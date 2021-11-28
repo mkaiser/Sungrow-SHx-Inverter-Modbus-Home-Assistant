@@ -1,0 +1,555 @@
+modbus:
+  - name: SungrowSH10
+    type: tcp
+    host: !secret sungrow_modbus_host_ip
+    port: !secret sungrow_modbus_port
+    # retry_on_empty : true
+    # retries: 10
+    # close_comm_on_error: true
+    #delay: 5
+    #timeout: 5
+    sensors:
+      - name: Daily PV generation & battery discharge
+        slave: !secret sungrow_modbus_slave
+        address: 5002
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Total PV generation & battery discharge
+        slave: !secret sungrow_modbus_slave
+        address: 5003
+        input_type: input
+        count: 2
+        data_type: uint32
+        swap: word
+        unit_of_measurement: kWh
+        precision: 1
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Inverter temperature
+        slave: !secret sungrow_modbus_slave
+        address: 5007
+        input_type: input
+        count: 1
+        data_type: int16
+        precision: 1
+        unit_of_measurement: °C
+        device_class: Temperature
+        scale: 0.1
+        scan_interval: 10
+
+      - name: MPPT1 voltage
+        slave: !secret sungrow_modbus_slave
+        address: 5010
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        scale: 0.1
+        scan_interval: 10
+
+      - name: MPPT1 current
+        slave: !secret sungrow_modbus_slave
+        address: 5011
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 2
+        unit_of_measurement: A
+        device_class: Current
+        scale: 0.1
+        scan_interval: 10
+
+      - name: MPPT2 voltage
+        slave: !secret sungrow_modbus_slave
+        address: 5012
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        scale: 0.1
+        scan_interval: 10
+
+      - name: MPPT2 current
+        slave: !secret sungrow_modbus_slave
+        address: 5013
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 2
+        unit_of_measurement: A
+        device_class: Current
+        scale: 0.1
+        scan_interval: 10
+
+      - name: Total DC power
+        slave: !secret sungrow_modbus_slave
+        address: 5016
+        input_type: input
+        count: 2
+        data_type: uint32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Reactive power
+        slave: !secret sungrow_modbus_slave
+        address: 5032
+        input_type: input
+        count: 2
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Power factor
+        slave: !secret sungrow_modbus_slave
+        address: 5034
+        input_type: input
+        count: 1
+        data_type: int16
+        swap: word
+        precision: 3
+        unit_of_measurement: "%"
+        device_class: power_factor
+        state_class: measurement
+        scale: 0.001
+        scan_interval: 10
+
+      - name: System state
+        slave: !secret sungrow_modbus_slave
+        address: 12999
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 0
+        scale: 1
+        scan_interval: 10
+
+      - name: Running state
+        slave: !secret sungrow_modbus_slave
+        address: 13000
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 0
+        scale: 1
+        scan_interval: 10
+
+      - name: Daily PV generation
+        slave: !secret sungrow_modbus_slave
+        address: 13001
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Total PV generation
+        slave: !secret sungrow_modbus_slave
+        address: 13002
+        input_type: input
+        count: 2
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Daily exported energy from PV
+        slave: !secret sungrow_modbus_slave
+        address: 13004
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Total exported energy from PV
+        slave: !secret sungrow_modbus_slave
+        address: 13005
+        input_type: input
+        count: 2
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Load power
+        slave: !secret sungrow_modbus_slave
+        address: 13007
+        input_type: input
+        count: 2
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Export power
+        slave: !secret sungrow_modbus_slave
+        address: 13009
+        input_type: input
+        count: 2
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Daily battery charge from PV
+        slave: !secret sungrow_modbus_slave
+        address: 13011
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Total battery charge from PV
+        slave: !secret sungrow_modbus_slave
+        address: 13012
+        input_type: input
+        count: 2
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Daily direct energy consumption
+        slave: !secret sungrow_modbus_slave
+        address: 13016
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Total direct energy consumption
+        slave: !secret sungrow_modbus_slave
+        address: 13017
+        input_type: input
+        count: 2
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Battery voltage
+        slave: !secret sungrow_modbus_slave
+        address: 13019
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 0
+        unit_of_measurement: V
+        device_class: Voltage
+        scale: 0.1
+        scan_interval: 10
+
+      - name: Battery current
+        slave: !secret sungrow_modbus_slave
+        address: 13020
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: A
+        device_class: Current
+        scale: 0.1
+        scan_interval: 10
+
+      - name: Battery power
+        slave: !secret sungrow_modbus_slave
+        address: 13021
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Battery level
+        slave: !secret sungrow_modbus_slave
+        address: 13022
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 60
+
+      - name: Battery state of health
+        slave: !secret sungrow_modbus_slave
+        address: 13023
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 0
+        unit_of_measurement: "%"
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+
+      - name: Battery temperature
+        slave: !secret sungrow_modbus_slave
+        address: 13024
+        input_type: input
+        count: 1
+        data_type: int16
+        precision: 1
+        unit_of_measurement: °C
+        device_class: Temperature
+        scale: 0.1
+        scan_interval: 60
+
+      - name: Daily battery discharge
+        slave: !secret sungrow_modbus_slave
+        address: 13025
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Total battery discharge
+        slave: !secret sungrow_modbus_slave
+        address: 13026
+        input_type: input
+        count: 2
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: 10
+
+      - name: Grid state
+        slave: !secret sungrow_modbus_slave
+        address: 13029
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 0
+        scale: 0.1
+        scan_interval: 10
+
+      - name: Total active power
+        slave: !secret sungrow_modbus_slave
+        address: 13033
+        input_type: input
+        count: 2
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Daily imported energy
+        slave: !secret sungrow_modbus_slave
+        address: 13035
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Total imported energy
+        slave: !secret sungrow_modbus_slave
+        address: 13036
+        input_type: input
+        count: 2
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Daily battery charge
+        slave: !secret sungrow_modbus_slave
+        address: 13039
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Total battery charge
+        slave: !secret sungrow_modbus_slave
+        address: 13040
+        input_type: input
+        count: 2
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Daily exported energy
+        slave: !secret sungrow_modbus_slave
+        address: 13044
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Total exported energy
+        slave: !secret sungrow_modbus_slave
+        address: 13045
+        input_type: input
+        count: 2
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Charge discharge power
+        slave: !secret sungrow_modbus_slave
+        address: 13051
+        input_type: input
+        count: 1
+        data_type: int16
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+binary_sensor:
+  - platform: template
+    sensors:
+      pv_generating:
+        friendly_name: "PV generating"
+        value_template: "{{ states('sensor.running_state')|int|bitwise_and(0x1) > 0 }}"
+      battery_charging:
+        friendly_name: "Battery charging"
+        value_template: "{{ states('sensor.running_state')|int|bitwise_and(0x2) > 0 }}"
+      battery_discharging:
+        friendly_name: "Battery discharging"
+        value_template: "{{ states('sensor.running_state')|int|bitwise_and(0x4) > 0 }}"
+      exporting_power:
+        friendly_name: "Exporting power"
+        value_template: "{{ states('sensor.running_state')|int|bitwise_and(0x10) > 0 }}"
+      importing_power:
+        friendly_name: "Importing power"
+        value_template: "{{ states('sensor.running_state')|int|bitwise_and(0x20) > 0 }}"
