@@ -22,7 +22,7 @@ The yaml-based integration file needs 3 parameters as input. Copy the following 
 ##  Modbus register mapping
 The file **modbus_sungrow.yaml** contains the Modbus register maps. Copy the file  to a subfolder named "integrations", which is located at the same level of your "configurations.yaml". 
 
-Include "modbus_sungrow.yaml" by adding follwing lines to your "configurations.yaml":
+Include "modbus_sungrow.yaml" by adding follwing lines to your "configuration.yaml":
 
     homeassistant:
       packages: !include_dir_named integrations
