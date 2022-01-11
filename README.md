@@ -27,7 +27,6 @@ Include "modbus_sungrow.yaml" by adding follwing lines to your "configuration.ya
     homeassistant:
       packages: !include_dir_named integrations
     
-
 Do not forget to check your configuration and restart.
 
 
@@ -36,6 +35,18 @@ Do not forget to check your configuration and restart.
 2. Click "Add new Card" and select "Entities"
 3a. Add the sensor values you want to display. I (more or less randomly) divided them into momentary power, energy, battery and other.
 3b. (Alternative to 3a): Copy [this dashboard file]](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/files/7848160/Sungrow_Dashboard.yaml.txt) and copy it a new dashboard using the "raw configuration editor" (top right, the 3 dots). Ensure that the spacing keeps intact (Apparently github does not support the .yaml file extension :/ )
+
+
+
+##  Configure the HomeAssistant energy dashboard 
+![image](https://user-images.githubusercontent.com/29856783/148981502-823778d7-ebd3-4101-8060-48e0619cee4c.png)
+
+Open the Energy settings ("Configuration" --> "Energy") and adapt the highlighted values as shown in the screenshot: 
+
+![image](https://user-images.githubusercontent.com/29856783/148981897-23821ec4-c35e-4dd0-8ec1-02aefd0eac93.png)
+
+Note, that only the energy values in kWh are shown in this dashboard and not the current power dissipation (in W).
+
 
 
 # Status and future work 
