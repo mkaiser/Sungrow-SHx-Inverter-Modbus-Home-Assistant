@@ -3,7 +3,8 @@ Sungrow SH Integration for Home Assistant for SH3.6RS, SH4.6RS, SH5.0RS, SH5.0RT
 
 Tested with a **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery**, **Home Assistant 2021.11**.
 
-![](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/HASS_Sungrow_Dashboard.png)
+![image](https://user-images.githubusercontent.com/29856783/148985584-531254dd-7f6d-445d-9b79-d1a8c9f90b70.png)
+
 
 The Modbus register mapping is based on two documents, the Sungrow support sent me by eMail. I am not sure, if I am allowed to share the files, but maybe you can successfully search for them...
 
