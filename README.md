@@ -31,6 +31,13 @@ Include "modbus_sungrow.yaml" by adding follwing lines to your "configuration.ya
 Do not forget to check your configuration and restart.
 
 
+##  Add a nice "Energy Dashboard" like shown above
+1. Create a new dashboard (or use the standard one)
+2. Click "Add new Card" and select "Entities"
+3a. Add the sensor values you want to display. I (more or less randomly) divided them into momentary power, energy, battery and other.
+3b. (Alternative to 3a): Copy [this dashboard file]](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/files/7848160/Sungrow_Dashboard.yaml.txt) and copy it a new dashboard using the "raw configuration editor" (top right, the 3 dots). Ensure that the spacing keeps intact (Apparently github does not support the .yaml file extension :/ )
+
+
 # Status and future work 
 I only included the most important registers, which seem to be common between a wide range of Sungrow inverter models . There are many more registers in the Sungrow documents, which I left out. 
 
