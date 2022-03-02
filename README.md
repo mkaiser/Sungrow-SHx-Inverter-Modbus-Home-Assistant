@@ -13,6 +13,11 @@ The Modbus register mapping is based on two documents, the Sungrow support sent 
 
 # Usage
 
+## Overview 
+I use the Visual Studio Code Server add-on for configuration. In the screenshot the relevant files for the sungrow integration are highlighted:
+![image](https://user-images.githubusercontent.com/29856783/156320105-6eb9448d-301c-4c81-9d2a-ded83840a3aa.png)
+
+
 ##  Configuration in secrets.yaml
 The yaml-based integration file needs 3 parameters as input. Copy the following lines in your secrets.yaml and adapt them:
 
