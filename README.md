@@ -3,6 +3,11 @@ Sungrow SH Integration for Home Assistant for SH3.6RS, SH4.6RS, SH5.0RS, SH5.0RT
 
 Tested with a **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery**, **Home Assistant 2021.11**.
 
+**!!! Some users reported that Sungrow ships several inverters with the new WiNetS Adapter, which does currently not support Modbus TCP**
+
+Sungrow promised in several forums, that a software update for enabling Modbus is under development, but no ETAs left
+
+
 ![image](https://user-images.githubusercontent.com/29856783/148985584-531254dd-7f6d-445d-9b79-d1a8c9f90b70.png)
 
 
