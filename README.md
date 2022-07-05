@@ -6,6 +6,7 @@ Tested with a **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery**,
 Community tested (thanks for reporting!)
 - SH10RT (via home assistant community, brix29 Axel)
 - SH5.0RT(home assistant community, ptC7H12 Paul)
+- SH8.0RT (github, lindehoff)
 - SH5K-30 (github, ajbatchelor)
 
 **!!! Some users reported that Sungrow ships new inverters with the WiNetS Adapter. Some users reported, that Modbus TCP is working now, some reported it isn't....**
