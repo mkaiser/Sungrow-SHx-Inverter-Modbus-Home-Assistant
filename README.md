@@ -1,9 +1,12 @@
 ### Home Assistant Sungrow SHx integration
 Sungrow SH Integration for Home Assistant for SH3.6RS, SH4.6RS, SH5.0RS, SH5.0RT, SH6.0RS, SH8.0RT, SH6.0RT, SH10RT
+SH5K-20, SH3K6, SH4K6, SH5K-V13, SH5K-30
 
-Tested with a **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery**, **Home Assistant 2022.06 (current version)**.
+Tested with my **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery**, **Home Assistant 2022.06 (current version)**.
 
-Community tested (thanks for reporting!)
+Please let me know, if the integration works also with other Sungrow SHx models. 
+
+Community confirmed supported inverters (thanks for reporting!)
 - SH10RT (via home assistant community, brix29 Axel)
 - SH5.0RT(home assistant community, ptC7H12 Paul)
 - SH8.0RT (github, lindehoff)
@@ -65,13 +68,5 @@ Note, that only the energy values in kWh are shown in this dashboard and not the
 # Status and future work 
 I only included the most important registers, which seem to be common between a wide range of Sungrow inverter models . There are many more registers in the Sungrow documents, which I left out. 
 
-The EMS features have not been really tested...
+The EMS features have not been thoroughly tested...
 
-Please let me know, if the integration works also with other Sungrow SHx models. 
-The manual also mentiones following Sungrow inverters, it may also work. Leave me a feedback on this models!
-
-SH5K-20
-SH3K6
-SH4K6
-SH5K-V13
-SH5K-30
