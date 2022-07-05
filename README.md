@@ -1,15 +1,11 @@
 ### Home Assistant Sungrow SHx integration
 Sungrow SH Integration for Home Assistant for SH3.6RS, SH4.6RS, SH5.0RS, SH5.0RT, SH6.0RS, SH8.0RT, SH6.0RT, SH10RT
 
-Tested with a **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery**, **Home Assistant 2021.11**.
+Tested with a **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery**, **Home Assistant 2022.06 (current version)**.
 
-**!!! Some users reported that Sungrow ships several inverters with the new WiNetS Adapter, which does currently not support Modbus TCP**
+**!!! Some users reported that Sungrow ships new inverters with the WiNetS Adapter. Some users reported, that Modbus TCP is working now, some reported it isn't....**
 
-Sungrow promised in several forums, that a software update for enabling Modbus is under development, but no ETAs left
-
-
-![image](https://user-images.githubusercontent.com/29856783/148985584-531254dd-7f6d-445d-9b79-d1a8c9f90b70.png)
-
+![image](https://user-images.githubusercontent.com/29856783/177328071-b7c3fc72-35c3-4178-9276-fffb0338d30b.png)
 
 The Modbus register mapping is based on two documents, the Sungrow support sent me by eMail. I am not sure, if I am allowed to share the files, but maybe you can successfully search for them...
 
@@ -41,11 +37,11 @@ Include "modbus_sungrow.yaml" by adding follwing lines to your "configuration.ya
 Do not forget to check your configuration and restart.
 
 
-##  Add a nice "Energy Dashboard" like shown below
+##  Add a nice "Energy Dashboard" like shown above
 1. Create a new dashboard (or use the standard one)
 2. Click "Add new Card" and select "Entities"
 3a. Add the sensor values you want to display. I (more or less randomly) divided them into momentary power, energy, battery and other.
-3b. (Alternative to 3a): Copy [this dashboard file]](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/files/7848160/Sungrow_Dashboard.yaml.txt) and copy it a new dashboard using the "raw configuration editor" (top right, the 3 dots). Ensure that the spacing keeps intact (Apparently github does not support the .yaml file extension :/ )
+3b. (Alternative to 3a): Copy *sungrow_dashboard.yaml* from the repo and copy it a new dashboard using the "raw configuration editor" (top right, the 3 dots). Ensure that the spacing keeps intact.
 
 
 
@@ -62,6 +58,8 @@ Note, that only the energy values in kWh are shown in this dashboard and not the
 
 # Status and future work 
 I only included the most important registers, which seem to be common between a wide range of Sungrow inverter models . There are many more registers in the Sungrow documents, which I left out. 
+
+The EMS features have not been really tested...
 
 Please let me know, if the integration works also with other Sungrow SHx models. 
 The manual also mentiones following Sungrow inverters, it may also work. Leave me a feedback on this models!
