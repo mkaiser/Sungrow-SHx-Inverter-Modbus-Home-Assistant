@@ -1,17 +1,30 @@
+# Sungrow integration
+# https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
+# by Martin Kaiser
+# 4 July 2022 
+
 modbus:
-  - name: SungrowSH10
+  - name: SungrowSHx
     type: tcp
     host: !secret sungrow_modbus_host_ip
     port: !secret sungrow_modbus_port
-    # retry_on_empty : true
+    retry_on_empty: true
     # retries: 10
     # close_comm_on_error: true
-    #delay: 5
+    delay: 5
     #timeout: 5
     sensors:
+      - name: Sungrow Device type code
+        slave: !secret sungrow_modbus_slave
+        address: 4999 # 5000
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        scan_interval: 600
       - name: Daily PV generation & battery discharge
         slave: !secret sungrow_modbus_slave
-        address: 5002
+        address: 5002 # 5003
         input_type: input
         count: 1
         data_type: uint16
@@ -141,6 +154,19 @@ modbus:
         device_class: power_factor
         state_class: measurement
         scale: 0.001
+        scan_interval: 10
+
+      - name: BDC rated power
+        slave: !secret sungrow_modbus_slave
+        address: 5627 #5628
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        scale: 100
         scan_interval: 10
 
       - name: System state
@@ -412,7 +438,7 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
-      - name: Grid state
+      - name: Grid state raw
         slave: !secret sungrow_modbus_slave
         address: 13029
         input_type: input
@@ -420,7 +446,6 @@ modbus:
         data_type: uint16
         swap: word
         precision: 0
-        scale: 0.1
         scan_interval: 10
 
       - name: Total active power
@@ -464,6 +489,21 @@ modbus:
         state_class: total_increasing
         scale: 0.1
         scan_interval: 600
+
+      # works only for SH5K-20, SH3K6, SH4K6, SH5K-V13, SH5K-30, SH3K6-30, SH4K6-30
+      # - name: Battery capacity
+      #   slave: !secret sungrow_modbus_slave
+      #   address: 13038
+      #   input_type: input
+      #   count: 1
+      #   data_type: uint16
+      #   swap: word
+      #   precision: 1
+      #   unit_of_measurement: kWh
+      #   device_class: energy
+      #   state_class: total_increasing
+      #   scale: 0.1
+      #   scan_interval: 600
 
       - name: Daily battery charge
         slave: !secret sungrow_modbus_slave
@@ -521,18 +561,79 @@ modbus:
         scale: 0.1
         scan_interval: 600
 
-      - name: Charge discharge power
+      # holding registers
+      - name: Inverter Start Stop
         slave: !secret sungrow_modbus_slave
-        address: 13051
-        input_type: input
+        address: 12999 # 13000
+        input_type: holding
         count: 1
-        data_type: int16
+        data_type: uint16
         swap: word
         precision: 0
+        scan_interval: 10
+
+      - name: EMS Mode Selection raw
+        slave: !secret sungrow_modbus_slave
+        address: 13049 # 13050
+        input_type: holding
+        count: 1
+        data_type: uint16
+        swap: word
+        scan_interval: 10
+
+      - name: Battery Charge Discharge Cmd raw
+        slave: !secret sungrow_modbus_slave
+        address: 13050 # 13051
+        input_type: holding
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 0
+        scan_interval: 10
+
+      - name: Battery Charge Discharge Power
+        slave: !secret sungrow_modbus_slave
+        address: 13051 # 13052
+        input_type: holding
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 0
+        # datasheet says:
+        # 0 to 5000 W for SH*K-*
+        # 0 to 100 % for SH*.0RT
+        # for my SH10RT it is set in W...
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        scale: 1
+        scan_interval: 10
+
+      - name: Max SoC
+        slave: !secret sungrow_modbus_slave
+        address: 13057 # 13058
+        input_type: holding
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+
+      - name: Min SoC
+        slave: !secret sungrow_modbus_slave
+        address: 13058 # 13059
+        input_type: holding
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        scale: 0.1
         scan_interval: 10
 
 binary_sensor:
@@ -553,3 +654,300 @@ binary_sensor:
       importing_power:
         friendly_name: "Importing power"
         value_template: "{{ states('sensor.running_state')|int|bitwise_and(0x20) > 0 }}"
+
+# 'virtual' template sensors for better readability
+sensor:
+  - platform: template
+    sensors:
+      sungrow_inverter_state:
+        # Inverter States from modbus reference manual
+        friendly_name: "Sungrow Inverter State"
+        value_template: >-
+          {% if ((states('sensor.system_state') | int(default=0)) == 0x0002) %}
+            Stop
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0008) %}
+            Standby
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0010) %}
+            Initial Standby
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0020) %}
+            Startup
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0040) %}
+            Running
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0100) %}
+            Fault
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0400) %}
+            Maintain mode
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0800) %}
+            Forced mode
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x1000) %}
+            Off-grid mode
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x2501) %}
+            Restarting
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x4000) %}
+            External EMS mode
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}
+
+      sungrow_grid_state:
+        friendly_name: "Sungrow Grid State"
+        value_template: >-
+          {% if ((states('sensor.grid_state_raw') | int(default=0)) == 0x00AA) %}
+            Off Grid
+          {% elif ((states('sensor.grid_state_raw') | int(default=0)) == 0x0055) %}
+            On Grid
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}
+
+
+      sungrow_device_type:
+        # device codes from modbus reference manual
+        friendly_name: "Sungrow Device Type"
+        value_template: >-
+          {% if ((states('sensor.sungrow_device_type_code') | int(default=0))  == 0x0D09) %}
+            SH5K-20
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D06) %}
+            SH3K6
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D07) %}
+            SH4K6
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D03) %}
+            SH5K-V13
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0C) %}
+            SH5K-30
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0A) %}
+            SH3K6-30
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0B) %}
+            SH4K6-30
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0F) %}
+            SH5.0RS            
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0D) %}
+            SH3.6RS
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0E) %}
+            SH4.6RS
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D10) %}
+            SH6.0RS                                                                                              
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E03) %}
+            SH10RT
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E02) %}
+            SH8.0RT
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E01) %}
+            SH6.0RT
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E00) %}
+            SH5.0RT
+          {% else %}
+            Unknown device code!
+          {% endif %}
+
+      # make the sensor battery_charge_discharge_cmd more human readable
+      sungrow_battery_charge_discharge_cmd:
+        # Inverter States from modbus reference manual
+        # 0xAA (170) Force charge
+        # 0xBB (187) Force discharge
+        # 0xCC (204) Stop (Default)
+        # don't know how to compare the integer values in hexadecimal format in following decoder statement...
+        friendly_name: "Battery Charge Discharge Cmd"
+        value_template: >-
+          {% if ((states('sensor.battery_charge_discharge_cmd_raw') | int(default=0)) == 0x00AA) %}
+            Force charge
+          {% elif ((states('sensor.battery_charge_discharge_cmd_raw') | int(default=0))  == 0x00BB) %}
+            Force discharge
+          {% elif ((states('sensor.battery_charge_discharge_cmd_raw') | int(default=0))  == 0x00CC) %}
+            Stop (Default)
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}
+
+      # make the sensor ems_selection_raw more human readable
+      sungrow_ems_mode_selection:
+        friendly_name: "EMS Mode Selection"
+        value_template: >-
+          {% if ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 0) %}
+            Self-consumption mode (default)
+          {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 2) %}
+            Forced mode
+          {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 3) %}
+            External EMS
+          {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 4) %}
+            VPP
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}
+
+# getting input for Min and Max SoC
+input_number:
+  set_sg_min_soc:
+    name: min Soc
+    #initial: 15
+    min: 5
+    max: 50
+    step: 1
+
+  set_sg_max_soc:
+    name: max Soc
+    #initial: 85
+    min: 50
+    max: 95
+    step: 1
+
+  set_sg_charge_discharge_power_percentage:
+    name: max charge discharge power in W
+    #initial: 40
+    min: 0
+    max: 5000
+    step: 50
+
+
+input_select:
+  set_sg_start_stop_mode:
+    name: Inverter mode
+    options:
+      - "Start"
+      - "Stop"
+
+# get input for battery mode (forced charge/discharge, stop (default) )
+  set_sg_ems_mode:
+    name: EMS mode
+    options:
+      - "Self-consumption mode (default)"
+      - "Forced mode"
+      - "External EMS"
+      - "VPP"
+    icon: mdi:battery-unknown
+
+  set_sg_battery_charge_discharge_cmd:
+    name: Battery charge discharge cmd
+    options:
+      - "Stop (default)"
+      - "Force charge"
+      - "Force discharge"
+    icon: mdi:battery-unknown
+
+# Automation: Write modbus registers on input changes via GUI
+
+# note: If you change a value by the sliders, it will take up to 60 seconds until the state variables are updated
+# Unfortunately, I could not find a way to "force update" modbus registers, yet...
+automation:
+
+  # Start 0xCF = 207
+  # Stop 0xCE = 206
+  # Todo I want to use hexadecimal format to write values!?
+  - id: "24334413543545" # random number
+    alias: start stop
+    description: "Starts/ Stops the inverter"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_select.set_sg_start_stop_mode
+    condition: []
+    action:
+      - service: modbus.write_register
+        data_template:
+          address: 12999 # 13000
+          slave: !secret sungrow_modbus_slave
+          value: "{% if is_state('input_select.set_sg_start_stop_mode' , 'Start') %} 207
+          {% else %} 206 {% endif %}"
+          hub: SungrowSHx
+    mode: single
+
+  - id: "24321413543543" # random number
+    alias: update max SoC
+    description: "Updates Sungrow max Soc holding register"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_number.set_sg_max_soc
+    condition: []
+    action:
+      - service: modbus.write_register
+        data_template:
+          address: 13057 # 13058
+          slave: !secret sungrow_modbus_slave
+          value: "{{ states('input_number.set_sg_max_soc') | int *10}}"
+          hub: SungrowSHx
+    mode: single
+
+  - id: "24321413543545" # random number
+    alias: update min SoC
+    description: "Updates Sungrow min Soc holding register"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_number.set_sg_min_soc
+    condition: []
+    action:
+      - service: modbus.write_register
+        data_template:
+          address: 13058 # 13059
+          slave: !secret sungrow_modbus_slave
+          value: "{{ states('input_number.set_sg_min_soc') | int *10}}"
+          hub: SungrowSHx
+    mode: single
+
+  - id: "24321413553543" # random number
+    alias: update battery charge discharge cmd
+    description: "Updates Sungrow holding register for battery charge discharge command"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_select.set_sg_battery_charge_discharge_cmd
+    condition: []
+    action:
+      - service: modbus.write_register
+        data_template:
+          address: 13050 # 13051
+          slave: !secret sungrow_modbus_slave
+          # 0xAA: 170 Charge
+          # 0xBB: 187 Discharge
+          # 0xCC: 204 Stop (Default)
+          # don't know how to compare the integer values in hexadecimal format in following decoder statement...
+          value: "{% if is_state('input_select.set_sg_battery_charge_discharge_cmd' , 'Stop (default)') %} 204
+          {% elif is_state('input_select.set_sg_battery_charge_discharge_cmd' , 'Force charge') %} 170
+          {% elif is_state('input_select.set_sg_battery_charge_discharge_cmd' , 'Force discharge') %} 187
+          {% else %} 204 {% endif %}"  
+          hub: SungrowSHx
+    mode: single
+
+  - id: "24323313553543" # random number
+    alias: update EMS mode
+    description: "Updates EMS mode"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_select.set_sg_ems_mode
+    condition: []
+    action:
+      - service: modbus.write_register
+        data_template:
+          address: 13049 # 13050
+          slave: !secret sungrow_modbus_slave
+          # 0: Self-consumption mode (Default)
+          # 1: entry does not exist
+          # 2: Forced Mode
+          # 3: External EMS
+          # 4: VPP
+          # don't know how to compare the integer values in hexadecimal format in following decoder statement...
+          value: "{% if is_state('input_select.set_sg_ems_mode' , 'Self-consumption mode (default)') %} 0
+          {% elif is_state('input_select.set_sg_ems_mode' , 'Forced mode') %} 2
+          {% elif is_state('input_select.set_sg_ems_mode' , 'External EMS') %} 3
+          {% elif is_state('input_select.set_sg_ems_mode' , 'VPP') %} 4
+          {% else %} 0 {% endif %}"
+          hub: SungrowSHx
+    mode: single
+
+  - id: "24321413543521" # random number
+    alias: "update max charge discharge power percent"
+    description: "Sets max charge discharge power in % of BDC rated power"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_number.set_sg_charge_discharge_power_percentage
+    condition: []
+    action:
+      - service: modbus.write_register
+        data_template:
+          address: 13051 # 13052
+          slave: !secret sungrow_modbus_slave
+          value: "{{ states('input_number.set_sg_charge_discharge_power_percentage') | int}}"
+          hub: SungrowSHx
+    mode: single

@@ -41,7 +41,7 @@ Include "modbus_sungrow.yaml" by adding follwing lines to your "configuration.ya
 Do not forget to check your configuration and restart.
 
 
-##  Add a nice "Energy Dashboard" like shown above
+##  Add a nice "Energy Dashboard" like shown below
 1. Create a new dashboard (or use the standard one)
 2. Click "Add new Card" and select "Entities"
 3a. Add the sensor values you want to display. I (more or less randomly) divided them into momentary power, energy, battery and other.
