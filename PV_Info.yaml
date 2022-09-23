@@ -1,0 +1,88 @@
+views:
+  - title: Home
+    cards:
+      - type: entities
+        entities:
+          - entity: sensor.total_dc_power
+          - entity: sensor.load_power
+          - entity: sensor.battery_power
+          - entity: sensor.export_power
+          - entity: binary_sensor.pv_generating
+          - entity: binary_sensor.exporting_power
+          - entity: binary_sensor.importing_power
+          - entity: binary_sensor.battery_discharging
+          - entity: binary_sensor.battery_charging
+        title: Power
+      - type: gauge
+        entity: sensor.battery_level
+        min: 0
+        max: 100
+        severity:
+          green: 70
+          yellow: 40
+          red: 20
+      - type: entities
+        entities:
+          - entity: sensor.mppt1_voltage
+          - entity: sensor.mppt1_current
+          - entity: sensor.mppt2_voltage
+          - entity: sensor.mppt2_current
+          - entity: sensor.total_dc_power
+        title: PV Gen
+      - type: entities
+        entities:
+          - entity: sensor.sungrow_device_type
+          - entity: sensor.sungrow_inverter_state
+          - entity: sensor.running_state
+          - entity: sensor.system_state
+          - entity: sensor.inverter_temperature
+        title: Inverter State
+      - type: entities
+        entities:
+          - entity: sensor.min_soc
+          - entity: sensor.max_soc
+          - entity: sensor.ems_mode_selection_raw
+          - entity: sensor.sungrow_ems_mode_selection
+          - entity: sensor.battery_forced_charge_discharge_cmd_raw
+          - entity: sensor.sungrow_battery_forced_charge_discharge_cmd
+          - entity: sensor.battery_forced_charge_discharge_power
+        title: EMS
+      - type: entities
+        entities:
+          - entity: sensor.daily_pv_generation
+          - entity: sensor.daily_direct_energy_consumption
+          - entity: sensor.daily_exported_energy_from_pv
+          - entity: sensor.daily_pv_generation_battery_discharge
+          - entity: sensor.daily_battery_charge_from_pv
+          - entity: sensor.daily_battery_discharge
+          - entity: sensor.daily_exported_energy
+          - entity: sensor.daily_battery_charge
+          - entity: sensor.daily_imported_energy
+          - entity: sensor.total_pv_generation
+          - entity: sensor.total_direct_energy_consumption
+          - entity: sensor.total_pv_generation_battery_discharge
+          - entity: sensor.total_exported_energy_from_pv
+          - entity: sensor.total_battery_charge_from_pv
+          - entity: sensor.total_battery_charge
+          - entity: sensor.total_battery_discharge
+          - entity: sensor.total_imported_energy
+          - entity: sensor.total_exported_energy
+        title: Energy
+      - type: entities
+        entities:
+          - entity: sensor.battery_power
+          - entity: sensor.battery_voltage
+          - entity: sensor.battery_current
+          - entity: sensor.battery_level
+          - entity: sensor.battery_state_of_health
+          - entity: sensor.battery_temperature
+          - entity: sensor.daily_battery_charge_from_pv
+          - entity: sensor.daily_battery_charge
+          - entity: sensor.daily_battery_discharge
+          - entity: sensor.total_battery_charge_from_pv
+          - entity: sensor.total_battery_discharge
+          - entity: sensor.total_battery_charge
+          - entity: sensor.max_soc
+          - entity: sensor.min_soc
+        title: Battery
+title: PV Info

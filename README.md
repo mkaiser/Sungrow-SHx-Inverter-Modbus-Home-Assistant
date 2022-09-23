@@ -1,20 +1,35 @@
-### Home Assistant Sungrow SHx integration
+# Home Assistant Sungrow SHx integration
 Sungrow SH Integration for Home Assistant for SH3.6RS, SH4.6RS, SH5.0RS, SH5.0RT, SH6.0RS, SH8.0RT, SH6.0RT, SH10RT
+SH5K-20, SH3K6, SH4K6, SH5K-V13, SH5K-30
 
-Tested with a **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery**, **Home Assistant 2021.11**.
+Tested with my **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery**, **Home Assistant 2022.06 (current version)**.
 
-**!!! Some users reported that Sungrow ships several inverters with the new WiNetS Adapter, which does currently not support Modbus TCP**
+Please let me know, if the integration works also with other Sungrow SHx models. 
 
-Sungrow promised in several forums, that a software update for enabling Modbus is under development, but no ETAs left
+Community confirmed supported inverters (thanks for reporting!)
+- SH10RT (via home assistant community, brix29 Axel)
+- SH5.0RT(home assistant community, ptC7H12 Paul)
+- SH8.0RT (github, lindehoff)
+- SH5K-30 (github, ajbatchelor)
 
-
-![image](https://user-images.githubusercontent.com/29856783/148985584-531254dd-7f6d-445d-9b79-d1a8c9f90b70.png)
+**!!! Multiple issues have been reported from users with single phase inverters (sungrows nomenclature is SH3.RS - single phase, vs. SH10.RT - tree phase). These inverters seem to only support a subset of the modbus registers.  Also there are issues with the WiNetS Adapter. Some users can use Modbus using WiNetS as ETH Port. For some users that won't work. If possible: ALWAYS use the native LAN port of your inerter (if existing!) **
 
 
 The Modbus register mapping is based on two documents, the Sungrow support sent me by eMail. I am not sure, if I am allowed to share the files, but maybe you can successfully search for them...
 
-    Communication Protocol of Residential Hybrid InverterV1.0.22_20201117.pdf
+    Communication.Protocol.of.Residential.Hybrid.Inverter_V1.0.23_EN
     10.4 Communication Protocol_String Inverter_V1.1.36_EN.pdf
+
+
+## Dashboards
+
+Display the status of the inverter:
+
+![image](https://user-images.githubusercontent.com/29856783/191961543-fbf9fa73-018f-4724-87cb-4e5d8261b43b.png)
+
+Control the EMS (Energy Management System):
+
+![image](https://user-images.githubusercontent.com/29856783/191961272-c030dd4d-3d62-434a-8306-3838e8c6fe37.png)
 
 # Usage
 
@@ -42,10 +57,10 @@ Do not forget to check your configuration and restart.
 
 
 ##  Add a nice "Energy Dashboard" like shown above
-1. Create a new dashboard (or use the standard one)
+1. Create a new dashboard
 2. Click "Add new Card" and select "Entities"
-3a. Add the sensor values you want to display. I (more or less randomly) divided them into momentary power, energy, battery and other.
-3b. (Alternative to 3a): Copy [this dashboard file]](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/files/7848160/Sungrow_Dashboard.yaml.txt) and copy it a new dashboard using the "raw configuration editor" (top right, the 3 dots). Ensure that the spacing keeps intact (Apparently github does not support the .yaml file extension :/ )
+3. Copy the content of *PV_Info.yaml* from the repo and paste it in the new dashboard using the "raw configuration editor" (top right, the 3 dots). Ensure that the spacing keeps intact.
+4. Repeat steps 1-3 with *PV_Control.yaml* for a dashboard allowing to set EMS (Energy Management System) parameters.
 
 
 
@@ -62,12 +77,3 @@ Note, that only the energy values in kWh are shown in this dashboard and not the
 
 # Status and future work 
 I only included the most important registers, which seem to be common between a wide range of Sungrow inverter models . There are many more registers in the Sungrow documents, which I left out. 
-
-Please let me know, if the integration works also with other Sungrow SHx models. 
-The manual also mentiones following Sungrow inverters, it may also work. Leave me a feedback on this models!
-
-SH5K-20
-SH3K6
-SH4K6
-SH5K-V13
-SH5K-30
