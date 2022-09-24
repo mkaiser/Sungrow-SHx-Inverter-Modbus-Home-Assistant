@@ -12,7 +12,7 @@ Community confirmed supported inverters (thanks for reporting!)
 - SH8.0RT (github, lindehoff)
 - SH5K-30 (github, ajbatchelor)
 
-**!!! Multiple issues have been reported from users with single phase inverters (sungrows nomenclature is SH3.RS - single phase, vs. SH10.RT - tree phase). These inverters seem to only support a subset of the modbus registers.  Also there are issues with the WiNetS Adapter. Some users can use Modbus using WiNetS as ETH Port. For some users that won't work. If possible: ALWAYS use the native LAN port of your inerter (if existing!) **
+**NOTE: Multiple issues have been reported from users with single phase inverters (sungrows nomenclature is SH3.RS - single phase, vs. SH10.RT - tree phase). These inverters seem to only support a subset of the modbus registers.  Also there are issues with the WiNetS Adapter. Some users can use Modbus using WiNetS as ETH Port. For some users that won't work. If possible: ALWAYS use the native LAN port of your inerter (if existing!)**
 
 
 The Modbus register mapping is based on two documents, the Sungrow support sent me by eMail. I am not sure, if I am allowed to share the files, but maybe you can successfully search for them...
@@ -31,10 +31,15 @@ Control the EMS (Energy Management System):
 
 ![image](https://user-images.githubusercontent.com/29856783/191961272-c030dd4d-3d62-434a-8306-3838e8c6fe37.png)
 
-# Usage
+# Usage / Configuration
 
 ## Overview 
-I use the Visual Studio Code Server add-on for configuration. In the screenshot the relevant files for the sungrow integration are highlighted:
+
+This does not come as a integration, you can set up by clicking something in the HomeAssistant GUI. 
+
+There is not "installation", more a "configuration". For this you need to add some information to the home assistant configuration files:
+
+Use the Visual Studio Code Server add-on for configuration. In the screenshot the relevant files for the sungrow integration are highlighted, which you need to modify:
 ![image](https://user-images.githubusercontent.com/29856783/156320105-6eb9448d-301c-4c81-9d2a-ded83840a3aa.png)
 
 
@@ -46,14 +51,16 @@ The yaml-based integration file needs 3 parameters as input. Copy the following 
     sungrow_modbus_slave: 1 #TODO update with the slave address of your inverter. Default is '1'
 
 ##  Modbus register mapping
-The file **modbus_sungrow.yaml** contains the Modbus register maps. Copy the file  to a subfolder named "integrations", which is located at the same level of your "configurations.yaml". 
+The file **modbus_sungrow.yaml** contains the Modbus register maps and automations to set values. Copy the file to a subfolder named "integrations" (maybe create it first), which is located at the same level of your "configurations.yaml" (see screenshot). 
 
 Include "modbus_sungrow.yaml" by adding follwing lines to your "configuration.yaml":
 
     homeassistant:
       packages: !include_dir_named integrations
     
-Do not forget to check your configuration and restart.
+Do not forget to check your configuration (Developer Tools --> hit "check configuration" and restart (it won't work without a restart!)
+
+After the restart, some new sensors should be available. E.g., check for "Total DC power"
 
 
 ##  Add a nice "Energy Dashboard" like shown above
