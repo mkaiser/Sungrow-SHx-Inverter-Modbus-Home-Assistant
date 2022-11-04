@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# 27th August 2022 
+# 4th November 2022 
 
 modbus:
   - name: SungrowSHx
@@ -129,9 +129,65 @@ modbus:
         scale: 1
         scan_interval: 10
 
+      - name: Phase A Voltage
+        slave: !secret sungrow_modbus_slave
+        address: 5018 # reg: 5019
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+
+      - name: Phase B Voltage
+        slave: !secret sungrow_modbus_slave
+        address: 5019 # reg: 5020
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+
+      - name: Phase C Voltage
+        slave: !secret sungrow_modbus_slave
+        address: 5020  # reg: 5021
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+
+      - name: Grid Frequency
+        slave: !secret sungrow_modbus_slave
+        address: 5035  # reg 5036
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: "Hz"
+        device_class: frequency
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+
       - name: Reactive power
         slave: !secret sungrow_modbus_slave
-        address: 5032
+        address: 5032  
         input_type: input
         count: 2
         data_type: int32
@@ -475,6 +531,51 @@ modbus:
       #   swap: word
       #   scan_interval: 10
 
+      - name: Phase A Current
+        slave: !secret sungrow_modbus_slave
+        address: 13030  # reg 13031
+        input_type: input
+        count: 1
+        data_type: int16
+        swap: word
+        precision: 1
+        unit_of_measurement: V
+        device_class: Current
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+
+
+      - name: Phase B Current
+        slave: !secret sungrow_modbus_slave
+        address: 13031  # reg 13032
+        input_type: input
+        count: 1
+        data_type: int16
+        swap: word
+        precision: 1
+        unit_of_measurement: V
+        device_class: Current
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+
+
+      - name: Phase C Current
+        slave: !secret sungrow_modbus_slave
+        address: 13032  # reg 13033
+        input_type: input
+        count: 1
+        data_type: int16
+        swap: word
+        precision: 1
+        unit_of_measurement: V
+        device_class: Current
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+
+
       - name: Total active power
         slave: !secret sungrow_modbus_slave
         address: 13033
@@ -806,40 +907,178 @@ binary_sensor:
         friendly_name: "Importing power"
         value_template: "{{ states('sensor.running_state')|int(default=0)|bitwise_and(0x20) > 0 }}"
 
-# 'virtual' template sensors for better readability
-sensor:
-  - platform: template
 
-    sensors:
-      sungrow_inverter_state:
-        # Inverter States from modbus reference manual
-        friendly_name: "Sungrow Inverter State"
-        value_template: >-
-          {% if ((states('sensor.system_state') | int(default=0)) == 0x0002) %}
-            Stop
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0008) %}
-            Standby
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0010) %}
-            Initial Standby
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0020) %}
-            Startup
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0040) %}
-            Running
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0100) %}
-            Fault
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0400) %}
-            Maintain mode
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0800) %}
-            Forced mode
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x1000) %}
-            Off-grid mode
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x2501) %}
-            Restarting
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x4000) %}
-            External EMS mode
-          {% else %}
-            Unknown - should not see me!
-          {% endif %}
+
+# 'virtual' template sensors for better readability
+template:
+  - sensor:
+    - name: "MPPT1 Power"
+      unit_of_measurement: W
+      device_class: power
+      state: > 
+        {{ (states('sensor.mppt1_voltage') | float * states('sensor.mppt1_current') | float) |int }}
+
+    - name: "MPPT2 Power"
+      unit_of_measurement: W
+      device_class: power
+      state: > 
+        {{ (states('sensor.mppt2_voltage') | float * states('sensor.mppt2_current') | float) |int}}
+
+    - name: "Phase A Power"
+      unit_of_measurement: W
+      device_class: power
+      state: > 
+        {{ (states('sensor.phase_a_voltage') | float * states('sensor.phase_a_current') | float) |int}}
+      
+    - name: "Phase B Power"
+      unit_of_measurement: W
+      device_class: power
+      state: > 
+        {{ (states('sensor.phase_b_voltage') | float * states('sensor.phase_b_current') | float) |int}}
+
+    - name: "Phase C Power"
+      unit_of_measurement: W
+      device_class: power
+      state: > 
+        {{ (states('sensor.phase_c_voltage') | float * states('sensor.phase_c_current') | float) |int}}
+
+
+    - name: "Sungrow Inverter State"
+      state: >-
+        {% if ((states('sensor.system_state') | int(default=0)) == 0x0002) %}
+          Stop
+        {% elif ((states('sensor.system_state') | int(default=0)) == 0x0008) %}
+          Standby
+        {% elif ((states('sensor.system_state') | int(default=0)) == 0x0010) %}
+          Initial Standby
+        {% elif ((states('sensor.system_state') | int(default=0)) == 0x0020) %}
+          Startup
+        {% elif ((states('sensor.system_state') | int(default=0)) == 0x0040) %}
+          Running
+        {% elif ((states('sensor.system_state') | int(default=0)) == 0x0100) %}
+          Fault
+        {% elif ((states('sensor.system_state') | int(default=0)) == 0x0400) %}
+          Maintain mode
+        {% elif ((states('sensor.system_state') | int(default=0)) == 0x0800) %}
+          Forced mode
+        {% elif ((states('sensor.system_state') | int(default=0)) == 0x1000) %}
+          Off-grid mode
+        {% elif ((states('sensor.system_state') | int(default=0)) == 0x2501) %}
+          Restarting
+        {% elif ((states('sensor.system_state') | int(default=0)) == 0x4000) %}
+          External EMS mode
+        {% else %}
+          Unknown - should not see me!
+        {% endif %}
+
+    - name: "Sungrow Device Type"
+      state: >-
+        {% if ((states('sensor.sungrow_device_type_code') | int(default=0))  == 0x0D06) %}
+          SH3K6
+        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D07) %}
+          SH4K6
+        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D09) %}
+          SH5K-20  
+        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D06) %}
+          SH3K6
+        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D07) %}
+          SH4K6
+        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D03) %}
+          SH5K-V13
+        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0C) %}
+          SH5K-30
+        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0A) %}
+          SH3K6-30
+        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0B) %}
+          SH4K6-30
+        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0F) %}
+          SH5.0RS            
+        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0D) %}
+          SH3.6RS
+        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0E) %}
+          SH4.6RS
+        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D10) %}
+          SH6.0RS                                                                                              
+        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E03) %}
+          SH10RT
+        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E02) %}
+          SH8.0RT
+        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E01) %}
+          SH6.0RT
+        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E00) %}
+          SH5.0RT
+        {% else %}
+          Unknown device code!
+        {% endif %}
+
+    # make the sensor battery_forced_charge_discharge_cmd more human readable
+    # Inverter States from modbus reference manual
+    # 0xAA forced charge
+    # 0xBB forced discharge
+    # 0xCC Stop (Default)
+    # TODO use variables here
+    - name: "Battery Forced Charge Discharge Cmd"
+      state: >-
+        {% if ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0)) == 0x00AA) %}
+          Forced charge
+        {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0))  == 0x00BB) %}
+          Forced discharge
+        {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0))  == 0x00CC) %}
+          Stop (Default)
+        {% else %}
+          Unknown - should not see me!
+        {% endif %}
+
+    # make the sensor ems_selection_raw more human readable
+    - name: "EMS Mode Selection"
+      state: >-
+        {% if ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 0) %}
+          Self-consumption mode (default)
+        {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 2) %}
+          Forced mode
+        {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 3) %}
+          External EMS
+        {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 4) %}
+          VPP
+        {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 8) %}
+          MicroGrid
+        {% else %}
+          Unknown - should not see me!
+        {% endif %}
+
+
+# sensor:
+#   - platform: template
+#     sensors:
+      # sungrow_inverter_state:
+      #   # Inverter States from modbus reference manual
+      #   friendly_name: "Sungrow Inverter State"
+      #   value_template: >-
+      #     {% if ((states('sensor.system_state') | int(default=0)) == 0x0002) %}
+      #       Stop
+      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x0008) %}
+      #       Standby
+      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x0010) %}
+      #       Initial Standby
+      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x0020) %}
+      #       Startup
+      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x0040) %}
+      #       Running
+      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x0100) %}
+      #       Fault
+      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x0400) %}
+      #       Maintain mode
+      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x0800) %}
+      #       Forced mode
+      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x1000) %}
+      #       Off-grid mode
+      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x2501) %}
+      #       Restarting
+      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x4000) %}
+      #       External EMS mode
+      #     {% else %}
+      #       Unknown - should not see me!
+      #     {% endif %}
 
       # grid_state_raw always returns 65535... disabling helper 
       # sungrow_grid_state:
@@ -854,88 +1093,86 @@ sensor:
       #     {% endif %}
 
 
-      sungrow_device_type:
-        # device codes from modbus reference manual
-        friendly_name: "Sungrow Device Type"
-        value_template: >-
-          
-          {% if ((states('sensor.sungrow_device_type_code') | int(default=0))  == 0x0D06) %}
-            SH3K6
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D07) %}
-            SH4K6
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D09) %}
-            SH5K-20  
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D06) %}
-            SH3K6
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D07) %}
-            SH4K6
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D03) %}
-            SH5K-V13
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0C) %}
-            SH5K-30
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0A) %}
-            SH3K6-30
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0B) %}
-            SH4K6-30
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0F) %}
-            SH5.0RS            
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0D) %}
-            SH3.6RS
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0E) %}
-            SH4.6RS
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D10) %}
-            SH6.0RS                                                                                              
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E03) %}
-            SH10RT
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E02) %}
-            SH8.0RT
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E01) %}
-            SH6.0RT
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E00) %}
-            SH5.0RT
-          {% else %}
-            Unknown device code!
-          {% endif %}
+      # sungrow_device_type:
+      #   # device codes from modbus reference manual
+      #   friendly_name: "Sungrow Device Type"
+      #   value_template: >-
+      #     {% if ((states('sensor.sungrow_device_type_code') | int(default=0))  == 0x0D06) %}
+      #       SH3K6
+      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D07) %}
+      #       SH4K6
+      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D09) %}
+      #       SH5K-20  
+      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D06) %}
+      #       SH3K6
+      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D07) %}
+      #       SH4K6
+      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D03) %}
+      #       SH5K-V13
+      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0C) %}
+      #       SH5K-30
+      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0A) %}
+      #       SH3K6-30
+      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0B) %}
+      #       SH4K6-30
+      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0F) %}
+      #       SH5.0RS            
+      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0D) %}
+      #       SH3.6RS
+      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0E) %}
+      #       SH4.6RS
+      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D10) %}
+      #       SH6.0RS                                                                                              
+      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E03) %}
+      #       SH10RT
+      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E02) %}
+      #       SH8.0RT
+      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E01) %}
+      #       SH6.0RT
+      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E00) %}
+      #       SH5.0RT
+      #     {% else %}
+      #       Unknown device code!
+      #     {% endif %}
 
 
-      # make the sensor battery_forced_charge_discharge_cmd more human readable
-      sungrow_battery_forced_charge_discharge_cmd:
-        # Inverter States from modbus reference manual
-        # 0xAA forced charge
-        # 0xBB forced discharge
-        # 0xCC Stop (Default)
+#       # make the sensor battery_forced_charge_discharge_cmd more human readable
+#       sungrow_battery_forced_charge_discharge_cmd:
+#         # Inverter States from modbus reference manual
+#         # 0xAA forced charge
+#         # 0xBB forced discharge
+#         # 0xCC Stop (Default)
+# # TODO use variables here
 
+#         friendly_name: "Battery Forced Charge Discharge Cmd"
+#         value_template: >-
+#           {% if ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0)) == 0x00AA) %}
+#             Forced charge
+#           {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0))  == 0x00BB) %}
+#             Forced discharge
+#           {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0))  == 0x00CC) %}
+#             Stop (Default)
+#           {% else %}
+#             Unknown - should not see me!
+#           {% endif %}
 
-
-        friendly_name: "Battery Forced Charge Discharge Cmd"
-        value_template: >-
-          {% if ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0)) == 0x00AA) %}
-            Forced charge
-          {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0))  == 0x00BB) %}
-            Forced discharge
-          {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0))  == 0x00CC) %}
-            Stop (Default)
-          {% else %}
-            Unknown - should not see me!
-          {% endif %}
-
-      # make the sensor ems_selection_raw more human readable
-      sungrow_ems_mode_selection:
-        friendly_name: "EMS Mode Selection"
-        value_template: >-
-          {% if ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 0) %}
-            Self-consumption mode (default)
-          {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 2) %}
-            Forced mode
-          {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 3) %}
-            External EMS
-          {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 4) %}
-            VPP
-          {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 8) %}
-            MicroGrid
-          {% else %}
-            Unknown - should not see me!
-          {% endif %}
+#       # make the sensor ems_selection_raw more human readable
+#       sungrow_ems_mode_selection:
+#         friendly_name: "EMS Mode Selection"
+#         value_template: >-
+#           {% if ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 0) %}
+#             Self-consumption mode (default)
+#           {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 2) %}
+#             Forced mode
+#           {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 3) %}
+#             External EMS
+#           {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 4) %}
+#             VPP
+#           {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 8) %}
+#             MicroGrid
+#           {% else %}
+#             Unknown - should not see me!
+#           {% endif %}
 
       # sungrow_battery_capacity:
       #   friendly_name: "Battery capacity kWh"
@@ -1015,8 +1252,8 @@ input_select:
       - "Forced discharge"
     icon: mdi:battery-unknown
 
-# Automations: Write modbus registers on input changes via GUI
 
+# Automations: Write modbus registers on input changes via GUI
 # note: If you change a value by the sliders, it will take up to 60 seconds until the state variables are updated
 # Unfortunately, I could not find a way to "force update" modbus registers, yet...
 automation:
@@ -1074,8 +1311,7 @@ automation:
           value: "{{ states('input_number.set_sg_min_soc') | int *10}}"
           hub: SungrowSHx
     mode: single
-    
-    
+
 
   - id: "12322468543545" # random number
     alias: update battery soc reserve
@@ -1094,7 +1330,7 @@ automation:
           hub: SungrowSHx
     mode: single
 
-    
+
 
   - id: "24321413553543" # random number
     alias: update battery forced charge discharge cmd
