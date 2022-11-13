@@ -13,17 +13,16 @@ views:
           - entity: sensor.min_soc
           - entity: sensor.max_soc
           - entity: input_select.set_sg_ems_mode
-          - entity: sensor.sungrow_ems_mode_selection
           - entity: input_select.set_sg_battery_forced_charge_discharge_cmd
-          - entity: sensor.battery_forced_charge_discharge_cmd_raw
-          - entity: sensor.sungrow_battery_forced_charge_discharge_cmd
           - entity: input_number.set_sg_forced_charge_discharge_power
           - entity: sensor.battery_forced_charge_discharge_power
           - entity: input_number.set_sg_batt_soc_reserve
           - entity: sensor.battery_soc_reserve
-          - entity: sensor.battery_max_charge_power
           - entity: input_number.set_sg_battery_max_charge_power
-          - entity: sensor.battery_max_discharge_power
+          - entity: sensor.battery_max_charge_power
           - entity: input_number.set_sg_battery_max_discharge_power
+          - entity: sensor.battery_max_discharge_power
         title: EMS
+        state_color: false
+        show_header_toggle: true
 title: PV Control
