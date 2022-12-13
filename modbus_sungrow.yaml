@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# 4th November 2022 
+# 13th Dezember 2022 
 
 modbus:
   - name: SungrowSHx
@@ -178,7 +178,7 @@ modbus:
         count: 1
         data_type: uint16
         swap: word
-        precision: 1
+        precision: 2
         unit_of_measurement: "Hz"
         device_class: frequency
         state_class: measurement
@@ -539,7 +539,7 @@ modbus:
         data_type: int16
         swap: word
         precision: 1
-        unit_of_measurement: V
+        unit_of_measurement: A
         device_class: Current
         state_class: measurement
         scale: 0.1
@@ -554,7 +554,7 @@ modbus:
         data_type: int16
         swap: word
         precision: 1
-        unit_of_measurement: V
+        unit_of_measurement: A
         device_class: Current
         state_class: measurement
         scale: 0.1
@@ -569,7 +569,7 @@ modbus:
         data_type: int16
         swap: word
         precision: 1
-        unit_of_measurement: V
+        unit_of_measurement: A
         device_class: Current
         state_class: measurement
         scale: 0.1
@@ -1047,140 +1047,6 @@ template:
         {% endif %}
 
 
-# sensor:
-#   - platform: template
-#     sensors:
-      # sungrow_inverter_state:
-      #   # Inverter States from modbus reference manual
-      #   friendly_name: "Sungrow Inverter State"
-      #   value_template: >-
-      #     {% if ((states('sensor.system_state') | int(default=0)) == 0x0002) %}
-      #       Stop
-      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x0008) %}
-      #       Standby
-      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x0010) %}
-      #       Initial Standby
-      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x0020) %}
-      #       Startup
-      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x0040) %}
-      #       Running
-      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x0100) %}
-      #       Fault
-      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x0400) %}
-      #       Maintain mode
-      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x0800) %}
-      #       Forced mode
-      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x1000) %}
-      #       Off-grid mode
-      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x2501) %}
-      #       Restarting
-      #     {% elif ((states('sensor.system_state') | int(default=0)) == 0x4000) %}
-      #       External EMS mode
-      #     {% else %}
-      #       Unknown - should not see me!
-      #     {% endif %}
-
-      # grid_state_raw always returns 65535... disabling helper 
-      # sungrow_grid_state:
-      #   friendly_name: "Sungrow Grid State"
-      #   value_template: >-
-      #     {% if ((states('sensor.grid_state_raw') | int(default=0)) == 0x00AA) %}
-      #       Off Grid
-      #     {% elif ((states('sensor.grid_state_raw') | int(default=0)) == 0x0055) %}
-      #       On Grid
-      #     {% else %}
-      #       Unknown - should not see me!
-      #     {% endif %}
-
-
-      # sungrow_device_type:
-      #   # device codes from modbus reference manual
-      #   friendly_name: "Sungrow Device Type"
-      #   value_template: >-
-      #     {% if ((states('sensor.sungrow_device_type_code') | int(default=0))  == 0x0D06) %}
-      #       SH3K6
-      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D07) %}
-      #       SH4K6
-      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D09) %}
-      #       SH5K-20  
-      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D06) %}
-      #       SH3K6
-      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D07) %}
-      #       SH4K6
-      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D03) %}
-      #       SH5K-V13
-      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0C) %}
-      #       SH5K-30
-      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0A) %}
-      #       SH3K6-30
-      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0B) %}
-      #       SH4K6-30
-      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0F) %}
-      #       SH5.0RS            
-      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0D) %}
-      #       SH3.6RS
-      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0E) %}
-      #       SH4.6RS
-      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D10) %}
-      #       SH6.0RS                                                                                              
-      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E03) %}
-      #       SH10RT
-      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E02) %}
-      #       SH8.0RT
-      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E01) %}
-      #       SH6.0RT
-      #     {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E00) %}
-      #       SH5.0RT
-      #     {% else %}
-      #       Unknown device code!
-      #     {% endif %}
-
-
-#       # make the sensor battery_forced_charge_discharge_cmd more human readable
-#       sungrow_battery_forced_charge_discharge_cmd:
-#         # Inverter States from modbus reference manual
-#         # 0xAA forced charge
-#         # 0xBB forced discharge
-#         # 0xCC Stop (Default)
-# # TODO use variables here
-
-#         friendly_name: "Battery Forced Charge Discharge Cmd"
-#         value_template: >-
-#           {% if ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0)) == 0x00AA) %}
-#             Forced charge
-#           {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0))  == 0x00BB) %}
-#             Forced discharge
-#           {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0))  == 0x00CC) %}
-#             Stop (Default)
-#           {% else %}
-#             Unknown - should not see me!
-#           {% endif %}
-
-#       # make the sensor ems_selection_raw more human readable
-#       sungrow_ems_mode_selection:
-#         friendly_name: "EMS Mode Selection"
-#         value_template: >-
-#           {% if ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 0) %}
-#             Self-consumption mode (default)
-#           {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 2) %}
-#             Forced mode
-#           {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 3) %}
-#             External EMS
-#           {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 4) %}
-#             VPP
-#           {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 8) %}
-#             MicroGrid
-#           {% else %}
-#             Unknown - should not see me!
-#           {% endif %}
-
-      # sungrow_battery_capacity:
-      #   friendly_name: "Battery capacity kWh"
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   value_template: >-
-      #     {{ ((states('sensor.battery_capacity_ah') | int(default=0) / 1000 * sensor.battery_voltage) / 1000) | round(1) }}
-
 # getting input for Min and Max SoC
 input_number:
   set_sg_min_soc:
@@ -1258,7 +1124,7 @@ input_select:
 # Unfortunately, I could not find a way to "force update" modbus registers, yet...
 automation:
   - id: "24334413543545" # random number
-    alias: start stop
+    alias: "sungrow inverter start stop"
     description: "Starts/ Stops the inverter"
     trigger:
       - platform: state
@@ -1279,7 +1145,7 @@ automation:
     mode: single
 
   - id: "24321413543543" # random number
-    alias: update max SoC
+    alias: "sungrow inverter update max SoC"
     description: "Updates Sungrow max Soc holding register"
     trigger:
       - platform: state
@@ -1296,7 +1162,7 @@ automation:
     mode: single
 
   - id: "24321413543545" # random number
-    alias: update min SoC
+    alias: "sungrow inverter update min SoC"
     description: "Updates Sungrow min Soc holding register"
     trigger:
       - platform: state
@@ -1314,7 +1180,7 @@ automation:
 
 
   - id: "12322468543545" # random number
-    alias: update battery soc reserve
+    alias: "sungrow inverter update battery soc reserve"
     description: "Updates Sungrow battery Soc reserve register"
     trigger:
       - platform: state
@@ -1333,7 +1199,7 @@ automation:
 
 
   - id: "24321413553543" # random number
-    alias: update battery forced charge discharge cmd
+    alias: "sungrow inverter update battery forced charge discharge cmd"
     description: "Updates Sungrow holding register for battery forced charge discharge command"
     trigger:
       - platform: state
@@ -1357,7 +1223,7 @@ automation:
     mode: single
 
   - id: "24323313553543" # random number
-    alias: update EMS mode
+    alias: "sungrow inverter update EMS mode"
     description: "Updates EMS mode"
     trigger:
       - platform: state
@@ -1385,7 +1251,7 @@ automation:
     mode: single
 
   - id: "24321413543521" # random number
-    alias: "update battery forced charge discharge power"
+    alias: "sungrow inverter update battery forced charge discharge power"
     description: "Sets battery forced charge discharge power"
     trigger:
       - platform: state
@@ -1402,7 +1268,7 @@ automation:
     mode: single
 
   - id: "24321213543520" # random number
-    alias: "update battery max charge power"
+    alias: "sungrow inverter update battery max charge power"
     description: "Sets battery max charge power"
     trigger:
       - platform: state
@@ -1420,7 +1286,7 @@ automation:
 
 
   - id: "24321203543522" # random number
-    alias: "update battery max discharge power"
+    alias: "sungrow inverter update battery max discharge power"
     description: "Sets battery max discharge power"
     trigger:
       - platform: state
