@@ -992,15 +992,17 @@ template:
         {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0B) %}
           SH4K6-30
         {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0F) %}
-          SH5.0RS            
+          SH5.0RS
         {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0D) %}
           SH3.6RS
         {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0E) %}
           SH4.6RS
         {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D10) %}
-          SH6.0RS                                                                                              
+          SH6.0RS
         {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E03) %}
           SH10RT
+        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0F) %}
+          SH10RT-V112
         {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E02) %}
           SH8.0RT
         {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E01) %}
