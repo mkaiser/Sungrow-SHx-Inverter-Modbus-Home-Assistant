@@ -3,8 +3,9 @@ views:
     cards:
       - type: entities
         entities:
-          - entity: sensor.total_dc_power
           - entity: sensor.load_power
+          - entity: sensor.meter_active_power
+          - entity: sensor.total_dc_power
           - entity: sensor.battery_power
           - entity: sensor.export_power
           - entity: binary_sensor.pv_generating
@@ -21,6 +22,12 @@ views:
           - entity: sensor.phase_c_voltage
           - entity: sensor.phase_c_current
           - entity: sensor.phase_c_power
+          - entity: sensor.meter_phase_a_active_power
+          - entity: sensor.meter_phase_b_active_power
+          - entity: sensor.meter_phase_c_active_power
+          - entity: sensor.backup_phase_a_power
+          - entity: sensor.backup_phase_b_power
+          - entity: sensor.backup_phase_c_power
           - entity: sensor.grid_frequency
         title: Power
       - type: gauge
