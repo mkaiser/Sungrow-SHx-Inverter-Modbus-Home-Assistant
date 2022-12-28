@@ -322,7 +322,7 @@ modbus:
         address: 5722
         input_type: input
         count: 1
-        data_type: uint16
+        data_type: int16
         swap: word
         precision: 0
         unit_of_measurement: W
@@ -336,7 +336,7 @@ modbus:
         address: 5723
         input_type: input
         count: 1
-        data_type: uint16
+        data_type: int16
         swap: word
         precision: 0
         unit_of_measurement: W
@@ -350,7 +350,7 @@ modbus:
         address: 5724
         input_type: input
         count: 1
-        data_type: uint16
+        data_type: int16
         swap: word
         precision: 0
         unit_of_measurement: W
