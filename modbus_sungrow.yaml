@@ -317,6 +317,20 @@ modbus:
 #Phase A Backup Power: 5723 S16 W (Backup Leistung Phase A)
 #Phase B Backup Power: 5724 S16 W (Backup Leistung Phase B)
 #Phase C Backup Power: 5725 S16 W (Backup Leistung Phase C)
+      - name: Total backup power
+        slave: !secret sungrow_modbus_slave
+        address: 5725
+        input_type: input
+        count: 1
+        data_type: int16
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
       - name: Backup phase A power
         slave: !secret sungrow_modbus_slave
         address: 5722
