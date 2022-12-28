@@ -25,6 +25,7 @@ views:
           - entity: sensor.meter_phase_a_active_power
           - entity: sensor.meter_phase_b_active_power
           - entity: sensor.meter_phase_c_active_power
+          - entity: sensor.total_backup_power
           - entity: sensor.backup_phase_a_power
           - entity: sensor.backup_phase_b_power
           - entity: sensor.backup_phase_c_power
