@@ -5,13 +5,14 @@ views:
         entities:
           - entity: sensor.total_dc_power
           - entity: sensor.load_power
-          - entity: sensor.battery_power
           - entity: sensor.export_power
-          - entity: binary_sensor.pv_generating
-          - entity: binary_sensor.exporting_power
-          - entity: binary_sensor.importing_power
-          - entity: binary_sensor.battery_discharging
-          - entity: binary_sensor.battery_charging
+          - entity: sensor.import_power
+          - entity: sensor.battery_charging_power
+          - entity: sensor.battery_discharging_power
+        title: Power
+      - type: entities
+        entities:
+          - entity: sensor.load_power
           - entity: sensor.phase_a_voltage
           - entity: sensor.phase_a_current
           - entity: sensor.phase_a_power
@@ -22,7 +23,7 @@ views:
           - entity: sensor.phase_c_current
           - entity: sensor.phase_c_power
           - entity: sensor.grid_frequency
-        title: Power
+        title: Grid / Load
       - type: gauge
         entity: sensor.battery_level
         min: 0
@@ -117,4 +118,16 @@ views:
           - min
           - max
         title: Battery SoC last 180 days
+      - type: conditional
+        conditions:
+          - entity: binary_sensor.battery_charging
+            state: 'On'
+        card:
+          type: gauge
+          entity: sensor.battery_power
+          name: Battery Charge Power
+          unit: W
+          min: 0
+          max: 5000
+          needle: true
 title: PV Info

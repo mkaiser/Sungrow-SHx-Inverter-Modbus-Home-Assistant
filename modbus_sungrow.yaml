@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# 13th Dezember 2022 
+# 21th Dezember 2022 
 
 modbus:
   - name: SungrowSHx
@@ -15,6 +15,7 @@ modbus:
     #timeout: 5
     sensors:
       - name: Sungrow Device type code
+        unique_id: sg_dev_code
         slave: !secret sungrow_modbus_slave
         address: 4999 # 5000
         input_type: input
@@ -24,6 +25,7 @@ modbus:
         scan_interval: 600
 
       - name: Daily PV generation & battery discharge
+        unique_id: sg_daily_pv_gen_battery_discharge
         slave: !secret sungrow_modbus_slave
         address: 5002 # 5003
         input_type: input
@@ -38,6 +40,7 @@ modbus:
         scan_interval: 600
 
       - name: Total PV generation & battery discharge
+        unique_id: sg_total_pv_gen_battery_discharge
         slave: !secret sungrow_modbus_slave
         address: 5003
         input_type: input
@@ -345,6 +348,7 @@ modbus:
         scan_interval: 10
 
       - name: Export power
+        unique_id: sg_battery_export_power
         slave: !secret sungrow_modbus_slave
         address: 13009
         input_type: input
@@ -1047,6 +1051,45 @@ template:
         {% else %}
           Unknown - should not see me!
         {% endif %}
+
+
+    - name: "Battery Charging Power" # positive if charging and negative if discharging 
+      unique_id: sg_battery_charging_power
+      unit_of_measurement: W 
+      device_class: power 
+      state: > 
+        {% if is_state('binary_sensor.battery_charging', 'unavailable') or is_state('binary_sensor.battery_discharging', 'unavailable') or is_state('sensor.battery_power', 'unavailable') %}
+          unavailable
+        {% elif is_state('binary_sensor.battery_charging', 'on') %}
+          {{ (states('sensor.battery_power') | float * 1 | float) |int }} 
+        {% elif is_state('binary_sensor.battery_discharging', 'on') %} 
+          {{ (states('sensor.battery_power') | float * -1 | float) |int }} 
+        {% else %} 
+          {{ (states('sensor.battery_power') | float * 1 | float) |int }} 
+        {% endif %}
+
+    - name: "Battery Discharging Power" # positive if discharging and negative if charging 
+      unique_id: sg_battery_discharging_power
+      unit_of_measurement: W 
+      device_class: power 
+      state: > 
+        {% if is_state('binary_sensor.battery_charging', 'unavailable') or is_state('binary_sensor.battery_discharging', 'unavailable') or is_state('sensor.battery_power', 'unavailable') %}
+          unavailable
+        {% elif is_state('binary_sensor.battery_discharging', 'on') %}
+          {{ (states('sensor.battery_power') | float * 1 | float) |int }} 
+        {% elif is_state('binary_sensor.battery_charging', 'on') %} 
+          {{ (states('sensor.battery_power') | float * -1 | float) |int }} 
+        {% else %} 
+          {{ (states('sensor.battery_power') | float * 1 | float) |int }} 
+        {% endif %}
+
+    - name: "Import Power" # positive if importing and negative if exporting 
+      unique_id: sg_import_power
+      unit_of_measurement: W 
+      device_class: power 
+      state: > 
+         {{ (states('sensor.export_power') | float * -1 | float) |int }}
+
 
 
 # getting input for Min and Max SoC
