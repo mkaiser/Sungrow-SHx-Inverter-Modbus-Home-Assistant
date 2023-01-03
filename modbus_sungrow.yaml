@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# 21th Dezember 2022 
+# 3rd January 2023
 
 modbus:
   - name: SungrowSHx
@@ -190,7 +190,7 @@ modbus:
 
       - name: Reactive power
         slave: !secret sungrow_modbus_slave
-        address: 5032  
+        address: 5032
         input_type: input
         count: 2
         data_type: int32
@@ -214,6 +214,67 @@ modbus:
         device_class: power_factor
         state_class: measurement
         scale: 0.001
+        scan_interval: 10
+
+#https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?pageNo=13
+#Meter Active Power: 5601-5602 S32 W (Energiezähler Wirkleistung)
+#Meter Phase A Active Power: 5603-5604 S32 W (Stromzähler Phase A Wirkleistung)
+#Meter Phase B Active Power: 5605-5606 S32 W (Stromzähler Phase B Wirkleistung)
+#Meter Phase C Active Power: 5607-5608 S32 W (Stromzähler Phase C Wirkleistung)
+      - name: Meter active power
+        slave: !secret sungrow_modbus_slave
+        address: 5600
+        input_type: input
+        count: 2
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Meter phase A active power
+        slave: !secret sungrow_modbus_slave
+        address: 5602
+        input_type: input
+        count: 2
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Meter phase B active power
+        slave: !secret sungrow_modbus_slave
+        address: 5604
+        input_type: input
+        count: 2
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Meter phase C active power
+        slave: !secret sungrow_modbus_slave
+        address: 5606
+        input_type: input
+        count: 2
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
         scan_interval: 10
 
       - name: BDC rated power
@@ -254,6 +315,66 @@ modbus:
         device_class: Current
         scale: 1
         scan_interval: 60 
+
+#https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?pageNo=13
+#Phase A Backup Power: 5723 S16 W (Backup Leistung Phase A)
+#Phase B Backup Power: 5724 S16 W (Backup Leistung Phase B)
+#Phase C Backup Power: 5725 S16 W (Backup Leistung Phase C)
+      - name: Total backup power
+        slave: !secret sungrow_modbus_slave
+        address: 5725
+        input_type: input
+        count: 1
+        data_type: int16
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Backup phase A power
+        slave: !secret sungrow_modbus_slave
+        address: 5722
+        input_type: input
+        count: 1
+        data_type: int16
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Backup phase B power
+        slave: !secret sungrow_modbus_slave
+        address: 5723
+        input_type: input
+        count: 1
+        data_type: int16
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Backup phase C power
+        slave: !secret sungrow_modbus_slave
+        address: 5724
+        input_type: input
+        count: 1
+        data_type: int16
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
 
       - name: System state
         slave: !secret sungrow_modbus_slave
@@ -549,7 +670,6 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
-
       - name: Phase B Current
         slave: !secret sungrow_modbus_slave
         address: 13031  # reg 13032
@@ -564,7 +684,6 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
-
       - name: Phase C Current
         slave: !secret sungrow_modbus_slave
         address: 13032  # reg 13033
@@ -578,7 +697,6 @@ modbus:
         state_class: measurement
         scale: 0.1
         scan_interval: 10
-
 
       - name: Total active power
         slave: !secret sungrow_modbus_slave
@@ -695,7 +813,6 @@ modbus:
         scale: 0.1
         scan_interval: 600
 
-
       # holding registers
       - name: Inverter Start Stop
         slave: !secret sungrow_modbus_slave
@@ -809,7 +926,6 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
-
 #undocumented sensors (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Battery Max Charge Power
         slave: !secret sungrow_modbus_slave
@@ -891,7 +1007,6 @@ modbus:
 # h,33032,SOC_lower_limit,"","%",U16,,,0.1
 # h,33046,protection_value_of_battery_average_overvoltage,"","W",U16,,,10
 
-
 binary_sensor:
   - platform: template
     sensors:
@@ -910,8 +1025,6 @@ binary_sensor:
       importing_power:
         friendly_name: "Importing power"
         value_template: "{{ states('sensor.running_state')|int(default=0)|bitwise_and(0x20) > 0 }}"
-
-
 
 # 'virtual' template sensors for better readability
 template:
@@ -945,7 +1058,6 @@ template:
       device_class: power
       state: > 
         {{ (states('sensor.phase_c_voltage') | float * states('sensor.phase_c_current') | float) |int}}
-
 
     - name: "Sungrow Inverter State"
       state: >-
@@ -1052,7 +1164,6 @@ template:
           Unknown - should not see me!
         {% endif %}
 
-
     - name: "Battery Charging Power" # positive if charging and negative if discharging 
       unique_id: sg_battery_charging_power
       unit_of_measurement: W 
@@ -1089,8 +1200,6 @@ template:
       device_class: power 
       state: > 
          {{ (states('sensor.export_power') | float * -1 | float) |int }}
-
-
 
 # getting input for Min and Max SoC
 input_number:
@@ -1136,7 +1245,6 @@ input_number:
     max: 5000
     step: 50
 
-
 input_select:
   set_sg_start_stop_mode:
     name: Inverter mode
@@ -1162,7 +1270,6 @@ input_select:
       - "Forced charge"
       - "Forced discharge"
     icon: mdi:battery-unknown
-
 
 # Automations: Write modbus registers on input changes via GUI
 # note: If you change a value by the sliders, it will take up to 60 seconds until the state variables are updated
@@ -1223,7 +1330,6 @@ automation:
           hub: SungrowSHx
     mode: single
 
-
   - id: "12322468543545" # random number
     alias: "sungrow inverter update battery soc reserve"
     description: "Updates Sungrow battery Soc reserve register"
@@ -1240,8 +1346,6 @@ automation:
           value: "{{ states('input_number.set_sg_batt_soc_reserve') | int *10}}"
           hub: SungrowSHx
     mode: single
-
-
 
   - id: "24321413553543" # random number
     alias: "sungrow inverter update battery forced charge discharge cmd"
@@ -1328,7 +1432,6 @@ automation:
           value: "{{ states('input_number.set_sg_battery_max_charge_power') | int /10}}"
           hub: SungrowSHx
     mode: single
-
 
   - id: "24321203543522" # random number
     alias: "sungrow inverter update battery max discharge power"
