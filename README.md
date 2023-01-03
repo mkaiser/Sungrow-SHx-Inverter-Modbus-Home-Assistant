@@ -2,17 +2,18 @@
 Sungrow SH Integration for Home Assistant for SH3.6RS, SH4.6RS, SH5.0RS, SH5.0RT, SH6.0RS, SH8.0RT, SH6.0RT, SH10RT
 SH5K-20, SH3K6, SH4K6, SH5K-V13, SH5K-30
 
-Tested with my **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery**, **Home Assistant 2022.06 (current version)**.
+Tested with my **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery**, **Home Assistant 2022.12 (current version)**.
 
 Please let me know, if the integration works also with other Sungrow SHx models. 
 
 Community confirmed supported inverters (thanks for reporting!)
 - SH10RT (via home assistant community, brix29 Axel)
+- SH10RT-V112 (github, dzarth, ViktorReinhold)
 - SH5.0RT(home assistant community, ptC7H12 Paul)
 - SH8.0RT (github, lindehoff)
 - SH5K-30 (github, ajbatchelor)
 
-**NOTE: Multiple issues have been reported from users with single phase inverters (sungrows nomenclature is SH3.RS - single phase, vs. SH10.RT - tree phase). These inverters seem to only support a subset of the modbus registers.  Also there are issues with the WiNetS Adapter. Some users can use Modbus using WiNetS as ETH Port. For some users that won't work. If possible: ALWAYS use the native LAN port of your inerter (if existing!)**
+**NOTE: Multiple issues have been reported from users with single phase inverters (sungrows nomenclature is SH3.RS - single phase, vs. SH10.RT - three phase). These inverters seem to only support a subset of the modbus registers.  Also there are issues with the WiNetS Adapter. Some users can use Modbus using WiNetS as ETH Port. For some users that won't work. If possible: ALWAYS use the native LAN port of your inerter (if existing!)**
 
 
 The Modbus register mapping is based on two documents, the Sungrow support sent me by eMail. I am not sure, if I am allowed to share the files, but maybe you can successfully search for them...
