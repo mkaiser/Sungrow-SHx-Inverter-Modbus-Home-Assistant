@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# 3rd January 2023
+# 13rd January 2023
 
 modbus:
   - name: SungrowSHx
@@ -1032,32 +1032,49 @@ template:
     - name: "MPPT1 Power"
       unit_of_measurement: W
       device_class: power
-      state: > 
-        {{ (states('sensor.mppt1_voltage') | float * states('sensor.mppt1_current') | float) |int }}
+      state: >
+        {% if is_state('sensor.mppt1_voltage', 'unavailable') or is_state('sensor.mppt1_current', 'unavailable') %}
+        unavailable
+        {% else %} 
+        {{ (states('sensor.mppt1_voltage') | float * states('sensor.mppt1_current') | float) |int }} 
 
     - name: "MPPT2 Power"
       unit_of_measurement: W
       device_class: power
       state: > 
-        {{ (states('sensor.mppt2_voltage') | float * states('sensor.mppt2_current') | float) |int}}
+        {% if is_state('sensor.mppt2_voltage', 'unavailable') or is_state('sensor.mppt2_current', 'unavailable') %}
+        unavailable
+        {% else %} 
+        {{ (states('sensor.mppt2_voltage') | float * states('sensor.mppt2_current') | float) |int }} 
 
     - name: "Phase A Power"
       unit_of_measurement: W
       device_class: power
       state: > 
-        {{ (states('sensor.phase_a_voltage') | float * states('sensor.phase_a_current') | float) |int}}
+        {% if is_state('sensor.phase_a_voltage', 'unavailable') or is_state('sensor.phase_a_current', 'unavailable') %}
+        unavailable
+        {% else %} 
+        {{ (states('sensor.phase_a_voltage') | float * states('sensor.phase_a_current') | float) |int }} 
       
     - name: "Phase B Power"
       unit_of_measurement: W
       device_class: power
       state: > 
-        {{ (states('sensor.phase_b_voltage') | float * states('sensor.phase_b_current') | float) |int}}
+        {% if is_state('sensor.phase_b_voltage', 'unavailable') or is_state('sensor.phase_b_current', 'unavailable') %}
+        unavailable
+        {% else %} 
+        {{ (states('sensor.phase_b_voltage') | float * states('sensor.phase_b_current') | float) |int }} 
+
 
     - name: "Phase C Power"
       unit_of_measurement: W
       device_class: power
       state: > 
-        {{ (states('sensor.phase_c_voltage') | float * states('sensor.phase_c_current') | float) |int}}
+        {% if is_state('sensor.phase_c_voltage', 'unavailable') or is_state('sensor.phase_c_current', 'unavailable') %}
+        unavailable
+        {% else %} 
+        {{ (states('sensor.phase_c_voltage') | float * states('sensor.phase_c_current') | float) |int }} 
+
 
     - name: "Sungrow Inverter State"
       state: >-
@@ -1164,7 +1181,7 @@ template:
           Unknown - should not see me!
         {% endif %}
 
-    - name: "Battery Charging Power" # positive if charging and negative if discharging 
+    - name: "Battery Charging Power" # positive value if charging else zero
       unique_id: sg_battery_charging_power
       unit_of_measurement: W 
       device_class: power 
@@ -1176,10 +1193,10 @@ template:
         {% elif is_state('binary_sensor.battery_discharging', 'on') %} 
           {{ (states('sensor.battery_power') | float * -1 | float) |int }} 
         {% else %} 
-          {{ (states('sensor.battery_power') | float * 1 | float) |int }} 
+          {{ 0 |int }} 
         {% endif %}
 
-    - name: "Battery Discharging Power" # positive if discharging and negative if charging 
+    - name: "Battery Discharging Power" # positive value if discharging else zero 
       unique_id: sg_battery_discharging_power
       unit_of_measurement: W 
       device_class: power 
@@ -1191,7 +1208,7 @@ template:
         {% elif is_state('binary_sensor.battery_charging', 'on') %} 
           {{ (states('sensor.battery_power') | float * -1 | float) |int }} 
         {% else %} 
-          {{ (states('sensor.battery_power') | float * 1 | float) |int }} 
+          {{ 0 |int }} 
         {% endif %}
 
     - name: "Import Power" # positive if importing and negative if exporting 
