@@ -1037,6 +1037,7 @@ template:
         unavailable
         {% else %} 
         {{ (states('sensor.mppt1_voltage') | float * states('sensor.mppt1_current') | float) |int }} 
+        {% endif %}
 
     - name: "MPPT2 Power"
       unit_of_measurement: W
@@ -1046,6 +1047,7 @@ template:
         unavailable
         {% else %} 
         {{ (states('sensor.mppt2_voltage') | float * states('sensor.mppt2_current') | float) |int }} 
+        {% endif %}
 
     - name: "Phase A Power"
       unit_of_measurement: W
@@ -1055,7 +1057,8 @@ template:
         unavailable
         {% else %} 
         {{ (states('sensor.phase_a_voltage') | float * states('sensor.phase_a_current') | float) |int }} 
-      
+        {% endif %}
+
     - name: "Phase B Power"
       unit_of_measurement: W
       device_class: power
@@ -1064,7 +1067,7 @@ template:
         unavailable
         {% else %} 
         {{ (states('sensor.phase_b_voltage') | float * states('sensor.phase_b_current') | float) |int }} 
-
+        {% endif %}
 
     - name: "Phase C Power"
       unit_of_measurement: W
@@ -1074,7 +1077,7 @@ template:
         unavailable
         {% else %} 
         {{ (states('sensor.phase_c_voltage') | float * states('sensor.phase_c_current') | float) |int }} 
-
+        {% endif %}
 
     - name: "Sungrow Inverter State"
       state: >-
