@@ -1,6 +1,8 @@
 # Home Assistant Sungrow SHx integration
 Sungrow SH Integration for Home Assistant for SH3.6RS, SH4.6RS, SH5.0RS, SH5.0RT, SH6.0RS, SH8.0RT, SH6.0RT, SH10RT
-SH5K-20, SH3K6, SH4K6, SH5K-V13, SH5K-30
+SH5K-20, SH3K6, SH4K6, SH5K-V13, SH5K-30. 
+
+**A native LAN port of the inverter is required - the WiNet LAN is not working!**
 
 Tested with my **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery**, **Home Assistant 2022.12 (current version)**.
 
