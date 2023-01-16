@@ -2,17 +2,17 @@
 Sungrow SH Integration for Home Assistant for SH3.6RS, SH4.6RS, SH5.0RS, SH5.0RT, SH6.0RS, SH8.0RT, SH6.0RT, SH10RT
 SH5K-20, SH3K6, SH4K6, SH5K-V13, SH5K-30. 
 
-**A native LAN port of the inverter is required - the WiNet LAN is not working!**
+**A native LAN port of the inverter is required - the WiNet LAN is not fully working! **
 
 Tested with my **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery**, **Home Assistant 2022.12 (current version)**.
 
 **Very important note - topmost known issue** 
 
-Recent sungrow invertes come with the WiNet port, a Dongle for WLAN access. Altough the dongle has an Ethernet port, modbus is not working with this port. 
+Recent sungrow invertes come with the WiNet port, a Dongle for WLAN access / LAN interconnection. Altough the dongle has an Ethernet port, modbus is not working properly with this port. Some modbus registers are working, some not. 
 
 **ALWAYS USE THE inverter's LAN port, NOT the WiNet port!**
 
-Most of the issues related to unstable modbus connections or erronoeous values (e.g., grid frequency has divisor 0.01 and not 0.1 as documented) are caused by using the WiNet port. Apparently Sungrow is working on this, but at the moment (January 2023), the WiNet modbus is not usable. 
+Most of the issues related to unstable modbus connections or erronoeous values (e.g., grid frequency has divisor 0.01 and not 0.1 as documented) are caused by using the WiNet port. Apparently Sungrow is working on this, but at the moment (January 2023), the WiNet modbus is not fully usable. Unfortunately, there is no way to circumvent this issues. If you have one ETH port at your inverter, the integration should work. Otherwise, it won't work or you have to live with some limitations (depending on the hard- and firmware configurations)
 
 
 
