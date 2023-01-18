@@ -1,0 +1,11 @@
+type: custom:power-flow-card
+kw_decimals: 2
+entities:
+  grid:
+    consumption: sensor.import_power
+    production: sensor.export_power
+  battery:
+    consumption: sensor.battery_discharging_power
+    production: sensor.battery_charging_power
+  battery_charge: sensor.battery_level
+  solar: sensor.total_dc_power

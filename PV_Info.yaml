@@ -3,9 +3,9 @@ views:
     cards:
       - type: entities
         entities:
-          - entity: sensor.load_power
-          - entity: sensor.meter_active_power
           - entity: sensor.total_dc_power
+          - entity: sensor.meter_active_power
+          - entity: sensor.load_power
           - entity: sensor.export_power
           - entity: sensor.import_power
           - entity: sensor.battery_charging_power
