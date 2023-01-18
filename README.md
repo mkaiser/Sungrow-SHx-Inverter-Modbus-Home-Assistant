@@ -8,7 +8,7 @@ Tested with my **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery**
 **Using the native LAN port of the inverter is highly recommended - the WiNet Ethernet port is not fully working!**
 Recent sungrow invertes come with WiNet S, a Dongle for WLAN access / LAN interconnection. Altough the dongle has an Ethernet port, modbus is not working properly with this port. Some modbus registers are working, some not. It seems like Sungrow is actively working on that, so maybe in the near future they will relase firmware upgrades to improve the modbus via WiNet S support. 
 
-**NOTE: Multiple issues have been reported from users with single phase inverters (sungrows nomenclature is SH3.RS - single phase, vs. SH10.RT - three phase). These inverters seem to only support a subset of the modbus registers.  Also there are issues with the WiNetS Adapter. Some users can use Modbus using WiNetS as ETH Port. For some users that won't work. If possible: ALWAYS use the native LAN port of your inerter (if existing!)**
+NOTE: Multiple issues have been reported from users with single phase inverters (sungrows nomenclature is SH3.RS - single phase, vs. SH10.RT - three phase). These inverters seem to only support a subset of the modbus registers (although the users reported using the inverter's built-in LAN port.
 
 
 The Modbus register mapping is based on two documents, the Sungrow support sent me by eMail. I am not sure, if I am allowed to share the files, but you can search for them using their names 
@@ -75,6 +75,8 @@ After the restart, some new sensors should be available. E.g., check for "Total 
 ## [Optional] HACS Power Flow Card
 1. Install Frontend "Power Flow Card" from HACS (instructions: https://github.com/ulic75/power-flow-card)
 2. Copy the content of *powerFlow.yaml* to a dashboard. It should look like this:
+![image](https://user-images.githubusercontent.com/29856783/213137105-e1443dce-be7e-46dc-939b-168a0dfbdfae.png)
+
 
 ##  Configure the HomeAssistant energy dashboard 
 ![image](https://user-images.githubusercontent.com/29856783/148981502-823778d7-ebd3-4101-8060-48e0619cee4c.png)
