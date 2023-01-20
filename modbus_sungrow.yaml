@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-01-18
+# last update: 2023-01-20
 
 modbus:
   - name: SungrowSHx
@@ -498,6 +498,7 @@ modbus:
         scale: 1
         scan_interval: 10
 
+      # this value returns a positive value when exporting and a negative value when importing power
       - name: Export power raw
         unique_id: sg_battery_export_power_raw
         slave: !secret sungrow_modbus_slave
@@ -601,6 +602,7 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
+      # this value represents a postitive value for charging and a negative value for discharging
       - name: Battery power
         unique_id: sg_battery_power
         slave: !secret sungrow_modbus_slave
@@ -788,12 +790,13 @@ modbus:
         scale: 0.1
         scan_interval: 600
 
-      # # works only for SH5K-20, SH3K6, SH4K6, SH5K-V13, SH5K-30, SH3K6-30, SH4K6-30
-      # # for Li-Ion in kWh
-      # # for Acid in Ah
+      # works only for SH5K-20, SH3K6, SH4K6, SH5K-V13, SH5K-30, SH3K6-30, SH4K6-30
+      # not on my SH10.RT
+      # for Li-Ion in kWh
+      # for Acid in Ah
       # - name: Battery capacity 13038
       #   slave: !secret sungrow_modbus_slave
-      #   address: 13038  #13039
+      #   address: 13038 #13039
       #   input_type: input
       #   count: 1
       #   data_type: uint16
@@ -1293,7 +1296,7 @@ template:
         state: >-
           {% if is_state('sensor.export_power_raw', 'unavailable') %}
           unavailable
-          {% elif states('sensor.export_power_raw') | float < 0 %}
+          {% elif is_state('binary_sensor.importing_power', 'on') %}
           {{ states('sensor.export_power_raw') |int * -1}}
           {% else %}
           0
@@ -1307,7 +1310,7 @@ template:
         state: >-
           {% if is_state('sensor.export_power_raw', 'unavailable') %}
           unavailable
-          {% elif states('sensor.export_power_raw') | float > 0 %}
+          {% elif is_state('binary_sensor.exporting_power', 'on') %}
           {{ states('sensor.export_power_raw') }}
           {% else %}
           0
