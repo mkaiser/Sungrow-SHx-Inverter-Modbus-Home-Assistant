@@ -602,7 +602,8 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
-      # this value represents a postitive value for charging and a negative value for discharging
+      # always positive battery power
+      # use binary_sensor.battery_charging | discharging to retrieve the direction of the energy flow 
       - name: Battery power
         unique_id: sg_battery_power
         slave: !secret sungrow_modbus_slave
@@ -1269,7 +1270,7 @@ template:
         state: >-
           {% if is_state('sensor.battery_power', 'unavailable') %}
           unavailable
-          {% elif states('sensor.battery_power') |float > 0 %}
+          {% elif is_state('binary_sensor.battery_charging', 'on') %}
           {{ states('sensor.battery_power') }}
           {% else %}
           0
@@ -1282,8 +1283,8 @@ template:
         state: >-
           {% if is_state('sensor.battery_power', 'unavailable') %}
           unavailable
-          {% elif states('sensor.battery_power') |float < 0 %}
-          {{ states('sensor.battery_power') |int * -1}}
+          {% elif is_state('binary_sensor.battery_discharging', 'on') %}
+          {{ states('sensor.battery_power') }}
           {% else %}
           0
           {% endif %}
