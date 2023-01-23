@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-01-20
+# last update: 2023-01-23
 
 modbus:
   - name: SungrowSHx
@@ -603,9 +603,9 @@ modbus:
         scan_interval: 10
 
       # always positive battery power
-      # use binary_sensor.battery_charging | discharging to retrieve the direction of the energy flow 
-      - name: Battery power
-        unique_id: sg_battery_power
+      # use binary_sensor.battery_charging | discharging to retrieve the direction of the energy flow
+      - name: Battery power raw
+        unique_id: sg_battery_power_raw
         slave: !secret sungrow_modbus_slave
         address: 13021 # reg 13022
         input_type: input
@@ -986,7 +986,7 @@ modbus:
         unit_of_measurement: "%"
         device_class: battery
         state_class: measurement
-        scale: 0.1
+        scale: 1
         scan_interval: 10
 
       #undocumented sensors (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
@@ -1075,27 +1075,34 @@ modbus:
 # h,33032,SOC_lower_limit,"","%",U16,,,0.1
 # h,33046,protection_value_of_battery_average_overvoltage,"","W",U16,,,10
 
-binary_sensor:
-  - platform: template
-    sensors:
-      pv_generating:
-        friendly_name: "PV generating"
-        value_template: "{{ states('sensor.running_state')|int(default=0)|bitwise_and(0x1) > 0 }}"
-      battery_charging:
-        friendly_name: "Battery charging"
-        value_template: "{{ states('sensor.running_state')|int(default=0)|bitwise_and(0x2) > 0 }}"
-      battery_discharging:
-        friendly_name: "Battery discharging"
-        value_template: "{{ states('sensor.running_state')|int(default=0)|bitwise_and(0x4) > 0 }}"
-      exporting_power:
-        friendly_name: "Exporting power"
-        value_template: "{{ states('sensor.running_state')|int(default=0)|bitwise_and(0x10) > 0 }}"
-      importing_power:
-        friendly_name: "Importing power"
-        value_template: "{{ states('sensor.running_state')|int(default=0)|bitwise_and(0x20) > 0 }}"
-
 # 'virtual' template sensors for better readability
 template:
+  - binary_sensor:
+      - name: "PV generating"
+        unique_id: "sg_pv_generating"
+        state: >
+          {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x1) > 0 }}
+
+      - name: "Battery charging"
+        unique_id: "sg_battery_charging"
+        state: >
+          {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x2) > 0 }}
+
+      - name: "Battery discharging"
+        unique_id: "sg_battery_discharging"
+        state: >
+          {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x4) > 0 }}
+
+      - name: "Exporting power"
+        unique_id: "sg_exporting_power"
+        state: >
+          "{{ states('sensor.running_state')|int(default=0)|bitwise_and(0x10) > 0 }}
+
+      - name: "Importing power"
+        unique_id: "sg_importing_power"
+        state: >
+          {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x20) > 0 }}
+
   - sensor:
       - name: "MPPT1 power"
         unique_id: sg_mppt1_power
@@ -1268,10 +1275,10 @@ template:
         unit_of_measurement: W
         device_class: power
         state: >-
-          {% if is_state('sensor.battery_power', 'unavailable') %}
+          {% if is_state('sensor.battery_power_raw', 'unavailable') %}
           unavailable
           {% elif is_state('binary_sensor.battery_charging', 'on') %}
-          {{ states('sensor.battery_power') }}
+          {{ states('sensor.battery_power_raw') }}
           {% else %}
           0
           {% endif %}
@@ -1281,10 +1288,10 @@ template:
         unit_of_measurement: W
         device_class: power
         state: >-
-          {% if is_state('sensor.battery_power', 'unavailable') %}
+          {% if is_state('sensor.battery_power_raw', 'unavailable') %}
           unavailable
           {% elif is_state('binary_sensor.battery_discharging', 'on') %}
-          {{ states('sensor.battery_power') }}
+          {{ states('sensor.battery_power_raw') }}
           {% else %}
           0
           {% endif %}
@@ -1464,7 +1471,7 @@ automation:
           hub: SungrowSHx
           slave: !secret sungrow_modbus_slave
           address: 13099 # reg 13100
-          value: "{{ states('input_number.set_sg_batt_soc_reserve') | int *10}}"
+          value: "{{ states('input_number.set_sg_batt_soc_reserve') | int}}"
     mode: single
 
   - id: "24321413553543" # random number
