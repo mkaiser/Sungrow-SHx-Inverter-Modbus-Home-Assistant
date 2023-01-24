@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-01-23
+# last update: 2023-01-24
 
 modbus:
   - name: SungrowSHx
@@ -975,8 +975,8 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
-      - name: Battery SoC reserve
-        unique_id: sg_battery_soc_reserve
+      - name: Reserved SoC for backup
+        unique_id: sg_reserved_soc_for_backup
         slave: !secret sungrow_modbus_slave
         address: 13099 # reg 13100
         input_type: holding
@@ -1238,7 +1238,6 @@ template:
       # 0xAA forced charge
       # 0xBB forced discharge
       # 0xCC Stop (Default)
-      # TODO use variables here
       - name: "Battery forced charge discharge cmd"
         unique_id: sg_battery_forced_charge_discharge_cmd
         state: >-
@@ -1340,8 +1339,8 @@ input_number:
     max: 95
     step: 1
 
-  set_sg_batt_soc_reserve:
-    name: Set battery SoC reserve
+  set_sg_reserved_soc_for_backup:
+    name: Set reserved SoC for backup
     #initial: 15
     min: 0
     max: 75
@@ -1381,9 +1380,10 @@ input_select:
     options:
       - "Self-consumption mode (default)"
       - "Forced mode"
-      - "External EMS"
-      - "VPP"
-      - "MicroGrid"
+    # these are commented, because they are rarely used
+    #      - "External EMS"
+    #      - "VPP"
+    #      - "MicroGrid"
     icon: mdi:battery-unknown
 
   set_sg_battery_forced_charge_discharge_cmd:
@@ -1398,7 +1398,7 @@ input_select:
 # note: If you change a value by the sliders, it will take up to 60 seconds until the state variables are updated
 # Unfortunately, I could not find a way to "force update" modbus registers, yet...
 automation:
-  - id: "24334413543545" # random number
+  - id: "automation_sungrow_inverter_start_stop"
     alias: "sungrow inverter start stop"
     description: "Starts/ Stops the inverter"
     trigger:
@@ -1423,7 +1423,7 @@ automation:
             {% endif %}
     mode: single
 
-  - id: "24321413543543" # random number
+  - id: "automation_sungrow_inverter_update_max_soc"
     alias: "sungrow inverter update max SoC"
     description: "Updates Sungrow max Soc holding register"
     trigger:
@@ -1440,7 +1440,7 @@ automation:
           value: "{{ states('input_number.set_sg_max_soc') | int *10}}"
     mode: single
 
-  - id: "24321413543545" # random number
+  - id: "automation_sungrow_inverter_update_min_soc"
     alias: "sungrow inverter update min SoC"
     description: "Updates Sungrow min Soc holding register"
     trigger:
@@ -1457,13 +1457,13 @@ automation:
           value: "{{ states('input_number.set_sg_min_soc') | int *10}}"
     mode: single
 
-  - id: "12322468543545" # random number
-    alias: "sungrow inverter update battery soc reserve"
-    description: "Updates Sungrow battery Soc reserve register"
+  - id: "automation_sungrow_inverter_update_reserved_soc_for_backup"
+    alias: "sungrow inverter update reserved soc for backup"
+    description: "Updates reserved SoC for backup register"
     trigger:
       - platform: state
         entity_id:
-          - input_number.set_sg_batt_soc_reserve
+          - input_number.set_sg_reserved_soc_for_backup
     condition: []
     action:
       - service: modbus.write_register
@@ -1471,10 +1471,10 @@ automation:
           hub: SungrowSHx
           slave: !secret sungrow_modbus_slave
           address: 13099 # reg 13100
-          value: "{{ states('input_number.set_sg_batt_soc_reserve') | int}}"
+          value: "{{ states('input_number.set_sg_reserved_soc_for_backup') | int}}"
     mode: single
 
-  - id: "24321413553543" # random number
+  - id: "automation_sungrow_inverter_update_battery_forced_charge_discharge_cmd"
     alias: "sungrow inverter update battery forced charge discharge cmd"
     description: "Updates Sungrow holding register for battery forced charge discharge command"
     trigger:
@@ -1501,7 +1501,7 @@ automation:
             {% endif %}
     mode: single
 
-  - id: "24323313553543" # random number
+  - id: "automation_sungrow_inverter_update_ems_mode"
     alias: "sungrow inverter update EMS mode"
     description: "Updates EMS mode"
     trigger:
@@ -1532,7 +1532,7 @@ automation:
             {% endif %}
     mode: single
 
-  - id: "24321413543521" # random number
+  - id: "automation_sungrow_inverter_update_battery_forced_charge_discharge_power"
     alias: "sungrow inverter update battery forced charge discharge power"
     description: "Sets battery forced charge discharge power"
     trigger:
@@ -1549,7 +1549,7 @@ automation:
           value: "{{ states('input_number.set_sg_forced_charge_discharge_power') | int}}"
     mode: single
 
-  - id: "24321213543520" # random number
+  - id: "automation_sungrow_inverter_update_battery_max_charge_power"
     alias: "sungrow inverter update battery max charge power"
     description: "Sets battery max charge power"
     trigger:
@@ -1566,7 +1566,7 @@ automation:
           value: "{{ states('input_number.set_sg_battery_max_charge_power') | int /10}}"
     mode: single
 
-  - id: "24321203543522" # random number
+  - id: "automation_sungrow_inverter_update_battery_max_discharge_power"
     alias: "sungrow inverter update battery max discharge power"
     description: "Sets battery max discharge power"
     trigger:
