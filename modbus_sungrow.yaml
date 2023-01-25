@@ -483,6 +483,36 @@ modbus:
         scale: 1
         scan_interval: 600
         
+      - name: Monthly direct energy consumption
+        unique_id: sg_monthly_direct_energy_consumption
+        slave: !secret sungrow_modbus_slave
+        address: 6418
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 1
+        scan_interval: 600
+        
+      - name: Yearly direct energy consumption
+        unique_id: sg_yearly_direct_energy_consumption
+        slave: !secret sungrow_modbus_slave
+        address: 6430
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 1
+        scan_interval: 600
+        
       - name: Yearly export energy from PV
         unique_id: sg_yearly_export_energy_from_pv
         slave: !secret sungrow_modbus_slave
