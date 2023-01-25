@@ -9,10 +9,10 @@ modbus:
     host: !secret sungrow_modbus_host_ip
     port: !secret sungrow_modbus_port
     retry_on_empty: true
-    # retries: 10
-    # close_comm_on_error: true
+    retries: 10
+    close_comm_on_error: true
     delay: 5
-    #timeout: 5
+    # timeout: 5
     sensors:
       - name: Sungrow device type code
         unique_id: sg_dev_code
@@ -1358,18 +1358,7 @@ template:
           {% else %}
             Unknown - should not see me!
           {% endif %}
-          
-      - name: "Daily Compensation"
-        unit_of_measurement: €
-        device_class: energy
-        state: >
-          {{ states('sensor.daily_exported_energy') | float * states('input_number.set_sg_feedin_compensation_per_kwh') | float}}
-
-      - name: "Daily energy cost"
-        unit_of_measurement: €
-        device_class: energy
-        state: >
-          {{ states('sensor.daily_imported_energy') | float * states('input_number.set_sg_energy_cost_per_kwh') | float}}
+         
       
       - name: "Signed Battery Power" # positive if charging and negative if discharging
         unique_id: sg_signed_battery_power
@@ -1453,17 +1442,6 @@ input_number:
     max: 50
     step: 1
   
-  set_sg_energy_cost_per_kwh:
-    name: Set energy cost per kWh
-    min: 0
-    max: 1
-    step: 0.001
-  
-  set_sg_feedin_compensation_per_kwh:
-    name: Set feedin compensation per kWh
-    min: 0
-    max: 1
-    step: 0.001
 
   set_sg_max_soc:
     name: Set max SoC
