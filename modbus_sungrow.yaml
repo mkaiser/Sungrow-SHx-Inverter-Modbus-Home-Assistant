@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-01-24
+# last update: 2023-01-26
 
 modbus:
   - name: SungrowSHx
@@ -9,10 +9,10 @@ modbus:
     host: !secret sungrow_modbus_host_ip
     port: !secret sungrow_modbus_port
     retry_on_empty: true
-    # retries: 10
-    # close_comm_on_error: true
+    retries: 10
+    close_comm_on_error: true
     delay: 5
-    #timeout: 5
+    # timeout: 5
     sensors:
       - name: Sungrow device type code
         unique_id: sg_dev_code
@@ -434,8 +434,98 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: measurement
+        state_class: total_increasing
         scale: 0.1
+        scan_interval: 600
+       
+      - name: Monthly PV energy yields
+        unique_id: sg_monthly_pv_energy_yields
+        slave: !secret sungrow_modbus_slave
+        address: 6228
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 1
+        scan_interval: 600
+        
+      - name: Yearly PV energy yields
+        unique_id: sg_yearly_pv_energy_yields
+        slave: !secret sungrow_modbus_slave
+        address: 6250
+        input_type: input
+        count: 1
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 1
+        scan_interval: 600
+        
+      - name: Monthly export energy from PV
+        unique_id: sg_monthly_export_energy_from_pv
+        slave: !secret sungrow_modbus_slave
+        address: 6596
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 1
+        scan_interval: 600
+        
+      - name: Monthly direct energy consumption
+        unique_id: sg_monthly_direct_energy_consumption
+        slave: !secret sungrow_modbus_slave
+        address: 6418
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 1
+        scan_interval: 600
+        
+      - name: Yearly direct energy consumption
+        unique_id: sg_yearly_direct_energy_consumption
+        slave: !secret sungrow_modbus_slave
+        address: 6430
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 1
+        scan_interval: 600
+        
+      - name: Yearly export energy from PV
+        unique_id: sg_yearly_export_energy_from_pv
+        slave: !secret sungrow_modbus_slave
+        address: 6608
+        input_type: input
+        count: 1
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 1
         scan_interval: 600
 
       - name: Total PV generation
@@ -449,7 +539,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -464,7 +554,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: measurement
+        state_class: total_increasing
         scale: 0.1
         scan_interval: 600
 
@@ -479,7 +569,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -525,7 +615,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: measurement
+        state_class: total_increasing
         scale: 0.1
         scan_interval: 600
 
@@ -555,7 +645,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: measurement
+        state_class: total_increasing
         scale: 0.1
         scan_interval: 600
 
@@ -672,7 +762,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: measurement
+        state_class: total_increasing
         scale: 0.1
         scan_interval: 600
 
@@ -772,7 +862,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: measurement
+        state_class: total_increasing
         scale: 0.1
         scan_interval: 600
 
@@ -820,7 +910,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: measurement
+        state_class: total_increasing
         scale: 0.1
         scan_interval: 600
 
@@ -850,7 +940,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: measurement
+        state_class: total_increasing
         scale: 0.1
         scan_interval: 600
 
@@ -1268,6 +1358,22 @@ template:
           {% else %}
             Unknown - should not see me!
           {% endif %}
+         
+      
+      - name: "Signed battery power" # positive if charging and negative if discharging
+        unique_id: sg_signed_battery_power
+        unit_of_measurement: W
+        device_class: power
+        state: >
+          {% if is_state('binary_sensor.battery_charging', 'unavailable') or is_state('binary_sensor.battery_discharging', 'unavailable') or is_state('sensor.battery_power_raw', 'unavailable') %}
+            unavailable
+          {% elif is_state('binary_sensor.battery_charging', 'on') %}
+            {{ (states('sensor.battery_power_raw') | float)}} 
+          {% elif is_state('binary_sensor.battery_discharging', 'on') %} 
+            {{ (states('sensor.battery_power_raw') | float * -1)}} 
+          {% else %} 
+            0 
+          {% endif %}
 
       - name: "Battery charging power" # positive if charging else zero
         unique_id: sg_battery_charging_power
@@ -1331,6 +1437,7 @@ input_number:
     min: 5
     max: 50
     step: 1
+  
 
   set_sg_max_soc:
     name: Set max SoC
