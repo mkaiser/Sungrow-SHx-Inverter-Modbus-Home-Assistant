@@ -74,7 +74,8 @@ views:
         title: PV Gen
       - type: entities
         entities:
-          - entity: sensor.battery_power
+          - entity: sensor.battery_charging_power
+          - entity: sensor.battery_discharging_power
           - entity: sensor.battery_voltage
           - entity: sensor.battery_current
           - entity: sensor.battery_level
@@ -133,7 +134,7 @@ views:
             state: 'On'
         card:
           type: gauge
-          entity: sensor.battery_power
+          entity: sensor.battery_power_raw
           name: Battery Charge Power
           unit: W
           min: 0
@@ -166,6 +167,4 @@ views:
         title: EMS
         state_color: false
         show_header_toggle: true
-
 title: PV System
-
