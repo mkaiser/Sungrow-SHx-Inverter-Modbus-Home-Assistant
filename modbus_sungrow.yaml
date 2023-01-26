@@ -1360,7 +1360,7 @@ template:
           {% endif %}
          
       
-      - name: "Signed Battery Power" # positive if charging and negative if discharging
+      - name: "Signed battery power" # positive if charging and negative if discharging
         unique_id: sg_signed_battery_power
         unit_of_measurement: W
         device_class: power
@@ -1368,15 +1368,11 @@ template:
           {% if is_state('binary_sensor.battery_charging', 'unavailable') or is_state('binary_sensor.battery_discharging', 'unavailable') or is_state('sensor.battery_power_raw', 'unavailable') %}
             unavailable
           {% elif is_state('binary_sensor.battery_charging', 'on') %}
-            {{ (states('sensor.battery_power_raw') | float * 1 | float) |int }} 
+            {{ (states('sensor.battery_power_raw') | float)}} 
           {% elif is_state('binary_sensor.battery_discharging', 'on') %} 
-            {{ (states('sensor.battery_power_raw') | float * -1 | float) |int }} 
+            {{ (states('sensor.battery_power_raw') | float * -1)}} 
           {% else %} 
-            {{ (states('sensor.battery_power_raw') | float * 1 | float) |int }} 
-          {% endif %}
-            {{ (states('sensor.battery_power_raw') | float * 1 | float) |int }} 
-          {% endif %}
-            {{ (states('sensor.battery_power_raw') | float * 1 | float) |int }} 
+            0 
           {% endif %}
 
       - name: "Battery charging power" # positive if charging else zero
