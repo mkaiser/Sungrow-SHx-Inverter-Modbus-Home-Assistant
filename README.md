@@ -8,7 +8,7 @@ Tested with my **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery**
 **Using the native LAN port of the inverter is highly recommended - the WiNet Ethernet port is not fully working!**
 Recent sungrow invertes come with WiNet S, a Dongle for WLAN access / LAN interconnection. Altough the dongle has an Ethernet port, modbus is not working properly with this port. Some modbus registers are working, some not. It seems like Sungrow is actively working on that, so maybe in the near future they will relase firmware upgrades to improve the modbus via WiNet S support. 
 
-NOTE: Multiple issues have been reported from users with single phase inverters (sungrows nomenclature is SH3.RS - single phase, vs. SH10.RT - three phase). These inverters seem to only support a subset of the modbus registers (although the users reported using the inverter's built-in LAN port.
+NOTE: Multiple issues have been reported from users with single phase inverters (sungrows nomenclature is SH3.RS - single phase, vs. SH10.RT - three phase). These inverters seem to only support a subset of the modbus registers (although the users reported using the inverter's built-in LAN port.)
 
 
 The Modbus register mapping is based on two documents, the Sungrow support sent me by eMail. I am not sure, if I am allowed to share the files, but you can search for them using their names 
@@ -18,22 +18,31 @@ The Modbus register mapping is based on two documents, the Sungrow support sent 
 
 Please let me know, if the integration works also with other Sungrow SHx models. 
 
-Community confirmed supported inverters (thanks for reporting!)
+Community confirmed supported inverters (thank you for reporting!)
 - SH10RT (via home assistant community, brix29 Axel)
 - SH10RT-V112 (github, dzarth, ViktorReinhold)
 - SH5.0RT(home assistant community, ptC7H12 Paul)
 - SH8.0RT (github, lindehoff)
 - SH5K-30 (github, ajbatchelor)
 
+partially working
+- SH5.RS (home assistant community, Danirb80) via WiNetS: register running_state is not available. We are working on workarounds...
+
+
 ## Dashboards
 
-Display the status of the inverter:
+dashboard.yaml provides a premade setup for quick integration and as a basis for more customization.  
+1) Quick Overview 
+![image](https://user-images.githubusercontent.com/29856783/215203711-024bf3d6-ed33-4877-b39b-aa5c296703cc.png)
 
-![image](https://user-images.githubusercontent.com/29856783/191961543-fbf9fa73-018f-4724-87cb-4e5d8261b43b.png)
 
-Control the EMS (Energy Management System):
+2) Detailed Info
+![image](https://user-images.githubusercontent.com/29856783/215203959-6213981b-3ca0-41e8-a10d-5235284a1002.png)
 
-![image](https://user-images.githubusercontent.com/29856783/191961272-c030dd4d-3d62-434a-8306-3838e8c6fe37.png)
+
+3) Basic EMS Control 
+![image](https://user-images.githubusercontent.com/29856783/215204039-4c36782c-df91-4673-921a-bf50f86f1b50.png)
+
 
 # Usage / Configuration
 
@@ -55,26 +64,26 @@ The yaml-based integration file needs 3 parameters as input. Copy the following 
     sungrow_modbus_slave: 1 #TODO update with the slave address of your inverter. Default is '1'
 
 ##  Modbus register mapping
-The file **modbus_sungrow.yaml** contains the Modbus register maps and automations to set values. Copy the file to a subfolder named "integrations" (maybe create it first), which is located at the same level of your "configurations.yaml" (see screenshot). 
+The file **modbus_sungrow.yaml** contains the Modbus register maps, template sensors and automations to set values like the battery minimum SoC. Copy the file to a subfolder named "integrations" (maybe create it first), which is located at the same level of your "configurations.yaml" (see screenshot). 
 
 Include "modbus_sungrow.yaml" by adding follwing lines to your "configuration.yaml":
 
     homeassistant:
       packages: !include_dir_named integrations
     
-Do not forget to check your configuration (Developer Tools --> hit "check configuration" and restart (it won't work without a restart!)
+Do not forget to check your configuration (Developer Tools --> hit "check configuration" and restart: it won't work without a restart!)
 
 After the restart, some new sensors should be available. E.g., check for "Total DC power"
 
 
-##  Add a nice "Energy Dashboard" like shown above
-1. Create a new dashboard "PV Info"
-2. Copy the content of *PV_Info.yaml* from the repo and paste it in the new dashboard using the "raw configuration editor" (top right, the 3 dots). Ensure that the spacing keeps intact.
-3. Repeat this with *PV_Control.yaml* for a dashboard allowing to set EMS (Energy Management System) parameters.
+##  Add a nice Dashboard like shown above
+1. Create a new dashboard, e.g. called "PV"
+2. Copy the content of *dashboard.yaml* from the repo and paste it in the new dashboard using the "raw configuration editor" (top right, the 3 dots). Ensure that the spacing keeps intact.
 
 ## [Optional] HACS Power Flow Card
+I personnally like this card very much, but it won't run ouf of the box with standard home assistant. You need to manually install it: 
 1. Install Frontend "Power Flow Card" from HACS (instructions: https://github.com/ulic75/power-flow-card)
-2. Copy the content of *powerFlow.yaml* to a dashboard. It should look like this:
+2. Copy the content of *powerFlow.yaml* to an arbitrary dashboard. It should look like this:
 ![image](https://user-images.githubusercontent.com/29856783/213137105-e1443dce-be7e-46dc-939b-168a0dfbdfae.png)
 
 
@@ -88,9 +97,27 @@ Open the Energy settings ("Configuration" --> "Energy") and adapt the highlighte
 Note, that only the energy values in kWh are shown in this dashboard and not the current power dissipation (in W).
 
 
+## Controlling the  EMS (Energy Management System)
+You can set EMS parameters in the third (from left) tab of the preconfigured dashboard. 
+
+Example to force-charge the battery:
+1. Change the "EMS mode" from "Self-consumption mode" to "Forced mode"
+2. Select "Force charge" as the input of the "Battery forced charge discharge cmd"
+3. Limit the energy loaded by setting "max Soc" (percentage of battery)
+4. You can control the charge discharge power by 3 paramters:
+- Limit the forced charge discharge power using "Set forced charge discharge power".
+- Limit the maximum battery charge power using "set max battery charge power". This value also limits the "force charge discharge power".
+- Limit the maximum battery discharge power using "set max battery discharge power". This value also limits the "force charge discharge power".
+
+Please note that changes on the input sliders may take up to 60 seconds until they have an effect on the "battery status" entities in the GUI. 
+
 
 # Status and future work 
 1. I included the registers, which seem to be common between a wide range of Sungrow inverter models . There are many more registers in the Sungrow documents, which I deliberately left out.
 2. Some stuff is not working (e.g. getting the battery capacity). I appreciate help here :)
-3. This is meant to be a very simple YAML-based integration. If you need more than this I recommend having a look at the SunGather project: https://github.com/bohdan-s
+3. See #38 for planned stuff
+4. If you made a nice visualization - let us know! 
+5. This is meant to be a very simple YAML-based integration. If you need more than this I recommend having a look at the SunGather project: https://github.com/bohdan-s
+
+I am happy to share my experience with you - feel encouraged to share yours with us, too! Open issues if you have any questions :)
 
