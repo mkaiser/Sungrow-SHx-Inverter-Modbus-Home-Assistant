@@ -437,7 +437,7 @@ modbus:
         state_class: total_increasing
         scale: 0.1
         scan_interval: 600
-       
+
       - name: Monthly PV energy yields
         unique_id: sg_monthly_pv_energy_yields
         slave: !secret sungrow_modbus_slave
@@ -452,7 +452,7 @@ modbus:
         state_class: total_increasing
         scale: 1
         scan_interval: 600
-        
+
       - name: Yearly PV energy yields
         unique_id: sg_yearly_pv_energy_yields
         slave: !secret sungrow_modbus_slave
@@ -467,7 +467,7 @@ modbus:
         state_class: total_increasing
         scale: 1
         scan_interval: 600
-        
+
       - name: Monthly export energy from PV
         unique_id: sg_monthly_export_energy_from_pv
         slave: !secret sungrow_modbus_slave
@@ -482,7 +482,7 @@ modbus:
         state_class: total_increasing
         scale: 1
         scan_interval: 600
-        
+
       - name: Monthly direct energy consumption
         unique_id: sg_monthly_direct_energy_consumption
         slave: !secret sungrow_modbus_slave
@@ -497,7 +497,7 @@ modbus:
         state_class: total_increasing
         scale: 1
         scan_interval: 600
-        
+
       - name: Yearly direct energy consumption
         unique_id: sg_yearly_direct_energy_consumption
         slave: !secret sungrow_modbus_slave
@@ -512,7 +512,7 @@ modbus:
         state_class: total_increasing
         scale: 1
         scan_interval: 600
-        
+
       - name: Yearly export energy from PV
         unique_id: sg_yearly_export_energy_from_pv
         slave: !secret sungrow_modbus_slave
@@ -1171,27 +1171,109 @@ template:
       - name: "PV generating"
         unique_id: "sg_pv_generating"
         state: >
+          {% if is_state('sensor.running_state', 'unavailable') %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.total_dc_power')|int > 0 %}
+            1
+            {% else %} 
+            0 
+            {% endif %}
+          {% else %} 
+          {# decode running_state #}
           {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x1) > 0 }}
+          {% endif %}
 
       - name: "Battery charging"
         unique_id: "sg_battery_charging"
         state: >
-          {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x2) > 0 }}
+          {% if is_state('sensor.running_state', 'unavailable') %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if (states('sensor.ems_mode_selection') ) == "Forced mode" %}
+              {% if (states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0) == 0x00AA) %}
+              {# mode: Forced charge #}
+                {% if (states('sensor.battery_power_raw') > 0 ) %}
+                  {# power flows into battery #}
+                  1
+                {% else %} 
+                  0
+                {% endif %}
+              {% else %}
+                0
+              {% endif %}
+            {% else %} 
+              {# not in a forced mode, assuming self consumption mode #}
+              {% if states('sensor.total_dc_power')|int > states('sensor.load_power')|int %}
+              {# more power generated than consumed. assuming battery charging #}
+              1
+              {% else %} 
+              0
+              {% endif %}
+            {% endif %}
+          {% else %}
+            {# decode running_state #}
+            {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x2) > 0 }}
+          {% endif %}
 
       - name: "Battery discharging"
         unique_id: "sg_battery_discharging"
         state: >
-          {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x4) > 0 }}
+          {% if is_state('sensor.running_state', 'unavailable') %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if (states('sensor.ems_mode_selection') ) == "Forced mode" %}
+              {% if (states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0) == 0x00BB) %}
+              {# mode: Forced discharge #}
+                {% if (states('sensor.battery_power_raw') > 0 ) %}
+                  {# power flows from battery #}
+                  1
+                {% else %} 
+                  0
+                {% endif %}
+              {% else %} 
+                0
+              {% endif %}
+            {% else %} 
+              {# not in a forced mode, assuming self consumption mode #}
+              {% if ( ( states('sensor.total_dc_power')|int < states('sensor.load_power')|int ) ) and states('sensor.battery_power_raw')|int > 0 %}
+              {# more power consumed than generated and some battery power -->  assuming battery discharging #}
+              1
+              {% else %} 
+              0
+              {% endif %}
+            {% endif %}
+          {% else %}
+            {# decode running_state #}
+            {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x4) > 0 }}
+          {% endif %}
 
       - name: "Exporting power"
         unique_id: "sg_exporting_power"
         state: >
-          "{{ states('sensor.running_state')|int(default=0)|bitwise_and(0x10) > 0 }}
+          {% if is_state('sensor.running_state', 'unavailable') %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.export_power_raw')|int > 0 %}
+            1
+            {% else %} 
+            0 
+            {% endif %}
+          {% else %} 
+          {# use running_state for decoding #}
+          {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x10) > 0 }}
+          {% endif %}
 
       - name: "Importing power"
         unique_id: "sg_importing_power"
         state: >
+          {% if is_state('sensor.running_state', 'unavailable') %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.export_power_raw')|int < 0 %}
+            1
+            {% else %}
+            0 
+            {% endif %}
+          {% else %} 
+          {# use running_state for decoding #}
           {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x20) > 0 }}
+          {% endif %}
 
   - sensor:
       - name: "MPPT1 power"
@@ -1358,8 +1440,7 @@ template:
           {% else %}
             Unknown - should not see me!
           {% endif %}
-         
-      
+
       - name: "Signed battery power" # positive if charging and negative if discharging
         unique_id: sg_signed_battery_power
         unit_of_measurement: W
@@ -1437,7 +1518,6 @@ input_number:
     min: 5
     max: 50
     step: 1
-  
 
   set_sg_max_soc:
     name: Set max SoC
