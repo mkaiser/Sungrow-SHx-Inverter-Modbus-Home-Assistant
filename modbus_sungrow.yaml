@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-01-27
+# last update: 2023-01-26
 
 modbus:
   - name: SungrowSHx
@@ -411,17 +411,17 @@ modbus:
         scale: 1
         scan_interval: 10
 
-      - name: Running state
-        unique_id: sg_running_state
-        slave: !secret sungrow_modbus_slave
-        address: 13000 # reg 13001
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 0
-        scale: 1
-        scan_interval: 10
+      # - name: Running state
+      #   unique_id: sg_running_state
+      #   slave: !secret sungrow_modbus_slave
+      #   address: 13000 # reg 13001
+      #   input_type: input
+      #   count: 1
+      #   data_type: uint16
+      #   swap: word
+      #   precision: 0
+      #   scale: 1
+      #   scan_interval: 10
 
       - name: Daily PV generation
         unique_id: sg_daily_pv_generation
@@ -1191,7 +1191,7 @@ template:
             {% if (states('sensor.ems_mode_selection') ) == "Forced mode" %}
               {% if (states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0) == 0x00AA) %}
               {# mode: Forced charge #}
-                {% if (states('sensor.battery_power_raw') > 0 ) %}
+                {% if (states('sensor.battery_power_raw')|int > 0 ) %}
                   {# power flows into battery #}
                   1
                 {% else %} 
@@ -1222,7 +1222,7 @@ template:
             {% if (states('sensor.ems_mode_selection') ) == "Forced mode" %}
               {% if (states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0) == 0x00BB) %}
               {# mode: Forced discharge #}
-                {% if (states('sensor.battery_power_raw') > 0 ) %}
+                {% if (states('sensor.battery_power_raw')|int > 0 ) %}
                   {# power flows from battery #}
                   1
                 {% else %} 
