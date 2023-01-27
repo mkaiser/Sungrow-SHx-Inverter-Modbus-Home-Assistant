@@ -1,5 +1,6 @@
 views:
-  - title: Home
+  - title: PV-Info
+    icon: mdi:solar-power-variant-outline
     cards:
       - type: entities
         entities:
@@ -73,7 +74,8 @@ views:
         title: PV Gen
       - type: entities
         entities:
-          - entity: sensor.battery_power
+          - entity: sensor.battery_charging_power
+          - entity: sensor.battery_discharging_power
           - entity: sensor.battery_voltage
           - entity: sensor.battery_current
           - entity: sensor.battery_level
@@ -132,10 +134,37 @@ views:
             state: 'On'
         card:
           type: gauge
-          entity: sensor.battery_power
+          entity: sensor.battery_power_raw
           name: Battery Charge Power
           unit: W
           min: 0
           max: 5000
           needle: true
-title: PV Info
+  - title: PV-Control
+    icon: mdi:sun-compass
+    cards:
+      - type: entities
+        entities:
+          - entity: input_select.set_sg_start_stop_mode
+          - entity: sensor.sungrow_inverter_state
+        title: Inverter State
+      - type: entities
+        entities:
+          - entity: input_number.set_sg_min_soc
+          - entity: input_number.set_sg_max_soc
+          - entity: sensor.min_soc
+          - entity: sensor.max_soc
+          - entity: input_select.set_sg_ems_mode
+          - entity: input_select.set_sg_battery_forced_charge_discharge_cmd
+          - entity: input_number.set_sg_forced_charge_discharge_power
+          - entity: sensor.battery_forced_charge_discharge_power
+          - entity: input_number.set_sg_batt_soc_reserve
+          - entity: sensor.battery_soc_reserve
+          - entity: input_number.set_sg_battery_max_charge_power
+          - entity: sensor.battery_max_charge_power
+          - entity: input_number.set_sg_battery_max_discharge_power
+          - entity: sensor.battery_max_discharge_power
+        title: EMS
+        state_color: false
+        show_header_toggle: true
+title: PV System
