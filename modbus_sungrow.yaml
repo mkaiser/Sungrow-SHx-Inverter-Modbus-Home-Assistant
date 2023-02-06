@@ -1207,6 +1207,7 @@ template:
             {# workaround for SH*RS inverters without working running_state #}
             {% if (states('sensor.ems_mode_selection') ) == "Forced mode" %}
               {# EMS forced mode #}
+
               {% if (states('sensor.battery_forced_charge_discharge_cmd') == "Forced charge") %}
                 {# in mode Forced charge #}
                 {% if (states('sensor.battery_power_raw')|int > 0 ) %}
