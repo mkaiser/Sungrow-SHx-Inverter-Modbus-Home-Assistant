@@ -39,7 +39,7 @@ views:
           - entity: binary_sensor.battery_discharging
           - entity: binary_sensor.exporting_power
           - entity: binary_sensor.importing_power
-        title: Satus
+        title: Status
         columns: 3
   - title: Detailed Info
     icon: mdi:solar-power-variant-outline
