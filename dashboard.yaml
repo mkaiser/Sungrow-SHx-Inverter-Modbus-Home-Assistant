@@ -29,6 +29,18 @@ views:
           green: 70
           yellow: 40
           red: 20
+      - show_name: true
+        show_icon: true
+        show_state: false
+        type: glance
+        entities:
+          - entity: binary_sensor.pv_generating
+          - entity: binary_sensor.battery_charging
+          - entity: binary_sensor.battery_discharging
+          - entity: binary_sensor.exporting_power
+          - entity: binary_sensor.importing_power
+        title: Status
+        columns: 3
   - title: Detailed Info
     icon: mdi:solar-power-variant-outline
     cards:
@@ -164,7 +176,7 @@ views:
           - max
         title: Battery SoC last 180 days
   - title: EMS Control
-    icon: mdi:sun-compass
+    icon: mdi:solar-power
     cards:
       - type: entities
         entities:
