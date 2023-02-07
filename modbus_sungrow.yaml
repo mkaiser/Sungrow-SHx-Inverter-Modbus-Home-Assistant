@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-01-26
+# last update: 2023-02-06
 
 modbus:
   - name: SungrowSHx
@@ -233,8 +233,8 @@ modbus:
       #Meter Phase A Active Power: 5603-5604 S32 W (Stromzähler Phase A Wirkleistung)
       #Meter Phase B Active Power: 5605-5606 S32 W (Stromzähler Phase B Wirkleistung)
       #Meter Phase C Active Power: 5607-5608 S32 W (Stromzähler Phase C Wirkleistung)
-      - name: Meter active power
-        unique_id: sg_meter_active_power
+      - name: Meter active power raw
+        unique_id: sg_meter_active_power_raw
         slave: !secret sungrow_modbus_slave
         address: 5600 # reg 5601
         input_type: input
@@ -248,8 +248,8 @@ modbus:
         scale: 1
         scan_interval: 10
 
-      - name: Meter phase A active power
-        unique_id: sg_meter_phase_a_active_power
+      - name: Meter phase A active power raw
+        unique_id: sg_meter_phase_a_active_power_raw
         slave: !secret sungrow_modbus_slave
         address: 5602 # reg 5603
         input_type: input
@@ -263,8 +263,8 @@ modbus:
         scale: 1
         scan_interval: 10
 
-      - name: Meter phase B active power
-        unique_id: sg_meter_phase_b_active_power
+      - name: Meter phase B active power raw
+        unique_id: sg_meter_phase_b_active_power_raw
         slave: !secret sungrow_modbus_slave
         address: 5604 # reg 5605
         input_type: input
@@ -278,8 +278,8 @@ modbus:
         scale: 1
         scan_interval: 10
 
-      - name: Meter phase C active power
-        unique_id: sg_meter_phase_c_active_power
+      - name: Meter phase C active power raw
+        unique_id: sg_meter_phase_c_active_power_raw
         slave: !secret sungrow_modbus_slave
         address: 5606 # reg 5607
         input_type: input
@@ -411,6 +411,8 @@ modbus:
         scale: 1
         scan_interval: 10
 
+      # register running state is not available for certain SH*RS inverters
+      # template sensors are used to determine the states based on other sensors
       - name: Running state
         unique_id: sg_running_state
         slave: !secret sungrow_modbus_slave
@@ -437,7 +439,7 @@ modbus:
         state_class: total_increasing
         scale: 0.1
         scan_interval: 600
-       
+
       - name: Monthly PV energy yields
         unique_id: sg_monthly_pv_energy_yields
         slave: !secret sungrow_modbus_slave
@@ -452,13 +454,13 @@ modbus:
         state_class: total_increasing
         scale: 1
         scan_interval: 600
-        
+
       - name: Yearly PV energy yields
         unique_id: sg_yearly_pv_energy_yields
         slave: !secret sungrow_modbus_slave
         address: 6250
         input_type: input
-        count: 1
+        count: 2
         data_type: uint32
         swap: word
         precision: 1
@@ -467,7 +469,7 @@ modbus:
         state_class: total_increasing
         scale: 1
         scan_interval: 600
-        
+
       - name: Monthly export energy from PV
         unique_id: sg_monthly_export_energy_from_pv
         slave: !secret sungrow_modbus_slave
@@ -482,7 +484,7 @@ modbus:
         state_class: total_increasing
         scale: 1
         scan_interval: 600
-        
+
       - name: Monthly direct energy consumption
         unique_id: sg_monthly_direct_energy_consumption
         slave: !secret sungrow_modbus_slave
@@ -497,7 +499,7 @@ modbus:
         state_class: total_increasing
         scale: 1
         scan_interval: 600
-        
+
       - name: Yearly direct energy consumption
         unique_id: sg_yearly_direct_energy_consumption
         slave: !secret sungrow_modbus_slave
@@ -512,13 +514,13 @@ modbus:
         state_class: total_increasing
         scale: 1
         scan_interval: 600
-        
+
       - name: Yearly export energy from PV
         unique_id: sg_yearly_export_energy_from_pv
         slave: !secret sungrow_modbus_slave
         address: 6608
         input_type: input
-        count: 1
+        count: 2
         data_type: uint32
         swap: word
         precision: 1
@@ -1168,88 +1170,214 @@ modbus:
 # 'virtual' template sensors for better readability
 template:
   - binary_sensor:
-      - name: "PV generating"
-        unique_id: "sg_pv_generating"
-        state: >
-          {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x1) > 0 }}
+      - name: PV generating
+        unique_id: sg_pv_generating
+        availability: >-
+          {{states('sensor.running_state')|is_number or 
+            states('sensor.total_dc_power')|is_number
+          }}
+        state: >-
+          {% if states('sensor.running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x1) > 0 }}
+          {% else %} 
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.total_dc_power')|int > 0 %}
+              1
+            {% else %} 
+              0 
+            {% endif %}
+          {% endif %}
 
-      - name: "Battery charging"
-        unique_id: "sg_battery_charging"
-        state: >
-          {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x2) > 0 }}
+      - name: Battery charging
+        unique_id: sg_battery_charging
+        availability: >-
+          {{states('sensor.running_state')|is_number or 
+            (states('sensor.ems_mode_selection_raw')|is_number and 
+            states('sensor.battery_forced_charge_discharge_cmd_raw')|is_number and
+            states('sensor.battery_power_raw')|is_number and 
+            states('sensor.total_dc_power')|is_number and 
+            states('sensor.load_power')|is_number ) 
+          }}
+        state: >-
+          {% if states('sensor.running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x2) > 0 }}
+          {% else %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if (states('sensor.ems_mode_selection') ) == "Forced mode" %}
+              {# EMS forced mode #}
+              {% if (states('sensor.battery_forced_charge_discharge_cmd') == "Forced charge") %}
+                {# in mode Forced charge #}
+                {% if (states('sensor.battery_power_raw')|int > 0 ) %}
+                  {# power flow from/to battery #}
+                  On
+                {% else %} 
+                  {# no power flow from/to battery #}
+                  Off
+                {% endif %}
+              {% else %}
+                {# in EMS mode, but not in mode Forced charge #}
+                Off
+              {% endif %}
+            {% else %} 
+              {# not in EMS forced mode, assuming self consumption mode #}
+              {% if states('sensor.total_dc_power')|int > states('sensor.load_power')|int %}
+                {# more power generated than consumed. assuming battery charging #}
+                On
+              {% else %} 
+                Off
+              {% endif %}
+            {% endif %}
+          {% endif %}
 
-      - name: "Battery discharging"
-        unique_id: "sg_battery_discharging"
-        state: >
-          {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x4) > 0 }}
+      - name: Battery discharging
+        unique_id: sg_battery_discharging
+        availability: >-
+          {{states('sensor.running_state')|is_number or 
+            (states('sensor.ems_mode_selection_raw')|is_number and 
+            states('sensor.battery_forced_charge_discharge_cmd_raw')|is_number and
+            states('sensor.battery_power_raw')|is_number and 
+            states('sensor.total_dc_power')|is_number and 
+            states('sensor.load_power')|is_number ) 
+          }}
+        state: >-
+          {% if states('sensor.running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x4) > 0 }}
+          {% else %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if (states('sensor.ems_mode_selection') ) == "Forced mode" %}
+              {# EMS forced mode #}
+              {% if (states('sensor.battery_forced_charge_discharge_cmd') == "Forced discharge") %}
+                {# in mode Forced discharge #}
+                {% if (states('sensor.battery_power_raw')|int > 0 ) %}
+                  {# power flow from/to battery #}
+                  On
+                {% else %} 
+                  {# no power flow from/to battery #}
+                  Off
+                {% endif %}
+              {% else %} 
+                {# in EMS mode, but not in mode Forced charge #}
+                Off
+              {% endif %}
+            {% else %} 
+              {# not in EMS forced mode, assuming self consumption mode #}
+              {% if ( ( states('sensor.total_dc_power')|int < states('sensor.load_power')|int ) ) and states('sensor.battery_power_raw')|int > 0 %}
+                {# more power consumed than generated and some battery power -->  assuming battery discharging #}
+                On
+              {% else %} 
+                Off
+              {% endif %}
+            {% endif %}
+          {% endif %}
 
-      - name: "Exporting power"
-        unique_id: "sg_exporting_power"
-        state: >
-          "{{ states('sensor.running_state')|int(default=0)|bitwise_and(0x10) > 0 }}
+      - name: Exporting power
+        unique_id: sg_exporting_power
+        availability: "{{states('sensor.running_state')|is_number or states('sensor.export_power_raw')|is_number }}"
+        state: >-
+          {% if states('sensor.running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x10) > 0 }}
+          {% else %} 
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.export_power_raw')|int > 0 %}
+                1
+            {% else %} 
+                0 
+            {% endif %}
+          {% endif %}
 
-      - name: "Importing power"
-        unique_id: "sg_importing_power"
-        state: >
-          {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x20) > 0 }}
+      - name: Importing power
+        unique_id: sg_importing_power
+        availability: "{{states('sensor.running_state')|is_number or states('sensor.export_power_raw')|is_number }}"
+        state: >-
+          {% if states('sensor.running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x20) > 0 }}
+          {% else %} 
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.export_power_raw')|int < 0 %}
+              1
+            {% else %}
+              0 
+            {% endif %}
+          {% endif %}
 
   - sensor:
-      - name: "MPPT1 power"
+      - name: MPPT1 power
         unique_id: sg_mppt1_power
         unit_of_measurement: W
         device_class: power
-        state: >
-          {% if is_state('sensor.mppt1_voltage', 'unavailable') or is_state('sensor.mppt1_current', 'unavailable') %}
-          unavailable
-          {% else %} 
-          {{ (states('sensor.mppt1_voltage') | float * states('sensor.mppt1_current') | float) |int }} 
-          {% endif %}
+        availability: "{{states('sensor.mppt1_voltage')|is_number and states('sensor.mppt1_current')|is_number }}"
+        state: "{{ (states('sensor.mppt1_voltage') | float * states('sensor.mppt1_current') | float) |int }}"
 
-      - name: "MPPT2 power"
+      - name: MPPT2 power
         unique_id: sg_mppt2_power
         unit_of_measurement: W
         device_class: power
-        state: >
-          {% if is_state('sensor.mppt2_voltage', 'unavailable') or is_state('sensor.mppt2_current', 'unavailable') %}
-          unavailable
-          {% else %} 
-          {{ (states('sensor.mppt2_voltage') | float * states('sensor.mppt2_current') | float) |int }} 
-          {% endif %}
+        availability: "{{states('sensor.mppt2_voltage')|is_number and states('sensor.mppt2_current')|is_number }}"
+        state: "{{ (states('sensor.mppt2_voltage') | float * states('sensor.mppt2_current') | float) |int }}"
 
-      - name: "Phase A power"
+      - name: Phase A power
         unique_id: sg_phase_a_power
         unit_of_measurement: W
         device_class: power
-        state: >
-          {% if is_state('sensor.phase_a_voltage', 'unavailable') or is_state('sensor.phase_a_current', 'unavailable') %}
-          unavailable
-          {% else %} 
-          {{ (states('sensor.phase_a_voltage') | float * states('sensor.phase_a_current') | float) |int }} 
-          {% endif %}
+        availability: "{{states('sensor.phase_a_voltage')|is_number and states('sensor.phase_a_current')|is_number }}"
+        state: "{{ (states('sensor.phase_a_voltage') | float * states('sensor.phase_a_current') | float) |int }}"
 
-      - name: "Phase B power"
+      - name: Phase B power
         unique_id: sg_phase_b_power
         unit_of_measurement: W
         device_class: power
-        state: >
-          {% if is_state('sensor.phase_b_voltage', 'unavailable') or is_state('sensor.phase_b_current', 'unavailable') %}
-          unavailable
-          {% else %} 
-          {{ (states('sensor.phase_b_voltage') | float * states('sensor.phase_b_current') | float) |int }} 
-          {% endif %}
+        availability: "{{states('sensor.phase_b_voltage')|is_number and states('sensor.phase_b_current')|is_number }}"
+        state: "{{ (states('sensor.phase_b_voltage') | float * states('sensor.phase_b_current') | float) |int }}"
 
-      - name: "Phase C power"
+      - name: Phase C power
         unique_id: sg_phase_c_power
         unit_of_measurement: W
         device_class: power
-        state: >
-          {% if is_state('sensor.phase_c_voltage', 'unavailable') or is_state('sensor.phase_c_current', 'unavailable') %}
-          unavailable
-          {% else %} 
-          {{ (states('sensor.phase_c_voltage') | float * states('sensor.phase_c_current') | float) |int }} 
-          {% endif %}
+        availability: "{{states('sensor.phase_c_voltage')|is_number and states('sensor.phase_c_current')|is_number }}"
+        state: "{{ (states('sensor.phase_c_voltage') | float * states('sensor.phase_c_current') | float) |int }}"
 
-      - name: "Sungrow inverter state"
+      # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
+      - name: Meter active power
+        unique_id: sg_meter_active_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.meter_active_power_raw')|is_number and states('sensor.meter_active_power_raw')|int != 0x7FFFFFFF}}"
+        state: "{{ states('sensor.meter_active_power_raw') }}"
+
+      # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
+      - name: Meter Phase A active power
+        unique_id: sg_meter_phase_a_active_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.meter_phase_a_active_power_raw')|is_number and states('sensor.meter_phase_a_active_power_raw')|int != 0x7FFFFFFF}}"
+        state: "{{ states('sensor.meter_phase_a_active_power_raw') }}"
+
+      # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
+      - name: Meter Phase B active power
+        unique_id: sg_meter_phase_b_active_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.meter_phase_b_active_power_raw')|is_number and states('sensor.meter_phase_b_active_power_raw')|int != 0x7FFFFFFF}}"
+        state: "{{ states('sensor.meter_phase_b_active_power_raw') }}"
+
+      # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
+      - name: Meter Phase C active power
+        unique_id: sg_meter_phase_c_active_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.meter_phase_c_active_power_raw')|is_number and states('sensor.meter_phase_c_active_power_raw')|int != 0x7FFFFFFF}}"
+        state: "{{ states('sensor.meter_phase_c_active_power_raw') }}"
+
+      - name: Sungrow inverter state
         unique_id: sg_inverter_state
         state: >-
           {% if ((states('sensor.system_state') | int(default=0)) == 0x0002) %}
@@ -1278,7 +1406,7 @@ template:
             Unknown - should not see me!
           {% endif %}
 
-      - name: "Sungrow device type"
+      - name: Sungrow device type
         unique_id: sg_device_type
         state: >-
           {% if ((states('sensor.sungrow_device_type_code') | int(default=0))  == 0x0D06) %}
@@ -1328,7 +1456,7 @@ template:
       # 0xAA forced charge
       # 0xBB forced discharge
       # 0xCC Stop (Default)
-      - name: "Battery forced charge discharge cmd"
+      - name: Battery forced charge discharge cmd
         unique_id: sg_battery_forced_charge_discharge_cmd
         state: >-
           {% if ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0)) == 0x00AA) %}
@@ -1342,7 +1470,7 @@ template:
           {% endif %}
 
       # make the sensor ems_selection_raw more human readable
-      - name: "EMS mode selection"
+      - name: EMS mode selection
         unique_id: sg_ems_mode_selection
         state: >-
           {% if ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 0) %}
@@ -1358,16 +1486,17 @@ template:
           {% else %}
             Unknown - should not see me!
           {% endif %}
-         
-      
-      - name: "Signed battery power" # positive if charging and negative if discharging
+
+      - name: Signed battery power # positive if charging and negative if discharging
         unique_id: sg_signed_battery_power
         unit_of_measurement: W
         device_class: power
-        state: >
-          {% if is_state('binary_sensor.battery_charging', 'unavailable') or is_state('binary_sensor.battery_discharging', 'unavailable') or is_state('sensor.battery_power_raw', 'unavailable') %}
-            unavailable
-          {% elif is_state('binary_sensor.battery_charging', 'on') %}
+        availability: >-
+          {{ states('binary_sensor.battery_charging') and 
+          states('binary_sensor.battery_discharging') and 
+          states('sensor.battery_power_raw')|is_number }}
+        state: >-
+          {% if is_state('binary_sensor.battery_charging', 'on') %}
             {{ (states('sensor.battery_power_raw') | float)}} 
           {% elif is_state('binary_sensor.battery_discharging', 'on') %} 
             {{ (states('sensor.battery_power_raw') | float * -1)}} 
@@ -1375,58 +1504,58 @@ template:
             0 
           {% endif %}
 
-      - name: "Battery charging power" # positive if charging else zero
+      - name: Battery charging power # positive if charging else zero
         unique_id: sg_battery_charging_power
         unit_of_measurement: W
         device_class: power
+        availability: >-
+          {{ states('binary_sensor.battery_charging') and 
+          states('sensor.battery_power_raw')|is_number }}
         state: >-
-          {% if is_state('sensor.battery_power_raw', 'unavailable') %}
-          unavailable
-          {% elif is_state('binary_sensor.battery_charging', 'on') %}
-          {{ states('sensor.battery_power_raw') }}
+          {% if is_state('binary_sensor.battery_charging', 'on') %}
+            {{ states('sensor.battery_power_raw') }}
           {% else %}
-          0
+            0
           {% endif %}
 
-      - name: "Battery discharging power" # positive if discharging else zero
+      - name: Battery discharging power # positive if discharging else zero
         unique_id: sg_battery_discharging_power
         unit_of_measurement: W
         device_class: power
+        availability: >-
+          {{ states('binary_sensor.battery_charging') and 
+          states('sensor.battery_power_raw')|is_number }}
         state: >-
-          {% if is_state('sensor.battery_power_raw', 'unavailable') %}
-          unavailable
-          {% elif is_state('binary_sensor.battery_discharging', 'on') %}
-          {{ states('sensor.battery_power_raw') }}
+          {% if is_state('binary_sensor.battery_discharging', 'on') %}
+            {{ states('sensor.battery_power_raw') }}
           {% else %}
-          0
+            0
           {% endif %}
 
-      - name: "Import power" # power from grid: positive if importing, else zero
+      - name: Import power # power from grid: positive if importing, else zero
         unique_id: sg_import_power
         unit_of_measurement: W
         device_class: power
         state_class: measurement
+        availability: "{{states('sensor.export_power_raw')|is_number }}"
         state: >-
-          {% if is_state('sensor.export_power_raw', 'unavailable') %}
-          unavailable
-          {% elif is_state('binary_sensor.importing_power', 'on') %}
-          {{ states('sensor.export_power_raw') |int * -1}}
+          {% if states('sensor.export_power_raw')|int < 0 %}
+            {{ states('sensor.export_power_raw')|int *-1 }}
           {% else %}
-          0
+            0
           {% endif %}
 
-      - name: "Export power" # power to grid: positive if exporting, else zero
+      - name: Export power # power to grid: positive if exporting, else zero
         unique_id: sg_export_power
         unit_of_measurement: W
         device_class: power
         state_class: measurement
+        availability: "{{states('sensor.export_power_raw')|is_number }}"
         state: >-
-          {% if is_state('sensor.export_power_raw', 'unavailable') %}
-          unavailable
-          {% elif is_state('binary_sensor.exporting_power', 'on') %}
-          {{ states('sensor.export_power_raw') }}
+          {% if states('sensor.export_power_raw')|int > 0 %}
+            {{ states('sensor.export_power_raw') }}
           {% else %}
-          0
+            0
           {% endif %}
 
 # getting input for Min and Max SoC
@@ -1437,7 +1566,6 @@ input_number:
     min: 5
     max: 50
     step: 1
-  
 
   set_sg_max_soc:
     name: Set max SoC
@@ -1522,7 +1650,7 @@ automation:
           hub: SungrowSHx
           slave: !secret sungrow_modbus_slave
           address: 12999 # reg 13000
-          value: >-
+          value: >
             {% if is_state('input_select.set_sg_start_stop_mode', 'Start') %}
             {{sg_start}}
             {% else %}  
@@ -1599,7 +1727,7 @@ automation:
           hub: SungrowSHx
           slave: !secret sungrow_modbus_slave
           address: 13050 # reg 13051
-          value: >-
+          value: >
             {% if is_state('input_select.set_sg_battery_forced_charge_discharge_cmd', 'Stop (default)') %} {{ems_stop_default}}
             {% elif is_state('input_select.set_sg_battery_forced_charge_discharge_cmd', 'Forced charge') %} {{ems_forced_charge}}
             {% elif is_state('input_select.set_sg_battery_forced_charge_discharge_cmd', 'Forced discharge') %} {{ems_forced_discharge}}
@@ -1628,7 +1756,7 @@ automation:
           hub: SungrowSHx
           slave: !secret sungrow_modbus_slave
           address: 13049 # reg 13050
-          value: >-
+          value: >
             {% if is_state('input_select.set_sg_ems_mode', 'Self-consumption mode (default)') %} {{ems_mode_self_consume}}
             {% elif is_state('input_select.set_sg_ems_mode', 'Forced mode') %} {{ems_mode_forced}}
             {% elif is_state('input_select.set_sg_ems_mode', 'External EMS') %} {{ems_mode_external}}
