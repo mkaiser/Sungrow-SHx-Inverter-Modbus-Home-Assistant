@@ -1591,14 +1591,14 @@ input_number:
   set_sg_battery_max_charge_power:
     name: Set max battery charge power in W
     #initial: 40
-    min: 0
+    min: 100
     max: 5000
     step: 100
 
   set_sg_battery_max_discharge_power:
     name: Set max battery discharge power in W
     #initial: 40
-    min: 0
+    min: 100
     max: 5000
     step: 100
 
