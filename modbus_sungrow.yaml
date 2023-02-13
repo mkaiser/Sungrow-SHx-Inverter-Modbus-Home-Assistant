@@ -1491,6 +1491,7 @@ template:
         unique_id: sg_signed_battery_power
         unit_of_measurement: W
         device_class: power
+        state_class: measurement
         availability: >-
           {{ states('binary_sensor.battery_charging') and 
           states('binary_sensor.battery_discharging') and 
@@ -1508,6 +1509,7 @@ template:
         unique_id: sg_battery_charging_power
         unit_of_measurement: W
         device_class: power
+        state_class: measurement
         availability: >-
           {{ states('binary_sensor.battery_charging') and 
           states('sensor.battery_power_raw')|is_number }}
@@ -1522,6 +1524,7 @@ template:
         unique_id: sg_battery_discharging_power
         unit_of_measurement: W
         device_class: power
+        state_class: measurement
         availability: >-
           {{ states('binary_sensor.battery_charging') and 
           states('sensor.battery_power_raw')|is_number }}
