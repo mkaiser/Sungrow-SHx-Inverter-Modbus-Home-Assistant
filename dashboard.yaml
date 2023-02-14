@@ -222,10 +222,10 @@ views:
           - entity: sensor.min_soc
           - entity: sensor.max_soc
           - entity: sensor.reserved_soc_for_backup
-          - entity: sensor.battery_discharging_start_power
-          - entity: sensor.battery_charging_start_power
           - entity: sensor.battery_forced_charge_discharge_power
           - entity: sensor.battery_max_charge_power
           - entity: sensor.battery_max_discharge_power
+          - entity: sensor.battery_charging_start_power
+          - entity: sensor.battery_discharging_start_power
         title: Battery Status
 title: PV System
