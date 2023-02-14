@@ -42,6 +42,19 @@ views:
           - entity: binary_sensor.importing_power
         title: Status
         columns: 3
+      - chart_type: line
+        period: 5minute
+        days_to_show: 1
+        type: statistics-graph
+        entities:
+          - sensor.total_dc_power
+          - sensor.load_power
+          - sensor.export_power
+          - sensor.import_power
+          - sensor.signed_battery_power
+        stat_types:
+          - mean
+        title: Power distribution last 24 hours
   - title: Detailed Info
     icon: mdi:solar-power-variant-outline
     cards:
@@ -196,6 +209,8 @@ views:
           - entity: input_number.set_sg_forced_charge_discharge_power
           - entity: input_number.set_sg_battery_max_charge_power
           - entity: input_number.set_sg_battery_max_discharge_power
+          - entity: input_number.set_sg_battery_charging_start_power
+          - entity: input_number.set_sg_battery_discharging_start_power
         title: EMS & Battery Settings
         state_color: false
         show_header_toggle: true
@@ -203,6 +218,7 @@ views:
         entities:
           - entity: sensor.battery_capacity
           - entity: sensor.battery_level
+          - entity: sensor.battery_state_of_health
           - entity: sensor.min_soc
           - entity: sensor.max_soc
           - entity: sensor.reserved_soc_for_backup
