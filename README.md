@@ -77,15 +77,10 @@ After the restart, some new sensors should be available. E.g., check for "Total 
 
 
 ##  Add a nice Dashboard like the one shown above
-1. Create a new dashboard, e.g. called "PV"
-2. Copy the content of *dashboard.yaml* from the repo and paste it into the new dashboard using the "raw configuration editor" (top right, the 3 dots). Ensure that the spacing keeps intact.
 
-## [Optional] HACS Power Flow Card
-I personally like this card very much, but it won't run out of the box with standard home assistant. You need to install it manually: 
-1. Install Frontend "Power Flow Card" from HACS (instructions: https://github.com/ulic75/power-flow-card)
-2. Copy the content of *powerFlow.yaml* to an arbitrary dashboard. It should look like this:
-![image](https://user-images.githubusercontent.com/29856783/213137105-e1443dce-be7e-46dc-939b-168a0dfbdfae.png)
+Navigate to folder "dashboards/_DefaultDashboard_mkaiser" and follow the instructions in the README
 
+Browse the "dashboards" folder for other contributed dashboards :)
 
 ##  Configure the HomeAssistant energy dashboard 
 ![image](https://user-images.githubusercontent.com/29856783/148981502-823778d7-ebd3-4101-8060-48e0619cee4c.png)
