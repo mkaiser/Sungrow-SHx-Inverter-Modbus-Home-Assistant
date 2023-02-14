@@ -1565,35 +1565,30 @@ template:
 input_number:
   set_sg_min_soc:
     name: Set min SoC
-    #initial: 15
     min: 5
     max: 50
     step: 1
 
   set_sg_max_soc:
     name: Set max SoC
-    #initial: 85
     min: 50
-    max: 95
+    max: 100
     step: 1
 
   set_sg_reserved_soc_for_backup:
     name: Set reserved SoC for backup
-    #initial: 15
     min: 0
     max: 75
     step: 1
 
   set_sg_forced_charge_discharge_power:
     name: Set forced charge discharge power in W
-    #initial: 40
     min: 0
     max: 5000
     step: 100
 
   set_sg_battery_max_charge_power:
     name: Set max battery charge power in W
-    #initial: 40
     min: 100
     max: 5000
     step: 100
