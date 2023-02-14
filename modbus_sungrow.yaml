@@ -1604,6 +1604,18 @@ input_number:
     min: 100
     max: 5000
     step: 100
+    
+ set_sg_battery_charging_start_power:
+    name: Set battery charging start power in W
+    min: 0
+    max: 1000
+    step: 10
+
+  set_sg_battery_discharging_start_power:
+    name: Set battery discharging start power in W
+    min: 0
+    max: 1000
+    step: 10    
 
 input_select:
   set_sg_start_stop_mode:
@@ -1820,3 +1832,38 @@ automation:
           address: 33047 # reg 33048
           value: "{{ states('input_number.set_sg_battery_max_discharge_power') | int /10}}"
     mode: single
+
+
+  - id: "automation_sungrow_inverter_update_battery_charging_start_power"
+    alias: "sungrow inverter update battery charging start power"
+    description: "Sets battery charging start power"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_number.set_sg_battery_charging_start_power
+    condition: []
+    action:
+      - service: modbus.write_register
+        data_template:
+          hub: SungrowSHx
+          slave: !secret sungrow_modbus_slave
+          address: 33148 # reg 33149
+          value: "{{ states('input_number.set_sg_battery_charging_start_power') | int /10}}"
+    mode: single
+
+  - id: "automation_sungrow_inverter_update_battery_discharging_start_power"
+    alias: "sungrow inverter update battery discharging start power"
+    description: "Sets battery discharging start power"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_number.set_sg_battery_discharging_start_power
+    condition: []
+    action:
+      - service: modbus.write_register
+        data_template:
+          hub: SungrowSHx
+          slave: !secret sungrow_modbus_slave
+          address: 33149 # reg 33150
+          value: "{{ states('input_number.set_sg_battery_discharging_start_power') | int /10}}"
+    mode: single    
