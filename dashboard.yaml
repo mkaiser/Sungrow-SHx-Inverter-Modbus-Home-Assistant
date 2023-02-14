@@ -34,6 +34,7 @@ views:
         show_state: false
         type: glance
         entities:
+          - entity: sun.sun
           - entity: binary_sensor.pv_generating
           - entity: binary_sensor.battery_charging
           - entity: binary_sensor.battery_discharging
