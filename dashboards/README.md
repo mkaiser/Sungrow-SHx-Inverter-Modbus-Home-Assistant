@@ -5,8 +5,8 @@ contributions are very welcome!
 Please send me your dashboard via Pullrequest
 
 1. Create a subfolder {HACS_}%DESRCIPTION%_%YOUR_NAME%
-  -{HACS_} should be pre-pended, if the dashboard is using HACS addons
-  - %DESCRIPTION%: Short (1-3 words) description of the dashboard
+- {HACS_} should be pre-pended, if the dashboard is using HACS addons
+- %DESCRIPTION%: Short (1-3 words) description of the dashboard
 - %YOUR_NAME%: required to get your the well-deserved fame 
 
 - Examples:
