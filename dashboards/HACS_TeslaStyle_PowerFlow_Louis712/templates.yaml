@@ -1,0 +1,120 @@
+# Home Assistant Sungrow inverter integration
+# https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
+# by Martin Kaiser
+# last update: 2023-01-24
+
+template:
+  - sensor:
+      - name: "Inverter loss"
+        unit_of_measurement: W
+        device_class: power
+        state: >
+          {{ states('sensor.total_dc_power')|int(default=0) - states('sensor.signed_battery_power')|int(default=0) - states('sensor.load_power')|int(default=0) - states('sensor.export_power_raw')|int(default=0) }}
+
+      - name: "Real load" # includes house power and inverter loss
+        unit_of_measurement: W
+        device_class: power
+        state: >
+          {{ states('sensor.load_power')|int(default=0) + states('sensor.inverter_loss')|int(default=0) }}
+
+      - name: "Grid to House" # only positive
+        unit_of_measurement: W
+        device_class: power
+        state: >
+          {% if (states('sensor.import_power')|float(default=0)) > states('sensor.real_load')|float(default=0) %}
+              {{ states('sensor.load_power')|float(default=0)}}
+          {% else %}
+              {{ states('sensor.import_power')|float(default=0) }}
+          {% endif %}
+
+      - name: "Grid to Battery"
+        unit_of_measurement: W
+        device_class: power
+        state: >
+          {% if states('sensor.import_power')|int(default=0) > states('sensor.real_load')|int(default=0) %}
+              {{ states('sensor.import_power')|int(default=0) - states('sensor.real_load')|int(default=0) }}
+          {% else %}
+              0
+          {% endif %}
+
+      - name: "Battery to House"
+        unit_of_measurement: W
+        device_class: power
+        state: >
+          {% if states('sensor.signed_battery_power')|int(default=0) < 0 %}
+              {% if states('sensor.signed_battery_power')|int(default=0)|abs > states('sensor.real_load')|int(default=0) %}
+                  {{ states('sensor.real_load')|int(default=0) }}
+              {% else %}
+                  {{ states('sensor.signed_battery_power')|int(default=0)|abs }}
+              {% endif %}
+          {% else %}
+              0
+          {% endif %}
+
+      - name: "Battery to Grid"
+        unit_of_measurement: W
+        device_class: power
+        state: >
+          {% if states('sensor.signed_battery_power')|int(default=0) < 0 %}
+              {% if states('sensor.signed_battery_power')|int(default=0)|abs > states('sensor.real_load')|int(default=0) %}
+                  {{ states('sensor.signed_battery_power')|int(default=0)|abs - states('sensor.real_load')|int(default=0) }}
+              {% else %}
+                  0
+              {% endif %}
+          {% else %}
+              0
+          {% endif %}
+
+      - name: "Solar to Grid"
+        unit_of_measurement: W
+        device_class: power
+        state: >
+          {% if states('sensor.export_power_raw')|int(default=0) > states('sensor.battery_to_grid')|int(default=0) %}
+              {{ states('sensor.export_power_raw')|int(default=0) - states('sensor.battery_to_grid')|int(default=0) }}
+          {% else %}
+              0
+          {% endif %}
+
+      - name: "Solar to House"
+        unit_of_measurement: W
+        device_class: power
+        state: >
+          {% if states('sensor.total_dc_power')|int(default=0) > 0 and states('sensor.real_load')|int(default=0) > states('sensor.battery_to_house')|int(default=0) + states('sensor.import_power')|int(default=0) %}
+              {% if states('sensor.total_dc_power')|int(default=0) > states('sensor.real_load')|int(default=0) - states('sensor.battery_to_house')|int(default=0) - states('sensor.grid_to_house')|int(default=0) %}
+                  {{ states('sensor.real_load')|int(default=0) - states('sensor.battery_to_house')|int(default=0) - states('sensor.grid_to_house')|int(default=0) }}
+              {% else %}
+                  {{ states('sensor.total_dc_power')|int(default=0) }}
+              {% endif %}
+          {% else %}
+              0
+          {% endif %}
+
+      - name: "Solar to Battery"
+        unit_of_measurement: W
+        device_class: power
+        state: >
+          {% if states('sensor.total_dc_power')|int(default=0) > 0 and states('sensor.battery_charging_power')|int(default=0) > 0 %}
+              {% if states('sensor.signed_battery_power')|int(default=0) > states('sensor.grid_to_battery')|int(default=0) %}
+                  {% if states('sensor.total_dc_power')|int(default=0) - states('sensor.solar_to_house')|int(default=0) > states('sensor.signed_battery_power')|int(default=0) - states('sensor.grid_to_battery')|int(default=0) %}
+                      {{ states('sensor.signed_battery_power')|int(default=0) - states('sensor.grid_to_battery')|int(default=0) }}
+                  {% else %}
+                      {{ states('sensor.total_dc_power')|int(default=0) - states('sensor.solar_to_house')|int(default=0) - states('sensor.solar_to_grid')|int(default=0) }}
+                  {% endif %}
+              {% else %}
+                  0
+              {% endif %}
+          {% else %}
+              0
+          {% endif %}
+      
+      - name: "Daily imported energy cost"
+        unit_of_measurement: €
+        device_class: energy
+        state: >
+          {{ (states('sensor.total_imported_energy_cost')) | float |round(2) }}
+
+      - name: "Daily exported energy compensation"
+        unit_of_measurement: €
+        device_class: energy
+        state: >
+          {{ (states('sensor.total_exported_energy_compensation')) | float |round(2) }}
