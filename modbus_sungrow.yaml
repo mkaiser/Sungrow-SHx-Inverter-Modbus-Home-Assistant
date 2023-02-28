@@ -1122,7 +1122,7 @@ modbus:
         swap: word
         unit_of_measurement: kWh
         device_class: energy
-        scale: 10
+        scale: 0.01
         scan_interval: 600
 
       - name: Battery charging start power
