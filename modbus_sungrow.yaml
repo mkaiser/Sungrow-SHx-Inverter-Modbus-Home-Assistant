@@ -2024,12 +2024,12 @@ template:
               states('sensor.sg_battery_level') | float / 10000) 
         }}
         
-        - name: "Monthly PV generation (current)"
-        unique_id: sg_monthly_pv_generation_current
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        state: "{{ states('sensor.' ~ 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower ) }}"
+    - name: "Monthly PV generation (current)"
+      unique_id: sg_monthly_pv_generation_current
+      unit_of_measurement: kWh
+      device_class: energy
+      state_class: total_increasing
+      state: "{{ states('sensor.' ~ 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower ) }}"
 
     - name: "Yearly PV generation (current)"
       unique_id: sg_yearly_pv_generation_current
