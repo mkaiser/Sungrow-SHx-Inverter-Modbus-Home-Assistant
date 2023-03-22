@@ -1990,6 +1990,22 @@ template:
           {% endif %}
 
   - sensor:
+    - name: sg_battery_level_nom
+      unique_id: sg_battery_level_nom
+      unit_of_measurement: "%"
+      device_class: battery
+      state_class: measurement
+      availability: >-
+        {{
+            states('sensor.sg_battery_level') | is_number and
+            states('sensor.sg_min_soc') | is_number and
+            states('sensor.sg_max_soc') | is_number
+        }}
+      state: >-
+        {% set soc_min = states('sensor.sg_min_soc') | float %}
+        {% set soc_max = states('sensor.sg_max_soc') | float %}
+        {% set soc_cur = states('sensor.sg_battery_level') | float %}
+        {{ (soc_min) + (soc_max - soc_min) * (soc_cur / 100) }}
   
     - name: sg_battery_charge_nom
       unique_id: sg_battery_charge_nom
