@@ -2172,54 +2172,56 @@ template:
         state_class: total_increasing
         state: "{{ states('sensor.' ~ 'yearly_export_' ~ now().year ) }}"
 
-      - name: sg_battery_level_nom
+      - name: "Battery level (nominal)"
         unique_id: sg_battery_level_nom
         unit_of_measurement: "%"
         device_class: battery
         state_class: measurement
         availability: >-
           {{
-              states('sensor.sg_battery_level') | is_number and
-              states('sensor.sg_min_soc') | is_number and
-              states('sensor.sg_max_soc') | is_number
+              states('sensor.battery_level') | is_number and
+              states('sensor.min_soc') | is_number and
+              states('sensor.max_soc') | is_number
           }}
         state: >-
-          {% set soc_min = states('sensor.sg_min_soc') | float %}
-          {% set soc_max = states('sensor.sg_max_soc') | float %}
-          {% set soc_cur = states('sensor.sg_battery_level') | float %}
-          {{ (soc_min) + (soc_max - soc_min) * (soc_cur / 100) }}
+          {% set soc_min = states('sensor.min_soc') | float %}
+          {% set soc_max = states('sensor.max_soc') | float %}
+          {% set soc_cur = states('sensor.battery_level') | float %}
+          {{
+            (soc_min) + (soc_max - soc_min) * (soc_cur / 100) | round(1) 
+          }}
 
-      - name: sg_battery_charge_nom
+      - name: "Battery charge (nominal)"
         unique_id: sg_battery_charge_nom
         unit_of_measurement: kWh
         device_class: energy
         availability: >-
           {{
-              states('sensor.sg_battery_capacity') | is_number and
+              states('sensor.battery_capacity') | is_number and
               states('sensor.sg_battery_level_nom') | is_number
           }}
         state: >-
           {{ 
-            states('sensor.sg_battery_capacity') | float * 
-            states('sensor.sg_battery_level_nom') | float / 100 
+            ( states('sensor.battery_capacity') | float * 
+            states('sensor.sg_battery_level_nom') | float / 100 )| round(1)
           }}
 
-      - name: sg_battery_charge_soc
-        unique_id: sg_battery_charge_soc
+      - name: "Battery charge"
+        unique_id: sg_battery_charge
         unit_of_measurement: kWh
         device_class: energy
         availability: >-
           {{
-              states('sensor.sg_battery_capacity') | is_number and
-              states('sensor.sg_battery_level') | is_number and
-              states('sensor.sg_min_soc') | is_number and
-              states('sensor.sg_max_soc') | is_number
+              states('sensor.battery_capacity') | is_number and
+              states('sensor.battery_level') | is_number and
+              states('sensor.min_soc') | is_number and
+              states('sensor.max_soc') | is_number
           }}
         state: >-
           {{  
-              states('sensor.sg_battery_capacity') | float *
-                ((states('sensor.sg_max_soc') | float - states('sensor.sg_min_soc') | float) * 
-                states('sensor.sg_battery_level') | float / 10000) 
+              states('sensor.battery_capacity') | float *
+                ((states('sensor.max_soc') | float - states('sensor.min_soc') | float) * 
+                states('sensor.battery_level') | float / 10000) | round(1)
           }}
 
 # getting input for Min and Max SoC

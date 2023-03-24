@@ -13,6 +13,10 @@ views:
         title: Power
       - type: entities
         entities:
+          - entity: sensor.battery_level
+          - entity: sensor.sg_battery_level_nom
+          - entity: sensor.battery_charge
+          - entity: sensor.sg_battery_charge_nom
           - entity: sensor.daily_pv_generation
           - entity: sensor.daily_exported_energy_from_pv
           - entity: sensor.daily_pv_generation_battery_discharge
@@ -29,9 +33,17 @@ views:
           green: 70
           yellow: 40
           red: 20
+      - type: gauge
+        entity: sensor.sg_battery_level_nom
+        min: 0
+        max: 100
+        severity:
+          green: 70
+          yellow: 40
+          red: 20
       - show_name: true
         show_icon: true
-        show_state: false
+        show_state: true
         type: glance
         entities:
           - entity: sun.sun
@@ -40,8 +52,10 @@ views:
           - entity: binary_sensor.battery_discharging
           - entity: binary_sensor.exporting_power
           - entity: binary_sensor.importing_power
+          - entity: sensor.inverter_temperature
         title: Status
         columns: 3
+        state_color: true
       - chart_type: line
         period: 5minute
         days_to_show: 1
