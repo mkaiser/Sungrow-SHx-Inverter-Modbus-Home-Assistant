@@ -2226,7 +2226,7 @@ template:
 input_number:
   set_sg_min_soc:
     name: Set min SoC
-    min: 5
+    min: 0
     max: 50
     step: 1
 
