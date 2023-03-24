@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-02-14
+# last update: 2023-03-24
 
 modbus:
   - name: SungrowSHx
@@ -440,96 +440,6 @@ modbus:
         scale: 0.1
         scan_interval: 600
 
-      - name: Monthly PV energy yields
-        unique_id: sg_monthly_pv_energy_yields
-        slave: !secret sungrow_modbus_slave
-        address: 6228
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 1
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        scale: 1
-        scan_interval: 600
-
-      - name: Yearly PV energy yields
-        unique_id: sg_yearly_pv_energy_yields
-        slave: !secret sungrow_modbus_slave
-        address: 6250
-        input_type: input
-        count: 2
-        data_type: uint32
-        swap: word
-        precision: 1
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        scale: 1
-        scan_interval: 600
-
-      - name: Monthly export energy from PV
-        unique_id: sg_monthly_export_energy_from_pv
-        slave: !secret sungrow_modbus_slave
-        address: 6596
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 1
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        scale: 1
-        scan_interval: 600
-
-      - name: Monthly direct energy consumption
-        unique_id: sg_monthly_direct_energy_consumption
-        slave: !secret sungrow_modbus_slave
-        address: 6418
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 1
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        scale: 1
-        scan_interval: 600
-
-      - name: Yearly direct energy consumption
-        unique_id: sg_yearly_direct_energy_consumption
-        slave: !secret sungrow_modbus_slave
-        address: 6430
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 1
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        scale: 1
-        scan_interval: 600
-
-      - name: Yearly export energy from PV
-        unique_id: sg_yearly_export_energy_from_pv
-        slave: !secret sungrow_modbus_slave
-        address: 6608
-        input_type: input
-        count: 2
-        data_type: uint32
-        swap: word
-        precision: 1
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        scale: 1
-        scan_interval: 600
-
       - name: Total PV generation
         unique_id: sg_total_pv_generation
         slave: !secret sungrow_modbus_slave
@@ -961,7 +871,9 @@ modbus:
         scale: 0.1
         scan_interval: 600
 
+      #####################
       # holding registers
+      #####################
       - name: Inverter start stop
         unique_id: sg_inverter_start_stop
         slave: !secret sungrow_modbus_slave
@@ -1154,18 +1066,6 @@ modbus:
         state_class: measurement
         scale: 10
         scan_interval: 10
-
-# from https://www.photovoltaikforum.com/thread/158136-sungrow-sammelthread-produktmanagement/?pageNo=348
-# Global Scanning
-# h 30229 - Timing Scanning - xAA enable, x55 disable
-# h 30230 - Manual Scanning - xAA enable, x55 disable
-# h 30231 - Periodic Scanning - xAA enable, x55 disable
-# h 30232 - Scanning Period (Periodic Scanning) - minutes 1-720
-# h 30233 - Hour Timing Scanning
-# h 30234 - Minute Timing Scanning
-# h,33031,SOC_upper_limit,"","%",U16,,,0.1
-# h,33032,SOC_lower_limit,"","%",U16,,,0.1
-# h,33046,protection_value_of_battery_average_overvoltage,"","W",U16,,,10
 
 # 'virtual' template sensors for better readability
 template:
@@ -1599,7 +1499,7 @@ input_number:
     min: 100
     max: 5000
     step: 100
-    
+
   set_sg_battery_charging_start_power:
     name: Set battery charging start power in W
     min: 0
@@ -1610,7 +1510,7 @@ input_number:
     name: Set battery discharging start power in W
     min: 0
     max: 1000
-    step: 10    
+    step: 10
 
 input_select:
   set_sg_start_stop_mode:
@@ -1827,7 +1727,6 @@ automation:
           address: 33047 # reg 33048
           value: "{{ states('input_number.set_sg_battery_max_discharge_power')  |float /10 |int}}"
     mode: single
-
 
   - id: "automation_sungrow_inverter_update_battery_charging_start_power"
     alias: "sungrow inverter update battery charging start power"
