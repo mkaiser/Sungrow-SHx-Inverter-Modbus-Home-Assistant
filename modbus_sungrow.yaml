@@ -417,7 +417,6 @@ modbus:
 
       - name: Monthly PV generation (02 February)
         unique_id: sg_monthly_pv_generation_02_february
-
         slave: !secret sungrow_modbus_slave
         address: 6227 # reg 6228
         input_type: input
@@ -929,7 +928,7 @@ modbus:
         state_class: total_increasing
         scale: 0.1
         scan_interval: 600
-      # Start monthly export
+      # End monthly export
 
       # Start yearly export energy from PV
       - name: Yearly Export (2019)
@@ -2172,6 +2171,58 @@ template:
         device_class: energy
         state_class: total_increasing
         state: "{{ states('sensor.' ~ 'yearly_export_' ~ now().year ) }}"
+
+
+      - name: sg_battery_level_nom
+        unique_id: sg_battery_level_nom
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        availability: >-
+          {{
+              states('sensor.sg_battery_level') | is_number and
+              states('sensor.sg_min_soc') | is_number and
+              states('sensor.sg_max_soc') | is_number
+          }}
+        state: >-
+          {% set soc_min = states('sensor.sg_min_soc') | float %}
+          {% set soc_max = states('sensor.sg_max_soc') | float %}
+          {% set soc_cur = states('sensor.sg_battery_level') | float %}
+          {{ (soc_min) + (soc_max - soc_min) * (soc_cur / 100) }}
+
+      - name: sg_battery_charge_nom
+        unique_id: sg_battery_charge_nom
+        unit_of_measurement: kWh
+        device_class: energy
+        availability: >-
+          {{
+              states('sensor.sg_battery_capacity') | is_number and
+              states('sensor.sg_battery_level_nom') | is_number
+          }}
+        state: >-
+          {{ 
+            states('sensor.sg_battery_capacity') | float * 
+            states('sensor.sg_battery_level_nom') | float / 100 
+          }}
+
+      - name: sg_battery_charge_soc
+        unique_id: sg_battery_charge_soc
+        unit_of_measurement: kWh
+        device_class: energy
+        availability: >-
+          {{
+              states('sensor.sg_battery_capacity') | is_number and
+              states('sensor.sg_battery_level') | is_number and
+              states('sensor.sg_min_soc') | is_number and
+              states('sensor.sg_max_soc') | is_number
+          }}
+        state: >-
+          {{  
+              states('sensor.sg_battery_capacity') | float *
+                ((states('sensor.sg_max_soc') | float - states('sensor.sg_min_soc') | float) * 
+                states('sensor.sg_battery_level') | float / 10000) 
+          }}
+
 
 # getting input for Min and Max SoC
 input_number:
