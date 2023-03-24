@@ -417,7 +417,6 @@ modbus:
 
       - name: Monthly PV generation (02 February)
         unique_id: sg_monthly_pv_generation_02_february
-
         slave: !secret sungrow_modbus_slave
         address: 6227 # reg 6228
         input_type: input
