@@ -928,7 +928,7 @@ modbus:
         state_class: total_increasing
         scale: 0.1
         scan_interval: 600
-      # Start monthly export
+      # End monthly export
 
       # Start yearly export energy from PV
       - name: Yearly Export (2019)
@@ -2172,6 +2172,7 @@ template:
         state_class: total_increasing
         state: "{{ states('sensor.' ~ 'yearly_export_' ~ now().year ) }}"
 
+
       - name: sg_battery_level_nom
         unique_id: sg_battery_level_nom
         unit_of_measurement: "%"
@@ -2221,6 +2222,7 @@ template:
                 ((states('sensor.sg_max_soc') | float - states('sensor.sg_min_soc') | float) * 
                 states('sensor.sg_battery_level') | float / 10000) 
           }}
+
 
 # getting input for Min and Max SoC
 input_number:
