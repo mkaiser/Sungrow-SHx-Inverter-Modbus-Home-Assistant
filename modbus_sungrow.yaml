@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-02-14
+# last update: 2023-03-24
 
 modbus:
   - name: SungrowSHx
@@ -14,7 +14,392 @@ modbus:
     delay: 5
     # timeout: 5
     sensors:
-    # Start monthly PV generation
+      - name: Sungrow device type code
+        unique_id: sg_dev_code
+        slave: !secret sungrow_modbus_slave
+        address: 4999 # reg 5000
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        scan_interval: 600
+
+      - name: Daily PV generation & battery discharge
+        unique_id: sg_daily_pv_gen_battery_discharge
+        slave: !secret sungrow_modbus_slave
+        address: 5002 # reg 5003
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Total PV generation & battery discharge
+        unique_id: sg_total_pv_gen_battery_discharge
+        slave: !secret sungrow_modbus_slave
+        address: 5003 # reg 5004
+        input_type: input
+        count: 2
+        data_type: uint32
+        swap: word
+        unit_of_measurement: kWh
+        precision: 1
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: 600
+
+      - name: Inverter temperature
+        unique_id: sg_inverter_temperature
+        slave: !secret sungrow_modbus_slave
+        address: 5007 # reg 5008
+        input_type: input
+        count: 1
+        data_type: int16
+        precision: 1
+        unit_of_measurement: °C
+        device_class: Temperature
+        scale: 0.1
+        scan_interval: 10
+
+      - name: MPPT1 voltage
+        unique_id: sg_mppt1_voltage
+        slave: !secret sungrow_modbus_slave
+        address: 5010 # reg 5011
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        scale: 0.1
+        scan_interval: 10
+
+      - name: MPPT1 current
+        unique_id: sg_mppt1_current
+        slave: !secret sungrow_modbus_slave
+        address: 5011 # reg 5012
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 2
+        unit_of_measurement: A
+        device_class: Current
+        scale: 0.1
+        scan_interval: 10
+
+      - name: MPPT2 voltage
+        unique_id: sg_mppt2_voltage
+        slave: !secret sungrow_modbus_slave
+        address: 5012 # reg 5013
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        scale: 0.1
+        scan_interval: 10
+
+      - name: MPPT2 current
+        unique_id: sg_mppt2_current
+        slave: !secret sungrow_modbus_slave
+        address: 5013 # reg 5014
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 2
+        unit_of_measurement: A
+        device_class: Current
+        scale: 0.1
+        scan_interval: 10
+
+      - name: Total DC power
+        unique_id: sg_total_dc_power
+        slave: !secret sungrow_modbus_slave
+        address: 5016 # reg 5017
+        input_type: input
+        count: 2
+        data_type: uint32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Phase A voltage
+        unique_id: sg_phase_a_voltage
+        slave: !secret sungrow_modbus_slave
+        address: 5018 # reg: 5019
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+
+      - name: Phase B voltage
+        unique_id: sg_phase_b_voltage
+        slave: !secret sungrow_modbus_slave
+        address: 5019 # reg: 5020
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+
+      - name: Phase C voltage
+        unique_id: sg_phase_c_voltage
+        slave: !secret sungrow_modbus_slave
+        address: 5020 # reg: 5021
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+
+      - name: Grid frequency
+        unique_id: sg_grid_frequency
+        slave: !secret sungrow_modbus_slave
+        address: 5035 # reg 5036
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 2
+        unit_of_measurement: "Hz"
+        device_class: frequency
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+
+      - name: Reactive power
+        unique_id: sg_reactive_power
+        slave: !secret sungrow_modbus_slave
+        address: 5032 # reg 5033
+        input_type: input
+        count: 2
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Power factor
+        unique_id: sg_power_factor
+        slave: !secret sungrow_modbus_slave
+        address: 5034 # reg 5035
+        input_type: input
+        count: 1
+        data_type: int16
+        swap: word
+        precision: 3
+        unit_of_measurement: "%"
+        device_class: power_factor
+        state_class: measurement
+        scale: 0.001
+        scan_interval: 10
+
+      #https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?pageNo=13
+      #Meter Active Power: 5601-5602 S32 W (Energiezähler Wirkleistung)
+      #Meter Phase A Active Power: 5603-5604 S32 W (Stromzähler Phase A Wirkleistung)
+      #Meter Phase B Active Power: 5605-5606 S32 W (Stromzähler Phase B Wirkleistung)
+      #Meter Phase C Active Power: 5607-5608 S32 W (Stromzähler Phase C Wirkleistung)
+      - name: Meter active power raw
+        unique_id: sg_meter_active_power_raw
+        slave: !secret sungrow_modbus_slave
+        address: 5600 # reg 5601
+        input_type: input
+        count: 2
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Meter phase A active power raw
+        unique_id: sg_meter_phase_a_active_power_raw
+        slave: !secret sungrow_modbus_slave
+        address: 5602 # reg 5603
+        input_type: input
+        count: 2
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Meter phase B active power raw
+        unique_id: sg_meter_phase_b_active_power_raw
+        slave: !secret sungrow_modbus_slave
+        address: 5604 # reg 5605
+        input_type: input
+        count: 2
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Meter phase C active power raw
+        unique_id: sg_meter_phase_c_active_power_raw
+        slave: !secret sungrow_modbus_slave
+        address: 5606 # reg 5607
+        input_type: input
+        count: 2
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: BDC rated power
+        unique_id: sg_bdc_rated_power
+        slave: !secret sungrow_modbus_slave
+        address: 5627 # reg 5628
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        scale: 100
+        scan_interval: 10
+
+      - name: BMS max. charging current
+        unique_id: sg_bms_max_charging_current
+        slave: !secret sungrow_modbus_slave
+        address: 5634 # reg 5635
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 0
+        unit_of_measurement: A
+        device_class: Current
+        scale: 1
+        scan_interval: 60
+
+      - name: BMS max. discharging current
+        unique_id: sg_bms_max_discharging_current
+        slave: !secret sungrow_modbus_slave
+        address: 5635 # reg 5636
+        input_type: input
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 0
+        unit_of_measurement: A
+        device_class: Current
+        scale: 1
+        scan_interval: 60
+
+      #https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?pageNo=13
+      #Phase A Backup Power: 5723 S16 W (Backup Leistung Phase A)
+      #Phase B Backup Power: 5724 S16 W (Backup Leistung Phase B)
+      #Phase C Backup Power: 5725 S16 W (Backup Leistung Phase C)
+      - name: Total backup power
+        slave: !secret sungrow_modbus_slave
+        unique_id: sg_total_backup_power
+        address: 5725 # reg 5726
+        input_type: input
+        count: 1
+        data_type: int16
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Backup phase A power
+        unique_id: sg_backup_phase_a_power
+        slave: !secret sungrow_modbus_slave
+        address: 5722 # reg 5723
+        input_type: input
+        count: 1
+        data_type: int16
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Backup phase B power
+        unique_id: sg_backup_phase_b_power
+        slave: !secret sungrow_modbus_slave
+        address: 5723 # reg 5724
+        input_type: input
+        count: 1
+        data_type: int16
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      - name: Backup phase C power
+        unique_id: sg_backup_phase_c_power
+        slave: !secret sungrow_modbus_slave
+        address: 5724 # reg 5725
+        input_type: input
+        count: 1
+        data_type: int16
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
+      # Start monthly PV generation
       - name: Monthly PV generation (01 January)
         unique_id: sg_monthly_pv_generation_01_january
         slave: !secret sungrow_modbus_slave
@@ -697,391 +1082,6 @@ modbus:
         scale: 0.1
         scan_interval: 600
       # End yearly export energy from PV
-      
-      - name: Sungrow device type code
-        unique_id: sg_dev_code
-        slave: !secret sungrow_modbus_slave
-        address: 4999 # reg 5000
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        scan_interval: 600
-
-      - name: Daily PV generation & battery discharge
-        unique_id: sg_daily_pv_gen_battery_discharge
-        slave: !secret sungrow_modbus_slave
-        address: 5002 # reg 5003
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 1
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        scale: 0.1
-        scan_interval: 600
-
-      - name: Total PV generation & battery discharge
-        unique_id: sg_total_pv_gen_battery_discharge
-        slave: !secret sungrow_modbus_slave
-        address: 5003 # reg 5004
-        input_type: input
-        count: 2
-        data_type: uint32
-        swap: word
-        unit_of_measurement: kWh
-        precision: 1
-        device_class: energy
-        state_class: total_increasing
-        scale: 0.1
-        scan_interval: 600
-
-      - name: Inverter temperature
-        unique_id: sg_inverter_temperature
-        slave: !secret sungrow_modbus_slave
-        address: 5007 # reg 5008
-        input_type: input
-        count: 1
-        data_type: int16
-        precision: 1
-        unit_of_measurement: °C
-        device_class: Temperature
-        scale: 0.1
-        scan_interval: 10
-
-      - name: MPPT1 voltage
-        unique_id: sg_mppt1_voltage
-        slave: !secret sungrow_modbus_slave
-        address: 5010 # reg 5011
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 1
-        unit_of_measurement: V
-        device_class: Voltage
-        scale: 0.1
-        scan_interval: 10
-
-      - name: MPPT1 current
-        unique_id: sg_mppt1_current
-        slave: !secret sungrow_modbus_slave
-        address: 5011 # reg 5012
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 2
-        unit_of_measurement: A
-        device_class: Current
-        scale: 0.1
-        scan_interval: 10
-
-      - name: MPPT2 voltage
-        unique_id: sg_mppt2_voltage
-        slave: !secret sungrow_modbus_slave
-        address: 5012 # reg 5013
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 1
-        unit_of_measurement: V
-        device_class: Voltage
-        scale: 0.1
-        scan_interval: 10
-
-      - name: MPPT2 current
-        unique_id: sg_mppt2_current
-        slave: !secret sungrow_modbus_slave
-        address: 5013 # reg 5014
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 2
-        unit_of_measurement: A
-        device_class: Current
-        scale: 0.1
-        scan_interval: 10
-
-      - name: Total DC power
-        unique_id: sg_total_dc_power
-        slave: !secret sungrow_modbus_slave
-        address: 5016 # reg 5017
-        input_type: input
-        count: 2
-        data_type: uint32
-        swap: word
-        precision: 0
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        scale: 1
-        scan_interval: 10
-
-      - name: Phase A voltage
-        unique_id: sg_phase_a_voltage
-        slave: !secret sungrow_modbus_slave
-        address: 5018 # reg: 5019
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 1
-        unit_of_measurement: V
-        device_class: Voltage
-        state_class: measurement
-        scale: 0.1
-        scan_interval: 10
-
-      - name: Phase B voltage
-        unique_id: sg_phase_b_voltage
-        slave: !secret sungrow_modbus_slave
-        address: 5019 # reg: 5020
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 1
-        unit_of_measurement: V
-        device_class: Voltage
-        state_class: measurement
-        scale: 0.1
-        scan_interval: 10
-
-      - name: Phase C voltage
-        unique_id: sg_phase_c_voltage
-        slave: !secret sungrow_modbus_slave
-        address: 5020 # reg: 5021
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 1
-        unit_of_measurement: V
-        device_class: Voltage
-        state_class: measurement
-        scale: 0.1
-        scan_interval: 10
-
-      - name: Grid frequency
-        unique_id: sg_grid_frequency
-        slave: !secret sungrow_modbus_slave
-        address: 5035 # reg 5036
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 2
-        unit_of_measurement: "Hz"
-        device_class: frequency
-        state_class: measurement
-        scale: 0.1
-        scan_interval: 10
-
-      - name: Reactive power
-        unique_id: sg_reactive_power
-        slave: !secret sungrow_modbus_slave
-        address: 5032 # reg 5033
-        input_type: input
-        count: 2
-        data_type: int32
-        swap: word
-        precision: 0
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        scale: 1
-        scan_interval: 10
-
-      - name: Power factor
-        unique_id: sg_power_factor
-        slave: !secret sungrow_modbus_slave
-        address: 5034 # reg 5035
-        input_type: input
-        count: 1
-        data_type: int16
-        swap: word
-        precision: 3
-        unit_of_measurement: "%"
-        device_class: power_factor
-        state_class: measurement
-        scale: 0.001
-        scan_interval: 10
-
-      #https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?pageNo=13
-      #Meter Active Power: 5601-5602 S32 W (Energiezähler Wirkleistung)
-      #Meter Phase A Active Power: 5603-5604 S32 W (Stromzähler Phase A Wirkleistung)
-      #Meter Phase B Active Power: 5605-5606 S32 W (Stromzähler Phase B Wirkleistung)
-      #Meter Phase C Active Power: 5607-5608 S32 W (Stromzähler Phase C Wirkleistung)
-      - name: Meter active power raw
-        unique_id: sg_meter_active_power_raw
-        slave: !secret sungrow_modbus_slave
-        address: 5600 # reg 5601
-        input_type: input
-        count: 2
-        data_type: int32
-        swap: word
-        precision: 0
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        scale: 1
-        scan_interval: 10
-
-      - name: Meter phase A active power raw
-        unique_id: sg_meter_phase_a_active_power_raw
-        slave: !secret sungrow_modbus_slave
-        address: 5602 # reg 5603
-        input_type: input
-        count: 2
-        data_type: int32
-        swap: word
-        precision: 0
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        scale: 1
-        scan_interval: 10
-
-      - name: Meter phase B active power raw
-        unique_id: sg_meter_phase_b_active_power_raw
-        slave: !secret sungrow_modbus_slave
-        address: 5604 # reg 5605
-        input_type: input
-        count: 2
-        data_type: int32
-        swap: word
-        precision: 0
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        scale: 1
-        scan_interval: 10
-
-      - name: Meter phase C active power raw
-        unique_id: sg_meter_phase_c_active_power_raw
-        slave: !secret sungrow_modbus_slave
-        address: 5606 # reg 5607
-        input_type: input
-        count: 2
-        data_type: int32
-        swap: word
-        precision: 0
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        scale: 1
-        scan_interval: 10
-
-      - name: BDC rated power
-        unique_id: sg_bdc_rated_power
-        slave: !secret sungrow_modbus_slave
-        address: 5627 # reg 5628
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        unit_of_measurement: "W"
-        device_class: power
-        state_class: measurement
-        scale: 100
-        scan_interval: 10
-
-      - name: BMS max. charging current
-        unique_id: sg_bms_max_charging_current
-        slave: !secret sungrow_modbus_slave
-        address: 5634 # reg 5635
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 0
-        unit_of_measurement: A
-        device_class: Current
-        scale: 1
-        scan_interval: 60
-
-      - name: BMS max. discharging current
-        unique_id: sg_bms_max_discharging_current
-        slave: !secret sungrow_modbus_slave
-        address: 5635 # reg 5636
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 0
-        unit_of_measurement: A
-        device_class: Current
-        scale: 1
-        scan_interval: 60
-
-      #https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?pageNo=13
-      #Phase A Backup Power: 5723 S16 W (Backup Leistung Phase A)
-      #Phase B Backup Power: 5724 S16 W (Backup Leistung Phase B)
-      #Phase C Backup Power: 5725 S16 W (Backup Leistung Phase C)
-      - name: Total backup power
-        slave: !secret sungrow_modbus_slave
-        unique_id: sg_total_backup_power
-        address: 5725 # reg 5726
-        input_type: input
-        count: 1
-        data_type: int16
-        swap: word
-        precision: 0
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        scale: 1
-        scan_interval: 10
-
-      - name: Backup phase A power
-        unique_id: sg_backup_phase_a_power
-        slave: !secret sungrow_modbus_slave
-        address: 5722 # reg 5723
-        input_type: input
-        count: 1
-        data_type: int16
-        swap: word
-        precision: 0
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        scale: 1
-        scan_interval: 10
-
-      - name: Backup phase B power
-        unique_id: sg_backup_phase_b_power
-        slave: !secret sungrow_modbus_slave
-        address: 5723 # reg 5724
-        input_type: input
-        count: 1
-        data_type: int16
-        swap: word
-        precision: 0
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        scale: 1
-        scan_interval: 10
-
-      - name: Backup phase C power
-        unique_id: sg_backup_phase_c_power
-        slave: !secret sungrow_modbus_slave
-        address: 5724 # reg 5725
-        input_type: input
-        count: 1
-        data_type: int16
-        swap: word
-        precision: 0
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        scale: 1
-        scan_interval: 10
 
       - name: System state
         unique_id: sg_system_state
@@ -1122,96 +1122,6 @@ modbus:
         device_class: energy
         state_class: total_increasing
         scale: 0.1
-        scan_interval: 600
-
-      - name: Monthly PV energy yields
-        unique_id: sg_monthly_pv_energy_yields
-        slave: !secret sungrow_modbus_slave
-        address: 6228
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 1
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        scale: 1
-        scan_interval: 600
-
-      - name: Yearly PV energy yields
-        unique_id: sg_yearly_pv_energy_yields
-        slave: !secret sungrow_modbus_slave
-        address: 6250
-        input_type: input
-        count: 2
-        data_type: uint32
-        swap: word
-        precision: 1
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        scale: 1
-        scan_interval: 600
-
-      - name: Monthly export energy from PV
-        unique_id: sg_monthly_export_energy_from_pv
-        slave: !secret sungrow_modbus_slave
-        address: 6596
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 1
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        scale: 1
-        scan_interval: 600
-
-      - name: Monthly direct energy consumption
-        unique_id: sg_monthly_direct_energy_consumption
-        slave: !secret sungrow_modbus_slave
-        address: 6418
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 1
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        scale: 1
-        scan_interval: 600
-
-      - name: Yearly direct energy consumption
-        unique_id: sg_yearly_direct_energy_consumption
-        slave: !secret sungrow_modbus_slave
-        address: 6430
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 1
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        scale: 1
-        scan_interval: 600
-
-      - name: Yearly export energy from PV
-        unique_id: sg_yearly_export_energy_from_pv
-        slave: !secret sungrow_modbus_slave
-        address: 6608
-        input_type: input
-        count: 2
-        data_type: uint32
-        swap: word
-        precision: 1
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        scale: 1
         scan_interval: 600
 
       - name: Total PV generation
@@ -1645,7 +1555,9 @@ modbus:
         scale: 0.1
         scan_interval: 600
 
+      #####################
       # holding registers
+      #####################
       - name: Inverter start stop
         unique_id: sg_inverter_start_stop
         slave: !secret sungrow_modbus_slave
@@ -1839,18 +1751,6 @@ modbus:
         scale: 10
         scan_interval: 10
 
-# from https://www.photovoltaikforum.com/thread/158136-sungrow-sammelthread-produktmanagement/?pageNo=348
-# Global Scanning
-# h 30229 - Timing Scanning - xAA enable, x55 disable
-# h 30230 - Manual Scanning - xAA enable, x55 disable
-# h 30231 - Periodic Scanning - xAA enable, x55 disable
-# h 30232 - Scanning Period (Periodic Scanning) - minutes 1-720
-# h 30233 - Hour Timing Scanning
-# h 30234 - Minute Timing Scanning
-# h,33031,SOC_upper_limit,"","%",U16,,,0.1
-# h,33032,SOC_lower_limit,"","%",U16,,,0.1
-# h,33046,protection_value_of_battery_average_overvoltage,"","W",U16,,,10
-
 # 'virtual' template sensors for better readability
 template:
   - binary_sensor:
@@ -1990,338 +1890,338 @@ template:
           {% endif %}
 
   - sensor:
-    - name: sg_battery_level_nom
-      unique_id: sg_battery_level_nom
-      unit_of_measurement: "%"
-      device_class: battery
-      state_class: measurement
-      availability: >-
-        {{
-            states('sensor.sg_battery_level') | is_number and
-            states('sensor.sg_min_soc') | is_number and
-            states('sensor.sg_max_soc') | is_number
-        }}
-      state: >-
-        {% set soc_min = states('sensor.sg_min_soc') | float %}
-        {% set soc_max = states('sensor.sg_max_soc') | float %}
-        {% set soc_cur = states('sensor.sg_battery_level') | float %}
-        {{ (soc_min) + (soc_max - soc_min) * (soc_cur / 100) }}
-  
-    - name: sg_battery_charge_nom
-      unique_id: sg_battery_charge_nom
-      unit_of_measurement: kWh
-      device_class: energy
-      availability: >-
-        {{
-            states('sensor.sg_battery_capacity') | is_number and
-            states('sensor.sg_battery_level_nom') | is_number
-        }}
-      state: >-
-        {{ 
-          states('sensor.sg_battery_capacity') | float * 
-          states('sensor.sg_battery_level_nom') | float / 100 
-        }}
-        
-    - name: sg_battery_charge_soc
-      unique_id: sg_battery_charge_soc
-      unit_of_measurement: kWh
-      device_class: energy
-      availability: >-
-        {{
-            states('sensor.sg_battery_capacity') | is_number and
-            states('sensor.sg_battery_level') | is_number and
-            states('sensor.sg_min_soc') | is_number and
-            states('sensor.sg_max_soc') | is_number
-        }}
-      state: >-
-        {{  
-            states('sensor.sg_battery_capacity') | float *
-              ((states('sensor.sg_max_soc') | float - states('sensor.sg_min_soc') | float) * 
-              states('sensor.sg_battery_level') | float / 10000) 
-        }}
-        
-    - name: "Monthly PV generation (current)"
-      unique_id: sg_monthly_pv_generation_current
-      unit_of_measurement: kWh
-      device_class: energy
-      state_class: total_increasing
-      state: "{{ states('sensor.' ~ 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower ) }}"
+      - name: MPPT1 power
+        unique_id: sg_mppt1_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.mppt1_voltage')|is_number and states('sensor.mppt1_current')|is_number }}"
+        state: "{{ (states('sensor.mppt1_voltage') | float * states('sensor.mppt1_current') | float) |int }}"
 
-    - name: "Yearly PV generation (current)"
-      unique_id: sg_yearly_pv_generation_current
-      unit_of_measurement: kWh
-      device_class: energy
-      state_class: total_increasing
-      state: "{{ states('sensor.' ~ 'yearly_pv_generation_' ~ now().year ) }}"
+      - name: MPPT2 power
+        unique_id: sg_mppt2_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.mppt2_voltage')|is_number and states('sensor.mppt2_current')|is_number }}"
+        state: "{{ (states('sensor.mppt2_voltage') | float * states('sensor.mppt2_current') | float) |int }}"
 
-    - name: "Monthly export (current)"
-      unique_id: sg_monthly_export_current
-      unit_of_measurement: kWh
-      device_class: energy
-      state_class: total_increasing
-      state: "{{ states('sensor.' ~ 'monthly_export_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower ) }}"
+      - name: Phase A power
+        unique_id: sg_phase_a_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.phase_a_voltage')|is_number and states('sensor.phase_a_current')|is_number }}"
+        state: "{{ (states('sensor.phase_a_voltage') | float * states('sensor.phase_a_current') | float) |int }}"
 
-    - name: "Yearly export (current)"
-      unique_id: sg_yearly_export_current
-      unit_of_measurement: kWh
-      device_class: energy
-      state_class: total_increasing
-      state: "{{ states('sensor.' ~ 'yearly_export_' ~ now().year ) }}"
-        
-    - name: MPPT1 power
-      unique_id: sg_mppt1_power
-      unit_of_measurement: W
-      device_class: power
-      availability: "{{states('sensor.mppt1_voltage')|is_number and states('sensor.mppt1_current')|is_number }}"
-      state: "{{ (states('sensor.mppt1_voltage') | float * states('sensor.mppt1_current') | float) |int }}"
+      - name: Phase B power
+        unique_id: sg_phase_b_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.phase_b_voltage')|is_number and states('sensor.phase_b_current')|is_number }}"
+        state: "{{ (states('sensor.phase_b_voltage') | float * states('sensor.phase_b_current') | float) |int }}"
 
-    - name: MPPT2 power
-      unique_id: sg_mppt2_power
-      unit_of_measurement: W
-      device_class: power
-      availability: "{{states('sensor.mppt2_voltage')|is_number and states('sensor.mppt2_current')|is_number }}"
-      state: "{{ (states('sensor.mppt2_voltage') | float * states('sensor.mppt2_current') | float) |int }}"
+      - name: Phase C power
+        unique_id: sg_phase_c_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.phase_c_voltage')|is_number and states('sensor.phase_c_current')|is_number }}"
+        state: "{{ (states('sensor.phase_c_voltage') | float * states('sensor.phase_c_current') | float) |int }}"
 
-    - name: Phase A power
-      unique_id: sg_phase_a_power
-      unit_of_measurement: W
-      device_class: power
-      availability: "{{states('sensor.phase_a_voltage')|is_number and states('sensor.phase_a_current')|is_number }}"
-      state: "{{ (states('sensor.phase_a_voltage') | float * states('sensor.phase_a_current') | float) |int }}"
+      # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
+      - name: Meter active power
+        unique_id: sg_meter_active_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.meter_active_power_raw')|is_number and states('sensor.meter_active_power_raw')|int != 0x7FFFFFFF}}"
+        state: "{{ states('sensor.meter_active_power_raw') }}"
 
-    - name: Phase B power
-      unique_id: sg_phase_b_power
-      unit_of_measurement: W
-      device_class: power
-      availability: "{{states('sensor.phase_b_voltage')|is_number and states('sensor.phase_b_current')|is_number }}"
-      state: "{{ (states('sensor.phase_b_voltage') | float * states('sensor.phase_b_current') | float) |int }}"
+      # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
+      - name: Meter Phase A active power
+        unique_id: sg_meter_phase_a_active_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.meter_phase_a_active_power_raw')|is_number and states('sensor.meter_phase_a_active_power_raw')|int != 0x7FFFFFFF}}"
+        state: "{{ states('sensor.meter_phase_a_active_power_raw') }}"
 
-    - name: Phase C power
-      unique_id: sg_phase_c_power
-      unit_of_measurement: W
-      device_class: power
-      availability: "{{states('sensor.phase_c_voltage')|is_number and states('sensor.phase_c_current')|is_number }}"
-      state: "{{ (states('sensor.phase_c_voltage') | float * states('sensor.phase_c_current') | float) |int }}"
+      # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
+      - name: Meter Phase B active power
+        unique_id: sg_meter_phase_b_active_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.meter_phase_b_active_power_raw')|is_number and states('sensor.meter_phase_b_active_power_raw')|int != 0x7FFFFFFF}}"
+        state: "{{ states('sensor.meter_phase_b_active_power_raw') }}"
 
-    # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
-    - name: Meter active power
-      unique_id: sg_meter_active_power
-      unit_of_measurement: W
-      device_class: power
-      state_class: measurement
-      availability: "{{ states('sensor.meter_active_power_raw')|is_number and states('sensor.meter_active_power_raw')|int != 0x7FFFFFFF}}"
-      state: "{{ states('sensor.meter_active_power_raw') }}"
+      # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
+      - name: Meter Phase C active power
+        unique_id: sg_meter_phase_c_active_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.meter_phase_c_active_power_raw')|is_number and states('sensor.meter_phase_c_active_power_raw')|int != 0x7FFFFFFF}}"
+        state: "{{ states('sensor.meter_phase_c_active_power_raw') }}"
 
-    # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
-    - name: Meter Phase A active power
-      unique_id: sg_meter_phase_a_active_power
-      unit_of_measurement: W
-      device_class: power
-      state_class: measurement
-      availability: "{{ states('sensor.meter_phase_a_active_power_raw')|is_number and states('sensor.meter_phase_a_active_power_raw')|int != 0x7FFFFFFF}}"
-      state: "{{ states('sensor.meter_phase_a_active_power_raw') }}"
+      - name: Sungrow inverter state
+        unique_id: sg_inverter_state
+        state: >-
+          {% if ((states('sensor.system_state') | int(default=0)) == 0x0002) %}
+            Stop
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0008) %}
+            Standby
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0010) %}
+            Initial Standby
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0020) %}
+            Startup
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0040) %}
+            Running
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0100) %}
+            Fault
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0400) %}
+            Maintain mode
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0800) %}
+            Forced mode
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x1000) %}
+            Off-grid mode
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x2501) %}
+            Restarting
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x4000) %}
+            External EMS mode
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}
 
-    # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
-    - name: Meter Phase B active power
-      unique_id: sg_meter_phase_b_active_power
-      unit_of_measurement: W
-      device_class: power
-      state_class: measurement
-      availability: "{{ states('sensor.meter_phase_b_active_power_raw')|is_number and states('sensor.meter_phase_b_active_power_raw')|int != 0x7FFFFFFF}}"
-      state: "{{ states('sensor.meter_phase_b_active_power_raw') }}"
+      - name: Sungrow device type
+        unique_id: sg_device_type
+        state: >-
+          {% if ((states('sensor.sungrow_device_type_code') | int(default=0))  == 0x0D06) %}
+            SH3K6
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D07) %}
+            SH4K6
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D09) %}
+            SH5K-20  
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D06) %}
+            SH3K6
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D07) %}
+            SH4K6
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D03) %}
+            SH5K-V13
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0C) %}
+            SH5K-30
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0A) %}
+            SH3K6-30
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0B) %}
+            SH4K6-30
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0F) %}
+            SH5.0RS
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0D) %}
+            SH3.6RS
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0E) %}
+            SH4.6RS
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D10) %}
+            SH6.0RS
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E01) %}
+            SH6.0RT
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E02) %}
+            SH8.0RT
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E03) %}
+            SH10RT
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0E) %}
+            SH8.0RT-V112
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0F) %}
+            SH10RT-V112
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E00) %}
+            SH5.0RT
+          {% else %}
+            Unknown device code!
+          {% endif %}
 
-    # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
-    - name: Meter Phase C active power
-      unique_id: sg_meter_phase_c_active_power
-      unit_of_measurement: W
-      device_class: power
-      state_class: measurement
-      availability: "{{ states('sensor.meter_phase_c_active_power_raw')|is_number and states('sensor.meter_phase_c_active_power_raw')|int != 0x7FFFFFFF}}"
-      state: "{{ states('sensor.meter_phase_c_active_power_raw') }}"
+      # make the sensor battery_forced_charge_discharge_cmd more human readable
+      # Inverter States from modbus reference manual
+      # 0xAA forced charge
+      # 0xBB forced discharge
+      # 0xCC Stop (Default)
+      - name: Battery forced charge discharge cmd
+        unique_id: sg_battery_forced_charge_discharge_cmd
+        state: >-
+          {% if ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0)) == 0x00AA) %}
+            Forced charge
+          {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0))  == 0x00BB) %}
+            Forced discharge
+          {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0))  == 0x00CC) %}
+            Stop (Default)
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}
 
-    - name: Sungrow inverter state
-      unique_id: sg_inverter_state
-      state: >-
-        {% if ((states('sensor.system_state') | int(default=0)) == 0x0002) %}
-          Stop
-        {% elif ((states('sensor.system_state') | int(default=0)) == 0x0008) %}
-          Standby
-        {% elif ((states('sensor.system_state') | int(default=0)) == 0x0010) %}
-          Initial Standby
-        {% elif ((states('sensor.system_state') | int(default=0)) == 0x0020) %}
-          Startup
-        {% elif ((states('sensor.system_state') | int(default=0)) == 0x0040) %}
-          Running
-        {% elif ((states('sensor.system_state') | int(default=0)) == 0x0100) %}
-          Fault
-        {% elif ((states('sensor.system_state') | int(default=0)) == 0x0400) %}
-          Maintain mode
-        {% elif ((states('sensor.system_state') | int(default=0)) == 0x0800) %}
-          Forced mode
-        {% elif ((states('sensor.system_state') | int(default=0)) == 0x1000) %}
-          Off-grid mode
-        {% elif ((states('sensor.system_state') | int(default=0)) == 0x2501) %}
-          Restarting
-        {% elif ((states('sensor.system_state') | int(default=0)) == 0x4000) %}
-          External EMS mode
-        {% else %}
-          Unknown - should not see me!
-        {% endif %}
+      # make the sensor ems_selection_raw more human readable
+      - name: EMS mode selection
+        unique_id: sg_ems_mode_selection
+        state: >-
+          {% if ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 0) %}
+            Self-consumption mode (default)
+          {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 2) %}
+            Forced mode
+          {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 3) %}
+            External EMS
+          {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 4) %}
+            VPP
+          {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 8) %}
+            MicroGrid
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}
 
-    - name: Sungrow device type
-      unique_id: sg_device_type
-      state: >-
-        {% if ((states('sensor.sungrow_device_type_code') | int(default=0))  == 0x0D06) %}
-          SH3K6
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D07) %}
-          SH4K6
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D09) %}
-          SH5K-20  
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D06) %}
-          SH3K6
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D07) %}
-          SH4K6
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D03) %}
-          SH5K-V13
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0C) %}
-          SH5K-30
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0A) %}
-          SH3K6-30
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0B) %}
-          SH4K6-30
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0F) %}
-          SH5.0RS
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0D) %}
-          SH3.6RS
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0E) %}
-          SH4.6RS
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D10) %}
-          SH6.0RS
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E01) %}
-          SH6.0RT
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E02) %}
-          SH8.0RT
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E03) %}
-          SH10RT
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0E) %}
-          SH8.0RT-V112
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0F) %}
-          SH10RT-V112
-        {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E00) %}
-          SH5.0RT
-        {% else %}
-          Unknown device code!
-        {% endif %}
+      - name: Signed battery power # positive if charging and negative if discharging
+        unique_id: sg_signed_battery_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ states('binary_sensor.battery_charging') and 
+          states('binary_sensor.battery_discharging') and 
+          states('sensor.battery_power_raw')|is_number }}
+        state: >-
+          {% if is_state('binary_sensor.battery_charging', 'on') %}
+            {{ (states('sensor.battery_power_raw') | float)}} 
+          {% elif is_state('binary_sensor.battery_discharging', 'on') %} 
+            {{ (states('sensor.battery_power_raw') | float * -1)}} 
+          {% else %} 
+            0 
+          {% endif %}
 
-    # make the sensor battery_forced_charge_discharge_cmd more human readable
-    # Inverter States from modbus reference manual
-    # 0xAA forced charge
-    # 0xBB forced discharge
-    # 0xCC Stop (Default)
-    - name: Battery forced charge discharge cmd
-      unique_id: sg_battery_forced_charge_discharge_cmd
-      state: >-
-        {% if ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0)) == 0x00AA) %}
-          Forced charge
-        {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0))  == 0x00BB) %}
-          Forced discharge
-        {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0))  == 0x00CC) %}
-          Stop (Default)
-        {% else %}
-          Unknown - should not see me!
-        {% endif %}
+      - name: Battery charging power # positive if charging else zero
+        unique_id: sg_battery_charging_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ states('binary_sensor.battery_charging') and 
+          states('sensor.battery_power_raw')|is_number }}
+        state: >-
+          {% if is_state('binary_sensor.battery_charging', 'on') %}
+            {{ states('sensor.battery_power_raw') }}
+          {% else %}
+            0
+          {% endif %}
 
-    # make the sensor ems_selection_raw more human readable
-    - name: EMS mode selection
-      unique_id: sg_ems_mode_selection
-      state: >-
-        {% if ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 0) %}
-          Self-consumption mode (default)
-        {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 2) %}
-          Forced mode
-        {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 3) %}
-          External EMS
-        {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 4) %}
-          VPP
-        {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 8) %}
-          MicroGrid
-        {% else %}
-          Unknown - should not see me!
-        {% endif %}
+      - name: Battery discharging power # positive if discharging else zero
+        unique_id: sg_battery_discharging_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ states('binary_sensor.battery_charging') and 
+          states('sensor.battery_power_raw')|is_number }}
+        state: >-
+          {% if is_state('binary_sensor.battery_discharging', 'on') %}
+            {{ states('sensor.battery_power_raw') }}
+          {% else %}
+            0
+          {% endif %}
 
-    - name: Signed battery power # positive if charging and negative if discharging
-      unique_id: sg_signed_battery_power
-      unit_of_measurement: W
-      device_class: power
-      state_class: measurement
-      availability: >-
-        {{ states('binary_sensor.battery_charging') and 
-        states('binary_sensor.battery_discharging') and 
-        states('sensor.battery_power_raw')|is_number }}
-      state: >-
-        {% if is_state('binary_sensor.battery_charging', 'on') %}
-          {{ (states('sensor.battery_power_raw') | float)}} 
-        {% elif is_state('binary_sensor.battery_discharging', 'on') %} 
-          {{ (states('sensor.battery_power_raw') | float * -1)}} 
-        {% else %} 
-          0 
-        {% endif %}
+      - name: Import power # power from grid: positive if importing, else zero
+        unique_id: sg_import_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{states('sensor.export_power_raw')|is_number }}"
+        state: >-
+          {% if states('sensor.export_power_raw')|int < 0 %}
+            {{ states('sensor.export_power_raw')|int *-1 }}
+          {% else %}
+            0
+          {% endif %}
 
-    - name: Battery charging power # positive if charging else zero
-      unique_id: sg_battery_charging_power
-      unit_of_measurement: W
-      device_class: power
-      state_class: measurement
-      availability: >-
-        {{ states('binary_sensor.battery_charging') and 
-        states('sensor.battery_power_raw')|is_number }}
-      state: >-
-        {% if is_state('binary_sensor.battery_charging', 'on') %}
-          {{ states('sensor.battery_power_raw') }}
-        {% else %}
-          0
-        {% endif %}
+      - name: Export power # power to grid: positive if exporting, else zero
+        unique_id: sg_export_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{states('sensor.export_power_raw')|is_number }}"
+        state: >-
+          {% if states('sensor.export_power_raw')|int > 0 %}
+            {{ states('sensor.export_power_raw') }}
+          {% else %}
+            0
+          {% endif %}
 
-    - name: Battery discharging power # positive if discharging else zero
-      unique_id: sg_battery_discharging_power
-      unit_of_measurement: W
-      device_class: power
-      state_class: measurement
-      availability: >-
-        {{ states('binary_sensor.battery_charging') and 
-        states('sensor.battery_power_raw')|is_number }}
-      state: >-
-        {% if is_state('binary_sensor.battery_discharging', 'on') %}
-          {{ states('sensor.battery_power_raw') }}
-        {% else %}
-          0
-        {% endif %}
+      - name: "Monthly PV generation (current)"
+        unique_id: sg_monthly_pv_generation_current
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        state: "{{ states('sensor.' ~ 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower ) }}"
 
-    - name: Import power # power from grid: positive if importing, else zero
-      unique_id: sg_import_power
-      unit_of_measurement: W
-      device_class: power
-      state_class: measurement
-      availability: "{{states('sensor.export_power_raw')|is_number }}"
-      state: >-
-        {% if states('sensor.export_power_raw')|int < 0 %}
-          {{ states('sensor.export_power_raw')|int *-1 }}
-        {% else %}
-          0
-        {% endif %}
+      - name: "Yearly PV generation (current)"
+        unique_id: sg_yearly_pv_generation_current
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        state: "{{ states('sensor.' ~ 'yearly_pv_generation_' ~ now().year ) }}"
 
-    - name: Export power # power to grid: positive if exporting, else zero
-      unique_id: sg_export_power
-      unit_of_measurement: W
-      device_class: power
-      state_class: measurement
-      availability: "{{states('sensor.export_power_raw')|is_number }}"
-      state: >-
-        {% if states('sensor.export_power_raw')|int > 0 %}
-          {{ states('sensor.export_power_raw') }}
-        {% else %}
-          0
-        {% endif %}
+      - name: "Monthly export (current)"
+        unique_id: sg_monthly_export_current
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        state: "{{ states('sensor.' ~ 'monthly_export_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower ) }}"
+
+      - name: "Yearly export (current)"
+        unique_id: sg_yearly_export_current
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        state: "{{ states('sensor.' ~ 'yearly_export_' ~ now().year ) }}"
+
+      - name: sg_battery_level_nom
+        unique_id: sg_battery_level_nom
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        availability: >-
+          {{
+              states('sensor.sg_battery_level') | is_number and
+              states('sensor.sg_min_soc') | is_number and
+              states('sensor.sg_max_soc') | is_number
+          }}
+        state: >-
+          {% set soc_min = states('sensor.sg_min_soc') | float %}
+          {% set soc_max = states('sensor.sg_max_soc') | float %}
+          {% set soc_cur = states('sensor.sg_battery_level') | float %}
+          {{ (soc_min) + (soc_max - soc_min) * (soc_cur / 100) }}
+
+      - name: sg_battery_charge_nom
+        unique_id: sg_battery_charge_nom
+        unit_of_measurement: kWh
+        device_class: energy
+        availability: >-
+          {{
+              states('sensor.sg_battery_capacity') | is_number and
+              states('sensor.sg_battery_level_nom') | is_number
+          }}
+        state: >-
+          {{ 
+            states('sensor.sg_battery_capacity') | float * 
+            states('sensor.sg_battery_level_nom') | float / 100 
+          }}
+
+      - name: sg_battery_charge_soc
+        unique_id: sg_battery_charge_soc
+        unit_of_measurement: kWh
+        device_class: energy
+        availability: >-
+          {{
+              states('sensor.sg_battery_capacity') | is_number and
+              states('sensor.sg_battery_level') | is_number and
+              states('sensor.sg_min_soc') | is_number and
+              states('sensor.sg_max_soc') | is_number
+          }}
+        state: >-
+          {{  
+              states('sensor.sg_battery_capacity') | float *
+                ((states('sensor.sg_max_soc') | float - states('sensor.sg_min_soc') | float) * 
+                states('sensor.sg_battery_level') | float / 10000) 
+          }}
 
 # getting input for Min and Max SoC
 input_number:
@@ -2361,7 +2261,7 @@ input_number:
     min: 100
     max: 5000
     step: 100
-    
+
   set_sg_battery_charging_start_power:
     name: Set battery charging start power in W
     min: 0
@@ -2372,7 +2272,7 @@ input_number:
     name: Set battery discharging start power in W
     min: 0
     max: 1000
-    step: 10    
+    step: 10
 
 input_select:
   set_sg_start_stop_mode:
@@ -2589,7 +2489,6 @@ automation:
           address: 33047 # reg 33048
           value: "{{ states('input_number.set_sg_battery_max_discharge_power')  |float /10 |int}}"
     mode: single
-
 
   - id: "automation_sungrow_inverter_update_battery_charging_start_power"
     alias: "sungrow inverter update battery charging start power"
