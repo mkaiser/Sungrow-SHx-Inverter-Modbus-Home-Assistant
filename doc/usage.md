@@ -10,4 +10,4 @@ Example to force-charge the battery:
 - Limit the maximum battery charge power using "set max battery charge power". This value also limits the "force charge discharge power".
 - Limit the maximum battery discharge power using "set max battery discharge power", and this value also limits the "force charge discharge power".
 
-Please note that changes on the input sliders may take up to 60 seconds until they affect the "battery status" entities in the GUI, will hopefully be fixed, soon, see #86
+Please note that changes on the input sliders may take up to 60 seconds until they affect the "battery status" entities in the GUI, will hopefully be fixed, soon, see [#86](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/86)

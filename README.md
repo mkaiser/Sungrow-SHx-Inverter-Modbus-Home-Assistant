@@ -24,7 +24,7 @@ Ensure, that you connected the inverter to the Home Assistant network using the 
 
 ## 2. Documentation
 
-The documentation covers following topics. If you need more help, please use the [github discussion](discussions). Only open an issue, if it code related, or you found a bug.
+The documentation covers following topics. If you need more help, please use the [github discussion](../../discussions). Only open an issue, if it code related, or you found a bug.
 
 [Installation/ Configuration](doc/installation.md)
 
@@ -36,13 +36,25 @@ The documentation covers following topics. If you need more help, please use the
 
 ## 3. Visual impressions
 
-![Home Asisstants built-in Energy Dashboard](doc/images/HA_Energy_Dashboard.png)
+Home Asisstants built-in Energy Dashboard
 
-![Overview ](doc/images/Dashboard_Overview.png)
+<img src="doc/images/HA_Energy_Dashboard.png" width="600">
 
-![Detailed Info](doc/images/Dashboard_Detail.png)
 
-![Basic EMS Control ](doc/images/Dashboard_EMS.png)
+Default dashboard tab "overview"
+
+<img src="doc/images/Dashboard_Overview.png" width="600">
+
+
+Default dashboard tab "Detail"
+
+<img src="doc/images/Dashboard_Detail.png" width="600">
+
+
+Default dashboard tab "EMS"
+
+<img src="doc/images/Dashboard_EMS.png" width="600">
+
 
 ## 4. Tested configurations
 I have a **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery with 14.4 kWh** updating frequently to the latest **Home Assistant** (> 2023.3). I try to thoroughly test features before releasing them, but I cannot test everything (e.g., backup capabilities, DO-related, ...)
@@ -67,12 +79,12 @@ partially working
 - SH5.RS (home assistant community, Danirb80) via WiNetS: register running_state is not available. Created workarounds using template sensors
 
 ## 5. Status and future work 
-1. See #38 for some kind of a roadmap
-2. I included the registers, which are common between a wide range of Sungrow inverter models. There are many more registers in the Sungrow documents, which I left out, but I am happy to include them, if you need them. --> [github discussions](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions)
-3. If you made a nice visualization - let us know! --> [github discussions](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions)
+1. See [#38](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/38) for some kind of a roadmap
+2. I included the registers, which are common between a wide range of Sungrow inverter models. There are many more registers in the Sungrow documents, which I left out, but I am happy to include them, if you need them. --> [github discussions](../../discussions)
+3. If you made a nice visualization - let us know! --> [github discussions](../../discussions)
 4. This is meant to be a simple, straightforward YAML-based integration. If you need more than this, I recommend having a look at the SunGather project: https://github.com/bohdan-s
 
 ## 6. Most important of all
 We am happy to share our experiences - feel encouraged to share yours with us, too! Participate, if you have any questions :)
 
-**Special thanks to all the people, who are actively contributing to this project and helping others in the issues and discussions!**
+**Thanks to all the people, who are actively contributing to this project! Special thanks to Louis712, dylan09 and elektrinis, who are helping a lot helping others in the issue/ disussion sections!**
