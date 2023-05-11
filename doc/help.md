@@ -18,7 +18,7 @@ Modbus IO exception Modbus Error: [Input/Output] Unable to decode request
 ## Check #1
 
 **Using the native LAN port of the inverter is required - the WiNet Ethernet port is not fully working!**
-Recent sungrow invertes come with WiNet-S, a Dongle for WLAN access / LAN interconnection. Although the dongle has an Ethernet port, modbus is not working properly with this port. Some users report, that they cannot establish a connection, some are able to, but several modbus registers are working, and some not. It seems like Sungrow is actively working on that, so maybe in the near future they will release firmware upgrades to improve the modbus via WiNet S support. 
+Recent Sungrow inverters come with WiNet-S, a Dongle for WLAN access / LAN interconnection. Although the dongle has an Ethernet port, modbus is not working properly with this port. Some users report, that they cannot establish a connection, some are able to, but several modbus registers are working, and some not. It seems like Sungrow is actively working on that, so maybe in the near future they will release firmware upgrades to improve the modbus via WiNet S support. 
 
 ![Inverter LAN connetion](images/Inverter_LAN_ports.drawio.svg)
 
