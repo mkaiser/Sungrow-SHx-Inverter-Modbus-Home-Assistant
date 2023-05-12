@@ -22,6 +22,8 @@ Ensure, that you connected the inverter to the Home Assistant network using the 
 
 ![Overview](doc/images/overview_modbus_connection.drawio.svg)
 
+![Inverter LAN connection](doc/images/Inverter_LAN_ports.drawio.svg)
+
 ## 2. Documentation
 
 The documentation covers following topics. If you need more help, please use the [github discussion](../../discussions). Only open an issue, if it code related, or you found a bug.
