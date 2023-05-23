@@ -2188,7 +2188,7 @@ template:
           {% set soc_max = states('sensor.max_soc') | float %}
           {% set soc_cur = states('sensor.battery_level') | float %}
           {{
-            (soc_min) + (soc_max - soc_min) * (soc_cur / 100) | round(1) 
+            ((soc_min) + ((soc_max - soc_min) * (soc_cur / 100))) | round(1) 
           }}
 
       - name: "Battery charge (nominal)"
