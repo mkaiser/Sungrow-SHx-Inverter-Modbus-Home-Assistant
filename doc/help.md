@@ -43,6 +43,13 @@ If you are using Windows you can easily check, if the modbus connection generall
 
 I tested it with the values shown in the screenshot. First set the TCP Settings (Options --> Modbus TCP) then adapt all highlighted parameters
 
+The following values must match values from your `secrets.yaml`
+```
+Slave IP = sungrow_modbus_host_ip
+TCP Port = sungrow_modbus_port
+Unit ID = sungrow_modbus_slave
+```
+
 ![QModMaster setting ](/doc/images/QModMaster.png)
 
 
