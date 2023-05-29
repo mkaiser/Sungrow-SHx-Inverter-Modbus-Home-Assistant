@@ -305,7 +305,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 100
-        scan_interval: 10
+        scan_interval: 600
 
       - name: BMS max. charging current
         unique_id: sg_bms_max_charging_current
@@ -1331,7 +1331,7 @@ modbus:
         unit_of_measurement: "%"
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 600
 
       - name: Battery temperature
         unique_id: sg_battery_temperature
@@ -1374,7 +1374,7 @@ modbus:
         device_class: energy
         state_class: total_increasing
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 600
 
       # always 65535
       # - name: Grid state raw
@@ -2326,8 +2326,34 @@ automation:
           value: >
             {% if is_state('input_select.set_sg_start_stop_mode', 'Start') %}
             {{sg_start}}
-            {% else %}  
-            {{sg_stop}} 
+            {% else %}
+            {{sg_stop}}
+            {% endif %}
+    mode: single
+
+  - id: "automation_sungrow_inverter_start_stop_input_selector_update"
+    alias: "sungrow inverter start stop input selector update"
+    description: "Updates starts/ stops input selector"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.system_state
+    condition: []
+    variables:
+      sg_start: 0xCF
+      sg_stop: 0xCE
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.set_sg_start_stop_mode
+        data:
+          #  {% elif ((states('sensor.system_state') | int(default=0)) == 0x0040) %}
+          #   Running
+          option: >
+            {% if is_state('sensor.system_state', '0x0040') %}
+            'Start'
+            {% else %}
+            'Stop'
             {% endif %}
     mode: single
 
@@ -2348,6 +2374,22 @@ automation:
           value: "{{ states('input_number.set_sg_max_soc') | int *10}}"
     mode: single
 
+  - id: "automation_sungrow_inverter_update_max_soc_input_slider_update"
+    alias: "sungrow inverter max SoC input slider update"
+    description: "Updates Sungrow max Soc input slider"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.max_soc
+    condition: []
+    action:
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.set_sg_max_soc
+        data:
+          value: "{{ states('sensor.max_soc') }}"
+    mode: single
+
   - id: "automation_sungrow_inverter_update_min_soc"
     alias: "sungrow inverter update min SoC"
     description: "Updates Sungrow min Soc holding register"
@@ -2365,6 +2407,22 @@ automation:
           value: "{{ states('input_number.set_sg_min_soc') | int *10}}"
     mode: single
 
+  - id: "automation_sungrow_inverter_update_min_soc_input_slider_update"
+    alias: "sungrow inverter min SoC input slider update"
+    description: "Updates Sungrow min Soc input slider"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.min_soc
+    condition: []
+    action:
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.set_sg_min_soc
+        data:
+          value: "{{ states('sensor.min_soc') }}"
+    mode: single
+
   - id: "automation_sungrow_inverter_update_reserved_soc_for_backup"
     alias: "sungrow inverter update reserved soc for backup"
     description: "Updates reserved SoC for backup register"
@@ -2380,6 +2438,22 @@ automation:
           slave: !secret sungrow_modbus_slave
           address: 13099 # reg 13100
           value: "{{ states('input_number.set_sg_reserved_soc_for_backup') | int}}"
+    mode: single
+
+  - id: "automation_sungrow_inverter_update_reserved_backup_soc_input_slider_update"
+    alias: "sungrow inverter reserved backup SoC input slider update"
+    description: "Updates Sungrow reserved backup Soc input slider"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.reserved_soc_for_backup
+    condition: []
+    action:
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.set_sg_reserved_soc_for_backup
+        data:
+          value: "{{ states('sensor.reserved_soc_for_backup') }}"
     mode: single
 
   - id: "automation_sungrow_inverter_update_battery_forced_charge_discharge_cmd"
@@ -2405,8 +2479,24 @@ automation:
             {% elif is_state('input_select.set_sg_battery_forced_charge_discharge_cmd', 'Forced charge') %} {{ems_forced_charge}}
             {% elif is_state('input_select.set_sg_battery_forced_charge_discharge_cmd', 'Forced discharge') %} {{ems_forced_discharge}}
             {% else %}
-            {{0xCC}}
+            {{ems_stop_default}}
             {% endif %}
+    mode: single
+
+  - id: "automation_sungrow_inverter_update_battery_forced_charge_discharge_cmd_input_select_update"
+    alias: "sungrow inverter update battery forced charge discharge cmd input select update"
+    description: "Updates Sungrow battery forced charge discharge cmd input select"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.sg_battery_forced_charge_discharge_cmd
+    condition: []
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
+        data:
+          option: "{{ states('sensor.sg_battery_forced_charge_discharge_cmd') }}"
     mode: single
 
   - id: "automation_sungrow_inverter_update_ems_mode"
@@ -2436,8 +2526,30 @@ automation:
             {% elif is_state('input_select.set_sg_ems_mode', 'VPP') %} {{ems_mode_vpp}}
             {% elif is_state('input_select.set_sg_ems_mode', 'MicroGrid') %} {{ems_mode_microgrid}}
             {% else %} 
-            0
+            ems_mode_self_consume
             {% endif %}
+    mode: single
+
+  - id: "automation_sungrow_inverter_update_ems_mode_input_select_update"
+    alias: "sungrow inverter update EMS mode input select update"
+    description: "Updates EMS mode input select"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.ems_mode_selection
+    condition: []
+    variables:
+      ems_mode_self_consume: 0
+      ems_mode_forced: 2
+      ems_mode_external: 3
+      ems_mode_vpp: 4
+      ems_mode_microgrid: 8
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.set_sg_ems_mode
+        data:
+          option: "{{ states('sensor.ems_mode_selection') }}"
     mode: single
 
   - id: "automation_sungrow_inverter_update_battery_forced_charge_discharge_power"
@@ -2457,6 +2569,22 @@ automation:
           value: "{{ states('input_number.set_sg_forced_charge_discharge_power') | int}}"
     mode: single
 
+  - id: "automation_sungrow_inverter_update_battery_forced_charge_discharge_power_input_slider_update"
+    alias: "sungrow inverter update battery forced charge discharge power input slider update"
+    description: "Updates battery forced charge discharge power input slider"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.battery_forced_charge_discharge_power
+    condition: []
+    action:
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.set_sg_forced_charge_discharge_power
+        data:
+          value: "{{ states('sensor.battery_forced_charge_discharge_power') }}"
+    mode: single
+
   - id: "automation_sungrow_inverter_update_battery_max_charge_power"
     alias: "sungrow inverter update battery max charge power"
     description: "Sets battery max charge power"
@@ -2472,6 +2600,22 @@ automation:
           slave: !secret sungrow_modbus_slave
           address: 33046 # reg 33047
           value: "{{ states('input_number.set_sg_battery_max_charge_power')  |float /10 |int}}"
+    mode: single
+
+  - id: "automation_sungrow_inverter_update_battery_max_charge_power_input_slider_update"
+    alias: "sungrow inverter update battery max charge power input slider update"
+    description: "Updates battery max charge power input slider"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.battery_max_charge_power
+    condition: []
+    action:
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.set_sg_battery_max_charge_power
+        data:
+          value: "{{ states('sensor.battery_max_charge_power') }}"
     mode: single
 
   - id: "automation_sungrow_inverter_update_battery_max_discharge_power"
@@ -2491,6 +2635,22 @@ automation:
           value: "{{ states('input_number.set_sg_battery_max_discharge_power')  |float /10 |int}}"
     mode: single
 
+  - id: "automation_sungrow_inverter_update_battery_max_discharge_power_input_slider_update"
+    alias: "sungrow inverter update battery max discharge power input slider update"
+    description: "Updates battery max discharge power input slider"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.battery_max_discharge_power
+    condition: []
+    action:
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.set_sg_battery_max_discharge_power
+        data:
+          value: "{{ states('sensor.battery_max_discharge_power') }}"
+    mode: single
+
   - id: "automation_sungrow_inverter_update_battery_charging_start_power"
     alias: "sungrow inverter update battery charging start power"
     description: "Sets battery charging start power"
@@ -2508,6 +2668,22 @@ automation:
           value: "{{ states('input_number.set_sg_battery_charging_start_power') |float /10 |int}}"
     mode: single
 
+  - id: "automation_sungrow_inverter_update_battery_charging_start_power_input_slider_update"
+    alias: "sungrow inverter update battery charging start power input slider update"
+    description: "Updates battery charging start power input slider"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.battery_charging_start_power
+    condition: []
+    action:
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.set_sg_battery_charging_start_power
+        data:
+          value: "{{ states('sensor.battery_charging_start_power') }}"
+    mode: single
+
   - id: "automation_sungrow_inverter_update_battery_discharging_start_power"
     alias: "sungrow inverter update battery discharging start power"
     description: "Sets battery discharging start power"
@@ -2523,4 +2699,20 @@ automation:
           slave: !secret sungrow_modbus_slave
           address: 33149 # reg 33150
           value: "{{ states('input_number.set_sg_battery_discharging_start_power') |float /10 | int}}"
+    mode: single
+
+  - id: "automation_sungrow_inverter_update_battery_discharging_start_power_input_slider_update"
+    alias: "sungrow inverter update battery discharging start power input slider update"
+    description: "Updates battery discharging start power input slider"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.battery_discharging_start_power
+    condition: []
+    action:
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.set_sg_battery_discharging_start_power
+        data:
+          value: "{{ states('sensor.battery_discharging_start_power') }}"
     mode: single
