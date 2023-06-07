@@ -144,6 +144,7 @@ views:
         title: PV Gen
       - type: entities
         entities:
+          - entity: sensor.battery_capacity
           - entity: sensor.battery_charging_power
           - entity: sensor.battery_discharging_power
           - entity: sensor.battery_voltage
