@@ -1662,6 +1662,21 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
+      - name: SG Max Export
+        unique_id: sg_max_export
+        slave: !secret sungrow_modbus_slave
+        address: 13073 # reg 13074
+        input_type: holding
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 1
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
       - name: Reserved SoC for backup
         unique_id: sg_reserved_soc_for_backup
         slave: !secret sungrow_modbus_slave
@@ -1719,6 +1734,17 @@ modbus:
         device_class: energy
         scale: 0.01
         scan_interval: 600
+
+      - name: Export power limitation cmd raw
+        unique_id: export_power_limitation_cmd_raw
+        slave: !secret sungrow_modbus_slave
+        address: 13086 # reg 13087
+        input_type: holding
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 0
+        scan_interval: 10
 
       - name: Battery charging start power
         unique_id: sg_battery_charging_start_power
@@ -2052,6 +2078,17 @@ template:
             Unknown - should not see me!
           {% endif %}
 
+      - name: Export power limitation
+        unique_id: export_power_limitation_cmd
+        state: >-
+          {% if ((states('sensor.export_power_limitation_cmd_raw') | int(default=0)) == 0x00AA) %}
+            Enable
+          {% elif ((states('sensor.export_power_limitation_cmd_raw') | int(default=0))  == 0x0055) %}
+            Disable
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}
+
       # make the sensor ems_selection_raw more human readable
       - name: EMS mode selection
         unique_id: sg_ems_mode_selection
@@ -2275,6 +2312,12 @@ input_number:
     max: 1000
     step: 10
 
+  set_sg_max_export:
+    name: Set max export
+    min: 0
+    max: 11000
+    step: 100
+
 input_select:
   set_sg_start_stop_mode:
     name: Inverter mode
@@ -2301,6 +2344,13 @@ input_select:
       - "Forced charge"
       - "Forced discharge"
     icon: mdi:battery-unknown
+
+  set_export_power_limitation:
+    name: Export power limitation
+    options:
+      - "Enable"
+      - "Disable"
+    icon: mdi:export
 
 # Automations: Write modbus registers on input changes via GUI
 # note: If you change a value by the sliders, it will take up to 60 seconds until the state variables are updated
@@ -2481,6 +2531,86 @@ automation:
             {% else %}
             {{ems_stop_default}}
             {% endif %}
+    mode: single
+
+  - id: "automation_sungrow_inverter_export_power_limitation_update"
+    alias: "sungrow inverter export power limitation update"
+    description: "Updates Enable/Disable for export power"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.export_power_limitation_cmd_raw
+    condition: []
+    variables:
+      export_limit_enable: Enable
+      export_limit_disable: Disable
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.set_export_power_limitation
+        data:
+          option: >
+            {% if is_state('sensor.export_power_limitation_cmd', 'Enable') %} {{export_limit_enable}}
+            {% elif is_state('sensor.export_power_limitation_cmd', 'Disable') %} {{export_limit_disable}}
+            {% endif %}
+    mode: single
+
+  - id: "automation_sungrow_export_power_limitation"
+    alias: "sungrow inverter export power limitation"
+    description: "Set export power limitation"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_select.set_export_power_limitation
+    condition: []
+    variables:
+      export_limit_enable: 0xAA
+      export_limit_disable: 0x55
+    action:
+      - service: modbus.write_register
+        data_template:
+          hub: SungrowSHx
+          slave: !secret sungrow_modbus_slave
+          address: 13086 # reg 13087
+          value: >
+            {% if is_state('input_select.set_export_power_limitation', 'Enable') %} {{export_limit_enable}}
+            {% elif is_state('input_select.set_export_power_limitation', 'Disable') %} {{export_limit_disable}}
+            {% else %}
+            {{export_disable}}
+            {% endif %}
+    mode: single
+
+  - id: "automation_sungrow_inverter_max_export_update"
+    alias: "sungrow inverter inverter max export update"
+    description: "Updates Sungrow max export slider"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.sg_max_export
+    condition: []
+    action:
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.set_sg_max_export
+        data:
+          value: "{{ states('sensor.sg_max_export') }}"
+    mode: single
+
+  - id: "automation_sungrow_inverter_max_export"
+    alias: "sungrow inverter max export"
+    description: "Sungrow max export"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_number.set_sg_max_export
+    condition: []
+    action:
+      - service: modbus.write_register
+        data_template:
+          hub: SungrowSHx
+          slave: !secret sungrow_modbus_slave
+          address: 13073 # reg 13074
+          value: "{{ states('input_number.set_sg_max_export') }}"
     mode: single
 
   - id: "automation_sungrow_inverter_update_battery_forced_charge_discharge_cmd_input_select_update"
