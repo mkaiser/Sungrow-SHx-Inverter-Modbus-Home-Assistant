@@ -2541,17 +2541,14 @@ automation:
         entity_id:
           - sensor.export_power_limitation_cmd_raw
     condition: []
-    variables:
-      export_limit_enable: Enable
-      export_limit_disable: Disable
     action:
       - service: input_select.select_option
         target:
           entity_id: input_select.set_export_power_limitation
         data:
           option: >
-            {% if is_state('sensor.export_power_limitation_cmd_raw', '170') %} {{export_limit_enable}}
-            {% elif is_state('sensor.export_power_limitation_cmd_raw', '85') %} {{export_limit_disable}}
+            {% if ((states('sensor.export_power_limitation_cmd_raw') | int(default=0)) == 0x00AA) %} {{'Enable'}}
+            {% elif ((states('sensor.export_power_limitation_cmd_raw') | int(default=0)) == 0x0055) %} {{'Disable'}}
             {% endif %}
     mode: single
 
