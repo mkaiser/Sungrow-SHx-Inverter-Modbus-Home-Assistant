@@ -1662,7 +1662,7 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
-      - name: SG Max Export
+      - name: Max export
         unique_id: sg_max_export
         slave: !secret sungrow_modbus_slave
         address: 13073 # reg 13074
