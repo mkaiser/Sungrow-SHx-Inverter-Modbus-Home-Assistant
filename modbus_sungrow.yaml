@@ -2315,7 +2315,7 @@ input_number:
   set_sg_max_export:
     name: Set max export
     min: 0
-    max: 11000
+    max: 10000
     step: 100
 
 input_select:
@@ -2550,8 +2550,8 @@ automation:
           entity_id: input_select.set_export_power_limitation
         data:
           option: >
-            {% if is_state('sensor.export_power_limitation_cmd', 'Enable') %} {{export_limit_enable}}
-            {% elif is_state('sensor.export_power_limitation_cmd', 'Disable') %} {{export_limit_disable}}
+            {% if is_state('sensor.export_power_limitation_cmd_raw', '170') %} {{export_limit_enable}}
+            {% elif is_state('sensor.export_power_limitation_cmd_raw', '85') %} {{export_limit_disable}}
             {% endif %}
     mode: single
 
