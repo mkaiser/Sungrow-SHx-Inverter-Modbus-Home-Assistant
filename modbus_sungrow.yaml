@@ -293,34 +293,6 @@ modbus:
         scale: 1
         scan_interval: 10
 
-      - name: TEST Export power limit min reg 5622
-        unique_id: sg_export_power_limit_min
-        slave: !secret sungrow_modbus_slave
-        address: 5621 # reg 5622
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        unit_of_measurement: "W"
-        device_class: power
-        state_class: measurement
-        scale: 10
-        scan_interval: 60
-
-      - name: TEST Export power limit max reg 5623
-        unique_id: sg_export_power_limit_max
-        slave: !secret sungrow_modbus_slave
-        address: 5622 # reg 5623
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        unit_of_measurement: "W"
-        device_class: power
-        state_class: measurement
-        scale: 10
-        scan_interval: 60
-
       - name: BDC rated power
         unique_id: sg_bdc_rated_power
         slave: !secret sungrow_modbus_slave
@@ -1583,7 +1555,7 @@ modbus:
         scan_interval: 600
 
       - name: TEST Export power limit reg13047
-        unique_id: sg_export_power_limit
+        unique_id: sg_export_power_limit_reg13047
         slave: !secret sungrow_modbus_slave
         address: 13046 # reg 13047
         input_type: input
@@ -1595,7 +1567,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 60
+        scan_interval: 10
 
       #####################
       # holding registers
@@ -1717,7 +1689,7 @@ modbus:
         unit_of_measurement: "W"
         device_class: power
         state_class: measurement
-        scale: 0
+        scale: 1
         scan_interval: 10
 
       - name: Reserved SoC for backup
@@ -2338,7 +2310,6 @@ input_number:
 
   set_sg_battery_max_discharge_power:
     name: Set max battery discharge power in W
-    #initial: 40
     min: 100
     max: 5000
     step: 100
