@@ -243,4 +243,11 @@ views:
           - entity: sensor.battery_charging_start_power
           - entity: sensor.battery_discharging_start_power
         title: Battery Status
+      - type: entities
+        entities:
+          - entity: sensor.export_power_limit_mode
+          - entity: sensor.export_power_limit
+          - entity: input_select.set_sg_export_power_limit_mode
+          - entity: input_number.set_sg_export_power_limit
+        title: Export Settings
 title: PV System
