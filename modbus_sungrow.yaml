@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-06-20
+# last update: 2023-07-05
 
 modbus:
   - name: SungrowSHx
@@ -1554,20 +1554,20 @@ modbus:
         scale: 0.1
         scan_interval: 600
 
-      - name: TEST Export power limit reg13047
-        unique_id: sg_export_power_limit_reg13047
-        slave: !secret sungrow_modbus_slave
-        address: 13046 # reg 13047
-        input_type: input
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 0
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        scale: 1
-        scan_interval: 10
+											  
+												 
+										   
+								  
+						 
+				
+						 
+				  
+					
+							  
+						   
+								
+				
+						 
 
       #####################
       # holding registers
@@ -1622,30 +1622,30 @@ modbus:
         state_class: measurement
         scan_interval: 10
 
-      #   # only SH*K* ?
-      # - name: Battery type
-      #   slave: !secret sungrow_modbus_slave
-      #   address: 13054 # 13055
-      #   input_type: holding
-      #   count: 1
-      #   data_type: uint16
-      #   swap: word
-      #   precision: 0
-      #   scan_interval: 60
+						
+							
+											 
+								
+							 
+				  
+						   
+					
+					  
+						   
 
-      #  # only for SH*K*
-      #  # does not work for my SH10.RT
-      # - name: Battery capacity Ah
-      #   slave: !secret sungrow_modbus_slave
-      #   address: 13056 #13057
-      #   input_type: holding
-      #   count: 1
-      #   scan_interval: 600
-      #   data_type: uint16
-      #   swap: word
-      #   precision: 0
-      #   unit_of_measurement: "Ah"
-      #   scale: 1
+						 
+									   
+								   
+											 
+							   
+							 
+				  
+							
+						   
+					
+					  
+								   
+				  
 
       - name: Max SoC
         unique_id: sg_max_soc
@@ -1690,6 +1690,17 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
+        scan_interval: 10
+
+      - name: Export power limit mode raw
+        unique_id: sg_export_power_limit_mode_raw
+        slave: !secret sungrow_modbus_slave
+        address: 13086 # reg 13087
+        input_type: holding
+        count: 1
+        data_type: uint16
+        swap: word
+        precision: 0
         scan_interval: 10
 
       - name: Reserved SoC for backup
@@ -1750,16 +1761,16 @@ modbus:
         scale: 0.01
         scan_interval: 600
 
-      - name: Export power limit mode raw
-        unique_id: sg_export_power_limit_mode_raw
-        slave: !secret sungrow_modbus_slave
-        address: 13086 # reg 13087
-        input_type: holding
-        count: 1
-        data_type: uint16
-        swap: word
-        precision: 0
-        scan_interval: 10
+										 
+												 
+										   
+								  
+						   
+				
+						 
+				  
+					
+						 
 
       - name: Battery charging start power
         unique_id: sg_battery_charging_start_power
@@ -2097,9 +2108,9 @@ template:
         unique_id: export_power_limit_mode
         state: >-
           {% if ((states('sensor.export_power_limit_mode_raw') | int(default=0)) == 0x00AA) %}
-            Enable
+            Enabled
           {% elif ((states('sensor.export_power_limit_mode_raw') | int(default=0))  == 0x0055) %}
-            Disable
+            Disabled
           {% else %}
             Unknown - should not see me!
           {% endif %}
@@ -2329,7 +2340,7 @@ input_number:
   set_sg_export_power_limit:
     name: Set export power limit
     min: 0
-    max: 10000
+    max: 10500 # Note: max for SH10.RT. It would be ncie to have this as a global variable /secret
     step: 100
 
 input_select:
@@ -2362,8 +2373,8 @@ input_select:
   set_sg_export_power_limit_mode:
     name: Export power limit mode
     options:
-      - "Enable"
-      - "Disable"
+      - "Enabled"
+      - "Disabled"
     icon: mdi:export
 
 # Automations: Write modbus registers on input changes via GUI
@@ -2608,8 +2619,8 @@ automation:
           entity_id: input_select.set_sg_export_power_limit_mode
         data:
           option: >
-            {% if ((states('sensor.export_power_limit_mode_raw') | int(default=0)) == 0x00AA) %} {{'Enable'}}
-            {% elif ((states('sensor.export_power_limit_mode_raw') | int(default=0)) == 0x0055) %} {{'Disable'}}
+            {% if ((states('sensor.export_power_limit_mode_raw') | int(default=0)) == 0x00AA) %} {{'Enabled'}}
+            {% elif ((states('sensor.export_power_limit_mode_raw') | int(default=0)) == 0x0055) %} {{'Disabled'}}
             {% endif %}
     mode: single
 
@@ -2631,8 +2642,8 @@ automation:
           slave: !secret sungrow_modbus_slave
           address: 13086 # reg 13087
           value: >
-            {% if is_state('input_select.set_sg_export_power_limit_mode', 'Enable') %} {{export_limit_enable}}
-            {% elif is_state('input_select.set_sg_export_power_limit_mode', 'Disable') %} {{export_limit_disable}}
+            {% if is_state('input_select.set_sg_export_power_limit_mode', 'Enabled') %} {{export_limit_enable}}
+            {% elif is_state('input_select.set_sg_export_power_limit_mode', 'Disabled') %} {{export_limit_disable}}
             {% else %}
             {{export_limit_disable}}
             {% endif %}
