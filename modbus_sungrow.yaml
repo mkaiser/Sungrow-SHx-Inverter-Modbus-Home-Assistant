@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-07-05
+# last update: 2023-07-07
 
 modbus:
   - name: SungrowSHx
@@ -1554,21 +1554,6 @@ modbus:
         scale: 0.1
         scan_interval: 600
 
-											  
-												 
-										   
-								  
-						 
-				
-						 
-				  
-					
-							  
-						   
-								
-				
-						 
-
       #####################
       # holding registers
       #####################
@@ -1621,31 +1606,6 @@ modbus:
         device_class: power
         state_class: measurement
         scan_interval: 10
-
-						
-							
-											 
-								
-							 
-				  
-						   
-					
-					  
-						   
-
-						 
-									   
-								   
-											 
-							   
-							 
-				  
-							
-						   
-					
-					  
-								   
-				  
 
       - name: Max SoC
         unique_id: sg_max_soc
@@ -1760,17 +1720,6 @@ modbus:
         device_class: energy
         scale: 0.01
         scan_interval: 600
-
-										 
-												 
-										   
-								  
-						   
-				
-						 
-				  
-					
-						 
 
       - name: Battery charging start power
         unique_id: sg_battery_charging_start_power
@@ -2406,31 +2355,31 @@ automation:
             {% endif %}
     mode: single
 
-  - id: "automation_sungrow_inverter_start_stop_input_selector_update"
-    alias: "sungrow inverter start stop input selector update"
-    description: "Updates starts/ stops input selector"
-    trigger:
-      - platform: state
-        entity_id:
-          - sensor.system_state
-    condition: []
-    variables:
-      sg_start: 0xCF
-      sg_stop: 0xCE
-    action:
-      - service: input_select.select_option
-        target:
-          entity_id: input_select.set_sg_start_stop_mode
-        data:
-          #  {% elif ((states('sensor.system_state') | int(default=0)) == 0x0040) %}
-          #   Running
-          option: >
-            {% if is_state('sensor.system_state', '0x0040') %}
-            'Start'
-            {% else %}
-            'Stop'
-            {% endif %}
-    mode: single
+  #  - id: "automation_sungrow_inverter_start_stop_input_selector_update"
+  #    alias: "sungrow inverter start stop input selector update"
+  #    description: "Updates starts/ stops input selector"
+  #    trigger:
+  #      - platform: state
+  #        entity_id:
+  #          - sensor.system_state
+  #    condition: []
+  #    variables:
+  #      sg_start: 0xCF
+  #      sg_stop: 0xCE
+  #    action:
+  #      - service: input_select.select_option
+  #        target:
+  #          entity_id: input_select.set_sg_start_stop_mode
+  #        data:
+  #          #  {% elif ((states('sensor.system_state') | int(default=0)) == 0x0040) %}
+  #          #   Running
+  #          option: >
+  #            {% if is_state('sensor.system_state', '0x0040') %}
+  #            'Start'
+  #            {% else %}
+  #            'Stop'
+  #            {% endif %}
+  #    mode: single
 
   - id: "automation_sungrow_inverter_update_max_soc"
     alias: "sungrow inverter update max SoC"
