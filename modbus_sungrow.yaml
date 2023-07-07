@@ -1376,16 +1376,6 @@ modbus:
         scale: 0.1
         scan_interval: 600
 
-      # always 65535
-      # - name: Grid state raw
-      #   slave: !secret sungrow_modbus_slave
-      #   address: 13029
-      #   input_type: input
-      #   count: 1
-      #   data_type: uint16
-      #   swap: word
-      #   scan_interval: 10
-
       - name: Phase A current
         unique_id: sg_phase_a_current
         slave: !secret sungrow_modbus_slave
@@ -1475,24 +1465,6 @@ modbus:
         state_class: total_increasing
         scale: 0.1
         scan_interval: 600
-
-      # works only for SH5K-20, SH3K6, SH4K6, SH5K-V13, SH5K-30, SH3K6-30, SH4K6-30
-      # not on my SH10.RT
-      # for Li-Ion in kWh
-      # for Acid in Ah
-      # - name: Battery capacity 13038
-      #   slave: !secret sungrow_modbus_slave
-      #   address: 13038 #13039
-      #   input_type: input
-      #   count: 1
-      #   data_type: uint16
-      #   swap: word
-      #   precision: 1
-      #   #unit_of_measurement: kWh
-      #   #device_class: energy
-      #   #state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
 
       - name: Daily battery charge
         unique_id: sg_daily_battery_charge
@@ -1760,6 +1732,8 @@ template:
           {{states('sensor.running_state')|is_number or 
             states('sensor.total_dc_power')|is_number
           }}
+        delay_on:
+          seconds: 60
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
@@ -1783,6 +1757,8 @@ template:
             states('sensor.total_dc_power')|is_number and 
             states('sensor.load_power')|is_number ) 
           }}
+        delay_on:
+          seconds: 60
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
@@ -1825,6 +1801,8 @@ template:
             states('sensor.total_dc_power')|is_number and 
             states('sensor.load_power')|is_number ) 
           }}
+        delay_on:
+          seconds: 60
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
@@ -1860,6 +1838,8 @@ template:
       - name: Exporting power
         unique_id: sg_exporting_power
         availability: "{{states('sensor.running_state')|is_number or states('sensor.export_power_raw')|is_number }}"
+        delay_on:
+          seconds: 60
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
@@ -1876,6 +1856,8 @@ template:
       - name: Importing power
         unique_id: sg_importing_power
         availability: "{{states('sensor.running_state')|is_number or states('sensor.export_power_raw')|is_number }}"
+        delay_on:
+          seconds: 60
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
