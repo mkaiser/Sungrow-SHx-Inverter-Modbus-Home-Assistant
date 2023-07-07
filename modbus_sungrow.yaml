@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-07-07
+# last update: 2023-07-07 (2)
 
 modbus:
   - name: SungrowSHx
@@ -2200,7 +2200,7 @@ template:
           {% set soc_max = states('sensor.max_soc') | float %}
           {% set soc_cur = states('sensor.battery_level') | float %}
           {{
-            ((soc_min) + ((soc_max - soc_min) * (soc_cur / 100))) | round(1) 
+            ((soc_min) + ((soc_max - soc_min) * (soc_cur / 100))) | round(1)
           }}
 
       - name: "Battery charge (nominal)"
@@ -2210,12 +2210,12 @@ template:
         availability: >-
           {{
               states('sensor.battery_capacity') | is_number and
-              states('sensor.sg_battery_level_nom') | is_number
+              states('sensor.battery_level_nominal') | is_number
           }}
         state: >-
-          {{ 
-            ( states('sensor.battery_capacity') | float * 
-            states('sensor.sg_battery_level_nom') | float / 100 )| round(1)
+          {{
+            ( states('sensor.battery_capacity') | float *
+            states('sensor.battery_level_nominal') | float / 100 )| round(1)
           }}
 
       - name: "Battery charge"

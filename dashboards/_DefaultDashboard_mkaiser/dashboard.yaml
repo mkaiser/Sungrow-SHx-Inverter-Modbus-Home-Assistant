@@ -14,9 +14,9 @@ views:
       - type: entities
         entities:
           - entity: sensor.battery_level
-          - entity: sensor.sg_battery_level_nom
+          - entity: sensor.battery_level_nominal
           - entity: sensor.battery_charge
-          - entity: sensor.sg_battery_charge_nom
+          - entity: sensor.battery_charge_nominal
           - entity: sensor.daily_pv_generation
           - entity: sensor.daily_exported_energy_from_pv
           - entity: sensor.daily_pv_generation_battery_discharge
@@ -34,7 +34,7 @@ views:
           yellow: 40
           red: 20
       - type: gauge
-        entity: sensor.sg_battery_level_nom
+        entity: sensor.battery_level_nominal
         min: 0
         max: 100
         severity:
