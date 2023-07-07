@@ -1,5 +1,12 @@
 An *easy-to-use YAML-based integration* for several Sungrow inverters for Home Assistant. 
 
+
+# Note (July 2023)
+I made a mistake end of march causing unique_ids of sensors getting mixed up. This is now fixed, but it may affect you. You are affected, if you see these warnings in a current verison of the Standard PV dashboard:
+> entity not available: sensor.sg_battery_charge_nom and sg_battery_level_nom"
+
+ Follow these instructions to fix it: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/88#issuecomment-1625270593
+
 # Contents
 - [1. Overview](#1-overview)
 - [2. Documentation](#2-documentation)
