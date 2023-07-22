@@ -209,7 +209,7 @@ views:
     cards:
       - type: entities
         entities:
-          - entity: input_select.set_sg_start_stop_mode
+          - entity: input_select.set_sg_inverter_run_mode
           - entity: sensor.sungrow_inverter_state
           - entity: sensor.ems_mode_selection
           - entity: sensor.battery_forced_charge_discharge_cmd
