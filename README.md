@@ -3,7 +3,7 @@ An *easy-to-use YAML-based integration* for several Sungrow inverters for Home A
 # new (July 2023): Discord Server
 
 Due to the unpredicted popularity of this integration, I am kind of overburdened with support and need your help. Maybe this freshly setup discord channel may help:
-[Discord server](https://discord.com/channels/1127341524770898062/1127341524770898065)
+[Discord server](https://discord.gg/ZvYBejFkm2)
 
 # Note (July 2023)
 I made a mistake end of march causing unique_ids of sensors getting mixed up. This is now fixed, but it may affect you. You are affected, if you see these warnings in a current verison of the Standard PV dashboard:
