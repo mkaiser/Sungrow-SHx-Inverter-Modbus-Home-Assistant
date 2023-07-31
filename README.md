@@ -2,7 +2,7 @@ An *easy-to-use YAML-based integration* for several Sungrow inverters for Home A
 
 # new (July 2023): Discord Server
 
-Due to the unpredicted popularity of this integration, I am kind of overburdened with support and need your help. Maybe this freshly setup discord channel may help:
+Due to the unpredicted popularity of this integration, I am kind of overburdened with support and need your help. Maybe a discord channel might help (2023-07-31):
 [Discord server](https://discord.gg/ZvYBejFkm2)
 
 # Note (July 2023)
