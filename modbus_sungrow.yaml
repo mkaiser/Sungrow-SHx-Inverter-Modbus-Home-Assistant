@@ -2490,14 +2490,14 @@ automation:
     trigger:
       - platform: state
         entity_id:
-          - sensor.sg_battery_forced_charge_discharge_cmd
+          - sensor.battery_forced_charge_discharge_cmd
     condition: []
     action:
       - service: input_select.select_option
         target:
           entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
         data:
-          option: "{{ states('sensor.sg_battery_forced_charge_discharge_cmd') }}"
+          option: "{{ states('sensor.battery_forced_charge_discharge_cmd') }}"
     mode: single
 
   - id: "automation_sungrow_inverter_update_ems_mode"
