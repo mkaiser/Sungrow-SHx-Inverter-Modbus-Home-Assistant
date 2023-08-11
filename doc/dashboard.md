@@ -4,7 +4,8 @@
 
 ##  Add a nice Dashboard like the one shown above
 
-Navigate to folder "dashboards/_DefaultDashboard_mkaiser" and follow the instructions in the README
+Navigate to folder [dashboards/_mkaiser](dashboards/_DefaultDashboard_mkaiser) and follow the instructions in [README.md](dashboards/_DefaultDashboard_mkaiser/README.md)
+    
 
 Browse the "dashboards" folder for other contributed dashboards :)
 
