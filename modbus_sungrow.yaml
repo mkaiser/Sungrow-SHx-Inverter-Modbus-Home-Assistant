@@ -1762,7 +1762,11 @@ template:
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
-            {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x2) > 0 }}
+            {% if states('sensor.running_state')|int(default=0)|bitwise_and(0x2) > 0 %}
+              on
+            {% else %}
+              off
+            {% endif %}
           {% else %}
             {# workaround for SH*RS inverters without working running_state #}
             {% if (states('sensor.ems_mode_selection') ) == "Forced mode" %}
@@ -1806,7 +1810,11 @@ template:
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
-            {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x4) > 0 }}
+            {% if states('sensor.running_state')|int(default=0)|bitwise_and(0x4) > 0 %}
+              on
+            {% else %}
+              off
+            {% endif %}
           {% else %}
             {# workaround for SH*RS inverters without working running_state #}
             {% if (states('sensor.ems_mode_selection') ) == "Forced mode" %}
