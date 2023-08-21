@@ -2,11 +2,14 @@ An *easy-to-use YAML-based integration* for several Sungrow inverters for Home A
 
 [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2)
 
+# IMPORTANT: Errors in YAMl file (2023-08-21):
+In the last Home Assistant update (2023.8.3), some breaking changes have been made to the internal HA Modbus implementation. This causes that this yaml-integration won't start. 
+If you updated to 2023.8.3, you need to downgrade:
 
-# new (July 2023): Discord Server
+- if you know how to use *SSH* with your HA instance, type: ``` ha core update --version 2023.8.2 ```
+- via GUI: Settings --> System --> Backup: Chose backup labelled with "core_2023.*" to downgrade
 
-Due to the unpredicted popularity of this integration, I am kind of overburdened with support and need your help. Maybe a discord channel might help (2023-07-31):
-[Discord server](https://discord.gg/ZvYBejFkm2)
+As soon it is fixed, a new version will be released! Join the discord / put this repository in your watch list to be notified! 
 
 # Note (July 2023)
 I made a mistake end of march causing unique_ids of sensors getting mixed up. This is now fixed, but it may affect you. You are affected, if you see these warnings in a current verison of the Standard PV dashboard:
@@ -57,9 +60,9 @@ If you any kind of assistance, you have three options:
 
 a) Use the [github discussion](../../discussions) 
 
-b) (new! Created in July 2023) Join the  [Discord server](https://discord.com/channels/1127341524770898062/1127341524770898065) and ask for help 
+b) (new! Created in July 2023) Join the Discord Channel [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2).
 
-c) If it is code-related or you want to contribute, open an  [github issue](../../issue) or isse a pullrequest
+c) Only if code-related (bugs / contributions): Open an  [github issue](../../issue) or isse a pullrequest
 
 ## 4. Visual impressions
 
