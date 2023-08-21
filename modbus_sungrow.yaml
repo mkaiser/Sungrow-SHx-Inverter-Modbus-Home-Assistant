@@ -2030,7 +2030,7 @@ template:
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0A) %}
             SH8.0RT-V122
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0B) %}
-            SH100RT-V122
+            SH10RT-V122
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0E) %}
             SH4.6RS
           {% else %}
