@@ -2,14 +2,9 @@ An *easy-to-use YAML-based integration* for several Sungrow inverters for Home A
 
 [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2)
 
-# IMPORTANT: Errors in YAMl file (2023-08-21):
+# IMPORTANT (2023-08-21): Errors in YAML file - fixed!
 In the last Home Assistant update (2023.8.3), some breaking changes have been made to the internal HA Modbus implementation. This causes that this yaml-integration won't start. 
-If you updated to 2023.8.3, you need to downgrade:
-
-- if you know how to use *SSH* with your HA instance, type: ``` ha core update --version 2023.8.2 ```
-- via GUI: Settings --> System --> Backup: Chose backup labelled with "core_2023.*" to downgrade
-
-As soon it is fixed, a new version will be released! Join the discord / put this repository in your watch list to be notified! 
+This was fixed in the current revision. Please upgrade.
 
 # Note (July 2023)
 I made a mistake end of march causing unique_ids of sensors getting mixed up. This is now fixed, but it may affect you. You are affected, if you see these warnings in a current verison of the Standard PV dashboard:
@@ -89,7 +84,7 @@ Default dashboard tab "EMS"
 ## 5. Tested configurations
 I have a **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery with 14.4 kWh** updating frequently to the latest **Home Assistant** (> 2023.3). I try to thoroughly test features before releasing them, but I cannot test everything (e.g., backup capabilities, DO-related, ...)
 
-The Modbus register mapping is based on two documents the Sungrow support sent me by email. I am not sure if I am allowed to share the files, but you can search for them using their names. Let me know in the [github discussions](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions), if there are newer versions available.
+The Modbus register mapping is based on two documents the Sungrow support sent me (my current version is v1.0.25 from 12.01.2023). I am not sure if I am allowed to share the files, but you can search for them using their names. Let me know in the [github discussions](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions), if there are newer versions available.
 
 ```
 Communication.Protocol.of.Residential.Hybrid.Inverter_V1.0.23_EN
