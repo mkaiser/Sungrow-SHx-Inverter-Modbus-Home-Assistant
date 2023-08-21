@@ -84,7 +84,7 @@ Default dashboard tab "EMS"
 ## 5. Tested configurations
 I have a **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery with 14.4 kWh** updating frequently to the latest **Home Assistant** (> 2023.3). I try to thoroughly test features before releasing them, but I cannot test everything (e.g., backup capabilities, DO-related, ...)
 
-The Modbus register mapping is based on two documents the Sungrow support sent me (my current version is v1.0.25 from 12.01.2023). I am not sure if I am allowed to share the files, but you can search for them using their names. Let me know in the [github discussions](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions), if there are newer versions available.
+The Modbus register mapping is based on two documents the Sungrow support sent me (my current version is v1.0.25 from 12.01.2023. The changelogs from .23 to .25 only mention added device codes (*RT-20, *-V112 and *-V122). I am not sure if I am allowed to share the files, but you can search for them using their names. Let me know in the [github discussions](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions), if there are newer versions available.
 
 ```
 Communication.Protocol.of.Residential.Hybrid.Inverter_V1.0.23_EN

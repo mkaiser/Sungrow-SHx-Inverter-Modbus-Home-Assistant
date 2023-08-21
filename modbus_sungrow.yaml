@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-08-21
+# last update: 2023-08-21 (2)
 
 modbus:
   - name: SungrowSHx
@@ -1981,38 +1981,58 @@ template:
             SH4K6
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D09) %}
             SH5K-20  
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D06) %}
-            SH3K6
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D07) %}
-            SH4K6
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D03) %}
             SH5K-V13
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0C) %}
-            SH5K-30
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0A) %}
             SH3K6-30
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0B) %}
             SH4K6-30
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0F) %}
-            SH5.0RS
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0C) %}
+            SH5K-30
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D17) %}
+            SH3.RS
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0D) %}
             SH3.6RS
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0E) %}
-            SH4.6RS
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D18) %}
+            SH4.0RS
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0F) %}
+            SH5.0RS
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D10) %}
             SH6.0RS
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E00) %}
+            SH5.0RT
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E01) %}
             SH6.0RT
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E02) %}
             SH8.0RT
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E03) %}
             SH10RT
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E10) %}
+            SH5.0RT-20
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E11) %}
+            SH6.0RT-20
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E12) %}
+            SH8.0RT-20
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E13) %}
+            SH10RT-20
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0C) %}
+            SH5.0RT-V112
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0D) %}
+            SH6.0RT-V112
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0E) %}
             SH8.0RT-V112
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0F) %}
             SH10RT-V112
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E00) %}
-            SH5.0RT
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E08) %}
+            SH5.0RT-V122
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E09) %}
+            SH6.0RT-V122
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0A) %}
+            SH8.0RT-V122
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0B) %}
+            SH100RT-V122
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0E) %}
+            SH4.6RS
           {% else %}
             Unknown device code!
           {% endif %}
