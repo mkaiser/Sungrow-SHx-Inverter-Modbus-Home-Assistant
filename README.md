@@ -4,7 +4,9 @@ An *easy-to-use YAML-based integration* for several Sungrow inverters for Home A
 
 # IMPORTANT (2023-08-21): Errors in YAML file - fixed!
 In the last Home Assistant update (2023.8.3), some breaking changes have been made to the internal HA Modbus implementation. This causes that this yaml-integration won't start. 
-This was fixed in the current revision. Please upgrade.
+This was fixed in the current revision. Please upgrade. 
+
+**Update 2023-08-25:** Home Assistant **2023.8.4** works with the current code, too!
 
 # Note (July 2023)
 I made a mistake end of march causing unique_ids of sensors getting mixed up. This is now fixed, but it may affect you. You are affected, if you see these warnings in a current verison of the Standard PV dashboard:
