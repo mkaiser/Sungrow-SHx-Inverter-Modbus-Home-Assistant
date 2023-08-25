@@ -1,0 +1,252 @@
+views:
+  - title: Overview
+    icon: mdi:sun-compass
+    cards:
+      - type: entities
+        entities:
+          - entity: sensor.sg1_total_dc_power
+          - entity: sensor.sg1_load_power
+          - entity: sensor.sg1_export_power
+          - entity: sensor.sg1_import_power
+          - entity: sensor.sg1_battery_charging_power
+          - entity: sensor.sg1_battery_discharging_power
+        title: Power
+      - type: entities
+        entities:
+          - entity: sensor.sg1_battery_level
+          - entity: sensor.sg1_battery_level_nominal
+          - entity: sensor.sg1_battery_charge
+          - entity: sensor.sg1_battery_charge_nominal
+          - entity: sensor.sg1_daily_pv_generation
+          - entity: sensor.sg1_daily_exported_energy_from_pv
+          - entity: sensor.sg1_daily_pv_generation_battery_discharge
+          - entity: sensor.sg1_daily_battery_charge_from_pv
+          - entity: sensor.sg1_daily_battery_discharge
+          - entity: sensor.sg1_daily_exported_energy
+          - entity: sensor.sg1_daily_imported_energy
+        title: Energy
+      - type: gauge
+        entity: sensor.sg1_battery_level
+        min: 0
+        max: 100
+        severity:
+          green: 70
+          yellow: 40
+          red: 20
+      - type: gauge
+        entity: sensor.sg1_battery_level_nominal
+        min: 0
+        max: 100
+        severity:
+          green: 70
+          yellow: 40
+          red: 20
+      - show_name: true
+        show_icon: true
+        show_state: true
+        type: glance
+        entities:
+          - entity: sun.sun
+          - entity: binary_sensor.sg1_pv_generating
+          - entity: binary_sensor.sg1_battery_charging
+          - entity: binary_sensor.sg1_battery_discharging
+          - entity: binary_sensor.sg1_exporting_power
+          - entity: binary_sensor.sg1_importing_power
+          - entity: sensor.sg1_inverter_temperature
+        title: Status
+        columns: 3
+        state_color: true
+      - chart_type: line
+        period: 5minute
+        days_to_show: 1
+        type: statistics-graph
+        entities:
+          - sensor.sg1_total_dc_power
+          - sensor.sg1_load_power
+          - sensor.sg1_export_power
+          - sensor.sg1_import_power
+          - sensor.sg1_signed_battery_power
+        stat_types:
+          - mean
+        title: Power distribution last 24 hours
+  - title: Detailed Info
+    icon: mdi:solar-power-variant-outline
+    cards:
+      - type: entities
+        entities:
+          - entity: sensor.sg1_total_dc_power
+          - entity: sensor.sg1_meter_active_power
+          - entity: sensor.sg1_load_power
+          - entity: sensor.sg1_export_power
+          - entity: sensor.sg1_import_power
+          - entity: sensor.sg1_battery_charging_power
+          - entity: sensor.sg1_battery_discharging_power
+        title: Power
+      - type: entities
+        entities:
+          - entity: sensor.sg1_load_power
+          - entity: sensor.sg1_phase_a_voltage
+          - entity: sensor.sg1_phase_a_current
+          - entity: sensor.sg1_phase_a_power
+          - entity: sensor.sg1_phase_b_voltage
+          - entity: sensor.sg1_phase_b_current
+          - entity: sensor.sg1_phase_b_power
+          - entity: sensor.sg1_phase_c_voltage
+          - entity: sensor.sg1_phase_c_current
+          - entity: sensor.sg1_phase_c_power
+          - entity: sensor.sg1_meter_phase_a_active_power
+          - entity: sensor.sg1_meter_phase_b_active_power
+          - entity: sensor.sg1_meter_phase_c_active_power
+          - entity: sensor.sg1_total_backup_power
+          - entity: sensor.sg1_backup_phase_a_power
+          - entity: sensor.sg1_backup_phase_b_power
+          - entity: sensor.sg1_backup_phase_c_power
+          - entity: sensor.sg1_grid_frequency
+        title: Grid / Load
+      - type: gauge
+        entity: sensor.battery_level
+        min: 0
+        max: 100
+        severity:
+          green: 70
+          yellow: 40
+          red: 20
+      - type: entities
+        entities:
+          - entity: sensor.sg1_daily_pv_generation
+          - entity: sensor.sg1_daily_direct_energy_consumption
+          - entity: sensor.sg1_daily_exported_energy_from_pv
+          - entity: sensor.sg1_daily_pv_generation_battery_discharge
+          - entity: sensor.sg1_daily_battery_charge_from_pv
+          - entity: sensor.sg1_daily_battery_discharge
+          - entity: sensor.sg1_daily_exported_energy
+          - entity: sensor.sg1_daily_battery_charge
+          - entity: sensor.sg1_daily_imported_energy
+          - entity: sensor.sg1_total_pv_generation
+          - entity: sensor.sg1_total_direct_energy_consumption
+          - entity: sensor.sg1_total_pv_generation_battery_discharge
+          - entity: sensor.sg1_total_exported_energy_from_pv
+          - entity: sensor.sg1_total_battery_charge_from_pv
+          - entity: sensor.sg1_total_battery_charge
+          - entity: sensor.sg1_total_battery_discharge
+          - entity: sensor.sg1_total_imported_energy
+          - entity: sensor.sg1_total_exported_energy
+        title: Energy
+      - type: entities
+        entities:
+          - entity: sensor.sg1_total_dc_power
+          - entity: sensor.sg1_mppt1_power
+          - entity: sensor.sg1_mppt1_voltage
+          - entity: sensor.sg1_mppt1_current
+          - entity: sensor.sg1_mppt2_power
+          - entity: sensor.sg1_mppt2_voltage
+          - entity: sensor.sg1_mppt2_current
+        title: PV Gen
+      - type: entities
+        entities:
+          - entity: sensor.sg1_battery_capacity
+          - entity: sensor.sg1_battery_charging_power
+          - entity: sensor.sg1_battery_discharging_power
+          - entity: sensor.sg1_battery_voltage
+          - entity: sensor.sg1_battery_current
+          - entity: sensor.sg1_battery_level
+          - entity: sensor.sg1_battery_state_of_health
+          - entity: sensor.sg1_battery_temperature
+          - entity: sensor.sg1_daily_battery_charge_from_pv
+          - entity: sensor.sg1_daily_battery_charge
+          - entity: sensor.sg1_daily_battery_discharge
+          - entity: sensor.sg1_total_battery_charge_from_pv
+          - entity: sensor.sg1_total_battery_discharge
+          - entity: sensor.sg1_total_battery_charge
+          - entity: sensor.sg1_max_soc
+          - entity: sensor.sg1_min_soc
+        title: Battery
+      - type: entities
+        entities:
+          - entity: sensor.sg1_ems_mode_selection
+          - entity: sensor.sg1_battery_forced_charge_discharge_mode
+          - entity: sensor.sg1_min_soc
+          - entity: sensor.sg1_max_soc
+          - entity: sensor.sg1_battery_forced_charge_discharge_power
+          - entity: sensor.sg1_battery_charging_start_power
+          - entity: sensor.sg1_battery_discharging_start_power
+        title: EMS
+      - type: entities
+        entities:
+          - entity: sensor.sg1_sungrow_device_type
+          - entity: sensor.sg1_sungrow_inverter_state
+          - entity: sensor.sg1_running_state
+          - entity: sensor.sg1_system_state
+          - entity: sensor.sg1_inverter_temperature
+          - entity: binary_sensor.sg1_pv_generating
+          - entity: binary_sensor.sg1_battery_charging
+          - entity: binary_sensor.sg1_battery_discharging
+          - entity: binary_sensor.sg1_exporting_power
+          - entity: binary_sensor.sg1_importing_power
+        title: Inverter State
+      - chart_type: line
+        period: day
+        days_to_show: 60
+        type: statistics-graph
+        entities:
+          - sensor.sg1_battery_level
+        stat_types:
+          - min
+          - max
+        title: Battery SoC last 60 days
+      - chart_type: line
+        period: day
+        days_to_show: 180
+        type: statistics-graph
+        entities:
+          - sensor.sg1_battery_level
+        stat_types:
+          - min
+          - max
+        title: Battery SoC last 180 days
+  - title: EMS Control
+    icon: mdi:solar-power
+    cards:
+      - type: entities
+        entities:
+          - entity: input_select.set_sg1_inverter_run_mode
+          - entity: sensor.sg1_sungrow_inverter_state
+          - entity: sensor.sg1_ems_mode_selection
+          - entity: sensor.sg1_battery_forced_charge_discharge_mode
+        title: Inverter State
+      - type: entities
+        entities:
+          - entity: input_select.set_sg1_ems_mode
+          - entity: input_number.set_sg1_min_soc
+          - entity: input_number.set_sg1_max_soc
+          - entity: input_number.set_sg1_reserved_soc_for_backup
+          - entity: input_number.set_sg1_forced_charge_discharge_power
+          - entity: input_number.set_sg1_battery_max_charge_power
+          - entity: input_number.set_sg1_battery_max_discharge_power
+          - entity: input_number.set_sg1_battery_charging_start_power
+          - entity: input_number.set_sg1_battery_discharging_start_power
+        title: EMS & Battery Settings
+        state_color: false
+        show_header_toggle: true
+      - type: entities
+        entities:
+          - entity: sensor.sg1_battery_capacity
+          - entity: sensor.sg1_battery_level
+          - entity: sensor.sg1_battery_state_of_health
+          - entity: sensor.sg1_min_soc
+          - entity: sensor.sg1_max_soc
+          - entity: sensor.sg1_reserved_soc_for_backup
+          - entity: sensor.sg1_battery_forced_charge_discharge_power
+          - entity: sensor.sg1_battery_max_charge_power
+          - entity: sensor.sg1_battery_max_discharge_power
+          - entity: sensor.sg1_battery_charging_start_power
+          - entity: sensor.sg1_battery_discharging_start_power
+        title: Battery Status
+      - type: entities
+        entities:
+          - entity: sensor.sg1_export_power_limit_mode
+          - entity: sensor.sg1_export_power_limit
+          - entity: input_select.set_sg1_export_power_limit_mode
+          - entity: input_number.set_sg1_export_power_limit
+        title: Export Settings
+title: PV SG 1

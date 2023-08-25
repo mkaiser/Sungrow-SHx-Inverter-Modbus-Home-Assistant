@@ -1,115 +1,53 @@
-An *easy-to-use YAML-based integration* for several Sungrow inverters for Home Assistant. 
+## Experimental branch
 
+# !! DO NOT USE, it breaks things !! 
+
+This branch is meant to test things and for discussion. 
+
+Use the discord 
 [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2)
-
-# IMPORTANT (2023-08-21): Errors in YAML file - fixed!
-In the last Home Assistant update (2023.8.3), some breaking changes have been made to the internal HA Modbus implementation. This causes that this yaml-integration won't start. 
-This was fixed in the current revision. Please upgrade.
-
-# Note (July 2023)
-I made a mistake end of march causing unique_ids of sensors getting mixed up. This is now fixed, but it may affect you. You are affected, if you see these warnings in a current verison of the Standard PV dashboard:
-> entity not available: sensor.sg_battery_charge_nom and sg_battery_level_nom"
-
- Follow these instructions to fix it: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/88#issuecomment-1625270593
-
-# Contents
-- [1. Overview](#1-overview)
-- [2. Documentation](#2-documentation)
-    - [Installation/ Configuration](doc/installation.md)
-    - [Dashboard Setup](doc/dashboard.md)
-    - [Usage Instructions](doc/usage.md)
-    - [FAQ, Troubleshooting, Known Issues](doc/help.md)
-    - [Roadmap](doc/issues_roadmap.md)
-- [3. Support](#3-support)
-- [4. Visual impressions](#4-visual-impressions)
-- [5. Tested configurations](#5-tested-configurations)
-- [6. Status and future work](#6-status-and-future-work)
-- [7. Most important of all](#7-most-important-of-all)
+for discussing this experimental branch. 
 
 
-# 1. Overview
-
-This integration lets you gather sensor data and control the EMS (Energy Management System) of a wide range of Sungrow inverters, including, but not limited to: SH3.6RS, SH4.6RS, SH5.0RS, SH5.0RT, SH6.0RS, SH8.0RT, SH8.0RT-V112, SH6.0RT, SH10RT, SH10RT-V112, SH5K-20, SH3K6, SH4K6, SH5K-V13, SH5K-30. A battery is not required, but several sensors will not be available without one.
-
-Ensure, that you connected the inverter to the Home Assistant network using the native LAN port. The WiNet Ethernet port is not only partially working!
-
-![Overview](doc/images/overview_modbus_connection.drawio.svg)
-
-![Inverter LAN connection](doc/images/Inverter_LAN_ports.drawio.svg)
-
-## 2. Documentation
-
-The documentation covers following topics:
-
-[Installation/ Configuration](doc/installation.md)
-
-[Dashboard Setup](doc/dashboard.md)
-
-[Usage Instructions](doc/usage.md)
-
-[FAQ, Troubleshooting, Known Issues](doc/help.md)
-
-## 3. Support
-
-If you any kind of assistance, you have three options:
-
-a) Use the [github discussion](../../discussions) 
-
-b) (new! Created in July 2023) Join the Discord Channel [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2).
-
-c) Only if code-related (bugs / contributions): Open an  [github issue](../../issue) or isse a pullrequest
-
-## 4. Visual impressions
-
-Home Asisstants built-in Energy Dashboard
-
-<img src="doc/images/HA_Energy_Dashboard.png" width="600">
+# Development goals:
+- complete restructuring, including consistent naming
+- Support more than 1 inverter by duplicating "modbus_sungrow_sg1.yaml" and then search & replace "sg1" with "sg2" and "SG1 with "SG2"
+- Secrets.yaml contain connection information to the inverters and additional information about the battery for individual sliders (e.g. limit the max charge/discharge power to fit your battery)
+- Create a template for localisation
+- naming:
+  - unique_ids are now named uid_sg*, where * is the inverter number
+  - Names are prefixed with SG* 
+  - Automations are named more consistent (e.g., set_* and *_gui_update)
 
 
-Default dashboard tab "overview"
+# Open issues
+- How to keep the Energy Dashboard history after several sensors have been renamed??
+  - sensor.Total_imported_energy --> sensor.sg1_total_imported_energy 
+  - sensor.Total_exported_energy --> sensor.sg1_total_exported_energy
+  - sensor.Total_PV_generation --> sensor.sg1_total_PV_generation
+  - sensor.Total_battery_charge --> sensor.sg1_total_battery_charge
+  - sensor.Total_battery_discharge --> sensor.sg1_total_battery_discharge
 
-<img src="doc/images/Dashboard_Overview.png" width="600">
+- Are there more possible side effects in just migrating?
+  - Should this just be the way to go for new installations?
 
-
-Default dashboard tab "Detail"
-
-<img src="doc/images/Dashboard_Detail.png" width="600">
-
-
-Default dashboard tab "EMS"
-
-<img src="doc/images/Dashboard_EMS.png" width="600">
-
-
-## 5. Tested configurations
-I have a **Sungrow SH10.RT** Inverter and a **PylonTech Force H1 battery with 14.4 kWh** updating frequently to the latest **Home Assistant** (> 2023.3). I try to thoroughly test features before releasing them, but I cannot test everything (e.g., backup capabilities, DO-related, ...)
-
-The Modbus register mapping is based on two documents the Sungrow support sent me (my current version is v1.0.25 from 12.01.2023. The changelogs from .23 to .25 only mention added device codes (*RT-20, *-V112 and *-V122). I am not sure if I am allowed to share the files, but you can search for them using their names. Let me know in the [github discussions](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions), if there are newer versions available.
-
+# Installation
+- Create folder "packages" in your Home Assistant configuration folder 
+- Copy modbus_sungrow_sg1.yaml to "packages"
+- Copy the content of the provided secrets.yaml to your secrets.yaml. Adapt the values marked with "TODO". If you have a second, third, ..., inverter adapt accordingly.
+- Add the following to your configuration.yaml:
 ```
-Communication.Protocol.of.Residential.Hybrid.Inverter_V1.0.23_EN
-10.4 Communication Protocol_String Inverter_V1.1.36_EN.pdf
+homeassistant:
+  packages:
+    modbus_sungrow_sg1: !include packages/modbus_sungrow_sg1.yaml
+    # optional:  modbus_sungrow_sg2: !include packages/modbus_sungrow_sg2.yaml
 ```
 
-Please let me know if the integration also works with other Sungrow models. 
 
-Community-confirmed supported inverters (thank you for reporting!)
-- SH10RT (via home assistant community, brix29 Axel)
-- SH10RT-V112 (github, dzarth, ViktorReinhold)
-- SH5.0RT(home assistant community, ptC7H12 Paul)
-- SH8.0RT (github, lindehoff)
-- SH5K-30 (github, ajbatchelor)
-
-partially working
-- SH5.RS (home assistant community, Danirb80) via WiNetS: register running_state is not available. Created workarounds using template sensors
-
-## 6. Status and future work 
-1. See [#38](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/38) for some kind of a roadmap
-2. I included the registers, which are common between a wide range of Sungrow inverter models. There are many more registers in the Sungrow documents, which I left out, but I am happy to include them, if you need them. --> [github discussions](../../discussions)
-3. If you made a nice visualization - let us know! --> [github discussions](../../discussions)
-4. This is meant to be a simple, straightforward YAML-based integration. If you need more than this, I recommend having a look at the SunGather project: https://github.com/bohdan-s
-
-## 7. Most important of all
-We am happy to share our experiences - feel encouraged to share yours with us, too! Participate, if you have any questions :)
-
-**Thanks to all the people, who are actively contributing to this project! Special thanks to Louis712, dylan09 and elektrinis, who are helping a lot helping others in the issue/ disussion sections!**
+# Help needed
+- Could anyone start on the translation?  
+  - "Friendly name approach" as customization: https://www.home-assistant.io/docs/configuration/customizing-devices/ 
+  - Some new stuff, I did not read much about, yet: https://developers.home-assistant.io/blog/2023/07/11/translating-services/ 
+-  Create "modbus_sungrow_combined_sensors.yaml" for template sensors, e.g. total PV generation, total battery charge, total battery discharge, total imported energy, total exported energy
+- Do we want to use simply a cloned version of the current "PV" Dashboard or does make an integrated for multiple inverters more sense?
+# !! I am serious, DO NOT use it, yet! !! 
