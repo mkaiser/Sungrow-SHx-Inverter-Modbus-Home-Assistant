@@ -9,7 +9,7 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/tree/twoInverter
 #
 # by Martin Kaiser
-# last update: 2023-08-2
+# last update: 2023-09-4
 
 modbus:
   - name: Sungrow_Inverter_SG1
@@ -1709,22 +1709,22 @@ template:
                 {# in mode Forced charge #}
                 {% if (states('sensor.sg1_battery_power_raw')|int > 0 ) %}
                   {# power flow from/to battery #}
-                  On
+                  on
                 {% else %}
                   {# no power flow from/to battery #}
-                  Off
+                  off
                 {% endif %}
               {% else %}
                 {# in EMS mode, but not in mode Forced charge #}
-                Off
+                off
               {% endif %}
             {% else %}
               {# not in EMS forced mode, assuming self consumption mode #}
               {% if states('sensor.sg1_total_dc_power')|int > states('sensor.load_power')|int %}
                 {# more power generated than consumed. assuming battery charging #}
-                On
+                on
               {% else %}
-                Off
+                off
               {% endif %}
             {% endif %}
           {% endif %}
@@ -1757,22 +1757,22 @@ template:
                 {# in mode Forced discharge #}
                 {% if (states('sensor.sg1_battery_power_raw')|int > 0 ) %}
                   {# power flow from/to battery #}
-                  On
+                  on
                 {% else %}
                   {# no power flow from/to battery #}
-                  Off
+                  off
                 {% endif %}
               {% else %}
                 {# in EMS mode, but not in mode Forced charge #}
-                Off
+                off
               {% endif %}
             {% else %}
               {# not in EMS forced mode, assuming self consumption mode #}
               {% if ( ( states('sensor.sg1_total_dc_power')|int < states('sensor.sg1_load_power')|int ) ) and states('sensor.sg1_battery_power_raw')|int > 0 %}
                 {# more power consumed than generated and some battery power -->  assuming battery discharging #}
-                On
+                on
               {% else %}
-                Off
+                off
               {% endif %}
             {% endif %}
           {% endif %}
@@ -1983,7 +1983,7 @@ template:
       # Inverter States from modbus reference manual
       # 0xAA forced charge
       # 0xBB forced discharge
-      # 0xCC Stop (Default)
+      # 0xCC Stop (default)
       - name: SG1 Battery forced charge discharge mode
         unique_id: uid_sg1_battery_forced_charge_discharge_mode
         state: >-
@@ -1992,7 +1992,7 @@ template:
           {% elif ((states('sensor.sg1_battery_forced_charge_discharge_mode_raw') | int(default=0))  == 0x00BB) %}
             Forced discharge
           {% elif ((states('sensor.sg1_battery_forced_charge_discharge_mode_raw') | int(default=0))  == 0x00CC) %}
-            Stop (Default)
+            Stop (default)
           {% else %}
             Unknown - should not see me!
           {% endif %}
@@ -2249,8 +2249,8 @@ input_select:
     options:
       - "Self-consumption mode (default)"
       - "Forced mode"
-    # these are commented, because they are rarely used
-    #      - "External EMS"
+      - "External EMS"   # for multiple inverters
+      # these are commented, because they are rarely used
     #      - "VPP"
     #      - "MicroGrid"
     icon: mdi:battery-unknown
@@ -2292,10 +2292,10 @@ automation:
           slave: !secret sungrow_sg1_modbus_slave
           address: 12999 # reg 13000
           value: >
-            {% if is_state('input_select.set_sg1_inverter_run_mode', 'Enabled') %}
-            {{sg_start}}
+            {% if is_state('input_select.set_sg1_inverter_run_mode', "Enabled") %}
+              {{sg_start}}
             {% else %}
-            {{sg_stop}}
+              {{sg_stop}}
             {% endif %}
     mode: single
 
@@ -2314,9 +2314,9 @@ automation:
         data:
           option: >
             {% if is_state('sensor.sg1_sungrow_inverter_state', 'Stop') %}
-            "Shutdown"
+              Shutdown
             {% else %}
-            "Enabled"
+              Enabled
             {% endif %}
     mode: single
 
@@ -2438,11 +2438,14 @@ automation:
           slave: !secret sungrow_sg1_modbus_slave
           address: 13050 # reg 13051
           value: >
-            {% if is_state('input_select.set_sg1_battery_forced_charge_discharge_mode', 'Stop (default)') %} {{ems_stop_default}}
-            {% elif is_state('input_select.set_sg1_battery_forced_charge_discharge_mode', 'Forced charge') %} {{ems_forced_charge}}
-            {% elif is_state('input_select.set_sg1_battery_forced_charge_discharge_mode', 'Forced discharge') %} {{ems_forced_discharge}}
+            {% if is_state('input_select.set_sg1_battery_forced_charge_discharge_mode', "Stop (default)") %} 
+              {{ems_stop_default}}
+            {% elif is_state('input_select.set_sg1_battery_forced_charge_discharge_mode', "Forced charge") %} 
+              {{ems_forced_charge}}
+            {% elif is_state('input_select.set_sg1_battery_forced_charge_discharge_mode', "Forced discharge") %} 
+              {{ems_forced_discharge}}
             {% else %}
-            {{ems_stop_default}}
+              {{ems_stop_default}}
             {% endif %}
     mode: single
 
@@ -2483,13 +2486,18 @@ automation:
           slave: !secret sungrow_sg1_modbus_slave
           address: 13049 # reg 13050
           value: >
-            {% if is_state('input_select.set_sg1_ems_mode', 'Self-consumption mode (default)') %} {{ems_mode_self_consume}}
-            {% elif is_state('input_select.set_sg1_ems_mode', 'Forced mode') %} {{ems_mode_forced}}
-            {% elif is_state('input_select.set_sg1_ems_mode', 'External EMS') %} {{ems_mode_external}}
-            {% elif is_state('input_select.set_sg1_ems_mode', 'VPP') %} {{ems_mode_vpp}}
-            {% elif is_state('input_select.set_sg1_ems_mode', 'MicroGrid') %} {{ems_mode_microgrid}}
+            {% if is_state('input_select.set_sg1_ems_mode', 'Self-consumption mode (default)') %} 
+              {{ems_mode_self_consume}}
+            {% elif is_state('input_select.set_sg1_ems_mode', 'Forced mode') %} 
+              {{ems_mode_forced}}
+            {% elif is_state('input_select.set_sg1_ems_mode', 'External EMS') %} 
+              {{ems_mode_external}}
+            {% elif is_state('input_select.set_sg1_ems_mode', 'VPP') %} 
+              {{ems_mode_vpp}}
+            {% elif is_state('input_select.set_sg1_ems_mode', 'MicroGrid') %} 
+              {{ems_mode_microgrid}}
             {% else %}
-            ems_mode_self_consume
+              {{ems_mode_self_consume}}
             {% endif %}
     mode: single
 
@@ -2533,10 +2541,12 @@ automation:
           slave: !secret sungrow_sg1_modbus_slave
           address: 13086 # reg 13087
           value: >
-            {% if is_state('input_select.set_sg1_export_power_limit_mode', 'Enabled') %} {{export_limit_enable}}
-            {% elif is_state('input_select.set_sg1_export_power_limit_mode', 'Disabled') %} {{export_limit_disable}}
+            {% if is_state('input_select.set_sg1_export_power_limit_mode', "Enabled") %} 
+              {{export_limit_enable}}
+            {% elif is_state('input_select.set_sg1_export_power_limit_mode', "Disabled") %} 
+              {{export_limit_disable}}
             {% else %}
-            {{export_limit_disable}}
+              {{export_limit_disable}}
             {% endif %}
     mode: single
 
@@ -2554,8 +2564,10 @@ automation:
           entity_id: input_select.set_sg1_export_power_limit_mode
         data:
           option: >
-            {% if ((states('sensor.sg1_export_power_limit_mode_raw') | int(default=0)) == 0x00AA) %} {{'Enabled'}}
-            {% elif ((states('sensor.sg1_export_power_limit_mode_raw') | int(default=0)) == 0x0055) %} {{'Disabled'}}
+            {% if ((states('sensor.sg1_export_power_limit_mode_raw') | int(default=0)) == 0x00AA) %} 
+              Enabled
+            {% elif ((states('sensor.sg1_export_power_limit_mode_raw') | int(default=0)) == 0x0055) %} 
+              Disabled
             {% endif %}
     mode: single
 
