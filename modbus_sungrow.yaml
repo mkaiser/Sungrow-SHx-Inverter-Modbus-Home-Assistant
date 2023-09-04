@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-08-21 (2)
+# last update: 2023-09-04
 
 modbus:
   - name: SungrowSHx
@@ -1775,22 +1775,22 @@ template:
                 {# in mode Forced charge #}
                 {% if (states('sensor.battery_power_raw')|int > 0 ) %}
                   {# power flow from/to battery #}
-                  On
+                  on
                 {% else %} 
                   {# no power flow from/to battery #}
-                  Off
+                  off
                 {% endif %}
               {% else %}
                 {# in EMS mode, but not in mode Forced charge #}
-                Off
+                off
               {% endif %}
             {% else %} 
               {# not in EMS forced mode, assuming self consumption mode #}
               {% if states('sensor.total_dc_power')|int > states('sensor.load_power')|int %}
                 {# more power generated than consumed. assuming battery charging #}
-                On
+                on
               {% else %} 
-                Off
+                off
               {% endif %}
             {% endif %}
           {% endif %}
@@ -1823,22 +1823,22 @@ template:
                 {# in mode Forced discharge #}
                 {% if (states('sensor.battery_power_raw')|int > 0 ) %}
                   {# power flow from/to battery #}
-                  On
+                  on
                 {% else %} 
                   {# no power flow from/to battery #}
-                  Off
+                  off
                 {% endif %}
               {% else %} 
                 {# in EMS mode, but not in mode Forced charge #}
-                Off
+                off
               {% endif %}
             {% else %} 
               {# not in EMS forced mode, assuming self consumption mode #}
               {% if ( ( states('sensor.total_dc_power')|int < states('sensor.load_power')|int ) ) and states('sensor.battery_power_raw')|int > 0 %}
                 {# more power consumed than generated and some battery power -->  assuming battery discharging #}
-                On
+                on
               {% else %} 
-                Off
+                off
               {% endif %}
             {% endif %}
           {% endif %}
@@ -2049,7 +2049,7 @@ template:
       # Inverter States from modbus reference manual
       # 0xAA forced charge
       # 0xBB forced discharge
-      # 0xCC Stop (Default)
+      # 0xCC Stop (default)
       - name: Battery forced charge discharge cmd
         unique_id: sg_battery_forced_charge_discharge_cmd
         state: >-
@@ -2058,7 +2058,7 @@ template:
           {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0))  == 0x00BB) %}
             Forced discharge
           {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0))  == 0x00CC) %}
-            Stop (Default)
+            Stop (default)
           {% else %}
             Unknown - should not see me!
           {% endif %}
@@ -2269,19 +2269,19 @@ input_number:
   set_sg_forced_charge_discharge_power:
     name: Set forced charge discharge power in W
     min: 0
-    max: 5000
+    max: 5000 # change this value according to the capability of your battery
     step: 100
 
   set_sg_battery_max_charge_power:
     name: Set max battery charge power in W
     min: 100
-    max: 5000
+    max: 5000 # change this value according to the capability of your battery
     step: 100
 
   set_sg_battery_max_discharge_power:
     name: Set max battery discharge power in W
     min: 100
-    max: 5000
+    max: 5000 # change this value according to the capability of your battery
     step: 100
 
   set_sg_battery_charging_start_power:
@@ -2358,10 +2358,10 @@ automation:
           slave: !secret sungrow_modbus_slave
           address: 12999 # reg 13000
           value: >
-            {% if is_state('input_select.set_sg_inverter_run_mode', 'Enabled') %}
-            {{sg_start}}
+            {% if is_state('input_select.set_sg_inverter_run_mode', "Enabled") %}
+              {{sg_start}}
             {% else %}
-            {{sg_stop}}
+              {{sg_stop}}
             {% endif %}
     mode: single
 
@@ -2379,10 +2379,10 @@ automation:
           entity_id: input_select.set_sg_inverter_run_mode
         data:
           option: >
-            {% if is_state('sensor.sungrow_inverter_state', 'Stop') %}
-            "Shutdown"
+            {% if is_state('sensor.sungrow_inverter_state', "Stop") %}
+              Shutdown
             {% else %}
-            "Enabled"
+              Enabled
             {% endif %}
     mode: single
 
@@ -2504,11 +2504,14 @@ automation:
           slave: !secret sungrow_modbus_slave
           address: 13050 # reg 13051
           value: >
-            {% if is_state('input_select.set_sg_battery_forced_charge_discharge_cmd', 'Stop (default)') %} {{ems_stop_default}}
-            {% elif is_state('input_select.set_sg_battery_forced_charge_discharge_cmd', 'Forced charge') %} {{ems_forced_charge}}
-            {% elif is_state('input_select.set_sg_battery_forced_charge_discharge_cmd', 'Forced discharge') %} {{ems_forced_discharge}}
+            {% if is_state('input_select.set_sg_battery_forced_charge_discharge_cmd', "Stop (default)") %} 
+              {{ems_stop_default}}
+            {% elif is_state('input_select.set_sg_battery_forced_charge_discharge_cmd', "Forced charge") %} 
+              {{ems_forced_charge}}
+            {% elif is_state('input_select.set_sg_battery_forced_charge_discharge_cmd', "Forced discharge") %} 
+              {{ems_forced_discharge}}
             {% else %}
-            {{ems_stop_default}}
+              {{ems_stop_default}}
             {% endif %}
     mode: single
 
@@ -2549,13 +2552,13 @@ automation:
           slave: !secret sungrow_modbus_slave
           address: 13049 # reg 13050
           value: >
-            {% if is_state('input_select.set_sg_ems_mode', 'Self-consumption mode (default)') %} {{ems_mode_self_consume}}
-            {% elif is_state('input_select.set_sg_ems_mode', 'Forced mode') %} {{ems_mode_forced}}
-            {% elif is_state('input_select.set_sg_ems_mode', 'External EMS') %} {{ems_mode_external}}
-            {% elif is_state('input_select.set_sg_ems_mode', 'VPP') %} {{ems_mode_vpp}}
-            {% elif is_state('input_select.set_sg_ems_mode', 'MicroGrid') %} {{ems_mode_microgrid}}
+            {% if is_state('input_select.set_sg_ems_mode', "Self-consumption mode (default)") %} {{ems_mode_self_consume}}
+            {% elif is_state('input_select.set_sg_ems_mode', "Forced mode") %} {{ems_mode_forced}}
+            {% elif is_state('input_select.set_sg_ems_mode', "External EMS") %} {{ems_mode_external}}
+            {% elif is_state('input_select.set_sg_ems_mode', "VPP") %} {{ems_mode_vpp}}
+            {% elif is_state('input_select.set_sg_ems_mode', "MicroGrid") %} {{ems_mode_microgrid}}
             {% else %} 
-            ems_mode_self_consume
+            {{ems_mode_self_consume}}
             {% endif %}
     mode: single
 
@@ -2573,8 +2576,10 @@ automation:
           entity_id: input_select.set_sg_export_power_limit_mode
         data:
           option: >
-            {% if ((states('sensor.export_power_limit_mode_raw') | int(default=0)) == 0x00AA) %} {{'Enabled'}}
-            {% elif ((states('sensor.export_power_limit_mode_raw') | int(default=0)) == 0x0055) %} {{'Disabled'}}
+            {% if ((states('sensor.export_power_limit_mode_raw') | int(default=0)) == 0x00AA) %} 
+              Enabled
+            {% elif ((states('sensor.export_power_limit_mode_raw') | int(default=0)) == 0x0055) %} 
+              Disabled
             {% endif %}
     mode: single
 
@@ -2596,10 +2601,12 @@ automation:
           slave: !secret sungrow_modbus_slave
           address: 13086 # reg 13087
           value: >
-            {% if is_state('input_select.set_sg_export_power_limit_mode', 'Enabled') %} {{export_limit_enable}}
-            {% elif is_state('input_select.set_sg_export_power_limit_mode', 'Disabled') %} {{export_limit_disable}}
+            {% if is_state('input_select.set_sg_export_power_limit_mode', "Enabled") %} 
+              {{export_limit_enable}}
+            {% elif is_state('input_select.set_sg_export_power_limit_mode', "Disabled") %}
+              {{export_limit_disable}}
             {% else %}
-            {{export_limit_disable}}
+              {{export_limit_disable}}
             {% endif %}
     mode: single
 
@@ -2705,7 +2712,7 @@ automation:
           hub: SungrowSHx
           slave: !secret sungrow_modbus_slave
           address: 33046 # reg 33047
-          value: "{{ states('input_number.set_sg_battery_max_charge_power')  |float /10 |int}}"
+          value: "{{ states('input_number.set_sg_battery_max_charge_power') |float /10 |int}}"
     mode: single
 
   - id: "automation_sungrow_inverter_update_battery_max_charge_power_input_slider_update"
