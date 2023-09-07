@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-09-04
+# last update: 2023-09-07
 
 modbus:
   - name: SungrowSHx
@@ -2315,8 +2315,8 @@ input_select:
     options:
       - "Self-consumption mode (default)"
       - "Forced mode"
+      - "External EMS" # required for multiple inverters main /follower?
     # these are commented, because they are rarely used
-    #      - "External EMS"
     #      - "VPP"
     #      - "MicroGrid"
     icon: mdi:battery-unknown
@@ -2371,8 +2371,10 @@ automation:
     trigger:
       - platform: state
         entity_id:
-          - sensor.system_state
-    condition: []
+          - sensor.sungrow_inverter_state
+    condition:
+      - condition: template
+        value_template: "{{ not is_state('sensor.sungrow_inverter_state', 'unavailable') }}"
     action:
       - service: input_select.select_option
         target:
@@ -2522,7 +2524,9 @@ automation:
       - platform: state
         entity_id:
           - sensor.battery_forced_charge_discharge_cmd
-    condition: []
+    condition:
+      - condition: template
+        value_template: "{{ not is_state('sensor.battery_forced_charge_discharge_cmd', 'unavailable') }}"
     action:
       - service: input_select.select_option
         target:
@@ -2552,13 +2556,18 @@ automation:
           slave: !secret sungrow_modbus_slave
           address: 13049 # reg 13050
           value: >
-            {% if is_state('input_select.set_sg_ems_mode', "Self-consumption mode (default)") %} {{ems_mode_self_consume}}
-            {% elif is_state('input_select.set_sg_ems_mode', "Forced mode") %} {{ems_mode_forced}}
-            {% elif is_state('input_select.set_sg_ems_mode', "External EMS") %} {{ems_mode_external}}
-            {% elif is_state('input_select.set_sg_ems_mode', "VPP") %} {{ems_mode_vpp}}
-            {% elif is_state('input_select.set_sg_ems_mode', "MicroGrid") %} {{ems_mode_microgrid}}
+            {% if is_state('input_select.set_sg_ems_mode', "Self-consumption mode (default)") %} 
+              {{ems_mode_self_consume}}
+            {% elif is_state('input_select.set_sg_ems_mode', h) %} 
+              {{ems_mode_forced}}
+            {% elif is_state('input_select.set_sg_ems_mode', "External EMS") %} 
+              {{ems_mode_external}}
+            {% elif is_state('input_select.set_sg_ems_mode', "VPP") %} 
+              {{ems_mode_vpp}}
+            {% elif is_state('input_select.set_sg_ems_mode', "MicroGrid") %} 
+              {{ems_mode_microgrid}}
             {% else %} 
-            {{ems_mode_self_consume}}
+              {{ems_mode_self_consume}}
             {% endif %}
     mode: single
 
@@ -2569,7 +2578,9 @@ automation:
       - platform: state
         entity_id:
           - sensor.export_power_limit_mode_raw
-    condition: []
+    condition:
+      - condition: template
+        value_template: "{{ not is_state('sensor.export_power_limit_mode_raw', 'unavailable') }}"
     action:
       - service: input_select.select_option
         target:
@@ -2650,13 +2661,9 @@ automation:
       - platform: state
         entity_id:
           - sensor.ems_mode_selection
-    condition: []
-    variables:
-      ems_mode_self_consume: 0
-      ems_mode_forced: 2
-      ems_mode_external: 3
-      ems_mode_vpp: 4
-      ems_mode_microgrid: 8
+    condition:
+      - condition: template
+        value_template: "{{ not is_state('sensor.ems_mode_selection', 'unavailable') }}"
     action:
       - service: input_select.select_option
         target:
