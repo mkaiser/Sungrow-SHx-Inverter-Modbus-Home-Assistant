@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-09-07
+# last update: 2023-09-08
 
 modbus:
   - name: SungrowSHx
@@ -10,7 +10,7 @@ modbus:
     port: !secret sungrow_modbus_port
     retry_on_empty: true
     retries: 10
-    close_comm_on_error: true
+    #close_comm_on_error: true # this caused errors for some users
     delay: 5
     # timeout: 5
     sensors:
