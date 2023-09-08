@@ -11,7 +11,7 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/tree/experimental
 #
 # by Martin Kaiser
-# last update: 2023-09-7
+# last update: 2023-09-8(2)
 
 modbus:
   - name: Sungrow_Inverter_SG1
@@ -20,7 +20,7 @@ modbus:
     port: !secret sungrow_sg1_modbus_port
     retry_on_empty: true
     retries: 10
-    close_comm_on_error: true
+    #close_comm_on_error: true # this caused errors for some users
     delay: 5
     # timeout: 5
     sensors:
@@ -2107,28 +2107,48 @@ template:
         unit_of_measurement: kWh
         device_class: energy
         state_class: total_increasing
-        state: "{{ states('sensor.sg1_' ~ 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower ) }}"
+        state: >
+          {% set currMonth = 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
+          {{ states('sensor.sg1_' ~ currMonth) }}
+        availability: >-
+          {% set currMonth = 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
+          {{ states('sensor.sg1_' ~ currMonth)|is_number }}
 
       - name: SG1 Yearly PV generation (current)
         unique_id: uid_sg1_yearly_pv_generation_current
         unit_of_measurement: kWh
         device_class: energy
         state_class: total_increasing
-        state: "{{ states('sensor.sg1_' ~ 'yearly_pv_generation_' ~ now().year ) }}"
+        state: >
+          {% set currYear = 'yearly_pv_generation_' ~ now().year %}
+          {{ states('sensor.sg1_' ~ currYear) }}
+        availability: >-
+          {% set currYear = 'yearly_pv_generation_' ~ now().year %}
+          {{ states('sensor.sg1_' ~ currYear)|is_number }}
 
       - name: SG1 Monthly export (current)
         unique_id: uid_sg1_monthly_export_current
         unit_of_measurement: kWh
         device_class: energy
         state_class: total_increasing
-        state: "{{ states('sensor.sg1_' ~ 'monthly_export_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower ) }}"
+        state: >
+          {% set currMonth = 'monthly_export_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
+          {{ states('sensor.sg1_' ~ currMonth) }}
+        availability: >-
+          {% set currMonth = 'monthly_export_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
+          {{ states('sensor.sg1_' ~ currMonth)|is_number }}
 
       - name: SG1 Yearly export (current)
         unique_id: uid_sg1_yearly_export_current
         unit_of_measurement: kWh
         device_class: energy
         state_class: total_increasing
-        state: "{{ states('sensor.sg1_' ~ 'yearly_export_' ~ now().year ) }}"
+        state: >
+          {% set currYear = 'yearly_export_' ~ now().year %}
+          {{ states('sensor.sg1_' ~ currYear) }}
+        availability: >-
+          {% set currYear = 'yearly_export_' ~ now().year %}
+          {{ states('sensor.sg1_' ~ currYear)|is_number }}
 
       - name: SG1 Battery level (nominal)
         unique_id: uid_sg1_battery_level_nom
