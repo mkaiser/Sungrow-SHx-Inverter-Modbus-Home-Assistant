@@ -32,7 +32,7 @@ I made a mistake end of march causing unique_ids of sensors getting mixed up. Th
 
 This integration lets you gather sensor data and control the EMS (Energy Management System) of a wide range of Sungrow inverters, including, but not limited to: SH3.6RS, SH4.6RS, SH5.0RS, SH5.0RT, SH6.0RS, SH8.0RT, SH8.0RT-V112, SH6.0RT, SH10RT, SH10RT-V112, SH5K-20, SH3K6, SH4K6, SH5K-V13, SH5K-30. A battery is not required, but several sensors will not be available without one.
 
-Ensure, that you connected the inverter to the Home Assistant network using the native LAN port. The WiNet Ethernet port is not only partially working!
+Ensure, that you connected the inverter to the Home Assistant network using the **internal LAN** port. The WiNet Ethernet port and the WiNet WLAN are only partially working and we cannot fix this! (==> no support, sorry :/ )
 
 ![Overview](doc/images/overview_modbus_connection.drawio.svg)
 
