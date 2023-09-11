@@ -13,10 +13,14 @@ A clear and concise description of what the bug is.
 
 **Your Sungrow inverter:**
  - Model: [e.g. SH-10.RT v112]
- - The inverter is connected via (check one)
+ - The inverter is connected via (mark one)
    - [] LAN (internal port)
    - [] WiNet-S (LAN)
    - [] WiNet-S (WLAN)
+
+- Modbus Proxy (mark one)
+  - [] yes
+  - [] no
 
 **Home Assistant :**
  - Version: [e.g. 2023.09.1]
