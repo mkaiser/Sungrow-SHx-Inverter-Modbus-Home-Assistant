@@ -18,9 +18,10 @@ A clear and concise description of what the bug is.
    - [] WiNet-S (LAN)
    - [] WiNet-S (WLAN)
 
-- Modbus Proxy (mark one)
+- Are you using a Modbus Proxy (mark one)
   - [] yes
-  - [] no
+  - [] no 
+  - [] I don't know what that is
 
 **Home Assistant :**
  - Version: [e.g. 2023.09.1]
@@ -28,6 +29,8 @@ A clear and concise description of what the bug is.
 **modbus_sungrow.yaml:**
  - Version/ time stamp : [e.g. 2023-09-08] (see header of the file)
 
+** Inverter Firmware Status:**
+   - [] I made sure that the newest firmware is installed via the installers account
 
 **To Reproduce**
 Steps to reproduce the behavior:
