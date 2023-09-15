@@ -2,10 +2,8 @@ An *easy-to-use YAML-based integration* for several Sungrow inverters for Home A
 
 [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2)
 
-# IMPORTANT (2023-09-11): Unknown issues with HA 2023.9.0 (1) and pyModbus
-In the current Home Assistant update (2023.9.1 (2)), there were (again) some changes made to the internal HA Modbus implementation (which is based on pymodbus). This causes that this integration gathers valid data for some minutes, but then stops. 
-
-It is currently under investigation. If you have these issues, it is recommended to downgrade to HA 2023.8. 
+# 2023-09-11: Everything is back to normal :)
+In the Home Assistant versions (2023.9.0 and .1), there were some issues with the internal HA Modbus implementation (which is based on pymodbus). This caused some trouble, but the issues are fixed in 2023.9.2. 
 
 # Note (July 2023)
 I made a mistake end of march causing unique_ids of sensors getting mixed up. This is now fixed, but it may affect you. You are affected, if you see these warnings in a current verison of the Standard PV dashboard:
@@ -110,7 +108,9 @@ partially working
 3. If you made a nice visualization - let us know! --> [github discussions](../../discussions)
 4. This is meant to be a simple, straightforward YAML-based integration. If you need more than this, I recommend having a look at the SunGather project: https://github.com/bohdan-s
 
-## 7. Most important of all
-We am happy to share our experiences - feel encouraged to share yours with us, too! Participate, if you have any questions :)
+## 7. COntribution
+We are happy to share our experiences - feel encouraged to share yours with us, too! 
 
-**Thanks to all the people, who are actively contributing to this project! Special thanks to Louis712, dylan09 and elektrinis, who are helping a lot helping others in the issue/ disussion sections!**
+If you have any questions, feature requests, found any bugs or have some hints how to update the documentation, a low-threshold way is to join the [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2) and just ask
+
+**Thanks to all the people, who are actively contributing to this project! Special thanks to @Louisbertelsmann, dylan09 and elektrinis for their efforts**
