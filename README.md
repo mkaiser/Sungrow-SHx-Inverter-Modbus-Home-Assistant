@@ -108,7 +108,7 @@ partially working
 3. If you made a nice visualization - let us know! --> [github discussions](../../discussions)
 4. This is meant to be a simple, straightforward YAML-based integration. If you need more than this, I recommend having a look at the SunGather project: https://github.com/bohdan-s
 
-## 7. COntribution
+## 7. Contribution
 We are happy to share our experiences - feel encouraged to share yours with us, too! 
 
 If you have any questions, feature requests, found any bugs or have some hints how to update the documentation, a low-threshold way is to join the [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2) and just ask
