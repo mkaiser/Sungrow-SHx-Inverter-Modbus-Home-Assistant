@@ -1,5 +1,5 @@
 views:
-  - title: Overview
+  - title: Overview SG1
     icon: mdi:sun-compass
     cards:
       - type: entities
@@ -69,7 +69,7 @@ views:
         stat_types:
           - mean
         title: Power distribution last 24 hours
-  - title: Detailed Info
+  - title: Detailed Info SG1
     icon: mdi:solar-power-variant-outline
     cards:
       - type: entities
@@ -104,7 +104,7 @@ views:
           - entity: sensor.sg1_grid_frequency
         title: Grid / Load
       - type: gauge
-        entity: sensor.battery_level
+        entity: sensor.sg1_battery_level
         min: 0
         max: 100
         severity:
@@ -173,8 +173,8 @@ views:
         title: EMS
       - type: entities
         entities:
-          - entity: sensor.sg1_sungrow_device_type
-          - entity: sensor.sg1_sungrow_inverter_state
+          - entity: sensor.sg1_device_type
+          - entity: sensor.sg1_inverter_state
           - entity: sensor.sg1_running_state
           - entity: sensor.sg1_system_state
           - entity: sensor.sg1_inverter_temperature
@@ -204,13 +204,13 @@ views:
           - min
           - max
         title: Battery SoC last 180 days
-  - title: EMS Control
+  - title: EMS Control SG1
     icon: mdi:solar-power
     cards:
       - type: entities
         entities:
           - entity: input_select.set_sg1_inverter_run_mode
-          - entity: sensor.sg1_sungrow_inverter_state
+          - entity: sensor.sg1_inverter_state
           - entity: sensor.sg1_ems_mode_selection
           - entity: sensor.sg1_battery_forced_charge_discharge_mode
         title: Inverter State
