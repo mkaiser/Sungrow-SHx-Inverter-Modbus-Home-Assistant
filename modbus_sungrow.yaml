@@ -1,27 +1,21 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-09-12
+# last update: 2023-09-29
 
 modbus:
   - name: SungrowSHx
     type: tcp
     host: !secret sungrow_modbus_host_ip
     port: !secret sungrow_modbus_port
-    retry_on_empty: true
     retries: 10
-    #close_comm_on_error: true # this caused errors for some users
-    delay: 5
-    # timeout: 5
     sensors:
       - name: Sungrow device type code
         unique_id: sg_dev_code
         slave: !secret sungrow_modbus_slave
         address: 4999 # reg 5000
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         scan_interval: 600
 
       - name: Daily PV generation & battery discharge
@@ -29,9 +23,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5002 # reg 5003
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -44,7 +36,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5003 # reg 5004
         input_type: input
-        count: 2
         data_type: uint32
         swap: word
         unit_of_measurement: kWh
@@ -59,7 +50,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5007 # reg 5008
         input_type: input
-        count: 1
         data_type: int16
         precision: 1
         unit_of_measurement: °C
@@ -72,9 +62,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5010 # reg 5011
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: V
         device_class: Voltage
@@ -86,9 +74,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5011 # reg 5012
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 2
         unit_of_measurement: A
         device_class: Current
@@ -100,9 +86,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5012 # reg 5013
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: V
         device_class: Voltage
@@ -114,9 +98,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5013 # reg 5014
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 2
         unit_of_measurement: A
         device_class: Current
@@ -128,7 +110,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5016 # reg 5017
         input_type: input
-        count: 2
         data_type: uint32
         swap: word
         precision: 0
@@ -143,9 +124,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5018 # reg: 5019
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: V
         device_class: Voltage
@@ -158,9 +137,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5019 # reg: 5020
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: V
         device_class: Voltage
@@ -173,9 +150,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5020 # reg: 5021
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: V
         device_class: Voltage
@@ -188,9 +163,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5035 # reg 5036
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 2
         unit_of_measurement: "Hz"
         device_class: frequency
@@ -203,7 +176,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5032 # reg 5033
         input_type: input
-        count: 2
         data_type: int32
         swap: word
         precision: 0
@@ -218,9 +190,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5034 # reg 5035
         input_type: input
-        count: 1
         data_type: int16
-        swap: none
         precision: 3
         unit_of_measurement: "%"
         device_class: power_factor
@@ -238,7 +208,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5600 # reg 5601
         input_type: input
-        count: 2
         data_type: int32
         swap: word
         precision: 0
@@ -253,7 +222,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5602 # reg 5603
         input_type: input
-        count: 2
         data_type: int32
         swap: word
         precision: 0
@@ -268,7 +236,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5604 # reg 5605
         input_type: input
-        count: 2
         data_type: int32
         swap: word
         precision: 0
@@ -283,7 +250,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5606 # reg 5607
         input_type: input
-        count: 2
         data_type: int32
         swap: word
         precision: 0
@@ -298,9 +264,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5627 # reg 5628
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         unit_of_measurement: "W"
         device_class: power
         state_class: measurement
@@ -312,9 +276,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5634 # reg 5635
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 0
         unit_of_measurement: A
         device_class: Current
@@ -326,9 +288,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5635 # reg 5636
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 0
         unit_of_measurement: A
         device_class: Current
@@ -344,9 +304,7 @@ modbus:
         unique_id: sg_total_backup_power
         address: 5725 # reg 5726
         input_type: input
-        count: 1
         data_type: int16
-        swap: none
         precision: 0
         unit_of_measurement: W
         device_class: power
@@ -359,9 +317,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5722 # reg 5723
         input_type: input
-        count: 1
         data_type: int16
-        swap: none
         precision: 0
         unit_of_measurement: W
         device_class: power
@@ -374,9 +330,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5723 # reg 5724
         input_type: input
-        count: 1
         data_type: int16
-        swap: none
         precision: 0
         unit_of_measurement: W
         device_class: power
@@ -389,9 +343,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 5724 # reg 5725
         input_type: input
-        count: 1
         data_type: int16
-        swap: none
         precision: 0
         unit_of_measurement: W
         device_class: power
@@ -405,9 +357,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6226 # reg 6227
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -420,9 +370,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6227 # reg 6228
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -435,9 +383,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6228 # reg 6229
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -450,9 +396,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6229 # reg 6230
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -465,9 +409,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6230 # reg 6231
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -480,9 +422,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6231 # reg 6232
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -495,9 +435,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6232 # reg 6233
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -510,9 +448,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6233 # reg 6234
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -525,9 +461,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6234 # reg 6235
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -540,9 +474,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6235 # reg 6236
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -555,9 +487,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6236 # reg 6237
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -570,9 +500,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6237 # reg 6238
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -589,7 +517,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -604,7 +531,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -619,7 +545,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -634,7 +559,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -649,7 +573,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -664,7 +587,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -679,7 +601,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -694,7 +615,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -709,7 +629,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -724,7 +643,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -739,7 +657,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -754,9 +671,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6595 # reg 6596
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -769,9 +684,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6596 # reg 6597
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -784,9 +697,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6597 # reg 6598
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -799,9 +710,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6598 # reg 6599
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -814,9 +723,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6599 # reg 6600
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -829,9 +736,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6600 # reg 6601
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -844,9 +749,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6601 # reg 6602
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -859,9 +762,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6602 # reg 6603
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -874,9 +775,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6603 # reg 6604
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -889,9 +788,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6604 # reg 6605
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -904,9 +801,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6605 # reg 6606
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -919,9 +814,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 6606 # reg 6607
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -938,7 +831,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -953,7 +845,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -968,7 +859,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -983,7 +873,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -998,7 +887,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -1013,7 +901,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -1028,7 +915,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -1043,7 +929,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -1058,7 +943,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -1073,7 +957,6 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        count: 2
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -1087,9 +970,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 12999 # reg 13000
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 0
         scale: 1
         scan_interval: 10
@@ -1101,9 +982,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13000 # reg 13001
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 0
         scale: 1
         scan_interval: 10
@@ -1113,9 +992,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13001 # reg 13002
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -1128,7 +1005,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13002 # reg 13003
         input_type: input
-        count: 2
         data_type: uint32
         swap: word
         precision: 1
@@ -1143,9 +1019,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13004 # reg 13005
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -1158,7 +1032,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13005 # reg 13006
         input_type: input
-        count: 2
         data_type: uint32
         swap: word
         precision: 1
@@ -1173,7 +1046,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13007 # reg 13008
         input_type: input
-        count: 2
         data_type: int32
         swap: word
         precision: 0
@@ -1189,7 +1061,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13009 # reg 13010
         input_type: input
-        count: 2
         data_type: int32
         swap: word
         precision: 0
@@ -1204,9 +1075,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13011 # reg 13012
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -1219,7 +1088,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13012 # reg 13013
         input_type: input
-        count: 2
         data_type: uint32
         swap: word
         precision: 1
@@ -1234,9 +1102,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13016 # reg 13017
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -1249,7 +1115,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13017 # reg 13018
         input_type: input
-        count: 2
         data_type: uint32
         swap: word
         precision: 1
@@ -1264,9 +1129,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13019 # reg 13020
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 0
         unit_of_measurement: V
         device_class: Voltage
@@ -1278,9 +1141,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13020 # reg 13021
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: A
         device_class: Current
@@ -1294,9 +1155,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13021 # reg 13022
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 0
         unit_of_measurement: W
         device_class: power
@@ -1309,9 +1168,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13022 # reg 13023
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: "%"
         device_class: battery
@@ -1324,9 +1181,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13023 # reg 13024
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 0
         unit_of_measurement: "%"
         state_class: measurement
@@ -1338,7 +1193,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13024 # reg 13025
         input_type: input
-        count: 1
         data_type: int16
         precision: 1
         unit_of_measurement: °C
@@ -1351,9 +1205,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13025 # reg 13026
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -1366,7 +1218,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13026 # reg 13027
         input_type: input
-        count: 2
         data_type: uint32
         swap: word
         precision: 1
@@ -1381,9 +1232,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13030 # reg 13031
         input_type: input
-        count: 1
         data_type: int16
-        swap: none
         precision: 1
         unit_of_measurement: A
         device_class: current
@@ -1396,9 +1245,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13031 # reg 13032
         input_type: input
-        count: 1
         data_type: int16
-        swap: none
         precision: 1
         unit_of_measurement: A
         device_class: current
@@ -1411,9 +1258,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13032 # reg 13033
         input_type: input
-        count: 1
         data_type: int16
-        swap: none
         precision: 1
         unit_of_measurement: A
         device_class: current
@@ -1426,7 +1271,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13033 # reg 13034
         input_type: input
-        count: 2
         data_type: int32
         swap: word
         precision: 0
@@ -1441,9 +1285,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13035 # reg 13036
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -1456,7 +1298,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13036 # reg 13037
         input_type: input
-        count: 2
         data_type: uint32
         swap: word
         precision: 1
@@ -1471,9 +1312,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13039 # reg 13040
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -1486,7 +1325,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13040 # reg 13041
         input_type: input
-        count: 2
         data_type: uint32
         swap: word
         precision: 1
@@ -1501,9 +1339,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13044 # reg 13045
         input_type: input
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
@@ -1516,7 +1352,6 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13045 # reg 13046
         input_type: input
-        count: 2
         data_type: uint32
         swap: word
         precision: 1
@@ -1534,9 +1369,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 12999 # reg 13000
         input_type: holding
-        count: 1
         data_type: uint16
-        swap: none
         precision: 0
         scan_interval: 10
 
@@ -1545,9 +1378,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13049 # reg 13050
         input_type: holding
-        count: 1
         data_type: uint16
-        swap: none
         scan_interval: 10
 
       - name: Battery forced charge discharge cmd raw
@@ -1555,9 +1386,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13050 # reg 13051
         input_type: holding
-        count: 1
         data_type: uint16
-        swap: none
         precision: 0
         scan_interval: 10
 
@@ -1566,9 +1395,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13051 # reg 13052
         input_type: holding
-        count: 1
         data_type: uint16
-        swap: none
         precision: 0
         # datasheet says:
         # 0 to 5000 W for SH*K-*
@@ -1584,9 +1411,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13057 # reg 13058
         input_type: holding
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: "%"
         device_class: battery
@@ -1599,9 +1424,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13058 # reg 13059
         input_type: holding
-        count: 1
         data_type: uint16
-        swap: none
         precision: 1
         unit_of_measurement: "%"
         device_class: battery
@@ -1614,9 +1437,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13073 # reg 13074
         input_type: holding
-        count: 1
         data_type: uint16
-        swap: none
         precision: 0
         unit_of_measurement: "W"
         device_class: power
@@ -1629,9 +1450,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13086 # reg 13087
         input_type: holding
-        count: 1
         data_type: uint16
-        swap: none
         precision: 0
         scan_interval: 10
 
@@ -1640,9 +1459,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 13099 # reg 13100
         input_type: holding
-        count: 1
         data_type: uint16
-        swap: none
         unit_of_measurement: "%"
         device_class: battery
         state_class: measurement
@@ -1655,9 +1472,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 33046 # reg 33047
         input_type: holding
-        count: 1
         data_type: uint16
-        swap: none
         precision: 0
         unit_of_measurement: W
         device_class: power
@@ -1670,9 +1485,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 33047 # reg 33048
         input_type: holding
-        count: 1
         data_type: uint16
-        swap: none
         precision: 0
         unit_of_measurement: W
         device_class: power
@@ -1685,9 +1498,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 33048 # reg 33049
         input_type: holding
-        count: 1
         data_type: uint16
-        swap: none
         unit_of_measurement: kWh
         device_class: energy
         scale: 0.01
@@ -1698,9 +1509,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 33148 # reg 33149
         input_type: holding
-        count: 1
         data_type: uint16
-        swap: none
         precision: 0
         unit_of_measurement: W
         device_class: power
@@ -1713,9 +1522,7 @@ modbus:
         slave: !secret sungrow_modbus_slave
         address: 33149 # reg 33150
         input_type: holding
-        count: 1
         data_type: uint16
-        swap: none
         precision: 0
         unit_of_measurement: W
         device_class: power
