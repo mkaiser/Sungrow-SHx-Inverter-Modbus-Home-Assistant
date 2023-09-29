@@ -1,0 +1,15 @@
+template:
+  - sensor:
+      - name: SG Total DC Power
+        unique_id: uid_sg_total_dc_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.sg1_total_dc_power')|is_number and states('sensor.sg2_total_dc_power')|is_number}}"
+        state: "{{ (states('sensor.sg1_total_dc_power') | float + states('sensor.sg2_total_dc_power') | float) |int }}"
+
+      - name: SG Load Power
+        unique_id: uid_sg_load_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.sg_total_dc_power')|is_number and states('sensor.sg1_export_power')|is_number}}"
+        state: "{{ (states('sensor.sg_total_dc_power') | float - states('sensor.sg1_export_power') | float) |int }}"
