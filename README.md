@@ -2,8 +2,8 @@ An *easy-to-use YAML-based integration* for several Sungrow inverters for Home A
 
 [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2)
 
-# 2023-09-11: Everything is back to normal :)
-In the Home Assistant versions (2023.9.0 and .1), there were some issues with the internal HA Modbus implementation (which is based on pymodbus). This caused some trouble, but the issues are fixed in 2023.9.2. 
+# 2023-09-29: Home Assistant 2023.10 will break some things
+update to the current git version and it will be fixed :)
 
 # Note (July 2023)
 I made a mistake end of march causing unique_ids of sensors getting mixed up. This is now fixed, but it may affect you. You are affected, if you see these warnings in a current verison of the Standard PV dashboard:
