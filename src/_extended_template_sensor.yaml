@@ -1,0 +1,108 @@
+
+      - name: SG1 Phase A power
+        unique_id: uid_sg1_phase_a_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.sg1_phase_a_voltage')|is_number and states('sensor.sg1_phase_a_current')|is_number }}"
+        state: "{{ (states('sensor.sg1_phase_a_voltage') | float * states('sensor.sg1_phase_a_current') | float) |int }}"
+
+      - name: SG1 Phase B power
+        unique_id: uid_sg1_phase_b_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.sg1_phase_b_voltage')|is_number and states('sensor.sg1_phase_b_current')|is_number }}"
+        state: "{{ (states('sensor.sg1_phase_b_voltage') | float * states('sensor.sg1_phase_b_current') | float) |int }}"
+
+      - name: SG1 Phase C power
+        unique_id: uid_sg1_phase_c_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.sg1_phase_c_voltage')|is_number and states('sensor.sg1_phase_c_current')|is_number }}"
+        state: "{{ (states('sensor.sg1_phase_c_voltage') | float * states('sensor.sg1_phase_c_current') | float) |int }}"
+
+      # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
+      - name: SG1 Meter active power
+        unique_id: uid_sg1_meter_active_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.sg1_meter_active_power_raw')|is_number and states('sensor.sg1_meter_active_power_raw')|int != 0x7FFFFFFF}}"
+        state: "{{ states('sensor.sg1_meter_active_power_raw') }}"
+
+      # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
+      - name: SG1 Meter Phase A active power
+        unique_id: uid_sg1_meter_phase_a_active_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.sg1_meter_phase_a_active_power_raw')|is_number and states('sensor.sg1_meter_phase_a_active_power_raw')|int != 0x7FFFFFFF}}"
+        state: "{{ states('sensor.sg1_meter_phase_a_active_power_raw') }}"
+
+      # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
+      - name: SG1 Meter Phase B active power
+        unique_id: uid_sg1_meter_phase_b_active_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.sg1_meter_phase_b_active_power_raw')|is_number and states('sensor.sg1_meter_phase_b_active_power_raw')|int != 0x7FFFFFFF}}"
+        state: "{{ states('sensor.sg1_meter_phase_b_active_power_raw') }}"
+
+      # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
+      - name: SG1 Meter Phase C active power
+        unique_id: uid_sg1_meter_phase_c_active_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.sg1_meter_phase_c_active_power_raw')|is_number and states('sensor.sg1_meter_phase_c_active_power_raw')|int != 0x7FFFFFFF}}"
+        state: "{{ states('sensor.sg1_meter_phase_c_active_power_raw') }}"
+        
+        
+
+      - name: SG1 Monthly PV generation (current)
+        unique_id: uid_sg1_monthly_pv_generation_current
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        state: >
+          {% set currMonth = 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
+          {{ states('sensor.sg1_' ~ currMonth) }}
+        availability: >-
+          {% set currMonth = 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
+          {{ states('sensor.sg1_' ~ currMonth)|is_number }}
+
+      - name: SG1 Yearly PV generation (current)
+        unique_id: uid_sg1_yearly_pv_generation_current
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        state: >
+          {% set currYear = 'yearly_pv_generation_' ~ now().year %}
+          {{ states('sensor.sg1_' ~ currYear) }}
+        availability: >-
+          {% set currYear = 'yearly_pv_generation_' ~ now().year %}
+          {{ states('sensor.sg1_' ~ currYear)|is_number }}
+
+      - name: SG1 Monthly export (current)
+        unique_id: uid_sg1_monthly_export_current
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        state: >
+          {% set currMonth = 'monthly_export_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
+          {{ states('sensor.sg1_' ~ currMonth) }}
+        availability: >-
+          {% set currMonth = 'monthly_export_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
+          {{ states('sensor.sg1_' ~ currMonth)|is_number }}
+
+      - name: SG1 Yearly export (current)
+        unique_id: uid_sg1_yearly_export_current
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        state: >
+          {% set currYear = 'yearly_export_' ~ now().year %}
+          {{ states('sensor.sg1_' ~ currYear) }}
+        availability: >-
+          {% set currYear = 'yearly_export_' ~ now().year %}
+          {{ states('sensor.sg1_' ~ currYear)|is_number }}        
+          

@@ -1,0 +1,187 @@
+
+  - id: "uid_sg1_set_run_mode_reg"
+    alias: "SG1 set run mode reg"
+    description: "SG1 enables/ stops the inverter"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_select.set_sg1_inverter_run_mode
+    condition: []
+    variables:
+      sg_start: 0xCF
+      sg_stop: 0xCE
+    action:
+      - service: modbus.write_register
+        data_template:
+          hub: Sungrow_Inverter_SG1
+          slave: !secret sungrow_sg1_modbus_slave
+          address: 12999 # reg 13000
+          value: >
+            {% if is_state('input_select.set_sg1_inverter_run_mode', "Enabled") %}
+              {{sg_start}}
+            {% else %}
+              {{sg_stop}}
+            {% endif %}
+    mode: single
+
+  - id: "uid_sg1_run_mode_gui_update"
+    alias: "SG1 run mode GUI update"
+    description: "SG1 run mode GUI update"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.sg1_system_state
+    condition:
+      - condition: template
+        value_template: "{{ not is_state('sensor.sg1_system_state', 'unavailable') }}"
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.set_sg1_inverter_run_mode
+        data:
+          option: >
+            {% if is_state('sensor.sg1_sungrow_inverter_state', "Stop") %}
+              Shutdown
+            {% else %}
+              Enabled
+            {% endif %}
+    mode: single
+    
+
+  - id: "uid_sg1_set_ems_mode_reg"
+    alias: "SG1 set EMS mode reg"
+    description: "SG1 set EMS mode reg"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_select.set_sg1_ems_mode
+    condition: []
+    variables:
+      ems_mode_self_consume: 0
+      ems_mode_forced: 2
+      ems_mode_external: 3
+      ems_mode_vpp: 4
+      ems_mode_microgrid: 8
+    action:
+      - service: modbus.write_register
+        data_template:
+          hub: Sungrow_Inverter_SG1
+          slave: !secret sungrow_sg1_modbus_slave
+          address: 13049 # reg 13050
+          value: >
+            {% if is_state('input_select.set_sg1_ems_mode', "Self-consumption mode (default)") %} 
+              {{ems_mode_self_consume}}
+            {% elif is_state('input_select.set_sg1_ems_mode', "Forced mode") %} 
+              {{ems_mode_forced}}
+            {% elif is_state('input_select.set_sg1_ems_mode', "External EMS") %} 
+              {{ems_mode_external}}
+            {% elif is_state('input_select.set_sg1_ems_mode', "VPP") %} 
+              {{ems_mode_vpp}}
+            {% elif is_state('input_select.set_sg1_ems_mode', "MicroGrid") %} 
+              {{ems_mode_microgrid}}
+            {% else %}
+              {{ems_mode_self_consume}}
+            {% endif %}
+    mode: single
+
+  - id: "uid_sg1_ems_mode_gui_update"
+    alias: "SG1 EMS mode GUI update"
+    description: "SG1 EMS mode GUI update"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.sg1_ems_mode_selection
+    condition:
+      - condition: template
+        value_template: "{{ not is_state('sensor.sg1_ems_mode_selection', 'unavailable') }}"
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.set_sg1_ems_mode
+        data:
+          option: "{{ states('sensor.sg1_ems_mode_selection') }}"
+    mode: single
+
+  - id: "uid_sg1_set_export_power_limit_mode_reg"
+    alias: "SG1 export power limit mode reg"
+    description: "SG1 Set export power limit mode"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_select.set_sg1_export_power_limit_mode
+    condition: []
+    variables:
+      export_limit_enable: 0xAA
+      export_limit_disable: 0x55
+    action:
+      - service: modbus.write_register
+        data_template:
+          hub: Sungrow_Inverter_SG1
+          slave: !secret sungrow_sg1_modbus_slave
+          address: 13086 # reg 13087
+          value: >
+            {% if is_state('input_select.set_sg1_export_power_limit_mode', "Enabled") %} 
+              {{export_limit_enable}}
+            {% elif is_state('input_select.set_sg1_export_power_limit_mode', "Disabled") %} 
+              {{export_limit_disable}}
+            {% else %}
+              {{export_limit_disable}}
+            {% endif %}
+    mode: single
+
+  - id: "uid_sg1_export_power_limit_mode_gui_update"
+    alias: "SG1 export power limit mode gui update"
+    description: "SG1 export power limit mode GUI Update"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.sg1_export_power_limit_mode_raw
+    condition:
+      - condition: template
+        value_template: "{{ not is_state('sensor.sg1_export_power_limit_mode_raw', 'unavailable') }}"
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.set_sg1_export_power_limit_mode
+        data:
+          option: >
+            {% if ((states('sensor.sg1_export_power_limit_mode_raw') | int(default=0)) == 0x00AA) %} 
+              Enabled
+            {% elif ((states('sensor.sg1_export_power_limit_mode_raw') | int(default=0)) == 0x0055) %} 
+              Disabled
+            {% endif %}
+    mode: single
+
+  - id: "uid_sg1_set_export_power_limit_reg"
+    alias: "SG1 export power limit reg"
+    description: "SG1 set export power limit"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_number.set_sg1_export_power_limit
+    condition: []
+    action:
+      - service: modbus.write_register
+        data_template:
+          hub: Sungrow_Inverter_SG1
+          slave: !secret sungrow_sg1_modbus_slave
+          address: 13073 # reg 13074
+          value: "{{ states('input_number.set_sg1_export_power_limit') }}"
+    mode: single
+
+  - id: "uid_sg1_export_power_limit_gui_update"
+    alias: "SG1 export power limit gui update"
+    description: "SG1 export power limit gui update"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.sg1_export_power_limit
+    condition: []
+    action:
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.set_sg1_export_power_limit
+        data:
+          value: "{{ states('sensor.sg1_export_power_limit') }}"
+    mode: single    
+    

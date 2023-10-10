@@ -1,0 +1,284 @@
+      - name: SG1 Device type code
+        unique_id: uid_sg1_dev_code
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 4999 # reg 5000
+        input_type: input
+        data_type: uint16
+        scan_interval: !secret sungrow_scan_interval_rare
+        
+      - name: SG1 Inverter temperature
+        unique_id: uid_sg1_inverter_temperature
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5007 # reg 5008
+        input_type: input
+        data_type: int16
+        precision: 1
+        unit_of_measurement: °C
+        device_class: Temperature
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG1 MPPT1 voltage
+        unique_id: uid_sg1_mppt1_voltage
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5010 # reg 5011
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 MPPT1 current
+        unique_id: uid_sg1_mppt1_current
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5011 # reg 5012
+        input_type: input
+        data_type: uint16
+        precision: 2
+        unit_of_measurement: A
+        device_class: Current
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 MPPT2 voltage
+        unique_id: uid_sg1_mppt2_voltage
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5012 # reg 5013
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 MPPT2 current
+        unique_id: uid_sg1_mppt2_current
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5013 # reg 5014
+        input_type: input
+        data_type: uint16
+        precision: 2
+        unit_of_measurement: A
+        device_class: Current
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 Total DC power
+        unique_id: uid_sg1_total_dc_power
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5016 # reg 5017
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG1 System state
+        unique_id: uid_sg1_system_state
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 12999 # reg 13000
+        input_type: input
+        data_type: uint16
+        precision: 0
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      # register running state is not available for certain SH*RS inverters
+      # template sensors are used to determine the states based on other sensors
+      - name: SG1 Running state
+        unique_id: uid_sg1_running_state
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13000 # reg 13001
+        input_type: input
+        data_type: uint16
+        precision: 0
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG1 Daily PV generation
+        unique_id: uid_sg1_daily_pv_generation
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13001 # reg 13002
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total PV generation
+        unique_id: uid_sg1_total_pv_generation
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13002 # reg 13003
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Daily exported energy from PV
+        unique_id: uid_sg1_daily_exported_energy_from_PV
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13004 # reg 13005
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total exported energy from PV
+        unique_id: uid_sg1_total_exported_energy_from_pv
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13005 # reg 13006
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Load power
+        unique_id: uid_sg1_load_power
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13007 # reg 13008
+        input_type: input
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      # this value returns a positive value when exporting and a negative value when importing power
+      - name: SG1 Export power raw
+        unique_id: uid_sg1_battery_export_power_raw
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13009 # reg 13010
+        input_type: input
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG1 Daily direct energy consumption
+        unique_id: uid_sg1_daily_direct_energy_consumption
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13016 # reg 13017
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total direct energy consumption
+        unique_id: uid_sg1_total_direct_energy_consumption
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13017 # reg 13018
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare        
+        
+      - name: SG1 Daily imported energy
+        unique_id: uid_sg1_daily_imported_energy
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13035 # reg 13036
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total imported energy
+        unique_id: uid_sg1_total_imported_energy
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13036 # reg 13037
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare        
+        
+      - name: SG1 Daily exported energy
+        unique_id: uid_sg1_daily_exported_energy
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13044 # reg 13045
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total exported energy
+        unique_id: uid_sg1_total_exported_energy
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13045 # reg 13046
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare        
+        
+      - name: SG1 Inverter start stop
+        unique_id: uid_sg1_inverter_start_stop
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 12999 # reg 13000
+        input_type: holding
+        data_type: uint16
+        precision: 0
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 EMS mode selection raw
+        unique_id: uid_sg1_ems_mode_selection_raw
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13049 # reg 13050
+        input_type: holding
+        data_type: uint16
+        scan_interval: !secret sungrow_scan_interval_fast

@@ -1,0 +1,122 @@
+      # make the sensor battery_forced_charge_discharge_mode more human readable
+      # Inverter States from modbus reference manual
+      # 0xAA forced charge
+      # 0xBB forced discharge
+      # 0xCC Stop (default)
+      - name: SG1 Battery forced charge discharge mode
+        unique_id: uid_sg1_battery_forced_charge_discharge_mode
+        state: >-
+          {% if ((states('sensor.sg1_battery_forced_charge_discharge_mode_raw') | int(default=0)) == 0x00AA) %}
+            Forced charge
+          {% elif ((states('sensor.sg1_battery_forced_charge_discharge_mode_raw') | int(default=0))  == 0x00BB) %}
+            Forced discharge
+          {% elif ((states('sensor.sg1_battery_forced_charge_discharge_mode_raw') | int(default=0))  == 0x00CC) %}
+            Stop (default)
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}
+
+
+
+      - name: SG1 Signed battery power # positive if charging and negative if discharging
+        unique_id: uid_sg1_signed_battery_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ states('binary_sensor.sg1_battery_charging') and
+          states('binary_sensor.sg1_battery_discharging') and
+          states('sensor.sg1_battery_power_raw')|is_number }}
+        state: >-
+          {% if is_state('binary_sensor.sg1_battery_charging', 'on') %}
+            {{ (states('sensor.sg1_battery_power_raw') | float)}}
+          {% elif is_state('binary_sensor.sg1_battery_discharging', 'on') %}
+            {{ (states('sensor.sg1_battery_power_raw') | float * -1)}}
+          {% else %}
+            0
+          {% endif %}
+
+      - name: SG1 Battery charging power # positive if charging else zero
+        unique_id: uid_sg1_battery_charging_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ states('binary_sensor.sg1_battery_charging') and
+          states('sensor.sg1_battery_power_raw')|is_number }}
+        state: >-
+          {% if is_state('binary_sensor.sg1_battery_charging', 'on') %}
+            {{ states('sensor.sg1_battery_power_raw') }}
+          {% else %}
+            0
+          {% endif %}
+
+      - name: SG1 Battery discharging power # positive if discharging else zero
+        unique_id: uid_sg1_battery_discharging_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ states('binary_sensor.sg1_battery_charging') and
+          states('sensor.sg1_battery_power_raw')|is_number }}
+        state: >-
+          {% if is_state('binary_sensor.sg1_battery_discharging', 'on') %}
+            {{ states('sensor.sg1_battery_power_raw') }}
+          {% else %}
+            0
+          {% endif %}
+          
+          
+
+      - name: SG1 Battery level (nominal)
+        unique_id: uid_sg1_battery_level_nom
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        availability: >-
+          {{
+              states('sensor.sg1_battery_level') | is_number and
+              states('sensor.sg1_min_soc') | is_number and
+              states('sensor.sg1_max_soc') | is_number
+          }}
+        state: >-
+          {% set soc_min = states('sensor.sg1_min_soc') | float %}
+          {% set soc_max = states('sensor.sg1_max_soc') | float %}
+          {% set soc_cur = states('sensor.sg1_battery_level') | float %}
+          {{
+            ((soc_min) + ((soc_max - soc_min) * (soc_cur / 100))) | round(1)
+          }}
+
+      - name: SG1 Battery charge (nominal)
+        unique_id: uid_sg1_battery_charge_nom
+        unit_of_measurement: kWh
+        device_class: energy
+        availability: >-
+          {{
+              states('sensor.sg1_battery_capacity') | is_number and
+              states('sensor.sg1_battery_level_nominal') | is_number
+          }}
+        state: >-
+          {{
+            ( states('sensor.sg1_battery_capacity') | float *
+            states('sensor.sg1_battery_level_nominal') | float / 100 )| round(1)
+          }}
+
+      - name: SG1 Battery charge
+        unique_id: uid_sg1_battery_charge
+        unit_of_measurement: kWh
+        device_class: energy
+        availability: >-
+          {{
+              states('sensor.sg1_battery_capacity') | is_number and
+              states('sensor.sg1_battery_level') | is_number and
+              states('sensor.sg1_min_soc') | is_number and
+              states('sensor.sg1_max_soc') | is_number
+          }}
+        state: >-
+          {{
+              states('sensor.sg1_battery_capacity') | float *
+                ((states('sensor.sg1_max_soc') | float - states('sensor.sg1_min_soc') | float) *
+                states('sensor.sg1_battery_level') | float / 10000) | round(1)
+          }}
+

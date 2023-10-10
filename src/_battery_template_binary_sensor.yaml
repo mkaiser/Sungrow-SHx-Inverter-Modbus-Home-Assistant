@@ -1,0 +1,97 @@
+
+      - name: SG1 Battery charging
+        unique_id: uid_sg1_battery_charging
+        availability: >-
+          {{states('sensor.sg1_running_state')|is_number or
+            (states('sensor.sg1_ems_mode_selection_raw')|is_number and
+            states('sensor.sg1_battery_forced_charge_discharge_mode_raw')|is_number and
+            states('sensor.sg1_battery_power_raw')|is_number and
+            states('sensor.sg1_total_dc_power')|is_number and
+            states('sensor.sg1_load_power')|is_number )
+          }}
+        delay_on:
+          seconds: 60
+        state: >-
+          {% if states('sensor.sg1_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {% if states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x2) > 0 %}
+              on
+            {% else %}
+              off
+            {% endif %}
+          {% else %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if (states('sensor.sg1_ems_mode_selection') ) == "Forced mode" %}
+              {# EMS forced mode #}
+              {% if (states('sensor.sg1_battery_forced_charge_discharge_mode') == "Forced charge") %}
+                {# in mode Forced charge #}
+                {% if (states('sensor.sg1_battery_power_raw')|int > 0 ) %}
+                  {# power flow from/to battery #}
+                  on
+                {% else %}
+                  {# no power flow from/to battery #}
+                  off
+                {% endif %}
+              {% else %}
+                {# in EMS mode, but not in mode Forced charge #}
+                off
+              {% endif %}
+            {% else %}
+              {# not in EMS forced mode, assuming self consumption mode #}
+              {% if states('sensor.sg1_total_dc_power')|int > states('sensor.load_power')|int %}
+                {# more power generated than consumed. assuming battery charging #}
+                on
+              {% else %}
+                off
+              {% endif %}
+            {% endif %}
+          {% endif %}
+
+      - name: SG1 Battery discharging
+        unique_id: uid_sg1_battery_discharging
+        availability: >-
+          {{states('sensor.sg1_running_state')|is_number or
+            (states('sensor.sg1_ems_mode_selection_raw')|is_number and
+            states('sensor.sg1_battery_forced_charge_discharge_mode_raw')|is_number and
+            states('sensor.sg1_battery_power_raw')|is_number and
+            states('sensor.sg1_total_dc_power')|is_number and
+            states('sensor.sg1_load_power')|is_number )
+          }}
+        delay_on:
+          seconds: 60
+        state: >-
+          {% if states('sensor.sg1_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {% if states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x4) > 0 %}
+              on
+            {% else %}
+              off
+            {% endif %}
+          {% else %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if (states('sensor.sg1_ems_mode_selection') ) == "Forced mode" %}
+              {# EMS forced mode #}
+              {% if (states('sensor.sg1_battery_forced_charge_discharge_mode') == "Forced discharge") %}
+                {# in mode Forced discharge #}
+                {% if (states('sensor.sg1_battery_power_raw')|int > 0 ) %}
+                  {# power flow from/to battery #}
+                  on
+                {% else %}
+                  {# no power flow from/to battery #}
+                  off
+                {% endif %}
+              {% else %}
+                {# in EMS mode, but not in mode Forced charge #}
+                off
+              {% endif %}
+            {% else %}
+              {# not in EMS forced mode, assuming self consumption mode #}
+              {% if ( ( states('sensor.sg1_total_dc_power')|int < states('sensor.sg1_load_power')|int ) ) and states('sensor.sg1_battery_power_raw')|int > 0 %}
+                {# more power consumed than generated and some battery power -->  assuming battery discharging #}
+                on
+              {% else %}
+                off
+              {% endif %}
+            {% endif %}
+          {% endif %}
+          

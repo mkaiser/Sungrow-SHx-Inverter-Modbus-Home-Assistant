@@ -1,0 +1,57 @@
+      - name: SG1 PV generating
+        unique_id: uid_sg1_pv_generating
+        availability: >-
+          {{states('sensor.sg1_running_state')|is_number or
+            states('sensor.sg1_total_dc_power')|is_number
+          }}
+        delay_on:
+          seconds: 60
+        state: >-
+          {% if states('sensor.sg1_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x1) > 0 }}
+          {% else %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.sg1_total_dc_power')|int > 0 %}
+              on
+            {% else %}
+              off
+            {% endif %}
+          {% endif %}
+          
+
+      - name: SG1 Exporting power
+        unique_id: uid_sg1_exporting_power
+        availability: "{{states('sensor.sg1_running_state')|is_number or states('sensor.sg1_export_power_raw')|is_number }}"
+        delay_on:
+          seconds: 60
+        state: >-
+          {% if states('sensor.sg1_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x10) > 0 }}
+          {% else %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.sg1_export_power_raw')|int > 0 %}
+                on
+            {% else %}
+                off
+            {% endif %}
+          {% endif %}
+
+      - name: SG1 Importing power
+        unique_id: uid_sg1_importing_power
+        availability: "{{states('sensor.sg1_running_state')|is_number or states('sensor.sg1_export_power_raw')|is_number }}"
+        delay_on:
+          seconds: 60
+        state: >-
+          {% if states('sensor.sg1_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x20) > 0 }}
+          {% else %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.sg1_export_power_raw')|int < 0 %}
+              on
+            {% else %}
+              off
+            {% endif %}
+          {% endif %}          

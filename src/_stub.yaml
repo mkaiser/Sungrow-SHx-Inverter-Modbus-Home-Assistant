@@ -1,0 +1,39 @@
+# Home Assistant Sungrow inverter integration
+#
+# this is a development version which breaks with the previous API!
+#
+# DO NOT USE THIS VERSION
+#
+# This version is meant to be a base for disussion and trying to find better ways
+#
+# Discussion here https://discord.gg/ZvYBejFkm2 , channel "Experimental"
+#
+# https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/tree/experimental
+#
+# by Martin Kaiser
+# last update: 2023-10-10
+
+modbus:
+# MARKER: insert modbus device for inverter 1 here 
+
+# MARKER: insert modbus sensors for inverter 1 here 
+
+# MARKER: insert modbus device for inverter 2 here 
+
+# MARKER: insert modbus sensors for inverter 2 here 
+
+template:
+  - binary_sensor:
+# MARKER: template binary sensors are inserted here
+
+  - sensor:
+# MARKER: template sensors are inserted here
+ 
+input_number:
+# MARKER: input numbers are inserted here
+
+input_select:
+# MARKER: input selects are inserted here
+
+automation:
+# MARKER: automations are inserted here

@@ -1,0 +1,26 @@
+  set_sg1_inverter_run_mode:
+    name: SG1 Inverter mode
+    options:
+      - "Enabled"
+      - "Shutdown"
+    
+  # get input for battery mode (forced charge/discharge, stop (default) )
+  set_sg1_ems_mode:
+    name: SG1 EMS mode
+    options:
+      - "Self-consumption mode (default)"
+      - "Forced mode"
+      - "External EMS" # for multiple inverters
+    # these are commented, because they are rarely used
+    #      - "VPP"
+    #      - "MicroGrid"
+    icon: mdi:battery-unknown      
+    
+    
+  set_sg1_export_power_limit_mode:
+    name: SG1 Export power limit mode
+    options:
+      - "Enabled"
+      - "Disabled"
+    icon: mdi:export    
+    

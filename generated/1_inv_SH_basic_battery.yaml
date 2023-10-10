@@ -1,0 +1,1507 @@
+# Home Assistant Sungrow inverter integration
+#
+# this is a development version which breaks with the previous API!
+#
+# DO NOT USE THIS VERSION
+#
+# This version is meant to be a base for disussion and trying to find better ways
+#
+# Discussion here https://discord.gg/ZvYBejFkm2 , channel "Experimental"
+#
+# https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/tree/experimental
+#
+# by Martin Kaiser
+# last update: 2023-10-10
+
+modbus:
+# MARKER: insert modbus device for inverter 1 here 
+  - name: Sungrow_Inverter_SG1
+    type: tcp
+    host: !secret sungrow_sg1_modbus_host_ip
+    port: !secret sungrow_sg1_modbus_port
+    retries: 10
+    sensors:
+    
+  - name: Sungrow_Inverter_SG1
+    type: tcp
+    host: !secret sungrow_sg1_modbus_host_ip
+    port: !secret sungrow_sg1_modbus_port
+    retries: 10
+    sensors:
+    
+
+# MARKER: insert modbus sensors for inverter 1 here 
+      - name: SG1 Device type code
+        unique_id: uid_sg1_dev_code
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 4999 # reg 5000
+        input_type: input
+        data_type: uint16
+        scan_interval: !secret sungrow_scan_interval_rare
+        
+      - name: SG1 Inverter temperature
+        unique_id: uid_sg1_inverter_temperature
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5007 # reg 5008
+        input_type: input
+        data_type: int16
+        precision: 1
+        unit_of_measurement: °C
+        device_class: Temperature
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG1 MPPT1 voltage
+        unique_id: uid_sg1_mppt1_voltage
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5010 # reg 5011
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 MPPT1 current
+        unique_id: uid_sg1_mppt1_current
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5011 # reg 5012
+        input_type: input
+        data_type: uint16
+        precision: 2
+        unit_of_measurement: A
+        device_class: Current
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 MPPT2 voltage
+        unique_id: uid_sg1_mppt2_voltage
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5012 # reg 5013
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 MPPT2 current
+        unique_id: uid_sg1_mppt2_current
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5013 # reg 5014
+        input_type: input
+        data_type: uint16
+        precision: 2
+        unit_of_measurement: A
+        device_class: Current
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 Total DC power
+        unique_id: uid_sg1_total_dc_power
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5016 # reg 5017
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG1 System state
+        unique_id: uid_sg1_system_state
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 12999 # reg 13000
+        input_type: input
+        data_type: uint16
+        precision: 0
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      # register running state is not available for certain SH*RS inverters
+      # template sensors are used to determine the states based on other sensors
+      - name: SG1 Running state
+        unique_id: uid_sg1_running_state
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13000 # reg 13001
+        input_type: input
+        data_type: uint16
+        precision: 0
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG1 Daily PV generation
+        unique_id: uid_sg1_daily_pv_generation
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13001 # reg 13002
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total PV generation
+        unique_id: uid_sg1_total_pv_generation
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13002 # reg 13003
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Daily exported energy from PV
+        unique_id: uid_sg1_daily_exported_energy_from_PV
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13004 # reg 13005
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total exported energy from PV
+        unique_id: uid_sg1_total_exported_energy_from_pv
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13005 # reg 13006
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Load power
+        unique_id: uid_sg1_load_power
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13007 # reg 13008
+        input_type: input
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      # this value returns a positive value when exporting and a negative value when importing power
+      - name: SG1 Export power raw
+        unique_id: uid_sg1_battery_export_power_raw
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13009 # reg 13010
+        input_type: input
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG1 Daily direct energy consumption
+        unique_id: uid_sg1_daily_direct_energy_consumption
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13016 # reg 13017
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total direct energy consumption
+        unique_id: uid_sg1_total_direct_energy_consumption
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13017 # reg 13018
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare        
+        
+      - name: SG1 Daily imported energy
+        unique_id: uid_sg1_daily_imported_energy
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13035 # reg 13036
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total imported energy
+        unique_id: uid_sg1_total_imported_energy
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13036 # reg 13037
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare        
+        
+      - name: SG1 Daily exported energy
+        unique_id: uid_sg1_daily_exported_energy
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13044 # reg 13045
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total exported energy
+        unique_id: uid_sg1_total_exported_energy
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13045 # reg 13046
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare        
+        
+      - name: SG1 Inverter start stop
+        unique_id: uid_sg1_inverter_start_stop
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 12999 # reg 13000
+        input_type: holding
+        data_type: uint16
+        precision: 0
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 EMS mode selection raw
+        unique_id: uid_sg1_ems_mode_selection_raw
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13049 # reg 13050
+        input_type: holding
+        data_type: uint16
+        scan_interval: !secret sungrow_scan_interval_fast
+      - name: SG1 Device type code
+        unique_id: uid_sg1_dev_code
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 4999 # reg 5000
+        input_type: input
+        data_type: uint16
+        scan_interval: !secret sungrow_scan_interval_rare
+        
+      - name: SG1 Inverter temperature
+        unique_id: uid_sg1_inverter_temperature
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5007 # reg 5008
+        input_type: input
+        data_type: int16
+        precision: 1
+        unit_of_measurement: °C
+        device_class: Temperature
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG1 MPPT1 voltage
+        unique_id: uid_sg1_mppt1_voltage
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5010 # reg 5011
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 MPPT1 current
+        unique_id: uid_sg1_mppt1_current
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5011 # reg 5012
+        input_type: input
+        data_type: uint16
+        precision: 2
+        unit_of_measurement: A
+        device_class: Current
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 MPPT2 voltage
+        unique_id: uid_sg1_mppt2_voltage
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5012 # reg 5013
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 MPPT2 current
+        unique_id: uid_sg1_mppt2_current
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5013 # reg 5014
+        input_type: input
+        data_type: uint16
+        precision: 2
+        unit_of_measurement: A
+        device_class: Current
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 Total DC power
+        unique_id: uid_sg1_total_dc_power
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5016 # reg 5017
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG1 System state
+        unique_id: uid_sg1_system_state
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 12999 # reg 13000
+        input_type: input
+        data_type: uint16
+        precision: 0
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      # register running state is not available for certain SH*RS inverters
+      # template sensors are used to determine the states based on other sensors
+      - name: SG1 Running state
+        unique_id: uid_sg1_running_state
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13000 # reg 13001
+        input_type: input
+        data_type: uint16
+        precision: 0
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG1 Daily PV generation
+        unique_id: uid_sg1_daily_pv_generation
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13001 # reg 13002
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total PV generation
+        unique_id: uid_sg1_total_pv_generation
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13002 # reg 13003
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Daily exported energy from PV
+        unique_id: uid_sg1_daily_exported_energy_from_PV
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13004 # reg 13005
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total exported energy from PV
+        unique_id: uid_sg1_total_exported_energy_from_pv
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13005 # reg 13006
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Load power
+        unique_id: uid_sg1_load_power
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13007 # reg 13008
+        input_type: input
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      # this value returns a positive value when exporting and a negative value when importing power
+      - name: SG1 Export power raw
+        unique_id: uid_sg1_battery_export_power_raw
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13009 # reg 13010
+        input_type: input
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG1 Daily direct energy consumption
+        unique_id: uid_sg1_daily_direct_energy_consumption
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13016 # reg 13017
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total direct energy consumption
+        unique_id: uid_sg1_total_direct_energy_consumption
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13017 # reg 13018
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare        
+        
+      - name: SG1 Daily imported energy
+        unique_id: uid_sg1_daily_imported_energy
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13035 # reg 13036
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total imported energy
+        unique_id: uid_sg1_total_imported_energy
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13036 # reg 13037
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare        
+        
+      - name: SG1 Daily exported energy
+        unique_id: uid_sg1_daily_exported_energy
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13044 # reg 13045
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total exported energy
+        unique_id: uid_sg1_total_exported_energy
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13045 # reg 13046
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare        
+        
+      - name: SG1 Inverter start stop
+        unique_id: uid_sg1_inverter_start_stop
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 12999 # reg 13000
+        input_type: holding
+        data_type: uint16
+        precision: 0
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 EMS mode selection raw
+        unique_id: uid_sg1_ems_mode_selection_raw
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13049 # reg 13050
+        input_type: holding
+        data_type: uint16
+        scan_interval: !secret sungrow_scan_interval_fast
+
+# MARKER: insert modbus device for inverter 2 here 
+
+# MARKER: insert modbus sensors for inverter 2 here 
+
+template:
+  - binary_sensor:
+# MARKER: template binary sensors are inserted here
+      - name: SG1 PV generating
+        unique_id: uid_sg1_pv_generating
+        availability: >-
+          {{states('sensor.sg1_running_state')|is_number or
+            states('sensor.sg1_total_dc_power')|is_number
+          }}
+        delay_on:
+          seconds: 60
+        state: >-
+          {% if states('sensor.sg1_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x1) > 0 }}
+          {% else %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.sg1_total_dc_power')|int > 0 %}
+              on
+            {% else %}
+              off
+            {% endif %}
+          {% endif %}
+          
+
+      - name: SG1 Exporting power
+        unique_id: uid_sg1_exporting_power
+        availability: "{{states('sensor.sg1_running_state')|is_number or states('sensor.sg1_export_power_raw')|is_number }}"
+        delay_on:
+          seconds: 60
+        state: >-
+          {% if states('sensor.sg1_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x10) > 0 }}
+          {% else %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.sg1_export_power_raw')|int > 0 %}
+                on
+            {% else %}
+                off
+            {% endif %}
+          {% endif %}
+
+      - name: SG1 Importing power
+        unique_id: uid_sg1_importing_power
+        availability: "{{states('sensor.sg1_running_state')|is_number or states('sensor.sg1_export_power_raw')|is_number }}"
+        delay_on:
+          seconds: 60
+        state: >-
+          {% if states('sensor.sg1_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x20) > 0 }}
+          {% else %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.sg1_export_power_raw')|int < 0 %}
+              on
+            {% else %}
+              off
+            {% endif %}
+          {% endif %}          
+      - name: SG1 PV generating
+        unique_id: uid_sg1_pv_generating
+        availability: >-
+          {{states('sensor.sg1_running_state')|is_number or
+            states('sensor.sg1_total_dc_power')|is_number
+          }}
+        delay_on:
+          seconds: 60
+        state: >-
+          {% if states('sensor.sg1_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x1) > 0 }}
+          {% else %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.sg1_total_dc_power')|int > 0 %}
+              on
+            {% else %}
+              off
+            {% endif %}
+          {% endif %}
+          
+
+      - name: SG1 Exporting power
+        unique_id: uid_sg1_exporting_power
+        availability: "{{states('sensor.sg1_running_state')|is_number or states('sensor.sg1_export_power_raw')|is_number }}"
+        delay_on:
+          seconds: 60
+        state: >-
+          {% if states('sensor.sg1_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x10) > 0 }}
+          {% else %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.sg1_export_power_raw')|int > 0 %}
+                on
+            {% else %}
+                off
+            {% endif %}
+          {% endif %}
+
+      - name: SG1 Importing power
+        unique_id: uid_sg1_importing_power
+        availability: "{{states('sensor.sg1_running_state')|is_number or states('sensor.sg1_export_power_raw')|is_number }}"
+        delay_on:
+          seconds: 60
+        state: >-
+          {% if states('sensor.sg1_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x20) > 0 }}
+          {% else %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.sg1_export_power_raw')|int < 0 %}
+              on
+            {% else %}
+              off
+            {% endif %}
+          {% endif %}          
+
+  - sensor:
+# MARKER: template sensors are inserted here
+      - name: SG1 MPPT1 power
+        unique_id: uid_sg1_mppt1_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.sg1_mppt1_voltage')|is_number and states('sensor.sg1_mppt1_current')|is_number }}"
+        state: "{{ (states('sensor.sg1_mppt1_voltage') | float * states('sensor.sg1_mppt1_current') | float) |int }}"
+
+      - name: SG1 MPPT2 power
+        unique_id: uid_sg1_mppt2_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.sg1_mppt2_voltage')|is_number and states('sensor.sg1_mppt2_current')|is_number }}"
+        state: "{{ (states('sensor.sg1_mppt2_voltage') | float * states('sensor.sg1_mppt2_current') | float) |int }}"
+        
+        
+
+      - name: SG1 Inverter state
+        unique_id: uid_sg1_inverter_state
+        state: >-
+          {% if ((states('sensor.sg1_system_state') | int(default=0)) == 0x0002) %}
+            Stop
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x0008) %}
+            Standby
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x0010) %}
+            Initial Standby
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x0020) %}
+            Startup
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x0040) %}
+            Running
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x0100) %}
+            Fault
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x0400) %}
+            Maintain mode
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x0800) %}
+            Forced mode
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x1000) %}
+            Off-grid mode
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x2501) %}
+            Restarting
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x4000) %}
+            External EMS mode
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}
+
+      - name: SG1 Device type
+        unique_id: uid_sg1_device_type
+        state: >-
+          {% if ((states('sensor.sg1_device_type_code') | int(default=0))  == 0x0D06) %}
+            SH3K6
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D07) %}
+            SH4K6
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D09) %}
+            SH5K-20
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D03) %}
+            SH5K-V13
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D0A) %}
+            SH3K6-30
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D0B) %}
+            SH4K6-30
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D0C) %}
+            SH5K-30
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D17) %}
+            SH3.RS
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D0D) %}
+            SH3.6RS
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D18) %}
+            SH4.0RS
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D0F) %}
+            SH5.0RS
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D10) %}
+            SH6.0RS
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E00) %}
+            SH5.0RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E01) %}
+            SH6.0RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E02) %}
+            SH8.0RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E03) %}
+            SH10RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E10) %}
+            SH5.0RT-20
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E11) %}
+            SH6.0RT-20
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E12) %}
+            SH8.0RT-20
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E13) %}
+            SH10RT-20
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E0C) %}
+            SH5.0RT-V112
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E0D) %}
+            SH6.0RT-V112
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E0E) %}
+            SH8.0RT-V112
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E0F) %}
+            SH10RT-V112
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E08) %}
+            SH5.0RT-V122
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E09) %}
+            SH6.0RT-V122
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E0A) %}
+            SH8.0RT-V122
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E0B) %}
+            SH10RT-V122
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D0E) %}
+            SH4.6RS
+          {% else %}
+            Unknown device code!
+          {% endif %}
+        
+        
+
+      - name: SG1 Export power limit mode
+        unique_id: uid_sg1_export_power_limit_mode
+        state: >-
+          {% if ((states('sensor.sg1_export_power_limit_mode_raw') | int(default=0)) == 0x00AA) %}
+            Enabled
+          {% elif ((states('sensor.sg1_export_power_limit_mode_raw') | int(default=0))  == 0x0055) %}
+            Disabled
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}
+
+      # make the sensor ems_selection_raw more human readable
+      - name: SG1 EMS mode selection
+        unique_id: uid_sg1_ems_mode_selection
+        state: >-
+          {% if ((states('sensor.sg1_ems_mode_selection_raw') | int(default=0)) == 0) %}
+            Self-consumption mode (default)
+          {% elif ((states('sensor.sg1_ems_mode_selection_raw') | int(default=0)) == 2) %}
+            Forced mode
+          {% elif ((states('sensor.sg1_ems_mode_selection_raw') | int(default=0)) == 3) %}
+            External EMS
+          {% elif ((states('sensor.sg1_ems_mode_selection_raw') | int(default=0)) == 4) %}
+            VPP
+          {% elif ((states('sensor.sg1_ems_mode_selection_raw') | int(default=0)) == 8) %}
+            MicroGrid
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}        
+          
+          
+
+      - name: SG1 Import power # power from grid: positive if importing, else zero
+        unique_id: uid_sg1_import_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{states('sensor.sg1_export_power_raw')|is_number }}"
+        state: >-
+          {% if states('sensor.sg1_export_power_raw')|int < 0 %}
+            {{ states('sensor.sg1_export_power_raw')|int *-1 }}
+          {% else %}
+            0
+          {% endif %}
+
+      - name: SG1 Export power # power to grid: positive if exporting, else zero
+        unique_id: uid_sg1_export_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{states('sensor.sg1_export_power_raw')|is_number }}"
+        state: >-
+          {% if states('sensor.sg1_export_power_raw')|int > 0 %}
+            {{ states('sensor.sg1_export_power_raw') }}
+          {% else %}
+            0
+          {% endif %}          
+      - name: SG1 MPPT1 power
+        unique_id: uid_sg1_mppt1_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.sg1_mppt1_voltage')|is_number and states('sensor.sg1_mppt1_current')|is_number }}"
+        state: "{{ (states('sensor.sg1_mppt1_voltage') | float * states('sensor.sg1_mppt1_current') | float) |int }}"
+
+      - name: SG1 MPPT2 power
+        unique_id: uid_sg1_mppt2_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.sg1_mppt2_voltage')|is_number and states('sensor.sg1_mppt2_current')|is_number }}"
+        state: "{{ (states('sensor.sg1_mppt2_voltage') | float * states('sensor.sg1_mppt2_current') | float) |int }}"
+        
+        
+
+      - name: SG1 Inverter state
+        unique_id: uid_sg1_inverter_state
+        state: >-
+          {% if ((states('sensor.sg1_system_state') | int(default=0)) == 0x0002) %}
+            Stop
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x0008) %}
+            Standby
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x0010) %}
+            Initial Standby
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x0020) %}
+            Startup
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x0040) %}
+            Running
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x0100) %}
+            Fault
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x0400) %}
+            Maintain mode
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x0800) %}
+            Forced mode
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x1000) %}
+            Off-grid mode
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x2501) %}
+            Restarting
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x4000) %}
+            External EMS mode
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}
+
+      - name: SG1 Device type
+        unique_id: uid_sg1_device_type
+        state: >-
+          {% if ((states('sensor.sg1_device_type_code') | int(default=0))  == 0x0D06) %}
+            SH3K6
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D07) %}
+            SH4K6
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D09) %}
+            SH5K-20
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D03) %}
+            SH5K-V13
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D0A) %}
+            SH3K6-30
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D0B) %}
+            SH4K6-30
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D0C) %}
+            SH5K-30
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D17) %}
+            SH3.RS
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D0D) %}
+            SH3.6RS
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D18) %}
+            SH4.0RS
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D0F) %}
+            SH5.0RS
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D10) %}
+            SH6.0RS
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E00) %}
+            SH5.0RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E01) %}
+            SH6.0RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E02) %}
+            SH8.0RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E03) %}
+            SH10RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E10) %}
+            SH5.0RT-20
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E11) %}
+            SH6.0RT-20
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E12) %}
+            SH8.0RT-20
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E13) %}
+            SH10RT-20
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E0C) %}
+            SH5.0RT-V112
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E0D) %}
+            SH6.0RT-V112
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E0E) %}
+            SH8.0RT-V112
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E0F) %}
+            SH10RT-V112
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E08) %}
+            SH5.0RT-V122
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E09) %}
+            SH6.0RT-V122
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E0A) %}
+            SH8.0RT-V122
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E0B) %}
+            SH10RT-V122
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D0E) %}
+            SH4.6RS
+          {% else %}
+            Unknown device code!
+          {% endif %}
+        
+        
+
+      - name: SG1 Export power limit mode
+        unique_id: uid_sg1_export_power_limit_mode
+        state: >-
+          {% if ((states('sensor.sg1_export_power_limit_mode_raw') | int(default=0)) == 0x00AA) %}
+            Enabled
+          {% elif ((states('sensor.sg1_export_power_limit_mode_raw') | int(default=0))  == 0x0055) %}
+            Disabled
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}
+
+      # make the sensor ems_selection_raw more human readable
+      - name: SG1 EMS mode selection
+        unique_id: uid_sg1_ems_mode_selection
+        state: >-
+          {% if ((states('sensor.sg1_ems_mode_selection_raw') | int(default=0)) == 0) %}
+            Self-consumption mode (default)
+          {% elif ((states('sensor.sg1_ems_mode_selection_raw') | int(default=0)) == 2) %}
+            Forced mode
+          {% elif ((states('sensor.sg1_ems_mode_selection_raw') | int(default=0)) == 3) %}
+            External EMS
+          {% elif ((states('sensor.sg1_ems_mode_selection_raw') | int(default=0)) == 4) %}
+            VPP
+          {% elif ((states('sensor.sg1_ems_mode_selection_raw') | int(default=0)) == 8) %}
+            MicroGrid
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}        
+          
+          
+
+      - name: SG1 Import power # power from grid: positive if importing, else zero
+        unique_id: uid_sg1_import_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{states('sensor.sg1_export_power_raw')|is_number }}"
+        state: >-
+          {% if states('sensor.sg1_export_power_raw')|int < 0 %}
+            {{ states('sensor.sg1_export_power_raw')|int *-1 }}
+          {% else %}
+            0
+          {% endif %}
+
+      - name: SG1 Export power # power to grid: positive if exporting, else zero
+        unique_id: uid_sg1_export_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{states('sensor.sg1_export_power_raw')|is_number }}"
+        state: >-
+          {% if states('sensor.sg1_export_power_raw')|int > 0 %}
+            {{ states('sensor.sg1_export_power_raw') }}
+          {% else %}
+            0
+          {% endif %}          
+ 
+input_number:
+# MARKER: input numbers are inserted here
+  set_sg1_export_power_limit:
+    name: SG1 set export power limit
+    min: 0
+    max: !secret sungrow_sg1_max_export_limit
+    step: 100
+  set_sg1_export_power_limit:
+    name: SG1 set export power limit
+    min: 0
+    max: !secret sungrow_sg1_max_export_limit
+    step: 100
+
+input_select:
+# MARKER: input selects are inserted here
+  set_sg1_inverter_run_mode:
+    name: SG1 Inverter mode
+    options:
+      - "Enabled"
+      - "Shutdown"
+    
+  # get input for battery mode (forced charge/discharge, stop (default) )
+  set_sg1_ems_mode:
+    name: SG1 EMS mode
+    options:
+      - "Self-consumption mode (default)"
+      - "Forced mode"
+      - "External EMS" # for multiple inverters
+    # these are commented, because they are rarely used
+    #      - "VPP"
+    #      - "MicroGrid"
+    icon: mdi:battery-unknown      
+    
+    
+  set_sg1_export_power_limit_mode:
+    name: SG1 Export power limit mode
+    options:
+      - "Enabled"
+      - "Disabled"
+    icon: mdi:export    
+    
+  set_sg1_inverter_run_mode:
+    name: SG1 Inverter mode
+    options:
+      - "Enabled"
+      - "Shutdown"
+    
+  # get input for battery mode (forced charge/discharge, stop (default) )
+  set_sg1_ems_mode:
+    name: SG1 EMS mode
+    options:
+      - "Self-consumption mode (default)"
+      - "Forced mode"
+      - "External EMS" # for multiple inverters
+    # these are commented, because they are rarely used
+    #      - "VPP"
+    #      - "MicroGrid"
+    icon: mdi:battery-unknown      
+    
+    
+  set_sg1_export_power_limit_mode:
+    name: SG1 Export power limit mode
+    options:
+      - "Enabled"
+      - "Disabled"
+    icon: mdi:export    
+    
+
+automation:
+# MARKER: automations are inserted here
+
+  - id: "uid_sg1_set_run_mode_reg"
+    alias: "SG1 set run mode reg"
+    description: "SG1 enables/ stops the inverter"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_select.set_sg1_inverter_run_mode
+    condition: []
+    variables:
+      sg_start: 0xCF
+      sg_stop: 0xCE
+    action:
+      - service: modbus.write_register
+        data_template:
+          hub: Sungrow_Inverter_SG1
+          slave: !secret sungrow_sg1_modbus_slave
+          address: 12999 # reg 13000
+          value: >
+            {% if is_state('input_select.set_sg1_inverter_run_mode', "Enabled") %}
+              {{sg_start}}
+            {% else %}
+              {{sg_stop}}
+            {% endif %}
+    mode: single
+
+  - id: "uid_sg1_run_mode_gui_update"
+    alias: "SG1 run mode GUI update"
+    description: "SG1 run mode GUI update"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.sg1_system_state
+    condition:
+      - condition: template
+        value_template: "{{ not is_state('sensor.sg1_system_state', 'unavailable') }}"
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.set_sg1_inverter_run_mode
+        data:
+          option: >
+            {% if is_state('sensor.sg1_sungrow_inverter_state', "Stop") %}
+              Shutdown
+            {% else %}
+              Enabled
+            {% endif %}
+    mode: single
+    
+
+  - id: "uid_sg1_set_ems_mode_reg"
+    alias: "SG1 set EMS mode reg"
+    description: "SG1 set EMS mode reg"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_select.set_sg1_ems_mode
+    condition: []
+    variables:
+      ems_mode_self_consume: 0
+      ems_mode_forced: 2
+      ems_mode_external: 3
+      ems_mode_vpp: 4
+      ems_mode_microgrid: 8
+    action:
+      - service: modbus.write_register
+        data_template:
+          hub: Sungrow_Inverter_SG1
+          slave: !secret sungrow_sg1_modbus_slave
+          address: 13049 # reg 13050
+          value: >
+            {% if is_state('input_select.set_sg1_ems_mode', "Self-consumption mode (default)") %} 
+              {{ems_mode_self_consume}}
+            {% elif is_state('input_select.set_sg1_ems_mode', "Forced mode") %} 
+              {{ems_mode_forced}}
+            {% elif is_state('input_select.set_sg1_ems_mode', "External EMS") %} 
+              {{ems_mode_external}}
+            {% elif is_state('input_select.set_sg1_ems_mode', "VPP") %} 
+              {{ems_mode_vpp}}
+            {% elif is_state('input_select.set_sg1_ems_mode', "MicroGrid") %} 
+              {{ems_mode_microgrid}}
+            {% else %}
+              {{ems_mode_self_consume}}
+            {% endif %}
+    mode: single
+
+  - id: "uid_sg1_ems_mode_gui_update"
+    alias: "SG1 EMS mode GUI update"
+    description: "SG1 EMS mode GUI update"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.sg1_ems_mode_selection
+    condition:
+      - condition: template
+        value_template: "{{ not is_state('sensor.sg1_ems_mode_selection', 'unavailable') }}"
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.set_sg1_ems_mode
+        data:
+          option: "{{ states('sensor.sg1_ems_mode_selection') }}"
+    mode: single
+
+  - id: "uid_sg1_set_export_power_limit_mode_reg"
+    alias: "SG1 export power limit mode reg"
+    description: "SG1 Set export power limit mode"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_select.set_sg1_export_power_limit_mode
+    condition: []
+    variables:
+      export_limit_enable: 0xAA
+      export_limit_disable: 0x55
+    action:
+      - service: modbus.write_register
+        data_template:
+          hub: Sungrow_Inverter_SG1
+          slave: !secret sungrow_sg1_modbus_slave
+          address: 13086 # reg 13087
+          value: >
+            {% if is_state('input_select.set_sg1_export_power_limit_mode', "Enabled") %} 
+              {{export_limit_enable}}
+            {% elif is_state('input_select.set_sg1_export_power_limit_mode', "Disabled") %} 
+              {{export_limit_disable}}
+            {% else %}
+              {{export_limit_disable}}
+            {% endif %}
+    mode: single
+
+  - id: "uid_sg1_export_power_limit_mode_gui_update"
+    alias: "SG1 export power limit mode gui update"
+    description: "SG1 export power limit mode GUI Update"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.sg1_export_power_limit_mode_raw
+    condition:
+      - condition: template
+        value_template: "{{ not is_state('sensor.sg1_export_power_limit_mode_raw', 'unavailable') }}"
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.set_sg1_export_power_limit_mode
+        data:
+          option: >
+            {% if ((states('sensor.sg1_export_power_limit_mode_raw') | int(default=0)) == 0x00AA) %} 
+              Enabled
+            {% elif ((states('sensor.sg1_export_power_limit_mode_raw') | int(default=0)) == 0x0055) %} 
+              Disabled
+            {% endif %}
+    mode: single
+
+  - id: "uid_sg1_set_export_power_limit_reg"
+    alias: "SG1 export power limit reg"
+    description: "SG1 set export power limit"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_number.set_sg1_export_power_limit
+    condition: []
+    action:
+      - service: modbus.write_register
+        data_template:
+          hub: Sungrow_Inverter_SG1
+          slave: !secret sungrow_sg1_modbus_slave
+          address: 13073 # reg 13074
+          value: "{{ states('input_number.set_sg1_export_power_limit') }}"
+    mode: single
+
+  - id: "uid_sg1_export_power_limit_gui_update"
+    alias: "SG1 export power limit gui update"
+    description: "SG1 export power limit gui update"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.sg1_export_power_limit
+    condition: []
+    action:
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.set_sg1_export_power_limit
+        data:
+          value: "{{ states('sensor.sg1_export_power_limit') }}"
+    mode: single    
+    
+
+  - id: "uid_sg1_set_run_mode_reg"
+    alias: "SG1 set run mode reg"
+    description: "SG1 enables/ stops the inverter"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_select.set_sg1_inverter_run_mode
+    condition: []
+    variables:
+      sg_start: 0xCF
+      sg_stop: 0xCE
+    action:
+      - service: modbus.write_register
+        data_template:
+          hub: Sungrow_Inverter_SG1
+          slave: !secret sungrow_sg1_modbus_slave
+          address: 12999 # reg 13000
+          value: >
+            {% if is_state('input_select.set_sg1_inverter_run_mode', "Enabled") %}
+              {{sg_start}}
+            {% else %}
+              {{sg_stop}}
+            {% endif %}
+    mode: single
+
+  - id: "uid_sg1_run_mode_gui_update"
+    alias: "SG1 run mode GUI update"
+    description: "SG1 run mode GUI update"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.sg1_system_state
+    condition:
+      - condition: template
+        value_template: "{{ not is_state('sensor.sg1_system_state', 'unavailable') }}"
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.set_sg1_inverter_run_mode
+        data:
+          option: >
+            {% if is_state('sensor.sg1_sungrow_inverter_state', "Stop") %}
+              Shutdown
+            {% else %}
+              Enabled
+            {% endif %}
+    mode: single
+    
+
+  - id: "uid_sg1_set_ems_mode_reg"
+    alias: "SG1 set EMS mode reg"
+    description: "SG1 set EMS mode reg"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_select.set_sg1_ems_mode
+    condition: []
+    variables:
+      ems_mode_self_consume: 0
+      ems_mode_forced: 2
+      ems_mode_external: 3
+      ems_mode_vpp: 4
+      ems_mode_microgrid: 8
+    action:
+      - service: modbus.write_register
+        data_template:
+          hub: Sungrow_Inverter_SG1
+          slave: !secret sungrow_sg1_modbus_slave
+          address: 13049 # reg 13050
+          value: >
+            {% if is_state('input_select.set_sg1_ems_mode', "Self-consumption mode (default)") %} 
+              {{ems_mode_self_consume}}
+            {% elif is_state('input_select.set_sg1_ems_mode', "Forced mode") %} 
+              {{ems_mode_forced}}
+            {% elif is_state('input_select.set_sg1_ems_mode', "External EMS") %} 
+              {{ems_mode_external}}
+            {% elif is_state('input_select.set_sg1_ems_mode', "VPP") %} 
+              {{ems_mode_vpp}}
+            {% elif is_state('input_select.set_sg1_ems_mode', "MicroGrid") %} 
+              {{ems_mode_microgrid}}
+            {% else %}
+              {{ems_mode_self_consume}}
+            {% endif %}
+    mode: single
+
+  - id: "uid_sg1_ems_mode_gui_update"
+    alias: "SG1 EMS mode GUI update"
+    description: "SG1 EMS mode GUI update"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.sg1_ems_mode_selection
+    condition:
+      - condition: template
+        value_template: "{{ not is_state('sensor.sg1_ems_mode_selection', 'unavailable') }}"
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.set_sg1_ems_mode
+        data:
+          option: "{{ states('sensor.sg1_ems_mode_selection') }}"
+    mode: single
+
+  - id: "uid_sg1_set_export_power_limit_mode_reg"
+    alias: "SG1 export power limit mode reg"
+    description: "SG1 Set export power limit mode"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_select.set_sg1_export_power_limit_mode
+    condition: []
+    variables:
+      export_limit_enable: 0xAA
+      export_limit_disable: 0x55
+    action:
+      - service: modbus.write_register
+        data_template:
+          hub: Sungrow_Inverter_SG1
+          slave: !secret sungrow_sg1_modbus_slave
+          address: 13086 # reg 13087
+          value: >
+            {% if is_state('input_select.set_sg1_export_power_limit_mode', "Enabled") %} 
+              {{export_limit_enable}}
+            {% elif is_state('input_select.set_sg1_export_power_limit_mode', "Disabled") %} 
+              {{export_limit_disable}}
+            {% else %}
+              {{export_limit_disable}}
+            {% endif %}
+    mode: single
+
+  - id: "uid_sg1_export_power_limit_mode_gui_update"
+    alias: "SG1 export power limit mode gui update"
+    description: "SG1 export power limit mode GUI Update"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.sg1_export_power_limit_mode_raw
+    condition:
+      - condition: template
+        value_template: "{{ not is_state('sensor.sg1_export_power_limit_mode_raw', 'unavailable') }}"
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.set_sg1_export_power_limit_mode
+        data:
+          option: >
+            {% if ((states('sensor.sg1_export_power_limit_mode_raw') | int(default=0)) == 0x00AA) %} 
+              Enabled
+            {% elif ((states('sensor.sg1_export_power_limit_mode_raw') | int(default=0)) == 0x0055) %} 
+              Disabled
+            {% endif %}
+    mode: single
+
+  - id: "uid_sg1_set_export_power_limit_reg"
+    alias: "SG1 export power limit reg"
+    description: "SG1 set export power limit"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_number.set_sg1_export_power_limit
+    condition: []
+    action:
+      - service: modbus.write_register
+        data_template:
+          hub: Sungrow_Inverter_SG1
+          slave: !secret sungrow_sg1_modbus_slave
+          address: 13073 # reg 13074
+          value: "{{ states('input_number.set_sg1_export_power_limit') }}"
+    mode: single
+
+  - id: "uid_sg1_export_power_limit_gui_update"
+    alias: "SG1 export power limit gui update"
+    description: "SG1 export power limit gui update"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.sg1_export_power_limit
+    condition: []
+    action:
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.set_sg1_export_power_limit
+        data:
+          value: "{{ states('sensor.sg1_export_power_limit') }}"
+    mode: single    
+    

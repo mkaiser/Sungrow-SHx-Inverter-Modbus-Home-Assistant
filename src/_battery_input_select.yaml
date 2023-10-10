@@ -1,0 +1,7 @@
+  set_sg1_battery_forced_charge_discharge_mode:
+    name: SG1 Battery forced charge discharge mode
+    options:
+      - "Stop (default)"
+      - "Forced charge"
+      - "Forced discharge"
+    icon: mdi:battery-unknown

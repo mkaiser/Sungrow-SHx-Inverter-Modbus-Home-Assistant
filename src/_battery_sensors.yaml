@@ -1,0 +1,400 @@
+      - name: SG1 BDC rated power
+        unique_id: uid_sg1_bdc_rated_power
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5627 # reg 5628
+        input_type: input
+        data_type: uint16
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        scale: 100
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 BMS max. charging current
+        unique_id: uid_sg1_bms_max_charging_current
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5634 # reg 5635
+        input_type: input
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: A
+        device_class: Current
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_mid
+
+      - name: SG1 BMS max. discharging current
+        unique_id: uid_sg1_bms_max_discharging_current
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5635 # reg 5636
+        input_type: input
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: A
+        device_class: Current
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_mid
+      #https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?pageNo=13
+      #Phase A Backup Power: 5723 S16 W (Backup Leistung Phase A)
+      #Phase B Backup Power: 5724 S16 W (Backup Leistung Phase B)
+      #Phase C Backup Power: 5725 S16 W (Backup Leistung Phase C)
+      - name: SG1 Total backup power
+        slave: !secret sungrow_sg1_modbus_slave
+        unique_id: uid_sg1_total_backup_power
+        address: 5725 # reg 5726
+        input_type: input
+        data_type: int16
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 Backup phase A power
+        unique_id: uid_sg1_backup_phase_a_power
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5722 # reg 5723
+        input_type: input
+        data_type: int16
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 Backup phase B power
+        unique_id: uid_sg1_backup_phase_b_power
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5723 # reg 5724
+        input_type: input
+        data_type: int16
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 Backup phase C power
+        unique_id: uid_sg1_backup_phase_c_power
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5724 # reg 5725
+        input_type: input
+        data_type: int16
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast        
+
+      - name: SG1 Daily battery charge from PV
+        unique_id: uid_sg1_daily_battery_charge_from_pv
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13011 # reg 13012
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total battery charge from PV
+        unique_id: uid_sg1_total_battery_charge_from_pv
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13012 # reg 13013
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare        
+        
+        
+      - name: SG1 Battery voltage
+        unique_id: uid_sg1_battery_voltage
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13019 # reg 13020
+        input_type: input
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: V
+        device_class: Voltage
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 Battery current
+        unique_id: uid_sg1_battery_current
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13020 # reg 13021
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: A
+        device_class: Current
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      # always positive battery power
+      # use binary_sensor.battery_charging | discharging to retrieve the direction of the energy flow
+      - name: SG1 Battery power raw
+        unique_id: uid_sg1_battery_power_raw
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13021 # reg 13022
+        input_type: input
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 Battery level
+        unique_id: uid_sg1_battery_level
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13022 # reg 13023
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_mid
+
+      - name: SG1 Battery state of health
+        unique_id: uid_sg1_battery_state_of_health
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13023 # reg 13024
+        input_type: input
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: "%"
+        state_class: measurement
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Battery temperature
+        unique_id: uid_sg1_battery_temperature
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13024 # reg 13025
+        input_type: input
+        data_type: int16
+        precision: 1
+        unit_of_measurement: °C
+        device_class: Temperature
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_mid
+
+      - name: SG1 Daily battery discharge
+        unique_id: uid_sg1_daily_battery_discharge
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13025 # reg 13026
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total battery discharge
+        unique_id: uid_sg1_total_battery_discharge
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13026 # reg 13027
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+        
+        
+      - name: SG1 Daily battery charge
+        unique_id: uid_sg1_daily_battery_charge
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13039 # reg 13040
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total battery charge
+        unique_id: uid_sg1_total_battery_charge
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13040 # reg 13041
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare        
+        
+
+      - name: SG1 Battery forced charge discharge mode raw
+        unique_id: uid_sg1_battery_forced_charge_discharge_mode_raw
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13050 # reg 13051
+        input_type: holding
+        data_type: uint16
+        precision: 0
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 Battery forced charge discharge power
+        unique_id: uid_sg1_battery_forced_charge_discharge_power
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13051 # reg 13052
+        input_type: holding
+        data_type: uint16
+        precision: 0
+        # datasheet says:
+        # 0 to 5000 W for SH*K-*
+        # 0 to 100 % for SH*.0RT
+        # for my SH10RT it is set in Watt, not in %
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 Max SoC
+        unique_id: uid_sg1_max_soc
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13057 # reg 13058
+        input_type: holding
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 Min SoC
+        unique_id: uid_sg1_min_soc
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13058 # reg 13059
+        input_type: holding
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 Export power limit
+        unique_id: uid_sg1_export_power_limit
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13073 # reg 13074
+        input_type: holding
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 Export power limit mode raw
+        unique_id: uid_sg1_export_power_limit_mode_raw
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13086 # reg 13087
+        input_type: holding
+        data_type: uint16
+        precision: 0
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 Reserved SoC for backup
+        unique_id: uid_sg1_reserved_soc_for_backup
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13099 # reg 13100
+        input_type: holding
+        data_type: uint16
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      #undocumented sensors (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
+      - name: SG1 Battery max charge power
+        unique_id: uid_sg1_battery_max_charge_power
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 33046 # reg 33047
+        input_type: holding
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 10
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 Battery max discharge power
+        unique_id: uid_sg1_battery_max_discharge_power
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 33047 # reg 33048
+        input_type: holding
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 10
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 Battery capacity
+        unique_id: uid_sg1_battery_capacity
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 33048 # reg 33049
+        input_type: holding
+        data_type: uint16
+        unit_of_measurement: kWh
+        device_class: energy
+        scale: 0.01
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Battery charging start power
+        unique_id: uid_sg1_battery_charging_start_power
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 33148 # reg 33149
+        input_type: holding
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 10
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG1 Battery discharging start power
+        unique_id: uid_sg1_battery_discharging_start_power
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 33149 # reg 33150
+        input_type: holding
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 10
+        scan_interval: !secret sungrow_scan_interval_fast
+
