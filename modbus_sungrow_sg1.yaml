@@ -1558,9 +1558,9 @@ template:
           {% else %}
             {# workaround for SH*RS inverters without working running_state #}
             {% if states('sensor.sg1_total_dc_power')|int > 0 %}
-              1
+              on
             {% else %}
-              0
+              off
             {% endif %}
           {% endif %}
 
@@ -1672,9 +1672,9 @@ template:
           {% else %}
             {# workaround for SH*RS inverters without working running_state #}
             {% if states('sensor.sg1_export_power_raw')|int > 0 %}
-                1
+                on
             {% else %}
-                0
+                off
             {% endif %}
           {% endif %}
 
@@ -1690,9 +1690,9 @@ template:
           {% else %}
             {# workaround for SH*RS inverters without working running_state #}
             {% if states('sensor.sg1_export_power_raw')|int < 0 %}
-              1
+              on
             {% else %}
-              0
+              off
             {% endif %}
           {% endif %}
 
