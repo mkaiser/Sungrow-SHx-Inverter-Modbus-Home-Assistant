@@ -20,7 +20,7 @@ modbus:
     port: !secret sungrow_sg1_modbus_port
     retries: 10
     sensors:
-      - name: SG1 device type code
+      - name: SG1 Device type code
         unique_id: uid_sg1_dev_code
         slave: !secret sungrow_sg1_modbus_slave
         address: 4999 # reg 5000
@@ -1768,7 +1768,7 @@ template:
         availability: "{{ states('sensor.sg1_meter_phase_c_active_power_raw')|is_number and states('sensor.sg1_meter_phase_c_active_power_raw')|int != 0x7FFFFFFF}}"
         state: "{{ states('sensor.sg1_meter_phase_c_active_power_raw') }}"
 
-      - name: SG1 inverter state
+      - name: SG1 Inverter state
         unique_id: uid_sg1_inverter_state
         state: >-
           {% if ((states('sensor.sg1_system_state') | int(default=0)) == 0x0002) %}
@@ -2103,7 +2103,7 @@ input_number:
     max: 75
     step: 1
 
-  set_sg1_forced_charge_discharge_power:
+  set_sg1_battery_forced_charge_discharge_power:
     name: SG1 set forced charge discharge power in W
     min: 0
     max: !secret sungrow_sg1_max_forced_power
@@ -2424,7 +2424,7 @@ automation:
           option: "{{ states('sensor.sg1_ems_mode_selection') }}"
     mode: single
 
-  - id: "uid_sg1_export_power_limit_mode_reg"
+  - id: "uid_set_sg1_export_power_limit_mode_reg"
     alias: "SG1 export power limit mode reg"
     description: "SG1 Set export power limit mode"
     trigger:
