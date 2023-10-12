@@ -84,7 +84,7 @@
     mode: single
 
   - id: "uid_sg1_ems_mode_gui_update"
-    alias: "SG1 EMS mode GUI update
+    alias: "SG1 EMS mode GUI update"
     description: "SG1 EMS mode GUI update"
     trigger:
       - platform: state

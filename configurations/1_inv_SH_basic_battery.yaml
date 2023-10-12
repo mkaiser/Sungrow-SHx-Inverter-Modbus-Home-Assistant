@@ -11,7 +11,7 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/tree/experimental
 #
 # by Martin Kaiser
-# last update: 2023-10-10
+# last update: 2023-10-12
 
 modbus:
   - name: Sungrow_Inverter_SG1
@@ -1372,7 +1372,7 @@ automation:
     mode: single
 
   - id: "uid_sg1_ems_mode_gui_update"
-    alias: "SG1 EMS mode GUI update
+    alias: "SG1 EMS mode GUI update"
     description: "SG1 EMS mode GUI update"
     trigger:
       - platform: state
