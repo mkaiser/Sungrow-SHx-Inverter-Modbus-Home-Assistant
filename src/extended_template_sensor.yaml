@@ -1,4 +1,3 @@
-
       - name: SG1 Phase A power
         unique_id: uid_sg1_phase_a_power
         unit_of_measurement: W
@@ -105,4 +104,3 @@
         availability: >-
           {% set currYear = 'yearly_export_' ~ now().year %}
           {{ states('sensor.sg1_' ~ currYear)|is_number }}        
-          

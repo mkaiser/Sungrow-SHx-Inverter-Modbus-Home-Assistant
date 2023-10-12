@@ -79,55 +79,6 @@
         state_class: measurement
         scale: 1
         scan_interval: !secret sungrow_scan_interval_fast        
-        
-      - name: SG1 System state
-        unique_id: uid_sg1_system_state
-        slave: !secret sungrow_sg1_modbus_slave
-        address: 12999 # reg 13000
-        input_type: input
-        data_type: uint16
-        precision: 0
-        scale: 1
-        scan_interval: !secret sungrow_scan_interval_fast
-
-      # register running state is not available for certain SH*RS inverters
-      # template sensors are used to determine the states based on other sensors
-      - name: SG1 Running state
-        unique_id: uid_sg1_running_state
-        slave: !secret sungrow_sg1_modbus_slave
-        address: 13000 # reg 13001
-        input_type: input
-        data_type: uint16
-        precision: 0
-        scale: 1
-        scan_interval: !secret sungrow_scan_interval_fast        
-        
-      - name: SG1 Daily PV generation
-        unique_id: uid_sg1_daily_pv_generation
-        slave: !secret sungrow_sg1_modbus_slave
-        address: 13001 # reg 13002
-        input_type: input
-        data_type: uint16
-        precision: 1
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        scale: 0.1
-        scan_interval: !secret sungrow_scan_interval_rare
-
-      - name: SG1 Total PV generation
-        unique_id: uid_sg1_total_pv_generation
-        slave: !secret sungrow_sg1_modbus_slave
-        address: 13002 # reg 13003
-        input_type: input
-        data_type: uint32
-        swap: word
-        precision: 1
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total
-        scale: 0.1
-        scan_interval: !secret sungrow_scan_interval_rare
 
       - name: SG1 Daily exported energy from PV
         unique_id: uid_sg1_daily_exported_energy_from_PV

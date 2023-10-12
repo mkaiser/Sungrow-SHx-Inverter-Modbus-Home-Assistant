@@ -1,4 +1,3 @@
-
       - name: SG1 Battery charging
         unique_id: uid_sg1_battery_charging
         availability: >-
@@ -94,4 +93,3 @@
               {% endif %}
             {% endif %}
           {% endif %}
-          

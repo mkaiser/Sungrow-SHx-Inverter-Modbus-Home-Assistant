@@ -4,4 +4,3 @@
     port: !secret sungrow_sg1_modbus_port
     retries: 10
     sensors:
-    

@@ -11,7 +11,7 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/tree/experimental
 #
 # by Martin Kaiser
-# last update: 2023-10-10
+# last update: 2023-10-12
 
 modbus:
 # MARKER: insert modbus device for inverter 1 here 

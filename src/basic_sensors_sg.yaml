@@ -1,0 +1,48 @@
+      # called device state work state (1) in string inverter (not hybrid) datasheet. Adapting to hybrid...
+      - name: SG1 System state
+        unique_id: uid_sg1_system_state
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5037 # reg 5038
+        input_type: input
+        data_type: uint16
+        precision: 0
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      # called work state (2) in string inverter (not hybrid) datasheet. Adapting to hybrid...
+      - name: SG1 Running state
+        unique_id: uid_sg1_running_state
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5080 # reg 5081
+        input_type: input
+        data_type: uint16
+        precision: 0
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG1 Daily PV generation
+        unique_id: uid_sg1_daily_pv_generation
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5002 # reg 5003
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total PV generation
+        unique_id: uid_sg1_total_pv_generation
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 5003 # reg 5004
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare

@@ -1,19 +1,3 @@
-      - name: SG1 MPPT1 power
-        unique_id: uid_sg1_mppt1_power
-        unit_of_measurement: W
-        device_class: power
-        availability: "{{states('sensor.sg1_mppt1_voltage')|is_number and states('sensor.sg1_mppt1_current')|is_number }}"
-        state: "{{ (states('sensor.sg1_mppt1_voltage') | float * states('sensor.sg1_mppt1_current') | float) |int }}"
-
-      - name: SG1 MPPT2 power
-        unique_id: uid_sg1_mppt2_power
-        unit_of_measurement: W
-        device_class: power
-        availability: "{{states('sensor.sg1_mppt2_voltage')|is_number and states('sensor.sg1_mppt2_current')|is_number }}"
-        state: "{{ (states('sensor.sg1_mppt2_voltage') | float * states('sensor.sg1_mppt2_current') | float) |int }}"
-        
-        
-
       - name: SG1 Inverter state
         unique_id: uid_sg1_inverter_state
         state: >-
@@ -66,6 +50,8 @@
             SH3.6RS
           {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D18) %}
             SH4.0RS
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D0E) %}
+            SH4.6RS
           {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D0F) %}
             SH5.0RS
           {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D10) %}
@@ -102,67 +88,6 @@
             SH8.0RT-V122
           {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0E0B) %}
             SH10RT-V122
-          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x0D0E) %}
-            SH4.6RS
           {% else %}
             Unknown device code!
           {% endif %}
-        
-        
-
-      - name: SG1 Export power limit mode
-        unique_id: uid_sg1_export_power_limit_mode
-        state: >-
-          {% if ((states('sensor.sg1_export_power_limit_mode_raw') | int(default=0)) == 0x00AA) %}
-            Enabled
-          {% elif ((states('sensor.sg1_export_power_limit_mode_raw') | int(default=0))  == 0x0055) %}
-            Disabled
-          {% else %}
-            Unknown - should not see me!
-          {% endif %}
-
-      # make the sensor ems_selection_raw more human readable
-      - name: SG1 EMS mode selection
-        unique_id: uid_sg1_ems_mode_selection
-        state: >-
-          {% if ((states('sensor.sg1_ems_mode_selection_raw') | int(default=0)) == 0) %}
-            Self-consumption mode (default)
-          {% elif ((states('sensor.sg1_ems_mode_selection_raw') | int(default=0)) == 2) %}
-            Forced mode
-          {% elif ((states('sensor.sg1_ems_mode_selection_raw') | int(default=0)) == 3) %}
-            External EMS
-          {% elif ((states('sensor.sg1_ems_mode_selection_raw') | int(default=0)) == 4) %}
-            VPP
-          {% elif ((states('sensor.sg1_ems_mode_selection_raw') | int(default=0)) == 8) %}
-            MicroGrid
-          {% else %}
-            Unknown - should not see me!
-          {% endif %}        
-          
-          
-
-      - name: SG1 Import power # power from grid: positive if importing, else zero
-        unique_id: uid_sg1_import_power
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        availability: "{{states('sensor.sg1_export_power_raw')|is_number }}"
-        state: >-
-          {% if states('sensor.sg1_export_power_raw')|int < 0 %}
-            {{ states('sensor.sg1_export_power_raw')|int *-1 }}
-          {% else %}
-            0
-          {% endif %}
-
-      - name: SG1 Export power # power to grid: positive if exporting, else zero
-        unique_id: uid_sg1_export_power
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        availability: "{{states('sensor.sg1_export_power_raw')|is_number }}"
-        state: >-
-          {% if states('sensor.sg1_export_power_raw')|int > 0 %}
-            {{ states('sensor.sg1_export_power_raw') }}
-          {% else %}
-            0
-          {% endif %}          
