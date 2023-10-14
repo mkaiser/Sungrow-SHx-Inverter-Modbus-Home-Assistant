@@ -39,6 +39,7 @@ def generate_output(output_file_name, src_file, patterns):
                         for content_file in content_files:
                             content_file_path = os.path.join(src_folder, content_file)
                             print("Appending content from:", content_file_path)
+                            output.write(f"# inserted from {content_file}\n")
                             output.write(open(content_file_path).read())
                         break
                 else:
@@ -52,8 +53,7 @@ output_files = [
         (pattern_inv1_device, ["modbus_device_sg1.yaml"]),
         (pattern_inv1_sensors, ["basic_sensors.yaml", "basic_sensors_sg.yaml"]),
         (pattern_template_binary_sensor, ["basic_template_binary_sensor_sg.yaml"]),
-        (pattern_template_sensor, ["basic_template_sensor.yaml"]),
-        (pattern_template_sensor, ["basic_template_sensor_sg.yaml"]),
+        (pattern_template_sensor, ["basic_template_sensor.yaml", "basic_template_sensor_sg.yaml"]),
         (pattern_input_number, ["basic_input_number.yaml"]),
         (pattern_input_select, ["basic_input_select.yaml"]),
         (pattern_automation, ["basic_automation.yaml"]),
@@ -66,8 +66,7 @@ output_files = [
         (pattern_inv1_device, ["modbus_device_sg1.yaml"]),
         (pattern_inv1_sensors, ["basic_sensors_sh.yaml", "basic_sensors.yaml"]),
         (pattern_template_binary_sensor, ["basic_template_binary_sensor_sh.yaml"]),
-        (pattern_template_sensor, ["basic_template_sensor.yaml"]),
-        (pattern_template_sensor, ["basic_template_sensor_sh.yaml"]),
+        (pattern_template_sensor, ["basic_template_sensor.yaml", "basic_template_sensor_sh.yaml"]),
         (pattern_input_number, ["basic_input_number.yaml"]),
         (pattern_input_select, ["basic_input_select.yaml"]),
         (pattern_automation, ["basic_automation.yaml"]),
@@ -119,10 +118,10 @@ for output_file, source_file, patterns in output_files:
     shutil.move(src_file_path, dst_file_path)
     print("Moved:", src_file_path, "to", dst_file_path)
 
-print("...done")
+    with fileinput.FileInput(dst_file_path, inplace=True) as file:
+        for line in file:
+            if "# MARKER" not in line:
+                print(line, end="")
 
-    # with fileinput.FileInput(dstFile, inplace=True) as file:
-    #     for line in file:
-    #         if "# MARKER" not in line:
-    #           print(line, end="")
+print("...done")
 

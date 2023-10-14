@@ -1,4 +1,4 @@
-      - name: SG2 MPPT2 power
+      - name: SG2 MPPT1 power
         unique_id: uid_sg2_mppt1_power
         unit_of_measurement: W
         device_class: power
@@ -84,8 +84,17 @@
         unique_id: uid_sg_total_pv_generation
         unit_of_measurement: kWh
         device_class: energy
+        state_class: total_increasing
         availability: "{{states('sensor.sg1_total_pv_generation')|is_number and states('sensor.sg2_total_pv_generation')|is_number}}"
-        state: "{{ (states('sensor.sg1_total_pv_generation')|float + states('sensor.sg2_total_pv_generation')|float) |int }}"
+        state: "{{ (states('sensor.sg1_total_pv_generation')|float + states('sensor.sg2_total_pv_generation')|float) |int }}"        
+
+      - name: SG Daily PV Generation
+        unique_id: uid_sg_daily_pv_generation
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        availability: "{{states('sensor.sg1_daily_pv_generation')|is_number and states('sensor.sg2_daily_pv_generation')|is_number}}"
+        state: "{{ (states('sensor.sg1_daily_pv_generation')|float + states('sensor.sg2_daily_pv_generation')|float) |int }}"
 
         # Load Power
         # without battery: PV + import - export
@@ -95,9 +104,9 @@
         unit_of_measurement: W
         device_class: power
         availability: >-
-          {{states('sensor.sg_total_dc_power')|is_number and
-            states('sensor.sg1_import_power')|is_number and 
-            states('sensor.sg1_export_power')|is_number 
+          {{states('sensor.sg_total_dc_power')|is_number 
+           and states('sensor.sg1_import_power')|is_number 
+           and states('sensor.sg1_export_power')|is_number 
           }}
         state: >-
           {% if states('sensor.sg1_battery_charging_power')|is_number and states('sensor.sg1_battery_discharging_power')|is_number %}
@@ -113,4 +122,18 @@
             - states('sensor.sg1_import_power')|float
             - states('sensor.sg1_export_power')|float ) |int }}
           {% endif %}
+
+
+      # Dissipated energy by load (if battery is installed, its loss of energy is also taken into account)
+      - name: SG Total dissipated energy
+        unique_id: uid_sg_total_dissipated_energy
+        unit_of_measurement: kWh
+        state_class: total_increasing
+        device_class: energy
+        availability: >-
+          {{ states('sensor.sg1_total_dissipated_energy')|is_number 
+             and states('sensor.sg2_total_pv_generation')|is_number 
+          }}
+        state: "{{ (states('sensor.sg1_total_dissipated_energy')|float + states('sensor.sg2_total_pv_generation')|float) |int }}"
+
 

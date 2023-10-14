@@ -14,7 +14,7 @@
 # last update: 2023-10-12
 
 modbus:
-# MARKER: insert modbus device for inverter 1 here 
+# inserted from modbus_device_sg1.yaml
   - name: Sungrow_Inverter_SG1
     type: tcp
     host: !secret sungrow_sg1_modbus_host_ip
@@ -22,7 +22,7 @@ modbus:
     retries: 10
     sensors:
 
-# MARKER: insert modbus sensors for inverter 1 here 
+# inserted from extended_sensors.yaml
       - name: SG1 Daily PV generation & battery discharge
         unique_id: uid_sg1_daily_pv_gen_battery_discharge
         slave: !secret sungrow_sg1_modbus_slave
@@ -859,6 +859,7 @@ modbus:
         state_class: measurement
         scale: 1
         scan_interval: !secret sungrow_scan_interval_fast
+# inserted from basic_sensors.yaml
       - name: SG1 Device type code
         unique_id: uid_sg1_dev_code
         slave: !secret sungrow_sg1_modbus_slave
@@ -1096,6 +1097,7 @@ modbus:
         scan_interval: !secret sungrow_scan_interval_fast
 
 
+# inserted from basic_sensors_sg.yaml
       # called device state work state (1) in string inverter (not hybrid) datasheet. Adapting to hybrid...
       - name: SG1 System state
         unique_id: uid_sg1_system_state
@@ -1145,13 +1147,11 @@ modbus:
         scale: 0.1
         scan_interval: !secret sungrow_scan_interval_rare
 
-# MARKER: insert modbus device for inverter 2 here 
 
-# MARKER: insert modbus sensors for inverter 2 here 
 
 template:
   - binary_sensor:
-# MARKER: template binary sensors are inserted here
+# inserted from basic_template_binary_sensor_sg.yaml
       - name: SG1 PV generating
         unique_id: uid_sg1_pv_generating
         availability: >-
@@ -1191,7 +1191,7 @@ template:
           
 
   - sensor:
-# MARKER: template sensors are inserted here
+# inserted from extended_template_sensor.yaml
       - name: SG1 Phase A power
         unique_id: uid_sg1_phase_a_power
         unit_of_measurement: W
@@ -1298,6 +1298,7 @@ template:
         availability: >-
           {% set currYear = 'yearly_export_' ~ now().year %}
           {{ states('sensor.sg1_' ~ currYear)|is_number }}        
+# inserted from basic_template_sensor.yaml
       - name: SG1 MPPT1 power
         unique_id: uid_sg1_mppt1_power
         unit_of_measurement: W
@@ -1368,15 +1369,15 @@ template:
           {% endif %}          
 
       # Dissipated energy by load (if battery is installed, its loss of energy is also taken into account)
-      - name: SG1 Total Load Energy
-        unique_id: uid_sg1_total_load_energy
+      - name: SG1 Total dissipated energy
+        unique_id: uid_sg1_total_dissipated_energy
         unit_of_measurement: kWh
         state_class: total_increasing
         device_class: energy
         availability: "{{states('sensor.sg1_total_pv_generation')|is_number and states('sensor.sg1_total_exported_energy')|is_number and states('sensor.sg1_total_imported_energy')|is_number}}"
         state: >-
           {% if states('sensor.sg1_total_battery_charge')|is_number and states('sensor.sg1_total_battery_discharge')|is_number %}
-            {## battery exists, also take the battery loss into account ##}
+            {## battery exists, also take the battery loss (charge - discharge) into account ##}
             {{ (states('sensor.sg1_total_pv_generation')|float - states('sensor.sg1_total_exported_energy')|float - states('sensor.sg1_total_imported_energy')|float + states('sensor.sg1_total_battery_charge')|float - states('sensor.sg1_total_battery_discharge')|float)|int }}
           {% else %}
             {## no battery ##}
@@ -1385,9 +1386,70 @@ template:
 
 
           
+# inserted from basic_template_sensor_sg.yaml
+      # called device work state in string inverter (not hybrid) datasheet. Adapting to hybrid... 
+      - name: SG1 Inverter state
+        unique_id: uid_sg1_inverter_state
+        state: >-
+          {% if ((states('sensor.sg1_system_state') | int(default=0)) == 0x0000) %}
+            Run
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x8000) %}
+            Stop
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x1300) %}
+            Key Stop
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x1500) %}
+            Emergency Stop
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x1400) %}
+            Standby
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x1200) %}
+            Initial standby
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x1600) %}
+            Starting
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x9100) %}
+            Alarm run
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x8100) %}
+            Derating run 
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x8200) %}
+            Dispatch run
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x5500) %}
+            Fault
+          {% elif ((states('sensor.sg1_system_state') | int(default=0)) == 0x2500) %}
+            Communicate fault
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}
+
+      - name: SG1 Device type
+        unique_id: uid_sg1_device_type
+        state: >-
+          {% if ((states('sensor.sg1_device_type_code') | int(default=0))  == 0x243D) %}
+            SG3.0RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x243E) %}
+            SG4.0RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x2430) %}
+            SG5.0RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x2431) %}
+            SG6.0RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x243C) %}
+            SG7.0RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x2432) %}
+            SG8.0RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x2433) %}
+            SG10.0RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x2434) %}
+            SG12.0RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x2435) %}
+            SG15.0RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x2436) %}
+            SG17.0RT
+          {% elif ((states('sensor.sg1_device_type_code') | int(default=0)) == 0x2437) %}
+            SG20.0RT            
+          {% else %}
+            Unknown device code!
+          {% endif %}
  
 input_number:
-# MARKER: input numbers are inserted here
+# inserted from basic_input_number.yaml
   set_sg1_export_power_limit:
     name: SG1 Set export power limit
     min: 0
@@ -1395,7 +1457,7 @@ input_number:
     step: 100
 
 input_select:
-# MARKER: input selects are inserted here
+# inserted from basic_input_select.yaml
   set_sg1_inverter_run_mode:
     name: SG1 Inverter mode
     options:
@@ -1423,7 +1485,7 @@ input_select:
     icon: mdi:export    
     
 automation:
-# MARKER: automations are inserted here
+# inserted from basic_automation.yaml
   - id: "uid_sg1_set_run_mode_reg"
     alias: "SG1 Set run mode reg"
     description: "SG1 enables/ stops the inverter"

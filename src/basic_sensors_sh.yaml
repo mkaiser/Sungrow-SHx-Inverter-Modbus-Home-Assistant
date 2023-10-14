@@ -43,7 +43,7 @@
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total
+        state_class: total_increasing
         scale: 0.1
         scan_interval: !secret sungrow_scan_interval_rare
 
