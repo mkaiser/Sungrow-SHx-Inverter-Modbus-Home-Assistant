@@ -23,6 +23,56 @@ modbus:
     sensors:
 
 # MARKER: insert modbus sensors for inverter 1 here 
+      - name: SG1 System state
+        unique_id: uid_sg1_system_state
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 12999 # reg 13000
+        input_type: input
+        data_type: uint16
+        precision: 0
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      # register running state is not available for certain SH*RS inverters
+      # template sensors are used to determine the states based on other sensors
+      - name: SG1 Running state
+        unique_id: uid_sg1_running_state
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13000 # reg 13001
+        input_type: input
+        data_type: uint16
+        precision: 0
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG1 Daily PV generation
+        unique_id: uid_sg1_daily_pv_generation
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13001 # reg 13002
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total PV generation
+        unique_id: uid_sg1_total_pv_generation
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13002 # reg 13003
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+
       - name: SG1 Device type code
         unique_id: uid_sg1_dev_code
         slave: !secret sungrow_sg1_modbus_slave
@@ -260,32 +310,124 @@ modbus:
         scan_interval: !secret sungrow_scan_interval_fast
 
 
-      # called device state work state (1) in string inverter (not hybrid) datasheet. Adapting to hybrid...
-      - name: SG1 System state
-        unique_id: uid_sg1_system_state
-        slave: !secret sungrow_sg1_modbus_slave
-        address: 5037 # reg 5038
+
+# MARKER: insert modbus device for inverter 2 here 
+  - name: Sungrow_Inverter_SG2
+    type: tcp
+    host: !secret sungrow_sg2_modbus_host_ip
+    port: !secret sungrow_sg2_modbus_port
+    retries: 10
+    sensors:
+
+# MARKER: insert modbus sensors for inverter 2 here 
+      - name: SG2 Device type code
+        unique_id: uid_sg2_dev_code
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 4999 # reg 5000
+        input_type: input
+        data_type: uint16
+        scan_interval: !secret sungrow_scan_interval_rare
+        
+      - name: SG2 Inverter temperature
+        unique_id: uid_sg2_inverter_temperature
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 5007 # reg 5008
+        input_type: input
+        data_type: int16
+        precision: 1
+        unit_of_measurement: °C
+        device_class: Temperature
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG2 MPPT1 voltage
+        unique_id: uid_sg2_mppt1_voltage
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 5010 # reg 5011
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG2 MPPT1 current
+        unique_id: uid_sg2_mppt1_current
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 5011 # reg 5012
+        input_type: input
+        data_type: uint16
+        precision: 2
+        unit_of_measurement: A
+        device_class: Current
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG2 MPPT2 voltage
+        unique_id: uid_sg2_mppt2_voltage
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 5012 # reg 5013
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG2 MPPT2 current
+        unique_id: uid_sg2_mppt2_current
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 5013 # reg 5014
+        input_type: input
+        data_type: uint16
+        precision: 2
+        unit_of_measurement: A
+        device_class: Current
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG2 Total DC power
+        unique_id: uid_sg2_total_dc_power
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 5016 # reg 5017
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG2 System state
+        unique_id: uid_sg2_system_state
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 12999 # reg 13000
         input_type: input
         data_type: uint16
         precision: 0
         scale: 1
         scan_interval: !secret sungrow_scan_interval_fast
 
-      # called work state (2) in string inverter (not hybrid) datasheet. Adapting to hybrid...
-      - name: SG1 Running state
-        unique_id: uid_sg1_running_state
-        slave: !secret sungrow_sg1_modbus_slave
-        address: 5080 # reg 5081
+      # register running state is not available for certain SH*RS inverters
+      # template sensors are used to determine the states based on other sensors
+      - name: SG2 Running state
+        unique_id: uid_sg2_running_state
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 13000 # reg 13001
         input_type: input
         data_type: uint16
         precision: 0
         scale: 1
         scan_interval: !secret sungrow_scan_interval_fast        
         
-      - name: SG1 Daily PV generation
-        unique_id: uid_sg1_daily_pv_generation
-        slave: !secret sungrow_sg1_modbus_slave
-        address: 5002 # reg 5003
+      - name: SG2 Daily PV generation
+        unique_id: uid_sg2_daily_pv_generation
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 13001 # reg 13002
         input_type: input
         data_type: uint16
         precision: 1
@@ -295,10 +437,10 @@ modbus:
         scale: 0.1
         scan_interval: !secret sungrow_scan_interval_rare
 
-      - name: SG1 Total PV generation
-        unique_id: uid_sg1_total_pv_generation
-        slave: !secret sungrow_sg1_modbus_slave
-        address: 5003 # reg 5004
+      - name: SG2 Total PV generation
+        unique_id: uid_sg2_total_pv_generation
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 13002 # reg 13003
         input_type: input
         data_type: uint32
         swap: word
@@ -309,24 +451,49 @@ modbus:
         scale: 0.1
         scan_interval: !secret sungrow_scan_interval_rare
 
-# MARKER: insert modbus device for inverter 2 here 
-
-# MARKER: insert modbus sensors for inverter 2 here 
-
 template:
   - binary_sensor:
 # MARKER: template binary sensors are inserted here
-      - name: SG1 PV generating
-        unique_id: uid_sg1_pv_generating
+      - name: SG2 PV generating
+        unique_id: uid_sg2_pv_generating
         availability: >-
-          {{ states('sensor.sg1_total_dc_power')|is_number }}
+          {{states('sensor.sg2_running_state')|is_number or
+            states('sensor.sg2_total_dc_power')|is_number
+          }}
         delay_on:
           seconds: 60
         state: >-
-          {% if states('sensor.sg1_total_dc_power')|int > 0 %}
-            on
+          {% if states('sensor.sg2_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.sg2_running_state')|int(default=0)|bitwise_and(0x1) > 0 }}
           {% else %}
-            off
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.sg2_total_dc_power')|int > 0 %}
+              on
+            {% else %}
+              off
+            {% endif %}
+          {% endif %}
+
+      - name: SG1 PV generating
+        unique_id: uid_sg1_pv_generating
+        availability: >-
+          {{states('sensor.sg1_running_state')|is_number or
+            states('sensor.sg1_total_dc_power')|is_number
+          }}
+        delay_on:
+          seconds: 60
+        state: >-
+          {% if states('sensor.sg1_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x1) > 0 }}
+          {% else %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.sg1_total_dc_power')|int > 0 %}
+              on
+            {% else %}
+              off
+            {% endif %}
           {% endif %}
           
       - name: SG1 Exporting power
@@ -335,10 +502,16 @@ template:
         delay_on:
           seconds: 60
         state: >-
-          {% if states('sensor.sg1_export_power_raw')|int > 0 %}
-              on
+          {% if states('sensor.sg1_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x10) > 0 }}
           {% else %}
-              off
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.sg1_export_power_raw')|int > 0 %}
+                on
+            {% else %}
+                off
+            {% endif %}
           {% endif %}
 
       - name: SG1 Importing power
@@ -347,15 +520,136 @@ template:
         delay_on:
           seconds: 60
         state: >-
-          {% if states('sensor.sg1_export_power_raw')|int < 0 %}
-            on
+          {% if states('sensor.sg1_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x20) > 0 }}
           {% else %}
-            off
-          {% endif %}
-          
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.sg1_export_power_raw')|int < 0 %}
+              on
+            {% else %}
+              off
+            {% endif %}
+          {% endif %}          
 
   - sensor:
 # MARKER: template sensors are inserted here
+      - name: SG2 MPPT2 power
+        unique_id: uid_sg2_mppt1_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.sg2_mppt1_voltage')|is_number and states('sensor.sg2_mppt1_current')|is_number }}"
+        state: "{{ (states('sensor.sg2_mppt1_voltage') | float * states('sensor.sg2_mppt1_current') | float) |int }}"
+
+      - name: SG2 MPPT2 power
+        unique_id: uid_sg2_mppt2_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.sg2_mppt2_voltage')|is_number and states('sensor.sg2_mppt2_current')|is_number }}"
+        state: "{{ (states('sensor.sg2_mppt2_voltage') | float * states('sensor.sg2_mppt2_current') | float) |int }}"
+
+      # called device work state in string inverter (not hybrid) datasheet. Adapting to hybrid... 
+      - name: SG2 Inverter state
+        unique_id: uid_sg2_inverter_state
+        state: >-
+          {% if ((states('sensor.sg2_system_state') | int(default=0)) == 0x0000) %}
+            Run
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x8000) %}
+            Stop
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x1300) %}
+            Key Stop
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x1500) %}
+            Emergency Stop
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x1400) %}
+            Standby
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x1200) %}
+            Initial standby
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x1600) %}
+            Starting
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x9100) %}
+            Alarm run
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x8100) %}
+            Derating run 
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x8200) %}
+            Dispatch run
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x5500) %}
+            Fault
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x2500) %}
+            Communicate fault
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}
+
+      - name: SG2 Device type
+        unique_id: uid_sg2_device_type
+        state: >-
+          {% if ((states('sensor.sg2_device_type_code') | int(default=0))  == 0x243D) %}
+            SG3.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x243E) %}
+            SG4.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x2430) %}
+            SG5.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x2431) %}
+            SG6.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x243C) %}
+            SG7.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x2432) %}
+            SG8.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x2433) %}
+            SG20.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x2434) %}
+            SG22.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x2435) %}
+            SG25.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x2436) %}
+            SG27.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x2437) %}
+            SG20.0RT            
+          {% else %}
+            Unknown device code!
+          {% endif %}
+
+      - name: SG Total DC Power
+        unique_id: uid_sg_total_dc_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.sg1_total_dc_power')|is_number and states('sensor.sg2_total_dc_power')|is_number}}"
+        state: "{{ (states('sensor.sg1_total_dc_power')|float + states('sensor.sg2_total_dc_power')|float) |int }}"
+
+      - name: SG Total PV Generation
+        unique_id: uid_sg_total_pv_generation
+        unit_of_measurement: kWh
+        device_class: energy
+        availability: "{{states('sensor.sg1_total_pv_generation')|is_number and states('sensor.sg2_total_pv_generation')|is_number}}"
+        state: "{{ (states('sensor.sg1_total_pv_generation')|float + states('sensor.sg2_total_pv_generation')|float) |int }}"
+
+        # Load Power
+        # without battery: PV + import - export
+        # with battery: PV + import - export - bat charge + bat discharge
+      - name: SG Load Power
+        unique_id: uid_sg_load_power
+        unit_of_measurement: W
+        device_class: power
+        availability: >-
+          {{states('sensor.sg_total_dc_power')|is_number and
+            states('sensor.sg1_import_power')|is_number and 
+            states('sensor.sg1_export_power')|is_number 
+          }}
+        state: >-
+          {% if states('sensor.sg1_battery_charging_power')|is_number and states('sensor.sg1_battery_discharging_power')|is_number %}
+            {## battery exists, also take the battery power flow into account ##}
+            {{ (states('sensor.sg_total_dc_power')|float 
+            - states('sensor.sg1_import_power')|float 
+            - states('sensor.sg1_export_power')|float 
+            - states('sensor.sg1_battery_charging_power')|float 
+            + states('sensor.sg1_battery_discharging_power')|float ) |int }}
+          {% else %}
+            {## no battery ##}
+            {{ (states('sensor.sg_total_dc_power')|float 
+            - states('sensor.sg1_import_power')|float
+            - states('sensor.sg1_export_power')|float ) |int }}
+          {% endif %}
+
       - name: SG1 MPPT1 power
         unique_id: uid_sg1_mppt1_power
         unit_of_measurement: W

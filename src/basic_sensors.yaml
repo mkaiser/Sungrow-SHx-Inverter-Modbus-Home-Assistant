@@ -78,7 +78,7 @@
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: !secret sungrow_scan_interval_fast        
+        scan_interval: !secret sungrow_scan_interval_fast
 
       - name: SG1 Daily exported energy from PV
         unique_id: uid_sg1_daily_exported_energy_from_PV
@@ -233,3 +233,5 @@
         input_type: holding
         data_type: uint16
         scan_interval: !secret sungrow_scan_interval_fast
+
+

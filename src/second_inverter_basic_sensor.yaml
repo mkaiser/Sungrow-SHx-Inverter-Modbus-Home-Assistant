@@ -1,0 +1,130 @@
+      - name: SG2 Device type code
+        unique_id: uid_sg2_dev_code
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 4999 # reg 5000
+        input_type: input
+        data_type: uint16
+        scan_interval: !secret sungrow_scan_interval_rare
+        
+      - name: SG2 Inverter temperature
+        unique_id: uid_sg2_inverter_temperature
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 5007 # reg 5008
+        input_type: input
+        data_type: int16
+        precision: 1
+        unit_of_measurement: °C
+        device_class: Temperature
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG2 MPPT1 voltage
+        unique_id: uid_sg2_mppt1_voltage
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 5010 # reg 5011
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG2 MPPT1 current
+        unique_id: uid_sg2_mppt1_current
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 5011 # reg 5012
+        input_type: input
+        data_type: uint16
+        precision: 2
+        unit_of_measurement: A
+        device_class: Current
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG2 MPPT2 voltage
+        unique_id: uid_sg2_mppt2_voltage
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 5012 # reg 5013
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG2 MPPT2 current
+        unique_id: uid_sg2_mppt2_current
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 5013 # reg 5014
+        input_type: input
+        data_type: uint16
+        precision: 2
+        unit_of_measurement: A
+        device_class: Current
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG2 Total DC power
+        unique_id: uid_sg2_total_dc_power
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 5016 # reg 5017
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      - name: SG2 System state
+        unique_id: uid_sg2_system_state
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 12999 # reg 13000
+        input_type: input
+        data_type: uint16
+        precision: 0
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      # register running state is not available for certain SH*RS inverters
+      # template sensors are used to determine the states based on other sensors
+      - name: SG2 Running state
+        unique_id: uid_sg2_running_state
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 13000 # reg 13001
+        input_type: input
+        data_type: uint16
+        precision: 0
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG2 Daily PV generation
+        unique_id: uid_sg2_daily_pv_generation
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 13001 # reg 13002
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG2 Total PV generation
+        unique_id: uid_sg2_total_pv_generation
+        slave: !secret sungrow_sg2_modbus_slave
+        address: 13002 # reg 13003
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare

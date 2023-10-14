@@ -14,6 +14,7 @@
 # last update: 2023-10-12
 
 modbus:
+# MARKER: insert modbus device for inverter 1 here 
   - name: Sungrow_Inverter_SG1
     type: tcp
     host: !secret sungrow_sg1_modbus_host_ip
@@ -21,6 +22,7 @@ modbus:
     retries: 10
     sensors:
 
+# MARKER: insert modbus sensors for inverter 1 here 
 
       - name: SG1 BDC rated power
         unique_id: uid_sg1_bdc_rated_power
@@ -421,6 +423,56 @@ modbus:
         state_class: measurement
         scale: 10
         scan_interval: !secret sungrow_scan_interval_fast
+      - name: SG1 System state
+        unique_id: uid_sg1_system_state
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 12999 # reg 13000
+        input_type: input
+        data_type: uint16
+        precision: 0
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      # register running state is not available for certain SH*RS inverters
+      # template sensors are used to determine the states based on other sensors
+      - name: SG1 Running state
+        unique_id: uid_sg1_running_state
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13000 # reg 13001
+        input_type: input
+        data_type: uint16
+        precision: 0
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG1 Daily PV generation
+        unique_id: uid_sg1_daily_pv_generation
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13001 # reg 13002
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total PV generation
+        unique_id: uid_sg1_total_pv_generation
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13002 # reg 13003
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+
       - name: SG1 Device type code
         unique_id: uid_sg1_dev_code
         slave: !secret sungrow_sg1_modbus_slave
@@ -501,7 +553,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: !secret sungrow_scan_interval_fast        
+        scan_interval: !secret sungrow_scan_interval_fast
 
       - name: SG1 Daily exported energy from PV
         unique_id: uid_sg1_daily_exported_energy_from_PV
@@ -659,8 +711,117 @@ modbus:
 
 
 
+# MARKER: insert modbus device for inverter 2 here 
+
+# MARKER: insert modbus sensors for inverter 2 here 
+
 template:
   - binary_sensor:
+# MARKER: template binary sensors are inserted here
+      - name: SG1 Battery charging
+        unique_id: uid_sg1_battery_charging
+        availability: >-
+          {{states('sensor.sg1_running_state')|is_number or
+            (states('sensor.sg1_ems_mode_selection_raw')|is_number and
+            states('sensor.sg1_battery_forced_charge_discharge_mode_raw')|is_number and
+            states('sensor.sg1_battery_power_raw')|is_number and
+            states('sensor.sg1_total_dc_power')|is_number and
+            states('sensor.sg1_load_power')|is_number )
+          }}
+        state: >-
+          {% if states('sensor.sg1_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {% if states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x2) > 0 %}
+              on
+            {% else %}
+              off
+            {% endif %}
+          {% else %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if (states('sensor.sg1_ems_mode_selection') ) == "Forced mode" %}
+              {# EMS forced mode #}
+              {% if (states('sensor.sg1_battery_forced_charge_discharge_mode') == "Forced charge") %}
+                {# in mode Forced charge #}
+                {% if (states('sensor.sg1_battery_power_raw')|int > 0 ) %}
+                  {# power flow from/to battery #}
+                  on
+                {% else %}
+                  {# no power flow from/to battery #}
+                  off
+                {% endif %}
+              {% else %}
+                {# in EMS mode, but not in mode Forced charge #}
+                off
+              {% endif %}
+            {% else %}
+              {# not in EMS forced mode, assuming self consumption mode #}
+              {% if states('sensor.sg1_total_dc_power')|int > states('sensor.sg1_load_power')|int %}
+                {# more power generated than consumed. assuming battery charging #}
+                on
+              {% else %}
+                off
+              {% endif %}
+            {% endif %}
+          {% endif %}
+
+      - name: SG1 Battery charging delay
+        unique_id: uid_sg1_battery_charging_delay
+        availability: "{{states('sensor.uid_sg1_battery_charging_delay')|is_number }}"
+        state: "{{ sg1_battery_charging_delay }}"
+
+      - name: SG1 Battery discharging
+        unique_id: uid_sg1_battery_discharging
+        availability: >-
+          {{states('sensor.sg1_running_state')|is_number or
+            (states('sensor.sg1_ems_mode_selection_raw')|is_number and
+            states('sensor.sg1_battery_forced_charge_discharge_mode_raw')|is_number and
+            states('sensor.sg1_battery_power_raw')|is_number and
+            states('sensor.sg1_total_dc_power')|is_number and
+            states('sensor.sg1_load_power')|is_number )
+          }}
+        state: >-
+          {% if states('sensor.sg1_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {% if states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x4) > 0 %}
+              on
+            {% else %}
+              off
+            {% endif %}
+          {% else %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if (states('sensor.sg1_ems_mode_selection') ) == "Forced mode" %}
+              {# EMS forced mode #}
+              {% if (states('sensor.sg1_battery_forced_charge_discharge_mode') == "Forced discharge") %}
+                {# in mode Forced discharge #}
+                {% if (states('sensor.sg1_battery_power_raw')|int > 0 ) %}
+                  {# power flow from/to battery #}
+                  on
+                {% else %}
+                  {# no power flow from/to battery #}
+                  off
+                {% endif %}
+              {% else %}
+                {# in EMS mode, but not in mode Forced charge #}
+                off
+              {% endif %}
+            {% else %}
+              {# not in EMS forced mode, assuming self consumption mode #}
+              {% if ( ( states('sensor.sg1_total_dc_power')|int < states('sensor.sg1_load_power')|int ) ) and states('sensor.sg1_battery_power_raw')|int > 0 %}
+                {# more power consumed than generated and some battery power -->  assuming battery discharging #}
+                on
+              {% else %}
+                off
+              {% endif %}
+            {% endif %}
+          {% endif %}
+
+      - name: SG1 Battery discharging delay
+        unique_id: uid_sg1_battery_discharging_delay
+        availability: "{{states('sensor.uid_sg1_battery_discharging_delay')|is_number }}"
+        delay_on:
+          seconds: 60
+        state: "{{ sg1_battery_discharging_delay }}"
+
       - name: SG1 PV generating
         unique_id: uid_sg1_pv_generating
         availability: >-
@@ -682,7 +843,6 @@ template:
             {% endif %}
           {% endif %}
           
-
       - name: SG1 Exporting power
         unique_id: uid_sg1_exporting_power
         availability: "{{states('sensor.sg1_running_state')|is_number or states('sensor.sg1_export_power_raw')|is_number }}"
@@ -720,101 +880,125 @@ template:
           {% endif %}          
 
   - sensor:
-      - name: SG1 Battery charging
-        unique_id: uid_sg1_battery_charging
-        availability: >-
-          {{states('sensor.sg1_running_state')|is_number or
-            (states('sensor.sg1_ems_mode_selection_raw')|is_number and
-            states('sensor.sg1_battery_forced_charge_discharge_mode_raw')|is_number and
-            states('sensor.sg1_battery_power_raw')|is_number and
-            states('sensor.sg1_total_dc_power')|is_number and
-            states('sensor.sg1_load_power')|is_number )
-          }}
-        delay_on:
-          seconds: 60
+# MARKER: template sensors are inserted here
+      # make the sensor battery_forced_charge_discharge_mode more human readable
+      # Inverter States from modbus reference manual
+      # 0xAA forced charge
+      # 0xBB forced discharge
+      # 0xCC Stop (default)
+      - name: SG1 Battery forced charge discharge mode
+        unique_id: uid_sg1_battery_forced_charge_discharge_mode
         state: >-
-          {% if states('sensor.sg1_running_state')|is_number %}
-            {# use available sensor running_state #}
-            {% if states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x2) > 0 %}
-              on
-            {% else %}
-              off
-            {% endif %}
+          {% if ((states('sensor.sg1_battery_forced_charge_discharge_mode_raw') | int(default=0)) == 0x00AA) %}
+            Forced charge
+          {% elif ((states('sensor.sg1_battery_forced_charge_discharge_mode_raw') | int(default=0))  == 0x00BB) %}
+            Forced discharge
+          {% elif ((states('sensor.sg1_battery_forced_charge_discharge_mode_raw') | int(default=0))  == 0x00CC) %}
+            Stop (default)
           {% else %}
-            {# workaround for SH*RS inverters without working running_state #}
-            {% if (states('sensor.sg1_ems_mode_selection') ) == "Forced mode" %}
-              {# EMS forced mode #}
-              {% if (states('sensor.sg1_battery_forced_charge_discharge_mode') == "Forced charge") %}
-                {# in mode Forced charge #}
-                {% if (states('sensor.sg1_battery_power_raw')|int > 0 ) %}
-                  {# power flow from/to battery #}
-                  on
-                {% else %}
-                  {# no power flow from/to battery #}
-                  off
-                {% endif %}
-              {% else %}
-                {# in EMS mode, but not in mode Forced charge #}
-                off
-              {% endif %}
-            {% else %}
-              {# not in EMS forced mode, assuming self consumption mode #}
-              {% if states('sensor.sg1_total_dc_power')|int > states('sensor.load_power')|int %}
-                {# more power generated than consumed. assuming battery charging #}
-                on
-              {% else %}
-                off
-              {% endif %}
-            {% endif %}
+            Unknown - should not see me!
           {% endif %}
 
-      - name: SG1 Battery discharging
-        unique_id: uid_sg1_battery_discharging
+      - name: SG1 Signed battery power # positive if charging and negative if discharging
+        unique_id: uid_sg1_signed_battery_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
         availability: >-
-          {{states('sensor.sg1_running_state')|is_number or
-            (states('sensor.sg1_ems_mode_selection_raw')|is_number and
-            states('sensor.sg1_battery_forced_charge_discharge_mode_raw')|is_number and
-            states('sensor.sg1_battery_power_raw')|is_number and
-            states('sensor.sg1_total_dc_power')|is_number and
-            states('sensor.sg1_load_power')|is_number )
-          }}
-        delay_on:
-          seconds: 60
+          {{ states('binary_sensor.sg1_battery_charging') and
+          states('binary_sensor.sg1_battery_discharging') and
+          states('sensor.sg1_battery_power_raw')|is_number }}
         state: >-
-          {% if states('sensor.sg1_running_state')|is_number %}
-            {# use available sensor running_state #}
-            {% if states('sensor.sg1_running_state')|int(default=0)|bitwise_and(0x4) > 0 %}
-              on
-            {% else %}
-              off
-            {% endif %}
+          {% if is_state('binary_sensor.sg1_battery_charging', 'on') %}
+            {{ (states('sensor.sg1_battery_power_raw') | float)}}
+          {% elif is_state('binary_sensor.sg1_battery_discharging', 'on') %}
+            {{ (states('sensor.sg1_battery_power_raw') | float * -1)}}
           {% else %}
-            {# workaround for SH*RS inverters without working running_state #}
-            {% if (states('sensor.sg1_ems_mode_selection') ) == "Forced mode" %}
-              {# EMS forced mode #}
-              {% if (states('sensor.sg1_battery_forced_charge_discharge_mode') == "Forced discharge") %}
-                {# in mode Forced discharge #}
-                {% if (states('sensor.sg1_battery_power_raw')|int > 0 ) %}
-                  {# power flow from/to battery #}
-                  on
-                {% else %}
-                  {# no power flow from/to battery #}
-                  off
-                {% endif %}
-              {% else %}
-                {# in EMS mode, but not in mode Forced charge #}
-                off
-              {% endif %}
-            {% else %}
-              {# not in EMS forced mode, assuming self consumption mode #}
-              {% if ( ( states('sensor.sg1_total_dc_power')|int < states('sensor.sg1_load_power')|int ) ) and states('sensor.sg1_battery_power_raw')|int > 0 %}
-                {# more power consumed than generated and some battery power -->  assuming battery discharging #}
-                on
-              {% else %}
-                off
-              {% endif %}
-            {% endif %}
+            0
           {% endif %}
+
+      - name: SG1 Battery charging power # positive if charging else zero
+        unique_id: uid_sg1_battery_charging_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ states('binary_sensor.sg1_battery_charging') and
+          states('sensor.sg1_battery_power_raw')|is_number }}
+        state: >-
+          {% if is_state('binary_sensor.sg1_battery_charging', 'on') %}
+            {{ states('sensor.sg1_battery_power_raw') }}
+          {% else %}
+            0
+          {% endif %}
+
+      - name: SG1 Battery discharging power # positive if discharging else zero
+        unique_id: uid_sg1_battery_discharging_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ states('binary_sensor.sg1_battery_charging') and
+          states('sensor.sg1_battery_power_raw')|is_number }}
+        state: >-
+          {% if is_state('binary_sensor.sg1_battery_discharging', 'on') %}
+            {{ states('sensor.sg1_battery_power_raw') }}
+          {% else %}
+            0
+          {% endif %}
+  
+      - name: SG1 Battery level (nominal)
+        unique_id: uid_sg1_battery_level_nom
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        availability: >-
+          {{
+              states('sensor.sg1_battery_level') | is_number and
+              states('sensor.sg1_min_soc') | is_number and
+              states('sensor.sg1_max_soc') | is_number
+          }}
+        state: >-
+          {% set soc_min = states('sensor.sg1_min_soc') | float %}
+          {% set soc_max = states('sensor.sg1_max_soc') | float %}
+          {% set soc_cur = states('sensor.sg1_battery_level') | float %}
+          {{
+            ((soc_min) + ((soc_max - soc_min) * (soc_cur / 100))) | round(1)
+          }}
+
+      - name: SG1 Battery charge (nominal)
+        unique_id: uid_sg1_battery_charge_nom
+        unit_of_measurement: kWh
+        device_class: energy
+        availability: >-
+          {{
+              states('sensor.sg1_battery_capacity') | is_number and
+              states('sensor.sg1_battery_level_nominal') | is_number
+          }}
+        state: >-
+          {{
+            ( states('sensor.sg1_battery_capacity') | float *
+            states('sensor.sg1_battery_level_nominal') | float / 100 )| round(1)
+          }}
+
+      - name: SG1 Battery charge
+        unique_id: uid_sg1_battery_charge
+        unit_of_measurement: kWh
+        device_class: energy
+        availability: >-
+          {{
+              states('sensor.sg1_battery_capacity') | is_number and
+              states('sensor.sg1_battery_level') | is_number and
+              states('sensor.sg1_min_soc') | is_number and
+              states('sensor.sg1_max_soc') | is_number
+          }}
+        state: >-
+          {{
+              states('sensor.sg1_battery_capacity') | float *
+                ((states('sensor.sg1_max_soc') | float - states('sensor.sg1_min_soc') | float) *
+                states('sensor.sg1_battery_level') | float / 10000) | round(1)
+          }}
+
       - name: SG1 MPPT1 power
         unique_id: uid_sg1_mppt1_power
         unit_of_measurement: W
@@ -883,62 +1067,83 @@ template:
           {% else %}
             0
           {% endif %}          
+
+      # Dissipated energy by load (if battery is installed, its loss of energy is also taken into account)
+      - name: SG1 Total Load Energy
+        unique_id: uid_sg1_total_load_energy
+        unit_of_measurement: kWh
+        state_class: total_increasing
+        device_class: energy
+        availability: "{{states('sensor.sg1_total_pv_generation')|is_number and states('sensor.sg1_total_exported_energy')|is_number and states('sensor.sg1_total_imported_energy')|is_number}}"
+        state: >-
+          {% if states('sensor.sg1_total_battery_charge')|is_number and states('sensor.sg1_total_battery_discharge')|is_number %}
+            {## battery exists, also take the battery loss into account ##}
+            {{ (states('sensor.sg1_total_pv_generation')|float - states('sensor.sg1_total_exported_energy')|float - states('sensor.sg1_total_imported_energy')|float + states('sensor.sg1_total_battery_charge')|float - states('sensor.sg1_total_battery_discharge')|float)|int }}
+          {% else %}
+            {## no battery ##}
+            {{ (states('sensor.sg1_total_pv_generation')|float - states('sensor.sg1_total_exported_energy')|float - states('sensor.sg1_total_imported_energy')|float )|int }}
+          {% endif %}
+
+
+          
  
 input_number:
-  set_sg1_min_soc:
-    name: SG1 set min SoC
+# MARKER: input numbers are inserted here
+  sg1_set_battery_min_soc:
+    name: SG1 Set min SoC
     min: 0
     max: 50
     step: 1
 
-  set_sg1_max_soc:
-    name: SG1 set max SoC
+  sg1_set_battery_max_soc:
+    name: SG1 Set max SoC
     min: 50
     max: 100
     step: 1
 
-  set_sg1_reserved_soc_for_backup:
-    name: SG1 set reserved SoC for backup
+  sg1_set_battery_reserved_soc_for_backup:
+    name: SG1 Set reserved SoC for backup
     min: 0
     max: 75
     step: 1
 
-  set_sg1_battery_forced_charge_discharge_power:
-    name: SG1 set forced charge discharge power in W
+  sg1_set_battery_forced_charge_discharge_power:
+    name: SG1 Set forced charge discharge power
     min: 0
     max: !secret sungrow_sg1_max_forced_power
     step: 100
 
-  set_sg1_battery_max_charge_power:
-    name: SG1 set max battery charge power in W
+  sg1_set_battery_max_charge_power:
+    name: SG1 Set max battery charge power
     min: 100
     max: !secret sungrow_sg1_max_charge_power
     step: 100
 
-  set_sg1_battery_max_discharge_power:
-    name: SG1 set max battery discharge power in W
+  sg1_set_battery_max_discharge_power:
+    name: SG1 Set max battery discharge power
     min: 100
     max: !secret sungrow_sg1_max_discharge_power
     step: 100
 
-  set_sg1_battery_charging_start_power:
-    name: SG1 set battery charging start power in W
+  sg1_set_battery_charging_start_power:
+    name: SG1 Set battery charging start power
     min: 0
     max: 1000
     step: 10
 
-  set_sg1_battery_discharging_start_power:
-    name: SG1 set battery discharging start power in W
+  sg1_set_battery_discharging_start_power:
+    name: SG1 Set battery discharging start power
     min: 0
     max: 1000
     step: 10
   set_sg1_export_power_limit:
-    name: SG1 set export power limit
+    name: SG1 Set export power limit
     min: 0
     max: !secret sungrow_sg1_max_export_limit
     step: 100
 
 input_select:
+# MARKER: input selects are inserted here
   set_sg1_battery_forced_charge_discharge_mode:
     name: SG1 Battery forced charge discharge mode
     options:
@@ -973,13 +1178,14 @@ input_select:
     icon: mdi:export    
     
 automation:
+# MARKER: automations are inserted here
   - id: "uid_sg1_set_max_soc_reg"
-    alias: "SG1 set max SoC reg"
-    description: "SG1 set max Soc"
+    alias: "SG1 Set max SoC reg"
+    description: "SG1 Set max Soc"
     trigger:
       - platform: state
         entity_id:
-          - input_number.set_sg1_max_soc
+          - input_number.set_sg1_set_battery_max_soc
     condition: []
     action:
       - service: modbus.write_register
@@ -987,32 +1193,32 @@ automation:
           hub: Sungrow_Inverter_SG1
           slave: !secret sungrow_sg1_modbus_slave
           address: 13057 # reg 13058
-          value: "{{ states('input_number.set_sg1_max_soc') | int *10}}"
+          value: "{{ states('input_number.set_sg1_set_battery_max_soc') | int *10}}"
     mode: single
 
-  - id: "uid_sg1_max_soc_gui_update"
-    alias: "SG1 max SoC GUI update"
+  - id: "uid_sg1_set_battery_max_soc_gui_update"
+    alias: "SG1 Max SoC GUI update"
     description: "SG1 max Soc GUI update"
     trigger:
       - platform: state
         entity_id:
-          - sensor.sg1_max_soc
+          - sensor.sg1_set_battery_max_soc
     condition: []
     action:
       - service: input_number.set_value
         target:
-          entity_id: input_number.set_sg1_max_soc
+          entity_id: input_number.set_sg1_set_battery_max_soc
         data:
-          value: "{{ states('sensor.sg1_max_soc') }}"
+          value: "{{ states('sensor.sg1_set_battery_max_soc') }}"
     mode: single
 
   - id: "uid_sg1_set_min_soc_reg"
-    alias: "SG1 set min SoC reg"
+    alias: "SG1 Set min SoC reg"
     description: "SG1 set min Soc"
     trigger:
       - platform: state
         entity_id:
-          - input_number.set_sg1_min_soc
+          - input_number.set_sg1_set_battery_min_soc
     condition: []
     action:
       - service: modbus.write_register
@@ -1020,32 +1226,32 @@ automation:
           hub: Sungrow_Inverter_SG1
           slave: !secret sungrow_sg1_modbus_slave
           address: 13058 # reg 13059
-          value: "{{ states('input_number.set_sg1_min_soc') | int *10}}"
+          value: "{{ states('input_number.set_sg1_set_battery_min_soc') | int *10}}"
     mode: single
 
-  - id: "uid_sg1_min_soc_gui_update"
-    alias: "SG1 min SoC GUI update"
+  - id: "uid_sg1_set_battery_min_soc_gui_update"
+    alias: "SG1 Min SoC GUI update"
     description: "SG1 min Soc GUI update"
     trigger:
       - platform: state
         entity_id:
-          - sensor.sg1_min_soc
+          - sensor.sg1_set_battery_min_soc
     condition: []
     action:
       - service: input_number.set_value
         target:
-          entity_id: input_number.set_sg1_min_soc
+          entity_id: input_number.set_sg1_set_battery_min_soc
         data:
-          value: "{{ states('sensor.sg1_min_soc') }}"
+          value: "{{ states('sensor.sg1_set_battery_min_soc') }}"
     mode: single
 
-  - id: "uid_sg1_set_reserved_soc_for_backup_reg"
-    alias: "SG1 set reserved soc for backup reg"
+  - id: "uid_sg1_set_battery_reserved_soc_for_backup_reg"
+    alias: "SG1 Set reserved soc for backup reg"
     description: "SG1 set reserved SoC for backup"
     trigger:
       - platform: state
         entity_id:
-          - input_number.set_sg1_reserved_soc_for_backup
+          - input_number.sg1_set_battery_reserved_soc_for_backup
     condition: []
     action:
       - service: modbus.write_register
@@ -1053,11 +1259,11 @@ automation:
           hub: Sungrow_Inverter_SG1
           slave: !secret sungrow_sg1_modbus_slave
           address: 13099 # reg 13100
-          value: "{{ states('input_number.set_sg1_reserved_soc_for_backup') | int}}"
+          value: "{{ states('input_number.sg1_set_battery_reserved_soc_for_backup') | int}}"
     mode: single
 
   - id: "uid_sg1_set_reserved_soc_for_backup_gui_update"
-    alias: "SG1 reserved backup SoC GUI update"
+    alias: "SG1 Reserved backup SoC GUI update"
     description: "SG1 reserved backup Soc GUI update"
     trigger:
       - platform: state
@@ -1067,13 +1273,13 @@ automation:
     action:
       - service: input_number.set_value
         target:
-          entity_id: input_number.set_sg1_reserved_soc_for_backup
+          entity_id: input_number.sg1_set_battery_reserved_soc_for_backup
         data:
           value: "{{ states('sensor.sg1_reserved_soc_for_backup') }}"
     mode: single
 
   - id: "uid_sg1_set_battery_forced_charge_discharge_mode_reg"
-    alias: "SG1 set battery forced charge discharge mode reg"
+    alias: "SG1 Set battery forced charge discharge mode reg"
     description: "SG1 battery forced charge discharge mode"
     trigger:
       - platform: state
@@ -1103,7 +1309,7 @@ automation:
     mode: single
 
   - id: "uid_sg1_battery_forced_charge_discharge_mode_input_select_gui_update"
-    alias: "SG1 battery forced charge discharge mode input select GUI update"
+    alias: "SG1 Battery forced charge discharge mode input select GUI update"
     description: "SG1 battery forced charge discharge mode input select GUI update"
     trigger:
       - platform: state
@@ -1121,12 +1327,12 @@ automation:
     
 
   - id: "uid_sg1_set_battery_forced_charge_discharge_power_reg"
-    alias: "SG1 set battery forced charge discharge power reg"
+    alias: "SG1 Set battery forced charge discharge power reg"
     description: "SG1 sets battery forced charge discharge power"
     trigger:
       - platform: state
         entity_id:
-          - input_number.set_sg1_forced_charge_discharge_power
+          - input_number.sg1_set_battery_forced_charge_discharge_power
     condition: []
     action:
       - service: modbus.write_register
@@ -1134,11 +1340,11 @@ automation:
           hub: Sungrow_Inverter_SG1
           slave: !secret sungrow_sg1_modbus_slave
           address: 13051 # reg 13052
-          value: "{{ states('input_number.set_sg1_forced_charge_discharge_power') | int}}"
+          value: "{{ states('input_number.sg1_set_battery_forced_charge_discharge_power') | int}}"
     mode: single
 
   - id: "uid_sg1_battery_forced_charge_discharge_power_gui_update"
-    alias: "SG1 battery forced charge discharge power GUI update"
+    alias: "SG1 Battery forced charge discharge power GUI update"
     description: "SG1 battery forced charge discharge power GUI update"
     trigger:
       - platform: state
@@ -1150,18 +1356,18 @@ automation:
     action:
       - service: input_number.set_value
         target:
-          entity_id: input_number.set_sg1_forced_charge_discharge_power
+          entity_id: input_number.sg1_set_battery_forced_charge_discharge_power
         data:
           value: "{{ states('sensor.sg1_battery_forced_charge_discharge_power') }}"
     mode: single
 
   - id: "uid_sg1_set_battery_max_charge_power_reg"
-    alias: "SG1 set battery max charge power reg"
+    alias: "SG1 Set battery max charge power reg"
     description: "SG1 sets battery max charge power"
     trigger:
       - platform: state
         entity_id:
-          - input_number.set_sg1_battery_max_charge_power
+          - input_number.sg1_set_battery_max_charge_power
     condition: []
     action:
       - service: modbus.write_register
@@ -1169,11 +1375,11 @@ automation:
           hub: Sungrow_Inverter_SG1
           slave: !secret sungrow_sg1_modbus_slave
           address: 33046 # reg 33047
-          value: "{{ states('input_number.set_sg1_battery_max_charge_power')  |float /10 |int}}"
+          value: "{{ states('input_number.sg1_set_battery_max_charge_power')  |float /10 |int}}"
     mode: single
 
   - id: "uid_sg1_battery_max_charge_power_gui_update"
-    alias: "SG1 battery max charge power GUI update"
+    alias: "SG1 Battery max charge power GUI update"
     description: "SG1 battery max charge power GUI update"
     trigger:
       - platform: state
@@ -1183,18 +1389,18 @@ automation:
     action:
       - service: input_number.set_value
         target:
-          entity_id: input_number.set_sg1_battery_max_charge_power
+          entity_id: input_number.sg1_set_battery_max_charge_power
         data:
           value: "{{ states('sensor.sg1_battery_max_charge_power') }}"
     mode: single
 
   - id: "uid_sg1_set_battery_max_discharge_power_reg"
-    alias: "SG1 set battery max discharge power reg"
+    alias: "SG1 Set battery max discharge power reg"
     description: "SG1 sets battery max discharge power"
     trigger:
       - platform: state
         entity_id:
-          - input_number.set_sg1_battery_max_discharge_power
+          - input_number.sg1_set_battery_max_discharge_power
     condition: []
     action:
       - service: modbus.write_register
@@ -1202,11 +1408,11 @@ automation:
           hub: Sungrow_Inverter_SG1
           slave: !secret sungrow_sg1_modbus_slave
           address: 33047 # reg 33048
-          value: "{{ states('input_number.set_sg1_battery_max_discharge_power')  |float /10 |int}}"
+          value: "{{ states('input_number.sg1_set_battery_max_discharge_power')  |float /10 |int}}"
     mode: single
 
   - id: "uid_sg1_battery_max_discharge_power_gui_update"
-    alias: "SG1 battery max discharge power GUI update"
+    alias: "SG1 Battery max discharge power GUI update"
     description: "SG1 battery max discharge power GUI update"
     trigger:
       - platform: state
@@ -1216,18 +1422,18 @@ automation:
     action:
       - service: input_number.set_value
         target:
-          entity_id: input_number.set_sg1_battery_max_discharge_power
+          entity_id: input_number.sg1_set_battery_max_discharge_power
         data:
           value: "{{ states('sensor.sg1_battery_max_discharge_power') }}"
     mode: single
 
   - id: "uid_sg1_set_battery_charging_start_power_reg"
-    alias: "SG1 set battery charging start power reg"
+    alias: "SG1 Set battery charging start power reg"
     description: "SG1 Sets battery charging start power"
     trigger:
       - platform: state
         entity_id:
-          - input_number.set_sg1_battery_charging_start_power
+          - input_number.sg1_set_battery_charging_start_power
     condition: []
     action:
       - service: modbus.write_register
@@ -1235,11 +1441,11 @@ automation:
           hub: Sungrow_Inverter_SG1
           slave: !secret sungrow_sg1_modbus_slave
           address: 33148 # reg 33149
-          value: "{{ states('input_number.set_sg1_battery_charging_start_power') |float /10 |int}}"
+          value: "{{ states('input_number.sg1_set_battery_charging_start_power') |float /10 |int}}"
     mode: single
 
   - id: "uid_sg1_battery_charging_start_power_gui_update"
-    alias: "SG1 battery charging start power GUI update"
+    alias: "SG1 Battery charging start power GUI update"
     description: "SG1 battery charging start power GUI update"
     trigger:
       - platform: state
@@ -1249,13 +1455,13 @@ automation:
     action:
       - service: input_number.set_value
         target:
-          entity_id: input_number.set_sg1_battery_charging_start_power
+          entity_id: input_number.set_sg1_battery_discharging_start_power
         data:
           value: "{{ states('sensor.sg1_battery_charging_start_power') }}"
     mode: single
 
   - id: "uid_sg1_set_battery_discharging_start_power_reg"
-    alias: "SG1 set battery discharging start power reg"
+    alias: "SG1 Set battery discharging start power reg"
     description: "SG1 Sets battery discharging start power"
     trigger:
       - platform: state
@@ -1287,7 +1493,7 @@ automation:
           value: "{{ states('sensor.sg1_battery_discharging_start_power') }}"
     mode: single
   - id: "uid_sg1_set_run_mode_reg"
-    alias: "SG1 set run mode reg"
+    alias: "SG1 Set run mode reg"
     description: "SG1 enables/ stops the inverter"
     trigger:
       - platform: state
@@ -1336,7 +1542,7 @@ automation:
     
 
   - id: "uid_sg1_set_ems_mode_reg"
-    alias: "SG1 set EMS mode reg"
+    alias: "SG1 Set EMS mode reg"
     description: "SG1 set EMS mode reg"
     trigger:
       - platform: state
@@ -1390,7 +1596,7 @@ automation:
     mode: single
 
   - id: "uid_sg1_set_export_power_limit_mode_reg"
-    alias: "SG1 export power limit mode reg"
+    alias: "SG1 Export power limit mode reg"
     description: "SG1 Set export power limit mode"
     trigger:
       - platform: state
@@ -1440,7 +1646,7 @@ automation:
     mode: single
 
   - id: "uid_sg1_set_export_power_limit_reg"
-    alias: "SG1 export power limit reg"
+    alias: "SG1 Export power limit reg"
     description: "SG1 set export power limit"
     trigger:
       - platform: state

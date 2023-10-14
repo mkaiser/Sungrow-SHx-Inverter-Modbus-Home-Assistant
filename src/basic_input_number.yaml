@@ -1,5 +1,5 @@
   set_sg1_export_power_limit:
-    name: SG1 set export power limit
+    name: SG1 Set export power limit
     min: 0
     max: !secret sungrow_sg1_max_export_limit
     step: 100

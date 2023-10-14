@@ -1,10 +1,10 @@
   - id: "uid_sg1_set_max_soc_reg"
-    alias: "SG1 set max SoC reg"
-    description: "SG1 set max Soc"
+    alias: "SG1 Set max SoC reg"
+    description: "SG1 Set max Soc"
     trigger:
       - platform: state
         entity_id:
-          - input_number.set_sg1_max_soc
+          - input_number.set_sg1_set_battery_max_soc
     condition: []
     action:
       - service: modbus.write_register
@@ -12,32 +12,32 @@
           hub: Sungrow_Inverter_SG1
           slave: !secret sungrow_sg1_modbus_slave
           address: 13057 # reg 13058
-          value: "{{ states('input_number.set_sg1_max_soc') | int *10}}"
+          value: "{{ states('input_number.set_sg1_set_battery_max_soc') | int *10}}"
     mode: single
 
-  - id: "uid_sg1_max_soc_gui_update"
-    alias: "SG1 max SoC GUI update"
+  - id: "uid_sg1_set_battery_max_soc_gui_update"
+    alias: "SG1 Max SoC GUI update"
     description: "SG1 max Soc GUI update"
     trigger:
       - platform: state
         entity_id:
-          - sensor.sg1_max_soc
+          - sensor.sg1_set_battery_max_soc
     condition: []
     action:
       - service: input_number.set_value
         target:
-          entity_id: input_number.set_sg1_max_soc
+          entity_id: input_number.set_sg1_set_battery_max_soc
         data:
-          value: "{{ states('sensor.sg1_max_soc') }}"
+          value: "{{ states('sensor.sg1_set_battery_max_soc') }}"
     mode: single
 
   - id: "uid_sg1_set_min_soc_reg"
-    alias: "SG1 set min SoC reg"
+    alias: "SG1 Set min SoC reg"
     description: "SG1 set min Soc"
     trigger:
       - platform: state
         entity_id:
-          - input_number.set_sg1_min_soc
+          - input_number.set_sg1_set_battery_min_soc
     condition: []
     action:
       - service: modbus.write_register
@@ -45,32 +45,32 @@
           hub: Sungrow_Inverter_SG1
           slave: !secret sungrow_sg1_modbus_slave
           address: 13058 # reg 13059
-          value: "{{ states('input_number.set_sg1_min_soc') | int *10}}"
+          value: "{{ states('input_number.set_sg1_set_battery_min_soc') | int *10}}"
     mode: single
 
-  - id: "uid_sg1_min_soc_gui_update"
-    alias: "SG1 min SoC GUI update"
+  - id: "uid_sg1_set_battery_min_soc_gui_update"
+    alias: "SG1 Min SoC GUI update"
     description: "SG1 min Soc GUI update"
     trigger:
       - platform: state
         entity_id:
-          - sensor.sg1_min_soc
+          - sensor.sg1_set_battery_min_soc
     condition: []
     action:
       - service: input_number.set_value
         target:
-          entity_id: input_number.set_sg1_min_soc
+          entity_id: input_number.set_sg1_set_battery_min_soc
         data:
-          value: "{{ states('sensor.sg1_min_soc') }}"
+          value: "{{ states('sensor.sg1_set_battery_min_soc') }}"
     mode: single
 
-  - id: "uid_sg1_set_reserved_soc_for_backup_reg"
-    alias: "SG1 set reserved soc for backup reg"
+  - id: "uid_sg1_set_battery_reserved_soc_for_backup_reg"
+    alias: "SG1 Set reserved soc for backup reg"
     description: "SG1 set reserved SoC for backup"
     trigger:
       - platform: state
         entity_id:
-          - input_number.set_sg1_reserved_soc_for_backup
+          - input_number.sg1_set_battery_reserved_soc_for_backup
     condition: []
     action:
       - service: modbus.write_register
@@ -78,11 +78,11 @@
           hub: Sungrow_Inverter_SG1
           slave: !secret sungrow_sg1_modbus_slave
           address: 13099 # reg 13100
-          value: "{{ states('input_number.set_sg1_reserved_soc_for_backup') | int}}"
+          value: "{{ states('input_number.sg1_set_battery_reserved_soc_for_backup') | int}}"
     mode: single
 
   - id: "uid_sg1_set_reserved_soc_for_backup_gui_update"
-    alias: "SG1 reserved backup SoC GUI update"
+    alias: "SG1 Reserved backup SoC GUI update"
     description: "SG1 reserved backup Soc GUI update"
     trigger:
       - platform: state
@@ -92,13 +92,13 @@
     action:
       - service: input_number.set_value
         target:
-          entity_id: input_number.set_sg1_reserved_soc_for_backup
+          entity_id: input_number.sg1_set_battery_reserved_soc_for_backup
         data:
           value: "{{ states('sensor.sg1_reserved_soc_for_backup') }}"
     mode: single
 
   - id: "uid_sg1_set_battery_forced_charge_discharge_mode_reg"
-    alias: "SG1 set battery forced charge discharge mode reg"
+    alias: "SG1 Set battery forced charge discharge mode reg"
     description: "SG1 battery forced charge discharge mode"
     trigger:
       - platform: state
@@ -128,7 +128,7 @@
     mode: single
 
   - id: "uid_sg1_battery_forced_charge_discharge_mode_input_select_gui_update"
-    alias: "SG1 battery forced charge discharge mode input select GUI update"
+    alias: "SG1 Battery forced charge discharge mode input select GUI update"
     description: "SG1 battery forced charge discharge mode input select GUI update"
     trigger:
       - platform: state
@@ -146,12 +146,12 @@
     
 
   - id: "uid_sg1_set_battery_forced_charge_discharge_power_reg"
-    alias: "SG1 set battery forced charge discharge power reg"
+    alias: "SG1 Set battery forced charge discharge power reg"
     description: "SG1 sets battery forced charge discharge power"
     trigger:
       - platform: state
         entity_id:
-          - input_number.set_sg1_forced_charge_discharge_power
+          - input_number.sg1_set_battery_forced_charge_discharge_power
     condition: []
     action:
       - service: modbus.write_register
@@ -159,11 +159,11 @@
           hub: Sungrow_Inverter_SG1
           slave: !secret sungrow_sg1_modbus_slave
           address: 13051 # reg 13052
-          value: "{{ states('input_number.set_sg1_forced_charge_discharge_power') | int}}"
+          value: "{{ states('input_number.sg1_set_battery_forced_charge_discharge_power') | int}}"
     mode: single
 
   - id: "uid_sg1_battery_forced_charge_discharge_power_gui_update"
-    alias: "SG1 battery forced charge discharge power GUI update"
+    alias: "SG1 Battery forced charge discharge power GUI update"
     description: "SG1 battery forced charge discharge power GUI update"
     trigger:
       - platform: state
@@ -175,18 +175,18 @@
     action:
       - service: input_number.set_value
         target:
-          entity_id: input_number.set_sg1_forced_charge_discharge_power
+          entity_id: input_number.sg1_set_battery_forced_charge_discharge_power
         data:
           value: "{{ states('sensor.sg1_battery_forced_charge_discharge_power') }}"
     mode: single
 
   - id: "uid_sg1_set_battery_max_charge_power_reg"
-    alias: "SG1 set battery max charge power reg"
+    alias: "SG1 Set battery max charge power reg"
     description: "SG1 sets battery max charge power"
     trigger:
       - platform: state
         entity_id:
-          - input_number.set_sg1_battery_max_charge_power
+          - input_number.sg1_set_battery_max_charge_power
     condition: []
     action:
       - service: modbus.write_register
@@ -194,11 +194,11 @@
           hub: Sungrow_Inverter_SG1
           slave: !secret sungrow_sg1_modbus_slave
           address: 33046 # reg 33047
-          value: "{{ states('input_number.set_sg1_battery_max_charge_power')  |float /10 |int}}"
+          value: "{{ states('input_number.sg1_set_battery_max_charge_power')  |float /10 |int}}"
     mode: single
 
   - id: "uid_sg1_battery_max_charge_power_gui_update"
-    alias: "SG1 battery max charge power GUI update"
+    alias: "SG1 Battery max charge power GUI update"
     description: "SG1 battery max charge power GUI update"
     trigger:
       - platform: state
@@ -208,18 +208,18 @@
     action:
       - service: input_number.set_value
         target:
-          entity_id: input_number.set_sg1_battery_max_charge_power
+          entity_id: input_number.sg1_set_battery_max_charge_power
         data:
           value: "{{ states('sensor.sg1_battery_max_charge_power') }}"
     mode: single
 
   - id: "uid_sg1_set_battery_max_discharge_power_reg"
-    alias: "SG1 set battery max discharge power reg"
+    alias: "SG1 Set battery max discharge power reg"
     description: "SG1 sets battery max discharge power"
     trigger:
       - platform: state
         entity_id:
-          - input_number.set_sg1_battery_max_discharge_power
+          - input_number.sg1_set_battery_max_discharge_power
     condition: []
     action:
       - service: modbus.write_register
@@ -227,11 +227,11 @@
           hub: Sungrow_Inverter_SG1
           slave: !secret sungrow_sg1_modbus_slave
           address: 33047 # reg 33048
-          value: "{{ states('input_number.set_sg1_battery_max_discharge_power')  |float /10 |int}}"
+          value: "{{ states('input_number.sg1_set_battery_max_discharge_power')  |float /10 |int}}"
     mode: single
 
   - id: "uid_sg1_battery_max_discharge_power_gui_update"
-    alias: "SG1 battery max discharge power GUI update"
+    alias: "SG1 Battery max discharge power GUI update"
     description: "SG1 battery max discharge power GUI update"
     trigger:
       - platform: state
@@ -241,18 +241,18 @@
     action:
       - service: input_number.set_value
         target:
-          entity_id: input_number.set_sg1_battery_max_discharge_power
+          entity_id: input_number.sg1_set_battery_max_discharge_power
         data:
           value: "{{ states('sensor.sg1_battery_max_discharge_power') }}"
     mode: single
 
   - id: "uid_sg1_set_battery_charging_start_power_reg"
-    alias: "SG1 set battery charging start power reg"
+    alias: "SG1 Set battery charging start power reg"
     description: "SG1 Sets battery charging start power"
     trigger:
       - platform: state
         entity_id:
-          - input_number.set_sg1_battery_charging_start_power
+          - input_number.sg1_set_battery_charging_start_power
     condition: []
     action:
       - service: modbus.write_register
@@ -260,11 +260,11 @@
           hub: Sungrow_Inverter_SG1
           slave: !secret sungrow_sg1_modbus_slave
           address: 33148 # reg 33149
-          value: "{{ states('input_number.set_sg1_battery_charging_start_power') |float /10 |int}}"
+          value: "{{ states('input_number.sg1_set_battery_charging_start_power') |float /10 |int}}"
     mode: single
 
   - id: "uid_sg1_battery_charging_start_power_gui_update"
-    alias: "SG1 battery charging start power GUI update"
+    alias: "SG1 Battery charging start power GUI update"
     description: "SG1 battery charging start power GUI update"
     trigger:
       - platform: state
@@ -274,13 +274,13 @@
     action:
       - service: input_number.set_value
         target:
-          entity_id: input_number.set_sg1_battery_charging_start_power
+          entity_id: input_number.set_sg1_battery_discharging_start_power
         data:
           value: "{{ states('sensor.sg1_battery_charging_start_power') }}"
     mode: single
 
   - id: "uid_sg1_set_battery_discharging_start_power_reg"
-    alias: "SG1 set battery discharging start power reg"
+    alias: "SG1 Set battery discharging start power reg"
     description: "SG1 Sets battery discharging start power"
     trigger:
       - platform: state

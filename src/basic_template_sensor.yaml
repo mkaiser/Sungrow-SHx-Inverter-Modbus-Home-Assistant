@@ -66,3 +66,22 @@
           {% else %}
             0
           {% endif %}          
+
+      # Dissipated energy by load (if battery is installed, its loss of energy is also taken into account)
+      - name: SG1 Total Load Energy
+        unique_id: uid_sg1_total_load_energy
+        unit_of_measurement: kWh
+        state_class: total_increasing
+        device_class: energy
+        availability: "{{states('sensor.sg1_total_pv_generation')|is_number and states('sensor.sg1_total_exported_energy')|is_number and states('sensor.sg1_total_imported_energy')|is_number}}"
+        state: >-
+          {% if states('sensor.sg1_total_battery_charge')|is_number and states('sensor.sg1_total_battery_discharge')|is_number %}
+            {## battery exists, also take the battery loss into account ##}
+            {{ (states('sensor.sg1_total_pv_generation')|float - states('sensor.sg1_total_exported_energy')|float - states('sensor.sg1_total_imported_energy')|float + states('sensor.sg1_total_battery_charge')|float - states('sensor.sg1_total_battery_discharge')|float)|int }}
+          {% else %}
+            {## no battery ##}
+            {{ (states('sensor.sg1_total_pv_generation')|float - states('sensor.sg1_total_exported_energy')|float - states('sensor.sg1_total_imported_energy')|float )|int }}
+          {% endif %}
+
+
+          

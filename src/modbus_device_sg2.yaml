@@ -1,0 +1,6 @@
+  - name: Sungrow_Inverter_SG2
+    type: tcp
+    host: !secret sungrow_sg2_modbus_host_ip
+    port: !secret sungrow_sg2_modbus_port
+    retries: 10
+    sensors:

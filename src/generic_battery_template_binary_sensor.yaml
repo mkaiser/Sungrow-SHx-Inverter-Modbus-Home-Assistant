@@ -8,8 +8,6 @@
             states('sensor.sg1_total_dc_power')|is_number and
             states('sensor.sg1_load_power')|is_number )
           }}
-        delay_on:
-          seconds: 60
         state: >-
           {% if states('sensor.sg1_running_state')|is_number %}
             {# use available sensor running_state #}
@@ -37,7 +35,7 @@
               {% endif %}
             {% else %}
               {# not in EMS forced mode, assuming self consumption mode #}
-              {% if states('sensor.sg1_total_dc_power')|int > states('sensor.load_power')|int %}
+              {% if states('sensor.sg1_total_dc_power')|int > states('sensor.sg1_load_power')|int %}
                 {# more power generated than consumed. assuming battery charging #}
                 on
               {% else %}
@@ -45,6 +43,11 @@
               {% endif %}
             {% endif %}
           {% endif %}
+
+      - name: SG1 Battery charging delay
+        unique_id: uid_sg1_battery_charging_delay
+        availability: "{{states('sensor.uid_sg1_battery_charging_delay')|is_number }}"
+        state: "{{ sg1_battery_charging_delay }}"
 
       - name: SG1 Battery discharging
         unique_id: uid_sg1_battery_discharging
@@ -56,8 +59,6 @@
             states('sensor.sg1_total_dc_power')|is_number and
             states('sensor.sg1_load_power')|is_number )
           }}
-        delay_on:
-          seconds: 60
         state: >-
           {% if states('sensor.sg1_running_state')|is_number %}
             {# use available sensor running_state #}
@@ -93,3 +94,11 @@
               {% endif %}
             {% endif %}
           {% endif %}
+
+      - name: SG1 Battery discharging delay
+        unique_id: uid_sg1_battery_discharging_delay
+        availability: "{{states('sensor.uid_sg1_battery_discharging_delay')|is_number }}"
+        delay_on:
+          seconds: 60
+        state: "{{ sg1_battery_discharging_delay }}"
+

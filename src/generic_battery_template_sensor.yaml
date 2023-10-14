@@ -16,8 +16,6 @@
             Unknown - should not see me!
           {% endif %}
 
-
-
       - name: SG1 Signed battery power # positive if charging and negative if discharging
         unique_id: uid_sg1_signed_battery_power
         unit_of_measurement: W
@@ -65,9 +63,7 @@
           {% else %}
             0
           {% endif %}
-          
-          
-
+  
       - name: SG1 Battery level (nominal)
         unique_id: uid_sg1_battery_level_nom
         unit_of_measurement: "%"
@@ -119,3 +115,4 @@
                 ((states('sensor.sg1_max_soc') | float - states('sensor.sg1_min_soc') | float) *
                 states('sensor.sg1_battery_level') | float / 10000) | round(1)
           }}
+

@@ -1,5 +1,5 @@
   - id: "uid_sg1_set_run_mode_reg"
-    alias: "SG1 set run mode reg"
+    alias: "SG1 Set run mode reg"
     description: "SG1 enables/ stops the inverter"
     trigger:
       - platform: state
@@ -48,7 +48,7 @@
     
 
   - id: "uid_sg1_set_ems_mode_reg"
-    alias: "SG1 set EMS mode reg"
+    alias: "SG1 Set EMS mode reg"
     description: "SG1 set EMS mode reg"
     trigger:
       - platform: state
@@ -102,7 +102,7 @@
     mode: single
 
   - id: "uid_sg1_set_export_power_limit_mode_reg"
-    alias: "SG1 export power limit mode reg"
+    alias: "SG1 Export power limit mode reg"
     description: "SG1 Set export power limit mode"
     trigger:
       - platform: state
@@ -152,7 +152,7 @@
     mode: single
 
   - id: "uid_sg1_set_export_power_limit_reg"
-    alias: "SG1 export power limit reg"
+    alias: "SG1 Export power limit reg"
     description: "SG1 set export power limit"
     trigger:
       - platform: state

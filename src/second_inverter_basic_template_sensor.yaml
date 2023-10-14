@@ -1,0 +1,116 @@
+      - name: SG2 MPPT2 power
+        unique_id: uid_sg2_mppt1_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.sg2_mppt1_voltage')|is_number and states('sensor.sg2_mppt1_current')|is_number }}"
+        state: "{{ (states('sensor.sg2_mppt1_voltage') | float * states('sensor.sg2_mppt1_current') | float) |int }}"
+
+      - name: SG2 MPPT2 power
+        unique_id: uid_sg2_mppt2_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.sg2_mppt2_voltage')|is_number and states('sensor.sg2_mppt2_current')|is_number }}"
+        state: "{{ (states('sensor.sg2_mppt2_voltage') | float * states('sensor.sg2_mppt2_current') | float) |int }}"
+
+      # called device work state in string inverter (not hybrid) datasheet. Adapting to hybrid... 
+      - name: SG2 Inverter state
+        unique_id: uid_sg2_inverter_state
+        state: >-
+          {% if ((states('sensor.sg2_system_state') | int(default=0)) == 0x0000) %}
+            Run
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x8000) %}
+            Stop
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x1300) %}
+            Key Stop
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x1500) %}
+            Emergency Stop
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x1400) %}
+            Standby
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x1200) %}
+            Initial standby
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x1600) %}
+            Starting
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x9100) %}
+            Alarm run
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x8100) %}
+            Derating run 
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x8200) %}
+            Dispatch run
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x5500) %}
+            Fault
+          {% elif ((states('sensor.sg2_system_state') | int(default=0)) == 0x2500) %}
+            Communicate fault
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}
+
+      - name: SG2 Device type
+        unique_id: uid_sg2_device_type
+        state: >-
+          {% if ((states('sensor.sg2_device_type_code') | int(default=0))  == 0x243D) %}
+            SG3.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x243E) %}
+            SG4.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x2430) %}
+            SG5.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x2431) %}
+            SG6.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x243C) %}
+            SG7.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x2432) %}
+            SG8.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x2433) %}
+            SG20.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x2434) %}
+            SG22.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x2435) %}
+            SG25.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x2436) %}
+            SG27.0RT
+          {% elif ((states('sensor.sg2_device_type_code') | int(default=0)) == 0x2437) %}
+            SG20.0RT            
+          {% else %}
+            Unknown device code!
+          {% endif %}
+
+      - name: SG Total DC Power
+        unique_id: uid_sg_total_dc_power
+        unit_of_measurement: W
+        device_class: power
+        availability: "{{states('sensor.sg1_total_dc_power')|is_number and states('sensor.sg2_total_dc_power')|is_number}}"
+        state: "{{ (states('sensor.sg1_total_dc_power')|float + states('sensor.sg2_total_dc_power')|float) |int }}"
+
+      - name: SG Total PV Generation
+        unique_id: uid_sg_total_pv_generation
+        unit_of_measurement: kWh
+        device_class: energy
+        availability: "{{states('sensor.sg1_total_pv_generation')|is_number and states('sensor.sg2_total_pv_generation')|is_number}}"
+        state: "{{ (states('sensor.sg1_total_pv_generation')|float + states('sensor.sg2_total_pv_generation')|float) |int }}"
+
+        # Load Power
+        # without battery: PV + import - export
+        # with battery: PV + import - export - bat charge + bat discharge
+      - name: SG Load Power
+        unique_id: uid_sg_load_power
+        unit_of_measurement: W
+        device_class: power
+        availability: >-
+          {{states('sensor.sg_total_dc_power')|is_number and
+            states('sensor.sg1_import_power')|is_number and 
+            states('sensor.sg1_export_power')|is_number 
+          }}
+        state: >-
+          {% if states('sensor.sg1_battery_charging_power')|is_number and states('sensor.sg1_battery_discharging_power')|is_number %}
+            {## battery exists, also take the battery power flow into account ##}
+            {{ (states('sensor.sg_total_dc_power')|float 
+            - states('sensor.sg1_import_power')|float 
+            - states('sensor.sg1_export_power')|float 
+            - states('sensor.sg1_battery_charging_power')|float 
+            + states('sensor.sg1_battery_discharging_power')|float ) |int }}
+          {% else %}
+            {## no battery ##}
+            {{ (states('sensor.sg_total_dc_power')|float 
+            - states('sensor.sg1_import_power')|float
+            - states('sensor.sg1_export_power')|float ) |int }}
+          {% endif %}
+

@@ -1,0 +1,21 @@
+      - name: SG2 PV generating
+        unique_id: uid_sg2_pv_generating
+        availability: >-
+          {{states('sensor.sg2_running_state')|is_number or
+            states('sensor.sg2_total_dc_power')|is_number
+          }}
+        delay_on:
+          seconds: 60
+        state: >-
+          {% if states('sensor.sg2_running_state')|is_number %}
+            {# use available sensor running_state #}
+            {{ states('sensor.sg2_running_state')|int(default=0)|bitwise_and(0x1) > 0 }}
+          {% else %}
+            {# workaround for SH*RS inverters without working running_state #}
+            {% if states('sensor.sg2_total_dc_power')|int > 0 %}
+              on
+            {% else %}
+              off
+            {% endif %}
+          {% endif %}
+

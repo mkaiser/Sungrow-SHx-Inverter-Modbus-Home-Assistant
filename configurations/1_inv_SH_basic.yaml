@@ -14,12 +14,64 @@
 # last update: 2023-10-12
 
 modbus:
+# MARKER: insert modbus device for inverter 1 here 
   - name: Sungrow_Inverter_SG1
     type: tcp
     host: !secret sungrow_sg1_modbus_host_ip
     port: !secret sungrow_sg1_modbus_port
     retries: 10
     sensors:
+
+# MARKER: insert modbus sensors for inverter 1 here 
+      - name: SG1 System state
+        unique_id: uid_sg1_system_state
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 12999 # reg 13000
+        input_type: input
+        data_type: uint16
+        precision: 0
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast
+
+      # register running state is not available for certain SH*RS inverters
+      # template sensors are used to determine the states based on other sensors
+      - name: SG1 Running state
+        unique_id: uid_sg1_running_state
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13000 # reg 13001
+        input_type: input
+        data_type: uint16
+        precision: 0
+        scale: 1
+        scan_interval: !secret sungrow_scan_interval_fast        
+        
+      - name: SG1 Daily PV generation
+        unique_id: uid_sg1_daily_pv_generation
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13001 # reg 13002
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
+      - name: SG1 Total PV generation
+        unique_id: uid_sg1_total_pv_generation
+        slave: !secret sungrow_sg1_modbus_slave
+        address: 13002 # reg 13003
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total
+        scale: 0.1
+        scan_interval: !secret sungrow_scan_interval_rare
+
 
       - name: SG1 Device type code
         unique_id: uid_sg1_dev_code
@@ -101,7 +153,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: !secret sungrow_scan_interval_fast        
+        scan_interval: !secret sungrow_scan_interval_fast
 
       - name: SG1 Daily exported energy from PV
         unique_id: uid_sg1_daily_exported_energy_from_PV
@@ -259,8 +311,13 @@ modbus:
 
 
 
+# MARKER: insert modbus device for inverter 2 here 
+
+# MARKER: insert modbus sensors for inverter 2 here 
+
 template:
   - binary_sensor:
+# MARKER: template binary sensors are inserted here
       - name: SG1 PV generating
         unique_id: uid_sg1_pv_generating
         availability: >-
@@ -282,7 +339,6 @@ template:
             {% endif %}
           {% endif %}
           
-
       - name: SG1 Exporting power
         unique_id: uid_sg1_exporting_power
         availability: "{{states('sensor.sg1_running_state')|is_number or states('sensor.sg1_export_power_raw')|is_number }}"
@@ -320,6 +376,7 @@ template:
           {% endif %}          
 
   - sensor:
+# MARKER: template sensors are inserted here
       - name: SG1 MPPT1 power
         unique_id: uid_sg1_mppt1_power
         unit_of_measurement: W
@@ -388,15 +445,36 @@ template:
           {% else %}
             0
           {% endif %}          
+
+      # Dissipated energy by load (if battery is installed, its loss of energy is also taken into account)
+      - name: SG1 Total Load Energy
+        unique_id: uid_sg1_total_load_energy
+        unit_of_measurement: kWh
+        state_class: total_increasing
+        device_class: energy
+        availability: "{{states('sensor.sg1_total_pv_generation')|is_number and states('sensor.sg1_total_exported_energy')|is_number and states('sensor.sg1_total_imported_energy')|is_number}}"
+        state: >-
+          {% if states('sensor.sg1_total_battery_charge')|is_number and states('sensor.sg1_total_battery_discharge')|is_number %}
+            {## battery exists, also take the battery loss into account ##}
+            {{ (states('sensor.sg1_total_pv_generation')|float - states('sensor.sg1_total_exported_energy')|float - states('sensor.sg1_total_imported_energy')|float + states('sensor.sg1_total_battery_charge')|float - states('sensor.sg1_total_battery_discharge')|float)|int }}
+          {% else %}
+            {## no battery ##}
+            {{ (states('sensor.sg1_total_pv_generation')|float - states('sensor.sg1_total_exported_energy')|float - states('sensor.sg1_total_imported_energy')|float )|int }}
+          {% endif %}
+
+
+          
  
 input_number:
+# MARKER: input numbers are inserted here
   set_sg1_export_power_limit:
-    name: SG1 set export power limit
+    name: SG1 Set export power limit
     min: 0
     max: !secret sungrow_sg1_max_export_limit
     step: 100
 
 input_select:
+# MARKER: input selects are inserted here
   set_sg1_inverter_run_mode:
     name: SG1 Inverter mode
     options:
@@ -424,8 +502,9 @@ input_select:
     icon: mdi:export    
     
 automation:
+# MARKER: automations are inserted here
   - id: "uid_sg1_set_run_mode_reg"
-    alias: "SG1 set run mode reg"
+    alias: "SG1 Set run mode reg"
     description: "SG1 enables/ stops the inverter"
     trigger:
       - platform: state
@@ -474,7 +553,7 @@ automation:
     
 
   - id: "uid_sg1_set_ems_mode_reg"
-    alias: "SG1 set EMS mode reg"
+    alias: "SG1 Set EMS mode reg"
     description: "SG1 set EMS mode reg"
     trigger:
       - platform: state
@@ -528,7 +607,7 @@ automation:
     mode: single
 
   - id: "uid_sg1_set_export_power_limit_mode_reg"
-    alias: "SG1 export power limit mode reg"
+    alias: "SG1 Export power limit mode reg"
     description: "SG1 Set export power limit mode"
     trigger:
       - platform: state
@@ -578,7 +657,7 @@ automation:
     mode: single
 
   - id: "uid_sg1_set_export_power_limit_reg"
-    alias: "SG1 export power limit reg"
+    alias: "SG1 Export power limit reg"
     description: "SG1 set export power limit"
     trigger:
       - platform: state

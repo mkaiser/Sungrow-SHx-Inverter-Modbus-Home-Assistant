@@ -1,0 +1,47 @@
+  sg1_set_battery_min_soc:
+    name: SG1 Set min SoC
+    min: 0
+    max: 50
+    step: 1
+
+  sg1_set_battery_max_soc:
+    name: SG1 Set max SoC
+    min: 50
+    max: 100
+    step: 1
+
+  sg1_set_battery_reserved_soc_for_backup:
+    name: SG1 Set reserved SoC for backup
+    min: 0
+    max: 75
+    step: 1
+
+  sg1_set_battery_forced_charge_discharge_power:
+    name: SG1 Set forced charge discharge power
+    min: 0
+    max: !secret sungrow_sg1_max_forced_power
+    step: 100
+
+  sg1_set_battery_max_charge_power:
+    name: SG1 Set max battery charge power
+    min: 100
+    max: !secret sungrow_sg1_max_charge_power
+    step: 100
+
+  sg1_set_battery_max_discharge_power:
+    name: SG1 Set max battery discharge power
+    min: 100
+    max: !secret sungrow_sg1_max_discharge_power
+    step: 100
+
+  sg1_set_battery_charging_start_power:
+    name: SG1 Set battery charging start power
+    min: 0
+    max: 1000
+    step: 10
+
+  sg1_set_battery_discharging_start_power:
+    name: SG1 Set battery discharging start power
+    min: 0
+    max: 1000
+    step: 10

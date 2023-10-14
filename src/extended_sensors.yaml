@@ -104,7 +104,8 @@
         state_class: measurement
         scale: 0.001
         scan_interval: !secret sungrow_scan_interval_fast
-       #https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?pageNo=13
+      
+      #https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?pageNo=13
       #Meter Active Power: 5601-5602 S32 W (Energiezähler Wirkleistung)
       #Meter Phase A Active Power: 5603-5604 S32 W (Stromzähler Phase A Wirkleistung)
       #Meter Phase B Active Power: 5605-5606 S32 W (Stromzähler Phase B Wirkleistung)
@@ -640,7 +641,7 @@
       # End monthly export
 
       # Start yearly export energy from PV
-      - name: SG1 Yearly Export (2019)
+      - name: SG1 Yearly export (2019)
         unique_id: uid_sg1_yearly_export_2019
         slave: !secret sungrow_sg1_modbus_slave
         address: 6615 # reg 6616
@@ -654,7 +655,7 @@
         scale: 0.1
         scan_interval: !secret sungrow_scan_interval_rare
 
-      - name: SG1 Yearly Export (2020)
+      - name: SG1 Yearly export (2020)
         unique_id: uid_sg1_yearly_export_2020
         slave: !secret sungrow_sg1_modbus_slave
         address: 6617 # reg 6618
@@ -668,7 +669,7 @@
         scale: 0.1
         scan_interval: !secret sungrow_scan_interval_rare
 
-      - name: SG1 Yearly Export (2021)
+      - name: SG1 Yearly export (2021)
         unique_id: uid_sg1_yearly_export_2021
         slave: !secret sungrow_sg1_modbus_slave
         address: 6619 # reg 6620
@@ -682,7 +683,7 @@
         scale: 0.1
         scan_interval: !secret sungrow_scan_interval_rare
 
-      - name: SG1 Yearly Export (2022)
+      - name: SG1 Yearly export (2022)
         unique_id: uid_sg1_yearly_export_2022
         slave: !secret sungrow_sg1_modbus_slave
         address: 6621 # reg 6622
@@ -696,7 +697,7 @@
         scale: 0.1
         scan_interval: !secret sungrow_scan_interval_rare
 
-      - name: SG1 Yearly Export (2023)
+      - name: SG1 Yearly export (2023)
         unique_id: uid_sg1_yearly_export_2023
         slave: !secret sungrow_sg1_modbus_slave
         address: 6623 # reg 6624
@@ -710,7 +711,7 @@
         scale: 0.1
         scan_interval: !secret sungrow_scan_interval_rare
 
-      - name: SG1 Yearly Export (2024)
+      - name: SG1 Yearly export (2024)
         unique_id: uid_sg1_yearly_export_2024
         slave: !secret sungrow_sg1_modbus_slave
         address: 6625 # reg 6626
@@ -724,7 +725,7 @@
         scale: 0.1
         scan_interval: !secret sungrow_scan_interval_rare
 
-      - name: SG1 Yearly Export (2025)
+      - name: SG1 Yearly export (2025)
         unique_id: uid_sg1_yearly_export_2025
         slave: !secret sungrow_sg1_modbus_slave
         address: 6627 # reg 6628
@@ -738,7 +739,7 @@
         scale: 0.1
         scan_interval: !secret sungrow_scan_interval_rare
 
-      - name: SG1 Yearly Export (2026)
+      - name: SG1 Yearly export (2026)
         unique_id: uid_sg1_yearly_export_2026
         slave: !secret sungrow_sg1_modbus_slave
         address: 6629 # reg 6630
@@ -752,7 +753,7 @@
         scale: 0.1
         scan_interval: !secret sungrow_scan_interval_rare
 
-      - name: SG1 Yearly Export (2027)
+      - name: SG1 Yearly export (2027)
         unique_id: uid_sg1_yearly_export_2027
         slave: !secret sungrow_sg1_modbus_slave
         address: 6631 # reg 6632
@@ -766,7 +767,7 @@
         scale: 0.1
         scan_interval: !secret sungrow_scan_interval_rare
 
-      - name: SG1 Yearly Export (2028)
+      - name: SG1 Yearly export (2028)
         unique_id: uid_sg1_yearly_export_2028
         slave: !secret sungrow_sg1_modbus_slave
         address: 6633 # reg 6634

@@ -46,3 +46,5 @@
         state_class: total
         scale: 0.1
         scan_interval: !secret sungrow_scan_interval_rare
+
+
