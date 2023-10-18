@@ -1,15 +1,10 @@
-
-
-
-
-##  Add a nice Dashboard like the one shown above
-
+#  Configure dashboards (see screenshots below)
+## PV dashboard
 Navigate to folder [dashboards/_mkaiser](../dashboards/_DefaultDashboard_mkaiser) and follow the instructions in [README.md](../dashboards/_DefaultDashboard_mkaiser/README.md)
-    
 
 Browse the "dashboards" folder for other contributed dashboards :)
 
-##  Configure the HomeAssistant energy dashboard 
+##  HomeAssistant energy dashboard 
 ![image](images/HA_Energy_Dashboard.png)
 
 Open the Energy settings ("Configuration" --> "Energy") and adapt the highlighted values as shown in the screenshot: 
