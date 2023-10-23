@@ -1,12 +1,12 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-09-29
+# last update: 2023-10-23
 
 modbus:
   - name: SungrowSHx
     type: tcp
-    host: !secret sungrow_modbus_host_ip
+    slave: !secret sungrow_modbus_slave
     port: !secret sungrow_modbus_port
     retries: 10
     sensors:
