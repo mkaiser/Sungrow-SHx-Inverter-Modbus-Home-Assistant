@@ -12,7 +12,7 @@ modbus:
     sensors:
       - name: Sungrow device type code
         unique_id: sg_dev_code
-        slave: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_slave
         address: 4999 # reg 5000
         input_type: input
         data_type: uint16
@@ -41,7 +41,7 @@ modbus:
         unit_of_measurement: kWh
         precision: 1
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -54,6 +54,7 @@ modbus:
         precision: 1
         unit_of_measurement: °C
         device_class: Temperature
+        state_class: measurement
         scale: 0.1
         scan_interval: 10
 
@@ -66,6 +67,7 @@ modbus:
         precision: 1
         unit_of_measurement: V
         device_class: Voltage
+        state_class: measurement
         scale: 0.1
         scan_interval: 10
 
@@ -78,6 +80,7 @@ modbus:
         precision: 2
         unit_of_measurement: A
         device_class: Current
+        state_class: measurement
         scale: 0.1
         scan_interval: 10
 
@@ -90,6 +93,7 @@ modbus:
         precision: 1
         unit_of_measurement: V
         device_class: Voltage
+        state_class: measurement
         scale: 0.1
         scan_interval: 10
 
@@ -102,6 +106,7 @@ modbus:
         precision: 2
         unit_of_measurement: A
         device_class: Current
+        state_class: measurement
         scale: 0.1
         scan_interval: 10
 
@@ -280,6 +285,7 @@ modbus:
         precision: 0
         unit_of_measurement: A
         device_class: Current
+        state_class: measurement
         scale: 1
         scan_interval: 60
 
@@ -292,6 +298,7 @@ modbus:
         precision: 0
         unit_of_measurement: A
         device_class: Current
+        state_class: measurement
         scale: 1
         scan_interval: 60
 
@@ -834,7 +841,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -848,7 +855,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -862,7 +869,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -876,7 +883,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -890,7 +897,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -904,7 +911,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -918,7 +925,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -932,7 +939,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -946,7 +953,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -960,7 +967,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
       # End yearly export energy from PV
@@ -973,6 +980,7 @@ modbus:
         data_type: uint16
         precision: 0
         scale: 1
+        state_class: measurement
         scan_interval: 10
 
       # register running state is not available for certain SH*RS inverters
@@ -984,6 +992,7 @@ modbus:
         input_type: input
         data_type: uint16
         precision: 0
+        state_class: measurement
         scale: 1
         scan_interval: 10
 
@@ -1093,7 +1102,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -1120,7 +1129,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -1133,6 +1142,7 @@ modbus:
         precision: 0
         unit_of_measurement: V
         device_class: Voltage
+        state_class: measurement
         scale: 0.1
         scan_interval: 10
 
@@ -1144,6 +1154,7 @@ modbus:
         data_type: uint16
         precision: 1
         unit_of_measurement: A
+        state_class: measurement
         device_class: Current
         scale: 0.1
         scan_interval: 10
@@ -1197,6 +1208,7 @@ modbus:
         precision: 1
         unit_of_measurement: °C
         device_class: Temperature
+        state_class: measurement
         scale: 0.1
         scan_interval: 60
 
@@ -1223,7 +1235,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -1303,7 +1315,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -1330,7 +1342,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -1357,7 +1369,7 @@ modbus:
         precision: 1
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        state_class: total
         scale: 0.1
         scan_interval: 600
 
@@ -1371,6 +1383,7 @@ modbus:
         input_type: holding
         data_type: uint16
         precision: 0
+        state_class: measurement
         scan_interval: 10
 
       - name: EMS mode selection raw
@@ -1379,6 +1392,7 @@ modbus:
         address: 13049 # reg 13050
         input_type: holding
         data_type: uint16
+        state_class: measurement
         scan_interval: 10
 
       - name: Battery forced charge discharge cmd raw
@@ -1388,6 +1402,7 @@ modbus:
         input_type: holding
         data_type: uint16
         precision: 0
+        state_class: measurement
         scan_interval: 10
 
       - name: Battery forced charge discharge power
@@ -1452,6 +1467,7 @@ modbus:
         input_type: holding
         data_type: uint16
         precision: 0
+        state_class: measurement
         scan_interval: 10
 
       - name: Reserved SoC for backup
@@ -1536,11 +1552,10 @@ template:
       - name: PV generating
         unique_id: sg_pv_generating
         availability: >-
-          {{states('sensor.running_state')|is_number or 
-            states('sensor.total_dc_power')|is_number
+          {{ 
+          not is_state('sensor.running_state', 'unavailable') 
+          and not is_state('sensor.total_dc_power', 'unavailable') 
           }}
-        delay_on:
-          seconds: 60
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
@@ -1554,18 +1569,26 @@ template:
             {% endif %}
           {% endif %}
 
+      - name: PV generating (delay)
+        unique_id: sg_pv_generating_delay
+        availability: "{{ not is_state('binary_sensor.pv_generating', 'unavailable') }}"
+        delay_on:
+          seconds: 60
+        state: "{{ states('binary_sensor.pv_generating') }}"
+
       - name: Battery charging
         unique_id: sg_battery_charging
         availability: >-
-          {{states('sensor.running_state')|is_number or 
-            (states('sensor.ems_mode_selection_raw')|is_number and 
-            states('sensor.battery_forced_charge_discharge_cmd_raw')|is_number and
-            states('sensor.battery_power_raw')|is_number and 
-            states('sensor.total_dc_power')|is_number and 
-            states('sensor.load_power')|is_number ) 
+          {{ 
+          not is_state('sensor.running_state', 'unavailable')
+          or
+            (   not is_state('sensor.ems_mode_selection_raw', 'unavailable')
+            and not is_state('sensor.battery_forced_charge_discharge_cmd_raw', 'unavailable') 
+            and not is_state('sensor.battery_power_raw', 'unavailable') 
+            and not is_state('sensor.total_dc_power', 'unavailable')
+            and not is_state('sensor.load_power', 'unavailable') 
+            )
           }}
-        delay_on:
-          seconds: 60
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
@@ -1602,18 +1625,27 @@ template:
             {% endif %}
           {% endif %}
 
+      - name: Battery charging (delay)
+        unique_id: sg_battery_charging_delay
+        availability: "{{ not is_state('binary_sensor.battery_charging', 'unavailable') }}"
+        delay_on:
+          seconds: 60
+        state: "{{ states('binary_sensor.battery_charging') }}"
+
       - name: Battery discharging
         unique_id: sg_battery_discharging
         availability: >-
-          {{states('sensor.running_state')|is_number or 
-            (states('sensor.ems_mode_selection_raw')|is_number and 
-            states('sensor.battery_forced_charge_discharge_cmd_raw')|is_number and
-            states('sensor.battery_power_raw')|is_number and 
-            states('sensor.total_dc_power')|is_number and 
-            states('sensor.load_power')|is_number ) 
+          {{ 
+          not is_state('sensor.running_state', 'unavailable')
+          or
+            (   not is_state('sensor.ems_mode_selection_raw', 'unavailable')
+            and not is_state('sensor.battery_forced_charge_discharge_cmd_raw', 'unavailable')
+            and not is_state('sensor.battery_power_raw', 'unavailable')
+            and not is_state('sensor.total_dc_power', 'unavailable') 
+            and not is_state('sensor.load_power', 'unavailable') 
+            )
           }}
-        delay_on:
-          seconds: 60
+
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
@@ -1642,7 +1674,7 @@ template:
             {% else %} 
               {# not in EMS forced mode, assuming self consumption mode #}
               {% if ( ( states('sensor.total_dc_power')|int < states('sensor.load_power')|int ) ) and states('sensor.battery_power_raw')|int > 0 %}
-                {# more power consumed than generated and some battery power -->  assuming battery discharging #}
+                {# more power consumed than generated and some battery power --> assuming battery discharging #}
                 on
               {% else %} 
                 off
@@ -1650,11 +1682,20 @@ template:
             {% endif %}
           {% endif %}
 
-      - name: Exporting power
-        unique_id: sg_exporting_power
-        availability: "{{states('sensor.running_state')|is_number or states('sensor.export_power_raw')|is_number }}"
+      - name: Battery discharging (delay)
+        unique_id: sg_battery_discharging_delay
+        availability: "{{ not is_state('binary_sensor.battery_discharging', 'unavailable') }}"
         delay_on:
           seconds: 60
+        state: "{{ states('binary_sensor.battery_discharging') }}"
+
+      - name: Exporting power
+        unique_id: sg_exporting_power
+        availability: >-
+          {{ 
+          not is_state('sensor.running_state', 'unavailable') 
+          and not is_state('sensor.export_power_raw', 'unavailable') 
+          }}
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
@@ -1662,17 +1703,26 @@ template:
           {% else %} 
             {# workaround for SH*RS inverters without working running_state #}
             {% if states('sensor.export_power_raw')|int > 0 %}
-                1
+              1
             {% else %} 
-                0 
+              0 
             {% endif %}
           {% endif %}
 
-      - name: Importing power
-        unique_id: sg_importing_power
-        availability: "{{states('sensor.running_state')|is_number or states('sensor.export_power_raw')|is_number }}"
+      - name: Exporting power (delay)
+        unique_id: sg_exporting_power_delay
+        availability: "{{ not is_state('binary_sensor.exporting_power', 'unavailable') }}"
         delay_on:
           seconds: 60
+        state: "{{ states('binary_sensor.exporting_power') }}"
+
+      - name: Importing power
+        unique_id: sg_importing_power
+        availability: >-
+          {{ 
+          not is_state('sensor.running_state', 'unavailable') 
+          and not is_state('sensor.running_state', 'unavailable')
+          }}
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
@@ -1682,53 +1732,83 @@ template:
             {% if states('sensor.export_power_raw')|int < 0 %}
               1
             {% else %}
-              0 
+              0
             {% endif %}
           {% endif %}
+
+      - name: Importing power (delay)
+        unique_id: sg_importing_power_delay
+        availability: "{{ not is_state('binary_sensor.importing_power', 'unavailable') }}"
+        delay_on:
+          seconds: 60
+        state: "{{ states('binary_sensor.importing_power') }}"
 
   - sensor:
       - name: MPPT1 power
         unique_id: sg_mppt1_power
         unit_of_measurement: W
+        availability: >-
+          {{ 
+          not is_state('sensor.mppt1_voltage', 'unavailable') 
+          and not is_state('sensor.mppt1_current', 'unavailable') 
+          }}
         device_class: power
-        availability: "{{states('sensor.mppt1_voltage')|is_number and states('sensor.mppt1_current')|is_number }}"
         state: "{{ (states('sensor.mppt1_voltage') | float * states('sensor.mppt1_current') | float) |int }}"
 
       - name: MPPT2 power
         unique_id: sg_mppt2_power
         unit_of_measurement: W
         device_class: power
-        availability: "{{states('sensor.mppt2_voltage')|is_number and states('sensor.mppt2_current')|is_number }}"
+        availability: >-
+          {{ 
+          not is_state('sensor.mppt2_voltage', 'unavailable') 
+          and not is_state('sensor.mppt2_current', 'unavailable' ) 
+          }}
         state: "{{ (states('sensor.mppt2_voltage') | float * states('sensor.mppt2_current') | float) |int }}"
 
       - name: Phase A power
         unique_id: sg_phase_a_power
         unit_of_measurement: W
+        availability: >-
+          {{ 
+          not is_state('sensor.phase_a_voltage', 'unavailable')
+          and not is_state('sensor.phase_a_current', 'unavailable')
+          }}
         device_class: power
-        availability: "{{states('sensor.phase_a_voltage')|is_number and states('sensor.phase_a_current')|is_number }}"
         state: "{{ (states('sensor.phase_a_voltage') | float * states('sensor.phase_a_current') | float) |int }}"
 
       - name: Phase B power
         unique_id: sg_phase_b_power
         unit_of_measurement: W
+        availability: >-
+          {{ 
+          not is_state('sensor.phase_b_voltage', 'unavailable') 
+          and not is_state('sensor.phase_b_current', 'unavailable') 
+          }}
         device_class: power
-        availability: "{{states('sensor.phase_b_voltage')|is_number and states('sensor.phase_b_current')|is_number }}"
         state: "{{ (states('sensor.phase_b_voltage') | float * states('sensor.phase_b_current') | float) |int }}"
 
       - name: Phase C power
         unique_id: sg_phase_c_power
         unit_of_measurement: W
+        availability: >-
+          {{ 
+          not is_state('sensor.phase_c_voltage', 'unavailable')
+          and not is_state('sensor.phase_c_current', 'unavailable')
+          }}
         device_class: power
-        availability: "{{states('sensor.phase_c_voltage')|is_number and states('sensor.phase_c_current')|is_number }}"
         state: "{{ (states('sensor.phase_c_voltage') | float * states('sensor.phase_c_current') | float) |int }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
       - name: Meter active power
         unique_id: sg_meter_active_power
         unit_of_measurement: W
+        availability: >-
+          {{ 
+          not is_state('sensor.meter_active_power_raw', 'unavailable')
+          and states('sensor.meter_active_power_raw')|int != 0x7FFFFFFF
+          }}
         device_class: power
-        state_class: measurement
-        availability: "{{ states('sensor.meter_active_power_raw')|is_number and states('sensor.meter_active_power_raw')|int != 0x7FFFFFFF}}"
         state: "{{ states('sensor.meter_active_power_raw') }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
@@ -1736,8 +1816,11 @@ template:
         unique_id: sg_meter_phase_a_active_power
         unit_of_measurement: W
         device_class: power
-        state_class: measurement
-        availability: "{{ states('sensor.meter_phase_a_active_power_raw')|is_number and states('sensor.meter_phase_a_active_power_raw')|int != 0x7FFFFFFF}}"
+        availability: >-
+          {{ 
+          not is_state('sensor.meter_phase_a_active_power_raw', 'unavailable')
+          and states('sensor.meter_phase_a_active_power_raw')|int != 0x7FFFFFFF
+          }}
         state: "{{ states('sensor.meter_phase_a_active_power_raw') }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
@@ -1745,8 +1828,11 @@ template:
         unique_id: sg_meter_phase_b_active_power
         unit_of_measurement: W
         device_class: power
-        state_class: measurement
-        availability: "{{ states('sensor.meter_phase_b_active_power_raw')|is_number and states('sensor.meter_phase_b_active_power_raw')|int != 0x7FFFFFFF}}"
+        availability: >-
+          {{ 
+          not is_state('sensor.meter_phase_b_active_power_raw', 'unavailable') 
+          and states('sensor.meter_phase_b_active_power_raw')|int != 0x7FFFFFFF 
+          }}
         state: "{{ states('sensor.meter_phase_b_active_power_raw') }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
@@ -1754,12 +1840,16 @@ template:
         unique_id: sg_meter_phase_c_active_power
         unit_of_measurement: W
         device_class: power
-        state_class: measurement
-        availability: "{{ states('sensor.meter_phase_c_active_power_raw')|is_number and states('sensor.meter_phase_c_active_power_raw')|int != 0x7FFFFFFF}}"
+        availability: >-
+          {{ 
+          not is_state('sensor.meter_phase_c_active_power_raw', 'unavailable')
+          and states('sensor.meter_phase_c_active_power_raw')|int != 0x7FFFFFFF
+          }}
         state: "{{ states('sensor.meter_phase_c_active_power_raw') }}"
 
       - name: Sungrow inverter state
         unique_id: sg_inverter_state
+        availability: "{{ not is_state('sensor.system_state', 'unavailable') }}"
         state: >-
           {% if ((states('sensor.system_state') | int(default=0)) == 0x0002) %}
             Stop
@@ -1789,6 +1879,7 @@ template:
 
       - name: Sungrow device type
         unique_id: sg_device_type
+        availability: "{{ not is_state('sungrow_device_type_code.sungrow_device_type_code', 'unavailable') }}"
         state: >-
           {% if ((states('sensor.sungrow_device_type_code') | int(default=0))  == 0x0D06) %}
             SH3K6
@@ -1859,6 +1950,7 @@ template:
       # 0xCC Stop (default)
       - name: Battery forced charge discharge cmd
         unique_id: sg_battery_forced_charge_discharge_cmd
+        availability: "{{ not is_state('sensor.battery_forced_charge_discharge_cmd_raw', 'unavailable') }}"
         state: >-
           {% if ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0)) == 0x00AA) %}
             Forced charge
@@ -1872,6 +1964,7 @@ template:
 
       - name: Export power limit mode
         unique_id: export_power_limit_mode
+        availability: "{{ not is_state('sensor.export_power_limit_mode_raw', 'unavailable') }}"
         state: >-
           {% if ((states('sensor.export_power_limit_mode_raw') | int(default=0)) == 0x00AA) %}
             Enabled
@@ -1884,6 +1977,7 @@ template:
       # make the sensor ems_selection_raw more human readable
       - name: EMS mode selection
         unique_id: sg_ems_mode_selection
+        availability: "{{ not is_state('ems_mode_selection_raw.ems_mode_selection_raw', 'unavailable') }}"
         state: >-
           {% if ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 0) %}
             Self-consumption mode (default)
@@ -1903,11 +1997,12 @@ template:
         unique_id: sg_signed_battery_power
         unit_of_measurement: W
         device_class: power
-        state_class: measurement
         availability: >-
-          {{ states('binary_sensor.battery_charging') and 
-          states('binary_sensor.battery_discharging') and 
-          states('sensor.battery_power_raw')|is_number }}
+          {{ 
+          not is_state('binary_sensor.battery_charging', 'unavailable') 
+          and not is_state('binary_sensor.battery_discharging', 'unavailable')
+          and not is_state('sensor.battery_power_raw', 'unavailable')
+          }}
         state: >-
           {% if is_state('binary_sensor.battery_charging', 'on') %}
             {{ (states('sensor.battery_power_raw') | float)}} 
@@ -1921,10 +2016,11 @@ template:
         unique_id: sg_battery_charging_power
         unit_of_measurement: W
         device_class: power
-        state_class: measurement
         availability: >-
-          {{ states('binary_sensor.battery_charging') and 
-          states('sensor.battery_power_raw')|is_number }}
+          {{ 
+          not is_state('binary_sensor.battery_charging', 'unavailable') 
+          and not is_state('sensor.battery_power_raw', 'unavailable')
+          }}
         state: >-
           {% if is_state('binary_sensor.battery_charging', 'on') %}
             {{ states('sensor.battery_power_raw') }}
@@ -1936,10 +2032,11 @@ template:
         unique_id: sg_battery_discharging_power
         unit_of_measurement: W
         device_class: power
-        state_class: measurement
         availability: >-
-          {{ states('binary_sensor.battery_charging') and 
-          states('sensor.battery_power_raw')|is_number }}
+          {{ 
+          not is_state('binary_sensor.battery_discharging', 'unavailable') 
+          and not is_state('sensor.battery_power_raw', 'unavailable') 
+          }}
         state: >-
           {% if is_state('binary_sensor.battery_discharging', 'on') %}
             {{ states('sensor.battery_power_raw') }}
@@ -1951,8 +2048,7 @@ template:
         unique_id: sg_import_power
         unit_of_measurement: W
         device_class: power
-        state_class: measurement
-        availability: "{{states('sensor.export_power_raw')|is_number }}"
+        availability: "{{ not is_state('sensor.export_power_raw', 'unavailable') }}"
         state: >-
           {% if states('sensor.export_power_raw')|int < 0 %}
             {{ states('sensor.export_power_raw')|int *-1 }}
@@ -1964,7 +2060,6 @@ template:
         unique_id: sg_export_power
         unit_of_measurement: W
         device_class: power
-        state_class: measurement
         availability: "{{states('sensor.export_power_raw')|is_number }}"
         state: >-
           {% if states('sensor.export_power_raw')|int > 0 %}
@@ -1977,60 +2072,55 @@ template:
         unique_id: sg_monthly_pv_generation_current
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
-        state: >
-          {% set currMonth = 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
-          {{ states('sensor.' ~ currMonth) }}
         availability: >-
           {% set currMonth = 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
           {{ states('sensor.' ~ currMonth)|is_number }}
+        state: >
+          {% set currMonth = 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
+          {{ states('sensor.' ~ currMonth) }}
 
       - name: "Yearly PV generation (current)"
         unique_id: sg_yearly_pv_generation_current
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
-        state: >
-          {% set currYear = 'yearly_pv_generation_' ~ now().year %}
-          {{ states('sensor.' ~ currYear) }}
         availability: >-
           {% set currYear = 'yearly_pv_generation_' ~ now().year %}
           {{ states('sensor.' ~ currYear)|is_number }}
+        state: >
+          {% set currYear = 'yearly_pv_generation_' ~ now().year %}
+          {{ states('sensor.' ~ currYear) }}
 
       - name: "Monthly export (current)"
         unique_id: sg_monthly_export_current
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
-        state: >
-          {% set currMonth = 'monthly_export_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
-          {{ states('sensor.' ~ currMonth) }}
         availability: >-
           {% set currMonth = 'monthly_export_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
           {{ states('sensor.' ~ currMonth)|is_number }}
+        state: >
+          {% set currMonth = 'monthly_export_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
+          {{ states('sensor.' ~ currMonth) }}
 
       - name: "Yearly export (current)"
         unique_id: sg_yearly_export_current
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
-        state: >
-          {% set currYear = 'yearly_export_' ~ now().year %}
-          {{ states('sensor.' ~ currYear) }}
         availability: >-
           {% set currYear = 'yearly_export_' ~ now().year %}
           {{ states('sensor.' ~ currYear)|is_number }}
+        state: >
+          {% set currYear = 'yearly_export_' ~ now().year %}
+          {{ states('sensor.' ~ currYear) }}
 
       - name: "Battery level (nominal)"
         unique_id: sg_battery_level_nom
         unit_of_measurement: "%"
         device_class: battery
-        state_class: measurement
         availability: >-
-          {{
-              states('sensor.battery_level') | is_number and
-              states('sensor.min_soc') | is_number and
-              states('sensor.max_soc') | is_number
+          {{ 
+          not is_state('sensor.battery_level', 'unavailable') 
+          and not is_state('sensor.min_soc', 'unavailable') 
+          and not is_state('sensor.max_soc', 'unavailable') 
           }}
         state: >-
           {% set soc_min = states('sensor.min_soc') | float %}
@@ -2045,9 +2135,9 @@ template:
         unit_of_measurement: kWh
         device_class: energy
         availability: >-
-          {{
-              states('sensor.battery_capacity') | is_number and
-              states('sensor.battery_level_nominal') | is_number
+          {{ 
+          not is_state('sensor.battery_capacity', 'unavailable')
+          and not is_state('sensor.battery_level_nominal', 'unavailable')
           }}
         state: >-
           {{
@@ -2060,17 +2150,41 @@ template:
         unit_of_measurement: kWh
         device_class: energy
         availability: >-
-          {{
-              states('sensor.battery_capacity') | is_number and
-              states('sensor.battery_level') | is_number and
-              states('sensor.min_soc') | is_number and
-              states('sensor.max_soc') | is_number
+          {{ 
+          not is_state('sensor.battery_capacity', 'unavailable') 
+          and not is_state('sensor.battery_level', 'unavailable') 
+          and not is_state('sensor.min_soc', 'unavailable') 
+          and not is_state('sensor.max_soc', 'unavailable') 
           }}
         state: >-
-          {{  
-              states('sensor.battery_capacity') | float *
-                ((states('sensor.max_soc') | float - states('sensor.min_soc') | float) * 
-                states('sensor.battery_level') | float / 10000) | round(1)
+          {{ 
+            ( states('sensor.battery_capacity')|float 
+            * ( states('sensor.max_soc')|float - states('sensor.min_soc')|float ) /100 
+            * states('sensor.battery_level')|float /100 
+            ) |round(2)
+          }}
+
+      - name: Total Load Energy
+        unique_id: uid_total_load_energy
+        unit_of_measurement: kWh
+        device_class: energy
+        availability: >-
+          {{ 
+          not is_state('sensor.total_pv_generation', 'unavailable') 
+          and not is_state('sensor.total_exported_energy', 'unavailable') 
+          and not is_state('sensor.total_imported_energy', 'unavailable') 
+          and not is_state('sensor.total_battery_charge', 'unavailable') 
+          and not is_state('sensor.total_battery_discharge', 'unavailable') 
+          }}
+        state: >-
+          {{ 
+            (
+              states('sensor.total_pv_generation')|float 
+              - states('sensor.total_exported_energy')|float 
+              + states('sensor.total_imported_energy')|float 
+              - states('sensor.total_battery_charge')|float 
+              + states('sensor.total_battery_discharge')|float
+            )|int 
           }}
 
 # getting input for Min and Max SoC
