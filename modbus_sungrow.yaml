@@ -4,8 +4,6 @@
 # last update: 2023-10-24 (2)
 #
 # Note: This YAML file will only work with Home Assistant >= 2023.10
-# ( modbus integration now considers "slave:" as deprecated.
-#   "slave:" is replaced by "device_address" )
 
 modbus:
   - name: SungrowSHx
@@ -2300,7 +2298,7 @@ automation:
       - service: modbus.write_register
         data_template:
           hub: SungrowSHx
-          device_address: !secret sungrow_modbus_slave
+          slave: !secret sungrow_modbus_slave
           address: 12999 # reg 13000
           value: >
             {% if is_state('input_select.set_sg_inverter_run_mode', "Enabled") %}
@@ -2345,7 +2343,7 @@ automation:
       - service: modbus.write_register
         data_template:
           hub: SungrowSHx
-          device_address: !secret sungrow_modbus_slave
+          slave: !secret sungrow_modbus_slave
           address: 13057 # reg 13058
           value: "{{ states('input_number.set_sg_max_soc') | int *10}}"
     mode: single
@@ -2378,7 +2376,7 @@ automation:
       - service: modbus.write_register
         data_template:
           hub: SungrowSHx
-          device_address: !secret sungrow_modbus_slave
+          slave: !secret sungrow_modbus_slave
           address: 13058 # reg 13059
           value: "{{ states('input_number.set_sg_min_soc') | int *10}}"
     mode: single
@@ -2411,7 +2409,7 @@ automation:
       - service: modbus.write_register
         data_template:
           hub: SungrowSHx
-          device_address: !secret sungrow_modbus_slave
+          slave: !secret sungrow_modbus_slave
           address: 13099 # reg 13100
           value: "{{ states('input_number.set_sg_reserved_soc_for_backup') | int}}"
     mode: single
@@ -2448,7 +2446,7 @@ automation:
       - service: modbus.write_register
         data_template:
           hub: SungrowSHx
-          device_address: !secret sungrow_modbus_slave
+          slave: !secret sungrow_modbus_slave
           address: 13050 # reg 13051
           value: >
             {% if is_state('input_select.set_sg_battery_forced_charge_discharge_cmd', "Stop (default)") %} 
@@ -2498,7 +2496,7 @@ automation:
       - service: modbus.write_register
         data_template:
           hub: SungrowSHx
-          device_address: !secret sungrow_modbus_slave
+          slave: !secret sungrow_modbus_slave
           address: 13049 # reg 13050
           value: >
             {% if is_state('input_select.set_sg_ems_mode', "Self-consumption mode (default)") %} 
@@ -2554,7 +2552,7 @@ automation:
       - service: modbus.write_register
         data_template:
           hub: SungrowSHx
-          device_address: !secret sungrow_modbus_slave
+          slave: !secret sungrow_modbus_slave
           address: 13086 # reg 13087
           value: >
             {% if is_state('input_select.set_sg_export_power_limit_mode', "Enabled") %} 
@@ -2594,7 +2592,7 @@ automation:
       - service: modbus.write_register
         data_template:
           hub: SungrowSHx
-          device_address: !secret sungrow_modbus_slave
+          slave: !secret sungrow_modbus_slave
           address: 13073 # reg 13074
           value: "{{ states('input_number.set_sg_export_power_limit') }}"
     mode: single
@@ -2629,7 +2627,7 @@ automation:
       - service: modbus.write_register
         data_template:
           hub: SungrowSHx
-          device_address: !secret sungrow_modbus_slave
+          slave: !secret sungrow_modbus_slave
           address: 13051 # reg 13052
           value: "{{ states('input_number.set_sg_forced_charge_discharge_power') | int}}"
     mode: single
@@ -2662,7 +2660,7 @@ automation:
       - service: modbus.write_register
         data_template:
           hub: SungrowSHx
-          device_address: !secret sungrow_modbus_slave
+          slave: !secret sungrow_modbus_slave
           address: 33046 # reg 33047
           value: "{{ states('input_number.set_sg_battery_max_charge_power') |float /10 |int}}"
     mode: single
@@ -2695,7 +2693,7 @@ automation:
       - service: modbus.write_register
         data_template:
           hub: SungrowSHx
-          device_address: !secret sungrow_modbus_slave
+          slave: !secret sungrow_modbus_slave
           address: 33047 # reg 33048
           value: "{{ states('input_number.set_sg_battery_max_discharge_power')  |float /10 |int}}"
     mode: single
@@ -2728,7 +2726,7 @@ automation:
       - service: modbus.write_register
         data_template:
           hub: SungrowSHx
-          device_address: !secret sungrow_modbus_slave
+          slave: !secret sungrow_modbus_slave
           address: 33148 # reg 33149
           value: "{{ states('input_number.set_sg_battery_charging_start_power') |float /10 |int}}"
     mode: single
@@ -2761,7 +2759,7 @@ automation:
       - service: modbus.write_register
         data_template:
           hub: SungrowSHx
-          device_address: !secret sungrow_modbus_slave
+          slave: !secret sungrow_modbus_slave
           address: 33149 # reg 33150
           value: "{{ states('input_number.set_sg_battery_discharging_start_power') |float /10 | int}}"
     mode: single
