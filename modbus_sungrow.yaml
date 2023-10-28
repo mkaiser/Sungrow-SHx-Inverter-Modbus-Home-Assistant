@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-10-24 (3)
+# last update: 2023-10-28
 #
 # Note: This YAML file will only work with Home Assistant >= 2023.10
 
@@ -1553,6 +1553,9 @@ template:
   - binary_sensor:
       - name: PV generating
         unique_id: sg_pv_generating
+        # TODO: test more with these parameters for template binary sensors
+        # device_class: none / power
+        # state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.running_state', 'unavailable') 
@@ -1561,7 +1564,7 @@ template:
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
-            {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x1) > 0 }}
+            {{ states('sensor.running_state')|int |bitwise_and(0x1) }}
           {% else %} 
             {# workaround for SH*RS inverters without working running_state #}
             {% if states('sensor.total_dc_power')|int > 0 %}
@@ -1573,6 +1576,9 @@ template:
 
       - name: PV generating (delay)
         unique_id: sg_pv_generating_delay
+        # TODO: test more with these parameters for template binary sensors
+        # device_class: none / power
+        # state_class: measurement
         availability: "{{ not is_state('binary_sensor.pv_generating', 'unavailable') }}"
         delay_on:
           seconds: 60
@@ -1580,6 +1586,9 @@ template:
 
       - name: Battery charging
         unique_id: sg_battery_charging
+        # TODO: test more with these parameters for template binary sensors
+        # device_class: none / power
+        # state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.running_state', 'unavailable')
@@ -1629,6 +1638,9 @@ template:
 
       - name: Battery charging (delay)
         unique_id: sg_battery_charging_delay
+        # TODO: test more with these parameters for template binary sensors
+        # device_class: none / power
+        # state_class: measurement
         availability: "{{ not is_state('binary_sensor.battery_charging', 'unavailable') }}"
         delay_on:
           seconds: 60
@@ -1636,6 +1648,9 @@ template:
 
       - name: Battery discharging
         unique_id: sg_battery_discharging
+        # TODO: test more with these parameters for template binary sensors
+        # device_class: none / power
+        # state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.running_state', 'unavailable')
@@ -1647,7 +1662,6 @@ template:
             and not is_state('sensor.load_power', 'unavailable') 
             )
           }}
-
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
@@ -1686,6 +1700,9 @@ template:
 
       - name: Battery discharging (delay)
         unique_id: sg_battery_discharging_delay
+        # TODO: test more with these parameters for template binary sensors
+        # device_class: none / power
+        # state_class: measurement
         availability: "{{ not is_state('binary_sensor.battery_discharging', 'unavailable') }}"
         delay_on:
           seconds: 60
@@ -1693,6 +1710,9 @@ template:
 
       - name: Exporting power
         unique_id: sg_exporting_power
+        # TODO: test more with these parameters for template binary sensors
+        # device_class: none / power
+        # state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.running_state', 'unavailable') 
@@ -1713,6 +1733,9 @@ template:
 
       - name: Exporting power (delay)
         unique_id: sg_exporting_power_delay
+        # TODO: test more with these parameters for template binary sensors
+        # device_class: none / power
+        # state_class: measurement
         availability: "{{ not is_state('binary_sensor.exporting_power', 'unavailable') }}"
         delay_on:
           seconds: 60
@@ -1720,6 +1743,9 @@ template:
 
       - name: Importing power
         unique_id: sg_importing_power
+        # TODO: test more with these parameters for template binary sensors
+        # device_class: none / power
+        # state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.running_state', 'unavailable') 
@@ -1740,6 +1766,9 @@ template:
 
       - name: Importing power (delay)
         unique_id: sg_importing_power_delay
+        # TODO: test more with these parameters for template binary sensors
+        # device_class: none / power
+        # state_class: measurement
         availability: "{{ not is_state('binary_sensor.importing_power', 'unavailable') }}"
         delay_on:
           seconds: 60
@@ -1749,18 +1778,20 @@ template:
       - name: MPPT1 power
         unique_id: sg_mppt1_power
         unit_of_measurement: W
+        device_class: power
+        state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.mppt1_voltage', 'unavailable') 
           and not is_state('sensor.mppt1_current', 'unavailable') 
           }}
-        device_class: power
         state: "{{ (states('sensor.mppt1_voltage') | float * states('sensor.mppt1_current') | float) |int }}"
 
       - name: MPPT2 power
         unique_id: sg_mppt2_power
         unit_of_measurement: W
         device_class: power
+        state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.mppt2_voltage', 'unavailable') 
@@ -1771,46 +1802,50 @@ template:
       - name: Phase A power
         unique_id: sg_phase_a_power
         unit_of_measurement: W
+        device_class: power
+        state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.phase_a_voltage', 'unavailable')
           and not is_state('sensor.phase_a_current', 'unavailable')
           }}
-        device_class: power
         state: "{{ (states('sensor.phase_a_voltage') | float * states('sensor.phase_a_current') | float) |int }}"
 
       - name: Phase B power
         unique_id: sg_phase_b_power
         unit_of_measurement: W
+        device_class: power
+        state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.phase_b_voltage', 'unavailable') 
           and not is_state('sensor.phase_b_current', 'unavailable') 
           }}
-        device_class: power
         state: "{{ (states('sensor.phase_b_voltage') | float * states('sensor.phase_b_current') | float) |int }}"
 
       - name: Phase C power
         unique_id: sg_phase_c_power
         unit_of_measurement: W
+        device_class: power
+        state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.phase_c_voltage', 'unavailable')
           and not is_state('sensor.phase_c_current', 'unavailable')
           }}
-        device_class: power
         state: "{{ (states('sensor.phase_c_voltage') | float * states('sensor.phase_c_current') | float) |int }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
       - name: Meter active power
         unique_id: sg_meter_active_power
         unit_of_measurement: W
+        device_class: power
+        state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.meter_active_power_raw', 'unavailable')
           and states('sensor.meter_active_power_raw')|int != 0x7FFFFFFF
           }}
-        device_class: power
         state: "{{ states('sensor.meter_active_power_raw') }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
@@ -1818,6 +1853,7 @@ template:
         unique_id: sg_meter_phase_a_active_power
         unit_of_measurement: W
         device_class: power
+        state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.meter_phase_a_active_power_raw', 'unavailable')
@@ -1830,6 +1866,7 @@ template:
         unique_id: sg_meter_phase_b_active_power
         unit_of_measurement: W
         device_class: power
+        state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.meter_phase_b_active_power_raw', 'unavailable') 
@@ -1842,6 +1879,7 @@ template:
         unique_id: sg_meter_phase_c_active_power
         unit_of_measurement: W
         device_class: power
+        state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.meter_phase_c_active_power_raw', 'unavailable')
@@ -1851,6 +1889,9 @@ template:
 
       - name: Sungrow inverter state
         unique_id: sg_inverter_state
+        # TODO: test state_class with enum
+        # state_class: measurement
+        device_class: enum
         availability: "{{ not is_state('sensor.system_state', 'unavailable') }}"
         state: >-
           {% if ((states('sensor.system_state') | int(default=0)) == 0x0002) %}
@@ -1882,6 +1923,9 @@ template:
       - name: Sungrow device type
         unique_id: sg_device_type
         availability: "{{ not is_state('sungrow_device_type_code.sungrow_device_type_code', 'unavailable') }}"
+        # TODO: test state_class with enum
+        # state_class: measurement
+        device_class: enum
         state: >-
           {% if ((states('sensor.sungrow_device_type_code') | int(default=0))  == 0x0D06) %}
             SH3K6
@@ -1940,7 +1984,7 @@ template:
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0B) %}
             SH10RT-V122
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0E) %}
-            SH4.6RS
+            SH4.6RS 
           {% else %}
             Unknown device code!
           {% endif %}
@@ -1953,6 +1997,9 @@ template:
       - name: Battery forced charge discharge cmd
         unique_id: sg_battery_forced_charge_discharge_cmd
         availability: "{{ not is_state('sensor.battery_forced_charge_discharge_cmd_raw', 'unavailable') }}"
+        # TODO: test state_class with enum
+        # state_class: measurement
+        device_class: enum
         state: >-
           {% if ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0)) == 0x00AA) %}
             Forced charge
@@ -1967,6 +2014,9 @@ template:
       - name: Export power limit mode
         unique_id: export_power_limit_mode
         availability: "{{ not is_state('sensor.export_power_limit_mode_raw', 'unavailable') }}"
+        # TODO: test state_class with enum
+        # state_class: measurement
+        device_class: enum
         state: >-
           {% if ((states('sensor.export_power_limit_mode_raw') | int(default=0)) == 0x00AA) %}
             Enabled
@@ -1980,6 +2030,9 @@ template:
       - name: EMS mode selection
         unique_id: sg_ems_mode_selection
         availability: "{{ not is_state('ems_mode_selection_raw.ems_mode_selection_raw', 'unavailable') }}"
+        # TODO: test state_class with enum with enum
+        # state_class: measurement
+        device_class: enum
         state: >-
           {% if ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 0) %}
             Self-consumption mode (default)
@@ -1999,6 +2052,7 @@ template:
         unique_id: sg_signed_battery_power
         unit_of_measurement: W
         device_class: power
+        state_class: measurement
         availability: >-
           {{ 
           not is_state('binary_sensor.battery_charging', 'unavailable') 
@@ -2018,6 +2072,7 @@ template:
         unique_id: sg_battery_charging_power
         unit_of_measurement: W
         device_class: power
+        state_class: measurement
         availability: >-
           {{ 
           not is_state('binary_sensor.battery_charging', 'unavailable') 
@@ -2034,6 +2089,7 @@ template:
         unique_id: sg_battery_discharging_power
         unit_of_measurement: W
         device_class: power
+        state_class: measurement
         availability: >-
           {{ 
           not is_state('binary_sensor.battery_discharging', 'unavailable') 
@@ -2050,6 +2106,7 @@ template:
         unique_id: sg_import_power
         unit_of_measurement: W
         device_class: power
+        state_class: measurement
         availability: "{{ not is_state('sensor.export_power_raw', 'unavailable') }}"
         state: >-
           {% if states('sensor.export_power_raw')|int < 0 %}
@@ -2062,6 +2119,7 @@ template:
         unique_id: sg_export_power
         unit_of_measurement: W
         device_class: power
+        state_class: measurement
         availability: "{{states('sensor.export_power_raw')|is_number }}"
         state: >-
           {% if states('sensor.export_power_raw')|int > 0 %}
@@ -2074,6 +2132,7 @@ template:
         unique_id: sg_monthly_pv_generation_current
         unit_of_measurement: kWh
         device_class: energy
+        state_class: total_increasing
         availability: >-
           {% set currMonth = 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
           {{ states('sensor.' ~ currMonth)|is_number }}
@@ -2085,6 +2144,7 @@ template:
         unique_id: sg_yearly_pv_generation_current
         unit_of_measurement: kWh
         device_class: energy
+        state_class: total_increasing
         availability: >-
           {% set currYear = 'yearly_pv_generation_' ~ now().year %}
           {{ states('sensor.' ~ currYear)|is_number }}
@@ -2096,6 +2156,7 @@ template:
         unique_id: sg_monthly_export_current
         unit_of_measurement: kWh
         device_class: energy
+        state_class: total_increasing
         availability: >-
           {% set currMonth = 'monthly_export_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
           {{ states('sensor.' ~ currMonth)|is_number }}
@@ -2107,6 +2168,7 @@ template:
         unique_id: sg_yearly_export_current
         unit_of_measurement: kWh
         device_class: energy
+        state_class: total_increasing
         availability: >-
           {% set currYear = 'yearly_export_' ~ now().year %}
           {{ states('sensor.' ~ currYear)|is_number }}
@@ -2118,6 +2180,7 @@ template:
         unique_id: sg_battery_level_nom
         unit_of_measurement: "%"
         device_class: battery
+        state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.battery_level', 'unavailable') 
@@ -2135,7 +2198,8 @@ template:
       - name: "Battery charge (nominal)"
         unique_id: sg_battery_charge_nom
         unit_of_measurement: kWh
-        device_class: energy
+        device_class: battery
+        state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.battery_capacity', 'unavailable')
@@ -2150,7 +2214,8 @@ template:
       - name: "Battery charge"
         unique_id: sg_battery_charge
         unit_of_measurement: kWh
-        device_class: energy
+        device_class: battery
+        state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.battery_capacity', 'unavailable') 
@@ -2170,6 +2235,7 @@ template:
         unique_id: uid_total_load_energy
         unit_of_measurement: kWh
         device_class: energy
+        state_class: total
         availability: >-
           {{ 
           not is_state('sensor.total_pv_generation', 'unavailable') 
