@@ -17,10 +17,10 @@ I made a mistake end of march causing unique_ids of sensors getting mixed up. Th
 # Contents
 - [1. Overview](#1-overview)
 - [2. Documentation](#2-documentation)
-    - [Installation/ Configuration](doc/installation.md)
-    - [Dashboard Setup](doc/dashboard.md)
-    - [Usage Instructions](doc/usage.md)
-    - [FAQ, Troubleshooting, Known Issues](doc/help.md)
+    - [Installation/ Configuration](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/wiki/FAQ:-How-to-install)
+    - [Dashboard Setup](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/wiki/How-to-configure-the-dashboards)
+    - [Usage Instructions](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/wiki/FAQ:-How-to-use)
+    - [FAQ, Troubleshooting, Known Issues](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/wiki/FAQ:-Problems-with-the-connection)
     - [Roadmap](doc/issues_roadmap.md)
 - [3. Support](#3-support)
 - [4. Visual impressions](#4-visual-impressions)
@@ -43,13 +43,13 @@ Ensure, that you connected the inverter to the Home Assistant network using the 
 
 The documentation covers following topics:
 
-[Installation/ Configuration](doc/installation.md)
+[Installation/ Configuration](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/wiki/FAQ:-How-to-install)
 
-[Dashboard Setup](doc/dashboard.md)
+[Dashboard Setup](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/wiki/How-to-configure-the-dashboards)
 
-[Usage Instructions](doc/usage.md)
+[Usage Instructions](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/wiki/FAQ:-How-to-use)
 
-[FAQ, Troubleshooting, Known Issues](doc/help.md)
+[FAQ, Troubleshooting, Known Issues](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/wiki/FAQ:-Problems-with-the-connection)
 
 ## 3. Support
 
