@@ -1518,7 +1518,7 @@ modbus:
         input_type: holding
         data_type: uint16
         unit_of_measurement: kWh
-        device_class: energy
+        device_class: energy_storage
         scale: 0.01
         scan_interval: 600
 
@@ -2198,7 +2198,7 @@ template:
       - name: "Battery charge (nominal)"
         unique_id: sg_battery_charge_nom
         unit_of_measurement: kWh
-        device_class: energy
+        device_class: energy_storage
         state_class: measurement
         availability: >-
           {{ 
@@ -2214,7 +2214,7 @@ template:
       - name: "Battery charge"
         unique_id: sg_battery_charge
         unit_of_measurement: kWh
-        device_class: energy
+        device_class: energy_storage
         state_class: measurement
         availability: >-
           {{ 
