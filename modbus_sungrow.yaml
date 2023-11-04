@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-11-04
+# last update: 2023-11-04 (2)
 #
 # Note: This YAML file will only work with Home Assistant >= 2023.10
 
@@ -2231,8 +2231,32 @@ template:
             ) |round(2)
           }}
 
-      - name: Total Load Energy
-        unique_id: uid_total_load_energy
+      - name: Daily consumed energy
+        unique_id: uid_daily_consumed_energy
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        availability: >-
+          {{ 
+          not is_state('sensor.daily_pv_generation', 'unavailable') 
+          and not is_state('sensor.daily_exported_energy', 'unavailable') 
+          and not is_state('sensor.daily_imported_energy', 'unavailable') 
+          and not is_state('sensor.daily_battery_charge', 'unavailable') 
+          and not is_state('sensor.daily_battery_discharge', 'unavailable') 
+          }}
+        state: >-
+          {{ 
+            (
+              states('sensor.daily_pv_generation')|float 
+              - states('sensor.daily_exported_energy')|float 
+              + states('sensor.daily_imported_energy')|float 
+              - states('sensor.daily_battery_charge')|float 
+              + states('sensor.daily_battery_discharge')|float
+            )|int 
+          }}
+
+      - name: Total consumed energy
+        unique_id: uid_total_consumed_energy
         unit_of_measurement: kWh
         device_class: energy
         state_class: total

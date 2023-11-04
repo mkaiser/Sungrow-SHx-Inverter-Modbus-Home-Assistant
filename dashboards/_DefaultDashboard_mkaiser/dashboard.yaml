@@ -13,17 +13,11 @@ views:
         title: Power
       - type: entities
         entities:
-          - entity: sensor.battery_level
-          - entity: sensor.battery_level_nominal
-          - entity: sensor.battery_charge
-          - entity: sensor.battery_charge_nominal
           - entity: sensor.daily_pv_generation
-          - entity: sensor.daily_exported_energy_from_pv
-          - entity: sensor.daily_pv_generation_battery_discharge
-          - entity: sensor.daily_battery_charge_from_pv
-          - entity: sensor.daily_battery_discharge
-          - entity: sensor.daily_exported_energy
+          - entity: sensor.daily_consumed_energy
           - entity: sensor.daily_imported_energy
+          - entity: sensor.daily_exported_energy
+          - entity: sensor.total_consumed_energy
         title: Energy
       - type: gauge
         entity: sensor.battery_level
@@ -57,7 +51,7 @@ views:
         columns: 3
         state_color: true
       - chart_type: line
-        period: 5minute
+        period: hour
         days_to_show: 1
         type: statistics-graph
         entities:
@@ -69,6 +63,16 @@ views:
         stat_types:
           - mean
         title: Power distribution last 24 hours
+        hide_legend: false
+      - type: entities
+        entities:
+          - entity: sensor.battery_level
+          - entity: sensor.battery_level_nominal
+          - entity: sensor.battery_charge
+          - entity: sensor.battery_charge_nominal
+          - entity: sensor.daily_battery_charge
+          - entity: sensor.daily_battery_discharge
+        title: Battery
   - title: Detailed Info
     icon: mdi:solar-power-variant-outline
     cards:
@@ -170,6 +174,8 @@ views:
           - entity: sensor.battery_forced_charge_discharge_power
           - entity: sensor.battery_charging_start_power
           - entity: sensor.battery_discharging_start_power
+          - entity: sensor.bms_max_charging_current
+          - entity: sensor.bms_max_discharging_current
         title: EMS
       - type: entities
         entities:
@@ -234,6 +240,8 @@ views:
           - entity: sensor.battery_capacity
           - entity: sensor.battery_level
           - entity: sensor.battery_state_of_health
+          - entity: sensor.battery_charging_power
+          - entity: sensor.battery_discharging_power
           - entity: sensor.min_soc
           - entity: sensor.max_soc
           - entity: sensor.reserved_soc_for_backup
@@ -242,6 +250,10 @@ views:
           - entity: sensor.battery_max_discharge_power
           - entity: sensor.battery_charging_start_power
           - entity: sensor.battery_discharging_start_power
+          - entity: sensor.battery_level_nominal
+          - entity: sensor.battery_level
+          - entity: sensor.battery_charge
+          - entity: sensor.battery_charge_nominal
         title: Battery Status
       - type: entities
         entities:
