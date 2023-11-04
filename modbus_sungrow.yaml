@@ -2198,7 +2198,7 @@ template:
       - name: "Battery charge (nominal)"
         unique_id: sg_battery_charge_nom
         unit_of_measurement: kWh
-        device_class: battery
+        device_class: energy
         state_class: measurement
         availability: >-
           {{ 
@@ -2214,7 +2214,7 @@ template:
       - name: "Battery charge"
         unique_id: sg_battery_charge
         unit_of_measurement: kWh
-        device_class: battery
+        device_class: energy
         state_class: measurement
         availability: >-
           {{ 
