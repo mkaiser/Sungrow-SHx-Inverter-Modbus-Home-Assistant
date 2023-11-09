@@ -1951,6 +1951,10 @@ template:
             SH5.0RS
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D10) %}
             SH6.0RS
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D1A) %}
+            SH8.0RS
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D1B) %}
+            SH10RS
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E00) %}
             SH5.0RT
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E01) %}
