@@ -1902,7 +1902,7 @@ template:
             Initial Standby
           {% elif ((states('sensor.system_state') | int(default=0)) == 0x0020) %}
             Startup
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0040) %}
+          {% elif ((states('sensor.system_state') | int(default=0)) in [0x0000,0x0040]) %}
             Running
           {% elif ((states('sensor.system_state') | int(default=0)) == 0x0100) %}
             Fault
