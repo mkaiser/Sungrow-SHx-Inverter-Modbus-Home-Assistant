@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-11-12
+# last update: 2023-11-12 (2)
 #
 # Note: This YAML file will only work with Home Assistant >= 2023.10
 
@@ -1922,7 +1922,7 @@ template:
 
       - name: Sungrow device type
         unique_id: sg_device_type
-        availability: "{{ not is_state('sungrow_device_type_code.sungrow_device_type_code', 'unavailable') }}"
+        availability: "{{ not is_state('sensor.sungrow_device_type_code', 'unavailable') }}"
         # TODO: test state_class with enum
         # state_class: measurement
         device_class: enum
@@ -2033,7 +2033,7 @@ template:
       # make the sensor ems_selection_raw more human readable
       - name: EMS mode selection
         unique_id: sg_ems_mode_selection
-        availability: "{{ not is_state('ems_mode_selection_raw.ems_mode_selection_raw', 'unavailable') }}"
+        availability: "{{ not is_state('sensor.ems_mode_selection_raw', 'unavailable') }}"
         # TODO: test state_class with enum with enum
         # state_class: measurement
         device_class: enum
