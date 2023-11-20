@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-11-12 (2)
+# last update: 2023-11-20
 #
 # Note: This YAML file will only work with Home Assistant >= 2023.10
 
@@ -2300,7 +2300,7 @@ input_number:
   set_sg_reserved_soc_for_backup:
     name: Set reserved SoC for backup
     min: 0
-    max: 75
+    max: 100
     step: 1
 
   set_sg_forced_charge_discharge_power:
