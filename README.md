@@ -2,6 +2,9 @@ An *easy-to-use YAML-based integration* for several Sungrow inverters for Home A
 
 [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2)
 
+# 2023-12-1: Add scripts for switching between inverter modes
+include `script: !include scripts.yaml` in `configuration.yaml`and review the scripts.yaml for an example usage
+
 # 2023-10-23: error: "Invalid config for [modbus]: [device_address]"
 update to HomeAssistant >= 2023.10 and it will work (the modbus integration renamed address descriptor "slave:" to "device:")
 
