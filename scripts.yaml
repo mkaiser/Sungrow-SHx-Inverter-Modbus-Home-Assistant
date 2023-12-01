@@ -5,7 +5,7 @@
 # Example (Adjust to your needs with appropriate trigger): 
 # automation:
 #  - alias: Forced Battery Charging Management
-#    description: "Manages forced battery charging during cheapest hours based on battery level."
+#    description: "Manages forced battery charging during cheapest hours."
 #   trigger:
 #      - platform: state
 #        entity_id: 
