@@ -2900,7 +2900,7 @@ automation:
 #              - service: script.sg_self_consumption_mode
 
 script:
-    sg_forced_discharge_battery_mode:
+    sg_set_forced_discharge_battery_mode:
       sequence:
         - service: input_select.select_option
           data:
@@ -2916,7 +2916,7 @@ script:
         #     title: "Forced Battery Discharge"
         #     message: "Switched to Forced Battery Discharge mode"
           
-    sg_forced_charge_battery_mode:
+    sg_set_forced_charge_battery_mode:
         sequence:
           - service: input_select.select_option
             data:
@@ -2926,12 +2926,8 @@ script:
             data:
               entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
               option: "Forced charge"
-          # - service: notify.notify
-          #   data:
-          #     title: "Forced Battery Charging"
-          #     message: "Switched to Forced Charging mode."
               
-    sg_self_consumption_mode:
+    sg_set_self_consumption_mode:
         sequence:
           - service: input_select.select_option
             data:
@@ -2941,7 +2937,3 @@ script:
             data:
               entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
               option: "Stop (default)"
-          # - service: notify.notify
-          #   data:
-          #     title: "Forced Battery Charging Ended"
-          #     message: "Switched to Self Consumption mode."
