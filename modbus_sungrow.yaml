@@ -2873,3 +2873,74 @@ automation:
         data:
           value: "{{ states('sensor.battery_discharging_start_power') }}"
     mode: single
+
+
+# Usage: Use these scripts to simplify automations
+# Example (Adjust to your needs with appropriate trigger): 
+# automation:
+#  - alias: Forced Battery Charging Management
+#    description: "Manages forced battery charging during cheapest hours."
+#   trigger:
+#      - platform: state
+#        entity_id: 
+#          - binary_sensor.cheapest_hours_for_charging_timer
+#    action:
+#      - choose:
+#          - conditions:
+#              - condition: state
+#                entity_id: binary_sensor.cheapest_hours_for_charging_timer
+#                state: 'on'
+#            sequence:
+#              - service: script.sg_forced_charge_battery_mode
+#          - conditions:
+#              - condition: state
+#                entity_id: binary_sensor.cheapest_hours_for_charging_timer
+#                state: 'off'
+#            sequence:
+#              - service: script.sg_self_consumption_mode
+
+script:
+    sg_forced_discharge_battery_mode:
+      sequence:
+        - service: input_select.select_option
+          data:
+            entity_id: input_select.set_sg_ems_mode
+            option: "Forced mode"
+        - service: input_select.select_option
+          data:
+            entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
+            option: "Forced discharge"
+        # - service: notify.notify
+        #   data:
+        #     title: "Forced Battery Discharge"
+        #     message: "Switched to Forced Battery Discharge mode"
+          
+    sg_forced_charge_battery_mode:
+        sequence:
+          - service: input_select.select_option
+            data:
+              entity_id: input_select.set_sg_ems_mode
+              option: "Forced mode"
+          - service: input_select.select_option
+            data:
+              entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
+              option: "Forced charge"
+          # - service: notify.notify
+          #   data:
+          #     title: "Forced Battery Charging"
+          #     message: "Switched to Forced Charging mode."
+              
+    sg_self_consumption_mode:
+        sequence:
+          - service: input_select.select_option
+            data:
+              entity_id: input_select.set_sg_ems_mode
+              option: "Self-consumption mode (default)"
+          - service: input_select.select_option
+            data:
+              entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
+              option: "Stop (default)"
+          # - service: notify.notify
+          #   data:
+          #     title: "Forced Battery Charging Ended"
+          #     message: "Switched to Self Consumption mode."
