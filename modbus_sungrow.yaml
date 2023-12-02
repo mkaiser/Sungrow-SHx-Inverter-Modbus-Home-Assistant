@@ -2927,6 +2927,17 @@ script:
               entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
               option: "Forced charge"
               
+    sg_set_battery_bypass_mode:
+        sequence:
+          - service: input_select.select_option
+            data:
+              entity_id: input_select.set_sg_ems_mode
+              option: "Forced mode"
+          - service: input_select.select_option
+            data:
+              entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
+              option: "Stop (default)"
+              
     sg_set_self_consumption_mode:
         sequence:
           - service: input_select.select_option
