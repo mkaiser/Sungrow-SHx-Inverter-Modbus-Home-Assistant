@@ -2910,6 +2910,7 @@ script:
           data:
             entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
             option: "Forced discharge"
+        # Uncomment notify service lines below for push notifications to mobile devices
         # - service: notify.notify
         #   data:
         #     title: "Forced Battery Discharge"
