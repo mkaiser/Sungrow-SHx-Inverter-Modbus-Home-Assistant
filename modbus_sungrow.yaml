@@ -1894,28 +1894,54 @@ template:
         device_class: enum
         availability: "{{ not is_state('sensor.system_state', 'unavailable') }}"
         state: >-
-          {% if ((states('sensor.system_state') | int(default=0)) == 0x0002) %}
+          {% if ((states('sensor.system_state') | int(default=0)) in [0x8000, 0x0001]) %}
             Stop
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0008) %}
+          {% elif ((states('sensor.system_state') | int(default=0)) in [0x1300, 0x0002]) %}
+            Shutdown
+          {% elif ((states('sensor.system_state') | int(default=0)) in [0x1500, 0x0004]) %}
+            Emergency Stop
+          {% elif ((states('sensor.system_state') | int(default=0)) in [0x1400, 0x0008]) %}
             Standby
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0010) %}
+          {% elif ((states('sensor.system_state') | int(default=0)) in [0x1200, 0x0010]) %}
             Initial Standby
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0020) %}
+          {% elif ((states('sensor.system_state') | int(default=0)) in [0x1600, 0x0020]) %}
             Startup
           {% elif ((states('sensor.system_state') | int(default=0)) in [0x0000,0x0040]) %}
             Running
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0100) %}
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0041) %}
+            Off-grid Charge
+            {% elif ((states('sensor.system_state') | int(default=0)) == 0x0100) %}
             Fault
+          {% elif ((states('sensor.system_state') | int(default=0)) in [0x5500, 0x0200]) %}
+            Update Failed
           {% elif ((states('sensor.system_state') | int(default=0)) == 0x0400) %}
             Maintain mode
           {% elif ((states('sensor.system_state') | int(default=0)) == 0x0800) %}
             Forced mode
           {% elif ((states('sensor.system_state') | int(default=0)) == 0x1000) %}
             Off-grid mode
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x1111) %}
+            Uninitialized
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x1700) %}
+            AFCI self-test shutdown
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x1800) %}
+            Intelligent Station Building
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x1900) %}
+            Safe Mode
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x2000) %}
+            Open loop
           {% elif ((states('sensor.system_state') | int(default=0)) == 0x2501) %}
             Restarting
           {% elif ((states('sensor.system_state') | int(default=0)) == 0x4000) %}
             External EMS mode
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x4001) %}
+            Emergency Charge
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x8100) %}
+            Derating Running
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x8200) %}
+            Dispatch Running
+          {% elif ((states('sensor.system_state') | int(default=0)) == 0x9100) %}
+            Warn Run
           {% else %}
             Unknown - should not see me!
           {% endif %}
