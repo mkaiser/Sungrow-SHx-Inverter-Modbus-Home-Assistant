@@ -7,7 +7,10 @@ assignees: ''
 
 ---
 
-**Describe the bug**
+**Before you create an issue, make sure to update to the current version of [modbus_sungrow.yaml](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/modbus_sungrow.yaml)**
+
+**Describe the bug:**
+
 A clear and concise description of what the bug is.
 
 
@@ -23,11 +26,12 @@ A clear and concise description of what the bug is.
   - [] no 
   - [] I don't know what that is
 
-**Home Assistant :**
+**Home Assistant version:**
  - Version: [e.g. 2023.09.1]
 
 **modbus_sungrow.yaml:**
  - Version/ time stamp : [e.g. 2023-09-08] (see header of the file)
+ - [] I ensured to use the most recent version
 
 ** Inverter Firmware Status:**
    - [] I made sure that the newest firmware is installed via the installers account
