@@ -1,7 +1,12 @@
+## changes by tttooommmeeekkk
+   ## 2023-11-15: changed the scan intervals to individual requirements (for many registers; many rows)
+   ## 2024-03-06: changed the values max+/min in rows 2322; 2336; 2343; 2350; 2357
+   ## 2024-03-06: extra select option (automation) "global mpp scan manuel register 30230" (rows: 1555-1565; 2302-2315; 2412-2419; 2922-2972)
+
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2023-12-31
+# last update: 2023-11-12 (2)
 #
 # Note: This YAML file will only work with Home Assistant >= 2023.10
 
@@ -10,6 +15,7 @@ modbus:
     type: tcp
     host: !secret sungrow_modbus_host_ip
     port: !secret sungrow_modbus_port
+    retries: 10
     sensors:
       - name: Sungrow device type code
         unique_id: sg_dev_code
@@ -57,7 +63,7 @@ modbus:
         device_class: Temperature
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: MPPT1 voltage
         unique_id: sg_mppt1_voltage
@@ -70,7 +76,7 @@ modbus:
         device_class: Voltage
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: MPPT1 current
         unique_id: sg_mppt1_current
@@ -83,7 +89,7 @@ modbus:
         device_class: Current
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: MPPT2 voltage
         unique_id: sg_mppt2_voltage
@@ -96,7 +102,7 @@ modbus:
         device_class: Voltage
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: MPPT2 current
         unique_id: sg_mppt2_current
@@ -109,7 +115,7 @@ modbus:
         device_class: Current
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Total DC power
         unique_id: sg_total_dc_power
@@ -123,7 +129,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Phase A voltage
         unique_id: sg_phase_a_voltage
@@ -136,7 +142,7 @@ modbus:
         device_class: Voltage
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Phase B voltage
         unique_id: sg_phase_b_voltage
@@ -149,7 +155,7 @@ modbus:
         device_class: Voltage
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Phase C voltage
         unique_id: sg_phase_c_voltage
@@ -162,7 +168,7 @@ modbus:
         device_class: Voltage
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Grid frequency
         unique_id: sg_grid_frequency
@@ -175,7 +181,7 @@ modbus:
         device_class: frequency
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Reactive power
         unique_id: sg_reactive_power
@@ -189,7 +195,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Power factor
         unique_id: sg_power_factor
@@ -202,7 +208,7 @@ modbus:
         device_class: power_factor
         state_class: measurement
         scale: 0.001
-        scan_interval: 10
+        scan_interval: 30
 
       #https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?pageNo=13
       #Meter Active Power: 5601-5602 S32 W (Energiezähler Wirkleistung)
@@ -221,7 +227,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Meter phase A active power raw
         unique_id: sg_meter_phase_a_active_power_raw
@@ -235,7 +241,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Meter phase B active power raw
         unique_id: sg_meter_phase_b_active_power_raw
@@ -249,7 +255,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Meter phase C active power raw
         unique_id: sg_meter_phase_c_active_power_raw
@@ -263,7 +269,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: BDC rated power
         unique_id: sg_bdc_rated_power
@@ -318,7 +324,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Backup phase A power
         unique_id: sg_backup_phase_a_power
@@ -331,7 +337,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Backup phase B power
         unique_id: sg_backup_phase_b_power
@@ -344,7 +350,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Backup phase C power
         unique_id: sg_backup_phase_c_power
@@ -357,7 +363,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: 30
 
       # Start monthly PV generation
       - name: Monthly PV generation (01 January)
@@ -982,7 +988,7 @@ modbus:
         precision: 0
         scale: 1
         state_class: measurement
-        scan_interval: 10
+        scan_interval: 30
 
       # register running state is not available for certain SH*RS inverters
       # template sensors are used to determine the states based on other sensors
@@ -995,7 +1001,7 @@ modbus:
         precision: 0
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Daily PV generation
         unique_id: sg_daily_pv_generation
@@ -1063,7 +1069,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: 30
 
       # this value returns a positive value when exporting and a negative value when importing power
       - name: Export power raw
@@ -1078,7 +1084,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Daily battery charge from PV
         unique_id: sg_daily_battery_charge_from_pv
@@ -1145,7 +1151,7 @@ modbus:
         device_class: Voltage
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Battery current
         unique_id: sg_battery_current
@@ -1158,7 +1164,7 @@ modbus:
         state_class: measurement
         device_class: Current
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 30
 
       # always positive battery power
       # use binary_sensor.battery_charging | discharging to retrieve the direction of the energy flow
@@ -1173,7 +1179,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Battery level
         unique_id: sg_battery_level
@@ -1251,7 +1257,7 @@ modbus:
         device_class: current
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Phase B current
         unique_id: sg_phase_b_current
@@ -1264,7 +1270,7 @@ modbus:
         device_class: current
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Phase C current
         unique_id: sg_phase_c_current
@@ -1277,7 +1283,7 @@ modbus:
         device_class: current
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Total active power
         unique_id: sg_total_active_power
@@ -1291,7 +1297,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Daily imported energy
         unique_id: sg_daily_imported_energy
@@ -1385,7 +1391,7 @@ modbus:
         data_type: uint16
         precision: 0
         state_class: measurement
-        scan_interval: 10
+        scan_interval: 30
 
       - name: EMS mode selection raw
         unique_id: sg_ems_mode_selection_raw
@@ -1394,7 +1400,7 @@ modbus:
         input_type: holding
         data_type: uint16
         state_class: measurement
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Battery forced charge discharge cmd raw
         unique_id: sg_battery_forced_charge_discharge_cmd_raw
@@ -1404,7 +1410,7 @@ modbus:
         data_type: uint16
         precision: 0
         state_class: measurement
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Battery forced charge discharge power
         unique_id: sg_battery_forced_charge_discharge_power
@@ -1420,7 +1426,7 @@ modbus:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Max SoC
         unique_id: sg_max_soc
@@ -1433,7 +1439,7 @@ modbus:
         device_class: battery
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Min SoC
         unique_id: sg_min_soc
@@ -1446,7 +1452,7 @@ modbus:
         device_class: battery
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Export power limit
         unique_id: sg_export_power_limit
@@ -1459,7 +1465,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Export power limit mode raw
         unique_id: sg_export_power_limit_mode_raw
@@ -1469,7 +1475,7 @@ modbus:
         data_type: uint16
         precision: 0
         state_class: measurement
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Reserved SoC for backup
         unique_id: sg_reserved_soc_for_backup
@@ -1481,7 +1487,7 @@ modbus:
         device_class: battery
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: 30
 
       #undocumented sensors (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Battery max charge power
@@ -1495,7 +1501,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 10
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Battery max discharge power
         unique_id: sg_battery_max_discharge_power
@@ -1508,7 +1514,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 10
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Battery capacity
         unique_id: sg_battery_capacity
@@ -1532,7 +1538,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 10
-        scan_interval: 10
+        scan_interval: 30
 
       - name: Battery discharging start power
         unique_id: sg_battery_discharging_start_power
@@ -1545,7 +1551,19 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 10
+        scan_interval: 30
+
+      #START change by tttooommmeeekkk 2024-03-06: extra select option (automation) "global mpp scan manuel register 30230"
+      - name: Global mpp scan manual raw
+        unique_id: sg_global_mpp_scan_manual_raw
+        device_address: !secret sungrow_modbus_slave
+        address: 30229 # reg 30230
+        input_type: holding
+        data_type: uint16
+        precision: 0
+        state_class: measurement
         scan_interval: 10
+      #ENDE change by tttooommmeeekkk 2024-03-06: extra select option (automation) "global mpp scan manuel register 30230"
 
 # 'virtual' template sensors for better readability
 template:
@@ -2282,11 +2300,27 @@ template:
             )|int 
           }}
 
+      #START change by tttooommmeeekkk 2024-03-06: extra select option (automation) "global mpp scan manuel register 30230"
+      - name: Global mpp scan manual
+        unique_id: global_mpp_scan_manual
+        availability: "{{ not is_state('sensor.global_mpp_scan_manual_raw', 'unavailable') }}"
+        device_class: enum
+        state: >-
+          {% if ((states('sensor.global_mpp_scan_manual_raw') | int(default=0)) == 0x00AA) %}
+            Enabled
+          {% elif ((states('sensor.global_mpp_scan_manual_raw') | int(default=0))  == 0x0055) %}
+            Disabled
+          {% else %}
+            Unknown - should not see me!
+          {% endif %}
+      #ENDE change by tttooommmeeekkk 2024-03-06: extra select option (automation) "global mpp scan manuel register 30230"
+
 # getting input for Min and Max SoC
+# change by tttooommmeeekkk 2024-03-06: "min" from 0 to 8 (because of battery producer advise)
 input_number:
   set_sg_min_soc:
     name: Set min SoC
-    min: 0
+    min: 8
     max: 50
     step: 1
 
@@ -2296,28 +2330,32 @@ input_number:
     max: 100
     step: 1
 
+  # change by tttooommmeeekkk 2024-03-06: "max" from 75 to 100
   set_sg_reserved_soc_for_backup:
     name: Set reserved SoC for backup
     min: 0
     max: 100
     step: 1
 
+  # change by tttooommmeeekkk 2024-03-06: "max" from 5000 to 5300
   set_sg_forced_charge_discharge_power:
     name: Set forced charge discharge power in W
     min: 0
-    max: 5000 # change this value according to the capability of your battery
+    max: 5300 # change this value according to the capability of your battery
     step: 100
 
+  # change by tttooommmeeekkk 2024-03-06: "max" from 5000 to 5300
   set_sg_battery_max_charge_power:
     name: Set max battery charge power in W
     min: 100
-    max: 5000 # change this value according to the capability of your battery
+    max: 5300 # change this value according to the capability of your battery
     step: 100
-
+  
+  # change by tttooommmeeekkk 2024-03-06: "max" from 5000 to 5300
   set_sg_battery_max_discharge_power:
     name: Set max battery discharge power in W
     min: 100
-    max: 5000 # change this value according to the capability of your battery
+    max: 5300 # change this value according to the capability of your battery
     step: 100
 
   set_sg_battery_charging_start_power:
@@ -2371,6 +2409,15 @@ input_select:
       - "Enabled"
       - "Disabled"
     icon: mdi:export
+
+  #START change by tttooommmeeekkk 2024-03-06: extra select option (automation) "global mpp scan manuel register 30230"
+  set_sg_global_mpp_scan_manual:
+    name: Global mpp scan manual
+    options:
+      - "Enabled"
+      - "Disabled"
+    icon: mdi:export
+  #ENDE change by tttooommmeeekkk 2024-03-06: extra select option (automation) "global mpp scan manuel register 30230"
 
 # Automations: Write modbus registers on input changes via GUI
 # note: If you change a value by the sliders, it will take up to 60 seconds until the state variables are updated
@@ -2873,77 +2920,54 @@ automation:
           value: "{{ states('sensor.battery_discharging_start_power') }}"
     mode: single
 
+#START change by tttooommmeeekkk 2024-03-06: extra select option (automation) "global mpp scan manuel register 30230"
+  - id: "automation_sungrow_inverter_global_mpp_scan_manual_update"
+    alias: "sungrow inverter global mpp scan manual update"
+    description: "Updates Enable/Disable for global mpp scan manual"
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.global_mpp_scan_manual_raw
+    condition:
+      - condition: template
+        value_template: "{{ not is_state('sensor.global_mpp_scan_manual_raw', 'unavailable') }}"
+    action:
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.set_sg_global_mpp_scan_manual
+        data:
+          option: >
+            {% if ((states('sensor.global_mpp_scan_manual_raw') | int(default=0)) == 0x00AA) %} 
+              Enabled
+            {% elif ((states('sensor.global_mpp_scan_manual_raw') | int(default=0)) == 0x0055) %} 
+              Disabled
+            {% endif %}
+    mode: single
 
-# Usage: Use these scripts to simplify automations
-# Example (Adjust to your needs with appropriate trigger): 
-# automation:
-#  - alias: Forced Battery Charging Management
-#    description: "Manages forced battery charging during cheapest hours."
-#   trigger:
-#      - platform: state
-#        entity_id: 
-#          - binary_sensor.cheapest_hours_for_charging_timer
-#    action:
-#      - choose:
-#          - conditions:
-#              - condition: state
-#                entity_id: binary_sensor.cheapest_hours_for_charging_timer
-#                state: 'on'
-#            sequence:
-#              - service: script.sg_forced_charge_battery_mode
-#          - conditions:
-#              - condition: state
-#                entity_id: binary_sensor.cheapest_hours_for_charging_timer
-#                state: 'off'
-#            sequence:
-#              - service: script.sg_self_consumption_mode
-
-script:
-    sg_set_forced_discharge_battery_mode:
-      sequence:
-        - service: input_select.select_option
-          data:
-            entity_id: input_select.set_sg_ems_mode
-            option: "Forced mode"
-        - service: input_select.select_option
-          data:
-            entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
-            option: "Forced discharge"
-        # Uncomment notify service lines below for push notifications to mobile devices
-        # - service: notify.notify
-        #   data:
-        #     title: "Forced Battery Discharge"
-        #     message: "Switched to Forced Battery Discharge mode"
-          
-    sg_set_forced_charge_battery_mode:
-        sequence:
-          - service: input_select.select_option
-            data:
-              entity_id: input_select.set_sg_ems_mode
-              option: "Forced mode"
-          - service: input_select.select_option
-            data:
-              entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
-              option: "Forced charge"
-              
-    sg_set_battery_bypass_mode:
-        sequence:
-          - service: input_select.select_option
-            data:
-              entity_id: input_select.set_sg_ems_mode
-              option: "Forced mode"
-          - service: input_select.select_option
-            data:
-              entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
-              option: "Stop (default)"
-              
-    sg_set_self_consumption_mode:
-        sequence:
-          - service: input_select.select_option
-            data:
-              entity_id: input_select.set_sg_ems_mode
-              option: "Self-consumption mode (default)"
-          - service: input_select.select_option
-            data:
-              entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
-              option: "Stop (default)"
+  - id: "automation_sungrow_global_mpp_scan_manual"
+    alias: "sungrow inverter global mpp scan manual"
+    description: "Set global mpp scan manual"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_select.set_sg_global_mpp_scan_manual
+    condition: []
+    variables:
+      export_limit_enable: 0xAA
+      export_limit_disable: 0x55
+    action:
+      - service: modbus.write_register
+        data_template:
+          hub: SungrowSHx
+          slave: !secret sungrow_modbus_slave
+          address: 30229 # reg 30230
+          value: >
+            {% if is_state('input_select.set_sg_global_mpp_scan_manual', "Enabled") %} 
+              {{export_limit_enable}}
+            {% elif is_state('input_select.set_sg_global_mpp_scan_manual', "Disabled") %}
+              {{export_limit_disable}}
+            {% else %}
+              {{export_limit_disable}}
+            {% endif %}
+    mode: single
+#ENDE change by tttooommmeeekkk 2024-03-06: extra select option (automation) "global mpp scan manuel register 30230"
