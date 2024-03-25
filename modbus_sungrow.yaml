@@ -1516,6 +1516,7 @@ modbus:
         address: 33048 # reg 33049
         input_type: holding
         data_type: uint16
+        precision: 1
         unit_of_measurement: kWh
         device_class: energy_storage
         scale: 0.01
