@@ -1,5 +1,14 @@
 An *easy-to-use YAML-based integration* for several Sungrow inverters for Home Assistant. 
 
+
+# WARNING: For many users HA 2024.4 does not work
+
+If you upgraded to HA 2024.4 and experience missing sungrow / modbus values, it is most likelycaused by HA-internal changes (transitioning from sync to async calls). It does not look like this can somehow be fixed by rewriting stuff in this integration. 
+If you are affected, there is currently no other option than to downgrade to 2024.3 :/
+
+In [#274](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/274) there are some related links. Please continue discussions there :)
+
+
 [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2)
 
 # Contents
