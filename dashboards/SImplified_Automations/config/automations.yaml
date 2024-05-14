@@ -1,0 +1,246 @@
+- id: "1694579954921"
+  alias: SG 10am BattLimit
+  description: ""
+  trigger:
+    - platform: time
+      at: "10:00:00"
+  condition: []
+  action:
+    - service: input_number.set_value
+      data:
+        value: 5000
+      target:
+        entity_id: input_number.set_sg_battery_max_charge_power
+  mode: single
+- id: "1694813024230"
+  alias: SG 7am Battery Limit
+  description: ""
+  trigger:
+    - platform: time
+      at: 07:00:00
+  condition: []
+  action:
+    - service: input_number.set_value
+      data:
+        value: 500
+      target:
+        entity_id: input_number.set_sg_battery_max_charge_power
+  mode: single
+- id: "1695549306361"
+  alias: Notify Battery Discharge Power
+  description: Battery Discharge W
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.battery_discharging_power
+      above: 1500
+  condition: []
+  action:
+    - service: notify.mobile_app_zee97
+      data:
+        message: Power {{ states('sensor.battery_discharging_power') }} W
+        title: Battery discharge
+    - service: script.notify_slack
+      data: {}
+      enabled: false
+  mode: single
+- id: "1695550909886"
+  alias: Notify Export Power
+  description: Export Power
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.export_power
+      above: 5000
+  condition: []
+  action:
+    - service: notify.mobile_app_zee97
+      data:
+        message: Power {{ states('sensor.export_power') }} W
+        title: Export Power
+  mode: single
+
+- id: "1696143665579"
+  alias: Webhook Battlimit
+  description: ""
+  trigger:
+    - platform: webhook
+      allowed_methods:
+        - POST
+      local_only: true
+      webhook_id: battlimit
+  condition: []
+  action:
+    - service: input_number.set_value
+      data:
+        value: "{{ trigger.json.value }}"
+      target:
+        entity_id: input_number.set_sg_battery_max_charge_power
+  mode: single
+- id: "1714700166225"
+  alias: Webhook ForceDischarge
+  description: ""
+  trigger:
+    - platform: webhook
+      allowed_methods:
+        - POST
+      local_only: true
+      webhook_id: discharge
+    - platform: time
+      at: "17:00:00"
+    - platform: time
+      at: 06:30:00
+      enabled: false
+  condition: []
+  action:
+    - service: input_select.select_option
+      data:
+        option: Forced mode
+      target:
+        entity_id: input_select.set_sg_ems_mode
+    - service: input_select.select_option
+      data:
+        option: Forced discharge
+      target:
+        entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
+  mode: single
+- id: "1714703520236"
+  alias: Webhook ForcePower
+  description: ""
+  trigger:
+    - platform: webhook
+      allowed_methods:
+        - POST
+      local_only: true
+      webhook_id: forcepower
+  condition: []
+  action:
+    - service: input_number.set_value
+      data:
+        value: "{{ trigger.json.value }}"
+      target:
+        entity_id: input_number.set_sg_forced_charge_discharge_power
+  mode: single
+- id: "1714773219354"
+  alias: Webhook ForceCharge
+  description: ""
+  trigger:
+    - platform: webhook
+      allowed_methods:
+        - POST
+      local_only: true
+      webhook_id: charge
+    - platform: time
+      at: "11:00:00"
+      enabled: true
+    - platform: time
+      at: 02:00:00
+      enabled: true
+    - platform: time
+      at: "20:00:00"
+      enabled: false
+  condition: []
+  action:
+    - service: input_select.select_option
+      data:
+        option: Forced mode
+      target:
+        entity_id: input_select.set_sg_ems_mode
+    - service: input_select.select_option
+      data:
+        option: Forced charge
+      target:
+        entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
+  mode: single
+- id: "1714773445739"
+  alias: Notify Import Power
+  description: Import Power
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.import_power
+      above: 800
+  condition: []
+  action:
+    - service: notify.mobile_app_zee97
+      data:
+        message: Power {{ states('sensor.import_power') }} W
+        title: Import Power
+  mode: single
+- id: "1714985988735"
+  alias: Webhook StopForce
+  description: ""
+  trigger:
+    - platform: webhook
+      allowed_methods:
+        - POST
+      local_only: true
+      webhook_id: stopforce
+  condition: []
+  action:
+    - service: input_select.select_option
+      data:
+        option: Self-consumption mode (default)
+      target:
+        entity_id: input_select.set_sg_ems_mode
+    - service: input_select.select_option
+      data:
+        option: Stop (default)
+      target:
+        entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
+  mode: single
+- id: "1714987207217"
+  alias: Webhook SelfConsume
+  description: ""
+  trigger:
+    - platform: webhook
+      allowed_methods:
+        - POST
+      local_only: true
+      webhook_id: selfconsume
+    - platform: time
+      at: "14:00:00"
+    - platform: time
+      at: 09:30:00
+    - platform: time
+      at: 03:00:00
+      enabled: true
+    - platform: time
+      at: "19:30:00"
+  condition: []
+  action:
+    - service: input_select.select_option
+      data:
+        option: Stop (default)
+      target:
+        entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
+    - service: input_select.select_option
+      data:
+        option: Self-consumption mode (default)
+      target:
+        entity_id: input_select.set_sg_ems_mode
+  mode: single
+- id: "1715676590360"
+  alias: Webhook ResetState
+  description: ""
+  trigger:
+    - platform: webhook
+      allowed_methods:
+        - POST
+      local_only: true
+      webhook_id: resetstate
+  condition: []
+  action:
+    - service: input_select.set_options
+      data:
+        options:
+          - Stop (default)
+          - Forced charge
+          - Forced discharge
+      target:
+        entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
+    - service: input_select.set_options
+      data:
+        options:
+          - Self-consumption mode (default)
+          - Forced mode
+      target:
+        entity_id: input_select.set_sg_ems_mode
+  mode: single
