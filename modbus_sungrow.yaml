@@ -2351,6 +2351,10 @@ input_number:
     max: 5000 # change this value according to the capability of your battery
     step: 100
 
+  # This threshold is compared against the currently achievable charging power, not just against the currently available surplus.
+  # If this is set higher than the maximum charging power of the battery, charging will not start.
+  # If currently achievable charging power drops below this threshold, charging will stop. Actual charging power (limited by register 33047) is ignored.
+  # Charging might stop before reaching 100% if set too close to the maximum charging power of the battery, due to achievable charging power naturally dropping at high state of charge.
   set_sg_battery_charging_start_power:
     name: Set battery charging start power in W
     min: 0
