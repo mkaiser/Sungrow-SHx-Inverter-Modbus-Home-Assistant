@@ -2116,6 +2116,21 @@ template:
             0
           {% endif %}
 
+      - name: Battery Current Signed  # on SHxx.0RS inverters Sungrow uses an unsigned 16-bit integer to represent current, negative current wraps around below zero
+        unit_of_measurement: A
+        device_class: current
+        unique_id: sensor.battery_current_signed
+        state_class: measurement
+        availability: "{{states('sensor.battery_current')|is_number }}"
+        state: >-
+            {% set positive = states('sensor.battery_current') | float  %}
+            {% set negative = states('sensor.battery_current') | float - 6553.5 %}
+            {% if positive > 3000 %}
+              {{ negative }}
+            {% else %}
+              {{ positive }}
+            {% endif %}
+
       - name: Import power # power from grid: positive if importing, else zero
         unique_id: sg_import_power
         unit_of_measurement: W
