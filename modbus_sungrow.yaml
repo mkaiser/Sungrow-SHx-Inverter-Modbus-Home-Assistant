@@ -1999,8 +1999,10 @@ template:
             SH10RT-V122
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0E) %}
             SH4.6RS 
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E26) %}
+            SH20T
           {% else %}
-            Unknown device code!
+            Unknown device code: {{ '%0x' % (states('sensor.sungrow_device_type_code') | int(default=0))  }}
           {% endif %}
 
       # make the sensor battery_forced_charge_discharge_cmd more human readable
