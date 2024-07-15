@@ -2001,6 +2001,8 @@ template:
             SH4.6RS 
           {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E26) %}
             SH20T
+          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E28) %}
+            SH25T
           {% else %}
             Unknown device code: {{ '%0x' % (states('sensor.sungrow_device_type_code') | int(default=0))  }}
           {% endif %}
