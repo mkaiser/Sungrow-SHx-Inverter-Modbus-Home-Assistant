@@ -265,6 +265,45 @@ modbus:
         scale: 1
         scan_interval: 10
 
+      - name: Meter phase A current grid
+        unique_id: sg_meter_phase_a_current_grid
+        device_address: !secret sungrow_modbus_slave
+        address: 5744 # reg 5743
+        input_type: input
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: A
+        device_class: Current
+        state_class: measurement
+        scale: 0.01
+        scan_interval: 10
+
+      - name: Meter phase B current grid
+        unique_id: sg_meter_phase_b_current_grid
+        device_address: !secret sungrow_modbus_slave
+        address: 5745 # reg 5744
+        input_type: input
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: A
+        device_class: Current
+        state_class: measurement
+        scale: 0.01
+        scan_interval: 10
+
+      - name: Meter phase C current grid
+        unique_id: sg_meter_phase_c_current_grid
+        device_address: !secret sungrow_modbus_slave
+        address: 5746 # reg 5745
+        input_type: input
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: A
+        device_class: Current
+        state_class: measurement
+        scale: 0.01
+        scan_interval: 10
+
       - name: BDC rated power
         unique_id: sg_bdc_rated_power
         device_address: !secret sungrow_modbus_slave
