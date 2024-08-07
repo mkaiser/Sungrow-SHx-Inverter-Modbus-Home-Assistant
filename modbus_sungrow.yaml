@@ -268,7 +268,7 @@ modbus:
       - name: Meter phase A current grid
         unique_id: sg_meter_phase_a_current_grid
         device_address: !secret sungrow_modbus_slave
-        address: 5744 # reg 5743
+        address: 5743 # reg 5742
         input_type: input
         data_type: uint16
         precision: 0
@@ -281,7 +281,7 @@ modbus:
       - name: Meter phase B current grid
         unique_id: sg_meter_phase_b_current_grid
         device_address: !secret sungrow_modbus_slave
-        address: 5745 # reg 5744
+        address: 5744 # reg 5743
         input_type: input
         data_type: uint16
         precision: 0
@@ -294,7 +294,7 @@ modbus:
       - name: Meter phase C current grid
         unique_id: sg_meter_phase_c_current_grid
         device_address: !secret sungrow_modbus_slave
-        address: 5746 # reg 5745
+        address: 5745 # reg 5744
         input_type: input
         data_type: uint16
         precision: 0
