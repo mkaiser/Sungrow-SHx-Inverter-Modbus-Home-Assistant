@@ -1152,7 +1152,7 @@ modbus:
         device_address: !secret sungrow_modbus_slave
         address: 13020 # reg 13021
         input_type: input
-        data_type: uint16
+        data_type: int16
         precision: 1
         unit_of_measurement: A
         state_class: measurement
