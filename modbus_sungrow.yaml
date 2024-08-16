@@ -1473,6 +1473,7 @@ modbus:
         state_class: measurement
         scan_interval: 10
 
+      #undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Reserved SoC for backup
         unique_id: sg_reserved_soc_for_backup
         device_address: !secret sungrow_modbus_slave
@@ -1485,7 +1486,6 @@ modbus:
         scale: 1
         scan_interval: 10
 
-      #undocumented sensors (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Battery max charge power
         unique_id: sg_battery_max_charge_power
         device_address: !secret sungrow_modbus_slave
@@ -1512,6 +1512,7 @@ modbus:
         scale: 10
         scan_interval: 10
 
+      #undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Battery capacity
         unique_id: sg_battery_capacity
         device_address: !secret sungrow_modbus_slave
@@ -1524,6 +1525,7 @@ modbus:
         scale: 0.01
         scan_interval: 600
 
+      #undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Battery charging start power
         unique_id: sg_battery_charging_start_power
         device_address: !secret sungrow_modbus_slave
@@ -1537,6 +1539,7 @@ modbus:
         scale: 10
         scan_interval: 10
 
+      #undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Battery discharging start power
         unique_id: sg_battery_discharging_start_power
         device_address: !secret sungrow_modbus_slave
@@ -2293,7 +2296,10 @@ template:
         unique_id: uid_daily_consumed_energy
         unit_of_measurement: kWh
         device_class: energy
-        state_class: total_increasing
+        # the state class is not total_increasing, because sometimes the read value are read at different times,
+        # resulting in decreasing values.
+        # "measurement" does not work, because it is incompatible with "energy"
+        state_class: total
         availability: >-
           {{ 
           not is_state('sensor.daily_pv_generation', 'unavailable') 
@@ -2987,17 +2993,16 @@ automation:
             {% else %}
               {{export_limit_disable}}
             {% endif %}
-    mode: single    
-
+    mode: single
 
 # Usage: Use these scripts to simplify automations
-# Example (Adjust to your needs with appropriate trigger): 
+# Example (Adjust to your needs with appropriate trigger):
 # automation:
 #  - alias: Forced Battery Charging Management
 #    description: "Manages forced battery charging during cheapest hours."
 #   trigger:
 #      - platform: state
-#        entity_id: 
+#        entity_id:
 #          - binary_sensor.cheapest_hours_for_charging_timer
 #    action:
 #      - choose:
@@ -3015,51 +3020,51 @@ automation:
 #              - service: script.sg_self_consumption_mode
 
 script:
-    sg_set_forced_discharge_battery_mode:
-      sequence:
-        - service: input_select.select_option
-          data:
-            entity_id: input_select.set_sg_ems_mode
-            option: "Forced mode"
-        - service: input_select.select_option
-          data:
-            entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
-            option: "Forced discharge"
-        # Uncomment notify service lines below for push notifications to mobile devices
-        # - service: notify.notify
-        #   data:
-        #     title: "Forced Battery Discharge"
-        #     message: "Switched to Forced Battery Discharge mode"
-          
-    sg_set_forced_charge_battery_mode:
-        sequence:
-          - service: input_select.select_option
-            data:
-              entity_id: input_select.set_sg_ems_mode
-              option: "Forced mode"
-          - service: input_select.select_option
-            data:
-              entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
-              option: "Forced charge"
-              
-    sg_set_battery_bypass_mode:
-        sequence:
-          - service: input_select.select_option
-            data:
-              entity_id: input_select.set_sg_ems_mode
-              option: "Forced mode"
-          - service: input_select.select_option
-            data:
-              entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
-              option: "Stop (default)"
-              
-    sg_set_self_consumption_mode:
-        sequence:
-          - service: input_select.select_option
-            data:
-              entity_id: input_select.set_sg_ems_mode
-              option: "Self-consumption mode (default)"
-          - service: input_select.select_option
-            data:
-              entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
-              option: "Stop (default)"
+  sg_set_forced_discharge_battery_mode:
+    sequence:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.set_sg_ems_mode
+          option: "Forced mode"
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
+          option: "Forced discharge"
+      # Uncomment notify service lines below for push notifications to mobile devices
+      # - service: notify.notify
+      #   data:
+      #     title: "Forced Battery Discharge"
+      #     message: "Switched to Forced Battery Discharge mode"
+
+  sg_set_forced_charge_battery_mode:
+    sequence:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.set_sg_ems_mode
+          option: "Forced mode"
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
+          option: "Forced charge"
+
+  sg_set_battery_bypass_mode:
+    sequence:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.set_sg_ems_mode
+          option: "Forced mode"
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
+          option: "Stop (default)"
+
+  sg_set_self_consumption_mode:
+    sequence:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.set_sg_ems_mode
+          option: "Self-consumption mode (default)"
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
+          option: "Stop (default)"
