@@ -1889,59 +1889,57 @@ template:
 
       - name: Sungrow inverter state
         unique_id: sg_inverter_state
-        # TODO: test state_class with enum
-        # state_class: measurement
         device_class: enum
         availability: "{{ not is_state('sensor.system_state', 'unavailable') }}"
         state: >-
-          {% if ((states('sensor.system_state') | int(default=0)) in [0x0000,0x0040]) %}
+          {% if ((states('sensor.system_state') |int) in [0x0000,0x0040]) %}
             Running
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0410) %}
+          {% elif ((states('sensor.system_state') |int) == 0x0410) %}
             Off-grid Charge
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0200) %}
+          {% elif ((states('sensor.system_state') |int) == 0x0200) %}
             Update Failed
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0400) %}
+          {% elif ((states('sensor.system_state') |int) == 0x0400) %}
             Maintain mode
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x0800) %}
+          {% elif ((states('sensor.system_state') |int) == 0x0800) %}
             Forced mode
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x1000) %}
+          {% elif ((states('sensor.system_state') |int) == 0x1000) %}
             Off-grid mode
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x1111) %}
+          {% elif ((states('sensor.system_state') |int) == 0x1111) %}
             Un-Initialized
-          {% elif ((states('sensor.system_state') | int(default=0)) in [0x0010,0x12000]) %}
+          {% elif ((states('sensor.system_state') |int) in [0x0010,0x12000]) %}
             Initial Standby
-          {% elif ((states('sensor.system_state') | int(default=0)) in [0x1300,0x0002]) %}
+          {% elif ((states('sensor.system_state') |int) in [0x1300,0x0002]) %}
             Shutdown
-          {% elif ((states('sensor.system_state') | int(default=0)) in [0x1400,0x0008]) %}
+          {% elif ((states('sensor.system_state') |int) in [0x1400,0x0008] ) %}
             Standby
-          {% elif ((states('sensor.system_state') | int(default=0)) in [0x1500,0x0004]) %}
+          {% elif ((states('sensor.system_state') |int) in [0x1500,0x0004] ) %}
             Emergency Stop
-          {% elif ((states('sensor.system_state') | int(default=0)) in [0x1600,0x0020]) %}
+          {% elif ((states('sensor.system_state') |int) in [0x1600,0x0020]) %}
             Startup
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x1700) %}
+          {% elif ((states('sensor.system_state') |int) == 0x1700) %}
             AFCI self test shutdown
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x1800) %}
+          {% elif ((states('sensor.system_state') |int) == 0x1800) %}
             Intelligent Station Building Status
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x1900) %}
+          {% elif ((states('sensor.system_state') |int) == 0x1900) %}
             Safe Mode
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x2000) %}
+          {% elif ((states('sensor.system_state') |int) == 0x2000) %}
             Open Loop
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x2501) %}
+          {% elif ((states('sensor.system_state') |int) == 0x2501) %}
             Restarting
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x4000) %}
+          {% elif ((states('sensor.system_state') |int) == 0x4000) %}
             External EMS mode
-          {% elif ((states('sensor.system_state') | int(default=0)) in [0x55000,0x0100]) %}
+          {% elif ((states('sensor.system_state') |int) == in [0x55000,0x0100]) %}
             Fault
-          {% elif ((states('sensor.system_state') | int(default=0)) in [0x8000,0x0001]) %}
+          {% elif ((states('sensor.system_state') |int) == in [0x8000,0x0001]) %}
             Stop
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x8100) %}
+          {% elif ((states('sensor.system_state') |int) == 0x8100) %}
             De-rating Running
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x8200) %}
+          {% elif ((states('sensor.system_state') |int) == 0x8200) %}
             Dispatch Run
-          {% elif ((states('sensor.system_state') | int(default=0)) == 0x9100) %}
+          {% elif ((states('sensor.system_state') |int) == 0x9100) %}
             Warn Running
           {% else %}
-            Unknown - should not see me! {{(states('sensor.system_state') | int(default=0))}}
+            Unknown - should not see me! {{ (states('sensor.system_state') |int) }}
           {% endif %}
 
       - name: Sungrow device type
