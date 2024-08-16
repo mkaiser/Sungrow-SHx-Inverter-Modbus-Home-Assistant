@@ -1618,7 +1618,7 @@ template:
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
-            {% if states('sensor.running_state')|int(default=0)|bitwise_and(0x2) > 0 %}
+            {% if states('sensor.running_state')|int|bitwise_and(0x2) > 0 %}
               on
             {% else %}
               off
@@ -1680,7 +1680,7 @@ template:
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
-            {% if states('sensor.running_state')|int(default=0)|bitwise_and(0x4) > 0 %}
+            {% if states('sensor.running_state')|int|bitwise_and(0x4) > 0 %}
               on
             {% else %}
               off
@@ -1736,7 +1736,7 @@ template:
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
-            {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x10) > 0 }}
+            {{ states('sensor.running_state')|int|bitwise_and(0x10) > 0 }}
           {% else %} 
             {# workaround for SH*RS inverters without working running_state #}
             {% if states('sensor.export_power_raw')|int > 0 %}
@@ -1769,7 +1769,7 @@ template:
         state: >-
           {% if states('sensor.running_state')|is_number %}
             {# use available sensor running_state #}
-            {{ states('sensor.running_state')|int(default=0)|bitwise_and(0x20) > 0 }}
+            {{ states('sensor.running_state')|int|bitwise_and(0x20) > 0 }}
           {% else %} 
             {# workaround for SH*RS inverters without working running_state #}
             {% if states('sensor.export_power_raw')|int < 0 %}
@@ -1960,94 +1960,92 @@ template:
       - name: Sungrow device type
         unique_id: sg_device_type
         availability: "{{ not is_state('sensor.sungrow_device_type_code', 'unavailable') }}"
-        # TODO: test state_class with enum
-        # state_class: measurement
         device_class: enum
         state: >-
-          {% if ((states('sensor.sungrow_device_type_code') | int(default=0))  == 0x0D06) %}
+          {% if ((states('sensor.sungrow_device_type_code') |int)  == 0x0D06) %}
             SH3K6
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D07) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D07) %}
             SH4K6
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D09) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D09) %}
             SH5K-20  
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D03) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D03) %}
             SH5K-V13
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0A) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D0A) %}
             SH3K6-30
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0B) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D0B) %}
             SH4K6-30
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0C) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D0C) %}
             SH5K-30
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D17) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D17) %}
             SH3.RS
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0D) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D0D) %}
             SH3.6RS
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D18) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D18) %}
             SH4.0RS
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0F) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D0F) %}
             SH5.0RS
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D10) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D10) %}
             SH6.0RS
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D1A) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D1A) %}
             SH8.0RS
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D1B) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D1B) %}
             SH10RS
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E00) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E00) %}
             SH5.0RT
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E01) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E01) %}
             SH6.0RT
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E02) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E02) %}
             SH8.0RT
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E03) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E03) %}
             SH10RT
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E10) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E10) %}
             SH5.0RT-20
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E11) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E11) %}
             SH6.0RT-20
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E12) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E12) %}
             SH8.0RT-20
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E13) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E13) %}
             SH10RT-20
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0C) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E0C) %}
             SH5.0RT-V112
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0D) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E0D) %}
             SH6.0RT-V112
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0E) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E0E) %}
             SH8.0RT-V112
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0F) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E0F) %}
             SH10RT-V112
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E08) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E08) %}
             SH5.0RT-V122
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E09) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E09) %}
             SH6.0RT-V122
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0A) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E0A) %}
             SH8.0RT-V122
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E0B) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E0B) %}
             SH10RT-V122
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E20) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E20) %}
             SH5T-V11
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E21) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E21) %}
             SH6T-V11
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E22) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E22) %}
             SH8T-V11
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E23) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E23) %}
             SH10T-V11
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E24) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E24) %}
             SH12T-V11
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E25) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E25) %}
             SH15T-V11
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E26) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E26) %}
             SH20T-V11
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E28) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E28) %}
             SH25T-V11
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0D0E) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D0E) %}
             SH4.6RS 
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E26) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E26) %}
             SH20T
-          {% elif ((states('sensor.sungrow_device_type_code') | int(default=0)) == 0x0E28) %}
+          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E28) %}
             SH25T
           {% else %}
-            Unknown device code: {{ '%0x' % (states('sensor.sungrow_device_type_code') | int(default=0))  }}
+            Unknown device code: {{ '%0x' % (states('sensor.sungrow_device_type_code') |int)  }}
           {% endif %}
 
       # make the sensor battery_forced_charge_discharge_cmd more human readable
@@ -2062,11 +2060,11 @@ template:
         # state_class: measurement
         device_class: enum
         state: >-
-          {% if ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0)) == 0x00AA) %}
+          {% if ((states('sensor.battery_forced_charge_discharge_cmd_raw') |int) == 0x00AA) %}
             Forced charge
-          {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0))  == 0x00BB) %}
+          {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') |int)  == 0x00BB) %}
             Forced discharge
-          {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') | int(default=0))  == 0x00CC) %}
+          {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') |int)  == 0x00CC) %}
             Stop (default)
           {% else %}
             Unknown - should not see me!
@@ -2079,9 +2077,9 @@ template:
         # state_class: measurement
         device_class: enum
         state: >-
-          {% if ((states('sensor.export_power_limit_mode_raw') | int(default=0)) == 0x00AA) %}
+          {% if ((states('sensor.export_power_limit_mode_raw') |int) == 0x00AA) %}
             Enabled
-          {% elif ((states('sensor.export_power_limit_mode_raw') | int(default=0))  == 0x0055) %}
+          {% elif ((states('sensor.export_power_limit_mode_raw') |int)  == 0x0055) %}
             Disabled
           {% else %}
             Unknown - should not see me!
@@ -2095,15 +2093,15 @@ template:
         # state_class: measurement
         device_class: enum
         state: >-
-          {% if ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 0) %}
+          {% if ((states('sensor.ems_mode_selection_raw') |int) == 0) %}
             Self-consumption mode (default)
-          {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 2) %}
+          {% elif ((states('sensor.ems_mode_selection_raw') |int) == 2) %}
             Forced mode
-          {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 3) %}
+          {% elif ((states('sensor.ems_mode_selection_raw') |int) == 3) %}
             External EMS
-          {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 4) %}
+          {% elif ((states('sensor.ems_mode_selection_raw') |int) == 4) %}
             VPP
-          {% elif ((states('sensor.ems_mode_selection_raw') | int(default=0)) == 8) %}
+          {% elif ((states('sensor.ems_mode_selection_raw') |int) == 8) %}
             MicroGrid
           {% else %}
             Unknown - should not see me!
@@ -2316,7 +2314,7 @@ template:
               + states('sensor.daily_imported_energy')|float 
               - states('sensor.daily_battery_charge')|float 
               + states('sensor.daily_battery_discharge')|float
-            )|int 
+            ) 
           }}
 
       - name: Total consumed energy
@@ -2695,9 +2693,9 @@ automation:
           entity_id: input_select.set_sg_export_power_limit_mode
         data:
           option: >
-            {% if ((states('sensor.export_power_limit_mode_raw') | int(default=0)) == 0x00AA) %} 
+            {% if ((states('sensor.export_power_limit_mode_raw') |int) == 0x00AA) %} 
               Enabled
-            {% elif ((states('sensor.export_power_limit_mode_raw') | int(default=0)) == 0x0055) %} 
+            {% elif ((states('sensor.export_power_limit_mode_raw') |int) == 0x0055) %} 
               Disabled
             {% endif %}
     mode: single
