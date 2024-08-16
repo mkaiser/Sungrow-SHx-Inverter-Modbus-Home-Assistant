@@ -1563,6 +1563,19 @@ modbus:
         state_class: measurement
         scan_interval: 10
 
+sensor:
+  - platform: filter
+    name: "Daily consumed energy (filtered)"
+    entity_id: sensor.daily_consumed_energy
+    # commented following line, due to: 'device_class' is an invalid option for 'sensor.filter', check: device_class
+    # device_class: energy
+    # commented following line, due to: 'state_class' is an invalid option for 'sensor.filter', check: state_class
+    # state_class: total_increasing
+    filters:
+      - filter: time_simple_moving_average
+        window_size: "00:05"
+        precision: 2
+
 # 'virtual' template sensors for better readability
 template:
   - binary_sensor:
@@ -1864,7 +1877,7 @@ template:
         state: "{{ states('sensor.meter_active_power_raw') }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
-      - name: Meter Phase A active power
+      - name: Meter phase A active power
         unique_id: sg_meter_phase_a_active_power
         unit_of_measurement: W
         device_class: power
@@ -1877,7 +1890,7 @@ template:
         state: "{{ states('sensor.meter_phase_a_active_power_raw') }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
-      - name: Meter Phase B active power
+      - name: Meter phase B active power
         unique_id: sg_meter_phase_b_active_power
         unit_of_measurement: W
         device_class: power
@@ -1890,7 +1903,7 @@ template:
         state: "{{ states('sensor.meter_phase_b_active_power_raw') }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
-      - name: Meter Phase C active power
+      - name: Meter phase C active power
         unique_id: sg_meter_phase_c_active_power
         unit_of_measurement: W
         device_class: power
