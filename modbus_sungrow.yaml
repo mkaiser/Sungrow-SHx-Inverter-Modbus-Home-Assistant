@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2024-07-17
+# last update: 2024-08-16
 #
 # Note: This YAML file will only work with Home Assistant >= 2023.10
 
@@ -1147,12 +1147,14 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
+      # note: datasheet states that this value is unsigned, but it is acually signed:
+      # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/304
       - name: Battery current
         unique_id: sg_battery_current
         device_address: !secret sungrow_modbus_slave
         address: 13020 # reg 13021
         input_type: input
-        data_type: uint16
+        data_type: int16
         precision: 1
         unit_of_measurement: A
         state_class: measurement
