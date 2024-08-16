@@ -1,8 +1,5 @@
 An *easy-to-use YAML-based integration* for several Sungrow inverters for Home Assistant. 
 
-
-# NOTE: HA 2024.4.1 to 2024.4.3 had some internal modbus bugs. These are fixed in 2024.4.4
-
 [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2)
 
 # Contents
