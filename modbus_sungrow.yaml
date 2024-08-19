@@ -361,8 +361,8 @@ modbus:
 
 
       # https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?postID=3324464#post3324464
-      - name: Meter voltage phase A
-        unique_id: sg_meter_voltage_phase_a
+      - name: Meter phase A voltage 
+        unique_id: sg_meter_phase_a_voltage
         device_address: !secret sungrow_modbus_slave
         address: 5740 # reg 5741
         input_type: input
@@ -374,8 +374,8 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
-      - name: Meter voltage phase B
-        unique_id: sg_meter_voltage_phase_b
+      - name: Meter phase B voltage
+        unique_id: sg_meter_phase_b_voltage
         device_address: !secret sungrow_modbus_slave
         address: 5741 # reg 5742
         input_type: input
@@ -387,8 +387,8 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
-      - name: Meter voltage phase C
-        unique_id: sg_meter_voltage_phase_c
+      - name: Meter phase C voltage
+        unique_id: sg_meter_phase_c_voltage
         device_address: !secret sungrow_modbus_slave
         address: 5742 # reg 5743
         input_type: input
