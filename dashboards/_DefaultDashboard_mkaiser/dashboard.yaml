@@ -4,6 +4,11 @@ views:
     cards:
       - type: entities
         entities:
+          - entity: sensor.sungrow_inverter_state
+          - entity: sensor.ems_mode_selection
+          - entity: sensor.battery_forced_charge_discharge_cmd
+      - type: entities
+        entities:
           - entity: sensor.total_dc_power
           - entity: sensor.load_power
           - entity: sensor.export_power
@@ -14,7 +19,9 @@ views:
       - type: entities
         entities:
           - entity: sensor.daily_pv_generation
+          - entity: sensor.daily_pv_generation_battery_discharge
           - entity: sensor.daily_consumed_energy
+          - entity: sensor.daily_consumed_energy_filtered
           - entity: sensor.daily_imported_energy
           - entity: sensor.daily_exported_energy
           - entity: sensor.total_consumed_energy
@@ -89,15 +96,6 @@ views:
       - type: entities
         entities:
           - entity: sensor.load_power
-          - entity: sensor.phase_a_voltage
-          - entity: sensor.phase_a_current
-          - entity: sensor.phase_a_power
-          - entity: sensor.phase_b_voltage
-          - entity: sensor.phase_b_current
-          - entity: sensor.phase_b_power
-          - entity: sensor.phase_c_voltage
-          - entity: sensor.phase_c_current
-          - entity: sensor.phase_c_power
           - entity: sensor.meter_phase_a_active_power
           - entity: sensor.meter_phase_b_active_power
           - entity: sensor.meter_phase_c_active_power
@@ -126,15 +124,16 @@ views:
           - entity: sensor.daily_exported_energy
           - entity: sensor.daily_battery_charge
           - entity: sensor.daily_imported_energy
-          - entity: sensor.total_pv_generation
           - entity: sensor.total_direct_energy_consumption
           - entity: sensor.total_pv_generation_battery_discharge
           - entity: sensor.total_exported_energy_from_pv
           - entity: sensor.total_battery_charge_from_pv
           - entity: sensor.total_battery_charge
           - entity: sensor.total_battery_discharge
+          - entity: sensor.total_pv_generation
           - entity: sensor.total_imported_energy
           - entity: sensor.total_exported_energy
+          - entity: sensor.total_consumed_energy
         title: Energy
       - type: entities
         entities:
@@ -202,14 +201,33 @@ views:
         title: Battery SoC last 60 days
       - chart_type: line
         period: day
-        days_to_show: 180
+        days_to_show: 360
         type: statistics-graph
         entities:
           - sensor.battery_level
         stat_types:
+          - mean
           - min
           - max
-        title: Battery SoC last 180 days
+        title: Battery SoC last 360 days
+        logarithmic_scale: false
+        hide_legend: false
+      - type: entities
+        entities:
+          - entity: sensor.meter_active_power
+          - entity: sensor.meter_current_phase_a
+          - entity: sensor.meter_current_phase_b
+          - entity: sensor.meter_current_phase_c
+          - entity: sensor.meter_phase_a_active_power
+          - entity: sensor.meter_phase_b_active_power
+          - entity: sensor.meter_phase_c_active_power
+          - entity: sensor.meter_voltage_phase_a
+          - entity: sensor.meter_voltage_phase_b
+          - entity: sensor.meter_voltage_phase_c
+          - entity: sensor.total_dc_power
+          - entity: sensor.load_power
+          - entity: sensor.battery_power_raw
+          - entity: sensor.export_power
   - title: EMS Control
     icon: mdi:solar-power
     cards:
@@ -217,13 +235,13 @@ views:
         entities:
           - entity: input_select.set_sg_inverter_run_mode
           - entity: sensor.sungrow_inverter_state
+          - entity: input_select.set_sg_ems_mode
           - entity: sensor.ems_mode_selection
+          - entity: input_select.set_sg_battery_forced_charge_discharge_cmd
           - entity: sensor.battery_forced_charge_discharge_cmd
-        title: Inverter State
+        title: Inverter State & EMS Settings
       - type: entities
         entities:
-          - entity: input_select.set_sg_ems_mode
-          - entity: input_select.set_sg_battery_forced_charge_discharge_cmd
           - entity: input_number.set_sg_min_soc
           - entity: input_number.set_sg_max_soc
           - entity: input_number.set_sg_reserved_soc_for_backup
@@ -232,7 +250,7 @@ views:
           - entity: input_number.set_sg_battery_max_discharge_power
           - entity: input_number.set_sg_battery_charging_start_power
           - entity: input_number.set_sg_battery_discharging_start_power
-        title: EMS & Battery Settings
+        title: Battery Settings
         state_color: false
         show_header_toggle: true
       - type: entities
