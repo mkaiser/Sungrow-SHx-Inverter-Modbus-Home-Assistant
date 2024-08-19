@@ -14,7 +14,7 @@ An *easy-to-use YAML-based integration* for several Sungrow inverters for Home A
 - [4. Visual impressions](#4-visual-impressions)
 - [5. Tested configurations](#5-tested-configurations)
 - [6. Status and future work](#6-status-and-future-work)
-- [7. Most important of all](#7-most-important-of-all)
+- [7. Contribution](#7-contribution)
 
 
 # 1. Overview
@@ -37,7 +37,7 @@ The documentation covers following topics:
 
 [Usage Instructions](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/wiki/FAQ:-How-to-use)
 
-[FAQ, Troubleshooting, Known Issues](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/wiki/FAQ:-Problems-with-the-connection)
+[Wiki: FAQ, Troubleshooting, Known Issues](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/wiki/)
 
 ## 3. Support
 
