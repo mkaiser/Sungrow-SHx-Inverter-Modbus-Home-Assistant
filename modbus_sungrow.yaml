@@ -265,45 +265,6 @@ modbus:
         scale: 1
         scan_interval: 10
 
-      - name: Meter phase A current grid
-        unique_id: sg_meter_phase_a_current_grid
-        device_address: !secret sungrow_modbus_slave
-        address: 5743 # reg 5742
-        input_type: input
-        data_type: uint16
-        precision: 0
-        unit_of_measurement: A
-        device_class: Current
-        state_class: measurement
-        scale: 0.01
-        scan_interval: 10
-
-      - name: Meter phase B current grid
-        unique_id: sg_meter_phase_b_current_grid
-        device_address: !secret sungrow_modbus_slave
-        address: 5744 # reg 5743
-        input_type: input
-        data_type: uint16
-        precision: 0
-        unit_of_measurement: A
-        device_class: Current
-        state_class: measurement
-        scale: 0.01
-        scan_interval: 10
-
-      - name: Meter phase C current grid
-        unique_id: sg_meter_phase_c_current_grid
-        device_address: !secret sungrow_modbus_slave
-        address: 5745 # reg 5744
-        input_type: input
-        data_type: uint16
-        precision: 0
-        unit_of_measurement: A
-        device_class: Current
-        state_class: measurement
-        scale: 0.01
-        scan_interval: 10
-
       - name: BDC rated power
         unique_id: sg_bdc_rated_power
         device_address: !secret sungrow_modbus_slave
@@ -396,6 +357,86 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
+        scan_interval: 10
+
+
+      # https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?postID=3324464#post3324464
+      - name: Meter voltage phase A
+        unique_id: sg_meter_voltage_phase_a
+        device_address: !secret sungrow_modbus_slave
+        address: 5740 # reg 5741
+        input_type: input
+        data_type: int16
+        precision: 1
+        unit_of_measurement: V
+        device_class: voltage
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+
+      - name: Meter voltage phase B
+        unique_id: sg_meter_voltage_phase_b
+        device_address: !secret sungrow_modbus_slave
+        address: 5741 # reg 5742
+        input_type: input
+        data_type: int16
+        precision: 1
+        unit_of_measurement: V
+        device_class: voltage
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+
+      - name: Meter voltage phase C
+        unique_id: sg_meter_voltage_phase_c
+        device_address: !secret sungrow_modbus_slave
+        address: 5742 # reg 5743
+        input_type: input
+        data_type: int16
+        precision: 1
+        unit_of_measurement: V
+        device_class: voltage
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+        
+      - name: Meter phase A current
+        unique_id: sg_meter_phase_a_current
+        device_address: !secret sungrow_modbus_slave
+        address: 5743 # reg 5742
+        input_type: input
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: A
+        device_class: Current
+        state_class: measurement
+        scale: 0.01
+        scan_interval: 10
+
+      - name: Meter phase B current
+        unique_id: sg_meter_phase_b_current
+        device_address: !secret sungrow_modbus_slave
+        address: 5744 # reg 5743
+        input_type: input
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: A
+        device_class: Current
+        state_class: measurement
+        scale: 0.01
+        scan_interval: 10
+
+      - name: Meter phase C current
+        unique_id: sg_meter_phase_c_current
+        device_address: !secret sungrow_modbus_slave
+        address: 5745 # reg 5744
+        input_type: input
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: A
+        device_class: Current
+        state_class: measurement
+        scale: 0.01
         scan_interval: 10
 
       # Start monthly PV generation
