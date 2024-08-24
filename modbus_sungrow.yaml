@@ -9,7 +9,9 @@ modbus:
   - name: SungrowSHx
     type: tcp
     host: !secret sungrow_modbus_host_ip
-    port: !secret sungrow_modbus_port
+    port: !secret sungrow_modbus_port  
+    delay: 5
+    timeout: 10
     sensors:
       - name: Sungrow device type code
         unique_id: sg_dev_code
