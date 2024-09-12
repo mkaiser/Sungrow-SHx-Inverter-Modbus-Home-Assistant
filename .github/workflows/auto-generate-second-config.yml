@@ -1,4 +1,4 @@
-name: Auto-generate modbus_sungrow_2.yaml for second inverter
+name: Auto-generate second configuration file
 
 on:
   push:
@@ -12,18 +12,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Copy and Modify YAML for Second Inverter
+      - name: Copy YAML file
+        run: cp modbus_sungrow.yaml modbus_sungrow_2.yaml
+
+      - name: Modify YAML for Second Inverter
         run: |
-          cp modbus_sungrow.yaml modbus_sungrow_2.yaml
           sed -i 's/sungrow_modbus_host_ip/sungrow_modbus_host_ip_inv2/g; \
           s/sungrow_modbus_port/sungrow_modbus_port_inv2/g; \
           s/sungrow_modbus_slave/sungrow_modbus_slave_inv2/g; \
           s/set_sg_/set_sg_2_/g; \
           s/sg_set_/sg_2_set_/g; \
-          s/- id: "automation_sungrow_global_/- id: "automation_sungrow_global_2_/g; \
-          s/- id: "automation_sungrow_inverter_/- id: "automation_sungrow_inverter_2_/g; \
+          s/- id: "automation_sungrow_global_/- id: "automation_sungrow_global_2/g; \
+          s/- id: "automation_sungrow_inverter_/- id: "automation_sungrow_inverter_2/g; \
           s/alias: "sungrow inverter/alias: "sungrow inverter 2/g' modbus_sungrow_2.yaml
-          
+
       - name: Append _2 to unique_ids
         run: |
           sed -i 's/\(unique_id:.*\)/\1_2/' modbus_sungrow_2.yaml
