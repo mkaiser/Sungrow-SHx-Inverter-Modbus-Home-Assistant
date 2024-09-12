@@ -4,7 +4,7 @@
 # last update: 2024-08-19
 #
 # Note: This YAML file will only work with Home Assistant >= 2023.10
-# test 5 to see if the github action does its job correctly. 
+# test 6 to see if the github action does its job correctly. 
 # see: https://github.com/ulfben/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/.github/workflows/auto-generate-second-config.yml
 
 modbus:
