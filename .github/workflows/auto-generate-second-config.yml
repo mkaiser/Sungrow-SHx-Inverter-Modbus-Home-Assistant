@@ -92,7 +92,7 @@ jobs:
          s/sensor.total_pv_generation\b/sensor.total_pv_generation_2/g' modbus_sungrow_2.yaml
 
       - name: Upload second configuration
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: modbus_sungrow_2
           path: modbus_sungrow_2.yaml
