@@ -1,4 +1,4 @@
-name: Auto-generate configuration file for second inverter
+name: Auto-generate modbus_sungrow_2.yaml for second inverter
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Copy and Modify YAML for Second Inverter
         run: |
