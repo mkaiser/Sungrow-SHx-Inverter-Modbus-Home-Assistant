@@ -4,6 +4,7 @@
 # last update: 2024-08-19
 #
 # Note: This YAML file will only work with Home Assistant >= 2023.10
+# testing if the github action runs on commits of this file
 
 modbus:
   - name: SungrowSHx
