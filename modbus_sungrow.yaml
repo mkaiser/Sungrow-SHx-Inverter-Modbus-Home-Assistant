@@ -1669,7 +1669,7 @@ template:
           and not is_state('sensor.total_dc_power', 'unavailable') 
           }}
         state: >-
-          {% if states('sensor.running_state')|is_number %}
+          {% if states('sensor.running_state')|is_number and states('sensor.running_state')|float > 0 %}
             {# use available sensor running_state #}
             {{ states('sensor.running_state')|int |bitwise_and(0x1) }}
           {% else %} 
@@ -1708,7 +1708,7 @@ template:
             )
           }}
         state: >-
-          {% if states('sensor.running_state')|is_number %}
+          {% if states('sensor.running_state')|is_number and states('sensor.running_state')|float > 0 %}
             {# use available sensor running_state #}
             {% if states('sensor.running_state')|int|bitwise_and(0x2) > 0 %}
               on
@@ -1770,7 +1770,7 @@ template:
             )
           }}
         state: >-
-          {% if states('sensor.running_state')|is_number %}
+          {% if states('sensor.running_state')|is_number and states('sensor.running_state')|float > 0 %}
             {# use available sensor running_state #}
             {% if states('sensor.running_state')|int|bitwise_and(0x4) > 0 %}
               on
@@ -1826,7 +1826,7 @@ template:
           and not is_state('sensor.export_power_raw', 'unavailable') 
           }}
         state: >-
-          {% if states('sensor.running_state')|is_number %}
+          {% if states('sensor.running_state')|is_number and states('sensor.running_state')|float > 0 %}
             {# use available sensor running_state #}
             {{ states('sensor.running_state')|int|bitwise_and(0x10) > 0 }}
           {% else %} 
@@ -1859,7 +1859,7 @@ template:
           and not is_state('sensor.running_state', 'unavailable')
           }}
         state: >-
-          {% if states('sensor.running_state')|is_number %}
+          {% if states('sensor.running_state')|is_number and states('sensor.running_state')|float > 0 %}
             {# use available sensor running_state #}
             {{ states('sensor.running_state')|int|bitwise_and(0x20) > 0 }}
           {% else %} 
