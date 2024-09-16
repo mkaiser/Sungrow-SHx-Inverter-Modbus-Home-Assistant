@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2024-08-16
+# last update: 2024-09-16
 #
 # Note: This YAML file will only work with Home Assistant >= 2023.10
 
@@ -20,14 +20,15 @@ modbus:
         count: 10
         scan_interval: 86400
 
-      - name: Sungrow battery serial
-        unique_id: sg_battery_serial
-        device_address: !secret sbr_modbus_slave # Usually 200, only modbus-port, not via Winet-S
-        address: 10710 # reg 10711
-        input_type: input
-        data_type: string
-        count: 10
-        scan_interval: 86400
+# for Sungrow batteries only
+#      - name: Sungrow battery serial
+#        unique_id: sg_battery_serial
+#        device_address: !secret sbr_modbus_slave # Usually 200, only modbus-port, not via Winet-S
+#        address: 10710 # reg 10711
+#        input_type: input
+#        data_type: string
+#        count: 10
+#        scan_interval: 86400
 
       - name: Sungrow device type code
         unique_id: sg_dev_code
