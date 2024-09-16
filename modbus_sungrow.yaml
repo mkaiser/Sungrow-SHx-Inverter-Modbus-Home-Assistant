@@ -13,6 +13,25 @@ modbus:
     delay: 5
     timeout: 10
     sensors:
+      - name: Sungrow inverter serial
+        unique_id: sg_inverter_serial
+        device_address: !secret sungrow_modbus_slave
+        address: 4989 # reg 4990
+        input_type: input
+        data_type: string
+        count: 10
+        scan_interval: 86400
+
+# for Sungrow batteries only
+#      - name: Sungrow battery serial
+#        unique_id: sg_battery_serial
+#        device_address: !secret sbr_modbus_slave # Usually 200, only modbus-port, not via Winet-S
+#        address: 10710 # reg 10711
+#        input_type: input
+#        data_type: string
+#        count: 10
+#        scan_interval: 86400
+
       - name: Sungrow device type code
         unique_id: sg_dev_code
         device_address: !secret sungrow_modbus_slave
