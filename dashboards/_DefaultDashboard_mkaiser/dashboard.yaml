@@ -96,6 +96,16 @@ views:
       - type: entities
         entities:
           - entity: sensor.load_power
+          - entity: sensor.phase_a_voltage
+          - entity: sensor.phase_a_current
+          - entity: sensor.phase_a_power
+          - entity: sensor.phase_b_voltage
+          - entity: sensor.phase_b_current
+          - entity: sensor.phase_b_power
+          - entity: sensor.phase_c_voltage
+          - entity: sensor.phase_c_current
+          - entity: sensor.phase_c_power
+          - entity: sensor.meter_active_power
           - entity: sensor.meter_phase_a_active_power
           - entity: sensor.meter_phase_b_active_power
           - entity: sensor.meter_phase_c_active_power
@@ -212,22 +222,6 @@ views:
         title: Battery SoC last 360 days
         logarithmic_scale: false
         hide_legend: false
-      - type: entities
-        entities:
-          - entity: sensor.meter_active_power
-          - entity: sensor.meter_current_phase_a
-          - entity: sensor.meter_current_phase_b
-          - entity: sensor.meter_current_phase_c
-          - entity: sensor.meter_phase_a_active_power
-          - entity: sensor.meter_phase_b_active_power
-          - entity: sensor.meter_phase_c_active_power
-          - entity: sensor.meter_voltage_phase_a
-          - entity: sensor.meter_voltage_phase_b
-          - entity: sensor.meter_voltage_phase_c
-          - entity: sensor.total_dc_power
-          - entity: sensor.load_power
-          - entity: sensor.battery_power_raw
-          - entity: sensor.export_power
   - title: EMS Control
     icon: mdi:solar-power
     cards:
