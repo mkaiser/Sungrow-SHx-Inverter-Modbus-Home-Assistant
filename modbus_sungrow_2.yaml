@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2024-08-19
+# last update: 2024-09-21
 #
 # Note: This YAML file will only work with Home Assistant >= 2023.10
 # test 7 to see if the github action does its job correctly. 
@@ -12,7 +12,29 @@ modbus:
     type: tcp
     host: !secret sungrow_modbus_host_ip_inv2
     port: !secret sungrow_modbus_port_inv2
+    delay: 5
+    timeout: 10
+
     sensors:
+      - name: Sungrow inverter serial 2
+        unique_id: sg_inverter_serial_2
+        device_address: !secret sungrow_modbus_slave_inv2
+        address: 4989 # reg 4990
+        input_type: input
+        data_type: string
+        count: 10
+        scan_interval: 600
+
+      # for Sungrow batteries only
+      #      - name: Sungrow battery serial
+      #        unique_id: sg_battery_serial_2
+      #        device_address: !secret sbr_modbus_slave # Usually 200, only modbus-port, not via Winet-S
+      #        address: 10710 # reg 10711
+      #        input_type: input
+      #        data_type: string
+      #        count: 10
+      #        scan_interval: 86400
+
       - name: Sungrow device type code 2
         unique_id: sg_dev_code_2
         device_address: !secret sungrow_modbus_slave_inv2
@@ -362,7 +384,7 @@ modbus:
         scan_interval: 10
 
       # https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?postID=3324464#post3324464
-      - name: Meter phase A voltage  2
+      - name: Meter phase A voltage 2
         unique_id: sg_meter_phase_a_voltage_2
         device_address: !secret sungrow_modbus_slave_inv2
         address: 5740 # reg 5741
@@ -388,7 +410,7 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
-      - name: Meter phase C voltage  2
+      - name: Meter phase C voltage 2
         unique_id: sg_meter_phase_c_voltage_2
         device_address: !secret sungrow_modbus_slave_inv2
         address: 5742 # reg 5743
@@ -401,7 +423,7 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
-      - name: Meter phase A current  2
+      - name: Meter phase A current 2
         unique_id: sg_meter_phase_a_current_2
         device_address: !secret sungrow_modbus_slave_inv2
         address: 5743 # reg 5744
@@ -427,7 +449,7 @@ modbus:
         scale: 0.01
         scan_interval: 10
 
-      - name: Meter phase C current  2
+      - name: Meter phase C current 2
         unique_id: sg_meter_phase_c_current_2
         device_address: !secret sungrow_modbus_slave_inv2
         address: 5745 # reg 5746
@@ -1671,7 +1693,7 @@ template:
           and not is_state('sensor.total_dc_power_2', 'unavailable') 
           }}
         state: >-
-          {% if states('sensor.running_state_2')|is_number %}
+          {% if states('sensor.running_state_2')|is_number and states('sensor.running_state_2')|float > 0 %}
             {# use available sensor.running_state_2 #}
             {{ states('sensor.running_state_2')|int |bitwise_and(0x1) }}
           {% else %} 
@@ -1710,7 +1732,7 @@ template:
             )
           }}
         state: >-
-          {% if states('sensor.running_state_2')|is_number %}
+          {% if states('sensor.running_state_2')|is_number and states('sensor.running_state_2')|float > 0 %}
             {# use available sensor.running_state_2 #}
             {% if states('sensor.running_state_2')|int|bitwise_and(0x2) > 0 %}
               on
@@ -1772,7 +1794,7 @@ template:
             )
           }}
         state: >-
-          {% if states('sensor.running_state_2')|is_number %}
+          {% if states('sensor.running_state_2')|is_number and states('sensor.running_state_2')|float > 0 %}
             {# use available sensor.running_state_2 #}
             {% if states('sensor.running_state_2')|int|bitwise_and(0x4) > 0 %}
               on
@@ -1828,7 +1850,7 @@ template:
           and not is_state('sensor.export_power_raw_2', 'unavailable') 
           }}
         state: >-
-          {% if states('sensor.running_state_2')|is_number %}
+          {% if states('sensor.running_state_2')|is_number and states('sensor.running_state_2')|float > 0 %}
             {# use available sensor.running_state_2 #}
             {{ states('sensor.running_state_2')|int|bitwise_and(0x10) > 0 }}
           {% else %} 
@@ -1861,7 +1883,7 @@ template:
           and not is_state('sensor.running_state_2', 'unavailable')
           }}
         state: >-
-          {% if states('sensor.running_state_2')|is_number %}
+          {% if states('sensor.running_state_2')|is_number and states('sensor.running_state_2')|float > 0 %}
             {# use available sensor.running_state_2 #}
             {{ states('sensor.running_state_2')|int|bitwise_and(0x20) > 0 }}
           {% else %} 
@@ -2581,7 +2603,7 @@ automation:
           entity_id: input_select.set_sg_2_inverter_run_mode
         data:
           option: >
-            {% if is_state('sensor.sungrow_inverter_state_2', "Stop") %}
+            {% if is_state('sensor.sungrow_inverter_state_2', "Stop") or is_state('sensor.sungrow_inverter_state_2', "Shutdown") %}
               Shutdown
             {% else %}
               Enabled
