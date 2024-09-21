@@ -1,0 +1,102 @@
+name: Auto-generate second configuration file
+
+on:
+  push:
+    paths:
+      - 'modbus_sungrow.yaml'
+
+jobs:
+  generate-second-config:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy YAML file
+        run: cp modbus_sungrow.yaml modbus_sungrow_second_inverter_experimental.yaml
+
+      - name: Modify YAML for Second Inverter
+        run: |
+          sed -i 's/sungrow_modbus_host_ip/sungrow_modbus_host_ip_inv2/g' modbus_sungrow_second_inverter_experimental.yaml
+          sed -i 's/sungrow_modbus_port/sungrow_modbus_port_inv2/g' modbus_sungrow_second_inverter_experimental.yaml
+          sed -i 's/sungrow_modbus_slave/sungrow_modbus_slave_inv2/g' modbus_sungrow_second_inverter_experimental.yaml
+          sed -i 's/set_sg_/set_sg_2_/g' modbus_sungrow_second_inverter_experimental.yaml
+          sed -i 's/sg_set_/sg_2_set_/g' modbus_sungrow_second_inverter_experimental.yaml
+          sed -i 's/- id: "automation_sungrow_global_/- id: "automation_sungrow_global_2/g' modbus_sungrow_second_inverter_experimental.yaml
+          sed -i 's/- id: "automation_sungrow_inverter_/- id: "automation_sungrow_inverter_2/g' modbus_sungrow_second_inverter_experimental.yaml
+          sed -i 's/alias: "sungrow inverter/alias: "sungrow inverter 2/g' modbus_sungrow_second_inverter_experimental.yaml
+
+      - name: Append _2 to unique_ids
+        run: |
+          sed -i 's/\(unique_id:.*\)/\1_2/' modbus_sungrow_second_inverter_experimental.yaml
+
+      - name: Add '2' to all names
+        run: |
+          sed -i -E 's/(^\s*- name:\s*)(\"[^\"]*\"|[^\r\n#]*)(\s*#.*)?$/\1\2 2\3/' modbus_sungrow_second_inverter_experimental.yaml
+          
+      - name: Clean-up quoted names
+        run: |
+          sed -i 's/" 2/ 2"/g' modbus_sungrow_second_inverter_experimental.yaml
+          
+      - name: Append _2 to all sensors 
+        run: |
+         sed -i 's/binary_sensor.battery_charging\b/binary_sensor.battery_charging_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/binary_sensor.battery_discharging\b/binary_sensor.battery_discharging_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/binary_sensor.exporting_power\b/binary_sensor.exporting_power_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/binary_sensor.importing_power\b/binary_sensor.importing_power_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/binary_sensor.pv_generating\b/binary_sensor.pv_generating_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.battery_capacity\b/sensor.battery_capacity_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.battery_discharging_start_power\b/sensor.battery_discharging_start_power_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.battery_forced_charge_discharge_cmd\b/sensor.battery_forced_charge_discharge_cmd_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.battery_forced_charge_discharge_cmd_raw\b/sensor.battery_forced_charge_discharge_cmd_raw_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.battery_forced_charge_discharge_power\b/sensor.battery_forced_charge_discharge_power_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.battery_level\b/sensor.battery_level_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.battery_level_nominal\b/sensor.battery_level_nominal_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.battery_max_charge_power\b/sensor.battery_max_charge_power_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.battery_max_discharge_power\b/sensor.battery_max_discharge_power_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.battery_power_raw\b/sensor.battery_power_raw_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.daily_battery_charge\b/sensor.daily_battery_charge_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.daily_battery_discharge\b/sensor.daily_battery_discharge_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.daily_exported_energy\b/sensor.daily_exported_energy_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.daily_imported_energy\b/sensor.daily_imported_energy_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.daily_pv_generation\b/sensor.daily_pv_generation_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.ems_mode_selection\b/sensor.ems_mode_selection_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.ems_mode_selection_raw\b/sensor.ems_mode_selection_raw_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.export_power_limit\b/sensor.export_power_limit_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.export_power_limit_mode\b/sensor.export_power_limit_mode_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.export_power_limit_mode_raw\b/sensor.export_power_limit_mode_raw_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.export_power_raw\b/sensor.export_power_raw_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.global_mpp_scan_manual_raw\b/sensor.global_mpp_scan_manual_raw_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.load_power\b/sensor.load_power_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.max_soc\b/sensor.max_soc_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.meter_active_power_raw\b/sensor.meter_active_power_raw_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.meter_phase_a_active_power_raw\b/sensor.meter_phase_a_active_power_raw_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.meter_phase_b_active_power_raw\b/sensor.meter_phase_b_active_power_raw_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.meter_phase_c_active_power_raw\b/sensor.meter_phase_c_active_power_raw_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.min_soc\b/sensor.min_soc_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.mppt1_current\b/sensor.mppt1_current_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.mppt1_voltage\b/sensor.mppt1_voltage_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.mppt2_current\b/sensor.mppt2_current_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.mppt2_voltage\b/sensor.mppt2_voltage_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.phase_a_voltage\b/sensor.phase_a_voltage_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.phase_b_voltage\b/sensor.phase_b_voltage_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.phase_c_voltage\b/sensor.phase_c_voltage_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.reserved_soc_for_backup\b/sensor.reserved_soc_for_backup_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.running_state\b/sensor.running_state_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.sungrow_device_type_code\b/sensor.sungrow_device_type_code_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.sungrow_inverter_state\b/sensor.sungrow_inverter_state_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.system_state\b/sensor.system_state_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.total_battery_charge\b/sensor.total_battery_charge_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.total_battery_discharge\b/sensor.total_battery_discharge_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.total_dc_power\b/sensor.total_dc_power_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.total_exported_energy\b/sensor.total_exported_energy_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.total_imported_energy\b/sensor.total_imported_energy_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.total_pv_generation\b/sensor.total_pv_generation_2/g' modbus_sungrow_second_inverter_experimental.yaml
+
+      - name: Commit and push the new file
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Action"
+          git add modbus_sungrow_second_inverter_experimental.yaml
+          git commit -m "Auto-generate modbus_sungrow_second_inverter_experimental.yaml"
+          git push
