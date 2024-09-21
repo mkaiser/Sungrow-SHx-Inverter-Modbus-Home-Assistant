@@ -41,11 +41,13 @@ The documentation covers following topics:
 
 ## 3. Support
 
+My personal time is quiet limited, but there are several nice people here who like to help. 
+
 If you any kind of assistance, you have three options:
 
 a) Use the [github discussion](../../discussions) 
 
-b) (new! Created in July 2023) Join the Discord Channel [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2).
+b) Join the Discord Channel [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2).
 
 c) Only if code-related (bugs / contributions): Open an  [github issue](../../issue) or isse a pullrequest
 
@@ -99,9 +101,9 @@ partially working
 3. If you made a nice visualization - let us know! --> [github discussions](../../discussions)
 4. This is meant to be a simple, straightforward YAML-based integration. If you need more than this, I recommend having a look at the SunGather project: https://github.com/bohdan-s
 
-## 7. Contribution
+## 7. Contributions
 We are happy to share our experiences - feel encouraged to share yours with us, too! 
 
-If you have any questions, feature requests, found any bugs or have some hints how to update the documentation, a low-threshold way is to join the [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2) and just ask
+If you have any questions, feature requests, found any bugs or have some hints how to update the documentation, a low-threshold way is to join the [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2) and just ask.
 
 **Thanks to all the people, who are actively contributing to this project! Special thanks to @Louisbertelsmann, dylan09 and elektrinis for their efforts**
