@@ -14,7 +14,8 @@ An *easy-to-use YAML-based integration* for several Sungrow inverters for Home A
 - [4. Visual impressions](#4-visual-impressions)
 - [5. Tested configurations](#5-tested-configurations)
 - [6. Status and future work](#6-status-and-future-work)
-- [7. Contribution](#7-contribution)
+- [7. Contributions](#7-contributions)
+- [8. Related work](#8-related-work)
 
 
 # 1. Overview
@@ -107,3 +108,9 @@ We are happy to share our experiences - feel encouraged to share yours with us, 
 If you have any questions, feature requests, found any bugs or have some hints how to update the documentation, a low-threshold way is to join the [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2) and just ask.
 
 **Thanks to all the people, who are actively contributing to this project! Special thanks to @Louisbertelsmann, dylan09 and elektrinis for their efforts**
+
+
+## 8. Related work
+Got a Sungrow Wallbox? Check https://github.com/Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant
+
+
