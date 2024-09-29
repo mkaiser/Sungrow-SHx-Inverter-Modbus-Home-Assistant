@@ -111,6 +111,7 @@ If you have any questions, feature requests, found any bugs or have some hints h
 
 
 ## 8. Related work
-Got a Sungrow Wallbox? Check https://github.com/Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant
+- Integrate a **Sungrow Wallbox**? Check https://github.com/Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant
+- Integrate your inverter to **EVCC**? Check https://github.com/Hoellenwesen/home-assistant-configurations
 
 
