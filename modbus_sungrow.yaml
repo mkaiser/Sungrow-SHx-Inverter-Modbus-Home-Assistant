@@ -2185,7 +2185,7 @@ template:
           {% endif %}
 
       - name: Export power limit mode
-        unique_id: export_power_limit_mode
+        unique_id: sg_export_power_limit_mode
         availability: "{{ not is_state('sensor.export_power_limit_mode_raw', 'unavailable') }}"
         # TODO: test state_class with enum
         # state_class: measurement
