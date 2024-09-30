@@ -2428,7 +2428,7 @@ template:
               + states('sensor.daily_imported_energy')|float 
               - states('sensor.daily_battery_charge')|float 
               + states('sensor.daily_battery_discharge')|float
-            ) 
+            )|int
           }}
 
       - name: Total consumed energy
