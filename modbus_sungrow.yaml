@@ -1617,7 +1617,7 @@ modbus:
       - name: Battery capacity
         unique_id: sg_battery_capacity
         device_address: !secret sungrow_modbus_slave
-        address: 33048 # reg 33049
+        address: 13038 # reg 13039 changed from reg 33048
         input_type: holding
         data_type: uint16
         precision: 1
