@@ -2057,9 +2057,9 @@ template:
             Restarting
           {% elif ((states('sensor.system_state') |int) == 0x4000) %}
             External EMS mode
-          {% elif ((states('sensor.system_state') |int) == in [0x55000,0x0100]) %}
+          {% elif ((states('sensor.system_state') |int) in [0x55000,0x0100]) %}
             Fault
-          {% elif ((states('sensor.system_state') |int) == in [0x8000,0x0001]) %}
+          {% elif ((states('sensor.system_state') |int) in [0x8000,0x0001]) %}
             Stop
           {% elif ((states('sensor.system_state') |int) == 0x8100) %}
             De-rating Running
@@ -2185,7 +2185,7 @@ template:
           {% endif %}
 
       - name: Export power limit mode
-        unique_id: export_power_limit_mode
+        unique_id: sg_export_power_limit_mode
         availability: "{{ not is_state('sensor.export_power_limit_mode_raw', 'unavailable') }}"
         # TODO: test state_class with enum
         # state_class: measurement

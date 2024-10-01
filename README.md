@@ -22,7 +22,7 @@ An *easy-to-use YAML-based integration* for several Sungrow inverters for Home A
 
 This integration lets you gather sensor data and control the EMS (Energy Management System) of a wide range of Sungrow inverters, including, but not limited to: SH3.6RS, SH4.6RS, SH5.0RS, SH5.0RT, SH6.0RS, SH8.0RT, SH8.0RT-V112, SH6.0RT, SH10RT, SH10RT-V112, SH5K-20, SH3K6, SH4K6, SH5K-V13, SH5K-30. A battery is not required, but several sensors will not be available without one.
 
-Ensure, that you connected the inverter to the Home Assistant network using the **internal LAN** port. The WiNet Ethernet port and the WiNet WLAN are only partially working and we cannot fix this! (==> no support, sorry :/ )
+If avaliable, ensure, that you connected the inverter to the Home Assistant network using the **internal LAN** port. The WiNet Ethernet port and the WiNet WLAN are only partially working and we cannot fix this! (sungrow winet programming ==> no support, sorry :/ )
 
 ![Overview](doc/images/overview_modbus_connection.drawio.svg)
 
@@ -42,7 +42,7 @@ The documentation covers following topics:
 
 ## 3. Support
 
-My personal time is quiet limited, but there are several nice people here who like to help. 
+My personal time is quite limited, but there are several nice people here who like to help. 
 
 If you any kind of assistance, you have three options:
 
@@ -94,7 +94,8 @@ Community-confirmed supported inverters (thank you for reporting!)
 - SH5K-30 (github, ajbatchelor)
 
 partially working
-- SH5.RS (home assistant community, Danirb80) via WiNetS: register running_state is not available. Created workarounds using template sensors
+- SH5.0RS (home assistant community, Danirb80) via WiNetS: register running_state is not available. Created workarounds using template sensors
+- SH6.0RS (github, icefest) largely working, occasionally needing to restart the winet
 
 ## 6. Status and future work 
 1. See [#38](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/38) for some kind of a roadmap
