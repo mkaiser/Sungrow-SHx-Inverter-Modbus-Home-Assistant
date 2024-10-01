@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2024-09-30
+# last update: 2024-10-01 (2)
 #
 # Note: This YAML file will only work with Home Assistant >= 2023.10
 
@@ -1613,11 +1613,13 @@ modbus:
         scale: 10
         scan_interval: 10
 
-      #undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
+
+      # was reg 33048 before as an undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
+      # but now it is in sungrow's datasheet
       - name: Battery capacity
         unique_id: sg_battery_capacity
         device_address: !secret sungrow_modbus_slave
-        address: 13038 # reg 13039 changed from reg 33048
+        address: 13038 # reg 13039 
         input_type: holding
         data_type: uint16
         precision: 1
