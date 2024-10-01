@@ -2059,9 +2059,9 @@ template:
             Restarting
           {% elif ((states('sensor.system_state') |int) == 0x4000) %}
             External EMS mode
-          {% elif ((states('sensor.system_state') |int) == in [0x55000,0x0100]) %}
+          {% elif ((states('sensor.system_state') |int) in [0x55000,0x0100]) %}
             Fault
-          {% elif ((states('sensor.system_state') |int) == in [0x8000,0x0001]) %}
+          {% elif ((states('sensor.system_state') |int) in [0x8000,0x0001]) %}
             Stop
           {% elif ((states('sensor.system_state') |int) == 0x8100) %}
             De-rating Running
@@ -2430,7 +2430,7 @@ template:
               + states('sensor.daily_imported_energy')|float 
               - states('sensor.daily_battery_charge')|float 
               + states('sensor.daily_battery_discharge')|float
-            ) 
+            )
           }}
 
       - name: Total consumed energy
@@ -2454,7 +2454,7 @@ template:
               + states('sensor.total_imported_energy')|float 
               - states('sensor.total_battery_charge')|float 
               + states('sensor.total_battery_discharge')|float
-            )|int 
+            )
           }}
 
 # getting input for Min and Max SoC
