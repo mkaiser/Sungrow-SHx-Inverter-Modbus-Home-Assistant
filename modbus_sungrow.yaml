@@ -334,7 +334,7 @@ modbus:
         unique_id: sg_total_backup_power
         address: 5725 # reg 5726
         input_type: input
-        data_type: int16
+        data_type: int32
         precision: 0
         unit_of_measurement: W
         device_class: power
