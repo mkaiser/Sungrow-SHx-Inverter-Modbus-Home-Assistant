@@ -439,7 +439,7 @@ modbus:
         address: 5743 # reg 5744
         input_type: input
         data_type: uint16
-        precision: 0
+        precision: 2
         unit_of_measurement: A
         device_class: current
         state_class: measurement
@@ -452,7 +452,7 @@ modbus:
         address: 5744 # reg 5745
         input_type: input
         data_type: uint16
-        precision: 0
+        precision: 2
         unit_of_measurement: A
         device_class: current
         state_class: measurement
@@ -465,7 +465,7 @@ modbus:
         address: 5745 # reg 5746
         input_type: input
         data_type: uint16
-        precision: 0
+        precision: 2
         unit_of_measurement: A
         device_class: current
         state_class: measurement
