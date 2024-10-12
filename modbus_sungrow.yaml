@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2024-10-12
+# last update: 2024-10-12 (2)
 #
 # Note: This YAML file will only work with Home Assistant >= 2023.10
 
@@ -1613,20 +1613,42 @@ modbus:
         scale: 10
         scan_interval: 10
 
+      #undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
+      # - name: Battery capacity
+      #   unique_id: sg_battery_capacity
+      #   device_address: !secret sungrow_modbus_slave
+      #   address: 33048 # reg 33049
+      #   input_type: holding
+      #   data_type: uint16
+      #   precision: 1
+      #   unit_of_measurement: kWh
+      #   device_class: energy_storage
+      #   scale: 0.01
+      #   scan_interval: 600
 
-      # was reg 33048 before as an undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
-      # but now it is in sungrow's datasheet
-      - name: Battery capacity
+      - name: Battery capacity # as in TI_20240924_Communication Protocol of Residential Hybrid Inverter-V1.1.5
         unique_id: sg_battery_capacity
         device_address: !secret sungrow_modbus_slave
-        address: 13038 # reg 13039 
-        input_type: holding
+        address: 5638 # reg 5639
+        input_type: input
         data_type: uint16
         precision: 1
         unit_of_measurement: kWh
         device_class: energy_storage
         scale: 0.01
-        scan_interval: 600
+        scan_interval: 10
+
+      # - name: Battery capacity
+      #   unique_id: sg_battery_capacity
+      #   device_address: !secret sungrow_modbus_slave
+      #   address: 13038 # reg 13039 changed from reg 33048
+      #   input_type: input # reg changed holding to input
+      #   data_type: uint16
+      #   precision: 1
+      #   unit_of_measurement: kWh
+      #   device_class: energy_storage
+      #   scale: 0.01
+      #   scan_interval: 600
 
       #undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Battery charging start power
@@ -2101,13 +2123,13 @@ template:
           {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D0F) %}
             SH5.0RS
           {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D10) %}
-          SH6.0RS
+            SH6.0RS
           {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D1A) %}
-          SH8.0RS
+            SH8.0RS
           {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D1B) %}
             SH10RS
           {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E00) %}
-          SH5.0RT
+            SH5.0RT
           {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E01) %}
             SH6.0RT
           {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E02) %}
@@ -2154,12 +2176,6 @@ template:
             SH20T-V11
           {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E28) %}
             SH25T-V11
-          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0D0E) %}
-            SH4.6RS 
-          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E26) %}
-            SH20T
-          {% elif ((states('sensor.sungrow_device_type_code') |int) == 0x0E28) %}
-            SH25T
           {% else %}
             Unknown device code: {{ '%0x' % (states('sensor.sungrow_device_type_code') |int)  }}
           {% endif %}
@@ -2430,7 +2446,7 @@ template:
               + states('sensor.daily_imported_energy')|float 
               - states('sensor.daily_battery_charge')|float 
               + states('sensor.daily_battery_discharge')|float
-            )
+            ) 
           }}
 
       - name: Total consumed energy
