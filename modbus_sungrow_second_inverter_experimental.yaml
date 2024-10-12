@@ -325,6 +325,18 @@ modbus:
         scale: 1
         scan_interval: 60
 
+      - name: Battery capacity  2# as in TI_20240924_Communication Protocol of Residential Hybrid Inverter-V1.1.5
+        unique_id: sg_battery_capacity_2
+        device_address: !secret sungrow_modbus_slave_inv2
+        address: 5638 # reg 5639
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: kWh
+        device_class: energy_storage
+        scale: 0.01
+        scan_interval: 600
+
       #https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?pageNo=13
       #Phase A Backup Power: 5723 S16 W (Backup Leistung Phase A)
       #Phase B Backup Power: 5724 S16 W (Backup Leistung Phase B)
@@ -1611,44 +1623,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 10
-        scan_interval: 10
-
-      #undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
-      # - name: Battery capacity
-      #   unique_id: sg_battery_capacity_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 33048 # reg 33049
-      #   input_type: holding
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy_storage
-      #   scale: 0.01
-      #   scan_interval: 600
-
-      - name: Battery capacity  2# as in TI_20240924_Communication Protocol of Residential Hybrid Inverter-V1.1.5
-        unique_id: sg_battery_capacity_2
-        device_address: !secret sungrow_modbus_slave_inv2
-        address: 5638 # reg 5639
-        input_type: input
-        data_type: uint16
-        precision: 1
-        unit_of_measurement: kWh
-        device_class: energy_storage
-        scale: 0.01
-        scan_interval: 10
-
-      # - name: Battery capacity
-      #   unique_id: sg_battery_capacity_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 13038 # reg 13039 changed from reg 33048
-      #   input_type: input # reg changed holding to input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy_storage
-      #   scale: 0.01
-      #   scan_interval: 600
+        scan_interval: 600
 
       #undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Battery charging start power 2
