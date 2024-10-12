@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2024-09-21
+# last update: 2024-10-01 (2)
 #
 # Note: This YAML file will only work with Home Assistant >= 2023.10
 
@@ -1613,11 +1613,13 @@ modbus:
         scale: 10
         scan_interval: 10
 
-      #undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
+
+      # was reg 33048 before as an undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
+      # but now it is in sungrow's datasheet
       - name: Battery capacity 2
         unique_id: sg_battery_capacity_2
         device_address: !secret sungrow_modbus_slave_inv2
-        address: 33048 # reg 33049
+        address: 13038 # reg 13039 
         input_type: holding
         data_type: uint16
         precision: 1
@@ -2057,9 +2059,9 @@ template:
             Restarting
           {% elif ((states('sensor.system_state_2') |int) == 0x4000) %}
             External EMS mode
-          {% elif ((states('sensor.system_state_2') |int) == in [0x55000,0x0100]) %}
+          {% elif ((states('sensor.system_state_2') |int) in [0x55000,0x0100]) %}
             Fault
-          {% elif ((states('sensor.system_state_2') |int) == in [0x8000,0x0001]) %}
+          {% elif ((states('sensor.system_state_2') |int) in [0x8000,0x0001]) %}
             Stop
           {% elif ((states('sensor.system_state_2') |int) == 0x8100) %}
             De-rating Running
@@ -2185,7 +2187,7 @@ template:
           {% endif %}
 
       - name: Export power limit mode 2
-        unique_id: export_power_limit_mode_2
+        unique_id: sg_export_power_limit_mode_2
         availability: "{{ not is_state('sensor.export_power_limit_mode_raw_2', 'unavailable') }}"
         # TODO: test state_class with enum
         # state_class: measurement
@@ -2428,7 +2430,7 @@ template:
               + states('sensor.daily_imported_energy_2')|float 
               - states('sensor.daily_battery_charge_2')|float 
               + states('sensor.daily_battery_discharge_2')|float
-            ) 
+            )
           }}
 
       - name: Total consumed energy 2
@@ -2452,7 +2454,7 @@ template:
               + states('sensor.total_imported_energy_2')|float 
               - states('sensor.total_battery_charge_2')|float 
               + states('sensor.total_battery_discharge_2')|float
-            )|int 
+            )
           }}
 
 # getting input for Min and Max SoC
