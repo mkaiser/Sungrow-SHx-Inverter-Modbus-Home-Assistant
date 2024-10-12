@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2024-09-21
+# last update: 2024-10-12
 #
 # Note: This YAML file will only work with Home Assistant >= 2023.10
 
