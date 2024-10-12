@@ -331,7 +331,7 @@ modbus:
         address: 5638 # reg 5639
         input_type: input
         data_type: uint16
-        precision: 1
+        precision: 2
         unit_of_measurement: kWh
         device_class: energy_storage
         scale: 0.01
