@@ -189,14 +189,14 @@ modbus:
       - name: Grid frequency
         unique_id: sg_grid_frequency
         device_address: !secret sungrow_modbus_slave
-        address: 5035 # reg 5036
+        address: 5241 # reg 5242
         input_type: input
         data_type: uint16
         precision: 2
         unit_of_measurement: "Hz"
         device_class: frequency
         state_class: measurement
-        scale: 0.1
+        scale: 0.01
         scan_interval: 10
 
       - name: Reactive power
