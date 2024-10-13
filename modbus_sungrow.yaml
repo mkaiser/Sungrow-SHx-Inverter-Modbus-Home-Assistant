@@ -1623,7 +1623,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 10
-        scan_interval: 600
+        scan_interval: 10
 
       #undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Battery charging start power
