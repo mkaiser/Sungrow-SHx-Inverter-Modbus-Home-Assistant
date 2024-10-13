@@ -1,0 +1,342 @@
+theme: Backend-selected
+title: andi test
+path: andi_test
+subview: false
+type: sidebar
+icon: mdi:monitor-dashboard
+badges:
+  - type: entity
+    show_name: false
+    show_state: false
+    show_icon: true
+    entity: sun.sun
+    icon: mdi:weather-sunset-up
+    color: ""
+    visibility:
+      - condition: screen
+        media_query: "(min-width: 0px) and (max-width: 1023px)"
+  - type: entity
+    show_name: false
+    show_state: false
+    show_icon: true
+    entity: binary_sensor.pv_generating
+    state_content: name
+    name: PV gen
+    icon: mdi:solar-power-variant-outline
+    visibility:
+      - condition: screen
+        media_query: "(min-width: 0px) and (max-width: 1023px)"
+    color: ""
+  - type: entity
+    show_name: false
+    show_state: false
+    show_icon: true
+    entity: binary_sensor.battery_charging
+    name: Bat +
+    icon: mdi:battery-arrow-up-outline
+    state_content: name
+    color: green
+    visibility:
+      - condition: state
+        entity: binary_sensor.battery_charging
+        state: "on"
+      - condition: and
+        conditions:
+          - condition: screen
+            media_query: "(min-width: 0px) and (max-width: 767px)"
+  - type: entity
+    show_name: false
+    show_state: false
+    show_icon: true
+    entity: binary_sensor.battery_discharging
+    show_entity_picture: false
+    name: Batt -
+    icon: mdi:battery-arrow-down
+    state_content: name
+    color: red
+    visibility:
+      - condition: state
+        entity: binary_sensor.battery_discharging
+        state: "on"
+      - condition: and
+        conditions:
+          - condition: screen
+            media_query: "(min-width: 0px) and (max-width: 767px)"
+  - type: entity
+    show_name: false
+    show_state: false
+    show_icon: true
+    entity: sensor.signed_battery_power
+    color: disabled
+    name: Batt
+    icon: mdi:battery
+    visibility:
+      - condition: state
+        entity: binary_sensor.battery_charging
+        state: "off"
+      - condition: and
+        conditions:
+          - condition: state
+            entity: binary_sensor.battery_discharging
+            state: "off"
+      - condition: and
+        conditions:
+          - condition: screen
+            media_query: "(min-width: 0px) and (max-width: 767px)"
+  - type: entity
+    show_name: false
+    show_state: false
+    show_icon: true
+    entity: binary_sensor.exporting_power
+    state_content: name
+    name: Export
+    icon: mdi:transmission-tower-export
+    color: light-green
+    visibility:
+      - condition: state
+        entity: binary_sensor.exporting_power
+        state: "on"
+      - condition: and
+        conditions:
+          - condition: screen
+            media_query: "(min-width: 0px) and (max-width: 767px)"
+  - type: entity
+    show_name: false
+    show_state: false
+    show_icon: true
+    entity: binary_sensor.importing_power
+    icon: mdi:transmission-tower-import
+    name: Import
+    state_content: name
+    color: deep-orange
+    visibility:
+      - condition: state
+        entity: binary_sensor.importing_power
+        state: "on"
+      - condition: and
+        conditions:
+          - condition: screen
+            media_query: "(min-width: 0px) and (max-width: 767px)"
+  - type: entity
+    show_name: false
+    show_state: false
+    show_icon: true
+    color: disabled
+    entity: sensor.export_power_raw
+    icon: mdi:transmission-tower
+    name: Export raw
+    visibility:
+      - condition: state
+        entity: binary_sensor.importing_power
+        state: "off"
+      - condition: and
+        conditions:
+          - condition: state
+            entity: binary_sensor.exporting_power
+            state: "off"
+      - condition: and
+        conditions:
+          - condition: screen
+            media_query: "(min-width: 0px) and (max-width: 767px)"
+  - type: entity
+    show_name: true
+    show_state: true
+    show_icon: true
+    entity: sun.sun
+    icon: mdi:weather-sunset-up
+    color: ""
+    show_entity_picture: false
+    visibility:
+      - condition: screen
+        media_query: "(min-width: 1024px)"
+  - type: entity
+    show_name: true
+    show_state: true
+    show_icon: true
+    entity: binary_sensor.pv_generating
+    state_content:
+      - state
+      - last_changed
+    name: PV generating
+    icon: mdi:solar-power-variant-outline
+    color: ""
+    show_entity_picture: false
+    visibility:
+      - condition: screen
+        media_query: "(min-width: 1024px)"
+  - type: entity
+    show_name: true
+    show_state: true
+    show_icon: true
+    entity: binary_sensor.battery_charging
+    name: Bat charging
+    icon: mdi:battery-arrow-up-outline
+    color: green
+    state_content:
+      - state
+      - last_changed
+    visibility:
+      - condition: screen
+        media_query: "(min-width: 768px)"
+  - type: entity
+    show_name: true
+    show_state: true
+    show_icon: true
+    entity: binary_sensor.battery_discharging
+    show_entity_picture: false
+    name: Batt discharging
+    icon: mdi:battery-arrow-down
+    color: red
+    state_content:
+      - state
+      - last_changed
+    visibility:
+      - condition: screen
+        media_query: "(min-width: 768px)"
+  - type: entity
+    show_name: true
+    show_state: true
+    show_icon: true
+    entity: binary_sensor.exporting_power
+    state_content:
+      - state
+      - last_changed
+    name: Exporting power
+    icon: mdi:transmission-tower-export
+    color: light-green
+    visibility:
+      - condition: screen
+        media_query: "(min-width: 768px)"
+  - type: entity
+    show_name: true
+    show_state: true
+    show_icon: true
+    entity: binary_sensor.importing_power
+    icon: mdi:transmission-tower-import
+    name: Importing power
+    color: deep-orange
+    state_content:
+      - state
+      - last_changed
+    visibility:
+      - condition: screen
+        media_query: "(min-width: 768px)"
+cards:
+  - type: vertical-stack
+    cards:
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.total_dc_power
+            needle: true
+            severity:
+              green: 5000
+              yellow: 2000
+              red: 0
+            max: 7000
+            min: 0
+          - type: gauge
+            entity: sensor.load_power
+            needle: true
+            max: 10500
+            min: 0
+            severity:
+              green: 0
+              yellow: 3500
+              red: 7000
+          - type: gauge
+            entity: sensor.battery_level
+            needle: true
+            severity:
+              green: 40
+              yellow: 20
+              red: 0
+            min: 0
+            max: 100
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.export_power_raw
+            needle: true
+            severity:
+              green: 0
+              yellow: 7000
+              red: -7000
+            min: -7000
+            max: 7000
+            name: "Power: import - / + export"
+          - type: gauge
+            entity: sensor.signed_battery_power
+            min: -7000
+            max: 7000
+            needle: true
+            severity:
+              green: 0
+              yellow: 7000
+              red: -7000
+            name: "Battery: discha - / + char"
+      - type: conditional
+        conditions:
+          - condition: screen
+            media_query: "(min-width: 0px) and (max-width: 767px)"
+        card:
+          type: vertical-stack
+          cards:
+            - type: horizontal-stack
+              cards:
+                - type: entity
+                  entity: sensor.daily_pv_generation
+                  icon: mdi:solar-power
+                - type: entity
+                  entity: sensor.daily_battery_charge
+                  icon: mdi:battery-plus-variant
+            - type: horizontal-stack
+              cards:
+                - type: entity
+                  entity: sensor.daily_exported_energy
+                  icon: mdi:transmission-tower-export
+                - type: entity
+                  entity: sensor.daily_imported_energy
+                  icon: mdi:transmission-tower-import
+      - type: conditional
+        conditions:
+          - condition: screen
+            media_query: "(min-width: 768px)"
+        card:
+          square: false
+          columns: 4
+          type: grid
+          cards:
+            - type: entity
+              entity: sensor.daily_pv_generation
+              icon: mdi:solar-power
+            - type: entity
+              entity: sensor.daily_battery_charge
+              icon: mdi:battery-plus-variant
+            - type: entity
+              entity: sensor.daily_exported_energy
+              icon: mdi:transmission-tower-export
+            - type: entity
+              entity: sensor.daily_imported_energy
+              icon: mdi:transmission-tower-import
+      - graph: line
+        type: sensor
+        entity: sensor.battery_level
+        detail: 1
+        name: Battery level history
+      - type: statistics-graph
+        chart_type: line
+        period: 5minute
+        days_to_show: 1
+        entities:
+          - entity: sensor.total_dc_power
+            name: PV
+          - entity: sensor.export_power_raw
+            name: Grid (export)
+          - entity: sensor.signed_battery_power
+            name: Battery
+          - entity: sensor.load_power
+            name: Load
+        stat_types:
+          - mean
+        hide_legend: false
