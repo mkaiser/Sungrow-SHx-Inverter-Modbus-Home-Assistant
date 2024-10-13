@@ -1253,7 +1253,7 @@ modbus:
         address: 13019 # reg 13020
         input_type: input
         data_type: uint16
-        precision: 0
+        precision: 1
         unit_of_measurement: V
         device_class: Voltage
         state_class: measurement
