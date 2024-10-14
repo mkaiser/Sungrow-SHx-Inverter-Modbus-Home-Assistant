@@ -185,20 +185,7 @@ modbus:
         state_class: measurement
         scale: 0.1
         scan_interval: 10
-
-      - name: Grid frequency
-        unique_id: sg_grid_frequency
-        device_address: !secret sungrow_modbus_slave
-        address: 5035 # reg 5036
-        input_type: input
-        data_type: uint16
-        precision: 2
-        unit_of_measurement: "Hz"
-        device_class: frequency
-        state_class: measurement
-        scale: 0.1
-        scan_interval: 10
-
+        
       - name: Reactive power
         unique_id: sg_reactive_power
         device_address: !secret sungrow_modbus_slave
@@ -225,6 +212,19 @@ modbus:
         state_class: measurement
         scale: 0.001
         scan_interval: 10
+
+      - name: Grid frequency
+        unique_id: sg_grid_frequency
+        device_address: !secret sungrow_modbus_slave
+        address: 5241 # reg 5242
+        input_type: input
+        data_type: uint16
+        precision: 2
+        unit_of_measurement: "Hz"
+        device_class: frequency
+        state_class: measurement
+        scale: 0.01
+        scan_interval: 10        
 
       #https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?pageNo=13
       #Meter Active Power: 5601-5602 S32 W (Energiezähler Wirkleistung)
@@ -1623,7 +1623,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 10
-        scan_interval: 600
+        scan_interval: 10
 
       #undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Battery charging start power
