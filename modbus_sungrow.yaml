@@ -2183,7 +2183,7 @@ template:
           {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') |int)  == 0x00CC) %}
             Stop (default)
           {% else %}
-            Unknown - should not see me!
+            Unknown - should not see me! code: {{ (states('sensor.battery_forced_charge_discharge_cmd_raw') |int) }}
           {% endif %}
 
       - name: Export power limit mode
@@ -2198,7 +2198,7 @@ template:
           {% elif ((states('sensor.export_power_limit_mode_raw') |int)  == 0x0055) %}
             Disabled
           {% else %}
-            Unknown - should not see me!
+            Unknown - should not see me! code: {{ (states('sensor.export_power_limit_mode_raw') |int) }}
           {% endif %}
 
       # make the sensor ems_selection_raw more human readable
@@ -2220,7 +2220,7 @@ template:
           {% elif ((states('sensor.ems_mode_selection_raw') |int) == 8) %}
             MicroGrid
           {% else %}
-            Unknown - should not see me!
+            Unknown - should not see me! code: {{ (states('sensor.ems_mode_selection_raw') |int) }}
           {% endif %}
 
       - name: Signed battery power # positive if charging and negative if discharging
