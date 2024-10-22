@@ -347,6 +347,7 @@ modbus:
         address: 5725 # reg 5726
         input_type: input
         data_type: int32
+        swap: word
         precision: 0
         unit_of_measurement: W
         device_class: power
