@@ -1,7 +1,7 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2024-10-15
+# last update: 2024-10-22
 #
 # Note: This YAML file will only work with Home Assistant >= 2023.10
 
@@ -2060,7 +2060,7 @@ template:
             Fault
           {% elif ((states('sensor.system_state') |int) in [0x8000,0x0001]) %}
             Stop
-          {% elif ((states('sensor.system_state') |int) == 0x8100) %}
+          {% elif ((states('sensor.system_state') |int) in [0x8100,0x0080]) %}
             De-rating Running
           {% elif ((states('sensor.system_state') |int) == 0x8200) %}
             Dispatch Run
