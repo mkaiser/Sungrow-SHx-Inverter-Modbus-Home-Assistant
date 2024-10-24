@@ -1,9 +1,10 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# last update: 2024-10-24
 #
-# Note: This YAML file will only work with Home Assistant >= 2023.10
+# last update: 2024-10-24 (2)
+#
+# Note: This YAML file will only work with Home Assistant >= 2024.10
 
 modbus:
   - name: SungrowSHx
@@ -2565,7 +2566,7 @@ automation:
     variables:
       sg_start: 0xCF
       sg_stop: 0xCE
-    action:
+    actions:
       - action: modbus.write_register
         data_template:
           hub: SungrowSHx
@@ -2589,7 +2590,7 @@ automation:
     condition:
       - condition: template
         value_template: "{{ not is_state('sensor.sungrow_inverter_state', 'unavailable') }}"
-    action:
+    actions:
       - action: input_select.select_option
         target:
           entity_id: input_select.set_sg_inverter_run_mode
@@ -2610,7 +2611,7 @@ automation:
         entity_id:
           - input_number.set_sg_max_soc
     condition: []
-    action:
+    actions:
       - action: modbus.write_register
         data_template:
           hub: SungrowSHx
@@ -2627,7 +2628,7 @@ automation:
         entity_id:
           - sensor.max_soc
     condition: []
-    action:
+    actions:
       - action: input_number.set_value
         target:
           entity_id: input_number.set_sg_max_soc
@@ -2643,7 +2644,7 @@ automation:
         entity_id:
           - input_number.set_sg_min_soc
     condition: []
-    action:
+    actions:
       - action: modbus.write_register
         data_template:
           hub: SungrowSHx
@@ -2660,7 +2661,7 @@ automation:
         entity_id:
           - sensor.min_soc
     condition: []
-    action:
+    actions:
       - action: input_number.set_value
         target:
           entity_id: input_number.set_sg_min_soc
@@ -2676,7 +2677,7 @@ automation:
         entity_id:
           - input_number.set_sg_reserved_soc_for_backup
     condition: []
-    action:
+    actions:
       - action: modbus.write_register
         data_template:
           hub: SungrowSHx
@@ -2693,7 +2694,7 @@ automation:
         entity_id:
           - sensor.reserved_soc_for_backup
     condition: []
-    action:
+    actions:
       - action: input_number.set_value
         target:
           entity_id: input_number.set_sg_reserved_soc_for_backup
@@ -2713,7 +2714,7 @@ automation:
       ems_forced_charge: 0xAA
       ems_forced_discharge: 0xBB
       ems_stop_default: 0xCC
-    action:
+    actions:
       - action: modbus.write_register
         data_template:
           hub: SungrowSHx
@@ -2741,7 +2742,7 @@ automation:
     condition:
       - condition: template
         value_template: "{{ not is_state('sensor.battery_forced_charge_discharge_cmd', 'unavailable') }}"
-    action:
+    actions:
       - action: input_select.select_option
         target:
           entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
@@ -2763,7 +2764,7 @@ automation:
       ems_mode_external: 3
       ems_mode_vpp: 4
       ems_mode_microgrid: 8
-    action:
+    actions:
       - action: modbus.write_register
         data_template:
           hub: SungrowSHx
@@ -2795,7 +2796,7 @@ automation:
     condition:
       - condition: template
         value_template: "{{ not is_state('sensor.export_power_limit_mode_raw', 'unavailable') }}"
-    action:
+    actions:
       - action: input_select.select_option
         target:
           entity_id: input_select.set_sg_export_power_limit_mode
@@ -2819,7 +2820,7 @@ automation:
     variables:
       export_limit_enable: 0xAA
       export_limit_disable: 0x55
-    action:
+    actions:
       - action: modbus.write_register
         data_template:
           hub: SungrowSHx
@@ -2843,7 +2844,7 @@ automation:
         entity_id:
           - sensor.export_power_limit
     condition: []
-    action:
+    actions:
       - action: input_number.set_value
         target:
           entity_id: input_number.set_sg_export_power_limit
@@ -2859,7 +2860,7 @@ automation:
         entity_id:
           - input_number.set_sg_export_power_limit
     condition: []
-    action:
+    actions:
       - action: modbus.write_register
         data_template:
           hub: SungrowSHx
@@ -2878,7 +2879,7 @@ automation:
     condition:
       - condition: template
         value_template: "{{ not is_state('sensor.ems_mode_selection', 'unavailable') }}"
-    action:
+    actions:
       - action: input_select.select_option
         target:
           entity_id: input_select.set_sg_ems_mode
@@ -2894,7 +2895,7 @@ automation:
         entity_id:
           - input_number.set_sg_forced_charge_discharge_power
     condition: []
-    action:
+    actions:
       - action: modbus.write_register
         data_template:
           hub: SungrowSHx
@@ -2911,7 +2912,7 @@ automation:
         entity_id:
           - sensor.battery_forced_charge_discharge_power
     condition: []
-    action:
+    actions:
       - action: input_number.set_value
         target:
           entity_id: input_number.set_sg_forced_charge_discharge_power
@@ -2927,7 +2928,7 @@ automation:
         entity_id:
           - input_number.set_sg_battery_max_charge_power
     condition: []
-    action:
+    actions:
       - action: modbus.write_register
         data_template:
           hub: SungrowSHx
@@ -2944,7 +2945,7 @@ automation:
         entity_id:
           - sensor.battery_max_charge_power
     condition: []
-    action:
+    actions:
       - action: input_number.set_value
         target:
           entity_id: input_number.set_sg_battery_max_charge_power
@@ -2960,7 +2961,7 @@ automation:
         entity_id:
           - input_number.set_sg_battery_max_discharge_power
     condition: []
-    action:
+    actions:
       - action: modbus.write_register
         data_template:
           hub: SungrowSHx
@@ -2977,7 +2978,7 @@ automation:
         entity_id:
           - sensor.battery_max_discharge_power
     condition: []
-    action:
+    actions:
       - action: input_number.set_value
         target:
           entity_id: input_number.set_sg_battery_max_discharge_power
@@ -2993,7 +2994,7 @@ automation:
         entity_id:
           - input_number.set_sg_battery_charging_start_power
     condition: []
-    action:
+    actions:
       - action: modbus.write_register
         data_template:
           hub: SungrowSHx
@@ -3010,7 +3011,7 @@ automation:
         entity_id:
           - sensor.battery_charging_start_power
     condition: []
-    action:
+    actions:
       - action: input_number.set_value
         target:
           entity_id: input_number.set_sg_battery_charging_start_power
@@ -3026,7 +3027,7 @@ automation:
         entity_id:
           - input_number.set_sg_battery_discharging_start_power
     condition: []
-    action:
+    actions:
       - action: modbus.write_register
         data_template:
           hub: SungrowSHx
@@ -3043,7 +3044,7 @@ automation:
         entity_id:
           - sensor.battery_discharging_start_power
     condition: []
-    action:
+    actions:
       - action: input_number.set_value
         target:
           entity_id: input_number.set_sg_battery_discharging_start_power
@@ -3061,7 +3062,7 @@ automation:
     condition:
       - condition: template
         value_template: "{{ not is_state('sensor.global_mpp_scan_manual_raw', 'unavailable') }}"
-    action:
+    actions:
       - action: input_select.select_option
         target:
           entity_id: input_select.set_sg_global_mpp_scan_manual
@@ -3085,7 +3086,7 @@ automation:
     variables:
       export_limit_enable: 0xAA
       export_limit_disable: 0x55
-    action:
+    actions:
       - action: modbus.write_register
         data_template:
           hub: SungrowSHx
@@ -3110,7 +3111,7 @@ automation:
 #      - platform: state
 #        entity_id:
 #          - binary_sensor.cheapest_hours_for_charging_timer
-#    action:
+#    actions:
 #      - choose:
 #          - conditions:
 #              - condition: state
