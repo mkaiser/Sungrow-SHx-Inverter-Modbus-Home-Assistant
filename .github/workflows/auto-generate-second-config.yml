@@ -22,8 +22,8 @@ jobs:
           sed -i 's/sungrow_modbus_slave/sungrow_modbus_slave_inv2/g' modbus_sungrow_second_inverter_experimental.yaml
           sed -i 's/set_sg_/set_sg_2_/g' modbus_sungrow_second_inverter_experimental.yaml
           sed -i 's/sg_set_/sg_2_set_/g' modbus_sungrow_second_inverter_experimental.yaml
-          sed -i 's/- id: "automation_sungrow_global_/- id: "automation_sungrow_global_2/g' modbus_sungrow_second_inverter_experimental.yaml
-          sed -i 's/- id: "automation_sungrow_inverter_/- id: "automation_sungrow_inverter_2/g' modbus_sungrow_second_inverter_experimental.yaml
+          sed -i 's/- id: "automation_sungrow_global_/- id: "automation_sungrow_global_2_/g' modbus_sungrow_second_inverter_experimental.yaml
+          sed -i 's/- id: "automation_sungrow_inverter_/- id: "automation_sungrow_inverter_2_/g' modbus_sungrow_second_inverter_experimental.yaml
           sed -i 's/alias: "sungrow inverter/alias: "sungrow inverter 2/g' modbus_sungrow_second_inverter_experimental.yaml
 
       - name: Append _2 to unique_ids
