@@ -2371,11 +2371,12 @@ template:
         availability: >-
           {{ 
           not is_state('sensor.battery_capacity', 'unavailable')
+          and not is_state('sensor.battery_state_of_health', 'unavailable')
           and not is_state('sensor.battery_level_nominal', 'unavailable')
           }}
         state: >-
           {{
-            ( states('sensor.battery_capacity') | float *
+            ( (states('sensor.battery_capacity')|float * (states('sensor.battery_state_of_health') |float / 100 )) *
             states('sensor.battery_level_nominal') | float / 100 )| round(1)
           }}
 
@@ -2387,13 +2388,14 @@ template:
         availability: >-
           {{ 
           not is_state('sensor.battery_capacity', 'unavailable') 
+          and not is_state('sensor.battery_state_of_health', 'unavailable')
           and not is_state('sensor.battery_level', 'unavailable') 
           and not is_state('sensor.min_soc', 'unavailable') 
           and not is_state('sensor.max_soc', 'unavailable') 
           }}
         state: >-
           {{ 
-            ( states('sensor.battery_capacity')|float 
+            ( (states('sensor.battery_capacity')|float * (states('sensor.battery_state_of_health') |float / 100 )) 
             * ( states('sensor.max_soc')|float - states('sensor.min_soc')|float ) /100 
             * states('sensor.battery_level')|float /100 
             ) |round(2)
