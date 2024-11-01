@@ -1669,6 +1669,7 @@ sensor:
   - platform: filter
     name: "Daily consumed energy (filtered)"
     entity_id: sensor.daily_consumed_energy
+    unique_id: uid_daily_consumed_energy_filtered_2
     # commented following line, due to: 'device_class' is an invalid option for 'sensor.filter', check: device_class
     # device_class: energy
     # commented following line, due to: 'state_class' is an invalid option for 'sensor.filter', check: state_class
