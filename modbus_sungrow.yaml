@@ -1,8 +1,8 @@
 # Home Assistant Sungrow inverter integration
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
-# 
-# last update: 2024-10-24 (2)
+#
+# last update: 2024-11-01
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
 
@@ -1667,9 +1667,12 @@ modbus:
 
 sensor:
   - platform: filter
+    # NOTE: 2024-01-11: Unique id was adapted to match the sg_* uid pattern.
+    # If the default dashboard does show an "unavailable" sensor, remove the unavailable one
+    # and remove the suffix *_2 from daily_consumed_energy_2
     name: "Daily consumed energy (filtered)"
-    entity_id: sensor.daily_consumed_energy
-    unique_id: uid_daily_consumed_energy_filtered
+    entity_id: sensor.daily_consumed_energy_2
+    unique_id: sg_daily_consumed_energy_filtered
     # commented following line, due to: 'device_class' is an invalid option for 'sensor.filter', check: device_class
     # device_class: energy
     # commented following line, due to: 'state_class' is an invalid option for 'sensor.filter', check: state_class
@@ -2400,8 +2403,11 @@ template:
             ) |round(2)
           }}
 
+      # NOTE: 2024-01-11: Unique id was adapted to match the sg_* uid pattern.
+      # If the default dashboard does show an "unavailable" sensor, remove the unavailable one
+      # and remove the suffix *_2 from daily_consumed_energy_2
       - name: Daily consumed energy
-        unique_id: uid_daily_consumed_energy
+        unique_id: sg_daily_consumed_energy
         unit_of_measurement: kWh
         device_class: energy
         # the state class is not total_increasing, because sometimes the read value are read at different times,
@@ -2427,8 +2433,11 @@ template:
             ) 
           }}
 
+      # NOTE: 2024-01-11: Unique id was adapted to match the sg_* uid pattern.
+      # If the default dashboard does show an "unavailable" sensor, remove the unavailable one
+      # and remove the suffix *_2 from daily_consumed_energy_2
       - name: Total consumed energy
-        unique_id: uid_total_consumed_energy
+        unique_id: sg_total_consumed_energy
         unit_of_measurement: kWh
         device_class: energy
         state_class: total
