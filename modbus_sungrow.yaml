@@ -2,7 +2,7 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
 #
-# last update: 2024-11-01
+# last update: 2024-11-02
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
 
@@ -2348,6 +2348,9 @@ template:
           {% set currYear = 'yearly_export_' ~ now().year %}
           {{ states('sensor.' ~ currYear) }}
 
+      # If min_soc is set to 15 and max soc is set to 90,
+      # this "nominal battery level" will be between 15% and 90%
+      # while the "battery level" is between 0 and 100%
       - name: "Battery level (nominal)"
         unique_id: sg_battery_level_nom
         unit_of_measurement: "%"
@@ -2364,9 +2367,12 @@ template:
           {% set soc_max = states('sensor.max_soc') | float %}
           {% set soc_cur = states('sensor.battery_level') | float %}
           {{
-            ((soc_min) + ((soc_max - soc_min) * (soc_cur / 100))) | round(1)
+            (soc_min + ((soc_max - soc_min) * (soc_cur / 100))) | round(1)
           }}
 
+      # If min_soc is set to 15 and max soc is set to 90,
+      # this "nominal battery charge" will be between 15% and 90% of the capacity value,
+      # reflecting the limits set by min_soc and max_soc
       - name: "Battery charge (nominal)"
         unique_id: sg_battery_charge_nom
         unit_of_measurement: kWh
@@ -2383,6 +2389,10 @@ template:
             states('sensor.battery_level_nominal') | float / 100 )| round(1)
           }}
 
+      # this is the actually **usable energy ** of the battery
+      # with respect to min/ max soc.
+      # If min_soc is set to 15 and max soc is set to 90,
+      # this value is 0.75 * capacity
       - name: "Battery charge"
         unique_id: sg_battery_charge
         unit_of_measurement: kWh
