@@ -2832,7 +2832,7 @@ automation:
             {% endif %}
     mode: single
 
-  - id: "automation_sungrow_export_power_limit_mode"
+  - id: "automation_sungrow_inverter_2_export_power_limit_mode"
     alias: "sungrow inverter 2 export power limit mode"
     description: "Set export power limit mode"
     triggers:
