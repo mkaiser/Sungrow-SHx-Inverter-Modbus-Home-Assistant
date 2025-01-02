@@ -2,7 +2,7 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
 #
-# last update: 2024-11-02
+# last update: 2025-01-02
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
 
@@ -1284,7 +1284,7 @@ modbus:
         device_address: !secret sungrow_modbus_slave_inv2
         address: 13021 # reg 13022
         input_type: input
-        data_type: uint16
+        data_type: int16
         precision: 0
         unit_of_measurement: W
         device_class: power
@@ -1671,7 +1671,7 @@ sensor:
     # If the default dashboard does show an "unavailable" sensor, remove the unavailable one
     # and remove the suffix *_2 from daily_consumed_energy_2
     name: "Daily consumed energy (filtered)"
-    entity_id: sensor.daily_consumed_energy_2
+    entity_id: sensor.daily_consumed_energy
     unique_id: sg_daily_consumed_energy_filtered_2
     # commented following line, due to: 'device_class' is an invalid option for 'sensor.filter', check: device_class
     # device_class: energy
@@ -2257,7 +2257,8 @@ template:
             0
           {% endif %}
 
-      - name: Battery discharging power  2# positive if discharging else zero
+      # positive if discharging else zero
+      - name: Battery discharging power 2
         unique_id: sg_battery_discharging_power_2
         unit_of_measurement: W
         device_class: power
@@ -2274,7 +2275,8 @@ template:
             0
           {% endif %}
 
-      - name: Import power  2# power from grid: positive if importing, else zero
+      # power from grid: positive if importing, else zero
+      - name: Import power 2
         unique_id: sg_import_power_2
         unit_of_measurement: W
         device_class: power
@@ -2287,7 +2289,8 @@ template:
             0
           {% endif %}
 
-      - name: Export power  2# power to grid: positive if exporting, else zero
+      # power to grid: positive if exporting, else zero
+      - name: Export power 2
         unique_id: sg_export_power_2
         unit_of_measurement: W
         device_class: power
