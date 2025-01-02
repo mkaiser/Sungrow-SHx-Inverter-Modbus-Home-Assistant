@@ -2,7 +2,7 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
 #
-# last update: 2024-11-02
+# last update: 2025-01-02
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
 
@@ -2257,7 +2257,8 @@ template:
             0
           {% endif %}
 
-      - name: Battery discharging power # positive if discharging else zero
+      # positive if discharging else zero
+      - name: Battery discharging power
         unique_id: sg_battery_discharging_power
         unit_of_measurement: W
         device_class: power
@@ -2274,7 +2275,8 @@ template:
             0
           {% endif %}
 
-      - name: Import power # power from grid: positive if importing, else zero
+      # power from grid: positive if importing, else zero
+      - name: Import power
         unique_id: sg_import_power
         unit_of_measurement: W
         device_class: power
@@ -2287,7 +2289,8 @@ template:
             0
           {% endif %}
 
-      - name: Export power # power to grid: positive if exporting, else zero
+      # power to grid: positive if exporting, else zero
+      - name: Export power
         unique_id: sg_export_power
         unit_of_measurement: W
         device_class: power
