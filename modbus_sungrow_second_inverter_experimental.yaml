@@ -1292,6 +1292,7 @@ modbus:
         scale: 1
         scan_interval: 10
 
+      # 0..100%  |  min_soc..max_soc
       - name: Battery level 2
         unique_id: sg_battery_level_2
         device_address: !secret sungrow_modbus_slave_inv2
@@ -1305,6 +1306,7 @@ modbus:
         scale: 0.1
         scan_interval: 60
 
+      # 0..100% calculated internally by the BMS load balancing
       - name: Battery state of health 2
         unique_id: sg_battery_state_of_health_2
         device_address: !secret sungrow_modbus_slave_inv2
@@ -2393,7 +2395,7 @@ template:
           }}
 
       # this is the actually **usable energy ** of the battery
-      # with respect to min/ max soc.
+      # with respect to min/ max soc, but WITHOUT the battery health.
       # If min_soc is set to 15 and max soc is set to 90,
       # this value is 0.75 * capacity
       - name: "Battery charge 2"
@@ -2415,6 +2417,28 @@ template:
             * states('sensor.battery_level_2')|float /100 
             ) |round(2)
           }}
+
+      # this is the actually **usable energy ** of the battery
+      # with respect to min/ max soc, including the battery health.
+      # This value is determined by multiplying Battery charge
+      # with the health factor (battery_health), which is often a value
+      # starting at 100 and decreases over time. Mine is 98% after 2 years.
+      - name: "Battery charge (health-rated) 2"
+        unique_id: sg_battery_charge_health_rated_2
+        unit_of_measurement: kWh
+        device_class: energy_storage
+        state_class: measurement
+        availability: >-
+          {{ 
+          not is_state('sensor.battery_charge', 'unavailable') 
+          and not is_state('sensor.battery_state_of_health', 'unavailable') 
+          }}
+        state: >-
+          {{ 
+            ( states('sensor.battery_charge')|float 
+            * states('sensor.battery_state_of_health')|float / 100 
+            ) |round(2)
+          }}          
 
       # NOTE: 2024-01-11: Unique id was adapted to match the sg_* uid pattern.
       # If the default dashboard does show an "unavailable" sensor, remove the unavailable one
