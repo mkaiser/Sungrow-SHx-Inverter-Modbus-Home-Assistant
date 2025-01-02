@@ -1671,7 +1671,7 @@ sensor:
     # If the default dashboard does show an "unavailable" sensor, remove the unavailable one
     # and remove the suffix *_2 from daily_consumed_energy_2
     name: "Daily consumed energy (filtered)"
-    entity_id: sensor.daily_consumed_energy_2
+    entity_id: sensor.daily_consumed_energy
     unique_id: sg_daily_consumed_energy_filtered
     # commented following line, due to: 'device_class' is an invalid option for 'sensor.filter', check: device_class
     # device_class: energy
