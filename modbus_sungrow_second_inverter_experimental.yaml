@@ -2,7 +2,7 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
 #
-# last update: 2024-11-02
+# last update: 2025-01-02
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
 
@@ -1290,6 +1290,7 @@ modbus:
         scale: -1 #invert sign to match program logic
         scan_interval: 10
 
+      # 0..100%  |  min_soc..max_soc
       - name: Battery level 2
         unique_id: sg_battery_level_2
         device_address: !secret sungrow_modbus_slave_inv2
@@ -1303,6 +1304,7 @@ modbus:
         scale: 0.1
         scan_interval: 60
 
+      # 0..100% calculated internally by the BMS load balancing
       - name: Battery state of health 2
         unique_id: sg_battery_state_of_health_2
         device_address: !secret sungrow_modbus_slave_inv2
@@ -1669,7 +1671,7 @@ sensor:
     # If the default dashboard does show an "unavailable" sensor, remove the unavailable one
     # and remove the suffix *_2 from daily_consumed_energy_2
     name: "Daily consumed energy (filtered)"
-    entity_id: sensor.daily_consumed_energy_2
+    entity_id: sensor.daily_consumed_energy
     unique_id: sg_daily_consumed_energy_filtered_2
     # commented following line, due to: 'device_class' is an invalid option for 'sensor.filter', check: device_class
     # device_class: energy
@@ -2235,7 +2237,8 @@ template:
             0
           {% endif %}
 
-      - name: Battery discharging power  2# positive if discharging else zero
+      # positive if discharging else zero
+      - name: Battery discharging power 2
         unique_id: sg_battery_discharging_power_2
         unit_of_measurement: W
         device_class: power
@@ -2252,7 +2255,8 @@ template:
             0
           {% endif %}
 
-      - name: Import power  2# power from grid: positive if importing, else zero
+      # power from grid: positive if importing, else zero
+      - name: Import power 2
         unique_id: sg_import_power_2
         unit_of_measurement: W
         device_class: power
@@ -2265,7 +2269,8 @@ template:
             0
           {% endif %}
 
-      - name: Export power  2# power to grid: positive if exporting, else zero
+      # power to grid: positive if exporting, else zero
+      - name: Export power 2
         unique_id: sg_export_power_2
         unit_of_measurement: W
         device_class: power
@@ -2368,7 +2373,7 @@ template:
           }}
 
       # this is the actually **usable energy ** of the battery
-      # with respect to min/ max soc.
+      # with respect to min/ max soc, but WITHOUT the battery health.
       # If min_soc is set to 15 and max soc is set to 90,
       # this value is 0.75 * capacity
       - name: "Battery charge 2"
@@ -2390,6 +2395,28 @@ template:
             * states('sensor.battery_level_2')|float /100 
             ) |round(2)
           }}
+
+      # this is the actually **usable energy ** of the battery
+      # with respect to min/ max soc, including the battery health.
+      # This value is determined by multiplying Battery charge
+      # with the health factor (battery_health), which is often a value
+      # starting at 100 and decreases over time. Mine is 98% after 2 years.
+      - name: "Battery charge (health-rated) 2"
+        unique_id: sg_battery_charge_health_rated_2
+        unit_of_measurement: kWh
+        device_class: energy_storage
+        state_class: measurement
+        availability: >-
+          {{ 
+          not is_state('sensor.battery_charge', 'unavailable') 
+          and not is_state('sensor.battery_state_of_health', 'unavailable') 
+          }}
+        state: >-
+          {{ 
+            ( states('sensor.battery_charge')|float 
+            * states('sensor.battery_state_of_health')|float / 100 
+            ) |round(2)
+          }}          
 
       # NOTE: 2024-01-11: Unique id was adapted to match the sg_* uid pattern.
       # If the default dashboard does show an "unavailable" sensor, remove the unavailable one
@@ -2807,7 +2834,7 @@ automation:
             {% endif %}
     mode: single
 
-  - id: "automation_sungrow_export_power_limit_mode"
+  - id: "automation_sungrow_inverter_2_export_power_limit_mode"
     alias: "sungrow inverter 2 export power limit mode"
     description: "Set export power limit mode"
     triggers:

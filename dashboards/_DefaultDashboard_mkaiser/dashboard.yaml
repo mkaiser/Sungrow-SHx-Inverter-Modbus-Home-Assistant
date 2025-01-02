@@ -79,6 +79,7 @@ views:
           - entity: sensor.battery_charge_nominal
           - entity: sensor.daily_battery_charge
           - entity: sensor.daily_battery_discharge
+          - entity: sensor.battery_charge_health_rated
         title: Battery
   - title: Detailed Info
     icon: mdi:solar-power-variant-outline
@@ -109,6 +110,9 @@ views:
           - entity: sensor.meter_phase_a_active_power
           - entity: sensor.meter_phase_b_active_power
           - entity: sensor.meter_phase_c_active_power
+          - entity: sensor.meter_phase_a_current
+          - entity: sensor.meter_phase_b_current
+          - entity: sensor.meter_phase_c_current
           - entity: sensor.total_backup_power
           - entity: sensor.backup_phase_a_power
           - entity: sensor.backup_phase_b_power
