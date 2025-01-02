@@ -1284,7 +1284,7 @@ modbus:
         device_address: !secret sungrow_modbus_slave
         address: 13021 # reg 13022
         input_type: input
-        data_type: uint16
+        data_type: int16
         precision: 0
         unit_of_measurement: W
         device_class: power
