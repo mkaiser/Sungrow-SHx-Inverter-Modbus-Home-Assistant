@@ -1277,14 +1277,17 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
-      # always positive battery power
+      # old firmware ( before october 2024): always positive battery power
       # use binary_sensor.battery_charging_2 | discharging to retrieve the direction of the energy flow
+      # new firmware: positive if charging and negative if discharging
+      # with new firmware installed we could use this raw value directly as signed battery power
+      # to support both firmwares we use the template sensor "signed battery power"
       - name: Battery power raw 2
         unique_id: sg_battery_power_raw_2
         device_address: !secret sungrow_modbus_slave_inv2
         address: 13021 # reg 13022
         input_type: input
-        data_type: int16
+        data_type: int16 #updated to signed int, see issue #406
         precision: 0
         unit_of_measurement: W
         device_class: power
@@ -1750,7 +1753,7 @@ template:
               {# EMS forced mode #}
               {% if (states('sensor.battery_forced_charge_discharge_cmd_2') == "Forced charge") %}
                 {# in mode Forced charge #}
-                {% if (states('sensor.battery_power_raw_2')|int > 0 ) %}
+                {% if (states('sensor.battery_power_raw_2')|int > 0 ) %} 
                   {# power flow from/to battery #}
                   on
                 {% else %} 
@@ -1825,7 +1828,7 @@ template:
               {% endif %}
             {% else %} 
               {# not in EMS forced mode, assuming self consumption mode #}
-              {% if ( ( states('sensor.total_dc_power_2')|int < states('sensor.load_power_2')|int ) ) and states('sensor.battery_power_raw_2')|int > 0 %}
+              {% if ( ( states('sensor.total_dc_power_2')|int < states('sensor.load_power_2')|int ) ) and states('sensor.battery_power_raw_2')|int > 0 %}  
                 {# more power consumed than generated and some battery power --> assuming battery discharging #}
                 on
               {% else %} 
@@ -2222,7 +2225,8 @@ template:
             Unknown - should not see me! code: {{ (states('sensor.ems_mode_selection_raw_2') |int) }}
           {% endif %}
 
-      - name: Signed battery power  2# positive if charging and negative if discharging
+      # positive if charging and negative if discharging
+      - name: Signed battery power  2
         unique_id: sg_signed_battery_power_2
         unit_of_measurement: W
         device_class: power
@@ -2235,14 +2239,15 @@ template:
           }}
         state: >-
           {% if is_state('binary_sensor.battery_charging_2', 'on') %}
-            {{ (states('sensor.battery_power_raw_2') | float)}} 
+            {{ (states('sensor.battery_power_raw_2') |float |abs)}} 
           {% elif is_state('binary_sensor.battery_discharging_2', 'on') %} 
-            {{ (states('sensor.battery_power_raw_2') | float * -1)}} 
+            {{ (states('sensor.battery_power_raw_2') |float |abs * -1)}} 
           {% else %} 
             0 
           {% endif %}
 
-      - name: Battery charging power  2# positive if charging else zero
+      # positive if charging else zero
+      - name: Battery charging power  2
         unique_id: sg_battery_charging_power_2
         unit_of_measurement: W
         device_class: power
@@ -2254,7 +2259,7 @@ template:
           }}
         state: >-
           {% if is_state('binary_sensor.battery_charging_2', 'on') %}
-            {{ states('sensor.battery_power_raw_2') }}
+            {{ states('sensor.battery_power_raw_2')|int |abs }}
           {% else %}
             0
           {% endif %}
@@ -2272,7 +2277,7 @@ template:
           }}
         state: >-
           {% if is_state('binary_sensor.battery_discharging_2', 'on') %}
-            {{ states('sensor.battery_power_raw_2') }}
+            {{ states('sensor.battery_power_raw_2')|int |abs }}
           {% else %}
             0
           {% endif %}
