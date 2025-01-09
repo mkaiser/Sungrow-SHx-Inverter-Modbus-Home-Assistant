@@ -2648,7 +2648,7 @@ automation:
           entity_id: input_select.set_sg_2_inverter_run_mode
         data:
           option: >
-            {% if is_state('sensor.sungrow_inverter_state_2', "Stop") or is_state('sensor.sungrow_inverter_state_2', "Shutdown") %}
+            {% if is_state('sensor.sungrow_inverter_state_2', "Shutdown") %}
               Shutdown
             {% else %}
               Enabled
