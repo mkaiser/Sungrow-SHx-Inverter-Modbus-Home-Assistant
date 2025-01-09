@@ -2,7 +2,7 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
 #
-# last update: 2025-01-03
+# last update: 2025-01-09
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
 
@@ -2648,7 +2648,7 @@ automation:
           entity_id: input_select.set_sg_inverter_run_mode
         data:
           option: >
-            {% if is_state('sensor.sungrow_inverter_state', "Stop") or is_state('sensor.sungrow_inverter_state', "Shutdown") %}
+            {% if is_state('sensor.sungrow_inverter_state', "Shutdown") %}
               Shutdown
             {% else %}
               Enabled
