@@ -158,6 +158,9 @@ views:
           - entity: sensor.mppt2_power
           - entity: sensor.mppt2_voltage
           - entity: sensor.mppt2_current
+          - entity: sensor.mppt3_power
+          - entity: sensor.mppt3_voltage
+          - entity: sensor.mppt3_current
         title: PV Gen
       - type: entities
         entities:
