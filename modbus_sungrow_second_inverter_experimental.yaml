@@ -2,7 +2,7 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
 #
-# last update: 2025-01-09
+# last update: 2025-01-28
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
 
@@ -1499,15 +1499,16 @@ modbus:
       #####################
       # holding registers
       #####################
-      - name: Inverter start stop 2
-        unique_id: sg_inverter_start_stop_2
-        device_address: !secret sungrow_modbus_slave_inv2
-        address: 12999 # reg 13000
-        input_type: holding
-        data_type: uint16
-        precision: 0
-        state_class: measurement
-        scan_interval: 10
+      # mkaiser 2025-01-12 this is already included as a sensor "System state"
+      # - name: Inverter start stop
+      #   unique_id: sg_inverter_start_stop_2
+      #   device_address: !secret sungrow_modbus_slave_inv2
+      #   address: 12999 # reg 13000
+      #   input_type: holding
+      #   data_type: uint16
+      #   precision: 0
+      #   state_class: measurement
+      #   scan_interval: 10
 
       - name: EMS mode selection raw 2
         unique_id: sg_ems_mode_selection_raw_2
@@ -1581,6 +1582,16 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
+        scan_interval: 10
+
+      # U16, 0x55:Disable, 0xAA:Enable
+      - name: Backup mode raw 2
+        unique_id: sg_backup_mode_raw_2
+        device_address: !secret sungrow_modbus_slave_inv2
+        address: 13074 # reg 13075
+        input_type: holding
+        data_type: uint16
+        state_class: measurement
         scan_interval: 10
 
       - name: Export power limit mode raw 2
@@ -2188,11 +2199,22 @@ template:
             Unknown - should not see me! code: {{ (states('sensor.battery_forced_charge_discharge_cmd_raw_2') |int) }}
           {% endif %}
 
+      - name: Backup mode 2
+        unique_id: sg_backup_mode_2
+        availability: "{{ not is_state('sensor.backup_mode_raw', 'unavailable') }}"
+        device_class: enum
+        state: >-
+          {% if ((states('sensor.backup_mode_raw') |int) == 0x00AA) %}
+            Enabled
+          {% elif ((states('sensor.backup_mode_raw') |int)  == 0x0055) %}
+            Disabled
+          {% else %}
+            Unknown - should not see me! code: {{ (states('sensor.backup_mode_raw') |int) }}
+          {% endif %}
+
       - name: Export power limit mode 2
         unique_id: sg_export_power_limit_mode_2
         availability: "{{ not is_state('sensor.export_power_limit_mode_raw_2', 'unavailable') }}"
-        # TODO: test state_class with enum
-        # state_class: measurement
         device_class: enum
         state: >-
           {% if ((states('sensor.export_power_limit_mode_raw_2') |int) == 0x00AA) %}
@@ -2207,8 +2229,6 @@ template:
       - name: EMS mode selection 2
         unique_id: sg_ems_mode_selection_2
         availability: "{{ not is_state('sensor.ems_mode_selection_raw_2', 'unavailable') }}"
-        # TODO: test state_class with enum with enum
-        # state_class: measurement
         device_class: enum
         state: >-
           {% if ((states('sensor.ems_mode_selection_raw_2') |int) == 0) %}
@@ -2226,7 +2246,7 @@ template:
           {% endif %}
 
       # positive if charging and negative if discharging
-      - name: Signed battery power  2
+      - name: Signed battery power 2
         unique_id: sg_signed_battery_power_2
         unit_of_measurement: W
         device_class: power
@@ -2247,7 +2267,7 @@ template:
           {% endif %}
 
       # positive if charging else zero
-      - name: Battery charging power  2
+      - name: Battery charging power 2
         unique_id: sg_battery_charging_power_2
         unit_of_measurement: W
         device_class: power
@@ -2443,7 +2463,7 @@ template:
             ( states('sensor.battery_charge')|float 
             * states('sensor.battery_state_of_health')|float / 100 
             ) |round(2)
-          }}          
+          }}
 
       # NOTE: 2024-01-11: Unique id was adapted to match the sg_* uid pattern.
       # If the default dashboard does show an "unavailable" sensor, remove the unavailable one
@@ -2505,37 +2525,37 @@ template:
 # getting input for Min and Max SoC
 input_number:
   set_sg_2_min_soc:
-    name: Set min SoC
+    name: Min SoC (%)
     min: 0
     max: 50
     step: 1
 
   set_sg_2_max_soc:
-    name: Set max SoC
+    name: Max SoC (%)
     min: 50
     max: 100
     step: 1
 
   set_sg_2_reserved_soc_for_backup:
-    name: Set reserved SoC for backup
+    name: Reserved SoC for backup (%)
     min: 0
     max: 100
     step: 1
 
   set_sg_2_forced_charge_discharge_power:
-    name: Set forced charge discharge power in W
+    name: Forced charge discharge power (W)
     min: 0
     max: 5000 # change this value according to the capability of your battery
     step: 100
 
   set_sg_2_battery_max_charge_power:
-    name: Set max battery charge power in W
+    name: Max battery charge power (W)
     min: 100
     max: 5000 # change this value according to the capability of your battery
     step: 100
 
   set_sg_2_battery_max_discharge_power:
-    name: Set max battery discharge power in W
+    name: Max battery discharge power (W)
     min: 100
     max: 5000 # change this value according to the capability of your battery
     step: 100
@@ -2545,21 +2565,21 @@ input_number:
   # If currently achievable charging power drops below this threshold, charging will stop. Actual charging power (limited by register 33047) is ignored.
   # Charging might stop before reaching 100% if set too close to the maximum charging power of the battery, due to achievable charging power naturally dropping at high state of charge.
   set_sg_2_battery_charging_start_power:
-    name: Set battery charging start power in W
+    name: Battery charging start power (W)
     min: 0
     max: 1000
     step: 10
 
   set_sg_2_battery_discharging_start_power:
-    name: Set battery discharging start power in W
+    name: Battery discharging start power (W)
     min: 0
     max: 1000
     step: 10
 
   set_sg_2_export_power_limit:
-    name: Set export power limit
+    name: Export power limit (W)
     min: 0
-    max: 10500 # Note: max for SH10.RT. It would be ncie to have this as a global variable /secret
+    max: 10500 # TODO Note: max for SH10.RT. It would be nice to have this as a global variable /secret
     step: 100
 
 input_select:
@@ -2588,6 +2608,13 @@ input_select:
       - "Forced charge"
       - "Forced discharge"
     icon: mdi:battery-unknown
+
+  set_sg_2_backup_mode:
+    name: Backup mode
+    options:
+      - "Enabled"
+      - "Disabled"
+    icon: mdi:export
 
   set_sg_2_export_power_limit_mode:
     name: Export power limit mode
@@ -2857,6 +2884,56 @@ automation:
             {% if ((states('sensor.export_power_limit_mode_raw_2') |int) == 0x00AA) %} 
               Enabled
             {% elif ((states('sensor.export_power_limit_mode_raw_2') |int) == 0x0055) %} 
+              Disabled
+            {% endif %}
+    mode: single
+
+  - id: "automation_sungrow_inverter_2_backup_mode"
+    alias: "sungrow inverter 2 backup mode"
+    description: "Set backup mode"
+    triggers:
+      - trigger: state
+        entity_id:
+          - input_select.set_sg_2_backup_mode
+    conditions: []
+    variables:
+      enable: 0xAA
+      disable: 0x55
+    actions:
+      - action: modbus.write_register
+        data_template:
+          hub: SungrowSHx
+          slave: !secret sungrow_modbus_slave_inv2
+          address: 13074 # reg 13075
+          value: >
+            {% if is_state('input_select.set_sg_2_backup_mode', "Enabled") %} 
+              {{enable}}
+            {% elif is_state('input_select.set_sg_2_backup_mode', "Disabled") %}
+              {{disable}}
+            {% else %}
+              {{disable}}
+            {% endif %}
+    mode: single
+
+  - id: "automation_sungrow_inverter_2_backup_mode_update"
+    alias: "sungrow inverter 2 backup mode mode update"
+    description: "Updates Enable/Disable for backup mode"
+    triggers:
+      - trigger: state
+        entity_id:
+          - sensor.sg_backup_mode_raw
+    conditions:
+      - condition: template
+        value_template: "{{ not is_state('sensor.sg_backup_mode_raw', 'unavailable') }}"
+    actions:
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.set_sg_2_backup_mode
+        data:
+          option: >
+            {% if ((states('sensor.sg_backup_mode_raw') |int) == 0xAA) %} 
+              Enabled
+            {% elif ((states('sensor.sg_backup_mode_raw') |int) == 0x55) %} 
               Disabled
             {% endif %}
     mode: single
