@@ -237,6 +237,8 @@ views:
           - entity: sensor.ems_mode_selection
           - entity: input_select.set_sg_battery_forced_charge_discharge_cmd
           - entity: sensor.battery_forced_charge_discharge_cmd
+          - entity: input_select.set_sg_backup_mode
+          - entity: sensor.backup_mode
         title: Inverter State & EMS Settings
       - type: entities
         entities:
