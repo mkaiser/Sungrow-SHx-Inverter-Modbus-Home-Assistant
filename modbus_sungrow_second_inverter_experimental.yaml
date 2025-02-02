@@ -2706,7 +2706,9 @@ automation:
       - trigger: state
         entity_id:
           - sensor.max_soc_2
-    conditions: []
+    conditions:
+      - condition: template
+        value_template: "{{ not is_state('sensor.max_soc_2', 'unavailable') }}"
     actions:
       - action: input_number.set_value
         target:
@@ -2739,7 +2741,9 @@ automation:
       - trigger: state
         entity_id:
           - sensor.min_soc_2
-    conditions: []
+    conditions:
+      - condition: template
+        value_template: "{{ not is_state('sensor.min_soc_2', 'unavailable') }}"
     actions:
       - action: input_number.set_value
         target:
@@ -2772,7 +2776,9 @@ automation:
       - trigger: state
         entity_id:
           - sensor.reserved_soc_for_backup_2
-    conditions: []
+    conditions:
+      - condition: template
+        value_template: "{{ not is_state('sensor.reserved_soc_for_backup_2', 'unavailable') }}"
     actions:
       - action: input_number.set_value
         target:
@@ -3040,7 +3046,9 @@ automation:
       - trigger: state
         entity_id:
           - sensor.battery_forced_charge_discharge_power_2
-    conditions: []
+    conditions:
+      - condition: template
+        value_template: "{{ not is_state('sensor.battery_forced_charge_discharge_power_2', 'unavailable') }}"
     actions:
       - action: input_number.set_value
         target:
@@ -3073,7 +3081,9 @@ automation:
       - trigger: state
         entity_id:
           - sensor.battery_max_charge_power_2
-    conditions: []
+    conditions:
+      - condition: template
+        value_template: "{{ not is_state('sensor.battery_max_charge_power_2', 'unavailable') }}"
     actions:
       - action: input_number.set_value
         target:
@@ -3106,7 +3116,9 @@ automation:
       - trigger: state
         entity_id:
           - sensor.battery_max_discharge_power_2
-    conditions: []
+    conditions:
+      - condition: template
+        value_template: "{{ not is_state('sensor.battery_max_discharge_power_2', 'unavailable') }}"
     actions:
       - action: input_number.set_value
         target:
@@ -3139,7 +3151,9 @@ automation:
       - trigger: state
         entity_id:
           - sensor.battery_charging_start_power
-    conditions: []
+    conditions:
+      - condition: template
+        value_template: "{{ not is_state('sensor.battery_charging_start_power', 'unavailable') }}"
     actions:
       - action: input_number.set_value
         target:
@@ -3172,7 +3186,9 @@ automation:
       - trigger: state
         entity_id:
           - sensor.battery_discharging_start_power_2
-    conditions: []
+    conditions:
+      - condition: template
+        value_template: "{{ not is_state('sensor.battery_discharging_start_power_2', 'unavailable') }}"
     actions:
       - action: input_number.set_value
         target:
