@@ -134,6 +134,33 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
+           #For Example SH15T-V11 with WiNetS2 Firmware ab: WINET-SV300.001.03.P014
+      - name: MPPT3 voltage
+        unique_id: sg_mppt3_voltage
+        device_address: !secret sungrow_modbus_slave
+        address: 5014 # reg 5015
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: V
+        device_class: Voltage
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+          #For Example SH15T-V11 with WiNetS2 Firmware ab: WINET-SV300.001.03.P014
+      - name: MPPT3 current
+        unique_id: sg_mppt3_current
+        device_address: !secret sungrow_modbus_slave
+        address: 5015 # reg 5016
+        input_type: input
+        data_type: uint16
+        precision: 2
+        unit_of_measurement: A
+        device_class: Current
+        state_class: measurement
+        scale: 0.1
+        scan_interval: 10
+
       - name: Total DC power
         unique_id: sg_total_dc_power
         device_address: !secret sungrow_modbus_slave
@@ -1948,6 +1975,18 @@ template:
           and not is_state('sensor.mppt2_current', 'unavailable' ) 
           }}
         state: "{{ (states('sensor.mppt2_voltage') | float * states('sensor.mppt2_current') | float) |int }}"
+
+      - name: MPPT3 power
+        unique_id: sg_mppt3_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ 
+          not is_state('sensor.mppt3_voltage', 'unavailable') 
+          and not is_state('sensor.mppt3_current', 'unavailable' ) 
+          }}
+        state: "{{ (states('sensor.mppt3_voltage') | float * states('sensor.mppt3_current') | float) |int }}"
 
       - name: Phase A power
         unique_id: sg_phase_a_power
