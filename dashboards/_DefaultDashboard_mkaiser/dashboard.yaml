@@ -11,10 +11,12 @@ views:
         entities:
           - entity: sensor.total_dc_power
           - entity: sensor.load_power
+          - entity: sensor.total_backup_power
           - entity: sensor.export_power
           - entity: sensor.import_power
           - entity: sensor.battery_charging_power
           - entity: sensor.battery_discharging_power
+          - entity: sensor.reactive_power
         title: Power
       - type: entities
         entities:
@@ -158,6 +160,9 @@ views:
           - entity: sensor.mppt2_power
           - entity: sensor.mppt2_voltage
           - entity: sensor.mppt2_current
+          - entity: sensor.mppt3_power
+          - entity: sensor.mppt3_voltage
+          - entity: sensor.mppt3_current
         title: PV Gen
       - type: entities
         entities:
