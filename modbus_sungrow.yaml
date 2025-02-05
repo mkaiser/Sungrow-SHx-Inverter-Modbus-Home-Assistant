@@ -2088,6 +2088,8 @@ template:
             Dispatch Run
           {% elif ((states('sensor.system_state') |int) == 0x9100) %}
             Warn Running
+          {% elif ((states('sensor.system_state') |int) == 16385) %} ### Emergancy Loading from Grid when SOC is under BackUp SOC
+            Emergency Battery Charging
           {% else %}
             Unknown - should not see me! {{ (states('sensor.system_state') |int) }}
           {% endif %}
