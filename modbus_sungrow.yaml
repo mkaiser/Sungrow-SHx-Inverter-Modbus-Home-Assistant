@@ -2078,6 +2078,8 @@ template:
             Restarting
           {% elif ((states('sensor.system_state') |int) == 0x4000) %}
             External EMS mode
+          {% elif ((states('sensor.system_state') |int) == 0x4001) %} ### Emergency loading from grid when SOC is under BackUp SOC
+            Emergency Battery Charging            
           {% elif ((states('sensor.system_state') |int) in [0x55000,0x0100]) %}
             Fault
           {% elif ((states('sensor.system_state') |int) in [0x8000,0x0001]) %}
@@ -2088,8 +2090,6 @@ template:
             Dispatch Run
           {% elif ((states('sensor.system_state') |int) == 0x9100) %}
             Warn Running
-          {% elif ((states('sensor.system_state') |int) == 16385) %} ### Emergancy Loading from Grid when SOC is under BackUp SOC
-            Emergency Battery Charging
           {% else %}
             Unknown - should not see me! {{ (states('sensor.system_state') |int) }}
           {% endif %}
