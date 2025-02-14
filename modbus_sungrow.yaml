@@ -2929,19 +2929,19 @@ automation:
     triggers:
       - trigger: state
         entity_id:
-          - sensor.sg_backup_mode_raw
+          - sensor.backup_mode_raw
     conditions:
       - condition: template
-        value_template: "{{ not is_state('sensor.sg_backup_mode_raw', 'unavailable') }}"
+        value_template: "{{ not is_state('sensor.backup_mode_raw', 'unavailable') }}"
     actions:
       - action: input_select.select_option
         target:
           entity_id: input_select.set_sg_backup_mode
         data:
           option: >
-            {% if ((states('sensor.sg_backup_mode_raw') |int) == 0xAA) %} 
+            {% if ((states('sensor.backup_mode_raw') |int) == 0xAA) %} 
               Enabled
-            {% elif ((states('sensor.sg_backup_mode_raw') |int) == 0x55) %} 
+            {% elif ((states('sensor.backup_mode_raw') |int) == 0x55) %} 
               Disabled
             {% endif %}
     mode: single
