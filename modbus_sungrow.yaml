@@ -2,7 +2,7 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
 #
-# last update: 2025-02-14
+# last update: 2025-02-15
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
 
@@ -3312,12 +3312,31 @@ script:
           entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
           option: "Stop (default)"
 
+  # Self-consumption mode with battery discharging disabled. Will still charge from solar. Intended for preserving battery capacity for high-price periods.
+  sg_set_self_consumption_limited_discharge:
+    sequence:
+      - action: input_select.select_option
+        data:
+          entity_id: input_select.set_sg_ems_mode
+          option: "Self-consumption mode (default)"     
+      # Has no effect in self-consumption mode, just restores the forced mode command to a safe default.
+      - action: input_select.select_option
+        data:
+          entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
+          option: "Stop (default)"
+      # Set battery max discharge power to lowest value (10 W) which disables discharging at least for Sungrow batteries.
+      - action: input_number.set_value
+        data:
+          entity_id: input_number.set_sg_battery_max_discharge_power
+          value: 10
+
   sg_set_self_consumption_mode:
     sequence:
       - action: input_select.select_option
         data:
           entity_id: input_select.set_sg_ems_mode
           option: "Self-consumption mode (default)"
+      # Has no effect in self-consumption mode, just restores the forced mode command to a safe default.
       - action: input_select.select_option
         data:
           entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
