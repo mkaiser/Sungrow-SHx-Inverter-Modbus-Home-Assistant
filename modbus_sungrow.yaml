@@ -24,6 +24,12 @@ modbus:
         count: 10
         scan_interval: 600
 
+defaults: 
+  - &max_charge_power 5000            # max battery charge power
+  - &max_discharge_power 5000         # max battery discharge power
+  - &max_charge_discharge_power 5000  # max forced charge/discharge power
+  - &export_power_limit 10500         # max export power
+
       # for Sungrow batteries only
       #      - name: Sungrow battery serial
       #        unique_id: sg_battery_serial
@@ -2547,19 +2553,19 @@ input_number:
   set_sg_forced_charge_discharge_power:
     name: Forced charge discharge power (W)
     min: 0
-    max: 5000 # change this value according to the capability of your battery
+    max: *max_charge_discharge_power # changes according to default value in the top of the file 
     step: 100
 
   set_sg_battery_max_charge_power:
     name: Max battery charge power (W)
     min: 100
-    max: 5000 # change this value according to the capability of your battery
+    max: *max_charge_power # changes according to default value in the top of the file 
     step: 100
 
   set_sg_battery_max_discharge_power:
     name: Max battery discharge power (W)
     min: 100
-    max: 5000 # change this value according to the capability of your battery
+    max: *max_discharge_power # changes according to default value in the top of the file 
     step: 100
 
   # This threshold is compared against the currently achievable charging power, not just against the currently available surplus.
@@ -2581,7 +2587,7 @@ input_number:
   set_sg_export_power_limit:
     name: Export power limit (W)
     min: 0
-    max: 10500 # TODO Note: max for SH10.RT. It would be nice to have this as a global variable /secret
+    max: *export_power_limit # this as a global variable /secret
     step: 100
 
 input_select:
