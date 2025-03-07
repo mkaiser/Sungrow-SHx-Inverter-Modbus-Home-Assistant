@@ -6,6 +6,13 @@
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
 
+# These are shortcut settings for later in the file, edit these according to your system capabilities.  
+defaults: 
+  - &max_charge_power 5000            # max battery charge power
+  - &max_discharge_power 5000         # max battery discharge power
+  - &max_charge_discharge_power 5000  # max forced charge/discharge power
+  - &export_power_limit 10500         # max export power
+
 modbus:
   - name: SungrowSHx
     type: tcp
@@ -24,11 +31,6 @@ modbus:
         count: 10
         scan_interval: 600
 
-defaults: 
-  - &max_charge_power 5000            # max battery charge power
-  - &max_discharge_power 5000         # max battery discharge power
-  - &max_charge_discharge_power 5000  # max forced charge/discharge power
-  - &export_power_limit 10500         # max export power
 
       # for Sungrow batteries only
       #      - name: Sungrow battery serial
