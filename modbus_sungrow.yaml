@@ -2958,7 +2958,7 @@ automation:
         # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
         data:
           entity_id:
-            - sensor.
+            - sensor.backup_mode_raw
     mode: single
 
   - id: "automation_sungrow_inverter_backup_mode_update"
