@@ -2080,7 +2080,7 @@ template:
             External EMS mode
           {% elif ((states('sensor.system_state') |int) == 0x4001) %} ### Emergency loading from grid when SOC is under BackUp SOC
             Emergency Battery Charging            
-          {% elif ((states('sensor.system_state') |int) in [0x55000,0x0100]) %}
+          {% elif ((states('sensor.system_state') |int) in [0x5500,0x0100]) %}
             Fault
           {% elif ((states('sensor.system_state') |int) in [0x8000,0x0001]) %}
             Stop
