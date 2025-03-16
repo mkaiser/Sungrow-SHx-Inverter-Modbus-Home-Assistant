@@ -5,6 +5,7 @@
 # last update: 2025-03-16
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
+#
 
 modbus:
   - name: SungrowSHx 2
