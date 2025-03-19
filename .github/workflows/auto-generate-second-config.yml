@@ -1,9 +1,11 @@
 name: Auto-generate second configuration file
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'modbus_sungrow.yaml'
+  
 
 jobs:
   generate-second-config:
