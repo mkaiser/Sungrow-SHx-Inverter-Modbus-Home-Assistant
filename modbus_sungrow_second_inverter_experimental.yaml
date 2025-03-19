@@ -2204,15 +2204,15 @@ template:
 
       - name: Backup mode 2
         unique_id: sg_backup_mode_2
-        availability: "{{ not is_state('sensor.backup_mode_raw', 'unavailable') }}"
+        availability: "{{ not is_state('sensor.backup_mode_raw_2', 'unavailable') }}"
         device_class: enum
         state: >-
-          {% if ((states('sensor.backup_mode_raw') |int) == 0x00AA) %}
+          {% if ((states('sensor.backup_mode_raw_2') |int) == 0x00AA) %}
             Enabled
-          {% elif ((states('sensor.backup_mode_raw') |int)  == 0x0055) %}
+          {% elif ((states('sensor.backup_mode_raw_2') |int)  == 0x0055) %}
             Disabled
           {% else %}
-            Unknown - should not see me! code: {{ (states('sensor.backup_mode_raw') |int) }}
+            Unknown - should not see me! code: {{ (states('sensor.backup_mode_raw_2') |int) }}
           {% endif %}
 
       - name: Export power limit mode 2
@@ -2959,7 +2959,7 @@ automation:
         # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
         data:
           entity_id:
-            - sensor.backup_mode_raw
+            - sensor.backup_mode_raw_2
     mode: single
 
   - id: "automation_sungrow_inverter_2_backup_mode_update"
@@ -2968,19 +2968,19 @@ automation:
     triggers:
       - trigger: state
         entity_id:
-          - sensor.backup_mode_raw
+          - sensor.backup_mode_raw_2
     conditions:
       - condition: template
-        value_template: "{{ not is_state('sensor.backup_mode_raw', 'unavailable') }}"
+        value_template: "{{ not is_state('sensor.backup_mode_raw_2', 'unavailable') }}"
     actions:
       - action: input_select.select_option
         target:
           entity_id: input_select.set_sg_2_backup_mode
         data:
           option: >
-            {% if ((states('sensor.backup_mode_raw') |int) == 0xAA) %} 
+            {% if ((states('sensor.backup_mode_raw_2') |int) == 0xAA) %} 
               Enabled
-            {% elif ((states('sensor.backup_mode_raw') |int) == 0x55) %} 
+            {% elif ((states('sensor.backup_mode_raw_2') |int) == 0x55) %} 
               Disabled
             {% endif %}
     mode: single
