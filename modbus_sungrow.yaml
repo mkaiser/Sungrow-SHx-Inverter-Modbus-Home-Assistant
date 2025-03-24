@@ -1500,16 +1500,6 @@ modbus:
       #####################
       # holding registers
       #####################
-      # mkaiser 2025-01-12 this is already included as a sensor "System state"
-      # - name: Inverter start stop
-      #   unique_id: sg_inverter_start_stop
-      #   device_address: !secret sungrow_modbus_slave
-      #   address: 12999 # reg 13000
-      #   input_type: holding
-      #   data_type: uint16
-      #   precision: 0
-      #   state_class: measurement
-      #   scan_interval: 10
       - name: Load adjustment mode selection raw
         unique_id: sg_load_adjustment_mode_selection_raw
         device_address: !secret sungrow_modbus_slave
