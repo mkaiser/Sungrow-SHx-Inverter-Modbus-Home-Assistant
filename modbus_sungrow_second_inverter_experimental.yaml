@@ -2,7 +2,7 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
 #
-# last update: 2025-03-24
+# last update: 2025-03-24 (2)
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
 #
@@ -2262,11 +2262,11 @@ template:
         device_class: enum
         state: >-
           {% if ((states('sensor.load_adjustment_mode_selection_raw') |int) == 0) %}
-            Timing mode
+            Timing
           {% elif ((states('sensor.load_adjustment_mode_selection_raw') |int) == 1) %}
-            ON/OFF mode
+            ON/OFF
           {% elif ((states('sensor.load_adjustment_mode_selection_raw') |int) == 2) %}
-            Power optimized mode
+            Power optimization
           {% elif ((states('sensor.load_adjustment_mode_selection_raw') |int) == 3) %}
             Disabled
           {% else %}
