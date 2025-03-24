@@ -2,7 +2,7 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
 #
-# last update: 2025-03-16
+# last update: 2025-03-24
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
 #
@@ -1510,6 +1510,23 @@ modbus:
       #   precision: 0
       #   state_class: measurement
       #   scan_interval: 10
+      - name: Load adjustment mode selection raw 2
+        unique_id: sg_load_adjustment_mode_selection_raw_2
+        device_address: !secret sungrow_modbus_slave_inv2
+        address: 13001 # reg 13002
+        input_type: holding
+        data_type: uint16
+        state_class: measurement
+        scan_interval: 10
+
+      - name: Load adjustment mode ON/OFF selection raw 2
+        unique_id: sg_load_adjustment_mode_on_off_selection_raw_2
+        device_address: !secret sungrow_modbus_slave_inv2
+        address: 13010 # reg 13011
+        input_type: holding
+        data_type: uint16
+        state_class: measurement
+        scan_interval: 10
 
       - name: EMS mode selection raw 2
         unique_id: sg_ems_mode_selection_raw_2
@@ -2248,6 +2265,39 @@ template:
             Unknown - should not see me! code: {{ (states('sensor.ems_mode_selection_raw_2') |int) }}
           {% endif %}
 
+      # make the sensor load_adjustment_selection_raw more human readable
+      - name: Load adjustment mode selection 2
+        unique_id: sg_load_adjustment_mode_selection_2
+        availability: "{{ not is_state('sensor.load_adjustment_mode_selection_raw', 'unavailable') }}"
+        device_class: enum
+        state: >-
+          {% if ((states('sensor.load_adjustment_mode_selection_raw') |int) == 0) %}
+            Timing mode
+          {% elif ((states('sensor.load_adjustment_mode_selection_raw') |int) == 1) %}
+            ON/OFF mode
+          {% elif ((states('sensor.load_adjustment_mode_selection_raw') |int) == 2) %}
+            Power optimized mode
+          {% elif ((states('sensor.load_adjustment_mode_selection_raw') |int) == 3) %}
+            Disabled
+          {% else %}
+            Unknown - should not see me! code: {{ (states('sensor.load_adjustment_mode_selection_raw') |int) }}
+          {% endif %}
+
+      # make the sensor load_adjustment_selection_raw_on_off more human readable
+      - name: Load adjustment mode on/off selection 2
+        unique_id: sg_load_adjustment_mode_on_off_selection_2
+        availability: "{{ not is_state('sensor.load_adjustment_mode_on_off_selection_raw', 'unavailable') }}"
+        device_class: enum
+        state: >-
+          {% if ((states('sensor.load_adjustment_mode_on_off_selection_raw') |int) == 0xAA) %}
+            ON
+          {% elif ((states('sensor.load_adjustment_mode_on_off_selection_raw') |int) == 0x55) %}
+            OFF
+          {% else %}
+            Unknown - should not see me! code: {{ (states('sensor.load_adjustment_mode_on_off_selection_raw') |int) }}
+          {% endif %}
+
+
       # positive if charging and negative if discharging
       - name: Signed battery power 2
         unique_id: sg_signed_battery_power_2
@@ -2595,6 +2645,24 @@ input_select:
       - "Enabled"
       - "Shutdown"
 
+  # get input for load adjustment mode (Timing/ ON-OFF/ Power optimization/Disabled )
+  set_sg_2_load_adjustment_mode:
+    name: Load adjustment mode
+    options:
+      - "Timing"
+      - "ON/OFF"
+      - "Power optimization"
+      - "Disabled"
+    icon: mdi:battery-unknown
+
+  # get input for load adjustment mode (Timing/ ON-OFF/ Power optimization/Disabled )
+  set_sg_2_load_adjustment_mode_on_off:
+    name: Load adjustment mode ON/OFF
+    options:
+      - "ON"
+      - "OFF"
+    icon: mdi:battery-unknown
+
   # get input for battery mode (forced charge/discharge, stop (default) )
   set_sg_2_ems_mode:
     name: EMS mode
@@ -2907,6 +2975,74 @@ automation:
             - sensor.ems_mode_selection_raw_2
     mode: single
 
+  - id: "automation_sungrow_inverter_2_update_load_adjustment_mode"
+    alias: "sungrow inverter 2 update Load adjustment mode"
+    description: "Updates Load adjustment mode"
+    triggers:
+      - trigger: state
+        entity_id:
+          - input_select.set_sg_2_load_adjustment_mode
+    conditions: []
+    variables:
+      load_adjustment_mode_timing: 0
+      load_adjustment_on_off: 1
+      load_adjustment_power_optimized: 2
+      load_adjustment_disabled: 3
+    actions:
+      - action: modbus.write_register
+        data_template:
+          hub: SungrowSHx
+          slave: !secret sungrow_modbus_slave_inv2
+          address: 13001 # reg 13002
+          value: >
+            {% if is_state('input_select.set_sg_2_load_adjustment_mode', "Timing") %} 
+              {{load_adjustment_mode_timing}}
+            {% elif is_state('input_select.set_sg_2_load_adjustment_mode', "ON/OFF") %} 
+              {{load_adjustment_on_off}}
+            {% elif is_state('input_select.set_sg_2_load_adjustment_mode', "Power optimization") %} 
+              {{load_adjustment_power_optimized}}
+            {% elif is_state('input_select.set_sg_2_load_adjustment_mode', "Disabled") %} 
+              {{load_adjustment_disabled}}
+            {% else %} 
+              {{load_adjustment_disabled}}
+            {% endif %}
+      - action: homeassistant.update_entity
+        # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
+        data:
+          entity_id:
+            - sensor.load_adjustment_mode_selection_raw                        
+    mode: single
+
+  - id: "automation_sungrow_inverter_2_update_load_adjustment_mode_on_off"
+    alias: "sungrow inverter 2 update Load adjustment mode ON/OFF"
+    description: "Updates Load adjustment mode ON/OFF"
+    triggers:
+      - trigger: state
+        entity_id:
+          - input_select.set_sg_2_load_adjustment_mode_on_off
+    conditions: []
+    variables:
+      load_adjustment_mode_on_off_on: 0xAA
+      load_adjustment_mode_on_off_off: 0x55
+    actions:
+      - action: modbus.write_register
+        data_template:
+          hub: SungrowSHx
+          slave: !secret sungrow_modbus_slave_inv2
+          address: 13010 # reg 13011
+          value: >
+            {% if is_state('input_select.set_sg_2_load_adjustment_mode_on_off', "ON") %} 
+              {{load_adjustment_mode_on_off_on}}
+            {% elif is_state('input_select.set_sg_2_load_adjustment_mode_on_off', "OFF") %} 
+              {{load_adjustment_mode_on_off_off}}
+            {% endif %}
+      - action: homeassistant.update_entity
+        # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
+        data:
+          entity_id:
+            - sensor.load_adjustment_mode_on_off_selection_raw            
+    mode: single
+
   - id: "automation_sungrow_inverter_2_export_power_limit_mode_update"
     alias: "sungrow inverter 2 export power limit mode update"
     description: "Updates Enable/Disable for export power limit mode"
@@ -3053,6 +3189,24 @@ automation:
         data:
           entity_id:
             - sensor.export_power_limit_2
+    mode: single
+
+  - id: "automation_sungrow_inverter_2_update_load_adjustment_mode_input_select_update"
+    alias: "sungrow inverter 2 update Load adjustment mode input select update"
+    description: "Updates Load adjustment mode input select"
+    triggers:
+      - trigger: state
+        entity_id:
+          - sensor.load_adjustment_mode_selection
+    conditions:
+      - condition: template
+        value_template: "{{ not is_state('sensor.load_adjustment_mode_selection', 'unavailable') }}"
+    actions:
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.set_sg_2_load_adjustment_mode
+        data:
+          option: "{{ states('sensor.load_adjustment_mode_selection') }}"
     mode: single
 
   - id: "automation_sungrow_inverter_2_update_ems_mode_input_select_update"
