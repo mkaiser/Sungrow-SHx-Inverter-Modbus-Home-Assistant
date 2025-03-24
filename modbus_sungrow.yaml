@@ -2297,7 +2297,6 @@ template:
             Unknown - should not see me! code: {{ (states('sensor.load_adjustment_mode_on_off_selection_raw') |int) }}
           {% endif %}
 
-
       # positive if charging and negative if discharging
       - name: Signed battery power
         unique_id: sg_signed_battery_power
@@ -2653,7 +2652,6 @@ input_select:
       - "ON/OFF"
       - "Power optimization"
       - "Disabled"
-    icon: mdi:battery-unknown
 
   # get input for load adjustment mode (Timing/ ON-OFF/ Power optimization/Disabled )
   set_sg_load_adjustment_mode_on_off:
@@ -2661,7 +2659,6 @@ input_select:
     options:
       - "ON"
       - "OFF"
-    icon: mdi:battery-unknown
 
   # get input for battery mode (forced charge/discharge, stop (default) )
   set_sg_ems_mode:
@@ -2673,7 +2670,6 @@ input_select:
     # these are commented, because they are rarely used
     #      - "VPP"
     #      - "MicroGrid"
-    icon: mdi:battery-unknown
 
   set_sg_battery_forced_charge_discharge_cmd:
     name: Battery forced charge discharge cmd
@@ -2681,28 +2677,24 @@ input_select:
       - "Stop (default)"
       - "Forced charge"
       - "Forced discharge"
-    icon: mdi:battery-unknown
 
   set_sg_backup_mode:
     name: Backup mode
     options:
       - "Enabled"
       - "Disabled"
-    icon: mdi:export
 
   set_sg_export_power_limit_mode:
     name: Export power limit mode
     options:
       - "Enabled"
       - "Disabled"
-    icon: mdi:export
 
   set_sg_global_mpp_scan_manual:
     name: Global mpp scan manual
     options:
       - "Enabled"
       - "Disabled"
-    icon: mdi:export
 
 # Automations: Write modbus registers on input changes via GUI
 # note: If you change a value by the sliders, it will take up to 60 seconds until the state variables are updated
@@ -3010,7 +3002,7 @@ automation:
         # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
         data:
           entity_id:
-            - sensor.load_adjustment_mode_selection_raw                        
+            - sensor.load_adjustment_mode_selection_raw
     mode: single
 
   - id: "automation_sungrow_inverter_update_load_adjustment_mode_on_off"
@@ -3040,7 +3032,7 @@ automation:
         # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
         data:
           entity_id:
-            - sensor.load_adjustment_mode_on_off_selection_raw            
+            - sensor.load_adjustment_mode_on_off_selection_raw
     mode: single
 
   - id: "automation_sungrow_inverter_export_power_limit_mode_update"
