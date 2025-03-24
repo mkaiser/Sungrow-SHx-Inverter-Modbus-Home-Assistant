@@ -15,6 +15,7 @@ views:
           - entity: sensor.import_power
           - entity: sensor.battery_charging_power
           - entity: sensor.battery_discharging_power
+          - entity: binary_sensor.battery_discharging_delay
         title: Power
       - type: entities
         entities:
@@ -280,4 +281,11 @@ views:
           - entity: input_select.set_sg_export_power_limit_mode
           - entity: input_number.set_sg_export_power_limit
         title: Export Settings
+      - type: entities
+        entities:
+          - input_select.set_sg_load_adjustment_mode
+          - input_select.set_sg_load_adjustment_mode_on_off
+          - sensor.load_adjustment_mode_on_off_selection
+          - sensor.load_adjustment_mode_selection
+        title: D0 Support
 title: PV System
