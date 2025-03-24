@@ -2,9 +2,10 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
 #
-# last update: 2025-03-11
+# last update: 2025-03-16
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
+#
 
 modbus:
   - name: SungrowSHx 2
@@ -2203,15 +2204,15 @@ template:
 
       - name: Backup mode 2
         unique_id: sg_backup_mode_2
-        availability: "{{ not is_state('sensor.backup_mode_raw', 'unavailable') }}"
+        availability: "{{ not is_state('sensor.backup_mode_raw_2', 'unavailable') }}"
         device_class: enum
         state: >-
-          {% if ((states('sensor.backup_mode_raw') |int) == 0x00AA) %}
+          {% if ((states('sensor.backup_mode_raw_2') |int) == 0x00AA) %}
             Enabled
-          {% elif ((states('sensor.backup_mode_raw') |int)  == 0x0055) %}
+          {% elif ((states('sensor.backup_mode_raw_2') |int)  == 0x0055) %}
             Disabled
           {% else %}
-            Unknown - should not see me! code: {{ (states('sensor.backup_mode_raw') |int) }}
+            Unknown - should not see me! code: {{ (states('sensor.backup_mode_raw_2') |int) }}
           {% endif %}
 
       - name: Export power limit mode 2
@@ -2581,7 +2582,10 @@ input_number:
   set_sg_2_export_power_limit:
     name: Export power limit (W)
     min: 0
-    max: 10500 # TODO Note: max for SH10.RT. It would be nice to have this as a global variable /secret
+    max: 10000
+    # NOTE: datasheet states 10,500 W export limit for SH10.RT. But setting 10 5000 results in a modbus error
+    # therefore limiting to 10 000 here.
+    # TODO Note: It would be nice to have this as a global variable /secret
     step: 100
 
 input_select:
@@ -2659,6 +2663,11 @@ automation:
             {% else %}
               {{sg_stop}}
             {% endif %}
+      - action: homeassistant.update_entity
+        # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
+        data:
+          entity_id:
+            - sensor.system_state_2
     mode: single
 
   - id: "automation_sungrow_inverter_2_state_input_selector_update"
@@ -2699,6 +2708,11 @@ automation:
           slave: !secret sungrow_modbus_slave_inv2
           address: 13057 # reg 13058
           value: "{{ states('input_number.set_sg_2_max_soc') | int *10}}"
+      - action: homeassistant.update_entity
+        # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
+        data:
+          entity_id:
+            - sensor.max_soc_2
     mode: single
 
   - id: "automation_sungrow_inverter_2_update_max_soc_input_slider_update"
@@ -2734,6 +2748,11 @@ automation:
           slave: !secret sungrow_modbus_slave_inv2
           address: 13058 # reg 13059
           value: "{{ states('input_number.set_sg_2_min_soc') | int *10}}"
+      - action: homeassistant.update_entity
+        # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
+        data:
+          entity_id:
+            - sensor.min_soc_2
     mode: single
 
   - id: "automation_sungrow_inverter_2_update_min_soc_input_slider_update"
@@ -2769,6 +2788,11 @@ automation:
           slave: !secret sungrow_modbus_slave_inv2
           address: 13099 # reg 13100
           value: "{{ states('input_number.set_sg_2_reserved_soc_for_backup') | int}}"
+      - action: homeassistant.update_entity
+        # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
+        data:
+          entity_id:
+            - sensor.reserved_soc_for_backup_2
     mode: single
 
   - id: "automation_sungrow_inverter_2_update_reserved_backup_soc_input_slider_update"
@@ -2817,6 +2841,11 @@ automation:
             {% else %}
               {{ems_stop_default}}
             {% endif %}
+      - action: homeassistant.update_entity
+        # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
+        data:
+          entity_id:
+            - sensor.battery_forced_charge_discharge_cmd_raw_2
     mode: single
 
   - id: "automation_sungrow_inverter_2_update_battery_forced_charge_discharge_cmd_input_select_update"
@@ -2871,6 +2900,11 @@ automation:
             {% else %} 
               {{ems_mode_self_consume}}
             {% endif %}
+      - action: homeassistant.update_entity
+        # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
+        data:
+          entity_id:
+            - sensor.ems_mode_selection_raw_2
     mode: single
 
   - id: "automation_sungrow_inverter_2_export_power_limit_mode_update"
@@ -2921,6 +2955,11 @@ automation:
             {% else %}
               {{disable}}
             {% endif %}
+      - action: homeassistant.update_entity
+        # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
+        data:
+          entity_id:
+            - sensor.backup_mode_raw_2
     mode: single
 
   - id: "automation_sungrow_inverter_2_backup_mode_update"
@@ -2929,19 +2968,19 @@ automation:
     triggers:
       - trigger: state
         entity_id:
-          - sensor.backup_mode_raw
+          - sensor.backup_mode_raw_2
     conditions:
       - condition: template
-        value_template: "{{ not is_state('sensor.backup_mode_raw', 'unavailable') }}"
+        value_template: "{{ not is_state('sensor.backup_mode_raw_2', 'unavailable') }}"
     actions:
       - action: input_select.select_option
         target:
           entity_id: input_select.set_sg_2_backup_mode
         data:
           option: >
-            {% if ((states('sensor.backup_mode_raw') |int) == 0xAA) %} 
+            {% if ((states('sensor.backup_mode_raw_2') |int) == 0xAA) %} 
               Enabled
-            {% elif ((states('sensor.backup_mode_raw') |int) == 0x55) %} 
+            {% elif ((states('sensor.backup_mode_raw_2') |int) == 0x55) %} 
               Disabled
             {% endif %}
     mode: single
@@ -2971,6 +3010,11 @@ automation:
             {% else %}
               {{export_limit_disable}}
             {% endif %}
+      - action: homeassistant.update_entity
+        # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
+        data:
+          entity_id:
+            - sensor.export_power_limit_mode_raw_2
     mode: single
 
   - id: "automation_sungrow_inverter_2_export_power_limit_update"
@@ -3004,6 +3048,11 @@ automation:
           slave: !secret sungrow_modbus_slave_inv2
           address: 13073 # reg 13074
           value: "{{ states('input_number.set_sg_2_export_power_limit') }}"
+      - action: homeassistant.update_entity
+        # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
+        data:
+          entity_id:
+            - sensor.export_power_limit_2
     mode: single
 
   - id: "automation_sungrow_inverter_2_update_ems_mode_input_select_update"
@@ -3039,6 +3088,11 @@ automation:
           slave: !secret sungrow_modbus_slave_inv2
           address: 13051 # reg 13052
           value: "{{ states('input_number.set_sg_2_forced_charge_discharge_power') | int}}"
+      - action: homeassistant.update_entity
+        # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
+        data:
+          entity_id:
+            - sensor.battery_forced_charge_discharge_power_2
     mode: single
 
   - id: "automation_sungrow_inverter_2_update_battery_forced_charge_discharge_power_input_slider_update"
@@ -3074,6 +3128,11 @@ automation:
           slave: !secret sungrow_modbus_slave_inv2
           address: 33046 # reg 33047
           value: "{{ states('input_number.set_sg_2_battery_max_charge_power') |float /10 |int}}"
+      - action: homeassistant.update_entity
+        # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
+        data:
+          entity_id:
+            - sensor.battery_max_charge_power_2
     mode: single
 
   - id: "automation_sungrow_inverter_2_update_battery_max_charge_power_input_slider_update"
@@ -3109,6 +3168,11 @@ automation:
           slave: !secret sungrow_modbus_slave_inv2
           address: 33047 # reg 33048
           value: "{{ states('input_number.set_sg_2_battery_max_discharge_power')  |float /10 |int}}"
+      - action: homeassistant.update_entity
+        # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
+        data:
+          entity_id:
+            - sensor.battery_max_discharge_power_2
     mode: single
 
   - id: "automation_sungrow_inverter_2_update_battery_max_discharge_power_input_slider_update"
@@ -3144,6 +3208,11 @@ automation:
           slave: !secret sungrow_modbus_slave_inv2
           address: 33148 # reg 33149
           value: "{{ states('input_number.set_sg_2_battery_charging_start_power') |float /10 |int}}"
+      - action: homeassistant.update_entity
+        # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
+        data:
+          entity_id:
+            - sensor.battery_charging_start_power
     mode: single
 
   - id: "automation_sungrow_inverter_2_update_battery_charging_start_power_input_slider_update"
@@ -3179,6 +3248,11 @@ automation:
           slave: !secret sungrow_modbus_slave_inv2
           address: 33149 # reg 33150
           value: "{{ states('input_number.set_sg_2_battery_discharging_start_power') |float /10 | int}}"
+      - action: homeassistant.update_entity
+        # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
+        data:
+          entity_id:
+            - sensor.battery_discharging_start_power_2
     mode: single
 
   - id: "automation_sungrow_inverter_2_update_battery_discharging_start_power_input_slider_update"
@@ -3247,6 +3321,11 @@ automation:
             {% else %}
               {{export_limit_disable}}
             {% endif %}
+      - action: homeassistant.update_entity
+        # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
+        data:
+          entity_id:
+            - sensor.global_mpp_scan_manual_raw_2
     mode: single
 
 # Usage: Use these scripts to simplify automations
@@ -3318,7 +3397,7 @@ script:
       - action: input_select.select_option
         data:
           entity_id: input_select.set_sg_2_ems_mode
-          option: "Self-consumption mode (default)"     
+          option: "Self-consumption mode (default)"
       # Has no effect in self-consumption mode, just restores the forced mode command to a safe default.
       - action: input_select.select_option
         data:

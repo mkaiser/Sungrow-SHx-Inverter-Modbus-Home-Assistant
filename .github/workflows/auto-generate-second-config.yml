@@ -1,9 +1,11 @@
 name: Auto-generate second configuration file
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'modbus_sungrow.yaml'
+  
 
 jobs:
   generate-second-config:
@@ -45,6 +47,8 @@ jobs:
          sed -i 's/binary_sensor.exporting_power\b/binary_sensor.exporting_power_2/g' modbus_sungrow_second_inverter_experimental.yaml
          sed -i 's/binary_sensor.importing_power\b/binary_sensor.importing_power_2/g' modbus_sungrow_second_inverter_experimental.yaml
          sed -i 's/binary_sensor.pv_generating\b/binary_sensor.pv_generating_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.backup_mode\b/sensor.backup_mode_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.backup_mode_raw\b/sensor.backup_mode_raw_2/g' modbus_sungrow_second_inverter_experimental.yaml
          sed -i 's/sensor.battery_capacity\b/sensor.battery_capacity_2/g' modbus_sungrow_second_inverter_experimental.yaml
          sed -i 's/sensor.battery_discharging_start_power\b/sensor.battery_discharging_start_power_2/g' modbus_sungrow_second_inverter_experimental.yaml
          sed -i 's/sensor.battery_forced_charge_discharge_cmd\b/sensor.battery_forced_charge_discharge_cmd_2/g' modbus_sungrow_second_inverter_experimental.yaml
