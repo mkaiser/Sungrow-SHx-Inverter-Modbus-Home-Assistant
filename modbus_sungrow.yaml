@@ -2598,7 +2598,7 @@ input_number:
 
   set_sg_battery_max_discharge_power:
     name: Max battery discharge power (W)
-    min: 100
+    min: 10
     max: 5000 # change this value according to the capability of your battery
     step: 100
 
