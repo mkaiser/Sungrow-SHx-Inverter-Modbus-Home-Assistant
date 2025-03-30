@@ -2,7 +2,7 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
 #
-# last update: 2025-03-24 (2)
+# last update: 2025-03-30
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
 #
@@ -2598,7 +2598,7 @@ input_number:
 
   set_sg_2_battery_max_discharge_power:
     name: Max battery discharge power (W)
-    min: 100
+    min: 10
     max: 5000 # change this value according to the capability of your battery
     step: 100
 
