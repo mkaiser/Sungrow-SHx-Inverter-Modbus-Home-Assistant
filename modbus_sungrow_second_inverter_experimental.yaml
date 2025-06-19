@@ -2704,7 +2704,7 @@ automation:
     actions:
       - action: modbus.write_register
         data_template:
-          hub: SungrowSHx
+          hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 12999 # reg 13000
           value: >
@@ -2754,7 +2754,7 @@ automation:
     actions:
       - action: modbus.write_register
         data_template:
-          hub: SungrowSHx
+          hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 13057 # reg 13058
           value: "{{ states('input_number.set_sg_2_max_soc') | int *10}}"
@@ -2794,7 +2794,7 @@ automation:
     actions:
       - action: modbus.write_register
         data_template:
-          hub: SungrowSHx
+          hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 13058 # reg 13059
           value: "{{ states('input_number.set_sg_2_min_soc') | int *10}}"
@@ -2834,7 +2834,7 @@ automation:
     actions:
       - action: modbus.write_register
         data_template:
-          hub: SungrowSHx
+          hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 13099 # reg 13100
           value: "{{ states('input_number.set_sg_2_reserved_soc_for_backup') | int}}"
@@ -2878,7 +2878,7 @@ automation:
     actions:
       - action: modbus.write_register
         data_template:
-          hub: SungrowSHx
+          hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 13050 # reg 13051
           value: >
@@ -2933,7 +2933,7 @@ automation:
     actions:
       - action: modbus.write_register
         data_template:
-          hub: SungrowSHx
+          hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 13049 # reg 13050
           value: >
@@ -2973,7 +2973,7 @@ automation:
     actions:
       - action: modbus.write_register
         data_template:
-          hub: SungrowSHx
+          hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 13001 # reg 13002
           value: >
@@ -3009,7 +3009,7 @@ automation:
     actions:
       - action: modbus.write_register
         data_template:
-          hub: SungrowSHx
+          hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 13010 # reg 13011
           value: >
@@ -3062,7 +3062,7 @@ automation:
     actions:
       - action: modbus.write_register
         data_template:
-          hub: SungrowSHx
+          hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 13074 # reg 13075
           value: >
@@ -3117,7 +3117,7 @@ automation:
     actions:
       - action: modbus.write_register
         data_template:
-          hub: SungrowSHx
+          hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 13086 # reg 13087
           value: >
@@ -3162,7 +3162,7 @@ automation:
     actions:
       - action: modbus.write_register
         data_template:
-          hub: SungrowSHx
+          hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 13073 # reg 13074
           value: "{{ states('input_number.set_sg_2_export_power_limit') }}"
@@ -3220,7 +3220,7 @@ automation:
     actions:
       - action: modbus.write_register
         data_template:
-          hub: SungrowSHx
+          hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 13051 # reg 13052
           value: "{{ states('input_number.set_sg_2_forced_charge_discharge_power') | int}}"
@@ -3260,7 +3260,7 @@ automation:
     actions:
       - action: modbus.write_register
         data_template:
-          hub: SungrowSHx
+          hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 33046 # reg 33047
           value: "{{ states('input_number.set_sg_2_battery_max_charge_power') |float /10 |int}}"
@@ -3300,7 +3300,7 @@ automation:
     actions:
       - action: modbus.write_register
         data_template:
-          hub: SungrowSHx
+          hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 33047 # reg 33048
           value: "{{ states('input_number.set_sg_2_battery_max_discharge_power')  |float /10 |int}}"
@@ -3340,7 +3340,7 @@ automation:
     actions:
       - action: modbus.write_register
         data_template:
-          hub: SungrowSHx
+          hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 33148 # reg 33149
           value: "{{ states('input_number.set_sg_2_battery_charging_start_power') |float /10 |int}}"
@@ -3380,7 +3380,7 @@ automation:
     actions:
       - action: modbus.write_register
         data_template:
-          hub: SungrowSHx
+          hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 33149 # reg 33150
           value: "{{ states('input_number.set_sg_2_battery_discharging_start_power') |float /10 | int}}"
@@ -3446,7 +3446,7 @@ automation:
     actions:
       - action: modbus.write_register
         data_template:
-          hub: SungrowSHx
+          hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 30229 # reg 30230
           value: >
