@@ -2,7 +2,7 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
 #
-# last update: 2025-03-30
+# last update: 2025-07-14
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
 #
@@ -1768,7 +1768,7 @@ template:
             {% endif %}
           {% else %}
             {# workaround for SH*RS inverters without working running_state #}
-            {% if (states('sensor.ems_mode_selection_2') ) == "Forced mode" %}
+            {% if (states('sensor.ems_mode_selection_2') ) in ["Forced mode", "VPP"] %}
               {# EMS forced mode #}
               {% if (states('sensor.battery_forced_charge_discharge_cmd_2') == "Forced charge") %}
                 {# in mode Forced charge #}
@@ -1830,7 +1830,7 @@ template:
             {% endif %}
           {% else %}
             {# workaround for SH*RS inverters without working running_state #}
-            {% if (states('sensor.ems_mode_selection_2') ) == "Forced mode" %}
+            {% if (states('sensor.ems_mode_selection_2') ) in ["Forced mode", "VPP"] %}
               {# EMS forced mode #}
               {% if (states('sensor.battery_forced_charge_discharge_cmd_2') == "Forced discharge") %}
                 {# in mode Forced discharge #}
