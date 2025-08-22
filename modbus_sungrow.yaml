@@ -1580,6 +1580,8 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
+
+      # Called "Feed-in limitation value" in spec
       - name: Export power limit
         unique_id: sg_export_power_limit
         device_address: !secret sungrow_modbus_slave
@@ -1594,6 +1596,7 @@ modbus:
         scan_interval: 10
 
       # U16, 0x55:Disable, 0xAA:Enable
+      # called "Off-grid option" in spec
       - name: Backup mode raw
         unique_id: sg_backup_mode_raw
         device_address: !secret sungrow_modbus_slave
@@ -1603,6 +1606,8 @@ modbus:
         state_class: measurement
         scan_interval: 10
 
+      # called "Feed-in limitation" in spec
+      # reg 13087 U16 0xAA: Enable 0x55: Disable
       - name: Export power limit mode raw
         unique_id: sg_export_power_limit_mode_raw
         device_address: !secret sungrow_modbus_slave
@@ -2931,7 +2936,7 @@ automation:
     conditions: []
     variables:
       ems_mode_self_consume: 0
-      ems_mode_forced: 2
+      ems_mode_forced: 2   # called "compulsory mode in modbus spec"
       ems_mode_external: 3
       ems_mode_vpp: 4
       ems_mode_microgrid: 8
