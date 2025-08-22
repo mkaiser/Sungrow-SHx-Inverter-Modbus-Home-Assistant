@@ -78,7 +78,7 @@ modbus:
         data_type: int16
         precision: 1
         unit_of_measurement: °C
-        device_class: Temperature
+        device_class: temperature
         state_class: measurement
         scale: 0.1
         scan_interval: 10
@@ -102,7 +102,7 @@ modbus:
         address: 5011 # reg 5012
         input_type: input
         data_type: uint16
-        precision: 2
+        precision: 1
         unit_of_measurement: A
         device_class: Current
         state_class: measurement
@@ -128,12 +128,40 @@ modbus:
         address: 5013 # reg 5014
         input_type: input
         data_type: uint16
-        precision: 2
+        precision: 1
         unit_of_measurement: A
         device_class: Current
         state_class: measurement
         scale: 0.1
         scan_interval: 10
+
+      # only for SH*T inverters with 3 MPPTs
+      # - name: MPPT3 voltage
+      #   unique_id: sg_mppt3_voltage_2
+      #   device_address: !secret sungrow_modbus_slave_inv2
+      #   address: 5014 # reg 5015
+      #   input_type: input
+      #   data_type: uint16
+      #   precision: 1
+      #   unit_of_measurement: V
+      #   device_class: Voltage
+      #   state_class: measurement
+      #   scale: 0.1
+      #   scan_interval: 10
+
+      # only for SH*T inverters with 3 MPPTs
+      # - name: MPPT3 current
+      #   unique_id: sg_mppt3_current_2
+      #   device_address: !secret sungrow_modbus_slave_inv2
+      #   address: 5015 # reg 5016
+      #   input_type: input
+      #   data_type: uint16
+      #   precision: 1
+      #   unit_of_measurement: A
+      #   device_class: Current
+      #   state_class: measurement
+      #   scale: 0.1
+      #   scan_interval: 10        
 
       - name: Total DC power 2
         unique_id: sg_total_dc_power_2
@@ -343,20 +371,6 @@ modbus:
       #Phase A Backup Power: 5723 S16 W (Backup Leistung Phase A)
       #Phase B Backup Power: 5724 S16 W (Backup Leistung Phase B)
       #Phase C Backup Power: 5725 S16 W (Backup Leistung Phase C)
-      - name: Total backup power 2
-        device_address: !secret sungrow_modbus_slave_inv2
-        unique_id: sg_total_backup_power_2
-        address: 5725 # reg 5726
-        input_type: input
-        data_type: int32
-        swap: word
-        precision: 0
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        scale: 1
-        scan_interval: 10
-
       - name: Backup phase A power 2
         unique_id: sg_backup_phase_a_power_2
         device_address: !secret sungrow_modbus_slave_inv2
@@ -395,6 +409,21 @@ modbus:
         state_class: measurement
         scale: 1
         scan_interval: 10
+
+      - name: Total backup power 2
+        device_address: !secret sungrow_modbus_slave_inv2
+        unique_id: sg_total_backup_power_2
+        address: 5725 # reg 5726
+        input_type: input
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
 
       # https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?postID=3324464#post3324464
       - name: Meter phase A voltage 2
@@ -1093,7 +1122,7 @@ modbus:
         unique_id: sg_system_state_2
         device_address: !secret sungrow_modbus_slave_inv2
         address: 12999 # reg 13000
-        input_type: input
+        input_type: holding
         data_type: uint16
         precision: 0
         scale: 1
@@ -1331,7 +1360,7 @@ modbus:
         data_type: int16
         precision: 1
         unit_of_measurement: °C
-        device_class: Temperature
+        device_class: temperature
         state_class: measurement
         scale: 0.1
         scan_interval: 60
@@ -1579,6 +1608,8 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
+
+      # Called "Feed-in limitation value" in spec
       - name: Export power limit 2
         unique_id: sg_export_power_limit_2
         device_address: !secret sungrow_modbus_slave_inv2
@@ -1593,6 +1624,7 @@ modbus:
         scan_interval: 10
 
       # U16, 0x55:Disable, 0xAA:Enable
+      # called "Off-grid option" in spec
       - name: Backup mode raw 2
         unique_id: sg_backup_mode_raw_2
         device_address: !secret sungrow_modbus_slave_inv2
@@ -1602,6 +1634,8 @@ modbus:
         state_class: measurement
         scan_interval: 10
 
+      # called "Feed-in limitation" in spec
+      # reg 13087 U16 0xAA: Enable 0x55: Disable
       - name: Export power limit mode raw 2
         unique_id: sg_export_power_limit_mode_raw_2
         device_address: !secret sungrow_modbus_slave_inv2
@@ -1957,6 +1991,19 @@ template:
           }}
         state: "{{ (states('sensor.mppt2_voltage_2') | float * states('sensor.mppt2_current_2') | float) |int }}"
 
+      # only for SH*T inverters with 3 MPPTs
+      # - name: MPPT3 power
+      #   unique_id: sg_mppt3_power_2
+      #   unit_of_measurement: W
+      #   device_class: power
+      #   state_class: measurement
+      #   availability: >-
+      #     {{ 
+      #     not is_state('sensor.mppt3_voltage', 'unavailable') 
+      #     and not is_state('sensor.mppt3_current', 'unavailable' ) 
+      #     }}
+      #   state: "{{ (states('sensor.mppt3_voltage') | float * states('sensor.mppt3_current') | float) |int }}"
+
       - name: Phase A power 2
         unique_id: sg_phase_a_power_2
         unit_of_measurement: W
@@ -2122,7 +2169,7 @@ template:
           {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D0C) %}
             SH5K-30
           {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D17) %}
-            SH3.RS
+            SH3.0RS
           {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D0D) %}
             SH3.6RS
           {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D18) %}
@@ -2168,21 +2215,25 @@ template:
           {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E0B) %}
             SH10RT-V122
           {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E20) %}
-            SH5T-V11
+            SH5T
           {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E21) %}
-            SH6T-V11
+            SH6T
           {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E22) %}
-            SH8T-V11
+            SH8T
           {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E23) %}
-            SH10T-V11
+            SH10T
           {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E24) %}
-            SH12T-V11
+            SH12T
           {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E25) %}
-            SH15T-V11
+            SH15T
           {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E26) %}
-            SH20T-V11
+            SH20T
           {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E28) %}
-            SH25T-V11
+            SH25T
+          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D27) %}
+            MG5RL 
+          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D28 ) %}
+            MG6RL           
           {% else %}
             Unknown device code: {{ '%0x' % (states('sensor.sungrow_device_type_code_2') |int)  }}
           {% endif %}
@@ -2618,6 +2669,8 @@ input_number:
     max: 1000
     step: 10
 
+  # TODO: adjust to the capabilities of your inverter
+  # e.g., 25000 for SH25T
   set_sg_2_export_power_limit:
     name: Export power limit (W)
     min: 0
@@ -2657,8 +2710,8 @@ input_select:
       - "Self-consumption mode (default)"
       - "Forced mode"
       - "External EMS" # required for multiple inverters main /follower?
+      - "VPP"  # used for Amber control
     # these are commented, because they are rarely used
-    #      - "VPP"
     #      - "MicroGrid"
 
   set_sg_2_battery_forced_charge_discharge_cmd:
@@ -2667,18 +2720,21 @@ input_select:
       - "Stop (default)"
       - "Forced charge"
       - "Forced discharge"
+    icon: mdi:battery-unknown
 
   set_sg_2_backup_mode:
     name: Backup mode
     options:
       - "Enabled"
       - "Disabled"
+    icon: mdi:export
 
   set_sg_2_export_power_limit_mode:
     name: Export power limit mode
     options:
       - "Enabled"
       - "Disabled"
+    icon: mdi:export      
 
   set_sg_2_global_mpp_scan_manual:
     name: Global mpp scan manual
@@ -2926,7 +2982,7 @@ automation:
     conditions: []
     variables:
       ems_mode_self_consume: 0
-      ems_mode_forced: 2
+      ems_mode_forced: 2   # called "compulsory mode in modbus spec"
       ems_mode_external: 3
       ems_mode_vpp: 4
       ems_mode_microgrid: 8
@@ -3142,7 +3198,9 @@ automation:
       - trigger: state
         entity_id:
           - sensor.export_power_limit_2
-    conditions: []
+    conditions:
+      - condition: template
+        value_template: "{{ states('sensor.export_power_limit_2') | is_number }}"
     actions:
       - action: input_number.set_value
         target:
@@ -3240,7 +3298,7 @@ automation:
           - sensor.battery_forced_charge_discharge_power_2
     conditions:
       - condition: template
-        value_template: "{{ not is_state('sensor.battery_forced_charge_discharge_power_2', 'unavailable') }}"
+        value_template: "{{ states('sensor.battery_forced_charge_discharge_power_2') | is_number }}"
     actions:
       - action: input_number.set_value
         target:
@@ -3280,7 +3338,7 @@ automation:
           - sensor.battery_max_charge_power_2
     conditions:
       - condition: template
-        value_template: "{{ not is_state('sensor.battery_max_charge_power_2', 'unavailable') }}"
+        value_template: "{{ states('sensor.battery_max_charge_power_2') | is_number }}"
     actions:
       - action: input_number.set_value
         target:
@@ -3320,7 +3378,7 @@ automation:
           - sensor.battery_max_discharge_power_2
     conditions:
       - condition: template
-        value_template: "{{ not is_state('sensor.battery_max_discharge_power_2', 'unavailable') }}"
+        value_template: "{{ states('sensor.battery_max_discharge_power_2') | is_number }}"
     actions:
       - action: input_number.set_value
         target:
@@ -3360,7 +3418,7 @@ automation:
           - sensor.battery_charging_start_power
     conditions:
       - condition: template
-        value_template: "{{ not is_state('sensor.battery_charging_start_power', 'unavailable') }}"
+        value_template: "{{ states('sensor.battery_charging_start_power') | is_number }}"
     actions:
       - action: input_number.set_value
         target:
@@ -3400,7 +3458,7 @@ automation:
           - sensor.battery_discharging_start_power_2
     conditions:
       - condition: template
-        value_template: "{{ not is_state('sensor.battery_discharging_start_power_2', 'unavailable') }}"
+        value_template: "{{ states('sensor.set_sg_2_battery_discharging_start_power') | is_number }}"
     actions:
       - action: input_number.set_value
         target:
