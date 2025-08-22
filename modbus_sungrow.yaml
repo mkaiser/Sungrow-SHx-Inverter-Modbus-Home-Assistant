@@ -78,7 +78,7 @@ modbus:
         data_type: int16
         precision: 1
         unit_of_measurement: °C
-        device_class: Temperature
+        device_class: temperature
         state_class: measurement
         scale: 0.1
         scan_interval: 10
@@ -102,7 +102,7 @@ modbus:
         address: 5011 # reg 5012
         input_type: input
         data_type: uint16
-        precision: 2
+        precision: 1
         unit_of_measurement: A
         device_class: Current
         state_class: measurement
@@ -128,12 +128,40 @@ modbus:
         address: 5013 # reg 5014
         input_type: input
         data_type: uint16
-        precision: 2
+        precision: 1
         unit_of_measurement: A
         device_class: Current
         state_class: measurement
         scale: 0.1
         scan_interval: 10
+
+      # only for SH*T inverters with 3 MPPTs
+      # - name: MPPT3 voltage
+      #   unique_id: sg_mppt3_voltage
+      #   device_address: !secret sungrow_modbus_slave
+      #   address: 5014 # reg 5015
+      #   input_type: input
+      #   data_type: uint16
+      #   precision: 1
+      #   unit_of_measurement: V
+      #   device_class: Voltage
+      #   state_class: measurement
+      #   scale: 0.1
+      #   scan_interval: 10
+
+      # only for SH*T inverters with 3 MPPTs
+      # - name: MPPT3 current
+      #   unique_id: sg_mppt3_current
+      #   device_address: !secret sungrow_modbus_slave
+      #   address: 5015 # reg 5016
+      #   input_type: input
+      #   data_type: uint16
+      #   precision: 1
+      #   unit_of_measurement: A
+      #   device_class: Current
+      #   state_class: measurement
+      #   scale: 0.1
+      #   scan_interval: 10        
 
       - name: Total DC power
         unique_id: sg_total_dc_power
@@ -1094,7 +1122,7 @@ modbus:
         unique_id: sg_system_state
         device_address: !secret sungrow_modbus_slave
         address: 12999 # reg 13000
-        input_type: input
+        input_type: holding
         data_type: uint16
         precision: 0
         scale: 1
@@ -1332,7 +1360,7 @@ modbus:
         data_type: int16
         precision: 1
         unit_of_measurement: °C
-        device_class: Temperature
+        device_class: temperature
         state_class: measurement
         scale: 0.1
         scan_interval: 60
@@ -1962,6 +1990,19 @@ template:
           and not is_state('sensor.mppt2_current', 'unavailable' ) 
           }}
         state: "{{ (states('sensor.mppt2_voltage') | float * states('sensor.mppt2_current') | float) |int }}"
+
+      # only for SH*T inverters with 3 MPPTs
+      # - name: MPPT3 power
+      #   unique_id: sg_mppt3_power
+      #   unit_of_measurement: W
+      #   device_class: power
+      #   state_class: measurement
+      #   availability: >-
+      #     {{ 
+      #     not is_state('sensor.mppt3_voltage', 'unavailable') 
+      #     and not is_state('sensor.mppt3_current', 'unavailable' ) 
+      #     }}
+      #   state: "{{ (states('sensor.mppt3_voltage') | float * states('sensor.mppt3_current') | float) |int }}"
 
       - name: Phase A power
         unique_id: sg_phase_a_power
@@ -2628,6 +2669,8 @@ input_number:
     max: 1000
     step: 10
 
+  # TODO: adjust to the capabilities of your inverter
+  # e.g., 25000 for SH25T
   set_sg_export_power_limit:
     name: Export power limit (W)
     min: 0
@@ -2667,8 +2710,8 @@ input_select:
       - "Self-consumption mode (default)"
       - "Forced mode"
       - "External EMS" # required for multiple inverters main /follower?
+      - "VPP"  # used for Amber control
     # these are commented, because they are rarely used
-    #      - "VPP"
     #      - "MicroGrid"
 
   set_sg_battery_forced_charge_discharge_cmd:
@@ -2677,18 +2720,21 @@ input_select:
       - "Stop (default)"
       - "Forced charge"
       - "Forced discharge"
+    icon: mdi:battery-unknown
 
   set_sg_backup_mode:
     name: Backup mode
     options:
       - "Enabled"
       - "Disabled"
+    icon: mdi:export
 
   set_sg_export_power_limit_mode:
     name: Export power limit mode
     options:
       - "Enabled"
       - "Disabled"
+    icon: mdi:export      
 
   set_sg_global_mpp_scan_manual:
     name: Global mpp scan manual
@@ -3152,7 +3198,9 @@ automation:
       - trigger: state
         entity_id:
           - sensor.export_power_limit
-    conditions: []
+    conditions:
+      - condition: template
+        value_template: "{{ states('sensor.export_power_limit') | is_number }}"
     actions:
       - action: input_number.set_value
         target:
@@ -3250,7 +3298,7 @@ automation:
           - sensor.battery_forced_charge_discharge_power
     conditions:
       - condition: template
-        value_template: "{{ not is_state('sensor.battery_forced_charge_discharge_power', 'unavailable') }}"
+        value_template: "{{ states('sensor.battery_forced_charge_discharge_power') | is_number }}"
     actions:
       - action: input_number.set_value
         target:
@@ -3290,7 +3338,7 @@ automation:
           - sensor.battery_max_charge_power
     conditions:
       - condition: template
-        value_template: "{{ not is_state('sensor.battery_max_charge_power', 'unavailable') }}"
+        value_template: "{{ states('sensor.battery_max_charge_power') | is_number }}"
     actions:
       - action: input_number.set_value
         target:
@@ -3330,7 +3378,7 @@ automation:
           - sensor.battery_max_discharge_power
     conditions:
       - condition: template
-        value_template: "{{ not is_state('sensor.battery_max_discharge_power', 'unavailable') }}"
+        value_template: "{{ states('sensor.battery_max_discharge_power') | is_number }}"
     actions:
       - action: input_number.set_value
         target:
@@ -3370,7 +3418,7 @@ automation:
           - sensor.battery_charging_start_power
     conditions:
       - condition: template
-        value_template: "{{ not is_state('sensor.battery_charging_start_power', 'unavailable') }}"
+        value_template: "{{ states('sensor.battery_charging_start_power') | is_number }}"
     actions:
       - action: input_number.set_value
         target:
@@ -3410,7 +3458,7 @@ automation:
           - sensor.battery_discharging_start_power
     conditions:
       - condition: template
-        value_template: "{{ not is_state('sensor.battery_discharging_start_power', 'unavailable') }}"
+        value_template: "{{ states('sensor.set_sg_battery_discharging_start_power') | is_number }}"
     actions:
       - action: input_number.set_value
         target:
