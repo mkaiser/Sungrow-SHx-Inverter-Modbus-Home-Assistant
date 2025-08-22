@@ -343,20 +343,6 @@ modbus:
       #Phase A Backup Power: 5723 S16 W (Backup Leistung Phase A)
       #Phase B Backup Power: 5724 S16 W (Backup Leistung Phase B)
       #Phase C Backup Power: 5725 S16 W (Backup Leistung Phase C)
-      - name: Total backup power
-        device_address: !secret sungrow_modbus_slave
-        unique_id: sg_total_backup_power
-        address: 5725 # reg 5726
-        input_type: input
-        data_type: int32
-        swap: word
-        precision: 0
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        scale: 1
-        scan_interval: 10
-
       - name: Backup phase A power
         unique_id: sg_backup_phase_a_power
         device_address: !secret sungrow_modbus_slave
@@ -395,6 +381,21 @@ modbus:
         state_class: measurement
         scale: 1
         scan_interval: 10
+
+      - name: Total backup power
+        device_address: !secret sungrow_modbus_slave
+        unique_id: sg_total_backup_power
+        address: 5725 # reg 5726
+        input_type: input
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: 10
+
 
       # https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?postID=3324464#post3324464
       - name: Meter phase A voltage
