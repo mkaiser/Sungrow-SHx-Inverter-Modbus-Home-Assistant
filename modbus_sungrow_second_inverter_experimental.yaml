@@ -1126,7 +1126,7 @@ modbus:
         unique_id: sg_system_state_2
         device_address: !secret sungrow_modbus_slave_inv2
         address: 12999 # reg 13000
-        input_type: holding
+        input_type: input
         data_type: uint16
         precision: 0
         scale: 1
@@ -1145,6 +1145,15 @@ modbus:
         state_class: measurement
         scale: 1
         scan_interval: 10
+
+      - name: Load adjustment mode selection raw 2
+        unique_id: sg_load_adjustment_mode_selection_raw_2
+        device_address: !secret sungrow_modbus_slave_inv2
+        address: 13001 # reg 13002
+        input_type: holding
+        data_type: uint16
+        state_class: measurement
+        scan_interval: 10        
 
       - name: Daily PV generation 2
         unique_id: sg_daily_pv_generation_2
@@ -1228,6 +1237,15 @@ modbus:
         state_class: measurement
         scale: 1
         scan_interval: 10
+
+      - name: Load adjustment mode ON/OFF selection raw 2
+        unique_id: sg_load_adjustment_mode_on_off_selection_raw_2
+        device_address: !secret sungrow_modbus_slave_inv2
+        address: 13010 # reg 13011
+        input_type: holding
+        data_type: uint16
+        state_class: measurement
+        scan_interval: 10        
 
       - name: Daily battery charge from PV 2
         unique_id: sg_daily_battery_charge_from_pv_2
@@ -1530,27 +1548,6 @@ modbus:
         scale: 0.1
         scan_interval: 600
 
-      #####################
-      # holding registers
-      #####################
-      - name: Load adjustment mode selection raw 2
-        unique_id: sg_load_adjustment_mode_selection_raw_2
-        device_address: !secret sungrow_modbus_slave_inv2
-        address: 13001 # reg 13002
-        input_type: holding
-        data_type: uint16
-        state_class: measurement
-        scan_interval: 10
-
-      - name: Load adjustment mode ON/OFF selection raw 2
-        unique_id: sg_load_adjustment_mode_on_off_selection_raw_2
-        device_address: !secret sungrow_modbus_slave_inv2
-        address: 13010 # reg 13011
-        input_type: holding
-        data_type: uint16
-        state_class: measurement
-        scan_interval: 10
-
       - name: EMS mode selection raw 2
         unique_id: sg_ems_mode_selection_raw_2
         device_address: !secret sungrow_modbus_slave_inv2
@@ -1612,7 +1609,6 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
-
       # Called "Feed-in limitation value" in spec
       - name: Export power limit 2
         unique_id: sg_export_power_limit_2
@@ -1662,6 +1658,16 @@ modbus:
         state_class: measurement
         scale: 1
         scan_interval: 10
+
+      - name: Global mpp scan manual raw 2
+        unique_id: sg_global_mpp_scan_manual_raw_2
+        device_address: !secret sungrow_modbus_slave_inv2
+        address: 30229 # reg 30230
+        input_type: holding
+        data_type: uint16
+        precision: 0
+        state_class: measurement
+        scan_interval: 10        
 
       - name: Battery max charge power 2
         unique_id: sg_battery_max_charge_power_2
@@ -1717,15 +1723,6 @@ modbus:
         scale: 10
         scan_interval: 10
 
-      - name: Global mpp scan manual raw 2
-        unique_id: sg_global_mpp_scan_manual_raw_2
-        device_address: !secret sungrow_modbus_slave_inv2
-        address: 30229 # reg 30230
-        input_type: holding
-        data_type: uint16
-        precision: 0
-        state_class: measurement
-        scan_interval: 10
 
 sensor:
   - platform: filter
