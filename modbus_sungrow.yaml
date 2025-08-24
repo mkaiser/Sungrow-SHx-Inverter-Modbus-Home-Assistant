@@ -1126,7 +1126,7 @@ modbus:
         unique_id: sg_system_state
         device_address: !secret sungrow_modbus_slave
         address: 12999 # reg 13000
-        input_type: holding
+        input_type: input
         data_type: uint16
         precision: 0
         scale: 1
