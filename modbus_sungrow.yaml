@@ -3459,7 +3459,7 @@ automation:
           - sensor.battery_discharging_start_power
     conditions:
       - condition: template
-        value_template: "{{ states('sensor.set_sg_battery_discharging_start_power') | is_number }}"
+        value_template: "{{ states('sensor.battery_discharging_start_power') | is_number }}"
     actions:
       - action: input_number.set_value
         target:
