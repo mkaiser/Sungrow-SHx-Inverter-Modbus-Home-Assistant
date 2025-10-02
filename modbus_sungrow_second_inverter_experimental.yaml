@@ -2643,7 +2643,7 @@ input_select:
       - "Power optimization"
       - "Disabled"
 
-  # get input for load adjustment mode (Timing/ ON-OFF/ Power optimization/Disabled )
+  # get input for load adjustment mode (enable: on / off  )
   set_sg_2_load_adjustment_mode_on_off:
     name: Load adjustment mode ON/OFF
     options:
