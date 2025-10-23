@@ -2112,7 +2112,7 @@ template:
             Off-grid mode
           {% elif ((states('sensor.system_state_2') |int) == 0x1111) %}
             Un-Initialized
-          {% elif ((states('sensor.system_state_2') |int) in [0x0010,0x12000]) %}
+          {% elif ((states('sensor.system_state_2') |int) in [0x0010,0x1200]) %}
             Initial Standby
           {% elif ((states('sensor.system_state_2') |int) in [0x1300,0x0002]) %}
             Shutdown
