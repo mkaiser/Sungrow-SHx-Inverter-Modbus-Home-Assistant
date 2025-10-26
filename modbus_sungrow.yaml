@@ -2,7 +2,7 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
 #
-# last update: 2025-07-14
+# last update: 2025-10-26
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
 #
@@ -161,7 +161,7 @@ modbus:
       #   device_class: Current
       #   state_class: measurement
       #   scale: 0.1
-      #   scan_interval: 10        
+      #   scan_interval: 10
 
       - name: Total DC power
         unique_id: sg_total_dc_power
@@ -424,7 +424,6 @@ modbus:
         scale: 1
         scan_interval: 10
 
-
       # https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?postID=3324464#post3324464
       - name: Meter phase A voltage
         unique_id: sg_meter_phase_a_voltage
@@ -503,7 +502,6 @@ modbus:
         state_class: measurement
         scale: 0.01
         scan_interval: 10
-
 
       # following statistic sensors only work on some SH*RT inverters
       # (only LAN attached devices)
@@ -1153,7 +1151,7 @@ modbus:
         input_type: holding
         data_type: uint16
         state_class: measurement
-        scan_interval: 10        
+        scan_interval: 10
 
       - name: Daily PV generation
         unique_id: sg_daily_pv_generation
@@ -1245,7 +1243,7 @@ modbus:
         input_type: holding
         data_type: uint16
         state_class: measurement
-        scan_interval: 10        
+        scan_interval: 10
 
       - name: Daily battery charge from PV
         unique_id: sg_daily_battery_charge_from_pv
@@ -1659,6 +1657,39 @@ modbus:
         scale: 1
         scan_interval: 10
 
+      # Inverter Firmware version from register 13250 to 13264 as UTF8 string
+      # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
+      - name: Inverter Firmware Version
+        unique_id: sg_inverter_firmware_version
+        device_address: !secret sungrow_modbus_slave
+        address: 13249 # reg 13250 - 13264, 15 register
+        input_type: input
+        data_type: string
+        count: 15
+        scan_interval: 600
+
+      # Communication Module Firmware version from register 13250 to 13264 as UTF8 string
+      # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
+      - name: Communication Module Firmware Version
+        unique_id: sg_communication_module_firmware_version
+        device_address: !secret sungrow_modbus_slave
+        address: 13264 # reg 13265 - 13279, 15 register
+        input_type: input
+        data_type: string
+        count: 15
+        scan_interval: 600
+
+      # Battery Firmware version from register 13250 to 13264 as UTF8 string
+      # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
+      - name: Battery Firmware Version
+        unique_id: sg_battery_firmware_version
+        device_address: !secret sungrow_modbus_slave
+        address: 13279 # reg 13280 - 13279, 15 register
+        input_type: input
+        data_type: string
+        count: 15
+        scan_interval: 600
+
       - name: Global mpp scan manual raw
         unique_id: sg_global_mpp_scan_manual_raw
         device_address: !secret sungrow_modbus_slave
@@ -1667,7 +1698,7 @@ modbus:
         data_type: uint16
         precision: 0
         state_class: measurement
-        scan_interval: 10        
+        scan_interval: 10
 
       - name: Battery max charge power
         unique_id: sg_battery_max_charge_power
@@ -1722,7 +1753,6 @@ modbus:
         state_class: measurement
         scale: 10
         scan_interval: 10
-
 
 sensor:
   - platform: filter
@@ -1999,9 +2029,9 @@ template:
       #   device_class: power
       #   state_class: measurement
       #   availability: >-
-      #     {{ 
-      #     not is_state('sensor.mppt3_voltage', 'unavailable') 
-      #     and not is_state('sensor.mppt3_current', 'unavailable' ) 
+      #     {{
+      #     not is_state('sensor.mppt3_voltage', 'unavailable')
+      #     and not is_state('sensor.mppt3_current', 'unavailable' )
       #     }}
       #   state: "{{ (states('sensor.mppt3_voltage') | float * states('sensor.mppt3_current') | float) |int }}"
 
@@ -2711,7 +2741,7 @@ input_select:
       - "Self-consumption mode (default)"
       - "Forced mode"
       - "External EMS" # required for multiple inverters main /follower?
-      - "VPP"  # used for Amber control
+      - "VPP" # used for Amber control
     # these are commented, because they are rarely used
     #      - "MicroGrid"
 
@@ -2735,7 +2765,7 @@ input_select:
     options:
       - "Enabled"
       - "Disabled"
-    icon: mdi:export      
+    icon: mdi:export
 
   set_sg_global_mpp_scan_manual:
     name: Global mpp scan manual
@@ -2983,7 +3013,7 @@ automation:
     conditions: []
     variables:
       ems_mode_self_consume: 0
-      ems_mode_forced: 2   # called "compulsory mode in modbus spec"
+      ems_mode_forced: 2 # called "compulsory mode in modbus spec"
       ems_mode_external: 3
       ems_mode_vpp: 4
       ems_mode_microgrid: 8
