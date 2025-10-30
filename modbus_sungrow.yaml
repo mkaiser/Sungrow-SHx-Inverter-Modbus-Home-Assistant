@@ -1527,7 +1527,7 @@ modbus:
         state_class: measurement
         scan_interval: 10
 
-      # TODO make more & statements 
+      # TODO make more & statements
       - name: Battery forced charge discharge cmd raw
         unique_id: sg_battery_forced_charge_discharge_cmd_raw
         device_address: !secret sungrow_modbus_slave
@@ -3186,7 +3186,10 @@ automation:
                   hub: *sg_hub_name
                   slave: !secret sungrow_modbus_slave
                   address: 13073 # reg 13074
-                  value: "{{ states('input_number.set_sg_export_power_limit')|int }}"
+                  # TODO this seems to be a sungrow bug in the current firmware (10/25)
+                  # documentation lists the export limit ("feed-in limitation value"), register 13074 as W
+                  # but we need to write this value as 0.1W
+                  value: "{{ states('input_number.set_sg_export_power_limit')|int /10}}"
               - delay: "00:00:01" # delay one second
               - action: homeassistant.update_entity # force update
                 data:
@@ -3205,7 +3208,6 @@ automation:
                   value: "{{ states('sensor.export_power_limit') }}"
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
-  
   - id: "automation_sungrow_inverter_backup_mode"
     alias: "sungrow inverter backup mode"
     description: "Updates backup mode and corresponding gui input"
@@ -3220,7 +3222,7 @@ automation:
         id: tid_sensor_backup_mode
     variables:
       enable: 0xAA
-      disable: 0x55        
+      disable: 0x55
     action:
       - choose:
           - conditions:
@@ -3263,7 +3265,6 @@ automation:
                     {% endif %}
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
-
   - id: "automation_sungrow_inverter_battery_forced_charge_discharge_power"
     alias: "sungrow inverter battery forced charge discharge power"
     description: "Updates battery forced charge discharge power and corresponding gui input"
@@ -3275,7 +3276,7 @@ automation:
       - platform: state
         entity_id:
           - sensor.battery_forced_charge_discharge_power
-        id: tid_sensor_battery_forced_charge_discharge_power        
+        id: tid_sensor_battery_forced_charge_discharge_power
     action:
       - choose:
           - conditions:
@@ -3303,7 +3304,7 @@ automation:
                 target:
                   entity_id: input_number.set_sg_battery_forced_charge_discharge_power
                 data:
-                 value: "{{ states('sensor.battery_forced_charge_discharge_power') }}"
+                  value: "{{ states('sensor.battery_forced_charge_discharge_power') }}"
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
   - id: "automation_sungrow_inverter_battery_max_charge_power"
@@ -3345,7 +3346,7 @@ automation:
                 target:
                   entity_id: input_number.set_sg_battery_max_charge_power
                 data:
-                 value: "{{ states('sensor.battery_max_charge_power') }}"
+                  value: "{{ states('sensor.battery_max_charge_power') }}"
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
   - id: "automation_sungrow_inverter_battery_max_discharge_power"
@@ -3387,10 +3388,9 @@ automation:
                 target:
                   entity_id: input_number.set_sg_battery_max_discharge_power
                 data:
-                 value: "{{ states('sensor.battery_max_discharge_power') }}"
+                  value: "{{ states('sensor.battery_max_discharge_power') }}"
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
-  
   - id: "automation_sungrow_inverter_battery_charging_start_power"
     alias: "sungrow inverter update battery charging start power"
     description: "Updates battery charging start power and corresponding gui input"
@@ -3430,7 +3430,7 @@ automation:
                 target:
                   entity_id: input_number.set_sg_battery_charging_start_power
                 data:
-                 value: "{{ states('sensor.battery_charging_start_power') }}"
+                  value: "{{ states('sensor.battery_charging_start_power') }}"
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
   - id: "automation_sungrow_inverter_battery_discharging_start_power"
@@ -3472,9 +3472,8 @@ automation:
                 target:
                   entity_id: input_number.set_sg_battery_discharging_start_power
                 data:
-                 value: "{{ states('sensor.battery_discharging_start_power') }}"
+                  value: "{{ states('sensor.battery_discharging_start_power') }}"
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
 
   - id: "automation_sungrow_inverter_global_mpp_scan_manual_update"
     alias: "sungrow inverter global mpp scan manual update"
