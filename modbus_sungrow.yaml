@@ -1100,6 +1100,7 @@ modbus:
         state_class: measurement
         scan_interval: 10
 
+      # TODO rename to "power flow status"
       # register running state is not available for certain SH*RS inverters
       # template sensors are used to determine the states based on other sensors
       - name: Running state
@@ -1518,6 +1519,17 @@ modbus:
         state_class: measurement
         scan_interval: 10
 
+      # TODO test. Does this control, if the standby goes into standby at night?
+      # Does forced charge prevent this or not?
+      - name: Forced startup under low soc standby raw
+        unique_id: sg_forced_startup_under_low_soc_standby_raw
+        device_address: !secret sungrow_modbus_slave
+        address: 13016 # reg 13017
+        input_type: holding
+        data_type: uint16
+        state_class: measurement
+        scan_interval: 10
+
       - name: EMS mode selection raw
         unique_id: sg_ems_mode_selection_raw
         device_address: !secret sungrow_modbus_slave
@@ -1679,16 +1691,6 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 10
-        scan_interval: 10
-
-      - name: Global mpp scan manual raw
-        unique_id: sg_global_mpp_scan_manual_raw
-        device_address: !secret sungrow_modbus_slave
-        address: 30229 # reg 30230
-        input_type: holding
-        data_type: uint16
-        precision: 0
-        state_class: measurement
         scan_interval: 10
 
 sensor:
@@ -2289,6 +2291,18 @@ template:
             Unknown - should not see me! code: {{ (states('sensor.load_adjustment_mode_enable_raw') |int) }}
           {% endif %}
 
+      # make the sensor load_adjustment_mode_enable_raw more human readable
+      - name: Forced startup under low soc standby
+        unique_id: forced_startup_under_low_soc_standby
+        availability: "{{ not is_state('sensor.forced_startup_under_low_soc_standby_raw', 'unavailable') }}"
+        device_class: enum
+        state: >-
+          {% if ((states('sensor.forced_startup_under_low_soc_standby_raw') |int) == 0xAA) %}
+            ON
+          {% else %}
+            OFF
+          {% endif %}
+
       # positive if charging and negative if discharging
       - name: Signed battery power
         unique_id: sg_signed_battery_power
@@ -2652,6 +2666,13 @@ input_select:
       - "ON"
       - "OFF"
 
+  # get input for forced startup under low soc standby
+  set_sg_forced_startup_under_low_soc_standby:
+    name: Forced startup under low SoC standby
+    options:
+      - "ON"
+      - "OFF"
+
   # get input for battery mode (forced charge/discharge, stop (default) )
   set_sg_ems_mode:
     name: EMS mode
@@ -2678,12 +2699,6 @@ input_select:
 
   set_sg_export_power_limit_mode:
     name: Export power limit mode
-    options:
-      - "Enabled"
-      - "Disabled"
-
-  set_sg_global_mpp_scan_manual:
-    name: Global mpp scan manual
     options:
       - "Enabled"
       - "Disabled"
@@ -3063,7 +3078,7 @@ automation:
         id: tid_ui_load_adjustment_mode_enable
       - platform: state
         entity_id:
-          - sensor.load_adjustment_mode_enable_raw
+          - sensor.load_adjustment_mode_enable
         id: tid_sensor_load_adjustment_mode_enable
     conditions: []
     action:
@@ -3100,6 +3115,62 @@ automation:
                 data:
                   option: >
                     {% if states('sensor.load_adjustment_mode_enable_raw') | int == load_adjustment_mode_on %}
+                      ON
+                    {% else %}
+                      OFF
+                    {% endif %}
+    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
+
+  - id: "automation_sungrow_inverter_forced_startup_under_low_soc_standby"
+    alias: "sungrow inverter forced startup under low SOC standby"
+    description: "Updates forced startup under low SOC standby and corresponding gui input"
+    variables:
+      forced_startup_under_low_soc_standby_on: 0xAA
+      forced_startup_under_low_soc_standby_off: 0x00
+    triggers:
+      - platform: state
+        entity_id:
+          - input_select.set_sg_forced_startup_under_low_soc_standby
+        id: tid_ui_forced_startup_under_low_soc_standby
+      - platform: state
+        entity_id:
+          - sensor.forced_startup_under_low_soc_standby
+        id: tid_sensor_forced_startup_under_low_soc_standby
+    conditions: []
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: tid_ui_forced_startup_under_low_soc_standby
+            sequence:
+              - action: modbus.write_register
+                data_template:
+                  hub: *sg_hub_name
+                  slave: !secret sungrow_modbus_slave
+                  address: 13016 # reg 13017
+                  value: >
+                    {% if is_state('input_select.set_sg_forced_startup_under_low_soc_standby', "ON") %}
+                      {{forced_startup_under_low_soc_standby_on}}
+                    {% else %}
+                      {{forced_startup_under_low_soc_standby_off}}
+                    {% endif %}
+              - delay: "00:00:01" # delay one second
+              - action: homeassistant.update_entity # force update
+                data:
+                  entity_id:
+                    - sensor.forced_startup_under_low_soc_standby_raw
+          - conditions:
+              - condition: trigger
+                id: tid_sensor_forced_startup_under_low_soc_standby
+              - condition: template
+                value_template: "{{ not is_state('sensor.forced_startup_under_low_soc_standby', 'unavailable') }}"
+            sequence:
+              - action: input_select.select_option
+                target:
+                  entity_id: input_select.set_sg_forced_startup_under_low_soc_standby
+                data:
+                  option: >
+                    {% if states('sensor.forced_startup_under_low_soc_standby_raw') | int == forced_startup_under_low_soc_standby_on %}
                       ON
                     {% else %}
                       OFF
@@ -3474,60 +3545,6 @@ automation:
                 data:
                   value: "{{ states('sensor.battery_discharging_start_power') }}"
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_global_mpp_scan_manual_update"
-    alias: "sungrow inverter global mpp scan manual update"
-    description: "Updates Enable/Disable for global mpp scan manual"
-    triggers:
-      - trigger: state
-        entity_id:
-          - sensor.global_mpp_scan_manual_raw
-    conditions:
-      - condition: template
-        value_template: "{{ not is_state('sensor.global_mpp_scan_manual_raw', 'unavailable') }}"
-    actions:
-      - action: input_select.select_option
-        target:
-          entity_id: input_select.set_sg_global_mpp_scan_manual
-        data:
-          option: >
-            {% if ((states('sensor.global_mpp_scan_manual_raw') | int(default=0)) == 0x00AA) %} 
-              Enabled
-            {% elif ((states('sensor.global_mpp_scan_manual_raw') | int(default=0)) == 0x0055) %} 
-              Disabled
-            {% endif %}
-    mode: single
-
-  - id: "automation_sungrow_global_mpp_scan_manual"
-    alias: "sungrow inverter global mpp scan manual"
-    description: "Set global mpp scan manual"
-    triggers:
-      - trigger: state
-        entity_id:
-          - input_select.set_sg_global_mpp_scan_manual
-    conditions: []
-    variables:
-      export_limit_enable: 0xAA
-      export_limit_disable: 0x55
-    actions:
-      - action: modbus.write_register
-        data_template:
-          hub: *sg_hub_name
-          slave: !secret sungrow_modbus_slave
-          address: 30229 # reg 30230
-          value: >
-            {% if is_state('input_select.set_sg_global_mpp_scan_manual', "Enabled") %} 
-              {{export_limit_enable}}
-            {% elif is_state('input_select.set_sg_global_mpp_scan_manual', "Disabled") %}
-              {{export_limit_disable}}
-            {% else %}
-              {{export_limit_disable}}
-            {% endif %}
-      - action: homeassistant.update_entity # force update
-        data:
-          entity_id:
-            - sensor.global_mpp_scan_manual_raw
-    mode: single
 
 script:
   sg_set_forced_discharge_battery_mode:
