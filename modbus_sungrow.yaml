@@ -1715,9 +1715,6 @@ template:
   - binary_sensor:
       - name: PV generating
         unique_id: sg_pv_generating
-        # TODO: test more with these parameters for template binary sensors
-        # device_class: none / power
-        # state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.running_state', 'unavailable') 
@@ -1738,9 +1735,6 @@ template:
 
       - name: PV generating (delay)
         unique_id: sg_pv_generating_delay
-        # TODO: test more with these parameters for template binary sensors
-        # device_class: none / power
-        # state_class: measurement
         availability: "{{ not is_state('binary_sensor.pv_generating', 'unavailable') }}"
         delay_on:
           seconds: 60
@@ -1748,9 +1742,6 @@ template:
 
       - name: Battery charging
         unique_id: sg_battery_charging
-        # TODO: test more with these parameters for template binary sensors
-        # device_class: none / power
-        # state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.running_state', 'unavailable')
@@ -1800,9 +1791,6 @@ template:
 
       - name: Battery charging (delay)
         unique_id: sg_battery_charging_delay
-        # TODO: test more with these parameters for template binary sensors
-        # device_class: none / power
-        # state_class: measurement
         availability: "{{ not is_state('binary_sensor.battery_charging', 'unavailable') }}"
         delay_on:
           seconds: 60
@@ -1810,9 +1798,6 @@ template:
 
       - name: Battery discharging
         unique_id: sg_battery_discharging
-        # TODO: test more with these parameters for template binary sensors
-        # device_class: none / power
-        # state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.running_state', 'unavailable')
@@ -1862,9 +1847,6 @@ template:
 
       - name: Battery discharging (delay)
         unique_id: sg_battery_discharging_delay
-        # TODO: test more with these parameters for template binary sensors
-        # device_class: none / power
-        # state_class: measurement
         availability: "{{ not is_state('binary_sensor.battery_discharging', 'unavailable') }}"
         delay_on:
           seconds: 60
@@ -1872,9 +1854,6 @@ template:
 
       - name: Exporting power
         unique_id: sg_exporting_power
-        # TODO: test more with these parameters for template binary sensors
-        # device_class: none / power
-        # state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.running_state', 'unavailable') 
@@ -1895,9 +1874,6 @@ template:
 
       - name: Exporting power (delay)
         unique_id: sg_exporting_power_delay
-        # TODO: test more with these parameters for template binary sensors
-        # device_class: none / power
-        # state_class: measurement
         availability: "{{ not is_state('binary_sensor.exporting_power', 'unavailable') }}"
         delay_on:
           seconds: 60
@@ -1905,9 +1881,6 @@ template:
 
       - name: Importing power
         unique_id: sg_importing_power
-        # TODO: test more with these parameters for template binary sensors
-        # device_class: none / power
-        # state_class: measurement
         availability: >-
           {{ 
           not is_state('sensor.running_state', 'unavailable') 
@@ -1928,9 +1901,6 @@ template:
 
       - name: Importing power (delay)
         unique_id: sg_importing_power_delay
-        # TODO: test more with these parameters for template binary sensors
-        # device_class: none / power
-        # state_class: measurement
         availability: "{{ not is_state('binary_sensor.importing_power', 'unavailable') }}"
         delay_on:
           seconds: 60
@@ -2199,8 +2169,6 @@ template:
       - name: Battery forced charge discharge cmd
         unique_id: sg_battery_forced_charge_discharge_cmd
         availability: "{{ not is_state('sensor.battery_forced_charge_discharge_cmd_raw', 'unavailable') }}"
-        # TODO: test state_class with enum
-        # state_class: measurement
         device_class: enum
         state: >-
           {% if ((states('sensor.battery_forced_charge_discharge_cmd_raw') |int) == 0x00AA) %}
@@ -2299,8 +2267,10 @@ template:
         state: >-
           {% if ((states('sensor.forced_startup_under_low_soc_standby_raw') |int) == 0xAA) %}
             ON
-          {% else %}
+          {% elif ((states('sensor.forced_startup_under_low_soc_standby_raw') |int) == 0x55) %}
             OFF
+          {% else %}
+            Unknown - should not see me! {{ (states('sensor.system_state') |int) }}
           {% endif %}
 
       # positive if charging and negative if discharging
@@ -3126,7 +3096,7 @@ automation:
     description: "Updates forced startup under low SOC standby and corresponding gui input"
     variables:
       forced_startup_under_low_soc_standby_on: 0xAA
-      forced_startup_under_low_soc_standby_off: 0x00
+      forced_startup_under_low_soc_standby_off: 0x55
     triggers:
       - platform: state
         entity_id:
@@ -3257,7 +3227,7 @@ automation:
                   hub: *sg_hub_name
                   slave: !secret sungrow_modbus_slave
                   address: 13073 # reg 13074
-                  # TODO this seems to be a sungrow bug in the current firmware (10/25)
+                  # NOTE this seems to be a sungrow bug in the current firmware (10/25)
                   # documentation lists the export limit ("feed-in limitation value"), register 13074 as W
                   # but we need to write this value as 0.1W
                   value: "{{ states('input_number.set_sg_export_power_limit')|int /10}}"
