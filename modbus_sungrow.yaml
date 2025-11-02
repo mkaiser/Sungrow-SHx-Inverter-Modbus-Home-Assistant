@@ -12,8 +12,9 @@ modbus:
     type: tcp
     host: !secret sungrow_modbus_host_ip
     port: !secret sungrow_modbus_port
-    delay: 5
-    timeout: 10
+    message_wait_milliseconds : 100 # delay 100 ms between messages
+    delay: 5 # delay 5 second after connecting. 
+    timeout: 10 # timeout while waiting for a response 
 
     sensors:
       - name: Sungrow inverter serial
