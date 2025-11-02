@@ -1521,10 +1521,11 @@ modbus:
 
       # TODO test. Does this control, if the standby goes into standby at night?
       # Does forced charge prevent this or not?
+      # see https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/444#issuecomment-3471705119
       - name: Forced startup under low soc standby raw
         unique_id: sg_forced_startup_under_low_soc_standby_raw
         device_address: !secret sungrow_modbus_slave
-        address: 13016 # reg 13017
+        address: &reg_forced_startup_low_soc 13016 # reg 13017
         input_type: holding
         data_type: uint16
         state_class: measurement
@@ -2550,6 +2551,9 @@ template:
             )
           }}
 
+    switch:
+      - name: Forced startup under low SoC standby
+
 # getting input for Min and Max SoC
 input_number:
   set_sg_min_soc:
@@ -2632,13 +2636,6 @@ input_select:
   # get input for load adjustment mode (enable: on / off  )
   set_sg_load_adjustment_mode_enable:
     name: Load adjustment mode enable
-    options:
-      - "ON"
-      - "OFF"
-
-  # get input for forced startup under low soc standby
-  set_sg_forced_startup_under_low_soc_standby:
-    name: Forced startup under low SoC standby
     options:
       - "ON"
       - "OFF"
@@ -3100,11 +3097,11 @@ automation:
     triggers:
       - platform: state
         entity_id:
-          - input_select.set_sg_forced_startup_under_low_soc_standby
+          - switch.forced_startup_under_low_soc_standby
         id: tid_ui_forced_startup_under_low_soc_standby
       - platform: state
         entity_id:
-          - sensor.forced_startup_under_low_soc_standby
+          - sensor.forced_startup_under_low_soc_standby_raw
         id: tid_sensor_forced_startup_under_low_soc_standby
     conditions: []
     action:
@@ -3117,9 +3114,9 @@ automation:
                 data_template:
                   hub: *sg_hub_name
                   slave: !secret sungrow_modbus_slave
-                  address: 13016 # reg 13017
+                  address: *reg_forced_startup_low_soc
                   value: >
-                    {% if is_state('input_select.set_sg_forced_startup_under_low_soc_standby', "ON") %}
+                    {% if is_state('switch.forced_startup_under_low_soc_standby', "on") %}
                       {{forced_startup_under_low_soc_standby_on}}
                     {% else %}
                       {{forced_startup_under_low_soc_standby_off}}
@@ -3133,18 +3130,26 @@ automation:
               - condition: trigger
                 id: tid_sensor_forced_startup_under_low_soc_standby
               - condition: template
-                value_template: "{{ not is_state('sensor.forced_startup_under_low_soc_standby', 'unavailable') }}"
+                value_template: "{{ not is_state('sensor.forced_startup_under_low_soc_standby_raw', 'unavailable') }}"
+            # apparently there is no switch.set_state function. Therefore we need a condition branch and use switch.turn_on/ off
             sequence:
-              - action: input_select.select_option
-                target:
-                  entity_id: input_select.set_sg_forced_startup_under_low_soc_standby
-                data:
-                  option: >
-                    {% if states('sensor.forced_startup_under_low_soc_standby_raw') | int == forced_startup_under_low_soc_standby_on %}
-                      ON
-                    {% else %}
-                      OFF
-                    {% endif %}
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: >
+                          {{ states('sensor.forced_startup_under_low_soc_standby_raw') | int == forced_startup_under_low_soc_standby_on }}
+                    sequence:
+                      - service: switch.turn_on
+                        target:
+                          entity_id: switch.forced_startup_under_low_soc_standby
+                  - conditions:
+                      - condition: template
+                        value_template: >
+                          {{ states('sensor.forced_startup_under_low_soc_standby_raw') | int == forced_startup_under_low_soc_standby_off }}
+                    sequence:
+                      - service: switch.turn_off
+                        target:
+                          entity_id: switch.forced_startup_under_low_soc_standby
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
   - id: "automation_sungrow_inverter_export_power_limit_mode"
