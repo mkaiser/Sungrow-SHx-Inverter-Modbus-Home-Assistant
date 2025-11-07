@@ -1751,7 +1751,7 @@ modbus:
       # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
       - name: APL shutdown at zero raw
         unique_id: sg_apl_shutdown_on_zero_raw
-        device_address: *sg_device_address
+        device_address: !secret sungrow_modbus_slave
         address: &reg_apl_shutdown_on_zero_raw 31212 # reg 31213
         input_type: holding
         data_type: uint16
