@@ -2,11 +2,18 @@
 # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 # by Martin Kaiser
 #
-# last update: 2025-11-02
+# last update: 2025-11-07
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
 #
 
+
+
+# TODO: Investigate: is there a way not to completely disable the visibility of GUI elements but just to disable them but still show them?
+# TODO: use secrets for battery parameters
+# TODO: Rename running_state to "power flow status"
+# TODO: Use more YAML anchors: Define register addresses when defining the sensors and reuse the variables in automations
+# TODO: Cleanup code for Sungrow device type (see comment inline)
 modbus:
   - name: &sg_hub_name SungrowSHx
     type: tcp
@@ -1655,7 +1662,6 @@ modbus:
         state_class: measurement
         scan_interval: 10
 
-      #undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Reserved SoC for backup
         unique_id: sg_reserved_soc_for_backup
         device_address: !secret sungrow_modbus_slave
@@ -1727,7 +1733,7 @@ modbus:
         scale: 10
         scan_interval: 10
 
-      #undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
+      # datasheet: Charging/Discharging Power–Wide range
       - name: Battery charging start power
         unique_id: sg_battery_charging_start_power
         device_address: !secret sungrow_modbus_slave
@@ -1741,7 +1747,7 @@ modbus:
         scale: 10
         scan_interval: 10
 
-      #undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
+      # undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Battery discharging start power
         unique_id: sg_battery_discharging_start_power
         device_address: !secret sungrow_modbus_slave
@@ -2148,6 +2154,7 @@ template:
         unique_id: sg_device_type
         availability: "{{ not is_state('sensor.sungrow_device_type_code', 'unavailable') }}"
         device_class: enum
+        # TODO adapt style from https://github.com/theunknown86/unknown_sungrow/blob/ec2464f3c9abcc6cc6c11041499d6f380ba05201/modbus_sungrow_inv1.yaml#L1532
         state: >-
           {% if ((states('sensor.sungrow_device_type_code') |int)  == 0x0D06) %}
             SH3K6
@@ -2234,20 +2241,20 @@ template:
           {% endif %}
 
       # make the sensor battery_forced_charge_discharge_cmd more human readable
-      # Inverter States from modbus reference manual
-      # 0xAA forced charge
-      # 0xBB forced discharge
-      # 0xCC Stop (default)
       - name: Battery forced charge discharge cmd
         unique_id: sg_battery_forced_charge_discharge_cmd
         availability: "{{ not is_state('sensor.battery_forced_charge_discharge_cmd_raw', 'unavailable') }}"
         device_class: enum
+        variables:
+          sg_forced_charge: 0xAA
+          sg_forced_discharge: 0xBB
+          sg_stop: 0xCC
         state: >-
-          {% if ((states('sensor.battery_forced_charge_discharge_cmd_raw') |int) == 0x00AA) %}
+          {% if ((states('sensor.battery_forced_charge_discharge_cmd_raw') |int) == sg_forced_charge) %}
             Forced charge
-          {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') |int)  == 0x00BB) %}
+          {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') |int)  == sg_forced_discharge) %}
             Forced discharge
-          {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') |int)  == 0x00CC) %}
+          {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw') |int)  == sg_stop) %}
             Stop (default)
           {% else %}
             Unknown - should not see me! code: {{ (states('sensor.battery_forced_charge_discharge_cmd_raw') |int) }}
@@ -2430,53 +2437,53 @@ template:
             0
           {% endif %}
 
-      - name: "Monthly PV generation (current)"
-        unique_id: sg_monthly_pv_generation_current
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        availability: >-
-          {% set currMonth = 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
-          {{ states('sensor.' ~ currMonth)|is_number }}
-        state: >
-          {% set currMonth = 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
-          {{ states('sensor.' ~ currMonth) }}
+      # - name: "Monthly PV generation (current)"
+      #   unique_id: sg_monthly_pv_generation_current
+      #   unit_of_measurement: kWh
+      #   device_class: energy
+      #   state_class: total_increasing
+      #   availability: >-
+      #     {% set currMonth = 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
+      #     {{ states('sensor.' ~ currMonth)|is_number }}
+      #   state: >
+      #     {% set currMonth = 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
+      #     {{ states('sensor.' ~ currMonth) }}
 
-      - name: "Yearly PV generation (current)"
-        unique_id: sg_yearly_pv_generation_current
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        availability: >-
-          {% set currYear = 'yearly_pv_generation_' ~ now().year %}
-          {{ states('sensor.' ~ currYear)|is_number }}
-        state: >
-          {% set currYear = 'yearly_pv_generation_' ~ now().year %}
-          {{ states('sensor.' ~ currYear) }}
+      # - name: "Yearly PV generation (current)"
+      #   unique_id: sg_yearly_pv_generation_current
+      #   unit_of_measurement: kWh
+      #   device_class: energy
+      #   state_class: total_increasing
+      #   availability: >-
+      #     {% set currYear = 'yearly_pv_generation_' ~ now().year %}
+      #     {{ states('sensor.' ~ currYear)|is_number }}
+      #   state: >
+      #     {% set currYear = 'yearly_pv_generation_' ~ now().year %}
+      #     {{ states('sensor.' ~ currYear) }}
 
-      - name: "Monthly export (current)"
-        unique_id: sg_monthly_export_current
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        availability: >-
-          {% set currMonth = 'monthly_export_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
-          {{ states('sensor.' ~ currMonth)|is_number }}
-        state: >
-          {% set currMonth = 'monthly_export_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
-          {{ states('sensor.' ~ currMonth) }}
+      # - name: "Monthly export (current)"
+      #   unique_id: sg_monthly_export_current
+      #   unit_of_measurement: kWh
+      #   device_class: energy
+      #   state_class: total_increasing
+      #   availability: >-
+      #     {% set currMonth = 'monthly_export_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
+      #     {{ states('sensor.' ~ currMonth)|is_number }}
+      #   state: >
+      #     {% set currMonth = 'monthly_export_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
+      #     {{ states('sensor.' ~ currMonth) }}
 
-      - name: "Yearly export (current)"
-        unique_id: sg_yearly_export_current
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        availability: >-
-          {% set currYear = 'yearly_export_' ~ now().year %}
-          {{ states('sensor.' ~ currYear)|is_number }}
-        state: >
-          {% set currYear = 'yearly_export_' ~ now().year %}
-          {{ states('sensor.' ~ currYear) }}
+      # - name: "Yearly export (current)"
+      #   unique_id: sg_yearly_export_current
+      #   unit_of_measurement: kWh
+      #   device_class: energy
+      #   state_class: total_increasing
+      #   availability: >-
+      #     {% set currYear = 'yearly_export_' ~ now().year %}
+      #     {{ states('sensor.' ~ currYear)|is_number }}
+      #   state: >
+      #     {% set currYear = 'yearly_export_' ~ now().year %}
+      #     {{ states('sensor.' ~ currYear) }}
 
       # If min_soc is set to 15 and max soc is set to 90,
       # this "nominal battery level" will be between 15% and 90%
@@ -2565,9 +2572,6 @@ template:
             ) |round(2)
           }}
 
-      # NOTE: 2024-01-11: Unique id was adapted to match the sg_* uid pattern.
-      # If the default dashboard does show an "unavailable" sensor, remove the unavailable one
-      # and remove the suffix *_2 from daily_consumed_energy_2
       - name: Daily consumed energy
         unique_id: sg_daily_consumed_energy
         unit_of_measurement: kWh
@@ -2595,9 +2599,6 @@ template:
             ) 
           }}
 
-      # NOTE: 2024-01-11: Unique id was adapted to match the sg_* uid pattern.
-      # If the default dashboard does show an "unavailable" sensor, remove the unavailable one
-      # and remove the suffix *_2 from daily_consumed_energy_2
       - name: Total consumed energy
         unique_id: sg_total_consumed_energy
         unit_of_measurement: kWh
@@ -2623,7 +2624,14 @@ template:
           }}
 
     switch:
+      # this enables/disables the inverter state & EMS settings in the dashboard
+      # hopefully this prevents accidentally setting values while browsing on the phone :)
+      - name: Sungrow dashboard enable danger mode
+      - name: Enable inverter
       - name: Forced startup under low SoC standby
+      - name: Backup mode
+      - name: Export power limit mode
+      - name: Load adjustment mode
 
 # getting input for Min and Max SoC
 input_number:
@@ -2648,19 +2656,19 @@ input_number:
   set_sg_battery_forced_charge_discharge_power:
     name: Forced charge discharge power (W)
     min: 0
-    max: 5000 # change this value according to the capability of your battery
+    max: 5000 # TODO put into secrets change this value according to the capability of your battery
     step: 100
 
   set_sg_battery_max_charge_power:
     name: Max battery charge power (W)
     min: 100
-    max: 5000 # change this value according to the capability of your battery
+    max: 5000 # TODO put into secrets  change this value according to the capability of your battery
     step: 100
 
   set_sg_battery_max_discharge_power:
     name: Max battery discharge power (W)
     min: 10
-    max: 5000 # change this value according to the capability of your battery
+    max: 5000 # TODO put into secrets  change this value according to the capability of your battery
     step: 100
 
   # This threshold is compared against the currently achievable charging power, not just against the currently available surplus.
@@ -2691,12 +2699,6 @@ input_number:
     step: 100
 
 input_select:
-  set_sg_inverter_run_mode:
-    name: Inverter mode
-    options:
-      - "Enabled"
-      - "Shutdown"
-
   # get input for load adjustment mode (Timing/ ON-OFF/ Power optimization/Disabled )
   set_sg_load_adjustment_mode_selection:
     name: Load adjustment mode selection
@@ -2705,13 +2707,6 @@ input_select:
       - "ON/OFF"
       - "Power optimization"
       - "Disabled"
-
-  # get input for load adjustment mode (enable: on / off  )
-  set_sg_load_adjustment_mode_enable:
-    name: Load adjustment mode enable
-    options:
-      - "ON"
-      - "OFF"
 
   # get input for battery mode (forced charge/discharge, stop (default) )
   set_sg_ems_mode:
@@ -2732,25 +2727,33 @@ input_select:
       - "Forced discharge"
     icon: mdi:battery-unknown
 
-  set_sg_backup_mode:
-    name: Backup mode
-    options:
-      - "Enabled"
-      - "Disabled"
-    icon: mdi:export
-
-  set_sg_export_power_limit_mode:
-    name: Export power limit mode
-    options:
-      - "Enabled"
-      - "Disabled"
-    icon: mdi:export
-
 # Automations: Write modbus registers on input changes via GUI
 # note: If you change a value by the sliders, it will take up to 60 seconds until the state variables are updated
 # Unfortunately, I could not find a way to "force update" modbus registers, yet...
 automation:
-  - id: "automation_sungrow_inverter_state"
+  - id: "automation_sungrow_enable_danger_mode"
+    alias: "sungrow dashboard enable danger mode"
+    description: "Enables/Disables the the inverter state and EMS settings the sungrow dashboard"
+    triggers:
+      - platform: state
+        entity_id:
+          - switch.sungrow_dashboard_enable_danger_mode
+    conditions: []
+    # if the switch is enabled, disable it automatically after 60 seconds
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: switch.sungrow_dashboard_enable_danger_mode
+                state: "on"
+            sequence:
+              - delay : "00:01:00" # delay 60 seconds
+              - service: switch.turn_off
+                target:
+                  entity_id: switch.sungrow_dashboard_enable_danger_mode
+    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
+
+  - id: "automation_sungrow_enable_inverter"
     alias: "sungrow inverter state"
     description: "Enables/Stops the inverter and corresponding gui input"
     variables:
@@ -2759,7 +2762,7 @@ automation:
     triggers:
       - platform: state
         entity_id:
-          - input_select.set_sg_inverter_run_mode
+          - switch.enable_inverter
         id: tid_ui_sg_inv_run_mode
       - platform: state
         entity_id:
@@ -2768,6 +2771,7 @@ automation:
     conditions: []
     action:
       - choose:
+          # UI --> inverter
           - conditions:
               - condition: trigger
                 id: tid_ui_sg_inv_run_mode
@@ -2778,7 +2782,7 @@ automation:
                   slave: !secret sungrow_modbus_slave
                   address: *sg_reg_system_state
                   value: >
-                    {% if is_state('input_select.set_sg_inverter_run_mode', "Enabled") %}
+                    {% if is_state('switch.enable_inverter', "on") %}
                       {{sg_start}}
                     {% else %}
                       {{sg_stop}}
@@ -2788,20 +2792,28 @@ automation:
                 data:
                   entity_id:
                     - sensor.system_state
+          # inverter --> UI
           - conditions:
               - condition: trigger
                 id: tid_sensor_inv_state
             sequence:
-              - action: input_select.select_option
-                target:
-                  entity_id: input_select.set_sg_inverter_run_mode
-                data:
-                  option: >
-                    {% if is_state('sensor.sungrow_inverter_state', "Shutdown") %}
-                      Shutdown
-                    {% else %}
-                      Enabled
-                    {% endif %}
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: >
+                          {{ states('sensor.sungrow_inverter_state') == "Running" }}
+                    sequence:
+                      - service: switch.turn_on
+                        target:
+                          entity_id: switch.enable_inverter
+                  - conditions:
+                      - condition: template
+                        value_template: >
+                          {{ states('sensor.sungrow_inverter_state') == "Shutdown" }}
+                    sequence:
+                      - service: switch.turn_off
+                        target:
+                          entity_id: switch.enable_inverter
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
   - id: "automation_sungrow_inverter_max_soc"
@@ -3117,7 +3129,7 @@ automation:
     triggers:
       - platform: state
         entity_id:
-          - input_select.set_sg_load_adjustment_mode_enable
+          - switch.load_adjustment_mode
         id: tid_ui_load_adjustment_mode_enable
       - platform: state
         entity_id:
@@ -3126,6 +3138,7 @@ automation:
     conditions: []
     action:
       - choose:
+          # UI --> inverter
           - conditions:
               - condition: trigger
                 id: tid_ui_load_adjustment_mode_enable
@@ -3136,9 +3149,9 @@ automation:
                   slave: !secret sungrow_modbus_slave
                   address: *sg_reg_load_adjustment_mode_enable
                   value: >
-                    {% if is_state('input_select.set_sg_load_adjustment_mode_enable', "ON") %} 
+                    {% if is_state('switch.load_adjustment_mode', "on") %} 
                       {{load_adjustment_mode_on}}
-                    {% elif is_state('input_select.set_sg_load_adjustment_mode_enable', "OFF") %} 
+                    {% else %} 
                       {{load_adjustment_mode_off}}
                     {% endif %}
               - delay: "00:00:01" # delay one second
@@ -3146,22 +3159,31 @@ automation:
                 data:
                   entity_id:
                     - sensor.load_adjustment_mode_enable_raw
+          # inverter --> UI
           - conditions:
               - condition: trigger
                 id: tid_sensor_load_adjustment_mode_enable
               - condition: template
-                value_template: "{{ not is_state('sensor.load_adjustment_mode_selection_enable', 'unavailable') }}"
+                value_template: "{{ not is_state('sensor.load_adjustment_mode_enable', 'unavailable') }}"
             sequence:
-              - action: input_select.select_option
-                target:
-                  entity_id: input_select.set_sg_load_adjustment_mode_enable
-                data:
-                  option: >
-                    {% if states('sensor.load_adjustment_mode_enable_raw') | int == load_adjustment_mode_on %}
-                      ON
-                    {% else %}
-                      OFF
-                    {% endif %}
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: >
+                          {{ states('sensor.load_adjustment_mode_enable') | int == load_adjustment_mode_on }}
+                    sequence:
+                      - service: switch.turn_on
+                        target:
+                          entity_id: switch.load_adjustment_mode
+                  - conditions:
+                      - condition: template
+                        value_template: >
+                          {{ states('sensor.load_adjustment_mode_enable') | int == load_adjustment_mode_off }}
+                    sequence:
+                      - service: switch.turn_off
+                        target:
+                          entity_id: switch.load_adjustment_mode
+
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
   - id: "automation_sungrow_inverter_forced_startup_under_low_soc_standby"
@@ -3237,7 +3259,7 @@ automation:
     triggers:
       - platform: state
         entity_id:
-          - input_select.set_sg_export_power_limit_mode
+          - switch.export_power_limit_mode
         id: tid_ui_export_power_limit_mode_raw
       - platform: state
         entity_id:
@@ -3255,10 +3277,8 @@ automation:
                   slave: !secret sungrow_modbus_slave
                   address: *sg_reg_export_power_limit_mode
                   value: >
-                    {% if is_state('input_select.set_sg_export_power_limit_mode', "Enabled") %} 
+                    {% if is_state('switch.export_power_limit_mode', "on") %} 
                       {{export_limit_enable}}
-                    {% elif is_state('input_select.set_sg_export_power_limit_mode', "Disabled") %}
-                      {{export_limit_disable}}
                     {% else %}
                       {{export_limit_disable}}
                     {% endif %}
@@ -3273,16 +3293,24 @@ automation:
               - condition: template
                 value_template: "{{ not is_state('sensor.export_power_limit_mode_raw', 'unavailable') }}"
             sequence:
-              - action: input_select.select_option
-                target:
-                  entity_id: input_select.set_sg_export_power_limit_mode
-                data:
-                  option: >
-                    {% if ((states('sensor.export_power_limit_mode_raw')|int) == export_limit_enable) %} 
-                      Enabled
-                    {% else  %} 
-                      Disabled
-                    {% endif %}
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: >
+                          {{ states('sensor.export_power_limit_mode_raw') | int == export_limit_enable }}
+                    sequence:
+                      - service: switch.turn_on
+                        target:
+                          entity_id: switch.export_power_limit_mode
+                  - conditions:
+                      - condition: template
+                        value_template: >
+                          {{ states('sensor.export_power_limit_mode_raw') | int == export_limit_disable }}
+                    sequence:
+                      - service: switch.turn_off
+                        target:
+                          entity_id: switch.export_power_limit_mode
+
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
   - id: "automation_sungrow_inverter_export_power_limit"
@@ -3336,7 +3364,7 @@ automation:
     triggers:
       - platform: state
         entity_id:
-          - input_select.set_sg_backup_mode
+          - switch.backup_mode
         id: tid_ui_backup_mode
       - platform: state
         entity_id:
@@ -3357,9 +3385,9 @@ automation:
                   slave: !secret sungrow_modbus_slave
                   address: *sg_reg_backup_mode
                   value: >
-                    {% if is_state('input_select.set_sg_backup_mode', "Enabled") %} 
+                    {% if is_state('switch.backup_mode', "on") %} 
                       {{enable}}
-                    {% elif is_state('input_select.set_sg_backup_mode', "Disabled") %}
+                    {% elif is_state('switch.backup_mode', "off") %}
                       {{disable}}
                     {% else %}
                       {{disable}}
@@ -3375,16 +3403,23 @@ automation:
               - condition: template
                 value_template: "{{ not is_state('sensor.backup_mode_raw', 'unavailable') }}"
             sequence:
-              - action: input_select.select_option
-                target:
-                  entity_id: input_select.set_sg_backup_mode
-                data:
-                  option: >
-                    {% if ((states('sensor.backup_mode_raw') |int) == 0xAA) %} 
-                      Enabled
-                    {% elif ((states('sensor.backup_mode_raw') |int) == 0x55) %} 
-                      Disabled
-                    {% endif %}
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: >
+                          {{ states('sensor.backup_mode_raw') | int == enable }}
+                    sequence:
+                      - service: switch.turn_on
+                        target:
+                          entity_id: switch.backup_mode
+                  - conditions:
+                      - condition: template
+                        value_template: >
+                          {{ states('sensor.backup_mode_raw') | int == disable }}
+                    sequence:
+                      - service: switch.turn_off
+                        target:
+                          entity_id: switch.backup_mode
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
   - id: "automation_sungrow_inverter_battery_forced_charge_discharge_power"

@@ -277,15 +277,28 @@ views:
     cards:
       - type: entities
         entities:
-          - entity: input_select.set_sg_inverter_run_mode
+          - switch.sungrow_dashboard_enable_danger_mode
+        title: Enable Danger Mode
+      - type: entities
+        entities:
+          - entity: switch.enable_inverter
           - entity: sensor.sungrow_inverter_state
           - entity: input_select.set_sg_ems_mode
           - entity: sensor.ems_mode_selection
           - entity: input_select.set_sg_battery_forced_charge_discharge_cmd
-          - entity: sensor.battery_forced_charge_discharge_cmd
-          - entity: input_select.set_sg_backup_mode
-          - entity: sensor.backup_mode
+          - entity: switch.backup_mode
+          - entity: switch.load_adjustment_mode
+          - entity: input_select.set_sg_load_adjustment_mode_selection
+          - entity: switch.export_power_limit_mode
+          - entity: input_number.set_sg_export_power_limit
+          - entity: switch.forced_startup_under_low_soc_standby
         title: Inverter State & EMS Settings
+        show_header_toggle: false
+        state_color: true
+        visibility:
+          - condition: state
+            entity: switch.sungrow_dashboard_enable_danger_mode
+            state: 'on'
       - type: entities
         entities:
           - entity: input_number.set_sg_min_soc
@@ -299,6 +312,18 @@ views:
         title: Battery Settings
         state_color: false
         show_header_toggle: true
+      - type: entities
+        entities:
+          - entity: sensor.backup_mode
+          - entity: sensor.battery_forced_charge_discharge_cmd
+          - entity: sensor.load_adjustment_mode_enable
+          - entity: sensor.load_adjustment_mode_enable_raw
+          - entity: sensor.load_adjustment_mode_selection
+          - entity: sensor.load_adjustment_mode_selection_raw
+          - entity: sensor.export_power_limit
+          - entity: sensor.export_power_limit_mode
+          - entity: sensor.forced_startup_under_low_soc_standby
+        title: Debug
       - type: entities
         entities:
           - entity: sensor.battery_capacity
@@ -319,22 +344,5 @@ views:
           - entity: sensor.battery_charge
           - entity: sensor.battery_charge_nominal
         title: Battery Status
-      - type: entities
-        entities:
-          - entity: sensor.export_power_limit_mode
-          - entity: sensor.export_power_limit
-          - entity: input_select.set_sg_export_power_limit_mode
-          - entity: input_number.set_sg_export_power_limit
-        title: Export Settings
-      - type: entities
-        entities:
-          - entity: input_select.set_sg_load_adjustment_mode_enable
-          - entity: input_select.set_sg_load_adjustment_mode_selection
-          - entity: sensor.load_adjustment_mode_enable
-          - entity: sensor.load_adjustment_mode_selection
-        title: D0 Support
-      - type: entities
-        entities:
-          - entity: sensor.forced_startup_under_low_soc_standby
-          - entity: switch.forced_startup_under_low_soc_standby
+    badges: []
 title: PV System
