@@ -6,14 +6,13 @@
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
 #
-
-
-
 # TODO: Investigate: is there a way not to completely disable the visibility of GUI elements but just to disable them but still show them?
 # TODO: use secrets for battery parameters
 # TODO: Rename running_state to "power flow status"
 # TODO: Use more YAML anchors: Define register addresses when defining the sensors and reuse the variables in automations
 # TODO: Cleanup code for Sungrow device type (see comment inline)
+# TODO: Update code for binary sensors: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/565
+# TODO: Create secrets for different scan_intervals (e.g. scan_interval_10min, scan_interval_1min, scan_interval_10s)
 modbus:
   - name: &sg_hub_name SungrowSHx 2
     type: tcp
@@ -48,6 +47,18 @@ modbus:
         address: 4999 # reg 5000
         input_type: input
         data_type: uint16
+        scan_interval: 600
+
+      - name: Inverter rated output 2
+        unique_id: sg_inverter_rated_output_2
+        device_address: !secret sungrow_modbus_slave_inv2
+        address: 5000 # reg 5001
+        input_type: input
+        data_type: uint16
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        scale: 100
         scan_interval: 600
 
       - name: Daily PV generation & battery discharge 2
@@ -1707,6 +1718,45 @@ modbus:
         count: 15
         scan_interval: 600
 
+      # TODO test and implement from theunknown86
+      # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
+      # MG5-6RL is not supported.
+      # 0xAA: Enable
+      # 0x55: Disable
+      - name: Active power limitation raw 2
+        unique_id: sg_active_power_limitation_raw_2
+        device_address: !secret sungrow_modbus_slave_inv2
+        address: &reg_active_power_limitation_raw 13088 # reg 13089
+        input_type: holding
+        data_type: uint16
+        scan_interval: 10
+        state_class: measurement
+
+      # MG5-6RL is not supported.
+      # 0-1000
+      - name: Active power limitation ratio raw 2
+        unique_id: sg_active_power_limitation_ratio_raw_2
+        device_address: !secret sungrow_modbus_slave_inv2
+        address: &reg_active_power_limitation_ratio_raw 13089 # reg 13090
+        input_type: holding
+        data_type: uint16
+        scan_interval: 10
+        state_class: measurement
+        scale: 0.1
+        unit_of_measurement: "%"
+        device_class: power_factor
+
+      # from the unknown too, but can't find this in the datasheet
+      # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
+      - name: APL shutdown at zero raw 2
+        unique_id: sg_apl_shutdown_on_zero_raw_2
+        device_address: !secret sungrow_modbus_slave_inv2
+        address: &reg_apl_shutdown_on_zero_raw 31212 # reg 31213
+        input_type: holding
+        data_type: uint16
+        state_class: measurement
+        scan_interval: 10
+
       - name: Battery max charge power 2
         unique_id: sg_battery_max_charge_power_2
         device_address: !secret sungrow_modbus_slave_inv2
@@ -1777,10 +1827,8 @@ template:
       - name: PV generating 2
         unique_id: sg_pv_generating_2
         availability: >-
-          {{ 
-          not is_state('sensor.running_state_2', 'unavailable') 
-          and not is_state('sensor.total_dc_power_2', 'unavailable') 
-          }}
+          {{ states('sensor.running_state_2') not in ['unknown','unavailable'] 
+          and states('sensor.total_dc_power_2') not in ['unknown','unavailable'] }}
         state: >-
           {% if states('sensor.running_state_2')|is_number and states('sensor.running_state_2')|float > 0 %}
             {# use available sensor.running_state_2 #}
@@ -1796,7 +1844,7 @@ template:
 
       - name: PV generating (delay) 2
         unique_id: sg_pv_generating_delay_2
-        availability: "{{ not is_state('binary_sensor.pv_generating_2', 'unavailable') }}"
+        availability: "{{ states('binary_sensor.pv_generating_2') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.pv_generating_2') }}"
@@ -1804,16 +1852,12 @@ template:
       - name: Battery charging 2
         unique_id: sg_battery_charging_2
         availability: >-
-          {{ 
-          not is_state('sensor.running_state_2', 'unavailable')
-          or
-            (   not is_state('sensor.ems_mode_selection_raw_2', 'unavailable')
-            and not is_state('sensor.battery_forced_charge_discharge_cmd_raw_2', 'unavailable') 
-            and not is_state('sensor.battery_power_raw_2', 'unavailable') 
-            and not is_state('sensor.total_dc_power_2', 'unavailable')
-            and not is_state('sensor.load_power_2', 'unavailable') 
-            )
-          }}
+          {{ states('sensor.running_state_2') not in ['unknown','unavailable'] 
+          or (states('sensor.ems_mode_selection_raw_2') not in ['unknown','unavailable'] 
+          and states('sensor.battery_forced_charge_discharge_cmd_raw_2') not in ['unknown','unavailable']
+          and states('sensor.battery_power_raw_2') not in ['unknown','unavailable']
+          and states('sensor.total_dc_power_2') not in ['unknown','unavailable'] 
+          and states('sensor.load_power_2') not in ['unknown','unavailable'] )}}
         state: >-
           {% if states('sensor.running_state_2')|is_number and states('sensor.running_state_2')|float > 0 %}
             {# use available sensor.running_state_2 #}
@@ -1852,7 +1896,7 @@ template:
 
       - name: Battery charging (delay) 2
         unique_id: sg_battery_charging_delay_2
-        availability: "{{ not is_state('binary_sensor.battery_charging_2', 'unavailable') }}"
+        availability: "{{ states('binary_sensor.battery_charging_2') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.battery_charging_2') }}"
@@ -1860,16 +1904,12 @@ template:
       - name: Battery discharging 2
         unique_id: sg_battery_discharging_2
         availability: >-
-          {{ 
-          not is_state('sensor.running_state_2', 'unavailable')
-          or
-            (   not is_state('sensor.ems_mode_selection_raw_2', 'unavailable')
-            and not is_state('sensor.battery_forced_charge_discharge_cmd_raw_2', 'unavailable')
-            and not is_state('sensor.battery_power_raw_2', 'unavailable')
-            and not is_state('sensor.total_dc_power_2', 'unavailable') 
-            and not is_state('sensor.load_power_2', 'unavailable') 
-            )
-          }}
+          {{ states('sensor.running_state_2') not in ['unknown','unavailable'] 
+          or ( states('sensor.ems_mode_selection_raw_2') not in ['unknown','unavailable'] 
+          and states('sensor.battery_forced_charge_discharge_cmd_raw_2') not in ['unknown','unavailable']
+          and states('sensor.battery_power_raw_2') not in ['unknown','unavailable']
+          and states('sensor.total_dc_power_2') not in ['unknown','unavailable'] 
+          and states('sensor.load_power_2') not in ['unknown','unavailable'] ) }}
         state: >-
           {% if states('sensor.running_state_2')|is_number and states('sensor.running_state_2')|float > 0 %}
             {# use available sensor.running_state_2 #}
@@ -1908,7 +1948,7 @@ template:
 
       - name: Battery discharging (delay) 2
         unique_id: sg_battery_discharging_delay_2
-        availability: "{{ not is_state('binary_sensor.battery_discharging_2', 'unavailable') }}"
+        availability: "{{ states('binary_sensor.battery_discharging_2') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.battery_discharging_2') }}"
@@ -1916,10 +1956,8 @@ template:
       - name: Exporting power 2
         unique_id: sg_exporting_power_2
         availability: >-
-          {{ 
-          not is_state('sensor.running_state_2', 'unavailable') 
-          and not is_state('sensor.export_power_raw_2', 'unavailable') 
-          }}
+          {{ states('sensor.running_state_2') not in ['unknown','unavailable'] 
+          and states('sensor.export_power_raw_2') not in ['unknown','unavailable'] }}
         state: >-
           {% if states('sensor.running_state_2')|is_number and states('sensor.running_state_2')|float > 0 %}
             {# use available sensor.running_state_2 #}
@@ -1935,7 +1973,7 @@ template:
 
       - name: Exporting power (delay) 2
         unique_id: sg_exporting_power_delay_2
-        availability: "{{ not is_state('binary_sensor.exporting_power_2', 'unavailable') }}"
+        availability: "{{ states('binary_sensor.exporting_power_2') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.exporting_power_2') }}"
@@ -1962,7 +2000,7 @@ template:
 
       - name: Importing power (delay) 2
         unique_id: sg_importing_power_delay_2
-        availability: "{{ not is_state('binary_sensor.importing_power_2', 'unavailable') }}"
+        availability: "{{ states('binary_sensor.importing_power_2') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.importing_power_2') }}"
@@ -1974,10 +2012,8 @@ template:
         device_class: power
         state_class: measurement
         availability: >-
-          {{ 
-          not is_state('sensor.mppt1_voltage_2', 'unavailable') 
-          and not is_state('sensor.mppt1_current_2', 'unavailable') 
-          }}
+          {{ states('sensor.mppt1_voltage_2') not in ['unknown','unavailable'] 
+          and states('sensor.mppt1_current_2') not in ['unknown','unavailable'] }}
         state: "{{ (states('sensor.mppt1_voltage_2') | float * states('sensor.mppt1_current_2') | float) |int }}"
 
       - name: MPPT2 power 2
@@ -1986,10 +2022,8 @@ template:
         device_class: power
         state_class: measurement
         availability: >-
-          {{ 
-          not is_state('sensor.mppt2_voltage_2', 'unavailable') 
-          and not is_state('sensor.mppt2_current_2', 'unavailable' ) 
-          }}
+          {{ states('sensor.mppt2_voltage_2') not in ['unknown','unavailable'] 
+          and states('sensor.mppt2_current_2') not in ['unknown','unavailable'] }}
         state: "{{ (states('sensor.mppt2_voltage_2') | float * states('sensor.mppt2_current_2') | float) |int }}"
 
       # only for SH*T inverters with 3 MPPTs
@@ -1999,10 +2033,8 @@ template:
       #   device_class: power
       #   state_class: measurement
       #   availability: >-
-      #     {{
-      #     not is_state('sensor.mppt3_voltage', 'unavailable')
-      #     and not is_state('sensor.mppt3_current', 'unavailable' )
-      #     }}
+      #    {{ states('sensor.mppt3_voltage') not in ['unknown','unavailable']
+      #    and states('sensor.mppt3_current') not in ['unknown','unavailable'] }}
       #   state: "{{ (states('sensor.mppt3_voltage') | float * states('sensor.mppt3_current') | float) |int }}"
 
       - name: Phase A power 2
@@ -2011,10 +2043,8 @@ template:
         device_class: power
         state_class: measurement
         availability: >-
-          {{ 
-          not is_state('sensor.phase_a_voltage_2', 'unavailable')
-          and not is_state('sensor.phase_a_current', 'unavailable')
-          }}
+          {{ states('sensor.phase_a_voltage_2') not in ['unknown','unavailable'] 
+          and states('sensor.phase_a_current') not in ['unknown','unavailable'] }}
         state: "{{ (states('sensor.phase_a_voltage_2') | float * states('sensor.phase_a_current') | float) |int }}"
 
       - name: Phase B power 2
@@ -2023,10 +2053,8 @@ template:
         device_class: power
         state_class: measurement
         availability: >-
-          {{ 
-          not is_state('sensor.phase_b_voltage_2', 'unavailable') 
-          and not is_state('sensor.phase_b_current', 'unavailable') 
-          }}
+          {{ states('sensor.phase_b_voltage_2') not in ['unknown','unavailable'] 
+          and states('sensor.phase_b_current') not in ['unknown','unavailable'] }}
         state: "{{ (states('sensor.phase_b_voltage_2') | float * states('sensor.phase_b_current') | float) |int }}"
 
       - name: Phase C power 2
@@ -2035,10 +2063,8 @@ template:
         device_class: power
         state_class: measurement
         availability: >-
-          {{ 
-          not is_state('sensor.phase_c_voltage_2', 'unavailable')
-          and not is_state('sensor.phase_c_current', 'unavailable')
-          }}
+          {{ states('sensor.phase_c_voltage_2') not in ['unknown','unavailable'] 
+          and states('sensor.phase_c_current') not in ['unknown','unavailable'] }}
         state: "{{ (states('sensor.phase_c_voltage_2') | float * states('sensor.phase_c_current') | float) |int }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
@@ -2048,10 +2074,8 @@ template:
         device_class: power
         state_class: measurement
         availability: >-
-          {{ 
-          not is_state('sensor.meter_active_power_raw_2', 'unavailable')
-          and states('sensor.meter_active_power_raw_2')|int != 0x7FFFFFFF
-          }}
+          {{ states('sensor.meter_active_power_raw_2') not in ['unknown','unavailable'] 
+          and states('sensor.meter_active_power_raw_2')|int != 0x7FFFFFFF }}
         state: "{{ states('sensor.meter_active_power_raw_2') }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
@@ -2061,10 +2085,8 @@ template:
         device_class: power
         state_class: measurement
         availability: >-
-          {{ 
-          not is_state('sensor.meter_phase_a_active_power_raw_2', 'unavailable')
-          and states('sensor.meter_phase_a_active_power_raw_2')|int != 0x7FFFFFFF
-          }}
+          {{ states('sensor.meter_phase_a_active_power_raw_2') not in ['unknown','unavailable'] 
+          and states('sensor.meter_phase_a_active_power_raw_2')|int != 0x7FFFFFFF }}
         state: "{{ states('sensor.meter_phase_a_active_power_raw_2') }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
@@ -2074,10 +2096,8 @@ template:
         device_class: power
         state_class: measurement
         availability: >-
-          {{ 
-          not is_state('sensor.meter_phase_b_active_power_raw_2', 'unavailable') 
-          and states('sensor.meter_phase_b_active_power_raw_2')|int != 0x7FFFFFFF 
-          }}
+          {{ states('sensor.meter_phase_b_active_power_raw_2') not in ['unknown','unavailable'] 
+          and states('sensor.meter_phase_b_active_power_raw_2')|int != 0x7FFFFFFF }}
         state: "{{ states('sensor.meter_phase_b_active_power_raw_2') }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
@@ -2087,16 +2107,14 @@ template:
         device_class: power
         state_class: measurement
         availability: >-
-          {{ 
-          not is_state('sensor.meter_phase_c_active_power_raw_2', 'unavailable')
-          and states('sensor.meter_phase_c_active_power_raw_2')|int != 0x7FFFFFFF
-          }}
+          {{ states('sensor.meter_phase_c_active_power_raw_2') not in ['unknown','unavailable'] 
+          and states('sensor.meter_phase_c_active_power_raw_2')|int != 0x7FFFFFFF }}
         state: "{{ states('sensor.meter_phase_c_active_power_raw_2') }}"
 
       - name: Sungrow inverter state 2
         unique_id: sg_inverter_state_2
         device_class: enum
-        availability: "{{ not is_state('sensor.system_state_2', 'unavailable') }}"
+        availability: "{{ states('sensor.system_state_2') not in ['unknown','unavailable'] }}"
         state: >-
           {% if ((states('sensor.system_state_2') |int) in [0x0000,0x0040]) %}
             Running
@@ -2152,7 +2170,7 @@ template:
 
       - name: Sungrow device type 2
         unique_id: sg_device_type_2
-        availability: "{{ not is_state('sensor.sungrow_device_type_code_2', 'unavailable') }}"
+        availability: "{{ states('sensor.sungrow_device_type_code_2') not in ['unknown','unavailable'] }}"
         device_class: enum
         # TODO adapt style from https://github.com/theunknown86/unknown_sungrow/blob/ec2464f3c9abcc6cc6c11041499d6f380ba05201/modbus_sungrow_inv1.yaml#L1532
         state: >-
@@ -2243,7 +2261,7 @@ template:
       # make the sensor.battery_forced_charge_discharge_cmd_2 more human readable
       - name: Battery forced charge discharge cmd 2
         unique_id: sg_battery_forced_charge_discharge_cmd_2
-        availability: "{{ not is_state('sensor.battery_forced_charge_discharge_cmd_raw_2', 'unavailable') }}"
+        availability: "{{ states('sensor.battery_forced_charge_discharge_cmd_raw_2') not in ['unknown','unavailable'] }}"
         device_class: enum
         variables:
           sg_forced_charge: 0xAA
@@ -2262,7 +2280,7 @@ template:
 
       - name: Backup mode 2
         unique_id: sg_backup_mode_2
-        availability: "{{ not is_state('sensor.backup_mode_raw_2', 'unavailable') }}"
+        availability: "{{ states('sensor.backup_mode_raw_2') not in ['unknown','unavailable'] }}"
         device_class: enum
         state: >-
           {% if ((states('sensor.backup_mode_raw_2') |int) == 0x00AA) %}
@@ -2275,7 +2293,7 @@ template:
 
       - name: Export power limit mode 2
         unique_id: sg_export_power_limit_mode_2
-        availability: "{{ not is_state('sensor.export_power_limit_mode_raw_2', 'unavailable') }}"
+        availability: "{{ states('sensor.export_power_limit_mode_raw_2') not in ['unknown','unavailable'] }}"
         device_class: enum
         state: >-
           {% if ((states('sensor.export_power_limit_mode_raw_2') |int) == 0x00AA) %}
@@ -2289,7 +2307,7 @@ template:
       # make the sensor ems_selection_raw more human readable
       - name: EMS mode selection 2
         unique_id: sg_ems_mode_selection_2
-        availability: "{{ not is_state('sensor.ems_mode_selection_raw_2', 'unavailable') }}"
+        availability: "{{ states('sensor.ems_mode_selection_raw_2') not in ['unknown','unavailable'] }}"
         device_class: enum
         state: >-
           {% if ((states('sensor.ems_mode_selection_raw_2') |int) == 0) %}
@@ -2309,7 +2327,7 @@ template:
       # make the sensor load_adjustment_selection_raw more human readable
       - name: Load adjustment mode selection 2
         unique_id: sg_load_adjustment_mode_selection_2
-        availability: "{{ not is_state('sensor.load_adjustment_mode_selection_raw', 'unavailable') }}"
+        availability: "{{ states('sensor.load_adjustment_mode_selection_raw') not in ['unknown','unavailable'] }}"
         device_class: enum
         state: >-
           {% if ((states('sensor.load_adjustment_mode_selection_raw') |int) == 0) %}
@@ -2327,7 +2345,7 @@ template:
       # make the sensor load_adjustment_selection_raw_enable more human readable
       - name: Load adjustment mode enable 2
         unique_id: sg_load_adjustment_mode_enable_2
-        availability: "{{ not is_state('sensor.load_adjustment_mode_enable_raw', 'unavailable') }}"
+        availability: "{{ states('sensor.load_adjustment_mode_enable_raw') not in ['unknown','unavailable'] }}"
         device_class: enum
         state: >-
           {% if ((states('sensor.load_adjustment_mode_enable_raw') |int) == 0xAA) %}
@@ -2341,7 +2359,7 @@ template:
       # make the sensor load_adjustment_mode_enable_raw more human readable
       - name: Forced startup under low soc standby 2
         unique_id: forced_startup_under_low_soc_standby_2
-        availability: "{{ not is_state('sensor.forced_startup_under_low_soc_standby_raw', 'unavailable') }}"
+        availability: "{{ states('sensor.forced_startup_under_low_soc_standby_raw') not in ['unknown','unavailable'] }}"
         device_class: enum
         state: >-
           {% if ((states('sensor.forced_startup_under_low_soc_standby_raw') |int) == 0xAA) %}
@@ -2359,11 +2377,9 @@ template:
         device_class: power
         state_class: measurement
         availability: >-
-          {{ 
-          not is_state('binary_sensor.battery_charging_2', 'unavailable') 
-          and not is_state('binary_sensor.battery_discharging_2', 'unavailable')
-          and not is_state('sensor.battery_power_raw_2', 'unavailable')
-          }}
+          {{ states('binary_sensor.battery_charging_2') not in ['unknown','unavailable'] 
+          and states('binary_sensor.battery_discharging_2') not in ['unknown','unavailable']
+          and states('sensor.battery_power_raw_2') not in ['unknown','unavailable'] }}
         state: >-
           {% if is_state('binary_sensor.battery_charging_2', 'on') %}
             {{ (states('sensor.battery_power_raw_2') |float |abs)}} 
@@ -2380,10 +2396,8 @@ template:
         device_class: power
         state_class: measurement
         availability: >-
-          {{ 
-          not is_state('binary_sensor.battery_charging_2', 'unavailable') 
-          and not is_state('sensor.battery_power_raw_2', 'unavailable')
-          }}
+          {{ states('binary_sensor.battery_charging_2') not in ['unknown','unavailable'] 
+          and states('sensor.battery_power_raw_2') not in ['unknown','unavailable'] }}
         state: >-
           {% if is_state('binary_sensor.battery_charging_2', 'on') %}
             {{ states('sensor.battery_power_raw_2')|int |abs }}
@@ -2398,10 +2412,8 @@ template:
         device_class: power
         state_class: measurement
         availability: >-
-          {{ 
-          not is_state('binary_sensor.battery_discharging_2', 'unavailable') 
-          and not is_state('sensor.battery_power_raw_2', 'unavailable') 
-          }}
+          {{ states('binary_sensor.battery_discharging_2') not in ['unknown','unavailable'] 
+          and states('sensor.battery_power_raw_2') not in ['unknown','unavailable'] }}
         state: >-
           {% if is_state('binary_sensor.battery_discharging_2', 'on') %}
             {{ states('sensor.battery_power_raw_2')|int |abs }}
@@ -2415,7 +2427,7 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: "{{ not is_state('sensor.export_power_raw_2', 'unavailable') }}"
+        availability: "{{ states('sensor.export_power_raw_2') |is_number }}"
         state: >-
           {% if states('sensor.export_power_raw_2')|int < 0 %}
             {{ states('sensor.export_power_raw_2')|int *-1 }}
@@ -2429,7 +2441,7 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: "{{states('sensor.export_power_raw_2')|is_number }}"
+        availability: "{{ states('sensor.export_power_raw_2') |is_number }}"
         state: >-
           {% if states('sensor.export_power_raw_2')|int > 0 %}
             {{ states('sensor.export_power_raw_2') }}
@@ -2494,11 +2506,9 @@ template:
         device_class: battery
         state_class: measurement
         availability: >-
-          {{ 
-          not is_state('sensor.battery_level_2', 'unavailable') 
-          and not is_state('sensor.min_soc_2', 'unavailable') 
-          and not is_state('sensor.max_soc_2', 'unavailable') 
-          }}
+          {{ states('sensor.battery_level_2') not in ['unknown','unavailable'] 
+          and states('sensor.min_soc_2') not in ['unknown','unavailable'] 
+          and states('sensor.max_soc_2') not in ['unknown','unavailable'] }}
         state: >-
           {% set soc_min = states('sensor.min_soc_2') | float %}
           {% set soc_max = states('sensor.max_soc_2') | float %}
@@ -2516,10 +2526,8 @@ template:
         device_class: energy_storage
         state_class: measurement
         availability: >-
-          {{ 
-          not is_state('sensor.battery_capacity_2', 'unavailable')
-          and not is_state('sensor.battery_level_nominal_2', 'unavailable')
-          }}
+          {{ states('sensor.battery_capacity_2') not in ['unknown','unavailable'] 
+          and states('sensor.battery_level_nominal_2') not in ['unknown','unavailable'] }}
         state: >-
           {{
             ( states('sensor.battery_capacity_2') | float *
@@ -2536,12 +2544,10 @@ template:
         device_class: energy_storage
         state_class: measurement
         availability: >-
-          {{ 
-          not is_state('sensor.battery_capacity_2', 'unavailable') 
-          and not is_state('sensor.battery_level_2', 'unavailable') 
-          and not is_state('sensor.min_soc_2', 'unavailable') 
-          and not is_state('sensor.max_soc_2', 'unavailable') 
-          }}
+          {{ states('sensor.battery_capacity_2') not in ['unknown','unavailable'] 
+          and states('sensor.battery_level_2') not in ['unknown','unavailable'] 
+          and states('sensor.min_soc_2') not in ['unknown','unavailable']
+          and states('sensor.max_soc_2') not in ['unknown','unavailable'] }}
         state: >-
           {{ 
             ( states('sensor.battery_capacity_2')|float 
@@ -2561,10 +2567,8 @@ template:
         device_class: energy_storage
         state_class: measurement
         availability: >-
-          {{ 
-          not is_state('sensor.battery_charge', 'unavailable') 
-          and not is_state('sensor.battery_state_of_health', 'unavailable') 
-          }}
+          {{ states('sensor.battery_charge') not in ['unknown','unavailable'] 
+          and states('sensor.battery_state_of_health') not in ['unknown','unavailable'] }}
         state: >-
           {{ 
             ( states('sensor.battery_charge')|float 
@@ -2581,13 +2585,11 @@ template:
         # "measurement" does not work, because it is incompatible with "energy"
         state_class: total
         availability: >-
-          {{ 
-          not is_state('sensor.daily_pv_generation_2', 'unavailable') 
-          and not is_state('sensor.daily_exported_energy_2', 'unavailable') 
-          and not is_state('sensor.daily_imported_energy_2', 'unavailable') 
-          and not is_state('sensor.daily_battery_charge_2', 'unavailable') 
-          and not is_state('sensor.daily_battery_discharge_2', 'unavailable') 
-          }}
+          {{ states('sensor.daily_pv_generation_2') not in ['unknown','unavailable'] 
+          and states('sensor.daily_exported_energy_2') not in ['unknown','unavailable'] 
+          and states('sensor.daily_imported_energy_2') not in ['unknown','unavailable']
+          and states('sensor.daily_battery_charge_2') not in ['unknown','unavailable']
+          and states('sensor.daily_battery_discharge_2') not in ['unknown','unavailable'] }}
         state: >-
           {{ 
             (
@@ -2605,13 +2607,11 @@ template:
         device_class: energy
         state_class: total
         availability: >-
-          {{ 
-          not is_state('sensor.total_pv_generation_2', 'unavailable') 
-          and not is_state('sensor.total_exported_energy_2', 'unavailable') 
-          and not is_state('sensor.total_imported_energy_2', 'unavailable') 
-          and not is_state('sensor.total_battery_charge_2', 'unavailable') 
-          and not is_state('sensor.total_battery_discharge_2', 'unavailable') 
-          }}
+          {{ states('sensor.total_pv_generation_2') not in ['unknown','unavailable'] 
+          and states('sensor.total_exported_energy_2') not in ['unknown','unavailable'] 
+          and states('sensor.total_imported_energy_2') not in ['unknown','unavailable']
+          and states('sensor.total_battery_charge_2') not in ['unknown','unavailable']
+          and states('sensor.total_battery_discharge_2') not in ['unknown','unavailable'] }}
         state: >-
           {{ 
             (
@@ -2747,7 +2747,7 @@ automation:
                 entity_id: switch.sungrow_dashboard_enable_danger_mode
                 state: "on"
             sequence:
-              - delay : "00:01:00" # delay 60 seconds
+              - delay: "00:01:00" # delay 60 seconds
               - service: switch.turn_off
                 target:
                   entity_id: switch.sungrow_dashboard_enable_danger_mode
