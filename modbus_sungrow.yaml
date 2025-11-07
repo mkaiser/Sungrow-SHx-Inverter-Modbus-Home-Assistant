@@ -6,14 +6,13 @@
 #
 # Note: This YAML file will only work with Home Assistant >= 2024.10
 #
-
-
-
 # TODO: Investigate: is there a way not to completely disable the visibility of GUI elements but just to disable them but still show them?
 # TODO: use secrets for battery parameters
 # TODO: Rename running_state to "power flow status"
 # TODO: Use more YAML anchors: Define register addresses when defining the sensors and reuse the variables in automations
 # TODO: Cleanup code for Sungrow device type (see comment inline)
+# TODO: Update code for binary sensors: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/565
+# TODO: Create secrets for different scan_intervals (e.g. scan_interval_10min, scan_interval_1min, scan_interval_10s)
 modbus:
   - name: &sg_hub_name SungrowSHx
     type: tcp
@@ -48,6 +47,18 @@ modbus:
         address: 4999 # reg 5000
         input_type: input
         data_type: uint16
+        scan_interval: 600
+
+      - name: Inverter rated output
+        unique_id: sg_inverter_rated_output
+        device_address:  !secret sungrow_modbus_slave
+        address: 5000 # reg 5001
+        input_type: input
+        data_type: uint16
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        scale: 100
         scan_interval: 600
 
       - name: Daily PV generation & battery discharge
@@ -1707,6 +1718,47 @@ modbus:
         count: 15
         scan_interval: 600
 
+
+      # TODO test and implement from theunknown86
+      # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
+      # MG5-6RL is not supported.
+      # 0xAA: Enable
+      # 0x55: Disable
+      - name: Active power limitation raw
+        unique_id: sg_active_power_limitation_raw
+        device_address: !secret sungrow_modbus_slave
+        address: &reg_active_power_limitation_raw 13088 # reg 13089
+        input_type: holding
+        data_type: uint16
+        scan_interval: 10
+        state_class: measurement
+
+      # MG5-6RL is not supported.
+      # 0-1000
+      - name: Active power limitation ratio raw
+        unique_id: sg_active_power_limitation_ratio_raw
+        device_address: !secret sungrow_modbus_slave
+        address: &reg_active_power_limitation_ratio_raw 13089 # reg 13090
+        input_type: holding
+        data_type: uint16
+        scan_interval: 10
+        state_class: measurement
+        scale: 0.1
+        unit_of_measurement: "%"
+        device_class: power_factor
+
+      # from the unknown too, but can't find this in the datasheet
+      # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
+      - name: APL shutdown at zero raw
+        unique_id: sg_apl_shutdown_on_zero_raw
+        device_address: *sg_device_address
+        address: &reg_apl_shutdown_on_zero_raw 31212 # reg 31213
+        input_type: holding
+        data_type: uint16
+        state_class: measurement
+        scan_interval: 10
+
+
       - name: Battery max charge power
         unique_id: sg_battery_max_charge_power
         device_address: !secret sungrow_modbus_slave
@@ -1777,10 +1829,8 @@ template:
       - name: PV generating
         unique_id: sg_pv_generating
         availability: >-
-          {{ 
-          not is_state('sensor.running_state', 'unavailable') 
-          and not is_state('sensor.total_dc_power', 'unavailable') 
-          }}
+          {{ states('sensor.running_state') not in ['unknown','unavailable'] 
+          and states('sensor.total_dc_power') not in ['unknown','unavailable'] }}
         state: >-
           {% if states('sensor.running_state')|is_number and states('sensor.running_state')|float > 0 %}
             {# use available sensor running_state #}
