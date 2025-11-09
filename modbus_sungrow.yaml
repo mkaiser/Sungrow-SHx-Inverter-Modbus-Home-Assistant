@@ -2428,6 +2428,24 @@ template:
             0
           {% endif %}
 
+      # positive if charging else negative
+      - name: Battery charging+discharging power
+        unique_id: sg_battery_charging_discharging_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ 
+          not is_state('sensor.battery_charging_power', 'unavailable') 
+          and not is_state('sensor.battery_discharging_power', 'unavailable')
+          }}
+        state: >-
+          {% if is_state('binary_sensor.battery_charging', 'on') %}
+            {{ states('sensor.battery_charging_power') }}
+          {% else %}
+            {{ states('sensor.battery_discharging_power') }}
+          {% endif %}
+
       # power from grid: positive if importing, else zero
       - name: Import power
         unique_id: sg_import_power
