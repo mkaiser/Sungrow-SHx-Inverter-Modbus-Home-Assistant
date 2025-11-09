@@ -2507,54 +2507,6 @@ template:
             0
           {% endif %}
 
-      # - name: "Monthly PV generation (current)"
-      #   unique_id: sg_monthly_pv_generation_current_2
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   availability: >-
-      #     {% set currMonth = 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
-      #     {{ states('sensor.' ~ currMonth)|is_number }}
-      #   state: >
-      #     {% set currMonth = 'monthly_pv_generation_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
-      #     {{ states('sensor.' ~ currMonth) }}
-
-      # - name: "Yearly PV generation (current)"
-      #   unique_id: sg_yearly_pv_generation_current_2
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   availability: >-
-      #     {% set currYear = 'yearly_pv_generation_' ~ now().year %}
-      #     {{ states('sensor.' ~ currYear)|is_number }}
-      #   state: >
-      #     {% set currYear = 'yearly_pv_generation_' ~ now().year %}
-      #     {{ states('sensor.' ~ currYear) }}
-
-      # - name: "Monthly export (current)"
-      #   unique_id: sg_monthly_export_current_2
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   availability: >-
-      #     {% set currMonth = 'monthly_export_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
-      #     {{ states('sensor.' ~ currMonth)|is_number }}
-      #   state: >
-      #     {% set currMonth = 'monthly_export_' ~ '%0.2d' % now().month ~ '_' ~ now().timestamp() | timestamp_custom('%B') | lower %}
-      #     {{ states('sensor.' ~ currMonth) }}
-
-      # - name: "Yearly export (current)"
-      #   unique_id: sg_yearly_export_current_2
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   availability: >-
-      #     {% set currYear = 'yearly_export_' ~ now().year %}
-      #     {{ states('sensor.' ~ currYear)|is_number }}
-      #   state: >
-      #     {% set currYear = 'yearly_export_' ~ now().year %}
-      #     {{ states('sensor.' ~ currYear) }}
-
       # If min_soc is set to 15 and max soc is set to 90,
       # this "nominal battery level" will be between 15% and 90%
       # while the "battery level" is between 0 and 100%
