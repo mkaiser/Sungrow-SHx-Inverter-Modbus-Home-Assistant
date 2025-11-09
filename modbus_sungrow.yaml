@@ -2069,20 +2069,23 @@ template:
       - name: Load adjustment mode selection
         unique_id: sg_load_adjustment_mode_selection
         variables:
-          load_adjustment_mode_timing: 0
-          load_adjustment_on_off: 1
-          load_adjustment_power_optimized: 2
-          load_adjustment_disabled: 3
-        options: "{{ ['Timing', 'ON/OFF', 'Power optimization', 'Disabled'] }}"
+          # map: option name to raw value
+          map:
+            "Timing": 0
+            "ON/OFF": 1
+            "Power optimization": 2
+            "Disabled": 3
+        # get option names from map keys
+        options: >-
+          {{ map.keys() | list | tojson }}
         # modbus --> UI (raw value --> option)
         state: >-
-          {% set v = states('sensor.load_adjustment_mode_selection_raw') | int(default=-1) %}
-          {% if v == load_adjustment_mode_timing %} "Timing"
-          {% elif v == load_adjustment_on_off %} "ON/OFF"
-          {% elif v == load_adjustment_power_optimized %} "Power optimization"
-          {% elif v == load_adjustment_disabled %} "Disabled"
-          {% else %} ""Unknown"
-          {% endif %}
+          {% set raw = states('sensor.load_adjustment_mode_selection_raw') %}
+          {% for k, v in map.items() %}
+            {% if v == raw %}
+              {{ k }}
+            {% endif %}
+          {% endfor %}
         # UI --> modbus
         select_option:
           - action: modbus.write_register
@@ -2090,18 +2093,7 @@ template:
               hub: *sg_hub_name
               slave: !secret sungrow_modbus_slave
               address: *sg_reg_load_adjustment_mode_selection
-              value: >-
-                {% if option == "Timing" %}
-                  {{ load_adjustment_mode_timing }}
-                {% elif option == "ON/OFF" %}
-                  {{ load_adjustment_on_off }}
-                {% elif option == "Power optimization" %}
-                  {{ load_adjustment_power_optimized }}
-                {% elif option == "Disabled" %}
-                  {{ load_adjustment_disabled }}
-                {% else %}
-                  {{"Should never see me! Invalid input_select in UI --> modbus load adjustment mode selection"}}
-                {% endif %}
+              value: "{{ map.get(option, map.get('Disabled', 3)) }}"
 
   - sensor:
       - name: MPPT1 power
