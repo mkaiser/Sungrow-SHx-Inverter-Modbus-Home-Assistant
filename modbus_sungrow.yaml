@@ -1,20 +1,17 @@
-# Home Assistant Sungrow inverter integration
-# https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
-# by Martin Kaiser
-#
-# last update: 2025-11-07
-#
-# Note: This YAML file will only work with Home Assistant >= 2024.10
+# This version is under heavy development. You should not use it :)
 #
 # TODO: Investigate: is there a way not to completely disable the visibility of GUI elements but just to disable them but still show them?
 # TODO: use secrets for battery parameters
 # TODO: Rename running_state to "power flow status"
-# TODO: Use more YAML anchors: Define register addresses when defining the sensors and reuse the variables in automations
 # TODO: Cleanup code for Sungrow device type (see comment inline)
 # TODO: Update code for binary sensors: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/565
 # TODO: Create secrets for different scan_intervals (e.g. scan_interval_10min, scan_interval_1min, scan_interval_10s)
 # TODO: Remove unnecessary parentheses in if-else statements.
-# TODO: Move automation for inputs into the template sections (https://github.com/theunknown86/unknown_sungrow/blob/ec2464f3c9abcc6cc6c11041499d6f380ba05201/modbus_sungrow_inv1.yaml#L1682-L1699)
+
+# DONE
+# - Use more YAML anchors: Define register addresses when defining the sensors and reuse the variables in automations
+# - Move automation for inputs into the template sections (https://github.com/theunknown86/unknown_sungrow/blob/ec2464f3c9abcc6cc6c11041499d6f380ba05201/modbus_sungrow_inv1.yaml#L1682-L1699)
+
 modbus:
   - name: &sg_hub_name SungrowSHx
     type: tcp
@@ -375,8 +372,8 @@ modbus:
         scale: 1
         scan_interval: 60
 
-      - name: Battery capacity # as in TI_20240924_Communication Protocol of Residential Hybrid Inverter-V1.1.5
-        unique_id: sg_battery_capacity
+      - name: Battery capacity high precision # as in TI_20240924_Communication Protocol of Residential Hybrid Inverter-V1.1.5
+        unique_id: uid_battery_capacity_high_precision
         device_address: !secret sungrow_modbus_slave
         address: 5638 # reg 5639
         input_type: input
@@ -874,6 +871,17 @@ modbus:
         scale: 0.1
         scan_interval: 600
 
+      - name: Battery capacity
+        unique_id: uid_battery_capacity
+        device_address: !secret sungrow_modbus_slave
+        address: 13038 # reg 13039
+        input_type: input
+        data_type: uint16
+        unit_of_measurement: kWh
+        device_class: energy_storage
+        scale: 0.1
+        scan_interval: 600
+
       - name: Daily battery charge
         unique_id: sg_daily_battery_charge
         device_address: !secret sungrow_modbus_slave
@@ -929,7 +937,7 @@ modbus:
         scan_interval: 600
 
       #####################
-      # holding registers
+      # modbus holding registers
       #####################
       - name: Load adjustment mode selection raw
         unique_id: sg_load_adjustment_mode_selection_raw
@@ -984,7 +992,7 @@ modbus:
       - name: Battery forced charge discharge power
         unique_id: sg_battery_forced_charge_discharge_power
         device_address: !secret sungrow_modbus_slave
-        address: &sg_reg_forced_charge_discharge_power 13051 # reg 13052
+        address: &sg_reg_battery_forced_charge_discharge_power 13051 # reg 13052
         input_type: holding
         data_type: uint16
         precision: 0
@@ -1161,7 +1169,6 @@ modbus:
         address: &sg_reg_battery_max_discharge_power 33047 # reg 33048
         input_type: holding
         data_type: uint16
-        precision: 0
         unit_of_measurement: W
         device_class: power
         state_class: measurement
@@ -1175,7 +1182,6 @@ modbus:
         address: &sg_reg_battery_charging_start_power 33148 # reg 33149
         input_type: holding
         data_type: uint16
-        precision: 0
         unit_of_measurement: W
         device_class: power
         state_class: measurement
@@ -1196,6 +1202,9 @@ modbus:
         scale: 10
         scan_interval: 10
 
+      #####################
+      # modbus switches
+      #####################
     switches:
       - name: Forced Startup Under Low SoC Standby
         unique_id: sg_forced_startup_under_low_soc_standby_switch
@@ -1263,8 +1272,11 @@ sensor:
         window_size: "00:05"
         precision: 2
 
-# 'virtual' template sensors for better readability
+
 template:
+  ###########################
+  # template: binary sensor
+  ###########################
   - binary_sensor:
       - name: PV generating
         unique_id: sg_pv_generating
@@ -1447,37 +1459,174 @@ template:
           seconds: 60
         state: "{{ states('binary_sensor.importing_power') }}"
 
-  - select:
-      # get input for load adjustment mode (Timing/ ON-OFF/ Power optimization/Disabled )
-      - name: Load adjustment mode selection
-        unique_id: sg_load_adjustment_mode_selection
-        variables:
-          # map: option name to raw value
-          map:
-            "Timing": 0
-            "ON/OFF": 1
-            "Power optimization": 2
-            "Disabled": 3
-        # get option names from map keys
-        options: >-
-          {{ map.keys() | list | tojson }}
-        # modbus --> UI (raw value --> option)
-        state: >-
-          {% set raw = states('sensor.load_adjustment_mode_selection_raw') %}
-          {% for k, v in map.items() %}
-            {% if v == raw %}
-              {{ k }}
-            {% endif %}
-          {% endfor %}
+  ####################
+  # template: number
+  ####################
+  - number:
+      - name: Battery Min Soc
+        unique_id: uid_battery_min_soc
+        unit_of_measurement: "%"
+        min: 0
+        max: 50
+        step: 1
+        # modbus --> UI
+        state: "{{ states('sensor.min_soc') }}"
         # UI --> modbus
-        select_option:
+        set_value:
           - action: modbus.write_register
             data_template:
               hub: *sg_hub_name
               slave: !secret sungrow_modbus_slave
-              address: *sg_reg_load_adjustment_mode_selection
-              value: "{{ map.get(option, map.get('Disabled', 3)) }}"
+              address: *sg_reg_min_soc
+              value: "{{ value | int *10 }}"
 
+      - name: Battery Max Soc
+        unique_id: uid_battery_max_soc
+        unit_of_measurement: "%"
+        min: 50
+        max: 100
+        step: 1
+        # modbus --> UI
+        state: "{{ states('sensor.max_soc') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave
+              address: *sg_reg_max_soc
+              value: "{{ value | int *10 }}"
+
+      - name: Battery Reserved SoC for Backup
+        unique_id: uid_battery_reserved_soc_for_backup
+        unit_of_measurement: "%"
+        min: 0
+        max: 100
+        step: 1
+        # modbus --> UI
+        state: "{{ states('sensor.reserved_soc_for_backup') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave
+              address: *sg_reg_reserved_soc_backup
+              value: "{{ value | int }}"
+
+      # This threshold is compared against the currently achievable charging power, not just against the currently available surplus.
+      # If this is set higher than the maximum charging power of the battery, charging will not start.
+      # If currently achievable charging power drops below this threshold, charging will stop. Actual charging power (limited by register 33047) is ignored.
+      # Charging might stop before reaching 100% if set too close to the maximum charging power of the battery, due to achievable charging power naturally dropping at high state of charge.
+      # set_sg_battery_charging_start_power:
+      - name: Battery charging start power
+        unique_id: uid_battery_charging_start_power
+        unit_of_measurement: W
+        min: 0
+        max: 5000
+        step: 10
+        # modbus --> UI
+        state: "{{ states('sensor.battery_charging_start_power') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave
+              address: *sg_reg_battery_charging_start_power
+              value: "{{ value | float /10 }}"
+
+      - name: Battery discharging start power
+        unique_id: uid_battery_discharging_start_power
+        unit_of_measurement: W
+        min: 0
+        max: 5000
+        step: 10
+        # modbus --> UI
+        state: "{{ states('sensor.battery_discharging_start_power') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave
+              address: *sg_reg_battery_discharging_start_power
+              value: "{{ value | float /10 }}"
+
+      - name: Battery forced charge discharge power
+        unique_id: uid_battery_forced_charge_discharge_power
+        unit_of_measurement: W
+        min: 0
+        max: 5000 # TODO use some secrets or inverter provided value
+        step: 100
+        # modbus --> UI
+        state: "{{ states('sensor.battery_forced_charge_discharge_power') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave
+              address: *sg_reg_battery_forced_charge_discharge_power
+              value: "{{ value | int }}"
+
+      - name: Battery max charge power
+        unique_id: uid_battery_max_charge_power
+        unit_of_measurement: W
+        min: 0
+        max: 5000 # TODO use some secrets or inverter provided value
+        step: 100
+        # modbus --> UI
+        state: "{{ states('sensor.battery_max_charge_power') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave
+              address: *sg_reg_battery_max_charge_power
+              value: "{{ value | float / 10 }}"
+
+      - name: Battery max discharge power
+        unique_id: uid_battery_max_discharge_power
+        unit_of_measurement: W
+        min: 0
+        max: 5000 # TODO use some secrets or inverter provided value
+        step: 100
+        # modbus --> UI
+        state: "{{ states('sensor.battery_max_discharge_power') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave
+              address: *sg_reg_battery_max_discharge_power
+              value: "{{ value| float / 10 }}"
+
+      - name: Export power limit
+        unique_id: uid_export_power_limit
+        unit_of_measurement: W
+        min: 0
+        max: 10000 # TODO use some secrets or inverter provided value
+        # NOTE: datasheet states 10,500 W export limit for SH10.RT. But setting 10 5000 results in a modbus error
+        # therefore limiting to 10 000 here.
+        # TODO Note: It would be nice to have this as a global variable /secret
+        step: 100
+        # modbus --> UI
+        state: "{{ states('sensor.export_power_limit') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave
+              address: *sg_reg_export_power_limit
+              value: "{{ value| float / 10 }}"
+
+  ####################
+  # template: sensor
+  ####################
   - sensor:
       - name: MPPT1 power
         unique_id: sg_mppt1_power
@@ -1731,6 +1880,7 @@ template:
             Unknown device code: {{ '%0x' % (states('sensor.sungrow_device_type_code') |int)  }}
           {% endif %}
 
+      # TODO remove me, not required
       # make the sensor battery_forced_charge_discharge_cmd more human readable
       - name: Battery forced charge discharge cmd
         unique_id: sg_battery_forced_charge_discharge_cmd
@@ -1751,40 +1901,7 @@ template:
             Unknown - should not see me! code: {{ (states('sensor.battery_forced_charge_discharge_cmd_raw') |int) }}
           {% endif %}
 
-
-      - name: Export power limit mode
-        unique_id: sg_export_power_limit_mode
-        availability: "{{ states('sensor.export_power_limit_mode_raw') not in ['unknown','unavailable'] }}"
-        device_class: enum
-        state: >-
-          {% if ((states('sensor.export_power_limit_mode_raw') |int) == 0x00AA) %}
-            Enabled
-          {% elif ((states('sensor.export_power_limit_mode_raw') |int)  == 0x0055) %}
-            Disabled
-          {% else %}
-            Unknown - should not see me! code: {{ (states('sensor.export_power_limit_mode_raw') |int) }}
-          {% endif %}
-
-      # make the sensor ems_selection_raw more human readable
-      - name: EMS mode selection
-        unique_id: sg_ems_mode_selection
-        availability: "{{ states('sensor.ems_mode_selection_raw') not in ['unknown','unavailable'] }}"
-        device_class: enum
-        state: >-
-          {% if ((states('sensor.ems_mode_selection_raw') |int) == 0) %}
-            Self-consumption mode (default)
-          {% elif ((states('sensor.ems_mode_selection_raw') |int) == 2) %}
-            Forced mode
-          {% elif ((states('sensor.ems_mode_selection_raw') |int) == 3) %}
-            External EMS
-          {% elif ((states('sensor.ems_mode_selection_raw') |int) == 4) %}
-            VPP
-          {% elif ((states('sensor.ems_mode_selection_raw') |int) == 8) %}
-            MicroGrid
-          {% else %}
-            Unknown - should not see me! code: {{ (states('sensor.ems_mode_selection_raw') |int) }}
-          {% endif %}
-
+      # TODO remove me, not required
       # make the sensor load_adjustment_mode_enable_raw more human readable
       - name: Forced startup under low soc standby
         unique_id: forced_startup_under_low_soc_standby
@@ -2004,105 +2121,127 @@ template:
             )
           }}
 
-    switch:
+  ###################
+  # template: switch
+  ###################
+  - switch:
+      - name: Sungrow dashboard enable danger mode
+        unique_id: uid_sungrow_dashboard_enable_danger_mode
+
       # this enables/disables the inverter state & EMS settings in the dashboard
       # hopefully this prevents accidentally setting values while browsing on the phone :)
-      - name: Sungrow dashboard enable danger mode
       - name: Enable inverter
       # - name: Export power limit mode
 
-# getting input for Min and Max SoC
-input_number:
-  set_sg_min_soc:
-    name: Min SoC (%)
-    min: 0
-    max: 50
-    step: 1
+  ###################
+  # template: select
+  ###################
+  - select:
+      - name: EMS mode
+        unique_id: uid_ems_mode
+        variables:
+          # map: option name to raw value
+          map:
+            "Self-consumption mode (default)": 0
+            "Forced mode": 2
+            "External EMS": 3
+            "VPP": 4
+            # rarely used and commented for simplicity
+            # "Microgid" :8
+        # get option names from map keys
+        options: >-
+          {{ map.keys() | list | tojson }}
+        # modbus --> UI (raw value --> option)
+        state: >-
 
-  set_sg_max_soc:
-    name: Max SoC (%)
-    min: 50
-    max: 100
-    step: 1
+          # TODO: FIXME: default state does not work. 
+          # try reverse map, e.g. {% set reversed_map = map | dictsort(attribute='1') | map('reverse') | list | items2dict %}
 
-  set_sg_reserved_soc_for_backup:
-    name: Reserved SoC for backup (%)
-    min: 0
-    max: 100
-    step: 1
+          {% set raw = states('sensor.ems_mode_selection_raw') %}
+          {% set found = false %}
+          {% for k, v in map.items() %}
+            {% if v == raw %}
+              {{ k }}
+              {% set found = True %}
+            {% endif %}
+          {% endfor %}
+          {% if not found %}
+            Self-consumption mode (default)
+          {% endif %}          
+        # UI --> modbus
+        select_option:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave
+              address: *sg_reg_ems_mode_selection
+              value: "{{ map.get(option, map.get('Self-consumption mode (default)', 0)) }}"
 
-  set_sg_battery_forced_charge_discharge_power:
-    name: Forced charge discharge power (W)
-    min: 0
-    max: 5000 # TODO put into secrets change this value according to the capability of your battery
-    step: 100
+      - name: Battery forced charge discharge
+        unique_id: uid_battery_forced_charge_discharge
+        variables:
+          # map: option name to raw value
+          map:
+            "Stop (default)": 0xCC
+            "Forced charge": 0xAA
+            "Forced discharge": 0xBB
+        # get option names from map keys
+        options: >-
+          {{ map.keys() | list | tojson }}
+        # modbus --> UI (raw value --> option)
+        state: >-
+          {% set raw = states('sensor.battery_forced_charge_discharge_cmd_raw') %}
+          {% for k, v in map.items() %}
+            {% if v == raw %}
+              {{ k }}
+            {% endif %}
+          {% endfor %}
+          {# default option #}
+          {{ 'Stop (default)' }}
+        # UI --> modbus
+        select_option:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave
+              address: *sg_reg_forced_charge_discharge_cmd_raw
+              value: "{{ map.get(option, map.get('Stop (default)', 0)) }}"
 
-  set_sg_battery_max_charge_power:
-    name: Max battery charge power (W)
-    min: 100
-    max: 5000 # TODO put into secrets  change this value according to the capability of your battery
-    step: 100
+      - name: Load adjustment mode
+        unique_id: uid_load_adjustment_mode
+        variables:
+          # map: option name to raw value
+          map:
+            "Timing": 0
+            "ON/OFF": 1
+            "Power optimization": 2
+            "Disabled": 3
+        # get option names from map keys
+        options: >-
+          {{ map.keys() | list | tojson }}
+        # modbus --> UI (raw value --> option)
+        state: >-
+          {% set raw = states('sensor.load_adjustment_mode_selection_raw') %}
+          {% for k, v in map.items() %}
+            {% if v == raw %}
+              {{ k }}
+            {% endif %}
+          {% endfor %}
+          {# default option #}
+          {{ 'Disabled' }}
+        # UI --> modbus
+        select_option:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave
+              address: *sg_reg_load_adjustment_mode_selection
+              value: "{{ map.get(option, map.get('Disabled', 3)) }}"
 
-  set_sg_battery_max_discharge_power:
-    name: Max battery discharge power (W)
-    min: 10
-    max: 5000 # TODO put into secrets  change this value according to the capability of your battery
-    step: 100
-
-  # This threshold is compared against the currently achievable charging power, not just against the currently available surplus.
-  # If this is set higher than the maximum charging power of the battery, charging will not start.
-  # If currently achievable charging power drops below this threshold, charging will stop. Actual charging power (limited by register 33047) is ignored.
-  # Charging might stop before reaching 100% if set too close to the maximum charging power of the battery, due to achievable charging power naturally dropping at high state of charge.
-  set_sg_battery_charging_start_power:
-    name: Battery charging start power (W)
-    min: 0
-    max: 1000
-    step: 10
-
-  set_sg_battery_discharging_start_power:
-    name: Battery discharging start power (W)
-    min: 0
-    max: 1000
-    step: 10
-
-  # TODO: adjust to the capabilities of your inverter
-  # e.g., 25000 for SH25T
-  set_sg_export_power_limit:
-    name: Export power limit (W)
-    min: 0
-    max: 10000
-    # NOTE: datasheet states 10,500 W export limit for SH10.RT. But setting 10 5000 results in a modbus error
-    # therefore limiting to 10 000 here.
-    # TODO Note: It would be nice to have this as a global variable /secret
-    step: 100
-
-input_select:
-  # get input for battery mode (forced charge/discharge, stop (default) )
-  set_sg_ems_mode:
-    name: EMS mode
-    options:
-      - "Self-consumption mode (default)"
-      - "Forced mode"
-      - "External EMS" # required for multiple inverters main /follower?
-      - "VPP" # used for Amber control
-    # these are commented, because they are rarely used
-    #      - "MicroGrid"
-
-  set_sg_battery_forced_charge_discharge_cmd:
-    name: Battery forced charge discharge cmd
-    options:
-      - "Stop (default)"
-      - "Forced charge"
-      - "Forced discharge"
-    icon: mdi:battery-unknown
-
-# Automations: Write modbus registers on input changes via GUI
-# note: If you change a value by the sliders, it will take up to 60 seconds until the state variables are updated
-# Unfortunately, I could not find a way to "force update" modbus registers, yet...
 automation:
-  - id: "automation_sungrow_enable_danger_mode"
-    alias: "sungrow dashboard enable danger mode"
-    description: "Enables/Disables the the inverter state and EMS settings the sungrow dashboard"
+  - id: "automation_sungrow_enable_danger_mode_auto_reset"
+    alias: "sungrow dashboard enable danger mode auto reset"
+    description: "Auto resets the dashboard danger mode after some seconds"
     triggers:
       - platform: state
         entity_id:
@@ -2183,569 +2322,6 @@ automation:
                       - service: switch.turn_off
                         target:
                           entity_id: switch.enable_inverter
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_max_soc"
-    alias: "sungrow inverter update max SoC"
-    description: "Updates Sungrow max Soc holding register and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_max_soc
-        id: tid_ui_max_soc
-      - platform: state
-        entity_id:
-          - sensor.max_soc
-        id: tid_sensor_max_soc
-    conditions: []
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_max_soc
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave
-                  address: *sg_reg_max_soc
-                  value: "{{ states('input_number.set_sg_max_soc') | int *10}}"
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.max_soc
-          - conditions:
-              - condition: trigger
-                id: tid_sensor_max_soc
-              - condition: template
-                value_template: "{{ not is_state('sensor.max_soc', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_max_soc
-                data:
-                  value: "{{ states('sensor.max_soc') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_min_soc"
-    alias: "sungrow inverter update min SoC"
-    description: "Updates Sungrow min Soc holding register and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_min_soc
-        id: tid_ui_min_soc
-      - platform: state
-        entity_id:
-          - sensor.min_soc
-        id: tid_sensor_min_soc
-    conditions: []
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_min_soc
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave
-                  address: *sg_reg_min_soc
-                  value: "{{ states('input_number.set_sg_min_soc') | int *10}}"
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.min_soc
-          - conditions:
-              - condition: trigger
-                id: tid_sensor_min_soc
-              - condition: template
-                value_template: "{{ not is_state('sensor.min_soc', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_min_soc
-                data:
-                  value: "{{ states('sensor.min_soc') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_reserved_soc_for_backup"
-    alias: "sungrow inverter update reserved SoC for backup"
-    description: "Updates Sungrow reserved SoC for backup holding register and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_reserved_soc_for_backup
-        id: tid_ui_reserved_soc_for_backup
-      - platform: state
-        entity_id:
-          - sensor.reserved_soc_for_backup
-        id: tid_sensor_reserved_soc_for_backup
-    conditions: []
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_reserved_soc_for_backup
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave
-                  address: *sg_reg_reserved_soc_backup
-                  value: "{{ states('input_number.set_sg_reserved_soc_for_backup') | int}}"
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.reserved_soc_for_backup
-          - conditions:
-              - condition: trigger
-                id: tid_sensor_reserved_soc_for_backup
-              - condition: template
-                value_template: "{{ not is_state('sensor.reserved_soc_for_backup', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_reserved_soc_for_backup
-                data:
-                  value: "{{ states('sensor.reserved_soc_for_backup') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_battery_forced_charge_discharge_cmd"
-    alias: "sungrow inverter battery forced charge discharge cmd"
-    description: "Updates Sungrow holding register for battery forced charge discharge command and corresponding gui input"
-    variables:
-      ems_forced_charge: 0xAA
-      ems_forced_discharge: 0xBB
-      ems_stop_default: 0xCC
-    triggers:
-      - platform: state
-        entity_id:
-          - input_select.set_sg_battery_forced_charge_discharge_cmd
-        id: tid_ui_forced_charge_discharge_cmd
-      - platform: state
-        entity_id:
-          - sensor.battery_forced_charge_discharge_cmd
-        id: tid_sensor_forced_charge_discharge_cmd
-    conditions: []
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_forced_charge_discharge_cmd
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave
-                  address: *sg_reg_forced_charge_discharge_cmd_raw
-                  value: >
-                    {% if is_state('input_select.set_sg_battery_forced_charge_discharge_cmd', "Stop (default)") %} 
-                      {{ems_stop_default}}
-                    {% elif is_state('input_select.set_sg_battery_forced_charge_discharge_cmd', "Forced charge") %} 
-                      {{ems_forced_charge}}
-                    {% elif is_state('input_select.set_sg_battery_forced_charge_discharge_cmd', "Forced discharge") %} 
-                      {{ems_forced_discharge}}
-                    {% else %}
-                      {{ems_stop_default}}
-                    {% endif %}
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.battery_forced_charge_discharge_cmd_raw
-          - conditions:
-              - condition: trigger
-                id: tid_sensor_forced_charge_discharge_cmd
-              - condition: template
-                value_template: "{{ not is_state('sensor.battery_forced_charge_discharge_cmd', 'unavailable') }}"
-            sequence:
-              - action: input_select.select_option
-                target:
-                  entity_id: input_select.set_sg_battery_forced_charge_discharge_cmd
-                data:
-                  option: "{{ states('sensor.battery_forced_charge_discharge_cmd') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_ems_mode"
-    alias: "sungrow inverter EMS mode"
-    description: "Updates EMS mode and corresponding gui input"
-    variables:
-      ems_mode_self_consume: 0
-      ems_mode_forced: 2 # called "compulsory mode in modbus spec"
-      ems_mode_external: 3
-      ems_mode_vpp: 4
-      ems_mode_microgrid: 8
-    triggers:
-      - platform: state
-        entity_id:
-          - input_select.set_sg_ems_mode
-        id: tid_ui_ems_mode
-      - platform: state
-        entity_id:
-          - sensor.ems_mode_selection
-        id: tid_sensor_ems_mode
-    conditions: []
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_ems_mode
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave
-                  address: *sg_reg_ems_mode_selection
-                  value: >
-                    {% if is_state('input_select.set_sg_ems_mode', "Self-consumption mode (default)") %} 
-                      {{ems_mode_self_consume}}
-                    {% elif is_state('input_select.set_sg_ems_mode', "Forced mode") %} 
-                      {{ems_mode_forced}}
-                    {% elif is_state('input_select.set_sg_ems_mode', "External EMS") %} 
-                      {{ems_mode_external}}
-                    {% elif is_state('input_select.set_sg_ems_mode', "VPP") %} 
-                      {{ems_mode_vpp}}
-                    {% elif is_state('input_select.set_sg_ems_mode', "MicroGrid") %} 
-                      {{ems_mode_microgrid}}
-                    {% else %} 
-                      {{ems_mode_self_consume}}
-                    {% endif %}
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.ems_mode_selection_raw
-          - conditions:
-              - condition: trigger
-                id: tid_sensor_ems_mode
-              - condition: template
-                value_template: "{{ not is_state('sensor.ems_mode_selection', 'unavailable') }}"
-            sequence:
-              - action: input_select.select_option
-                target:
-                  entity_id: input_select.set_sg_ems_mode
-                data:
-                  option: "{{ states('sensor.ems_mode_selection') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  # - id: "automation_sungrow_inverter_export_power_limit_mode"
-  #   alias: "sungrow inverter export power limit mode"
-  #   description: "Updates export power limit mode and corresponding gui input"
-  #   variables:
-  #     export_limit_enable: 0xAA
-  #     export_limit_disable: 0x55
-  #   triggers:
-  #     - platform: state
-  #       entity_id:
-  #         - switch.export_power_limit_mode
-  #       id: tid_ui_export_power_limit_mode_raw
-  #     - platform: state
-  #       entity_id:
-  #         - sensor.export_power_limit_mode_raw
-  #       id: tid_sensor_export_power_limit_mode_raw
-  #   action:
-  #     - choose:
-  #         - conditions:
-  #             - condition: trigger
-  #               id: tid_ui_export_power_limit_mode_raw
-  #           sequence:
-  #             - action: modbus.write_register
-  #               data_template:
-  #                 hub: *sg_hub_name
-  #                 slave: !secret sungrow_modbus_slave
-  #                 address: *sg_reg_export_power_limit_mode
-  #                 value: >
-  #                   {% if is_state('switch.export_power_limit_mode', "on") %}
-  #                     {{export_limit_enable}}
-  #                   {% else %}
-  #                     {{export_limit_disable}}
-  #                   {% endif %}
-  #             - delay: "00:00:01" # delay one second
-  #             - action: homeassistant.update_entity # force update
-  #               data:
-  #                 entity_id:
-  #                   - sensor.export_power_limit_mode_raw
-  #         - conditions:
-  #             - condition: trigger
-  #               id: tid_sensor_export_power_limit_mode_raw
-  #             - condition: template
-  #               value_template: "{{ not is_state('sensor.export_power_limit_mode_raw', 'unavailable') }}"
-  #           sequence:
-  #             - choose:
-  #                 - conditions:
-  #                     - condition: template
-  #                       value_template: >
-  #                         {{ states('sensor.export_power_limit_mode_raw') | int == export_limit_enable }}
-  #                   sequence:
-  #                     - service: switch.turn_on
-  #                       target:
-  #                         entity_id: switch.export_power_limit_mode
-  #                 - conditions:
-  #                     - condition: template
-  #                       value_template: >
-  #                         {{ states('sensor.export_power_limit_mode_raw') | int == export_limit_disable }}
-  #                   sequence:
-  #                     - service: switch.turn_off
-  #                       target:
-  #                         entity_id: switch.export_power_limit_mode
-
-  #   mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_export_power_limit"
-    alias: "sungrow inverter export power limit"
-    description: "Updates export power limit and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_export_power_limit
-        id: tid_ui_export_power_limit
-      - platform: state
-        entity_id:
-          - sensor.export_power_limit
-        id: tid_sensor_export_power_limit
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_export_power_limit
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave
-                  address: *sg_reg_export_power_limit
-                  # NOTE this seems to be a sungrow bug in the current firmware (10/25)
-                  # documentation lists the export limit ("feed-in limitation value"), register 13074 as W
-                  # but we need to write this value as 0.1W
-                  value: "{{ states('input_number.set_sg_export_power_limit')|int /10}}"
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.export_power_limit
-          - conditions:
-              - condition: trigger
-                id: tid_sensor_export_power_limit
-              - condition: template
-                value_template: "{{ not is_state('sensor.export_power_limit', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_export_power_limit
-                data:
-                  value: "{{ states('sensor.export_power_limit') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_battery_forced_charge_discharge_power"
-    alias: "sungrow inverter battery forced charge discharge power"
-    description: "Updates battery forced charge discharge power and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_battery_forced_charge_discharge_power
-        id: tid_ui_battery_forced_charge_discharge_power
-      - platform: state
-        entity_id:
-          - sensor.battery_forced_charge_discharge_power
-        id: tid_sensor_battery_forced_charge_discharge_power
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_battery_forced_charge_discharge_power
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave
-                  address: *sg_reg_forced_charge_discharge_power
-                  value: "{{ states('input_number.set_sg_battery_forced_charge_discharge_power') | int}}"
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.battery_forced_charge_discharge_power
-          - conditions:
-              - condition: trigger
-                id: tid_sensor_battery_forced_charge_discharge_power
-              - condition: template
-                value_template: "{{ not is_state('sensor.battery_forced_charge_discharge_power', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_battery_forced_charge_discharge_power
-                data:
-                  value: "{{ states('sensor.battery_forced_charge_discharge_power') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_battery_max_charge_power"
-    alias: "sungrow inverter update battery max charge power"
-    description: "Updates battery max charge power and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_battery_max_charge_power
-        id: tid_ui_battery_max_charge_power
-      - platform: state
-        entity_id:
-          - sensor.battery_max_charge_power
-        id: tid_sensor_battery_max_charge_power
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_battery_max_charge_power
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave
-                  address: *sg_reg_battery_max_charge_power
-                  value: "{{ states('input_number.set_sg_battery_max_charge_power') |float /10 |int}}"
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.battery_max_charge_power
-          - conditions:
-              - condition: trigger
-                id: tid_sensor_battery_max_charge_power
-              - condition: template
-                value_template: "{{ not is_state('sensor.battery_max_charge_power', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_battery_max_charge_power
-                data:
-                  value: "{{ states('sensor.battery_max_charge_power') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_battery_max_discharge_power"
-    alias: "sungrow inverter update battery max discharge power"
-    description: "Updates battery max discharge power and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_battery_max_discharge_power
-        id: tid_ui_battery_max_discharge_power
-      - platform: state
-        entity_id:
-          - sensor.battery_max_discharge_power
-        id: tid_sensor_battery_max_discharge_power
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_battery_max_discharge_power
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave
-                  address: *sg_reg_battery_max_discharge_power
-                  value: "{{ states('input_number.set_sg_battery_max_discharge_power') |float /10 |int}}"
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.battery_max_discharge_power
-          - conditions:
-              - condition: trigger
-                id: tid_sensor_battery_max_discharge_power
-              - condition: template
-                value_template: "{{ not is_state('sensor.battery_max_discharge_power', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_battery_max_discharge_power
-                data:
-                  value: "{{ states('sensor.battery_max_discharge_power') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_battery_charging_start_power"
-    alias: "sungrow inverter update battery charging start power"
-    description: "Updates battery charging start power and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_battery_charging_start_power
-        id: tid_ui_battery_charging_start_power
-      - platform: state
-        entity_id:
-          - sensor.battery_charging_start_power
-        id: tid_sensor_battery_charging_start_power
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_battery_charging_start_power
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave
-                  address: *sg_reg_battery_charging_start_power
-                  value: "{{ states('input_number.set_sg_battery_charging_start_power') |float /10 |int}}"
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.battery_charging_start_power
-          - conditions:
-              - condition: trigger
-                id: tid_sensor_battery_charging_start_power
-              - condition: template
-                value_template: "{{ not is_state('sensor.battery_charging_start_power', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_battery_charging_start_power
-                data:
-                  value: "{{ states('sensor.battery_charging_start_power') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_battery_discharging_start_power"
-    alias: "sungrow inverter update battery discharging start power"
-    description: "Updates battery discharging start power and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_battery_discharging_start_power
-        id: tid_ui_battery_discharging_start_power
-      - platform: state
-        entity_id:
-          - sensor.battery_discharging_start_power
-        id: tid_sensor_battery_discharging_start_power
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_battery_discharging_start_power
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave
-                  address: *sg_reg_battery_discharging_start_power
-                  value: "{{ states('input_number.set_sg_battery_discharging_start_power') |float /10 |int}}"
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.battery_discharging_start_power
-          - conditions:
-              - condition: trigger
-                id: tid_sensor_battery_discharging_start_power
-              - condition: template
-                value_template: "{{ not is_state('sensor.battery_discharging_start_power', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_battery_discharging_start_power
-                data:
-                  value: "{{ states('sensor.battery_discharging_start_power') }}"
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
 # Usage: Use these scripts to simplify automations
