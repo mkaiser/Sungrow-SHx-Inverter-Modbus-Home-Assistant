@@ -1,20 +1,17 @@
-# Home Assistant Sungrow inverter integration
-# https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
-# by Martin Kaiser
-#
-# last update: 2025-11-07
-#
-# Note: This YAML file will only work with Home Assistant >= 2024.10
+# This version is under heavy development. You should not use it :)
 #
 # TODO: Investigate: is there a way not to completely disable the visibility of GUI elements but just to disable them but still show them?
 # TODO: use secrets for battery parameters
 # TODO: Rename running_state to "power flow status"
-# TODO: Use more YAML anchors: Define register addresses when defining the sensors and reuse the variables in automations
 # TODO: Cleanup code for Sungrow device type (see comment inline)
 # TODO: Update code for binary sensors: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/565
 # TODO: Create secrets for different scan_intervals (e.g. scan_interval_10min, scan_interval_1min, scan_interval_10s)
 # TODO: Remove unnecessary parentheses in if-else statements.
-# TODO: Move automation for inputs into the template sections (https://github.com/theunknown86/unknown_sungrow/blob/ec2464f3c9abcc6cc6c11041499d6f380ba05201/modbus_sungrow_inv1.yaml#L1682-L1699)
+
+# DONE
+# - Use more YAML anchors: Define register addresses when defining the sensors and reuse the variables in automations
+# - Move automation for inputs into the template sections (https://github.com/theunknown86/unknown_sungrow/blob/ec2464f3c9abcc6cc6c11041499d6f380ba05201/modbus_sungrow_inv1.yaml#L1682-L1699)
+
 modbus:
   - name: &sg_hub_name SungrowSHx 2
     type: tcp
@@ -375,8 +372,8 @@ modbus:
         scale: 1
         scan_interval: 60
 
-      - name: Battery capacity  2# as in TI_20240924_Communication Protocol of Residential Hybrid Inverter-V1.1.5
-        unique_id: sg_battery_capacity_2
+      - name: Battery capacity high precision  2# as in TI_20240924_Communication Protocol of Residential Hybrid Inverter-V1.1.5
+        unique_id: uid_battery_capacity_high_precision_2
         device_address: !secret sungrow_modbus_slave_inv2
         address: 5638 # reg 5639
         input_type: input
@@ -518,623 +515,6 @@ modbus:
         state_class: measurement
         scale: 0.01
         scan_interval: 10
-
-      # following statistic sensors only work on some SH*RT inverters
-      # (only LAN attached devices)
-      # Therefore commenting them here
-      # # Start monthly PV generation
-      # - name: Monthly PV generation (01 January)
-      #   unique_id: sg_monthly_pv_generation_01_january_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6226 # reg 6227
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly PV generation (02 February)
-      #   unique_id: sg_monthly_pv_generation_02_february_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6227 # reg 6228
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly PV generation (03 March)
-      #   unique_id: sg_monthly_pv_generation_03_march_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6228 # reg 6229
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly PV generation (04 April)
-      #   unique_id: sg_monthly_pv_generation_04_april_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6229 # reg 6230
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly PV generation (05 May)
-      #   unique_id: sg_monthly_pv_generation_05_may_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6230 # reg 6231
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly PV generation (06 June)
-      #   unique_id: sg_monthly_pv_generation_06_june_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6231 # reg 6232
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly PV generation (07 July)
-      #   unique_id: sg_monthly_pv_generation_07_july_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6232 # reg 6233
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly PV generation (08 August)
-      #   unique_id: sg_monthly_pv_generation_08_august_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6233 # reg 6234
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly PV generation (09 September)
-      #   unique_id: sg_monthly_pv_generation_09_september_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6234 # reg 6235
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly PV generation (10 October)
-      #   unique_id: sg_monthly_pv_generation_10_october_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6235 # reg 6236
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly PV generation (11 November)
-      #   unique_id: sg_monthly_pv_generation_11_november_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6236 # reg 6237
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly PV generation (12 December)
-      #   unique_id: sg_monthly_pv_generation_12_december_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6237 # reg 6238
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-      # # End monthly PV generation
-
-      # # Start yearly pv generation
-      # - name: Yearly PV generation (2019)
-      #   unique_id: sg_yearly_pv_generation_2019_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6257 # reg 6258
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly PV generation (2020)
-      #   unique_id: sg_yearly_pv_generation_2020_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6259 # reg 6260
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly PV generation (2021)
-      #   unique_id: sg_yearly_pv_generation_2021_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6261 # reg 6262
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly PV generation (2022)
-      #   unique_id: sg_yearly_pv_generation_2022_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6263 # reg 6264
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly PV generation (2023)
-      #   unique_id: sg_yearly_pv_generation_2023_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6265 # reg 6266
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly PV generation (2024)
-      #   unique_id: sg_yearly_pv_generation_2024_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6267 # reg 6268
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly PV generation (2025)
-      #   unique_id: sg_yearly_pv_generation_2025_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6269 # reg 6270
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly PV generation (2026)
-      #   unique_id: sg_yearly_pv_generation_2026_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6271 # reg 6272
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly PV generation (2027)
-      #   unique_id: sg_yearly_pv_generation_2027_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6273 # reg 6274
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly PV generation (2028)
-      #   unique_id: sg_yearly_pv_generation_2028_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6275 # reg 6276
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly PV generation (2029)
-      #   unique_id: sg_yearly_pv_generation_2029_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6277 # reg 6278
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-      # # End yearly pv generation
-
-      # # Start monthly export
-      # - name: Monthly export (01 January)
-      #   unique_id: sg_monthly_export_01_january_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6595 # reg 6596
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly export (02 February)
-      #   unique_id: sg_monthly_export_02_february_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6596 # reg 6597
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly export (03 March)
-      #   unique_id: sg_monthly_export_03_march_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6597 # reg 6598
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly export (04 April)
-      #   unique_id: sg_monthly_export_04_april_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6598 # reg 6599
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly export (05 May)
-      #   unique_id: sg_monthly_export_05_may_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6599 # reg 6600
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly export (06 June)
-      #   unique_id: sg_monthly_export_06_june_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6600 # reg 6601
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly export (07 July)
-      #   unique_id: sg_monthly_export_07_july_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6601 # reg 6602
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly export (08 August)
-      #   unique_id: sg_monthly_export_08_august_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6602 # reg 6603
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly export (09 September)
-      #   unique_id: sg_monthly_export_09_september_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6603 # reg 6604
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly export (10 October)
-      #   unique_id: sg_monthly_export_10_october_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6604 # reg 6605
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly export (11 November)
-      #   unique_id: sg_monthly_export_11_november_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6605 # reg 6606
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Monthly export (12 December)
-      #   unique_id: sg_monthly_export_12_december_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6606 # reg 6607
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total_increasing
-      #   scale: 0.1
-      #   scan_interval: 600
-      # # End monthly export
-
-      # # Start yearly export energy from PV
-      # - name: Yearly Export (2019)
-      #   unique_id: sg_yearly_export_2019_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6615 # reg 6616
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly Export (2020)
-      #   unique_id: sg_yearly_export_2020_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6617 # reg 6618
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly Export (2021)
-      #   unique_id: sg_yearly_export_2021_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6619 # reg 6620
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly Export (2022)
-      #   unique_id: sg_yearly_export_2022_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6621 # reg 6622
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly Export (2023)
-      #   unique_id: sg_yearly_export_2023_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6623 # reg 6624
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly Export (2024)
-      #   unique_id: sg_yearly_export_2024_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6625 # reg 6626
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly Export (2025)
-      #   unique_id: sg_yearly_export_2025_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6627 # reg 6628
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly Export (2026)
-      #   unique_id: sg_yearly_export_2026_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6629 # reg 6630
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly Export (2027)
-      #   unique_id: sg_yearly_export_2027_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6631 # reg 6632
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total
-      #   scale: 0.1
-      #   scan_interval: 600
-
-      # - name: Yearly Export (2028)
-      #   unique_id: sg_yearly_export_2028_2
-      #   device_address: !secret sungrow_modbus_slave_inv2
-      #   address: 6633 # reg 6634
-      #   input_type: input
-      #   data_type: uint32
-      #   swap: word
-      #   precision: 1
-      #   unit_of_measurement: kWh
-      #   device_class: energy
-      #   state_class: total
-      #   scale: 0.1
-      #   scan_interval: 600
-      # # End yearly export energy from PV
 
       - name: System state 2
         unique_id: sg_system_state_2
@@ -1491,6 +871,17 @@ modbus:
         scale: 0.1
         scan_interval: 600
 
+      - name: Battery capacity 2
+        unique_id: uid_battery_capacity_2
+        device_address: !secret sungrow_modbus_slave_inv2
+        address: 13038 # reg 13039
+        input_type: input
+        data_type: uint16
+        unit_of_measurement: kWh
+        device_class: energy_storage
+        scale: 0.1
+        scan_interval: 600
+
       - name: Daily battery charge 2
         unique_id: sg_daily_battery_charge_2
         device_address: !secret sungrow_modbus_slave_inv2
@@ -1546,7 +937,7 @@ modbus:
         scan_interval: 600
 
       #####################
-      # holding registers
+      # modbus holding registers
       #####################
       - name: Load adjustment mode selection raw 2
         unique_id: sg_load_adjustment_mode_selection_raw_2
@@ -1601,7 +992,7 @@ modbus:
       - name: Battery forced charge discharge power 2
         unique_id: sg_battery_forced_charge_discharge_power_2
         device_address: !secret sungrow_modbus_slave_inv2
-        address: &sg_reg_forced_charge_discharge_power 13051 # reg 13052
+        address: &sg_reg_battery_forced_charge_discharge_power 13051 # reg 13052
         input_type: holding
         data_type: uint16
         precision: 0
@@ -1778,7 +1169,6 @@ modbus:
         address: &sg_reg_battery_max_discharge_power 33047 # reg 33048
         input_type: holding
         data_type: uint16
-        precision: 0
         unit_of_measurement: W
         device_class: power
         state_class: measurement
@@ -1792,7 +1182,6 @@ modbus:
         address: &sg_reg_battery_charging_start_power 33148 # reg 33149
         input_type: holding
         data_type: uint16
-        precision: 0
         unit_of_measurement: W
         device_class: power
         state_class: measurement
@@ -1813,6 +1202,9 @@ modbus:
         scale: 10
         scan_interval: 10
 
+      #####################
+      # modbus switches
+      #####################
     switches:
       - name: Forced Startup Under Low SoC Standby 2
         unique_id: sg_forced_startup_under_low_soc_standby_switch_2
@@ -1880,8 +1272,11 @@ sensor:
         window_size: "00:05"
         precision: 2
 
-# 'virtual' template sensors for better readability
+
 template:
+  ###########################
+  # template: binary sensor
+  ###########################
   - binary_sensor:
       - name: PV generating 2
         unique_id: sg_pv_generating_2
@@ -2064,37 +1459,174 @@ template:
           seconds: 60
         state: "{{ states('binary_sensor.importing_power_2') }}"
 
-  - select:
-      # get input for load adjustment mode (Timing/ ON-OFF/ Power optimization/Disabled )
-      - name: Load adjustment mode selection 2
-        unique_id: sg_load_adjustment_mode_selection_2
-        variables:
-          # map: option name to raw value
-          map:
-            "Timing": 0
-            "ON/OFF": 1
-            "Power optimization": 2
-            "Disabled": 3
-        # get option names from map keys
-        options: >-
-          {{ map.keys() | list | tojson }}
-        # modbus --> UI (raw value --> option)
-        state: >-
-          {% set raw = states('sensor.load_adjustment_mode_selection_raw') %}
-          {% for k, v in map.items() %}
-            {% if v == raw %}
-              {{ k }}
-            {% endif %}
-          {% endfor %}
+  ####################
+  # template: number
+  ####################
+  - number:
+      - name: Battery Min Soc 2
+        unique_id: uid_battery_min_soc_2
+        unit_of_measurement: "%"
+        min: 0
+        max: 50
+        step: 1
+        # modbus --> UI
+        state: "{{ states('sensor.min_soc_2') }}"
         # UI --> modbus
-        select_option:
+        set_value:
           - action: modbus.write_register
             data_template:
               hub: *sg_hub_name
               slave: !secret sungrow_modbus_slave_inv2
-              address: *sg_reg_load_adjustment_mode_selection
-              value: "{{ map.get(option, map.get('Disabled', 3)) }}"
+              address: *sg_reg_min_soc
+              value: "{{ value | int *10 }}"
 
+      - name: Battery Max Soc 2
+        unique_id: uid_battery_max_soc_2
+        unit_of_measurement: "%"
+        min: 50
+        max: 100
+        step: 1
+        # modbus --> UI
+        state: "{{ states('sensor.max_soc_2') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave_inv2
+              address: *sg_reg_max_soc
+              value: "{{ value | int *10 }}"
+
+      - name: Battery Reserved SoC for Backup 2
+        unique_id: uid_battery_reserved_soc_for_backup_2
+        unit_of_measurement: "%"
+        min: 0
+        max: 100
+        step: 1
+        # modbus --> UI
+        state: "{{ states('sensor.reserved_soc_for_backup_2') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave_inv2
+              address: *sg_reg_reserved_soc_backup
+              value: "{{ value | int }}"
+
+      # This threshold is compared against the currently achievable charging power, not just against the currently available surplus.
+      # If this is set higher than the maximum charging power of the battery, charging will not start.
+      # If currently achievable charging power drops below this threshold, charging will stop. Actual charging power (limited by register 33047) is ignored.
+      # Charging might stop before reaching 100% if set too close to the maximum charging power of the battery, due to achievable charging power naturally dropping at high state of charge.
+      # set_sg_2_battery_charging_start_power:
+      - name: Battery charging start power 2
+        unique_id: uid_battery_charging_start_power_2
+        unit_of_measurement: W
+        min: 0
+        max: 5000
+        step: 10
+        # modbus --> UI
+        state: "{{ states('sensor.battery_charging_start_power') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave_inv2
+              address: *sg_reg_battery_charging_start_power
+              value: "{{ value | float /10 }}"
+
+      - name: Battery discharging start power 2
+        unique_id: uid_battery_discharging_start_power_2
+        unit_of_measurement: W
+        min: 0
+        max: 5000
+        step: 10
+        # modbus --> UI
+        state: "{{ states('sensor.battery_discharging_start_power_2') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave_inv2
+              address: *sg_reg_battery_discharging_start_power
+              value: "{{ value | float /10 }}"
+
+      - name: Battery forced charge discharge power 2
+        unique_id: uid_battery_forced_charge_discharge_power_2
+        unit_of_measurement: W
+        min: 0
+        max: 5000 # TODO use some secrets or inverter provided value
+        step: 100
+        # modbus --> UI
+        state: "{{ states('sensor.battery_forced_charge_discharge_power_2') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave_inv2
+              address: *sg_reg_battery_forced_charge_discharge_power
+              value: "{{ value | int }}"
+
+      - name: Battery max charge power 2
+        unique_id: uid_battery_max_charge_power_2
+        unit_of_measurement: W
+        min: 0
+        max: 5000 # TODO use some secrets or inverter provided value
+        step: 100
+        # modbus --> UI
+        state: "{{ states('sensor.battery_max_charge_power_2') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave_inv2
+              address: *sg_reg_battery_max_charge_power
+              value: "{{ value | float / 10 }}"
+
+      - name: Battery max discharge power 2
+        unique_id: uid_battery_max_discharge_power_2
+        unit_of_measurement: W
+        min: 0
+        max: 5000 # TODO use some secrets or inverter provided value
+        step: 100
+        # modbus --> UI
+        state: "{{ states('sensor.battery_max_discharge_power_2') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave_inv2
+              address: *sg_reg_battery_max_discharge_power
+              value: "{{ value| float / 10 }}"
+
+      - name: Export power limit 2
+        unique_id: uid_export_power_limit_2
+        unit_of_measurement: W
+        min: 0
+        max: 10000 # TODO use some secrets or inverter provided value
+        # NOTE: datasheet states 10,500 W export limit for SH10.RT. But setting 10 5000 results in a modbus error
+        # therefore limiting to 10 000 here.
+        # TODO Note: It would be nice to have this as a global variable /secret
+        step: 100
+        # modbus --> UI
+        state: "{{ states('sensor.export_power_limit_2') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave_inv2
+              address: *sg_reg_export_power_limit
+              value: "{{ value| float / 10 }}"
+
+  ####################
+  # template: sensor
+  ####################
   - sensor:
       - name: MPPT1 power 2
         unique_id: sg_mppt1_power_2
@@ -2348,6 +1880,7 @@ template:
             Unknown device code: {{ '%0x' % (states('sensor.sungrow_device_type_code_2') |int)  }}
           {% endif %}
 
+      # TODO remove me, not required
       # make the sensor.battery_forced_charge_discharge_cmd_2 more human readable
       - name: Battery forced charge discharge cmd 2
         unique_id: sg_battery_forced_charge_discharge_cmd_2
@@ -2368,52 +1901,7 @@ template:
             Unknown - should not see me! code: {{ (states('sensor.battery_forced_charge_discharge_cmd_raw_2') |int) }}
           {% endif %}
 
-      - name: Backup mode 2
-        unique_id: sg_backup_mode_2
-        availability: "{{ states('sensor.backup_mode_raw_2') not in ['unknown','unavailable'] }}"
-        device_class: enum
-        state: >-
-          {% if ((states('sensor.backup_mode_raw_2') |int) == 0x00AA) %}
-            Enabled
-          {% elif ((states('sensor.backup_mode_raw_2') |int)  == 0x0055) %}
-            Disabled
-          {% else %}
-            Unknown - should not see me! code: {{ (states('sensor.backup_mode_raw_2') |int) }}
-          {% endif %}
-
-      - name: Export power limit mode 2
-        unique_id: sg_export_power_limit_mode_2
-        availability: "{{ states('sensor.export_power_limit_mode_raw_2') not in ['unknown','unavailable'] }}"
-        device_class: enum
-        state: >-
-          {% if ((states('sensor.export_power_limit_mode_raw_2') |int) == 0x00AA) %}
-            Enabled
-          {% elif ((states('sensor.export_power_limit_mode_raw_2') |int)  == 0x0055) %}
-            Disabled
-          {% else %}
-            Unknown - should not see me! code: {{ (states('sensor.export_power_limit_mode_raw_2') |int) }}
-          {% endif %}
-
-      # make the sensor ems_selection_raw more human readable
-      - name: EMS mode selection 2
-        unique_id: sg_ems_mode_selection_2
-        availability: "{{ states('sensor.ems_mode_selection_raw_2') not in ['unknown','unavailable'] }}"
-        device_class: enum
-        state: >-
-          {% if ((states('sensor.ems_mode_selection_raw_2') |int) == 0) %}
-            Self-consumption mode (default)
-          {% elif ((states('sensor.ems_mode_selection_raw_2') |int) == 2) %}
-            Forced mode
-          {% elif ((states('sensor.ems_mode_selection_raw_2') |int) == 3) %}
-            External EMS
-          {% elif ((states('sensor.ems_mode_selection_raw_2') |int) == 4) %}
-            VPP
-          {% elif ((states('sensor.ems_mode_selection_raw_2') |int) == 8) %}
-            MicroGrid
-          {% else %}
-            Unknown - should not see me! code: {{ (states('sensor.ems_mode_selection_raw_2') |int) }}
-          {% endif %}
-
+      # TODO remove me, not required
       # make the sensor load_adjustment_mode_enable_raw more human readable
       - name: Forced startup under low soc standby 2
         unique_id: forced_startup_under_low_soc_standby_2
@@ -2633,105 +2121,127 @@ template:
             )
           }}
 
-    switch:
+  ###################
+  # template: switch
+  ###################
+  - switch:
+      - name: Sungrow dashboard enable danger mode 2
+        unique_id: uid_sungrow_dashboard_enable_danger_mode_2
+
       # this enables/disables the inverter state & EMS settings in the dashboard
       # hopefully this prevents accidentally setting values while browsing on the phone :)
-      - name: Sungrow dashboard enable danger mode 2
       - name: Enable inverter 2
       # - name: Export power limit mode
 
-# getting input for Min and Max SoC
-input_number:
-  set_sg_2_min_soc:
-    name: Min SoC (%)
-    min: 0
-    max: 50
-    step: 1
+  ###################
+  # template: select
+  ###################
+  - select:
+      - name: EMS mode 2
+        unique_id: uid_ems_mode_2
+        variables:
+          # map: option name to raw value
+          map:
+            "Self-consumption mode (default)": 0
+            "Forced mode": 2
+            "External EMS": 3
+            "VPP": 4
+            # rarely used and commented for simplicity
+            # "Microgid" :8
+        # get option names from map keys
+        options: >-
+          {{ map.keys() | list | tojson }}
+        # modbus --> UI (raw value --> option)
+        state: >-
 
-  set_sg_2_max_soc:
-    name: Max SoC (%)
-    min: 50
-    max: 100
-    step: 1
+          # TODO: FIXME: default state does not work. 
+          # try reverse map, e.g. {% set reversed_map = map | dictsort(attribute='1') | map('reverse') | list | items2dict %}
 
-  set_sg_2_reserved_soc_for_backup:
-    name: Reserved SoC for backup (%)
-    min: 0
-    max: 100
-    step: 1
+          {% set raw = states('sensor.ems_mode_selection_raw_2') %}
+          {% set found = false %}
+          {% for k, v in map.items() %}
+            {% if v == raw %}
+              {{ k }}
+              {% set found = True %}
+            {% endif %}
+          {% endfor %}
+          {% if not found %}
+            Self-consumption mode (default)
+          {% endif %}          
+        # UI --> modbus
+        select_option:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave_inv2
+              address: *sg_reg_ems_mode_selection
+              value: "{{ map.get(option, map.get('Self-consumption mode (default)', 0)) }}"
 
-  set_sg_2_battery_forced_charge_discharge_power:
-    name: Forced charge discharge power (W)
-    min: 0
-    max: 5000 # TODO put into secrets change this value according to the capability of your battery
-    step: 100
+      - name: Battery forced charge discharge 2
+        unique_id: uid_battery_forced_charge_discharge_2
+        variables:
+          # map: option name to raw value
+          map:
+            "Stop (default)": 0xCC
+            "Forced charge": 0xAA
+            "Forced discharge": 0xBB
+        # get option names from map keys
+        options: >-
+          {{ map.keys() | list | tojson }}
+        # modbus --> UI (raw value --> option)
+        state: >-
+          {% set raw = states('sensor.battery_forced_charge_discharge_cmd_raw_2') %}
+          {% for k, v in map.items() %}
+            {% if v == raw %}
+              {{ k }}
+            {% endif %}
+          {% endfor %}
+          {# default option #}
+          {{ 'Stop (default)' }}
+        # UI --> modbus
+        select_option:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave_inv2
+              address: *sg_reg_forced_charge_discharge_cmd_raw
+              value: "{{ map.get(option, map.get('Stop (default)', 0)) }}"
 
-  set_sg_2_battery_max_charge_power:
-    name: Max battery charge power (W)
-    min: 100
-    max: 5000 # TODO put into secrets  change this value according to the capability of your battery
-    step: 100
+      - name: Load adjustment mode 2
+        unique_id: uid_load_adjustment_mode_2
+        variables:
+          # map: option name to raw value
+          map:
+            "Timing": 0
+            "ON/OFF": 1
+            "Power optimization": 2
+            "Disabled": 3
+        # get option names from map keys
+        options: >-
+          {{ map.keys() | list | tojson }}
+        # modbus --> UI (raw value --> option)
+        state: >-
+          {% set raw = states('sensor.load_adjustment_mode_selection_raw') %}
+          {% for k, v in map.items() %}
+            {% if v == raw %}
+              {{ k }}
+            {% endif %}
+          {% endfor %}
+          {# default option #}
+          {{ 'Disabled' }}
+        # UI --> modbus
+        select_option:
+          - action: modbus.write_register
+            data_template:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_slave_inv2
+              address: *sg_reg_load_adjustment_mode_selection
+              value: "{{ map.get(option, map.get('Disabled', 3)) }}"
 
-  set_sg_2_battery_max_discharge_power:
-    name: Max battery discharge power (W)
-    min: 10
-    max: 5000 # TODO put into secrets  change this value according to the capability of your battery
-    step: 100
-
-  # This threshold is compared against the currently achievable charging power, not just against the currently available surplus.
-  # If this is set higher than the maximum charging power of the battery, charging will not start.
-  # If currently achievable charging power drops below this threshold, charging will stop. Actual charging power (limited by register 33047) is ignored.
-  # Charging might stop before reaching 100% if set too close to the maximum charging power of the battery, due to achievable charging power naturally dropping at high state of charge.
-  set_sg_2_battery_charging_start_power:
-    name: Battery charging start power (W)
-    min: 0
-    max: 1000
-    step: 10
-
-  set_sg_2_battery_discharging_start_power:
-    name: Battery discharging start power (W)
-    min: 0
-    max: 1000
-    step: 10
-
-  # TODO: adjust to the capabilities of your inverter
-  # e.g., 25000 for SH25T
-  set_sg_2_export_power_limit:
-    name: Export power limit (W)
-    min: 0
-    max: 10000
-    # NOTE: datasheet states 10,500 W export limit for SH10.RT. But setting 10 5000 results in a modbus error
-    # therefore limiting to 10 000 here.
-    # TODO Note: It would be nice to have this as a global variable /secret
-    step: 100
-
-input_select:
-  # get input for battery mode (forced charge/discharge, stop (default) )
-  set_sg_2_ems_mode:
-    name: EMS mode
-    options:
-      - "Self-consumption mode (default)"
-      - "Forced mode"
-      - "External EMS" # required for multiple inverters main /follower?
-      - "VPP" # used for Amber control
-    # these are commented, because they are rarely used
-    #      - "MicroGrid"
-
-  set_sg_2_battery_forced_charge_discharge_cmd:
-    name: Battery forced charge discharge cmd
-    options:
-      - "Stop (default)"
-      - "Forced charge"
-      - "Forced discharge"
-    icon: mdi:battery-unknown
-
-# Automations: Write modbus registers on input changes via GUI
-# note: If you change a value by the sliders, it will take up to 60 seconds until the state variables are updated
-# Unfortunately, I could not find a way to "force update" modbus registers, yet...
 automation:
-  - id: "automation_sungrow_enable_danger_mode"
-    alias: "sungrow dashboard enable danger mode"
-    description: "Enables/Disables the the inverter state and EMS settings the sungrow dashboard"
+  - id: "automation_sungrow_enable_danger_mode_auto_reset"
+    alias: "sungrow dashboard enable danger mode auto reset"
+    description: "Auto resets the dashboard danger mode after some seconds"
     triggers:
       - platform: state
         entity_id:
@@ -2812,633 +2322,6 @@ automation:
                       - service: switch.turn_off
                         target:
                           entity_id: switch.enable_inverter
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_2_max_soc"
-    alias: "sungrow inverter 2 update max SoC"
-    description: "Updates Sungrow max Soc holding register and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_2_max_soc
-        id: tid_ui_max_soc
-      - platform: state
-        entity_id:
-          - sensor.max_soc_2
-        id: tid_sensor.max_soc_2
-    conditions: []
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_max_soc
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave_inv2
-                  address: *sg_reg_max_soc
-                  value: "{{ states('input_number.set_sg_2_max_soc') | int *10}}"
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.max_soc_2
-          - conditions:
-              - condition: trigger
-                id: tid_sensor.max_soc_2
-              - condition: template
-                value_template: "{{ not is_state('sensor.max_soc_2', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_2_max_soc
-                data:
-                  value: "{{ states('sensor.max_soc_2') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_2_min_soc"
-    alias: "sungrow inverter 2 update min SoC"
-    description: "Updates Sungrow min Soc holding register and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_2_min_soc
-        id: tid_ui_min_soc
-      - platform: state
-        entity_id:
-          - sensor.min_soc_2
-        id: tid_sensor.min_soc_2
-    conditions: []
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_min_soc
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave_inv2
-                  address: *sg_reg_min_soc
-                  value: "{{ states('input_number.set_sg_2_min_soc') | int *10}}"
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.min_soc_2
-          - conditions:
-              - condition: trigger
-                id: tid_sensor.min_soc_2
-              - condition: template
-                value_template: "{{ not is_state('sensor.min_soc_2', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_2_min_soc
-                data:
-                  value: "{{ states('sensor.min_soc_2') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_2_reserved_soc_for_backup"
-    alias: "sungrow inverter 2 update reserved SoC for backup"
-    description: "Updates Sungrow reserved SoC for backup holding register and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_2_reserved_soc_for_backup
-        id: tid_ui_reserved_soc_for_backup
-      - platform: state
-        entity_id:
-          - sensor.reserved_soc_for_backup_2
-        id: tid_sensor.reserved_soc_for_backup_2
-    conditions: []
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_reserved_soc_for_backup
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave_inv2
-                  address: *sg_reg_reserved_soc_backup
-                  value: "{{ states('input_number.set_sg_2_reserved_soc_for_backup') | int}}"
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.reserved_soc_for_backup_2
-          - conditions:
-              - condition: trigger
-                id: tid_sensor.reserved_soc_for_backup_2
-              - condition: template
-                value_template: "{{ not is_state('sensor.reserved_soc_for_backup_2', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_2_reserved_soc_for_backup
-                data:
-                  value: "{{ states('sensor.reserved_soc_for_backup_2') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_2_battery_forced_charge_discharge_cmd"
-    alias: "sungrow inverter 2 battery forced charge discharge cmd"
-    description: "Updates Sungrow holding register for battery forced charge discharge command and corresponding gui input"
-    variables:
-      ems_forced_charge: 0xAA
-      ems_forced_discharge: 0xBB
-      ems_stop_default: 0xCC
-    triggers:
-      - platform: state
-        entity_id:
-          - input_select.set_sg_2_battery_forced_charge_discharge_cmd
-        id: tid_ui_forced_charge_discharge_cmd
-      - platform: state
-        entity_id:
-          - sensor.battery_forced_charge_discharge_cmd_2
-        id: tid_sensor_forced_charge_discharge_cmd
-    conditions: []
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_forced_charge_discharge_cmd
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave_inv2
-                  address: *sg_reg_forced_charge_discharge_cmd_raw
-                  value: >
-                    {% if is_state('input_select.set_sg_2_battery_forced_charge_discharge_cmd', "Stop (default)") %} 
-                      {{ems_stop_default}}
-                    {% elif is_state('input_select.set_sg_2_battery_forced_charge_discharge_cmd', "Forced charge") %} 
-                      {{ems_forced_charge}}
-                    {% elif is_state('input_select.set_sg_2_battery_forced_charge_discharge_cmd', "Forced discharge") %} 
-                      {{ems_forced_discharge}}
-                    {% else %}
-                      {{ems_stop_default}}
-                    {% endif %}
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.battery_forced_charge_discharge_cmd_raw_2
-          - conditions:
-              - condition: trigger
-                id: tid_sensor_forced_charge_discharge_cmd
-              - condition: template
-                value_template: "{{ not is_state('sensor.battery_forced_charge_discharge_cmd_2', 'unavailable') }}"
-            sequence:
-              - action: input_select.select_option
-                target:
-                  entity_id: input_select.set_sg_2_battery_forced_charge_discharge_cmd
-                data:
-                  option: "{{ states('sensor.battery_forced_charge_discharge_cmd_2') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_2_ems_mode"
-    alias: "sungrow inverter 2 EMS mode"
-    description: "Updates EMS mode and corresponding gui input"
-    variables:
-      ems_mode_self_consume: 0
-      ems_mode_forced: 2 # called "compulsory mode in modbus spec"
-      ems_mode_external: 3
-      ems_mode_vpp: 4
-      ems_mode_microgrid: 8
-    triggers:
-      - platform: state
-        entity_id:
-          - input_select.set_sg_2_ems_mode
-        id: tid_ui_ems_mode
-      - platform: state
-        entity_id:
-          - sensor.ems_mode_selection_2
-        id: tid_sensor_ems_mode
-    conditions: []
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_ems_mode
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave_inv2
-                  address: *sg_reg_ems_mode_selection
-                  value: >
-                    {% if is_state('input_select.set_sg_2_ems_mode', "Self-consumption mode (default)") %} 
-                      {{ems_mode_self_consume}}
-                    {% elif is_state('input_select.set_sg_2_ems_mode', "Forced mode") %} 
-                      {{ems_mode_forced}}
-                    {% elif is_state('input_select.set_sg_2_ems_mode', "External EMS") %} 
-                      {{ems_mode_external}}
-                    {% elif is_state('input_select.set_sg_2_ems_mode', "VPP") %} 
-                      {{ems_mode_vpp}}
-                    {% elif is_state('input_select.set_sg_2_ems_mode', "MicroGrid") %} 
-                      {{ems_mode_microgrid}}
-                    {% else %} 
-                      {{ems_mode_self_consume}}
-                    {% endif %}
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.ems_mode_selection_raw_2
-          - conditions:
-              - condition: trigger
-                id: tid_sensor_ems_mode
-              - condition: template
-                value_template: "{{ not is_state('sensor.ems_mode_selection_2', 'unavailable') }}"
-            sequence:
-              - action: input_select.select_option
-                target:
-                  entity_id: input_select.set_sg_2_ems_mode
-                data:
-                  option: "{{ states('sensor.ems_mode_selection_2') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  # - id: "automation_sungrow_inverter_2_export_power_limit_mode"
-  #   alias: "sungrow inverter 2 export power limit mode"
-  #   description: "Updates export power limit mode and corresponding gui input"
-  #   variables:
-  #     export_limit_enable: 0xAA
-  #     export_limit_disable: 0x55
-  #   triggers:
-  #     - platform: state
-  #       entity_id:
-  #         - switch.export_power_limit_mode
-  #       id: tid_ui_export_power_limit_mode_raw
-  #     - platform: state
-  #       entity_id:
-  #         - sensor.export_power_limit_mode_raw_2
-  #       id: tid_sensor.export_power_limit_mode_raw_2
-  #   action:
-  #     - choose:
-  #         - conditions:
-  #             - condition: trigger
-  #               id: tid_ui_export_power_limit_mode_raw
-  #           sequence:
-  #             - action: modbus.write_register
-  #               data_template:
-  #                 hub: *sg_hub_name
-  #                 slave: !secret sungrow_modbus_slave_inv2
-  #                 address: *sg_reg_export_power_limit_mode
-  #                 value: >
-  #                   {% if is_state('switch.export_power_limit_mode', "on") %}
-  #                     {{export_limit_enable}}
-  #                   {% else %}
-  #                     {{export_limit_disable}}
-  #                   {% endif %}
-  #             - delay: "00:00:01" # delay one second
-  #             - action: homeassistant.update_entity # force update
-  #               data:
-  #                 entity_id:
-  #                   - sensor.export_power_limit_mode_raw_2
-  #         - conditions:
-  #             - condition: trigger
-  #               id: tid_sensor.export_power_limit_mode_raw_2
-  #             - condition: template
-  #               value_template: "{{ not is_state('sensor.export_power_limit_mode_raw_2', 'unavailable') }}"
-  #           sequence:
-  #             - choose:
-  #                 - conditions:
-  #                     - condition: template
-  #                       value_template: >
-  #                         {{ states('sensor.export_power_limit_mode_raw_2') | int == export_limit_enable }}
-  #                   sequence:
-  #                     - service: switch.turn_on
-  #                       target:
-  #                         entity_id: switch.export_power_limit_mode
-  #                 - conditions:
-  #                     - condition: template
-  #                       value_template: >
-  #                         {{ states('sensor.export_power_limit_mode_raw_2') | int == export_limit_disable }}
-  #                   sequence:
-  #                     - service: switch.turn_off
-  #                       target:
-  #                         entity_id: switch.export_power_limit_mode
-
-  #   mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_2_export_power_limit"
-    alias: "sungrow inverter 2 export power limit"
-    description: "Updates export power limit and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_2_export_power_limit
-        id: tid_ui_export_power_limit
-      - platform: state
-        entity_id:
-          - sensor.export_power_limit_2
-        id: tid_sensor.export_power_limit_2
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_export_power_limit
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave_inv2
-                  address: *sg_reg_export_power_limit
-                  # NOTE this seems to be a sungrow bug in the current firmware (10/25)
-                  # documentation lists the export limit ("feed-in limitation value"), register 13074 as W
-                  # but we need to write this value as 0.1W
-                  value: "{{ states('input_number.set_sg_2_export_power_limit')|int /10}}"
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.export_power_limit_2
-          - conditions:
-              - condition: trigger
-                id: tid_sensor.export_power_limit_2
-              - condition: template
-                value_template: "{{ not is_state('sensor.export_power_limit_2', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_2_export_power_limit
-                data:
-                  value: "{{ states('sensor.export_power_limit_2') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  # - id: "automation_sungrow_inverter_2_backup_mode"
-  #   alias: "sungrow inverter 2 backup mode"
-  #   description: "Updates backup mode and corresponding gui input"
-  #   triggers:
-  #     - platform: state
-  #       entity_id:
-  #         - switch.backup_mode
-  #       id: tid_ui_backup_mode
-  #     - platform: state
-  #       entity_id:
-  #         - sensor.backup_mode_2
-  #       id: tid_sensor.backup_mode_2
-  #   variables:
-  #     enable: 0xAA
-  #     disable: 0x55
-  #   action:
-  #     - choose:
-  #         - conditions:
-  #             - condition: trigger
-  #               id: tid_ui_backup_mode
-  #           sequence:
-  #             - action: modbus.write_register
-  #               data_template:
-  #                 hub: *sg_hub_name
-  #                 slave: !secret sungrow_modbus_slave_inv2
-  #                 address: *sg_reg_backup_mode
-  #                 value: >
-  #                   {% if is_state('switch.backup_mode', "on") %}
-  #                     {{enable}}
-  #                   {% elif is_state('switch.backup_mode', "off") %}
-  #                     {{disable}}
-  #                   {% else %}
-  #                     {{disable}}
-  #                   {% endif %}
-  #             - delay: "00:00:01" # delay one second
-  #             - action: homeassistant.update_entity # force update
-  #               data:
-  #                 entity_id:
-  #                   - sensor.backup_mode_raw_2
-  #         - conditions:
-  #             - condition: trigger
-  #               id: tid_sensor.backup_mode_2
-  #             - condition: template
-  #               value_template: "{{ not is_state('sensor.backup_mode_raw_2', 'unavailable') }}"
-  #           sequence:
-  #             - choose:
-  #                 - conditions:
-  #                     - condition: template
-  #                       value_template: >
-  #                         {{ states('sensor.backup_mode_raw_2') | int == enable }}
-  #                   sequence:
-  #                     - service: switch.turn_on
-  #                       target:
-  #                         entity_id: switch.backup_mode
-  #                 - conditions:
-  #                     - condition: template
-  #                       value_template: >
-  #                         {{ states('sensor.backup_mode_raw_2') | int == disable }}
-  #                   sequence:
-  #                     - service: switch.turn_off
-  #                       target:
-  #                         entity_id: switch.backup_mode
-  #   mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_2_battery_forced_charge_discharge_power"
-    alias: "sungrow inverter 2 battery forced charge discharge power"
-    description: "Updates battery forced charge discharge power and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_2_battery_forced_charge_discharge_power
-        id: tid_ui_battery_forced_charge_discharge_power
-      - platform: state
-        entity_id:
-          - sensor.battery_forced_charge_discharge_power_2
-        id: tid_sensor.battery_forced_charge_discharge_power_2
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_battery_forced_charge_discharge_power
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave_inv2
-                  address: *sg_reg_forced_charge_discharge_power
-                  value: "{{ states('input_number.set_sg_2_battery_forced_charge_discharge_power') | int}}"
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.battery_forced_charge_discharge_power_2
-          - conditions:
-              - condition: trigger
-                id: tid_sensor.battery_forced_charge_discharge_power_2
-              - condition: template
-                value_template: "{{ not is_state('sensor.battery_forced_charge_discharge_power_2', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_2_battery_forced_charge_discharge_power
-                data:
-                  value: "{{ states('sensor.battery_forced_charge_discharge_power_2') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_2_battery_max_charge_power"
-    alias: "sungrow inverter 2 update battery max charge power"
-    description: "Updates battery max charge power and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_2_battery_max_charge_power
-        id: tid_ui_battery_max_charge_power
-      - platform: state
-        entity_id:
-          - sensor.battery_max_charge_power_2
-        id: tid_sensor.battery_max_charge_power_2
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_battery_max_charge_power
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave_inv2
-                  address: *sg_reg_battery_max_charge_power
-                  value: "{{ states('input_number.set_sg_2_battery_max_charge_power') |float /10 |int}}"
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.battery_max_charge_power_2
-          - conditions:
-              - condition: trigger
-                id: tid_sensor.battery_max_charge_power_2
-              - condition: template
-                value_template: "{{ not is_state('sensor.battery_max_charge_power_2', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_2_battery_max_charge_power
-                data:
-                  value: "{{ states('sensor.battery_max_charge_power_2') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_2_battery_max_discharge_power"
-    alias: "sungrow inverter 2 update battery max discharge power"
-    description: "Updates battery max discharge power and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_2_battery_max_discharge_power
-        id: tid_ui_battery_max_discharge_power
-      - platform: state
-        entity_id:
-          - sensor.battery_max_discharge_power_2
-        id: tid_sensor.battery_max_discharge_power_2
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_battery_max_discharge_power
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave_inv2
-                  address: *sg_reg_battery_max_discharge_power
-                  value: "{{ states('input_number.set_sg_2_battery_max_discharge_power') |float /10 |int}}"
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.battery_max_discharge_power_2
-          - conditions:
-              - condition: trigger
-                id: tid_sensor.battery_max_discharge_power_2
-              - condition: template
-                value_template: "{{ not is_state('sensor.battery_max_discharge_power_2', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_2_battery_max_discharge_power
-                data:
-                  value: "{{ states('sensor.battery_max_discharge_power_2') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_2_battery_charging_start_power"
-    alias: "sungrow inverter 2 update battery charging start power"
-    description: "Updates battery charging start power and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_2_battery_charging_start_power
-        id: tid_ui_battery_charging_start_power
-      - platform: state
-        entity_id:
-          - sensor.battery_charging_start_power
-        id: tid_sensor_battery_charging_start_power
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_battery_charging_start_power
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave_inv2
-                  address: *sg_reg_battery_charging_start_power
-                  value: "{{ states('input_number.set_sg_2_battery_charging_start_power') |float /10 |int}}"
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.battery_charging_start_power
-          - conditions:
-              - condition: trigger
-                id: tid_sensor_battery_charging_start_power
-              - condition: template
-                value_template: "{{ not is_state('sensor.battery_charging_start_power', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_2_battery_charging_start_power
-                data:
-                  value: "{{ states('sensor.battery_charging_start_power') }}"
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-  - id: "automation_sungrow_inverter_2_battery_discharging_start_power"
-    alias: "sungrow inverter 2 update battery discharging start power"
-    description: "Updates battery discharging start power and corresponding gui input"
-    triggers:
-      - platform: state
-        entity_id:
-          - input_number.set_sg_2_battery_discharging_start_power
-        id: tid_ui_battery_discharging_start_power
-      - platform: state
-        entity_id:
-          - sensor.battery_discharging_start_power_2
-        id: tid_sensor.battery_discharging_start_power_2
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: tid_ui_battery_discharging_start_power
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave_inv2
-                  address: *sg_reg_battery_discharging_start_power
-                  value: "{{ states('input_number.set_sg_2_battery_discharging_start_power') |float /10 |int}}"
-              - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.battery_discharging_start_power_2
-          - conditions:
-              - condition: trigger
-                id: tid_sensor.battery_discharging_start_power_2
-              - condition: template
-                value_template: "{{ not is_state('sensor.battery_discharging_start_power_2', 'unavailable') }}"
-            sequence:
-              - action: input_number.set_value
-                target:
-                  entity_id: input_number.set_sg_2_battery_discharging_start_power
-                data:
-                  value: "{{ states('sensor.battery_discharging_start_power_2') }}"
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
 # Usage: Use these scripts to simplify automations
