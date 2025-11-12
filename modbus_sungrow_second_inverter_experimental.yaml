@@ -7,6 +7,7 @@
 # TODO: Update code for binary sensors: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/565
 # TODO: Create secrets for different scan_intervals (e.g. scan_interval_10min, scan_interval_1min, scan_interval_10s)
 # TODO: Remove unnecessary parentheses in if-else statements.
+# TODO: Error handling for non-available register values used for template numbers
 
 # DONE
 # - Use more YAML anchors: Define register addresses when defining the sensors and reuse the variables in automations
@@ -2148,26 +2149,25 @@ template:
             "VPP": 4
             # rarely used and commented for simplicity
             # "Microgid" :8
+          fallback: "Self-consumption mode (default)"
         # get option names from map keys
         options: >-
           {{ map.keys() | list | tojson }}
         # modbus --> UI (raw value --> option)
         state: >-
-
-          # TODO: FIXME: default state does not work. 
-          # try reverse map, e.g. {% set reversed_map = map | dictsort(attribute='1') | map('reverse') | list | items2dict %}
-
-          {% set raw = states('sensor.ems_mode_selection_raw_2') %}
-          {% set found = false %}
-          {% for k, v in map.items() %}
-            {% if v == raw %}
-              {{ k }}
-              {% set found = True %}
+          {# workaround for limited jinja python skills to reverse-search the map #}
+          {# create a mutable namespace with default fallback #}
+          {% set ns = namespace(result=fallback) %}
+          {% set regVal = states('sensor.ems_mode_selection_raw_2') | int %}
+          {# search in map inverted #}
+          {% for key, value in map.items() %}
+            {% if value == regVal %}
+              {% set ns.result = key %}
             {% endif %}
           {% endfor %}
-          {% if not found %}
-            Self-consumption mode (default)
-          {% endif %}          
+          {# save as result and output variable#}
+          {% set result = ns.result %}
+          {{ result }} 
         # UI --> modbus
         select_option:
           - action: modbus.write_register
@@ -2175,7 +2175,7 @@ template:
               hub: *sg_hub_name
               slave: !secret sungrow_modbus_slave_inv2
               address: *sg_reg_ems_mode_selection
-              value: "{{ map.get(option, map.get('Self-consumption mode (default)', 0)) }}"
+              value: "{{ map.get(option, map.get('Self-consumption mode (default)', 0)) | int }}"
 
       - name: Battery forced charge discharge 2
         unique_id: uid_battery_forced_charge_discharge_2
@@ -2185,19 +2185,25 @@ template:
             "Stop (default)": 0xCC
             "Forced charge": 0xAA
             "Forced discharge": 0xBB
+          fallback: "Stop (default)"            
         # get option names from map keys
         options: >-
           {{ map.keys() | list | tojson }}
         # modbus --> UI (raw value --> option)
         state: >-
-          {% set raw = states('sensor.battery_forced_charge_discharge_cmd_raw_2') %}
-          {% for k, v in map.items() %}
-            {% if v == raw %}
-              {{ k }}
+          {# workaround for limited jinja python skills to reverse-search the map #}
+          {# create a mutable namespace with default fallback #}
+          {% set ns = namespace(result=fallback) %}
+          {% set regVal = states('sensor.battery_forced_charge_discharge_cmd_raw_2') | int %}
+          {# search in map inverted #}
+          {% for key, value in map.items() %}
+            {% if value == regVal %}
+              {% set ns.result = key %}
             {% endif %}
           {% endfor %}
-          {# default option #}
-          {{ 'Stop (default)' }}
+          {# save as result and output variable#}
+          {% set result = ns.result %}
+          {{ result }} 
         # UI --> modbus
         select_option:
           - action: modbus.write_register
@@ -2216,19 +2222,25 @@ template:
             "ON/OFF": 1
             "Power optimization": 2
             "Disabled": 3
+          fallback: "Disabled"            
         # get option names from map keys
         options: >-
           {{ map.keys() | list | tojson }}
         # modbus --> UI (raw value --> option)
         state: >-
-          {% set raw = states('sensor.load_adjustment_mode_selection_raw') %}
-          {% for k, v in map.items() %}
-            {% if v == raw %}
-              {{ k }}
+          {# workaround for limited jinja python skills to reverse-search the map #}
+          {# create a mutable namespace with default fallback #}
+          {% set ns = namespace(result=fallback) %}
+          {% set regVal = states('sensor.load_adjustment_mode_selection_raw') | int %}
+          {# search in map inverted #}
+          {% for key, value in map.items() %}
+            {% if value == regVal %}
+              {% set ns.result = key %}
             {% endif %}
           {% endfor %}
-          {# default option #}
-          {{ 'Disabled' }}
+          {# save as result and output variable#}
+          {% set result = ns.result %}
+          {{ result }} 
         # UI --> modbus
         select_option:
           - action: modbus.write_register
