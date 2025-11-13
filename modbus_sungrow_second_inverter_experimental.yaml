@@ -1,17 +1,23 @@
 # This version is under heavy development. You should not use it :)
 #
 # TODO: Investigate: is there a way not to completely disable the visibility of GUI elements but just to disable them but still show them?
-# TODO: use secrets for battery parameters
 # TODO: Cleanup code for Sungrow device type (see comment inline)
-# TODO: Update code for binary sensors: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/565
 # TODO: Create secrets for different scan_intervals (e.g. scan_interval_10min, scan_interval_1min, scan_interval_10s)
-# TODO: Remove unnecessary parentheses in if-else statements.
 # TODO: Error handling for non-available register values used for template numbers
+# TODO: Implement logic for active power limitation: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
 
 # DONE
 # - Use more YAML anchors: Define register addresses when defining the sensors and reuse the variables in automations
 # - Move automation for inputs into the template sections (https://github.com/theunknown86/unknown_sungrow/blob/ec2464f3c9abcc6cc6c11041499d6f380ba05201/modbus_sungrow_inv1.yaml#L1682-L1699)
-# - Rename "running state" to "power flow status"
+# - Rename "running state" to "power flow status" and update code for binary sensors: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/565
+# - Use secrets for battery parameters
+# - Remove unnecessary parentheses in if-else statements.
+
+# This code requires folowing entries in your secrets.yaml file, see the example in this repository:
+# sungrow_modbus_host_ip_inv2
+# sungrow_modbus_port_inv2
+# sungrow_modbus_slave_inv2
+# sungrow_modbus_battery_max_power
 
 modbus:
   - name: &sg_hub_name SungrowSHx 2
@@ -979,7 +985,6 @@ modbus:
         state_class: measurement
         scan_interval: 10
 
-      # TODO make more & statements
       - name: Battery forced charge discharge cmd raw 2
         unique_id: sg_battery_forced_charge_discharge_cmd_raw_2
         device_address: !secret sungrow_modbus_slave_inv2
@@ -1006,8 +1011,8 @@ modbus:
         state_class: measurement
         scan_interval: 10
 
-      - name: Max SoC 2
-        unique_id: sg_max_soc_2
+      - name: Battery max SoC 2
+        unique_id: uid_sg_battery_max_soc_2
         device_address: !secret sungrow_modbus_slave_inv2
         address: &sg_reg_max_soc 13057 # reg 13058
         input_type: holding
@@ -1019,8 +1024,8 @@ modbus:
         scale: 0.1
         scan_interval: 10
 
-      - name: Min SoC 2
-        unique_id: sg_min_soc_2
+      - name: Battery min SoC 2
+        unique_id: uid_sg_battery_min_soc_2
         device_address: !secret sungrow_modbus_slave_inv2
         address: &sg_reg_min_soc 13058 # reg 13059
         input_type: holding
@@ -1378,10 +1383,11 @@ template:
         unique_id: uid_battery_min_soc_2
         unit_of_measurement: "%"
         min: 0
+        # max value is defined by modbus spec
         max: 50
         step: 1
         # modbus --> UI
-        state: "{{ states('sensor.min_soc_2') }}"
+        state: "{{ states('sensor.battery_min_soc') }}"
         # UI --> modbus
         set_value:
           - action: modbus.write_register
@@ -1394,11 +1400,12 @@ template:
       - name: Battery Max Soc 2
         unique_id: uid_battery_max_soc_2
         unit_of_measurement: "%"
+        # min value is defined by modbus spec
         min: 50
         max: 100
         step: 1
         # modbus --> UI
-        state: "{{ states('sensor.max_soc_2') }}"
+        state: "{{ states('sensor.battery_max_soc') }}"
         # UI --> modbus
         set_value:
           - action: modbus.write_register
@@ -1434,7 +1441,10 @@ template:
         unique_id: uid_battery_charging_start_power_2
         unit_of_measurement: W
         min: 0
-        max: 5000
+        max: 1000
+        # The charging and the discharging options are meant to save the battery from frequent cycling between
+        # charging and discharging. I am pretty confident, that a max: value for the number is ok with 1000W.
+        # Please open an issue, if other values are needed.
         step: 10
         # modbus --> UI
         state: "{{ states('sensor.battery_charging_start_power') }}"
@@ -1451,7 +1461,10 @@ template:
         unique_id: uid_battery_discharging_start_power_2
         unit_of_measurement: W
         min: 0
-        max: 5000
+        max: 1000
+        # The charging and the discharging options are meant to save the battery from frequent cycling between
+        # charging and discharging. I am pretty confident, that a max: value for the number is ok with 1000W
+        # Please open an issue, if other values are needed.
         step: 10
         # modbus --> UI
         state: "{{ states('sensor.battery_discharging_start_power_2') }}"
@@ -1468,7 +1481,7 @@ template:
         unique_id: uid_battery_forced_charge_discharge_power_2
         unit_of_measurement: W
         min: 0
-        max: 5000 # TODO use some secrets or inverter provided value
+        max: !secret sungrow_modbus_battery_max_power
         step: 100
         # modbus --> UI
         state: "{{ states('sensor.battery_forced_charge_discharge_power_2') }}"
@@ -1485,7 +1498,7 @@ template:
         unique_id: uid_battery_max_charge_power_2
         unit_of_measurement: W
         min: 0
-        max: 5000 # TODO use some secrets or inverter provided value
+        max: !secret sungrow_modbus_battery_max_power
         step: 100
         # modbus --> UI
         state: "{{ states('sensor.battery_max_charge_power_2') }}"
@@ -1502,7 +1515,7 @@ template:
         unique_id: uid_battery_max_discharge_power_2
         unit_of_measurement: W
         min: 0
-        max: 5000 # TODO use some secrets or inverter provided value
+        max: !secret sungrow_modbus_battery_max_power
         step: 100
         # modbus --> UI
         state: "{{ states('sensor.battery_max_discharge_power_2') }}"
@@ -1519,7 +1532,7 @@ template:
         unique_id: uid_export_power_limit_2
         unit_of_measurement: W
         min: 0
-        max: 10000 # TODO use some secrets or inverter provided value
+        max: "{{ states('sensor.inverter_rated_output') }}"
         # NOTE: datasheet states 10,500 W export limit for SH10.RT. But setting 10 5000 results in a modbus error
         # therefore limiting to 10 000 here.
         # TODO Note: It would be nice to have this as a global variable /secret
@@ -1544,9 +1557,7 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: >-
-          {{ states('sensor.mppt1_voltage_2') not in ['unknown','unavailable'] 
-          and states('sensor.mppt1_current_2') not in ['unknown','unavailable'] }}
+        availability: "{{ states('sensor.mppt1_voltage_2')|is_number and states('sensor.mppt1_current_2')|is_number }}"
         state: "{{ (states('sensor.mppt1_voltage_2') | float * states('sensor.mppt1_current_2') | float) |int }}"
 
       - name: MPPT2 power 2
@@ -1554,9 +1565,7 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: >-
-          {{ states('sensor.mppt2_voltage_2') not in ['unknown','unavailable'] 
-          and states('sensor.mppt2_current_2') not in ['unknown','unavailable'] }}
+        availability: "{{ states('sensor.mppt2_voltage_2')|is_number and states('sensor.mppt2_current_2')|is_number }}"
         state: "{{ (states('sensor.mppt2_voltage_2') | float * states('sensor.mppt2_current_2') | float) |int }}"
 
       # only for SH*T inverters with 3 MPPTs
@@ -1565,9 +1574,7 @@ template:
       #   unit_of_measurement: W
       #   device_class: power
       #   state_class: measurement
-      #   availability: >-
-      #    {{ states('sensor.mppt3_voltage') not in ['unknown','unavailable']
-      #    and states('sensor.mppt3_current') not in ['unknown','unavailable'] }}
+      #   availability: "{{ states('sensor.mppt3_voltage')|is_number and states('sensor.mppt3_current')|is_number }}"
       #   state: "{{ (states('sensor.mppt3_voltage') | float * states('sensor.mppt3_current') | float) |int }}"
 
       - name: Phase A power 2
@@ -1575,9 +1582,7 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: >-
-          {{ states('sensor.phase_a_voltage_2') not in ['unknown','unavailable'] 
-          and states('sensor.phase_a_current') not in ['unknown','unavailable'] }}
+        availability: "{{ states('sensor.phase_a_voltage_2')|is_number and states('sensor.phase_a_current')|is_number }}"
         state: "{{ (states('sensor.phase_a_voltage_2') | float * states('sensor.phase_a_current') | float) |int }}"
 
       - name: Phase B power 2
@@ -1585,9 +1590,7 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: >-
-          {{ states('sensor.phase_b_voltage_2') not in ['unknown','unavailable'] 
-          and states('sensor.phase_b_current') not in ['unknown','unavailable'] }}
+        availability: "{{ states('sensor.phase_b_voltage_2')|is_number and states('sensor.phase_b_current')|is_number }}"
         state: "{{ (states('sensor.phase_b_voltage_2') | float * states('sensor.phase_b_current') | float) |int }}"
 
       - name: Phase C power 2
@@ -1595,9 +1598,7 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: >-
-          {{ states('sensor.phase_c_voltage_2') not in ['unknown','unavailable'] 
-          and states('sensor.phase_c_current') not in ['unknown','unavailable'] }}
+        availability: "{{ states('sensor.phase_c_voltage_2')|is_number and states('sensor.phase_c_current')|is_number }}"
         state: "{{ (states('sensor.phase_c_voltage_2') | float * states('sensor.phase_c_current') | float) |int }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
@@ -1606,9 +1607,7 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: >-
-          {{ states('sensor.meter_active_power_raw_2') not in ['unknown','unavailable'] 
-          and states('sensor.meter_active_power_raw_2')|int != 0x7FFFFFFF }}
+        availability: "{{ states('sensor.meter_active_power_raw_2')|is_number and states('sensor.meter_active_power_raw_2')|int != 0x7FFFFFFF }}"
         state: "{{ states('sensor.meter_active_power_raw_2') }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
@@ -1617,9 +1616,7 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: >-
-          {{ states('sensor.meter_phase_a_active_power_raw_2') not in ['unknown','unavailable'] 
-          and states('sensor.meter_phase_a_active_power_raw_2')|int != 0x7FFFFFFF }}
+        availability: "{{ states('sensor.meter_phase_a_active_power_raw_2')|is_number and states('sensor.meter_phase_a_active_power_raw_2')|int != 0x7FFFFFFF }}"
         state: "{{ states('sensor.meter_phase_a_active_power_raw_2') }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
@@ -1628,9 +1625,7 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: >-
-          {{ states('sensor.meter_phase_b_active_power_raw_2') not in ['unknown','unavailable'] 
-          and states('sensor.meter_phase_b_active_power_raw_2')|int != 0x7FFFFFFF }}
+        availability: "{{ states('sensor.meter_phase_b_active_power_raw_2')|is_number and states('sensor.meter_phase_b_active_power_raw_2')|int != 0x7FFFFFFF }}"
         state: "{{ states('sensor.meter_phase_b_active_power_raw_2') }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
@@ -1639,9 +1634,7 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: >-
-          {{ states('sensor.meter_phase_c_active_power_raw_2') not in ['unknown','unavailable'] 
-          and states('sensor.meter_phase_c_active_power_raw_2')|int != 0x7FFFFFFF }}
+        availability: "{{ states('sensor.meter_phase_c_active_power_raw_2')|is_number and states('sensor.meter_phase_c_active_power_raw_2')|int != 0x7FFFFFFF }}"
         state: "{{ states('sensor.meter_phase_c_active_power_raw_2') }}"
 
       - name: Sungrow inverter state 2
@@ -1649,56 +1642,56 @@ template:
         device_class: enum
         availability: "{{ states('sensor.system_state_2') not in ['unknown','unavailable'] }}"
         state: >-
-          {% if ((states('sensor.system_state_2') |int) in [0x0000,0x0040]) %}
+          {% if (states('sensor.system_state_2') |int) in [0x0000,0x0040] %}
             Running
-          {% elif ((states('sensor.system_state_2') |int) == 0x0410) %}
+          {% elif (states('sensor.system_state_2') |int) == 0x0410 %}
             Off-grid Charge
-          {% elif ((states('sensor.system_state_2') |int) == 0x0200) %}
+          {% elif (states('sensor.system_state_2') |int) == 0x0200 %}
             Update Failed
-          {% elif ((states('sensor.system_state_2') |int) == 0x0400) %}
+          {% elif (states('sensor.system_state_2') |int) == 0x0400 %}
             Maintain mode
-          {% elif ((states('sensor.system_state_2') |int) == 0x0800) %}
+          {% elif (states('sensor.system_state_2') |int) == 0x0800 %}
             Forced mode
-          {% elif ((states('sensor.system_state_2') |int) == 0x1000) %}
+          {% elif (states('sensor.system_state_2') |int) == 0x1000 %}
             Off-grid mode
-          {% elif ((states('sensor.system_state_2') |int) == 0x1111) %}
+          {% elif (states('sensor.system_state_2') |int) == 0x1111 %}
             Un-Initialized
-          {% elif ((states('sensor.system_state_2') |int) in [0x0010,0x1200]) %}
+          {% elif (states('sensor.system_state_2') |int) in [0x0010,0x1200] %}
             Initial Standby
-          {% elif ((states('sensor.system_state_2') |int) in [0x1300,0x0002]) %}
+          {% elif (states('sensor.system_state_2') |int) in [0x1300,0x0002] %}
             Shutdown
-          {% elif ((states('sensor.system_state_2') |int) in [0x1400,0x0008] ) %}
+          {% elif (states('sensor.system_state_2') |int) in [0x1400,0x0008] %}
             Standby
-          {% elif ((states('sensor.system_state_2') |int) in [0x1500,0x0004] ) %}
+          {% elif (states('sensor.system_state_2') |int) in [0x1500,0x0004] %}
             Emergency Stop
-          {% elif ((states('sensor.system_state_2') |int) in [0x1600,0x0020]) %}
+          {% elif (states('sensor.system_state_2') |int) in [0x1600,0x0020] %}
             Startup
-          {% elif ((states('sensor.system_state_2') |int) == 0x1700) %}
+          {% elif (states('sensor.system_state_2') |int) == 0x1700 %}
             AFCI self test shutdown
-          {% elif ((states('sensor.system_state_2') |int) == 0x1800) %}
+          {% elif (states('sensor.system_state_2') |int) == 0x1800 %}
             Intelligent Station Building Status
-          {% elif ((states('sensor.system_state_2') |int) == 0x1900) %}
+          {% elif (states('sensor.system_state_2') |int) == 0x1900 %}
             Safe Mode
-          {% elif ((states('sensor.system_state_2') |int) == 0x2000) %}
+          {% elif (states('sensor.system_state_2') |int) == 0x2000 %}
             Open Loop
-          {% elif ((states('sensor.system_state_2') |int) == 0x2501) %}
+          {% elif (states('sensor.system_state_2') |int) == 0x2501 %}
             Restarting
-          {% elif ((states('sensor.system_state_2') |int) == 0x4000) %}
+          {% elif (states('sensor.system_state_2') |int) == 0x4000 %}
             External EMS mode
-          {% elif ((states('sensor.system_state_2') |int) == 0x4001) %} ### Emergency loading from grid when SOC is under BackUp SOC
+          {% elif (states('sensor.system_state_2') |int) == 0x4001 %} ### Emergency loading from grid when SOC is under BackUp SOC
             Emergency Battery Charging            
-          {% elif ((states('sensor.system_state_2') |int) in [0x5500,0x0100]) %}
+          {% elif (states('sensor.system_state_2') |int) in [0x5500,0x0100] %}
             Fault
-          {% elif ((states('sensor.system_state_2') |int) in [0x8000,0x0001]) %}
+          {% elif (states('sensor.system_state_2') |int) in [0x8000,0x0001] %}
             Stop
-          {% elif ((states('sensor.system_state_2') |int) in [0x8100,0x0080]) %}
+          {% elif (states('sensor.system_state_2') |int) in [0x8100,0x0080] %}
             De-rating Running
-          {% elif ((states('sensor.system_state_2') |int) == 0x8200) %}
+          {% elif (states('sensor.system_state_2') |int) == 0x8200 %}
             Dispatch Run
-          {% elif ((states('sensor.system_state_2') |int) == 0x9100) %}
+          {% elif (states('sensor.system_state_2') |int) == 0x9100 %}
             Warn Running
           {% else %}
-            Unknown - should not see me! {{ (states('sensor.system_state_2') |int) }}
+            Unknown - should not see me! {{ states('sensor.system_state_2') |int }}
           {% endif %}
 
       - name: Sungrow device type 2
@@ -1707,109 +1700,88 @@ template:
         device_class: enum
         # TODO adapt style from https://github.com/theunknown86/unknown_sungrow/blob/ec2464f3c9abcc6cc6c11041499d6f380ba05201/modbus_sungrow_inv1.yaml#L1532
         state: >-
-          {% if ((states('sensor.sungrow_device_type_code_2') |int)  == 0x0D06) %}
+          {% if (states('sensor.sungrow_device_type_code_2') |int)  == 0x0D06 %}
             SH3K6
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D07) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0D07 %}
             SH4K6
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D09) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0D09 %}
             SH5K-20  
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D03) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0D03 %}
             SH5K-V13
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D0A) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0D0A %}
             SH3K6-30
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D0B) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0D0B %}
             SH4K6-30
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D0C) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0D0C %}
             SH5K-30
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D17) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0D17 %}
             SH3.0RS
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D0D) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0D0D %}
             SH3.6RS
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D18) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0D18 %}
             SH4.0RS
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D0F) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0D0F %}
             SH5.0RS
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D10) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0D10 %}
             SH6.0RS
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D1A) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0D1A %}
             SH8.0RS
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D1B) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0D1B %}
             SH10RS
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E00) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E00 %}
             SH5.0RT
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E01) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E01 %}
             SH6.0RT
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E02) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E02 %}
             SH8.0RT
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E03) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E03 %}
             SH10RT
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E10) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E10 %}
             SH5.0RT-20
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E11) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E11 %}
             SH6.0RT-20
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E12) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E12 %}
             SH8.0RT-20
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E13) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E13 %}
             SH10RT-20
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E0C) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E0C %}
             SH5.0RT-V112
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E0D) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E0D %}
             SH6.0RT-V112
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E0E) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E0E %}
             SH8.0RT-V112
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E0F) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E0F %}
             SH10RT-V112
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E08) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E08 %}
             SH5.0RT-V122
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E09) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E09 %}
             SH6.0RT-V122
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E0A) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E0A %}
             SH8.0RT-V122
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E0B) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E0B %}
             SH10RT-V122
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E20) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E20 %}
             SH5T
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E21) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E21 %}
             SH6T
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E22) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E22 %}
             SH8T
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E23) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E23 %}
             SH10T
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E24) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E24 %}
             SH12T
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E25) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E25 %}
             SH15T
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E26) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E26 %}
             SH20T
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0E28) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0E28 %}
             SH25T
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D27) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0D27 %}
             MG5RL 
-          {% elif ((states('sensor.sungrow_device_type_code_2') |int) == 0x0D28 ) %}
+          {% elif (states('sensor.sungrow_device_type_code_2') |int) == 0x0D28 %}
             MG6RL           
           {% else %}
             Unknown device code: {{ '%0x' % (states('sensor.sungrow_device_type_code_2') |int)  }}
-          {% endif %}
-
-      # TODO remove me, not required
-      # make the sensor.battery_forced_charge_discharge_cmd_2 more human readable
-      - name: Battery forced charge discharge cmd 2
-        unique_id: sg_battery_forced_charge_discharge_cmd_2
-        availability: "{{ states('sensor.battery_forced_charge_discharge_cmd_raw_2') not in ['unknown','unavailable'] }}"
-        device_class: enum
-        variables:
-          sg_forced_charge: 0xAA
-          sg_forced_discharge: 0xBB
-          sg_stop: 0xCC
-        state: >-
-          {% if ((states('sensor.battery_forced_charge_discharge_cmd_raw_2') |int) == sg_forced_charge) %}
-            Forced charge
-          {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw_2') |int)  == sg_forced_discharge) %}
-            Forced discharge
-          {% elif ((states('sensor.battery_forced_charge_discharge_cmd_raw_2') |int)  == sg_stop) %}
-            Stop (default)
-          {% else %}
-            Unknown - should not see me! code: {{ (states('sensor.battery_forced_charge_discharge_cmd_raw_2') |int) }}
           {% endif %}
 
       # positive if charging and negative if discharging
@@ -1901,11 +1873,11 @@ template:
         state_class: measurement
         availability: >-
           {{ states('sensor.battery_level_2') not in ['unknown','unavailable'] 
-          and states('sensor.min_soc_2') not in ['unknown','unavailable'] 
-          and states('sensor.max_soc_2') not in ['unknown','unavailable'] }}
+          and states('sensor.battery_min_soc') not in ['unknown','unavailable'] 
+          and states('sensor.battery_max_soc') not in ['unknown','unavailable'] }}
         state: >-
-          {% set soc_min = states('sensor.min_soc_2') | float %}
-          {% set soc_max = states('sensor.max_soc_2') | float %}
+          {% set soc_min = states('sensor.battery_min_soc') | float %}
+          {% set soc_max = states('sensor.battery_max_soc') | float %}
           {% set soc_cur = states('sensor.battery_level_2') | float %}
           {{
             (soc_min + ((soc_max - soc_min) * (soc_cur / 100))) | round(1)
@@ -1940,12 +1912,12 @@ template:
         availability: >-
           {{ states('sensor.battery_capacity_2') not in ['unknown','unavailable'] 
           and states('sensor.battery_level_2') not in ['unknown','unavailable'] 
-          and states('sensor.min_soc_2') not in ['unknown','unavailable']
-          and states('sensor.max_soc_2') not in ['unknown','unavailable'] }}
+          and states('sensor.battery_min_soc') not in ['unknown','unavailable']
+          and states('sensor.battery_max_soc') not in ['unknown','unavailable'] }}
         state: >-
           {{ 
             ( states('sensor.battery_capacity_2')|float 
-            * ( states('sensor.max_soc_2')|float - states('sensor.min_soc_2')|float ) /100 
+            * ( states('sensor.battery_max_soc')|float - states('sensor.battery_min_soc')|float ) /100 
             * states('sensor.battery_level_2')|float /100 
             ) |round(2)
           }}
@@ -2258,68 +2230,63 @@ automation:
 script:
   sg_2_set_forced_discharge_battery_mode:
     sequence:
-      - action: input_select.select_option
+      - action: select.select_option
         data:
-          entity_id: input_select.set_sg_2_ems_mode
+          entity_id: select.ems_mode
           option: "Forced mode"
-      - action: input_select.select_option
+      - action: select.select_option
         data:
-          entity_id: input_select.set_sg_2_battery_forced_charge_discharge_cmd
+          entity_id: select.battery_forced_charge_discharge
           option: "Forced discharge"
-      # Uncomment notify action lines below for push notifications to mobile devices
-      # - action: notify.notify
-      #   data:
-      #     title: "Forced Battery Discharge"
-      #     message: "Switched to Forced Battery Discharge mode"
 
   sg_2_set_forced_charge_battery_mode:
     sequence:
-      - action: input_select.select_option
+      - action: select.select_option
         data:
-          entity_id: input_select.set_sg_2_ems_mode
+          entity_id: select.ems_mode
           option: "Forced mode"
-      - action: input_select.select_option
+      - action: select.select_option
         data:
-          entity_id: input_select.set_sg_2_battery_forced_charge_discharge_cmd
+          entity_id: select.battery_forced_charge_discharge
           option: "Forced charge"
 
   sg_2_set_battery_bypass_mode:
     sequence:
-      - action: input_select.select_option
+      - action: select.select_option
         data:
-          entity_id: input_select.set_sg_2_ems_mode
+          entity_id: select.ems_mode
           option: "Forced mode"
-      - action: input_select.select_option
+      - action: select.select_option
         data:
-          entity_id: input_select.set_sg_2_battery_forced_charge_discharge_cmd
+          entity_id: select.battery_forced_charge_discharge
           option: "Stop (default)"
 
   # Self-consumption mode with battery discharging disabled. Will still charge from solar. Intended for preserving battery capacity for high-price periods.
   sg_2_set_self_consumption_limited_discharge:
     sequence:
-      - action: input_select.select_option
+      - action: select.select_option
         data:
-          entity_id: input_select.set_sg_2_ems_mode
+          entity_id: select.ems_mode
           option: "Self-consumption mode (default)"
       # Has no effect in self-consumption mode, just restores the forced mode command to a safe default.
-      - action: input_select.select_option
+      - action: select.select_option
         data:
-          entity_id: input_select.set_sg_2_battery_forced_charge_discharge_cmd
+          entity_id: select.battery_forced_charge_discharge
           option: "Stop (default)"
       # Set battery max discharge power to lowest value (10 W) which disables discharging at least for Sungrow batteries.
-      - action: input_number.set_value
+      - action: number.set_value
         data:
-          entity_id: input_number.set_sg_2_battery_max_discharge_power
+          entity_id: number.battery_max_discharge_power
           value: 10
 
   sg_2_set_self_consumption_mode:
     sequence:
-      - action: input_select.select_option
+      - action: select.select_option
         data:
-          entity_id: input_select.set_sg_2_ems_mode
+          entity_id: select.ems_mode
           option: "Self-consumption mode (default)"
       # Has no effect in self-consumption mode, just restores the forced mode command to a safe default.
-      - action: input_select.select_option
+      - action: select.select_option
         data:
-          entity_id: input_select.set_sg_2_battery_forced_charge_discharge_cmd
+          entity_id: select.battery_forced_charge_discharge
           option: "Stop (default)"
