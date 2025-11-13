@@ -1533,9 +1533,6 @@ template:
         unit_of_measurement: W
         min: 0
         max: "{{ states('sensor.inverter_rated_output') }}"
-        # NOTE: datasheet states 10,500 W export limit for SH10.RT. But setting 10 5000 results in a modbus error
-        # therefore limiting to 10 000 here.
-        # TODO Note: It would be nice to have this as a global variable /secret
         step: 100
         # modbus --> UI
         state: "{{ states('sensor.export_power_limit') }}"
