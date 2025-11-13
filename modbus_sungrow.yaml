@@ -2,7 +2,6 @@
 #
 # TODO: Investigate: is there a way not to completely disable the visibility of GUI elements but just to disable them but still show them?
 # TODO: use secrets for battery parameters
-# TODO: Rename running_state to "power flow status"
 # TODO: Cleanup code for Sungrow device type (see comment inline)
 # TODO: Update code for binary sensors: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/565
 # TODO: Create secrets for different scan_intervals (e.g. scan_interval_10min, scan_interval_1min, scan_interval_10s)
@@ -12,6 +11,7 @@
 # DONE
 # - Use more YAML anchors: Define register addresses when defining the sensors and reuse the variables in automations
 # - Move automation for inputs into the template sections (https://github.com/theunknown86/unknown_sungrow/blob/ec2464f3c9abcc6cc6c11041499d6f380ba05201/modbus_sungrow_inv1.yaml#L1682-L1699)
+# - Rename "running state" to "power flow status"
 
 modbus:
   - name: &sg_hub_name SungrowSHx
@@ -528,11 +528,11 @@ modbus:
         state_class: measurement
         scan_interval: 10
 
-      # TODO rename to "power flow status"
-      # register running state is not available for certain SH*RS inverters
+      # NOTE: In old modbus doc versions this was called "running state"
+      # but has been renamed to "power flow status"
       # template sensors are used to determine the states based on other sensors
-      - name: Running state
-        unique_id: sg_running_state
+      - name: Power Flow Status
+        unique_id: uid_power_flow_status
         device_address: !secret sungrow_modbus_slave
         address: 13000 # reg 13001
         input_type: input
@@ -1067,8 +1067,8 @@ modbus:
         state_class: measurement
         scan_interval: 10
 
-      - name: Reserved SoC for backup
-        unique_id: sg_reserved_soc_for_backup
+      - name: Battery reserved SoC for backup
+        unique_id: sg_battery_reserved_soc_for_backup
         device_address: !secret sungrow_modbus_slave
         address: &sg_reg_reserved_soc_backup 13099 # reg 13100
         input_type: holding
@@ -1273,192 +1273,102 @@ sensor:
         window_size: "00:05"
         precision: 2
 
-
 template:
   ###########################
   # template: binary sensor
   ###########################
   - binary_sensor:
+      # bit 0 — PV generating
       - name: PV generating
         unique_id: sg_pv_generating
-        availability: >-
-          {{ states('sensor.running_state') not in ['unknown','unavailable'] 
-          and states('sensor.total_dc_power') not in ['unknown','unavailable'] }}
-        state: >-
-          {% if states('sensor.running_state')|is_number and states('sensor.running_state')|float > 0 %}
-            {# use available sensor running_state #}
-            {{ states('sensor.running_state')|int |bitwise_and(0x1) }}
-          {% else %} 
-            {# workaround for SH*RS inverters without working running_state #}
-            {% if states('sensor.total_dc_power')|int > 0 %}
-              1
-            {% else %} 
-              0 
-            {% endif %}
-          {% endif %}
+        availability: "{{ states('sensor.power_flow_status') not in ['unknown','unavailable'] }}"
+        state: "{{ states('sensor.power_flow_status')|int |bitwise_and(0x1) }}"
 
       - name: PV generating (delay)
         unique_id: sg_pv_generating_delay
-        availability: "{{ states('binary_sensor.pv_generating') not in ['unknown','unavailable'] }}"
+        availability: "{{ states('binary_sensor.pv_generating') }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.pv_generating') }}"
 
+      # bit 1 — Battery charging
       - name: Battery charging
         unique_id: sg_battery_charging
-        availability: >-
-          {{ states('sensor.running_state') not in ['unknown','unavailable'] 
-          or (states('sensor.ems_mode_selection_raw') not in ['unknown','unavailable'] 
-          and states('sensor.battery_forced_charge_discharge_cmd_raw') not in ['unknown','unavailable']
-          and states('sensor.battery_power_raw') not in ['unknown','unavailable']
-          and states('sensor.total_dc_power') not in ['unknown','unavailable'] 
-          and states('sensor.load_power') not in ['unknown','unavailable'] )}}
-        state: >-
-          {% if states('sensor.running_state')|is_number and states('sensor.running_state')|float > 0 %}
-            {# use available sensor running_state #}
-            {% if states('sensor.running_state')|int|bitwise_and(0x2) > 0 %}
-              on
-            {% else %}
-              off
-            {% endif %}
-          {% else %}
-            {# workaround for SH*RS inverters without working running_state #}
-            {% if (states('sensor.ems_mode_selection') ) in ["Forced mode", "VPP"] %}
-              {# EMS forced mode #}
-              {% if (states('sensor.battery_forced_charge_discharge_cmd') == "Forced charge") %}
-                {# in mode Forced charge #}
-                {% if (states('sensor.battery_power_raw')|int > 0 ) %} 
-                  {# power flow from/to battery #}
-                  on
-                {% else %} 
-                  {# no power flow from/to battery #}
-                  off
-                {% endif %}
-              {% else %}
-                {# in EMS mode, but not in mode Forced charge #}
-                off
-              {% endif %}
-            {% else %} 
-              {# not in EMS forced mode, assuming self consumption mode #}
-              {% if states('sensor.total_dc_power')|int > states('sensor.load_power')|int %}
-                {# more power generated than consumed. assuming battery charging #}
-                on
-              {% else %} 
-                off
-              {% endif %}
-            {% endif %}
-          {% endif %}
+        availability: "{{ states('sensor.power_flow_status') not in ['unknown','unavailable'] }}"
+        state: "{{ states('sensor.power_flow_status')|int |bitwise_and(0x2) }}"
 
       - name: Battery charging (delay)
         unique_id: sg_battery_charging_delay
-        availability: "{{ states('binary_sensor.battery_charging') not in ['unknown','unavailable'] }}"
+        availability: "{{ states('binary_sensor.battery_charging') }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.battery_charging') }}"
 
+      # bit 2 — Battery discharging
       - name: Battery discharging
         unique_id: sg_battery_discharging
-        availability: >-
-          {{ states('sensor.running_state') not in ['unknown','unavailable'] 
-          or ( states('sensor.ems_mode_selection_raw') not in ['unknown','unavailable'] 
-          and states('sensor.battery_forced_charge_discharge_cmd_raw') not in ['unknown','unavailable']
-          and states('sensor.battery_power_raw') not in ['unknown','unavailable']
-          and states('sensor.total_dc_power') not in ['unknown','unavailable'] 
-          and states('sensor.load_power') not in ['unknown','unavailable'] ) }}
-        state: >-
-          {% if states('sensor.running_state')|is_number and states('sensor.running_state')|float > 0 %}
-            {# use available sensor running_state #}
-            {% if states('sensor.running_state')|int|bitwise_and(0x4) > 0 %}
-              on
-            {% else %}
-              off
-            {% endif %}
-          {% else %}
-            {# workaround for SH*RS inverters without working running_state #}
-            {% if (states('sensor.ems_mode_selection') ) in ["Forced mode", "VPP"] %}
-              {# EMS forced mode #}
-              {% if (states('sensor.battery_forced_charge_discharge_cmd') == "Forced discharge") %}
-                {# in mode Forced discharge #}
-                {% if (states('sensor.battery_power_raw')|int > 0 ) %}
-                  {# power flow from/to battery #}
-                  on
-                {% else %} 
-                  {# no power flow from/to battery #}
-                  off
-                {% endif %}
-              {% else %} 
-                {# in EMS mode, but not in mode Forced charge #}
-                off
-              {% endif %}
-            {% else %} 
-              {# not in EMS forced mode, assuming self consumption mode #}
-              {% if ( ( states('sensor.total_dc_power')|int < states('sensor.load_power')|int ) ) and states('sensor.battery_power_raw')|int > 0 %}  
-                {# more power consumed than generated and some battery power --> assuming battery discharging #}
-                on
-              {% else %} 
-                off
-              {% endif %}
-            {% endif %}
-          {% endif %}
+        availability: "{{ states('sensor.power_flow_status') not in ['unknown','unavailable'] }}"
+        state: "{{ states('sensor.power_flow_status')|int |bitwise_and(0x4) }}"
 
       - name: Battery discharging (delay)
         unique_id: sg_battery_discharging_delay
-        availability: "{{ states('binary_sensor.battery_discharging') not in ['unknown','unavailable'] }}"
+        availability: "{{ states('binary_sensor.battery_discharging') }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.battery_discharging') }}"
 
-      - name: Exporting power
-        unique_id: sg_exporting_power
-        availability: >-
-          {{ states('sensor.running_state') not in ['unknown','unavailable'] 
-          and states('sensor.export_power_raw') not in ['unknown','unavailable'] }}
-        state: >-
-          {% if states('sensor.running_state')|is_number and states('sensor.running_state')|float > 0 %}
-            {# use available sensor running_state #}
-            {{ states('sensor.running_state')|int|bitwise_and(0x10) > 0 }}
-          {% else %} 
-            {# workaround for SH*RS inverters without working running_state #}
-            {% if states('sensor.export_power_raw')|int > 0 %}
-              1
-            {% else %} 
-              0 
-            {% endif %}
-          {% endif %}
+      # bit 3 — Positive Load Power
+      - name: Positive Load Power
+        unique_id: sg_positive_load_power
+        availability: "{{ states('sensor.power_flow_status') not in ['unknown','unavailable'] }}"
+        state: "{{ states('sensor.power_flow_status')|int |bitwise_and(0x8) }}"
 
-      - name: Exporting power (delay)
+      - name: Positive Load Power (delay)
+        unique_id: sg_positive_load_power_delay
+        availability: "{{ states('binary_sensor.positive_load_power') }}"
+        delay_on:
+          seconds: 60
+        state: "{{ states('binary_sensor.positive_load_power') }}"
+
+      # bit 4 modbus spec "feed-in power"
+      - name: Exporting Power
+        unique_id: sg_exporting_power
+        availability: "{{ states('sensor.power_flow_status') not in ['unknown','unavailable'] }}"
+        state: "{{ states('sensor.power_flow_status')|int |bitwise_and(0x10) }}"
+
+      - name: Exporting Power (delay)
         unique_id: sg_exporting_power_delay
-        availability: "{{ states('binary_sensor.exporting_power') not in ['unknown','unavailable'] }}"
+        availability: "{{ states('binary_sensor.exporting_power') }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.exporting_power') }}"
 
-      - name: Importing power
+      # bit 5 modbus spec "import power from grid"
+      - name: Importing Power
         unique_id: sg_importing_power
-        availability: >-
-          {{ 
-          not is_state('sensor.running_state', 'unavailable') 
-          and not is_state('sensor.running_state', 'unavailable')
-          }}
-        state: >-
-          {% if states('sensor.running_state')|is_number and states('sensor.running_state')|float > 0 %}
-            {# use available sensor running_state #}
-            {{ states('sensor.running_state')|int|bitwise_and(0x20) > 0 }}
-          {% else %} 
-            {# workaround for SH*RS inverters without working running_state #}
-            {% if states('sensor.export_power_raw')|int < 0 %}
-              1
-            {% else %}
-              0
-            {% endif %}
-          {% endif %}
+        availability: "{{ states('sensor.power_flow_status') not in ['unknown','unavailable'] }}"
+        state: "{{ states('sensor.power_flow_status')|int |bitwise_and(0x20) }}"
 
-      - name: Importing power (delay)
+      - name: Importing Power (delay)
         unique_id: sg_importing_power_delay
-        availability: "{{ states('binary_sensor.importing_power') not in ['unknown','unavailable'] }}"
+        availability: "{{ states('binary_sensor.importing_power') }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.importing_power') }}"
+
+      # bit 6 is reserved
+
+      # bit 7 — Negative load power
+      - name: Negative Load Power
+        unique_id: sg_negative_load_power
+        availability: "{{ states('sensor.power_flow_status') not in ['unknown','unavailable'] }}"
+        state: "{{ states('sensor.power_flow_status')|int |bitwise_and(0x80) }}"
+      - name: Negative Load Power (delay)
+        unique_id: sg_negative_load_power_delay
+        availability: "{{ states('binary_sensor.negative_load_power') }}"
+        delay_on:
+          seconds: 60
+        state: "{{ states('binary_sensor.negative_load_power') }}"
 
   ####################
   # template: number
@@ -1505,7 +1415,7 @@ template:
         max: 100
         step: 1
         # modbus --> UI
-        state: "{{ states('sensor.reserved_soc_for_backup') }}"
+        state: "{{ states('sensor.battery_reserved_soc_for_backup') }}"
         # UI --> modbus
         set_value:
           - action: modbus.write_register
@@ -1552,7 +1462,7 @@ template:
               hub: *sg_hub_name
               slave: !secret sungrow_modbus_slave
               address: *sg_reg_battery_discharging_start_power
-              value: "{{ value | float /10 }}"
+              value: "{{ value | float /10 |int}}"
 
       - name: Battery forced charge discharge power
         unique_id: uid_battery_forced_charge_discharge_power
@@ -1902,21 +1812,6 @@ template:
             Unknown - should not see me! code: {{ (states('sensor.battery_forced_charge_discharge_cmd_raw') |int) }}
           {% endif %}
 
-      # TODO remove me, not required
-      # make the sensor load_adjustment_mode_enable_raw more human readable
-      - name: Forced startup under low soc standby
-        unique_id: forced_startup_under_low_soc_standby
-        availability: "{{ states('sensor.forced_startup_under_low_soc_standby_raw') not in ['unknown','unavailable'] }}"
-        device_class: enum
-        state: >-
-          {% if ((states('sensor.forced_startup_under_low_soc_standby_raw') |int) == 0xAA) %}
-            ON
-          {% elif ((states('sensor.forced_startup_under_low_soc_standby_raw') |int) == 0x55) %}
-            OFF
-          {% else %}
-            Unknown - should not see me! {{ (states('sensor.system_state') |int) }}
-          {% endif %}
-
       # positive if charging and negative if discharging
       - name: Signed battery power
         unique_id: sg_signed_battery_power
@@ -2167,7 +2062,7 @@ template:
           {% endfor %}
           {# save as result and output variable#}
           {% set result = ns.result %}
-          {{ result }} 
+          {{ result }}
         # UI --> modbus
         select_option:
           - action: modbus.write_register
@@ -2185,7 +2080,7 @@ template:
             "Stop (default)": 0xCC
             "Forced charge": 0xAA
             "Forced discharge": 0xBB
-          fallback: "Stop (default)"            
+          fallback: "Stop (default)"
         # get option names from map keys
         options: >-
           {{ map.keys() | list | tojson }}
@@ -2203,7 +2098,7 @@ template:
           {% endfor %}
           {# save as result and output variable#}
           {% set result = ns.result %}
-          {{ result }} 
+          {{ result }}
         # UI --> modbus
         select_option:
           - action: modbus.write_register
@@ -2222,7 +2117,7 @@ template:
             "ON/OFF": 1
             "Power optimization": 2
             "Disabled": 3
-          fallback: "Disabled"            
+          fallback: "Disabled"
         # get option names from map keys
         options: >-
           {{ map.keys() | list | tojson }}
@@ -2240,7 +2135,7 @@ template:
           {% endfor %}
           {# save as result and output variable#}
           {% set result = ns.result %}
-          {{ result }} 
+          {{ result }}
         # UI --> modbus
         select_option:
           - action: modbus.write_register
