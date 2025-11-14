@@ -530,10 +530,12 @@ modbus:
         scale: 0.01
         scan_interval: *scan_interval_fast
 
-      - name: System state
-        unique_id: sg_system_state
+      # NOTE: in old modbus doc version this was called "system state"
+      # but has been renamed to "running state"
+      - name: Running state raw
+        unique_id: uid_sg_running_state_raw
         device_address: !secret sungrow_modbus_slave
-        address: &sg_reg_system_state 12999 # reg 13000
+        address: &sg_reg_running_state 12999 # reg 13000
         input_type: input
         data_type: uint16
         precision: 0
@@ -543,7 +545,7 @@ modbus:
 
       # NOTE: In old modbus doc versions this was called "running state"
       # but has been renamed to "power flow status"
-      # template sensors are used to determine the states based on other sensors
+      # template binary sensors are used to determine their states based on this value
       - name: Power Flow Status
         unique_id: uid_power_flow_status
         device_address: !secret sungrow_modbus_slave
@@ -1678,149 +1680,97 @@ template:
       - name: Sungrow inverter state
         unique_id: sg_inverter_state
         device_class: enum
-        availability: "{{ states('sensor.system_state') not in ['unknown','unavailable'] }}"
+        availability: "{{ states('sensor.running_state_raw') not in ['unknown','unavailable'] }}"
         state: >-
-          {% if (states('sensor.system_state') |int) in [0x0000,0x0040] %}
-            Running
-          {% elif (states('sensor.system_state') |int) == 0x0410 %}
-            Off-grid Charge
-          {% elif (states('sensor.system_state') |int) == 0x0200 %}
-            Update Failed
-          {% elif (states('sensor.system_state') |int) == 0x0400 %}
-            Maintain mode
-          {% elif (states('sensor.system_state') |int) == 0x0800 %}
-            Forced mode
-          {% elif (states('sensor.system_state') |int) == 0x1000 %}
-            Off-grid mode
-          {% elif (states('sensor.system_state') |int) == 0x1111 %}
-            Un-Initialized
-          {% elif (states('sensor.system_state') |int) in [0x0010,0x1200] %}
-            Initial Standby
-          {% elif (states('sensor.system_state') |int) in [0x1300,0x0002] %}
-            Shutdown
-          {% elif (states('sensor.system_state') |int) in [0x1400,0x0008] %}
-            Standby
-          {% elif (states('sensor.system_state') |int) in [0x1500,0x0004] %}
-            Emergency Stop
-          {% elif (states('sensor.system_state') |int) in [0x1600,0x0020] %}
-            Startup
-          {% elif (states('sensor.system_state') |int) == 0x1700 %}
-            AFCI self test shutdown
-          {% elif (states('sensor.system_state') |int) == 0x1800 %}
-            Intelligent Station Building Status
-          {% elif (states('sensor.system_state') |int) == 0x1900 %}
-            Safe Mode
-          {% elif (states('sensor.system_state') |int) == 0x2000 %}
-            Open Loop
-          {% elif (states('sensor.system_state') |int) == 0x2501 %}
-            Restarting
-          {% elif (states('sensor.system_state') |int) == 0x4000 %}
-            External EMS mode
-          {% elif (states('sensor.system_state') |int) == 0x4001 %} ### Emergency loading from grid when SOC is under BackUp SOC
-            Emergency Battery Charging            
-          {% elif (states('sensor.system_state') |int) in [0x5500,0x0100] %}
-            Fault
-          {% elif (states('sensor.system_state') |int) in [0x8000,0x0001] %}
-            Stop
-          {% elif (states('sensor.system_state') |int) in [0x8100,0x0080] %}
-            De-rating Running
-          {% elif (states('sensor.system_state') |int) == 0x8200 %}
-            Dispatch Run
-          {% elif (states('sensor.system_state') |int) == 0x9100 %}
-            Warn Running
-          {% else %}
-            Unknown - should not see me! {{ states('sensor.system_state') |int }}
-          {% endif %}
+          {% set invState=states('sensor.running_state_raw')|int %}
+          {% set map = {
+            0x0000: 'Running',
+            0x0001: 'Stop',
+            0x0002: 'Key stop',
+            0x0004: 'Emergency Stop',
+            0x0008: 'Standby',
+            0x0020: 'Starting',
+            0x0010: 'Initial standby',
+            0x0014: 'Microgrid Operation',
+            0x0040: 'Running',
+            0x0041: 'Off-grid Charge',
+            0x0080: 'Derating Running',
+            0x0100: 'Fault',
+            0x0200: 'Update Failed',
+            0x0400: 'Running in maintain mode',
+            0x0800: 'Running in compulsory (forced)mode',
+            0x1000: 'Running (off-grid)',
+            0x1111: 'Uninitialized',
+            0x1200: 'Initial standby',
+            0x1300: 'Key stop',
+            0x1400: 'Standby',
+            0x1500: 'Emergency Stop',
+            0x1600: 'Starting',
+            0x1700: 'AFCI self-test shutdown',
+            0x1800: 'Intelligent Station Building Status',
+            0x1900: 'Safe Mode',
+            0x2000: 'Open loop',
+            0x2500: 'Communicate fault',
+            0x2501: 'Restarting',
+            0x4000: 'Running in External EMS mode',
+            0x4001: 'Emergency Charging Operation',
+            0x8000: 'Stop',
+            0x5500: 'Fault',
+            0x8100: 'Derating Running',
+            0x8200: 'Dispatch Running',
+            0x9100: 'Warn Running',
+          } %}
+          {{ map.get(invState, 'Unknown running state code: 0x%04X' % invState) }}
 
       - name: Sungrow device type
         unique_id: sg_device_type
         availability: "{{ states('sensor.sungrow_device_type_code') not in ['unknown','unavailable'] }}"
         device_class: enum
-        # TODO adapt style from https://github.com/theunknown86/unknown_sungrow/blob/ec2464f3c9abcc6cc6c11041499d6f380ba05201/modbus_sungrow_inv1.yaml#L1532
         state: >-
-          {% if (states('sensor.sungrow_device_type_code') |int)  == 0x0D06 %}
-            SH3K6
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0D07 %}
-            SH4K6
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0D09 %}
-            SH5K-20  
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0D03 %}
-            SH5K-V13
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0D0A %}
-            SH3K6-30
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0D0B %}
-            SH4K6-30
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0D0C %}
-            SH5K-30
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0D17 %}
-            SH3.0RS
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0D0D %}
-            SH3.6RS
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0D18 %}
-            SH4.0RS
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0D0F %}
-            SH5.0RS
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0D10 %}
-            SH6.0RS
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0D1A %}
-            SH8.0RS
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0D1B %}
-            SH10RS
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E00 %}
-            SH5.0RT
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E01 %}
-            SH6.0RT
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E02 %}
-            SH8.0RT
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E03 %}
-            SH10RT
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E10 %}
-            SH5.0RT-20
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E11 %}
-            SH6.0RT-20
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E12 %}
-            SH8.0RT-20
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E13 %}
-            SH10RT-20
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E0C %}
-            SH5.0RT-V112
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E0D %}
-            SH6.0RT-V112
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E0E %}
-            SH8.0RT-V112
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E0F %}
-            SH10RT-V112
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E08 %}
-            SH5.0RT-V122
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E09 %}
-            SH6.0RT-V122
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E0A %}
-            SH8.0RT-V122
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E0B %}
-            SH10RT-V122
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E20 %}
-            SH5T
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E21 %}
-            SH6T
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E22 %}
-            SH8T
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E23 %}
-            SH10T
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E24 %}
-            SH12T
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E25 %}
-            SH15T
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E26 %}
-            SH20T
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0E28 %}
-            SH25T
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0D27 %}
-            MG5RL 
-          {% elif (states('sensor.sungrow_device_type_code') |int) == 0x0D28 %}
-            MG6RL           
-          {% else %}
-            Unknown device code: {{ '%0x' % (states('sensor.sungrow_device_type_code') |int)  }}
-          {% endif %}
+          {% set devType=states('sensor.sungrow_device_type_code')|int %}
+          {% set map = {
+            0x0D06: 'SH3K6',
+            0x0D07: 'SH4K6',
+            0x0D09: 'SH5K-20',
+            0x0D03: 'SH5K-V13',
+            0x0D0A: 'SH3K6-30',
+            0x0D0B: 'SH4K6-30',
+            0x0D0C: 'SH5K-30',
+            0x0D17: 'SH3.0RS',
+            0x0D0D: 'SH3.6RS',
+            0x0D18: 'SH4.0RS',
+            0x0D0F: 'SH5.0RS',
+            0x0D10: 'SH6.0RS',
+            0x0D1A: 'SH8.0RS',
+            0x0D1B: 'SH10RS',
+            0x0E00: 'SH5.0RT',
+            0x0E01: 'SH6.0RT',
+            0x0E02: 'SH8.0RT',
+            0x0E03: 'SH10RT',
+            0x0E10: 'SH5.0RT-20',
+            0x0E11: 'SH6.0RT-20',
+            0x0E12: 'SH8.0RT-20',
+            0x0E13: 'SH10RT-20',
+            0x0E0C: 'SH5.0RT-V112',
+            0x0E0D: 'SH6.0RT-V112',
+            0x0E0E: 'SH8.0RT-V112',
+            0x0E0F: 'SH10RT-V112',
+            0x0E08: 'SH5.0RT-V122',
+            0x0E09: 'SH6.0RT-V122',
+            0x0E0A: 'SH8.0RT-V122',
+            0x0E0B: 'SH10RT-V122',
+            0x0E20: 'SH5T',
+            0x0E21: 'SH6T',
+            0x0E22: 'SH8T',
+            0x0E23: 'SH10T',
+            0x0E24: 'SH12T',
+            0x0E25: 'SH15T',
+            0x0E26: 'SH20T',
+            0x0E28: 'SH25T',
+            0x0D27: 'MG5RL',
+            0x0D28: 'MG6RL'
+          } %}
+          {{ map.get(devType, 'Unknown device code: 0x%04X' % devType) }}
 
       # positive if charging and negative if discharging
       - name: Signed battery power
@@ -2208,7 +2158,7 @@ automation:
                 data_template:
                   hub: *sg_hub_name
                   slave: !secret sungrow_modbus_slave
-                  address: *sg_reg_system_state
+                  address: *sg_reg_running_state
                   value: >
                     {% if is_state('switch.enable_inverter', "on") %}
                       {{sg_start}}
@@ -2219,7 +2169,7 @@ automation:
               - action: homeassistant.update_entity # force update
                 data:
                   entity_id:
-                    - sensor.system_state
+                    - sensor.running_state_raw
           # inverter --> UI
           - conditions:
               - condition: trigger
