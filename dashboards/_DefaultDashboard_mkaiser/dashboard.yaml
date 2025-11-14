@@ -6,11 +6,12 @@ views:
         entities:
           - entity: sensor.sungrow_device_type
           - entity: sensor.sungrow_inverter_state
-          - entity: sensor.ems_mode_selection
-          - entity: sensor.battery_forced_charge_discharge_cmd
+          - entity: select.ems_mode
           - entity: sensor.inverter_firmware_version
           - entity: sensor.communication_module_firmware_version
           - entity: sensor.battery_firmware_version
+          - entity: sensor.inverter_rated_output
+          - entity: sensor.bdc_rated_power
       - type: entities
         entities:
           - entity: sensor.total_dc_power
@@ -78,24 +79,16 @@ views:
         hide_legend: false
       - type: entities
         entities:
+          - entity: sensor.battery_capacity
+          - entity: sensor.battery_capacity_high_precision
           - entity: sensor.battery_level
           - entity: sensor.battery_level_nominal
           - entity: sensor.battery_charge
           - entity: sensor.battery_charge_nominal
-          - entity: sensor.daily_battery_charge
-          - entity: sensor.daily_battery_discharge
           - entity: sensor.battery_charge_health_rated
+          - entity: sensor.daily_battery_discharge
+          - entity: sensor.daily_battery_charge
         title: Battery
-      - chart_type: line
-        period: day
-        type: statistics-graph
-        entities:
-          - sensor.reactive_power
-        stat_types:
-          - mean
-          - min
-          - max
-        title: Reactive power
       - chart_type: line
         period: 5minute
         type: statistics-graph
@@ -105,25 +98,14 @@ views:
           - sensor.meter_phase_c_voltage
         stat_types:
           - mean
-      - type: statistic
-        entity: sensor.reactive_power
-        period:
-          calendar:
-            period: week
-            offset: -1
-        stat_type: mean
-      - chart_type: line
-        period: 5minute
-        type: statistics-graph
-        entities:
-          - sensor.reactive_power
-        stat_types:
-          - max
-          - min
-        days_to_show: 7
   - title: Detailed Info
     icon: mdi:solar-power-variant-outline
     cards:
+      - type: entities
+        entities:
+          - sensor.battery_firmware_version
+          - sensor.communication_module_firmware_version
+          - sensor.inverter_firmware_version
       - type: entities
         entities:
           - entity: sensor.total_dc_power
@@ -194,48 +176,39 @@ views:
         entities:
           - entity: sensor.total_dc_power
           - entity: sensor.mppt1_power
-          - entity: sensor.mppt1_voltage
-          - entity: sensor.mppt1_current
           - entity: sensor.mppt2_power
+          - entity: sensor.mppt3_power
+          - entity: sensor.mppt1_voltage
           - entity: sensor.mppt2_voltage
+          - entity: sensor.mppt3_voltage
+          - entity: sensor.mppt1_current
           - entity: sensor.mppt2_current
+          - entity: sensor.mppt3_current
         title: PV Gen
       - type: entities
         entities:
           - entity: sensor.battery_capacity
+          - entity: sensor.battery_capacity_high_precision
+          - entity: sensor.battery_temperature
           - entity: sensor.battery_charging_power
           - entity: sensor.battery_discharging_power
           - entity: sensor.battery_voltage
           - entity: sensor.battery_current
           - entity: sensor.battery_level
           - entity: sensor.battery_state_of_health
-          - entity: sensor.battery_temperature
-          - entity: sensor.daily_battery_charge_from_pv
-          - entity: sensor.daily_battery_charge
-          - entity: sensor.daily_battery_discharge
-          - entity: sensor.total_battery_charge_from_pv
-          - entity: sensor.total_battery_discharge
-          - entity: sensor.total_battery_charge
-          - entity: sensor.max_soc
-          - entity: sensor.min_soc
-        title: Battery
-      - type: entities
-        entities:
-          - entity: sensor.ems_mode_selection
-          - entity: sensor.battery_forced_charge_discharge_cmd
-          - entity: sensor.min_soc
-          - entity: sensor.max_soc
+          - entity: sensor.battery_min_soc
+          - entity: sensor.battery_max_soc
           - entity: sensor.battery_forced_charge_discharge_power
-          - entity: sensor.battery_charging_start_power
-          - entity: sensor.battery_discharging_start_power
           - entity: sensor.bms_max_charging_current
           - entity: sensor.bms_max_discharging_current
-        title: EMS
+          - entity: sensor.battery_charging_start_power
+          - entity: sensor.battery_discharging_start_power
+        title: Battery
       - type: entities
         entities:
           - entity: sensor.sungrow_device_type
           - entity: sensor.sungrow_inverter_state
-          - entity: sensor.running_state
+          - entity: sensor.power_flow_status
           - entity: sensor.system_state
           - entity: sensor.inverter_temperature
           - entity: binary_sensor.pv_generating
@@ -267,82 +240,62 @@ views:
         title: Battery SoC last 360 days
         logarithmic_scale: false
         hide_legend: false
-      - type: entities
-        entities:
-          - sensor.battery_firmware_version
-          - sensor.communication_module_firmware_version
-          - sensor.inverter_firmware_version
   - title: EMS Control
     icon: mdi:solar-power
     cards:
       - type: entities
         entities:
-          - switch.sungrow_dashboard_enable_danger_mode
+          - entity: switch.sungrow_dashboard_enable_danger_mode
         title: Enable Danger Mode
       - type: entities
         entities:
           - entity: switch.enable_inverter
           - entity: sensor.sungrow_inverter_state
-          - entity: input_select.set_sg_ems_mode
-          - entity: sensor.ems_mode_selection
-          - entity: input_select.set_sg_battery_forced_charge_discharge_cmd
+          - entity: select.ems_mode
+          - entity: select.battery_forced_charge_discharge
           - entity: switch.backup_mode
+          - entity: select.load_adjustment_mode
           - entity: switch.load_adjustment_mode
-          - entity: input_select.set_sg_load_adjustment_mode_selection
-          - entity: switch.export_power_limit_mode
-          - entity: input_number.set_sg_export_power_limit
-          - entity: switch.forced_startup_under_low_soc_standby
+          - entity: switch.export_power_limit_2
+          - entity: number.export_power_limit
+          - entity: switch.forced_startup_under_low_soc_standby_2
         title: Inverter State & EMS Settings
         show_header_toggle: false
         state_color: true
         visibility:
           - condition: state
             entity: switch.sungrow_dashboard_enable_danger_mode
-            state: 'on'
+            state: "on"
       - type: entities
         entities:
-          - entity: input_number.set_sg_min_soc
-          - entity: input_number.set_sg_max_soc
-          - entity: input_number.set_sg_reserved_soc_for_backup
-          - entity: input_number.set_sg_battery_forced_charge_discharge_power
-          - entity: input_number.set_sg_battery_max_charge_power
-          - entity: input_number.set_sg_battery_max_discharge_power
-          - entity: input_number.set_sg_battery_charging_start_power
-          - entity: input_number.set_sg_battery_discharging_start_power
+          - entity: number.battery_min_soc
+          - entity: number.battery_max_soc
+          - entity: number.battery_reserved_soc_for_backup
+          - entity: number.battery_forced_charge_discharge_power
+          - entity: number.battery_max_charge_power
+          - entity: number.battery_max_discharge_power
+          - entity: number.battery_charging_start_power
+          - entity: number.battery_discharging_start_power
+          - entity: number.battery_min_soc
+          - entity: number.battery_max_soc
+          - entity: number.battery_reserved_soc_for_backup
         title: Battery Settings
         state_color: false
         show_header_toggle: true
+        visibility:
+          - condition: state
+            entity: switch.sungrow_dashboard_enable_danger_mode
+            state: "on"
       - type: entities
         entities:
-          - entity: sensor.backup_mode
-          - entity: sensor.battery_forced_charge_discharge_cmd
-          - entity: sensor.load_adjustment_mode_enable
           - entity: sensor.load_adjustment_mode_enable_raw
-          - entity: sensor.load_adjustment_mode_selection
+          - entity: sensor.battery_forced_charge_discharge_cmd_raw
           - entity: sensor.load_adjustment_mode_selection_raw
           - entity: sensor.export_power_limit
-          - entity: sensor.export_power_limit_mode
-          - entity: sensor.forced_startup_under_low_soc_standby
+          - entity: sensor.battery_min_soc
+          - entity: sensor.battery_max_soc
+          - entity: sensor.ems_mode_selection_raw
+          - entity: sensor.battery_forced_charge_discharge_cmd_raw
         title: Debug
-      - type: entities
-        entities:
-          - entity: sensor.battery_capacity
-          - entity: sensor.battery_level
-          - entity: sensor.battery_state_of_health
-          - entity: sensor.battery_charging_power
-          - entity: sensor.battery_discharging_power
-          - entity: sensor.min_soc
-          - entity: sensor.max_soc
-          - entity: sensor.reserved_soc_for_backup
-          - entity: sensor.battery_forced_charge_discharge_power
-          - entity: sensor.battery_max_charge_power
-          - entity: sensor.battery_max_discharge_power
-          - entity: sensor.battery_charging_start_power
-          - entity: sensor.battery_discharging_start_power
-          - entity: sensor.battery_level_nominal
-          - entity: sensor.battery_level
-          - entity: sensor.battery_charge
-          - entity: sensor.battery_charge_nominal
-        title: Battery Status
     badges: []
 title: PV System

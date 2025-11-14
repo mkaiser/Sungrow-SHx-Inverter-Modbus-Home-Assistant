@@ -1,23 +1,30 @@
 # This version is under heavy development. You should not use it :)
 #
-# TODO: Investigate: is there a way not to completely disable the visibility of GUI elements but just to disable them but still show them?
+# TODO: Use MIT licence
+# TODO: Create changelog of dev branch for version 2 release
+# TODO: Create a "howto migrate to version 2" guide
 # TODO: Cleanup code for Sungrow device type (see comment inline)
-# TODO: Create secrets for different scan_intervals (e.g. scan_interval_10min, scan_interval_1min, scan_interval_10s)
 # TODO: Error handling for non-available register values used for template numbers
 # TODO: Implement logic for active power limitation: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
 
 # DONE
+# - Use a switch (Sungrow dashboard enable danger mode) with an automation to hide / show dangerous elements in the dashboard (works with the default dashboard)
 # - Use more YAML anchors: Define register addresses when defining the sensors and reuse the variables in automations
 # - Move automation for inputs into the template sections (https://github.com/theunknown86/unknown_sungrow/blob/ec2464f3c9abcc6cc6c11041499d6f380ba05201/modbus_sungrow_inv1.yaml#L1682-L1699)
-# - Rename "running state" to "power flow status" and update code for binary sensors: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/565
+# - Rename "running st0ate" to "power flow status" and update code for binary sensors: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/565
 # - Use secrets for battery parameters
 # - Remove unnecessary parentheses in if-else statements.
+# - Implement MPPT3 for SH*T inverters, not resulting in broken / unknown sensors for SH*RT inverters
+# - Use YAML anchors different scan_intervals (e.g. scan_interval_slowest, scan_interval_mid, scan_interval_frequent, scan_interval_realtime)
 
 # This code requires folowing entries in your secrets.yaml file, see the example in this repository:
-# sungrow_modbus_host_ip
-# sungrow_modbus_port
-# sungrow_modbus_slave
-# sungrow_modbus_battery_max_power
+# secret.yaml
+# sungrow_modbus_host_ip: 192.168.xxx.xxx # TODO update with the IP of your inverter. No default. Check your router.
+# sungrow_modbus_port: 502 # TODO update with the Modbus port of your inverter. Default is '502'
+# sungrow_modbus_slave: 1 #TODO update with the slave address of your inverter. Default is '1'
+# sungrow_modbus_battery_max_power: 4500 # TODO update with the maximum charge power of your battery in W.
+## For >99% of all situations it won't hurt to set a lower value here, which won't put much aging-stress on the battery.
+## Max values for common batteries: SBR096: 6500W, SBR128: 8500W, SBR160: 10500W, SBR192: 13000W, SBR224: 15000Wm, SBR256: 17000W Default is '5000'
 
 modbus:
   - name: &sg_hub_name SungrowSHx
@@ -35,7 +42,7 @@ modbus:
         input_type: input
         data_type: string
         count: 10
-        scan_interval: 600
+        scan_interval: &scan_interval_slowest 600
 
       # for Sungrow batteries only
       #      - name: Sungrow battery serial
@@ -53,7 +60,7 @@ modbus:
         address: 4999 # reg 5000
         input_type: input
         data_type: uint16
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Inverter rated output
         unique_id: sg_inverter_rated_output
@@ -65,7 +72,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 100
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Daily PV generation & battery discharge
         unique_id: sg_daily_pv_gen_battery_discharge
@@ -78,7 +85,7 @@ modbus:
         device_class: energy
         state_class: total_increasing
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Total PV generation & battery discharge
         unique_id: sg_total_pv_gen_battery_discharge
@@ -92,7 +99,7 @@ modbus:
         device_class: energy
         state_class: total
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Inverter temperature
         unique_id: sg_inverter_temperature
@@ -105,7 +112,7 @@ modbus:
         device_class: temperature
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: &scan_interval_medium 60
 
       - name: MPPT1 voltage
         unique_id: sg_mppt1_voltage
@@ -115,10 +122,10 @@ modbus:
         data_type: uint16
         precision: 1
         unit_of_measurement: V
-        device_class: Voltage
+        device_class: voltage
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: &scan_interval_fast 10
 
       - name: MPPT1 current
         unique_id: sg_mppt1_current
@@ -128,10 +135,10 @@ modbus:
         data_type: uint16
         precision: 1
         unit_of_measurement: A
-        device_class: Current
+        device_class: current
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: MPPT2 voltage
         unique_id: sg_mppt2_voltage
@@ -141,10 +148,10 @@ modbus:
         data_type: uint16
         precision: 1
         unit_of_measurement: V
-        device_class: Voltage
+        device_class: voltage
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: MPPT2 current
         unique_id: sg_mppt2_current
@@ -154,38 +161,38 @@ modbus:
         data_type: uint16
         precision: 1
         unit_of_measurement: A
-        device_class: Current
+        device_class: current
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       # only for SH*T inverters with 3 MPPTs
-      # - name: MPPT3 voltage
-      #   unique_id: sg_mppt3_voltage
-      #   device_address: !secret sungrow_modbus_slave
-      #   address: 5014 # reg 5015
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: V
-      #   device_class: Voltage
-      #   state_class: measurement
-      #   scale: 0.1
-      #   scan_interval: 10
+      - name: MPPT3 voltage raw
+        unique_id: sg_mppt3_voltage_raw
+        device_address: !secret sungrow_modbus_slave
+        address: 5014 # reg 5015
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: V
+        device_class: voltage
+        state_class: measurement
+        scale: 0.1
+        scan_interval: *scan_interval_fast
 
       # only for SH*T inverters with 3 MPPTs
-      # - name: MPPT3 current
-      #   unique_id: sg_mppt3_current
-      #   device_address: !secret sungrow_modbus_slave
-      #   address: 5015 # reg 5016
-      #   input_type: input
-      #   data_type: uint16
-      #   precision: 1
-      #   unit_of_measurement: A
-      #   device_class: Current
-      #   state_class: measurement
-      #   scale: 0.1
-      #   scan_interval: 10
+      - name: MPPT3 current raw
+        unique_id: sg_mppt3_current_raw
+        device_address: !secret sungrow_modbus_slave
+        address: 5015 # reg 5016
+        input_type: input
+        data_type: uint16
+        precision: 1
+        unit_of_measurement: A
+        device_class: current
+        state_class: measurement
+        scale: 0.1
+        scan_interval: *scan_interval_fast
 
       - name: Total DC power
         unique_id: sg_total_dc_power
@@ -199,7 +206,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Phase A voltage
         unique_id: sg_phase_a_voltage
@@ -209,10 +216,10 @@ modbus:
         data_type: uint16
         precision: 1
         unit_of_measurement: V
-        device_class: Voltage
+        device_class: voltage
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Phase B voltage
         unique_id: sg_phase_b_voltage
@@ -222,10 +229,10 @@ modbus:
         data_type: uint16
         precision: 1
         unit_of_measurement: V
-        device_class: Voltage
+        device_class: voltage
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Phase C voltage
         unique_id: sg_phase_c_voltage
@@ -235,10 +242,10 @@ modbus:
         data_type: uint16
         precision: 1
         unit_of_measurement: V
-        device_class: Voltage
+        device_class: voltage
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Reactive power
         unique_id: sg_reactive_power
@@ -252,7 +259,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Power factor
         unique_id: sg_power_factor
@@ -265,7 +272,7 @@ modbus:
         device_class: power_factor
         state_class: measurement
         scale: 0.001
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Grid frequency
         unique_id: sg_grid_frequency
@@ -278,7 +285,7 @@ modbus:
         device_class: frequency
         state_class: measurement
         scale: 0.01
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       #https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?pageNo=13
       #Meter Active Power: 5601-5602 S32 W (Energiezähler Wirkleistung)
@@ -297,7 +304,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Meter phase A active power raw
         unique_id: sg_meter_phase_a_active_power_raw
@@ -311,7 +318,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Meter phase B active power raw
         unique_id: sg_meter_phase_b_active_power_raw
@@ -325,7 +332,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Meter phase C active power raw
         unique_id: sg_meter_phase_c_active_power_raw
@@ -339,7 +346,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: BDC rated power
         unique_id: sg_bdc_rated_power
@@ -351,7 +358,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 100
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: BMS max. charging current
         unique_id: sg_bms_max_charging_current
@@ -361,10 +368,10 @@ modbus:
         data_type: uint16
         precision: 0
         unit_of_measurement: A
-        device_class: Current
+        device_class: current
         state_class: measurement
         scale: 1
-        scan_interval: 60
+        scan_interval: *scan_interval_slowest
 
       - name: BMS max. discharging current
         unique_id: sg_bms_max_discharging_current
@@ -374,10 +381,10 @@ modbus:
         data_type: uint16
         precision: 0
         unit_of_measurement: A
-        device_class: Current
+        device_class: current
         state_class: measurement
         scale: 1
-        scan_interval: 60
+        scan_interval: *scan_interval_slowest
 
       - name: Battery capacity high precision # as in TI_20240924_Communication Protocol of Residential Hybrid Inverter-V1.1.5
         unique_id: uid_battery_capacity_high_precision
@@ -389,7 +396,7 @@ modbus:
         unit_of_measurement: kWh
         device_class: energy_storage
         scale: 0.01
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Backup phase A power
         unique_id: sg_backup_phase_a_power
@@ -402,7 +409,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Backup phase B power
         unique_id: sg_backup_phase_b_power
@@ -415,7 +422,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Backup phase C power
         unique_id: sg_backup_phase_c_power
@@ -428,7 +435,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Total backup power
         device_address: !secret sungrow_modbus_slave
@@ -442,7 +449,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       # https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?postID=3324464#post3324464
       - name: Meter phase A voltage
@@ -456,7 +463,7 @@ modbus:
         device_class: voltage
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Meter phase B voltage
         unique_id: sg_meter_phase_b_voltage
@@ -469,7 +476,7 @@ modbus:
         device_class: voltage
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Meter phase C voltage
         unique_id: sg_meter_phase_c_voltage
@@ -482,7 +489,7 @@ modbus:
         device_class: voltage
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Meter phase A current
         unique_id: sg_meter_phase_a_current
@@ -495,7 +502,7 @@ modbus:
         device_class: current
         state_class: measurement
         scale: 0.01
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Meter phase B current
         unique_id: sg_meter_phase_b_current
@@ -508,7 +515,7 @@ modbus:
         device_class: current
         state_class: measurement
         scale: 0.01
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Meter phase C current
         unique_id: sg_meter_phase_c_current
@@ -521,7 +528,7 @@ modbus:
         device_class: current
         state_class: measurement
         scale: 0.01
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: System state
         unique_id: sg_system_state
@@ -532,7 +539,7 @@ modbus:
         precision: 0
         scale: 1
         state_class: measurement
-        scan_interval: 10
+        scan_interval: &scan_interval_realtime 5
 
       # NOTE: In old modbus doc versions this was called "running state"
       # but has been renamed to "power flow status"
@@ -546,7 +553,7 @@ modbus:
         precision: 0
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: *scan_interval_realtime
 
       - name: Daily PV generation
         unique_id: sg_daily_pv_generation
@@ -559,7 +566,7 @@ modbus:
         device_class: energy
         state_class: total_increasing
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Total PV generation
         unique_id: sg_total_pv_generation
@@ -573,7 +580,7 @@ modbus:
         device_class: energy
         state_class: total
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Daily exported energy from PV
         unique_id: sg_daily_exported_energy_from_PV
@@ -586,7 +593,7 @@ modbus:
         device_class: energy
         state_class: total_increasing
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Total exported energy from PV
         unique_id: sg_total_exported_energy_from_pv
@@ -600,7 +607,7 @@ modbus:
         device_class: energy
         state_class: total
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Load power
         unique_id: sg_load_power
@@ -614,7 +621,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: *scan_interval_realtime
 
       # this value returns a positive value when exporting and a negative value when importing power
       - name: Export power raw
@@ -629,7 +636,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Daily battery charge from PV
         unique_id: sg_daily_battery_charge_from_pv
@@ -642,7 +649,7 @@ modbus:
         device_class: energy
         state_class: total_increasing
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Total battery charge from PV
         unique_id: sg_total_battery_charge_from_pv
@@ -656,7 +663,7 @@ modbus:
         device_class: energy
         state_class: total
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Daily direct energy consumption
         unique_id: sg_daily_direct_energy_consumption
@@ -669,7 +676,7 @@ modbus:
         device_class: energy
         state_class: total_increasing
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Total direct energy consumption
         unique_id: sg_total_direct_energy_consumption
@@ -683,7 +690,7 @@ modbus:
         device_class: energy
         state_class: total
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Battery voltage
         unique_id: sg_battery_voltage
@@ -693,10 +700,10 @@ modbus:
         data_type: uint16
         precision: 1
         unit_of_measurement: V
-        device_class: Voltage
+        device_class: voltage
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       # note: datasheet states that this value is unsigned, but it is acually signed:
       # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/304
@@ -709,9 +716,9 @@ modbus:
         precision: 1
         unit_of_measurement: A
         state_class: measurement
-        device_class: Current
+        device_class: current
         scale: 0.1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       # old firmware ( before october 2024): always positive battery power
       # use binary_sensor.battery_charging | discharging to retrieve the direction of the energy flow
@@ -729,7 +736,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       # 0..100%  |  min_soc..max_soc
       - name: Battery level
@@ -743,7 +750,7 @@ modbus:
         device_class: battery
         state_class: measurement
         scale: 0.1
-        scan_interval: 60
+        scan_interval: *scan_interval_medium
 
       # 0..100% calculated internally by the BMS load balancing
       - name: Battery state of health
@@ -756,7 +763,7 @@ modbus:
         unit_of_measurement: "%"
         state_class: measurement
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Battery temperature
         unique_id: sg_battery_temperature
@@ -769,7 +776,7 @@ modbus:
         device_class: temperature
         state_class: measurement
         scale: 0.1
-        scan_interval: 60
+        scan_interval: *scan_interval_medium
 
       - name: Daily battery discharge
         unique_id: sg_daily_battery_discharge
@@ -782,7 +789,7 @@ modbus:
         device_class: energy
         state_class: total_increasing
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Total battery discharge
         unique_id: sg_total_battery_discharge
@@ -796,7 +803,7 @@ modbus:
         device_class: energy
         state_class: total
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Phase A current
         unique_id: sg_phase_a_current
@@ -809,7 +816,7 @@ modbus:
         device_class: current
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Phase B current
         unique_id: sg_phase_b_current
@@ -822,7 +829,7 @@ modbus:
         device_class: current
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Phase C current
         unique_id: sg_phase_c_current
@@ -835,7 +842,7 @@ modbus:
         device_class: current
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Total active power
         unique_id: sg_total_active_power
@@ -849,7 +856,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Daily imported energy
         unique_id: sg_daily_imported_energy
@@ -862,7 +869,7 @@ modbus:
         device_class: energy
         state_class: total_increasing
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Total imported energy
         unique_id: sg_total_imported_energy
@@ -876,7 +883,7 @@ modbus:
         device_class: energy
         state_class: total
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Battery capacity
         unique_id: uid_battery_capacity
@@ -887,7 +894,7 @@ modbus:
         unit_of_measurement: kWh
         device_class: energy_storage
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Daily battery charge
         unique_id: sg_daily_battery_charge
@@ -900,7 +907,7 @@ modbus:
         device_class: energy
         state_class: total_increasing
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Total battery charge
         unique_id: sg_total_battery_charge
@@ -914,7 +921,7 @@ modbus:
         device_class: energy
         state_class: total
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Daily exported energy
         unique_id: sg_daily_exported_energy
@@ -927,7 +934,7 @@ modbus:
         device_class: energy
         state_class: total_increasing
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: Total exported energy
         unique_id: sg_total_exported_energy
@@ -941,7 +948,7 @@ modbus:
         device_class: energy
         state_class: total
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       #####################
       # modbus holding registers
@@ -953,7 +960,7 @@ modbus:
         input_type: holding
         data_type: uint16
         state_class: measurement
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Load adjustment mode enable raw
         unique_id: sg_load_adjustment_mode_enable_raw
@@ -962,7 +969,7 @@ modbus:
         input_type: holding
         data_type: uint16
         state_class: measurement
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       # TODO test. Does this control, if the standby goes into standby at night?
       # Does forced charge prevent this or not?
@@ -974,7 +981,7 @@ modbus:
         input_type: holding
         data_type: uint16
         state_class: measurement
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: EMS mode selection raw
         unique_id: sg_ems_mode_selection_raw
@@ -983,7 +990,7 @@ modbus:
         input_type: holding
         data_type: uint16
         state_class: measurement
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Battery forced charge discharge cmd raw
         unique_id: sg_battery_forced_charge_discharge_cmd_raw
@@ -993,7 +1000,7 @@ modbus:
         data_type: uint16
         precision: 0
         state_class: measurement
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Battery forced charge discharge power
         unique_id: sg_battery_forced_charge_discharge_power
@@ -1009,7 +1016,7 @@ modbus:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Battery max SoC
         unique_id: uid_sg_battery_max_soc
@@ -1022,7 +1029,7 @@ modbus:
         device_class: battery
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Battery min SoC
         unique_id: uid_sg_battery_min_soc
@@ -1035,7 +1042,7 @@ modbus:
         device_class: battery
         state_class: measurement
         scale: 0.1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       # in the documentation this is called "feed-in power limit"
       - name: Export power limit
@@ -1049,7 +1056,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       # called "Off-grid option" in spec
       - name: Backup mode raw
@@ -1059,7 +1066,7 @@ modbus:
         input_type: holding
         data_type: uint16
         state_class: measurement
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       # called "Feed-in limitation" in spec
       - name: Export power limit mode raw
@@ -1070,7 +1077,7 @@ modbus:
         data_type: uint16
         precision: 0
         state_class: measurement
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Battery reserved SoC for backup
         unique_id: sg_battery_reserved_soc_for_backup
@@ -1082,7 +1089,7 @@ modbus:
         device_class: battery
         state_class: measurement
         scale: 1
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       # Inverter Firmware version from register 13250 to 13264 as UTF8 string
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
@@ -1093,7 +1100,7 @@ modbus:
         input_type: input
         data_type: string
         count: 15
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       # Communication Module Firmware version from register 13250 to 13264 as UTF8 string
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
@@ -1104,7 +1111,7 @@ modbus:
         input_type: input
         data_type: string
         count: 15
-        scan_interval: 600
+        scan_interval: *scan_interval_fast
 
       # Battery Firmware version from register 13250 to 13264 as UTF8 string
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
@@ -1115,7 +1122,7 @@ modbus:
         input_type: input
         data_type: string
         count: 15
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       # TODO test and implement from theunknown86
       # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
@@ -1128,7 +1135,7 @@ modbus:
         address: &reg_active_power_limitation_raw 13088 # reg 13089
         input_type: holding
         data_type: uint16
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
         state_class: measurement
 
       # MG5-6RL is not supported.
@@ -1139,7 +1146,7 @@ modbus:
         address: &reg_active_power_limitation_ratio_raw 13089 # reg 13090
         input_type: holding
         data_type: uint16
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
         state_class: measurement
         scale: 0.1
         unit_of_measurement: "%"
@@ -1154,7 +1161,7 @@ modbus:
         input_type: holding
         data_type: uint16
         state_class: measurement
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Battery max charge power
         unique_id: sg_battery_max_charge_power
@@ -1167,7 +1174,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 10
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       - name: Battery max discharge power
         unique_id: sg_battery_max_discharge_power
@@ -1179,7 +1186,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 10
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       # datasheet: Charging/Discharging Power–Wide range
       - name: Battery charging start power
@@ -1192,7 +1199,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 10
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       # undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Battery discharging start power
@@ -1206,7 +1213,7 @@ modbus:
         device_class: power
         state_class: measurement
         scale: 10
-        scan_interval: 10
+        scan_interval: *scan_interval_fast
 
       #####################
       # modbus switches
@@ -1565,14 +1572,48 @@ template:
         availability: "{{ states('sensor.mppt2_voltage')|is_number and states('sensor.mppt2_current')|is_number }}"
         state: "{{ (states('sensor.mppt2_voltage') | float * states('sensor.mppt2_current') | float) |int }}"
 
-      # only for SH*T inverters with 3 MPPTs
-      # - name: MPPT3 power
-      #   unique_id: sg_mppt3_power
-      #   unit_of_measurement: W
-      #   device_class: power
-      #   state_class: measurement
-      #   availability: "{{ states('sensor.mppt3_voltage')|is_number and states('sensor.mppt3_current')|is_number }}"
-      #   state: "{{ (states('sensor.mppt3_voltage') | float * states('sensor.mppt3_current') | float) |int }}"
+        # only for SH*T inverters with 3 MPPTs
+        # if no MPPT3 is present, the mppt3_voltage_raw sensor return 6.553,50 ( == 0xFFFF / 10)
+        # if this value is read, mark this sensor as not available
+      - name: MPPT3 voltage
+        unique_id: uid_sg_mppt3_voltage
+        unit_of_measurement: V
+        device_class: voltage
+        state_class: measurement
+        availability: "{{ states('sensor.mppt3_voltage_raw') }}"
+        state: >-
+          {% if (states('sensor.mppt3_voltage_raw')|float == 0xFFFF/10) %}
+            0
+          {% else %}
+            {{ states('sensor.mppt3_voltage_raw') }}
+          {% endif %}
+
+        # only for SH*T inverters with 3 MPPTs
+        # if no MPPT3 is present, the mppt3_voltage_raw sensor return 6.553,50 ( == 0xFFFF / 10)
+        # if this value is read, mark this sensor as not available
+      - name: MPPT3 current
+        unique_id: uid_sg_mppt3_current
+        unit_of_measurement: A
+        device_class: current
+        state_class: measurement
+        availability: "{{ states('sensor.mppt3_current_raw') }}"
+        state: >-
+          {% if (states('sensor.mppt3_current_raw')|float == 0xFFFF/10) %}
+            0
+          {% else %}
+            {{ states('sensor.mppt3_current_raw') }}
+          {% endif %}
+
+        # only for SH*T inverters with 3 MPPTs
+        # if no MPPT3 is present, the mppt3_voltage_raw sensor return 6.553,50 ( == 0xFFFF / 10)
+        # if this value is read, mark this sensor as not available
+      - name: MPPT3 power
+        unique_id: uid_sg_mppt3_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.mppt3_voltage')|is_number and states('sensor.mppt3_current')|is_number }}"
+        state: "{{ (states('sensor.mppt3_voltage') | float * states('sensor.mppt3_current') | float) |int }}"
 
       - name: Phase A power
         unique_id: sg_phase_a_power
@@ -2137,6 +2178,9 @@ automation:
                   entity_id: switch.sungrow_dashboard_enable_danger_mode
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
+    # compared to the other selects, this is very tricky
+    # after enabling / disabling the inverter it will take several seconds for bootup
+    # or shutdown. The user won't get any feedback if it worked.
   - id: "automation_sungrow_enable_inverter"
     alias: "sungrow inverter state"
     description: "Enables/Stops the inverter and corresponding gui input"
