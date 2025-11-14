@@ -8,6 +8,7 @@
 
 # DONE
 # - Rename "System state" to "Running state"
+# - Use nan_value to eliminate Template sensors for Meter [phase 1-3] active power and MPPT3 voltage/current
 # - Use compact maps for decoding the "running state" (updated from modbus spec) and for device type code
 # - Use a switch (Sungrow dashboard enable danger mode) with an automation to hide / show dangerous elements in the dashboard (works with the default dashboard)
 # - Use more YAML anchors: Define register addresses when defining the sensors and reuse the variables in automations
@@ -168,12 +169,13 @@ modbus:
         scan_interval: *scan_interval_fast
 
       # only for SH*T inverters with 3 MPPTs
-      - name: MPPT3 voltage raw 2
-        unique_id: sg_mppt3_voltage_raw_2
+      - name: MPPT3 voltage 2
+        unique_id: sg_mppt3_voltage_2
         device_address: !secret sungrow_modbus_slave_inv2
         address: 5014 # reg 5015
         input_type: input
         data_type: uint16
+        nan_value: 0xFFFF
         precision: 1
         unit_of_measurement: V
         device_class: voltage
@@ -182,12 +184,13 @@ modbus:
         scan_interval: *scan_interval_fast
 
       # only for SH*T inverters with 3 MPPTs
-      - name: MPPT3 current raw 2
-        unique_id: sg_mppt3_current_raw_2
+      - name: MPPT3 current 2
+        unique_id: sg_mppt3_current_2
         device_address: !secret sungrow_modbus_slave_inv2
         address: 5015 # reg 5016
         input_type: input
         data_type: uint16
+        nan_value: 0xFFFF
         precision: 1
         unit_of_measurement: A
         device_class: current
@@ -288,18 +291,16 @@ modbus:
         scale: 0.01
         scan_interval: *scan_interval_fast
 
-      #https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?pageNo=13
-      #Meter Active Power: 5601-5602 S32 W (Energiezähler Wirkleistung)
-      #Meter Phase A Active Power: 5603-5604 S32 W (Stromzähler Phase A Wirkleistung)
-      #Meter Phase B Active Power: 5605-5606 S32 W (Stromzähler Phase B Wirkleistung)
-      #Meter Phase C Active Power: 5607-5608 S32 W (Stromzähler Phase C Wirkleistung)
-      - name: Meter active power raw 2
-        unique_id: sg_meter_active_power_raw_2
+        # modbus spec: Only valid when the inverter is directly connected to the smart energy meter. (See note 1);
+        # ＞ 0 buy from grid; ＜ 0 sell to grid;
+      - name: Meter active power 2
+        unique_id: sg_meter_active_power_2
         device_address: !secret sungrow_modbus_slave_inv2
         address: 5600 # reg 5601
         input_type: input
         data_type: int32
         swap: word
+        nan_value: 0x7FFFFFFF
         precision: 0
         unit_of_measurement: W
         device_class: power
@@ -307,13 +308,16 @@ modbus:
         scale: 1
         scan_interval: *scan_interval_fast
 
-      - name: Meter phase A active power raw 2
-        unique_id: sg_meter_phase_a_active_power_raw_2
+        # modbus spec: Only valid when the inverter is directly connected to the smart energy meter. (See note 1);
+        # ＞ 0 buy from grid; ＜ 0 sell to grid;
+      - name: Meter phase A active power 2
+        unique_id: sg_meter_phase_a_active_power_2
         device_address: !secret sungrow_modbus_slave_inv2
         address: 5602 # reg 5603
         input_type: input
         data_type: int32
         swap: word
+        nan_value: 0x7FFFFFFF
         precision: 0
         unit_of_measurement: W
         device_class: power
@@ -321,13 +325,16 @@ modbus:
         scale: 1
         scan_interval: *scan_interval_fast
 
-      - name: Meter phase B active power raw 2
-        unique_id: sg_meter_phase_b_active_power_raw_2
+        # modbus spec: Only valid when the inverter is directly connected to the smart energy meter. (See note 1);
+        # ＞ 0 buy from grid; ＜ 0 sell to grid;
+      - name: Meter phase B active power 2
+        unique_id: sg_meter_phase_b_active_power_2
         device_address: !secret sungrow_modbus_slave_inv2
         address: 5604 # reg 5605
         input_type: input
         data_type: int32
         swap: word
+        nan_value: 0x7FFFFFFF
         precision: 0
         unit_of_measurement: W
         device_class: power
@@ -335,13 +342,16 @@ modbus:
         scale: 1
         scan_interval: *scan_interval_fast
 
-      - name: Meter phase C active power raw 2
-        unique_id: sg_meter_phase_c_active_power_raw_2
+        # modbus spec: Only valid when the inverter is directly connected to the smart energy meter. (See note 1);
+        # ＞ 0 buy from grid; ＜ 0 sell to grid;
+      - name: Meter phase C active power 2
+        unique_id: sg_meter_phase_c_active_power_2
         device_address: !secret sungrow_modbus_slave_inv2
         address: 5606 # reg 5607
         input_type: input
         data_type: int32
         swap: word
+        nan_value: 0x7FFFFFFF
         precision: 0
         unit_of_measurement: W
         device_class: power
@@ -1576,40 +1586,6 @@ template:
         state: "{{ (states('sensor.mppt2_voltage_2') | float * states('sensor.mppt2_current_2') | float) |int }}"
 
         # only for SH*T inverters with 3 MPPTs
-        # if no MPPT3 is present, the mppt3_voltage_raw sensor return 6.553,50 ( == 0xFFFF / 10)
-        # if this value is read, mark this sensor as not available
-      - name: MPPT3 voltage 2
-        unique_id: uid_sg_mppt3_voltage_2
-        unit_of_measurement: V
-        device_class: voltage
-        state_class: measurement
-        availability: "{{ states('sensor.mppt3_voltage_raw') }}"
-        state: >-
-          {% if (states('sensor.mppt3_voltage_raw')|float == 0xFFFF/10) %}
-            0
-          {% else %}
-            {{ states('sensor.mppt3_voltage_raw') }}
-          {% endif %}
-
-        # only for SH*T inverters with 3 MPPTs
-        # if no MPPT3 is present, the mppt3_voltage_raw sensor return 6.553,50 ( == 0xFFFF / 10)
-        # if this value is read, mark this sensor as not available
-      - name: MPPT3 current 2
-        unique_id: uid_sg_mppt3_current_2
-        unit_of_measurement: A
-        device_class: current
-        state_class: measurement
-        availability: "{{ states('sensor.mppt3_current_raw') }}"
-        state: >-
-          {% if (states('sensor.mppt3_current_raw')|float == 0xFFFF/10) %}
-            0
-          {% else %}
-            {{ states('sensor.mppt3_current_raw') }}
-          {% endif %}
-
-        # only for SH*T inverters with 3 MPPTs
-        # if no MPPT3 is present, the mppt3_voltage_raw sensor return 6.553,50 ( == 0xFFFF / 10)
-        # if this value is read, mark this sensor as not available
       - name: MPPT3 power 2
         unique_id: uid_sg_mppt3_power_2
         unit_of_measurement: W
@@ -1641,42 +1617,6 @@ template:
         state_class: measurement
         availability: "{{ states('sensor.phase_c_voltage_2')|is_number and states('sensor.phase_c_current')|is_number }}"
         state: "{{ (states('sensor.phase_c_voltage_2') | float * states('sensor.phase_c_current') | float) |int }}"
-
-      # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
-      - name: Meter active power 2
-        unique_id: sg_meter_active_power_2
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        availability: "{{ states('sensor.meter_active_power_raw_2')|is_number and states('sensor.meter_active_power_raw_2')|int != 0x7FFFFFFF }}"
-        state: "{{ states('sensor.meter_active_power_raw_2') }}"
-
-      # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
-      - name: Meter phase A active power 2
-        unique_id: sg_meter_phase_a_active_power_2
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        availability: "{{ states('sensor.meter_phase_a_active_power_raw_2')|is_number and states('sensor.meter_phase_a_active_power_raw_2')|int != 0x7FFFFFFF }}"
-        state: "{{ states('sensor.meter_phase_a_active_power_raw_2') }}"
-
-      # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
-      - name: Meter phase B active power 2
-        unique_id: sg_meter_phase_b_active_power_2
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        availability: "{{ states('sensor.meter_phase_b_active_power_raw_2')|is_number and states('sensor.meter_phase_b_active_power_raw_2')|int != 0x7FFFFFFF }}"
-        state: "{{ states('sensor.meter_phase_b_active_power_raw_2') }}"
-
-      # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
-      - name: Meter phase C active power 2
-        unique_id: sg_meter_phase_c_active_power_2
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        availability: "{{ states('sensor.meter_phase_c_active_power_raw_2')|is_number and states('sensor.meter_phase_c_active_power_raw_2')|int != 0x7FFFFFFF }}"
-        state: "{{ states('sensor.meter_phase_c_active_power_raw_2') }}"
 
       - name: Sungrow inverter state 2
         unique_id: sg_inverter_state_2
