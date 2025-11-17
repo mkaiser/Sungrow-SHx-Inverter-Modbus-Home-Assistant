@@ -3256,7 +3256,7 @@ automation:
           hub: SungrowSHx 2
           slave: !secret sungrow_modbus_slave_inv2
           address: 13073 # reg 13074
-          value: "{{ states('input_number.set_sg_2_export_power_limit') }}"
+          value: "{{ states('input_number.set_sg_2_export_power_limit') |float/10 |int }}"
       - action: homeassistant.update_entity
         # immediate update the sensor to reflect the new value, not waiting for the next scheduled update
         data:
