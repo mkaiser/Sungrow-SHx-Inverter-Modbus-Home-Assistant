@@ -1,10 +1,12 @@
+# Release data 2025-11-18
+#
 # This version is under heavy development. You should not use it :)
 #
-# TODO: Use MIT licence
-# TODO: Create changelog of dev branch for version 2 release
-# TODO: Create a "howto migrate to version 2" guide
-# TODO: Error handling for non-available register values used for template numbers
-# TODO: Implement logic for active power limitation: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
+# TODO:
+# - Use MIT licence
+# - Create changelog of dev branch for version 2 release
+# - Create a "howto migrate to version 2" guide
+# - Implement logic for active power limitation: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
 
 # DONE
 # - Rename "System state" to "Running state"
@@ -1324,7 +1326,7 @@ template:
 
       - name: Battery charging (delay) 2
         unique_id: sg_battery_charging_delay_2
-        availability: "{{ states('binary_sensor.battery_charging_2') }}"
+        availability: "{{ states('binary_sensor.battery_charging_2') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.battery_charging_2') }}"
@@ -1337,7 +1339,7 @@ template:
 
       - name: Battery discharging (delay) 2
         unique_id: sg_battery_discharging_delay_2
-        availability: "{{ states('binary_sensor.battery_discharging_2') }}"
+        availability: "{{ states('binary_sensor.battery_discharging_2') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.battery_discharging_2') }}"
@@ -1350,7 +1352,7 @@ template:
 
       - name: Positive Load Power (delay) 2
         unique_id: sg_positive_load_power_delay_2
-        availability: "{{ states('binary_sensor.positive_load_power') }}"
+        availability: "{{ states('binary_sensor.positive_load_power') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.positive_load_power') }}"
@@ -1363,7 +1365,7 @@ template:
 
       - name: Exporting Power (delay) 2
         unique_id: sg_exporting_power_delay_2
-        availability: "{{ states('binary_sensor.exporting_power_2') }}"
+        availability: "{{ states('binary_sensor.exporting_power_2') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.exporting_power_2') }}"
@@ -1376,7 +1378,7 @@ template:
 
       - name: Importing Power (delay) 2
         unique_id: sg_importing_power_delay_2
-        availability: "{{ states('binary_sensor.importing_power_2') }}"
+        availability: "{{ states('binary_sensor.importing_power_2') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.importing_power_2') }}"
@@ -1388,9 +1390,10 @@ template:
         unique_id: sg_negative_load_power_2
         availability: "{{ states('sensor.power_flow_status') not in ['unknown','unavailable'] }}"
         state: "{{ states('sensor.power_flow_status')|int |bitwise_and(0x80) }}"
+
       - name: Negative Load Power (delay) 2
         unique_id: sg_negative_load_power_delay_2
-        availability: "{{ states('binary_sensor.negative_load_power') }}"
+        availability: "{{ states('binary_sensor.negative_load_power') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.negative_load_power') }}"
