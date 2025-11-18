@@ -6,7 +6,6 @@ views:
         entities:
           - entity: sensor.sungrow_device_type
           - entity: sensor.sungrow_inverter_state
-          - entity: select.ems_mode
           - entity: sensor.inverter_firmware_version
           - entity: sensor.communication_module_firmware_version
           - entity: sensor.battery_firmware_version
@@ -20,8 +19,17 @@ views:
           - entity: sensor.import_power
           - entity: sensor.battery_charging_power
           - entity: sensor.battery_discharging_power
-          - entity: binary_sensor.battery_discharging_delay
         title: Power
+      - type: entities
+        entities:
+          - binary_sensor.battery_charging
+          - binary_sensor.battery_charging_delay
+          - binary_sensor.battery_discharging
+          - binary_sensor.battery_discharging_delay
+          - binary_sensor.negative_load_power
+          - binary_sensor.negative_load_power_delay
+          - binary_sensor.positive_load_power
+          - binary_sensor.positive_load_power_delay
       - type: entities
         entities:
           - entity: sensor.daily_pv_generation
@@ -209,7 +217,7 @@ views:
           - entity: sensor.sungrow_device_type
           - entity: sensor.sungrow_inverter_state
           - entity: sensor.power_flow_status
-          - entity: sensor.system_state
+          - entity: sensor.running_state_raw
           - entity: sensor.inverter_temperature
           - entity: binary_sensor.pv_generating
           - entity: binary_sensor.battery_charging
@@ -256,16 +264,16 @@ views:
           - entity: switch.backup_mode
           - entity: select.load_adjustment_mode
           - entity: switch.load_adjustment_mode
-          - entity: switch.export_power_limit_2
+          - entity: switch.export_power_limit
           - entity: number.export_power_limit
-          - entity: switch.forced_startup_under_low_soc_standby_2
+          - entity: switch.forced_startup_under_low_soc_standby
         title: Inverter State & EMS Settings
         show_header_toggle: false
         state_color: true
         visibility:
           - condition: state
             entity: switch.sungrow_dashboard_enable_danger_mode
-            state: "on"
+            state: 'on'
       - type: entities
         entities:
           - entity: number.battery_min_soc
@@ -285,7 +293,7 @@ views:
         visibility:
           - condition: state
             entity: switch.sungrow_dashboard_enable_danger_mode
-            state: "on"
+            state: 'on'
       - type: entities
         entities:
           - entity: sensor.load_adjustment_mode_enable_raw
