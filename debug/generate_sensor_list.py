@@ -1,5 +1,9 @@
-# Warning: This code is 99% vibe-coded. Don't expect much 
+#!/usr/bin/env python3
 
+# Warning: This code is 99% vibe-coded. Don't expect much 
+# Usage:  
+# cd debug 
+# ./generate_sensor_list.py ../modbus_sungrow.yaml -o sensor_list_for_ha_template_editor.txt
 
 import argparse
 import re
