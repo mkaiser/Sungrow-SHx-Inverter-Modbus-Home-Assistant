@@ -3,12 +3,13 @@
 # This version is under heavy development. You should not use it :)
 #
 # TODO:
-# - Use MIT licence
 # - Create changelog of dev branch for version 2 release
 # - Create a "howto migrate to version 2" guide
 # - Implement logic for active power limitation: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
 
 # DONE
+# - Rename secret sungrow_modbus_slave to sungrow_modbus_device_address to match modbus naming
+# - Add MIT licence
 # - Rename "System state" to "Running state"
 # - Use nan_value to eliminate Template sensors for Meter [phase 1-3] active power and MPPT3 voltage/current
 # - Use compact maps for decoding the "running state" (updated from modbus spec) and for device type code
@@ -25,7 +26,7 @@
 # secret.yaml
 # sungrow_modbus_host_ip: 192.168.xxx.xxx # TODO update with the IP of your inverter. No default. Check your router.
 # sungrow_modbus_port: 502 # TODO update with the Modbus port of your inverter. Default is '502'
-# sungrow_modbus_slave: 1 #TODO update with the slave address of your inverter. Default is '1'
+# sungrow_modbus_device_address: 1 #TODO update with the slave address of your inverter. Default is '1'
 # sungrow_modbus_battery_max_power: 4500 # TODO update with the maximum charge power of your battery in W.
 ## For >99% of all situations it won't hurt to set a lower value here, which won't put much aging-stress on the battery.
 ## Max values for common batteries: SBR096: 6500W, SBR128: 8500W, SBR160: 10500W, SBR192: 13000W, SBR224: 15000Wm, SBR256: 17000W Default is '5000'
@@ -41,7 +42,7 @@ modbus:
     sensors:
       - name: Sungrow inverter serial
         unique_id: sg_inverter_serial
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 4989 # reg 4990
         input_type: input
         data_type: string
@@ -60,7 +61,7 @@ modbus:
 
       - name: Sungrow device type code
         unique_id: sg_dev_code
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 4999 # reg 5000
         input_type: input
         data_type: uint16
@@ -68,7 +69,7 @@ modbus:
 
       - name: Inverter rated output
         unique_id: sg_inverter_rated_output
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5000 # reg 5001
         input_type: input
         data_type: uint16
@@ -80,7 +81,7 @@ modbus:
 
       - name: Daily PV generation & battery discharge
         unique_id: sg_daily_pv_gen_battery_discharge
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5002 # reg 5003
         input_type: input
         data_type: uint16
@@ -93,7 +94,7 @@ modbus:
 
       - name: Total PV generation & battery discharge
         unique_id: sg_total_pv_gen_battery_discharge
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5003 # reg 5004
         input_type: input
         data_type: uint32
@@ -107,7 +108,7 @@ modbus:
 
       - name: Inverter temperature
         unique_id: sg_inverter_temperature
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5007 # reg 5008
         input_type: input
         data_type: int16
@@ -120,7 +121,7 @@ modbus:
 
       - name: MPPT1 voltage
         unique_id: sg_mppt1_voltage
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5010 # reg 5011
         input_type: input
         data_type: uint16
@@ -133,7 +134,7 @@ modbus:
 
       - name: MPPT1 current
         unique_id: sg_mppt1_current
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5011 # reg 5012
         input_type: input
         data_type: uint16
@@ -146,7 +147,7 @@ modbus:
 
       - name: MPPT2 voltage
         unique_id: sg_mppt2_voltage
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5012 # reg 5013
         input_type: input
         data_type: uint16
@@ -159,7 +160,7 @@ modbus:
 
       - name: MPPT2 current
         unique_id: sg_mppt2_current
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5013 # reg 5014
         input_type: input
         data_type: uint16
@@ -173,7 +174,7 @@ modbus:
       # only for SH*T inverters with 3 MPPTs
       - name: MPPT3 voltage
         unique_id: sg_mppt3_voltage
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5014 # reg 5015
         input_type: input
         data_type: uint16
@@ -188,7 +189,7 @@ modbus:
       # only for SH*T inverters with 3 MPPTs
       - name: MPPT3 current
         unique_id: sg_mppt3_current
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5015 # reg 5016
         input_type: input
         data_type: uint16
@@ -202,7 +203,7 @@ modbus:
 
       - name: Total DC power
         unique_id: sg_total_dc_power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5016 # reg 5017
         input_type: input
         data_type: uint32
@@ -216,7 +217,7 @@ modbus:
 
       - name: Phase A voltage
         unique_id: sg_phase_a_voltage
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5018 # reg: 5019
         input_type: input
         data_type: uint16
@@ -229,7 +230,7 @@ modbus:
 
       - name: Phase B voltage
         unique_id: sg_phase_b_voltage
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5019 # reg: 5020
         input_type: input
         data_type: uint16
@@ -242,7 +243,7 @@ modbus:
 
       - name: Phase C voltage
         unique_id: sg_phase_c_voltage
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5020 # reg: 5021
         input_type: input
         data_type: uint16
@@ -255,7 +256,7 @@ modbus:
 
       - name: Reactive power
         unique_id: sg_reactive_power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5032 # reg 5033
         input_type: input
         data_type: int32
@@ -269,7 +270,7 @@ modbus:
 
       - name: Power factor
         unique_id: sg_power_factor
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5034 # reg 5035
         input_type: input
         data_type: int16
@@ -282,7 +283,7 @@ modbus:
 
       - name: Grid frequency
         unique_id: sg_grid_frequency
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5241 # reg 5242
         input_type: input
         data_type: uint16
@@ -297,7 +298,7 @@ modbus:
         # ＞ 0 buy from grid; ＜ 0 sell to grid;
       - name: Meter active power
         unique_id: sg_meter_active_power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5600 # reg 5601
         input_type: input
         data_type: int32
@@ -314,7 +315,7 @@ modbus:
         # ＞ 0 buy from grid; ＜ 0 sell to grid;
       - name: Meter phase A active power
         unique_id: sg_meter_phase_a_active_power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5602 # reg 5603
         input_type: input
         data_type: int32
@@ -331,7 +332,7 @@ modbus:
         # ＞ 0 buy from grid; ＜ 0 sell to grid;
       - name: Meter phase B active power
         unique_id: sg_meter_phase_b_active_power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5604 # reg 5605
         input_type: input
         data_type: int32
@@ -348,7 +349,7 @@ modbus:
         # ＞ 0 buy from grid; ＜ 0 sell to grid;
       - name: Meter phase C active power
         unique_id: sg_meter_phase_c_active_power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5606 # reg 5607
         input_type: input
         data_type: int32
@@ -363,7 +364,7 @@ modbus:
 
       - name: BDC rated power
         unique_id: sg_bdc_rated_power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5627 # reg 5628
         input_type: input
         data_type: uint16
@@ -375,7 +376,7 @@ modbus:
 
       - name: BMS max. charging current
         unique_id: sg_bms_max_charging_current
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5634 # reg 5635
         input_type: input
         data_type: uint16
@@ -388,7 +389,7 @@ modbus:
 
       - name: BMS max. discharging current
         unique_id: sg_bms_max_discharging_current
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5635 # reg 5636
         input_type: input
         data_type: uint16
@@ -401,7 +402,7 @@ modbus:
 
       - name: Battery capacity high precision # as in TI_20240924_Communication Protocol of Residential Hybrid Inverter-V1.1.5
         unique_id: uid_battery_capacity_high_precision
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5638 # reg 5639
         input_type: input
         data_type: uint16
@@ -413,7 +414,7 @@ modbus:
 
       - name: Backup phase A power
         unique_id: sg_backup_phase_a_power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5722 # reg 5723
         input_type: input
         data_type: int16
@@ -426,7 +427,7 @@ modbus:
 
       - name: Backup phase B power
         unique_id: sg_backup_phase_b_power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5723 # reg 5724
         input_type: input
         data_type: int16
@@ -439,7 +440,7 @@ modbus:
 
       - name: Backup phase C power
         unique_id: sg_backup_phase_c_power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5724 # reg 5725
         input_type: input
         data_type: int16
@@ -451,7 +452,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Total backup power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         unique_id: sg_total_backup_power
         address: 5725 # reg 5726
         input_type: input
@@ -467,7 +468,7 @@ modbus:
       # https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?postID=3324464#post3324464
       - name: Meter phase A voltage
         unique_id: sg_meter_phase_a_voltage
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5740 # reg 5741
         input_type: input
         data_type: int16
@@ -480,7 +481,7 @@ modbus:
 
       - name: Meter phase B voltage
         unique_id: sg_meter_phase_b_voltage
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5741 # reg 5742
         input_type: input
         data_type: int16
@@ -493,7 +494,7 @@ modbus:
 
       - name: Meter phase C voltage
         unique_id: sg_meter_phase_c_voltage
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5742 # reg 5743
         input_type: input
         data_type: int16
@@ -506,7 +507,7 @@ modbus:
 
       - name: Meter phase A current
         unique_id: sg_meter_phase_a_current
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5743 # reg 5744
         input_type: input
         data_type: uint16
@@ -519,7 +520,7 @@ modbus:
 
       - name: Meter phase B current
         unique_id: sg_meter_phase_b_current
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5744 # reg 5745
         input_type: input
         data_type: uint16
@@ -532,7 +533,7 @@ modbus:
 
       - name: Meter phase C current
         unique_id: sg_meter_phase_c_current
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 5745 # reg 5746
         input_type: input
         data_type: uint16
@@ -547,7 +548,7 @@ modbus:
       # but has been renamed to "running state"
       - name: Running state raw
         unique_id: uid_sg_running_state_raw
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &sg_reg_running_state 12999 # reg 13000
         input_type: input
         data_type: uint16
@@ -561,7 +562,7 @@ modbus:
       # template binary sensors are used to determine their states based on this value
       - name: Power Flow Status
         unique_id: uid_power_flow_status
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13000 # reg 13001
         input_type: input
         data_type: uint16
@@ -572,7 +573,7 @@ modbus:
 
       - name: Daily PV generation
         unique_id: sg_daily_pv_generation
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13001 # reg 13002
         input_type: input
         data_type: uint16
@@ -585,7 +586,7 @@ modbus:
 
       - name: Total PV generation
         unique_id: sg_total_pv_generation
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13002 # reg 13003
         input_type: input
         data_type: uint32
@@ -599,7 +600,7 @@ modbus:
 
       - name: Daily exported energy from PV
         unique_id: sg_daily_exported_energy_from_PV
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13004 # reg 13005
         input_type: input
         data_type: uint16
@@ -612,7 +613,7 @@ modbus:
 
       - name: Total exported energy from PV
         unique_id: sg_total_exported_energy_from_pv
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13005 # reg 13006
         input_type: input
         data_type: uint32
@@ -626,7 +627,7 @@ modbus:
 
       - name: Load power
         unique_id: sg_load_power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13007 # reg 13008
         input_type: input
         data_type: int32
@@ -641,7 +642,7 @@ modbus:
       # this value returns a positive value when exporting and a negative value when importing power
       - name: Export power raw
         unique_id: sg_battery_export_power_raw
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13009 # reg 13010
         input_type: input
         data_type: int32
@@ -655,7 +656,7 @@ modbus:
 
       - name: Daily battery charge from PV
         unique_id: sg_daily_battery_charge_from_pv
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13011 # reg 13012
         input_type: input
         data_type: uint16
@@ -668,7 +669,7 @@ modbus:
 
       - name: Total battery charge from PV
         unique_id: sg_total_battery_charge_from_pv
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13012 # reg 13013
         input_type: input
         data_type: uint32
@@ -682,7 +683,7 @@ modbus:
 
       - name: Daily direct energy consumption
         unique_id: sg_daily_direct_energy_consumption
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13016 # reg 13017
         input_type: input
         data_type: uint16
@@ -695,7 +696,7 @@ modbus:
 
       - name: Total direct energy consumption
         unique_id: sg_total_direct_energy_consumption
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13017 # reg 13018
         input_type: input
         data_type: uint32
@@ -709,7 +710,7 @@ modbus:
 
       - name: Battery voltage
         unique_id: sg_battery_voltage
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13019 # reg 13020
         input_type: input
         data_type: uint16
@@ -724,7 +725,7 @@ modbus:
       # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/304
       - name: Battery current
         unique_id: sg_battery_current
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13020 # reg 13021
         input_type: input
         data_type: int16
@@ -742,7 +743,7 @@ modbus:
       # to support both firmwares we use the template sensor "signed battery power"
       - name: Battery power raw
         unique_id: sg_battery_power_raw
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13021 # reg 13022
         input_type: input
         data_type: int16 #updated to signed int, see issue #406
@@ -756,7 +757,7 @@ modbus:
       # 0..100%  |  min_soc..max_soc
       - name: Battery level
         unique_id: sg_battery_level
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13022 # reg 13023
         input_type: input
         data_type: uint16
@@ -770,7 +771,7 @@ modbus:
       # 0..100% calculated internally by the BMS load balancing
       - name: Battery state of health
         unique_id: sg_battery_state_of_health
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13023 # reg 13024
         input_type: input
         data_type: uint16
@@ -782,7 +783,7 @@ modbus:
 
       - name: Battery temperature
         unique_id: sg_battery_temperature
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13024 # reg 13025
         input_type: input
         data_type: int16
@@ -795,7 +796,7 @@ modbus:
 
       - name: Daily battery discharge
         unique_id: sg_daily_battery_discharge
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13025 # reg 13026
         input_type: input
         data_type: uint16
@@ -808,7 +809,7 @@ modbus:
 
       - name: Total battery discharge
         unique_id: sg_total_battery_discharge
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13026 # reg 13027
         input_type: input
         data_type: uint32
@@ -822,7 +823,7 @@ modbus:
 
       - name: Phase A current
         unique_id: sg_phase_a_current
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13030 # reg 13031
         input_type: input
         data_type: int16
@@ -835,7 +836,7 @@ modbus:
 
       - name: Phase B current
         unique_id: sg_phase_b_current
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13031 # reg 13032
         input_type: input
         data_type: int16
@@ -848,7 +849,7 @@ modbus:
 
       - name: Phase C current
         unique_id: sg_phase_c_current
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13032 # reg 13033
         input_type: input
         data_type: int16
@@ -861,7 +862,7 @@ modbus:
 
       - name: Total active power
         unique_id: sg_total_active_power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13033 # reg 13034
         input_type: input
         data_type: int32
@@ -875,7 +876,7 @@ modbus:
 
       - name: Daily imported energy
         unique_id: sg_daily_imported_energy
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13035 # reg 13036
         input_type: input
         data_type: uint16
@@ -888,7 +889,7 @@ modbus:
 
       - name: Total imported energy
         unique_id: sg_total_imported_energy
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13036 # reg 13037
         input_type: input
         data_type: uint32
@@ -902,7 +903,7 @@ modbus:
 
       - name: Battery capacity
         unique_id: uid_battery_capacity
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13038 # reg 13039
         input_type: input
         data_type: uint16
@@ -913,7 +914,7 @@ modbus:
 
       - name: Daily battery charge
         unique_id: sg_daily_battery_charge
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13039 # reg 13040
         input_type: input
         data_type: uint16
@@ -926,7 +927,7 @@ modbus:
 
       - name: Total battery charge
         unique_id: sg_total_battery_charge
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13040 # reg 13041
         input_type: input
         data_type: uint32
@@ -940,7 +941,7 @@ modbus:
 
       - name: Daily exported energy
         unique_id: sg_daily_exported_energy
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13044 # reg 13045
         input_type: input
         data_type: uint16
@@ -953,7 +954,7 @@ modbus:
 
       - name: Total exported energy
         unique_id: sg_total_exported_energy
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13045 # reg 13046
         input_type: input
         data_type: uint32
@@ -970,7 +971,7 @@ modbus:
       #####################
       - name: Load adjustment mode selection raw
         unique_id: sg_load_adjustment_mode_selection_raw
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &sg_reg_load_adjustment_mode_selection 13001 # reg 13002
         input_type: holding
         data_type: uint16
@@ -979,7 +980,7 @@ modbus:
 
       - name: Load adjustment mode enable raw
         unique_id: sg_load_adjustment_mode_enable_raw
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &sg_reg_load_adjustment_mode_enable 13010 # reg 13011
         input_type: holding
         data_type: uint16
@@ -991,7 +992,7 @@ modbus:
       # see https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/444#issuecomment-3471705119
       - name: Forced startup under low soc standby raw
         unique_id: sg_forced_startup_under_low_soc_standby_raw
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &sg_reg_forced_startup_low_soc 13016 # reg 13017
         input_type: holding
         data_type: uint16
@@ -1000,7 +1001,7 @@ modbus:
 
       - name: EMS mode selection raw
         unique_id: sg_ems_mode_selection_raw
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &sg_reg_ems_mode_selection 13049 # reg 13050
         input_type: holding
         data_type: uint16
@@ -1009,7 +1010,7 @@ modbus:
 
       - name: Battery forced charge discharge cmd raw
         unique_id: sg_battery_forced_charge_discharge_cmd_raw
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &sg_reg_forced_charge_discharge_cmd_raw 13050 # reg 13051
         input_type: holding
         data_type: uint16
@@ -1019,7 +1020,7 @@ modbus:
 
       - name: Battery forced charge discharge power
         unique_id: sg_battery_forced_charge_discharge_power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &sg_reg_battery_forced_charge_discharge_power 13051 # reg 13052
         input_type: holding
         data_type: uint16
@@ -1035,7 +1036,7 @@ modbus:
 
       - name: Battery max SoC
         unique_id: uid_sg_battery_max_soc
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &sg_reg_max_soc 13057 # reg 13058
         input_type: holding
         data_type: uint16
@@ -1048,7 +1049,7 @@ modbus:
 
       - name: Battery min SoC
         unique_id: uid_sg_battery_min_soc
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &sg_reg_min_soc 13058 # reg 13059
         input_type: holding
         data_type: uint16
@@ -1062,7 +1063,7 @@ modbus:
       # in the documentation this is called "feed-in power limit"
       - name: Export power limit
         unique_id: sg_export_power_limit
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &sg_reg_export_power_limit 13073 # reg 13074
         input_type: holding
         data_type: uint16
@@ -1076,7 +1077,7 @@ modbus:
       # called "Off-grid option" in spec
       - name: Backup mode raw
         unique_id: sg_backup_mode_raw
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &sg_reg_backup_mode 13074 # reg 13075
         input_type: holding
         data_type: uint16
@@ -1086,7 +1087,7 @@ modbus:
       # called "Feed-in limitation" in spec
       - name: Export power limit mode raw
         unique_id: sg_export_power_limit_mode_raw
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &sg_reg_export_power_limit_mode 13086 # reg 13087
         input_type: holding
         data_type: uint16
@@ -1096,7 +1097,7 @@ modbus:
 
       - name: Battery reserved SoC for backup
         unique_id: sg_battery_reserved_soc_for_backup
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &sg_reg_reserved_soc_backup 13099 # reg 13100
         input_type: holding
         data_type: uint16
@@ -1110,7 +1111,7 @@ modbus:
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
       - name: Inverter Firmware Version
         unique_id: sg_inverter_firmware_version
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13249 # reg 13250 - 13264, 15 register
         input_type: input
         data_type: string
@@ -1121,7 +1122,7 @@ modbus:
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
       - name: Communication Module Firmware Version
         unique_id: sg_communication_module_firmware_version
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13264 # reg 13265 - 13279, 15 register
         input_type: input
         data_type: string
@@ -1132,7 +1133,7 @@ modbus:
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
       - name: Battery Firmware Version
         unique_id: sg_battery_firmware_version
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: 13279 # reg 13280 - 13279, 15 register
         input_type: input
         data_type: string
@@ -1146,7 +1147,7 @@ modbus:
       # 0x55: Disable
       - name: Active power limitation raw
         unique_id: sg_active_power_limitation_raw
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &reg_active_power_limitation_raw 13088 # reg 13089
         input_type: holding
         data_type: uint16
@@ -1157,7 +1158,7 @@ modbus:
       # 0-1000
       - name: Active power limitation ratio raw
         unique_id: sg_active_power_limitation_ratio_raw
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &reg_active_power_limitation_ratio_raw 13089 # reg 13090
         input_type: holding
         data_type: uint16
@@ -1171,7 +1172,7 @@ modbus:
       # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
       - name: APL shutdown at zero raw
         unique_id: sg_apl_shutdown_on_zero_raw
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &reg_apl_shutdown_on_zero_raw 31212 # reg 31213
         input_type: holding
         data_type: uint16
@@ -1180,7 +1181,7 @@ modbus:
 
       - name: Battery max charge power
         unique_id: sg_battery_max_charge_power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &sg_reg_battery_max_charge_power 33046 # reg 33047
         input_type: holding
         data_type: uint16
@@ -1193,7 +1194,7 @@ modbus:
 
       - name: Battery max discharge power
         unique_id: sg_battery_max_discharge_power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &sg_reg_battery_max_discharge_power 33047 # reg 33048
         input_type: holding
         data_type: uint16
@@ -1206,7 +1207,7 @@ modbus:
       # datasheet: Charging/Discharging Power–Wide range
       - name: Battery charging start power
         unique_id: sg_battery_charging_start_power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &sg_reg_battery_charging_start_power 33148 # reg 33149
         input_type: holding
         data_type: uint16
@@ -1219,7 +1220,7 @@ modbus:
       # undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Battery discharging start power
         unique_id: sg_battery_discharging_start_power
-        device_address: !secret sungrow_modbus_slave
+        device_address: !secret sungrow_modbus_device_address
         address: &sg_reg_battery_discharging_start_power 33149 # reg 33150
         input_type: holding
         data_type: uint16
@@ -1236,7 +1237,7 @@ modbus:
     switches:
       - name: Forced Startup Under Low SoC Standby
         unique_id: sg_forced_startup_under_low_soc_standby_switch
-        slave: !secret sungrow_modbus_slave
+        slave: !secret sungrow_modbus_device_address
         address: *sg_reg_forced_startup_low_soc
         write_type: holding
         command_on: 0xAA
@@ -1250,7 +1251,7 @@ modbus:
 
       - name: Backup Mode
         unique_id: sg_backup_mode_switch
-        slave: !secret sungrow_modbus_slave
+        slave: !secret sungrow_modbus_device_address
         address: *sg_reg_backup_mode
         write_type: holding
         command_on: 0xAA
@@ -1264,7 +1265,7 @@ modbus:
 
       - name: Export power limit
         unique_id: sg_export_power_limit_switch
-        slave: !secret sungrow_modbus_slave
+        slave: !secret sungrow_modbus_device_address
         address: *sg_reg_export_power_limit_mode
         write_type: holding
         command_on: 0xAA
@@ -1278,7 +1279,7 @@ modbus:
 
       - name: Load adjustment mode
         unique_id: sg_load_adjustment_mode_switch
-        slave: !secret sungrow_modbus_slave
+        slave: !secret sungrow_modbus_device_address
         address: *sg_reg_load_adjustment_mode_enable
         write_type: holding
         command_on: 0xAA
@@ -1416,7 +1417,7 @@ template:
           - action: modbus.write_register
             data_template:
               hub: *sg_hub_name
-              slave: !secret sungrow_modbus_slave
+              slave: !secret sungrow_modbus_device_address
               address: *sg_reg_min_soc
               value: "{{ value | int *10 }}"
 
@@ -1434,7 +1435,7 @@ template:
           - action: modbus.write_register
             data_template:
               hub: *sg_hub_name
-              slave: !secret sungrow_modbus_slave
+              slave: !secret sungrow_modbus_device_address
               address: *sg_reg_max_soc
               value: "{{ value | int *10 }}"
 
@@ -1451,7 +1452,7 @@ template:
           - action: modbus.write_register
             data_template:
               hub: *sg_hub_name
-              slave: !secret sungrow_modbus_slave
+              slave: !secret sungrow_modbus_device_address
               address: *sg_reg_reserved_soc_backup
               value: "{{ value | int }}"
 
@@ -1476,7 +1477,7 @@ template:
           - action: modbus.write_register
             data_template:
               hub: *sg_hub_name
-              slave: !secret sungrow_modbus_slave
+              slave: !secret sungrow_modbus_device_address
               address: *sg_reg_battery_charging_start_power
               value: "{{ value | float /10 }}"
 
@@ -1496,7 +1497,7 @@ template:
           - action: modbus.write_register
             data_template:
               hub: *sg_hub_name
-              slave: !secret sungrow_modbus_slave
+              slave: !secret sungrow_modbus_device_address
               address: *sg_reg_battery_discharging_start_power
               value: "{{ value | float /10 |int}}"
 
@@ -1513,7 +1514,7 @@ template:
           - action: modbus.write_register
             data_template:
               hub: *sg_hub_name
-              slave: !secret sungrow_modbus_slave
+              slave: !secret sungrow_modbus_device_address
               address: *sg_reg_battery_forced_charge_discharge_power
               value: "{{ value | int }}"
 
@@ -1530,7 +1531,7 @@ template:
           - action: modbus.write_register
             data_template:
               hub: *sg_hub_name
-              slave: !secret sungrow_modbus_slave
+              slave: !secret sungrow_modbus_device_address
               address: *sg_reg_battery_max_charge_power
               value: "{{ value | float / 10 }}"
 
@@ -1547,7 +1548,7 @@ template:
           - action: modbus.write_register
             data_template:
               hub: *sg_hub_name
-              slave: !secret sungrow_modbus_slave
+              slave: !secret sungrow_modbus_device_address
               address: *sg_reg_battery_max_discharge_power
               value: "{{ value| float / 10 }}"
 
@@ -1564,7 +1565,7 @@ template:
           - action: modbus.write_register
             data_template:
               hub: *sg_hub_name
-              slave: !secret sungrow_modbus_slave
+              slave: !secret sungrow_modbus_device_address
               address: *sg_reg_export_power_limit
               value: "{{ value| float / 10 }}"
 
@@ -1972,7 +1973,7 @@ template:
           - action: modbus.write_register
             data_template:
               hub: *sg_hub_name
-              slave: !secret sungrow_modbus_slave
+              slave: !secret sungrow_modbus_device_address
               address: *sg_reg_ems_mode_selection
               value: "{{ map.get(option, map.get('Self-consumption mode (default)', 0)) | int }}"
 
@@ -2008,7 +2009,7 @@ template:
           - action: modbus.write_register
             data_template:
               hub: *sg_hub_name
-              slave: !secret sungrow_modbus_slave
+              slave: !secret sungrow_modbus_device_address
               address: *sg_reg_forced_charge_discharge_cmd_raw
               value: "{{ map.get(option, map.get('Stop (default)', 0)) }}"
 
@@ -2045,7 +2046,7 @@ template:
           - action: modbus.write_register
             data_template:
               hub: *sg_hub_name
-              slave: !secret sungrow_modbus_slave
+              slave: !secret sungrow_modbus_device_address
               address: *sg_reg_load_adjustment_mode_selection
               value: "{{ map.get(option, map.get('Disabled', 3)) }}"
 
@@ -2101,7 +2102,7 @@ automation:
               - action: modbus.write_register
                 data_template:
                   hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_slave
+                  slave: !secret sungrow_modbus_device_address
                   address: *sg_reg_running_state
                   value: >
                     {% if is_state('switch.enable_inverter', "on") %}
@@ -2163,6 +2164,23 @@ automation:
 #              - action: script.sg_self_consumption_mode
 
 script:
+  sg_wakeup_inverter_for_forced_mode:
+    sequence:
+      - action: select.select_option
+        data:
+          entity_id: select.ems_mode
+          option: "Forced mode"
+      - if:
+        - condition: state
+          entity_id: sensor.sungrow_inverter_state
+          state: "Standby"
+        then:
+          - action: switch.turn_on
+            data:
+              entity_id: switch.forced_startup_under_low_soc_standby
+          - delay: "00:02:00" # wait 2min for inverter to boot up
+      
+
   sg_set_forced_discharge_battery_mode:
     sequence:
       - action: select.select_option
