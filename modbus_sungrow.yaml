@@ -4,6 +4,7 @@
 #
 # TODO:
 # - Create changelog of dev branch for version 2 release
+# - Generate settings for two inverter setups with _inv1 and _inv2 as suffix
 # - Create a "howto migrate to version 2" guide
 # - Implement logic for active power limitation: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
 
