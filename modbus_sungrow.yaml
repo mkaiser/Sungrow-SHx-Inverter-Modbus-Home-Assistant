@@ -33,6 +33,16 @@
 # sungrow_modbus_battery_max_power: 4500 # TODO update with the maximum charge power of your battery in W.
 ## For >99% of all situations it won't hurt to set a lower value here, which won't put much aging-stress on the battery.
 ## Max values for common batteries: SBR096: 6500W, SBR128: 8500W, SBR160: 10500W, SBR192: 13000W, SBR224: 15000Wm, SBR256: 17000W Default is '5000'
+#
+#
+# MIGRATING from version 1 of modbus_sungrow.yaml:
+# 0) Backup your modbus_sungrow.yaml file
+# 1) Adapt secrets.yaml:
+#    - Rename *sungrow_modbus_device_address* to *sungrow_modbus_device_address*
+#    - Add *sungrow_modbus_battery_max_power: 5000* (use the max supported power of your battery)
+# 2) HA: Developer tools --> Check Configuration --> Restart
+# 3) Check the Log for errors: HA: Settings --> System --> Log (or hotkey 'c' followed by 'log')
+# 4) If everything is fine, update the default dashboard provided in the git
 
 modbus:
   - name: &sg_hub_name SungrowSHx
