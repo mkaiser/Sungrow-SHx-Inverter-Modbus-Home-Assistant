@@ -1,4 +1,4 @@
-# Release data 2025-11-18
+# Release data 2025-12-08
 #
 # This version is under heavy development. You should not use it :)
 #
@@ -7,7 +7,7 @@
 # - Generate settings for two inverter setups with _inv1 and _inv2 as suffix
 # - Create a "howto migrate to version 2" guide
 # - Implement logic for active power limitation: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
-
+#
 # DONE
 # - Rename secret sungrow_modbus_slave to sungrow_modbus_device_address to match modbus naming
 # - Add MIT licence
@@ -22,7 +22,9 @@
 # - Remove unnecessary parentheses in if-else statements.
 # - Implement MPPT3 for SH*T inverters, not resulting in broken / unknown sensors for SH*RT inverters
 # - Use YAML anchors different scan_intervals (e.g. scan_interval_slowest, scan_interval_mid, scan_interval_frequent, scan_interval_realtime)
-
+# - Update modbus sensor registers after modbus writes in input number templates
+# 
+#
 # This code requires folowing entries in your secrets.yaml file, see the example in this repository:
 # secret.yaml
 # sungrow_modbus_host_ip: 192.168.xxx.xxx # TODO update with the IP of your inverter. No default. Check your router.
@@ -1410,6 +1412,10 @@ template:
               slave: !secret sungrow_modbus_device_address
               address: *sg_reg_min_soc
               value: "{{ value | int *10 }}"
+          # manually refresh modbus register
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.battery_min_soc
 
       - name: Battery Max Soc
         unique_id: uid_battery_max_soc
@@ -1428,6 +1434,10 @@ template:
               slave: !secret sungrow_modbus_device_address
               address: *sg_reg_max_soc
               value: "{{ value | int *10 }}"
+          # manually refresh modbus register
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.battery_max_soc
 
       - name: Battery Reserved SoC for Backup
         unique_id: uid_battery_reserved_soc_for_backup
@@ -1445,6 +1455,10 @@ template:
               slave: !secret sungrow_modbus_device_address
               address: *sg_reg_reserved_soc_backup
               value: "{{ value | int }}"
+          # manually refresh modbus register
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.battery_reserved_soc_for_backup
 
       # This threshold is compared against the currently achievable charging power, not just against the currently available surplus.
       # If this is set higher than the maximum charging power of the battery, charging will not start.
@@ -1470,6 +1484,10 @@ template:
               slave: !secret sungrow_modbus_device_address
               address: *sg_reg_battery_charging_start_power
               value: "{{ value | float /10 }}"
+          # manually refresh modbus register
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.battery_charging_start_power
 
       - name: Battery discharging start power
         unique_id: uid_battery_discharging_start_power
@@ -1490,6 +1508,10 @@ template:
               slave: !secret sungrow_modbus_device_address
               address: *sg_reg_battery_discharging_start_power
               value: "{{ value | float /10 |int}}"
+          # manually refresh modbus register
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.battery_discharging_start_power
 
       - name: Battery forced charge discharge power
         unique_id: uid_battery_forced_charge_discharge_power
@@ -1507,6 +1529,10 @@ template:
               slave: !secret sungrow_modbus_device_address
               address: *sg_reg_battery_forced_charge_discharge_power
               value: "{{ value | int }}"
+          # manually refresh modbus register
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.battery_forced_charge_discharge_power
 
       - name: Battery max charge power
         unique_id: uid_battery_max_charge_power
@@ -1524,6 +1550,10 @@ template:
               slave: !secret sungrow_modbus_device_address
               address: *sg_reg_battery_max_charge_power
               value: "{{ value | float / 10 }}"
+          # manually refresh modbus register
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.battery_max_charge_power
 
       - name: Battery max discharge power
         unique_id: uid_battery_max_discharge_power
@@ -1541,6 +1571,10 @@ template:
               slave: !secret sungrow_modbus_device_address
               address: *sg_reg_battery_max_discharge_power
               value: "{{ value| float / 10 }}"
+          # manually refresh modbus register
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.battery_max_discharge_power
 
       - name: Export power limit
         unique_id: uid_export_power_limit
@@ -1557,7 +1591,17 @@ template:
               hub: *sg_hub_name
               slave: !secret sungrow_modbus_device_address
               address: *sg_reg_export_power_limit
-              value: "{{ value| float / 10 }}"
+              value: >-
+                {% set dev = states('sensor.sungrow_device_type') %}
+                {% if dev.startswith('SH') and dev.endswith('RT') %}
+                  {{ (value | float / 10) | int }}
+                {% else %}
+                  {{ value | int }}
+                {% endif %}
+          # manually refresh modbus register
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.export_power_limit
 
   ####################
   # template: sensor
@@ -2101,10 +2145,10 @@ automation:
                       {{sg_stop}}
                     {% endif %}
               - delay: "00:00:01" # delay one second
-              - action: homeassistant.update_entity # force update
-                data:
-                  entity_id:
-                    - sensor.running_state_raw
+              # manually refresh modbus register
+              - action: homeassistant.update_entity 
+                target:
+                  entity_id: sensor.running_state_raw
           # inverter --> UI
           - conditions:
               - condition: trigger
