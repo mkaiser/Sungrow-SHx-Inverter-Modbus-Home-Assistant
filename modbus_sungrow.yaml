@@ -902,17 +902,6 @@ modbus:
         scale: 0.1
         scan_interval: *scan_interval_slowest
 
-      - name: Battery capacity
-        unique_id: uid_battery_capacity
-        device_address: !secret sungrow_modbus_device_address
-        address: 13038 # reg 13039
-        input_type: input
-        data_type: uint16
-        unit_of_measurement: kWh
-        device_class: energy_storage
-        scale: 0.1
-        scan_interval: *scan_interval_slowest
-
       - name: Daily battery charge
         unique_id: sg_daily_battery_charge
         device_address: !secret sungrow_modbus_device_address
@@ -1826,11 +1815,11 @@ template:
         device_class: energy_storage
         state_class: measurement
         availability: >-
-          {{ states('sensor.battery_capacity') not in ['unknown','unavailable'] 
+          {{ states('sensor.battery_capacity_high_precision') not in ['unknown','unavailable'] 
           and states('sensor.battery_level_nominal') not in ['unknown','unavailable'] }}
         state: >-
           {{
-            ( states('sensor.battery_capacity') | float *
+            ( states('sensor.battery_capacity_high_precision') | float *
             states('sensor.battery_level_nominal') | float / 100 )| round(1)
           }}
 
@@ -1844,13 +1833,13 @@ template:
         device_class: energy_storage
         state_class: measurement
         availability: >-
-          {{ states('sensor.battery_capacity') not in ['unknown','unavailable'] 
+          {{ states('sensor.battery_capacity_high_precision') not in ['unknown','unavailable'] 
           and states('sensor.battery_level') not in ['unknown','unavailable'] 
           and states('sensor.battery_min_soc') not in ['unknown','unavailable']
           and states('sensor.battery_max_soc') not in ['unknown','unavailable'] }}
         state: >-
           {{ 
-            ( states('sensor.battery_capacity')|float 
+            ( states('sensor.battery_capacity_high_precision')|float 
             * ( states('sensor.battery_max_soc')|float - states('sensor.battery_min_soc')|float ) /100 
             * states('sensor.battery_level')|float /100 
             ) |round(2)
@@ -2172,15 +2161,14 @@ script:
           entity_id: select.ems_mode
           option: "Forced mode"
       - if:
-        - condition: state
-          entity_id: sensor.sungrow_inverter_state
-          state: "Standby"
+          - condition: state
+            entity_id: sensor.sungrow_inverter_state
+            state: "Standby"
         then:
           - action: switch.turn_on
             data:
               entity_id: switch.forced_startup_under_low_soc_standby
           - delay: "00:02:00" # wait 2min for inverter to boot up
-      
 
   sg_set_forced_discharge_battery_mode:
     sequence:
