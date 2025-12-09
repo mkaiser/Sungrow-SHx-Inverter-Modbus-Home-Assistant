@@ -38,7 +38,7 @@
 # MIGRATING from version 1 of modbus_sungrow.yaml:
 # 0) Backup your modbus_sungrow.yaml file
 # 1) Adapt secrets.yaml:
-#    - Rename *sungrow_modbus_device_address* to *sungrow_modbus_device_address*
+#    - Rename *sungrow_modbus_slave* to *sungrow_modbus_device_address*
 #    - Add *sungrow_modbus_battery_max_power: 5000* (use the max supported power of your battery)
 # 2) HA: Developer tools --> Check Configuration --> Restart
 # 3) Check the Log for errors: HA: Settings --> System --> Log (or hotkey 'c' followed by 'log')
