@@ -35,7 +35,7 @@
 ## Max values for common batteries: SBR096: 6500W, SBR128: 8500W, SBR160: 10500W, SBR192: 13000W, SBR224: 15000Wm, SBR256: 17000W Default is '5000'
 #
 #
-# MIGRATING from version 1 of modbus_sungrow.yaml:
+# MIGRATING from version 1 of modbus_sungrow.yaml to this version:
 # 0) Backup your modbus_sungrow.yaml file
 # 1) Adapt secrets.yaml:
 #    - Rename *sungrow_modbus_slave* to *sungrow_modbus_device_address*
@@ -1170,17 +1170,19 @@ modbus:
         unit_of_measurement: "%"
         device_class: power_factor
 
-      # from the unknown too, but can't find this in the datasheet
+      # NOTE: 2025-12-10
+      # from 'theunknown' too, but can't find this in the datasheet
       # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
       - name: APL shutdown at zero raw
         unique_id: sg_apl_shutdown_on_zero_raw
         device_address: !secret sungrow_modbus_device_address
-        address: &reg_apl_shutdown_on_zero_raw 31212 # reg 31213
+        address: &sg_reg_apl_shutdown_on_zero_raw 31212 # reg 31213
         input_type: holding
         data_type: uint16
         state_class: measurement
         scan_interval: *scan_interval_fast
 
+      # NOTE: datasheet (1.1.11) states 0.01kW as unit (scale=100)
       - name: Battery max charge power
         unique_id: sg_battery_max_charge_power
         device_address: !secret sungrow_modbus_device_address
@@ -1194,6 +1196,7 @@ modbus:
         scale: 10
         scan_interval: *scan_interval_fast
 
+      # NOTE: datasheet (1.1.11) states 0.01kW as unit (scale=100)
       - name: Battery max discharge power
         unique_id: sg_battery_max_discharge_power
         device_address: !secret sungrow_modbus_device_address
@@ -1988,7 +1991,7 @@ template:
           # map: option name to raw value
           map:
             "Self-consumption mode (default)": 0
-            "Forced mode": 2
+            "Forced mode": 2 # datasheet now calls it "compulsory mode"
             "External EMS": 3
             "VPP": 4
             # rarely used and commented for simplicity
