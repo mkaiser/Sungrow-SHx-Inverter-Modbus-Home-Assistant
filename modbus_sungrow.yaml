@@ -55,6 +55,33 @@ modbus:
     timeout: 10
 
     sensors:
+      - name: Sungrow Protocol Version
+        unique_id: sg_protocol_version
+        device_address: !secret sungrow_modbus_device_address
+        address: 4951 # reg 5952-4953
+        input_type: input
+        data_type: uint32
+        swap: word
+        scan_interval: &scan_interval_slowest 600
+
+      - name: Sungrow Arm Software
+        unique_id: sg_arm_software
+        device_address: !secret sungrow_modbus_device_address
+        address: 4953 # reg 4954-4968, 15 registers
+        input_type: input
+        data_type: string
+        count: 15
+        scan_interval: *scan_interval_slowest
+
+      - name: Sungrow DSP Software
+        unique_id: sg_dsp_software
+        device_address: !secret sungrow_modbus_device_address
+        address: 4968 # reg 4969-4983, 15 registers
+        input_type: input
+        data_type: string
+        count: 15
+        scan_interval: *scan_interval_slowest
+
       - name: Sungrow inverter serial
         unique_id: sg_inverter_serial
         device_address: !secret sungrow_modbus_device_address
@@ -62,7 +89,7 @@ modbus:
         input_type: input
         data_type: string
         count: 10
-        scan_interval: &scan_interval_slowest 600
+        scan_interval: *scan_interval_slowest
 
       # for Sungrow batteries only
       #      - name: Sungrow battery serial
@@ -296,7 +323,7 @@ modbus:
         scale: 0.001
         scan_interval: *scan_interval_fast
 
-      # NOTE: In datasheet (1.1.11) it is recommended to use this register instead of 13022 
+      # NOTE: In datasheet (1.1.11) it is recommended to use this register instead of 13022
       # negative: Battery charging
       # positive: Battery discharging
       - name: Battery power raw
@@ -405,6 +432,20 @@ modbus:
         state_class: measurement
         scale: 100
         scan_interval: *scan_interval_slowest
+
+      # NOTE: In datasheet (1.1.11) it is recommended to use Battery Current register 5631 instead of 13021
+      - name: Battery current
+        unique_id: sg_battery_current
+        device_address: !secret sungrow_modbus_device_address
+        address: 5630 # reg 5631
+        input_type: input
+        data_type: int16
+        precision: 1
+        unit_of_measurement: A
+        state_class: measurement
+        device_class: current
+        scale: 0.1
+        scan_interval: *scan_interval_fast
 
       - name: BMS max. charging current
         unique_id: sg_bms_max_charging_current
@@ -753,27 +794,28 @@ modbus:
         scale: 0.1
         scan_interval: *scan_interval_fast
 
-      # NOTE: datasheet states that this value is unsigned, but it is actually signed:
+      # NOTE: 2025-12-12. This sensor was replaced by register 5631 as recommended in the datasheet
+      #  datasheet states that this value is unsigned, but it is actually signed:
       # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/304
-      - name: Battery current
-        unique_id: sg_battery_current
-        device_address: !secret sungrow_modbus_device_address
-        address: 13020 # reg 13021
-        input_type: input
-        data_type: int16
-        precision: 1
-        unit_of_measurement: A
-        state_class: measurement
-        device_class: current
-        scale: 0.1
-        scan_interval: *scan_interval_fast
+      # - name: Battery current
+      #   unique_id: sg_battery_current
+      #   device_address: !secret sungrow_modbus_device_address
+      #   address: 13020 # reg 13021
+      #   input_type: input
+      #   data_type: int16
+      #   precision: 1
+      #   unit_of_measurement: A
+      #   state_class: measurement
+      #   device_class: current
+      #   scale: 0.1
+      #   scan_interval: *scan_interval_fast
 
+      # NOTE: 2025-12-12: substituted this register by reg 5214 as recommended in the datasheet
       # old firmware ( before october 2024): always positive battery power
       # use binary_sensor.battery_charging | discharging to retrieve the direction of the energy flow
       # new firmware: positive if charging and negative if discharging
       # with new firmware installed we could use this raw value directly as signed battery power
       # to support both firmwares we use the template sensor "signed battery power"
-      # 2025-12-12: substituted this register by reg 5214 as recommended in the datasheet
       # - name: Battery power raw
       #   unique_id: sg_battery_power_raw
       #   device_address: !secret sungrow_modbus_device_address
@@ -1807,7 +1849,6 @@ template:
         availability: "{{ states('sensor.battery_power_raw') not in ['unknown','unavailable'] }}"
         state: "{{ states('sensor.battery_power_raw')|int }}"
 
-
       # positive if discharging else zero
       - name: Battery discharging power
         unique_id: sg_battery_discharging_power
@@ -1830,7 +1871,6 @@ template:
         state_class: measurement
         availability: "{{ states('sensor.battery_power_raw') not in ['unknown','unavailable'] }}"
         state: "{{ states('sensor.battery_power_raw')|int *-1}}"
-
 
       # power from grid: positive if importing, else zero
       - name: Import power
