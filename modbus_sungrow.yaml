@@ -25,6 +25,7 @@
 # - Update modbus sensor registers after modbus writes in input number templates
 # - Use scenes instead of automations
 #
+#
 # This code requires folowing entries in your secrets.yaml file, see the example in this repository:
 # secret.yaml
 # sungrow_modbus_host_ip: 192.168.xxx.xxx # TODO update with the IP of your inverter. No default. Check your router.
@@ -40,9 +41,10 @@
 # 1) Adapt secrets.yaml:
 #    - Rename *sungrow_modbus_slave* to *sungrow_modbus_device_address*
 #    - Add *sungrow_modbus_battery_max_power: 5000* (use the max supported power of your battery)
-# 2) HA: Developer tools --> Check Configuration --> Restart
-# 3) Check the Log for errors: HA: Settings --> System --> Log (or hotkey 'c' followed by 'log')
-# 4) If everything is fine, update the default dashboard provided in the git
+# 2) Swap the modbus_sungrow.yaml file with the current version version
+# 3) HA: Developer tools --> Check Configuration --> Restart
+# 4) Check the Log for errors: HA: Settings --> System --> Log (or hotkey 'c' followed by 'log')
+# 5) If everything is fine, update the default dashboard provided in the git
 
 modbus:
   - name: &sg_hub_name SungrowSHx
@@ -734,7 +736,7 @@ modbus:
         scale: 0.1
         scan_interval: *scan_interval_fast
 
-      # note: datasheet states that this value is unsigned, but it is acually signed:
+      # NOTE: datasheet states that this value is unsigned, but it is actually signed:
       # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/304
       - name: Battery current
         unique_id: sg_battery_current
@@ -759,7 +761,7 @@ modbus:
         device_address: !secret sungrow_modbus_device_address
         address: 13021 # reg 13022
         input_type: input
-        data_type: int16 #updated to signed int, see issue #406
+        data_type: int16 #updated to signed int, see github issue #406
         precision: 0
         unit_of_measurement: W
         device_class: power
@@ -1979,7 +1981,6 @@ template:
       # this enables/disables the inverter state & EMS settings in the dashboard
       # hopefully this prevents accidentally setting values while browsing on the phone :)
       - name: Enable inverter
-      # - name: Export power limit mode
 
   ###################
   # template: select
@@ -2159,7 +2160,7 @@ automation:
                     {% endif %}
               - delay: "00:00:01" # delay one second
               # manually refresh modbus register
-              - action: homeassistant.update_entity 
+              - action: homeassistant.update_entity
                 target:
                   entity_id: sensor.running_state_raw
           # inverter --> UI
@@ -2205,7 +2206,6 @@ automation:
         data:
           value: "{{ states('sensor.inverter_rated_output') | float(0) }}"
     mode: single
-
 
 scene:
   - name: Sungrow Self-Consumption Mode
