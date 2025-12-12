@@ -23,7 +23,7 @@
 # - Implement MPPT3 for SH*T inverters, not resulting in broken / unknown sensors for SH*RT inverters
 # - Use YAML anchors different scan_intervals (e.g. scan_interval_slowest, scan_interval_mid, scan_interval_frequent, scan_interval_realtime)
 # - Update modbus sensor registers after modbus writes in input number templates
-# 
+# - Use scenes instead of automations
 #
 # This code requires folowing entries in your secrets.yaml file, see the example in this repository:
 # secret.yaml
@@ -2186,106 +2186,63 @@ automation:
                           entity_id: switch.enable_inverter
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
-# Usage: Use these scripts to simplify automations
-# Example (Adjust to your needs with appropriate trigger):
-# automation:
-#  - alias: Forced Battery Charging Management
-#    description: "Manages forced battery charging during cheapest hours."
-#   triggers:
-#      - trigger: state
-#        entity_id:
-#          - binary_sensor.cheapest_hours_for_charging_timer
-#    actions:
-#      - choose:
-#          - conditions:
-#              - condition: state
-#                entity_id: binary_sensor.cheapest_hours_for_charging_timer
-#                state: 'on'
-#            sequence:
-#              - action: script.sg_forced_charge_battery_mode
-#          - conditions:
-#              - condition: state
-#                entity_id: binary_sensor.cheapest_hours_for_charging_timer
-#                state: 'off'
-#            sequence:
-#              - action: script.sg_self_consumption_mode
+  - id: "automation_sungrow_max_export_scene_sets_rated_limit"
+    alias: "sungrow max export scene sets rated limit"
+    description: "When 'Sungrow Set Max Export' scene is activated, set export limit to inverter rated output"
+    triggers:
+      - platform: event
+        event_type: call_service
+        event_data:
+          domain: scene
+          service: turn_on
+          service_data:
+            entity_id: scene.sungrow_set_max_export_power
+    conditions: []
+    action:
+      - service: number.set_value
+        target:
+          entity_id: number.export_power_limit
+        data:
+          value: "{{ states('sensor.inverter_rated_output') | float(0) }}"
+    mode: single
 
-script:
-  sg_wakeup_inverter_for_forced_mode:
-    sequence:
-      - action: select.select_option
-        data:
-          entity_id: select.ems_mode
-          option: "Forced mode"
-      - if:
-          - condition: state
-            entity_id: sensor.sungrow_inverter_state
-            state: "Standby"
-        then:
-          - action: switch.turn_on
-            data:
-              entity_id: switch.forced_startup_under_low_soc_standby
-          - delay: "00:02:00" # wait 2min for inverter to boot up
 
-  sg_set_forced_discharge_battery_mode:
-    sequence:
-      - action: select.select_option
-        data:
-          entity_id: select.ems_mode
-          option: "Forced mode"
-      - action: select.select_option
-        data:
-          entity_id: select.battery_forced_charge_discharge
-          option: "Forced discharge"
+scene:
+  - name: Sungrow Self-Consumption Mode
+    entities:
+      select.ems_mode: "Self-consumption mode (default)"
+      select.battery_forced_charge_discharge: "Stop (default)"
 
-  sg_set_forced_charge_battery_mode:
-    sequence:
-      - action: select.select_option
-        data:
-          entity_id: select.ems_mode
-          option: "Forced mode"
-      - action: select.select_option
-        data:
-          entity_id: select.battery_forced_charge_discharge
-          option: "Forced charge"
+  - name: Sungrow Set Zero Export Power
+    entities:
+      switch.export_power_limit: "on"
+      number.export_power_limit: "0"
 
-  sg_set_battery_bypass_mode:
-    sequence:
-      - action: select.select_option
-        data:
-          entity_id: select.ems_mode
-          option: "Forced mode"
-      - action: select.select_option
-        data:
-          entity_id: select.battery_forced_charge_discharge
-          option: "Stop (default)"
+  - name: Sungrow Set Max Export Power
+    entities:
+      # cannot use sensor.inverter_rated_output, because scripts don't render templates :/
+      # for this, the automation "automation_sungrow_max_export_scene_sets_rated_limit" is used
+      # number.export_power_limit: "5000"
+      switch.export_power_limit: "off"
 
-  # Self-consumption mode with battery discharging disabled. Will still charge from solar. Intended for preserving battery capacity for high-price periods.
-  sg_set_self_consumption_limited_discharge:
-    sequence:
-      - action: select.select_option
-        data:
-          entity_id: select.ems_mode
-          option: "Self-consumption mode (default)"
-      # Has no effect in self-consumption mode, just restores the forced mode command to a safe default.
-      - action: select.select_option
-        data:
-          entity_id: select.battery_forced_charge_discharge
-          option: "Stop (default)"
-      # Set battery max discharge power to lowest value (10 W) which disables discharging at least for Sungrow batteries.
-      - action: number.set_value
-        data:
-          entity_id: number.battery_max_discharge_power
-          value: 10
+  - name: Sungrow Set Battery Bypass Mode
+    entities:
+      select.ems_mode: "Forced mode"
+      select.battery_forced_charge_discharge: "Stop (default)"
 
-  sg_set_self_consumption_mode:
-    sequence:
-      - action: select.select_option
-        data:
-          entity_id: select.ems_mode
-          option: "Self-consumption mode (default)"
-      # Has no effect in self-consumption mode, just restores the forced mode command to a safe default.
-      - action: select.select_option
-        data:
-          entity_id: select.battery_forced_charge_discharge
-          option: "Stop (default)"
+  - name: Sungrow Set Battery Forced Discharge
+    entities:
+      select.ems_mode: "Forced mode"
+      select.battery_forced_charge_discharge: "Forced discharge"
+
+  - name: Sungrow Set Battery Forced Charge
+    entities:
+      select.ems_mode: "Forced mode"
+      select.battery_forced_charge_discharge: "Forced charge"
+      switch.forced_startup_under_low_soc_standby: "on" # in case inverter is in standby due to low soc
+
+  - name: Sungrow Set Self-Consumption Limited Discharge
+    entities:
+      select.ems_mode: "Self-consumption mode (default)"
+      select.battery_forced_charge_discharge: "Stop (default)"
+      number.battery_max_discharge_power: "10" # set to minimum to disable discharging
