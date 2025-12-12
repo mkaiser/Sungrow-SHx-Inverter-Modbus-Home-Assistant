@@ -23,7 +23,8 @@
 # - Implement MPPT3 for SH*T inverters, not resulting in broken / unknown sensors for SH*RT inverters
 # - Use YAML anchors different scan_intervals (e.g. scan_interval_slowest, scan_interval_mid, scan_interval_frequent, scan_interval_realtime)
 # - Update modbus sensor registers after modbus writes in input number templates
-# 
+# - Use scenes instead of automations
+#
 #
 # This code requires folowing entries in your secrets.yaml file, see the example in this repository:
 # secret.yaml
@@ -35,14 +36,15 @@
 ## Max values for common batteries: SBR096: 6500W, SBR128: 8500W, SBR160: 10500W, SBR192: 13000W, SBR224: 15000Wm, SBR256: 17000W Default is '5000'
 #
 #
-# MIGRATING from version 1 of modbus_sungrow.yaml:
+# MIGRATING from version 1 of modbus_sungrow.yaml to this version:
 # 0) Backup your modbus_sungrow.yaml file
 # 1) Adapt secrets.yaml:
 #    - Rename *sungrow_modbus_slave_inv2* to *sungrow_modbus_device_address*
 #    - Add *sungrow_modbus_battery_max_power: 5000* (use the max supported power of your battery)
-# 2) HA: Developer tools --> Check Configuration --> Restart
-# 3) Check the Log for errors: HA: Settings --> System --> Log (or hotkey 'c' followed by 'log')
-# 4) If everything is fine, update the default dashboard provided in the git
+# 2) Swap the modbus_sungrow.yaml file with the current version version
+# 3) HA: Developer tools --> Check Configuration --> Restart
+# 4) Check the Log for errors: HA: Settings --> System --> Log (or hotkey 'c' followed by 'log')
+# 5) If everything is fine, update the default dashboard provided in the git
 
 modbus:
   - name: &sg_hub_name SungrowSHx 2
@@ -53,14 +55,41 @@ modbus:
     timeout: 10
 
     sensors:
+      - name: Sungrow Protocol Version 2
+        unique_id: sg_protocol_version_2
+        device_address: !secret sungrow_modbus_device_address
+        address: 4951 # reg 5952-4953
+        input_type: input
+        data_type: uint32
+        swap: word
+        scan_interval: &scan_interval_slowest 600
+
+      - name: Sungrow Arm Software 2
+        unique_id: sg_arm_software_2
+        device_address: !secret sungrow_modbus_device_address
+        address: 4953 # reg 4954-4968, 15 registers
+        input_type: input
+        data_type: string
+        count: 15
+        scan_interval: *scan_interval_slowest
+
+      - name: Sungrow DSP Software 2
+        unique_id: sg_dsp_software_2
+        device_address: !secret sungrow_modbus_device_address
+        address: 4968 # reg 4969-4983, 15 registers
+        input_type: input
+        data_type: string
+        count: 15
+        scan_interval: *scan_interval_slowest
+
       - name: Sungrow inverter serial 2
         unique_id: sg_inverter_serial_2
         device_address: !secret sungrow_modbus_device_address
-        address: 4989 # reg 4990
+        address: 4989 # reg 4990- 4999, 10 registers
         input_type: input
         data_type: string
         count: 10
-        scan_interval: &scan_interval_slowest 600
+        scan_interval: *scan_interval_slowest
 
       # for Sungrow batteries only
       #      - name: Sungrow battery serial
@@ -294,6 +323,23 @@ modbus:
         scale: 0.001
         scan_interval: *scan_interval_fast
 
+      # NOTE: In datasheet (1.1.11) it is recommended to use this register instead of 13022
+      # negative: Battery charging
+      # positive: Battery discharging
+      - name: Battery power raw 2
+        unique_id: sg_battery_power_raw_2
+        device_address: !secret sungrow_modbus_device_address
+        address: 5213 # reg 5214-5215
+        input_type: input
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
+        scan_interval: *scan_interval_fast
+
       - name: Grid frequency 2
         unique_id: sg_grid_frequency_2
         device_address: !secret sungrow_modbus_device_address
@@ -386,6 +432,20 @@ modbus:
         state_class: measurement
         scale: 100
         scan_interval: *scan_interval_slowest
+
+      # NOTE: In datasheet (1.1.11) it is recommended to use Battery Current register 5631 instead of 13021
+      - name: Battery current 2
+        unique_id: sg_battery_current_2
+        device_address: !secret sungrow_modbus_device_address
+        address: 5630 # reg 5631
+        input_type: input
+        data_type: int16
+        precision: 1
+        unit_of_measurement: A
+        state_class: measurement
+        device_class: current
+        scale: 0.1
+        scan_interval: *scan_interval_fast
 
       - name: BMS max. charging current 2
         unique_id: sg_bms_max_charging_current_2
@@ -734,38 +794,40 @@ modbus:
         scale: 0.1
         scan_interval: *scan_interval_fast
 
-      # note: datasheet states that this value is unsigned, but it is acually signed:
+      # NOTE: 2025-12-12. This sensor was replaced by register 5631 as recommended in the datasheet
+      #  datasheet states that this value is unsigned, but it is actually signed:
       # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/304
-      - name: Battery current 2
-        unique_id: sg_battery_current_2
-        device_address: !secret sungrow_modbus_device_address
-        address: 13020 # reg 13021
-        input_type: input
-        data_type: int16
-        precision: 1
-        unit_of_measurement: A
-        state_class: measurement
-        device_class: current
-        scale: 0.1
-        scan_interval: *scan_interval_fast
+      # - name: Battery current
+      #   unique_id: sg_battery_current_2
+      #   device_address: !secret sungrow_modbus_device_address
+      #   address: 13020 # reg 13021
+      #   input_type: input
+      #   data_type: int16
+      #   precision: 1
+      #   unit_of_measurement: A
+      #   state_class: measurement
+      #   device_class: current
+      #   scale: 0.1
+      #   scan_interval: *scan_interval_fast
 
+      # NOTE: 2025-12-12: substituted this register by reg 5214 as recommended in the datasheet
       # old firmware ( before october 2024): always positive battery power
       # use binary_sensor.battery_charging_2 | discharging to retrieve the direction of the energy flow
       # new firmware: positive if charging and negative if discharging
       # with new firmware installed we could use this raw value directly as signed battery power
       # to support both firmwares we use the template sensor "signed battery power"
-      - name: Battery power raw 2
-        unique_id: sg_battery_power_raw_2
-        device_address: !secret sungrow_modbus_device_address
-        address: 13021 # reg 13022
-        input_type: input
-        data_type: int16 #updated to signed int, see issue #406
-        precision: 0
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        scale: 1
-        scan_interval: *scan_interval_fast
+      # - name: Battery power raw
+      #   unique_id: sg_battery_power_raw_2
+      #   device_address: !secret sungrow_modbus_device_address
+      #   address: 13021 # reg 13022
+      #   input_type: input
+      #   data_type: int16 #updated to signed int, see github issue #406
+      #   precision: 0
+      #   unit_of_measurement: W
+      #   device_class: power
+      #   state_class: measurement
+      #   scale: 1
+      #   scan_interval: *scan_interval_fast
 
       # 0..100%  |  min_soc..max_soc
       - name: Battery level 2
@@ -1170,17 +1232,19 @@ modbus:
         unit_of_measurement: "%"
         device_class: power_factor
 
-      # from the unknown too, but can't find this in the datasheet
+      # NOTE: 2025-12-10
+      # from 'theunknown' too, but can't find this in the datasheet
       # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
       - name: APL shutdown at zero raw 2
         unique_id: sg_apl_shutdown_on_zero_raw_2
         device_address: !secret sungrow_modbus_device_address
-        address: &reg_apl_shutdown_on_zero_raw 31212 # reg 31213
+        address: &sg_reg_apl_shutdown_on_zero_raw 31212 # reg 31213
         input_type: holding
         data_type: uint16
         state_class: measurement
         scan_interval: *scan_interval_fast
 
+      # NOTE: datasheet (1.1.11) states 0.01kW as unit (scale=100)
       - name: Battery max charge power 2
         unique_id: sg_battery_max_charge_power_2
         device_address: !secret sungrow_modbus_device_address
@@ -1194,6 +1258,7 @@ modbus:
         scale: 10
         scan_interval: *scan_interval_fast
 
+      # NOTE: datasheet (1.1.11) states 0.01kW as unit (scale=100)
       - name: Battery max discharge power 2
         unique_id: sg_battery_max_discharge_power_2
         device_address: !secret sungrow_modbus_device_address
@@ -1761,40 +1826,28 @@ template:
           } %}
           {{ map.get(devType, 'Unknown device code: 0x%04X' % devType) }}
 
-      # positive if charging and negative if discharging
-      - name: Signed battery power 2
-        unique_id: sg_signed_battery_power_2
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        availability: >-
-          {{ states('binary_sensor.battery_charging_2') not in ['unknown','unavailable'] 
-          and states('binary_sensor.battery_discharging_2') not in ['unknown','unavailable']
-          and states('sensor.battery_power_raw_2') not in ['unknown','unavailable'] }}
-        state: >-
-          {% if is_state('binary_sensor.battery_charging_2', 'on') %}
-            {{ (states('sensor.battery_power_raw_2') |float |abs)}} 
-          {% elif is_state('binary_sensor.battery_discharging_2', 'on') %} 
-            {{ (states('sensor.battery_power_raw_2') |float |abs * -1)}} 
-          {% else %} 
-            0 
-          {% endif %}
-
       # positive if charging else zero
       - name: Battery charging power 2
         unique_id: sg_battery_charging_power_2
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: >-
-          {{ states('binary_sensor.battery_charging_2') not in ['unknown','unavailable'] 
-          and states('sensor.battery_power_raw_2') not in ['unknown','unavailable'] }}
+        availability: "{{ states('sensor.battery_power_raw_2') not in ['unknown','unavailable'] }}"
         state: >-
-          {% if is_state('binary_sensor.battery_charging_2', 'on') %}
-            {{ states('sensor.battery_power_raw_2')|int |abs }}
+          {% if states('sensor.battery_power_raw_2')|int > 0 %}
+            {{ states('sensor.battery_power_raw_2')|int }}
           {% else %}
             0
           {% endif %}
+
+      # positive if charging, negative if discharging
+      - name: Battery charging power signed 2
+        unique_id: sg_battery_charging_power_signed_2
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.battery_power_raw_2') not in ['unknown','unavailable'] }}"
+        state: "{{ states('sensor.battery_power_raw_2')|int }}"
 
       # positive if discharging else zero
       - name: Battery discharging power 2
@@ -1802,15 +1855,22 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: >-
-          {{ states('binary_sensor.battery_discharging_2') not in ['unknown','unavailable'] 
-          and states('sensor.battery_power_raw_2') not in ['unknown','unavailable'] }}
+        availability: "{{ states('sensor.battery_power_raw_2') not in ['unknown','unavailable'] }}"
         state: >-
-          {% if is_state('binary_sensor.battery_discharging_2', 'on') %}
+          {% if states('sensor.battery_power_raw_2')|int < 0 %}
             {{ states('sensor.battery_power_raw_2')|int |abs }}
           {% else %}
             0
           {% endif %}
+
+      # positive if discharging, negative if charging
+      - name: Battery discharging power signed 2
+        unique_id: sg_battery_discharging_power_signed_2
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.battery_power_raw_2') not in ['unknown','unavailable'] }}"
+        state: "{{ states('sensor.battery_power_raw_2')|int *-1}}"
 
       # power from grid: positive if importing, else zero
       - name: Import power 2
@@ -1976,7 +2036,6 @@ template:
       # this enables/disables the inverter state & EMS settings in the dashboard
       # hopefully this prevents accidentally setting values while browsing on the phone :)
       - name: Enable inverter 2
-      # - name: Export power limit mode
 
   ###################
   # template: select
@@ -1988,7 +2047,7 @@ template:
           # map: option name to raw value
           map:
             "Self-consumption mode (default)": 0
-            "Forced mode": 2
+            "Forced mode": 2 # datasheet now calls it "compulsory mode"
             "External EMS": 3
             "VPP": 4
             # rarely used and commented for simplicity
@@ -2156,7 +2215,7 @@ automation:
                     {% endif %}
               - delay: "00:00:01" # delay one second
               # manually refresh modbus register
-              - action: homeassistant.update_entity 
+              - action: homeassistant.update_entity
                 target:
                   entity_id: sensor.running_state_raw
           # inverter --> UI
@@ -2183,106 +2242,62 @@ automation:
                           entity_id: switch.enable_inverter
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
-# Usage: Use these scripts to simplify automations
-# Example (Adjust to your needs with appropriate trigger):
-# automation:
-#  - alias: Forced Battery Charging Management
-#    description: "Manages forced battery charging during cheapest hours."
-#   triggers:
-#      - trigger: state
-#        entity_id:
-#          - binary_sensor.cheapest_hours_for_charging_timer
-#    actions:
-#      - choose:
-#          - conditions:
-#              - condition: state
-#                entity_id: binary_sensor.cheapest_hours_for_charging_timer
-#                state: 'on'
-#            sequence:
-#              - action: script.sg_forced_charge_battery_mode
-#          - conditions:
-#              - condition: state
-#                entity_id: binary_sensor.cheapest_hours_for_charging_timer
-#                state: 'off'
-#            sequence:
-#              - action: script.sg_self_consumption_mode
+  - id: "automation_sungrow_max_export_scene_sets_rated_limit"
+    alias: "sungrow max export scene sets rated limit"
+    description: "When 'Sungrow Set Max Export' scene is activated, set export limit to inverter rated output"
+    triggers:
+      - platform: event
+        event_type: call_service
+        event_data:
+          domain: scene
+          service: turn_on
+          service_data:
+            entity_id: scene.sungrow_set_max_export_power
+    conditions: []
+    action:
+      - service: number.set_value
+        target:
+          entity_id: number.export_power_limit
+        data:
+          value: "{{ states('sensor.inverter_rated_output') | float(0) }}"
+    mode: single
 
-script:
-  sg_wakeup_inverter_for_forced_mode:
-    sequence:
-      - action: select.select_option
-        data:
-          entity_id: select.ems_mode
-          option: "Forced mode"
-      - if:
-          - condition: state
-            entity_id: sensor.sungrow_inverter_state_2
-            state: "Standby"
-        then:
-          - action: switch.turn_on
-            data:
-              entity_id: switch.forced_startup_under_low_soc_standby
-          - delay: "00:02:00" # wait 2min for inverter to boot up
+scene:
+  - name: Sungrow Self-Consumption Mode 2
+    entities:
+      select.ems_mode: "Self-consumption mode (default)"
+      select.battery_forced_charge_discharge: "Stop (default)"
 
-  sg_2_set_forced_discharge_battery_mode:
-    sequence:
-      - action: select.select_option
-        data:
-          entity_id: select.ems_mode
-          option: "Forced mode"
-      - action: select.select_option
-        data:
-          entity_id: select.battery_forced_charge_discharge
-          option: "Forced discharge"
+  - name: Sungrow Set Zero Export Power 2
+    entities:
+      switch.export_power_limit: "on"
+      number.export_power_limit: "0"
 
-  sg_2_set_forced_charge_battery_mode:
-    sequence:
-      - action: select.select_option
-        data:
-          entity_id: select.ems_mode
-          option: "Forced mode"
-      - action: select.select_option
-        data:
-          entity_id: select.battery_forced_charge_discharge
-          option: "Forced charge"
+  - name: Sungrow Set Max Export Power 2
+    entities:
+      # cannot use sensor.inverter_rated_output, because scripts don't render templates :/
+      # for this, the automation "automation_sungrow_max_export_scene_sets_rated_limit" is used
+      # number.export_power_limit: "5000"
+      switch.export_power_limit: "off"
 
-  sg_2_set_battery_bypass_mode:
-    sequence:
-      - action: select.select_option
-        data:
-          entity_id: select.ems_mode
-          option: "Forced mode"
-      - action: select.select_option
-        data:
-          entity_id: select.battery_forced_charge_discharge
-          option: "Stop (default)"
+  - name: Sungrow Set Battery Bypass Mode 2
+    entities:
+      select.ems_mode: "Forced mode"
+      select.battery_forced_charge_discharge: "Stop (default)"
 
-  # Self-consumption mode with battery discharging disabled. Will still charge from solar. Intended for preserving battery capacity for high-price periods.
-  sg_2_set_self_consumption_limited_discharge:
-    sequence:
-      - action: select.select_option
-        data:
-          entity_id: select.ems_mode
-          option: "Self-consumption mode (default)"
-      # Has no effect in self-consumption mode, just restores the forced mode command to a safe default.
-      - action: select.select_option
-        data:
-          entity_id: select.battery_forced_charge_discharge
-          option: "Stop (default)"
-      # Set battery max discharge power to lowest value (10 W) which disables discharging at least for Sungrow batteries.
-      - action: number.set_value
-        data:
-          entity_id: number.battery_max_discharge_power
-          value: 10
+  - name: Sungrow Set Battery Forced Discharge 2
+    entities:
+      select.ems_mode: "Forced mode"
+      select.battery_forced_charge_discharge: "Forced discharge"
 
-  sg_2_set_self_consumption_mode:
-    sequence:
-      - action: select.select_option
-        data:
-          entity_id: select.ems_mode
-          option: "Self-consumption mode (default)"
-      # Has no effect in self-consumption mode, just restores the forced mode command to a safe default.
-      - action: select.select_option
-        data:
-          entity_id: select.battery_forced_charge_discharge
-          option: "Stop (default)"
+  - name: Sungrow Set Battery Forced Charge 2
+    entities:
+      select.ems_mode: "Forced mode"
+      select.battery_forced_charge_discharge: "Forced charge"
+      switch.forced_startup_under_low_soc_standby: "on" # in case inverter is in standby due to low soc
+
+  - name: Sungrow Set Self-Consumption Limited Discharge 2
+    entities:
+      select.ems_mode: "Self-consumption mode (default)"
+      select.battery_forced_charge_discharge: "Stop (default)"
+      number.battery_max_discharge_power: "10" # set to minimum to disable discharging
