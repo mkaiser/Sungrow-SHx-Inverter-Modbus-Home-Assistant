@@ -58,7 +58,7 @@ modbus:
       - name: Sungrow inverter serial
         unique_id: sg_inverter_serial
         device_address: !secret sungrow_modbus_device_address
-        address: 4989 # reg 4990
+        address: 4989 # reg 4990- 4999, 10 registers
         input_type: input
         data_type: string
         count: 10
@@ -294,6 +294,23 @@ modbus:
         device_class: power_factor
         state_class: measurement
         scale: 0.001
+        scan_interval: *scan_interval_fast
+
+      # NOTE: In datasheet (1.1.11) it is recommended to use this register instead of 13022 
+      # negative: Battery charging
+      # positive: Battery discharging
+      - name: Battery power raw
+        unique_id: sg_battery_power_raw
+        device_address: !secret sungrow_modbus_device_address
+        address: 5213 # reg 5214-5215
+        input_type: input
+        data_type: int32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scale: 1
         scan_interval: *scan_interval_fast
 
       - name: Grid frequency
@@ -756,18 +773,19 @@ modbus:
       # new firmware: positive if charging and negative if discharging
       # with new firmware installed we could use this raw value directly as signed battery power
       # to support both firmwares we use the template sensor "signed battery power"
-      - name: Battery power raw
-        unique_id: sg_battery_power_raw
-        device_address: !secret sungrow_modbus_device_address
-        address: 13021 # reg 13022
-        input_type: input
-        data_type: int16 #updated to signed int, see github issue #406
-        precision: 0
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        scale: 1
-        scan_interval: *scan_interval_fast
+      # 2025-12-12: substituted this register by reg 5214 as recommended in the datasheet
+      # - name: Battery power raw
+      #   unique_id: sg_battery_power_raw
+      #   device_address: !secret sungrow_modbus_device_address
+      #   address: 13021 # reg 13022
+      #   input_type: input
+      #   data_type: int16 #updated to signed int, see github issue #406
+      #   precision: 0
+      #   unit_of_measurement: W
+      #   device_class: power
+      #   state_class: measurement
+      #   scale: 1
+      #   scan_interval: *scan_interval_fast
 
       # 0..100%  |  min_soc..max_soc
       - name: Battery level
@@ -1772,12 +1790,10 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: >-
-          {{ states('binary_sensor.battery_charging') not in ['unknown','unavailable'] 
-          and states('sensor.battery_power_raw') not in ['unknown','unavailable'] }}
+        availability: "{{ states('sensor.battery_power_raw') not in ['unknown','unavailable'] }}"
         state: >-
-          {% if is_state('binary_sensor.battery_charging', 'on') %}
-            {{ states('sensor.battery_power_raw')|int |abs }}
+          {% if states('sensor.battery_power_raw')|int > 0 %}
+            {{ states('sensor.battery_power_raw')|int }}
           {% else %}
             0
           {% endif %}
@@ -1788,15 +1804,9 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: >-
-          {{ states('binary_sensor.battery_charging') not in ['unknown','unavailable'] 
-          and states('sensor.battery_power_raw') not in ['unknown','unavailable'] }}
-        state: >-
-          {% if is_state('binary_sensor.battery_charging', 'on') %}
-            {{ states('sensor.battery_power_raw')|int |abs }}
-          {% else %}
-           {{ states('sensor.battery_power_raw')|int |abs *-1}}
-          {% endif %}
+        availability: "{{ states('sensor.battery_power_raw') not in ['unknown','unavailable'] }}"
+        state: "{{ states('sensor.battery_power_raw')|int }}"
+
 
       # positive if discharging else zero
       - name: Battery discharging power
@@ -1804,11 +1814,9 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: >-
-          {{ states('binary_sensor.battery_discharging') not in ['unknown','unavailable'] 
-          and states('sensor.battery_power_raw') not in ['unknown','unavailable'] }}
+        availability: "{{ states('sensor.battery_power_raw') not in ['unknown','unavailable'] }}"
         state: >-
-          {% if is_state('binary_sensor.battery_discharging', 'on') %}
+          {% if states('sensor.battery_power_raw')|int < 0 %}
             {{ states('sensor.battery_power_raw')|int |abs }}
           {% else %}
             0
@@ -1820,15 +1828,9 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: >-
-          {{ states('binary_sensor.battery_discharging') not in ['unknown','unavailable'] 
-          and states('sensor.battery_power_raw') not in ['unknown','unavailable'] }}
-        state: >-
-          {% if is_state('binary_sensor.battery_discharging', 'on') %}
-            {{ states('sensor.battery_power_raw')|int |abs }}
-          {% else %}
-           {{ states('sensor.battery_power_raw')|int |abs *-1}}
-          {% endif %}
+        availability: "{{ states('sensor.battery_power_raw') not in ['unknown','unavailable'] }}"
+        state: "{{ states('sensor.battery_power_raw')|int *-1}}"
+
 
       # power from grid: positive if importing, else zero
       - name: Import power
