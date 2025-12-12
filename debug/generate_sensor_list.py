@@ -103,7 +103,7 @@ def main():
     out_lines = []
     for name in uniq:
         eid = sanitize_entity(name)
-        out_lines.append(f"{name}={{{{states('sensor.{eid}')}}}}")
+        out_lines.append(f"sensor.{eid}={{{{states('sensor.{eid}')}}}}")
 
     output = "\n".join(out_lines) + "\n"
 
