@@ -1766,25 +1766,6 @@ template:
           } %}
           {{ map.get(devType, 'Unknown device code: 0x%04X' % devType) }}
 
-      # positive if charging and negative if discharging
-      - name: Signed battery power
-        unique_id: sg_signed_battery_power
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        availability: >-
-          {{ states('binary_sensor.battery_charging') not in ['unknown','unavailable'] 
-          and states('binary_sensor.battery_discharging') not in ['unknown','unavailable']
-          and states('sensor.battery_power_raw') not in ['unknown','unavailable'] }}
-        state: >-
-          {% if is_state('binary_sensor.battery_charging', 'on') %}
-            {{ (states('sensor.battery_power_raw') |float |abs)}} 
-          {% elif is_state('binary_sensor.battery_discharging', 'on') %} 
-            {{ (states('sensor.battery_power_raw') |float |abs * -1)}} 
-          {% else %} 
-            0 
-          {% endif %}
-
       # positive if charging else zero
       - name: Battery charging power
         unique_id: sg_battery_charging_power
@@ -1801,6 +1782,22 @@ template:
             0
           {% endif %}
 
+      # positive if charging, negative if discharging
+      - name: Battery charging power signed
+        unique_id: sg_battery_charging_power_signed
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ states('binary_sensor.battery_charging') not in ['unknown','unavailable'] 
+          and states('sensor.battery_power_raw') not in ['unknown','unavailable'] }}
+        state: >-
+          {% if is_state('binary_sensor.battery_charging', 'on') %}
+            {{ states('sensor.battery_power_raw')|int |abs }}
+          {% else %}
+           {{ states('sensor.battery_power_raw')|int |abs *-1}}
+          {% endif %}
+
       # positive if discharging else zero
       - name: Battery discharging power
         unique_id: sg_battery_discharging_power
@@ -1815,6 +1812,22 @@ template:
             {{ states('sensor.battery_power_raw')|int |abs }}
           {% else %}
             0
+          {% endif %}
+
+      # positive if discharging, negative if charging
+      - name: Battery discharging power signed
+        unique_id: sg_battery_discharging_power_signed
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ states('binary_sensor.battery_discharging') not in ['unknown','unavailable'] 
+          and states('sensor.battery_power_raw') not in ['unknown','unavailable'] }}
+        state: >-
+          {% if is_state('binary_sensor.battery_discharging', 'on') %}
+            {{ states('sensor.battery_power_raw')|int |abs }}
+          {% else %}
+           {{ states('sensor.battery_power_raw')|int |abs *-1}}
           {% endif %}
 
       # power from grid: positive if importing, else zero
