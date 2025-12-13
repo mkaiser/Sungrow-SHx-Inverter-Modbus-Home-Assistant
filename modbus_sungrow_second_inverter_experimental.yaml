@@ -1827,20 +1827,6 @@ template:
           } %}
           {{ map.get(devType, 'Unknown device code: 0x%04X' % devType) }}
 
-      # positive if charging else zero
-      - name: Battery charging power 2
-        unique_id: sg_battery_charging_power_2
-        unit_of_measurement: W
-        device_class: power
-        state_class: measurement
-        availability: "{{ states('sensor.battery_power') not in ['unknown','unavailable'] }}"
-        state: >-
-          {% if states('sensor.battery_power')|int > 0 %}
-            {{ states('sensor.battery_power')|int }}
-          {% else %}
-            0
-          {% endif %}
-
       # positive if charging, negative if discharging
       - name: Battery charging power signed 2
         unique_id: sg_battery_charging_power_signed_2
@@ -1848,18 +1834,18 @@ template:
         device_class: power
         state_class: measurement
         availability: "{{ states('sensor.battery_power') not in ['unknown','unavailable'] }}"
-        state: "{{ states('sensor.battery_power')|int }}"
+        state: "{{ states('sensor.battery_power')|int *-1}}"  # sensor.battery_power is negative when charging
 
-      # positive if discharging else zero
-      - name: Battery discharging power 2
-        unique_id: sg_battery_discharging_power_2
+      # positive if charging else zero
+      - name: Battery charging power 2
+        unique_id: sg_battery_charging_power_2
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: "{{ states('sensor.battery_power') not in ['unknown','unavailable'] }}"
+        availability: "{{ states('sensor.battery_charging_power_signed') not in ['unknown','unavailable'] }}"
         state: >-
-          {% if states('sensor.battery_power')|int < 0 %}
-            {{ states('sensor.battery_power')|int |abs }}
+          {% if states('sensor.battery_charging_power_signed') |int > 0 %}
+            {{ states('sensor.battery_charging_power_signed') |int}}
           {% else %}
             0
           {% endif %}
@@ -1877,7 +1863,22 @@ template:
         device_class: power
         state_class: measurement
         availability: "{{ states('sensor.battery_power') not in ['unknown','unavailable'] }}"
-        state: "{{ states('sensor.battery_power')|int *-1}}"
+        state: "{{ states('sensor.battery_power')|int}}"  # sensor.battery_power is positive when discharging
+
+
+      # positive if discharging else zero
+      - name: Battery discharging power 2
+        unique_id: sg_battery_discharging_power_2
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.battery_discharging_power_signed') not in ['unknown','unavailable'] }}"
+        state: >-
+          {% if states('sensor.battery_discharging_power_signed')|int > 0 %}
+            {{ states('sensor.battery_discharging_power_signed')|int }}
+          {% else %}
+            0
+          {% endif %}
 
       # power from grid: positive if importing, else zero
       - name: Import power 2
