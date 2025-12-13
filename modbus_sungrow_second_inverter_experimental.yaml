@@ -7,6 +7,7 @@
 # - Generate settings for two inverter setups with _inv1 and _inv2 as suffix
 # - Create a "howto migrate to version 2" guide
 # - Implement logic for active power limitation: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
+# - Update doc for HA Energy dashboard configuration ("Use Battery discharging power signed" as battery power sensor)
 #
 # DONE
 # - Rename secret sungrow_modbus_slave_inv2 to sungrow_modbus_device_address to match modbus naming
@@ -326,8 +327,8 @@ modbus:
       # NOTE: In datasheet (1.1.11) it is recommended to use this register instead of 13022
       # negative: Battery charging
       # positive: Battery discharging
-      - name: Battery power raw 2
-        unique_id: sg_battery_power_raw_2
+      - name: Battery power 2
+        unique_id: sg_battery_power_2
         device_address: !secret sungrow_modbus_device_address
         address: 5213 # reg 5214-5215
         input_type: input
@@ -1832,10 +1833,10 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: "{{ states('sensor.battery_power_raw_2') not in ['unknown','unavailable'] }}"
+        availability: "{{ states('sensor.battery_power') not in ['unknown','unavailable'] }}"
         state: >-
-          {% if states('sensor.battery_power_raw_2')|int > 0 %}
-            {{ states('sensor.battery_power_raw_2')|int }}
+          {% if states('sensor.battery_power')|int > 0 %}
+            {{ states('sensor.battery_power')|int }}
           {% else %}
             0
           {% endif %}
@@ -1846,8 +1847,8 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: "{{ states('sensor.battery_power_raw_2') not in ['unknown','unavailable'] }}"
-        state: "{{ states('sensor.battery_power_raw_2')|int }}"
+        availability: "{{ states('sensor.battery_power') not in ['unknown','unavailable'] }}"
+        state: "{{ states('sensor.battery_power')|int }}"
 
       # positive if discharging else zero
       - name: Battery discharging power 2
@@ -1855,22 +1856,28 @@ template:
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: "{{ states('sensor.battery_power_raw_2') not in ['unknown','unavailable'] }}"
+        availability: "{{ states('sensor.battery_power') not in ['unknown','unavailable'] }}"
         state: >-
-          {% if states('sensor.battery_power_raw_2')|int < 0 %}
-            {{ states('sensor.battery_power_raw_2')|int |abs }}
+          {% if states('sensor.battery_power')|int < 0 %}
+            {{ states('sensor.battery_power')|int |abs }}
           {% else %}
             0
           {% endif %}
 
+      # NOTE:
+      # Use this sensor for the HA energy dashboard.
+      # HA Energy Dashboard configuration description:
+      # "Pick a sensor which measures the electricity flowing into and out of the battery in either of GW, kW, MW, mW, TW, W.
+      # Positive values indicate discharging the battery, negative values indicate charging the battery."
+      #
       # positive if discharging, negative if charging
       - name: Battery discharging power signed 2
         unique_id: sg_battery_discharging_power_signed_2
         unit_of_measurement: W
         device_class: power
         state_class: measurement
-        availability: "{{ states('sensor.battery_power_raw_2') not in ['unknown','unavailable'] }}"
-        state: "{{ states('sensor.battery_power_raw_2')|int *-1}}"
+        availability: "{{ states('sensor.battery_power') not in ['unknown','unavailable'] }}"
+        state: "{{ states('sensor.battery_power')|int *-1}}"
 
       # power from grid: positive if importing, else zero
       - name: Import power 2
