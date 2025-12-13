@@ -19,6 +19,7 @@ views:
           - entity: sensor.import_power
           - entity: sensor.battery_charging_power
           - entity: sensor.battery_discharging_power
+          - entity: sensor.battery_power
         title: Power
       - type: entities
         entities:
@@ -87,7 +88,6 @@ views:
         hide_legend: false
       - type: entities
         entities:
-          - entity: sensor.battery_capacity
           - entity: sensor.battery_capacity_high_precision
           - entity: sensor.battery_level
           - entity: sensor.battery_level_nominal
@@ -195,7 +195,6 @@ views:
         title: PV Gen
       - type: entities
         entities:
-          - entity: sensor.battery_capacity
           - entity: sensor.battery_capacity_high_precision
           - entity: sensor.battery_temperature
           - entity: sensor.battery_charging_power
@@ -211,6 +210,11 @@ views:
           - entity: sensor.bms_max_discharging_current
           - entity: sensor.battery_charging_start_power
           - entity: sensor.battery_discharging_start_power
+          - entity: sensor.battery_power
+          - entity: sensor.battery_charging_power
+          - entity: sensor.battery_charging_power_signed
+          - entity: sensor.battery_discharging_power
+          - entity: sensor.battery_discharging_power_signed
         title: Battery
       - type: entities
         entities:
@@ -284,9 +288,6 @@ views:
           - entity: number.battery_max_discharge_power
           - entity: number.battery_charging_start_power
           - entity: number.battery_discharging_start_power
-          - entity: number.battery_min_soc
-          - entity: number.battery_max_soc
-          - entity: number.battery_reserved_soc_for_backup
         title: Battery Settings
         state_color: false
         show_header_toggle: true
@@ -296,6 +297,7 @@ views:
             state: 'on'
       - type: entities
         entities:
+          - entity: sensor.sungrow_inverter_state
           - entity: sensor.load_adjustment_mode_enable_raw
           - entity: sensor.battery_forced_charge_discharge_cmd_raw
           - entity: sensor.load_adjustment_mode_selection_raw
@@ -304,6 +306,21 @@ views:
           - entity: sensor.battery_max_soc
           - entity: sensor.ems_mode_selection_raw
           - entity: sensor.battery_forced_charge_discharge_cmd_raw
+          - entity: sensor.forced_startup_under_low_soc_standby_raw
+          - entity: sensor.battery_power
         title: Debug
+      - type: entities
+        entities:
+          - scene.sungrow_self_consumption_mode
+          - scene.sungrow_set_battery_bypass_mode
+          - scene.sungrow_set_battery_forced_charge
+          - scene.sungrow_set_battery_forced_discharge
+          - scene.sungrow_set_max_export_power
+          - scene.sungrow_set_self_consumption_limited_discharge
+          - scene.sungrow_set_zero_export_power
+        visibility:
+          - condition: state
+            entity: switch.sungrow_dashboard_enable_danger_mode
+            state: 'on'
     badges: []
 title: PV System
