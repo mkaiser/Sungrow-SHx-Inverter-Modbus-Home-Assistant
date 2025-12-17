@@ -1670,7 +1670,7 @@ modbus:
         count: 15
         scan_interval: 600
 
-      # Communication Module Firmware version from register 13250 to 13264 as UTF8 string
+      # Communication Module Firmware version from register 13265 to 13279 as UTF8 string
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
       - name: Communication Module Firmware Version
         unique_id: sg_communication_module_firmware_version
@@ -1681,12 +1681,12 @@ modbus:
         count: 15
         scan_interval: 600
 
-      # Battery Firmware version from register 13250 to 13264 as UTF8 string
+      # Battery Firmware version from register 13280 to 13294 as UTF8 string
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
       - name: Battery Firmware Version
         unique_id: sg_battery_firmware_version
         device_address: !secret sungrow_modbus_slave
-        address: 13279 # reg 13280 - 13279, 15 register
+        address: 13279 # reg 13280 - 13294, 15 register
         input_type: input
         data_type: string
         count: 15
