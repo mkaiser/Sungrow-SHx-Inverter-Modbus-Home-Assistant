@@ -46,6 +46,27 @@
 # 3) HA: Developer tools --> Check Configuration --> Restart
 # 4) Check the Log for errors: HA: Settings --> System --> Log (or hotkey 'c' followed by 'log')
 # 5) If everything is fine, update the default dashboard provided in the git
+# 6) Check for unavailable and sensors with entities ending with _2   
+#    TODO (help me!) better explanation here!
+#      a) open "Homeassistant" --> "Settings" --> "Devices and services" --> Tab "Entities" 
+#      b) Uuse the filter (top left side) to filter for "not provided". 
+#         Propably multiple now deprecated modbus_sungrow sensors will appear there. 
+#      c) You can multi-select them (somewhere top left?) and click at the top right (three dots) to delete them
+#      d) restart HA and check again
+#      e) if you see and _2 sensors, remove the _2 suffix and restart HA 
+# 7) Update the new "Energy Dashboard" (introduced in HA 25.12)
+#    Home Assisant --> Energy --> Edit Dashboard (top right):
+#     Electricity grid:
+#       Grid consumption --> Total imported energy
+#       Return to grid --> Total exported energy
+#       Grid power --> Meter active power
+#     Solar Panels
+#       Solar production energy --> Total PV generation
+#       Solar production power --> Total DC power
+#     Home battery storage
+#       Energy charged into the battery --> Total battery charge
+#       Energy discharged from the battery --> Total battery discharge
+#       Battery power --> Battery discharging power signed
 
 modbus:
   - name: &sg_hub_name SungrowSHx 2
@@ -1834,7 +1855,7 @@ template:
         device_class: power
         state_class: measurement
         availability: "{{ states('sensor.battery_power') not in ['unknown','unavailable'] }}"
-        state: "{{ states('sensor.battery_power')|int *-1}}"  # sensor.battery_power is negative when charging
+        state: "{{ states('sensor.battery_power')|int *-1}}" # sensor.battery_power is negative when charging
 
       # positive if charging else zero
       - name: Battery charging power 2
@@ -1863,8 +1884,7 @@ template:
         device_class: power
         state_class: measurement
         availability: "{{ states('sensor.battery_power') not in ['unknown','unavailable'] }}"
-        state: "{{ states('sensor.battery_power')|int}}"  # sensor.battery_power is positive when discharging
-
+        state: "{{ states('sensor.battery_power')|int}}" # sensor.battery_power is positive when discharging
 
       # positive if discharging else zero
       - name: Battery discharging power 2
