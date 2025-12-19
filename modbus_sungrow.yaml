@@ -1,15 +1,14 @@
-# Release data 2025-12-08
+# Release data 2025-12-20
 #
 # This version is under heavy development. You should not use it :)
 #
 # TODO:
-# - Create changelog of dev branch for version 2 release
-# - Generate settings for two inverter setups with _inv1 and _inv2 as suffix
-# - Create a "howto migrate to version 2" guide
 # - Implement logic for active power limitation: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
-# - Update doc for HA Energy dashboard configuration ("Use Battery discharging power signed" as battery power sensor)
 #
 # DONE
+# - Create a "howto migrate to version 2" guide
+# - Generate python script to generate config files for multiple inverter setups with _inv_1 and _inv_2 ... as suffix
+# - Update doc for HA Energy dashboard configuration ("Use Battery discharging power signed" as battery power sensor)
 # - Rename secret sungrow_modbus_slave to sungrow_modbus_device_address to match modbus naming
 # - Add MIT licence
 # - Rename "System state" to "Running state"
@@ -46,14 +45,14 @@
 # 3) HA: Developer tools --> Check Configuration --> Restart
 # 4) Check the Log for errors: HA: Settings --> System --> Log (or hotkey 'c' followed by 'log')
 # 5) If everything is fine, update the default dashboard provided in the git
-# 6) Check for unavailable and sensors with entities ending with _2   
+# 6) Check for unavailable and sensors with entities ending with _2
 #    TODO (help me!) better explanation here!
-#      a) open "Homeassistant" --> "Settings" --> "Devices and services" --> Tab "Entities" 
-#      b) Uuse the filter (top left side) to filter for "not provided". 
-#         Propably multiple now deprecated modbus_sungrow sensors will appear there. 
+#      a) open "Homeassistant" --> "Settings" --> "Devices and services" --> Tab "Entities"
+#      b) Uuse the filter (top left side) to filter for "not provided".
+#         Propably multiple now deprecated modbus_sungrow sensors will appear there.
 #      c) You can multi-select them (somewhere top left?) and click at the top right (three dots) to delete them
 #      d) restart HA and check again
-#      e) if you see and _2 sensors, remove the _2 suffix and restart HA 
+#      e) if you see and _2 sensors, remove the _2 suffix and restart HA
 # 7) Update the new "Energy Dashboard" (introduced in HA 25.12)
 #    Home Assisant --> Energy --> Edit Dashboard (top right):
 #     Electricity grid:
