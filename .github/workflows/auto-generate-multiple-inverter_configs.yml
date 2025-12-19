@@ -1,0 +1,38 @@
+name: Auto-generate multiple inverter configs
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'modbus_sungrow.yaml'
+
+jobs:
+  auto-generate-multiple-inverter-configs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Generate configs for inverter 1..3
+        working-directory: scripts
+        run: |
+          python3 ./generate_second_inverter_config.py 1
+          python3 ./generate_second_inverter_config.py 2
+          python3 ./generate_second_inverter_config.py 3
+
+      - name: Commit and push generated files
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Action"
+          git add modbus_sungrow_multiple_inverters_1.yaml modbus_sungrow_multiple_inverters_2.yaml modbus_sungrow_multiple_inverters_3.yaml
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Auto-generate modbus_sungrow_multiple_inverters_{1..3}.yaml"
+          git push
