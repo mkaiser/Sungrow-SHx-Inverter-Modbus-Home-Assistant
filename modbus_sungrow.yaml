@@ -76,6 +76,55 @@ modbus:
     timeout: 10
 
     sensors:
+      - name: Sungrow Version 1
+        # first part of firmware string
+        # SAPPHIRE-H_01011.95.12SAPPHIRE-H_03011.95.12SUBCTL-S_04011.01.01
+        # --> SAPPHIRE-H_01011.95.12
+        unique_id: sg_version_1
+        device_address: !secret sungrow_modbus_device_address
+        address: 2581 # reg 2582
+        input_type: input
+        data_type: string
+        count: 11 
+        scan_interval: 60 # TODO make slowest!
+
+      - name: Sungrow Version 2
+        # second part of firmware string
+        # SAPPHIRE-H_01011.95.12SAPPHIRE-H_03011.95.12SUBCTL-S_04011.01.01
+        # --> SAPPHIRE-H_03011.95.12
+        unique_id: sg_version_2
+        device_address: !secret sungrow_modbus_device_address
+        address: 2596
+        input_type: input
+        data_type: string
+        count: 11
+        scan_interval: 60 # TODO make slowest!
+
+      - name: Sungrow Version 3
+        # third part of firmware string
+        # SAPPHIRE-H_01011.95.12SAPPHIRE-H_03011.95.12SUBCTL-S_04011.01.01
+        # --> SUBCTL-S_04011.01.01
+        unique_id: sg_version_3
+        device_address: !secret sungrow_modbus_device_address
+        address: 2612
+        input_type: input
+        data_type: string
+        count: 11
+        scan_interval: 60 # TODO make slowest!
+
+      - name: Sungrow Version 4 (Sungrow Battery)
+        # TODO: cannot test, have no sungrow battery
+        # fourth part of firmware string (only for sungrow batteries)
+        # SAPPHIRE-H_01011.95.12SAPPHIRE-H_03011.95.12SUBCTL-S_04011.01.01 - XXXX
+        # --> XXXX
+        unique_id: sg_version_4_battery
+        device_address: !secret sungrow_modbus_device_address
+        address: 2628 
+        input_type: input
+        data_type: string
+        count: 11
+        scan_interval: 60 # TODO make slowest!
+
       - name: Sungrow Protocol Version
         unique_id: sg_protocol_version
         device_address: !secret sungrow_modbus_device_address

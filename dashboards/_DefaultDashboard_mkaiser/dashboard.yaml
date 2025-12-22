@@ -6,6 +6,10 @@ views:
         entities:
           - entity: sensor.sungrow_device_type
           - entity: sensor.sungrow_inverter_state
+          - entity: sensor.sungrow_version_1
+          - entity: sensor.sungrow_version_2
+          - entity: sensor.sungrow_version_3
+          - entity: sensor.sungrow_version_4_sungrow_battery
           - entity: sensor.inverter_firmware_version
           - entity: sensor.communication_module_firmware_version
           - entity: sensor.battery_firmware_version
@@ -81,7 +85,7 @@ views:
           - sensor.load_power
           - sensor.export_power
           - sensor.import_power
-          - sensor.signed_battery_power
+          - sensor.battery_power
         stat_types:
           - mean
         title: Power distribution last 24 hours
@@ -140,6 +144,9 @@ views:
           - entity: sensor.meter_phase_a_active_power
           - entity: sensor.meter_phase_b_active_power
           - entity: sensor.meter_phase_c_active_power
+          - entity: sensor.meter_phase_a_voltage
+          - entity: sensor.meter_phase_b_voltage
+          - entity: sensor.meter_phase_c_voltage
           - entity: sensor.meter_phase_a_current
           - entity: sensor.meter_phase_b_current
           - entity: sensor.meter_phase_c_current
