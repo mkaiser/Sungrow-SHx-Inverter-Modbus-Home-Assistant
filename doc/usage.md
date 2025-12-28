@@ -1,4 +1,7 @@
 ## Controlling the EMS (Energy Management System)
+
+** this all deprecated, just use the scenes included in the modbus_sungrow.yaml file **
+
 You can set EMS parameters in the third (from left) tab of the pre-configured dashboard. 
 
 Example to force-charge the battery:
