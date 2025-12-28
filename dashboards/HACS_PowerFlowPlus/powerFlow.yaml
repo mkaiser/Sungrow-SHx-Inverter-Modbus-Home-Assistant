@@ -1,0 +1,32 @@
+type: custom:power-flow-card-plus
+kw_decimals: 2
+entities:
+  grid:
+    entity:
+      consumption: sensor.import_power
+      production: sensor.export_power
+    color_circle: true
+    secondary_info: {}
+  solar:
+    entity: sensor.total_dc_power
+    secondary_info: {}
+  battery:
+    entity:
+      consumption: sensor.battery_discharging_power
+      production: sensor.battery_charging_power
+    state_of_charge: sensor.battery_level
+    color_circle: true
+  home:
+    color_icon: true
+watt_threshold: 1000
+display_zero_lines:
+  mode: grey_out
+  transparency: 50
+  grey_color:
+    - 189
+    - 189
+    - 189
+title: Momentanleistung
+clickable_entities: true
+use_new_flow_rate_model: true
+w_decimals: 0
