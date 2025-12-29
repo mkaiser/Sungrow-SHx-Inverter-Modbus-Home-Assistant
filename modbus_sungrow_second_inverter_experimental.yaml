@@ -2045,9 +2045,9 @@ template:
         availability: >-
           {{ 
           not is_state('sensor.phase_a_voltage_2', 'unavailable')
-          and not is_state('sensor.phase_a_current', 'unavailable')
+          and not is_state('sensor.phase_a_current_2', 'unavailable')
           }}
-        state: "{{ (states('sensor.phase_a_voltage_2') | float * states('sensor.phase_a_current') | float) |int }}"
+        state: "{{ (states('sensor.phase_a_voltage_2') | float * states('sensor.phase_a_current_2') | float) |int }}"
 
       - name: Phase B power 2
         unique_id: sg_phase_b_power_2
@@ -2057,9 +2057,9 @@ template:
         availability: >-
           {{ 
           not is_state('sensor.phase_b_voltage_2', 'unavailable') 
-          and not is_state('sensor.phase_b_current', 'unavailable') 
+          and not is_state('sensor.phase_b_current_2', 'unavailable') 
           }}
-        state: "{{ (states('sensor.phase_b_voltage_2') | float * states('sensor.phase_b_current') | float) |int }}"
+        state: "{{ (states('sensor.phase_b_voltage_2') | float * states('sensor.phase_b_current_2') | float) |int }}"
 
       - name: Phase C power 2
         unique_id: sg_phase_c_power_2
@@ -2069,9 +2069,9 @@ template:
         availability: >-
           {{ 
           not is_state('sensor.phase_c_voltage_2', 'unavailable')
-          and not is_state('sensor.phase_c_current', 'unavailable')
+          and not is_state('sensor.phase_c_current_2', 'unavailable')
           }}
-        state: "{{ (states('sensor.phase_c_voltage_2') | float * states('sensor.phase_c_current') | float) |int }}"
+        state: "{{ (states('sensor.phase_c_voltage_2') | float * states('sensor.phase_c_current_2') | float) |int }}"
 
       # template sensor in case the meter is not available (grid is off) and returns 0x7FFFFF
       - name: Meter active power 2
