@@ -1,14 +1,28 @@
 #  Configure dashboards (see screenshots below)
+
 ## PV dashboard
+
+![Default Dashboard Tab \"Info\""](images/default_dashboard_info.drawio.svg)
+![Default Dashboard Tab \"Details\""](images/default_dashboard_details.drawio.svg)
+![Default Dashboard Tab \"EMS control\""](images/default_dashboard_ems_ctrl.drawio.svg)
+
 Navigate to folder [dashboards/_DefaultDashboard_mkaiser](../dashboards/_DefaultDashboard_mkaiser) and follow the instructions in [README.md](../dashboards/_DefaultDashboard_mkaiser/README.md).
 
-Browse the "dashboards" folder for other contributed dashboards. :)
+##  Home Assistant build-in energy dashboard
 
-##  Home Assistant energy dashboard
-![image](images/HA_Energy_Dashboard.png)
+![Home assistant energy dashboard, tab "Summary"](images/energy_dashboard_summary.drawio.svg)
+![Home assistant energy dashboard, tab "Now"](images/energy_dashboard_now.drawio.svg)
+![Home assistant energy dashboard, tab "Energy"](images/energy_dashboard_energy.drawio.svg)
 
-Open the Energy settings ("Configuration" --> "Energy") and adapt the highlighted values as shown in the screenshot: 
 
-![image](images/HA_Energy_Dashboard_config.png)
+### Configuration
+
+Edit the Energy Dashboard (Top right --> edit") and adapt the highlighted values as shown in the screenshots: 
+
+![Energy dashboard settings overview](images/energy_dashboard_settings.drawio.svg)
+
+![Energy dashboard settings for solar](images/energy_dashboard_settings_solar.drawio.svg)
+
+![Energy dashboard settings for battery](images/energy_dashboard_settings_battery.drawio.svg)
 
 Note, that only the energy in kWh is shown in this dashboard and not the current power (in W).
