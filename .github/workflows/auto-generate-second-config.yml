@@ -89,6 +89,9 @@ jobs:
          sed -i 's/sensor.phase_a_voltage\b/sensor.phase_a_voltage_2/g' modbus_sungrow_second_inverter_experimental.yaml
          sed -i 's/sensor.phase_b_voltage\b/sensor.phase_b_voltage_2/g' modbus_sungrow_second_inverter_experimental.yaml
          sed -i 's/sensor.phase_c_voltage\b/sensor.phase_c_voltage_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.phase_a_current\b/sensor.phase_a_current_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.phase_b_current\b/sensor.phase_b_current_2/g' modbus_sungrow_second_inverter_experimental.yaml
+         sed -i 's/sensor.phase_c_current\b/sensor.phase_c_current_2/g' modbus_sungrow_second_inverter_experimental.yaml
          sed -i 's/sensor.reserved_soc_for_backup\b/sensor.reserved_soc_for_backup_2/g' modbus_sungrow_second_inverter_experimental.yaml
          sed -i 's/sensor.running_state\b/sensor.running_state_2/g' modbus_sungrow_second_inverter_experimental.yaml
          sed -i 's/sensor.sungrow_device_type_code\b/sensor.sungrow_device_type_code_2/g' modbus_sungrow_second_inverter_experimental.yaml
