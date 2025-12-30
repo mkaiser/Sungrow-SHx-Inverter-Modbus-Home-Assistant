@@ -1,5 +1,5 @@
 
-# Migration instructions
+# Migration guide from modbus_sungrow.yaml versions before 2026
 
 ## Single Inverter setup
  0) Backup your modbus_sungrow.yaml file (keep in mind to rename the file ending from .yaml to yaml.bak to avoid a double inclusion by the ```!include_dir_named``` directive in configuration.yaml)

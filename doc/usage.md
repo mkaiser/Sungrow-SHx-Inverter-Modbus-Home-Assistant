@@ -1,16 +1,31 @@
 ## Controlling the EMS (Energy Management System)
 
-** this all deprecated, just use the scenes included in the modbus_sungrow.yaml file **
+The recommended way to control the inverter's Energy Management System is by using the **pre-configured scenes** included in the `modbus_sungrow.yaml` file. These scenes provide a quick and reliable way to switch between different operating modes without manually adjusting individual parameters.
 
-You can set EMS parameters in the third (from left) tab of the pre-configured dashboard. 
+### Available Scenes
 
-Example to force-charge the battery:
-1. Change the "EMS mode" from "Self-consumption mode" to "Forced mode"
-2. Select "Force charge" as the input of the "Battery forced charge discharge cmd"
-3. Limit the energy loaded by setting "max SoC" (percentage of battery)
-4. You can control the charge / discharge power by 3 parameters:
-- Limit the forced charge / discharge power using "Set forced charge discharge power".
-- Limit the maximum battery charge power using "set max battery charge power". This value also limits the "force charge discharge power".
-- Limit the maximum battery discharge power using "set max battery discharge power". This value also limits the "force charge discharge power".
+You can activate these scenes through Home Assistant's UI (Developer Tools → Services → `scene.turn_on`) or integrate them into automations:
 
-Please note that changes on the input sliders may take up to 60 seconds until they affect the "battery status" entities. Hopefully this can be fixed, see [#86](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/86).
+- **Sungrow Self-Consumption Mode** — Prioritize using solar production to power your home and charge the battery with surplus energy.
+
+- **Sungrow Set Zero Export Power** — Minimize or prevent exporting energy to the grid by adjusting export limits.
+
+- **Sungrow Set Max Export Power** — Export at the inverter's maximum rated output capacity.
+
+- **Sungrow Set Battery Bypass Mode** — Bypass the battery; solar production directly powers the load or exports to the grid.
+
+- **Sungrow Set Battery Forced Discharge** — Force the battery to discharge, delivering power to the home or grid.
+
+- **Sungrow Set Battery Forced Charge** — Force the battery to charge from solar production or the grid.
+
+- **Sungrow Set Self-Consumption Limited Discharge** — Discharge the battery only to power your home; prevent exporting battery energy to the grid.
+
+### Manual EMS Control (Advanced)
+
+If you prefer manual control, you can adjust individual EMS parameters via the pre-configured dashboard (third tab from left):
+
+- **EMS Mode** — Select between Self-consumption, Forced, or other modes.
+- **Battery Forced Charge/Discharge Command** — Toggle battery charging or discharging.
+- **Battery Min/Max SoC** — Define the safe operating range for battery state of charge.
+- **Max Charge/Discharge Power** — Limit the speed of battery charging or discharging.
+- **Export Power Limit** — Cap the power exported to the grid.

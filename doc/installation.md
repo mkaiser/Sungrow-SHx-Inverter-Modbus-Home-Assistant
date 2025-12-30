@@ -8,6 +8,8 @@ It is not an "installation" process per se, but more of a "configuration" proces
 
 It is recommended to use the Visual Studio Code Server add-on for configuration. In the screenshot, the relevant files for the sungrow integration are highlighted, which you will need to modify:
 
+
+
 ![Home Assistant directory structure seen by VSCode](images/HA_config_vscode.drawio.svg)
 
 
@@ -47,8 +49,10 @@ If you need more (which no one ever did), you can generate it yourself by using 
         # SUNGROW integration 
         modbus_sungrow: !include integrations/modbus_sungrow.yaml
     ```
+    This will include the Sungrow inverter logic provided by this integration. 
 
-    this will include the Sungrow inverter logic provided by this integration. 
+    Note: in previous versions, the file was included via ```include_dir_named```, but this sometimes caused confusion with double-included files when having backup files with .yaml extensions (e.g., sungrow.bak.yaml).
+
 
 
 3. Adjust secrets.yaml
