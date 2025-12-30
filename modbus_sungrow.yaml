@@ -1646,6 +1646,46 @@ modbus:
         state_class: measurement
         scan_interval: 10
 
+      - name: Feed in limit mode raw
+        unique_id: sg_feed_in_limit_mode_raw
+        device_address: !secret sungrow_modbus_slave
+        address: 31220 # reg 31221
+        input_type: holding
+        data_type: uint16
+        precision: 0
+        state_class: measurement
+        scan_interval: 10
+
+      - name: Feed in limitation value
+        unique_id: sg_feed_in_limitation_value
+        device_address: !secret sungrow_modbus_slave
+        address: 31221 # reg 31222
+        input_type: holding
+        data_type: uint16
+        precision: 0
+        state_class: measurement
+        scan_interval: 10
+
+      - name: Feed in limitation ratio
+        unique_id: sg_feed_in_limitation_ratio
+        device_address: !secret sungrow_modbus_slave
+        address: 31222 # reg 31223
+        input_type: holding
+        data_type: uint16
+        precision: 0
+        state_class: measurement
+        scan_interval: 10
+
+      - name: Feed in limit for each phase mode raw
+        unique_id: sg_feed_in_limit_for_each_phase_mode_raw
+        device_address: !secret sungrow_modbus_slave
+        address: 31225 # reg 31226
+        input_type: holding
+        data_type: uint16
+        precision: 0
+        state_class: measurement
+        scan_interval: 10
+
       #undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Reserved SoC for backup
         unique_id: sg_reserved_soc_for_backup
@@ -2317,6 +2357,32 @@ template:
             Disabled
           {% else %}
             Unknown - should not see me! code: {{ (states('sensor.export_power_limit_mode_raw') |int) }}
+          {% endif %}
+
+      - name: Feed in limit mode
+        unique_id: sg_feed_in_limit_mode
+        availability: "{{ states('sensor.feed_in_limit_mode_raw') not in ['unavailable', 'unknown'] }}"
+        device_class: enum
+        state: >-
+          {% if ((states('sensor.feed_in_limit_mode_raw') |int) == 0x00AA) %}
+            Enabled
+          {% elif ((states('sensor.feed_in_limit_mode_raw') |int)  == 0x0055) %}
+            Disabled
+          {% else %}
+            Unknown - should not see me! code: {{ (states('sensor.feed_in_limit_mode_raw') |int) }}
+          {% endif %}
+
+      - name: Feed in limit for each phase mode
+        unique_id: sg_feed_in_limit_for_each_phase_mode
+        availability: "{{ states('sensor.feed_in_limit_for_each_phase_mode_raw') not in ['unavailable', 'unknown'] }}"
+        device_class: enum
+        state: >-
+          {% if ((states('sensor.feed_in_limit_for_each_phase_mode_raw') |int) == 0x00AA) %}
+            Enabled
+          {% elif ((states('sensor.feed_in_limit_for_each_phase_mode_raw') |int)  == 0x0055) %}
+            Disabled
+          {% else %}
+            Unknown - should not see me! code: {{ (states('sensor.feed_in_limit_for_each_phase_mode_raw') |int) }}
           {% endif %}
 
       # make the sensor ems_selection_raw more human readable
