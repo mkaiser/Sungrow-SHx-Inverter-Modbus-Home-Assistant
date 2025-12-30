@@ -32,12 +32,18 @@ If you need more (which no one ever did), you can generate it yourself by using 
     **Advanced users** familiar with git **may want** to clone the repository and reference the file via symbolic link (if you don't know what git is, just copy the file as described above :) ):
     ```bash
     bash commands: 
+
+    > cd integrations
     > git clone https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant git_Sungrow-SHx-Inverter-Modbus-Home-Assistant
     
     # NOTE: including subdirectories within folder /integrations does not work...
     # Workaround: Create a symlink from integrations/modbus_sungrow.yaml to integrations/git_Sungrow-SHx-Inverter-Modbus-Home-Assistant/modbus_sungrow.yaml
-    > cd integrations
-    > ln -s modbus_sungrow.yaml git_Sungrow-SHx-Inverter-Modbus-Home-Assistant/modbus_sungrow.yaml
+    > ln -s git_Sungrow-SHx-Inverter-Modbus-Home-Assistant/modbus_sungrow.yaml modbus_sungrow.yaml 
+    ```
+    ensure that you are working on the branch "main" to get the latest stable version or branch "dev" for the latest development version.
+    ```bash
+     git checkout main
+     git checkout dev
     ```
 
 2. Include in configuration.yaml
