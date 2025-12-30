@@ -31,8 +31,8 @@ modbus:
         address: 2581 # reg 2582
         input_type: input
         data_type: string
-        count: 11 
-        scan_interval: 60 # TODO make slowest!
+        count: 11
+        scan_interval: &scan_interval_slowest 600
 
       - name: Sungrow Version 2 inv 2
         # second part of firmware string
@@ -44,7 +44,7 @@ modbus:
         input_type: input
         data_type: string
         count: 11
-        scan_interval: 60 # TODO make slowest!
+        scan_interval: *scan_interval_slowest
 
       - name: Sungrow Version 3 inv 2
         # third part of firmware string
@@ -56,7 +56,7 @@ modbus:
         input_type: input
         data_type: string
         count: 11
-        scan_interval: 60 # TODO make slowest!
+        scan_interval: *scan_interval_slowest
 
       - name: Sungrow Version 4 (Sungrow Battery) inv 2
         # TODO: cannot test, have no sungrow battery
@@ -65,11 +65,11 @@ modbus:
         # --> XXXX
         unique_id: sg_version_4_battery
         device_address: !secret sungrow_modbus_device_address_inv_2
-        address: 2628 
+        address: 2628
         input_type: input
         data_type: string
         count: 11
-        scan_interval: 60 # TODO make slowest!
+        scan_interval: *scan_interval_slowest
 
       - name: Sungrow Protocol Version inv 2
         unique_id: sg_protocol_version
@@ -78,7 +78,7 @@ modbus:
         input_type: input
         data_type: uint32
         swap: word
-        scan_interval: &scan_interval_slowest 600
+        scan_interval: *scan_interval_slowest
 
       - name: Sungrow Arm Software inv 2
         unique_id: sg_arm_software
