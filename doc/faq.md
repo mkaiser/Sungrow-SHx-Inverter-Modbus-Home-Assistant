@@ -3,6 +3,7 @@
 ## Contents
 - [isolarcloud installer account](#isolarcloud-installer-account)
 - [Firmware upgrades](#firmware-upgrades)
+- [Firmware version registers](#firmware-version-registers)
 - [Properly restart your inverter](#properly-restart-your-inverter)
 - [Modbus connection issues](#modbus-connection-issues)
 - [Check Home Assistant Log](#check-home-assistant-log)
@@ -22,6 +23,13 @@ You can either upgrade the firmware using the isolarcloud web interface (require
 
 If you are directly connected to your inverter using the isolarcloud app, use, the administrators credentials are ``` admin / pw8888 ``` (cannot be changed by the user :/ ...). 
 
+## Firmware version registers
+Depending on your inverter model and the way it is connected (LAN cable, WiNet-S), the firmware version can be read from different Modbus registers and not all firmware versions might be available. 
+
+| | |
+|---|---|
+| <img src="images/firmware_info_SH10RT_lan.png" width="400"> | <img src="images/firmware_info_SH10RT-20_WiNet-S.png" width="400"> |
+| SH10RT LAN | SH10RT-20 WiNet-S |
 
 ### WiNet-S dongle
 
