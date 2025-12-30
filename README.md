@@ -14,11 +14,11 @@ The old version will be archived in the separate branch "legacy". The "dev"-bran
 # Contents
 - [1. Overview](#1-overview)
 - [2. Documentation](#2-documentation)
-    - [Installation / Configuration](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/wiki/FAQ:-How-to-install)
+    - [Installation / Configuration](doc/installation.md)
     - [Migration instructions](doc/migration.md)
-    - [Dashboard Setup](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/wiki/How-to-configure-the-dashboards)
-    - [Usage Instructions](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/wiki/FAQ:-How-to-use)
-    - [FAQ, Troubleshooting, Known Issues](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/wiki/FAQ:-Problems-with-the-connection)
+    - [Dashboard Setup](doc/dashboard.md)
+    - [Usage Instructions](doc/usage.md)
+    - [FAQ, Troubleshooting, Known Issues](doc/faq.md)  
 - [3. Support](#3-support)
 - [4. Visual impressions](#4-visual-impressions)
 - [5. Tested configurations](#5-tested-configurations)
@@ -48,9 +48,8 @@ If avaliable on your inverter, connect the inverter to the Home Assistant networ
 # 2. Documentation
 
 [Installation / Configuration](doc/installation.md)
-
+[Migration from versions before 2026](doc/migration_guide.md)
 [Usage Instructions](doc/usage.md)
-
 [FAQ](doc/faq.md)
 
 # 3. Support
