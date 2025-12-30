@@ -14,6 +14,7 @@ The old version will be archived in the separate branch "legacy". The "dev"-bran
 # Contents
 - [1. Overview](#1-overview)
 - [2. Documentation](#2-documentation)
+    - [Changelog](doc/changelog.md)
     - [Installation / Configuration](doc/installation.md)
     - [Migration instructions](doc/migration.md)
     - [Dashboard Setup](doc/dashboard.md)
@@ -46,9 +47,9 @@ If avaliable on your inverter, connect the inverter to the Home Assistant networ
 
 
 # 2. Documentation
-
 - [Installation / Configuration](doc/installation.md)
 - [Migration from versions before 2026](doc/migration_guide.md)
+- [Changelog](doc/changelog.md)
 - [Usage Instructions](doc/usage.md)
 - [FAQ](doc/faq.md)
 
