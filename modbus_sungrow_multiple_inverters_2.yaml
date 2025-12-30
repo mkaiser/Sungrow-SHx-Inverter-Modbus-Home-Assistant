@@ -503,7 +503,7 @@ modbus:
         scale: 100
         scan_interval: *scan_interval_slowest
 
-      # NOTE: In datasheet (1.1.11) it is recommended to use Battery Current register 5631 instead of 13021
+      # NOTE: In datasheet (1.1.11) it is recommended to use Battery current register 5631 instead of 13021
       - name: Battery current inv 2
         unique_id: sg_battery_current
         device_address: !secret sungrow_modbus_device_address_inv_2
@@ -1252,7 +1252,7 @@ modbus:
         count: 15
         scan_interval: *scan_interval_slowest
 
-      # Communication Module Firmware version from register 13250 to 13264 as UTF8 string
+      # Communication Module Firmware version from register 13265 to 13279 as UTF8 string
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
       - name: Communication Module Firmware Version inv 2
         unique_id: sg_communication_module_firmware_version
@@ -1263,7 +1263,7 @@ modbus:
         count: 15
         scan_interval: *scan_interval_fast
 
-      # Battery Firmware version from register 13250 to 13264 as UTF8 string
+      # Battery Firmware version from register 13280 to 13279 as UTF8 string
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
       - name: Battery Firmware Version inv 2
         unique_id: sg_battery_firmware_version
