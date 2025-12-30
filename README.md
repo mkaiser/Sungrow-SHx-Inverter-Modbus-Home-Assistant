@@ -47,10 +47,10 @@ If avaliable on your inverter, connect the inverter to the Home Assistant networ
 
 # 2. Documentation
 
-[Installation / Configuration](doc/installation.md)
-[Migration from versions before 2026](doc/migration_guide.md)
-[Usage Instructions](doc/usage.md)
-[FAQ](doc/faq.md)
+- [Installation / Configuration](doc/installation.md)
+- [Migration from versions before 2026](doc/migration_guide.md)
+- [Usage Instructions](doc/usage.md)
+- [FAQ](doc/faq.md)
 
 # 3. Support
 
