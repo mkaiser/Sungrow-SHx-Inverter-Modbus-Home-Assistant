@@ -2,11 +2,11 @@
 # Migration guide from modbus_sungrow.yaml versions before 2026
 
 ## Single Inverter setup
- 0) Backup your modbus_sungrow.yaml file (keep in mind to rename the file ending from .yaml to yaml.bak to avoid a double inclusion by the ```!include_dir_named``` directive in configuration.yaml)
+ 0) Backup your modbus_sungrow.yaml file (keep in mind to rename the file ending from .yaml to yaml.bak to avoid a double inclusion by the deprecated (!)```!include_dir_named``` directive in configuration.yaml)
 
- 1) Adapt secrets.yaml:
+ 1) Adapt ```secrets.yaml```:
     - Rename ```sungrow_modbus_slave``` to ```sungrow_modbus_device_address```
-    - Add ```sungrow_modbus_battery_max_power: 5000``` (use the max supported power of your battery, see [comments in secrets.yaml](secrets.yaml) for details)
+    - Add ```sungrow_modbus_battery_max_power: 5000``` (use the max supported power of your battery, see [comments in secrets.yaml](../secrets.yaml) for details)
  2) Swap your modbus_sungrow.yaml file with the [current version](modbus_sungrow.yaml)
 
  3) Restart Home Assistant: ```Developer tools --> Check Configuration --> Restart```
