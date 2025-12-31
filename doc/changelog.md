@@ -18,7 +18,7 @@ Major Changes:
  - Use more YAML anchors: Define register addresses when defining the sensors and reuse the variables in automations
  - Move automation for inputs into the template sections (https://github.com/theunknown86/unknown_sungrow/blob/ec2464f3c9abcc6cc6c11041499d6f380ba05201/modbus_sungrow_inv1.yaml#L1682-L1699)
  - Rename "running state" to "power flow status" and update code for binary sensors: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/565
- - Use secrets for battery parameters
+ - Use secrets for battery parametershttps://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/dev/doc/faq.md
  - Remove unnecessary parentheses in if-else statements.
  - Implement MPPT3 for SH*T inverters, not resulting in broken / unknown sensors for SH*RT inverters
  - Use YAML anchors different scan_intervals (e.g. scan_interval_slowest, scan_interval_mid, scan_interval_frequent, scan_interval_realtime)
