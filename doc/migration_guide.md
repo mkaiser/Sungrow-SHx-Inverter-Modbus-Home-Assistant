@@ -7,13 +7,13 @@
  1) Adapt ```secrets.yaml```:
     - Rename ```sungrow_modbus_slave``` to ```sungrow_modbus_device_address```
     - Add ```sungrow_modbus_battery_max_power: 5000``` (use the max supported power of your battery, see [comments in secrets.yaml](../secrets.yaml) for details)
- 2) Swap your modbus_sungrow.yaml file with the [current version](modbus_sungrow.yaml)
+ 2) Swap your modbus_sungrow.yaml file with the [current version](../modbus_sungrow.yaml)
 
  3) Restart Home Assistant: ```Developer tools --> Check Configuration --> Restart```
 
  4) Check the Log for errors: ```Settings --> System --> Log``` (or hotkey ```c``` followed by ```log```)
 
- 5) If everything is fine, update the [default dashboard provided in the git](doc/default_dashboard.yaml):
+ 5) If everything is fine, update the [default dashboard provided in the git](../dashboards/DefaultDashboard/dashboard.yaml):
     - Open the file
     - Copy all content
     - In Home Assistant: ```Settings --> Dashboards --> Select your dashboard --> 3-dots menu (top right) --> Edit Dashboard --> 3-dots menu (top right) --> Raw configuration editor```
@@ -64,9 +64,9 @@
 
 ## Multiple Inverters
 
-Option A: if you have a running installation with one inverter based on modbus_sungrow.yaml and want to add a second one, use [modbus_sungrow_multiple_inverters_2.yaml](modbus_sungrow_multiple_inverters_2.yaml) (or *_3 for a third one)
+Option A: if you have a running installation with one inverter based on modbus_sungrow.yaml and want to add a second one, use [modbus_sungrow_multiple_inverters_2.yaml](../modbus_sungrow_multiple_inverters_2.yaml) (or *_3 for a third one)
 
-Option B: if you are setting up multiple inverters for the first time in HA, use [modbus_sungrow_multiple_inverters_1.yaml](modbus_sungrow_multiple_inverters_1.yaml) and
-[modbus_sungrow_multiple_inverters_2.yaml](modbus_sungrow_multiple_inverters_2.yaml) or
+Option B: if you are setting up multiple inverters for the first time in HA, use [modbus_sungrow_multiple_inverters_1.yaml](../modbus_sungrow_multiple_inverters_1.yaml) and
+[modbus_sungrow_multiple_inverters_2.yaml](../modbus_sungrow_multiple_inverters_2.yaml) or
  (or *_3 for a third one)
 
