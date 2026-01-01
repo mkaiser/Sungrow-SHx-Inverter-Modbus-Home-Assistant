@@ -1,0 +1,50 @@
+name: Generate sensor list
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'modbus_sungrow.yaml'
+      - 'debug/generate_sensor_list.py'
+
+jobs:
+  generate-sensor-list:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: debug
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Generate sensor list
+        run: |
+          ./generate_sensor_list.py ../modbus_sungrow.yaml -o sensor_list_for_ha_template_editor.txt
+
+      - name: Upload sensor list artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sensor-list
+          path: debug/sensor_list_for_ha_template_editor.txt
+
+      - name: Commit and push sensor list (push only)
+        if: github.event_name == 'push'
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Action"
+          git add debug/sensor_list_for_ha_template_editor.txt
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Auto-generate sensor_list_for_ha_template_editor.txt"
+          git push
