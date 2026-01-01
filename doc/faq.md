@@ -13,17 +13,17 @@
 
 ## isolarcloud installer account
 
-Some advanced settings and firmware upgrades can only be changed remotly using an installer account. See [installer_account.md](installer_account.md) for a step-by-step guide on how to create such an account and link it to your plant.
+Some advanced settings and firmware upgrades can only be changed remotely using an installer account. See [installer_account.md](installer_account.md) for a step-by-step guide on how to create such an account and link it to your plant.
 
 
 ## Firmware upgrades
 
 ### Inverter
-Sungrow releases 1-3 firmware updates per year for their inverters. It is generally recommended to keep your inverter firmware up to date to benefit from bug fixes and new features. Unfortunately, Sungrow does not provide a changelog, so upgrading the the newest firmware could result in unexpected behavior with this integration.
+Sungrow releases 1-3 firmware updates per year for their inverters. It is generally recommended to keep your inverter firmware up to date to benefit from bug fixes and new features. Unfortunately, Sungrow does not provide a changelog, so upgrading the newest firmware could result in unexpected behavior with this integration.
 
 You can either upgrade the firmware using the isolarcloud web interface (requires installer account, see above) or by using the isolarcloud mobile app connected directly to the inverter via Wi-Fi or LAN cable.
 
-If you are directly connected to your inverter using the isolarcloud app, use, the administrators credentials are ``` admin / pw8888 ``` (cannot be changed by the user :/ ...). 
+If you are directly connected to your inverter using the isolarcloud app, use the administrator's credentials: ``` admin / pw8888 ``` (cannot be changed by the user :/ ...). 
 
 ## Firmware version registers
 Depending on your inverter model and the way it is connected (LAN cable, WiNet-S), the firmware version can be read from different Modbus registers and not all firmware versions might be available. 

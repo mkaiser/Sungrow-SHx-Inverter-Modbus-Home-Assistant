@@ -4,7 +4,7 @@ An *easy-to-use YAML-based integration* for several Sungrow inverters for Home A
 
 # 2026-01-01 "Version 2 of modbus_sungrow.yaml"
 
-After five years of continuous development with maintained backwards compatibility, this integration reached its limits. With the help of @theunknown86 and several others, this yaml-based integration was rebased on a better and more flexible codebase. It is still remains yaml-based and not a "full" Home Assistant integration, but can now support different Sungrow models with their specific features ("quirks"). As long there is no "real integration" available, I will continue to maintain the new yaml file. 
+After five years of continuous development with maintained backwards compatibility, this integration reached its limits. With the help of @theunknown86 and several others, this yaml-based integration was rebased on a better and more flexible codebase. It still remains yaml-based and not a "full" Home Assistant integration, but can now support different Sungrow models with their specific features ("quirks"). As long there is no "real integration" available, I will continue to maintain the new yaml file. 
 
 **The migration to the new version requires a few manual steps, see [migration guide](doc/migration_guide.md).**
 
@@ -32,7 +32,7 @@ The old version will be archived in the separate branch [2025-legacy](https://gi
 
 This integration lets you gather sensor data and control the EMS (Energy Management System) of a wide range of Sungrow inverters, including, but not limited to: SH3.6RS, SH4.6RS, SH5.0RS, SH5.0RT, SH6.0RS, SH8.0RT, SH8.0RT-V112, SH6.0RT, SH10RT, SH10RT-V112, SH5K-20, SH3K6, SH4K6, SH5K-V13, SH5K-30. A battery is not required, but several sensors will not be available without one.
 
-If avaliable on your inverter, connect the inverter to the Home Assistant network using the inverters **internal LAN port**. The WiNet-S Ethernet port and the WiNet-S Wi-Fi also work, but sometimes slightly slower and with some restrictions imposed by Sungrow on which data is available.
+If available on your inverter, connect the inverter to the Home Assistant network using the inverters **internal LAN port**. The WiNet-S Ethernet port and the WiNet-S Wi-Fi also work, but sometimes slightly slower and with some restrictions imposed by Sungrow on which data is available.
 
 <figure>
   <img src="doc/images/overview_modbus_connection.drawio.svg" width="600">
@@ -69,7 +69,7 @@ If you need any kind of assistance, you have three options:
 
 <figure>
   <img src="doc/images/energy_dashboard_summary.drawio.svg" width="600">
-  <figcaption>Home Asisstant's built-in Energy Dashboard</figcaption>
+  <figcaption>Home Assistant's built-in Energy Dashboard</figcaption>
 </figure>
 
 

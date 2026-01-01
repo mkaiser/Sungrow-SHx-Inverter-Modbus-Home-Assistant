@@ -1,17 +1,9 @@
 # Release date 2026-01-01
 #
-# This code requires folowing entries in your secrets.yaml file, see the example in this repository:
-# secret.yaml
-# sungrow_modbus_host_ip: 192.168.xxx.xxx # TODO update with the IP of your inverter. No default. Check your router.
-# sungrow_modbus_port: 502 # TODO update with the Modbus port of your inverter. Default is '502'
-# sungrow_modbus_device_address: 1 #TODO update with the slave address of your inverter. Default is '1'
-# sungrow_modbus_battery_max_power: 4500 # TODO update with the maximum charge power of your battery in W.
-## For >99% of all situations it won't hurt to set a lower value here, which won't put much aging-stress on the battery.
-## Max values for common batteries: SBR096: 6500W, SBR128: 8500W, SBR160: 10500W, SBR192: 13000W, SBR224: 15000Wm, SBR256: 17000W Default is '5000'
-#
+# INSTALLATION GUIDE: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/doc/installation.md
 #
 # MIGRATING GUIDE from version earlier than 2026 of modbus_sungrow.yaml to this version.
-# see https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/dev/doc/migration_guide.md
+# see https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/doc/migration_guide.md
 
 modbus:
   - name: &sg_hub_name SungrowSHx
@@ -1608,7 +1600,7 @@ template:
         unique_id: uid_battery_forced_charge_discharge_power
         unit_of_measurement: W
         min: 0
-        max: !secret sungrow_modbus_battery_max_power
+        max: !secret sungrow_modbus_battery_max_power_inv_3
         step: 100
         # modbus --> UI
         state: "{{ states('sensor.battery_forced_charge_discharge_power_inv_3') }}"
@@ -1629,7 +1621,7 @@ template:
         unique_id: uid_battery_max_charge_power
         unit_of_measurement: W
         min: 0
-        max: !secret sungrow_modbus_battery_max_power
+        max: !secret sungrow_modbus_battery_max_power_inv_3
         step: 100
         # modbus --> UI
         state: "{{ states('sensor.battery_max_charge_power_inv_3') }}"
@@ -1650,7 +1642,7 @@ template:
         unique_id: uid_battery_max_discharge_power
         unit_of_measurement: W
         min: 0
-        max: !secret sungrow_modbus_battery_max_power
+        max: !secret sungrow_modbus_battery_max_power_inv_3
         step: 100
         # modbus --> UI
         state: "{{ states('sensor.battery_max_discharge_power_inv_3') }}"

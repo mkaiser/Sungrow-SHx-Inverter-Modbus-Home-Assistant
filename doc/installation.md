@@ -69,7 +69,7 @@ If you need more (which no one ever did), you can generate it yourself by using 
     sungrow_modbus_port: 502 # TODO update with the Modbus port of your inverter. Default is '502'
     sungrow_modbus_device_address: 1 # TODO update with the unit id / slave address of your inverter. Default is '1'
     sungrow_modbus_battery_max_power: 5000 # TODO update with the maximum charge power of your battery in W. 
-    # For >99% of all situations setting a lower value than supported does not have measureble disadcantages
+    # For >99% of all situations setting a lower value than supported does not have measureble disadvantages
     # Keep in mind that high currents put more aging-stress on the battery.
     # Max power of several sungrow batteries: SBR096: 6500W, SBR128: 8500W, SBR160: 10500W, SBR192: 13000W SBR224: 15000Wm SBR256: 17000W
     # Default is 5000 W
