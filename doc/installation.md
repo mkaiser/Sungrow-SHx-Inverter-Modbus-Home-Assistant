@@ -62,6 +62,8 @@ If you need more (which no one ever did), you can generate it yourself by using 
 
 3. Adjust secrets.yaml
 
+    For multi-inverter setups, see the comments in the [secrets.yaml](../secrets.yaml).
+
     The YAML-based integration file needs 3 parameters as input. Copy the following lines to your secrets.yaml and adapt them:
 
     ```yaml
