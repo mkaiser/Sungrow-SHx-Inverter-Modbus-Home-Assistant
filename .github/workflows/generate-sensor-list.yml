@@ -26,6 +26,9 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Install dependencies
+        run: pip install pyyaml
+
       - name: Generate sensor list
         run: |
           ./generate_sensor_list.py ../modbus_sungrow.yaml -o sensor_list_for_ha_template_editor.txt
