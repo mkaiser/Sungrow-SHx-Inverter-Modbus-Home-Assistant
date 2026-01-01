@@ -2,13 +2,13 @@ An *easy-to-use YAML-based integration* for several Sungrow inverters for Home A
 
 [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2)
 
-# 2025-12-29 "Version 2 of modbus_sungrow.yaml"
+# 2026-01-01 "Version 2 of modbus_sungrow.yaml"
 
 After five years of continuous development with maintained backwards compatibility, this integration reached its limits. With the help of @theunknown86 and several others, this yaml-based integration was rebased on a better and more flexible codebase. It is still remains yaml-based and not a "full" Home Assistant integration, but can now support different Sungrow models with their specific features ("quirks"). As long there is no "real integration" available, I will continue to maintain the new yaml file. 
 
 **The migration to the new version requires a few manual steps, see [migration guide](doc/migration_guide.md).**
 
-The old version will be archived in the separate branch "legacy". The "dev"-branch which was tested now by several users is now the "main"-branch.
+The old version will be archived in the separate branch "2025-legacy". The "dev"-branch which was tested now by several users is now the "main"-branch.
 
 
 # Contents
