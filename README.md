@@ -8,7 +8,7 @@ After five years of continuous development with maintained backwards compatibili
 
 **The migration to the new version requires a few manual steps, see [migration guide](doc/migration_guide.md).**
 
-The old version will be archived in the separate branch "2025-legacy". The "dev"-branch which was tested now by several users is now the "main"-branch.
+The old version will be archived in the separate branch [2025-legacy](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/tree/2025-legacy). The "dev"-branch which was tested now by several users is now the "main"-branch.
 
 
 # Contents
