@@ -2044,12 +2044,16 @@ template:
   # template: switch
   ###################
   - switch:
+      # this enables/disables the inverter state & EMS settings in the dashboard
+      # hopefully this prevents accidentally setting values while browsing on the phone :)
       - name: Sungrow dashboard enable danger mode inv 1
         unique_id: uid_sungrow_dashboard_enable_danger_mode
 
-      # this enables/disables the inverter state & EMS settings in the dashboard
-      # hopefully this prevents accidentally setting values while browsing on the phone :)
+      # Note: This entity will be unknown until the switch is manually toggled 
+      # or the system state changes (e.g. inverter turned off/on).
+      # The update logic of the switch is a separate automation
       - name: Enable inverter inv 1
+        unique_id: uid_enable_inverter
 
   ###################
   # template: select
