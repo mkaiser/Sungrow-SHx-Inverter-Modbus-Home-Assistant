@@ -120,6 +120,19 @@ views:
           - sensor.inverter_firmware_version
       - type: entities
         entities:
+          - entity: sensor.sungrow_device_type
+          - entity: sensor.sungrow_inverter_state
+          - entity: sensor.power_flow_status
+          - entity: sensor.running_state_raw
+          - entity: sensor.inverter_temperature
+          - entity: binary_sensor.pv_generating
+          - entity: binary_sensor.battery_charging
+          - entity: binary_sensor.battery_discharging
+          - entity: binary_sensor.exporting_power
+          - entity: binary_sensor.importing_power
+        title: Inverter State
+      - type: entities
+        entities:
           - entity: sensor.total_dc_power
           - entity: sensor.meter_active_power
           - entity: sensor.load_power
@@ -223,19 +236,6 @@ views:
           - entity: sensor.battery_discharging_power
           - entity: sensor.battery_discharging_power_signed
         title: Battery
-      - type: entities
-        entities:
-          - entity: sensor.sungrow_device_type
-          - entity: sensor.sungrow_inverter_state
-          - entity: sensor.power_flow_status
-          - entity: sensor.running_state_raw
-          - entity: sensor.inverter_temperature
-          - entity: binary_sensor.pv_generating
-          - entity: binary_sensor.battery_charging
-          - entity: binary_sensor.battery_discharging
-          - entity: binary_sensor.exporting_power
-          - entity: binary_sensor.importing_power
-        title: Inverter State
       - chart_type: line
         period: day
         days_to_show: 60
@@ -305,17 +305,10 @@ views:
       - type: entities
         entities:
           - entity: sensor.sungrow_inverter_state
-          - entity: sensor.load_adjustment_mode_enable_raw
-          - entity: sensor.battery_forced_charge_discharge_cmd_raw
-          - entity: sensor.load_adjustment_mode_selection_raw
-          - entity: sensor.export_power_limit
-          - entity: sensor.battery_min_soc
-          - entity: sensor.battery_max_soc
-          - entity: sensor.ems_mode_selection_raw
-          - entity: sensor.battery_forced_charge_discharge_cmd_raw
-          - entity: sensor.forced_startup_under_low_soc_standby_raw
           - entity: sensor.battery_power
-        title: Debug
+          - entity: binary_sensor.battery_charging
+          - entity: binary_sensor.battery_discharging
+        title: Quick Info
       - type: entities
         entities:
           - scene.sungrow_self_consumption_mode
