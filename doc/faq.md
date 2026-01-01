@@ -8,6 +8,8 @@
 - [Modbus connection issues](#modbus-connection-issues)
 - [Check Home Assistant Log](#check-home-assistant-log)
 - [Full list of provided sensors](#full-list-of-provided-sensors)
+- [Orphaned or unavailable entities](#orphaned-or-unavailable-entities)
+
 
 ## isolarcloud installer account
 
@@ -29,9 +31,9 @@ Depending on your inverter model and the way it is connected (LAN cable, WiNet-S
 | | |
 |---|---|
 | <img src="images/firmware_info_SH10RT_lan.png" width="400"> | <img src="images/firmware_info_SH10RT-20_WiNet-S-WiFi.png" width="400"> |
-| SH10RT LAN | SH10RT-20 WiNet-S (WiFi)|
+| SH10RT LAN + Pylontech Battery | SH10RT-20 WiNet-S (WiFi) + SBR096|
 | <img src="images/firmware_info_SH8RT-V112_WiNetS-LAN.png" width="400"> |  |
-| SH8RT-V112 WiNet-S (LAN) |  |
+| SH8RT-V112 WiNet-S (LAN) + SBR096 |  |
 
 ### WiNet-S dongle
 
@@ -119,6 +121,12 @@ Copy and paste the sensor list into the Home Assistant Template Editor (Develope
 See [usage.md](usage.md) for instructions on how to change the EMS modes using scenes or directly via the entity ```scene.sungrow_ems_mode_<mode>```.
 
 
+## Orphaned or unavailable entities
+
+If you see unavailable entities in Home Assistant after upgrading the integration, you can follow the steps in [cleanup_entities.md](cleanup_entities.md) to remove them from your installation.
+Please note that depending on your inverter and the way to connect it to Home Assistant (Lan, WiNet-S Wifi or WiNet-S LAN) some entities might not be available in your installation.
+
 
 ## open questions @all
+
 - Does the user have to enable the inverters LAN port manually? 

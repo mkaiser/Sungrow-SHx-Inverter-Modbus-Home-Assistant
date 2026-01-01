@@ -62,6 +62,10 @@
 
        ```Battery power``` --> ```Battery discharging power signed```
 
+   8) If you see unavailable entities in Home Assistant after upgrading the integration due to renaming, you can follow the steps in [cleanup_entities.md](cleanup_entities.md) to remove them from your installation.
+   Please note that depending on your inverter and the way to connect it to Home Assistant (Lan, WiNet-S Wifi or WiNet-S LAN) some entities might not be available in your installation.
+         
+
 ## Multiple Inverters
 
 Option A: if you have a running installation with one inverter based on modbus_sungrow.yaml and want to add a second one, use [modbus_sungrow_multiple_inverters_2.yaml](../modbus_sungrow_multiple_inverters_2.yaml) (or *_3 for a third one)
