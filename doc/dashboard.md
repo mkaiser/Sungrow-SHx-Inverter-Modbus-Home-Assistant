@@ -50,7 +50,33 @@ NOTE: Click on the highlighted switch to show or hide the advanced EMS controls.
 
 ### Configuration
 
-Edit the Energy Dashboard (Top right --> edit") and adapt the highlighted values as shown in the screenshots: 
+Edit the Energy Dashboard (Top right --> edit") and adapt the values (see screenshots): 
+
+```Home Assisant --> Energy --> Edit Dashboard (top right)```
+
+**Electricity grid**
+
+  ```Grid consumption``` --> ```Total imported energy```
+
+  ```Return to grid``` --> ```Total exported energy```
+
+  ```Grid power``` --> ```Meter active power```
+
+**Solar Panels**
+
+  ```Solar production energy``` --> ```Total PV generation```
+
+  ```Solar production power``` --> ```Total DC power```
+
+**Home battery storage**
+
+  ```Energy charged into the battery``` --> ```Total battery charge```
+
+  ```Energy discharged from the battery``` --> ```Total battery discharge```
+
+  ```Battery power``` --> ```Battery discharging power signed```
+
+
 
 <figure>
   <img src="images/energy_dashboard_settings.drawio.svg" width="600">

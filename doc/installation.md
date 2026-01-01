@@ -60,7 +60,6 @@ If you need more (which no one ever did), you can generate it yourself by using 
     Note: in previous versions, the file was included via ```include_dir_named```, but this sometimes caused confusion with double-included files when having backup files with .yaml extensions (e.g., sungrow.bak.yaml).
 
 
-
 3. Adjust secrets.yaml
 
     The YAML-based integration file needs 3 parameters as input. Copy the following lines to your secrets.yaml and adapt them:

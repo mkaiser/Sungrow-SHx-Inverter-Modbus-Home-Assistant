@@ -40,7 +40,7 @@
 
     ```Home Assisant --> Energy --> Edit Dashboard (top right):```
 
-     **Electricity grid:**
+     **Electricity grid**
 
        ```Grid consumption``` --> ```Total imported energy```
 

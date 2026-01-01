@@ -16,7 +16,7 @@ The old version will be archived in the separate branch "legacy". The "dev"-bran
 - [2. Documentation](#2-documentation)
     - [Changelog](doc/changelog.md)
     - [Installation / Configuration](doc/installation.md)
-    - [Migration instructions](doc/migration.md)
+    - [Migration guide from 2025er version](doc/migration_guide.md)
     - [Dashboard Setup](doc/dashboard.md)
     - [Usage Instructions](doc/usage.md)
     - [FAQ, Troubleshooting, Known Issues](doc/faq.md)  
