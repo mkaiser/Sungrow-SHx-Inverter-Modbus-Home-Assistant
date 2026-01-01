@@ -19,22 +19,10 @@
     - In Home Assistant: ```Settings --> Dashboards --> Select your dashboard --> 3-dots menu (top right) --> Edit Dashboard --> 3-dots menu (top right) --> Raw configuration editor```
     - Replace all content with the copied content from the file and save
 
- 6) Check for unavailable and sensors with entities ending with _2
+ 6) Remove orphaned / unavailable sensors
+ 
+    [see this how-to guide to cleanup](cleanup_entities.md)
 
-    **TODO** (help me!) better explanation + screenshots needed here!
-
-    a) Homeassistant ```"Settings" --> "Devices and services" --> Tab "Entities" ```
-    
-    b) Use the filter (top left side) to filter for "not provided".
-        Propably multiple now deprecated modbus_sungrow sensors will appear there.
-    
-    c) You can multi-select them (somewhere top left?) and click at the top right (three dots) to delete them
-    
-    d) restart HA and check again
-    
-    e) if you see and _2 sensors, remove the _2 suffix 
-    
-    f) Restart HA
 
  7) Update the new "Energy Dashboard" (introduced in HA 25.12)
 

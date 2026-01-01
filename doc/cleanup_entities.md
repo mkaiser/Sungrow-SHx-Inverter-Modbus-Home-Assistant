@@ -1,8 +1,6 @@
 # Cleanup unavailable entities
 
-
 After migrating to the 2026 version of this integration, some entities were removed. If you want to cleanup your installation follow these steps:
-
 
 ## Find and delete unavailable entities
 
@@ -12,7 +10,7 @@ After migrating to the 2026 version of this integration, some entities were remo
     - ```Intgrations --> Modbus```
 - Click on the icon left to the search bar: ```Enter selection mode```
 - Select the entities you want to remove and click on the three dots icon (top right) --> ```Delete selected entities```
-- Restart Home Assistant
+- Restart Home Assistant to finalize the cleanup.
 
 
 <figure>
