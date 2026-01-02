@@ -1674,7 +1674,8 @@ template:
               address: *sg_reg_export_power_limit
               value: >-
                 {% set dev = states('sensor.sungrow_device_type') %}
-                {% if dev.startswith('SH') and dev.endswith('RT') %}
+                {% if dev.startswith('SH') and 'RT' in dev %}
+                  {# SH*RT* devices (e.g. SH10RT, SH8.0RT-20, SH8.0RT-V112 or SH10RT-V122) #}
                   {{ (value | float / 10) | int }}
                 {% else %}
                   {{ value | int }}
