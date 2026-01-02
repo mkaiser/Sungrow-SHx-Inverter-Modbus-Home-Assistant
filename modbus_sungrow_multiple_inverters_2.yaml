@@ -1482,9 +1482,9 @@ template:
         unique_id: uid_battery_min_soc
         unit_of_measurement: "%"
         min: 0
-        # max value is defined by modbus spec
-        max: 50
+        max: 50 # max value is defined by modbus spec
         step: 1
+        availability: "{{ states('sensor.battery_min_soc_inv_2') | is_number }}"        
         # modbus --> UI
         state: "{{ states('sensor.battery_min_soc_inv_2') }}"
         # UI --> modbus
@@ -1503,10 +1503,10 @@ template:
       - name: Battery Max Soc inv 2
         unique_id: uid_battery_max_soc
         unit_of_measurement: "%"
-        # min value is defined by modbus spec
-        min: 50
+        min: 50 # min value is defined by modbus spec
         max: 100
         step: 1
+        availability: "{{ states('sensor.battery_max_soc_inv_2') | is_number }}"        
         # modbus --> UI
         state: "{{ states('sensor.battery_max_soc_inv_2') }}"
         # UI --> modbus
@@ -1528,6 +1528,7 @@ template:
         min: 0
         max: 100
         step: 1
+        availability: "{{ states('sensor.battery_reserved_soc_for_backup_inv_2') | is_number }}"        
         # modbus --> UI
         state: "{{ states('sensor.battery_reserved_soc_for_backup_inv_2') }}"
         # UI --> modbus
@@ -1557,6 +1558,7 @@ template:
         # charging and discharging. I am pretty confident, that a max: value for the number is ok with 1000W.
         # Please open an issue, if other values are needed.
         step: 10
+        availability: "{{ states('sensor.battery_charging_start_power_inv_2') | is_number }}"        
         # modbus --> UI
         state: "{{ states('sensor.battery_charging_start_power_inv_2') }}"
         # UI --> modbus
@@ -1581,6 +1583,7 @@ template:
         # charging and discharging. I am pretty confident, that a max: value for the number is ok with 1000W
         # Please open an issue, if other values are needed.
         step: 10
+        availability: "{{ states('sensor.battery_discharging_start_power_inv_2') | is_number }}"        
         # modbus --> UI
         state: "{{ states('sensor.battery_discharging_start_power_inv_2') }}"
         # UI --> modbus
@@ -1602,6 +1605,7 @@ template:
         min: 0
         max: !secret sungrow_modbus_battery_max_power_inv_2
         step: 100
+        availability: "{{ states('sensor.battery_forced_charge_discharge_power_inv_2') | is_number }}"        
         # modbus --> UI
         state: "{{ states('sensor.battery_forced_charge_discharge_power_inv_2') }}"
         # UI --> modbus
@@ -1644,6 +1648,7 @@ template:
         min: 0
         max: !secret sungrow_modbus_battery_max_power_inv_2
         step: 100
+        availability: "{{ states('sensor.battery_max_discharge_power_inv_2') | is_number }}"        
         # modbus --> UI
         state: "{{ states('sensor.battery_max_discharge_power_inv_2') }}"
         # UI --> modbus
@@ -1665,6 +1670,7 @@ template:
         min: 0
         max: "{{ states('sensor.inverter_rated_output_inv_2') }}"
         step: 100
+        availability: "{{ states('sensor.export_power_limit_inv_2') | is_number }}"
         # modbus --> UI
         state: "{{ states('sensor.export_power_limit_inv_2') }}"
         # UI --> modbus
@@ -1676,7 +1682,8 @@ template:
               address: *sg_reg_export_power_limit
               value: >-
                 {% set dev = states('sensor.sungrow_device_type_inv_2') %}
-                {% if dev.startswith('SH') and dev.endswith('RT') %}
+                {% if dev.startswith('SH') and 'RT' in dev %}
+                  {# SH*RT* devices (e.g. SH10RT, SH8.0RT-20, SH8.0RT-V112 or SH10RT-V122) #}
                   {{ (value | float / 10) | int }}
                 {% else %}
                   {{ value | int }}
@@ -2049,7 +2056,7 @@ template:
       - name: Sungrow dashboard enable danger mode inv 2
         unique_id: uid_sungrow_dashboard_enable_danger_mode
 
-      # Note: This entity will be unknown until the switch is manually toggled 
+      # Note: This entity will be unknown until the switch is manually toggled
       # or the system state changes (e.g. inverter turned off/on).
       # The update logic of the switch is a separate automation
       - name: Enable inverter inv 2
@@ -2071,9 +2078,8 @@ template:
             # rarely used and commented for simplicity
             # "Microgid" :8
           fallback: "Self-consumption mode (default)"
-        # get option names from map keys
-        options: >-
-          {{ map.keys() | list | tojson }}
+        options: "{{ map.keys() | list | tojson }}" # get option names from map keys
+        availability: "{{ states('sensor.ems_mode_selection_raw_inv_2') | is_number }}"
         # modbus --> UI (raw value --> option)
         state: >-
           {# workaround for limited jinja python skills to reverse-search the map #}
@@ -2107,9 +2113,8 @@ template:
             "Forced charge": 0xAA
             "Forced discharge": 0xBB
           fallback: "Stop (default)"
-        # get option names from map keys
-        options: >-
-          {{ map.keys() | list | tojson }}
+        options: "{{ map.keys() | list | tojson }}" # get option names from map keys
+        availability: "{{ states('sensor.battery_forced_charge_discharge_cmd_raw_inv_2') | is_number }}"
         # modbus --> UI (raw value --> option)
         state: >-
           {# workaround for limited jinja python skills to reverse-search the map #}
@@ -2144,9 +2149,8 @@ template:
             "Power optimization": 2
             "Disabled": 3
           fallback: "Disabled"
-        # get option names from map keys
-        options: >-
-          {{ map.keys() | list | tojson }}
+        options: "{{ map.keys() | list | tojson }}" # get option names from map keys
+        availability: "{{ states('sensor.load_adjustment_mode_selection_raw_inv_2') | is_number }}"
         # modbus --> UI (raw value --> option)
         state: >-
           {# workaround for limited jinja python skills to reverse-search the map #}
