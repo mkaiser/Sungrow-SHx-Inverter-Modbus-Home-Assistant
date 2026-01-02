@@ -1482,8 +1482,7 @@ template:
         unique_id: uid_battery_min_soc
         unit_of_measurement: "%"
         min: 0
-        # max value is defined by modbus spec
-        max: 50
+        max: 50 # max value is defined by modbus spec
         step: 1
         # modbus --> UI
         state: "{{ states('sensor.battery_min_soc') }}"
@@ -1503,8 +1502,7 @@ template:
       - name: Battery Max Soc
         unique_id: uid_battery_max_soc
         unit_of_measurement: "%"
-        # min value is defined by modbus spec
-        min: 50
+        min: 50 # min value is defined by modbus spec
         max: 100
         step: 1
         # modbus --> UI
@@ -2049,7 +2047,7 @@ template:
       - name: Sungrow dashboard enable danger mode
         unique_id: uid_sungrow_dashboard_enable_danger_mode
 
-      # Note: This entity will be unknown until the switch is manually toggled 
+      # Note: This entity will be unknown until the switch is manually toggled
       # or the system state changes (e.g. inverter turned off/on).
       # The update logic of the switch is a separate automation
       - name: Enable inverter
