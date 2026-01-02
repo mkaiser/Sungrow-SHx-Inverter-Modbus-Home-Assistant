@@ -51,7 +51,7 @@ If you need more (which no one ever did), you can generate it yourself by using 
     Open your configuration.yaml and add the following lines:
     ```yaml
     homeassistant:
-    packages:
+      packages:
         # SUNGROW integration 
         modbus_sungrow: !include integrations/modbus_sungrow.yaml
     ```
