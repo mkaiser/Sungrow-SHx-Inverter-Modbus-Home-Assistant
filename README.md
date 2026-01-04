@@ -119,7 +119,7 @@ If you have any questions, feature requests, found any bugs or have some hints h
 - **[Sungrow Logger 1000a](https://github.com/RafAustralia/Sungrow-Logger1000a-Modbus)**
 - **[Chint DTSU666 Modbus](https://github.com/RafAustralia/Chint-DTSU666-20-modbus/)**
 - **[EVCC](https://github.com/Hoellenwesen/home-assistant-configurations)**
-- **Sungrow document collections by [bohdan-s](https://github.com/bohdan-s/Sungrow-Inverter) b< [Gnarfoz](https://github.com/Gnarfoz/Sungrow-Inverter)**
+- **Sungrow document collections [by bohdan-s](https://github.com/bohdan-s/Sungrow-Inverter) and [by Gnarfoz](https://github.com/Gnarfoz/Sungrow-Inverter)**
 
 
 # 9. Acknowledgements
