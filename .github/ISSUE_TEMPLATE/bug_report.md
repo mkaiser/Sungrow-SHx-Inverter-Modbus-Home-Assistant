@@ -34,10 +34,15 @@ A clear and concise description of what the bug is.
    - [-] WiNet-S (LAN)
    - [-] WiNet-S (WLAN)
 
-- Are you using a Modbus Proxy (mark exactly one)
+- Are you using a Modbus Proxy (mark exactly one with an ```x```)
   - [-] yes
   - [-] no 
   - [-] I don't know what that is
+
+- Backup mode (mark exactly one with an ```x```)
+  - [-] yes
+  - [-] no 
+  - [-] I don't know what that is 
 
 **Home Assistant version:**
  - Version: [e.g. 2025.01.01]
