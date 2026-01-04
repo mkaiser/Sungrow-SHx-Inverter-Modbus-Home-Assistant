@@ -1389,7 +1389,7 @@ template:
 
       - name: PV generating (delay)
         unique_id: sg_pv_generating_delay
-        availability: "{{ states('binary_sensor.pv_generating') }}"
+        availability: "{{ states('binary_sensor.pv_generating') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.pv_generating') }}"
