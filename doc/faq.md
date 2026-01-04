@@ -11,6 +11,7 @@
 - [Orphaned or unavailable entities](#orphaned-or-unavailable-entities)
 - [Connect the inverter via Ethernet](#connect-the-inverter-via-ethernet)
 - [Open questions](#open-questions-all)
+- [iHomeManager](#ihomemanager)
 
 
 ## isolarcloud installer account
@@ -135,6 +136,14 @@ On several inverters, the LAN port has to be enabled before you can connect via 
 
 Isolarcloud app: 
 - ```Support``` --> ```Local Access``` --> ``` user: admin, password: pw8888 ``` --> ```More``` --> ``` Communication Settings``` --> Enable ```Inverter ETH port``` 
+
+
+## iHomeManager
+
+Q: Will this integration support the iHome Manager from Sungrow?
+
+A: Not at the moment. The iHome Manager uses a different Modbus map and is not supported by this integration. If you are interested in supporting the iHome Manager, please create an issue or submit a PR.
+
 
 ## open questions @all
 
