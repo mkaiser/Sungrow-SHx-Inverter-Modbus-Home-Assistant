@@ -1,4 +1,4 @@
-# Release date 2026-01-04
+# Release date 2026-01-04 (2)
 #
 # INSTALLATION GUIDE: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/doc/installation.md
 #
@@ -1200,6 +1200,34 @@ modbus:
         state_class: measurement
         scan_interval: *scan_interval_fast
 
+      # TODO test and implement from theunknown86
+      # TODO datasheet name: Feed-in Limitation Ratio
+      # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
+      # MG5-6RL is not supported.
+      # 0xAA: Enable
+      # 0x55: Disable
+      - name: Active power limitation raw
+        unique_id: sg_active_power_limitation_raw
+        device_address: !secret sungrow_modbus_device_address
+        address: &reg_active_power_limitation_raw 13088 # reg 13089
+        input_type: holding
+        data_type: uint16
+        scan_interval: *scan_interval_fast
+        state_class: measurement
+
+      # MG5-6RL is not supported.
+      # 0-1000
+      - name: Active power limitation ratio raw
+        unique_id: sg_active_power_limitation_ratio_raw
+        device_address: !secret sungrow_modbus_device_address
+        address: &reg_active_power_limitation_ratio_raw 13089 # reg 13090
+        input_type: holding
+        data_type: uint16
+        scan_interval: *scan_interval_fast
+        state_class: measurement
+        scale: 0.1
+        unit_of_measurement: "%"
+
       - name: Battery reserved SoC for backup
         unique_id: sg_battery_reserved_soc_for_backup
         device_address: !secret sungrow_modbus_device_address
@@ -1244,34 +1272,6 @@ modbus:
         data_type: string
         count: 15
         scan_interval: *scan_interval_slowest
-
-      # TODO test and implement from theunknown86
-      # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
-      # MG5-6RL is not supported.
-      # 0xAA: Enable
-      # 0x55: Disable
-      - name: Active power limitation raw
-        unique_id: sg_active_power_limitation_raw
-        device_address: !secret sungrow_modbus_device_address
-        address: &reg_active_power_limitation_raw 13088 # reg 13089
-        input_type: holding
-        data_type: uint16
-        scan_interval: *scan_interval_fast
-        state_class: measurement
-
-      # MG5-6RL is not supported.
-      # 0-1000
-      - name: Active power limitation ratio raw
-        unique_id: sg_active_power_limitation_ratio_raw
-        device_address: !secret sungrow_modbus_device_address
-        address: &reg_active_power_limitation_ratio_raw 13089 # reg 13090
-        input_type: holding
-        data_type: uint16
-        scan_interval: *scan_interval_fast
-        state_class: measurement
-        scale: 0.1
-        unit_of_measurement: "%"
-        device_class: power_factor
 
       # NOTE: 2025-12-10
       # from 'theunknown' too, but can't find this in the datasheet
@@ -1517,7 +1517,7 @@ template:
         min: 0
         max: 50 # max value is defined by modbus spec
         step: 1
-        availability: "{{ states('sensor.battery_min_soc') | is_number }}"        
+        availability: "{{ states('sensor.battery_min_soc') | is_number }}"
         # modbus --> UI
         state: "{{ states('sensor.battery_min_soc') }}"
         # UI --> modbus
@@ -1539,7 +1539,7 @@ template:
         min: 50 # min value is defined by modbus spec
         max: 100
         step: 1
-        availability: "{{ states('sensor.battery_max_soc') | is_number }}"        
+        availability: "{{ states('sensor.battery_max_soc') | is_number }}"
         # modbus --> UI
         state: "{{ states('sensor.battery_max_soc') }}"
         # UI --> modbus
@@ -1561,7 +1561,7 @@ template:
         min: 0
         max: 100
         step: 1
-        availability: "{{ states('sensor.battery_reserved_soc_for_backup') | is_number }}"        
+        availability: "{{ states('sensor.battery_reserved_soc_for_backup') | is_number }}"
         # modbus --> UI
         state: "{{ states('sensor.battery_reserved_soc_for_backup') }}"
         # UI --> modbus
@@ -1591,7 +1591,7 @@ template:
         # charging and discharging. I am pretty confident, that a max: value for the number is ok with 1000W.
         # Please open an issue, if other values are needed.
         step: 10
-        availability: "{{ states('sensor.battery_charging_start_power') | is_number }}"        
+        availability: "{{ states('sensor.battery_charging_start_power') | is_number }}"
         # modbus --> UI
         state: "{{ states('sensor.battery_charging_start_power') }}"
         # UI --> modbus
@@ -1616,7 +1616,7 @@ template:
         # charging and discharging. I am pretty confident, that a max: value for the number is ok with 1000W
         # Please open an issue, if other values are needed.
         step: 10
-        availability: "{{ states('sensor.battery_discharging_start_power') | is_number }}"        
+        availability: "{{ states('sensor.battery_discharging_start_power') | is_number }}"
         # modbus --> UI
         state: "{{ states('sensor.battery_discharging_start_power') }}"
         # UI --> modbus
@@ -1638,7 +1638,7 @@ template:
         min: 0
         max: !secret sungrow_modbus_battery_max_power
         step: 100
-        availability: "{{ states('sensor.battery_forced_charge_discharge_power') | is_number }}"        
+        availability: "{{ states('sensor.battery_forced_charge_discharge_power') | is_number }}"
         # modbus --> UI
         state: "{{ states('sensor.battery_forced_charge_discharge_power') }}"
         # UI --> modbus
@@ -1681,7 +1681,7 @@ template:
         min: 0
         max: !secret sungrow_modbus_battery_max_power
         step: 100
-        availability: "{{ states('sensor.battery_max_discharge_power') | is_number }}"        
+        availability: "{{ states('sensor.battery_max_discharge_power') | is_number }}"
         # modbus --> UI
         state: "{{ states('sensor.battery_max_discharge_power') }}"
         # UI --> modbus
