@@ -114,11 +114,12 @@ We are happy to share our experiences - feel encouraged to share yours with us, 
 If you have any questions, feature requests, found any bugs or have some hints how to update the documentation, a low-threshold way is to join the [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2) and just ask.
 
 # 8. Related work
-- **Sungrow Wallbox**: Check https://github.com/Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant
-- **Sungrow Logger 1000a**: https://github.com/RafAustralia/Sungrow-Logger1000a-Modbus
-- **Chint DTSU666 Modbus**: https://github.com/RafAustralia/Chint-DTSU666-20-modbus/
-- **EVCC**: Check https://github.com/Hoellenwesen/home-assistant-configurations
-- **Sungrow document collection**: https://github.com/bohdan-s/Sungrow-Inverter / https://github.com/Gnarfoz/Sungrow-Inverter/
+- **[HA Modbus Manager](https://github.com/TCzerny/ha-modbus-manager)**
+- **[Sungrow Wallbox](https://github.com/Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant)**
+- **[Sungrow Logger 1000a](https://github.com/RafAustralia/Sungrow-Logger1000a-Modbus)**
+- **[Chint DTSU666 Modbus](https://github.com/RafAustralia/Chint-DTSU666-20-modbus/)**
+- **[EVCC](https://github.com/Hoellenwesen/home-assistant-configurations)**
+- **Sungrow document collections by [bohdan-s](https://github.com/bohdan-s/Sungrow-Inverter) b< [Gnarfoz](https://github.com/Gnarfoz/Sungrow-Inverter)**
 
 
 # 9. Acknowledgements
