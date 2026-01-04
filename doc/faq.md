@@ -10,8 +10,9 @@
 - [Full list of provided sensors](#full-list-of-provided-sensors)
 - [Orphaned or unavailable entities](#orphaned-or-unavailable-entities)
 - [Connect the inverter via Ethernet](#connect-the-inverter-via-ethernet)
-- [Open questions](#open-questions-all)
 - [iHomeManager](#ihomemanager)
+- [Q: How can I change the input sliders to boxes?](#q-how-can-i-change-the-input-sliders-to-boxes)
+- [Open questions](#open-questions-all)
 
 
 ## isolarcloud installer account
@@ -144,6 +145,20 @@ Q: Will this integration support the iHome Manager from Sungrow?
 
 A: Not at the moment. The iHome Manager uses a different Modbus map and is not supported by this integration. If you are interested in supporting the iHome Manager, please create an issue or submit a PR.
 
+
+## Q: How can I change the input sliders to boxes?
+
+IN the defauld dashboard (enable the danger mode), you can set the EMS parameters using sliders.
+
+The integration currently uses [template numbers](https://www.home-assistant.io/integrations/template#number). They have the function ```state``` to retrieve the state from the read modbus sensors and the function ```set_value``` to define a modbus write action. Both make the past  error-prone additional automations obsolete. 
+But template_numbers don't support box-style input :/ 
+
+input_number have the desired mode: box settings.
+I tried switching to input_numbers, but this does not support state and set_value.
+
+So unless someone implements this on HA side we are stuck with sliders for the moment ;/
+
+But maybe (hopefully) I am wrong here - please prove me wrong ;)
 
 ## open questions @all
 
