@@ -18,7 +18,7 @@ modbus:
         # first part of firmware string
         # SAPPHIRE-H_01011.95.12SAPPHIRE-H_03011.95.12SUBCTL-S_04011.01.01
         # --> SAPPHIRE-H_01011.95.12
-        unique_id: sg_version_1
+        unique_id: sg_version_1_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 2581 # reg 2582
         input_type: input
@@ -30,7 +30,7 @@ modbus:
         # second part of firmware string
         # SAPPHIRE-H_01011.95.12SAPPHIRE-H_03011.95.12SUBCTL-S_04011.01.01
         # --> SAPPHIRE-H_03011.95.12
-        unique_id: sg_version_2
+        unique_id: sg_version_2_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 2596
         input_type: input
@@ -42,7 +42,7 @@ modbus:
         # third part of firmware string
         # SAPPHIRE-H_01011.95.12SAPPHIRE-H_03011.95.12SUBCTL-S_04011.01.01
         # --> SUBCTL-S_04011.01.01
-        unique_id: sg_version_3
+        unique_id: sg_version_3_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 2612
         input_type: input
@@ -55,7 +55,7 @@ modbus:
         # fourth part of firmware string (only for sungrow batteries)
         # SAPPHIRE-H_01011.95.12SAPPHIRE-H_03011.95.12SUBCTL-S_04011.01.01 - XXXX
         # --> XXXX
-        unique_id: sg_version_4_battery
+        unique_id: sg_version_4_battery_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 2628
         input_type: input
@@ -64,7 +64,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Sungrow Protocol Version inv 3
-        unique_id: sg_protocol_version
+        unique_id: sg_protocol_version_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 4951 # reg 5952-4953
         input_type: input
@@ -73,7 +73,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Sungrow Arm Software inv 3
-        unique_id: sg_arm_software
+        unique_id: sg_arm_software_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 4953 # reg 4954-4968, 15 registers
         input_type: input
@@ -82,7 +82,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Sungrow DSP Software inv 3
-        unique_id: sg_dsp_software
+        unique_id: sg_dsp_software_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 4968 # reg 4969-4983, 15 registers
         input_type: input
@@ -91,7 +91,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Sungrow inverter serial inv 3
-        unique_id: sg_inverter_serial
+        unique_id: sg_inverter_serial_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 4989 # reg 4990- 4999, 10 registers
         input_type: input
@@ -110,7 +110,7 @@ modbus:
       #        scan_interval: 86400
 
       - name: Sungrow device type code inv 3
-        unique_id: sg_dev_code
+        unique_id: sg_dev_code_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 4999 # reg 5000
         input_type: input
@@ -118,7 +118,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Inverter rated output inv 3
-        unique_id: sg_inverter_rated_output
+        unique_id: sg_inverter_rated_output_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5000 # reg 5001
         input_type: input
@@ -130,7 +130,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Daily PV generation & battery discharge inv 3
-        unique_id: sg_daily_pv_gen_battery_discharge
+        unique_id: sg_daily_pv_gen_battery_discharge_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5002 # reg 5003
         input_type: input
@@ -143,7 +143,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Total PV generation & battery discharge inv 3
-        unique_id: sg_total_pv_gen_battery_discharge
+        unique_id: sg_total_pv_gen_battery_discharge_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5003 # reg 5004
         input_type: input
@@ -157,7 +157,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Inverter temperature inv 3
-        unique_id: sg_inverter_temperature
+        unique_id: sg_inverter_temperature_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5007 # reg 5008
         input_type: input
@@ -170,7 +170,7 @@ modbus:
         scan_interval: &scan_interval_medium 60
 
       - name: MPPT1 voltage inv 3
-        unique_id: sg_mppt1_voltage
+        unique_id: sg_mppt1_voltage_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5010 # reg 5011
         input_type: input
@@ -183,7 +183,7 @@ modbus:
         scan_interval: &scan_interval_fast 10
 
       - name: MPPT1 current inv 3
-        unique_id: sg_mppt1_current
+        unique_id: sg_mppt1_current_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5011 # reg 5012
         input_type: input
@@ -196,7 +196,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: MPPT2 voltage inv 3
-        unique_id: sg_mppt2_voltage
+        unique_id: sg_mppt2_voltage_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5012 # reg 5013
         input_type: input
@@ -209,7 +209,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: MPPT2 current inv 3
-        unique_id: sg_mppt2_current
+        unique_id: sg_mppt2_current_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5013 # reg 5014
         input_type: input
@@ -223,7 +223,7 @@ modbus:
 
       # only for SH*T inverters with 3 MPPTs
       - name: MPPT3 voltage inv 3
-        unique_id: sg_mppt3_voltage
+        unique_id: sg_mppt3_voltage_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5014 # reg 5015
         input_type: input
@@ -238,7 +238,7 @@ modbus:
 
       # only for SH*T inverters with 3 MPPTs
       - name: MPPT3 current inv 3
-        unique_id: sg_mppt3_current
+        unique_id: sg_mppt3_current_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5015 # reg 5016
         input_type: input
@@ -252,7 +252,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Total DC power inv 3
-        unique_id: sg_total_dc_power
+        unique_id: sg_total_dc_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5016 # reg 5017
         input_type: input
@@ -266,7 +266,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Phase A voltage inv 3
-        unique_id: sg_phase_a_voltage
+        unique_id: sg_phase_a_voltage_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5018 # reg: 5019
         input_type: input
@@ -279,7 +279,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Phase B voltage inv 3
-        unique_id: sg_phase_b_voltage
+        unique_id: sg_phase_b_voltage_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5019 # reg: 5020
         input_type: input
@@ -292,7 +292,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Phase C voltage inv 3
-        unique_id: sg_phase_c_voltage
+        unique_id: sg_phase_c_voltage_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5020 # reg: 5021
         input_type: input
@@ -305,7 +305,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Reactive power inv 3
-        unique_id: sg_reactive_power
+        unique_id: sg_reactive_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5032 # reg 5033
         input_type: input
@@ -319,7 +319,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Power factor inv 3
-        unique_id: sg_power_factor
+        unique_id: sg_power_factor_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5034 # reg 5035
         input_type: input
@@ -335,7 +335,7 @@ modbus:
       # negative: Battery charging
       # positive: Battery discharging
       - name: Battery power inv 3
-        unique_id: sg_battery_power
+        unique_id: sg_battery_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5213 # reg 5214-5215
         input_type: input
@@ -349,7 +349,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Grid frequency inv 3
-        unique_id: sg_grid_frequency
+        unique_id: sg_grid_frequency_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5241 # reg 5242
         input_type: input
@@ -364,7 +364,7 @@ modbus:
         # modbus spec: Only valid when the inverter is directly connected to the smart energy meter. (See note 1);
         # ＞ 0 buy from grid; ＜ 0 sell to grid;
       - name: Meter active power inv 3
-        unique_id: sg_meter_active_power
+        unique_id: sg_meter_active_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5600 # reg 5601
         input_type: input
@@ -381,7 +381,7 @@ modbus:
         # modbus spec: Only valid when the inverter is directly connected to the smart energy meter. (See note 1);
         # ＞ 0 buy from grid; ＜ 0 sell to grid;
       - name: Meter phase A active power inv 3
-        unique_id: sg_meter_phase_a_active_power
+        unique_id: sg_meter_phase_a_active_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5602 # reg 5603
         input_type: input
@@ -398,7 +398,7 @@ modbus:
         # modbus spec: Only valid when the inverter is directly connected to the smart energy meter. (See note 1);
         # ＞ 0 buy from grid; ＜ 0 sell to grid;
       - name: Meter phase B active power inv 3
-        unique_id: sg_meter_phase_b_active_power
+        unique_id: sg_meter_phase_b_active_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5604 # reg 5605
         input_type: input
@@ -415,7 +415,7 @@ modbus:
         # modbus spec: Only valid when the inverter is directly connected to the smart energy meter. (See note 1);
         # ＞ 0 buy from grid; ＜ 0 sell to grid;
       - name: Meter phase C active power inv 3
-        unique_id: sg_meter_phase_c_active_power
+        unique_id: sg_meter_phase_c_active_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5606 # reg 5607
         input_type: input
@@ -430,7 +430,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: BDC rated power inv 3
-        unique_id: sg_bdc_rated_power
+        unique_id: sg_bdc_rated_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5627 # reg 5628
         input_type: input
@@ -443,7 +443,7 @@ modbus:
 
       # NOTE: In datasheet (1.1.11) it is recommended to use Battery current register 5631 instead of 13021
       - name: Battery current inv 3
-        unique_id: sg_battery_current
+        unique_id: sg_battery_current_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5630 # reg 5631
         input_type: input
@@ -456,7 +456,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: BMS max. charging current inv 3
-        unique_id: sg_bms_max_charging_current
+        unique_id: sg_bms_max_charging_current_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5634 # reg 5635
         input_type: input
@@ -469,7 +469,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: BMS max. discharging current inv 3
-        unique_id: sg_bms_max_discharging_current
+        unique_id: sg_bms_max_discharging_current_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5635 # reg 5636
         input_type: input
@@ -482,7 +482,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Battery capacity high precision inv 3 # as in TI_20240924_Communication Protocol of Residential Hybrid Inverter-V1.1.5
-        unique_id: uid_battery_capacity_high_precision
+        unique_id: uid_battery_capacity_high_precision_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5638 # reg 5639
         input_type: input
@@ -494,7 +494,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Backup phase A power inv 3
-        unique_id: sg_backup_phase_a_power
+        unique_id: sg_backup_phase_a_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5722 # reg 5723
         input_type: input
@@ -507,7 +507,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Backup phase B power inv 3
-        unique_id: sg_backup_phase_b_power
+        unique_id: sg_backup_phase_b_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5723 # reg 5724
         input_type: input
@@ -520,7 +520,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Backup phase C power inv 3
-        unique_id: sg_backup_phase_c_power
+        unique_id: sg_backup_phase_c_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5724 # reg 5725
         input_type: input
@@ -534,7 +534,7 @@ modbus:
 
       - name: Total backup power inv 3
         device_address: !secret sungrow_modbus_device_address_inv_3
-        unique_id: sg_total_backup_power
+        unique_id: sg_total_backup_power_inv_3
         address: 5725 # reg 5726
         input_type: input
         data_type: int32
@@ -548,7 +548,7 @@ modbus:
 
       # https://www.photovoltaikforum.com/thread/166134-daten-lesen-vom-sungrow-wechselrichtern-modbus/?postID=3324464#post3324464
       - name: Meter phase A voltage inv 3
-        unique_id: sg_meter_phase_a_voltage
+        unique_id: sg_meter_phase_a_voltage_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5740 # reg 5741
         input_type: input
@@ -561,7 +561,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Meter phase B voltage inv 3
-        unique_id: sg_meter_phase_b_voltage
+        unique_id: sg_meter_phase_b_voltage_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5741 # reg 5742
         input_type: input
@@ -574,7 +574,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Meter phase C voltage inv 3
-        unique_id: sg_meter_phase_c_voltage
+        unique_id: sg_meter_phase_c_voltage_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5742 # reg 5743
         input_type: input
@@ -587,7 +587,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Meter phase A current inv 3
-        unique_id: sg_meter_phase_a_current
+        unique_id: sg_meter_phase_a_current_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5743 # reg 5744
         input_type: input
@@ -600,7 +600,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Meter phase B current inv 3
-        unique_id: sg_meter_phase_b_current
+        unique_id: sg_meter_phase_b_current_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5744 # reg 5745
         input_type: input
@@ -613,7 +613,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Meter phase C current inv 3
-        unique_id: sg_meter_phase_c_current
+        unique_id: sg_meter_phase_c_current_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 5745 # reg 5746
         input_type: input
@@ -628,7 +628,7 @@ modbus:
       # NOTE: in old modbus doc version this was called "system state"
       # but has been renamed to "running state"
       - name: Running state raw inv 3
-        unique_id: uid_sg_running_state_raw
+        unique_id: uid_sg_running_state_raw_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_running_state 12999 # reg 13000
         input_type: input
@@ -642,7 +642,7 @@ modbus:
       # but has been renamed to "power flow status"
       # template binary sensors are used to determine their states based on this value
       - name: Power Flow Status inv 3
-        unique_id: uid_power_flow_status
+        unique_id: uid_power_flow_status_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13000 # reg 13001
         input_type: input
@@ -653,7 +653,7 @@ modbus:
         scan_interval: *scan_interval_realtime
 
       - name: Daily PV generation inv 3
-        unique_id: sg_daily_pv_generation
+        unique_id: sg_daily_pv_generation_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13001 # reg 13002
         input_type: input
@@ -666,7 +666,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Total PV generation inv 3
-        unique_id: sg_total_pv_generation
+        unique_id: sg_total_pv_generation_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13002 # reg 13003
         input_type: input
@@ -680,7 +680,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Daily exported energy from PV inv 3
-        unique_id: sg_daily_exported_energy_from_PV
+        unique_id: sg_daily_exported_energy_from_PV_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13004 # reg 13005
         input_type: input
@@ -693,7 +693,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Total exported energy from PV inv 3
-        unique_id: sg_total_exported_energy_from_pv
+        unique_id: sg_total_exported_energy_from_pv_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13005 # reg 13006
         input_type: input
@@ -707,7 +707,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Load power inv 3
-        unique_id: sg_load_power
+        unique_id: sg_load_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13007 # reg 13008
         input_type: input
@@ -722,7 +722,7 @@ modbus:
 
       # this value returns a positive value when exporting and a negative value when importing power
       - name: Export power raw inv 3
-        unique_id: sg_battery_export_power_raw
+        unique_id: sg_battery_export_power_raw_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13009 # reg 13010
         input_type: input
@@ -736,7 +736,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Daily battery charge from PV inv 3
-        unique_id: sg_daily_battery_charge_from_pv
+        unique_id: sg_daily_battery_charge_from_pv_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13011 # reg 13012
         input_type: input
@@ -749,7 +749,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Total battery charge from PV inv 3
-        unique_id: sg_total_battery_charge_from_pv
+        unique_id: sg_total_battery_charge_from_pv_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13012 # reg 13013
         input_type: input
@@ -763,7 +763,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Daily direct energy consumption inv 3
-        unique_id: sg_daily_direct_energy_consumption
+        unique_id: sg_daily_direct_energy_consumption_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13016 # reg 13017
         input_type: input
@@ -776,7 +776,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Total direct energy consumption inv 3
-        unique_id: sg_total_direct_energy_consumption
+        unique_id: sg_total_direct_energy_consumption_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13017 # reg 13018
         input_type: input
@@ -790,7 +790,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Battery voltage inv 3
-        unique_id: sg_battery_voltage
+        unique_id: sg_battery_voltage_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13019 # reg 13020
         input_type: input
@@ -839,7 +839,7 @@ modbus:
 
       # 0..100%  |  min_soc..max_soc
       - name: Battery level inv 3
-        unique_id: sg_battery_level
+        unique_id: sg_battery_level_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13022 # reg 13023
         input_type: input
@@ -853,7 +853,7 @@ modbus:
 
       # 0..100% calculated internally by the BMS load balancing
       - name: Battery state of health inv 3
-        unique_id: sg_battery_state_of_health
+        unique_id: sg_battery_state_of_health_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13023 # reg 13024
         input_type: input
@@ -865,7 +865,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Battery temperature inv 3
-        unique_id: sg_battery_temperature
+        unique_id: sg_battery_temperature_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13024 # reg 13025
         input_type: input
@@ -878,7 +878,7 @@ modbus:
         scan_interval: *scan_interval_medium
 
       - name: Daily battery discharge inv 3
-        unique_id: sg_daily_battery_discharge
+        unique_id: sg_daily_battery_discharge_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13025 # reg 13026
         input_type: input
@@ -891,7 +891,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Total battery discharge inv 3
-        unique_id: sg_total_battery_discharge
+        unique_id: sg_total_battery_discharge_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13026 # reg 13027
         input_type: input
@@ -905,7 +905,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Phase A current inv 3
-        unique_id: sg_phase_a_current
+        unique_id: sg_phase_a_current_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13030 # reg 13031
         input_type: input
@@ -918,7 +918,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Phase B current inv 3
-        unique_id: sg_phase_b_current
+        unique_id: sg_phase_b_current_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13031 # reg 13032
         input_type: input
@@ -931,7 +931,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Phase C current inv 3
-        unique_id: sg_phase_c_current
+        unique_id: sg_phase_c_current_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13032 # reg 13033
         input_type: input
@@ -944,7 +944,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Total active power inv 3
-        unique_id: sg_total_active_power
+        unique_id: sg_total_active_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13033 # reg 13034
         input_type: input
@@ -958,7 +958,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Daily imported energy inv 3
-        unique_id: sg_daily_imported_energy
+        unique_id: sg_daily_imported_energy_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13035 # reg 13036
         input_type: input
@@ -971,7 +971,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Total imported energy inv 3
-        unique_id: sg_total_imported_energy
+        unique_id: sg_total_imported_energy_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13036 # reg 13037
         input_type: input
@@ -985,7 +985,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Daily battery charge inv 3
-        unique_id: sg_daily_battery_charge
+        unique_id: sg_daily_battery_charge_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13039 # reg 13040
         input_type: input
@@ -998,7 +998,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Total battery charge inv 3
-        unique_id: sg_total_battery_charge
+        unique_id: sg_total_battery_charge_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13040 # reg 13041
         input_type: input
@@ -1012,7 +1012,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Daily exported energy inv 3
-        unique_id: sg_daily_exported_energy
+        unique_id: sg_daily_exported_energy_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13044 # reg 13045
         input_type: input
@@ -1025,7 +1025,7 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       - name: Total exported energy inv 3
-        unique_id: sg_total_exported_energy
+        unique_id: sg_total_exported_energy_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13045 # reg 13046
         input_type: input
@@ -1042,7 +1042,7 @@ modbus:
       # modbus holding registers
       #####################
       - name: Load adjustment mode selection raw inv 3
-        unique_id: sg_load_adjustment_mode_selection_raw
+        unique_id: sg_load_adjustment_mode_selection_raw_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_load_adjustment_mode_selection 13001 # reg 13002
         input_type: holding
@@ -1051,7 +1051,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Load adjustment mode enable raw inv 3
-        unique_id: sg_load_adjustment_mode_enable_raw
+        unique_id: sg_load_adjustment_mode_enable_raw_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_load_adjustment_mode_enable 13010 # reg 13011
         input_type: holding
@@ -1063,7 +1063,7 @@ modbus:
       # Does forced charge prevent this or not?
       # see https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/444#issuecomment-3471705119
       - name: Forced startup under low soc standby raw inv 3
-        unique_id: sg_forced_startup_under_low_soc_standby_raw
+        unique_id: sg_forced_startup_under_low_soc_standby_raw_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_forced_startup_low_soc 13016 # reg 13017
         input_type: holding
@@ -1072,7 +1072,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: EMS mode selection raw inv 3
-        unique_id: sg_ems_mode_selection_raw
+        unique_id: sg_ems_mode_selection_raw_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_ems_mode_selection 13049 # reg 13050
         input_type: holding
@@ -1081,7 +1081,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Battery forced charge discharge cmd raw inv 3
-        unique_id: sg_battery_forced_charge_discharge_cmd_raw
+        unique_id: sg_battery_forced_charge_discharge_cmd_raw_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_forced_charge_discharge_cmd_raw 13050 # reg 13051
         input_type: holding
@@ -1091,7 +1091,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Battery forced charge discharge power inv 3
-        unique_id: sg_battery_forced_charge_discharge_power
+        unique_id: sg_battery_forced_charge_discharge_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_battery_forced_charge_discharge_power 13051 # reg 13052
         input_type: holding
@@ -1107,7 +1107,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Battery max SoC inv 3
-        unique_id: uid_sg_battery_max_soc
+        unique_id: uid_sg_battery_max_soc_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_max_soc 13057 # reg 13058
         input_type: holding
@@ -1120,7 +1120,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Battery min SoC inv 3
-        unique_id: uid_sg_battery_min_soc
+        unique_id: uid_sg_battery_min_soc_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_min_soc 13058 # reg 13059
         input_type: holding
@@ -1134,7 +1134,7 @@ modbus:
 
       # in the documentation this is called "feed-in power limit"
       - name: Export power limit inv 3
-        unique_id: sg_export_power_limit
+        unique_id: sg_export_power_limit_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_export_power_limit 13073 # reg 13074
         input_type: holding
@@ -1148,7 +1148,7 @@ modbus:
 
       # called "Off-grid option" in spec
       - name: Backup mode raw inv 3
-        unique_id: sg_backup_mode_raw
+        unique_id: sg_backup_mode_raw_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_backup_mode 13074 # reg 13075
         input_type: holding
@@ -1158,7 +1158,7 @@ modbus:
 
       # called "Feed-in limitation" in spec
       - name: Export power limit mode raw inv 3
-        unique_id: sg_export_power_limit_mode_raw
+        unique_id: sg_export_power_limit_mode_raw_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_export_power_limit_mode 13086 # reg 13087
         input_type: holding
@@ -1168,7 +1168,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       - name: Battery reserved SoC for backup inv 3
-        unique_id: sg_battery_reserved_soc_for_backup
+        unique_id: sg_battery_reserved_soc_for_backup_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_reserved_soc_backup 13099 # reg 13100
         input_type: holding
@@ -1182,7 +1182,7 @@ modbus:
       # Inverter Firmware version from register 13250 to 13264 as UTF8 string
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
       - name: Inverter Firmware Version inv 3
-        unique_id: sg_inverter_firmware_version
+        unique_id: sg_inverter_firmware_version_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13249 # reg 13250 - 13264, 15 register
         input_type: input
@@ -1193,7 +1193,7 @@ modbus:
       # Communication Module Firmware version from register 13265 to 13279 as UTF8 string
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
       - name: Communication Module Firmware Version inv 3
-        unique_id: sg_communication_module_firmware_version
+        unique_id: sg_communication_module_firmware_version_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13264 # reg 13265 - 13279, 15 register
         input_type: input
@@ -1204,7 +1204,7 @@ modbus:
       # Battery Firmware version from register 13280 to 13279 as UTF8 string
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
       - name: Battery Firmware Version inv 3
-        unique_id: sg_battery_firmware_version
+        unique_id: sg_battery_firmware_version_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: 13279 # reg 13280 - 13279, 15 register
         input_type: input
@@ -1218,7 +1218,7 @@ modbus:
       # 0xAA: Enable
       # 0x55: Disable
       - name: Active power limitation raw inv 3
-        unique_id: sg_active_power_limitation_raw
+        unique_id: sg_active_power_limitation_raw_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &reg_active_power_limitation_raw 13088 # reg 13089
         input_type: holding
@@ -1229,7 +1229,7 @@ modbus:
       # MG5-6RL is not supported.
       # 0-1000
       - name: Active power limitation ratio raw inv 3
-        unique_id: sg_active_power_limitation_ratio_raw
+        unique_id: sg_active_power_limitation_ratio_raw_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &reg_active_power_limitation_ratio_raw 13089 # reg 13090
         input_type: holding
@@ -1244,7 +1244,7 @@ modbus:
       # from 'theunknown' too, but can't find this in the datasheet
       # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/554#issuecomment-3170420960
       - name: APL shutdown at zero raw inv 3
-        unique_id: sg_apl_shutdown_on_zero_raw
+        unique_id: sg_apl_shutdown_on_zero_raw_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_apl_shutdown_on_zero_raw 31212 # reg 31213
         input_type: holding
@@ -1254,7 +1254,7 @@ modbus:
 
       # NOTE: datasheet (1.1.11) states 0.01kW as unit (scale=100)
       - name: Battery max charge power inv 3
-        unique_id: sg_battery_max_charge_power
+        unique_id: sg_battery_max_charge_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_battery_max_charge_power 33046 # reg 33047
         input_type: holding
@@ -1268,7 +1268,7 @@ modbus:
 
       # NOTE: datasheet (1.1.11) states 0.01kW as unit (scale=100)
       - name: Battery max discharge power inv 3
-        unique_id: sg_battery_max_discharge_power
+        unique_id: sg_battery_max_discharge_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_battery_max_discharge_power 33047 # reg 33048
         input_type: holding
@@ -1281,7 +1281,7 @@ modbus:
 
       # datasheet: Charging/Discharging Power–Wide range
       - name: Battery charging start power inv 3
-        unique_id: sg_battery_charging_start_power
+        unique_id: sg_battery_charging_start_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_battery_charging_start_power 33148 # reg 33149
         input_type: holding
@@ -1294,7 +1294,7 @@ modbus:
 
       # undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Battery discharging start power inv 3
-        unique_id: sg_battery_discharging_start_power
+        unique_id: sg_battery_discharging_start_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
         address: &sg_reg_battery_discharging_start_power 33149 # reg 33150
         input_type: holding
@@ -1311,7 +1311,7 @@ modbus:
       #####################
     switches:
       - name: Forced Startup Under Low SoC Standby inv 3
-        unique_id: sg_forced_startup_under_low_soc_standby_switch
+        unique_id: sg_forced_startup_under_low_soc_standby_switch_inv_3
         slave: !secret sungrow_modbus_device_address_inv_3
         address: *sg_reg_forced_startup_low_soc
         write_type: holding
@@ -1325,7 +1325,7 @@ modbus:
           delay: 1
 
       - name: Backup Mode inv 3
-        unique_id: sg_backup_mode_switch
+        unique_id: sg_backup_mode_switch_inv_3
         slave: !secret sungrow_modbus_device_address_inv_3
         address: *sg_reg_backup_mode
         write_type: holding
@@ -1339,7 +1339,7 @@ modbus:
           delay: 1
 
       - name: Export power limit inv 3
-        unique_id: sg_export_power_limit_switch
+        unique_id: sg_export_power_limit_switch_inv_3
         slave: !secret sungrow_modbus_device_address_inv_3
         address: *sg_reg_export_power_limit_mode
         write_type: holding
@@ -1353,7 +1353,7 @@ modbus:
           delay: 1
 
       - name: Load adjustment mode inv 3
-        unique_id: sg_load_adjustment_mode_switch
+        unique_id: sg_load_adjustment_mode_switch_inv_3
         slave: !secret sungrow_modbus_device_address_inv_3
         address: *sg_reg_load_adjustment_mode_enable
         write_type: holding
@@ -1370,7 +1370,7 @@ sensor:
   - platform: filter
     name: "Daily consumed energy (filtered)"
     entity_id: sensor.daily_consumed_energy_inv_3
-    unique_id: sg_daily_consumed_energy_filtered
+    unique_id: sg_daily_consumed_energy_filtered_inv_3
     filters:
       - filter: time_simple_moving_average
         window_size: "00:05"
@@ -1383,25 +1383,25 @@ template:
   - binary_sensor:
       # bit 0 — PV generating
       - name: PV generating inv 3
-        unique_id: sg_pv_generating
+        unique_id: sg_pv_generating_inv_3
         availability: "{{ states('sensor.power_flow_status_inv_3') not in ['unknown','unavailable'] }}"
         state: "{{ states('sensor.power_flow_status_inv_3')|int |bitwise_and(0x1) }}"
 
       - name: PV generating (delay) inv 3
-        unique_id: sg_pv_generating_delay
-        availability: "{{ states('binary_sensor.pv_generating_inv_3') }}"
+        unique_id: sg_pv_generating_delay_inv_3
+        availability: "{{ states('binary_sensor.pv_generating_inv_3') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
         state: "{{ states('binary_sensor.pv_generating_inv_3') }}"
 
       # bit 1 — Battery charging
       - name: Battery charging inv 3
-        unique_id: sg_battery_charging
+        unique_id: sg_battery_charging_inv_3
         availability: "{{ states('sensor.power_flow_status_inv_3') not in ['unknown','unavailable'] }}"
         state: "{{ states('sensor.power_flow_status_inv_3')|int |bitwise_and(0x2) }}"
 
       - name: Battery charging (delay) inv 3
-        unique_id: sg_battery_charging_delay
+        unique_id: sg_battery_charging_delay_inv_3
         availability: "{{ states('binary_sensor.battery_charging_inv_3') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
@@ -1409,12 +1409,12 @@ template:
 
       # bit 2 — Battery discharging
       - name: Battery discharging inv 3
-        unique_id: sg_battery_discharging
+        unique_id: sg_battery_discharging_inv_3
         availability: "{{ states('sensor.power_flow_status_inv_3') not in ['unknown','unavailable'] }}"
         state: "{{ states('sensor.power_flow_status_inv_3')|int |bitwise_and(0x4) }}"
 
       - name: Battery discharging (delay) inv 3
-        unique_id: sg_battery_discharging_delay
+        unique_id: sg_battery_discharging_delay_inv_3
         availability: "{{ states('binary_sensor.battery_discharging_inv_3') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
@@ -1422,12 +1422,12 @@ template:
 
       # bit 3 — Positive Load Power
       - name: Positive Load Power inv 3
-        unique_id: sg_positive_load_power
+        unique_id: sg_positive_load_power_inv_3
         availability: "{{ states('sensor.power_flow_status_inv_3') not in ['unknown','unavailable'] }}"
         state: "{{ states('sensor.power_flow_status_inv_3')|int |bitwise_and(0x8) }}"
 
       - name: Positive Load Power (delay) inv 3
-        unique_id: sg_positive_load_power_delay
+        unique_id: sg_positive_load_power_delay_inv_3
         availability: "{{ states('binary_sensor.positive_load_power_inv_3') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
@@ -1435,12 +1435,12 @@ template:
 
       # bit 4 modbus spec "feed-in power"
       - name: Exporting Power inv 3
-        unique_id: sg_exporting_power
+        unique_id: sg_exporting_power_inv_3
         availability: "{{ states('sensor.power_flow_status_inv_3') not in ['unknown','unavailable'] }}"
         state: "{{ states('sensor.power_flow_status_inv_3')|int |bitwise_and(0x10) }}"
 
       - name: Exporting Power (delay) inv 3
-        unique_id: sg_exporting_power_delay
+        unique_id: sg_exporting_power_delay_inv_3
         availability: "{{ states('binary_sensor.exporting_power_inv_3') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
@@ -1448,12 +1448,12 @@ template:
 
       # bit 5 modbus spec "import power from grid"
       - name: Importing Power inv 3
-        unique_id: sg_importing_power
+        unique_id: sg_importing_power_inv_3
         availability: "{{ states('sensor.power_flow_status_inv_3') not in ['unknown','unavailable'] }}"
         state: "{{ states('sensor.power_flow_status_inv_3')|int |bitwise_and(0x20) }}"
 
       - name: Importing Power (delay) inv 3
-        unique_id: sg_importing_power_delay
+        unique_id: sg_importing_power_delay_inv_3
         availability: "{{ states('binary_sensor.importing_power_inv_3') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
@@ -1463,12 +1463,12 @@ template:
 
       # bit 7 — Negative load power
       - name: Negative Load Power inv 3
-        unique_id: sg_negative_load_power
+        unique_id: sg_negative_load_power_inv_3
         availability: "{{ states('sensor.power_flow_status_inv_3') not in ['unknown','unavailable'] }}"
         state: "{{ states('sensor.power_flow_status_inv_3')|int |bitwise_and(0x80) }}"
 
       - name: Negative Load Power (delay) inv 3
-        unique_id: sg_negative_load_power_delay
+        unique_id: sg_negative_load_power_delay_inv_3
         availability: "{{ states('binary_sensor.negative_load_power_inv_3') not in ['unknown','unavailable'] }}"
         delay_on:
           seconds: 60
@@ -1479,7 +1479,7 @@ template:
   ####################
   - number:
       - name: Battery Min Soc inv 3
-        unique_id: uid_battery_min_soc
+        unique_id: uid_battery_min_soc_inv_3
         unit_of_measurement: "%"
         min: 0
         max: 50 # max value is defined by modbus spec
@@ -1501,7 +1501,7 @@ template:
               entity_id: sensor.battery_min_soc_inv_3
 
       - name: Battery Max Soc inv 3
-        unique_id: uid_battery_max_soc
+        unique_id: uid_battery_max_soc_inv_3
         unit_of_measurement: "%"
         min: 50 # min value is defined by modbus spec
         max: 100
@@ -1523,7 +1523,7 @@ template:
               entity_id: sensor.battery_max_soc_inv_3
 
       - name: Battery Reserved SoC for Backup inv 3
-        unique_id: uid_battery_reserved_soc_for_backup
+        unique_id: uid_battery_reserved_soc_for_backup_inv_3
         unit_of_measurement: "%"
         min: 0
         max: 100
@@ -1550,7 +1550,7 @@ template:
       # Charging might stop before reaching 100% if set too close to the maximum charging power of the battery, due to achievable charging power naturally dropping at high state of charge.
       # set_sg_battery_charging_start_power:
       - name: Battery charging start power inv 3
-        unique_id: uid_battery_charging_start_power
+        unique_id: uid_battery_charging_start_power_inv_3
         unit_of_measurement: W
         min: 0
         max: 1000
@@ -1575,7 +1575,7 @@ template:
               entity_id: sensor.battery_charging_start_power_inv_3
 
       - name: Battery discharging start power inv 3
-        unique_id: uid_battery_discharging_start_power
+        unique_id: uid_battery_discharging_start_power_inv_3
         unit_of_measurement: W
         min: 0
         max: 1000
@@ -1600,7 +1600,7 @@ template:
               entity_id: sensor.battery_discharging_start_power_inv_3
 
       - name: Battery forced charge discharge power inv 3
-        unique_id: uid_battery_forced_charge_discharge_power
+        unique_id: uid_battery_forced_charge_discharge_power_inv_3
         unit_of_measurement: W
         min: 0
         max: !secret sungrow_modbus_battery_max_power_inv_3
@@ -1622,7 +1622,7 @@ template:
               entity_id: sensor.battery_forced_charge_discharge_power_inv_3
 
       - name: Battery max charge power inv 3
-        unique_id: uid_battery_max_charge_power
+        unique_id: uid_battery_max_charge_power_inv_3
         unit_of_measurement: W
         min: 0
         max: !secret sungrow_modbus_battery_max_power_inv_3
@@ -1643,7 +1643,7 @@ template:
               entity_id: sensor.battery_max_charge_power_inv_3
 
       - name: Battery max discharge power inv 3
-        unique_id: uid_battery_max_discharge_power
+        unique_id: uid_battery_max_discharge_power_inv_3
         unit_of_measurement: W
         min: 0
         max: !secret sungrow_modbus_battery_max_power_inv_3
@@ -1665,7 +1665,7 @@ template:
               entity_id: sensor.battery_max_discharge_power_inv_3
 
       - name: Export power limit inv 3
-        unique_id: uid_export_power_limit
+        unique_id: uid_export_power_limit_inv_3
         unit_of_measurement: W
         min: 0
         max: "{{ states('sensor.inverter_rated_output_inv_3') }}"
@@ -1698,7 +1698,7 @@ template:
   ####################
   - sensor:
       - name: MPPT1 power inv 3
-        unique_id: sg_mppt1_power
+        unique_id: sg_mppt1_power_inv_3
         unit_of_measurement: W
         device_class: power
         state_class: measurement
@@ -1706,7 +1706,7 @@ template:
         state: "{{ (states('sensor.mppt1_voltage_inv_3') | float * states('sensor.mppt1_current_inv_3') | float) |int }}"
 
       - name: MPPT2 power inv 3
-        unique_id: sg_mppt2_power
+        unique_id: sg_mppt2_power_inv_3
         unit_of_measurement: W
         device_class: power
         state_class: measurement
@@ -1715,7 +1715,7 @@ template:
 
         # only for SH*T inverters with 3 MPPTs
       - name: MPPT3 power inv 3
-        unique_id: uid_sg_mppt3_power
+        unique_id: uid_sg_mppt3_power_inv_3
         unit_of_measurement: W
         device_class: power
         state_class: measurement
@@ -1723,7 +1723,7 @@ template:
         state: "{{ (states('sensor.mppt3_voltage_inv_3') | float * states('sensor.mppt3_current_inv_3') | float) |int }}"
 
       - name: Phase A power inv 3
-        unique_id: sg_phase_a_power
+        unique_id: sg_phase_a_power_inv_3
         unit_of_measurement: W
         device_class: power
         state_class: measurement
@@ -1731,7 +1731,7 @@ template:
         state: "{{ (states('sensor.phase_a_voltage_inv_3') | float * states('sensor.phase_a_current_inv_3') | float) |int }}"
 
       - name: Phase B power inv 3
-        unique_id: sg_phase_b_power
+        unique_id: sg_phase_b_power_inv_3
         unit_of_measurement: W
         device_class: power
         state_class: measurement
@@ -1739,7 +1739,7 @@ template:
         state: "{{ (states('sensor.phase_b_voltage_inv_3') | float * states('sensor.phase_b_current_inv_3') | float) |int }}"
 
       - name: Phase C power inv 3
-        unique_id: sg_phase_c_power
+        unique_id: sg_phase_c_power_inv_3
         unit_of_measurement: W
         device_class: power
         state_class: measurement
@@ -1747,7 +1747,7 @@ template:
         state: "{{ (states('sensor.phase_c_voltage_inv_3') | float * states('sensor.phase_c_current_inv_3') | float) |int }}"
 
       - name: Sungrow inverter state inv 3
-        unique_id: sg_inverter_state
+        unique_id: sg_inverter_state_inv_3
         device_class: enum
         availability: "{{ states('sensor.running_state_raw_inv_3') not in ['unknown','unavailable'] }}"
         state: >-
@@ -1792,7 +1792,7 @@ template:
           {{ map.get(invState, 'Unknown running state code: 0x%04X' % invState) }}
 
       - name: Sungrow device type inv 3
-        unique_id: sg_device_type
+        unique_id: sg_device_type_inv_3
         availability: "{{ states('sensor.sungrow_device_type_code_inv_3') not in ['unknown','unavailable'] }}"
         device_class: enum
         state: >-
@@ -1843,7 +1843,7 @@ template:
 
       # positive if charging, negative if discharging
       - name: Battery charging power signed inv 3
-        unique_id: sg_battery_charging_power_signed
+        unique_id: sg_battery_charging_power_signed_inv_3
         unit_of_measurement: W
         device_class: power
         state_class: measurement
@@ -1852,7 +1852,7 @@ template:
 
       # positive if charging else zero
       - name: Battery charging power inv 3
-        unique_id: sg_battery_charging_power
+        unique_id: sg_battery_charging_power_inv_3
         unit_of_measurement: W
         device_class: power
         state_class: measurement
@@ -1872,7 +1872,7 @@ template:
       #
       # positive if discharging, negative if charging
       - name: Battery discharging power signed inv 3
-        unique_id: sg_battery_discharging_power_signed
+        unique_id: sg_battery_discharging_power_signed_inv_3
         unit_of_measurement: W
         device_class: power
         state_class: measurement
@@ -1881,7 +1881,7 @@ template:
 
       # positive if discharging else zero
       - name: Battery discharging power inv 3
-        unique_id: sg_battery_discharging_power
+        unique_id: sg_battery_discharging_power_inv_3
         unit_of_measurement: W
         device_class: power
         state_class: measurement
@@ -1895,7 +1895,7 @@ template:
 
       # power from grid: positive if importing, else zero
       - name: Import power inv 3
-        unique_id: sg_import_power
+        unique_id: sg_import_power_inv_3
         unit_of_measurement: W
         device_class: power
         state_class: measurement
@@ -1909,7 +1909,7 @@ template:
 
       # power to grid: positive if exporting, else zero
       - name: Export power inv 3
-        unique_id: sg_export_power
+        unique_id: sg_export_power_inv_3
         unit_of_measurement: W
         device_class: power
         state_class: measurement
@@ -1925,7 +1925,7 @@ template:
       # this "nominal battery level" will be between 15% and 90%
       # while the "battery level" is between 0 and 100%
       - name: "Battery level (nominal) inv 3"
-        unique_id: sg_battery_level_nom
+        unique_id: sg_battery_level_nom_inv_3
         unit_of_measurement: "%"
         device_class: battery
         state_class: measurement
@@ -1945,7 +1945,7 @@ template:
       # this "nominal battery charge" will be between 15% and 90% of the capacity value,
       # reflecting the limits set by min_soc and max_soc
       - name: "Battery charge (nominal) inv 3"
-        unique_id: sg_battery_charge_nom
+        unique_id: sg_battery_charge_nom_inv_3
         unit_of_measurement: kWh
         device_class: energy_storage
         state_class: measurement
@@ -1963,7 +1963,7 @@ template:
       # If min_soc is set to 15 and max soc is set to 90,
       # this value is 0.75 * capacity
       - name: "Battery charge inv 3"
-        unique_id: sg_battery_charge
+        unique_id: sg_battery_charge_inv_3
         unit_of_measurement: kWh
         device_class: energy_storage
         state_class: measurement
@@ -1986,7 +1986,7 @@ template:
       # with the health factor (battery_health), which is often a value
       # starting at 100 and decreases over time. Mine is 98% after 2 years.
       - name: "Battery charge (health-rated) inv 3"
-        unique_id: sg_battery_charge_health_rated
+        unique_id: sg_battery_charge_health_rated_inv_3
         unit_of_measurement: kWh
         device_class: energy_storage
         state_class: measurement
@@ -2001,7 +2001,7 @@ template:
           }}
 
       - name: Daily consumed energy inv 3
-        unique_id: sg_daily_consumed_energy
+        unique_id: sg_daily_consumed_energy_inv_3
         unit_of_measurement: kWh
         device_class: energy
         # the state class is not total_increasing, because sometimes the read value are read at different times,
@@ -2026,7 +2026,7 @@ template:
           }}
 
       - name: Total consumed energy inv 3
-        unique_id: sg_total_consumed_energy
+        unique_id: sg_total_consumed_energy_inv_3
         unit_of_measurement: kWh
         device_class: energy
         state_class: total
@@ -2054,20 +2054,20 @@ template:
       # this enables/disables the inverter state & EMS settings in the dashboard
       # hopefully this prevents accidentally setting values while browsing on the phone :)
       - name: Sungrow dashboard enable danger mode inv 3
-        unique_id: uid_sungrow_dashboard_enable_danger_mode
+        unique_id: uid_sungrow_dashboard_enable_danger_mode_inv_3
 
       # Note: This entity will be unknown until the switch is manually toggled
       # or the system state changes (e.g. inverter turned off/on).
       # The update logic of the switch is a separate automation
       - name: Enable inverter inv 3
-        unique_id: uid_enable_inverter
+        unique_id: uid_enable_inverter_inv_3
 
   ###################
   # template: select
   ###################
   - select:
       - name: EMS mode inv 3
-        unique_id: uid_ems_mode
+        unique_id: uid_ems_mode_inv_3
         variables:
           # map: option name to raw value
           map:
@@ -2105,7 +2105,7 @@ template:
               value: "{{ map.get(option, map.get('Self-consumption mode (default)', 0)) | int }}"
 
       - name: Battery forced charge discharge inv 3
-        unique_id: uid_battery_forced_charge_discharge
+        unique_id: uid_battery_forced_charge_discharge_inv_3
         variables:
           # map: option name to raw value
           map:
@@ -2140,7 +2140,7 @@ template:
               value: "{{ map.get(option, map.get('Stop (default)', 0)) }}"
 
       - name: Load adjustment mode inv 3
-        unique_id: uid_load_adjustment_mode
+        unique_id: uid_load_adjustment_mode_inv_3
         variables:
           # map: option name to raw value
           map:
