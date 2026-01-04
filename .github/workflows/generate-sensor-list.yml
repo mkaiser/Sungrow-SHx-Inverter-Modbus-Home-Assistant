@@ -48,4 +48,5 @@ jobs:
             exit 0
           fi
           git commit -m "Auto-generate sensor_list_for_ha_template_editor.txt"
+          git pull --rebase
           git push
