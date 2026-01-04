@@ -9,6 +9,8 @@
 - [Check Home Assistant Log](#check-home-assistant-log)
 - [Full list of provided sensors](#full-list-of-provided-sensors)
 - [Orphaned or unavailable entities](#orphaned-or-unavailable-entities)
+- [Connect the inverter via Ethernet](#connect-the-inverter-via-ethernet)
+- [Open questions](#open-questions-all)
 
 
 ## isolarcloud installer account
@@ -127,6 +129,13 @@ If you see unavailable entities in Home Assistant after upgrading the integratio
 Please note that depending on your inverter and the way to connect it to Home Assistant (Lan, WiNet-S Wifi or WiNet-S LAN) some entities might not be available in your installation.
 
 
+## Connect the inverter via Ethernet
+
+On several inverters, the LAN port has to be enabled before you can connect via Modbus TCP. Use the isolarcloud mobile app to enable the LAN port:
+
+Isolarcloud app: 
+- ```Support``` --> ```Local Access``` --> ``` user: admin, password: pw8888 ``` --> ```More``` --> ``` Communication Settings``` --> Enable ```Inverter ETH port``` 
+
 ## open questions @all
 
-- Does the user have to enable the inverters LAN port manually? 
+A better guide how to connect/use multiple inverters. 
