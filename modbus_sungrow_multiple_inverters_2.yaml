@@ -1657,7 +1657,7 @@ template:
       - name: Battery max charge power inv 2
         unique_id: uid_battery_max_charge_power_inv_2
         unit_of_measurement: W
-        min: 0
+        min: 10 # 10W minimum defined in datasheet: 0.01 kW
         max: !secret sungrow_modbus_battery_max_power_inv_2
         step: 100
         # modbus --> UI
@@ -1669,7 +1669,7 @@ template:
               hub: *sg_hub_name
               slave: !secret sungrow_modbus_device_address_inv_2
               address: *sg_reg_battery_max_charge_power
-              value: "{{ value | float / 10 }}"
+              value: "{{ value | float / 10 | int}}"
           # manually refresh modbus register
           - action: homeassistant.update_entity
             target:
@@ -1678,7 +1678,7 @@ template:
       - name: Battery max discharge power inv 2
         unique_id: uid_battery_max_discharge_power_inv_2
         unit_of_measurement: W
-        min: 0
+        min: 10 # 10W minimum defined in datasheet: 0.01 kW
         max: !secret sungrow_modbus_battery_max_power_inv_2
         step: 100
         availability: "{{ states('sensor.battery_max_discharge_power_inv_2') | is_number }}"
@@ -1691,7 +1691,7 @@ template:
               hub: *sg_hub_name
               slave: !secret sungrow_modbus_device_address_inv_2
               address: *sg_reg_battery_max_discharge_power
-              value: "{{ value| float / 10 }}"
+              value: "{{ value| float / 10 | int}}"
           # manually refresh modbus register
           - action: homeassistant.update_entity
             target:
