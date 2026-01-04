@@ -10,6 +10,7 @@
 # - adds a suffix to all "- name" entries
 #   - there should be a space before the number
 #   - rename suffix to " inv 1" (i.e. " inv <n>")
+# - adds the same suffix to all unique_id entries
 # - also add this suffix to all used sensors in the automations, templates etc.
 #   Example: sensor.battery_max_discharge_power --> sensor.battery_max_discharge_power_inv_1
 # - use secrets with suffix:
@@ -52,6 +53,10 @@ _ENTITY_ID_RE = re.compile(
 
 _SUNGROW_SECRET_RE = re.compile(
     r"!secret\s+(?P<name>sungrow_modbus_host_ip|sungrow_modbus_port|sungrow_modbus_device_address|sungrow_modbus_battery_max_power)\b"
+)
+
+_UNIQUE_ID_LINE_RE = re.compile(
+    r"^(?P<prefix>\s*unique_id\s*:\s*)(?P<value>[^#\n]*?)(?P<comment>\s*(#.*)?)$"
 )
 
 
@@ -141,6 +146,44 @@ def suffix_sungrow_secrets(text: str, *, inv_number: str) -> tuple[str, int]:
     return updated, count
 
 
+def suffix_unique_ids(text: str, *, inv_number: str) -> tuple[str, int]:
+    """Append `_inv_<n>` suffix to unique_id values."""
+    out_lines: list[str] = []
+    replacements = 0
+
+    for line in text.splitlines(keepends=True):
+        eol = ""
+        if line.endswith("\r\n"):
+            eol = "\r\n"
+        elif line.endswith("\n"):
+            eol = "\n"
+
+        content = line[: -len(eol)] if eol else line
+
+        m = _UNIQUE_ID_LINE_RE.match(content)
+        if not m:
+            out_lines.append(line)
+            continue
+
+        value = m.group("value")
+
+        # Avoid risky transformations on complex YAML scalars.
+        if value.strip() in {"|", ">"}:
+            out_lines.append(line)
+            continue
+        if value.lstrip().startswith(("&", "*")):
+            out_lines.append(line)
+            continue
+
+        new_value = _append_suffix_preserving_quotes(value, f"_inv_{inv_number}")
+        if new_value != value:
+            replacements += 1
+
+        out_lines.append(f"{m.group('prefix')}{new_value}{m.group('comment')}{eol}")
+
+    return "".join(out_lines), replacements
+
+
 def main(argv: list[str]) -> int:
     if len(argv) != 2 or argv[1] in {"-h", "--help"}:
         print(
@@ -170,12 +213,13 @@ def main(argv: list[str]) -> int:
     name_suffix = f" inv {number}"
     updated, name_replacements = transform_text(original, suffix=name_suffix)
     updated, entity_replacements = suffix_entity_ids(updated, inv_number=number)
+    updated, unique_id_replacements = suffix_unique_ids(updated, inv_number=number)
     updated, secret_replacements = suffix_sungrow_secrets(updated, inv_number=number)
 
     dest.write_text(updated, encoding="utf-8")
 
     print(
-        f"Wrote {dest} ({name_replacements} '- name:' entr(y/ies) updated, {entity_replacements} entity_id reference(s) updated, {secret_replacements} secret reference(s) updated)"
+        f"Wrote {dest} ({name_replacements} '- name:' entr(y/ies) updated, {entity_replacements} entity_id reference(s) updated, {unique_id_replacements} unique_id(s) updated, {secret_replacements} secret reference(s) updated)"
     )
     return 0
 
