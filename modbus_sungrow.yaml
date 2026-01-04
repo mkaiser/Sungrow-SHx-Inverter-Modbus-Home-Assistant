@@ -222,6 +222,8 @@ modbus:
         scan_interval: *scan_interval_fast
 
       # only for SH*T inverters with 3 MPPTs
+      # NOTE that mppt3 registers read on a SH10RT as 0xFFFF, but MPPT4 reads as 0
+      # Therefore adding the nan_value here. This causes HA to render the sensor as 'unavailable' instead of '6553.5 V'
       - name: MPPT3 voltage
         unique_id: sg_mppt3_voltage
         device_address: !secret sungrow_modbus_device_address
@@ -237,6 +239,8 @@ modbus:
         scan_interval: *scan_interval_fast
 
       # only for SH*T inverters with 3 MPPTs
+      # NOTE that mppt3 registers read on a SH10RT as 0xFFFF, but MPPT4 reads as 0
+      # Therefore adding the nan_value here. This causes HA to render the sensor as 'unavailable' instead of '6553.5 V'
       - name: MPPT3 current
         unique_id: sg_mppt3_current
         device_address: !secret sungrow_modbus_device_address
@@ -329,6 +333,35 @@ modbus:
         device_class: power_factor
         state_class: measurement
         scale: 0.001
+        scan_interval: *scan_interval_fast
+
+      # only for inverters with 4 MPPTs (SH8|10RS)
+      - name: MPPT4 voltage
+        unique_id: sg_mppt4_voltage
+        device_address: !secret sungrow_modbus_device_address
+        address: 5010 # reg 5011
+        input_type: input
+        data_type: uint16
+        # nan_value: 0xFFFF
+        precision: 1
+        unit_of_measurement: V
+        device_class: voltage
+        state_class: measurement
+        scale: 0.1
+        scan_interval: *scan_interval_fast
+
+      - name: MPPT4 current
+        unique_id: sg_mppt4_current
+        device_address: !secret sungrow_modbus_device_address
+        address: 5011 # reg 5012
+        input_type: input
+        data_type: uint16
+        # nan_value: 0xFFFF
+        precision: 1
+        unit_of_measurement: A
+        device_class: current
+        state_class: measurement
+        scale: 0.1
         scan_interval: *scan_interval_fast
 
       # NOTE: In datasheet (1.1.11) it is recommended to use this register instead of 13022
@@ -1721,6 +1754,15 @@ template:
         state_class: measurement
         availability: "{{ states('sensor.mppt3_voltage')|is_number and states('sensor.mppt3_current')|is_number }}"
         state: "{{ (states('sensor.mppt3_voltage') | float * states('sensor.mppt3_current') | float) |int }}"
+
+        # only for inverters with 4 MPPTs (SH8|10RS)
+      - name: MPPT4 power
+        unique_id: uid_sg_mppt4_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: "{{ states('sensor.mppt4_voltage')|is_number and states('sensor.mppt4_current')|is_number }}"
+        state: "{{ (states('sensor.mppt4_voltage') | float * states('sensor.mppt4_current') | float) |int }}"
 
       - name: Phase A power
         unique_id: sg_phase_a_power
