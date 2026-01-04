@@ -18,7 +18,7 @@ A clear and concise description of what the bug is.
 
 **Your Sungrow inverter:**
 
-  You can find all required information in the default dashboard, tab "Info". R
+  You can find all required information in the default dashboard, tab "Info".
   - Sungrow device type: 
   - Sungrow Version 1: e.g., SAPPHIRE-H_01011.95.xx 
   - Sungrow Version 2: e.g., SAPPHIRE-H_03011.95.xx 
@@ -28,7 +28,7 @@ A clear and concise description of what the bug is.
   - Communication Module Firmware Version: 
   - Battery Firmware Version: 
 
-
+**Connection to your inverter:** 
  - The inverter is connected via (mark exactly one with an ```x```)
    - [-] LAN (internal port)
    - [-] WiNet-S (LAN)
