@@ -1704,7 +1704,7 @@ template:
         min: 0
         max: "{{ states('sensor.inverter_rated_output_inv_1') }}"
         step: 100
-        availability: "{{ states('sensor.export_power_limit_inv_1') | is_number }}"
+        availability: "{{ states('sensor.export_power_limit_inv_1')|is_number and states('sensor.inverter_rated_output_inv_1')|is_number }}"
         # modbus --> UI
         state: "{{ states('sensor.export_power_limit_inv_1') }}"
         # UI --> modbus
