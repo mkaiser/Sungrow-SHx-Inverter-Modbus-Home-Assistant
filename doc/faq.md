@@ -148,15 +148,16 @@ A: Not at the moment. The iHome Manager uses a different Modbus map and is not s
 
 ## Q: How can I change the input sliders to boxes?
 
-IN the defauld dashboard (enable the danger mode), you can set the EMS parameters using sliders.
+In the default dashboard (enable the danger mode), you can set the EMS parameters using sliders.
 
 The integration currently uses [template numbers](https://www.home-assistant.io/integrations/template#number). They have the function ```state``` to retrieve the state from the read modbus sensors and the function ```set_value``` to define a modbus write action. Both make the past  error-prone additional automations obsolete. 
 But template_numbers don't support box-style input :/ 
 
-input_number have the desired mode: box settings.
+input_number have the desired mode, called ```box settings```.
+
 I tried switching to input_numbers, but this does not support state and set_value.
 
-So unless someone implements this on HA side we are stuck with sliders for the moment ;/
+So unless someone implements this on HA side we are stuck with sliders for the moment, when we still want to maintain the default dashboard without any external extensions (e.g. mushroom)
 
 But maybe (hopefully) I am wrong here - please prove me wrong ;)
 
