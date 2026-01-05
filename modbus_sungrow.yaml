@@ -1660,6 +1660,7 @@ template:
         min: 10 # 10W minimum defined in datasheet: 0.01 kW
         max: !secret sungrow_modbus_battery_max_power
         step: 100
+        availability: "{{ states('sensor.battery_max_charge_power') | is_number }}"
         # modbus --> UI
         state: "{{ states('sensor.battery_max_charge_power') }}"
         # UI --> modbus
