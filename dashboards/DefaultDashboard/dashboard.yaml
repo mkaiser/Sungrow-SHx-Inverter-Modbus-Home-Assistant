@@ -25,6 +25,8 @@ views:
           - entity: sensor.battery_charging_power
           - entity: sensor.battery_discharging_power
           - entity: sensor.battery_power
+          - entity: sensor.inverter_self_consumption
+          - entity: sensor.inverter_self_consumption_1_min_mean
         title: Power
       - type: entities
         entities:
