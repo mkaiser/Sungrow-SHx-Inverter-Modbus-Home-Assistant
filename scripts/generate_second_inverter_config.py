@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+#
+# SERIOUS WARNING. This is some vibe-coded shit.. Don't expect too much!
+#
 # PROMPT TO RECREATE THIS SCRIPT (verbatim requirements)
 #
 # Create a Python script that:
@@ -11,6 +14,7 @@
 #   - there should be a space before the number
 #   - rename suffix to " inv 1" (i.e. " inv <n>")
 # - adds the same suffix to all unique_id entries
+# - adds the same suffix to &sg_hub_name SungrowSHx --> SungrowSHx_inv<n>, but keep the name of the yaml anchor and don't use spaces in the name 
 # - also add this suffix to all used sensors in the automations, templates etc.
 #   Example: sensor.battery_max_discharge_power --> sensor.battery_max_discharge_power_inv_1
 # - use secrets with suffix:
@@ -102,7 +106,32 @@ def transform_text(text: str, suffix: str) -> tuple[str, int]:
         if value.strip() in {"|", ">"}:
             out_lines.append(line)
             continue
-        if value.lstrip().startswith(("&", "*")):
+        
+        # Handle anchors: keep anchor unchanged, only suffix the value after it
+        # e.g., "&sg_hub_name SungrowSHx" -> "&sg_hub_name SungrowSHx_inv3"
+        value_stripped = value.lstrip()
+        if value_stripped.startswith("&"):
+            # Extract anchor and value
+            anchor_match = re.match(r"^(&[a-z_]+)\s+(.*)$", value_stripped)
+            if anchor_match:
+                anchor = anchor_match.group(1)
+                actual_value = anchor_match.group(2)
+                leading = value[: len(value) - len(value_stripped)]
+                # For SungrowSHx, use underscore without space instead of the regular suffix
+                if actual_value.startswith("SungrowSHx"):
+                    # Extract the number from the suffix (e.g., " inv 3" -> "3")
+                    number_match = re.search(r'\d+', suffix)
+                    actual_suffix = f"_inv{number_match.group()}" if number_match else suffix
+                else:
+                    actual_suffix = suffix
+                new_actual_value = _append_suffix_preserving_quotes(actual_value, actual_suffix)
+                new_value = f"{leading}{anchor} {new_actual_value}"
+                if new_value != value:
+                    replacements += 1
+                out_lines.append(f"{m.group('prefix')}{new_value}{m.group('comment')}{eol}")
+                continue
+        
+        if value_stripped.startswith("*"):
             out_lines.append(line)
             continue
 
