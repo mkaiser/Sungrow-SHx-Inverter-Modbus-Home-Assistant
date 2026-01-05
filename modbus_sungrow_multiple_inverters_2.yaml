@@ -6,7 +6,7 @@
 # see https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/doc/migration_guide.md
 
 modbus:
-  - name: &sg_hub_name SungrowSHx
+  - name: &sg_hub_name SungrowSHx_inv2
     type: tcp
     host: !secret sungrow_modbus_host_ip_inv_2
     port: !secret sungrow_modbus_port_inv_2
@@ -1660,6 +1660,7 @@ template:
         min: 10 # 10W minimum defined in datasheet: 0.01 kW
         max: !secret sungrow_modbus_battery_max_power_inv_2
         step: 100
+        availability: "{{ states('sensor.battery_max_charge_power_inv_2') | is_number }}"
         # modbus --> UI
         state: "{{ states('sensor.battery_max_charge_power_inv_2') }}"
         # UI --> modbus
