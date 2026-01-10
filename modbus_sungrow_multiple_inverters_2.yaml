@@ -1092,17 +1092,19 @@ modbus:
         state_class: measurement
         scan_interval: *scan_interval_fast
 
+      # BUG: 2026-01-10. Deactivated for now, see issue #643 
+      # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/643
       # TODO test. Does this control, if the standby goes into standby at night?
       # Does forced charge prevent this or not?
       # see https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/444#issuecomment-3471705119
-      - name: Forced startup under low soc standby raw inv 2
-        unique_id: sg_forced_startup_under_low_soc_standby_raw_inv_2
-        device_address: !secret sungrow_modbus_device_address_inv_2
-        address: &sg_reg_forced_startup_low_soc 13016 # reg 13017
-        input_type: holding
-        data_type: uint16
-        state_class: measurement
-        scan_interval: *scan_interval_fast
+      # - name: Forced startup under low soc standby raw
+      #   unique_id: sg_forced_startup_under_low_soc_standby_raw
+      #   device_address: !secret sungrow_modbus_device_address_inv_2
+      #   address: &sg_reg_forced_startup_low_soc 13016 # reg 13017
+      #   input_type: holding
+      #   data_type: uint16
+      #   state_class: measurement
+      #   scan_interval: *scan_interval_fast
 
       - name: EMS mode selection raw inv 2
         unique_id: sg_ems_mode_selection_raw_inv_2
@@ -1343,19 +1345,21 @@ modbus:
       # modbus switches
       #####################
     switches:
-      - name: Forced Startup Under Low SoC Standby inv 2
-        unique_id: sg_forced_startup_under_low_soc_standby_switch_inv_2
-        slave: !secret sungrow_modbus_device_address_inv_2
-        address: *sg_reg_forced_startup_low_soc
-        write_type: holding
-        command_on: 0xAA
-        command_off: 0x55
-        verify:
-          input_type: holding
-          address: *sg_reg_forced_startup_low_soc
-          state_on: 0xAA
-          state_off: 0x55
-          delay: 1
+      # BUG: 2026-01-10. Deactivated for now, see issue #643 
+      # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/643
+      # - name: Forced Startup Under Low SoC Standby    
+      #   unique_id: sg_forced_startup_under_low_soc_standby_switch
+      #   slave: !secret sungrow_modbus_device_address_inv_2
+      #   address: *sg_reg_forced_startup_low_soc
+      #   write_type: holding
+      #   command_on: 0xAA
+      #   command_off: 0x55
+      #   verify:
+      #     input_type: holding
+      #     address: *sg_reg_forced_startup_low_soc
+      #     state_on: 0xAA
+      #     state_off: 0x55
+      #     delay: 1
 
       - name: Backup Mode inv 2
         unique_id: sg_backup_mode_switch_inv_2
@@ -2359,7 +2363,9 @@ scene:
     entities:
       select.ems_mode_inv_2: "Forced mode"
       select.battery_forced_charge_discharge_inv_2: "Forced charge"
-      switch.forced_startup_under_low_soc_standby_inv_2: "on" # in case inverter is in standby due to low soc
+      # BUG: 2026-01-10. Deactivated for now, see issue #643 
+      # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/643
+      # switch.forced_startup_under_low_soc_standby_inv_2: "on" # in case inverter is in standby due to low soc
 
   - name: Sungrow Set Self-Consumption Limited Discharge inv 2
     entities:
