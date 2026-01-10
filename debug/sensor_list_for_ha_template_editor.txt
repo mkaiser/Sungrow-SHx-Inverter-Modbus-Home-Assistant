@@ -50,7 +50,6 @@ sensor.export_power={{states('sensor.export_power')}}
 sensor.export_power_limit={{states('sensor.export_power_limit')}}
 sensor.export_power_limit_mode_raw={{states('sensor.export_power_limit_mode_raw')}}
 sensor.export_power_raw={{states('sensor.export_power_raw')}}
-sensor.forced_startup_under_low_soc_standby_raw={{states('sensor.forced_startup_under_low_soc_standby_raw')}}
 sensor.grid_frequency={{states('sensor.grid_frequency')}}
 sensor.import_power={{states('sensor.import_power')}}
 sensor.inverter_firmware_version={{states('sensor.inverter_firmware_version')}}
