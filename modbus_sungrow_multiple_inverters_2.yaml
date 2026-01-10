@@ -1,4 +1,4 @@
-# Release date 2026-01-10 (2)
+# Release date 2026-01-10 (3)
 #
 # INSTALLATION GUIDE: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/doc/installation.md
 #
@@ -12,7 +12,7 @@ modbus:
     port: !secret sungrow_modbus_port_inv_2
     delay: 15 # delay 5 second after connecting. 
     timeout: 30 # timeout while waiting for a response before flodding the log with errors
-    message_wait_milliseconds : !secret sungrow_modbus_wait_milliseconds # delay between messages, depending on inverter connection
+    message_wait_milliseconds: !secret sungrow_modbus_wait_milliseconds_inv_2 # delay between messages, depending on inverter connection
 
     sensors:
       - name: Sungrow Version 1 inv 2

@@ -56,7 +56,7 @@ _ENTITY_ID_RE = re.compile(
 )
 
 _SUNGROW_SECRET_RE = re.compile(
-    r"!secret\s+(?P<name>sungrow_modbus_host_ip|sungrow_modbus_port|sungrow_modbus_device_address|sungrow_modbus_battery_max_power)\b"
+    r"!secret\s+(?P<name>sungrow_modbus_host_ip|sungrow_modbus_port|sungrow_modbus_wait_milliseconds|sungrow_modbus_device_address|sungrow_modbus_battery_max_power)\b"
 )
 
 _UNIQUE_ID_LINE_RE = re.compile(
