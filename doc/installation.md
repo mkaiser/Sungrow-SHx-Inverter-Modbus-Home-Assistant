@@ -67,6 +67,7 @@ If you need more (which no one ever did), you can generate it yourself by using 
     The YAML-based integration file needs 3 parameters as input. Copy the following lines to your secrets.yaml and adapt them:
 
     ```yaml
+    sungrow_modbus_wait_milliseconds : 5 # delay in ms between messages, depends on inverter connection (LAN, WiNet-S-LAN or WiNet-S-WiFi), choose 5 ms for LAN, 30 or higher for WiNet-S
     sungrow_modbus_host_ip: 192.168.178.xxx # TODO update with the IP of your inverter. No default. Check your router.
     sungrow_modbus_port: 502 # TODO update with the Modbus port of your inverter. Default is '502'
     sungrow_modbus_device_address: 1 # TODO update with the unit id / slave address of your inverter. Default is '1'

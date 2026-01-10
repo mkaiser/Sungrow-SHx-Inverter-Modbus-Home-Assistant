@@ -7,6 +7,8 @@
  1) Adapt ```secrets.yaml```:
     - Rename ```sungrow_modbus_slave``` to ```sungrow_modbus_device_address```
     - Add ```sungrow_modbus_battery_max_power: 5000``` (use the max supported power of your battery, see [comments in secrets.yaml](../secrets.yaml) for details)
+    - Add ```sungrow_modbus_wait_milliseconds``` (choose 5 ms for LAN, 20 or higher for WiNet-S
+
  2) Swap your modbus_sungrow.yaml file with the [current version](../modbus_sungrow.yaml)
 
  3) Restart Home Assistant: ```Developer tools --> Check Configuration --> Restart```
