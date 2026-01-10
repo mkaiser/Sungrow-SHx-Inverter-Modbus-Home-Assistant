@@ -2,6 +2,12 @@ An *easy-to-use YAML-based integration* for several Sungrow inverters for Home A
 
 [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2)
 
+# 2026-01-10 "small breaking change: new parameter in secrets.yaml"
+
+With the newest version you need to add ```sungrow_modbus_wait_milliseconds``` to your secrets.yaml. Choose 5 ms for LAN, 20 or higher for WiNet-S. This hopefully fixes some stability issues with WiNet-S connections. 
+
+Sorry, I forgot to migrate this patch from the old version :/ 
+
 # 2026-01-01 "Version 2 of modbus_sungrow.yaml"
 
 After five years of continuous development with maintained backwards compatibility, this integration reached its limits. With the help of @theunknown86 and several others, this yaml-based integration was rebased on a better and more flexible codebase. It still remains yaml-based and not a "full" Home Assistant integration, but can now support different Sungrow models with their specific features ("quirks"). As long there is no "real integration" available, I will continue to maintain the new yaml file. 
