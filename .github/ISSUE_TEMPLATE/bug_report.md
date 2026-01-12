@@ -9,7 +9,7 @@ assignees: ''
 
 **Before you create an issue, make sure to update to the current version of [modbus_sungrow.yaml](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/modbus_sungrow.yaml)**
 
-Please be aware that I can only support users who use the latest version of the integration. 
+Please be aware that I can only support users who use the latest version of this integration and current inverter firmware. 
 
 **Describe the bug:**
 
@@ -24,7 +24,7 @@ A clear and concise description of what the bug is.
   - Sungrow Version 2: e.g., SAPPHIRE-H_03011.95.xx 
   - Sungrow Version 3: e.g., SUBCTL-S_04011.01.xx
   - Sungrow Version 4 (Sungrow Battery): [only displayed you have a Sungrow battery connected]
-  - Inverter Fiwmare Version: e.g., SAPPHIRE-H_B001.V000.P020
+  - Inverter Firmware Version: e.g., SAPPHIRE-H_B001.V000.P020
   - Communication Module Firmware Version: 
   - Battery Firmware Version: 
 
