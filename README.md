@@ -36,7 +36,7 @@ The old version will be archived in the separate branch [2025-legacy](https://gi
 
 # 1. Overview
 
-This integration lets you gather sensor data and control the EMS (Energy Management System) of a wide range of Sungrow inverters, including, but not limited to: SH3.6RS, SH4.6RS, SH5.0RS, SH5.0RT, SH6.0RS, SH8.0RT, SH8.0RT-V112, SH6.0RT, SH10RT, SH10RT-V112, SH5K-20, SH3K6, SH4K6, SH5K-V13, SH5K-30. A battery is not required, but several sensors will not be available without one.
+This integration lets you gather sensor data and control the EMS (Energy Management System) of a wide range of Sungrow inverters, but is primary tested using a *SH10RT* attached via LAN cable. Other inverters like SH*RS, SH*RT-V112, SH*RT-V112, SH*K-20 are supported partially. There might be sensors or controls not be working. A battery is not required, but several sensors will not be available without one.
 
 If available on your inverter, connect the inverter to the Home Assistant network using the inverters **internal LAN port**. The WiNet-S Ethernet port and the WiNet-S Wi-Fi also work, but sometimes slightly slower and with some restrictions imposed by Sungrow on which data is available.
 
