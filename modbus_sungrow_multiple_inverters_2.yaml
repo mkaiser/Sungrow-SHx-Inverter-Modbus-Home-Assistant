@@ -1,4 +1,4 @@
-# Release date 2026-01-10 (3)
+# Release date 2026-01-12
 #
 # INSTALLATION GUIDE: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/doc/installation.md
 #
@@ -10,7 +10,7 @@ modbus:
     type: tcp
     host: !secret sungrow_modbus_host_ip_inv_2
     port: !secret sungrow_modbus_port_inv_2
-    delay: 15 # delay 5 second after connecting. 
+    delay: 15 # delay 5 second after connecting
     timeout: 30 # timeout while waiting for a response before flodding the log with errors
     message_wait_milliseconds: !secret sungrow_modbus_wait_milliseconds_inv_2 # delay between messages, depending on inverter connection
 
@@ -223,7 +223,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       # only for SH*T inverters with 3 MPPTs
-      # NOTE that mppt3 registers read on a SH10RT as 0xFFFF, but MPPT4 reads as 0
+      # NOTE that mppt3 registers read on a SH10RT as 0xFFFF
       # Therefore adding the nan_value here. This causes HA to render the sensor as 'unavailable' instead of '6553.5 V'
       - name: MPPT3 voltage inv 2
         unique_id: sg_mppt3_voltage_inv_2
@@ -240,7 +240,7 @@ modbus:
         scan_interval: *scan_interval_fast
 
       # only for SH*T inverters with 3 MPPTs
-      # NOTE that mppt3 registers read on a SH10RT as 0xFFFF, but MPPT4 reads as 0
+      # NOTE that mppt3 registers read on a SH10RT as 0xFFFF
       # Therefore adding the nan_value here. This causes HA to render the sensor as 'unavailable' instead of '6553.5 V'
       - name: MPPT3 current inv 2
         unique_id: sg_mppt3_current_inv_2
@@ -337,13 +337,14 @@ modbus:
         scan_interval: *scan_interval_fast
 
       # only for inverters with 4 MPPTs (SH8|10RS)
+      # NOTE that mppt4 registers read on a SH10RT as 0xFFFF, using nan_value to render the value unavailable
       - name: MPPT4 voltage inv 2
         unique_id: sg_mppt4_voltage_inv_2
         device_address: !secret sungrow_modbus_device_address_inv_2
-        address: 5010 # reg 5011
+        address: 5114 # reg 5115
         input_type: input
         data_type: uint16
-        # nan_value: 0xFFFF
+        nan_value: 0xFFFF
         precision: 1
         unit_of_measurement: V
         device_class: voltage
@@ -351,13 +352,15 @@ modbus:
         scale: 0.1
         scan_interval: *scan_interval_fast
 
+      # only for inverters with 4 MPPTs (SH8|10RS)
+      # NOTE that mppt4 registers read on a SH10RT as 0xFFFF, using nan_value to render the value unavailable
       - name: MPPT4 current inv 2
         unique_id: sg_mppt4_current_inv_2
         device_address: !secret sungrow_modbus_device_address_inv_2
-        address: 5011 # reg 5012
+        address: 5115 # reg 5116
         input_type: input
         data_type: uint16
-        # nan_value: 0xFFFF
+        nan_value: 0xFFFF
         precision: 1
         unit_of_measurement: A
         device_class: current
@@ -1093,7 +1096,7 @@ modbus:
         state_class: measurement
         scan_interval: *scan_interval_fast
 
-      # BUG: 2026-01-10. Deactivated for now, see issue #643 
+      # BUG: 2026-01-10. Deactivated for now, see issue #643
       # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/643
       # TODO test. Does this control, if the standby goes into standby at night?
       # Does forced charge prevent this or not?
@@ -1346,9 +1349,9 @@ modbus:
       # modbus switches
       #####################
     switches:
-      # BUG: 2026-01-10. Deactivated for now, see issue #643 
+      # BUG: 2026-01-10. Deactivated for now, see issue #643
       # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/643
-      # - name: Forced Startup Under Low SoC Standby    
+      # - name: Forced Startup Under Low SoC Standby
       #   unique_id: sg_forced_startup_under_low_soc_standby_switch
       #   slave: !secret sungrow_modbus_device_address_inv_2
       #   address: *sg_reg_forced_startup_low_soc
@@ -2364,7 +2367,7 @@ scene:
     entities:
       select.ems_mode_inv_2: "Forced mode"
       select.battery_forced_charge_discharge_inv_2: "Forced charge"
-      # BUG: 2026-01-10. Deactivated for now, see issue #643 
+      # BUG: 2026-01-10. Deactivated for now, see issue #643
       # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/643
       # switch.forced_startup_under_low_soc_standby_inv_2: "on" # in case inverter is in standby due to low soc
 
