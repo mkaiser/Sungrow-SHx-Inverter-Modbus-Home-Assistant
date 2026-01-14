@@ -1,4 +1,4 @@
-# Release date 2026-01-12
+# Release date 2026-01-14
 #
 # INSTALLATION GUIDE: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/doc/installation.md
 #
@@ -2107,11 +2107,34 @@ template:
       - name: Sungrow dashboard enable danger mode inv 1
         unique_id: uid_sungrow_dashboard_enable_danger_mode_inv_1
 
-      # Note: This entity will be unknown until the switch is manually toggled
-      # or the system state changes (e.g. inverter turned off/on).
-      # The update logic of the switch is a separate automation
-      - name: Enable inverter inv 1
-        unique_id: uid_enable_inverter_inv_1
+  ###################
+  # template: button
+  ###################
+  - button:
+      - name: Start inverter inv 1
+        unique_id: uid_start_inverter_inv_1
+        variables:
+          sg_start: 0xCF
+        press:
+          - action: modbus.write_register
+            data:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_device_address_inv_1
+              address: *sg_reg_running_state
+              value: "{{ sg_start }}"
+
+      - name: Stop inverter inv 1
+        unique_id: uid_stop_inverter_inv_1
+        variables:
+          sg_stop: 0xCE
+        press:
+          - action: modbus.write_register
+            data:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_device_address_inv_1
+              address: *sg_reg_running_state
+              value: "{{ sg_stop }}"
+
 
   ###################
   # template: select
@@ -2247,72 +2270,6 @@ automation:
               - service: switch.turn_off_inv_1
                 target:
                   entity_id: switch.sungrow_dashboard_enable_danger_mode_inv_1
-    mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
-
-    # compared to the other selects, this is very tricky
-    # after enabling / disabling the inverter it will take several seconds for bootup
-    # or shutdown. The user won't get any feedback if it worked.
-  - id: "automation_sungrow_enable_inverter"
-    alias: "sungrow inverter state"
-    description: "Enables/Stops the inverter and corresponding gui input"
-    variables:
-      sg_start: 0xCF
-      sg_stop: 0xCE
-    triggers:
-      - platform: state
-        entity_id:
-          - switch.enable_inverter_inv_1
-        id: tid_ui_sg_inv_run_mode
-      - platform: state
-        entity_id:
-          - sensor.sungrow_inverter_state_inv_1
-        id: tid_sensor_inv_state
-    conditions: []
-    action:
-      - choose:
-          # UI --> inverter
-          - conditions:
-              - condition: trigger
-                id: tid_ui_sg_inv_run_mode
-            sequence:
-              - action: modbus.write_register
-                data_template:
-                  hub: *sg_hub_name
-                  slave: !secret sungrow_modbus_device_address_inv_1
-                  address: *sg_reg_running_state
-                  value: >
-                    {% if is_state('switch.enable_inverter_inv_1', "on") %}
-                      {{sg_start}}
-                    {% else %}
-                      {{sg_stop}}
-                    {% endif %}
-              - delay: "00:00:01" # delay one second
-              # manually refresh modbus register
-              - action: homeassistant.update_entity
-                target:
-                  entity_id: sensor.running_state_raw_inv_1
-          # inverter --> UI
-          - conditions:
-              - condition: trigger
-                id: tid_sensor_inv_state
-            sequence:
-              - choose:
-                  - conditions:
-                      - condition: template
-                        value_template: >
-                          {{ states('sensor.sungrow_inverter_state_inv_1') == "Running" }}
-                    sequence:
-                      - service: switch.turn_on_inv_1
-                        target:
-                          entity_id: switch.enable_inverter_inv_1
-                  - conditions:
-                      - condition: template
-                        value_template: >
-                          {{ states('sensor.sungrow_inverter_state_inv_1') == "Shutdown" }}
-                    sequence:
-                      - service: switch.turn_off_inv_1
-                        target:
-                          entity_id: switch.enable_inverter_inv_1
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
   - id: "automation_sungrow_max_export_scene_sets_rated_limit"
