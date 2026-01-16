@@ -1318,7 +1318,7 @@ modbus:
         scale: 10
         scan_interval: *scan_interval_fast
 
-      # datasheet: Charging/Discharging Power–Wide range
+      # undocumented sensor (reverse engineered by some guys of photovoltaikforum.com and forum.iobroker.net )
       - name: Battery charging start power inv 3
         unique_id: sg_battery_charging_start_power_inv_3
         device_address: !secret sungrow_modbus_device_address_inv_3
