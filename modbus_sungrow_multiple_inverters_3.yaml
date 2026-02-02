@@ -1727,7 +1727,7 @@ template:
                 {% if dev.startswith('SH') and 'RT' in dev %}
                   {# SH*RT* devices (e.g. SH10RT, SH8.0RT-20, SH8.0RT-V112 or SH10RT-V122) #}
                   {{ (value | float / 10) | int }}
-                {% if dev.startswith('SH') and 'RS' in dev %}
+                {% else if dev.startswith('SH') and 'RS' in dev %}
                   {# SH*RS* devices (e.g. SH10RS) #}
                   {{ (value | float / 10) | int }}
                 {% else %}
