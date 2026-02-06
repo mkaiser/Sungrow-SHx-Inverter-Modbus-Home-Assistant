@@ -1,330 +1,1578 @@
 views:
-  - title: Overview
+  - type: sections
+    max_columns: 3
+    path: overview
     icon: mdi:sun-compass
-    cards:
-      - type: entities
-        entities:
-          - entity: sensor.sungrow_device_type
-          - entity: sensor.sungrow_inverter_state
-          - entity: sensor.sungrow_version_1
-          - entity: sensor.sungrow_version_2
-          - entity: sensor.sungrow_version_3
-          - entity: sensor.sungrow_version_4_sungrow_battery
-          - entity: sensor.inverter_firmware_version
-          - entity: sensor.communication_module_firmware_version
-          - entity: sensor.battery_firmware_version
-          - entity: sensor.inverter_rated_output
-          - entity: sensor.bdc_rated_power
-        title: Version
-      - type: entities
-        entities:
-          - entity: sensor.total_dc_power
-          - entity: sensor.load_power
-          - entity: sensor.export_power
-          - entity: sensor.import_power
-          - entity: sensor.battery_charging_power
-          - entity: sensor.battery_discharging_power
-          - entity: sensor.battery_power
-        title: Power
-      - type: entities
-        entities:
-          - binary_sensor.battery_charging
-          - binary_sensor.battery_charging_delay
-          - binary_sensor.battery_discharging
-          - binary_sensor.battery_discharging_delay
-          - binary_sensor.negative_load_power
-          - binary_sensor.negative_load_power_delay
-          - binary_sensor.positive_load_power
-          - binary_sensor.positive_load_power_delay
-      - type: entities
-        entities:
-          - entity: sensor.daily_pv_generation
-          - entity: sensor.daily_pv_generation_battery_discharge
-          - entity: sensor.daily_consumed_energy
-          - entity: sensor.daily_consumed_energy_filtered
-          - entity: sensor.daily_imported_energy
-          - entity: sensor.daily_exported_energy
-          - entity: sensor.total_consumed_energy
-        title: Energy
-      - type: gauge
-        entity: sensor.battery_level
-        min: 0
-        max: 100
-        severity:
-          green: 70
-          yellow: 40
-          red: 20
-      - type: gauge
-        entity: sensor.battery_level_nominal
-        min: 0
-        max: 100
-        severity:
-          green: 70
-          yellow: 40
-          red: 20
-      - show_name: true
-        show_icon: true
-        show_state: true
-        type: glance
-        entities:
-          - entity: sun.sun
-          - entity: binary_sensor.pv_generating
-          - entity: binary_sensor.battery_charging
-          - entity: binary_sensor.battery_discharging
-          - entity: binary_sensor.exporting_power
-          - entity: binary_sensor.importing_power
-          - entity: sensor.inverter_temperature
-        title: Status
-        columns: 3
-        state_color: true
-      - chart_type: line
-        period: hour
-        days_to_show: 1
-        type: statistics-graph
-        entities:
-          - sensor.total_dc_power
-          - sensor.load_power
-          - sensor.export_power
-          - sensor.import_power
-          - sensor.battery_power
-        stat_types:
-          - mean
-        title: Power distribution last 24 hours
-        hide_legend: false
-      - type: entities
-        entities:
-          - entity: sensor.battery_capacity_high_precision
-          - entity: sensor.battery_level
-          - entity: sensor.battery_level_nominal
-          - entity: sensor.battery_charge
-          - entity: sensor.battery_charge_nominal
-          - entity: sensor.battery_charge_health_rated
-          - entity: sensor.daily_battery_discharge
-          - entity: sensor.daily_battery_charge
-        title: Battery
-      - chart_type: line
-        period: 5minute
-        type: statistics-graph
-        entities:
-          - sensor.meter_phase_a_voltage
-          - sensor.meter_phase_b_voltage
-          - sensor.meter_phase_c_voltage
-        stat_types:
-          - mean
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Inverter
+            heading_style: title
+            icon: mdi:list-status
+          - type: tile
+            entity: sensor.sungrow_inverter_state
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.inverter_temperature
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: tile
+            grid_options:
+              columns: full
+            entity: binary_sensor.pv_generating
+            vertical: false
+            features_position: bottom
+          - type: tile
+            grid_options:
+              columns: full
+            entity: binary_sensor.importing_power
+            vertical: false
+            features_position: bottom
+          - type: tile
+            grid_options:
+              columns: full
+            entity: binary_sensor.exporting_power
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: binary_sensor.battery_charging
+            grid_options:
+              columns: full
+          - type: tile
+            entity: binary_sensor.battery_discharging
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sun.sun
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - type: heading
+            heading: Energy Stats Today
+            heading_style: title
+            icon: mdi:counter
+          - type: tile
+            entity: sensor.daily_pv_generation
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.daily_consumed_energy
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.daily_consumed_energy_filtered
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.daily_imported_energy
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.daily_exported_energy
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.daily_battery_charge
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.daily_battery_discharge
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.daily_pv_generation_battery_discharge
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - type: heading
+            heading: Power Values
+            heading_style: title
+            icon: mdi:flash-outline
+          - type: tile
+            entity: sensor.total_dc_power
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.load_power
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.export_power
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.import_power
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_charging_power
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_discharging_power
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - type: heading
+            heading: Battery
+            heading_style: title
+            icon: mdi:battery-outline
+          - type: tile
+            entity: sensor.battery_level
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: tile
+            grid_options:
+              columns: full
+            entity: sensor.battery_level_nominal
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: sensor.battery_charge
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_charge_nominal
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: gauge
+            entity: sensor.battery_level
+            min: 0
+            max: 100
+            needle: false
+            severity:
+              green: 70
+              yellow: 30
+              red: 0
+            grid_options:
+              columns: 6
+              rows: auto
+          - type: gauge
+            entity: sensor.battery_level_nominal
+            min: 0
+            max: 100
+            severity:
+              green: 70
+              yellow: 30
+              red: 0
+            grid_options:
+              columns: 6
+              rows: auto
+      - type: grid
+        column_span: 1
+        cards:
+          - type: heading
+            heading: Power distribution last 24 hours
+            heading_style: title
+            icon: mdi:sine-wave
+          - chart_type: line
+            period: hour
+            days_to_show: 1
+            type: statistics-graph
+            entities:
+              - sensor.total_dc_power
+              - sensor.load_power
+              - sensor.export_power
+              - sensor.import_power
+              - sensor.battery_power
+            stat_types:
+              - mean
+            hide_legend: false
+            grid_options:
+              columns: full
+              rows: auto
+      - type: grid
+        cards:
+          - type: heading
+            heading: Meter Voltage Graph Last 10 Days
+            heading_style: title
+            icon: mdi:sine-wave
+          - chart_type: line
+            period: 5minute
+            type: statistics-graph
+            entities:
+              - sensor.meter_phase_a_voltage
+              - sensor.meter_phase_b_voltage
+              - sensor.meter_phase_c_voltage
+            stat_types:
+              - mean
+    cards: []
+    title: Overview
   - title: Detailed Info
     icon: mdi:solar-power-variant-outline
-    cards:
-      - type: entities
-        entities:
-          - sensor.battery_firmware_version
-          - sensor.communication_module_firmware_version
-          - sensor.inverter_firmware_version
-      - type: entities
-        entities:
-          - entity: sensor.sungrow_device_type
-          - entity: sensor.sungrow_inverter_state
-          - entity: sensor.power_flow_status
-          - entity: sensor.running_state_raw
-          - entity: sensor.inverter_temperature
-          - entity: binary_sensor.pv_generating
-          - entity: binary_sensor.battery_charging
-          - entity: binary_sensor.battery_discharging
-          - entity: binary_sensor.exporting_power
-          - entity: binary_sensor.importing_power
-        title: Inverter State
-      - type: entities
-        entities:
-          - entity: sensor.total_dc_power
-          - entity: sensor.meter_active_power
-          - entity: sensor.load_power
-          - entity: sensor.export_power
-          - entity: sensor.import_power
-          - entity: sensor.battery_charging_power
-          - entity: sensor.battery_discharging_power
-        title: Power
-      - type: entities
-        entities:
-          - entity: sensor.load_power
-          - entity: sensor.phase_a_voltage
-          - entity: sensor.phase_a_current
-          - entity: sensor.phase_a_power
-          - entity: sensor.phase_b_voltage
-          - entity: sensor.phase_b_current
-          - entity: sensor.phase_b_power
-          - entity: sensor.phase_c_voltage
-          - entity: sensor.phase_c_current
-          - entity: sensor.phase_c_power
-          - entity: sensor.meter_active_power
-          - entity: sensor.meter_phase_a_active_power
-          - entity: sensor.meter_phase_b_active_power
-          - entity: sensor.meter_phase_c_active_power
-          - entity: sensor.meter_phase_a_voltage
-          - entity: sensor.meter_phase_b_voltage
-          - entity: sensor.meter_phase_c_voltage
-          - entity: sensor.meter_phase_a_current
-          - entity: sensor.meter_phase_b_current
-          - entity: sensor.meter_phase_c_current
-          - entity: sensor.total_backup_power
-          - entity: sensor.backup_phase_a_power
-          - entity: sensor.backup_phase_b_power
-          - entity: sensor.backup_phase_c_power
-          - entity: sensor.grid_frequency
-          - entity: sensor.reactive_power
-        title: Grid / Load
-      - type: gauge
-        entity: sensor.battery_level
-        min: 0
-        max: 100
-        severity:
-          green: 70
-          yellow: 40
-          red: 20
-      - type: entities
-        entities:
-          - entity: sensor.daily_pv_generation
-          - entity: sensor.daily_direct_energy_consumption
-          - entity: sensor.daily_exported_energy_from_pv
-          - entity: sensor.daily_pv_generation_battery_discharge
-          - entity: sensor.daily_battery_charge_from_pv
-          - entity: sensor.daily_battery_discharge
-          - entity: sensor.daily_exported_energy
-          - entity: sensor.daily_battery_charge
-          - entity: sensor.daily_imported_energy
-          - entity: sensor.total_direct_energy_consumption
-          - entity: sensor.total_pv_generation_battery_discharge
-          - entity: sensor.total_exported_energy_from_pv
-          - entity: sensor.total_battery_charge_from_pv
-          - entity: sensor.total_battery_charge
-          - entity: sensor.total_battery_discharge
-          - entity: sensor.total_pv_generation
-          - entity: sensor.total_imported_energy
-          - entity: sensor.total_exported_energy
-          - entity: sensor.total_consumed_energy
-        title: Energy
-      - type: entities
-        entities:
-          - entity: sensor.total_dc_power
-          - entity: sensor.mppt1_power
-          - entity: sensor.mppt2_power
-          - entity: sensor.mppt3_power
-          - entity: sensor.mppt4_power
-          - entity: sensor.mppt1_voltage
-          - entity: sensor.mppt2_voltage
-          - entity: sensor.mppt3_voltage
-          - entity: sensor.mppt4_voltage
-          - entity: sensor.mppt1_current
-          - entity: sensor.mppt2_current
-          - entity: sensor.mppt3_current
-          - entity: sensor.mppt4_current
-        title: PV Gen
-      - type: entities
-        entities:
-          - entity: sensor.battery_capacity_high_precision
-          - entity: sensor.battery_temperature
-          - entity: sensor.battery_charging_power
-          - entity: sensor.battery_discharging_power
-          - entity: sensor.battery_voltage
-          - entity: sensor.battery_current
-          - entity: sensor.battery_level
-          - entity: sensor.battery_state_of_health
-          - entity: sensor.battery_min_soc
-          - entity: sensor.battery_max_soc
-          - entity: sensor.battery_forced_charge_discharge_power
-          - entity: sensor.bms_max_charging_current
-          - entity: sensor.bms_max_discharging_current
-          - entity: sensor.battery_charging_start_power
-          - entity: sensor.battery_discharging_start_power
-          - entity: sensor.battery_power
-          - entity: sensor.battery_charging_power
-          - entity: sensor.battery_charging_power_signed
-          - entity: sensor.battery_discharging_power
-          - entity: sensor.battery_discharging_power_signed
-        title: Battery
-      - chart_type: line
-        period: day
-        days_to_show: 60
-        type: statistics-graph
-        entities:
-          - sensor.battery_level
-        stat_types:
-          - min
-          - max
-        title: Battery SoC last 60 days
-      - chart_type: line
-        period: day
-        days_to_show: 360
-        type: statistics-graph
-        entities:
-          - sensor.battery_level
-        stat_types:
-          - mean
-          - min
-          - max
-        title: Battery SoC last 360 days
-        logarithmic_scale: false
-        hide_legend: false
-  - title: EMS Control
+    cards: []
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Inverter State
+            heading_style: title
+            icon: mdi:solar-power-variant-outline
+            grid_options:
+              columns: full
+          - type: heading
+            heading: System Status
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.sungrow_inverter_state
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.inverter_temperature
+            vertical: false
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Current Activity
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: binary_sensor.pv_generating
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: binary_sensor.battery_charging
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: binary_sensor.battery_discharging
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: binary_sensor.exporting_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: binary_sensor.importing_power
+            vertical: false
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - type: heading
+            heading: Power
+            heading_style: title
+            icon: mdi:flash-outline
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Total Overview
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.total_dc_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.load_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.meter_active_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Grid Import & Export
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.export_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.import_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Battery Power
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_charging_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_discharging_power
+            vertical: false
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - type: heading
+            heading: PV Generation
+            heading_style: title
+            icon: mdi:solar-panel
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Total Production
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.total_dc_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: heading
+            heading: MPPT 1
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.mppt1_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.mppt1_voltage
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.mppt1_current
+            vertical: false
+            grid_options:
+              columns: full
+          - type: heading
+            heading: MPPT 2
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.mppt2_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.mppt2_voltage
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.mppt2_current
+            vertical: false
+            grid_options:
+              columns: full
+          - type: heading
+            heading: MPPT 3
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            grid_options:
+              columns: full
+            entity: sensor.mppt3_power
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: sensor.mppt3_voltage
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.mppt3_current
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: heading
+            heading: MPPT 4
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.mppt4_power
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.mppt4_current
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.mppt4_voltage
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - type: heading
+            heading: Grid / Load
+            heading_style: title
+            icon: mdi:transmission-tower
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Load & Inverter Phases
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.load_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.phase_a_voltage
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.phase_a_current
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.phase_a_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.phase_b_voltage
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.phase_b_current
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.phase_b_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.phase_c_voltage
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.phase_c_current
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.phase_c_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Smart Meter (Grid)
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.meter_active_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.meter_phase_a_active_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.meter_phase_b_active_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.meter_phase_c_active_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.meter_phase_a_voltage
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.meter_phase_b_voltage
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.meter_phase_c_voltage
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.meter_phase_a_current
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.meter_phase_b_current
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.meter_phase_c_current
+            vertical: false
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Backup
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.total_backup_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.backup_phase_a_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.backup_phase_b_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.backup_phase_c_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Grid Quality & Diagnostics
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.grid_frequency
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.reactive_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            grid_options:
+              columns: full
+            entity: sensor.active_power_limitation_ratio_raw
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: sensor.export_power_limit
+            vertical: false
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - type: heading
+            heading: Battery
+            heading_style: title
+            icon: mdi:battery-outline
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Power & Electricity
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_voltage
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_current
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_temperature
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_charging_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_discharging_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_charging_power_signed
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_discharging_power_signed
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_forced_charge_discharge_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: heading
+            heading: SoC & Capacity
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_level
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_level_nominal
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_charge
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_charge_nominal
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_charge_health_rated
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_capacity_high_precision
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_state_of_health
+            vertical: false
+            grid_options:
+              columns: full
+          - type: heading
+            heading: BMS Limits & Backup
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_min_soc
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_max_soc
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_reserved_soc_for_backup
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_max_charge_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_max_discharge_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_charging_start_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_discharging_start_power
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.bms_max_charging_current
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.bms_max_discharging_current
+            vertical: false
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - type: heading
+            heading: Energy Stats
+            heading_style: title
+            icon: mdi:counter
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Daily Energy
+            heading_style: subtitle
+            icon: ''
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.daily_pv_generation
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.daily_imported_energy
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.daily_exported_energy
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.daily_exported_energy_from_pv
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            grid_options:
+              columns: full
+            entity: sensor.daily_consumed_energy
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: sensor.daily_consumed_energy_filtered
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.daily_direct_energy_consumption
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.daily_battery_charge
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.daily_battery_charge_from_pv
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.daily_battery_discharge
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.daily_pv_generation_battery_discharge
+            vertical: false
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Total Energy
+            heading_style: subtitle
+            icon: ''
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.total_pv_generation
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.total_imported_energy
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.total_exported_energy
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.total_exported_energy_from_pv
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.total_consumed_energy
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.total_direct_energy_consumption
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.total_battery_charge
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.total_battery_charge_from_pv
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.total_battery_discharge
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.total_pv_generation_battery_discharge
+            vertical: false
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - type: heading
+            heading: HW & SW Info
+            heading_style: title
+            icon: mdi:server-minus-outline
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Firmware & Software
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.inverter_firmware_version
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.sungrow_version_1
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.sungrow_version_2
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.sungrow_version_3
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.sungrow_version_4_sungrow_battery
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.communication_module_firmware_version
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_firmware_version
+            vertical: false
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Device & Identity
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.sungrow_device_type
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.sungrow_inverter_serial
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: heading
+            heading: Technical Ratings
+            heading_style: subtitle
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.inverter_rated_output
+            vertical: false
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.bdc_rated_power
+            vertical: false
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - type: heading
+            heading: Inverter Logic & Delays
+            heading_style: title
+            icon: mdi:chip
+          - type: tile
+            entity: binary_sensor.positive_load_power
+            grid_options:
+              columns: full
+          - type: tile
+            entity: binary_sensor.positive_load_power_delay
+            grid_options:
+              columns: full
+          - type: tile
+            entity: binary_sensor.negative_load_power
+            grid_options:
+              columns: full
+          - type: tile
+            entity: binary_sensor.negative_load_power_delay
+            grid_options:
+              columns: full
+          - type: tile
+            grid_options:
+              columns: full
+            entity: binary_sensor.importing_power
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: binary_sensor.importing_power_delay
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: tile
+            grid_options:
+              columns: full
+            entity: binary_sensor.exporting_power
+            vertical: false
+            features_position: bottom
+          - type: tile
+            grid_options:
+              columns: full
+            entity: binary_sensor.exporting_power_delay
+            vertical: false
+            features_position: bottom
+          - type: tile
+            grid_options:
+              columns: full
+            entity: binary_sensor.battery_charging
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: binary_sensor.battery_charging_delay
+            grid_options:
+              columns: full
+          - type: tile
+            grid_options:
+              columns: full
+            entity: binary_sensor.battery_discharging
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: binary_sensor.battery_discharging_delay
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - type: heading
+            heading: Inverter Diagnostics & Raw Registry
+            heading_style: title
+            icon: mdi:bug-check-outline
+          - type: heading
+            icon: ''
+            heading: Operation & Flow
+            heading_style: subtitle
+          - type: tile
+            entity: sensor.running_state_raw
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.power_flow_status
+            grid_options:
+              columns: full
+          - type: heading
+            icon: ''
+            heading: EMS Control Feedback
+            heading_style: subtitle
+          - type: tile
+            entity: sensor.ems_mode_selection_raw
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.backup_mode_raw
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.battery_forced_charge_discharge_cmd_raw
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: full
+          - type: heading
+            icon: ''
+            heading: Power & Export Limits
+            heading_style: subtitle
+          - type: tile
+            entity: sensor.export_power_limit_mode_raw
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.active_power_limitation_ratio_raw
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.active_power_limitation_raw
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.apl_shutdown_at_zero_raw
+            grid_options:
+              columns: full
+          - type: tile
+            grid_options:
+              columns: full
+            entity: sensor.load_adjustment_mode_enable_raw
+            vertical: false
+            features_position: inline
+          - type: tile
+            grid_options:
+              columns: full
+            entity: sensor.load_adjustment_mode_selection_raw
+            vertical: false
+            features_position: inline
+          - type: heading
+            icon: ''
+            heading: Communication
+            heading_style: subtitle
+          - type: tile
+            entity: sensor.sungrow_protocol_version
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - type: heading
+            heading: Battery SoC History
+            heading_style: title
+            icon: mdi:chart-bell-curve-cumulative
+            grid_options:
+              columns: full
+        column_span: 3
+      - type: grid
+        cards:
+          - type: heading
+            heading: Battery SoC last 60 days
+            heading_style: subtitle
+            icon: mdi:chart-bell-curve-cumulative
+            grid_options:
+              columns: full
+              rows: auto
+          - chart_type: line
+            period: day
+            days_to_show: 60
+            type: statistics-graph
+            entities:
+              - sensor.battery_level
+            stat_types:
+              - min
+              - max
+              - mean
+            grid_options:
+              columns: full
+        column_span: 1
+      - type: grid
+        cards:
+          - type: heading
+            heading: Battery SoC last 360 days
+            heading_style: subtitle
+            icon: mdi:chart-bell-curve-cumulative
+            grid_options:
+              columns: full
+              rows: auto
+          - chart_type: line
+            period: day
+            days_to_show: 360
+            type: statistics-graph
+            entities:
+              - sensor.battery_level
+            stat_types:
+              - min
+              - max
+              - mean
+            grid_options:
+              columns: full
+              rows: auto
+        column_span: 2
+    max_columns: 3
+    path: detailed
+  - type: sections
+    max_columns: 3
+    title: EMS Control
+    path: ems-control
     icon: mdi:solar-power
-    cards:
-      - type: entities
-        entities:
-          - entity: switch.sungrow_dashboard_enable_danger_mode
-        title: Enable Danger Mode
-      - type: entities
-        entities:
-          - entity: button.start_inverter
-          - entity: button.stop_inverter
-          - entity: sensor.sungrow_inverter_state
-          - entity: select.ems_mode
-          - entity: select.battery_forced_charge_discharge
-          - entity: switch.backup_mode
-          - entity: select.load_adjustment_mode
-          - entity: switch.load_adjustment_mode
-          - entity: switch.export_power_limit
-          - entity: number.export_power_limit
-        title: Inverter State & EMS Settings
-        show_header_toggle: false
-        state_color: true
-        visibility:
-          - condition: state
-            entity: switch.sungrow_dashboard_enable_danger_mode
-            state: 'on'
-      - type: entities
-        entities:
-          - entity: number.battery_min_soc
-          - entity: number.battery_max_soc
-          - entity: number.battery_reserved_soc_for_backup
-          - entity: number.battery_forced_charge_discharge_power
-          - entity: number.battery_max_charge_power
-          - entity: number.battery_max_discharge_power
-          - entity: number.battery_charging_start_power
-          - entity: number.battery_discharging_start_power
-        title: Battery Settings
-        state_color: false
-        show_header_toggle: true
-        visibility:
-          - condition: state
-            entity: switch.sungrow_dashboard_enable_danger_mode
-            state: 'on'
-      - type: entities
-        entities:
-          - entity: sensor.sungrow_inverter_state
-          - entity: sensor.battery_power
-          - entity: binary_sensor.battery_charging
-          - entity: binary_sensor.battery_discharging
-        title: Quick Info
-      - type: entities
-        entities:
-          - scene.sungrow_self_consumption_mode
-          - scene.sungrow_set_battery_bypass_mode
-          - scene.sungrow_set_battery_forced_charge
-          - scene.sungrow_set_battery_forced_discharge
-          - scene.sungrow_set_max_export_power
-          - scene.sungrow_set_self_consumption_limited_discharge
-          - scene.sungrow_set_zero_export_power
-        visibility:
-          - condition: state
-            entity: switch.sungrow_dashboard_enable_danger_mode
-            state: 'on'
+    top_margin: false
     badges: []
+    header:
+      layout: center
+      badges_position: bottom
+      badges_wrap: wrap
+    sections:
+      - type: grid
+        column_span: 1
+        cards:
+          - type: heading
+            heading: Danger Mode
+            heading_style: title
+            icon: mdi:alert-outline
+          - type: tile
+            grid_options:
+              columns: full
+            entity: switch.sungrow_dashboard_enable_danger_mode
+            name: Enable Danger Mode
+            vertical: false
+            features:
+              - type: toggle
+            features_position: inline
+      - type: grid
+        cards:
+          - type: heading
+            heading: Quick Info
+            heading_style: title
+            icon: mdi:information-outline
+          - type: tile
+            entity: sensor.sungrow_inverter_state
+            vertical: false
+            features_position: bottom
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: tile
+            entity: sensor.battery_power
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: binary_sensor.battery_charging
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: binary_sensor.battery_discharging
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: sensor.export_power_limit
+            vertical: false
+            features_position: bottom
+          - type: tile
+            entity: sensor.active_power_limitation_ratio_raw
+            vertical: false
+            features_position: bottom
+        column_span: 1
+      - type: grid
+        cards: []
+      - type: grid
+        cards:
+          - type: heading
+            heading: EMS Settings
+            heading_style: title
+            icon: mdi:tune-variant-outline
+          - type: tile
+            grid_options:
+              columns: full
+            entity: button.start_inverter
+            vertical: false
+            icon_tap_action:
+              action: more-info
+            features:
+              - type: button
+            features_position: inline
+          - type: tile
+            grid_options:
+              columns: full
+            entity: button.stop_inverter
+            vertical: false
+            icon_tap_action:
+              action: more-info
+            features:
+              - type: button
+            features_position: inline
+          - type: tile
+            grid_options:
+              columns: full
+            entity: select.ems_mode
+            hide_state: true
+            vertical: false
+            features:
+              - type: select-options
+            features_position: inline
+          - type: tile
+            grid_options:
+              columns: full
+            entity: select.battery_forced_charge_discharge
+            hide_state: true
+            vertical: false
+            features:
+              - type: select-options
+            features_position: inline
+          - type: tile
+            grid_options:
+              columns: full
+            entity: switch.backup_mode
+            vertical: false
+            icon_tap_action:
+              action: more-info
+            features:
+              - type: toggle
+            features_position: inline
+          - type: tile
+            grid_options:
+              columns: full
+            entity: select.load_adjustment_mode
+            hide_state: true
+            vertical: false
+            features:
+              - type: select-options
+            features_position: inline
+          - type: tile
+            grid_options:
+              columns: full
+            entity: switch.load_adjustment_mode
+            hide_state: true
+            vertical: false
+            icon_tap_action:
+              action: more-info
+            features:
+              - type: toggle
+            features_position: inline
+          - type: tile
+            grid_options:
+              columns: full
+            entity: switch.export_power_limit
+            hide_state: true
+            vertical: false
+            icon_tap_action:
+              action: more-info
+            features:
+              - type: toggle
+            features_position: inline
+          - type: tile
+            grid_options:
+              columns: full
+            entity: number.export_power_limit
+            vertical: false
+            features:
+              - style: slider
+                type: numeric-input
+            features_position: inline
+            visibility:
+              - condition: state
+                entity: switch.export_power_limit
+                state: 'on'
+        visibility:
+          - condition: state
+            entity: switch.sungrow_dashboard_enable_danger_mode
+            state: 'on'
+        column_span: 1
+      - type: grid
+        cards:
+          - type: heading
+            heading: Apply EMS Preset
+            heading_style: title
+            icon: mdi:tune-variant
+          - type: tile
+            grid_options:
+              columns: full
+            entity: scene.sungrow_self_consumption_mode
+            name: Set Self-Consumption Mode
+            icon: mdi:home-lightning-bolt-outline
+            show_entity_picture: false
+            hide_state: true
+            vertical: false
+            icon_tap_action:
+              action: more-info
+            features:
+              - type: button
+                action_name: Activate
+            features_position: inline
+          - type: tile
+            grid_options:
+              columns: full
+            entity: scene.sungrow_set_battery_bypass_mode
+            name: Set Battery Bypass Mode
+            icon: mdi:battery-off-outline
+            hide_state: true
+            vertical: false
+            icon_tap_action:
+              action: more-info
+            features:
+              - type: button
+                action_name: Activate
+            features_position: inline
+          - type: tile
+            grid_options:
+              columns: full
+            entity: scene.sungrow_set_battery_forced_charge
+            name: Set Battery Forced Charge
+            icon: mdi:battery-arrow-up-outline
+            hide_state: true
+            vertical: false
+            icon_tap_action:
+              action: more-info
+            features:
+              - type: button
+                action_name: Activate
+            features_position: inline
+          - type: tile
+            grid_options:
+              columns: full
+            entity: scene.sungrow_set_battery_forced_discharge
+            name: Set Battery Forced Discharge
+            icon: mdi:battery-arrow-down-outline
+            hide_state: true
+            vertical: false
+            icon_tap_action:
+              action: more-info
+            features:
+              - type: button
+                action_name: Activate
+            features_position: inline
+          - type: tile
+            grid_options:
+              columns: full
+            entity: scene.sungrow_set_max_export_power
+            name: Set Max Export Power
+            icon: mdi:transmission-tower-export
+            hide_state: true
+            vertical: false
+            icon_tap_action:
+              action: more-info
+            features:
+              - type: button
+                action_name: Activate
+            features_position: inline
+          - type: tile
+            grid_options:
+              columns: full
+            entity: scene.sungrow_set_self_consumption_limited_discharge
+            name: ' Set Self-Consumption Limited Discharge'
+            icon: mdi:battery-lock
+            hide_state: true
+            vertical: false
+            icon_tap_action:
+              action: more-info
+            features:
+              - type: button
+                action_name: Activate
+            features_position: inline
+          - type: tile
+            grid_options:
+              columns: full
+            entity: scene.sungrow_set_zero_export_power
+            name: Set Zero Export Power
+            icon: mdi:transmission-tower-off
+            hide_state: true
+            vertical: false
+            icon_tap_action:
+              action: more-info
+            features:
+              - type: button
+                action_name: Activate
+            features_position: inline
+        visibility:
+          - condition: state
+            entity: switch.sungrow_dashboard_enable_danger_mode
+            state: 'on'
+      - type: grid
+        column_span: 1
+        visibility:
+          - condition: state
+            entity: switch.sungrow_dashboard_enable_danger_mode
+            state: 'on'
+        cards:
+          - type: heading
+            heading: Battery Settings
+            heading_style: title
+            icon: mdi:battery-outline
+          - type: heading
+            icon: mdi:battery-high
+            heading: SoC Limits
+            heading_style: subtitle
+          - type: tile
+            entity: number.battery_min_soc
+            name: Min SoC
+            vertical: false
+            features:
+              - style: slider
+                type: numeric-input
+            features_position: inline
+          - type: tile
+            entity: number.battery_max_soc
+            name: Max SoC
+            vertical: false
+            features:
+              - style: slider
+                type: numeric-input
+            features_position: inline
+          - type: tile
+            entity: number.battery_reserved_soc_for_backup
+            name: Reserved SoC for Backup
+            vertical: false
+            features:
+              - style: slider
+                type: numeric-input
+            features_position: inline
+          - type: heading
+            icon: mdi:battery-charging-high
+            heading: Power Limits
+            heading_style: subtitle
+          - type: tile
+            entity: number.battery_forced_charge_discharge_power
+            name: Forced charge discharge power
+            vertical: false
+            features:
+              - style: slider
+                type: numeric-input
+            features_position: inline
+          - type: tile
+            entity: number.battery_max_charge_power
+            name: Max charge power
+            vertical: false
+            features:
+              - style: slider
+                type: numeric-input
+            features_position: inline
+          - type: tile
+            entity: number.battery_max_discharge_power
+            name: Max discharge power
+            vertical: false
+            features:
+              - style: slider
+                type: numeric-input
+            features_position: inline
+          - type: tile
+            entity: number.battery_charging_start_power
+            name: Charging start power
+            vertical: false
+            features:
+              - style: slider
+                type: numeric-input
+            features_position: inline
+          - type: tile
+            entity: number.battery_discharging_start_power
+            name: Discharging start power
+            vertical: false
+            features:
+              - style: slider
+                type: numeric-input
+            features_position: inline
+      - type: grid
+        column_span: 3
+        visibility:
+          - condition: state
+            entity: switch.sungrow_dashboard_enable_danger_mode
+            state: 'on'
+        cards:
+          - type: heading
+            heading: Help
+            heading_style: title
+            icon: mdi:help-circle-outline
+          - type: markdown
+            content: >
+              ### Manual EMS Control (Advanced)
+
+              - **EMS Mode** — Select between Self-consumption, Forced, or other
+              modes.
+
+              - **Battery Forced Charge/Discharge Command** — Toggle battery
+              charging or discharging.
+
+              - **Battery Min/Max SoC** — Define the safe operating range for
+              battery state of charge.
+
+              - **Max Charge/Discharge Power** — Limit the speed of battery
+              charging or discharging.
+
+              - **Export Power Limit** — Cap the power exported to the grid.
+          - type: markdown
+            content: >-
+              ### Available Scenes (EMS Presets)
+
+              You can activate these scenes through Home Assistant's UI
+              (Developer Tools → Services → `scene.turn_on`) or integrate them
+              into automations:
+
+
+              - **Sungrow Self-Consumption Mode** — Prioritize using solar
+              production to power your home and charge the battery with surplus
+              energy.
+
+              - **Sungrow Set Zero Export Power** — Minimize or prevent
+              exporting energy to the grid by adjusting export limits.
+
+              - **Sungrow Set Max Export Power** — Export at the inverter's
+              maximum rated output capacity.
+
+              - **Sungrow Set Battery Bypass Mode** — Bypass the battery; solar
+              production directly powers the load or exports to the grid.
+
+              - **Sungrow Set Battery Forced Discharge** — Force the battery to
+              discharge, delivering power to the home or grid.
+
+              - **Sungrow Set Battery Forced Charge** — Force the battery to
+              charge from solar production or the grid.
+
+              - **Sungrow Set Self-Consumption Limited Discharge** — Discharge
+              the battery only to power your home; prevent exporting battery
+              energy to the grid.
+    cards: []
 title: PV System
