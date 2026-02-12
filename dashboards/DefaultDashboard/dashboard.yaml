@@ -315,13 +315,13 @@ views:
         title: Quick Info
       - type: entities
         entities:
-          - scene.sungrow_self_consumption_mode
-          - scene.sungrow_set_battery_bypass_mode
-          - scene.sungrow_set_battery_forced_charge
-          - scene.sungrow_set_battery_forced_discharge
-          - scene.sungrow_set_max_export_power
-          - scene.sungrow_set_self_consumption_limited_discharge
-          - scene.sungrow_set_zero_export_power
+          - entity: scene.sungrow_self_consumption_mode_max_battery_discharge
+          - entity: scene.sungrow_self_consumption_mode_no_battery_discharge
+          - entity: scene.sungrow_zero_export_power
+          - entity: scene.sungrow_max_export_power
+          - entity: scene.sungrow_battery_bypass_mode
+          - entity: scene.sungrow_battery_forced_discharge
+          - entity: scene.sungrow_battery_forced_charge
         visibility:
           - condition: state
             entity: switch.sungrow_dashboard_enable_danger_mode
