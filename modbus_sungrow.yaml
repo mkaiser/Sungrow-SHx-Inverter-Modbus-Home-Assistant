@@ -2305,7 +2305,7 @@ automation:
           domain: scene
           service: turn_on
           service_data:
-            entity_id: scene.sungrow_set_max_export_power
+            entity_id: scene.set_max_export_power
     conditions: []
     action:
       - service: number.set_value
@@ -2325,7 +2325,7 @@ automation:
           domain: scene
           service: turn_on
           service_data:
-            entity_id: scene.sungrow_self_consumption_mode_max_battery_discharge
+            entity_id: scene.self_consumption_mode_max_battery_discharge
     conditions: []
     action:
       - service: number.set_value
