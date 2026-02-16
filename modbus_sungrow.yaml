@@ -2340,11 +2340,8 @@ scene:
     entities:
       select.ems_mode: "Self-consumption mode (default)"
       select.battery_forced_charge_discharge: "Stop (default)"
-      # scripts don't render templates, therefore this won't work:
-      # number.battery_max_discharge_power: !secret sungrow_modbus_battery_max_power
-      # Workaround: 
-      # this screne triggers the automation automation_sungrow_self_consumption_mode_max_battery_discharge_scene_sets_rated_limit,
-      # which sets the max battery power defined your secrets.yaml""
+      # Scenes don't resolve secrets and don't render templates, so we can use neither a sensor nor a secret as the target state here.
+      # Instead, turning on this scene triggers the automation automation_sungrow_self_consumption_mode_max_battery_discharge_scene_sets_rated_limit which uses the sungrow_modbus_battery_max_power secret
 
   - name: Self-Consumption Mode (no battery discharge)
     entities:
