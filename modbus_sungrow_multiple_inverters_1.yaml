@@ -1,4 +1,4 @@
-# Release date 2026-02-12
+# Release date 2026-02-16
 #
 # INSTALLATION GUIDE: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/doc/installation.md
 #
@@ -2340,8 +2340,11 @@ scene:
     entities:
       select.ems_mode_inv_1: "Self-consumption mode (default)"
       select.battery_forced_charge_discharge_inv_1: "Stop (default)"
-      # scripts don't render templates :/
-      # battery_max_discharge_power set by an automation
+      # scripts don't render templates, therefore this won't work:
+      # number.battery_max_discharge_power_inv_1: !secret sungrow_modbus_battery_max_power_inv_1
+      # Workaround: 
+      # this screne triggers the automation automation_sungrow_self_consumption_mode_max_battery_discharge_scene_sets_rated_limit,
+      # which sets the max battery power defined your secrets.yaml""
 
   - name: Self-Consumption Mode (no battery discharge) inv 1
     entities:
