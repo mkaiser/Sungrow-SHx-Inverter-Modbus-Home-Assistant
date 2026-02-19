@@ -2305,7 +2305,7 @@ automation:
           domain: scene
           service: turn_on
           service_data:
-            entity_id: scene.set_max_export_power_inv_2
+            entity_id: scene.max_export_power_inv_2
     conditions: []
     action:
       - service: number.set_value_inv_2
