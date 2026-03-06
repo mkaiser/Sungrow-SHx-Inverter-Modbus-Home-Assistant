@@ -1,4 +1,4 @@
-# Release date 2026-02-16
+# Release date 2026-03-06
 #
 # INSTALLATION GUIDE: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/doc/installation.md
 #
@@ -590,6 +590,7 @@ modbus:
         address: 5740 # reg 5741
         input_type: input
         data_type: int16
+        nan_value: 0x7FFF
         precision: 1
         unit_of_measurement: V
         device_class: voltage
@@ -603,6 +604,7 @@ modbus:
         address: 5741 # reg 5742
         input_type: input
         data_type: int16
+        nan_value: 0x7FFF
         precision: 1
         unit_of_measurement: V
         device_class: voltage
@@ -616,6 +618,7 @@ modbus:
         address: 5742 # reg 5743
         input_type: input
         data_type: int16
+        nan_value: 0x7FFF
         precision: 1
         unit_of_measurement: V
         device_class: voltage
@@ -629,6 +632,7 @@ modbus:
         address: 5743 # reg 5744
         input_type: input
         data_type: uint16
+        nan_value: 0xFFFF
         precision: 2
         unit_of_measurement: A
         device_class: current
@@ -642,6 +646,7 @@ modbus:
         address: 5744 # reg 5745
         input_type: input
         data_type: uint16
+        nan_value: 0xFFFF
         precision: 2
         unit_of_measurement: A
         device_class: current
@@ -655,6 +660,7 @@ modbus:
         address: 5745 # reg 5746
         input_type: input
         data_type: uint16
+        nan_value: 0xFFFF
         precision: 2
         unit_of_measurement: A
         device_class: current
@@ -749,6 +755,7 @@ modbus:
         address: 13007 # reg 13008
         input_type: input
         data_type: int32
+        nan_value: 0x7FFFFFFF
         swap: word
         precision: 0
         unit_of_measurement: W
@@ -764,6 +771,7 @@ modbus:
         address: 13009 # reg 13010
         input_type: input
         data_type: int32
+        nan_value: 0x7FFFFFFF
         swap: word
         precision: 0
         unit_of_measurement: W
