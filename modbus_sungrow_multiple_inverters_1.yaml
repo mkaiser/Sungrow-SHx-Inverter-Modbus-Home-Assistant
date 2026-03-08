@@ -1,4 +1,4 @@
-# Release date 2026-03-06
+# Release date 2026-03-08
 #
 # INSTALLATION GUIDE: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/doc/installation.md
 #
@@ -1735,9 +1735,10 @@ template:
                 {% if dev.startswith('SH') and 'RT' in dev %}
                   {# SH*RT* devices (e.g. SH10RT, SH8.0RT-20, SH8.0RT-V112 or SH10RT-V122) #}
                   {{ (value | float / 10) | int }}
-                {% elif dev.startswith('SH') and 'RS' in dev %}
-                  {# SH*RS* devices (e.g. SH10RS) #}
-                  {{ (value | float / 10) | int }}
+                {# 2026-03-08. Commented, it seems that a factor is not required for RS series, see: #666 and #677 #}
+                {# {% elif dev.startswith('SH') and 'RS' in dev %} #}
+                {#  SH*RS* devices (e.g. SH10RS)  #}
+                {#  {{ (value | float / 10) | int }} #}
                 {% else %}
                   {{ value | int }}
                 {% endif %}
