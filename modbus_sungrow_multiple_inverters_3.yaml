@@ -1,4 +1,4 @@
-# Release date 2026-03-08
+# Release date 2026-03-09
 #
 # INSTALLATION GUIDE: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/doc/installation.md
 #
@@ -1274,7 +1274,7 @@ modbus:
         input_type: input
         data_type: string
         count: 15
-        scan_interval: *scan_interval_fast
+        scan_interval: *scan_interval_slowest
 
       # Battery Firmware version from register 13280 to 13279 as UTF8 string
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
