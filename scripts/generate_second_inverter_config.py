@@ -85,6 +85,9 @@ def transform_text(text: str, suffix: str) -> tuple[str, int]:
     out_lines: list[str] = []
     replacements = 0
 
+    warning = "# WARNING: Automatically generated file! Do not modify in the repository.\n"
+    out_lines.append(warning)
+
     for line in text.splitlines(keepends=True):
         # Keep line endings intact but match only on the content without EOL.
         eol = ""
