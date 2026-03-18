@@ -2308,8 +2308,13 @@ automation:
     alias: "sungrow max export scene sets rated limit"
     description: "When scenes with max export power are activated, set export limit to inverter rated output"
     triggers:
-      - platform: state
-        entity_id: scene.max_export_power_inv_2
+      - platform: event
+        event_type: call_service
+        event_data:
+          domain: scene
+          service: turn_on
+          service_data:
+            entity_id: scene.max_export_power_inv_2
     conditions: []
     action:
       - service: number.set_value_inv_2
@@ -2323,8 +2328,13 @@ automation:
     alias: "sungrow self consumption mode max battery discharge scene sets rated limit"
     description: "When scenes with max battery discharge are activated, set battery discharge limit to sungrow_modbus_battery_max_power defined in secret"
     triggers:
-      - platform: state
-        entity_id: scene.self_consumption_mode_max_battery_discharge_inv_2
+      - platform: event
+        event_type: call_service
+        event_data:
+          domain: scene
+          service: turn_on
+          service_data:
+            entity_id: scene.self_consumption_mode_max_battery_discharge_inv_2
     conditions: []
     action:
       - service: number.set_value_inv_2
