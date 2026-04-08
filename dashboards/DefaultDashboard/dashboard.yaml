@@ -1332,7 +1332,7 @@ views:
           - type: tile
             grid_options:
               columns: full
-            entity: scene.sungrow_self_consumption_mode
+            entity: scene.self_consumption_mode_max_battery_discharge
             name: Set Self-Consumption Mode
             icon: mdi:home-lightning-bolt-outline
             show_entity_picture: false
@@ -1347,7 +1347,7 @@ views:
           - type: tile
             grid_options:
               columns: full
-            entity: scene.sungrow_set_battery_bypass_mode
+            entity: scene.battery_bypass_mode
             name: Set Battery Bypass Mode
             icon: mdi:battery-off-outline
             hide_state: true
@@ -1361,7 +1361,7 @@ views:
           - type: tile
             grid_options:
               columns: full
-            entity: scene.sungrow_set_battery_forced_charge
+            entity: scene.battery_forced_charge
             name: Set Battery Forced Charge
             icon: mdi:battery-arrow-up-outline
             hide_state: true
@@ -1375,7 +1375,7 @@ views:
           - type: tile
             grid_options:
               columns: full
-            entity: scene.sungrow_set_battery_forced_discharge
+            entity: scene.battery_forced_discharge
             name: Set Battery Forced Discharge
             icon: mdi:battery-arrow-down-outline
             hide_state: true
@@ -1389,7 +1389,7 @@ views:
           - type: tile
             grid_options:
               columns: full
-            entity: scene.sungrow_set_max_export_power
+            entity: scene.max_export_power
             name: Set Max Export Power
             icon: mdi:transmission-tower-export
             hide_state: true
@@ -1403,7 +1403,7 @@ views:
           - type: tile
             grid_options:
               columns: full
-            entity: scene.sungrow_set_self_consumption_limited_discharge
+            entity: scene.self_consumption_mode_no_battery_discharge
             name: ' Set Self-Consumption Limited Discharge'
             icon: mdi:battery-lock
             hide_state: true
@@ -1417,7 +1417,7 @@ views:
           - type: tile
             grid_options:
               columns: full
-            entity: scene.sungrow_set_zero_export_power
+            entity: scene.zero_export_power
             name: Set Zero Export Power
             icon: mdi:transmission-tower-off
             hide_state: true

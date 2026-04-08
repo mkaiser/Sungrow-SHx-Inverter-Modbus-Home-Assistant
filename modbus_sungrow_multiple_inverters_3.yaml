@@ -1,4 +1,5 @@
-# Release date 2026-02-06
+# WARNING: Automatically generated file! Do not modify in the repository.
+# Release date 2026-03-09
 #
 # INSTALLATION GUIDE: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/doc/installation.md
 #
@@ -590,6 +591,7 @@ modbus:
         address: 5740 # reg 5741
         input_type: input
         data_type: int16
+        nan_value: 0x7FFF
         precision: 1
         unit_of_measurement: V
         device_class: voltage
@@ -603,6 +605,7 @@ modbus:
         address: 5741 # reg 5742
         input_type: input
         data_type: int16
+        nan_value: 0x7FFF
         precision: 1
         unit_of_measurement: V
         device_class: voltage
@@ -616,6 +619,7 @@ modbus:
         address: 5742 # reg 5743
         input_type: input
         data_type: int16
+        nan_value: 0x7FFF
         precision: 1
         unit_of_measurement: V
         device_class: voltage
@@ -629,6 +633,7 @@ modbus:
         address: 5743 # reg 5744
         input_type: input
         data_type: uint16
+        nan_value: 0xFFFF
         precision: 2
         unit_of_measurement: A
         device_class: current
@@ -642,6 +647,7 @@ modbus:
         address: 5744 # reg 5745
         input_type: input
         data_type: uint16
+        nan_value: 0xFFFF
         precision: 2
         unit_of_measurement: A
         device_class: current
@@ -655,6 +661,7 @@ modbus:
         address: 5745 # reg 5746
         input_type: input
         data_type: uint16
+        nan_value: 0xFFFF
         precision: 2
         unit_of_measurement: A
         device_class: current
@@ -749,6 +756,7 @@ modbus:
         address: 13007 # reg 13008
         input_type: input
         data_type: int32
+        nan_value: 0x7FFFFFFF
         swap: word
         precision: 0
         unit_of_measurement: W
@@ -764,6 +772,7 @@ modbus:
         address: 13009 # reg 13010
         input_type: input
         data_type: int32
+        nan_value: 0x7FFFFFFF
         swap: word
         precision: 0
         unit_of_measurement: W
@@ -1266,7 +1275,7 @@ modbus:
         input_type: input
         data_type: string
         count: 15
-        scan_interval: *scan_interval_fast
+        scan_interval: *scan_interval_slowest
 
       # Battery Firmware version from register 13280 to 13279 as UTF8 string
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
@@ -1727,9 +1736,10 @@ template:
                 {% if dev.startswith('SH') and 'RT' in dev %}
                   {# SH*RT* devices (e.g. SH10RT, SH8.0RT-20, SH8.0RT-V112 or SH10RT-V122) #}
                   {{ (value | float / 10) | int }}
-                {% elif dev.startswith('SH') and 'RS' in dev %}
-                  {# SH*RS* devices (e.g. SH10RS) #}
-                  {{ (value | float / 10) | int }}
+                {# 2026-03-08. Commented, it seems that a factor is not required for RS series, see: #666 and #677 #}
+                {# {% elif dev.startswith('SH') and 'RS' in dev %} #}
+                {#  SH*RS* devices (e.g. SH10RS)  #}
+                {#  {{ (value | float / 10) | int }} #}
                 {% else %}
                   {{ value | int }}
                 {% endif %}
@@ -2179,6 +2189,14 @@ template:
               slave: !secret sungrow_modbus_device_address_inv_3
               address: *sg_reg_ems_mode_selection
               value: "{{ map.get(option, map.get('Self-consumption mode (default)', 0)) | int }}"
+          - delay:
+              milliseconds: 100
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.ems_mode_selection_raw_inv_3
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.running_state_raw_inv_3
 
       - name: Battery forced charge discharge inv 3
         unique_id: uid_battery_forced_charge_discharge_inv_3
@@ -2214,6 +2232,14 @@ template:
               slave: !secret sungrow_modbus_device_address_inv_3
               address: *sg_reg_forced_charge_discharge_cmd_raw
               value: "{{ map.get(option, map.get('Stop (default)', 0)) }}"
+          - delay:
+              milliseconds: 100
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.battery_forced_charge_discharge_cmd_raw_inv_3
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.running_state_raw_inv_3
 
       - name: Load adjustment mode inv 3
         unique_id: uid_load_adjustment_mode_inv_3
@@ -2250,6 +2276,11 @@ template:
               slave: !secret sungrow_modbus_device_address_inv_3
               address: *sg_reg_load_adjustment_mode_selection
               value: "{{ map.get(option, map.get('Disabled', 3)) }}"
+          - delay:
+              milliseconds: 100
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.load_adjustment_mode_selection_raw_inv_3
 
 automation:
   - id: "automation_sungrow_enable_danger_mode_auto_reset"
@@ -2276,62 +2307,73 @@ automation:
 
   - id: "automation_sungrow_max_export_scene_sets_rated_limit"
     alias: "sungrow max export scene sets rated limit"
-    description: "When 'Sungrow Set Max Export' scene is activated, set export limit to inverter rated output"
+    description: "When scenes with max export power are activated, set export limit to inverter rated output"
     triggers:
-      - platform: event
-        event_type: call_service
-        event_data:
-          domain: scene
-          service: turn_on
-          service_data:
-            entity_id: scene.sungrow_set_max_export_power_inv_3
+      - platform: state
+        entity_id: scene.max_export_power_inv_3
     conditions: []
     action:
       - service: number.set_value_inv_3
         target:
           entity_id: number.export_power_limit_inv_3
         data:
-          value: "{{ states('sensor.inverter_rated_output_inv_3') | float(0) }}"
+          value: "{{ states('sensor.inverter_rated_output_inv_3') | int(0) }}"
+    mode: single
+
+  - id: "automation_sungrow_self_consumption_mode_max_battery_discharge_scene_sets_rated_limit"
+    alias: "sungrow self consumption mode max battery discharge scene sets rated limit"
+    description: "When scenes with max battery discharge are activated, set battery discharge limit to sungrow_modbus_battery_max_power defined in secret"
+    triggers:
+      - platform: state
+        entity_id: scene.self_consumption_mode_max_battery_discharge_inv_3
+    conditions: []
+    action:
+      - service: number.set_value_inv_3
+        target:
+          entity_id: number.battery_max_discharge_power_inv_3
+        data:
+          value: !secret sungrow_modbus_battery_max_power_inv_3
     mode: single
 
 scene:
-  - name: Sungrow Self-Consumption Mode inv 3
+  - name: Self-Consumption Mode (max battery discharge) inv 3
     entities:
       select.ems_mode_inv_3: "Self-consumption mode (default)"
       select.battery_forced_charge_discharge_inv_3: "Stop (default)"
+      # Scenes don't resolve secrets and don't render templates, so we can use neither a sensor nor a secret as the target state here.
+      # Instead, turning on this scene triggers the automation automation_sungrow_self_consumption_mode_max_battery_discharge_scene_sets_rated_limit which uses the sungrow_modbus_battery_max_power secret
 
-  - name: Sungrow Set Zero Export Power inv 3
+  - name: Self-Consumption Mode (no battery discharge) inv 3
+    entities:
+      select.ems_mode_inv_3: "Self-consumption mode (default)"
+      select.battery_forced_charge_discharge_inv_3: "Stop (default)"
+      number.battery_max_discharge_power_inv_3: "10" # set to minimum to disable discharging
+
+  - name: Zero Export Power inv 3
     entities:
       switch.export_power_limit_inv_3: "on"
       number.export_power_limit_inv_3: "0"
 
-  - name: Sungrow Set Max Export Power inv 3
+  - name: Max Export Power inv 3
     entities:
-      # cannot use sensor.inverter_rated_output_inv_3, because scripts don't render templates :/
-      # for this, the automation "automation_sungrow_max_export_scene_sets_rated_limit" is used
-      # number.export_power_limit_inv_3: "5000"
       switch.export_power_limit_inv_3: "off"
+      # scripts don't render templates :/
+      # number.export_power_limit_inv_3 is set by an automation
 
-  - name: Sungrow Set Battery Bypass Mode inv 3
+  - name: Battery Bypass Mode inv 3
     entities:
       select.ems_mode_inv_3: "Forced mode"
       select.battery_forced_charge_discharge_inv_3: "Stop (default)"
 
-  - name: Sungrow Set Battery Forced Discharge inv 3
+  - name: Battery Forced Discharge inv 3
     entities:
       select.ems_mode_inv_3: "Forced mode"
       select.battery_forced_charge_discharge_inv_3: "Forced discharge"
 
-  - name: Sungrow Set Battery Forced Charge inv 3
+  - name: Battery Forced Charge inv 3
     entities:
       select.ems_mode_inv_3: "Forced mode"
       select.battery_forced_charge_discharge_inv_3: "Forced charge"
       # BUG: 2026-01-10. Deactivated for now, see issue #643
       # https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/643
       # switch.forced_startup_under_low_soc_standby_inv_3: "on" # in case inverter is in standby due to low soc
-
-  - name: Sungrow Set Self-Consumption Limited Discharge inv 3
-    entities:
-      select.ems_mode_inv_3: "Self-consumption mode (default)"
-      select.battery_forced_charge_discharge_inv_3: "Stop (default)"
-      number.battery_max_discharge_power_inv_3: "10" # set to minimum to disable discharging
