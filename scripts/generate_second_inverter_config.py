@@ -52,7 +52,7 @@ _NAME_LINE_RE = re.compile(
 )
 
 _ENTITY_ID_RE = re.compile(
-    r"\b(?P<domain>sensor|binary_sensor|switch|number|select|button|scene)\.(?P<object_id>[a-z0-9_]+)\b"
+    r"\b(?<!service:\s)(?P<domain>sensor|binary_sensor|switch|number|select|button|scene)\.(?P<object_id>[a-z0-9_]+)\b"
 )
 
 _SUNGROW_SECRET_RE = re.compile(
