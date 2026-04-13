@@ -2300,7 +2300,7 @@ automation:
                 state: "on"
             sequence:
               - delay: "00:01:00" # delay 60 seconds
-              - service: switch.turn_off_inv_1
+              - service: switch.turn_off
                 target:
                   entity_id: switch.sungrow_dashboard_enable_danger_mode_inv_1
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
@@ -2313,7 +2313,7 @@ automation:
         entity_id: scene.max_export_power_inv_1
     conditions: []
     action:
-      - service: number.set_value_inv_1
+      - service: number.set_value
         target:
           entity_id: number.export_power_limit_inv_1
         data:
@@ -2328,7 +2328,7 @@ automation:
         entity_id: scene.self_consumption_mode_max_battery_discharge_inv_1
     conditions: []
     action:
-      - service: number.set_value_inv_1
+      - service: number.set_value
         target:
           entity_id: number.battery_max_discharge_power_inv_1
         data:
