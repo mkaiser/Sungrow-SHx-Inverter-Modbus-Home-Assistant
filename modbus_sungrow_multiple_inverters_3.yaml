@@ -2283,8 +2283,8 @@ template:
               entity_id: sensor.load_adjustment_mode_selection_raw_inv_3
 
 automation:
-  - id: "automation_sungrow_enable_danger_mode_auto_reset"
-    alias: "sungrow dashboard enable danger mode auto reset"
+  - id: "automation_sungrow_enable_danger_mode_auto_reset_inv_3"
+    alias: "sungrow dashboard enable danger mode auto reset inv 3"
     description: "Auto resets the dashboard danger mode after some seconds"
     triggers:
       - platform: state
@@ -2305,8 +2305,8 @@ automation:
                   entity_id: switch.sungrow_dashboard_enable_danger_mode_inv_3
     mode: restart # use restart to avoid warnings, when GUI is updated too often and the delay causes this automation to not finish before the next call
 
-  - id: "automation_sungrow_max_export_scene_sets_rated_limit"
-    alias: "sungrow max export scene sets rated limit"
+  - id: "automation_sungrow_max_export_scene_sets_rated_limit_inv_3"
+    alias: "sungrow max export scene sets rated limit inv 3"
     description: "When scenes with max export power are activated, set export limit to inverter rated output"
     triggers:
       - platform: state
@@ -2320,8 +2320,8 @@ automation:
           value: "{{ states('sensor.inverter_rated_output_inv_3') | int(0) }}"
     mode: single
 
-  - id: "automation_sungrow_self_consumption_mode_max_battery_discharge_scene_sets_rated_limit"
-    alias: "sungrow self consumption mode max battery discharge scene sets rated limit"
+  - id: "automation_sungrow_self_consumption_mode_max_battery_discharge_scene_sets_rated_limit_inv_3"
+    alias: "sungrow self consumption mode max battery discharge scene sets rated limit inv 3"
     description: "When scenes with max battery discharge are activated, set battery discharge limit to sungrow_modbus_battery_max_power defined in secret"
     triggers:
       - platform: state
