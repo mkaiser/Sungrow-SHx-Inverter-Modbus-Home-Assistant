@@ -46,9 +46,12 @@ import re
 import sys
 from pathlib import Path
 
+_AUTOMATION_ID_LINE_RE = re.compile(
+    r"^(?P<prefix>\s*-\sid\s*:\s*)(?P<value>[^#\n]*?)(?P<comment>\s*(#.*)?)$"
+)
 
 _NAME_LINE_RE = re.compile(
-    r"^(?P<prefix>\s*-\s*name\s*:\s*)(?P<value>[^#\n]*?)(?P<comment>\s*(#.*)?)$"
+    r"^(?P<prefix>\s*(-\s*name|alias)\s*:\s*)(?P<value>[^#\n]*?)(?P<comment>\s*(#.*)?)$"
 )
 
 _ENTITY_ID_RE = re.compile(
@@ -215,6 +218,43 @@ def suffix_unique_ids(text: str, *, inv_number: str) -> tuple[str, int]:
 
     return "".join(out_lines), replacements
 
+def suffix_automation_ids(text: str, *, inv_number: str) -> tuple[str, int]:
+    """Append `_inv_<n>` suffix to automation id values."""
+    out_lines: list[str] = []
+    replacements = 0
+
+    for line in text.splitlines(keepends=True):
+        eol = ""
+        if line.endswith("\r\n"):
+            eol = "\r\n"
+        elif line.endswith("\n"):
+            eol = "\n"
+
+        content = line[: -len(eol)] if eol else line
+
+        m = _AUTOMATION_ID_LINE_RE.match(content)
+        if not m:
+            out_lines.append(line)
+            continue
+
+        value = m.group("value")
+
+        # Avoid risky transformations on complex YAML scalars.
+        if value.strip() in {"|", ">"}:
+            out_lines.append(line)
+            continue
+        if value.lstrip().startswith(("&", "*")):
+            out_lines.append(line)
+            continue
+
+        new_value = _append_suffix_preserving_quotes(value, f"_inv_{inv_number}")
+        if new_value != value:
+            replacements += 1
+
+        out_lines.append(f"{m.group('prefix')}{new_value}{m.group('comment')}{eol}")
+
+    return "".join(out_lines), replacements
+
 
 def main(argv: list[str]) -> int:
     if len(argv) != 2 or argv[1] in {"-h", "--help"}:
@@ -246,12 +286,13 @@ def main(argv: list[str]) -> int:
     updated, name_replacements = transform_text(original, suffix=name_suffix)
     updated, entity_replacements = suffix_entity_ids(updated, inv_number=number)
     updated, unique_id_replacements = suffix_unique_ids(updated, inv_number=number)
+    updated, automation_id_replacements = suffix_automation_ids(updated, inv_number=number)
     updated, secret_replacements = suffix_sungrow_secrets(updated, inv_number=number)
 
     dest.write_text(updated, encoding="utf-8")
 
     print(
-        f"Wrote {dest} ({name_replacements} '- name:' entr(y/ies) updated, {entity_replacements} entity_id reference(s) updated, {unique_id_replacements} unique_id(s) updated, {secret_replacements} secret reference(s) updated)"
+        f"Wrote {dest} ({name_replacements} '- name:' entr(y/ies) updated, {entity_replacements} entity_id reference(s) updated, {unique_id_replacements} unique_id(s) updated, {automation_id_replacements} automation id(s) updated, {secret_replacements} secret reference(s) updated)"
     )
     return 0
 
