@@ -85,5 +85,5 @@ If you need more (which no one ever did), you can generate it yourself by using 
 
 5. Dashboards (Sungrow PV and Home Assistant Energy Dashboard)
     
-    [Setup instructions here](installation.md)
+    [Setup instructions here](dashboard.md)
 
