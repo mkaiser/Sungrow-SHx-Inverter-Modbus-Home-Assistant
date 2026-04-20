@@ -2,7 +2,7 @@
 # Manually add the items below to the list of sensors in modbus_sungrow.yaml
 # Add the following to secrets.yaml -> sungrow_modbus_slave_battery: 200
 
-# Tested on Sungrow SHxRT with SBR
+# Tested on Sungrow SHxRT with SBR - SAPPHIRE-H_B001.V000.P019 - SBRBCU-S_22011.01.27
 # ONLY WORKS ON INTERNAL TCP/MODBUS PORT! NOT WINET DONGLE!
 
         
