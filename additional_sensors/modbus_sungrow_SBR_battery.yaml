@@ -1,0 +1,506 @@
+# Extra modbus settings for SBR Batteries - Gives per module cell information
+# Manually add the items below to the list of sensors in modbus_sungrow.yaml
+# Add the following to secrets.yaml -> sungrow_modbus_slave_battery: 200
+
+# Tested on Sungrow SHxRT with SBR
+# ONLY WORKS ON INTERNAL TCP/MODBUS PORT! NOT WINET DONGLE!
+
+        
+
+      #####################
+      # Start custom SBR battery
+      #####################
+
+
+      - name: Battery 1 Voltage
+        unique_id: sg_battery_1_voltage
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10740 # reg 10741;Bat Spannung 0.1 V; 2010
+        input_type: input
+        data_type: uint16
+        scale: 0.1
+        precision: 1
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+
+      - name: Battery 1 Current
+        unique_id: sg_battery_1_current
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10741 # reg 10742;Bat Strom 0.1 A; 1
+        input_type: input
+        data_type: int16
+        scale: 0.1
+        precision: 1
+        unit_of_measurement: "A"
+        device_class: current
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+
+      - name: Battery 1 Temperature
+        unique_id: sg_battery_1_temperature
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10742 # reg 10743;Bat Temp 0.1 °C; 215
+        input_type: input
+        data_type: uint16
+        scale: 0.1
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+
+      - name: Battery 1 SOC
+        unique_id: sg_battery_1_soc
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10743 # reg 10744;SOC 0.1%; 1000
+        input_type: input
+        data_type: uint16
+        scale: 0.1
+        precision: 1
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+
+      - name: Battery 1 SOH
+        unique_id: sg_battery_1_soh
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10744 # reg 10745;SOH %, 99
+        input_type: input
+        data_type: uint16
+        scale: 1
+        precision: 1
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        scan_interval: *scan_interval_slowest
+
+      - name: Battery 1 Total Battery Charge
+        unique_id: sg_battery_1_total_battery_charge
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10745 # reg 10746-10747; in Batt gespeichert total kWh; 22751
+        input_type: input
+        data_type: uint32
+        swap: word
+        scale: 0.1
+        precision: 1
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        scan_interval: *scan_interval_medium
+
+      - name: Battery 1 Total Battery Discharge
+        unique_id: sg_battery_1_total_battery_dischargea
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10747 # reg 10748-10749; aus Batt entnommen total kWh; 21501
+        input_type: input
+        data_type: uint32
+        swap: word
+        scale: 0.1
+        precision: 1
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        scan_interval: *scan_interval_medium
+
+
+      - name: Battery 1 Max Voltage of Cell
+        unique_id: sg_battery_1_max_voltage_of_cell
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10756 # reg 10757;Max.Voltage of Cell 0.1mV; 33457 (also 3.3457 Volt)
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Battery 1 Position of Max Voltage Cell
+        unique_id: sg_battery_1_position_of_max_voltage_cell
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10757 # reg 10758;Position of Max.Voltage Cell; 518
+        input_type: input
+        data_type: uint16
+        scale: 1
+        precision: 0
+        scan_interval: *scan_interval_fast
+
+      - name: Battery 1 Min Voltage of Cell
+        unique_id: sg_battery_1_min_voltage_of_cell
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10758 # reg 10759;Min.Voltage of Cell 0.1mV; 33390
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Battery 1 Position of Min Voltage Cell
+        unique_id: sg_battery_1_position_of_min_voltage_cell
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10759 # reg 10760;Position of Min.Voltage Cell; 788
+        input_type: input
+        data_type: uint16
+        scale: 1
+        precision: 0
+        scan_interval: *scan_interval_fast
+
+      - name: Battery 1 Max Temperature of Module
+        unique_id: sg_battery_1_max_temperature_of_module
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10760 # reg 10761;Max. Temp. of Module 0.1 °C; 218
+        input_type: input
+        data_type: uint16
+        scale: 0.1
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Battery 1 Position of Max Temperature of Module
+        unique_id: sg_battery_1_position_of_max_temperature_of_module
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10761 # reg 10762; Pos of Max. Temp. of Module ; 514
+        input_type: input
+        data_type: uint16
+        scale: 1
+        precision: 0
+        scan_interval: *scan_interval_fast
+
+      - name: Battery 1 Min Temperature of Module
+        unique_id: sg_battery_1_min_temperature_of_module
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10762 # reg 10763;Min. Temp. of Module 0.1 °C; 206
+        input_type: input
+        data_type: uint16
+        scale: 0.1
+        precision: 1
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Battery 1 Position of Min Temperature of Module
+        unique_id: sg_battery_1_position_of_min_temperature_of_module
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10763 # reg 10764; Pos of Min. Temp. of Module ; 257
+        input_type: input
+        data_type: uint16
+        scale: 1
+        precision: 0
+        scan_interval: *scan_interval_fast
+
+      - name: Max Cell Voltage of Module 1
+        unique_id: sg_battery_1_max_cell_voltage_of_module_1
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10764 # reg 10765;Max. Cell Voltage of Module 1 0.1mV; 33440
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Max Cell Voltage of Module 2
+        unique_id: sg_battery_1_max_cell_voltage_of_module_2
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10765 # reg 10766;Max. Cell Voltage of Module 2 0.1mV; 33457
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Max Cell Voltage of Module 3
+        unique_id: sg_battery_1_max_cell_voltage_of_module_3
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10766 # reg 10767;Max. Cell Voltage of Module 3 0.1mV; 33423
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Max Cell Voltage of Module 4
+        unique_id: sg_battery_1_max_cell_voltage_of_module_4
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10767 # reg 10768;Max. Cell Voltage of Module 4 0.1mV; 33423
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Max Cell Voltage of Module 5
+        unique_id: sg_battery_1_max_cell_voltage_of_module_5
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10768 # reg 10769;Max. Cell Voltage of Module 5 0.1mV; 33423
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Max Cell Voltage of Module 6
+        unique_id: sg_battery_1_max_cell_voltage_of_module_6
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10769 # reg 10769;Max. Cell Voltage of Module 5 0.1mV; 33423
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Max Cell Voltage of Module 7
+        unique_id: sg_battery_1_max_cell_voltage_of_module_7
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10770 # reg 10769;Max. Cell Voltage of Module 5 0.1mV; 33423
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Max Cell Voltage of Module 8
+        unique_id: sg_battery_1_max_cell_voltage_of_module_8
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10771 # reg 10769;Max. Cell Voltage of Module 5 0.1mV; 33423
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Min Cell Voltage of Module 1
+        unique_id: sg_battery_1_min_cell_voltage_of_module_1
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10772 # reg 10773;Min. Cell Voltage of Module 1 0.1mV; 33399
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Min Cell Voltage of Module 2
+        unique_id: sg_battery_1_min_cell_voltage_of_module_2
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10773 # reg 10774;Min. Cell Voltage of Module 2 0.1mV; 33457
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Min Cell Voltage of Module 3
+        unique_id: sg_battery_1_min_cell_voltage_of_module_3
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10774 # reg 10775;Min. Cell Voltage of Module 3 0.1mV; 33423
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Min Cell Voltage of Module 4
+        unique_id: sg_battery_1_min_cell_voltage_of_module_4
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10775 # reg 10776;Min. Cell Voltage of Module 4 0.1mV; 33423
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Min Cell Voltage of Module 5
+        unique_id: sg_battery_1_min_cell_voltage_of_module_5
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10776 # reg 10777;Min. Cell Voltage of Module 5 0.1mV; 33423
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Min Cell Voltage of Module 6
+        unique_id: sg_battery_1_min_cell_voltage_of_module_6
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10777 # reg 10777;Min. Cell Voltage of Module 5 0.1mV; 33423
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Min Cell Voltage of Module 7
+        unique_id: sg_battery_1_min_cell_voltage_of_module_7
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10778 # reg 10777;Min. Cell Voltage of Module 5 0.1mV; 33423
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: Min Cell Voltage of Module 8
+        unique_id: sg_battery_1_min_cell_voltage_of_module_8
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10779 # reg 10777;Min. Cell Voltage of Module 5 0.1mV; 33423
+        input_type: input
+        data_type: uint16
+        scale: 0.0001
+        precision: 4
+        unit_of_measurement: "V"
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+
+      - name: Battery 1 Cell Type of Module 1
+        unique_id: sg_battery_1_cell_type_of_module_1
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10780 # reg 10781;Cell Type of Module 1; 1
+        input_type: input
+        data_type: uint16
+        scale: 1
+        precision: 0
+        scan_interval: *scan_interval_slowest
+
+      - name: Battery 1 Cell Type of Module 2
+        unique_id: sg_battery_1_cell_type_of_module_2
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10781 # reg 10782;Cell Type of Module 2; 1
+        input_type: input
+        data_type: uint16
+        scale: 1
+        precision: 0
+        scan_interval: *scan_interval_slowest
+
+      - name: Battery 1 Cell Type of Module 3
+        unique_id: sg_battery_1_cell_type_of_module_3
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10782 # reg 10783;Cell Type of Module 3; 1
+        input_type: input
+        data_type: uint16
+        scale: 1
+        precision: 0
+        scan_interval: *scan_interval_slowest
+
+      - name: Battery 1 Cell Type of Module 4
+        unique_id: sg_battery_1_cell_type_of_module_4
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10783 # reg 10784;Cell Type of Module 4; 1
+        input_type: input
+        data_type: uint16
+        scale: 1
+        precision: 0
+        scan_interval: *scan_interval_slowest
+
+      - name: Battery 1 Cell Type of Module 5
+        unique_id: sg_battery_1_cell_type_of_module_5
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10784 # reg 10785;Cell Type of Module 5; 1
+        input_type: input
+        data_type: uint16
+        scale: 1
+        precision: 0
+        scan_interval: *scan_interval_slowest
+
+      - name: Battery 1 Cell Type of Module 6
+        unique_id: sg_battery_1_cell_type_of_module_6
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10785 # reg 10785;Cell Type of Module 5; 1
+        input_type: input
+        data_type: uint16
+        scale: 1
+        precision: 0
+        scan_interval: *scan_interval_slowest
+
+      - name: Battery 1 Cell Type of Module 7
+        unique_id: sg_battery_1_cell_type_of_module_7
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10786 # reg 10785;Cell Type of Module 5; 1
+        input_type: input
+        data_type: uint16
+        scale: 1
+        precision: 0
+        scan_interval: *scan_interval_slowest
+
+      - name: Battery 1 Cell Type of Module 8
+        unique_id: sg_battery_1_cell_type_of_module_8
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10787 # reg 10785;Cell Type of Module 5; 1
+        input_type: input
+        data_type: uint16
+        scale: 1
+        precision: 0
+        scan_interval: *scan_interval_slowest
+
+      - name: Battery 1 State of DC Switch
+        unique_id: sg_battery_1_state_of_dc_switch
+        device_address: !secret sungrow_modbus_slave_battery
+        address: 10788 # reg 10789;Zustand DC-Schütz; 2
+        input_type: input
+        data_type: uint16
+        scale: 1
+        precision: 0
+        scan_interval: *scan_interval_slowest
+
+
+
+      #####################
+      # End custom battery
+      #####################
+
+    
