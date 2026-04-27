@@ -467,6 +467,34 @@ modbus:
         scale: 1
         scan_interval: *scan_interval_fast
 
+      # in the documentation this is called "Min. Feed-in Power Limitation Value"
+      - name: Export power limit min inv 2
+        unique_id: sg_export_power_limit_min_inv_2
+        device_address: !secret sungrow_modbus_device_address_inv_2
+        address: 5621 # reg 5622
+        input_type: input
+        data_type: uint16
+        nan_value: 0xFFFF
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        scale: 10
+        scan_interval: *scan_interval_slowest
+
+      # in the documentation this is called "Max. Feed-in Power Limitation Value"
+      - name: Export power limit max inv 2
+        unique_id: sg_export_power_limit_max_inv_2
+        device_address: !secret sungrow_modbus_device_address_inv_2
+        address: 5622 # reg 5623
+        input_type: input
+        data_type: uint16
+        nan_value: 0xFFFF
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        scale: 10
+        scan_interval: *scan_interval_slowest
+
       - name: BDC rated power inv 2
         unique_id: sg_bdc_rated_power_inv_2
         device_address: !secret sungrow_modbus_device_address_inv_2
@@ -1718,10 +1746,10 @@ template:
       - name: Export power limit inv 2
         unique_id: uid_export_power_limit_inv_2
         unit_of_measurement: W
-        min: 0
-        max: "{{ states('sensor.inverter_rated_output_inv_2') }}"
+        min: "{{ states('sensor.export_power_limit_min_inv_2') }}"
+        max: "{{ states('sensor.export_power_limit_max_inv_2') }}"
         step: 100
-        availability: "{{ states('sensor.export_power_limit_inv_2')|is_number and states('sensor.inverter_rated_output_inv_2')|is_number }}"
+        availability: "{{ states('sensor.export_power_limit_inv_2')|is_number and states('sensor.export_power_limit_min_inv_2')|is_number and states('sensor.export_power_limit_max_inv_2')|is_number }}"
         # modbus --> UI
         state: "{{ states('sensor.export_power_limit_inv_2') }}"
         # UI --> modbus
@@ -1731,18 +1759,7 @@ template:
               hub: *sg_hub_name
               slave: !secret sungrow_modbus_device_address_inv_2
               address: *sg_reg_export_power_limit
-              value: >-
-                {% set dev = states('sensor.sungrow_device_type_inv_2') %}
-                {% if dev.startswith('SH') and 'RT' in dev %}
-                  {# SH*RT* devices (e.g. SH10RT, SH8.0RT-20, SH8.0RT-V112 or SH10RT-V122) #}
-                  {{ (value | float / 10) | int }}
-                {# 2026-03-08. Commented, it seems that a factor is not required for RS series, see: #666 and #677 #}
-                {# {% elif dev.startswith('SH') and 'RS' in dev %} #}
-                {#  SH*RS* devices (e.g. SH10RS)  #}
-                {#  {{ (value | float / 10) | int }} #}
-                {% else %}
-                  {{ value | int }}
-                {% endif %}
+              value: "{{ value | int }}"
           # manually refresh modbus register
           - action: homeassistant.update_entity
             target:
@@ -2307,7 +2324,7 @@ automation:
 
   - id: "automation_sungrow_max_export_scene_sets_rated_limit_inv_2"
     alias: "sungrow max export scene sets rated limit inv 2"
-    description: "When scenes with max export power are activated, set export limit to inverter rated output"
+    description: "When scenes with max export power are activated, set export limit to maximum as reported by the inverter"
     triggers:
       - platform: state
         entity_id: scene.max_export_power_inv_2
@@ -2317,7 +2334,7 @@ automation:
         target:
           entity_id: number.export_power_limit_inv_2
         data:
-          value: "{{ states('sensor.inverter_rated_output_inv_2') | int(0) }}"
+          value: "{{ states('sensor.export_power_limit_max_inv_2') | int(0) }}"
     mode: single
 
   - id: "automation_sungrow_self_consumption_mode_max_battery_discharge_scene_sets_rated_limit_inv_2"
