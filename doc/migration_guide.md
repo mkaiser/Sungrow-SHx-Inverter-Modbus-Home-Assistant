@@ -64,3 +64,21 @@ Option B: if you are setting up multiple inverters for the first time in HA, use
 [modbus_sungrow_multiple_inverters_2.yaml](../modbus_sungrow_multiple_inverters_2.yaml) or
  (or *_3 for a third one)
 
+Edit [secrets.yaml](../secrets.yaml) accordingly:
+
+  ```
+  # Inverter 1:
+  sungrow_modbus_host_ip_inv_1: 192.168.4.xxx # TODO update with the IP of your inverter. No default. Check your router.
+  sungrow_modbus_port_inv_1: 502 # Modbus port of your inverter. Default is '502'
+  sungrow_modbus_device_address_inv_1: 1 # device address of your inverter. Default is '1'
+  sungrow_modbus_wait_milliseconds_inv_1: 5 # "Choose 5 ms for LAN, 20 or higher for WiNet-S"
+  sungrow_modbus_battery_max_power_inv_1: 5000  # TODO update with the maximum charge power of your battery in W. 
+
+  # Inverter 2:
+  sungrow_modbus_host_ip_inv_2: 192.168.4.xxx # TODO update with the IP of your inverter. No default. Check your router.
+  sungrow_modbus_port_inv_2: 502 # Modbus port of your inverter. Default is '502'
+  sungrow_modbus_device_address_inv_2: 2 # device address of your inverter. Default is '1'
+  sungrow_modbus_wait_milliseconds_inv_2: 5 # "Choose 5 ms for LAN, 20 or higher for WiNet-S"
+  sungrow_modbus_battery_max_power_inv_2: 5000  # TODO update with the maximum charge power of your battery in W. 
+  ```
+
