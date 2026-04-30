@@ -1,0 +1,64 @@
+# Combines PV production values from multiple inverters to provide a whole-plant view.
+# Assumes default entity naming from this project (e.g. sensor.total_dc_power and/or sensor.total_dc_power_inv_1, _inv_2, ...).
+# Installation: place this file in /config/templates/
+# and ensure configuration.yaml includes:
+# template: !include_dir_merge_list templates/
+
+- sensor:
+    - name: "Total DC Power (All Inverters)"
+      unique_id: sg_total_dc_power_combined
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >-
+        {% set ns = namespace(total=0, found=false) %}
+        {% for s in states.sensor
+            if s.entity_id is match('^sensor\\.total_dc_power(_inv_[0-9]+)?$')
+            and s.state not in ['unknown', 'unavailable', 'none'] %}
+          {% set ns.total = ns.total + (s.state | float(0)) %}
+          {% set ns.found = true %}
+        {% endfor %}
+        {{ ns.total | round(2) if ns.found else 'unavailable' }}
+
+    - name: "Daily PV Generation (All Inverters)"
+      unique_id: sg_daily_pv_generation_combined
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      state: >-
+        {% set ns = namespace(total=0, found=false) %}
+        {% for s in states.sensor
+            if s.entity_id is match('^sensor\\.daily_pv_generation(_inv_[0-9]+)?$')
+            and s.state not in ['unknown', 'unavailable', 'none'] %}
+          {% set ns.total = ns.total + (s.state | float(0)) %}
+          {% set ns.found = true %}
+        {% endfor %}
+        {{ ns.total | round(2) if ns.found else 'unavailable' }}
+
+    - name: "Total PV Generation (All Inverters)"
+      unique_id: sg_total_pv_generation_combined
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      state: >-
+        {% set ns = namespace(total=0, found=false) %}
+        {% for s in states.sensor
+            if s.entity_id is match('^sensor\\.total_pv_generation(_inv_[0-9]+)?$')
+            and s.state not in ['unknown', 'unavailable', 'none'] %}
+          {% set ns.total = ns.total + (s.state | float(0)) %}
+          {% set ns.found = true %}
+        {% endfor %}
+        {{ ns.total | round(2) if ns.found else 'unavailable' }}
+
+- binary_sensor:
+    - name: "PV Generating (All Inverters)"
+      unique_id: sg_pv_generating_combined
+      state: >-
+        {% set ns = namespace(generating=false) %}
+        {% for s in states.binary_sensor
+            if s.entity_id is match('^binary_sensor\\.pv_generating(_inv_[0-9]+)?$') %}
+          {% if s.state == 'on' %}
+            {% set ns.generating = true %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.generating }}
