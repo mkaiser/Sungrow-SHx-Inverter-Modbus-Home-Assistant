@@ -4,7 +4,12 @@
 
 
 ### Setup
-The folder ```/dashboards/DefaultDashboard``` in the git contains the file ```dashboard.yaml``` with a predefined dashboard showing the most relevant sungrow sensors. 
+
+
+The folder ```/dashboards/DefaultDashboard``` in the git contains predefined dashboards showing the most relevant sungrow sensors.
+
+* For single-inverter installations, use: ```dashboard.yaml```
+* For multi-inverter installations, use: ```dashboard_multiple_inverters.yaml```
 
 Navigate to folder [dashboards/DefaultDashboard](../dashboards/DefaultDashboard) and follow the instructions in [README.md](../dashboards/DefaultDashboard/README.md).
 
@@ -92,6 +97,7 @@ Edit the Energy Dashboard (Top right --> edit") and adapt the values (see screen
   <img src="images/energy_dashboard_settings_battery.drawio.svg" width="600">
   <figcaption>Energy dashboard settings for battery</figcaption>
 </figure>
+
 
 
 
