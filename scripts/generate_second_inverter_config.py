@@ -51,7 +51,9 @@ _AUTOMATION_ID_LINE_RE = re.compile(
 )
 
 _NAME_LINE_RE = re.compile(
-    r"^(?P<prefix>\s*(-\s*name|alias)\s*:\s*)(?P<value>[^#\n]*?)(?P<comment>\s*(#.*)?)$"
+    r"^(?P<prefix>\s*(?:(?:-\s*)?name|alias)\s*:\s*)"
+    r"(?P<value>[^#\n]*?)"
+    r"(?P<comment>\s*(#.*)?)$"
 )
 
 _ENTITY_ID_RE = re.compile(
