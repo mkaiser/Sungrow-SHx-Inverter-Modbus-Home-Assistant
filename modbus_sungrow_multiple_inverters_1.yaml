@@ -1446,7 +1446,7 @@ modbus:
 
 sensor:
   - platform: filter
-    name: "Daily consumed energy (filtered)"
+    name: "Daily consumed energy (filtered) inv 1"
     entity_id: sensor.daily_consumed_energy_inv_1
     unique_id: sg_daily_consumed_energy_filtered_inv_1
     filters:
