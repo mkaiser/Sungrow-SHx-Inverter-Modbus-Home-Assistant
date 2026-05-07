@@ -1,3 +1,5 @@
+> **Note:** v2.0 uses different entity IDs — see [migration_guide.md](migration_guide.md) for the mapping. References below to `modbus_sungrow.yaml` and legacy scene names apply to the pre-2.0 YAML package; under the new integration, scenes and EMS controls are exposed as device entities (switches, numbers, selects) instead.
+
 ## Controlling the EMS (Energy Management System)
 
 The recommended way to control the inverter's Energy Management System is by using the **pre-configured scenes** included in the `modbus_sungrow.yaml` file. These scenes provide a quick and reliable way to switch between different operating modes without manually adjusting individual parameters.

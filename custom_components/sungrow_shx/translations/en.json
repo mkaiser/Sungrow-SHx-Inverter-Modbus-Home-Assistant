@@ -1,0 +1,93 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Sungrow SHx Inverter",
+        "description": "Configure the Modbus TCP connection to your Sungrow SHx hybrid inverter.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "slave": "Inverter unit ID",
+          "sbr_slave": "Battery (SBR) unit ID",
+          "battery_max_power": "Battery max power",
+          "wait_ms": "Inter-request delay"
+        },
+        "data_description": {
+          "host": "Hostname or IP address of the inverter / logger module (WiNet-S, LAN, etc.).",
+          "port": "Modbus TCP port (default 502).",
+          "slave": "Modbus unit ID of the inverter (default 1).",
+          "sbr_slave": "Modbus unit ID of the SBR battery. Use 0 if no battery is attached.",
+          "battery_max_power": "Nameplate maximum charge/discharge power of the battery stack, in watts.",
+          "wait_ms": "Delay between consecutive Modbus requests. Increase if you see timeouts."
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure {device}",
+        "description": "Update the Modbus connection details for this inverter.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "slave": "Inverter unit ID",
+          "sbr_slave": "Battery (SBR) unit ID",
+          "battery_max_power": "Battery max power",
+          "wait_ms": "Inter-request delay"
+        },
+        "data_description": {
+          "host": "Hostname or IP address of the inverter / logger module (WiNet-S, LAN, etc.).",
+          "port": "Modbus TCP port (default 502).",
+          "slave": "Modbus unit ID of the inverter (default 1).",
+          "sbr_slave": "Modbus unit ID of the SBR battery. Use 0 if no battery is attached.",
+          "battery_max_power": "Nameplate maximum charge/discharge power of the battery stack, in watts.",
+          "wait_ms": "Delay between consecutive Modbus requests. Increase if you see timeouts."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the inverter",
+      "invalid_slave": "The inverter rejected the configured unit ID",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "This inverter is already configured",
+      "reconfigure_successful": "Reconfiguration was successful",
+      "unique_id_mismatch": "The inverter at this address has a different serial number than the one being reconfigured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Sungrow SHx polling intervals",
+        "description": "Tune how frequently each group of registers is polled.",
+        "data": {
+          "scan_interval_realtime": "Realtime scan interval",
+          "scan_interval_fast": "Fast scan interval",
+          "scan_interval_medium": "Medium scan interval",
+          "scan_interval_slowest": "Slow scan interval"
+        },
+        "data_description": {
+          "scan_interval_realtime": "How often live power/current values are polled (seconds).",
+          "scan_interval_fast": "How often near-live values (energy counters, state) are polled (seconds).",
+          "scan_interval_medium": "How often slower-changing values (temperatures, daily totals) are polled (seconds).",
+          "scan_interval_slowest": "How often near-static values (serial, firmware, nameplate) are polled (seconds)."
+        }
+      }
+    }
+  },
+  "issues": {
+    "legacy_yaml_present": {
+      "title": "Legacy Sungrow YAML package is still loaded",
+      "description": "Your `modbus_sungrow.yaml` package is still loaded (detected modbus hub `{hub_name}`). This integration now replaces it \u2014 remove the package entries from `configuration.yaml` and your `sensor: !include` / `template: !include` blocks, then restart Home Assistant. See the migration guide for the full step-by-step."
+    },
+    "imported_from_yaml": {
+      "title": "Sungrow SHx entry imported from YAML",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Remove the YAML import block",
+            "description": "Delete the `sungrow_shx:` block from `configuration.yaml`. The config entry for **{title}** is already saved and will continue to work without it. Press **Submit** to dismiss this notice."
+          }
+        }
+      }
+    }
+  }
+}

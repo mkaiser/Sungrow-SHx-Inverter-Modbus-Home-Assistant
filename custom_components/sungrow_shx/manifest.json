@@ -1,0 +1,13 @@
+{
+  "domain": "sungrow_shx",
+  "name": "Sungrow SHx Inverter",
+  "codeowners": ["@mkaiser"],
+  "config_flow": true,
+  "documentation": "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues",
+  "loggers": ["pymodbus"],
+  "requirements": ["pymodbus>=3.7.0"],
+  "version": "2.0.0"
+}
