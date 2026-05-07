@@ -1,5 +1,38 @@
 # Changelog
 
+## v2.0.0
+
+Full rewrite: the project is now a proper Home Assistant **custom
+integration** (`sungrow_shx`) instead of a YAML package. See the
+[migration guide](migration_guide.md) for the upgrade path and entity-ID
+mapping.
+
+- **HACS distribution** — install as a custom repository
+  (Integration category). Manual drop-in install into
+  `custom_components/sungrow_shx/` is also supported.
+- **UI config flow** — configure host, port, slave, SBR slave, battery
+  max power, and inter-request delay from *Settings → Devices & services*.
+  No more `secrets.yaml` entries, no more `!include`.
+- **Options flow** — four polling buckets (realtime / fast / medium /
+  slowest) are now tunable per device without editing YAML.
+- **UI-based multi-inverter support** — add the integration once per
+  inverter. Each entry is a separate device with its own entities.
+- **Dropped the regex-based multi-inverter generator** — the
+  `modbus_sungrow_multiple_inverters_{1,2,3}.yaml` files and the Python
+  generator under `scripts/` are no longer part of the install path
+  (they remain on the `legacy` branch).
+- **Breaking: entity IDs have changed.** Entities are now scoped under
+  the device name (`sensor.sungrow_inverter_*` by default) instead of
+  the global `sensor.sg_*` / `sensor.sungrow_*` prefixes. See the
+  mapping table in the migration guide; rename the device *before*
+  rebuilding automations to keep slugs stable.
+- The legacy YAML package is **frozen** on the `legacy` branch/tag —
+  no new features.
+
+Known gaps:
+- Dashboards under `dashboards/` have **not yet been updated** to the new
+  entity IDs; this is planned as a follow-up.
+
 ## Versions before 2026
 
 The new 2026 version is a major rework of the integration and comes with minor breaking changes (see [migration guide](doc/migration_guide.md) for details).

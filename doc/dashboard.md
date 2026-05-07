@@ -1,3 +1,5 @@
+> **Note:** v2.0 uses different entity IDs — see [migration_guide.md](migration_guide.md) for the mapping. The entity names referenced below (e.g. `Total PV generation`, `Battery discharging power signed`) originate from the legacy YAML package; under the new integration they live as scoped entity IDs such as `sensor.sungrow_inverter_total_pv_generation`.
+
 #  Configure dashboards (see screenshots below)
 
 ## PV dashboard
