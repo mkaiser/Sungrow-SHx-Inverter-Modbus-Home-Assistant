@@ -92,6 +92,21 @@ generator script are no longer required.
 
 
 ## Post-install sanity check
+    ```yaml
+    sungrow_modbus_wait_milliseconds : 5 # delay in ms between messages, depends on inverter connection (LAN, WiNet-S-LAN or WiNet-S-WiFi), choose 5 ms for LAN, 30 or higher for WiNet-S
+    sungrow_modbus_host_ip: 192.168.178.xxx # TODO update with the IP of your inverter. No default. Check your router.
+    sungrow_modbus_port: 502 # TODO update with the Modbus port of your inverter. Default is '502'
+    sungrow_modbus_device_address: 1 # TODO update with the unit id / slave address of your inverter. Default is '1'
+    sungrow_modbus_battery_max_power: 5000 # TODO update with the maximum charge power of your battery in W. Default is 5000 W
+    # Being conservative here is good for your battery's health. Sungrow technical trainings recommend using the low end of the voltage range × the rated current, instead of the nominal voltage.
+    # Power limits for Sungrow SBR batteries according to https://info-support.sungrowpower.com/application/pdf/2024/09/13/DS_20240907_SBR064_096_128_160_192_224_256_Datasheet_V5_EN.pdf
+    # Conservative: SBR064: 3240 W, SBR096: 4860 W, SBR128: 6480 W, SBR160: 8100 W, SBR192: 9720 W, SBR224: 11340 W, SBR256: 12960 W
+    # Nominal: SBR064: 3840 W, SBR096: 5760 W, SBR128: 7680 W, SBR160: 9600 W, SBR192: 11520 W, SBR224: 13440 W, SBR256: 15360 W
+    # Power limits for Sungrow SBH batteries according to https://info-support.sungrowpower.com/application/pdf/2024/08/30/DS_20240329_SBH100_150_200_250_300_350_400_Datasheet_V4_EN.pdf
+    # Conservative: SBH100: 5940 W, SBH150: 8910 W, SBH200: 11880 W, SBH250: 14850 W, SBH300: 17820 W, SBH350: 20790 W, SBH400: 23760 W
+    # Nominal: SBH100: 7040 W, SBH150: 10560 W, SBH200: 14080 W, SBH250: 17600 W, SBH300: 21120 W, SBH350: 24640 W, SBH400: 28160 W
+    
+    ```
 
 1. Go to **Settings → Devices & services → Sungrow SHx Inverter → *(device)***.
 2. In the entity list, find a known entity such as
@@ -104,6 +119,9 @@ generator script are no longer required.
 If you also want to use the Home Assistant Energy Dashboard or the
 bundled default dashboard, follow [`dashboard.md`](dashboard.md).
 
+5. Dashboards (Sungrow PV and Home Assistant Energy Dashboard)
+    
+    [Setup instructions here](dashboard.md)
 
 ## Troubleshooting
 

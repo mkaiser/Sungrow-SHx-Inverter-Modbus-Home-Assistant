@@ -152,4 +152,21 @@ the `legacy` branch) — those snapshots predate the move to the custom
 component and ship only the `modbus_sungrow*.yaml` files. Remove the
 integration from *Settings → Devices & services* before falling back, to
 avoid double-polling the inverter over Modbus.
+Edit [secrets.yaml](../secrets.yaml) accordingly:
+
+  ```
+  # Inverter 1:
+  sungrow_modbus_host_ip_inv_1: 192.168.4.xxx # TODO update with the IP of your inverter. No default. Check your router.
+  sungrow_modbus_port_inv_1: 502 # Modbus port of your inverter. Default is '502'
+  sungrow_modbus_device_address_inv_1: 1 # device address of your inverter. Default is '1'
+  sungrow_modbus_wait_milliseconds_inv_1: 5 # "Choose 5 ms for LAN, 20 or higher for WiNet-S"
+  sungrow_modbus_battery_max_power_inv_1: 5000  # TODO update with the maximum charge power of your battery in W. 
+
+  # Inverter 2:
+  sungrow_modbus_host_ip_inv_2: 192.168.4.xxx # TODO update with the IP of your inverter. No default. Check your router.
+  sungrow_modbus_port_inv_2: 502 # Modbus port of your inverter. Default is '502'
+  sungrow_modbus_device_address_inv_2: 2 # device address of your inverter. Default is '1'
+  sungrow_modbus_wait_milliseconds_inv_2: 5 # "Choose 5 ms for LAN, 20 or higher for WiNet-S"
+  sungrow_modbus_battery_max_power_inv_2: 5000  # TODO update with the maximum charge power of your battery in W. 
+  ```
 
