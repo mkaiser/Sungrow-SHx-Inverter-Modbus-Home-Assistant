@@ -239,8 +239,6 @@ modbus:
         input_type: input
         data_type: int16
         precision: 3
-        unit_of_measurement: "%"
-        device_class: power_factor
         state_class: measurement
         scale: 0.001
         scan_interval: 10
