@@ -1,5 +1,5 @@
 # WARNING: Automatically generated file! Do not modify in the repository.
-# Release date 2026-04-27
+# Release date 2026-06-02
 #
 # INSTALLATION GUIDE: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/blob/main/doc/installation.md
 #
@@ -16,11 +16,11 @@ modbus:
     message_wait_milliseconds: !secret sungrow_modbus_wait_milliseconds_inv_2 # delay between messages, depending on inverter connection
 
     sensors:
-      - name: Sungrow Version 1 inv 2
+      - name: Sungrow Version 1 raw inv 2
         # first part of firmware string
         # SAPPHIRE-H_01011.95.12SAPPHIRE-H_03011.95.12SUBCTL-S_04011.01.01
         # --> SAPPHIRE-H_01011.95.12
-        unique_id: sg_version_1_inv_2
+        unique_id: sg_version_1_raw_inv_2
         device_address: !secret sungrow_modbus_device_address_inv_2
         address: 2581 # reg 2582
         input_type: input
@@ -28,11 +28,11 @@ modbus:
         count: 11
         scan_interval: &scan_interval_slowest 600
 
-      - name: Sungrow Version 2 inv 2
+      - name: Sungrow Version 2 raw inv 2
         # second part of firmware string
         # SAPPHIRE-H_01011.95.12SAPPHIRE-H_03011.95.12SUBCTL-S_04011.01.01
         # --> SAPPHIRE-H_03011.95.12
-        unique_id: sg_version_2_inv_2
+        unique_id: sg_version_2_raw_inv_2
         device_address: !secret sungrow_modbus_device_address_inv_2
         address: 2596
         input_type: input
@@ -40,11 +40,11 @@ modbus:
         count: 11
         scan_interval: *scan_interval_slowest
 
-      - name: Sungrow Version 3 inv 2
+      - name: Sungrow Version 3 raw inv 2
         # third part of firmware string
         # SAPPHIRE-H_01011.95.12SAPPHIRE-H_03011.95.12SUBCTL-S_04011.01.01
         # --> SUBCTL-S_04011.01.01
-        unique_id: sg_version_3_inv_2
+        unique_id: sg_version_3_raw_inv_2
         device_address: !secret sungrow_modbus_device_address_inv_2
         address: 2612
         input_type: input
@@ -52,12 +52,12 @@ modbus:
         count: 11
         scan_interval: *scan_interval_slowest
 
-      - name: Sungrow Version 4 (Sungrow Battery) inv 2
+      - name: Sungrow Version 4 (Sungrow Battery) raw inv 2
         # TODO: cannot test, have no sungrow battery
         # fourth part of firmware string (only for sungrow batteries)
         # SAPPHIRE-H_01011.95.12SAPPHIRE-H_03011.95.12SUBCTL-S_04011.01.01 - XXXX
         # --> XXXX
-        unique_id: sg_version_4_battery_inv_2
+        unique_id: sg_version_4_battery_raw_inv_2
         device_address: !secret sungrow_modbus_device_address_inv_2
         address: 2628
         input_type: input
@@ -74,8 +74,8 @@ modbus:
         swap: word
         scan_interval: *scan_interval_slowest
 
-      - name: Sungrow Arm Software inv 2
-        unique_id: sg_arm_software_inv_2
+      - name: Sungrow Arm Software raw inv 2
+        unique_id: sg_arm_software_raw_inv_2
         device_address: !secret sungrow_modbus_device_address_inv_2
         address: 4953 # reg 4954-4968, 15 registers
         input_type: input
@@ -83,8 +83,8 @@ modbus:
         count: 15
         scan_interval: *scan_interval_slowest
 
-      - name: Sungrow DSP Software inv 2
-        unique_id: sg_dsp_software_inv_2
+      - name: Sungrow DSP Software raw inv 2
+        unique_id: sg_dsp_software_raw_inv_2
         device_address: !secret sungrow_modbus_device_address_inv_2
         address: 4968 # reg 4969-4983, 15 registers
         input_type: input
@@ -92,8 +92,8 @@ modbus:
         count: 15
         scan_interval: *scan_interval_slowest
 
-      - name: Sungrow inverter serial inv 2
-        unique_id: sg_inverter_serial_inv_2
+      - name: Sungrow inverter serial raw inv 2
+        unique_id: sg_inverter_serial_raw_inv_2
         device_address: !secret sungrow_modbus_device_address_inv_2
         address: 4989 # reg 4990- 4999, 10 registers
         input_type: input
@@ -102,8 +102,8 @@ modbus:
         scan_interval: *scan_interval_slowest
 
       # for Sungrow batteries only
-      #      - name: Sungrow battery serial
-      #        unique_id: sg_battery_serial
+      #      - name: Sungrow battery serial raw
+      #        unique_id: sg_battery_serial_raw
       #        device_address: !secret sungrow_modbus_sbr_device_address_inv_2
       #        address: 10710 # reg 10711
       #        input_type: input
@@ -1283,8 +1283,8 @@ modbus:
 
       # Inverter Firmware version from register 13250 to 13264 as UTF8 string
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
-      - name: Inverter Firmware Version inv 2
-        unique_id: sg_inverter_firmware_version_inv_2
+      - name: Inverter Firmware Version raw inv 2
+        unique_id: sg_inverter_firmware_version_raw_inv_2
         device_address: !secret sungrow_modbus_device_address_inv_2
         address: 13249 # reg 13250 - 13264, 15 register
         input_type: input
@@ -1294,8 +1294,8 @@ modbus:
 
       # Communication Module Firmware version from register 13265 to 13279 as UTF8 string
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
-      - name: Communication Module Firmware Version inv 2
-        unique_id: sg_communication_module_firmware_version_inv_2
+      - name: Communication Module Firmware Version raw inv 2
+        unique_id: sg_communication_module_firmware_version_raw_inv_2
         device_address: !secret sungrow_modbus_device_address_inv_2
         address: 13264 # reg 13265 - 13279, 15 register
         input_type: input
@@ -1305,8 +1305,8 @@ modbus:
 
       # Battery Firmware version from register 13280 to 13279 as UTF8 string
       # NOTE: SH3.0-10RS and MG5-6RL are NOT supported
-      - name: Battery Firmware Version inv 2
-        unique_id: sg_battery_firmware_version_inv_2
+      - name: Battery Firmware Version raw inv 2
+        unique_id: sg_battery_firmware_version_raw_inv_2
         device_address: !secret sungrow_modbus_device_address_inv_2
         address: 13279 # reg 13280 - 13279, 15 register
         input_type: input
@@ -1919,6 +1919,62 @@ template:
             0x0D28: 'MG6RL'
           } %}
           {{ map.get(devType, 'Unknown device code: 0x%04X' % devType) }}
+
+      # Wrap string registers in template sensors to trim off trailing zero bytes, which can't be stored in some databases like PostgreSQL
+      - name: Sungrow Version 1 inv 2
+        unique_id: sg_version_1_inv_2
+        availability: "{{ not is_state('sensor.sungrow_version_1_raw_inv_2', 'unavailable') }}"
+        state: "{{ states('sensor.sungrow_version_1_raw_inv_2') | trim('\0') }}"
+
+      - name: Sungrow Version 2 inv 2
+        unique_id: sg_version_2_inv_2
+        availability: "{{ not is_state('sensor.sungrow_version_2_raw_inv_2', 'unavailable') }}"
+        state: "{{ states('sensor.sungrow_version_2_raw_inv_2') | trim('\0') }}"
+
+      - name: Sungrow Version 3 inv 2
+        unique_id: sg_version_3_inv_2
+        availability: "{{ not is_state('sensor.sungrow_version_3_raw_inv_2', 'unavailable') }}"
+        state: "{{ states('sensor.sungrow_version_3_raw_inv_2') | trim('\0') }}"
+
+      - name: Sungrow Version 4 (Sungrow Battery) inv 2
+        unique_id: sg_version_4_battery_inv_2
+        availability: "{{ not is_state('sensor.sungrow_version_4_sungrow_battery_raw_inv_2', 'unavailable') }}"
+        state: "{{ states('sensor.sungrow_version_4_sungrow_battery_raw_inv_2') | trim('\0') }}"
+
+      - name: Sungrow Arm Software inv 2
+        unique_id: sg_arm_software_inv_2
+        availability: "{{ not is_state('sensor.sungrow_arm_software_raw_inv_2', 'unavailable') }}"
+        state: "{{ states('sensor.sungrow_arm_software_raw_inv_2') | trim('\0') }}"
+
+      - name: Sungrow DSP Software inv 2
+        unique_id: sg_dsp_software_inv_2
+        availability: "{{ not is_state('sensor.sungrow_dsp_software_raw_inv_2', 'unavailable') }}"
+        state: "{{ states('sensor.sungrow_dsp_software_raw_inv_2') | trim('\0') }}"
+
+      - name: Sungrow inverter serial inv 2
+        unique_id: sg_inverter_serial_inv_2
+        availability: "{{ not is_state('sensor.sungrow_inverter_serial_raw_inv_2', 'unavailable') }}"
+        state: "{{ states('sensor.sungrow_inverter_serial_raw_inv_2') | trim('\0') }}"
+
+      - name: Sungrow battery serial inv 2
+        unique_id: sg_battery_serial_inv_2
+        availability: "{{ not is_state('sensor.sungrow_battery_serial_raw_inv_2', 'unavailable') }}"
+        state: "{{ states('sensor.sungrow_battery_serial_raw_inv_2') | trim('\0') }}"
+
+      - name: Inverter Firmware Version inv 2
+        unique_id: sg_inverter_firmware_version_inv_2
+        availability: "{{ not is_state('sensor.inverter_firmware_version_raw_inv_2', 'unavailable') }}"
+        state: "{{ states('sensor.inverter_firmware_version_raw_inv_2') | trim('\0') }}"
+
+      - name: Communication Module Firmware Version inv 2
+        unique_id: sg_communication_module_firmware_version_inv_2
+        availability: "{{ not is_state('sensor.communication_module_firmware_version_raw_inv_2', 'unavailable') }}"
+        state: "{{ states('sensor.communication_module_firmware_version_raw_inv_2') | trim('\0') }}"
+
+      - name: Battery Firmware Version inv 2
+        unique_id: sg_battery_firmware_version_inv_2
+        availability: "{{ not is_state('sensor.battery_firmware_version_raw_inv_2', 'unavailable') }}"
+        state: "{{ states('sensor.battery_firmware_version_raw_inv_2') | trim('\0') }}"
 
       # positive if charging, negative if discharging
       - name: Battery charging power signed inv 2
