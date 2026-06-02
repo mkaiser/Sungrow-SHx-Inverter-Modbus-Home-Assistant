@@ -15,7 +15,7 @@ It is recommended to use the Visual Studio Code Server add-on for configuration.
 
 ## Users with multi-inverter setups: 
 
-if you have more than one Sungrow inverter, you should download specialized yaml files for your use case. These are ```modbus_sungrow_multiple_inverters_x.yaml```, where x is the number of the used inverter (1..3). 
+If you have more than one Sungrow inverter, you should download specialized yaml files for your use case. These are ```modbus_sungrow_multiple_inverters_x.yaml```, where x is the number of the used inverter (1..3). 
 
 If you are adding another inverter to your existing modbus_sungrow installation, you should just use the inverter_2 files in addition the modbus_sungrow.yaml to keep your history of the first inverter. 
 
@@ -23,7 +23,7 @@ If you need more (which no one ever did), you can generate it yourself by using 
 
 # 5 steps setup process
 
-1. copy modbus_sungrow.yaml
+1. Copy modbus_sungrow.yaml
 
     The file **modbus_sungrow.yaml** contains the Modbus register maps, template sensors and scenes to e.g., limit the power export or set a battery minimum SoC. 
 
@@ -59,6 +59,24 @@ If you need more (which no one ever did), you can generate it yourself by using 
 
     Note: in previous versions, the file was included via ```include_dir_named```, but this sometimes caused confusion with double-included files when having backup files with .yaml extensions (e.g., sungrow.bak.yaml).
 
+    > [!WARNING]  
+    > If you're using an external database like PostgreSQL, make sure to exclude the following sensors from your recorder configuration. They can contain null bytes (0x00) which can't be stored in PostgreSQL. Not excluding them can prevent **any** changes from being recorded!
+    > ```yaml
+    > recorder:
+    >   exclude:
+    >     entities:
+    >       - sensor.sungrow_version_1_raw
+    >       - sensor.sungrow_version_2_raw
+    >       - sensor.sungrow_version_3_raw
+    >       - sensor.sungrow_version_4_sungrow_battery_raw
+    >       - sensor.sungrow_arm_software_raw
+    >       - sensor.sungrow_dsp_software_raw
+    >       - sensor.sungrow_inverter_serial_raw
+    >       - sensor.sungrow_battery_serial_raw
+    >       - sensor.inverter_firmware_version_raw
+    >       - sensor.communication_module_firmware_version_raw
+    >       - sensor.battery_firmware_version_raw 
+    > ```
 
 3. Adjust secrets.yaml
 
