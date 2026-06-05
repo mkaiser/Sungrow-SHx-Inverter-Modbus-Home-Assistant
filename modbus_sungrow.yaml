@@ -1153,6 +1153,20 @@ modbus:
         state_class: measurement
         scan_interval: *scan_interval_fast
 
+      # Backing register for the "Cut PV generation" template switch (see template: switch).
+      # reg 31211 (HA address 31210): 0xAA = PV cut, 0x55 = PV allowed (normal).
+      # This is the register iSolarCloud uses to stop PV production on SH-RT inverters.
+      # Reads are harmless on any model; the template switch is gated to RT-family devices
+      # so the write path is never exposed where the register meaning is unconfirmed.
+      - name: Cut PV generation raw
+        unique_id: sg_cut_pv_generation_raw
+        device_address: !secret sungrow_modbus_device_address
+        address: &sg_reg_cut_pv_generation 31210 # reg 31211
+        input_type: holding
+        data_type: uint16
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
       - name: Battery forced charge discharge cmd raw
         unique_id: sg_battery_forced_charge_discharge_cmd_raw
         device_address: !secret sungrow_modbus_device_address
@@ -2133,6 +2147,50 @@ template:
       # hopefully this prevents accidentally setting values while browsing on the phone :)
       - name: Sungrow dashboard enable danger mode
         unique_id: uid_sungrow_dashboard_enable_danger_mode
+
+      # Cut PV generation (stop all solar production).
+      # The datasheet "PV power limitation" register 13018 is marked "Only SHT supported"
+      # and silently fails on the SH-RT family (reads 0xFFFF, writes ignored). iSolarCloud
+      # instead uses reg 31211 (HA address 31210) to stop PV on RT inverters, confirmed
+      # working on an SH10RT (firmware SAPPHIRE-H 95.12): 0xAA = cut PV, 0x55 = allow PV.
+      #
+      # Because the meaning of reg 31211 is only confirmed on the RT family, this switch is
+      # gated via `availability` to RT inverters so it is never exposed (and the write path
+      # never reachable) on models where the register could mean something else. Owners of
+      # other models that confirm the same register can widen the availability check below.
+      #
+      # Use case: cut solar during negative grid import prices so the battery charges purely
+      # from the (paid) grid.
+      - name: Cut PV generation
+        unique_id: uid_cut_pv_generation
+        availability: >-
+          {{ states('sensor.cut_pv_generation_raw') | is_number
+             and 'RT' in states('sensor.sungrow_device_type') }}
+        is_on: "{{ states('sensor.cut_pv_generation_raw') | int(0) == 0xAA }}"
+        turn_on:
+          - action: modbus.write_register
+            data:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_device_address
+              address: *sg_reg_cut_pv_generation
+              value: 0xAA
+          - delay:
+              milliseconds: 100
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.cut_pv_generation_raw
+        turn_off:
+          - action: modbus.write_register
+            data:
+              hub: *sg_hub_name
+              slave: !secret sungrow_modbus_device_address
+              address: *sg_reg_cut_pv_generation
+              value: 0x55
+          - delay:
+              milliseconds: 100
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.cut_pv_generation_raw
 
   ###################
   # template: button
