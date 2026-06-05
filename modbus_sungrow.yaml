@@ -2166,7 +2166,7 @@ template:
         availability: >-
           {{ states('sensor.cut_pv_generation_raw') | is_number
              and 'RT' in states('sensor.sungrow_device_type') }}
-        is_on: "{{ states('sensor.cut_pv_generation_raw') | int(0) == 0xAA }}"
+        state: "{{ states('sensor.cut_pv_generation_raw') | int(0) == 0xAA }}"
         turn_on:
           - action: modbus.write_register
             data:
