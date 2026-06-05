@@ -1155,7 +1155,9 @@ modbus:
 
       # Backing register for the "Cut PV generation" template switch (see template: switch).
       # reg 31211 (HA address 31210): 0xAA = PV cut, 0x55 = PV allowed (normal).
-      # This is the register iSolarCloud uses to stop PV production on SH-RT inverters.
+      # Identified by theunknown86 (issue #554) via Modbus traffic analysis of iSolarCloud —
+      # there is no named user-facing option in iSolarCloud that maps to this register, but the
+      # app writes it internally. Confirmed working on SH10RT fw SAPPHIRE-H 95.12.
       # Reads are harmless on any model; the template switch is gated to RT-family devices
       # so the write path is never exposed where the register meaning is unconfirmed.
       - name: Cut PV generation raw
@@ -2150,9 +2152,11 @@ template:
 
       # Cut PV generation (stop all solar production).
       # The datasheet "PV power limitation" register 13018 is marked "Only SHT supported"
-      # and silently fails on the SH-RT family (reads 0xFFFF, writes ignored). iSolarCloud
-      # instead uses reg 31211 (HA address 31210) to stop PV on RT inverters, confirmed
-      # working on an SH10RT (firmware SAPPHIRE-H 95.12): 0xAA = cut PV, 0x55 = allow PV.
+      # and silently fails on the SH-RT family (reads 0xFFFF, writes ignored). reg 31211
+      # (HA address 31210) was identified by theunknown86 via Modbus traffic analysis of
+      # iSolarCloud as the RT-family equivalent — no named iSolarCloud option maps to it
+      # directly. Confirmed working on SH10RT (firmware SAPPHIRE-H 95.12): 0xAA = cut PV,
+      # 0x55 = allow PV (normal).
       #
       # Because the meaning of reg 31211 is only confirmed on the RT family, this switch is
       # gated via `availability` to RT inverters so it is never exposed (and the write path
