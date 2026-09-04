@@ -1,0 +1,64 @@
+{
+  "name": "Sungrow SHx Home Assistant integration",
+
+  // Home Assistant 2026.9 requires Python >= 3.14.2. The Microsoft
+  // devcontainers/python images only go up to 3.13, so this uses the official
+  // Python image instead. Pinning the interpreter in the image (rather than
+  // installing it through a feature) means the exact same environment can be
+  // reproduced with a plain `docker run`, without the devcontainer CLI.
+  "image": "python:3.14-bookworm",
+
+  "features": {
+    // Adds the non-root `vscode` user, git and a usable shell, which the
+    // official Python image does not ship.
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "username": "vscode",
+      "installZsh": false,
+      "upgradePackages": false
+    },
+    // Home Assistant's default_config pulls in ffmpeg and camera support;
+    // without these it refuses to start.
+    "ghcr.io/devcontainers-extra/features/apt-packages:1": {
+      "packages": "ffmpeg,libturbojpeg0,libpcap-dev"
+    }
+  },
+
+  "postCreateCommand": "scripts/setup",
+
+  "forwardPorts": [8123, 5020],
+  "portsAttributes": {
+    "8123": {
+      "label": "Home Assistant",
+      "onAutoForward": "notify"
+    },
+    "5020": {
+      "label": "Sungrow Modbus simulator",
+      "onAutoForward": "silent"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "charliermarsh.ruff",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "github.vscode-pull-request-github"
+      ],
+      "settings": {
+        "files.eol": "\n",
+        "editor.tabSize": 4,
+        "editor.formatOnSave": true,
+        "files.trimTrailingWhitespace": true,
+        "python.analysis.typeCheckingMode": "basic",
+        "python.analysis.autoImportCompletions": true,
+        "python.testing.pytestEnabled": true,
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff"
+        }
+      }
+    }
+  },
+
+  "remoteUser": "vscode"
+}

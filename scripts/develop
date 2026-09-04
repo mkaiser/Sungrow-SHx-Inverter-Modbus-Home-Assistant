@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Boot a minimal Home Assistant with the Sungrow SHx integration loaded.
+set -e
+
+cd "$(dirname "$0")/.."
+
+# Create the dev config on first run.
+if [[ ! -d "${PWD}/config" ]]; then
+    mkdir -p "${PWD}/config"
+fi
+if [[ ! -f "${PWD}/config/.HA_VERSION" ]]; then
+    hass --config "${PWD}/config" --script ensure_config
+fi
+
+# Home Assistant looks for custom integrations in <config>/custom_components.
+# Putting the repo's custom_components on PYTHONPATH keeps the integration at
+# the repo root (where hassfest and HACS expect it) without a symlink.
+export PYTHONPATH="${PYTHONPATH}:${PWD}/custom_components"
+
+hass --config "${PWD}/config" --debug

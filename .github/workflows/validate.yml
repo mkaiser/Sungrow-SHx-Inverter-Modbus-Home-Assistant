@@ -1,0 +1,55 @@
+# Validation for the new custom integration and its device library.
+# The YAML package has its own workflows and is untouched by this one.
+name: Validate integration
+
+on:
+  push:
+    branches: [main, proper-ha-integration]
+    paths:
+      - "custom_components/**"
+      - "src/**"
+      - "tests/**"
+      - "scripts/simulator.py"
+      - "scripts/gen_simulator_registers.py"
+      - "pyproject.toml"
+      - "requirements_dev.txt"
+      - "hacs.json"
+      - ".github/workflows/validate.yml"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  hassfest:
+    name: hassfest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: home-assistant/actions/hassfest@master
+
+  hacs:
+    name: HACS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hacs/action@main
+        with:
+          category: integration
+
+  lint-and-test:
+    name: Lint and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --requirement requirements_dev.txt
+      - name: Ruff
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Pytest
+        run: pytest -q

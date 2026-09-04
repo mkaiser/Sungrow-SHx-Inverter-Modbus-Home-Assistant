@@ -1,0 +1,30 @@
+# Development environment for the Sungrow SHx Home Assistant integration.
+#
+# Home Assistant 2026.9 is the first release with the modernized modbus
+# integration (homeassistant.components.modbus.async_get_unit); the
+# integration does not work on anything older.
+homeassistant>=2026.9
+
+# The device library lives in this repo. Installing it editable keeps the
+# version reported to pip identical to manifest.json's `requirements` entry,
+# so Home Assistant's requirements check is satisfied without a PyPI release.
+--editable .
+
+# Pinned to exactly what core's modbus integration requires, so the dev
+# environment matches what Home Assistant installs at runtime. Note that core
+# drives modbus-connection with the *tmodbus* backend; importing
+# homeassistant.components.modbus fails without it. Bump these together with
+# the pins in homeassistant/components/modbus/manifest.json.
+modbus-connection[tmodbus]==4.10.0
+tmodbus==0.6.2
+pymodbus==3.13.1
+
+# Simulator + tests.
+PyYAML>=6.0
+pytest>=8.0
+pytest-asyncio>=0.24
+pytest-homeassistant-custom-component
+
+# Tooling.
+ruff>=0.14
+mypy>=1.14

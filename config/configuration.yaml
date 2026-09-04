@@ -1,0 +1,34 @@
+# Minimal Home Assistant configuration for integration development.
+#
+# Started by scripts/develop. Everything else in config/ is generated at
+# runtime and gitignored.
+#
+# This deliberately does NOT use `default_config:`. That pulls in bluetooth,
+# dhcp, usb, ssdp, zeroconf, conversation, stream and more, each of which Home
+# Assistant pip-installs on first boot - several minutes and a few hundred MB
+# for components no Modbus integration needs. The list below is what is
+# actually required to click through a config flow and look at entities.
+#
+# If you do need something from default_config (say, the energy dashboard),
+# add just that component rather than swapping the whole thing back in.
+
+# The web UI, and the Settings pages that host the integrations list.
+frontend:
+config:
+
+# Entity history, so a sensor's graph shows whether polling actually works.
+recorder:
+history:
+logbook:
+
+# Sane defaults a dev instance is awkward without.
+sun:
+person:
+
+logger:
+  default: info
+  logs:
+    custom_components.sungrow_shx: debug
+    sungrow_shx_modbus: debug
+    homeassistant.components.modbus: debug
+    modbus_connection: debug

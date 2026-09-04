@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sungrow-shx-modbus"
+# Keep in lockstep with `requirements` in
+# custom_components/sungrow_shx/manifest.json: Home Assistant checks the
+# installed version against it on every start.
+version = "0.1.0"
+description = "Talk to Sungrow SHx hybrid inverters over Modbus."
+readme = "README.md"
+requires-python = ">=3.13"
+license = "Apache-2.0"
+authors = [{ name = "Martin Kaiser" }]
+keywords = ["modbus", "sungrow", "inverter", "solar"]
+dependencies = ["modbus-connection>=4.10.0"]
+
+[project.urls]
+Homepage = "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sungrow_shx_modbus"]
+
+[tool.ruff]
+target-version = "py313"
+# The YAML package and its helper scripts predate this tooling; linting them
+# is a separate job from bootstrapping the integration.
+extend-exclude = [".reference", "debug", "scripts/generate_second_inverter_config.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "D"]
+ignore = ["D203", "D213"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D100", "D103"]
+
+[tool.ruff.lint.isort]
+# Mirrors Home Assistant core's isort settings, so the integration reads the
+# same way as the core integrations it is modelled on and could be moved there
+# without a reshuffle.
+force-sort-within-sections = true
+known-first-party = ["homeassistant"]
+combine-as-imports = true
+split-on-trailing-comma = false
+
+[tool.mypy]
+python_version = "3.13"
+packages = ["sungrow_shx_modbus"]
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

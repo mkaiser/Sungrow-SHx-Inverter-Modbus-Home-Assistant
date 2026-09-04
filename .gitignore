@@ -1,1 +1,20 @@
 .venv
+
+# Home Assistant dev instance (scripts/develop) - only the template is tracked.
+config/*
+!config/configuration.yaml
+
+# Generated simulator seed.
+scripts/simulator_registers.json
+
+# Upstream sources cloned for reference (scripts/fetch_references).
+.reference/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage

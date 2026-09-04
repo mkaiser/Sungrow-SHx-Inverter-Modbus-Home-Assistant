@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Home Assistant",
+      "type": "shell",
+      "command": "scripts/develop",
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": { "panel": "dedicated", "group": "dev" }
+    },
+    {
+      "label": "Run Sungrow Modbus simulator",
+      "type": "shell",
+      "command": "scripts/simulate",
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": { "panel": "dedicated", "group": "dev" }
+    },
+    {
+      "label": "Fetch upstream reference sources",
+      "type": "shell",
+      "command": "scripts/fetch_references",
+      "problemMatcher": []
+    }
+  ]
+}

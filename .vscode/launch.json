@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Home Assistant",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "homeassistant",
+      "args": ["--config", "${workspaceFolder}/config", "--debug"],
+      "env": { "PYTHONPATH": "${workspaceFolder}/custom_components" },
+      "justMyCode": false,
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Home Assistant (attach)",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": { "host": "localhost", "port": 5678 },
+      "justMyCode": false
+    }
+  ]
+}
