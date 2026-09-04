@@ -193,15 +193,71 @@ The shape to build is a **choice at setup time**:
 - **Modern, device-scoped ids** — idiomatic HA, with the existing data
   migrated across.
 
-### To establish before either can be promised
+### Established by experiment
 
-- Does renaming an entity in the entity registry carry its raw recorder
-  states, or do old rows stay under the old `entity_id` in `states_meta`?
-- Long-term statistics (what the Energy dashboard reads) are keyed by
-  `statistic_id`. Do they follow an entity rename, or need separate handling
-  via the recorder's statistics-metadata APIs?
-- What happens to `total_increasing` sensors' high-water marks across the
-  switch, so the Energy dashboard does not see a spurious reset or spike.
+All three of the questions this section used to open with are now answered,
+against Home Assistant 2026.9.0 in the devcontainer, by
+[tests/test_recorder_migration.py](../tests/test_recorder_migration.py). They
+are asserted rather than written down, so a core release that changes any of
+it fails the suite instead of breaking users silently.
+
+**Renaming carries everything, and copies nothing.** The recorder listens for
+entity registry updates that carry `old_entity_id`
+(`homeassistant/components/recorder/entity_registry.py`) and renames the
+`states_meta` row *and* the `statistics_meta` row. State rows reference
+`states_meta` by id, so no history is rewritten and long-term statistics
+follow the same rename. A `total_increasing` sum keeps climbing across it:
+the statistics compiler reads the previous sum from the statistic_id it just
+inherited, so the Energy dashboard sees neither a reset nor a spike.
+
+**A rename onto an entity_id the recorder already knows is refused.** Both
+`states_meta.update_metadata` and `statistics_meta.update_statistic_id` bail
+out on collision with a log line and nothing else — no exception, no repair
+issue. This is precisely the situation a YAML migration is in, because
+`sensor.total_dc_power` already has years of rows. So the migration cannot be
+"create modern entities, then rename them onto the legacy ids".
+
+**The mechanism that does work is to claim the legacy entity_id at creation.**
+An entity registered directly on `sensor.total_dc_power` writes to the
+`states_meta` row that is already there; raw history and statistics simply
+continue, with no recorder API called at all. Two preconditions, both
+verified: the legacy registry entry must be gone, *and* the legacy entity
+must be absent from the state machine — the registry hands out an entity_id
+only if it is free in both, and otherwise silently appends `_2`. Removing the
+old entity records one empty state, so a migrated series carries a
+single-row seam where the YAML package stopped; statistics do not see it.
+
+**This collapses the two setup options into one mechanism plus a step.**
+Keeping the legacy ids is the adoption above. Modern, device-scoped ids are
+the same adoption followed by one registry rename, which is exactly the case
+that carries history and statistics cleanly. Note what the rename does *not*
+fix: dashboards reference entity_ids literally, so only the legacy-id option
+leaves existing cards working.
+
+**Holding the entity_id is necessary but not sufficient.** Statistics
+metadata pins the unit. A unit in the same unit class as the compiled
+statistics (Wh where the YAML had kWh) is converted and the series continues.
+A unit from a different class is dropped from normalization, and long-term
+statistics then **freeze flat** — every later period repeats the last good
+state and sum — while raw history keeps filling normally. Nothing looks
+broken; the Energy dashboard just reads as a system producing nothing. Every
+ported entity must therefore keep the unit class *and* `state_class` of the
+YAML entry it replaces. This is the constraint to check per entity while
+porting the register map, not afterwards.
+
+One thing a statistics query does *not* pin: its display unit follows the
+entity's current unit, so comparing statistics across a unit change without
+passing an explicit `units` argument shows a thousandfold jump that is not in
+the stored data.
+
+### Still open
+
+- Whether the seam row and the adoption path behave the same on a database
+  with years of real rows and statistics, rather than minutes of synthetic
+  ones. That is what the production copy below is for.
+- How the setup-time choice is presented, and how the integration is told to
+  claim a legacy id per entity (`_attr_has_entity_name` is per entity class,
+  so the two id shapes cannot both be static).
 
 ### Test data from production
 

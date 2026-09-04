@@ -81,10 +81,22 @@ The YAML package produces `sensor.total_dc_power`. An integration entity with
 Get this wrong and years of history and every dashboard card break silently.
 
 The intended shape is a choice at setup: keep the legacy ids, or take modern
-ids and migrate the data across. **Still unestablished:** whether renaming an
-entity in the registry carries its raw recorder states, and whether long-term
-statistics (keyed by `statistic_id`, what the Energy dashboard reads) follow
-the same path. Do not design this out of reach while adding entities.
+ids and migrate the data across. How that works is **settled and asserted**
+in `tests/test_recorder_migration.py`; `doc/integration_plan.md` has the
+detail. In short:
+
+- A registry rename carries raw history *and* long-term statistics, and a
+  `total_increasing` sum keeps climbing across it.
+- But a rename onto an id the recorder already knows is **refused** with only
+  a log line, which is exactly the YAML case. So the mechanism is to claim the
+  legacy `entity_id` at entity creation — history then simply continues, no
+  recorder API involved. Modern ids are that plus one rename afterwards.
+- Adoption needs the legacy id free in the registry *and* in the state
+  machine, or the registry silently appends `_2`.
+- Every ported entity must keep the **unit class** and `state_class` of the
+  YAML entry it replaces. Get the unit class wrong and long-term statistics
+  freeze flat — repeating the last value forever — while raw history keeps
+  filling, so nothing looks broken. Check this per entity while porting.
 
 ## Local-only context
 
