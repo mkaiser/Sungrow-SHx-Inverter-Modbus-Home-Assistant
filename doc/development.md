@@ -115,9 +115,12 @@ sets it up, and `default_config` drags in bluetooth, dhcp, usb, ssdp,
 conversation and video handling that a Modbus integration never touches.
 
 Even so, the very first boot installs a handful of packages (the frontend
-above all) and can take a few minutes before <http://localhost:8123> answers
-with something other than a 404. That is once per container, not once per
-run - later boots are quick and quiet.
+above all) and takes a few minutes before <http://localhost:8123> answers with
+something other than a 404. That is once per container, not once per run:
+measured in a clean container, the first boot logs ~20 setup errors while its
+dependencies are still downloading, and the next boot comes up in 2.2 seconds
+with no errors at all. If the UI 404s on your very first run, give it a minute
+and reload rather than going looking for a bug.
 
 ## Open question: superseding the YAML package
 
