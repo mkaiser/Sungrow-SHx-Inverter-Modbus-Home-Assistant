@@ -16,14 +16,39 @@
       "installZsh": false,
       "upgradePackages": false
     },
-    // Home Assistant's default_config pulls in ffmpeg and camera support;
-    // without these it refuses to start.
+    // Home Assistant installs each component's requirements on first boot;
+    // a few of them build against these.
     "ghcr.io/devcontainers-extra/features/apt-packages:1": {
       "packages": "ffmpeg,libturbojpeg0,libpcap-dev"
     }
   },
 
-  "postCreateCommand": "scripts/setup",
+  "remoteUser": "vscode",
+
+  // Session handoff: bind the host's ~/.claude into the container so Claude
+  // Code auth, settings, transcripts and plan files survive a rebuild and are
+  // shared with sessions running on the host. A bind (not a named volume)
+  // keeps both sides looking at the same state.
+  //
+  // The HOME/USERPROFILE pair resolves on either host: exactly one of the two
+  // is set, so this works on Windows and on Linux/macOS without editing.
+  //
+  // Caveat: Claude Code keys project memory by workspace path, and that path
+  // differs inside the container, so repo context lives in CLAUDE.md and
+  // doc/integration_plan.md instead - those are path-independent and
+  // committed.
+  "mounts": [
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.claude,target=/home/vscode/.claude,type=bind"
+  ],
+
+  // VS Code copies the host ~/.gitconfig in on every create. On a Windows
+  // host that drags in safe.directory entries like C:\..., which are not
+  // absolute paths on Linux, and git then warns on every invocation.
+  "postCreateCommand": "git config --global --unset-all safe.directory '^[A-Za-z]:' || true; scripts/setup",
+
+  "containerEnv": {
+    "TZ": "Europe/Berlin"
+  },
 
   "forwardPorts": [8123, 5020],
   "portsAttributes": {
@@ -40,9 +65,12 @@
   "customizations": {
     "vscode": {
       "extensions": [
+        "anthropic.claude-code",
         "charliermarsh.ruff",
         "ms-python.python",
         "ms-python.vscode-pylance",
+        "mhutchie.git-graph",
+        "redhat.vscode-yaml",
         "github.vscode-pull-request-github"
       ],
       "settings": {
@@ -58,7 +86,5 @@
         }
       }
     }
-  },
-
-  "remoteUser": "vscode"
+  }
 }

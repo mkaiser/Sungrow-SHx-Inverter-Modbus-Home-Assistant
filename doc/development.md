@@ -37,6 +37,24 @@ docker run --rm -it -p 8123:8123 -p 5020:5020 -v "$PWD:/workspace" -w /workspace
   'apt-get update -qq && apt-get install -y -qq ffmpeg libturbojpeg0 libpcap-dev && scripts/setup && bash'
 ```
 
+## Continuing a Claude Code session inside the container
+
+The devcontainer bind-mounts the host's `~/.claude` to `/home/vscode/.claude`,
+so Claude Code's auth, settings, transcripts and plan files are the same on
+the host and in the container. Start a session on either side and it picks up
+where the other left off; a container rebuild loses nothing.
+
+The mount source is written as `${localEnv:HOME}${localEnv:USERPROFILE}`.
+Exactly one of those is set on any given host, so the same line works on
+Windows and on Linux/macOS.
+
+One thing does *not* follow automatically: Claude Code keys project memory by
+workspace path, and the workspace is `C:\...` on the host but
+`/workspaces/...` in the container, so the two resolve to different project
+directories. That is why the durable repo context lives in `CLAUDE.md` and
+`doc/integration_plan.md` instead - both are committed, path-independent, and
+`CLAUDE.md` is loaded automatically wherever the repo is opened.
+
 ## Day-to-day
 
 | Command | What it does |
