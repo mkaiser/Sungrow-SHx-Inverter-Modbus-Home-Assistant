@@ -1,0 +1,65 @@
+{
+  "device_type_code": "0x0E03",
+  "output_type": "three phase 3P4L",
+  "read_on": "2026-09-05",
+  "registers": {
+    "MPPT1 voltage": [
+      0
+    ],
+    "MPPT2 voltage": [
+      0
+    ],
+    "MPPT3 voltage": [
+      65535
+    ],
+    "MPPT4 voltage": [
+      65535
+    ],
+    "PV power limitation (13018, V1.1.10+)": [
+      65535
+    ],
+    "PV power of today (6100, direct-only)": [
+      0,
+      0
+    ],
+    "battery level": [
+      877
+    ],
+    "battery temperature": [
+      290
+    ],
+    "battery voltage": [
+      1990
+    ],
+    "device type code (5000)": [
+      3587
+    ],
+    "firmware block (13250, spec V1.1.7+)": [
+      21313
+    ],
+    "meter phase A current (5744)": [
+      81
+    ],
+    "meter phase A voltage (5741)": [
+      2293
+    ],
+    "nominal output power (5001)": [
+      100
+    ],
+    "output type (5002)": [
+      1
+    ],
+    "phase A voltage": [
+      2298
+    ],
+    "phase B voltage": [
+      2290
+    ],
+    "phase C voltage": [
+      2311
+    ]
+  },
+  "serial": "A3732335295",
+  "serial_is_a_stand_in": true,
+  "unit": 1
+}

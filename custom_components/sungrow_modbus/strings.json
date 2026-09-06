@@ -1,0 +1,472 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Device is already configured"
+    },
+    "error": {
+      "cannot_connect": "Failed to connect: {error}",
+      "no_serial_number": "The device answered but reported no serial number.",
+      "unrecognized_inverter": "The device answered with an unknown model code ({code}). Please open an issue with this code so the model can be added.",
+      "legacy_package_still_loaded": "The YAML package is still running, so its entities still hold their IDs. Remove `modbus_sungrow.yaml` from your configuration — or comment out the line that includes it — then restart Home Assistant and try again. Or choose Start fresh.",
+      "network_too_large": "That range holds {hosts} addresses, more than the limit of {limit}. Sweeping it would take minutes and flood the network. Narrow it to the subnet the inverter is on, usually a /24.",
+      "invalid_network": "Not a network range: {error}"
+    },
+    "step": {
+      "user": {
+        "title": "Sungrow Modbus",
+        "description": "How would you like to find the inverter?",
+        "menu_options": {
+          "search": "Search my network",
+          "manual": "Enter the address myself"
+        }
+      },
+      "entity_ids": {
+        "title": "Existing entities found",
+        "description": "Home Assistant found **{count} entities** from the `modbus_sungrow.yaml` package, such as `{example}`. Your recorder history, your statistics and every dashboard card are stored against those entity IDs.\n\n{status}\n\n**Migrate my existing entities** takes those IDs over. History and statistics carry on uninterrupted and your dashboards keep working unchanged. Nothing is copied and nothing is deleted.\n\n**Start fresh** gives this inverter its own IDs, such as `sensor.sh10rt_total_dc_power`. Your old history stays where it is, under the old IDs, and your dashboards keep pointing at it.\n\nEither way the entities are identical in every other respect.",
+        "data": {
+          "entity_ids": "Entity IDs"
+        },
+        "data_description": {
+          "entity_ids": "This can be changed later without losing anything."
+        }
+      },
+      "search": {
+        "title": "Search my network",
+        "description": "Home Assistant will try every address in this range on the Modbus port, then ask whatever answers what it is — an open port alone is not enough to call something an inverter.\n\nThe range is prefilled with the network Home Assistant is on. A `/24` takes about a second; anything much larger is rejected, because every address probed is real traffic on your network.",
+        "data": {
+          "network": "Network range",
+          "port": "Port"
+        },
+        "data_description": {
+          "network": "In CIDR notation, for example 192.168.1.0/24.",
+          "port": "Sungrow inverters use 502. A Modbus TCP bridge may use another."
+        }
+      },
+      "pick": {
+        "title": "Inverters found",
+        "description": "{count} device(s) answered and identified themselves. Names come from your router's DNS where it provides them, otherwise the address is shown.\n\nIf none of these is the inverter you meant, choose the last option and you can enter its address yourself.",
+        "data": {
+          "host": "Inverter"
+        }
+      },
+      "nothing_found": {
+        "title": "No inverter found",
+        "description": "Nothing on **{scanned}** identified itself as a Sungrow inverter. {candidates} device(s) had the port open but did not answer as one — an open Modbus port on its own is not enough.\n\nWorth checking:\n- the inverter is on **this** network — if Home Assistant is in a container or a VM, it may be on a different one from your inverter;\n- nothing else is holding the inverter's Modbus connection. A Sungrow accepts very few at once, so another integration, a second Home Assistant, or the old YAML package still polling will block it;\n- the port is right — 502 for a direct connection, something else through a Modbus TCP bridge.\n\nYou can search a different range, type the address in yourself, or go back to the beginning.",
+        "menu_options": {
+          "search": "Search a different range",
+          "manual": "Enter the address myself",
+          "start_over": "Back to the start"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "battery_charging": {
+        "name": "Battery charging"
+      },
+      "battery_discharging": {
+        "name": "Battery discharging"
+      },
+      "exporting_power": {
+        "name": "Exporting power"
+      },
+      "importing_power": {
+        "name": "Importing power"
+      },
+      "negative_load_power": {
+        "name": "Negative load power"
+      },
+      "positive_load_power": {
+        "name": "Positive load power"
+      },
+      "pv_generating": {
+        "name": "PV generating"
+      }
+    },
+    "sensor": {
+      "active_power_limitation_ratio_raw": {
+        "name": "Active power limitation ratio raw"
+      },
+      "active_power_limitation_raw": {
+        "name": "Active power limitation raw"
+      },
+      "apl_shutdown_at_zero_raw": {
+        "name": "APL shutdown at zero raw"
+      },
+      "backup_mode_raw": {
+        "name": "Backup mode raw"
+      },
+      "backup_phase_a_power": {
+        "name": "Backup phase A power"
+      },
+      "backup_phase_b_power": {
+        "name": "Backup phase B power"
+      },
+      "backup_phase_c_power": {
+        "name": "Backup phase C power"
+      },
+      "battery_capacity_high_precision": {
+        "name": "Battery capacity high precision"
+      },
+      "battery_charge": {
+        "name": "Battery charge"
+      },
+      "battery_charge_health_rated": {
+        "name": "Battery charge (health-rated)"
+      },
+      "battery_charge_nominal": {
+        "name": "Battery charge (nominal)"
+      },
+      "battery_charging_power": {
+        "name": "Battery charging power"
+      },
+      "battery_charging_power_signed": {
+        "name": "Battery charging power signed"
+      },
+      "battery_charging_start_power": {
+        "name": "Battery charging start power"
+      },
+      "battery_current": {
+        "name": "Battery current"
+      },
+      "battery_discharging_power": {
+        "name": "Battery discharging power"
+      },
+      "battery_discharging_power_signed": {
+        "name": "Battery discharging power signed"
+      },
+      "battery_discharging_start_power": {
+        "name": "Battery discharging start power"
+      },
+      "battery_firmware_version": {
+        "name": "Battery firmware version"
+      },
+      "battery_forced_charge_discharge_cmd_raw": {
+        "name": "Battery forced charge/discharge command raw"
+      },
+      "battery_forced_charge_discharge_power": {
+        "name": "Battery forced charge/discharge power"
+      },
+      "battery_level": {
+        "name": "Battery level"
+      },
+      "battery_level_nominal": {
+        "name": "Battery level (nominal)"
+      },
+      "battery_max_charge_power": {
+        "name": "Battery max charge power"
+      },
+      "battery_max_discharge_power": {
+        "name": "Battery max discharge power"
+      },
+      "battery_max_soc": {
+        "name": "Battery max SoC"
+      },
+      "battery_min_soc": {
+        "name": "Battery min SoC"
+      },
+      "battery_power": {
+        "name": "Battery power"
+      },
+      "battery_reserved_soc_for_backup": {
+        "name": "Battery reserved SoC for backup"
+      },
+      "battery_state_of_health": {
+        "name": "Battery state of health"
+      },
+      "battery_temperature": {
+        "name": "Battery temperature"
+      },
+      "battery_voltage": {
+        "name": "Battery voltage"
+      },
+      "bdc_rated_power": {
+        "name": "BDC rated power"
+      },
+      "bms_max_charging_current": {
+        "name": "BMS max charging current"
+      },
+      "bms_max_discharging_current": {
+        "name": "BMS max discharging current"
+      },
+      "communication_module_firmware_version": {
+        "name": "Communication module firmware version"
+      },
+      "daily_battery_charge": {
+        "name": "Daily battery charge"
+      },
+      "daily_battery_charge_from_pv": {
+        "name": "Daily battery charge from PV"
+      },
+      "daily_battery_discharge": {
+        "name": "Daily battery discharge"
+      },
+      "daily_consumed_energy": {
+        "name": "Daily consumed energy"
+      },
+      "daily_direct_energy_consumption": {
+        "name": "Daily direct energy consumption"
+      },
+      "daily_exported_energy": {
+        "name": "Daily exported energy"
+      },
+      "daily_exported_energy_from_pv": {
+        "name": "Daily exported energy from PV"
+      },
+      "daily_imported_energy": {
+        "name": "Daily imported energy"
+      },
+      "daily_pv_generation": {
+        "name": "Daily PV generation"
+      },
+      "daily_pv_generation_battery_discharge": {
+        "name": "Daily PV generation & battery discharge"
+      },
+      "ems_mode_selection_raw": {
+        "name": "EMS mode selection raw"
+      },
+      "export_power": {
+        "name": "Export power"
+      },
+      "export_power_limit": {
+        "name": "Export power limit"
+      },
+      "export_power_limit_max": {
+        "name": "Export power limit max"
+      },
+      "export_power_limit_min": {
+        "name": "Export power limit min"
+      },
+      "export_power_limit_mode_raw": {
+        "name": "Export power limit mode raw"
+      },
+      "export_power_raw": {
+        "name": "Export power raw"
+      },
+      "grid_frequency": {
+        "name": "Grid frequency"
+      },
+      "import_power": {
+        "name": "Import power"
+      },
+      "inverter_firmware_version": {
+        "name": "Firmware version"
+      },
+      "inverter_rated_output": {
+        "name": "Rated output power"
+      },
+      "inverter_temperature": {
+        "name": "Temperature"
+      },
+      "load_adjustment_mode_enable_raw": {
+        "name": "Load adjustment mode enable raw"
+      },
+      "load_adjustment_mode_selection_raw": {
+        "name": "Load adjustment mode selection raw"
+      },
+      "load_power": {
+        "name": "Load power"
+      },
+      "meter_active_power": {
+        "name": "Meter active power"
+      },
+      "meter_phase_a_active_power": {
+        "name": "Meter phase A active power"
+      },
+      "meter_phase_a_current": {
+        "name": "Meter phase A current"
+      },
+      "meter_phase_a_voltage": {
+        "name": "Meter phase A voltage"
+      },
+      "meter_phase_b_active_power": {
+        "name": "Meter phase B active power"
+      },
+      "meter_phase_b_current": {
+        "name": "Meter phase B current"
+      },
+      "meter_phase_b_voltage": {
+        "name": "Meter phase B voltage"
+      },
+      "meter_phase_c_active_power": {
+        "name": "Meter phase C active power"
+      },
+      "meter_phase_c_current": {
+        "name": "Meter phase C current"
+      },
+      "meter_phase_c_voltage": {
+        "name": "Meter phase C voltage"
+      },
+      "mppt1_current": {
+        "name": "MPPT1 current"
+      },
+      "mppt1_power": {
+        "name": "MPPT1 power"
+      },
+      "mppt1_voltage": {
+        "name": "MPPT1 voltage"
+      },
+      "mppt2_current": {
+        "name": "MPPT2 current"
+      },
+      "mppt2_power": {
+        "name": "MPPT2 power"
+      },
+      "mppt2_voltage": {
+        "name": "MPPT2 voltage"
+      },
+      "mppt3_current": {
+        "name": "MPPT3 current"
+      },
+      "mppt3_power": {
+        "name": "MPPT3 power"
+      },
+      "mppt3_voltage": {
+        "name": "MPPT3 voltage"
+      },
+      "mppt4_current": {
+        "name": "MPPT4 current"
+      },
+      "mppt4_power": {
+        "name": "MPPT4 power"
+      },
+      "mppt4_voltage": {
+        "name": "MPPT4 voltage"
+      },
+      "phase_a_current": {
+        "name": "Phase A current"
+      },
+      "phase_a_power": {
+        "name": "Phase A power"
+      },
+      "phase_a_voltage": {
+        "name": "Phase A voltage"
+      },
+      "phase_b_current": {
+        "name": "Phase B current"
+      },
+      "phase_b_power": {
+        "name": "Phase B power"
+      },
+      "phase_b_voltage": {
+        "name": "Phase B voltage"
+      },
+      "phase_c_current": {
+        "name": "Phase C current"
+      },
+      "phase_c_power": {
+        "name": "Phase C power"
+      },
+      "phase_c_voltage": {
+        "name": "Phase C voltage"
+      },
+      "power_factor": {
+        "name": "Power factor"
+      },
+      "power_flow_status": {
+        "name": "Power flow status"
+      },
+      "reactive_power": {
+        "name": "Reactive power"
+      },
+      "running_state_raw": {
+        "name": "Running state raw"
+      },
+      "sungrow_arm_software": {
+        "name": "ARM software version"
+      },
+      "sungrow_device_type": {
+        "name": "Device type"
+      },
+      "sungrow_device_type_code": {
+        "name": "Device type code"
+      },
+      "sungrow_dsp_software": {
+        "name": "DSP software version"
+      },
+      "sungrow_inverter_serial": {
+        "name": "Serial number"
+      },
+      "sungrow_inverter_state": {
+        "name": "Running state"
+      },
+      "sungrow_protocol_version": {
+        "name": "Protocol version"
+      },
+      "sungrow_version_1": {
+        "name": "Firmware version part 1"
+      },
+      "sungrow_version_2": {
+        "name": "Firmware version part 2"
+      },
+      "sungrow_version_3": {
+        "name": "Firmware version part 3"
+      },
+      "sungrow_version_4_sungrow_battery": {
+        "name": "Firmware version part 4 (Sungrow battery)"
+      },
+      "total_active_power": {
+        "name": "Total active power"
+      },
+      "total_backup_power": {
+        "name": "Total backup power"
+      },
+      "total_battery_charge": {
+        "name": "Total battery charge"
+      },
+      "total_battery_charge_from_pv": {
+        "name": "Total battery charge from PV"
+      },
+      "total_battery_discharge": {
+        "name": "Total battery discharge"
+      },
+      "total_consumed_energy": {
+        "name": "Total consumed energy"
+      },
+      "total_dc_power": {
+        "name": "Total DC power"
+      },
+      "total_direct_energy_consumption": {
+        "name": "Total direct energy consumption"
+      },
+      "total_exported_energy": {
+        "name": "Total exported energy"
+      },
+      "total_exported_energy_from_pv": {
+        "name": "Total exported energy from PV"
+      },
+      "total_imported_energy": {
+        "name": "Total imported energy"
+      },
+      "total_pv_generation": {
+        "name": "Total PV generation"
+      },
+      "total_pv_generation_battery_discharge": {
+        "name": "Total PV generation & battery discharge"
+      }
+    }
+  },
+  "selector": {
+    "entity_ids": {
+      "options": {
+        "migrate": "Migrate my existing entities — keep their history",
+        "new": "Start fresh / create new entities"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Diagnostics",
+        "description": "Settings → Devices & Services → Sungrow Modbus → **Download diagnostics** produces a file describing this setup: the model, which capabilities the inverter confirmed, which registers reported themselves unavailable, how each poll tier is doing, and why any entity was not created. Attach it to a bug report — the serial number and the host address are removed from it.",
+        "data": {
+          "register_dump": "Include a raw register dump"
+        },
+        "data_description": {
+          "register_dump": "Adds every mapped register's raw value. Only useful when a value looks wrong and the decoding itself is in question. Producing it is a second full read of the register map on top of normal polling, which is slow over a WiNet-S dongle, so leave it off unless you have been asked for it."
+        }
+      }
+    }
+  }
+}

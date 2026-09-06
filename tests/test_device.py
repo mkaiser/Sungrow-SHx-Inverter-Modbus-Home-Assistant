@@ -10,7 +10,7 @@ from modbus_connection import ModbusTimeoutError
 from modbus_connection.mock import MockModbusUnit
 import pytest
 
-from sungrow_shx_modbus import SungrowInverter, model_for
+from sungrow_modbus import SungrowInverter, model_for
 
 # "A2340600123" left-padded the way the inverter reports it, as 16-bit words.
 SERIAL = "A2340600123"
@@ -58,16 +58,19 @@ async def test_identity_is_one_block_read(unit: MockModbusUnit) -> None:
     event = unit.read_events[0]
     assert event.register_type == "input"
     assert event.address == 4951
-    assert event.count == 50
+    # 4951 to 5001 inclusive: the block grew by one when the output type
+    # register was added, and is still a single read.
+    assert event.count == 51
 
 
 async def test_total_dc_power_is_word_swapped(unit: MockModbusUnit) -> None:
     """A 32-bit Sungrow value arrives low word first."""
     inverter = SungrowInverter(unit)
-    report = await inverter.async_update_readings()
+    report = await inverter.async_update_tier(10)
 
-    assert inverter.readings.total_dc_power == 7000
-    assert report.updated == frozenset({"readings"})
+    assert inverter.fast_input.total_dc_power == 7000
+    # Tier 10 covers both the input and holding components.
+    assert "fast_input" in report.updated
     assert not report.failed
 
 
@@ -89,7 +92,7 @@ async def test_failed_component_is_reported_not_raised(
     unit.fail_read(5016, ModbusTimeoutError("no answer"), register_type="input")
     inverter = SungrowInverter(unit)
 
-    report = await inverter.async_update_readings()
+    report = await inverter.async_update_tier(10)
 
-    assert not report.updated
-    assert "readings" in report.failed
+    assert "fast_input" not in report.updated
+    assert "fast_input" in report.failed

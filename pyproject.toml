@@ -3,15 +3,15 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "sungrow-shx-modbus"
+name = "sungrow-modbus"
 # Keep in lockstep with `requirements` in
-# custom_components/sungrow_shx/manifest.json: Home Assistant checks the
+# custom_components/sungrow_modbus/manifest.json: Home Assistant checks the
 # installed version against it on every start.
-version = "0.1.0"
-description = "Talk to Sungrow SHx hybrid inverters over Modbus."
+version = "0.0.1"
+description = "Talk to Sungrow inverters, batteries and wallboxes over Modbus."
 readme = "README.md"
 requires-python = ">=3.13"
-license = "Apache-2.0"
+license = "MIT"
 authors = [{ name = "Martin Kaiser" }]
 keywords = ["modbus", "sungrow", "inverter", "solar"]
 dependencies = ["modbus-connection>=4.10.0"]
@@ -20,7 +20,25 @@ dependencies = ["modbus-connection>=4.10.0"]
 Homepage = "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/sungrow_shx_modbus"]
+packages = ["src/sungrow_modbus"]
+
+# Without this the sdist sweeps in everything not gitignored — the YAML
+# package, the dashboards and doc/images take it past 6 MB, for a library
+# whose wheel is 9 KB. The sdist should be the library and what it needs to
+# be built and understood, nothing else.
+[tool.hatch.build.targets.sdist]
+# Anchored with a leading slash. Hatchling treats these as gitignore-style
+# patterns, so a bare "README.md" matches at every depth -- after the YAML
+# package moved to legacy/ that quietly swept six dashboard READMEs into the
+# library's sdist.
+include = [
+    "/src/sungrow_modbus",
+    "/tests/test_device.py",
+    "/tests/conftest.py",
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml",
+]
 
 [tool.ruff]
 target-version = "py313"
@@ -46,7 +64,7 @@ split-on-trailing-comma = false
 
 [tool.mypy]
 python_version = "3.13"
-packages = ["sungrow_shx_modbus"]
+packages = ["sungrow_modbus"]
 strict = true
 
 [tool.pytest.ini_options]

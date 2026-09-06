@@ -14,6 +14,17 @@ on:
       - "pyproject.toml"
       - "requirements_dev.txt"
       - "hacs.json"
+      - "legacy/modbus_sungrow.yaml"
+      - "doc/legacy_entity_map.json"
+      - "scripts/sync_version.py"
+      - "scripts/generate_entity_map.py"
+      - "scripts/generate_registers.py"
+      - "scripts/generate_sensors.py"
+      - "scripts/generate_derived.py"
+      - "scripts/generate_strings.py"
+      - "scripts/naming.py"
+      - "LICENSE"
+      - "README.md"
       - ".github/workflows/validate.yml"
   pull_request:
   workflow_dispatch:
@@ -47,9 +58,36 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install --requirement requirements_dev.txt
+      - name: Versions in lockstep
+        run: python scripts/sync_version.py --check
+      - name: The legacy entity map matches the YAML package
+        run: python scripts/generate_entity_map.py --check
+      - name: The register map matches the entity map
+        run: python scripts/generate_registers.py --check
+      - name: The sensor descriptions match the entity map
+        run: python scripts/generate_sensors.py --check
+      - name: The derived descriptions are current
+        run: python scripts/generate_derived.py --check
+      - name: The entity names follow the naming convention
+        run: python scripts/generate_strings.py --check
       - name: Ruff
         run: |
           ruff check .
           ruff format --check .
       - name: Pytest
         run: pytest -q
+
+      # The release workflow is the only thing that packages the library, and
+      # it runs once, on a tag, against an index where uploads are immutable.
+      # That makes the first real publish the worst possible moment to find
+      # out the package does not build. This is the same two steps, ten
+      # seconds, and touches no external service.
+      #
+      # It does NOT prove trusted publishing works -- only an upload does
+      # that. Rehearse the handshake with the manual "Rehearse the PyPI
+      # publish" workflow before tagging.
+      - name: The library still packages
+        run: |
+          python -m pip install --upgrade build twine
+          python -m build
+          twine check --strict dist/*

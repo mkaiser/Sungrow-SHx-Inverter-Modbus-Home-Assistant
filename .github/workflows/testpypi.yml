@@ -1,0 +1,87 @@
+# Rehearses the PyPI publish, against TestPyPI, without spending a version.
+#
+# The real release workflow publishes once per tag and an upload is immutable,
+# so the first time trusted publishing runs for real is a bad time to discover
+# the publisher is misconfigured. This does the same three steps — build,
+# `twine check`, OIDC upload — against test.pypi.org, and it is manual only.
+#
+# It never collides with itself: the version is rewritten to a `.devN` suffix
+# taken from the run number, so every run uploads something new. Nothing is
+# committed; only the runner's checkout is edited.
+#
+# Setup, once, on **test.pypi.org** (a separate account and a separate
+# publisher from pypi.org):
+#
+#   Your projects -> Publishing -> Add a pending publisher
+#     PyPI project name: sungrow-modbus
+#     Owner:             mkaiser
+#     Repository:        Sungrow-SHx-Inverter-Modbus-Home-Assistant
+#     Workflow:          testpypi.yml
+#     Environment:       testpypi
+#
+# Then create a GitHub environment named `testpypi` on this repository.
+#
+# Afterwards, prove the artefact actually installs:
+#
+#   pip install --index-url https://test.pypi.org/simple/ \
+#               --extra-index-url https://pypi.org/simple/ \
+#               "sungrow-modbus==<version printed by the run>"
+#
+# The extra index matters: TestPyPI does not carry modbus-connection.
+name: Rehearse the PyPI publish
+
+on:
+  workflow_dispatch:
+
+jobs:
+  testpypi:
+    name: Publish to TestPyPI
+    runs-on: ubuntu-latest
+    environment: testpypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      # A dev suffix rather than the plain version: TestPyPI uploads are as
+      # immutable as PyPI's, so re-running with the same version would fail on
+      # the upload — after everything worth testing had already passed.
+      - name: Give this run its own version
+        id: version
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import re
+          from pathlib import Path
+
+          path = Path("pyproject.toml")
+          text = path.read_text(encoding="utf-8")
+          base = re.search(r'^version = "([^"]+)"', text, re.M).group(1)
+          version = f"{base}.dev${{ github.run_number }}"
+          path.write_text(
+              re.sub(r'^version = "[^"]+"', f'version = "{version}"', text, count=1, flags=re.M),
+              encoding="utf-8",
+          )
+          print(f"version={version}")
+          PY
+
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+
+      - name: Check the metadata before uploading
+        run: |
+          python -m pip install --upgrade twine
+          twine check dist/*
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+      - name: Say what to install
+        run: |
+          echo "::notice::pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ sungrow-modbus==${{ steps.version.outputs.version }}"

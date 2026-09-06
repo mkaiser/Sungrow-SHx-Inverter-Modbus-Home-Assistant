@@ -1,0 +1,337 @@
+# Development runbook, in the order you actually need it.
+#
+# doc/development.md is the prose version and explains *why*. This is the
+# copy-paste companion: every command, with the traps written next to the
+# command they bite on rather than three paragraphs away.
+#
+# Everything here runs INSIDE the devcontainer unless a step says otherwise.
+# Home Assistant 2026.9 needs Python >= 3.14.2 and a specific set of pinned
+# dependencies; the host has neither, which is what the container is for.
+
+devcontainer:
+  open: >-
+    VS Code -> Reopen in Container. The first build runs scripts/setup, which
+    installs Home Assistant, the device library (editable) and the tooling.
+    Takes a few minutes once.
+
+  notes:
+    - The workspace is a bind mount from the Windows filesystem, so anything
+      written on the host is visible in the container immediately and the
+      other way round.
+    - ~/.claude is bind-mounted too, so Claude Code auth and transcripts
+      survive a rebuild.
+    - The very first `scripts/develop` in a fresh container logs ~20 setup
+      errors while Home Assistant downloads component requirements, and the UI
+      404s. The next boot is clean in about two seconds. Not a bug.
+
+  verify:
+    - python --version                       # 3.14.x
+    - pytest -q                              # ~744 tests, no network needed
+    - ruff check . && ruff format --check .
+
+# ---------------------------------------------------------------------------
+
+secrets:
+  # OPTIONAL. Everything below works against the simulator without any of it.
+  # These exist only for talking to real hardware, and none of them are in the
+  # repository -- it is public.
+
+  home_assistant_yaml_package:
+    what: >-
+      The YAML package (modbus_sungrow.yaml) reads its connection details from
+      the user's own secrets.yaml. If you point the dev instance at a real
+      inverter you need the same keys.
+    file: config/secrets.yaml          # gitignored along with the rest of config/
+    keys:
+      sungrow_modbus_host_ip: 192.168.x.x
+      sungrow_modbus_port: 502
+      sungrow_modbus_device_address: 1
+      sungrow_modbus_wait_milliseconds: 5      # 5 for LAN, 20+ for WiNet-S
+      sungrow_modbus_battery_max_power: 5000
+    note: >-
+      The integration does NOT read secrets.yaml. It collects host, port and
+      unit id in its own config flow, which is the point of being an
+      integration.
+
+  production_home_assistant_api:
+    what: A long-lived access token, for reading state from a live instance.
+    file: ~/.claude/sungrow-ha.env       # outside the repo, chmod 600
+    keys:
+      HA_URL: http://<host>:8123
+      HA_TOKEN: <long-lived access token>
+    use: |
+      set -a; . ~/.claude/sungrow-ha.env; set +a
+      curl -s -H "Authorization: Bearer $HA_TOKEN" "$HA_URL/api/states" | jq length
+    rules:
+      - Source it; never echo it, never paste it into a chat or a commit.
+      - Read-only endpoints only against a production instance. No service
+        calls, no recorder.purge, no configuration writes.
+      - Anything it returns is real household data. It goes in .testdata/,
+        which is gitignored, and never in doc/ or tests/.
+
+# ---------------------------------------------------------------------------
+
+running:
+  simulator:
+    why: >-
+      A fake Sungrow answering the whole register map, so nothing here needs
+      hardware. Regenerates the seed from the register map, then serves it.
+    command: scripts/simulate
+    listens: 0.0.0.0:5020
+    background: nohup scripts/simulate > /tmp/sim.log 2>&1 &
+
+  home_assistant:
+    command: scripts/develop
+    listens: 0.0.0.0:8123
+    background: nohup scripts/develop > /tmp/ha.log 2>&1 &
+    config: config/                  # gitignored except configuration.yaml
+    stop: pkill -f 'bin/hass'
+    note: >-
+      scripts/develop symlinks config/custom_components to the repo's
+      custom_components/, so the integration is loaded exactly as a HACS
+      install would load it. It must NOT be PYTHONPATH: the domain and the
+      library share the name sungrow_modbus, so that would shadow the library
+      with the integration and Home Assistant would report a circular import
+      when the config flow loads.
+
+  login:
+    # Created by the onboarding API for this dev instance only.
+    username: dev
+    password: dev
+    warning: >-
+      Development credentials, committed on purpose so anyone can pick the
+      instance up. They are only ever acceptable because this instance holds
+      fabricated data and talks to a simulator. Do not reuse them anywhere,
+      and think twice before exposing this instance beyond your own LAN.
+    recreate: |
+      # If config/ is wiped, onboarding runs again:
+      curl -s -X POST http://127.0.0.1:8123/api/onboarding/users \
+        -H 'Content-Type: application/json' \
+        -d '{"client_id":"http://127.0.0.1:8123/","name":"Developer",
+             "username":"dev","password":"dev","language":"en"}'
+
+# ---------------------------------------------------------------------------
+
+real_hardware:
+  # Verified from inside the container on 2026-09-06: a connect to the
+  # reference inverter's port 502 succeeds.
+  reachable: >-
+    Yes, outbound. The container is on the Docker bridge (172.17.0.2/16) and
+    NATs out through it, so it follows the host's routing without knowing
+    anything about it:
+      ip route get 192.168.178.35
+      -> via 172.17.0.1 dev eth0
+    Nothing has to be forwarded or configured. That is the same path the
+    reference inverter's register dumps were read over.
+
+  what_does_not_work:
+    - >-
+      Multicast, so mDNS discovery finds nothing from in here -- a Docker
+      bridge does not carry it. Run `scripts/discover_probe.py mdns` on the
+      Windows host instead.
+    - >-
+      Inbound. Reaching the container's Home Assistant from another machine is
+      the web_gui section above, and needs work on the Windows side.
+
+  connect:
+    where: Settings -> Devices & Services -> Add integration -> Sungrow Modbus
+    values:
+      host: the inverter's IP, from sungrow_modbus_host_ip in your secrets.yaml
+      port: 502
+      unit_id: 1              # sungrow_modbus_device_address
+
+  network_search: >-
+    Works against the real LAN too, but the range is prefilled from the
+    container's own adapter, which is the Docker bridge -- searching
+    172.17.0.0/24 finds nothing because the inverter is not on it. Type the
+    LAN's range instead, e.g. 192.168.178.0/24.
+
+  warnings:
+    - >-
+      A Sungrow inverter accepts very few simultaneous Modbus connections. If
+      the YAML package is polling the same inverter from a production Home
+      Assistant, the dev instance will fight it for the connection and both
+      will see dropouts. This was misdiagnosed as an idle timeout once; it is
+      contention. Stop one, or use the simulator.
+    - >-
+      What contention looks like, measured on 2026-09-06: the integration
+      failed setup with "read_holding_registers(13049, 51): Connection lost
+      before response was received", which reads like a bad block or a network
+      fault and is neither. That exact read succeeds on its own; a full
+      setup-shaped burst of 15 block reads succeeds in 0.06s on one
+      connection. But opening connections in quick succession degrades
+      progressively -- run 1 fine, run 2 fails at read 14, run 3 at read 6,
+      run 4 at read 2 -- because the slots are not released promptly. After 90
+      seconds of quiet everything works again. Note the trap in that pattern:
+      it also makes a pacing experiment look like slower pacing is worse,
+      which it is not. If you are debugging this, stop everything that talks
+      to the inverter, including the retrying dev instance, and wait a minute
+      before drawing conclusions.
+    - >-
+      Anything read from a real inverter carries a serial number and live
+      household readings. It belongs in .testdata/, which is gitignored, never
+      in doc/ or tests/.
+    - >-
+      Overlapping subnets bite silently: if two sites are both on
+      192.168.178.0/24 (the FRITZ!Box default) a probe can reach the wrong
+      inverter without any error. See doc/maintainer_setup.md section 4.
+
+  prefer_the_simulator: >-
+    scripts/simulate serves the whole register map on localhost:5020 and is
+    seeded from modbus_sungrow.yaml, so it cannot drift from the map being
+    ported. Use real hardware only when the point is to verify real-hardware
+    behaviour.
+
+# ---------------------------------------------------------------------------
+
+web_gui:
+  # Home Assistant already binds 0.0.0.0:8123 inside the container. What
+  # varies is how many NAT hops sit between it and the browser:
+  #
+  #   container 172.17.0.2  ->  WSL2 VM  ->  Windows host  ->  LAN
+  #
+  # Only the first hop is inside the container's control.
+
+  to_your_desktop:
+    how: >-
+      Automatic. devcontainer.json declares forwardPorts [8123, 5020], so VS
+      Code forwards 8123 to the host's localhost as soon as something listens.
+    url: http://localhost:8123
+    if_it_does_not_appear: >-
+      VS Code -> Ports panel -> Forward a Port -> 8123.
+
+  to_the_lan:
+    why: >-
+      Reaching the dev instance from a phone or another machine. Needs two
+      more hops opened, neither of which can be done from inside the container.
+
+    option_1_dev_tunnel:
+      recommended: true
+      steps:
+        - VS Code -> Ports panel -> right-click the 8123 row
+        - Port Visibility -> Public
+      gives: An https://*.devtunnels.ms URL, reachable from anywhere.
+      auth: GitHub sign-in, enforced by the tunnel.
+      caveat: >-
+        This is internet-reachable, not LAN-only. Fine for a dev instance with
+        fabricated data; never do it with a config pointed at a real house.
+
+    option_2_real_lan_ip:
+      steps:
+        - VS Code -> Ports panel -> right-click 8123 -> Change Local Address
+        - Set it to 0.0.0.0 (this reaches the WSL2 VM, not yet the LAN)
+        - Then one of the two hops below, on the Windows host.
+      wsl_mirrored_networking:
+        when: Windows 11 22H2 or newer. The cleaner of the two.
+        file: '%UserProfile%\.wslconfig'
+        content: |
+          [wsl2]
+          networkingMode=mirrored
+        then: wsl --shutdown            # then reopen the container
+        result: The WSL listener appears directly on the host's LAN IP.
+      netsh_portproxy:
+        when: Older Windows, or mirrored networking is not an option.
+        shell: PowerShell, as Administrator
+        commands:
+          - >-
+            netsh interface portproxy add v4tov4 listenaddress=0.0.0.0
+            listenport=8123 connectaddress=$(wsl hostname -I) connectport=8123
+          - >-
+            New-NetFirewallRule -DisplayName "HA dev 8123" -Direction Inbound
+            -Protocol TCP -LocalPort 8123 -Action Allow
+        undo:
+          - netsh interface portproxy delete v4tov4 listenaddress=0.0.0.0 listenport=8123
+          - Remove-NetFirewallRule -DisplayName "HA dev 8123"
+        caveat: >-
+          The WSL VM's IP changes on reboot, so the portproxy has to be
+          re-pointed. Mirrored networking does not have this problem.
+      url: http://<windows-lan-ip>:8123
+
+# ---------------------------------------------------------------------------
+
+reviewing_the_migration:
+  # The one feature a unit test cannot fully judge: whether the dialog explains
+  # the choice well enough to make it, and whether the graph is really
+  # continuous afterwards.
+  steps:
+    - scripts/develop                       # once, to create config/
+    - pkill -f 'bin/hass'                   # it must be stopped for the next step
+    - python scripts/seed_migration_testbed.py
+    - nohup scripts/simulate > /tmp/sim.log 2>&1 &
+    - nohup scripts/develop > /tmp/ha.log 2>&1 &
+  then: >-
+    Settings -> Devices & Services -> Add integration -> Sungrow Modbus.
+    Host 127.0.0.1, port 5020, unit id 1. The next screen asks whether to take
+    over the existing entity ids.
+  afterwards: >-
+    Open sensor.total_pv_generation and look at the 30-day graph. Migrated, it
+    continues across the handover with a one-pixel gap where the YAML package
+    stopped.
+  other_answer: |
+    pkill -f 'bin/hass'
+    python scripts/seed_migration_testbed.py --reset
+    # delete the config entry in the UI, re-seed, restart
+  diagnostics: >-
+    Settings -> Devices & Services -> Sungrow Modbus -> the three-dot menu ->
+    Download diagnostics. The dev config asks for the `diagnostics:` component
+    explicitly, because this instance does not use default_config.
+  from_a_real_registry: >-
+    python scripts/seed_migration_testbed.py --from .testdata/<snapshot>.json
+    -- more faithful (real _2 suffixes, disabled entities), but such a file is
+    private and belongs in .testdata/, which is gitignored.
+
+# ---------------------------------------------------------------------------
+
+generated_files:
+  # All committed, all checked in CI. Edit the generator, never the output.
+  files:
+    - script: scripts/generate_entity_map.py
+      writes: doc/legacy_entity_map.json
+      from: modbus_sungrow.yaml
+    - script: scripts/generate_registers.py
+      writes: src/sungrow_modbus/registers.py
+    - script: scripts/generate_sensors.py
+      writes: custom_components/sungrow_modbus/sensor_descriptions.py
+    - script: scripts/generate_derived.py
+      writes: custom_components/sungrow_modbus/derived_descriptions.py
+    - script: scripts/generate_strings.py
+      writes: custom_components/sungrow_modbus/strings.json (+ translations/en.json)
+      convention: scripts/naming.py
+  check_all: |
+    for s in entity_map registers sensors derived strings; do
+      python scripts/generate_$s.py --check || echo "STALE: $s"
+    done
+
+version:
+  single_source: scripts/sync_version.py
+  why: >-
+    pyproject.toml and custom_components/sungrow_modbus/manifest.json must
+    agree. Home Assistant checks the installed version on every start and will
+    try to pip-install the package if they differ.
+  commands:
+    - python scripts/sync_version.py --check       # CI, and pytest
+    - python scripts/sync_version.py --set 0.0.2   # release
+  gotcha: >-
+    --set also re-installs the editable library, because Home Assistant checks
+    the *installed* version against the manifest pin. Without that the config
+    flow fails with RequirementsNotFound asking pip for a version that is not
+    on PyPI yet. --check fails on the drift if it ever happens another way.
+
+packaging:
+  what_ci_does: >-
+    validate.yml builds the sdist and wheel and runs `twine check --strict` on
+    every push, so a package that will not build is caught immediately rather
+    than at tag time, when the upload is immutable. It does NOT verify trusted
+    publishing -- only an upload does that.
+  rehearse_the_upload: >-
+    Actions -> "Rehearse the PyPI publish" (manual). Uploads a .devN version to
+    TestPyPI over OIDC. Run it once before the first real tag.
+  locally: |
+    python -m build && twine check --strict dist/*
+  sdist_is_deliberately_small: >-
+    pyproject.toml pins the sdist contents to the library, its two portable
+    tests, the README and the licence. The patterns are anchored with a leading
+    slash: hatchling reads them gitignore-style, so a bare "README.md" matches
+    at every depth and quietly swept six of legacy/dashboards' READMEs into the
+    package the moment the YAML track moved. Without any include list at all it
+    sweeps in everything not gitignored and passes 6 MB, for a 24 KB wheel.

@@ -8,7 +8,7 @@
 # - is run from subdirectory scripts
 # - is called "generate_second_inverter_config" and has the .py extension
 # - takes a number as input parameter, e.g. '1' or '2'
-# - takes the modbus_sungrow.yaml file from one directory level above and creates the file
+# - takes legacy/modbus_sungrow.yaml from one directory level above and creates the file
 #   "modbus_sungrow_multiple_inverters_%number%" (output should have a .yaml extension)
 # - adds a suffix to all "- name" entries
 #   - there should be a space before the number
@@ -28,8 +28,8 @@ Usage (run from this directory):
   python3 ./generate_second_inverter_config.py 2
 
 This will:
-- read:  ../modbus_sungrow.yaml
-- write: ../modbus_sungrow_multiple_inverters_2.yaml
+- read:  ../legacy/modbus_sungrow.yaml
+- write: ../legacy/modbus_sungrow_multiple_inverters_2.yaml
 
 It performs conservative, line-based transformations to preserve formatting.
 Only single-line scalars on the same line as `- name:` are modified.
@@ -262,7 +262,7 @@ def main(argv: list[str]) -> int:
     if len(argv) != 2 or argv[1] in {"-h", "--help"}:
         print(
             "Usage: generate_second_inverter_config.py <number>\n"
-            "Run from the 'scripts' directory; reads ../modbus_sungrow.yaml and writes ../modbus_sungrow_multiple_inverters_<number>.yaml."
+            "Run from the 'scripts' directory; reads ../legacy/modbus_sungrow.yaml and writes ../legacy/modbus_sungrow_multiple_inverters_<number>.yaml."
         )
         return 2
 
@@ -272,7 +272,7 @@ def main(argv: list[str]) -> int:
         return 2
 
     scripts_dir = Path.cwd()
-    source = scripts_dir.parent / "modbus_sungrow.yaml"
+    source = scripts_dir.parent / "legacy" / "modbus_sungrow.yaml"
     if not source.exists():
         print(
             "Error: expected source file not found: "
@@ -281,7 +281,11 @@ def main(argv: list[str]) -> int:
         )
         return 2
 
-    dest = scripts_dir.parent / f"modbus_sungrow_multiple_inverters_{number}.yaml"
+    dest = (
+        scripts_dir.parent
+        / "legacy"
+        / f"modbus_sungrow_multiple_inverters_{number}.yaml"
+    )
 
     original = source.read_text(encoding="utf-8")
     name_suffix = f" inv {number}"

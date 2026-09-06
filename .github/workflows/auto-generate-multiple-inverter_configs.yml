@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'modbus_sungrow.yaml'
+      - 'legacy/modbus_sungrow.yaml'
 
 jobs:
   auto-generate-multiple-inverter-configs:
@@ -29,7 +29,7 @@ jobs:
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
-          git add modbus_sungrow_multiple_inverters_1.yaml modbus_sungrow_multiple_inverters_2.yaml modbus_sungrow_multiple_inverters_3.yaml
+          git add legacy/modbus_sungrow_multiple_inverters_1.yaml legacy/modbus_sungrow_multiple_inverters_2.yaml legacy/modbus_sungrow_multiple_inverters_3.yaml
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0

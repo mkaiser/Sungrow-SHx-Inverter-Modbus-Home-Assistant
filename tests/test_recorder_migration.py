@@ -11,8 +11,8 @@ The recorder answers it in
 ``homeassistant/components/recorder/entity_registry.py``: it listens for
 entity registry updates carrying ``old_entity_id`` and renames the
 ``states_meta`` and ``statistics_meta`` rows, so no state rows are copied and
-no data moves. These tests hold that behaviour, and the three ways it goes
-wrong, in place:
+no data moves. These tests hold that behaviour, and the ways it goes wrong, in
+place:
 
 * A registry rename carries both raw history and long-term statistics.
 * A ``total_increasing`` sum keeps climbing across the rename, so the Energy
@@ -24,6 +24,11 @@ wrong, in place:
   created, instead of renaming into it afterwards. Then no migration runs at
   all: the integration's states land on the row the YAML package has been
   filling for years.
+* **Migrating back works too.** A rename moves the row rather than copying it,
+  so the round trip returns the history to the legacy id. Where the legacy id
+  is still occupied by the YAML package's own rows, archiving the occupant
+  under another name frees it -- both series survive, nothing is copied and
+  nothing is deleted.
 * Holding the entity_id is necessary but not sufficient. A unit from the same
   unit class is converted and the series continues; a unit from a different
   class is dropped, and long-term statistics then freeze flat instead of
@@ -48,8 +53,11 @@ from pytest_homeassistant_custom_component.components.recorder.common import (
 from pytest_homeassistant_custom_component.typing import RecorderInstanceContextManager
 from sqlalchemy import select
 
-from homeassistant.components.recorder import Recorder, history
+from homeassistant.components.recorder import Recorder, get_instance, history
 from homeassistant.components.recorder.db_schema import StatesMeta
+from homeassistant.components.recorder.statistics import (
+    async_update_statistics_metadata,
+)
 from homeassistant.components.recorder.util import session_scope
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy, UnitOfPower
@@ -260,7 +268,7 @@ async def test_rename_into_an_id_the_recorder_knows_is_refused(
 
         entity_registry.async_get_or_create(
             "sensor",
-            "sungrow_shx",
+            "sungrow_modbus",
             "A2340600123_total_pv_generation",
             suggested_object_id="sh10rt_total_pv_generation",
         )
@@ -297,7 +305,7 @@ async def test_claiming_the_legacy_id_at_creation_continues_history(
         # The integration takes over the same id under its own platform.
         entry = entity_registry.async_get_or_create(
             "sensor",
-            "sungrow_shx",
+            "sungrow_modbus",
             "A2340600123_total_pv_generation",
             suggested_object_id="total_pv_generation",
         )
@@ -416,3 +424,123 @@ async def test_an_incompatible_unit_freezes_statistics_flat(
         pytest.approx(1002.0),
         pytest.approx(1002.0),
     ]
+
+
+#: Where a series is moved when it is in the way. Nothing is deleted: the rows
+#: stay queryable under this id until the user decides to clean up.
+ARCHIVE_ID = "sensor.total_pv_generation_yaml_archive"
+
+
+async def test_the_round_trip_returns_history_to_the_legacy_id(
+    hass: HomeAssistant, entity_registry: er.EntityRegistry
+) -> None:
+    """Legacy to modern and back again is reversible, because a rename moves.
+
+    The rename updates the one `states_meta` row rather than copying it, so
+    once the entity has moved to a modern id the legacy id is *free* again.
+    Renaming back therefore meets no collision and the whole history comes
+    with it. Changing the option reloads the config entry, which removes and
+    re-adds the entities, so each direction is modelled with the entity
+    leaving the state machine first -- the id has to be free there too.
+    """
+    _register_legacy_entity(entity_registry)
+
+    period0 = _period_start()
+    period1 = period0 + timedelta(minutes=5)
+    with freeze_time(period0) as freezer:
+        await _record_meter(hass, freezer, period0, LEGACY_ID, [1000.0, 1001.0, 1002.0])
+        do_adhoc_statistics(hass, start=period0)
+        await async_wait_recording_done(hass)
+
+        # Switch to modern ids.
+        await _retire(hass, LEGACY_ID)
+        entity_registry.async_update_entity(LEGACY_ID, new_entity_id=MODERN_ID)
+        await async_wait_recording_done(hass)
+        assert _states_meta_ids(hass) == {MODERN_ID}
+
+        # It runs that way for a while.
+        await _record_meter(hass, freezer, period1, MODERN_ID, [1003.0, 1005.0])
+        do_adhoc_statistics(hass, start=period1)
+        await async_wait_recording_done(hass)
+
+        # The user changes their mind and switches back.
+        await _retire(hass, MODERN_ID)
+        entity_registry.async_update_entity(MODERN_ID, new_entity_id=LEGACY_ID)
+        await async_wait_recording_done(hass)
+
+    # One series, one name, nothing stranded and nothing copied.
+    assert _states_meta_ids(hass) == {LEGACY_ID}
+    assert _recorded_states(hass, period0, LEGACY_ID) == [
+        "1000.0",
+        "1001.0",
+        "1002.0",
+        SEAM,
+        "1003.0",
+        "1005.0",
+        SEAM,
+    ]
+
+    stats = statistics_during_period(hass, period0, period="5minute")
+    assert MODERN_ID not in stats
+    assert [row["sum"] for row in stats[LEGACY_ID]] == [
+        pytest.approx(2.0),
+        pytest.approx(5.0),
+    ]
+
+
+async def test_archiving_the_occupant_unblocks_the_reverse_migration(
+    hass: HomeAssistant, entity_registry: er.EntityRegistry
+) -> None:
+    """The blocked case, unblocked: move the old series aside, delete nothing.
+
+    This is the hard direction — modern ids in use *and* the YAML package's
+    rows still sitting on the legacy id, which is the collision the recorder
+    refuses. Renaming the orphaned series to an archive id frees the target,
+    and because it is a rename rather than a copy it is instant on a database
+    of any size. Both histories survive, under two names, and the user
+    decides later whether to delete the archive.
+
+    The YAML rows have no registry entry to rename through, so the recorder
+    is asked directly.
+    """
+    period0 = _period_start()
+    period1 = period0 + timedelta(minutes=5)
+    with freeze_time(period0) as freezer:
+        # Years of YAML history, its registry entry long since removed.
+        await _record_meter(hass, freezer, period0, LEGACY_ID, [1000.0, 1002.0])
+        do_adhoc_statistics(hass, start=period0)
+        await async_wait_recording_done(hass)
+        await _retire(hass, LEGACY_ID)
+
+        # The integration has been running on modern ids and built its own.
+        entity_registry.async_get_or_create(
+            "sensor",
+            "sungrow_modbus",
+            "A2340600123_total_pv_generation",
+            suggested_object_id="sh10rt_total_pv_generation",
+        )
+        await _record_meter(hass, freezer, period1, MODERN_ID, [2000.0, 2002.0])
+        do_adhoc_statistics(hass, start=period1)
+        await async_wait_recording_done(hass)
+
+        # Step 1: archive the occupant. No registry entry exists for it, so
+        # the recorder is told directly. Rows are renamed, never copied.
+        get_instance(hass).async_update_states_metadata(
+            LEGACY_ID, new_entity_id=ARCHIVE_ID
+        )
+        async_update_statistics_metadata(hass, LEGACY_ID, new_statistic_id=ARCHIVE_ID)
+        await async_wait_recording_done(hass)
+
+        # Step 2: the legacy id is free, so the reverse rename is accepted.
+        entity_registry.async_update_entity(MODERN_ID, new_entity_id=LEGACY_ID)
+        await async_wait_recording_done(hass)
+
+    # Two series, both intact, under two names.
+    assert _states_meta_ids(hass) == {LEGACY_ID, ARCHIVE_ID}
+    assert _recorded_states(hass, period0, ARCHIVE_ID) == ["1000.0", "1002.0", SEAM]
+    assert _recorded_states(hass, period0, LEGACY_ID) == ["2000.0", "2002.0"]
+
+    stats = statistics_during_period(hass, period0, period="5minute")
+    assert MODERN_ID not in stats
+    assert [row["sum"] for row in stats[ARCHIVE_ID]] == [pytest.approx(2.0)]
+    assert [row["sum"] for row in stats[LEGACY_ID]] == [pytest.approx(2.0)]

@@ -7,7 +7,9 @@ list that would drift. Every modbus sensor in the package contributes its
 address, width and a plausible value, which is enough for the integration to
 read something sensible back during development.
 
-Writes scripts/simulator_registers.json (gitignored).
+Writes scripts/simulator_registers.json, which is committed: the tests read
+it to prove every ported register decodes, so it is a fixture rather than a
+scratch file.
 """
 
 from __future__ import annotations
@@ -19,7 +21,7 @@ from typing import Any
 import yaml
 
 REPO = Path(__file__).resolve().parent.parent
-SOURCE = REPO / "modbus_sungrow.yaml"
+SOURCE = REPO / "legacy" / "modbus_sungrow.yaml"
 TARGET = REPO / "scripts" / "simulator_registers.json"
 
 # Registers per data type. Anything not listed occupies a single register.

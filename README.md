@@ -1,133 +1,119 @@
-An *easy-to-use YAML-based integration* for several Sungrow inverters for Home Assistant. 
+# Sungrow Modbus — Home Assistant integration
 
 [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2)
 
-# 2026-01-10 "small breaking change: new parameter in secrets.yaml"
+> ## ⚠️ Experimental. Do not use this branch on a system you care about.
+>
+> This is the `proper-ha-integration` branch: a rewrite of this project as a
+> real Home Assistant integration. It is **unreleased, unversioned in any
+> meaningful sense, and not on HACS.** Registers can move, entity IDs can
+> change, and nothing here promises backwards compatibility yet.
+>
+> **If you are a normal user, you want [`main`](../../tree/main)** — the YAML
+> package, five years old, in use by thousands of people, and the only thing
+> that is finished.
 
-With the newest version you need to add ```sungrow_modbus_wait_milliseconds``` to your secrets.yaml. Choose 5 ms for LAN, 20 or higher for WiNet-S. This hopefully fixes some stability issues with WiNet-S connections. 
+## What this is
 
-Sorry, I forgot to migrate this patch from the old version :/ 
+A Home Assistant integration built on the Modbus architecture that arrived in
+Home Assistant 2026.9. It sets up through the UI, shares one serialized
+connection per inverter, and keeps its register knowledge in a plain Python
+library that tests without Home Assistant and without hardware.
 
-# 2026-01-01 "Version 2 of modbus_sungrow.yaml"
+It is intended to **replace** the YAML package rather than sit beside it, so
+the hard requirement is that existing users keep their recorder history, their
+long-term statistics and their dashboards when they switch.
 
-After five years of continuous development with maintained backwards compatibility, this integration reached its limits. With the help of @theunknown86 and several others, this yaml-based integration was rebased on a better and more flexible codebase. It still remains yaml-based and not a "full" Home Assistant integration, but can now support different Sungrow models with their specific features ("quirks"). As long there is no "real integration" available, I will continue to maintain the new yaml file. 
+## Where it has got to
 
-**The migration to the new version requires a few manual steps, see [migration guide](doc/migration_guide.md).**
+**Works:**
 
-The old version will be archived in the separate branch [2025-legacy](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/tree/2025-legacy). The "dev"-branch which was tested now by several users is now the "main"-branch.
+- All 127 read entities of the YAML package, generated from it so they cannot
+  drift, with the unit and state class of every entry they replace.
+- Setup through the UI: search the network for inverters, or type an address.
+  The model is detected from the device itself.
+- Entities are created **only where the hardware has them** — a two-tracker
+  inverter gets no MPPT3 sensors, a single-phase one gets no phase B or C.
+- A migration that keeps your entity IDs, so history and dashboards continue.
+  You are asked at setup; either answer works. See
+  [doc/integration_migration.md](doc/integration_migration.md).
+- Diagnostics you can download and attach to a bug report.
+- One naming convention, enforced by a test.
 
+**Not there yet:**
 
-# Contents
-- [1. Overview](#1-overview)
-- [2. Documentation](#2-documentation)
-    - [Changelog](doc/changelog.md)
-    - [Installation / Configuration](doc/installation.md)
-    - [Migration guide from 2025er version](doc/migration_guide.md)
-    - [Dashboard Setup](doc/dashboard.md)
-    - [Usage Instructions](doc/usage.md)
-    - [FAQ, Troubleshooting, Known Issues](doc/faq.md)  
-- [3. Support](#3-support)
-- [4. Visual impressions](#4-visual-impressions)
-- [5. Tested configurations](#5-tested-configurations)
-- [6. Status and future work](#6-status-and-future-work)
-- [7. Contributions](#7-contributions)
-- [8. Related work](#8-related-work)
+- **Writes.** Every `number`, `select`, `switch` and `button` the YAML package
+  has. This integration is read-only today.
+- Battery modules (SBR/SBH), the wallbox, the iHomeManager.
+- A release. The library is not on PyPI, so a HACS install would fail.
 
+[doc/integration_plan.md](doc/integration_plan.md) is the plan of record and
+says what is decided, what is open, and why.
 
-# 1. Overview
+## Trying it
 
-This integration lets you gather sensor data and control the EMS (Energy Management System) of a wide range of Sungrow inverters, but is primary tested using a *SH10RT* attached via LAN cable. Other inverters like SH*RS, SH*RT-V112, SH*RT-V112, SH*K-20 are supported partially. There might be sensors or controls not be working. A battery is not required, but several sensors will not be available without one.
+Nothing here needs an inverter — there is a simulator.
 
-If available on your inverter, connect the inverter to the Home Assistant network using the inverters **internal LAN port**. The WiNet-S Ethernet port and the WiNet-S Wi-Fi also work, but sometimes slightly slower and with some restrictions imposed by Sungrow on which data is available.
+```bash
+scripts/setup       # devcontainer does this for you
+scripts/simulate &  # a fake SH10RT on :5020
+scripts/develop     # Home Assistant on :8123
+```
 
-<figure>
-  <img src="doc/images/overview_modbus_connection.drawio.svg" width="600">
-  <figcaption>SHxRT connections overview</figcaption>
-</figure>
+Then *Settings → Devices & Services → Add integration → Sungrow Modbus*, and
+point it at `127.0.0.1:5020`, unit id `1`.
 
+[doc/development.yaml](doc/development.yaml) is the copy-paste runbook:
+commands, the dev login, talking to real hardware, and getting the web UI onto
+your LAN. [doc/development.md](doc/development.md) explains why things are the
+way they are.
 
-<figure>
-  <img src="doc/images/Inverter_LAN_ports.drawio.svg" width="600">
-  <figcaption>SHxRT LAN connection</figcaption>
-</figure>
+## The YAML package
 
+It lives in [legacy/](legacy/) on this branch, and at the repository root on
+`main`, which is where users should get it. Nothing about it changes until
+this integration reaches parity.
 
-# 2. Documentation
-- [Installation / Configuration](doc/installation.md)
-- [Migration from versions before 2026](doc/migration_guide.md)
-- [Changelog](doc/changelog.md)
-- [Usage Instructions](doc/usage.md)
-- [FAQ](doc/faq.md)
+- [Installation / Configuration](legacy/doc/installation.md)
+- [Migration from versions before 2026](legacy/doc/migration_guide.md)
+- [Usage](legacy/doc/usage.md) · [FAQ](legacy/doc/faq.md) ·
+  [Help / Troubleshooting](legacy/doc/help.md)
+- [Changelog](legacy/doc/changelog.md)
 
-# 3. Support
+## Register documentation
 
-My personal time is quite limited, but there are several nice people here who like to help. 
-
-If you need any kind of assistance, you have three options:
-
-  - Use the [GitHub discussions](../../discussions).
-
-  - Join the Discord server [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2).
-
-  - Only if code-related (bugs / contributions): Open a [GitHub issue](../../issue) or create a pull request.
-
-# 4. Visual impressions
-
-<figure>
-  <img src="doc/images/energy_dashboard_summary.drawio.svg" width="600">
-  <figcaption>Home Assistant's built-in Energy Dashboard</figcaption>
-</figure>
-
-
-<figure>
-  <img src="doc/images/default_dashboard_info.drawio.svg" width="600">
-  <figcaption>Default dashboard tab "Overview"</figcaption>
-</figure>
-
-
-<figure>
-  <img src="doc/images/default_dashboard_details.drawio.svg" width="600">
-  <figcaption>Default dashboard tab "Detail"</figcaption>
-</figure>
-
-
-<figure>
-  <img src="doc/images/default_dashboard_ems_ctrl.drawio.svg" width="600">
-  <figcaption>Default dashboard tab "EMS control"</figcaption>
-</figure>
-
-
-
-# 5. Tested configurations
-I have a **Sungrow SH10.RT** inverter and a **PylonTech Force H1 battery with 14.4 kWh**, updating frequently to the latest available firmware and **Home Assistant**. I try to thoroughly test features before releasing them, but I cannot test everything (e.g., backup capabilities, DO-related, sungrow-battery-specifics ...)
-
-The Modbus register mapping is based on Sungrow's official *Modbus communication protocol specification*. These documents are available from Sungrow support. They are only updated sporadically. If you have a newer version, let me know in the [GitHub discussions](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions)!
+The mapping comes from Sungrow's official *Modbus communication protocol
+specification*, available from Sungrow support and updated only sporadically.
+If you have a newer version, say so in the
+[discussions](../../discussions).
 
 ```
 TI_20251119_Communication_Protocol_of_Residential_Hybrid_Inverter_V1.1.11_EN.pdf
 TI_20230117_Communication.Protocol.of.Residential.and.Commerical.PV.Grid-connected.Inverter_V1.1.53_EN.pdf
 ```
 
+## Help and contributions
 
-# 6. Status and future work 
-This is meant to be a simple, straight-forward YAML-based integration. If you need more than this, I recommend having a look at other projects: 
-  - https://github.com/TCzerny/ha-modbus-manager
-  - https://github.com/bohdan-s
+- [GitHub discussions](../../discussions) for questions.
+- [Discord](https://discord.gg/ZvYBejFkm2) — the lowest-threshold way to ask.
+- [GitHub issues](../../issues) for bugs and pull requests.
 
-# 7. Contributions
-We are happy to share our experiences - feel encouraged to share yours with us, too! 
+A diagnostics download from the integration answers most of the first round of
+questions on a bug report, so attach one if you have it.
 
-If you have any questions, feature requests, found any bugs or have some hints how to update the documentation, a low-threshold way is to join the [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2) and just ask.
+## Related work
 
-# 8. Related work
 - **[HA Modbus Manager](https://github.com/TCzerny/ha-modbus-manager)**
 - **[Sungrow Wallbox](https://github.com/Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant)**
 - **[Sungrow Logger 1000a](https://github.com/RafAustralia/Sungrow-Logger1000a-Modbus)**
 - **[Chint DTSU666 Modbus](https://github.com/RafAustralia/Chint-DTSU666-20-modbus/)**
 - **[EVCC](https://github.com/Hoellenwesen/home-assistant-configurations)**
-- **Sungrow document collections [by bohdan-s](https://github.com/bohdan-s/Sungrow-Inverter) and [by Gnarfoz](https://github.com/Gnarfoz/Sungrow-Inverter)**
+- Sungrow document collections
+  [by bohdan-s](https://github.com/bohdan-s/Sungrow-Inverter) and
+  [by Gnarfoz](https://github.com/Gnarfoz/Sungrow-Inverter)
 
+## Acknowledgements
 
-# 9. Acknowledgements
-
-**Thanks to all the people, who are actively contributing to this project! Special thanks to Gnarfoz, Louisbertelsmann, dylan09, elektrinis and many more!**
+Five years of this project is the work of many people — everyone who filed a
+register correction, tested a firmware, or answered a question in the
+discussions. The YAML package's history is theirs.

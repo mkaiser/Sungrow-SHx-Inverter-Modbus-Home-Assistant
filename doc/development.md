@@ -1,7 +1,7 @@
 # Developing the Home Assistant integration
 
-This is about the **new custom integration** (`custom_components/sungrow_shx`)
-and its device library (`src/sungrow_shx_modbus`), not the YAML package. The
+This is about the **new custom integration** (`custom_components/sungrow_modbus`)
+and its device library (`src/sungrow_modbus`), not the YAML package. The
 YAML package in `modbus_sungrow.yaml` is unaffected and keeps working as it
 always has.
 
@@ -17,6 +17,12 @@ lives in a plain Python library built on
 so it can be tested without Home Assistant and without an inverter.
 
 ## Getting a dev environment
+
+> [doc/development.yaml](development.yaml) is the copy-paste companion to this
+> page: every command in order, the optional secrets, the dev instance's login,
+> and how to get the web UI to your desktop and onto the LAN. This page
+> explains why; that one is what you paste.
+
 
 Open the repo in the devcontainer (VS Code: *Dev Containers: Reopen in
 Container*). It pins Python 3.14 - Home Assistant 2026.9 requires 3.14.2 or
@@ -67,11 +73,19 @@ directories. That is why the durable repo context lives in `CLAUDE.md` and
 | `ruff check . && ruff format .` | Lint and format |
 
 Add the integration from *Settings → Devices & Services → Add Integration →
-Sungrow SHx Inverter*, then point it at either:
+Sungrow Modbus*, then point it at either:
 
 - the simulator: host `localhost`, port `5020`, unit id `1`
 - a real inverter: its IP, port `502`, and the unit id from `secrets.yaml`
   (`sungrow_modbus_device_address`, normally `1`)
+
+**A real inverter on your LAN is reachable from the container without any
+setup.** The Docker bridge NATs outbound, so the container follows the host's
+routing — which is how the reference inverter's register dumps were read. What
+does *not* cross the bridge is multicast, so mDNS discovery has to run on the
+host; and inbound, which is the web UI's problem rather than the inverter's.
+`real_hardware` in [development.yaml](development.yaml) has the details, the
+contention warning, and the network-search caveat.
 
 ## The simulator
 
@@ -89,8 +103,8 @@ zeroes everywhere.
 ## Layout
 
 ```
-custom_components/sungrow_shx/   Home Assistant integration (thin)
-src/sungrow_shx_modbus/          device library (no Home Assistant imports)
+custom_components/sungrow_modbus/   Home Assistant integration (thin)
+src/sungrow_modbus/          device library (no Home Assistant imports)
   components.py                  register maps as typed Component classes
   device.py                      SungrowInverter, composed of components
 tests/                           device library tests, against the mock backend
@@ -101,7 +115,7 @@ The split follows what Home Assistant's Modbus documentation recommends and
 what core's `sofar` integration does. The library is kept in this repo for now
 and can be broken out into its own PyPI package once its shape settles; the
 version in `pyproject.toml` must stay identical to the `requirements` entry in
-`custom_components/sungrow_shx/manifest.json`, because Home Assistant checks
+`custom_components/sungrow_modbus/manifest.json`, because Home Assistant checks
 the installed version on every start.
 
 ## Porting registers
@@ -123,6 +137,59 @@ Addresses are protocol addresses, i.e. one below the register number in
 Sungrow's document (`address: 4989 # reg 4990`). Neighbouring fields are
 pooled into block reads automatically, so grouping fields by how often they
 should be polled matters more than grouping them by address.
+
+## Reviewing the migration by hand
+
+The migration is the one feature a unit test cannot fully judge. Whether the
+setup dialog explains the choice well enough to make it, and whether the
+history graph really is continuous afterwards, are things you have to look at.
+`scripts/seed_migration_testbed.py` fabricates the starting state — the
+registry entries `modbus_sungrow.yaml` leaves behind, plus a month of recorded
+readings and hourly statistics under the ids it used:
+
+```console
+$ scripts/develop                            # once, to create config/
+# stop it
+$ python scripts/seed_migration_testbed.py
+Registry:   153 entities added
+History:    2880 states over 30 days
+Statistics: 2880 hourly rows
+$ scripts/simulate &                         # an inverter to talk to
+$ scripts/develop
+```
+
+Home Assistant must be **stopped** while it runs: it writes the entity
+registry and the recorder database directly. `--reset` undoes it, so the same
+instance can be used to try the other answer. `--from <snapshot>` uses a
+registry exported from a real instance instead of the generated entity map —
+more faithful, but such a file belongs in `.testdata/`, never in the repo.
+
+## Naming entities
+
+Entity names are entity ids. With `has_entity_name` set, Home Assistant
+slugifies the object id **from the name**, so "Sungrow inverter serial" gives
+`sensor.sh10rt_sungrow_inverter_serial` and "Serial number" gives
+`sensor.sh10rt_serial_number`. A name is cheap to get right before release and
+impossible to change afterwards.
+
+The convention is in [scripts/naming.py](../scripts/naming.py) — sentence case,
+a fixed acronym list, no device name at the front, no guessable abbreviations,
+and `_raw` entities under `EntityCategory.DIAGNOSTIC`. Do not write a name into
+`strings.json` by hand:
+
+```console
+$ python scripts/generate_strings.py
+Wrote 127 entity names
+```
+
+`tests/test_naming_convention.py` checks the committed `strings.json` against
+the convention rather than against the generator, so an override has to obey
+the rules like everything else. If a name genuinely needs to break them, add it
+to `OVERRIDES` **with the reason** — the table is short on purpose.
+
+`legacy_name` on each description is the exception and must never be
+normalised: legacy mode reproduces a user's existing entity_ids byte for byte,
+so the YAML's inconsistency is preserved there deliberately.
 
 ## First boot
 
@@ -158,9 +225,9 @@ The shape being considered is to let the user choose during setup:
   which requires the YAML entities to be removed first, or the ids collide;
 - **take modern, device-scoped ids** and migrate the existing data across.
 
-What still has to be established before either can be promised: whether
-renaming an entity in the entity registry carries its raw recorder states,
-and whether long-term statistics (which the Energy dashboard reads, keyed by
-`statistic_id`) follow the same path or need separate handling. Until that is
-answered, avoid decisions in the integration that would make either option
-impossible.
+Both were open questions; both are now settled and asserted against Home
+Assistant itself in [tests/test_recorder_migration.py](../tests/test_recorder_migration.py).
+A registry rename carries raw states *and* long-term statistics, and it is
+reversible, so neither direction is a one-way door. The mechanism and its traps
+are in [doc/integration_plan.md](integration_plan.md); read that before
+touching entity ids.

@@ -1,0 +1,120 @@
+# Publishes a release of the custom integration.
+#
+# The whole flow is driven by a tag, so the git history is the record of what
+# was released:
+#
+#   scripts/sync_version.py --set 0.2.0
+#   git commit -am "Release 0.2.0" && git tag v0.2.0 && git push --follow-tags
+#
+# The version in pyproject.toml and manifest.json must match the tag. That is
+# checked here rather than trusted, because a manifest whose version does not
+# match the installed library makes Home Assistant try to pip-install it on
+# every start.
+#
+# `v*` tags are the integration. The YAML package keeps its own dated scheme
+# and is not released from here.
+name: Release integration
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build a release for, e.g. v0.2.0"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Verify and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Resolve version from the tag
+        id: version
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: The tag, pyproject.toml and manifest.json must agree
+        run: python scripts/sync_version.py --check --expect "${{ steps.version.outputs.version }}"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --requirement requirements_dev.txt
+
+      - name: Lint and test
+        run: |
+          ruff check .
+          ruff format --check .
+          pytest -q
+
+      - name: hassfest
+        uses: home-assistant/actions/hassfest@master
+
+      - name: HACS
+        uses: hacs/action@main
+        with:
+          category: integration
+
+      # HACS shows users the five most recent releases, so a release has to
+      # exist — a bare tag is not enough, and is also what the HACS default
+      # store requires.
+      - name: Publish the GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+
+  # Publishing to PyPI is not optional: manifest.json pins
+  # sungrow-modbus==<version>, and Home Assistant pip-installs a custom
+  # integration's requirements exactly as it does a built-in one. Without this
+  # a HACS install fails at start-up.
+  #
+  # Uses PyPI Trusted Publishing (OIDC), so there is no API token in secrets.
+  # It requires a matching publisher configured on PyPI for this repository,
+  # this workflow filename and the `pypi` environment.
+  pypi:
+    name: Publish the library to PyPI
+    needs: release
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+
+      - name: Check the metadata before uploading
+        run: |
+          python -m pip install --upgrade twine
+          twine check dist/*
+
+      - uses: pypa/gh-action-pypi-publish@release/v1

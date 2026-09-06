@@ -19,6 +19,19 @@ def encode_string(text: str, registers: int) -> list[int]:
 
 
 #: An inverter answering like an SH10RT producing 7 kW.
+#:
+#: Two of these entries are the difference between a plausible double and a
+#: misleading one, and both were found by a test that expected the hardware's
+#: behaviour and got the mock's:
+#:
+#: * **5001 (register 5002) is the output type**, and an SH10RT is 3P4L. Left
+#:   unseeded it reads 0, which is "single phase" — so the double contradicted
+#:   its own model code, and every test silently exercised the single-phase
+#:   path.
+#: * **An unseeded address reads 0, but a real inverter sends 0xFFFF** for a
+#:   measuring point it does not have. Without the sentinels below, MPPT3 and
+#:   MPPT4 probe as *present* on a two-tracker inverter, and the capability
+#:   gating this project is built around is never exercised at all.
 SH10RT_INPUT_REGISTERS: dict[int, int | list[int]] = {
     4951: [0x0002, 0x0000],
     4953: encode_string("SAPPHIRE-H_01011.95.12", 15),
@@ -26,7 +39,12 @@ SH10RT_INPUT_REGISTERS: dict[int, int | list[int]] = {
     4989: encode_string(SERIAL, 10),
     4999: 0x0E03,
     5000: 100,
+    5001: 1,  # reg 5002: 3P4L, which is what an SH10RT is
+    5014: 0xFFFF,  # MPPT3 voltage: absent, as the specification spells it
+    5015: 0xFFFF,  # MPPT3 current
     5016: [0x1B58, 0x0000],
+    5114: 0xFFFF,  # MPPT4 voltage
+    5115: 0xFFFF,  # MPPT4 current
 }
 
 

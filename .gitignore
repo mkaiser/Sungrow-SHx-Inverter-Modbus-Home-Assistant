@@ -5,7 +5,6 @@ config/*
 !config/configuration.yaml
 
 # Generated simulator seed.
-scripts/simulator_registers.json
 
 # Upstream sources cloned for reference (scripts/fetch_references).
 .reference/
@@ -18,3 +17,22 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .coverage
+
+# Generated only for eyeballing the brand mark, not an asset.
+brand/preview.png
+
+# Build artefacts from `python -m build`.
+dist/
+build/
+
+# Register dumps and production data from real installations. These carry
+# serial numbers and live household readings, and this repo is public.
+# Redacted capability fingerprints are committed instead; see
+# scripts/discover_probe.py.
+.testdata/
+
+# Reports written by scripts/collect_fingerprint.py, which defaults to the
+# working directory — so running it inside a checkout drops one here. They are
+# redacted by construction, but they are somebody's data and not repo content:
+# a curated copy belongs in doc/fingerprints/ under a deliberate name.
+sungrow-fingerprint-*.json

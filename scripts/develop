@@ -12,9 +12,19 @@ if [[ ! -f "${PWD}/config/.HA_VERSION" ]]; then
     hass --config "${PWD}/config" --script ensure_config
 fi
 
-# Home Assistant looks for custom integrations in <config>/custom_components.
-# Putting the repo's custom_components on PYTHONPATH keeps the integration at
-# the repo root (where hassfest and HACS expect it) without a symlink.
-export PYTHONPATH="${PYTHONPATH}:${PWD}/custom_components"
+# Home Assistant looks for custom integrations in <config>/custom_components,
+# so that is a symlink back to the repo. It used to be PYTHONPATH instead,
+# which broke the moment the domain was renamed to `sungrow_modbus`: that is
+# also the library's import name, so putting custom_components/ on the path
+# exposes the *integration* as top-level `sungrow_modbus` and it shadows the
+# library. `from sungrow_modbus import TIERS` inside the integration then
+# imports the integration from inside itself, and Home Assistant reports a
+# circular import while loading the config flow.
+#
+# A real installation has config/custom_components/ as a directory and the
+# library in site-packages, which is exactly what this reproduces. config/ is
+# gitignored, so the link costs nothing.
+mkdir -p "${PWD}/config"
+ln -sfn "${PWD}/custom_components" "${PWD}/config/custom_components"
 
 hass --config "${PWD}/config" --debug

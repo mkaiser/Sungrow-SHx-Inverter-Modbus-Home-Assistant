@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+from modbus_connection import ModbusConnectionError
 from modbus_connection.mock import MockModbusUnit
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.sungrow_shx.const import CONF_UNIT_ID, DOMAIN
+from custom_components.sungrow_modbus.const import CONF_UNIT_ID, DOMAIN
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
@@ -25,7 +26,7 @@ async def _setup(hass: HomeAssistant, unit: MockModbusUnit) -> MockConfigEntry:
     )
     entry.add_to_hass(hass)
     with patch(
-        "custom_components.sungrow_shx.async_get_unit",
+        "custom_components.sungrow_modbus.async_get_unit",
         return_value=unit,
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
@@ -73,3 +74,36 @@ async def test_entry_unloads(hass: HomeAssistant, sungrow_unit: MockModbusUnit) 
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
     assert entry.state is ConfigEntryState.NOT_LOADED
+
+
+async def test_a_dropped_connection_names_its_usual_cause(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The message has to point somewhere useful.
+
+    A Sungrow accepts very few Modbus sessions at once, so a dropped
+    connection is nearly always a second client rather than a network fault.
+    The bare library message -- "Connection lost before response was
+    received" -- sends people to look at their cabling, which is what happened
+    to the maintainer against his own inverter: the reads were fine, another
+    client had the slots.
+    """
+    entry = MockConfigEntry(
+        domain=DOMAIN, data=ENTRY_DATA, unique_id=SERIAL, title="SH10RT"
+    )
+    entry.add_to_hass(hass)
+    with (
+        patch(
+            "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
+        ),
+        patch.object(
+            type(sungrow_unit),
+            "read_input_registers",
+            side_effect=ModbusConnectionError("Connection lost"),
+        ),
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert entry.state is ConfigEntryState.SETUP_RETRY
+    assert "accepts very few Modbus connections" in str(entry.reason)

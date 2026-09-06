@@ -16,6 +16,10 @@
 frontend:
 config:
 
+# The "Download diagnostics" button on an integration's page. Part of
+# default_config, which this file deliberately does not use.
+diagnostics:
+
 # Entity history, so a sensor's graph shows whether polling actually works.
 recorder:
 history:
@@ -28,7 +32,7 @@ person:
 logger:
   default: info
   logs:
-    custom_components.sungrow_shx: debug
-    sungrow_shx_modbus: debug
+    custom_components.sungrow_modbus: debug
+    sungrow_modbus: debug
     homeassistant.components.modbus: debug
     modbus_connection: debug
