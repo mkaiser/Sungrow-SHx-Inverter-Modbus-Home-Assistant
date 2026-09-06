@@ -56,7 +56,7 @@ implementation for this pattern — read its real source, not blog posts.
 | `scripts/generate_strings.py` | Write the entity names to the convention in `scripts/naming.py`; `--check` in CI |
 | `scripts/seed_migration_testbed.py` | Make the dev instance look like a house that ran the YAML package for years, so the migration can be reviewed in the GUI |
 | `scripts/collect_fingerprint.py` | Standalone, dependency-free report users run against their own inverter |
-| `scripts/make_brand_icon.py` | Regenerate `brand/` icons (`--preview` renders a check sheet) |
+| `scripts/make_brand_icon.py` | Regenerate the integration's `brand/` icons (`--preview` renders a check sheet) |
 | `pytest` | Device library + integration tests, no network needed |
 | `ruff check . && ruff format .` | Lint and format |
 

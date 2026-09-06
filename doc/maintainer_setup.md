@@ -158,6 +158,21 @@ Two things to check:
 - **The Docker bridge is `172.17.0.0/16`**, so a site on that range would
   collide with the container itself.
 
+### The HACS brands check
+
+HACS validates nine things about a repository, and the one that fails for a
+new integration is **brands**: it wants the domain listed in the Home Assistant
+[brands repository](https://github.com/home-assistant/brands), and falls back
+to looking for assets at `custom_components/<domain>/brand/icon.png` inside
+the repository itself. The icons were at the repository root, which is neither
+place, so the check failed with "does not provide brand assets and is not
+listed in the Home Assistant brands repository".
+
+They now live at `custom_components/sungrow_modbus/brand/`, which satisfies
+the fallback. Submitting `sungrow_modbus` to the brands repository is still
+worth doing before applying to the HACS default store — it is what puts a real
+icon on the integration in Home Assistant's own UI rather than only in HACS.
+
 ## 5. Keeping data out of the cloud
 
 Worth being precise, because "cloud" means two different things here and the
@@ -197,7 +212,7 @@ print it.
 ## 6. Repository settings, for the HACS default store later
 
 Needed before submitting to `hacs/default`, and free to do now: a repository
-**description**, **topics**, and **issues enabled**. A `brand/icon.png` already
+**description**, **topics**, and **issues enabled**. A `custom_components/sungrow_modbus/brand/icon.png` already
 exists. Submission also needs at least one full GitHub release, which item 1
 produces. Expect the review to take months.
 

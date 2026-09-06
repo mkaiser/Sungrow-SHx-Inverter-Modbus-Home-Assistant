@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Draw the integration's brand icon.
 
-HACS requires a `brand/icon.png` for an integration, and Home Assistant's
+HACS looks for `custom_components/<domain>/brand/icon.png` and falls back to
+the Home Assistant brands repository if it is not there. Home Assistant's
 brands repository wants 256x256 and 512x512 PNGs, square, transparent,
 trimmed to the mark. Generating them from code keeps the asset reproducible
 and lets the mark be adjusted without a design tool.
@@ -16,7 +17,7 @@ which is exactly what an SH-series hybrid inverter is. Two shapes, two
 colours, and deliberately no more: the icon is displayed at around 32 pixels
 in Home Assistant's own UI, where anything finer turns to mush.
 
-    python scripts/make_brand_icon.py            # writes brand/
+    python scripts/make_brand_icon.py            # writes the brand/ folder
     python scripts/make_brand_icon.py --preview  # also writes a large preview
 """
 
@@ -29,7 +30,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 REPO = Path(__file__).resolve().parent.parent
-BRAND = REPO / "brand"
+BRAND = REPO / "custom_components" / "sungrow_modbus" / "brand"
 
 #: Drawn far larger than needed and downsampled, which is the cheapest way to
 #: get clean edges out of Pillow's non-antialiased primitives.

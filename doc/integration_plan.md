@@ -1013,7 +1013,9 @@ without any of that, and is worth running before tagging.
 
 **HACS custom repository now** — works as soon as a release exists. **HACS
 default store** when stable: needs a description, issues enabled, topics, one
-full release, a `brand/icon.png` (done), and the HACS action and hassfest
+full release, brand assets at `custom_components/sungrow_modbus/brand/`
+(done -- HACS looks there before it falls back to the Home Assistant brands
+repository, which this integration is not in), and the HACS action and hassfest
 passing.
 
 **Core is a real option but not for this shape of integration.** New core
