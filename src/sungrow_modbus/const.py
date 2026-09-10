@@ -7,13 +7,22 @@ MANUFACTURER = "Sungrow"
 #: Inverter model by the code in input register 5000 (protocol address 4999).
 #:
 #: Checked against Appendix 1 of Sungrow's *Communication Protocol of
-#: Residential Hybrid Inverter* V1.1.11 (2025-11-17), which lists 35 models.
-#: All 35 are here and the names agree.
+#: Residential and Small Industrial Hybrid Inverter* V1.1.16 (2026-07-03),
+#: which lists 49 models. All 49 are here and the names agree.
 #:
 #: Seven entries are **not** in that appendix: the SH*K series, which protocol
 #: V1.1.0 removed from the list of valid device types in 2023. They stay,
 #: because the hardware is still in the field even where the current
 #: specification has stopped describing it.
+#:
+#: **The codes are not allocated in one block per family.** An earlier version
+#: of this project classified families by code range, on the stated assumption
+#: that "new models land inside those blocks". V1.1.12 to V1.1.16 falsified it:
+#: MG and SH*RL interleave inside 0x0D2x -- MG5RL to MG10RL at 0x0D27-0x0D2A,
+#: then SH5RL to SH10RL at 0x0D2B-0x0D2E, then MG12RL again at 0x0D2F. A range
+#: extended over that gap would have called four single-phase inverters
+#: three-phase MG. `family_for` reads the model *name* from this table
+#: instead.
 DEVICE_TYPES: dict[int, str] = {
     0x0D03: "SH5K-V13",
     0x0D06: "SH3K6",
@@ -33,6 +42,16 @@ DEVICE_TYPES: dict[int, str] = {
     0x0D28: "MG6RL",
     0x0D29: "MG8RL",
     0x0D2A: "MG10RL",
+    # V1.1.12 onward, interleaved with the MG codes above and below.
+    0x0D2B: "SH5RL",
+    0x0D2C: "SH6RL",
+    0x0D2D: "SH8RL",
+    0x0D2E: "SH10RL",
+    0x0D2F: "MG12RL",
+    0x0D31: "MG7.5RL",
+    0x0D41: "SH3RL",
+    0x0D42: "SH3.6RL",
+    0x0D43: "SH4RL",
     0x0E00: "SH5.0RT",
     0x0E01: "SH6.0RT",
     0x0E02: "SH8.0RT",
@@ -57,6 +76,13 @@ DEVICE_TYPES: dict[int, str] = {
     0x0E25: "SH15T",
     0x0E26: "SH20T",
     0x0E28: "SH25T",
+    # V1.1.14 and V1.1.15. Ten MPP trackers, where every other model here has
+    # two to four, and no reading from one exists -- see `Family.CX`.
+    0x0E39: "SH100CX",
+    0x0E3A: "SH110CX",
+    0x0E3D: "SH125CX",
+    0x0E51: "SH50CX",
+    0x0E52: "SH80CX",
 }
 
 

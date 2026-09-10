@@ -343,14 +343,42 @@ async def _find(args, echo) -> list[Found]:
             addresses = [(typed, args.port)]
 
     found = []
+    managers = []
     echo("")
     for host, port in addresses:
         who = await probe.identify(host, port)
         echo(f"  {host}:{port}  {probe.described(who)}")
+        if who.kind == "ihomemanager":
+            # Found, and deliberately **not** surveyed. Every block this tool
+            # reads is an inverter's; run them against unit 247 and each one
+            # refuses, producing a document that claims a reading of nothing.
+            # Saying so is worth more than an empty file.
+            managers.append((host, port))
+            continue
         # The unit that answered, not the flag's default. Where `--unit` was
         # given explicitly it still wins, because somebody passing it knows
         # something the probe does not.
         found.append(Found(host, port, who.unit or args.unit, who))
+
+    if managers:
+        echo("")
+        echo("  An iHomeManager answered, and this survey cannot read it yet.")
+        echo("  It is the one Sungrow device in scope with an official register")
+        echo("  document and no measurement at any house, so a reading would be")
+        echo("  the first. Nothing here reads its blocks, and pointing the")
+        echo("  inverter survey at it would write a document full of refusals.")
+        echo("")
+        echo("  What would help, if you own this: say so on the tracker. The")
+        echo("  registers are known -- unit 247, input 8000 upward -- and what")
+        echo("  is missing is somebody's device to check them against.")
+        if not found:
+            echo("")
+            echo("  No inverter was found at these addresses, so there is")
+            echo("  nothing to survey. An iHomeManager does not forward its")
+            echo("  inverters: Sungrow's own note says it carries only system")
+            echo("  energy dispatch data, not the devices behind it. So the")
+            echo("  inverter is a separate address -- sweep for it, or pass it:")
+            echo(f"    python {Path(__file__).name} 192.168.1.50")
 
     _report_shared_serials(found, echo)
     if len(found) > 1:

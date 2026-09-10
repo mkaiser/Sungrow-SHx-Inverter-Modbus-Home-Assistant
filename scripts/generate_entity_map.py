@@ -74,9 +74,9 @@ CARRIED = (
 #:
 #: **Addresses are protocol addresses, one below the register number the
 #: specification prints.** Every value below was read from *Communication
-#: Protocol of Residential Hybrid Inverter* **V1.1.11 (2025-11-17)** rather
-#: than inferred: a guessed scale produces a plausible wrong number, which is
-#: the failure this project can least afford.
+#: Protocol of Residential and Small Industrial Hybrid Inverter* **V1.1.16
+#: (2026-07-03)** rather than inferred: a guessed scale produces a plausible
+#: wrong number, which is the failure this project can least afford.
 SPECIFICATION_ADDITIONS: list[dict[str, Any]] = [
     # V1.1.7, reg 13088, U16, 0-1000, 0.1%. Not the same thing as the active
     # power limit ratio at reg 13090, which the YAML already reads: the
@@ -106,6 +106,100 @@ SPECIFICATION_ADDITIONS: list[dict[str, Any]] = [
         "nan_value": 0xFFFF,
         "scan_interval": 10,
     },
+    # V1.1.7, reg 13017, U16, 0xAA forced startup. Note the address: this is
+    # one *below* the PV power limitation above, which is reg 13018 -- and
+    # input 13017 is a different measurement again, "optimized power of load"
+    # in watts. Register and space together, always.
+    #
+    # Added to the specification in V1.1.7 alongside the seven additions this
+    # project's V1.1.11 audit resolved, and missed by that audit. V1.1.16
+    # excludes only SH50~125CX.
+    {
+        "name": "Forced startup under low SoC raw",
+        "domain": "sensor",
+        "input_type": "holding",
+        "address": 13016,
+        "data_type": "uint16",
+        "nan_value": 0xFFFF,
+        "scan_interval": 10,
+    },
+    # V1.1.16 reg 13029, U16, 0.1%. What share of today's generation was used
+    # on site rather than exported. A ratio the inverter keeps itself, not a
+    # counter -- so `measurement`, not `total_increasing`.
+    {
+        "name": "Self-consumption of today",
+        "domain": "sensor",
+        "input_type": "input",
+        "address": 13028,
+        "data_type": "uint16",
+        "scale": 0.1,
+        "unit_of_measurement": "%",
+        "precision": 1,
+        "state_class": "measurement",
+        "nan_value": 0xFFFF,
+        "scan_interval": 600,
+    },
+]
+
+#: The backup port's voltage, current and frequency -- regs 5720-5722 (S16,
+#: 0.1 A), 5731-5733 (U16, 0.1 V) and 5734 (U16, 0.01 Hz).
+#:
+#: The YAML package reads the backup port's **power** at regs 5723-5726 and
+#: stops, so an off-grid house can see what the backup output delivers but
+#: not at what voltage or frequency. Same block, same battery capability
+#: gate; 0x7FFF is the specification's unavailable sentinel for S16 and
+#: 0xFFFF for U16.
+SPECIFICATION_ADDITIONS += [
+    {
+        "name": f"Backup phase {phase} current",
+        "domain": "sensor",
+        "input_type": "input",
+        "address": address,
+        "data_type": "int16",
+        "scale": 0.1,
+        "unit_of_measurement": "A",
+        "device_class": "current",
+        "state_class": "measurement",
+        "precision": 1,
+        "nan_value": 0x7FFF,
+        "scan_interval": 10,
+    }
+    for phase, address in (("A", 5719), ("B", 5720), ("C", 5721))
+]
+
+SPECIFICATION_ADDITIONS += [
+    {
+        "name": f"Backup phase {phase} voltage",
+        "domain": "sensor",
+        "input_type": "input",
+        "address": address,
+        "data_type": "uint16",
+        "scale": 0.1,
+        "unit_of_measurement": "V",
+        "device_class": "voltage",
+        "state_class": "measurement",
+        "precision": 1,
+        "nan_value": 0xFFFF,
+        "scan_interval": 10,
+    }
+    for phase, address in (("A", 5730), ("B", 5731), ("C", 5732))
+]
+
+SPECIFICATION_ADDITIONS += [
+    {
+        "name": "Backup frequency",
+        "domain": "sensor",
+        "input_type": "input",
+        "address": 5733,
+        "data_type": "uint16",
+        "scale": 0.01,
+        "unit_of_measurement": "Hz",
+        "device_class": "frequency",
+        "state_class": "measurement",
+        "precision": 2,
+        "nan_value": 0xFFFF,
+        "scan_interval": 10,
+    }
 ]
 
 #: V1.1.9, regs 13200-13207, S32, 1 W each. "Only valid when the inverter is

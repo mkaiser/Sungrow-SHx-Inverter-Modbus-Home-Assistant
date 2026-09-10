@@ -2,16 +2,21 @@
 
 `DEVICE_TYPES` decides what an inverter is called and, in modern mode, what
 its entities are called — so a wrong or missing entry is user-visible. This
-holds it against Appendix 1 of the *Communication Protocol of Residential
-Hybrid Inverter* V1.1.11, transcribed below because the PDF is not in the
-repository.
+holds it against Appendix 1 of the *Communication Protocol of Residential and
+Small Industrial Hybrid Inverter* V1.1.16, transcribed below because the PDF
+is not in the repository.
 """
 
 from __future__ import annotations
 
 from sungrow_modbus.const import DEVICE_TYPES, model_for
 
-#: Appendix 1, "Adaptive Inverter Models", V1.1.11 (2025-11-17). All 35.
+#: Appendix 1, "Adaptive Inverter Models", V1.1.16 (2026-07-03). All 49.
+#:
+#: Note the ordering of the 0x0D2x block: the MG codes are **interrupted** by
+#: SH5RL to SH10RL and resume above them. That is what falsified the
+#: code-range family classifier this table's consumer used to have, so the
+#: transcription keeps the specification's own order rather than sorting it.
 SPECIFICATION = {
     0x0D0D: "SH3.6RS",
     0x0D0F: "SH5.0RS",
@@ -24,6 +29,15 @@ SPECIFICATION = {
     0x0D28: "MG6RL",
     0x0D29: "MG8RL",
     0x0D2A: "MG10RL",
+    0x0D2B: "SH5RL",
+    0x0D2C: "SH6RL",
+    0x0D2D: "SH8RL",
+    0x0D2E: "SH10RL",
+    0x0D2F: "MG12RL",
+    0x0D31: "MG7.5RL",
+    0x0D41: "SH3RL",
+    0x0D42: "SH3.6RL",
+    0x0D43: "SH4RL",
     0x0E00: "SH5.0RT",
     0x0E01: "SH6.0RT",
     0x0E02: "SH8.0RT",
@@ -48,6 +62,11 @@ SPECIFICATION = {
     0x0E25: "SH15T",
     0x0E26: "SH20T",
     0x0E28: "SH25T",
+    0x0E39: "SH100CX",
+    0x0E3A: "SH110CX",
+    0x0E3D: "SH125CX",
+    0x0E51: "SH50CX",
+    0x0E52: "SH80CX",
 }
 
 #: Removed from the specification by protocol V1.1.0 in 2023, but still real
@@ -65,7 +84,7 @@ DELIBERATE_EXTRAS = {
 
 def test_every_model_in_the_specification_is_known() -> None:
     missing = {c: n for c, n in SPECIFICATION.items() if c not in DEVICE_TYPES}
-    assert not missing, f"models in V1.1.11 that DEVICE_TYPES does not know: {missing}"
+    assert not missing, f"models in V1.1.16 that DEVICE_TYPES does not know: {missing}"
 
 
 def test_names_agree_with_the_specification() -> None:

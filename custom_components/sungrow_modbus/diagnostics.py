@@ -26,6 +26,15 @@ pasted into a public issue.
 The raw register dump is **off by default** and enabled in the integration's
 options. It performs a full extra read of every mapped address, which through
 a WiNet-S is slow enough to disturb polling, so it is opt-in rather than free.
+
+It also carries a **`fingerprint`** section: a complete capability survey in
+the same format `scripts/sungrow_scan/collect.py` writes, so a user who has
+the integration running can contribute one by clicking a button instead of
+running Python. Everything else in this file answers "what is wrong with
+mine"; that section answers "what does this model and this firmware actually
+do", which is the question `doc/compatibility.md` exists for and which nine
+documents from four houses cannot answer. See `fingerprint.py`, including
+what it deliberately does not do.
 """
 
 from __future__ import annotations
@@ -44,6 +53,7 @@ from sungrow_modbus.capabilities import OUTPUT_TYPES, known_absent, probe
 
 from .const import CONF_REGISTER_DUMP, CONF_UNIT_ID, DOMAIN
 from .coordinator import COMPONENT_TIERS, SungrowConfigEntry
+from .fingerprint import async_build
 from .migration import DESCRIPTIONS, legacy_entity_id
 
 #: Identifying details, redacted because this file is meant to be shared.
@@ -83,6 +93,25 @@ async def async_get_config_entry_diagnostics(
         "entities": _entities(hass, entry, runtime),
         "readings": async_redact_data(_readings(device), TO_REDACT),
     }
+
+    # A publishable capability survey, in the same format the standalone
+    # scanner writes. This is the part worth sending on: everything above
+    # answers "what is wrong with mine", and this answers "what does this
+    # model and firmware actually do", which is the question
+    # `doc/compatibility.md` is built from and which nine documents from four
+    # houses is not enough to answer.
+    #
+    # Wrapped, and that is not caution for its own sake: diagnostics is what
+    # somebody downloads when the integration is *already* misbehaving, so a
+    # survey that raised would take away the report they came for. It costs
+    # 19 probe reads and five timing reads, which is small beside the
+    # register dump and not free -- an inverter grants very few sessions.
+    try:
+        report["fingerprint"] = await async_build(hass, entry)
+    # Deliberately broad: the report a user came for matters more than
+    # any one section of it.
+    except Exception as err:
+        report["fingerprint"] = {"error": f"{type(err).__name__}: {err}"}
 
     if entry.options.get(CONF_REGISTER_DUMP, False):
         report["register_dump"] = await _async_register_dump(device)

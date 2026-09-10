@@ -24,6 +24,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from enum import StrEnum
 
+from .const import model_for
+
 
 class Capability(StrEnum):
     """Something a device may or may not have, gating a group of registers."""
@@ -107,6 +109,14 @@ class Capability(StrEnum):
     different things.
     """
 
+    FORCED_STARTUP = "forced_startup"
+    """Forced startup from a low-SoC standby (register 13017).
+
+    Added to the specification in V1.1.7 and missed by this project's audit of
+    V1.1.11, which resolved seven register additions and counted past this
+    one. V1.1.16 excludes only SH50~125CX.
+    """
+
     PV_POWER_LIMITATION = "pv_power_limitation"
     """Whether PV generation itself may be limited (register 13018).
 
@@ -122,7 +132,11 @@ class Family(StrEnum):
     """Single-phase hybrids, SH3.0RS to SH10RS."""
 
     MG = "MG"
-    """MG5RL and up."""
+    """Three-phase MG5RL to MG12RL.
+
+    Not the same family as `RL` even though every member's name ends in RL --
+    see that entry.
+    """
 
     RT = "RT"
     """Three-phase hybrids, SH5.0RT to SH10RT and their variants."""
@@ -133,15 +147,57 @@ class Family(StrEnum):
     K = "K"
     """The withdrawn SH*K series, still in the field."""
 
+    RL = "RL"
+    """Single-phase SH3RL to SH10RL.
 
-#: Device type code to family. Ranges rather than a per-model list, because
-#: Sungrow allocates them in blocks and new models land inside those blocks.
-_FAMILY_RANGES: tuple[tuple[int, int, Family], ...] = (
-    (0x0D03, 0x0D0C, Family.K),
-    (0x0D0D, 0x0D1B, Family.RS),
-    (0x0D27, 0x0D2A, Family.MG),
-    (0x0E00, 0x0E13, Family.RT),
-    (0x0E20, 0x0E28, Family.T),
+    Distinct from `MG` despite sharing the RL suffix and interleaving with it
+    in the device type codes. The specification treats them as two groups,
+    writing "MG5-12RL and SH3-10RL are not supported" wherever it excludes
+    both, and they differ in the thing that matters: an MG*RL is three-phase,
+    an SH*RL single-phase.
+    """
+
+    CX = "CX"
+    """SH50CX to SH125CX, three-phase with ten MPP trackers.
+
+    Added to the specification in V1.1.14 and V1.1.15. Nothing here has been
+    tested against one, and the register map this project reads stops at
+    MPPT4, so a CX would report a fraction of its trackers. It is named so
+    that the specification's many "SH50~125CX are not supported" remarks can
+    be recorded rather than lost.
+    """
+
+
+#: Ordered rules mapping a model name to its family, first match winning.
+#:
+#: **Name-based, not code-based, and deliberately so.** This was a table of
+#: code ranges, on the assumption -- written down in the comment above it --
+#: that Sungrow allocates codes in one block per family and new models land
+#: inside those blocks. Protocol V1.1.12 to V1.1.16 falsified that: MG5RL to
+#: MG10RL occupy 0x0D27-0x0D2A, SH5RL to SH10RL follow at 0x0D2B-0x0D2E, and
+#: then MG12RL and MG7.5RL appear *above* them at 0x0D2F and 0x0D31. Widening
+#: the MG range to cover MG12RL would have classified four single-phase
+#: inverters as three-phase MG.
+#:
+#: A name cannot interleave. `DEVICE_TYPES` is checked against Appendix 1 by
+#: [tests/test_device_types.py](../../tests/test_device_types.py), so the
+#: input to these rules is pinned to the specification, and an unrecognised
+#: model still returns None and is probed.
+#:
+#: Order matters. `MG12RL` and `SH8RL` both end in `RL`, so MG is tested
+#: first; `SH5K-30` and `SH10RT-20` both contain a hyphenated suffix, so the
+#: K series is matched on its closed set of codes rather than on a substring.
+_FAMILY_RULES: tuple[tuple[str, Family], ...] = (
+    ("CX", Family.CX),
+    ("RS", Family.RS),
+    ("RL", Family.RL),
+    ("T", Family.T),
+)
+
+#: The SH*K codes, matched as a set because the series is closed: protocol
+#: V1.1.0 dropped it in 2023 and no new member can appear.
+_K_SERIES: frozenset[int] = frozenset(
+    {0x0D03, 0x0D06, 0x0D07, 0x0D09, 0x0D0A, 0x0D0B, 0x0D0C}
 )
 
 #: Where a capability is known to be absent, and where that was learned.
@@ -149,26 +205,60 @@ _FAMILY_RANGES: tuple[tuple[int, int, Family], ...] = (
 #: listed here is not thereby known to *have* the capability, which is what
 #: probing is for.
 ABSENT_IN: dict[Capability, frozenset[Family]] = {
-    # "only for SH*T inverters with 3 MPPTs"
+    # "only for SH*T inverters with 3 MPPTs". Not CX, which has ten, and not
+    # RL: SH8RL and SH10RL have three where SH3RL to SH6RL have two, so the
+    # family is mixed and only a probe can tell them apart. The same is now
+    # true of MG -- MG7.5RL and up have three -- but a probed capability
+    # survives this table, so the stale entry costs an MG8RL nothing.
     Capability.MPPT3: frozenset({Family.RS, Family.MG, Family.RT, Family.K}),
     # "only for inverters with 4 MPPTs (SH8|10RS)"
     Capability.MPPT4: frozenset({Family.MG, Family.RT, Family.T, Family.K}),
-    # "MG5-6RL is not supported."
-    Capability.ACTIVE_POWER_LIMIT: frozenset({Family.MG}),
-    # "NOTE: SH3.0-10RS and MG5-6RL are NOT supported"
-    Capability.FIRMWARE_VERSIONS: frozenset({Family.RS, Family.MG}),
+    # V1.1.16 reg 13089/13090: "MG5-12RL and SH3-10RL are not supported.
+    # SH50~125CX are not supported." Note RS is *not* excluded, which settles
+    # a question raised by another project gating these to a different pair of
+    # registers on exactly the RS models -- see
+    # [cross_reference_modbus_manager.md](../../doc/cross_reference_modbus_manager.md).
+    Capability.ACTIVE_POWER_LIMIT: frozenset({Family.MG, Family.RL, Family.CX}),
+    # V1.1.16 regs 13250-13369: "SH3.0-10RS and MG5-12RL and SH3-10RL are not
+    # supported. SH50~125CX are not supported."
+    Capability.FIRMWARE_VERSIONS: frozenset(
+        {Family.RS, Family.MG, Family.RL, Family.CX}
+    ),
     # "not available on SHxRS as per issue #743"
     Capability.BATTERY_START_POWER: frozenset({Family.RS}),
-    # V1.1.9: "SH3.0-10RS and MG5-10RL are not supported."
-    Capability.METER_CHANNEL_2: frozenset({Family.RS, Family.MG}),
-    # V1.1.7: "MG5-10RL is not supported."
-    Capability.FEED_IN_LIMITATION_RATIO: frozenset({Family.MG}),
+    # V1.1.16 regs 13200-13207: "SH3.0-10RS and MG5-12RL and SH3-10RL are not
+    # supported. SH50~125CX are not supported."
+    Capability.METER_CHANNEL_2: frozenset({Family.RS, Family.MG, Family.RL, Family.CX}),
+    # V1.1.16 reg 13088: "MG5-12RL and SH3-10RL are not supported.
+    # SH50~125CX are not supported."
+    Capability.FEED_IN_LIMITATION_RATIO: frozenset({Family.MG, Family.RL, Family.CX}),
     # V1.1.10: "Only SHT are supported."
     Capability.PV_POWER_LIMITATION: frozenset(
-        {Family.RS, Family.MG, Family.RT, Family.K}
+        {Family.RS, Family.MG, Family.RL, Family.CX, Family.RT, Family.K}
     ),
+    # V1.1.16 reg 13017: "SH50~125CX are not supported."
+    Capability.FORCED_STARTUP: frozenset({Family.CX}),
     # Single-phase families have no phase B or C.
-    Capability.THREE_PHASE: frozenset({Family.RS, Family.MG, Family.K}),
+    #
+    # **MG was removed from this set, and that is a deliberate retraction.**
+    # It was here with no source cited -- unlike every other line above, which
+    # quotes the YAML comment or the specification remark it came from -- and
+    # this table is documented as recording absence *learned from* something.
+    # The only external evidence anyone has produced says the opposite: the
+    # datasheet-derived model table in
+    # [ha-modbus-manager](https://github.com/TCzerny/ha-modbus-manager) gives
+    # `phases: 3` for MG5RL through MG12RL. Sungrow's own Appendix 1 lists
+    # MPPT and strings per model but not phases, so it does not settle it.
+    #
+    # Behaviourally this costs nothing either way: register 5002 states the
+    # output type outright and `resolve` lets it lift or impose this veto, so
+    # a real MG gets the right answer from the device. What changes is the
+    # claim `doc/compatibility.md` publishes for a model nobody has read, and
+    # asserting single-phase there on no evidence was the weaker of the two
+    # options. One MG fingerprint settles it.
+    #
+    # SH*RL stays, and is why RL is a separate family from MG.
+    Capability.THREE_PHASE: frozenset({Family.RS, Family.RL, Family.K}),
 }
 
 #: What register 5002 reports. Asking beats inferring, so this outranks the
@@ -197,11 +287,27 @@ LINE_VOLTAGE_OUTPUT_TYPE = 2
 
 
 def family_for(device_type_code: int | None) -> Family | None:
-    """Return the product family for a device type code, if it is known."""
+    """Return the product family for a device type code, if it is known.
+
+    Resolved from the model name in `DEVICE_TYPES` rather than from the code,
+    because the codes interleave -- see `_FAMILY_RULES`. A code that is not in
+    that table returns None, which `known_absent` turns into "probe it".
+    """
     if device_type_code is None:
         return None
-    for low, high, family in _FAMILY_RANGES:
-        if low <= device_type_code <= high:
+    if device_type_code in _K_SERIES:
+        return Family.K
+    model = model_for(device_type_code)
+    if model is None:
+        return None
+    # MG*RL before the bare RL rule, and RT before the bare T rule: both
+    # suffixes are substrings of the other family's names.
+    if model.startswith("MG"):
+        return Family.MG
+    if "RT" in model:
+        return Family.RT
+    for suffix, family in _FAMILY_RULES:
+        if suffix in model:
             return family
     return None
 
@@ -237,6 +343,7 @@ PROBES: dict[Capability, tuple[str, ...]] = {
     Capability.METER_CHANNEL_2: ("meter_channel_2_total_active_power",),
     Capability.FEED_IN_LIMITATION_RATIO: ("feed_in_limitation_ratio",),
     Capability.PV_POWER_LIMITATION: ("pv_power_limitation_raw",),
+    Capability.FORCED_STARTUP: ("forced_startup_under_low_soc_raw",),
 }
 
 

@@ -100,6 +100,20 @@ class SungrowInverter:
         except AttributeError:
             return None
 
+    async def async_read_words(self, space: str, address: int, count: int) -> list[int]:
+        """Read raw words at one address, for a survey probe.
+
+        The seam a capability survey needs and the components cannot give it:
+        `fingerprint.PROBES` asks about addresses chosen to answer a
+        *question* -- is there a third tracker, does this path forward the
+        6100 block -- and several of them are not in any component this
+        library maps. Raises, because only the caller can tell a refusal from
+        a timeout and the difference is the whole point of asking.
+        """
+        if space == "holding":
+            return list(await self._unit.read_holding_registers(address, count))
+        return list(await self._unit.read_input_registers(address, count))
+
     async def async_update_identity(self) -> None:
         """Read the identity block. Raises on failure; the caller decides."""
         await self.identity.async_update()

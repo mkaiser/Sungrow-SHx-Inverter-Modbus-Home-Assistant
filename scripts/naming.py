@@ -331,6 +331,7 @@ DIAGNOSTIC: frozenset[str] = frozenset(
         "load_adjustment_mode_selection_raw",
         "running_state_raw",
         "pv_power_limitation_raw",
+        "forced_startup_under_low_soc_raw",
         # The two mode flags that replaced a raw number. They mirror a
         # setting rather than measure the house, which is what Diagnostic
         # means -- and their `number`/`select` counterparts, being writable,

@@ -540,8 +540,17 @@ def _fake_serial(real: str) -> str:
 #: read nine registers by hand. It is `battery_pack` and not `battery`
 #: because that key already holds what the owner *typed* about their
 #: battery, and the first attempt overwrote their testimony with a
-#: measurement.
-SCHEMA = 16
+#: measurement. 17 admits a **second producer**: the integration can write
+#: one of these from Home Assistant's diagnostics download, so `command_line`
+#: may name a tool rather than an invocation -- a download cannot be
+#: reproduced by typing anything. The shape is otherwise identical, which is
+#: the point: one generator keeps building `doc/compatibility.md` from both,
+#: and a reading from somebody who only ever clicked a button counts the same
+#: as one from a terminal. The tables, the schema and the stand-in
+#: derivation are duplicated in `sungrow_modbus.fingerprint` for that
+#: producer, and `tests/test_fingerprint_tables_agree.py` keeps the copies
+#: identical.
+SCHEMA = 17
 
 #: Keys of the connection block that carry a claim rather than a measurement.
 #: They are moved into `user_inputs`, so the published `connection` holds only
@@ -1526,6 +1535,27 @@ async def _async_decoded_readings(unit, passes: int = 8) -> dict[str, object]:
     return report
 
 
+#: What a document says about WiFi versus Ethernet, which is that it cannot say.
+#:
+#: A constant rather than an inline string because the integration publishes
+#: the same sentence -- `sungrow_modbus.fingerprint` carries a copy for the
+#: producer that cannot import this file, and
+#: `tests/test_fingerprint_tables_agree.py` keeps the two identical. A reader
+#: comparing two documents should not have to wonder whether a difference in
+#: this field means anything.
+WIFI_OR_ETHERNET = (
+    "not determinable over Modbus. Nothing in the protocol reports it, "
+    "and latency cannot stand in: measured across four installations, "
+    "direct-LAN medians run from 2.0 to 61.5 ms and WiNet medians from "
+    "24.3 to 48.3, so the ranges overlap -- one house's direct link is "
+    "slower than its own dongle. Jitter does not separate them either: "
+    "a WiNet-S measured 1.6 ms of spread wired and 4.9 over WiFi on the "
+    "same dongle, while another house's wired WiNet spread 8.6. Latency "
+    "describes the network between the client and the device, not how "
+    "the device is attached. Use the reported_by_hand field."
+)
+
+
 def transport_verdict(*, answered_6100: bool, module_named: bool) -> str:
     """Read the two transport signals, one measured row at a time.
 
@@ -1655,17 +1685,7 @@ async def _async_connection(unit, host: str, firmware: dict, ModbusError) -> dic
 
     return {
         "verdict": verdict,
-        "wifi_or_ethernet": (
-            "not determinable over Modbus. Nothing in the protocol reports it, "
-            "and latency cannot stand in: measured across four installations, "
-            "direct-LAN medians run from 2.0 to 61.5 ms and WiNet medians from "
-            "24.3 to 48.3, so the ranges overlap -- one house's direct link is "
-            "slower than its own dongle. Jitter does not separate them either: "
-            "a WiNet-S measured 1.6 ms of spread wired and 4.9 over WiFi on the "
-            "same dongle, while another house's wired WiNet spread 8.6. Latency "
-            "describes the network between the client and the device, not how "
-            "the device is attached. Use the reported_by_hand field."
-        ),
+        "wifi_or_ethernet": WIFI_OR_ETHERNET,
         **signals,
     }
 
@@ -3100,6 +3120,40 @@ class Identity(NamedTuple):
     #: because 1 is not always it: a cluster slave reached at its own LAN
     #: port answers on **2** and nothing at all on 1.
     unit: int | None = None
+    #: What kind of device this is, when it is not an inverter.
+    #:
+    #: `None` means an inverter, which is everything that has ever answered
+    #: here. `"ihomemanager"` is the one alternative currently probed for.
+    kind: str | None = None
+
+
+#: Where an iHomeManager names itself, and on which unit.
+#:
+#: **Nothing here has ever met one.** No endpoint has answered on port 503
+#: across four surveyed subnets, and the device has no measurement at any
+#: house -- it is the only Sungrow device in this project's scope with an
+#: official register document and no reading. So this is transcribed from
+#: *Communication Protocol of iHomeManager* V1.0.2 and from
+#: [ha-modbus-manager](https://github.com/TCzerny/ha-modbus-manager)'s
+#: template, and it is a **probe**, not a claim: its purpose is to let the
+#: first contributor who owns one produce a fingerprint, rather than be told
+#: their device is not there.
+#:
+#: Why it cannot reuse the inverter probe: an iHM has no serial at input 4990.
+#: It would refuse that read with exception 0x02 -- indistinguishable, to
+#: `identify`, from the not-a-Sungrow endpoint measured on 2026-09-09 that
+#: ignores the unit id and answers only registers 0-19.
+#:
+#: Port 503 is not sufficient either. Sungrow's installer setting is "Modbus
+#: TCP on the iHM", and field reports have it on **502** on some units and
+#: 503 "if 502 is busy" -- so a sweep that only looked at 503 was never going
+#: to find one, which weakens the four negative sweeps rather than confirming
+#: them.
+IHOMEMANAGER_UNIT = 247
+#: Input register 8000, the device type code. Address 7999.
+IHOMEMANAGER_TYPE_ADDRESS = 7999
+#: Input registers 8001-8002, the protocol number as a UTF-8 string.
+IHOMEMANAGER_PROTOCOL_ADDRESS = 8000
 
 
 #: The unit ids `identify` tries for an inverter, in order, and why each.
@@ -3163,10 +3217,55 @@ async def identify(host: str, port: int) -> Identity:
             return Identity(
                 serial, int(code[0]), _model_for(int(code[0])), None, unit_id
             )
+        # No inverter. Before reporting nothing, ask whether this is an
+        # iHomeManager: it is a Sungrow, it is in scope, and it answers a
+        # different register on a different unit, so the loop above cannot
+        # see it. Costs one read, and only where every inverter unit failed.
+        found = await _identify_ihomemanager(connection, ModbusError)
+        if found is not None:
+            return found
         tried = ", ".join(str(unit_id) for unit_id in IDENTIFY_UNITS)
         return Identity(None, None, None, f"no serial at unit {tried} ({first_error})")
     finally:
         await connection.close()
+
+
+async def _identify_ihomemanager(
+    connection: object, modbus_error: type[BaseException]
+) -> Identity | None:
+    """Return an iHomeManager identity if one answers here, else None.
+
+    Reads the device type code at input 8000 on unit `IHOMEMANAGER_UNIT`, and
+    the protocol number beside it. **No serial:** the iHM protocol puts no
+    serial in this block, and this project does not go looking for one -- see
+    the serial constraint in CLAUDE.md.
+
+    Returning `None` rather than an error keeps `identify`'s existing message
+    intact for the overwhelmingly common case of an address that is simply not
+    a Sungrow. A refusal here is expected, not interesting.
+    """
+    unit = connection.for_unit(IHOMEMANAGER_UNIT)  # type: ignore[attr-defined]
+    try:
+        values = await unit.read_input_registers(IHOMEMANAGER_TYPE_ADDRESS, 1)
+    except (modbus_error, TimeoutError, OSError):  # type: ignore[misc]
+        return None
+    code = int(values[0])
+    if code in (0, 0xFFFF):
+        # Answered with the specification's "nothing here". A device that does
+        # not know its own type code is not evidence of an iHomeManager -- the
+        # same reasoning as `ZERO_MEANS_ABSENT`, for the same reason: a
+        # forwarding device can answer without knowing.
+        return None
+    try:
+        raw = await unit.read_input_registers(IHOMEMANAGER_PROTOCOL_ADDRESS, 2)
+    except (modbus_error, TimeoutError, OSError):  # type: ignore[misc]
+        return Identity(
+            None, code, "iHomeManager", None, IHOMEMANAGER_UNIT, "ihomemanager"
+        )
+    text = b"".join(int(v).to_bytes(2, "big") for v in raw)
+    protocol = text.decode("utf-8", "replace").strip("\x00").strip()
+    model = "iHomeManager" if not protocol else f"iHomeManager (protocol {protocol})"
+    return Identity(None, code, model, None, IHOMEMANAGER_UNIT, "ihomemanager")
 
 
 def described(who: Identity) -> str:
@@ -3178,6 +3277,12 @@ def described(who: Identity) -> str:
     """
     if who.error is not None:
         return who.error
+    if who.kind == "ihomemanager":
+        # No serial line: the iHM's identity block has none, and nothing here
+        # goes looking for one. The unit is always worth printing for this
+        # device, because 247 is the whole reason it was found.
+        model = who.model or "iHomeManager"
+        return f"{model} -- on unit {who.unit}, port answered as an energy manager"
     described = f"serial {who.serial}, anonymized to {_fake_serial(who.serial)}"
     if who.device_type_code is not None:
         model = who.model or f"0x{who.device_type_code:04X}"

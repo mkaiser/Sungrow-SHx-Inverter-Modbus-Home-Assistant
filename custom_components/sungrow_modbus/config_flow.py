@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 from ipaddress import ip_address, ip_network
+import logging
 from typing import Any
 
 from modbus_connection import ModbusError, ModbusTcpParams
@@ -32,6 +34,7 @@ from homeassistant.helpers.selector import (
     SelectSelectorConfig,
     SelectSelectorMode,
     TextSelector,
+    TextSelectorConfig,
 )
 from homeassistant.util import slugify
 from sungrow_modbus import (
@@ -50,6 +53,7 @@ from sungrow_modbus import (
     network_of,
     power_from_bms,
 )
+from sungrow_modbus.fingerprint import PROXY_CLAIMS, TRANSPORT_CLAIMS
 
 from .const import (
     AUDIENCE_ADMINS,
@@ -59,9 +63,17 @@ from .const import (
     CONF_EXTERNAL_PLACEMENT,
     CONF_EXTERNAL_SOURCES,
     CONF_INTERVALS,
+    CONF_MODE,
     CONF_NETWORK,
     CONF_PERMISSIONS,
+    CONF_PUBLISH_ADDRESS,
     CONF_REGISTER_DUMP,
+    CONF_REPORTER,
+    CONF_SURVEY_BATTERY,
+    CONF_SURVEY_COMMENT,
+    CONF_SURVEY_POLLERS,
+    CONF_SURVEY_PROXY,
+    CONF_SURVEY_TRANSPORT,
     CONF_UNIT_ID,
     DEFAULT_EXTERNAL_PLACEMENT,
     DEFAULT_NAME,
@@ -74,11 +86,14 @@ from .const import (
     IDENTIFY_UNITS,
     INTERVAL_MINIMUM,
     INTERVAL_NEVER,
+    MODE_DEVICES,
+    MODE_DIAGNOSTICS,
     PERMISSION_START_STOP,
     PLACEMENT_BEHIND_METER,
     PLACEMENT_SEPARATE,
     ROLE_SLAVE,
 )
+from .fingerprint import async_build, summarise
 from .migration import (
     async_legacy_ids_known,
     async_legacy_ids_live,
@@ -441,6 +456,48 @@ def _described(found: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
     )
 
 
+_LOGGER = logging.getLogger(__name__)
+
+#: Where a contributed reading goes. The compatibility report template asks
+#: for exactly what a survey produces, so the form arrives pre-shaped.
+SURVEY_ISSUE_URL = (
+    "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant"
+    "/issues/new?template=compatibility_report.yml"
+)
+
+#: And the route for somebody without a GitHub account, which is most people.
+DISCORD_URL = "https://discord.gg/ZvYBejFkm2"
+
+
+def _async_survey_notice(
+    hass: HomeAssistant, entry: ConfigEntry, document: dict[str, Any]
+) -> None:
+    """Leave the result somewhere it survives the dialog closing.
+
+    A config-flow page is gone the moment it is dismissed, and what it says
+    here -- which menu the file is behind, and where to send it -- is needed
+    *after* that. A persistent notification is the only surface in Home
+    Assistant that keeps a short instruction until somebody acts on it.
+    """
+    from homeassistant.components import persistent_notification
+
+    persistent_notification.async_create(
+        hass,
+        title=f"Sungrow survey ready: {entry.title}",
+        notification_id=f"{DOMAIN}_survey_{entry.entry_id}",
+        message=(
+            f"{summarise(document)}\n\n"
+            "**To send it:** Settings → Devices & services → Sungrow Modbus "
+            "→ the three dots beside this entry → **Download diagnostics**. "
+            "The file lands in your browser's downloads.\n\n"
+            f"Attach it to [a compatibility report]({SURVEY_ISSUE_URL}) or "
+            f"post it on [Discord]({DISCORD_URL}). Nothing was written to "
+            "your inverter, and the serial number is replaced by a stand-in "
+            "before it reaches the file."
+        ),
+    )
+
+
 class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a Sungrow Modbus config flow."""
 
@@ -469,8 +526,45 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         #: How many distinct inverters the search found, by serial. Decides
         #: whether the name is worth asking about at all.
         self._others = 1
+        #: What this entry is for. Decided in the first step, because it
+        #: decides whether the migration question is asked at all.
+        self._mode = MODE_DEVICES
 
     async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ask what this entry is for before asking anything about the wiring.
+
+        Two very different intentions arrive at this dialog. Most people want
+        their inverter in Home Assistant. Some want to help this project find
+        out what their model answers -- and for them the flow's central
+        question, whether to take over the YAML package's entity ids, is both
+        irreversible and beside the point.
+
+        So it is asked first, and cheaply: a diagnostics entry connects,
+        identifies the hardware, creates no entities, and never mentions
+        migration. It can be promoted to a full entry afterwards, which is
+        when the id question is put.
+        """
+        return self.async_show_menu(
+            step_id="user", menu_options=["setup_devices", "setup_diagnostics"]
+        )
+
+    async def async_step_setup_devices(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Set up the inverter properly, with entities."""
+        self._mode = MODE_DEVICES
+        return await self.async_step_find()
+
+    async def async_step_setup_diagnostics(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Set up only enough to read the inverter and report on it."""
+        self._mode = MODE_DIAGNOSTICS
+        return await self.async_step_find()
+
+    async def async_step_find(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Offer to look for the inverter, or to be told where it is.
@@ -479,7 +573,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         the inverter's IP address -- is one many users cannot answer without
         going to look at their router.
         """
-        return self.async_show_menu(step_id="user", menu_options=["search", "manual"])
+        return self.async_show_menu(step_id="find", menu_options=["search", "manual"])
 
     async def async_step_search(
         self, user_input: dict[str, Any] | None = None
@@ -574,8 +668,14 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_start_over(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Return to the first menu."""
-        return await self.async_step_user()
+        """Return to the choice of *how to find* the inverter.
+
+        Not all the way to the first menu. A sweep that found nothing says
+        nothing about what the entry is for, and re-asking a question the
+        user has already answered is how a dead end starts to feel like a
+        loop.
+        """
+        return await self.async_step_find()
 
     async def async_step_pick(
         self, user_input: dict[str, Any] | None = None
@@ -777,6 +877,14 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         make, so they are not shown a question about a package they have never
         heard of — the entry is created with device-scoped ids directly.
         """
+        # A diagnostics entry creates no entities, so there is nothing for an
+        # id to attach to and nothing to migrate. Asking would be worse than
+        # pointless: it is the one decision here that cannot be undone
+        # casually, and answering it wrongly to get past a dialog is exactly
+        # how somebody loses years of history.
+        if self._mode == MODE_DIAGNOSTICS:
+            return self._async_create(ENTITY_IDS_NEW)
+
         known = async_legacy_ids_known(self.hass)
         if not known:
             # The registry is the good evidence, but not the only evidence.
@@ -892,7 +1000,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
 
     def _async_create(self, entity_ids: str) -> ConfigFlowResult:
         """Create the entry with the id style already decided."""
-        data = {**self._data, CONF_ENTITY_IDS: entity_ids}
+        data = {**self._data, CONF_ENTITY_IDS: entity_ids, CONF_MODE: self._mode}
         # Stored only where the name question was actually asked and answered.
         # An entry without it keeps a `DeviceInfo` carrying no name, which is
         # what every entry created before this step has -- so nothing already
@@ -912,14 +1020,103 @@ class SungrowOptionsFlow(OptionsFlow):
     option.
     """
 
+    def __init__(self) -> None:
+        """Start with no survey in flight."""
+        #: Answers given on the survey page, held until the flow ends.
+        self._testimony: dict[str, Any] = {}
+        #: The task reading the inverter, so the progress step can wait on it.
+        self._survey_task: asyncio.Task[None] | None = None
+        #: What it produced, or why it did not.
+        self._document: dict[str, Any] | None = None
+        self._survey_error: str | None = None
+
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Offer the things worth changing after setup."""
-        return self.async_show_menu(
-            step_id="init",
-            menu_options=["polling", "permissions", "external", "settings"],
+        """Offer the things worth changing after setup.
+
+        Built rather than fixed, for one entry in it: a diagnostics-only
+        entry has no entities and needs a way to become an ordinary one, and
+        offering that to an entry that is already ordinary would be a menu
+        item that does nothing.
+        """
+        options = ["polling", "permissions", "external", "survey", "settings"]
+        if self.config_entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
+            # First, because it is the only reason somebody with this kind of
+            # entry opens this menu.
+            options.insert(0, "promote")
+        return self.async_show_menu(step_id="init", menu_options=options)
+
+    async def async_step_promote(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Turn a diagnostics-only entry into a full one.
+
+        This is where the question the diagnostics path skipped finally gets
+        put, and it is put here rather than at setup for a reason: it is the
+        only irreversible decision in this integration -- it decides which
+        entity ids years of recorder history attach to -- and somebody who
+        came to send a reading should never have had to answer it to get
+        past a dialog.
+
+        Asked only where there is something to take over. A user who never
+        ran `modbus_sungrow.yaml` has no history and no decision, so the
+        entry is simply promoted.
+        """
+        known = async_legacy_ids_known(self.hass)
+        if not known:
+            known = await async_legacy_ids_with_history(self.hass)
+        if not known:
+            return await self._async_promote(ENTITY_IDS_NEW)
+
+        live = async_legacy_ids_live(self.hass)
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            choice = user_input[CONF_ENTITY_IDS]
+            if choice == ENTITY_IDS_MIGRATE and live:
+                # The same refusal the setup flow makes, and for the same
+                # reason: adoption needs the id free in the state machine as
+                # well as the registry, or the registry silently appends `_2`
+                # and the history is orphaned.
+                errors["base"] = "legacy_package_still_loaded"
+            else:
+                return await self._async_promote(choice)
+
+        return self.async_show_form(
+            step_id="promote",
+            data_schema=_entity_ids_schema(
+                ENTITY_IDS_NEW if live else ENTITY_IDS_MIGRATE
+            ),
+            errors=errors,
+            description_placeholders={
+                "count": str(len(known)),
+                "example": sorted(known)[0],
+                "status": (
+                    _PACKAGE_LOADED.format(live=len(live))
+                    if live
+                    else _PACKAGE_NOT_LOADED
+                ),
+            },
         )
+
+    async def _async_promote(self, entity_ids: str) -> ConfigFlowResult:
+        """Rewrite the entry's data and let the reload build the entities.
+
+        `data` rather than `options`, because what an entry is *for* is not a
+        preference: it decides whether platforms are forwarded at all, and it
+        is the same field the setup flow wrote.
+        """
+        self.hass.config_entries.async_update_entry(
+            self.config_entry,
+            data={
+                **self.config_entry.data,
+                CONF_MODE: MODE_DEVICES,
+                CONF_ENTITY_IDS: entity_ids,
+            },
+        )
+        # Updating `data` already schedules a reload, so this only has to end
+        # the flow without touching the options.
+        return self.async_create_entry(data=dict(self.config_entry.options))
 
     async def async_step_permissions(
         self, user_input: dict[str, Any] | None = None
@@ -1141,6 +1338,204 @@ class SungrowOptionsFlow(OptionsFlow):
         return (
             f"Right now this inverter reports a house load of **{reported:.0f} W**, "
             "which does not include anything it cannot see."
+        )
+
+    async def async_step_survey(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Collect the testimony a capability survey needs and cannot read.
+
+        Every answer here is optional, and leaving one blank is a real
+        answer: the document format distinguishes an empty field -- **the
+        question was not put** -- from `unknown`, where it was put and the
+        owner did not know. So an untouched page still produces an honest
+        document, just a less useful one.
+
+        Why any of it is asked at all: no register reports a battery's make,
+        nothing distinguishes a cable from a dongle's Ethernet socket, and a
+        Modbus proxy in the path changes what every dropped block means while
+        being completely invisible from this end.
+        """
+        if user_input is not None:
+            # Held rather than saved. The survey has to run with these
+            # answers in it so the contributor can see what their reading
+            # actually found, and options are only persisted when a flow
+            # ends -- so the document is built first and the answers are
+            # committed by the step that follows.
+            self._testimony = dict(user_input)
+            return await self.async_step_survey_run()
+
+        options = self.config_entry.options
+        return self.async_show_form(
+            step_id="survey",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_REPORTER, default=options.get(CONF_REPORTER, "")
+                    ): TextSelector(),
+                    vol.Optional(
+                        CONF_SURVEY_TRANSPORT,
+                        default=options.get(CONF_SURVEY_TRANSPORT, ""),
+                    ): SelectSelector(
+                        SelectSelectorConfig(
+                            mode=SelectSelectorMode.DROPDOWN,
+                            translation_key="survey_transport",
+                            options=list(TRANSPORT_CLAIMS),
+                        )
+                    ),
+                    vol.Optional(
+                        CONF_SURVEY_PROXY,
+                        default=options.get(CONF_SURVEY_PROXY, ""),
+                    ): SelectSelector(
+                        SelectSelectorConfig(
+                            mode=SelectSelectorMode.DROPDOWN,
+                            translation_key="survey_proxy",
+                            options=list(PROXY_CLAIMS),
+                        )
+                    ),
+                    vol.Optional(
+                        CONF_SURVEY_POLLERS,
+                        default=options.get(CONF_SURVEY_POLLERS, ""),
+                    ): TextSelector(),
+                    vol.Optional(
+                        CONF_SURVEY_BATTERY,
+                        default=options.get(CONF_SURVEY_BATTERY, ""),
+                    ): TextSelector(),
+                    vol.Optional(
+                        CONF_SURVEY_COMMENT,
+                        default=options.get(CONF_SURVEY_COMMENT, ""),
+                    ): TextSelector(TextSelectorConfig(multiline=True)),
+                    # Off unless somebody turns it on, every time. The third
+                    # octet is what separates one contributor's network from
+                    # another's, and a document reading `xxx.xxx` is complete
+                    # rather than damaged.
+                    vol.Required(
+                        CONF_PUBLISH_ADDRESS,
+                        default=options.get(CONF_PUBLISH_ADDRESS, False),
+                    ): BooleanSelector(),
+                }
+            ),
+            description_placeholders={"measured": self._async_survey_measured()},
+        )
+
+    @callback
+    def _async_survey_measured(self) -> str:
+        """Say what the integration has already worked out for itself.
+
+        So that nobody answers a question that has been measured. The
+        transport is the one that matters: register 6100 settles direct
+        against dongle 9 times out of 9, and what an owner adds is the half
+        no register reaches -- whether a dongle is on its cable or its WiFi,
+        which is not determinable and not guessed.
+        """
+        runtime = getattr(self.config_entry, "runtime_data", None)
+        if runtime is None:
+            return "The inverter is not connected, so nothing has been measured yet."
+
+        device = next(iter(runtime.coordinators.values())).device
+        model = device.model or "an unidentified model"
+        try:
+            module = device.field("communication_module_firmware_version")
+        except (AttributeError, KeyError):
+            module = None
+
+        if module:
+            route = (
+                f"a communication module, which names itself **{module}** — so a "
+                "WiNet-S, WiNet-S2 or Logger is in the path. Whether it is using "
+                "its Ethernet socket or its WiFi is **not** determinable over "
+                "Modbus, and that is the part only you can tell us"
+            )
+        else:
+            route = (
+                "no communication module — nothing answered register 13265, which "
+                "is what a cable straight into the inverter looks like"
+            )
+        return (
+            f"Already measured, so you do not need to tell us: this is **{model}**, "
+            f"reached through {route}."
+        )
+
+    async def async_step_survey_run(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Read the inverter, with a spinner, because it takes a moment.
+
+        Nineteen probe reads and five timing reads. On a direct cable that is
+        under a second; through a WiNet-S over a VPN it has been fifteen. A
+        form that simply closed and left nothing behind was the first version
+        of this and it was indefensible -- the user had no way to tell
+        whether anything had happened, and the honest answer was that nothing
+        had until they went and downloaded diagnostics.
+        """
+        if self._survey_task is None:
+            self._survey_task = self.hass.async_create_task(
+                self._async_run_survey(), eager_start=False
+            )
+
+        if not self._survey_task.done():
+            return self.async_show_progress(
+                step_id="survey_run",
+                progress_action="running_survey",
+                progress_task=self._survey_task,
+            )
+
+        return self.async_show_progress_done(next_step_id="survey_result")
+
+    async def _async_run_survey(self) -> None:
+        """Build the document and keep it, or keep the failure instead.
+
+        Failures are shown rather than raised. Somebody who has just offered
+        to help should be told what went wrong, not dropped back into a menu
+        -- and a link that fails here is worth reporting in its own right.
+        """
+        merged = {**self.config_entry.options, **self._testimony}
+        try:
+            self._document = await async_build(self.hass, self.config_entry, merged)
+        except Exception as err:  # the message is the useful part
+            _LOGGER.warning("Survey failed for %s: %s", self.config_entry.title, err)
+            self._survey_error = f"{type(err).__name__}: {err}"
+
+    async def async_step_survey_result(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Say what was found, where the file is, and what to do with it.
+
+        The three things missing from the first version, and the third was
+        the worst: a contributor who fills in a form and is told nothing has
+        no idea whether they have helped, and no idea that the file they are
+        being asked for is behind a menu on a different page.
+        """
+        if user_input is not None:
+            if self._document is not None:
+                _async_survey_notice(self.hass, self.config_entry, self._document)
+            return self.async_create_entry(
+                data={**self.config_entry.options, **self._testimony}
+            )
+
+        if self._document is None:
+            return self.async_show_form(
+                step_id="survey_failed",
+                data_schema=vol.Schema({}),
+                description_placeholders={"error": self._survey_error or "unknown"},
+            )
+
+        return self.async_show_form(
+            step_id="survey_result",
+            data_schema=vol.Schema({}),
+            description_placeholders={
+                "found": summarise(self._document),
+                "issue_url": SURVEY_ISSUE_URL,
+                "discord_url": DISCORD_URL,
+            },
+        )
+
+    async def async_step_survey_failed(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Save the answers anyway, so the attempt is not wasted."""
+        return self.async_create_entry(
+            data={**self.config_entry.options, **self._testimony}
         )
 
     async def async_step_settings(

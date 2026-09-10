@@ -119,25 +119,57 @@ a decision only the maintainer can take, or work whose blocker is named.
 
 ### Work with no blocker
 
-3. **Migration per inverter.** The legacy ids are global and unprefixed, so
+3. **A survey anybody can run from the interface**, and a *diagnostics-only*
+   setup mode to go with it. Designed in
+   [Fingerprinting from the interface](#fingerprinting-from-the-interface).
+   Today contributing a fingerprint means running Python on a machine that
+   can reach the inverter, which is the single biggest filter on where the
+   evidence in this project comes from — four houses, all of them known to
+   the maintainer.
+4. **Firmware-dependent register semantics**, which nothing here supports
+   today and issue
+   [#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)
+   needs. Designed in [When a firmware changes what a register
+   means](#when-a-firmware-changes-what-a-register-means).
+5. **Migration per inverter.** The legacy ids are global and unprefixed, so
    only one device can hold them, and today the second inverter is silently
    not asked. Needs the `_inv_N` scheme.
-4. **The config flow's topology step.** What can be determined is measured
+6. **The config flow's topology step.** What can be determined is measured
    and written up in [Working out the topology](#working-out-the-topology);
    discovery and the name question are done. What remains is presenting the
    role it derives, and saying which claims are measured and which inferred.
 
 ### Work blocked on evidence, not effort
 
-5. **Milestone 5 — iHomeManager.** Never measured, on any network. The
-   licence-clean route is the official `iHM.Communication.Protocol` document
-   rather than a fingerprint; a GPL-3.0 project references it, and this repo
-   is MIT.
-6. **Milestone 8 — Sungrow Logger.** Also unmeasured, also documented —
+7. **Milestone 5 — iHomeManager.** Never measured, on any network — but no
+   longer unfindable, and no longer short of a licence-clean map. `identify()`
+   probes input 8000 on unit 247, so a contributor who owns one is told what
+   they have instead of that nothing is there, and
+   [ha-modbus-manager](https://github.com/TCzerny/ha-modbus-manager) publishes
+   53 registers for it under **MIT**. Two things its documentation settles
+   before any code is written: an iHM answers on port **502 or 503**, not 503
+   alone, so the four sweeps that found nothing on 503 are weaker evidence
+   than they looked; and it is **not a gateway** — Sungrow's own note is that
+   it forwards system energy dispatch data and not the devices behind it, so
+   it is one endpoint with one device on it. `collect.py` reports it and does
+   not survey it, because every block that survey reads is an inverter's. See
+   [cross_reference_modbus_manager.md](cross_reference_modbus_manager.md).
+8. **Milestone 8 — Sungrow Logger.** Also unmeasured, also documented —
    *Logger Communication Protocol AW0 1.0.2.9*. It fronts a whole
    installation, which is the shape the one-entry-per-endpoint model was
    built for, so a reading would test that design rather than only add a
    device.
+
+   **It will not carry the batteries, and that is documented.** Note 2 under
+   the hybrid protocol's fault block, on where a battery's Modbus address
+   comes from: over RS485 it is the pack's own address, and four parallel
+   packs are 200-203; through a WiNet-S it is "the WiNet internal forwarding
+   address", which is the mechanism behind the measured 200-on-a-cable,
+   2-through-a-dongle finding in [CLAUDE.md](../CLAUDE.md). The note then
+   ends: **"Logger is not supported."** So a Logger reading gives the
+   installation and not the storage behind it — worth knowing before
+   designing it, rather than being found by a contributor whose battery
+   entities never appear.
 8. **The SBR's per-module entities.** All 24 registers are read; none is an
    entity, because an unfitted module answers 0 V and something has to
    establish the module count first. An SBR128 settles it.
@@ -713,12 +745,12 @@ generates and commits two artefacts this way.
 
 | Device | Map from | Licence | Quality |
 | --- | --- | --- | --- |
-| Inverter | [modbus_sungrow.yaml](../legacy/modbus_sungrow.yaml) plus Sungrow's *Communication Protocol of Residential Hybrid Inverter* **V1.1.11 (2025-11-17)** | MIT, this repo | Field-proven, now checkable against the specification |
+| Inverter | [modbus_sungrow.yaml](../legacy/modbus_sungrow.yaml) plus Sungrow's *Communication Protocol of Residential and Small Industrial Hybrid Inverter* **V1.1.16 (2026-07-03)** | MIT, this repo | Field-proven, now checkable against the specification |
 | SBR battery | [additional_sensors/](../legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml) — 40 input registers, 10740-10788 | MIT, this repo | In use |
 | SBH battery | Nothing yet | — | Needs the protocol document |
-| iHomeManager | Official Sungrow PDFs, mirrored in [Jam3s97/sungrow_ihomemanager](https://github.com/Jam3s97/sungrow_ihomemanager/tree/main/Modbus%20Information) | Sungrow's documents; that repo is GPL-3.0, so implement from the spec, not their YAML | An actual specification |
+| iHomeManager | Official Sungrow PDFs — *Communication Protocol of iHomeManager* V1.0.1 and V1.0.2, both shipped in [ha-modbus-manager](https://github.com/TCzerny/ha-modbus-manager)'s `docs/` — plus that project's own 53-register template | **MIT** (ha-modbus-manager), so its map is usable directly. Sungrow's documents alongside it. The earlier note here said the only referencing project was GPL-3.0 and the spec was the only licence-clean route; that is no longer the case | A specification, and now a second implementation to check it against. §3.4 Charger Control is listed in the V1.0.2 table of contents and **missing from the PDF**, so the published read-write table is known to be incomplete |
 | Wallbox | [evcc `charger/sungrow.go`](https://github.com/evcc-io/evcc/blob/master/charger/sungrow.go), plus a live measurement of an AC22E-01 cross-checked against two projects — see [wallbox_registers.md](wallbox_registers.md) | MIT (evcc, and KevinD987); Louisbertelsmann's carries no licence file and is used with the author's permission, for register *meanings* only | Measured through a charging session that ended, so the counters, the status codes and the timestamps are separated by behaviour rather than inference. Register 21313 is the only line nobody can name |
-| Logger1000/3000/4000 | Sungrow's *Logger Communication Protocol* **AW0 1.0.2.9**, plus the field-proven map in [discussion #262](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions/262) | Sungrow's document | An official specification exists |
+| Logger1000/3000/4000 | Sungrow's *Logger Communication Protocol* **AW0 1.0.2.9**, plus the field-proven map in [discussion #262](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions/262) | Sungrow's document | An official specification exists. Scope limit known in advance: the hybrid protocol's Note 2 ends "Logger is not supported", so a Logger does not forward battery data |
 
 The wallbox has no official register document; evcc is the best-licensed
 source and covers AC011E-01 and AC22E-01. The maintainer also has the wallbox
@@ -733,7 +765,8 @@ measurement on the other model, the control-pilot voltage at register 21312.
 `doc/wallbox_registers.md` carries the table and marks every line by how many
 sources hold it.
 
-**Audited against V1.1.11.** The YAML has kept up better than expected. Of the
+**Audited against V1.1.11, then re-audited against V1.1.16.** The YAML has
+kept up better than expected. Of the
 seven register additions between V1.1.2 and V1.1.11, four are already covered
 — the firmware block at 13250-13369, active power limitation 13089/13090, and
 meter active power 5601. Three are not, and are the port's chance to go past
@@ -777,12 +810,62 @@ consumption` and the specification's PV power limitation, both at 13018 —
 but one is an input register and the other a holding register, which are
 separate address spaces. There was no conflict.
 
-`DEVICE_TYPES` is now checked against Appendix 1 of that document and pinned
-by [tests/test_device_types.py](../tests/test_device_types.py): all 35 models
-present, names agreeing, **MG8RL (0x0D29) and MG10RL (0x0D2A) added**. Seven
+**The re-audit against V1.1.16 found four more things**, and the count above
+is itself one short. Between V1.1.2 and V1.1.11 the specification added
+**eight** registers, not seven: V1.1.7's change list has "Add Forced Startup
+Under Low SOC Standby (13017)" as its sixth item, and the tally above passes
+over it — the other two items in that list, remarks on read-only registers
+and the retirement of the protocol number, add no register and are rightly
+excluded. So 13017 is an eighth addition and was simply missed. It is in now,
+gated by the remarks column, which excludes only SH50~125CX.
+
+Three groups V1.1.16 defines that neither the YAML nor the V1.1.11 pass
+picked up, all now in `SPECIFICATION_ADDITIONS`:
+
+| Added | Space and register | Note |
+| --- | --- | --- |
+| Backup current, voltage, frequency | input 5720-5722, 5731-5734 | The YAML reads backup *power* at 5723-5726 and stops |
+| Self-consumption of today | input 13029 | U16, 0.1 %, a ratio and not a counter |
+| Forced startup under low SoC | holding 13017 | The missed V1.1.7 addition |
+
+And one group left out deliberately, because it is bigger than it looks: the
+**fault and alarm block is fourteen consecutive U32s at input 13052-13079**,
+and **Appendix 4 defines every bit** across six pages. Roughly 450 named
+flags do not map onto entities without a decision about representation, and
+taking the five that another project happens to expose would be the wrong
+cut. It is the largest single piece of specification this port still does not
+read.
+
+The remarks column turned out to be where the per-model capability facts
+live, and two `ABSENT_IN` entries had been recorded from older, narrower
+wordings — the YAML's "MG5-6RL" and V1.1.9's "MG5-10RL" named the models that
+existed when they were written. The full table, and the one conclusion that
+had to be reached twice, are in
+[cross_reference_modbus_manager.md](cross_reference_modbus_manager.md).
+
+`DEVICE_TYPES` is now checked against Appendix 1 of **V1.1.16** and pinned
+by [tests/test_device_types.py](../tests/test_device_types.py): all 49 models
+present and names agreeing, where the V1.1.11 pass had 35. Seven
 entries remain that the specification dropped in V1.1.0 — the SH\*K series —
 because the hardware outlived the paperwork, and the test records that as a
 decision rather than an oversight.
+
+The fourteen models V1.1.12 to V1.1.16 added also **falsified how families
+were classified**. That was a table of device-type code ranges, whose comment
+said Sungrow "allocates them in blocks and new models land inside those
+blocks"; in fact MG5RL-MG10RL take 0x0D27-0x0D2A, SH5RL-SH10RL follow at
+0x0D2B-0x0D2E, and MG12RL and MG7.5RL appear *above* them. Widening the MG
+range to reach MG12RL would have called four single-phase inverters
+three-phase. `family_for` reads the model name instead, `Family` gains **RL**
+and **CX**, and a test now asserts that every model in the table classifies
+to something — the check the range table lacked, which is why nine models
+resolved to `None` and lost their gating in silence.
+
+**SH50-125CX is named but not supported.** Ten MPP trackers against a
+register map that stops at four, no reading from one, and an Appendix 1 row
+that contradicts itself on SH50CX's tracker count. The names are in so the
+specification's many "SH50~125CX are not supported" remarks can be recorded,
+and the family is in so a CX is not silently treated as something else.
 
 ## Roadmap
 
@@ -1392,6 +1475,139 @@ Control *of* the Logger itself is not available at all.
 map — but also **SG string inverters**, which have their own protocol document
 (*Communication Protocol of PV Grid-Connected String Inverters*). Supporting
 the Logger does not imply supporting the SG family.
+
+## Fingerprinting from the interface
+
+**Not built.** The design, and the two things that make it harder than it
+looks.
+
+Today a fingerprint costs a contributor a Python run on a machine that can
+reach the inverter. That is why every document in
+`doc/device-fingerprints/` comes from one of four houses, all known to the
+maintainer, and why one axis of `compatibility.md` is still entirely
+unmeasured. Somebody who has already installed the integration has, by
+definition, a working connection to their inverter — and no way to turn it
+into evidence.
+
+**The output already exists.** Home Assistant's diagnostics download is
+exactly the mechanism the survey needs: it produces a JSON file a user can
+attach to an issue, it is reachable from the config entry's menu with no
+entities involved, and `diagnostics.py` already redacts. Nothing needs to
+write a file, and no new download UI has to be invented. The work is making
+what it emits a *survey document* rather than a summary — the same schema
+`collect.py` writes, so one generator keeps producing `compatibility.md` from
+both.
+
+**What has to be asked, because no register answers it.** The survey's
+`user_inputs` is testimony: which cable, whether a Modbus proxy is in the
+path, whether anything else was polling, who is reporting, and whether the
+address may be published. An options-flow step is the natural home; it is a
+form, and the answers are already a defined set in `probe.py`'s
+`REPORTED_TRANSPORTS` and `PROXY_ANSWERS`.
+
+Two real obstacles:
+
+1. **A fingerprint taken from inside Home Assistant is taken under
+   contention** — and this project discards documents taken while something
+   else was polling, because contention and a register fault are hard to tell
+   apart from the result. Four documents were thrown away for exactly this.
+   So the coordinators for the entry have to be held off for the duration and
+   the document has to say they were, or the document has to be marked as
+   taken under contention and be worth less. A *second* poller outside this
+   entry — another Home Assistant, the YAML package, evcc — remains
+   undetectable either way, which is why the question is asked.
+2. **The block read test is the expensive part.** Twenty-six block reads
+   times three rounds, plus binary-tree narrowing over whatever failed, which
+   on a slow link ran a survey past its own cap. `blocks.NARROW_BUDGET`
+   exists for that and would have to be enforced harder inside Home
+   Assistant, where a config-flow step cannot sit for a quarter of an hour.
+   The realistic shape is a background task with a progress notification, not
+   a form that blocks.
+
+### A diagnostics-only setup mode
+
+**Possible, and worth having.** A contributor who wants to send a reading
+should not have to answer the migration question at all — it is the one
+irreversible decision in the flow, and it has nothing to do with producing a
+document.
+
+The shape: a first step asking what the entry is *for*. **Diagnostics only**
+connects, identifies what answers, probes capabilities, registers the device
+and creates **no entities** — so `PLATFORMS` is empty for that entry, the
+entity-ids question is never asked, and `async_claim_legacy_ids` never runs.
+**Full integration** is today's flow, unchanged.
+
+Then the options flow can switch an entry from diagnostics-only to full
+later, which it already does correctly: an options change reloads the entry,
+and the entity-ids choice would be asked at that point instead.
+
+Three things to be honest about:
+
+- An entry with no entities is unusual but entirely legal, and the
+  diagnostics download does not depend on any existing.
+- It still opens a Modbus connection, so it still spends one of the very few
+  sessions a Sungrow grants. Diagnostics-only is cheaper than a full entry
+  but not free.
+- It must not become a way to end up with a half-configured integration by
+  accident. The step has to read as *"help this project by sending a
+  reading"* rather than as a mode with fewer features.
+
+## When a firmware changes what a register means
+
+**Not supported today**, and issue
+[#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)
+is the case that needs it: after a firmware update, writing the export power
+limit at register 13074 behaves as though the value were 0.1% of rated power
+rather than watts — write 700, get 7000 W.
+
+**What exists.** Capabilities gate whether a group of registers is *read at
+all*, probed by reading rather than inferred, and that is the only
+variability the model has. `Capability.FIRMWARE_VERSIONS` means "the version
+registers answered", not "which version". A register's address, scale, unit
+and sign are class attributes in `registers.py`, fixed at import:
+
+    export_power_limit = integer(13073, signed=False, unit="W", writable=True)
+
+One interpretation, compiled in. Nothing consumes a version string to change
+it.
+
+**What is already in place to build on.** The input is read and recorded:
+`sungrow_version_1` and `_2`, `inverter_firmware_version`,
+`sungrow_arm_software`, `sungrow_dsp_software` and `sungrow_protocol_version`
+all reach every fingerprint, and every writable register is declared in one
+table (`scripts/writes.py`) that generates the `number`, `switch` and
+`select` descriptions. So there is exactly one place a version-dependent
+scale would have to be expressed.
+
+**Which field to gate on, measured rather than assumed.** `sungrow_version_1`
+is the one that tracks updatable firmware and the one the issue quotes. It
+varies across the committed documents — `01011.95.03`, `.95.12`, `.95.13` —
+and it read on **9 of 9**, where `inverter_firmware_version` read on only 5
+because four documents refuse that block. ARM and DSP are constant across all
+nine and, per that thread, identify hardware rather than firmware, so they
+are the wrong thing to key on. `sungrow_protocol_version` is constant at
+16781568 everywhere so far; it is semantically the *right* field if Sungrow
+bumps it when meanings change, and there is no evidence yet that it does.
+
+**What the mechanism should not be.** Not a fork of the register map, and not
+a runtime `if` in a property. The honest shape is what `layout.py` already is
+for padded frames: a small, explicit table of *deviations*, each carrying the
+measurement it came from — field, the version range it applies to, and the
+scale or unit that replaces the default. Then a register keeps one definition
+and the exceptions are enumerable, reviewable and testable, instead of the
+map meaning different things depending on where you read it.
+
+**And it is blocked on evidence, not effort.** Every measured machine reads
+13073 in watts and matches its own maximum at 5622 — 10000 on the 10 kW
+machines, 8000 on gerd's 8 kW one, 24990 on fwitten's — so the deviation has
+never been observed here. Worse, the two explanations in the thread are
+indistinguishable from the reports so far: "0.1% of rated power" and "units
+of 10 W" predict the same number on a 10 kW inverter, and every reporter
+appears to have one. Writing a version-gated scale on that basis would be
+guessing in the one place the integration *writes to somebody's inverter*.
+What is needed first is in
+[devices-wanted.md](device-fingerprints/devices-wanted.md) — a survey from a
+machine on `.95.14` or later, ideally one that is not 10 kW.
 
 ## Cross-cutting
 

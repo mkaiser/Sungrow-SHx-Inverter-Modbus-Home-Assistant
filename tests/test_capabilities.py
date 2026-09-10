@@ -19,6 +19,7 @@ from sungrow_modbus.capabilities import (
     probe,
     resolve,
 )
+from sungrow_modbus.const import DEVICE_TYPES
 
 SH10RT = 0x0E03
 SH10RS = 0x0D1B
@@ -37,10 +38,71 @@ SH5K_30 = 0x0D0C
         (SH5K_30, Family.K),
         (0x0E0F, Family.RT),  # SH10RT-V112, a variant inside the RT block
         (0x0D2A, Family.MG),  # MG10RL, added to the specification in V1.1.11
+        # The interleaved 0x0D2x block, which is the whole reason family is
+        # resolved from the model name and not from a code range. MG runs to
+        # 0x0D2A, SH*RL takes 0x0D2B-0x0D2E, and MG resumes above it.
+        (0x0D2B, Family.RL),  # SH5RL, immediately after MG10RL
+        (0x0D2E, Family.RL),  # SH10RL, immediately before MG12RL
+        (0x0D2F, Family.MG),  # MG12RL, above the SH*RL block
+        (0x0D31, Family.MG),  # MG7.5RL, higher still
+        (0x0D41, Family.RL),  # SH3RL, a second SH*RL block
+        (0x0E51, Family.CX),  # SH50CX
+        (0x0E3D, Family.CX),  # SH125CX
     ],
 )
 def test_families_are_recognised(code: int, family: Family) -> None:
     assert family_for(code) is family
+
+
+def test_every_model_in_the_table_has_a_family() -> None:
+    """No model may fall through the rules unclassified.
+
+    This is the test the code-range classifier did not have. Nine models
+    arrived between V1.1.12 and V1.1.16 outside every range it knew, and
+    nothing failed -- they simply resolved to None and lost their capability
+    gating silently.
+    """
+    unclassified = {
+        f"0x{code:04X}": name
+        for code, name in DEVICE_TYPES.items()
+        if family_for(code) is None
+    }
+    assert not unclassified, f"models with no family: {unclassified}"
+
+
+def test_no_single_phase_model_is_classified_three_phase() -> None:
+    """The specific wrong answer a widened MG range would have given.
+
+    SH5RL to SH10RL sit between MG10RL and MG12RL in the code space. Reaching
+    MG12RL by extending the MG range would have swept them up, and MG is
+    three-phase while SH*RL is not -- so four single-phase inverters would
+    have been told they had a phase B and a phase C.
+    """
+    for code in (0x0D2B, 0x0D2C, 0x0D2D, 0x0D2E, 0x0D41, 0x0D42, 0x0D43):
+        assert Capability.THREE_PHASE in known_absent(code), (
+            f"0x{code:04X} ({DEVICE_TYPES[code]}) is single-phase"
+        )
+    # And the MG models around them keep their three phases.
+    for code in (0x0D2A, 0x0D2F, 0x0D31):
+        assert Capability.THREE_PHASE not in known_absent(code), (
+            f"0x{code:04X} ({DEVICE_TYPES[code]}) is three-phase"
+        )
+
+
+def test_the_specifications_model_exclusions_are_recorded() -> None:
+    """The remarks column of V1.1.16, which is where these facts live.
+
+    Register 13089/13090 excludes "MG5-12RL and SH3-10RL" and "SH50~125CX" --
+    and notably *not* the RS models, which another project gates to a
+    different register pair on exactly those models.
+    """
+    for code in (0x0D31, 0x0D2D, 0x0E51):  # MG7.5RL, SH8RL, SH50CX
+        assert Capability.ACTIVE_POWER_LIMIT in known_absent(code)
+    for code in (0x0D1B, 0x0E03):  # SH10RS, SH10RT
+        assert Capability.ACTIVE_POWER_LIMIT not in known_absent(code)
+    # Reg 13017 excludes only the CX series.
+    assert Capability.FORCED_STARTUP in known_absent(0x0E51)
+    assert Capability.FORCED_STARTUP not in known_absent(0x0E03)
 
 
 def test_an_unknown_code_has_no_family_and_no_assumptions() -> None:

@@ -20,9 +20,20 @@ are now done:
   reachable, under a different number.
 - ✅ the **wallbox** (AC011E-01 / AC22E-01) — its own device, 32 registers in
   four components, at unit **3** through a WiNet-S or **248** direct. Read
-  only; nothing writes to it.
-- ⬜ the **iHomeManager** (port **503**, slave 247) — the only one with an
-  official Sungrow register document, and the only one **never measured**.
+  only; nothing writes to it. Unit 248 is the charger's own RS485 address,
+  reachable only through a serial gateway wired to the charger — never over
+  Modbus TCP, which is why it has never answered there.
+- ⬜ the **iHomeManager** (port **502 *or* 503**, slave 247) — still the only
+  one **never measured**, but no longer unfindable and no longer short of a
+  map. `identify()` probes input 8000 on unit 247, so a contributor who owns
+  one is told what they have rather than that nothing answered, and
+  `collect.py` reports it without surveying it. Not 503 alone: Sungrow's
+  setting is "Modbus TCP on the iHM", which lands on 502 on some units and
+  503 where 502 is busy — so the four sweeps that found nothing on 503 are
+  weaker evidence than they looked. And it is **not a gateway**: it forwards
+  system energy dispatch data, not the devices behind it, so its inverters
+  are separate endpoints. `doc/cross_reference_modbus_manager.md` has the
+  53-register map, MIT-licensed.
 
 A wallbox does *not* require an iHomeManager, and cannot be found by sweeping
 for one: it answers only behind an endpoint that already answered.
