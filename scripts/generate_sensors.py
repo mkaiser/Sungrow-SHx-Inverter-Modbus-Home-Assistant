@@ -25,7 +25,8 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from naming import DIAGNOSTIC
+from layout import component_for
+from naming import DIAGNOSTIC, LEGACY_ONLY_SENSORS
 
 REPO = Path(__file__).resolve().parent.parent
 ENTITY_MAP = REPO / "doc" / "legacy_entity_map.json"
@@ -66,7 +67,7 @@ def _entities() -> list[dict]:
         (
             e
             for e in entities
-            if e["layer"] == "modbus"
+            if e["layer"] in {"modbus", "specification"}
             and e.get("address") is not None
             and e["domain"] == "sensor"
             and e.get("scan_interval") in TIER_NAMES
@@ -82,6 +83,16 @@ CAPABILITY_BY_PREFIX: tuple[tuple[str, str], ...] = (
     ("mppt4_", "MPPT4"),
     ("phase_b_", "THREE_PHASE"),
     ("phase_c_", "THREE_PHASE"),
+    # From the specification rather than the YAML: a second meter channel
+    # needs a dual-channel meter, and PV power limitation is SHT-only.
+    ("meter_channel_2_", "METER_CHANNEL_2"),
+    ("feed_in_limitation_ratio", "FEED_IN_LIMITATION_RATIO"),
+    ("pv_power_limitation_raw", "PV_POWER_LIMITATION"),
+    # Two firmware strings the reference SH10RT cannot read at all. Gated so
+    # they are absent rather than permanently unavailable; see
+    # `scripts/layout.py` for why each is read on its own.
+    ("sungrow_version_3", "SUB_CONTROLLER_FIRMWARE"),
+    ("sungrow_version_4_sungrow_battery", "BATTERY_FIRMWARE"),
 )
 
 
@@ -98,18 +109,27 @@ def render() -> str:
     lines = [HEADER]
     for entity in _entities():
         key = entity["entity_id"].split(".", 1)[1]
-        component = f"{TIER_NAMES[entity['scan_interval']]}_{entity['input_type']}"
+        component = component_for(
+            key, TIER_NAMES[entity["scan_interval"]], entity["input_type"]
+        )
         lines.append("    SungrowSensorDescription(")
         lines.append(f'        key="{key}",')
         lines.append(f'        component="{component}",')
         lines.append(f'        field="{key}",')
         lines.append(f'        translation_key="{key}",')
-        lines.append(f'        legacy_name="{entity["name"]}",')
+        if entity["layer"] == "modbus":
+            # Only a YAML entity has an id worth inheriting; these fields are
+            # what the migration identifies and claims by.
+            lines.append(f'        legacy_name="{entity["name"]}",')
+            lines.append(f'        legacy_unique_id="{entity["unique_id"]}",')
+            lines.append('        legacy_platform="modbus",')
         capability = _requires(key)
         if capability:
             lines.append(f"        requires=Capability.{capability},")
         if key in DIAGNOSTIC:
             lines.append("        entity_category=EntityCategory.DIAGNOSTIC,")
+        if key in LEGACY_ONLY_SENSORS:
+            lines.append("        legacy_only=True,")
         if entity.get("device_class"):
             device_class = entity["device_class"].upper()
             lines.append(f"        device_class=SensorDeviceClass.{device_class},")

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions and help
+    url: https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions
+    about: For anything that is not a bug — setup help, dashboards, what a register means.
+  - name: Discord
+    url: https://discord.gg/ZvYBejFkm2
+    about: The lowest-threshold way to ask. Several people there like to help.

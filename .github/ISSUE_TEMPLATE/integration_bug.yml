@@ -1,0 +1,73 @@
+name: Bug report (integration)
+description: Something is wrong with the sungrow_modbus integration.
+title: "[Integration] "
+labels: ["bug", "integration"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is for the **integration** on the `proper-ha-integration` branch.
+        For the YAML package — `modbus_sungrow.yaml`, which is what almost
+        everyone runs — use the plain *Bug report* instead.
+
+        The integration is experimental and unreleased. Registers and entity
+        IDs can still change.
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics file
+      description: |
+        **Settings → Devices & Services → Sungrow Modbus → the three-dot menu →
+        Download diagnostics**, then drag the file into this box.
+
+        It answers most of the first round of questions on its own: the model,
+        which capabilities the inverter confirmed, which registers reported
+        themselves unavailable, how each poll group is doing, and why any
+        entity was not created. It carries **no serial number, no host address
+        and no timestamp**.
+      placeholder: Drag the .json file here, or paste its contents.
+    validations:
+      required: true
+
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you got instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log output
+      description: |
+        Settings → System → Logs. If nothing obvious is there, add this to
+        `configuration.yaml`, restart, and reproduce it:
+
+        ```yaml
+        logger:
+          logs:
+            custom_components.sungrow_modbus: debug
+            sungrow_modbus: debug
+        ```
+      render: text
+
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.9.0"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contention
+    attributes:
+      label: Before you file this
+      description: |
+        A Sungrow inverter accepts very few Modbus connections at once, and
+        most reported dropouts are two clients competing for one.
+      options:
+        - label: Nothing else is polling this inverter — not the YAML package, not another Home Assistant, not EVCC or a logger.

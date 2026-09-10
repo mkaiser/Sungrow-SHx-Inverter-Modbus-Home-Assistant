@@ -13,7 +13,7 @@ Applies to the **integration** track only. The YAML package needs none of it.
 `sungrow-modbus==<version>`, and Home Assistant pip-installs a custom
 integration's requirements exactly as it does a built-in one. That package does
 not exist yet, so **a HACS install fails at start-up**. It works in the
-devcontainer only because `scripts/setup` installs the library editable, which
+devcontainer only because `scripts/setup.sh` installs the library editable, which
 no user has.
 
 There is no way to reserve a name on PyPI. A name is claimed by uploading, and
@@ -72,7 +72,7 @@ the host is genuinely better:
 - **Any site the container cannot route to**, though in practice it follows the
   host's routing already.
 
-[scripts/collect_fingerprint.py](../scripts/collect_fingerprint.py) is built
+[scripts/sungrow_scan/portable.py](../scripts/sungrow_scan/portable.py) is built
 for exactly this: no dependencies, plain Python 3.9 or newer, so it runs on the
 host with nothing installed. Write its output into the repository folder and it
 appears on both sides.
@@ -83,7 +83,7 @@ Run this **on the host**, not in the container:
 
 ```bash
 pip install zeroconf          # the only dependency, and only for this check
-python scripts/discover_probe.py mdns
+python scripts/sungrow_scan/probe.py mdns
 ```
 
 If the dongle advertises its serial and model, host discovery becomes free and
@@ -97,9 +97,9 @@ Three tools, three homes, and mixing them up produces confusing errors:
 
 | Command | Runs | Because |
 | --- | --- | --- |
-| `python scripts/collect_fingerprint.py <ip>` | **host or container** | No dependencies at all |
-| `python scripts/discover_probe.py mdns` | **host only** | Multicast does not cross the Docker bridge; needs `zeroconf` |
-| `python scripts/discover_probe.py capabilities/units/dump` | **container only** | Uses the device library, which is installed there |
+| `python scripts/sungrow_scan/portable.py <ip>` | **host or container** | No dependencies at all |
+| `python scripts/sungrow_scan/probe.py mdns` | **host only** | Multicast does not cross the Docker bridge; needs `zeroconf` |
+| `python scripts/sungrow_scan/collect.py`, `probe.py capabilities/units/dump` | either | They prefer the device library where it is installed and fall back to this directory's own client, which is what makes the zip work |
 
 ## 3. Capture the test systems
 
@@ -108,34 +108,44 @@ visiting each at its own milestone, because three decisions have been made on
 paper and can be checked cheaply now — above all the naming ladder, designed
 without ever having seen two inverters of the same model.
 
-Run this **in the devcontainer** — it uses the device library:
+Run the one entry point. It identifies every device on the endpoint before
+asking anything — which is what tells one inverter reached two ways from two
+inverters, the condition that invalidated two documents — then asks, checks
+the transport against the answer, runs the block read test on the still-idle
+link, reads every register and prints what it found:
 
 ```bash
-python scripts/discover_probe.py capabilities <host> \
-    --save doc/fingerprints --label sh10rt-v112
+python scripts/sungrow_scan/collect.py <host>
+```
+
+For the reading on its own, without the other phases:
+
+```bash
+python scripts/sungrow_scan/probe.py capabilities <host> \
+    --save doc/device-fingerprints --label sh10rt-v112
 ```
 
 | Setup | Label to use | Why it matters |
 | --- | --- | --- |
-| LAN: SH10RT + Pylontech | `sh10rt-pylontech` | Done — a third-party battery |
-| Remote: SH10RT-V112 + Sungrow battery | `sh10rt-v112` | A variant device code, a real Sungrow battery |
+| LAN: SH10RT + Pylontech | `sh10rt-3p-mkaiser-0ea759-battery-thirdparty-meter` | Done — a third-party battery, direct LAN |
+| Remote (gerd): **SH8.0RT-V112** + SBR096, both paths | `sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter` and the same with `-wallbox-winet-wlan` | Measured 2026-09-08, not SH10RT as this row said: a variant device code, a real Sungrow battery, and the only site scanned over both its LAN port and its dongle |
 | Remote: SH10RT-V122 + battery + wallbox | `sh10rt-v122-wallbox` | The only wallbox |
 | Remote: two SH10RT | `sh10rt-pair-a`, `-b` | The only multi-inverter site |
 
 On the wallbox system, also dump the undocumented gaps:
 
 ```bash
-python scripts/discover_probe.py dump <host> --unit 3 --start 21230 --count 40 --save
-python scripts/discover_probe.py dump <host> --unit 3 --start 21266 --count 40 --save
+python scripts/sungrow_scan/probe.py dump <host> --unit 3 --start 21230 --count 40 --save
+python scripts/sungrow_scan/probe.py dump <host> --unit 3 --start 21266 --count 40 --save
 ```
 
-Everything above is **read-only**. No command in `discover_probe.py` writes a
+Everything above is **read-only**. No command in `scripts/sungrow_scan/` writes a
 register.
 
 For anyone outside this repo — the users whose models nobody here owns —
-[scripts/collect_fingerprint.py](../scripts/collect_fingerprint.py) does the
+[scripts/sungrow_scan/portable.py](../scripts/sungrow_scan/portable.py) does the
 same job with no dependencies and no checkout: a single file they can download
-and run on plain Python. See [doc/fingerprints/](fingerprints/).
+and run on plain Python. See [doc/device-fingerprints/](fingerprints/).
 
 Then commit the `.capabilities.json` and `.readings.json` files. Leave the
 `.raw.json` alone — it is gitignored, and it carries the real serial and the
@@ -200,7 +210,7 @@ The protections in place:
 
 - `.testdata/` is gitignored and holds raw dumps, the production database copy,
   and anything else from a real installation.
-- `scripts/discover_probe.py` splits every capture into a publishable part and
+- `scripts/sungrow_scan/probe.py` splits every capture into a publishable part and
   a private part rather than leaving the judgement to whoever runs it.
 - Connection details for the maintainer's own inverter are deliberately not in
   the repo; they live in his `secrets.yaml`.

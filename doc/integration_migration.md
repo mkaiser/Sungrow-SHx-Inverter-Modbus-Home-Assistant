@@ -44,11 +44,13 @@ already there.
    still running", with how many of its entities are holding IDs. If it is
    still running, migrating is not offered as the default and is refused if
    you pick it.
-3. **Leave the old entities in the entity registry alone.** After the restart
-   they show as unavailable, and [cleanup_entities.md](../legacy/doc/cleanup_entities.md)
-   normally tells you to delete them. Do **not** delete them here — the
-   integration releases each ID itself as it takes it over. Deleting them by
-   hand does no harm to your history either, but it is unnecessary work.
+3. **The old entities can stay in the registry, or not — either works.**
+   After the restart they show as unavailable, and
+   [cleanup_entities.md](../legacy/doc/cleanup_entities.md) tells you to delete
+   them. If you leave them, the integration releases each entry as it takes the
+   ID over. If you already deleted them, it asks the recorder instead, which
+   still has the rows. Deleting them never touches your history — the recorder
+   keys on the entity ID and knows nothing about the registry.
 
 ## Setting it up
 
@@ -94,6 +96,54 @@ follow Home Assistant's conventions rather than the YAML package's:
   — rather than a permanently unavailable entity you have to go and delete.
 
 Migrating does not opt you out of any of that. Only the ID is inherited.
+
+## Three entities that do not come across
+
+Everything the YAML package reads or sets has a replacement on the same ID,
+including the seven `(delay)` flags and `sensor.daily_consumed_energy_filtered`.
+Three entities deliberately do not, and if your dashboard uses them the cards
+will break. All three are the YAML working around things Home Assistant now
+does properly.
+
+| Was | Now |
+| --- | --- |
+| `button.start_inverter` | Action `sungrow_modbus.start_inverter` |
+| `button.stop_inverter` | Action `sungrow_modbus.stop_inverter` |
+| `switch.sungrow_dashboard_enable_danger_mode` | Nothing — see below |
+
+**Start and stop became actions rather than buttons** because Home Assistant
+has no confirmation dialog for a button press. A button would sit in every
+dashboard picker and automation editor, and a misclick while scrolling on a
+phone stops your inverter. An action has to be written into a script or called
+from Developer Tools.
+
+Who may call them is **yours to choose**, in *Options → Permissions* on the
+integration: administrators only, which is the default, or anyone who can
+already control the inverter. A read-only account never can, whichever you
+pick, and neither setting affects automations and scripts — those act for the
+household rather than for a person. A button could not have been restricted at
+all.
+
+If a script or automation of yours pressed those buttons, replace the
+`button.press` with the action. The register written is the same one.
+
+**The danger-mode switch was a guard for the YAML's own dashboard** — it
+enabled the inverter and EMS controls so that browsing on a phone could not
+change them by accident, and an automation reset it after a few seconds. It
+was never a device setting, so the integration does not provide it. If you
+keep using that dashboard, create a helper to take its place:
+
+*Settings → Devices & services → Helpers → Create helper → Toggle*, named
+`Sungrow dashboard enable danger mode`. It will land on the same entity ID and
+your dashboard and its reset automation keep working, provided you remove the
+YAML package first so the ID is free.
+
+The integration's own answer to the same worry is different and does not need
+a switch. Home Assistant decides who may change a setting, by account: a
+read-only account under *Settings → People* sees every reading and can change
+nothing at all, which is a stronger guard than a toggle on a dashboard and
+cannot be un-toggled by the person browsing. Start and stop are further behind
+the Permissions option above.
 
 ## Changing your mind
 

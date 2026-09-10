@@ -19,7 +19,7 @@ from modbus_connection.mock import MockModbusConnection
 import pytest
 
 from custom_components.sungrow_modbus.sensor_descriptions import SENSOR_DESCRIPTIONS
-from sungrow_modbus import TIERS, SungrowInverter
+from sungrow_modbus import TIER_COMPONENTS, SungrowInverter
 
 SEED = Path(__file__).resolve().parent.parent / "scripts" / "simulator_registers.json"
 
@@ -38,15 +38,15 @@ def inverter() -> SungrowInverter:
 async def polled(inverter: SungrowInverter) -> SungrowInverter:
     """Return the same inverter, with every tier read once."""
     await inverter.async_update_identity()
-    for interval in TIERS:
-        await inverter.async_update_tier(interval)
+    for tier in TIER_COMPONENTS:
+        await inverter.async_update_tier(tier)
     return inverter
 
 
 async def test_the_seed_covers_every_tier(polled: SungrowInverter) -> None:
-    for interval in TIERS:
-        report = await polled.async_update_tier(interval)
-        assert not report.failed, f"tier {interval}: {report.failed}"
+    for tier in TIER_COMPONENTS:
+        report = await polled.async_update_tier(tier)
+        assert not report.failed, f"tier {tier}: {report.failed}"
 
 
 @pytest.mark.parametrize("description", SENSOR_DESCRIPTIONS, ids=lambda d: d.key)

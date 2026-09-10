@@ -5,8 +5,15 @@ A backend-neutral device library built on ``modbus-connection``: it is given a
 any Python program and tested without a network.
 """
 
+from .battery import (
+    FALLBACK_W,
+    MODELS,
+    BatteryModel,
+    model_for_capacity,
+    power_from_bms,
+)
 from .capabilities import Capability, Family, family_for, known_absent, resolve
-from .components import InverterIdentity, InverterReadings
+from .components import InverterControl, InverterIdentity, InverterReadings
 from .const import DEVICE_TYPES, MANUFACTURER, model_for
 from .derived import RUNNING_STATES, Derived
 from .device import SungrowInverter
@@ -19,20 +26,25 @@ from .discovery import (
     hosts_in,
     network_of,
 )
-from .model import UpdateReport
-from .registers import COMPONENTS, TIERS
+from .model import UpdateReport, present
+from .registers import COMPONENTS, DEFAULT_INTERVALS, TIER_COMPONENTS
 
 __all__ = [
     "COMPONENTS",
+    "DEFAULT_INTERVALS",
     "DEFAULT_PORT",
     "DEVICE_TYPES",
+    "FALLBACK_W",
     "MANUFACTURER",
     "MAX_HOSTS",
+    "MODELS",
     "RUNNING_STATES",
-    "TIERS",
+    "TIER_COMPONENTS",
+    "BatteryModel",
     "Capability",
     "Derived",
     "Family",
+    "InverterControl",
     "InverterIdentity",
     "InverterReadings",
     "NetworkTooLarge",
@@ -44,6 +56,9 @@ __all__ = [
     "hosts_in",
     "known_absent",
     "model_for",
+    "model_for_capacity",
     "network_of",
+    "power_from_bms",
+    "present",
     "resolve",
 ]

@@ -2,7 +2,7 @@
 """Serve the Sungrow register seed over Modbus TCP.
 
 Lets the integration be developed and tested without an inverter. Run
-scripts/simulate to regenerate the seed and start this, or point it at an
+scripts/simulate.sh to regenerate the seed and start this, or point it at an
 existing seed file.
 
 The seed only names the registers the YAML package reads. Those are served

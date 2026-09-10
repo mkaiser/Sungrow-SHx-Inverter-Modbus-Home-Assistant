@@ -1,0 +1,145 @@
+name: Compatibility report (integration)
+description: Tell us what your setup is and whether the integration reads it correctly.
+title: "[Compatibility] "
+labels: ["compatibility", "integration"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you — this is the single most useful thing anybody can contribute.
+
+        Which parts of the register map a device answers varies by model, phase
+        count, wiring, transport and firmware, and Sungrow's specification says
+        what *exists*, not what your machine does with it. So the capability
+        model is built from fingerprints off real hardware, and a report from a
+        model nobody has tested is worth more than any amount of reasoning.
+
+        **No GitHub account?** [Discord](https://discord.gg/ZvYBejFkm2) works
+        just as well — drop the file there and say what your setup is. This
+        form only exists because it asks the right questions up front.
+
+        **On privacy.** The diagnostics file below carries **no serial number,
+        no host address and no timestamp** — those are removed before it is
+        written. It does contain a snapshot of your current power and energy
+        readings, which is what makes it useful for checking scale factors. If
+        you would rather not post even that, say so and we will work out
+        another way.
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics file
+      description: |
+        **Settings → Devices & Services → Sungrow Modbus → the three-dot menu →
+        Download diagnostics**, then drag the file into this box.
+
+        Not installed it yet? Either of these needs nothing but Python:
+
+        - `python scripts/sungrow_scan/portable.py <ip>` — one file, one
+          report, pasteable.
+        - `python collect.py` from the `sungrow_scan` folder — the full
+          survey: it finds the device, asks a few things no register can
+          answer, tests the block reads and tells you which file to send.
+          Ask for the zip if you do not have a checkout.
+      placeholder: Drag the .json file here, or paste its contents.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: works
+    attributes:
+      label: Does it work?
+      options:
+        - Yes — everything I expected is there
+        - Mostly — some entities are missing or wrong
+        - "No — it will not set up at all"
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: Inverter model
+      description: As printed on the unit, e.g. SH10RT-V112, SH5T, SH3.6RS.
+      placeholder: SH10RT
+    validations:
+      required: true
+
+  - type: dropdown
+    id: inverters
+    attributes:
+      label: How many inverters?
+      options:
+        - "One"
+        - "Two"
+        - "Three or more"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: connection
+    attributes:
+      label: How is it connected?
+      description: |
+        This matters more than it looks. Sungrow's own protocol document warns
+        that some measuring points are not forwarded over a WiNet-S, so the
+        same inverter answers a different subset depending on the route in.
+      options:
+        - Ethernet, directly to the inverter's LAN port
+        - WiNet-S dongle over Ethernet
+        - WiNet-S dongle over WiFi
+        - Logger1000 / Logger3000
+        - A Modbus TCP gateway or proxy
+        - Something else (say below)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: battery
+    attributes:
+      label: Battery
+      options:
+        - "None"
+        - Sungrow SBR
+        - Sungrow SBH
+        - Pylontech
+        - BYD
+        - Another third-party pack (say below)
+    validations:
+      required: true
+
+  - type: input
+    id: battery_size
+    attributes:
+      label: Battery size and model
+      description: The usable or nominal capacity, and the model if you know it.
+      placeholder: Pylontech Force H1, 14.4 kWh
+
+  - type: dropdown
+    id: meter
+    attributes:
+      label: Energy meter
+      options:
+        - "None"
+        - DTSU666 (single channel)
+        - DTSU666-20 (dual channel)
+        - iHomeManager
+        - Another meter (say below)
+
+  - type: dropdown
+    id: wallbox
+    attributes:
+      label: Wallbox
+      options:
+        - "None"
+        - Sungrow AC011E-01
+        - Sungrow AC22E-01
+        - Another wallbox (say below)
+
+  - type: textarea
+    id: anything_else
+    attributes:
+      label: Anything else
+      description: |
+        Firmware versions, entities that look wrong, values that are out by a
+        factor of ten, anything that surprised you.

@@ -1,12 +1,12 @@
 .venv
 
-# Home Assistant dev instance (scripts/develop) - only the template is tracked.
+# Home Assistant dev instance (scripts/develop.sh) - only the template is tracked.
 config/*
 !config/configuration.yaml
 
 # Generated simulator seed.
 
-# Upstream sources cloned for reference (scripts/fetch_references).
+# Upstream sources cloned for reference (scripts/fetch_references.sh).
 .reference/
 
 # Python
@@ -28,11 +28,22 @@ build/
 # Register dumps and production data from real installations. These carry
 # serial numbers and live household readings, and this repo is public.
 # Redacted capability fingerprints are committed instead; see
-# scripts/discover_probe.py.
+# scripts/sungrow_scan/probe.py.
 .testdata/
 
-# Reports written by scripts/collect_fingerprint.py, which defaults to the
+# Reports written by scripts/sungrow_scan/portable.py, which defaults to the
 # working directory — so running it inside a checkout drops one here. They are
 # redacted by construction, but they are somebody's data and not repo content:
-# a curated copy belongs in doc/fingerprints/ under a deliberate name.
+# a curated copy belongs in doc/device-fingerprints/ under a deliberate name.
 sungrow-fingerprint-*.json
+
+# Built by scripts/make_scan_zip.py from scripts/sungrow_scan/, which is the
+# source of truth. Committing the zip would mean two copies, and the stale one
+# would be the one somebody was handed.
+sungrow_scan.zip
+
+# Written by scripts/sungrow_scan/collect.py when it runs outside a checkout,
+# and by probe.py's fixed raw destination in the same case. Both carry the
+# real serial and address; `.testdata/` covers the in-checkout case above.
+sungrow-scan-private/
+sungrow-scan-*.log

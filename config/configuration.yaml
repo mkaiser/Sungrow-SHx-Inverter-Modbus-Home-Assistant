@@ -1,6 +1,6 @@
 # Minimal Home Assistant configuration for integration development.
 #
-# Started by scripts/develop. Everything else in config/ is generated at
+# Started by scripts/develop.sh. Everything else in config/ is generated at
 # runtime and gitignored.
 #
 # This deliberately does NOT use `default_config:`. That pulls in bluetooth,

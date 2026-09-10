@@ -41,7 +41,7 @@ OVERRIDES: dict[int, int | list[int]] = {
 STRINGS = {
     4953: "SAPPHIRE-H_01011.95.12",  # ARM software
     4968: "SAPPHIRE-H_03011.95.12",  # DSP software
-    4989: "A2340600123",  # inverter serial
+    4989: "A123456789",  # inverter serial
     2581: "SAPPHIRE-H_01011.95.12",
     2596: "SAPPHIRE-H_03011.95.12",
     2612: "SUBCTL-S_04011.01.01",
@@ -88,6 +88,20 @@ def collect() -> dict[str, dict[str, list[int]]]:
             data_type = entry.get("data_type", "uint16")
             width = int(entry.get("count", WIDTHS.get(data_type, 1)))
             spaces[space][int(address)] = _default_value(entry, width)
+
+    # Registers the specification defines and the YAML never read. Their one
+    # source is the entity map, so they cannot drift from the descriptions
+    # generated beside them.
+    entity_map = json.loads(
+        (REPO / "doc" / "legacy_entity_map.json").read_text(encoding="utf-8")
+    )
+    for entry in entity_map["entities"]:
+        if entry["layer"] != "specification" or entry.get("address") is None:
+            continue
+        space = "input" if entry.get("input_type") == "input" else "holding"
+        data_type = entry.get("data_type", "uint16")
+        width = int(entry.get("count", WIDTHS.get(data_type, 1)))
+        spaces[space][int(entry["address"])] = _default_value(entry, width)
 
     for address, text in STRINGS.items():
         for space in spaces.values():

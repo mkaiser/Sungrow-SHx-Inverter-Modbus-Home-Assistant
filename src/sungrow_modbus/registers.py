@@ -34,7 +34,7 @@ class InverterRealtimeInput(Component):
 
 
 class InverterFastInput(Component):
-    """37 input registers, polled every 10s."""
+    """36 input registers, polled every 10s."""
 
     register_space = "input"
 
@@ -66,8 +66,6 @@ class InverterFastInput(Component):
     """MPPT4 voltage (reg 5115)."""
     mppt4_current = gauge(5115, 0.1, signed=False, nan=65535, unit="A")
     """MPPT4 current (reg 5116)."""
-    battery_power = int32(5213, word_order="little", unit="W")
-    """Battery power (reg 5214)."""
     grid_frequency = gauge(5241, 0.01, signed=False, unit="Hz")
     """Grid frequency (reg 5242)."""
     meter_active_power = int32(5600, word_order="little", nan=2147483647, unit="W")
@@ -120,49 +118,124 @@ class InverterFastInput(Component):
     """Total active power (reg 13034)."""
 
 
+class InverterBatteryPower(Component):
+    """1 input register, polled every 10s.
+
+    Battery power at register 5214, which one measured firmware refuses on
+    the inverter's own LAN port while serving it through a WiNet-S.
+    """
+
+    register_space = "input"
+
+    battery_power = int32(5213, word_order="little", unit="W")
+    """Battery power (reg 5214)."""
+
+
+class InverterMeterChannel2(Component):
+    """4 input registers, polled every 10s.
+
+    A second metering channel, which most installations do not have and
+    some firmware answers by closing the connection.
+    """
+
+    register_space = "input"
+
+    meter_channel_2_total_active_power = int32(
+        13199, word_order="little", nan=2147483647, unit="W"
+    )
+    """Meter channel 2 total active power (reg 13200)."""
+    meter_channel_2_phase_a_active_power = int32(
+        13201, word_order="little", nan=2147483647, unit="W"
+    )
+    """Meter channel 2 phase A active power (reg 13202)."""
+    meter_channel_2_phase_b_active_power = int32(
+        13203, word_order="little", nan=2147483647, unit="W"
+    )
+    """Meter channel 2 phase B active power (reg 13204)."""
+    meter_channel_2_phase_c_active_power = int32(
+        13205, word_order="little", nan=2147483647, unit="W"
+    )
+    """Meter channel 2 phase C active power (reg 13206)."""
+
+
 class InverterFastHolding(Component):
-    """18 holding registers, polled every 10s."""
+    """19 holding registers, polled every 10s."""
 
     register_space = "holding"
 
-    load_adjustment_mode_selection_raw = integer(13001, signed=False)
+    load_adjustment_mode_selection_raw = integer(13001, signed=False, writable=True)
     """Load adjustment mode selection raw (reg 13002)."""
-    load_adjustment_mode_enable_raw = integer(13010, signed=False)
+    load_adjustment_mode_enable_raw = integer(13010, signed=False, writable=True)
     """Load adjustment mode enable raw (reg 13011)."""
-    ems_mode_selection_raw = integer(13049, signed=False)
+    pv_power_limitation_raw = integer(13017, signed=False, nan=65535)
+    """PV power limitation raw (reg 13018)."""
+    ems_mode_selection_raw = integer(13049, signed=False, writable=True)
     """EMS mode selection raw (reg 13050)."""
-    battery_forced_charge_discharge_cmd_raw = integer(13050, signed=False)
+    battery_forced_charge_discharge_cmd_raw = integer(
+        13050, signed=False, writable=True
+    )
     """Battery forced charge discharge cmd raw (reg 13051)."""
-    battery_forced_charge_discharge_power = integer(13051, signed=False, unit="W")
+    battery_forced_charge_discharge_power = integer(
+        13051, signed=False, unit="W", writable=True
+    )
     """Battery forced charge discharge power (reg 13052)."""
-    battery_max_soc = gauge(13057, 0.1, signed=False, unit="%")
+    battery_max_soc = gauge(13057, 0.1, signed=False, unit="%", writable=True)
     """Battery max SoC (reg 13058)."""
-    battery_min_soc = gauge(13058, 0.1, signed=False, unit="%")
+    battery_min_soc = gauge(13058, 0.1, signed=False, unit="%", writable=True)
     """Battery min SoC (reg 13059)."""
-    export_power_limit = integer(13073, signed=False, unit="W")
+    export_power_limit = integer(13073, signed=False, unit="W", writable=True)
     """Export power limit (reg 13074)."""
-    backup_mode_raw = integer(13074, signed=False)
+    backup_mode_raw = integer(13074, signed=False, writable=True)
     """Backup mode raw (reg 13075)."""
-    export_power_limit_mode_raw = integer(13086, signed=False)
+    export_power_limit_mode_raw = integer(13086, signed=False, writable=True)
     """Export power limit mode raw (reg 13087)."""
+    feed_in_limitation_ratio = gauge(13087, 0.1, signed=False, nan=65535, unit="%")
+    """Feed-in limitation ratio (reg 13088)."""
     active_power_limitation_raw = integer(13088, signed=False)
     """Active power limitation raw (reg 13089)."""
     active_power_limitation_ratio_raw = gauge(13089, 0.1, signed=False, unit="%")
     """Active power limitation ratio raw (reg 13090)."""
-    battery_reserved_soc_for_backup = integer(13099, signed=False, unit="%")
+    battery_reserved_soc_for_backup = integer(
+        13099, signed=False, unit="%", writable=True
+    )
     """Battery reserved SoC for backup (reg 13100)."""
-    apl_shutdown_at_zero_raw = integer(31212, signed=False)
-    """APL shutdown at zero raw (reg 31213)."""
-    battery_max_charge_power = gauge(33046, 10, signed=False, unit="W")
+    battery_max_charge_power = gauge(33046, 10, signed=False, unit="W", writable=True)
     """Battery max charge power (reg 33047)."""
-    battery_max_discharge_power = gauge(33047, 10, signed=False, unit="W")
+    battery_max_discharge_power = gauge(
+        33047, 10, signed=False, unit="W", writable=True
+    )
     """Battery max discharge power (reg 33048)."""
-    battery_charging_start_power = gauge(33148, 10, signed=False, nan=65535, unit="W")
+    battery_charging_start_power = gauge(
+        33148, 10, signed=False, nan=65535, unit="W", writable=True
+    )
     """Battery charging start power (reg 33149)."""
     battery_discharging_start_power = gauge(
-        33149, 10, signed=False, nan=65535, unit="W"
+        33149, 10, signed=False, nan=65535, unit="W", writable=True
     )
     """Battery discharging start power (reg 33150)."""
+
+
+class InverterAplShutdownAtZero(Component):
+    """1 holding register, polled every 10s.
+
+    The active-power-limit shutdown flag at register 31213, refused by one
+    measured firmware on the inverter's own LAN port. **Experimental and
+    unverified:** this register is not in Sungrow's protocol document --
+    the comment that added it to the YAML package says so outright -- and
+    it comes from community feedback in issue #554, a request for ramping
+    PV production down. What it does is inferred from its name, whether the
+    inverter shuts down when the active power limit is set to zero or idles
+    at zero output, and nobody here has tested it. All three surveyed
+    inverters read 85 (0x55), one value three times, so its 0xAA/0x55 pair
+    is a convention assumed rather than observed -- which is why it stays a
+    number instead of becoming a binary sensor like the two documented mode
+    registers beside it.
+    """
+
+    register_space = "holding"
+
+    apl_shutdown_at_zero_raw = integer(31212, signed=False)
+    """APL shutdown at zero raw (reg 31213)."""
 
 
 class InverterMediumInput(Component):
@@ -179,7 +252,7 @@ class InverterMediumInput(Component):
 
 
 class InverterSlowestInput(Component):
-    """38 input registers, polled every 600s."""
+    """33 input registers, polled every 600s."""
 
     register_space = "input"
 
@@ -187,10 +260,6 @@ class InverterSlowestInput(Component):
     """Sungrow Version 1 (reg 2582)."""
     sungrow_version_2 = string(2596, 11)
     """Sungrow Version 2 (reg 2597)."""
-    sungrow_version_3 = string(2612, 11)
-    """Sungrow Version 3 (reg 2613)."""
-    sungrow_version_4_sungrow_battery = string(2628, 11)
-    """Sungrow Version 4 (Sungrow Battery) (reg 2629)."""
     sungrow_protocol_version = uint32(4951, word_order="little")
     """Sungrow Protocol Version (reg 4952)."""
     sungrow_arm_software = string(4953, 15)
@@ -261,30 +330,116 @@ class InverterSlowestInput(Component):
     """Daily exported energy (reg 13045)."""
     total_exported_energy = uint32(13045, scale=0.1, word_order="little", unit="kWh")
     """Total exported energy (reg 13046)."""
-    inverter_firmware_version = string(13249, 15)
-    """Inverter Firmware Version (reg 13250)."""
-    communication_module_firmware_version = string(13264, 15)
-    """Communication Module Firmware Version (reg 13265)."""
+
+
+class InverterBatteryFirmware(Component):
+    """1 input register, polled every 600s.
+
+    The battery firmware string, which the YAML package documents as being
+    for Sungrow batteries only.
+    """
+
+    register_space = "input"
+
+    sungrow_version_4_sungrow_battery = string(2628, 15)
+    """Sungrow Version 4 (Sungrow Battery) (reg 2629)."""
+
+
+class InverterFirmwareBlockBattery(Component):
+    """1 input register, polled every 600s.
+
+    The battery firmware string at register 13280, which some firmware
+    answers by closing the connection.
+    """
+
+    register_space = "input"
+
     battery_firmware_version = string(13279, 15)
     """Battery Firmware Version (reg 13280)."""
+
+
+class InverterFirmwareBlockCommunicationModule(Component):
+    """1 input register, polled every 600s.
+
+    The communication module's firmware string at register 13265, absent on
+    a direct LAN connection and read on its own because some firmware
+    answers it by closing the connection.
+    """
+
+    register_space = "input"
+
+    communication_module_firmware_version = string(13264, 15)
+    """Communication Module Firmware Version (reg 13265)."""
+
+
+class InverterFirmwareBlockInverter(Component):
+    """1 input register, polled every 600s.
+
+    The inverter firmware string at register 13250, which some firmware
+    answers by closing the connection.
+    """
+
+    register_space = "input"
+
+    inverter_firmware_version = string(13249, 15)
+    """Inverter Firmware Version (reg 13250)."""
+
+
+class InverterSubControllerFirmware(Component):
+    """1 input register, polled every 600s.
+
+    The sub-controller firmware string, which some firmware versions do not
+    publish at all.
+    """
+
+    register_space = "input"
+
+    sungrow_version_3 = string(2612, 15)
+    """Sungrow Version 3 (reg 2613)."""
 
 
 #: Attribute name on the device to the Component it holds.
 COMPONENTS: dict[str, type[Component]] = {
     "realtime_input": InverterRealtimeInput,
     "fast_input": InverterFastInput,
+    "battery_power": InverterBatteryPower,
+    "meter_channel_2": InverterMeterChannel2,
     "fast_holding": InverterFastHolding,
+    "apl_shutdown_at_zero": InverterAplShutdownAtZero,
     "medium_input": InverterMediumInput,
     "slowest_input": InverterSlowestInput,
+    "battery_firmware": InverterBatteryFirmware,
+    "firmware_block_battery": InverterFirmwareBlockBattery,
+    "firmware_block_communication_module": InverterFirmwareBlockCommunicationModule,
+    "firmware_block_inverter": InverterFirmwareBlockInverter,
+    "sub_controller_firmware": InverterSubControllerFirmware,
 }
 
-#: Poll interval in seconds to the components read at it.
-TIERS: dict[int, tuple[str, ...]] = {
-    5: ("realtime_input",),
-    10: (
+#: Tier name to the components read at its interval.
+TIER_COMPONENTS: dict[str, tuple[str, ...]] = {
+    "realtime": ("realtime_input",),
+    "fast": (
         "fast_input",
+        "battery_power",
+        "meter_channel_2",
         "fast_holding",
+        "apl_shutdown_at_zero",
     ),
-    60: ("medium_input",),
-    600: ("slowest_input",),
+    "medium": ("medium_input",),
+    "slowest": (
+        "slowest_input",
+        "battery_firmware",
+        "firmware_block_battery",
+        "firmware_block_communication_module",
+        "firmware_block_inverter",
+        "sub_controller_firmware",
+    ),
+}
+
+#: How often each tier is polled unless the user says otherwise.
+DEFAULT_INTERVALS: dict[str, int] = {
+    "realtime": 5,
+    "fast": 10,
+    "medium": 60,
+    "slowest": 600,
 }

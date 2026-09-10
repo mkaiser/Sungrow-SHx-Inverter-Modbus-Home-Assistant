@@ -38,6 +38,9 @@ from __future__ import annotations
 
 import logging
 
+from sqlalchemy.exc import SQLAlchemyError
+
+from homeassistant.components.recorder import DOMAIN as RECORDER_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, callback
@@ -48,7 +51,10 @@ from sungrow_modbus import Capability
 from .const import DOMAIN
 from .derived_descriptions import DERIVED_BINARY_SENSORS, DERIVED_SENSORS
 from .entity import SungrowEntityDescription
+from .number_descriptions import NUMBER_DESCRIPTIONS
+from .select_descriptions import SELECT_DESCRIPTIONS
 from .sensor_descriptions import SENSOR_DESCRIPTIONS
+from .switch_descriptions import SWITCH_DESCRIPTIONS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -56,6 +62,12 @@ _LOGGER = logging.getLogger(__name__)
 DESCRIPTIONS: tuple[tuple[str, SungrowEntityDescription], ...] = (
     *((Platform.SENSOR.value, d) for d in (*SENSOR_DESCRIPTIONS, *DERIVED_SENSORS)),
     *((Platform.BINARY_SENSOR.value, d) for d in DERIVED_BINARY_SENSORS),
+    # A `number` reads the same register as a sensor but is a different
+    # entity, with its own id and its own history. The YAML had both, so a
+    # migration has to claim both.
+    *((Platform.NUMBER.value, d) for d in NUMBER_DESCRIPTIONS),
+    *((Platform.SWITCH.value, d) for d in SWITCH_DESCRIPTIONS),
+    *((Platform.SELECT.value, d) for d in SELECT_DESCRIPTIONS),
 )
 
 
@@ -73,7 +85,11 @@ def legacy_entity_id(
 
 
 def legacy_entity_ids() -> frozenset[str]:
-    """Return every entity_id this integration could take over."""
+    """Return the entity_id each YAML entity had **if it was never renamed**.
+
+    Only the naming tests use this. Identification goes through
+    `async_legacy_entities`, which asks the registry rather than assuming.
+    """
     return frozenset(
         entity_id
         for platform, description in DESCRIPTIONS
@@ -82,20 +98,108 @@ def legacy_entity_ids() -> frozenset[str]:
 
 
 @callback
-def async_legacy_ids_known(hass: HomeAssistant) -> set[str]:
-    """Return the legacy ids the entity registry knows about.
+def async_legacy_entities(hass: HomeAssistant) -> dict[tuple[str, str], str]:
+    """Return each description's YAML entity, as `{(platform, key): id now}`.
 
-    Evidence that the YAML package is or was installed. Entries this
-    integration itself owns are excluded, so a reload does not read as a
-    second YAML package.
+    Keyed by platform *and* key, because a setting has two descriptions with
+    the same key: `sensor.battery_min_soc` read the register and
+    `number.battery_min_soc` wrote it. Keying by the key alone let the second
+    overwrite the first, and the sensor then lost its id to a `_2` suffix
+    while the number took the one it wanted.
+
+    Looked up by `unique_id` and platform, never by entity_id. That matters
+    twice.
+
+    It is the only **correct** identification. 69 of the 127 legacy ids carry
+    nothing Sungrow-specific — `sensor.battery_level`, `sensor.grid_frequency`,
+    `binary_sensor.battery_charging` — so matching on the id alone would
+    mistake a battery integration's entity for one of ours, and then delete
+    its registry entry in order to take the id.
+
+    And it follows **renames**. A user who renamed `sensor.total_pv_generation`
+    took their history with them, because the recorder keys on the id. Asking
+    what registered the entity finds where the history actually is, where
+    slugifying the YAML's old name would claim an id nothing has written to
+    for years.
     """
     registry = er.async_get(hass)
-    known: set[str] = set()
-    for entity_id in legacy_entity_ids():
-        entry = registry.async_get(entity_id)
-        if entry is not None and entry.platform != DOMAIN:
-            known.add(entity_id)
-    return known
+    found: dict[tuple[str, str], str] = {}
+    for platform, description in DESCRIPTIONS:
+        if not (description.legacy_unique_id and description.legacy_platform):
+            continue
+        entity_id = registry.async_get_entity_id(
+            platform, description.legacy_platform, description.legacy_unique_id
+        )
+        if entity_id is not None:
+            found[platform, description.key] = entity_id
+    return found
+
+
+@callback
+def async_legacy_ids_known(hass: HomeAssistant) -> set[str]:
+    """Return the entity ids the YAML package's own entities hold right now.
+
+    Evidence that it is or was installed.
+    """
+    return set(async_legacy_entities(hass).values())
+
+
+@callback
+def keys_for(entity_ids: set[str]) -> frozenset[tuple[str, str]]:
+    """Return the (platform, key) pairs whose un-renamed legacy id is here."""
+    return frozenset(
+        (platform, description.key)
+        for platform, description in DESCRIPTIONS
+        if legacy_entity_id(platform, description) in entity_ids
+    )
+
+
+async def async_legacy_ids_with_history(hass: HomeAssistant) -> set[str]:
+    """Return legacy ids the recorder still holds rows for.
+
+    The registry lookup is the good path, but it is not the only evidence that
+    a YAML package was here. `doc/cleanup_entities.md` has told users for years
+    to delete the orphaned entries a removed YAML platform leaves behind, and
+    plenty have. Their registry is then clean while the recorder still holds
+    years of rows under those ids — history that is perfectly migratable and
+    that the registry can no longer point at.
+
+    Without this the setup dialog would say nothing, hand out device-scoped
+    ids, and strand the lot, with no way for the user to opt in afterwards.
+
+    Falls back on the ids the YAML's names slugify to, since there is no
+    registry entry left to ask. That cannot follow a rename — but a user who
+    renamed an entity and then deleted its registry entry has already lost the
+    thread themselves.
+
+    Returns nothing when the recorder is not set up, which is legitimate: no
+    recorder means no history to preserve.
+    """
+    if RECORDER_DOMAIN not in hass.config.components:
+        return set()
+
+    from sqlalchemy import select
+
+    from homeassistant.components.recorder import get_instance
+    from homeassistant.components.recorder.db_schema import StatesMeta
+    from homeassistant.components.recorder.util import session_scope
+
+    wanted = legacy_entity_ids()
+
+    def _query() -> set[str]:
+        with session_scope(hass=hass, read_only=True) as session:
+            rows = session.execute(
+                select(StatesMeta.entity_id).where(StatesMeta.entity_id.in_(wanted))
+            )
+            return {row[0] for row in rows}
+
+    try:
+        return await get_instance(hass).async_add_executor_job(_query)
+    except (SQLAlchemyError, RuntimeError) as err:
+        # A database that will not answer is not a reason to fail setup; it
+        # only means this piece of evidence is unavailable.
+        _LOGGER.debug("Could not ask the recorder about legacy entities: %s", err)
+        return set()
 
 
 @callback
@@ -120,6 +224,7 @@ def async_claim_legacy_ids(
     entry: ConfigEntry,
     serial: str,
     capabilities: frozenset[Capability],
+    with_history: frozenset[tuple[str, str]] = frozenset(),
 ) -> list[str]:
     """Register this integration's entities on the YAML package's ids.
 
@@ -133,9 +238,13 @@ def async_claim_legacy_ids(
     """
     registry = er.async_get(hass)
     claimed: list[str] = []
+    legacy = async_legacy_entities(hass)
 
     for platform, description in DESCRIPTIONS:
-        legacy_id = legacy_entity_id(platform, description)
+        legacy_id = legacy.get((platform, description.key))
+        if legacy_id is None and (platform, description.key) in with_history:
+            # No registry entry left, but the recorder still has the rows.
+            legacy_id = legacy_entity_id(platform, description)
         if legacy_id is None:
             continue
         if (

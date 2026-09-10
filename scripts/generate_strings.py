@@ -34,16 +34,64 @@ TRANSLATION = COMPONENT / "translations" / "en.json"
 
 def descriptions() -> list[tuple[str, str, str]]:
     """Return (domain, key, legacy name) for every entity the integration has."""
+    from custom_components.sungrow_modbus.battery_descriptions import (
+        BATTERY_DESCRIPTIONS,
+    )
     from custom_components.sungrow_modbus.derived_descriptions import (
         DERIVED_BINARY_SENSORS,
         DERIVED_SENSORS,
     )
+    from custom_components.sungrow_modbus.external_descriptions import EXTERNAL_SENSORS
+    from custom_components.sungrow_modbus.number_descriptions import NUMBER_DESCRIPTIONS
+    from custom_components.sungrow_modbus.select_descriptions import SELECT_DESCRIPTIONS
     from custom_components.sungrow_modbus.sensor_descriptions import SENSOR_DESCRIPTIONS
+    from custom_components.sungrow_modbus.switch_descriptions import SWITCH_DESCRIPTIONS
+    from custom_components.sungrow_modbus.wallbox_descriptions import (
+        WALLBOX_BINARY_DESCRIPTIONS,
+        WALLBOX_DESCRIPTIONS,
+    )
 
-    entries = [("sensor", d) for d in (*SENSOR_DESCRIPTIONS, *DERIVED_SENSORS)]
-    entries += [("binary_sensor", d) for d in DERIVED_BINARY_SENSORS]
+    # A specification addition has no legacy name, so its name comes from the
+    # entity map, where it was written down from V1.1.11. Falling back to the
+    # key instead loses whatever the key cannot carry -- "Feed-in" came out as
+    # "Feed in", because a slug has no hyphens.
+    added = {
+        entity["entity_id"].split(".", 1)[1]: entity["name"]
+        for entity in json.loads(
+            (REPO / "doc" / "legacy_entity_map.json").read_text(encoding="utf-8")
+        )["entities"]
+        if entity["layer"] == "specification"
+    }
+
+    # The battery's entities go through the same convention as everything
+    # else, deliberately. They are hand-written rather than generated, which
+    # is exactly the case where a naming rule stops being enforced by
+    # accident -- so they are named in `naming.OVERRIDES` like any other
+    # exception and checked by `test_naming_convention.py` like any other
+    # name.
+    entries = [
+        ("sensor", d)
+        for d in (
+            *SENSOR_DESCRIPTIONS,
+            *DERIVED_SENSORS,
+            *BATTERY_DESCRIPTIONS,
+            *WALLBOX_DESCRIPTIONS,
+            *EXTERNAL_SENSORS,
+        )
+    ]
+    entries += [
+        ("binary_sensor", d)
+        for d in (*DERIVED_BINARY_SENSORS, *WALLBOX_BINARY_DESCRIPTIONS)
+    ]
+    entries += [("number", d) for d in NUMBER_DESCRIPTIONS]
+    entries += [("switch", d) for d in SWITCH_DESCRIPTIONS]
+    entries += [("select", d) for d in SELECT_DESCRIPTIONS]
     return [
-        (domain, d.key, d.legacy_name or d.key.replace("_", " ").capitalize())
+        (
+            domain,
+            d.key,
+            d.legacy_name or added.get(d.key) or d.key.replace("_", " ").capitalize(),
+        )
         for domain, d in entries
     ]
 
@@ -56,13 +104,34 @@ def names() -> dict[str, dict[str, str]]:
     return result
 
 
+def option_labels() -> dict[str, dict[str, str]]:
+    """Return each select's option labels, from the same table as its values.
+
+    A label and the register value behind it come from one row, so the two
+    cannot drift -- which is the whole reason the options are not written into
+    strings.json by hand.
+    """
+    from writes import SELECTS
+
+    return {
+        row["key"]: {option["slug"]: option["label"] for option in row["options"]}
+        for row in SELECTS
+    }
+
+
 def render() -> str:
     """Return strings.json with its `entity` block regenerated."""
     document = json.loads(STRINGS.read_text(encoding="utf-8"))
-    document["entity"] = {
-        domain: {key: {"name": name} for key, name in sorted(entries.items())}
-        for domain, entries in sorted(names().items())
-    }
+    labels = option_labels()
+    entity: dict[str, dict[str, dict[str, object]]] = {}
+    for domain, entries in sorted(names().items()):
+        entity[domain] = {}
+        for key, name in sorted(entries.items()):
+            block: dict[str, object] = {"name": name}
+            if domain == "select" and key in labels:
+                block["state"] = labels[key]
+            entity[domain][key] = block
+    document["entity"] = entity
     return json.dumps(document, indent=2, ensure_ascii=False) + "\n"
 
 

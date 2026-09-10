@@ -12,11 +12,11 @@ from modbus_connection import ModbusConnectionError, ModbusError, ModbusUnit
 from modbus_connection.model import Component
 
 from .capabilities import Capability, probe, resolve
-from .components import InverterIdentity
+from .components import InverterControl, InverterIdentity
 from .const import model_for
 from .derived import Derived
-from .model import UpdateReport
-from .registers import COMPONENTS, TIERS
+from .model import UpdateReport, present
+from .registers import COMPONENTS, TIER_COMPONENTS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,6 +34,8 @@ class SungrowInverter:
         """Bind every component to a unit handle."""
         self._unit = unit
         self.identity = InverterIdentity(unit)
+        # Write-only, and not in COMPONENTS, so no coordinator ever polls it.
+        self.control = InverterControl(unit)
         for attribute, component in COMPONENTS.items():
             setattr(self, attribute, component(unit))
         self.derived = Derived(self)
@@ -56,7 +58,7 @@ class SungrowInverter:
         attribute = self._fields.get(name)
         if attribute is None:
             raise AttributeError(f"no register named {name!r}")
-        return getattr(self.component(attribute), name)
+        return present(getattr(self.component(attribute), name))
 
     @property
     def serial_number(self) -> str | None:
@@ -102,16 +104,21 @@ class SungrowInverter:
         """Read the identity block. Raises on failure; the caller decides."""
         await self.identity.async_update()
 
-    async def async_update_tier(self, interval: int) -> UpdateReport:
-        """Poll every component belonging to one poll interval."""
-        return await self._async_update_components(TIERS[interval])
+    async def async_update_tier(self, tier: str) -> UpdateReport:
+        """Poll every component belonging to one tier.
+
+        Named rather than keyed by interval, because the interval is a
+        setting: slowing the fast tier to 60 seconds must not merge it with
+        the medium one.
+        """
+        return await self._async_update_components(TIER_COMPONENTS[tier])
 
     async def async_update(self) -> UpdateReport:
         """Read identity and every tier, as a config flow probe does."""
         await self.async_update_identity()
         report = UpdateReport()
-        for interval in TIERS:
-            report = report | await self.async_update_tier(interval)
+        for tier in TIER_COMPONENTS:
+            report = report | await self.async_update_tier(tier)
         return report
 
     async def _async_update_components(self, names: tuple[str, ...]) -> UpdateReport:

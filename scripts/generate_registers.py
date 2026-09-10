@@ -13,7 +13,10 @@ The output is **committed source**, not configuration read at runtime, and
 
 A Component reads one register space, and the integration polls one Component
 per interval, so the classes are the cross product of the two: the tier
-decides how often, the space decides which function code.
+decides how often, the space decides which function code. `scripts/layout.py`
+adds to that cross product: registers proved absent on real hardware are
+pulled into their own component so a failed block cannot take a whole tier's
+entities down with it.
 
     python scripts/generate_registers.py            # write the module
     python scripts/generate_registers.py --check    # fail if it is stale
@@ -26,7 +29,13 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import textwrap
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from layout import COUNTS, GROUP_DESCRIPTIONS, ISOLATE
+from writes import WRITABLE_FIELDS
 
 REPO = Path(__file__).resolve().parent.parent
 ENTITY_MAP = REPO / "doc" / "legacy_entity_map.json"
@@ -74,7 +83,7 @@ def _load() -> list[dict[str, Any]]:
         (
             e
             for e in entities
-            if e["layer"] == "modbus"
+            if e["layer"] in {"modbus", "specification"}
             and e.get("address") is not None
             # Switches are writes; milestone 2 is read-only.
             and e["domain"] != "switch"
@@ -83,7 +92,7 @@ def _load() -> list[dict[str, Any]]:
     )
 
 
-def _field(entity: dict[str, Any]) -> str:
+def _field(entity: dict[str, Any], *, writable: bool = False) -> str:
     """Return the field expression for one entity."""
     address = entity["address"]
     data_type = entity.get("data_type")
@@ -95,7 +104,8 @@ def _field(entity: dict[str, Any]) -> str:
     keywords: list[str] = []
 
     if data_type == "string":
-        parts.append(str(entity.get("count", 1)))
+        field = entity["entity_id"].split(".", 1)[1]
+        parts.append(str(COUNTS.get(field, entity.get("count", 1))))
         return f"string({', '.join(parts)})"
 
     if data_type in {"uint32", "int32"}:
@@ -117,71 +127,127 @@ def _field(entity: dict[str, Any]) -> str:
         keywords.append(f"nan={nan}")
     if unit:
         keywords.append(f'unit="{unit}"')
+    # Declared in scripts/writes.py and nowhere else, so the library refuses a
+    # write to any register the integration has not deliberately exposed.
+    if writable:
+        keywords.append("writable=True")
 
     return f"{factory}({', '.join(parts + keywords)})"
 
 
-def _class_name(tier: int, space: str) -> str:
-    """Return the Component class name for a tier and register space."""
+def _class_name(tier: int, space: str, group: str | None = None) -> str:
+    """Return the Component class name for a tier, space and isolate group."""
+    if group is not None:
+        return "Inverter" + "".join(word.title() for word in group.split("_"))
     return f"Inverter{TIERS[tier]}{SPACES[space]}"
 
 
-def _attribute(tier: int, space: str) -> str:
+def _attribute(tier: int, space: str, group: str | None = None) -> str:
     """Return the attribute the device holds that Component under."""
+    if group is not None:
+        return group
     return f"{TIERS[tier].lower()}_{space}"
+
+
+def _docstring(count: int, tier: int, space: str, group: str | None) -> str:
+    """Return the class docstring, wrapped the way ruff leaves it alone."""
+    plural = "s" if count != 1 else ""
+    summary = f"{count} {space} register{plural}, polled every {tier}s."
+    if group is None:
+        return f'    """{summary}"""\n'
+    body = textwrap.fill(
+        GROUP_DESCRIPTIONS[group],
+        width=75,
+        initial_indent="    ",
+        subsequent_indent="    ",
+    )
+    return f'    """{summary}\n\n{body}\n    """\n'
+
+
+def _order(
+    grouped: dict[tuple[int, str, str | None], list[dict[str, Any]]],
+) -> list[tuple[int, str, str | None]]:
+    """Return the component keys in the order they are emitted.
+
+    Tier first, then space, and within a space the main component before the
+    groups isolated out of it — so a diff of the generated module shows an
+    isolated group appearing next to where its registers used to live.
+    """
+    return sorted(
+        grouped,
+        key=lambda key: (key[0], key[1] != "input", key[2] is not None, key[2] or ""),
+    )
 
 
 def render() -> str:
     """Return the whole generated module."""
-    grouped: dict[tuple[int, str], list[dict[str, Any]]] = {}
+    grouped: dict[tuple[int, str, str | None], list[dict[str, Any]]] = {}
     for entity in _load():
         tier = entity.get("scan_interval")
         space = entity.get("input_type")
         if tier not in TIERS or space not in SPACES:
             continue
-        grouped.setdefault((tier, space), []).append(entity)
+        field = entity["entity_id"].split(".", 1)[1]
+        grouped.setdefault((tier, space, ISOLATE.get(field)), []).append(entity)
+
+    # An isolate group is one component, so it cannot straddle register
+    # spaces — a Component reads exactly one. Caught here rather than as a
+    # duplicate class name in the generated module.
+    spaces_per_group: dict[str, set[str]] = {}
+    for _tier, space, group in grouped:
+        if group is not None:
+            spaces_per_group.setdefault(group, set()).add(space)
+    for group, spaces in sorted(spaces_per_group.items()):
+        if len(spaces) > 1:
+            raise SystemExit(
+                f"isolate group {group!r} spans register spaces {sorted(spaces)}; "
+                "give each space its own group"
+            )
 
     lines = [HEADER]
-    for tier in sorted(TIERS):
-        for space in ("input", "holding"):
-            entities = grouped.get((tier, space))
-            if not entities:
-                continue
-            name = _class_name(tier, space)
-            lines.append(f"\nclass {name}(Component):")
-            lines.append(
-                f'    """{len(entities)} {space} registers, polled every {tier}s."""\n'
-            )
-            lines.append(f'    register_space = "{space}"\n')
-            for entity in entities:
-                field = entity["entity_id"].split(".", 1)[1]
-                lines.append(f"    {field} = {_field(entity)}")
-                lines.append(
-                    f'    """{entity["name"]} (reg {entity["address"] + 1})."""'
-                )
-            lines.append("")
+    for key in _order(grouped):
+        tier, space, group = key
+        entities = grouped[key]
+        name = _class_name(tier, space, group)
+        lines.append(f"\nclass {name}(Component):")
+        lines.append(_docstring(len(entities), tier, space, group))
+        lines.append(f'    register_space = "{space}"\n')
+        for entity in entities:
+            field = entity["entity_id"].split(".", 1)[1]
+            writable = field in WRITABLE_FIELDS
+            lines.append(f"    {field} = {_field(entity, writable=writable)}")
+            lines.append(f'    """{entity["name"]} (reg {entity["address"] + 1})."""')
+        lines.append("")
 
     # The device composes these by attribute name, and the integration gives
     # each interval its own coordinator, so both mappings are generated too.
     lines.append("\n#: Attribute name on the device to the Component it holds.")
     lines.append("COMPONENTS: dict[str, type[Component]] = {")
-    for tier in sorted(TIERS):
-        for space in ("input", "holding"):
-            if (tier, space) in grouped:
-                name = _class_name(tier, space)
-                lines.append(f'    "{_attribute(tier, space)}": {name},')
+    for tier, space, group in _order(grouped):
+        name = _class_name(tier, space, group)
+        lines.append(f'    "{_attribute(tier, space, group)}": {name},')
     lines.append("}")
 
-    lines.append("\n#: Poll interval in seconds to the components read at it.")
-    lines.append("TIERS: dict[int, tuple[str, ...]] = {")
+    # An isolated component is listed under the tier it was taken out of, so
+    # it keeps being polled at that interval — only its blast radius changed.
+    lines.append("\n#: Tier name to the components read at its interval.")
+    lines.append("TIER_COMPONENTS: dict[str, tuple[str, ...]] = {")
     for tier in sorted(TIERS):
         attributes = [
-            f'"{_attribute(tier, space)}"'
-            for space in ("input", "holding")
-            if (tier, space) in grouped
+            f'"{_attribute(*key)}"' for key in _order(grouped) if key[0] == tier
         ]
         if attributes:
-            lines.append(f"    {tier}: ({', '.join(attributes)},),")
+            lines.append(f'    "{TIERS[tier].lower()}": ({", ".join(attributes)},),')
+    lines.append("}")
+
+    # Keyed by tier name rather than by interval, because the interval is now
+    # a setting: a user who slows the fast tier to 60 seconds must not thereby
+    # merge it with the medium one.
+    lines.append("\n#: How often each tier is polled unless the user says otherwise.")
+    lines.append("DEFAULT_INTERVALS: dict[str, int] = {")
+    for tier in sorted(TIERS):
+        if any(key[0] == tier for key in grouped):
+            lines.append(f'    "{TIERS[tier].lower()}": {tier},')
     lines.append("}")
     return "\n".join(lines) + "\n"
 

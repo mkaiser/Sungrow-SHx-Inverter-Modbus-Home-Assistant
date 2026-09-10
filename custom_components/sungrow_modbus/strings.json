@@ -32,7 +32,7 @@
       },
       "search": {
         "title": "Search my network",
-        "description": "Home Assistant will try every address in this range on the Modbus port, then ask whatever answers what it is — an open port alone is not enough to call something an inverter.\n\nThe range is prefilled with the network Home Assistant is on. A `/24` takes about a second; anything much larger is rejected, because every address probed is real traffic on your network.",
+        "description": "Home Assistant will try every address in this range on the Modbus port, then ask whatever answers what it is — an open port alone is not enough to call something an inverter.\n\n{detected}\n\nA `/24` takes about a second; anything much larger is rejected, because every address probed is real traffic on your network.",
         "data": {
           "network": "Network range",
           "port": "Port"
@@ -44,9 +44,19 @@
       },
       "pick": {
         "title": "Inverters found",
-        "description": "{count} device(s) answered and identified themselves. Names come from your router's DNS where it provides them, otherwise the address is shown.\n\nIf none of these is the inverter you meant, choose the last option and you can enter its address yourself.",
+        "description": "{count} device(s) answered and identified themselves. Names come from your router's DNS where it provides them, otherwise the address is shown.\n\nIf none of these is the inverter you meant, choose the last option and you can enter its address yourself.{note}",
         "data": {
           "host": "Inverter"
+        }
+      },
+      "name": {
+        "title": "What should this inverter be called?",
+        "description": "You have **{count}** inverters, and both would otherwise be called “{model}” — Home Assistant would add `_2` to whichever you set up second, which records the order you clicked in and nothing else.\n\nThis name becomes part of every entity id for this inverter, for example `{example}`. That is what your history and dashboards are keyed to, so it is worth a moment now: renaming later changes the label but leaves the ids already created exactly where they are.\n\nSomething about where it is works best — `Roof`, `Garage`, `Barn`. The suggestion is the most the inverter itself can tell us.",
+        "data": {
+          "name": "Name"
+        },
+        "data_description": {
+          "name": "Suggested: {suggestion}. Change it to whatever you will recognise."
         }
       },
       "nothing_found": {
@@ -62,37 +72,127 @@
   },
   "entity": {
     "binary_sensor": {
+      "active_power_limitation_enabled": {
+        "name": "Active power limitation"
+      },
       "battery_charging": {
         "name": "Battery charging"
+      },
+      "battery_charging_delay": {
+        "name": "Battery charging (delayed)"
       },
       "battery_discharging": {
         "name": "Battery discharging"
       },
+      "battery_discharging_delay": {
+        "name": "Battery discharging (delayed)"
+      },
       "exporting_power": {
         "name": "Exporting power"
+      },
+      "exporting_power_delay": {
+        "name": "Exporting power (delayed)"
       },
       "importing_power": {
         "name": "Importing power"
       },
+      "importing_power_delay": {
+        "name": "Importing power (delayed)"
+      },
       "negative_load_power": {
         "name": "Negative load power"
+      },
+      "negative_load_power_delay": {
+        "name": "Negative load power (delayed)"
       },
       "positive_load_power": {
         "name": "Positive load power"
       },
+      "positive_load_power_delay": {
+        "name": "Positive load power (delayed)"
+      },
       "pv_generating": {
         "name": "PV generating"
+      },
+      "pv_generating_delay": {
+        "name": "PV generating (delayed)"
+      },
+      "pv_power_limitation_enabled": {
+        "name": "PV power limitation"
+      },
+      "wallbox_charging": {
+        "name": "Charging"
+      },
+      "wallbox_enabled": {
+        "name": "Enabled"
+      }
+    },
+    "number": {
+      "battery_charging_start_power": {
+        "name": "Battery charging start power"
+      },
+      "battery_discharging_start_power": {
+        "name": "Battery discharging start power"
+      },
+      "battery_forced_charge_discharge_power": {
+        "name": "Battery forced charge/discharge power"
+      },
+      "battery_max_charge_power": {
+        "name": "Battery max charge power"
+      },
+      "battery_max_discharge_power": {
+        "name": "Battery max discharge power"
+      },
+      "battery_max_soc": {
+        "name": "Battery max SoC"
+      },
+      "battery_min_soc": {
+        "name": "Battery min SoC"
+      },
+      "battery_reserved_soc_for_backup": {
+        "name": "Battery reserved SoC for backup"
+      },
+      "export_power_limit": {
+        "name": "Export power limit"
+      }
+    },
+    "select": {
+      "battery_forced_charge_discharge": {
+        "name": "Battery forced charge discharge",
+        "state": {
+          "stop": "Stop",
+          "charge": "Forced charge",
+          "discharge": "Forced discharge"
+        }
+      },
+      "ems_mode": {
+        "name": "EMS mode",
+        "state": {
+          "self_consumption": "Self-consumption",
+          "forced": "Forced (compulsory)",
+          "external_ems": "External EMS",
+          "vpp": "VPP"
+        }
+      },
+      "load_adjustment_mode": {
+        "name": "Load adjustment mode",
+        "state": {
+          "timing": "Timing",
+          "on_off": "On/off",
+          "power_optimised": "Power optimised",
+          "disabled": "Disabled"
+        }
       }
     },
     "sensor": {
       "active_power_limitation_ratio_raw": {
-        "name": "Active power limitation ratio raw"
+        "name": "Active power limitation ratio"
       },
       "active_power_limitation_raw": {
         "name": "Active power limitation raw"
       },
       "apl_shutdown_at_zero_raw": {
-        "name": "APL shutdown at zero raw"
+        "name": "Active power limitation shutdown at zero"
       },
       "backup_mode_raw": {
         "name": "Backup mode raw"
@@ -154,17 +254,68 @@
       "battery_level_nominal": {
         "name": "Battery level (nominal)"
       },
+      "battery_max_cell_module": {
+        "name": "Highest cell module"
+      },
+      "battery_max_cell_number": {
+        "name": "Highest cell number"
+      },
+      "battery_max_cell_voltage": {
+        "name": "Highest cell voltage"
+      },
       "battery_max_charge_power": {
         "name": "Battery max charge power"
       },
       "battery_max_discharge_power": {
         "name": "Battery max discharge power"
       },
+      "battery_max_module_temperature": {
+        "name": "Warmest module temperature"
+      },
+      "battery_max_module_temperature_module": {
+        "name": "Warmest module"
+      },
       "battery_max_soc": {
         "name": "Battery max SoC"
       },
+      "battery_min_cell_module": {
+        "name": "Lowest cell module"
+      },
+      "battery_min_cell_number": {
+        "name": "Lowest cell number"
+      },
+      "battery_min_cell_voltage": {
+        "name": "Lowest cell voltage"
+      },
+      "battery_min_module_temperature": {
+        "name": "Coolest module temperature"
+      },
+      "battery_min_module_temperature_module": {
+        "name": "Coolest module"
+      },
       "battery_min_soc": {
         "name": "Battery min SoC"
+      },
+      "battery_pack_current": {
+        "name": "Pack current"
+      },
+      "battery_pack_level": {
+        "name": "Pack level"
+      },
+      "battery_pack_state_of_health": {
+        "name": "Pack state of health"
+      },
+      "battery_pack_temperature": {
+        "name": "Pack temperature"
+      },
+      "battery_pack_total_charge": {
+        "name": "Pack total charge"
+      },
+      "battery_pack_total_discharge": {
+        "name": "Pack total discharge"
+      },
+      "battery_pack_voltage": {
+        "name": "Pack voltage"
       },
       "battery_power": {
         "name": "Battery power"
@@ -193,6 +344,9 @@
       "communication_module_firmware_version": {
         "name": "Communication module firmware version"
       },
+      "corrected_load_power": {
+        "name": "Corrected load power"
+      },
       "daily_battery_charge": {
         "name": "Daily battery charge"
       },
@@ -204,6 +358,9 @@
       },
       "daily_consumed_energy": {
         "name": "Daily consumed energy"
+      },
+      "daily_consumed_energy_filtered": {
+        "name": "Daily consumed energy (smoothed)"
       },
       "daily_direct_energy_consumption": {
         "name": "Daily direct energy consumption"
@@ -244,6 +401,9 @@
       "export_power_raw": {
         "name": "Export power raw"
       },
+      "feed_in_limitation_ratio": {
+        "name": "Feed-in limitation ratio"
+      },
       "grid_frequency": {
         "name": "Grid frequency"
       },
@@ -270,6 +430,18 @@
       },
       "meter_active_power": {
         "name": "Meter active power"
+      },
+      "meter_channel_2_phase_a_active_power": {
+        "name": "Meter channel 2 phase A active power"
+      },
+      "meter_channel_2_phase_b_active_power": {
+        "name": "Meter channel 2 phase B active power"
+      },
+      "meter_channel_2_phase_c_active_power": {
+        "name": "Meter channel 2 phase C active power"
+      },
+      "meter_channel_2_total_active_power": {
+        "name": "Meter channel 2 total active power"
       },
       "meter_phase_a_active_power": {
         "name": "Meter phase A active power"
@@ -367,6 +539,9 @@
       "power_flow_status": {
         "name": "Power flow status"
       },
+      "pv_power_limitation_raw": {
+        "name": "PV power limitation raw"
+      },
       "reactive_power": {
         "name": "Reactive power"
       },
@@ -444,6 +619,77 @@
       },
       "total_pv_generation_battery_discharge": {
         "name": "Total PV generation & battery discharge"
+      },
+      "total_site_pv_power": {
+        "name": "Total site PV power"
+      },
+      "wallbox_available_current": {
+        "name": "Available current"
+      },
+      "wallbox_charging_power": {
+        "name": "Charging power"
+      },
+      "wallbox_charging_status": {
+        "name": "Charging status"
+      },
+      "wallbox_control_pilot_voltage": {
+        "name": "Control pilot voltage"
+      },
+      "wallbox_firmware_version": {
+        "name": "Firmware version"
+      },
+      "wallbox_lifetime_energy": {
+        "name": "Lifetime energy"
+      },
+      "wallbox_maximum_charging_power": {
+        "name": "Maximum charging power"
+      },
+      "wallbox_minimum_charging_power": {
+        "name": "Minimum charging power"
+      },
+      "wallbox_output_current_setting": {
+        "name": "Configured output current"
+      },
+      "wallbox_phase_a_current": {
+        "name": "Phase A current"
+      },
+      "wallbox_phase_a_voltage": {
+        "name": "Phase A voltage"
+      },
+      "wallbox_phase_b_current": {
+        "name": "Phase B current"
+      },
+      "wallbox_phase_b_voltage": {
+        "name": "Phase B voltage"
+      },
+      "wallbox_phase_c_current": {
+        "name": "Phase C current"
+      },
+      "wallbox_phase_c_voltage": {
+        "name": "Phase C voltage"
+      },
+      "wallbox_phase_mode": {
+        "name": "Phase mode"
+      },
+      "wallbox_rated_current": {
+        "name": "Rated current"
+      },
+      "wallbox_session_energy": {
+        "name": "Session energy"
+      },
+      "wallbox_start_mode": {
+        "name": "Start mode"
+      }
+    },
+    "switch": {
+      "backup_mode": {
+        "name": "Backup mode"
+      },
+      "export_power_limit_mode": {
+        "name": "Export power limit mode"
+      },
+      "load_adjustment_mode_enable": {
+        "name": "Load adjustment"
       }
     }
   },
@@ -453,20 +699,124 @@
         "migrate": "Migrate my existing entities — keep their history",
         "new": "Start fresh / create new entities"
       }
+    },
+    "audience": {
+      "options": {
+        "admins": "Administrators only",
+        "users": "Any user who can control this device"
+      }
+    },
+    "external_placement": {
+      "options": {
+        "behind_meter": "Behind the same grid meter — it reduces what the house imports",
+        "separately_metered": "On its own supply — none of it passes this inverter's meter"
+      }
+    }
+  },
+  "issues": {
+    "preview_release": {
+      "title": "Sungrow Modbus is a preview",
+      "description": "This integration is a preview release, for testers rather than for a system you depend on.\n\n**Entity names may still change.** A name supplies an entity id when the entity is first created, so a change does not move the ids you already have -- your history and dashboards are safe. What it does mean is that your ids can end up differing from somebody who installs later. Where that matters, a rename will ship with a migration that moves yours across and carries the history with it.\n\n**What is not in flux:** readings, units, and the migration from the YAML package. If you chose to keep the YAML package's entity ids, those are reproduced exactly and none of this touches them.\n\nPlease report anything that looks wrong -- that is what a preview is for."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Diagnostics",
-        "description": "Settings → Devices & Services → Sungrow Modbus → **Download diagnostics** produces a file describing this setup: the model, which capabilities the inverter confirmed, which registers reported themselves unavailable, how each poll tier is doing, and why any entity was not created. Attach it to a bug report — the serial number and the host address are removed from it.",
+        "title": "Sungrow Modbus options",
+        "description": "What would you like to change?",
+        "menu_options": {
+          "polling": "Polling — how often each group of registers is read",
+          "permissions": "Permissions — who may start and stop the inverter",
+          "settings": "Battery and diagnostics",
+          "external": "Another inverter — correct the load reading for generation this one cannot see"
+        }
+      },
+      "polling": {
+        "title": "Polling",
+        "description": "Registers are read in four groups. Each group is one request cycle, so the interval you set is how often that whole group is fetched.\n\n{tiers}\n\n**Why this is worth changing.** A Sungrow inverter accepts very few Modbus connections at once. If something else polls it — the YAML package, another Home Assistant, EVCC, a logger — you are competing for one, and most reported dropouts are exactly that. Slowing a group down, or switching it off, is the cheapest fix there is.\n\nSet **0** for never: that group is not read at all and its entities are not created. The minimum otherwise is 5 seconds — Sungrow's protocol warns against polling frequently through a WiNet-S dongle, and 5 seconds is already the fastest the YAML package ever used.\n\nChanging anything here reloads the integration.",
         "data": {
-          "register_dump": "Include a raw register dump"
+          "realtime": "Realtime group",
+          "fast": "Fast group",
+          "medium": "Medium group",
+          "slowest": "Slowest group"
         },
         "data_description": {
+          "realtime": "Seconds between reads, or 0 for never.",
+          "fast": "Seconds between reads, or 0 for never.",
+          "medium": "Seconds between reads, or 0 for never.",
+          "slowest": "Seconds between reads, or 0 for never."
+        }
+      },
+      "settings": {
+        "title": "Battery and diagnostics",
+        "description": "**Battery charge power.** {battery_status}\n\nThe maximum a battery will take is not something the inverter knows — it reports its own converter rating, but not the pack's limit. Sungrow's own technical training recommends the **rated current × the low end of the voltage range**, not the nominal voltage: being conservative here is good for the battery's health.\n\n*Example — a Pylontech Force H1, 14.4 kWh: the datasheet gives a recommended charge current and an operating voltage range per module. Take the current × the lowest voltage in the range, not the nominal one. For a stack reporting 25 A at 355 V that is 25 × 355 ≈ 8875 W, and rounding down to 8500 W costs almost nothing.* Check your own datasheet — the arithmetic is the point, not these numbers.\n\nLeave it at 0 to let the integration work it out.\n\n---\n\n**Diagnostics.** Settings → Devices & Services → Sungrow Modbus → **Download diagnostics** produces a file describing this setup: the model, which capabilities the inverter confirmed, which registers reported themselves unavailable, how each poll group is doing, and why any entity was not created. The serial number and host address are removed from it.",
+        "data": {
+          "battery_max_power": "Maximum battery charge power (W)",
+          "register_dump": "Include a raw register dump in diagnostics"
+        },
+        "data_description": {
+          "battery_max_power": "0 means work it out: a Sungrow pack is identified from the capacity it reports and looked up against its datasheet, and any other pack that reports a BMS charge current gets that instead. Set a value to override either.",
           "register_dump": "Adds every mapped register's raw value. Only useful when a value looks wrong and the decoding itself is in question. Producing it is a second full read of the register map on top of normal polling, which is slow over a WiNet-S dongle, so leave it off unless you have been asked for it."
         }
+      },
+      "permissions": {
+        "title": "Permissions",
+        "description": "**Starting and stopping the inverter** is an action rather than a switch, so this integration decides who may call it, and you decide here. Administrators only is the default: there is no way back from a stopped inverter except another call, and the house runs on the grid until somebody makes it.\n\nOpening it to users means users who can already change this device — a read-only login still cannot, and neither setting affects automations or scripts, which act for the household rather than for a person.\n\n**Everything else is not ours to decide, and it is worth knowing what already applies.** The settings this integration exposes — the state-of-charge limits, the EMS mode, the export and power limits — are entities, and Home Assistant checks who may control an entity itself, before any integration is asked. By default a normal user can change all of them and a read-only user none of them. To restrict one person, make their account read-only under *Settings → People*; there is no per-setting permission in Home Assistant for us to offer.",
+        "data": {
+          "start_stop": "Start and stop the inverter"
+        },
+        "data_description": {
+          "start_stop": "Who may call the start and stop actions on this inverter."
+        }
+      },
+      "external": {
+        "title": "Another inverter on the same supply",
+        "description": "This inverter works out your house load from its own production and its grid meter. A second, non-Sungrow inverter is invisible to it, so the load reading comes out **low by exactly what that inverter is making** — and negative once it makes more than the house uses.\n\n{reported_load}\n\nName the entities that report the other inverter's power and this integration adds two corrected sensors. For **energy** in kWh, do not use this page: the Energy dashboard already accepts several solar sources, and adding yours there is both easier and more accurate.\n\nOne thing to check when picking a source: some integrations report `unavailable` overnight rather than 0 W. The corrected sensors then go unknown overnight too, because a generator that is not reporting is not the same as one making nothing — assuming zero would put back the very error this page removes.",
+        "data": {
+          "external_sources": "Power sensors for the other generation",
+          "external_placement": "Where it is connected"
+        },
+        "data_description": {
+          "external_sources": "Only power sensors are listed. Pick every one that reports generation this Sungrow cannot see; leave empty to switch the correction off.",
+          "external_placement": "This changes the arithmetic, so it is asked rather than guessed."
+        }
       }
+    },
+    "error": {
+      "nothing_left_to_poll": "Every group is set to never, which would leave the integration with nothing to read and no entities at all. Leave at least one group with an interval."
+    }
+  },
+  "services": {
+    "start_inverter": {
+      "name": "Start inverter",
+      "description": "Boots an inverter that has been shut down. Deliberately an action rather than a button: Home Assistant has no confirmation dialog for a button press, and admin rights are required to call this.",
+      "fields": {
+        "device_id": {
+          "name": "Inverter",
+          "description": "Which inverter to start."
+        }
+      }
+    },
+    "stop_inverter": {
+      "name": "Stop inverter",
+      "description": "Shuts the inverter down. It stops generating, stops charging and stops discharging until it is started again. Deliberately an action rather than a button, and admin rights are required to call it — a dashboard card cannot do this by accident.",
+      "fields": {
+        "device_id": {
+          "name": "Inverter",
+          "description": "Which inverter to stop."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "device_not_found": {
+      "message": "No device with ID {device_id} exists. If this call came from a script, the device may have been removed and re-added since it was written."
+    },
+    "entry_not_loaded": {
+      "message": "{title} is not loaded, so it cannot be started or stopped. Check the integration page for a setup error."
+    },
+    "not_a_sungrow_device": {
+      "message": "{name} is not a Sungrow Modbus device."
     }
   }
 }

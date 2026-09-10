@@ -2,10 +2,11 @@
   "generated_from": "modbus_sungrow.yaml",
   "generated_by": "scripts/generate_entity_map.py",
   "summary": {
-    "entities": 153,
+    "entities": 159,
     "by_layer": {
       "filter": 1,
       "modbus": 102,
+      "specification": 6,
       "template": 50
     },
     "by_domain": {
@@ -13,10 +14,10 @@
       "button": 2,
       "number": 9,
       "select": 3,
-      "sensor": 121,
+      "sensor": 127,
       "switch": 4
     },
-    "with_state_class": 105,
+    "with_state_class": 110,
     "entity_id_collisions": {},
     "without_unique_id": [],
     "state_class_without_unit": []
@@ -2001,6 +2002,102 @@
       "name": "Load adjustment mode",
       "domain": "select",
       "layer": "template"
+    },
+    {
+      "entity_id": "sensor.feed_in_limitation_ratio",
+      "unique_id": null,
+      "name": "Feed-in limitation ratio",
+      "domain": "sensor",
+      "layer": "specification",
+      "state_class": "measurement",
+      "unit_of_measurement": "%",
+      "precision": 1,
+      "input_type": "holding",
+      "address": 13087,
+      "data_type": "uint16",
+      "scale": 0.1,
+      "nan_value": 65535,
+      "scan_interval": 10
+    },
+    {
+      "entity_id": "sensor.pv_power_limitation_raw",
+      "unique_id": null,
+      "name": "PV power limitation raw",
+      "domain": "sensor",
+      "layer": "specification",
+      "input_type": "holding",
+      "address": 13017,
+      "data_type": "uint16",
+      "nan_value": 65535,
+      "scan_interval": 10
+    },
+    {
+      "entity_id": "sensor.meter_channel_2_total_active_power",
+      "unique_id": null,
+      "name": "Meter channel 2 total active power",
+      "domain": "sensor",
+      "layer": "specification",
+      "device_class": "power",
+      "state_class": "measurement",
+      "unit_of_measurement": "W",
+      "input_type": "input",
+      "address": 13199,
+      "data_type": "int32",
+      "scale": 1,
+      "swap": "word",
+      "nan_value": 2147483647,
+      "scan_interval": 10
+    },
+    {
+      "entity_id": "sensor.meter_channel_2_phase_a_active_power",
+      "unique_id": null,
+      "name": "Meter channel 2 phase A active power",
+      "domain": "sensor",
+      "layer": "specification",
+      "device_class": "power",
+      "state_class": "measurement",
+      "unit_of_measurement": "W",
+      "input_type": "input",
+      "address": 13201,
+      "data_type": "int32",
+      "scale": 1,
+      "swap": "word",
+      "nan_value": 2147483647,
+      "scan_interval": 10
+    },
+    {
+      "entity_id": "sensor.meter_channel_2_phase_b_active_power",
+      "unique_id": null,
+      "name": "Meter channel 2 phase B active power",
+      "domain": "sensor",
+      "layer": "specification",
+      "device_class": "power",
+      "state_class": "measurement",
+      "unit_of_measurement": "W",
+      "input_type": "input",
+      "address": 13203,
+      "data_type": "int32",
+      "scale": 1,
+      "swap": "word",
+      "nan_value": 2147483647,
+      "scan_interval": 10
+    },
+    {
+      "entity_id": "sensor.meter_channel_2_phase_c_active_power",
+      "unique_id": null,
+      "name": "Meter channel 2 phase C active power",
+      "domain": "sensor",
+      "layer": "specification",
+      "device_class": "power",
+      "state_class": "measurement",
+      "unit_of_measurement": "W",
+      "input_type": "input",
+      "address": 13205,
+      "data_type": "int32",
+      "scale": 1,
+      "swap": "word",
+      "nan_value": 2147483647,
+      "scan_interval": 10
     }
   ]
 }

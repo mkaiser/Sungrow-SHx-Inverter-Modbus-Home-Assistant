@@ -46,8 +46,30 @@ jobs:
         id: version
         run: |
           TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          VERSION="${TAG#v}"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          # Whether this is a pre-release, decided by PEP 440's own rule
+          # rather than by looking for a hyphen.
+          #
+          # `contains(version, '-')` was the test, and it was wrong in the
+          # one direction that matters: pip normalises `0.1.0-alpha.1` to
+          # `0.1.0a1`, so `scripts/sync_version.py` requires the normalised
+          # spelling and rejects the hyphenated one. Every pre-release this
+          # project can actually cut therefore has **no hyphen**, and would
+          # have been published as a stable GitHub release -- which is what
+          # HACS offers users as the latest version. The preview labelling
+          # exists precisely to stop that, and this would have undone it
+          # silently.
+          # Both spellings count. The normalised one is the only one that
+          # can reach here -- sync_version.py --check runs next and rejects
+          # the other -- but a rule that is right either way costs nothing
+          # and removes a "what if" from a step that publishes.
+          if printf '%s' "$VERSION" | grep -Eiq '^[0-9]+\.[0-9]+\.[0-9]+([-._]?(a|b|c|rc|alpha|beta|pre|preview)[-._]?[0-9]*)$'; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: The tag, pyproject.toml and manifest.json must agree
         run: python scripts/sync_version.py --check --expect "${{ steps.version.outputs.version }}"
@@ -81,7 +103,7 @@ jobs:
           name: ${{ steps.version.outputs.tag }}
           generate_release_notes: true
           draft: false
-          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          prerelease: ${{ steps.version.outputs.prerelease }}
 
   # Publishing to PyPI is not optional: manifest.json pins
   # sungrow-modbus==<version>, and Home Assistant pip-installs a custom

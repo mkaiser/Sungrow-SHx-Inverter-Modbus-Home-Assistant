@@ -10,7 +10,7 @@
 
 devcontainer:
   open: >-
-    VS Code -> Reopen in Container. The first build runs scripts/setup, which
+    VS Code -> Reopen in Container. The first build runs scripts/setup.sh, which
     installs Home Assistant, the device library (editable) and the tooling.
     Takes a few minutes once.
 
@@ -20,12 +20,14 @@ devcontainer:
       other way round.
     - ~/.claude is bind-mounted too, so Claude Code auth and transcripts
       survive a rebuild.
-    - The very first `scripts/develop` in a fresh container logs ~20 setup
+    - The very first `scripts/develop.sh` in a fresh container logs ~20 setup
       errors while Home Assistant downloads component requirements, and the UI
       404s. The next boot is clean in about two seconds. Not a bug.
 
   verify:
     - python --version                       # 3.14.x
+    - make check                             # all of the below, plus every
+                                             # generator CI checks
     - pytest -q                              # ~744 tests, no network needed
     - ruff check . && ruff format --check .
 
@@ -76,18 +78,18 @@ running:
     why: >-
       A fake Sungrow answering the whole register map, so nothing here needs
       hardware. Regenerates the seed from the register map, then serves it.
-    command: scripts/simulate
+    command: scripts/simulate.sh
     listens: 0.0.0.0:5020
-    background: nohup scripts/simulate > /tmp/sim.log 2>&1 &
+    background: nohup scripts/simulate.sh > /tmp/sim.log 2>&1 &
 
   home_assistant:
-    command: scripts/develop
+    command: scripts/develop.sh
     listens: 0.0.0.0:8123
-    background: nohup scripts/develop > /tmp/ha.log 2>&1 &
+    background: nohup scripts/develop.sh > /tmp/ha.log 2>&1 &
     config: config/                  # gitignored except configuration.yaml
     stop: pkill -f 'bin/hass'
     note: >-
-      scripts/develop symlinks config/custom_components to the repo's
+      scripts/develop.sh symlinks config/custom_components to the repo's
       custom_components/, so the integration is loaded exactly as a HACS
       install would load it. It must NOT be PYTHONPATH: the domain and the
       library share the name sungrow_modbus, so that would shadow the library
@@ -127,7 +129,7 @@ real_hardware:
   what_does_not_work:
     - >-
       Multicast, so mDNS discovery finds nothing from in here -- a Docker
-      bridge does not carry it. Run `scripts/discover_probe.py mdns` on the
+      bridge does not carry it. Run `scripts/sungrow_scan/probe.py mdns` on the
       Windows host instead.
     - >-
       Inbound. Reaching the container's Home Assistant from another machine is
@@ -177,7 +179,7 @@ real_hardware:
       inverter without any error. See doc/maintainer_setup.md section 4.
 
   prefer_the_simulator: >-
-    scripts/simulate serves the whole register map on localhost:5020 and is
+    scripts/simulate.sh serves the whole register map on localhost:5020 and is
     seeded from modbus_sungrow.yaml, so it cannot drift from the map being
     ported. Use real hardware only when the point is to verify real-hardware
     behaviour.
@@ -254,11 +256,11 @@ reviewing_the_migration:
   # the choice well enough to make it, and whether the graph is really
   # continuous afterwards.
   steps:
-    - scripts/develop                       # once, to create config/
+    - scripts/develop.sh                       # once, to create config/
     - pkill -f 'bin/hass'                   # it must be stopped for the next step
     - python scripts/seed_migration_testbed.py
-    - nohup scripts/simulate > /tmp/sim.log 2>&1 &
-    - nohup scripts/develop > /tmp/ha.log 2>&1 &
+    - nohup scripts/simulate.sh > /tmp/sim.log 2>&1 &
+    - nohup scripts/develop.sh > /tmp/ha.log 2>&1 &
   then: >-
     Settings -> Devices & Services -> Add integration -> Sungrow Modbus.
     Host 127.0.0.1, port 5020, unit id 1. The next screen asks whether to take
@@ -297,10 +299,11 @@ generated_files:
     - script: scripts/generate_strings.py
       writes: custom_components/sungrow_modbus/strings.json (+ translations/en.json)
       convention: scripts/naming.py
-  check_all: |
-    for s in entity_map registers sensors derived strings; do
-      python scripts/generate_$s.py --check || echo "STALE: $s"
-    done
+  check_all: make gen-check
+  # That runs all ten generators. The loop that used to live here ran five of
+  # them, so a clean local run could still fail CI on numbers, switches,
+  # selects, scan_plan or compatibility. The list lives in the Makefile now,
+  # next to the one in .github/workflows/validate.yml it has to match.
 
 version:
   single_source: scripts/sync_version.py

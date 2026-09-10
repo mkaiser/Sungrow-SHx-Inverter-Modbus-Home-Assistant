@@ -41,6 +41,7 @@ from custom_components.sungrow_modbus.const import (
 from custom_components.sungrow_modbus.migration import (
     async_legacy_ids_known,
     async_legacy_ids_live,
+    async_legacy_ids_with_history,
     legacy_entity_ids,
 )
 from homeassistant.components.recorder import Recorder, history
@@ -191,6 +192,125 @@ async def test_our_own_entities_do_not_read_as_a_yaml_package(
     assert async_legacy_ids_known(hass) == set()
 
 
+async def test_another_integrations_entity_is_not_mistaken_for_ours(
+    hass: HomeAssistant,
+    sungrow_unit: MockModbusUnit,
+    entity_registry: er.EntityRegistry,
+) -> None:
+    """The id alone cannot identify a YAML entity, and must not be used to.
+
+    69 of the 127 legacy ids carry nothing Sungrow-specific --
+    `sensor.battery_level`, `sensor.grid_frequency`,
+    `binary_sensor.battery_charging`. Somebody with a BMS integration, or a
+    template sensor of their own, plausibly owns one. Matching on the id would
+    have counted it as a YAML entity, offered to migrate, and then **deleted
+    its registry entry** to take the id.
+    """
+    stranger = entity_registry.async_get_or_create(
+        "sensor",
+        "some_battery_integration",
+        "bms-pack-1-soc",
+        suggested_object_id="battery_level",
+    )
+    assert stranger.entity_id == "sensor.battery_level"
+
+    # Not ours, so there is nothing to migrate and no question to ask.
+    assert async_legacy_ids_known(hass) == set()
+
+    await _setup(hass, sungrow_unit, ENTITY_IDS_MIGRATE)
+
+    # Still theirs, still registered, still under the same platform.
+    survivor = entity_registry.async_get("sensor.battery_level")
+    assert survivor is not None
+    assert survivor.platform == "some_battery_integration"
+    assert survivor.unique_id == "bms-pack-1-soc"
+    # And ours took a device-scoped id rather than fighting for that one.
+    assert _entity_id(entity_registry, "battery_level") == "sensor.sh10rt_battery_level"
+
+
+async def test_a_renamed_yaml_entity_is_followed_to_where_its_history_is(
+    hass: HomeAssistant,
+    sungrow_unit: MockModbusUnit,
+    entity_registry: er.EntityRegistry,
+) -> None:
+    """Renaming moved the recorder's rows, so the new id is the one to claim.
+
+    Slugifying the YAML's old name would claim `sensor.total_pv_generation`,
+    which nothing has written to since the user renamed it -- inheriting an
+    empty series and orphaning the real one.
+    """
+    _register_yaml_package(entity_registry)
+    entity_registry.async_update_entity(
+        LEGACY_ID, new_entity_id="sensor.pv_total_lifetime"
+    )
+
+    assert async_legacy_ids_known(hass) == {"sensor.pv_total_lifetime"}
+
+    await _setup(hass, sungrow_unit, ENTITY_IDS_MIGRATE)
+
+    assert (
+        _entity_id(entity_registry, "total_pv_generation") == "sensor.pv_total_lifetime"
+    )
+
+
+async def test_history_is_found_even_after_the_orphans_were_deleted(
+    hass: HomeAssistant,
+    recorder: None,
+    sungrow_unit: MockModbusUnit,
+    entity_registry: er.EntityRegistry,
+) -> None:
+    """The registry is not the only evidence a YAML package was here.
+
+    doc/cleanup_entities.md has told users for years to delete the orphaned
+    entries a removed YAML platform leaves behind, and plenty have. Their
+    registry is then clean while the recorder still holds years of rows under
+    those ids -- migratable history the registry can no longer point at.
+    Without the recorder as a second source, those users are handed
+    device-scoped ids and a stranded history, and are never offered the
+    choice.
+    """
+    start = get_start_time(dt_util.utcnow())
+    sungrow_unit.input[13002] = [10030 & 0xFFFF, 10030 >> 16]
+
+    with freeze_time(start) as freezer:
+        for minute, reading in enumerate([1000.0, 1001.0, 1002.0]):
+            freezer.move_to(start + timedelta(minutes=minute))
+            hass.states.async_set(LEGACY_ID, str(reading), METER_ATTRS)
+            await hass.async_block_till_done()
+        await async_wait_recording_done(hass)
+        hass.states.async_remove(LEGACY_ID)
+        await async_wait_recording_done(hass)
+
+        # No registry entry was ever created -- this is the state after the
+        # user tidied the orphans away.
+        assert entity_registry.async_get(LEGACY_ID) is None
+        assert async_legacy_ids_known(hass) == set()
+
+        # But the recorder knows, so the offer still stands.
+        assert LEGACY_ID in await async_legacy_ids_with_history(hass)
+
+        freezer.move_to(start + timedelta(minutes=5))
+        await _setup(hass, sungrow_unit, ENTITY_IDS_MIGRATE)
+        await async_wait_recording_done(hass)
+
+    assert _entity_id(entity_registry, "total_pv_generation") == LEGACY_ID
+    recorded = [
+        state.state
+        for state in history.get_significant_states(
+            hass, start - timedelta.resolution, None, [LEGACY_ID]
+        ).get(LEGACY_ID, [])
+    ]
+    assert recorded == ["1000.0", "1001.0", "1002.0", "", "1003.0"]
+
+
+async def test_no_recorder_means_nothing_to_find_rather_than_an_error(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """No recorder is legitimate: no recorder, no history to preserve."""
+    assert "recorder" not in hass.config.components
+    assert await async_legacy_ids_with_history(hass) == set()
+
+
 async def test_every_legacy_id_matches_the_generated_map() -> None:
     """The ids derived at runtime are the ids the YAML package really made.
 
@@ -307,3 +427,106 @@ async def test_migrating_continues_the_recorded_history(
     after = statistics_during_period(hass, start, period="5minute")[LEGACY_ID]
     assert [row["sum"] for row in after] == [row["sum"] for row in before]
     assert [row["state"] for row in before] == [pytest.approx(1002.0)]
+
+
+async def test_a_number_claims_the_yaml_numbers_id_not_the_sensors(
+    hass: HomeAssistant,
+    sungrow_unit: MockModbusUnit,
+    entity_registry: er.EntityRegistry,
+) -> None:
+    """The YAML had two entities per setting, and both have history.
+
+    `sensor.battery_min_soc` read the register and `number.battery_min_soc`
+    wrote it, under different platforms and different unique_ids. A migration
+    has to claim both, from the right one each time -- claiming the sensor's
+    id for the number would put the setting where the readings are.
+    """
+    sensor = entity_registry.async_get_or_create(
+        "sensor",
+        "modbus",
+        "uid_sg_battery_min_soc",
+        suggested_object_id="battery_min_soc",
+    )
+    number = entity_registry.async_get_or_create(
+        "number",
+        "template",
+        "uid_battery_min_soc",
+        suggested_object_id="battery_min_soc",
+    )
+    assert sensor.entity_id == "sensor.battery_min_soc"
+    assert number.entity_id == "number.battery_min_soc"
+
+    await _setup(hass, sungrow_unit, ENTITY_IDS_MIGRATE)
+
+    registry = entity_registry
+    assert (
+        registry.async_get_entity_id("sensor", DOMAIN, f"{SERIAL}_battery_min_soc")
+        == "sensor.battery_min_soc"
+    )
+    assert (
+        registry.async_get_entity_id("number", DOMAIN, f"{SERIAL}_battery_min_soc")
+        == "number.battery_min_soc"
+    )
+
+
+async def test_the_filter_platforms_entity_is_found_and_claimed(
+    hass: HomeAssistant,
+    sungrow_unit: MockModbusUnit,
+    entity_registry: er.EntityRegistry,
+) -> None:
+    """The one YAML entity registered by neither `modbus` nor `template`.
+
+    `sensor.daily_consumed_energy_filtered` comes from the `filter` platform,
+    so the migration only finds it if it looks it up under that platform.
+    Every other entity is `modbus` or `template`, which is exactly why a
+    third one is worth a test of its own: the lookup would come back None,
+    the id would be left alone, and the entity would silently arrive as
+    `sensor.sh10rt_daily_consumed_energy_filtered` with none of the history.
+    """
+    entry = entity_registry.async_get_or_create(
+        "sensor",
+        "filter",
+        "sg_daily_consumed_energy_filtered",
+        suggested_object_id="daily_consumed_energy_filtered",
+    )
+    assert entry.entity_id == "sensor.daily_consumed_energy_filtered"
+
+    await _setup(hass, sungrow_unit, ENTITY_IDS_MIGRATE)
+
+    assert (
+        _entity_id(entity_registry, "daily_consumed_energy_filtered")
+        == "sensor.daily_consumed_energy_filtered"
+    )
+
+
+async def test_a_delayed_flag_claims_its_own_id_not_its_twins(
+    hass: HomeAssistant,
+    sungrow_unit: MockModbusUnit,
+    entity_registry: er.EntityRegistry,
+) -> None:
+    """Two entities read one register, and each must keep its own id.
+
+    `binary_sensor.pv_generating` and `binary_sensor.pv_generating_delay` are
+    computed from the same bit and differ only in the delay. Keying anything
+    by the *field* rather than by the entity would collapse them, and one of
+    the pair would lose its id to a `_2` suffix -- which is what happened to
+    the sensor/number pairs before the migration was keyed by (platform, key).
+    """
+    for unique_id, object_id in (
+        ("sg_pv_generating", "pv_generating"),
+        ("sg_pv_generating_delay", "pv_generating_delay"),
+    ):
+        created = entity_registry.async_get_or_create(
+            "binary_sensor", "template", unique_id, suggested_object_id=object_id
+        )
+        assert created.entity_id == f"binary_sensor.{object_id}"
+
+    await _setup(hass, sungrow_unit, ENTITY_IDS_MIGRATE)
+
+    def claimed(key: str) -> str | None:
+        return entity_registry.async_get_entity_id(
+            "binary_sensor", DOMAIN, f"{SERIAL}_{key}"
+        )
+
+    assert claimed("pv_generating") == "binary_sensor.pv_generating"
+    assert claimed("pv_generating_delay") == "binary_sensor.pv_generating_delay"

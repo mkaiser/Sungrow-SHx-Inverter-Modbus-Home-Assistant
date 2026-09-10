@@ -7,7 +7,7 @@ name = "sungrow-modbus"
 # Keep in lockstep with `requirements` in
 # custom_components/sungrow_modbus/manifest.json: Home Assistant checks the
 # installed version against it on every start.
-version = "0.0.1"
+version = "0.1.0a1"
 description = "Talk to Sungrow inverters, batteries and wallboxes over Modbus."
 readme = "README.md"
 requires-python = ">=3.13"

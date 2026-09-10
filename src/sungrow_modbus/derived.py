@@ -63,6 +63,11 @@ RUNNING_STATES: dict[int, str] = {
     0x9100: "Warn Running",
 }
 
+#: What Sungrow's writable mode registers mean. One pair, used by every one of
+#: them, and `scripts/writes.py` sends exactly these two values.
+MODE_ENABLED = 0xAA
+MODE_DISABLED = 0x55
+
 #: Bits of the power flow status register, which the YAML tested one at a time
 #: to produce seven binary sensors.
 POWER_FLOW_BITS: dict[str, int] = {
@@ -102,6 +107,49 @@ class Derived:
         if raw is None:
             return None
         return bool(int(raw) & POWER_FLOW_BITS[name])
+
+    def _mode_flag(self, field: str) -> bool | None:
+        """Return a Sungrow on/off mode register as a boolean, or None.
+
+        `0xAA` is enabled and `0x55` disabled -- the same pair every writable
+        mode register in this map uses, and what `scripts/writes.py` sends.
+        Anything else, including the `0xFFFF` an SH-series inverter answers
+        for a mode only SHT hardware supports, is **None** rather than False:
+        "we do not know" and "limiting is off" are different claims, and a
+        False here would be the second one made up out of the first.
+        """
+        raw = self._value(field)
+        if raw is None:
+            return None
+        code = int(raw)
+        if code == MODE_ENABLED:
+            return True
+        if code == MODE_DISABLED:
+            return False
+        return None
+
+    # -- the mode registers, as flags -------------------------------------
+
+    @property
+    def active_power_limitation_enabled(self) -> bool | None:
+        """Whether the inverter's AC output is being limited (reg 13089).
+
+        Measured `0xAA` on one house and `0x55` on another, so both halves of
+        the pair are observed rather than assumed. The percentage it is
+        limited *to* is a separate register, 13090.
+        """
+        return self._mode_flag("active_power_limitation_raw")
+
+    @property
+    def pv_power_limitation_enabled(self) -> bool | None:
+        """Whether PV generation itself is being limited (reg 13018).
+
+        Documented in Sungrow's protocol V1.1.10 as a mode and not a power --
+        `0xAA` limit, `0x55` allow -- and "Only SHT are supported", which is
+        why all three surveyed SH inverters answer `0xFFFF` and this reads
+        None on every one of them.
+        """
+        return self._mode_flag("pv_power_limitation_raw")
 
     def _floats(self, *fields: str) -> tuple[float, ...] | None:
         """Return several readings as floats, or None if any is missing."""
