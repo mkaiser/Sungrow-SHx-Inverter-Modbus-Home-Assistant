@@ -124,3 +124,45 @@ jobs:
           python -m pip install --upgrade build twine
           python -m build
           twine check --strict dist/*
+
+      # Every other check in this file runs against the editable install from
+      # `src/`, which satisfies any import the source tree can satisfy. So
+      # nothing here has ever tested the thing a user actually gets: the
+      # integration's imports against a *built* library.
+      #
+      # This asks that of the wheel built one step above, which is answerable
+      # offline and true whenever the tree is consistent. It deliberately does
+      # NOT ask it of the version on PyPI: between releases the integration
+      # legitimately moves ahead of the last published library, which is why
+      # `doc/installing_a_preview.md` says to install a tag rather than the
+      # branch. Run `python scripts/check_pinned_library.py` with no argument
+      # for that question, before pointing anybody at a build.
+      - name: The built wheel provides what the integration imports
+        run: python scripts/check_pinned_library.py --wheel "$(ls dist/*.whl)"
+
+      # `doc/preview-mirror/sync.yml` is the source of record for the preview
+      # channel: the copy that runs lives in a separate repository which gets
+      # archived once the integration reaches `main`, so the documented one is
+      # what survives. Two files, and nothing made them agree -- unlike every
+      # other duplication in this project, which has a generator or an
+      # equality test.
+      #
+      # Skips rather than fails when the file cannot be fetched: the preview
+      # repository is temporary by design, and its removal must not turn this
+      # branch red.
+      - name: The documented preview sync matches the one that runs
+        run: |
+          LIVE=https://raw.githubusercontent.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview/main/.github/workflows/sync.yml
+          if ! curl -fsSL "$LIVE" -o /tmp/live-sync.yml; then
+            echo "skipped: the preview channel does not serve $LIVE"
+            exit 0
+          fi
+          if diff -u doc/preview-mirror/sync.yml /tmp/live-sync.yml; then
+            echo "doc/preview-mirror/sync.yml is what the preview channel runs"
+          else
+            echo
+            echo "The documented copy and the running copy have drifted."
+            echo "Whichever is right, make them one file again: the doc copy is"
+            echo "what outlives the preview repository."
+            exit 1
+          fi

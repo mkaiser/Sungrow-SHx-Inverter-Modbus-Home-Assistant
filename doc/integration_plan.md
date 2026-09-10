@@ -72,6 +72,16 @@ a decision only the maintainer can take, or work whose blocker is named.
      enforces by syncing releases and refusing one whose pin is not yet on
      PyPI.
 
+     It is now a command rather than a lesson.
+     `scripts/check_pinned_library.py` reads the integration's
+     `sungrow_modbus` imports with `ast` and asks whether a wheel provides
+     them -- `--wheel dist/*.whl` of the build CI already makes, which is a
+     gate, and with no argument of the version manifest.json pins on **PyPI**,
+     which is deliberately not a gate because a development branch is
+     legitimately ahead of its last release. Run against the a1 wheel it
+     reproduces the incident in one second. It inspects the archive and never
+     executes it, so pointing it at a downloaded wheel runs none of it.
+
    **Why a preview channel exists at all.** HACS resolves a repository to
    the latest *stable* release, or else to the **default branch** -- read out
    of its own source (`repositories/base.py`, `version_to_download`), which

@@ -83,6 +83,7 @@ implementation for this pattern — read its real source, not blog posts.
 | `scripts/make_scan_zip.py` | Build `sungrow_scan.zip`; `--verify` unpacks it and runs it with a bare Python, `--against 5020` runs the whole survey against the simulator |
 | `scripts/sungrow_scan/probe.py` | Probe for Sungrow devices: `mdns`, `sweep <cidr>` (502, 503 for a Logger or iHomeManager, 516 for an iHomeManager's TLS port — found, not readable), `units <host>`, `capabilities <host>`, `dump <host>`. Uses the library where it is installed and `portable.py`'s client where it is not, so the whole directory runs from a zip |
 | `scripts/sync_version.py` | Single source of truth for the version; `--check` in CI, `--set X.Y.Z` to release |
+| `scripts/check_pinned_library.py` | Do the integration's `sungrow_modbus` imports resolve against the library version `manifest.json` pins? `--wheel dist/*.whl` asks it of a local build and gates CI; with no argument it asks it of **PyPI**, which is legitimately red between releases |
 | `scripts/generate_entity_map.py` | Derive `doc/legacy_entity_map.json` from the YAML package; `--check` in CI |
 | `scripts/generate_numbers.py` | Write the `number` descriptions from the write table in `scripts/writes.py`; `--check` in CI |
 | `scripts/generate_switches.py` | Write the `switch` descriptions from the write table; `--check` in CI |
@@ -138,6 +139,14 @@ verified in a container.
   dies with `RequirementsNotFound` at the moment somebody clicks Add
   integration. `scripts/sync_version.py --set` now does the re-install, and
   `--check` fails on the drift.
+- **The pin is a promise about a published wheel, and an editable install
+  cannot test it.** `--check` above only compares two version *strings*. What
+  it cannot see is the integration importing a library module that the pinned
+  version does not have -- which happened between a1 and a2 with
+  `sungrow_modbus.fingerprint`, passing every test, ruff, hassfest and the
+  release, and failing only in a real install. `scripts/check_pinned_library.py`
+  is the check: `--wheel` against a local build gates CI, and with no argument
+  it asks the same of PyPI, which is legitimately red mid-development.
 - **Addresses are protocol addresses**, one below the register number in
   Sungrow's document and in the YAML comments (`address: 4989 # reg 4990`).
 - **Ask the inverter, do not infer.** Register 5002 reports the output type
