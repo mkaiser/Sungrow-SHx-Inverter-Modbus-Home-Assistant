@@ -38,94 +38,87 @@ a decision only the maintainer can take, or work whose blocker is named.
 
 ### Decisions waiting on the maintainer
 
-1. **Finish cutting the preview release.** `v0.1.0a1` is tagged and pushed
-   (2026-09-10) and **nothing is published yet**: the release workflow failed
-   at hassfest, so no GitHub release exists and the PyPI job never ran.
-   Nothing else here matters as much -- until somebody else can install it,
-   every bug is found by the two people who wrote it.
+1. **The preview is out, and installable through HACS.** ✅
+   `v0.1.0a1` and `v0.1.0a2` are released, both marked pre-release, and
+   `sungrow-modbus` is on PyPI at both versions. A preview channel serves
+   them to HACS. What is left is a decision rather than work: **when to
+   merge into `main`**, which retires the channel and unlocks the HACS
+   default store.
 
-   Three things this taught, all of them fixed:
+   Four things this cost, all of them fixed, and the last is the one worth
+   remembering:
 
-   - **`git push --follow-tags` pushes only _annotated_ tags.** The tag was
-     lightweight, so the push said nothing and reached nothing. This document
-     and `release.yml`'s own header both instructed exactly that, which is
-     why the tag is annotated now.
-   - **The branch's `Validate` run was already red on hassfest** twenty-three
-     minutes before the tag went up, and the release failed the same way.
-     hassfest is in CI; nobody read it.
-   - **One of the three hassfest findings was a real bug.** A device filter
-     on `target` in `services.yaml` is forbidden *because* Home Assistant's
-     target expansion delivers `device_id` as a list, while `services.SCHEMA`
-     requires a string -- so `start_inverter` and `stop_inverter` would have
-     been rejected for anyone calling them through the target picker.
+   - **`git push --follow-tags` pushes only _annotated_ tags.** The first
+     v0.1.0a1 was lightweight, so the push said nothing and reached nothing
+     -- while this document and `release.yml`'s own header both instructed
+     exactly that.
+   - **The branch's `Validate` run was already red on hassfest** when that
+     tag went up, and the release failed the same way. hassfest is in CI;
+     nobody read it.
+   - **One hassfest finding was a real bug.** A device filter on `target` in
+     services.yaml is forbidden *because* target expansion delivers
+     `device_id` as a list while `services.SCHEMA` requires a string, so
+     start_inverter and stop_inverter would have been rejected for anyone
+     using the target picker.
+   - **A green release can still ship a broken install.** After a1, the
+     integration began importing `sungrow_modbus.fingerprint` while
+     manifest.json still pinned `sungrow-modbus==0.1.0a1`, whose wheel does
+     not contain that module -- so installing the branch raised ImportError
+     the moment somebody clicked Add integration. A checkout hides it
+     completely, because there the library is installed editable from `src/`.
+     Found by opening the published wheel, not by any test. **Between
+     releases, the branch is only safe to install as a tag**, which is what
+     `doc/installing_a_preview.md` tells people, and the preview channel
+     enforces by syncing releases and refusing one whose pin is not yet on
+     PyPI.
 
-   What remains is a green run at the tag. Since no release and no PyPI
-   artefact were produced, `v0.1.0a1` was consumed by nothing and can be
-   moved onto the fixed commit rather than spent.
+   **Why a preview channel exists at all.** HACS resolves a repository to
+   the latest *stable* release, or else to the **default branch** -- read out
+   of its own source (`repositories/base.py`, `version_to_download`), which
+   never consults a pre-release for that decision, and `show_beta` only
+   changes what is offered *after* a repository is accepted. This
+   repository's default branch is the YAML package, with no
+   `custom_components/` at all, so HACS rejects it: *"Repository structure
+   for main is not compliant"*. A separate repository whose default branch
+   *is* the integration passes.
 
-   **And a green release is still not a HACS install.** Read out of HACS's
-   own source rather than assumed (`repositories/base.py`,
-   `version_to_download`, and `repositories/integration.py`,
-   `validate_repository`), because the answer is counter-intuitive:
+   [doc/preview-mirror/sync.yml](preview-mirror/sync.yml) is the whole
+   mechanism and the source of record for it -- the live copy runs in the
+   preview repository, which is archived when this ends. It **pulls rather
+   than being pushed to**, so no credential exists in either repository:
+   this one is public, and it writes only to itself. That required giving up
+   on a verbatim copy, because an exact mirror must force-overwrite the
+   default branch, which would delete the syncing workflow -- a scheduled
+   workflow can only run from the default branch. Copying just
+   `custom_components/`, `hacs.json` and a README of its own keeps the
+   workflow and keeps that repository small.
 
-   - HACS decides which ref to read in this order — the latest **stable**
-     release, then a tag the user explicitly selected, then the
-     **default branch**. `data.last_version` is set only from the first
-     release that is *not* a pre-release, and `version_to_download()` never
-     consults `data.prerelease` at all. So **a pre-release-only repository
-     resolves to the default branch**, and `show_beta` does not change that —
-     it changes which versions are *offered* after registration, not which
-     ref registration validates.
-   - This repository's default branch is `main`, which carries the YAML
-     package and **no `custom_components/` at all**. For an integration HACS
-     looks for the first directory under `custom_components`, finds none, and
-     refuses the repository outright: *"Repository structure for main is not
-     compliant"*.
+   **The default store** -- searchable in HACS without adding a URL -- is a
+   separate PR to `hacs/default`, and this repository already satisfies the
+   easy half: a description, topics and a passing `hacs/action` run. What it
+   lacks is the integration's brand in `home-assistant/brands`, which
+   `scripts/make_brand_icon.py` produces the icons for. Not worth submitting
+   while it is a preview, and it needs the merge to `main` first.
 
-   So while the integration lives only on `proper-ha-integration` and ships
-   only pre-releases, **adding this repository to HACS cannot work** — not
-   because the release is missing but because of where HACS looks. Three ways
-   out, in increasing order of commitment: tell testers to install by hand
-   (copy `custom_components/sungrow_modbus/` from the release zip, which needs
-   no HACS and works today); change the repository's default branch, which
-   makes an experimental branch the first thing thousands of YAML users see;
-   or merge the integration into `main`, which is where this is going anyway
-   and is the only one of the three that also fixes the default store.
-
-   The pin is fine, for the record: `manifest.json` requires
-   `sungrow-modbus==0.1.0a1` and pip installs a pre-release when the
-   specifier names it exactly, so no `--pre` is needed at install time. That
-   only matters once the PyPI publish has succeeded, which is still unproven
-   on pypi.org — the rehearsal that passed was TestPyPI, a separate account
-   with its own pending publisher for `testpypi.yml`.
-
-   **The default store** — being searchable in HACS without adding a URL — is
-   a separate PR to `hacs/default`, and this repository already satisfies the
-   easy half: a description, topics, and a passing `hacs/action` run. What it
-   does not have is the integration's brand in `home-assistant/brands`, which
-   is required for an integration and is what `scripts/make_brand_icon.py`
-   produces the icons for. Not worth submitting while it is a preview.
-
-   One thing was wrong and is fixed: `release.yml` decided whether to mark a
-   GitHub release as a pre-release by looking for a **hyphen** in the
-   version. `sync_version.py` requires the normalised PEP 440 spelling and
-   rejects the hyphenated one, so every pre-release this project can cut has
-   no hyphen — and `0.1.0a1` would have been published as **stable**, which
-   is what HACS offers users as the latest version. The preview labelling
-   exists to prevent exactly that, and this would have undone it silently.
+   One more thing that was wrong and is fixed: `release.yml` decided
+   pre-release status by looking for a **hyphen** in the version.
+   `sync_version.py` requires the normalised PEP 440 spelling, so every
+   pre-release this project can cut has no hyphen -- and `0.1.0a1` would
+   have been published as **stable**, which is what HACS offers as the
+   latest. The preview labelling exists to prevent exactly that.
 2. **Whether entity names are final enough** to stop being cheap to change.
    They are settled and reviewed; the preview exists so that changing one is
    still possible, with a registry migration.
 
 ### Work with no blocker
 
-3. **A survey anybody can run from the interface**, and a *diagnostics-only*
-   setup mode to go with it. Designed in
-   [Fingerprinting from the interface](#fingerprinting-from-the-interface).
-   Today contributing a fingerprint means running Python on a machine that
-   can reach the inverter, which is the single biggest filter on where the
-   evidence in this project comes from — four houses, all of them known to
-   the maintainer.
+3. **The rest of the interface survey.** The survey itself is **built** --
+   see [Fingerprinting from the interface](#fingerprinting-from-the-interface)
+   -- and two pieces of it are deliberately not: the **block read test**,
+   which is 26 block reads times three rounds plus narrowing and belongs in
+   a background task rather than a form, and **pausing the coordinators** for
+   the duration, without which every document from the interface is taken
+   under contention and says so.
 4. **Firmware-dependent register semantics**, which nothing here supports
    today and issue
    [#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)
@@ -1478,55 +1471,79 @@ the Logger does not imply supporting the SG family.
 
 ## Fingerprinting from the interface
 
-**Not built.** The design, and the two things that make it harder than it
-looks.
+**Built**, in 0.1.0a2, except for the two pieces named at the end -- which
+are the two that make it harder than it looks.
 
-Today a fingerprint costs a contributor a Python run on a machine that can
+A fingerprint used to cost a contributor a Python run on a machine that can
 reach the inverter. That is why every document in
 `doc/device-fingerprints/` comes from one of four houses, all known to the
 maintainer, and why one axis of `compatibility.md` is still entirely
 unmeasured. Somebody who has already installed the integration has, by
-definition, a working connection to their inverter — and no way to turn it
-into evidence.
+definition, a working connection to their inverter — and had no way to turn
+it into evidence.
 
-**The output already exists.** Home Assistant's diagnostics download is
-exactly the mechanism the survey needs: it produces a JSON file a user can
-attach to an issue, it is reachable from the config entry's menu with no
-entities involved, and `diagnostics.py` already redacts. Nothing needs to
-write a file, and no new download UI has to be invented. The work is making
-what it emits a *survey document* rather than a summary — the same schema
-`collect.py` writes, so one generator keeps producing `compatibility.md` from
+**What was built.** `custom_components/sungrow_modbus/fingerprint.py`
+assembles a survey document and `diagnostics.py` carries it as a
+`fingerprint` section, so the delivery mechanism is a button Home Assistant
+already has: it produces a JSON file a user attaches to an issue, it is
+reachable with no entities involved, and it already redacts. The document is
+the **same schema** `collect.py` writes -- schema 17, which admits the
+second producer -- so one generator keeps producing `compatibility.md` from
 both.
 
-**What has to be asked, because no register answers it.** The survey's
-`user_inputs` is testimony: which cable, whether a Modbus proxy is in the
-path, whether anything else was polling, who is reporting, and whether the
-address may be published. An options-flow step is the natural home; it is a
-form, and the answers are already a defined set in `probe.py`'s
-`REPORTED_TRANSPORTS` and `PROXY_ANSWERS`.
+The register knowledge moved to `sungrow_modbus.fingerprint`, where both
+producers reach it: the 19 curated probes, the five firmware strings, the
+four-state vocabulary (`present`, `unavailable`, `refused`, `no answer`),
+the stand-in derivation, the transport verdict and the sentence about WiFi
+versus Ethernet. `probe.py` keeps literal copies, because that directory
+ships as a zip and cannot import the library, and
+`tests/test_fingerprint_tables_agree.py` is what makes that duplication
+safe -- a probe label *is* the published format, so renaming one on one side
+would silently unrelate every new reading from every old one.
 
-Two real obstacles:
+**What is asked, because no register answers it.** An options page collects
+the testimony: which cable, whether a Modbus proxy is in the path, whether
+anything else was polling, who is reporting, and whether the address may be
+published. All optional, and empty stays distinct from `unknown` -- the
+question not put against the owner not knowing. The page opens by saying
+what has already been measured, so nobody is asked whether they use a dongle
+when register 6100 settled it 9 times out of 9.
+
+Submitting it runs the survey behind a progress step and then reports what
+was found, where the file is, and where to send it. That last part is not
+decoration: the file sits behind a menu on a different page, which nobody
+would guess, and a reading nobody sends is worth nothing. The same text is
+left under Notifications, because a config-flow page is gone the moment it
+is dismissed and that is exactly when the instructions are needed.
+
+**Two pieces deliberately left out**, and both are the reasons this was
+harder than it looked:
 
 1. **A fingerprint taken from inside Home Assistant is taken under
    contention** — and this project discards documents taken while something
    else was polling, because contention and a register fault are hard to tell
    apart from the result. Four documents were thrown away for exactly this.
-   So the coordinators for the entry have to be held off for the duration and
-   the document has to say they were, or the document has to be marked as
-   taken under contention and be worth less. A *second* poller outside this
-   entry — another Home Assistant, the YAML package, evcc — remains
-   undetectable either way, which is why the question is asked.
-2. **The block read test is the expensive part.** Twenty-six block reads
-   times three rounds, plus binary-tree narrowing over whatever failed, which
-   on a slow link ran a survey past its own cap. `blocks.NARROW_BUDGET`
-   exists for that and would have to be enforced harder inside Home
-   Assistant, where a config-flow step cannot sit for a quarter of an hour.
-   The realistic shape is a background task with a progress notification, not
-   a form that blocks.
+   So for now the document *admits it*, in a `contention` section outside
+   `user_inputs` -- a measurement, since the integration knows what it was
+   doing rather than being told -- naming the components, their intervals and
+   `coordinators_paused: false`. Holding the coordinators off for the
+   duration is the fix and is not done. A *second* poller outside the entry
+   — another Home Assistant, the YAML package, evcc — remains undetectable
+   either way, which is why the question is asked.
+2. **The block read test is the expensive part**, and is not run at all.
+   Twenty-six block reads times three rounds, plus binary-tree narrowing over
+   whatever failed, which on a slow link ran a survey past its own cap.
+   `blocks.NARROW_BUDGET` exists for that and would have to be enforced
+   harder inside Home Assistant, where a config-flow step cannot sit for a
+   quarter of an hour. The realistic shape is a background task with a
+   progress notification, not a form that blocks. Until then a document from
+   the interface carries no block evidence, and
+   `test_a_collect_run_at_schema_16_carries_its_block_read_test` is keyed on
+   the tool so that absence is legitimate rather than a lie.
 
 ### A diagnostics-only setup mode
 
-**Possible, and worth having.** A contributor who wants to send a reading
+**Built**, in 0.1.0a2. A contributor who wants to send a reading
 should not have to answer the migration question at all — it is the one
 irreversible decision in the flow, and it has nothing to do with producing a
 document.
