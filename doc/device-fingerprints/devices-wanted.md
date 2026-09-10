@@ -33,8 +33,9 @@ almost entirely unmeasured**:
 | --- | --- | --- |
 | Inverter model | **4 of 42** — SH10RT, SH10RT-20, SH10RT-V112, SH8.0RT-V112 | every model outside the RT family, and 12 of the 16 RTs |
 | Phase / output type | three phase 3P4L only | **single phase**, and three phase 3P3L |
-| ARM and DSP firmware | **one string each** on all nine — `ARM_SAPPHIRE-H_V11_V01_B`, `MDSP_…` | anything else at all |
-| Inverter firmware | **two** — `B001.V000.P020` and `P022`; unknown at the third house, which refuses the block that reports it | a third |
+| ARM and DSP | **one string each** on all nine — `ARM_SAPPHIRE-H_V11_V01_B`, `MDSP_…` | probably nothing: see below, these look like *hardware* identifiers |
+| **Version 1 / 2** (the updatable firmware) | **three** — `01011.95.03`, `.95.12`, `.95.13`, and reads on **9 of 9** | a fourth, especially `.95.14` — see [#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763) |
+| Inverter firmware | **two** — `B001.V000.P020` and `P022`; reads on only **5 of 9**, the rest refuse the block | a third |
 | WiNet-S firmware | **two** — `P040` and `P043` | a third |
 | SBR BCU firmware | **two** — `22011.01.27` and `.30` | a third |
 | Transport | direct LAN, WiNet-S wired, WiNet-S WiFi | a Logger, a Modbus proxy in the path |
@@ -59,10 +60,29 @@ does rather than what one machine does. A finding that appeared on only one
 firmware would deserve much less confidence, and there would be no way to
 know without this.
 
-What is genuinely thin is the *spread*: two versions per field, from three
-houses, all within one model family. A third value on any of them is worth
-having — and an ARM or DSP string that is not the one above would be the most
-interesting of the lot, being the two fields nothing has ever varied.
+**And one of these rows was asking for the wrong thing.** An earlier draft
+called an ARM or DSP string other than `ARM_SAPPHIRE-H_V11_V01_B` "the most
+interesting of the lot, being the two fields nothing has ever varied". The
+discussion on
+[#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)
+gives the likely reason nothing has: those two identify **hardware**, and do
+not change when the inverter is updated. Which makes them the *least* likely
+field to vary rather than the most interesting, and means nine identical
+readings are evidence of nothing.
+
+The field that does track updatable firmware is **Version 1** (and Version 2
+beside it), and it was in the readings all along:
+
+| House | Version 1 |
+| --- | --- |
+| fwitten SH10RT-V112 | `SAPPHIRE-H_01011.95.03` |
+| bar12 SH10RT-20, mkaiser SH10RT | `SAPPHIRE-H_01011.95.12` |
+| gerd SH8.0RT-V112 | `SAPPHIRE-H_01011.95.13` |
+
+Three values across four houses, on 9 of 9 documents — better coverage than
+`inverter_firmware_version`, which four houses' worth of readings refuse.
+That is the field to compare two machines by, and the one worth naming in a
+report.
 
 One gap worth naming: **fwitten's inverter firmware is unknown**, not absent.
 That house refuses input 13249, which is the block reporting it, so four of
@@ -87,13 +107,33 @@ finds the first exception.
 Worth having even if the integration then reports fewer entities than the
 YAML package did on the same machine — that difference *is* the finding.
 
-### 2. A third value on any firmware field
+### 2. A machine on Version 1 `95.14` or later
 
-Not "a second" — there are already two of the inverter's, two of the
-WiNet-S's and two of the SBR BCU's. What is missing is a *third*, and above
-all **any** ARM or DSP string other than `ARM_SAPPHIRE-H_V11_V01_B` and
-`MDSP_SAPPHIRE-H_V11_V01_B`, which have never varied across nine documents
-and four houses.
+Specifically, and for a reason: issue
+[#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)
+reports that after a firmware update, writing the **export power limit**
+(register 13074) behaves as though the value were a percentage in units of
+0.1% rather than watts — write 700, get 7000 W. The reporter is on Version 1
+`01011.95.14`. The highest measured here is gerd's `.95.13`, where the
+register reads **8000 on an 8 kW machine** and matches its own maximum at
+5622, so it is plainly watts there. That brackets any change to *after*
+`.95.13`, which is as close as this project can currently get.
+
+Two things would settle it, and neither needs a write:
+
+- **A survey from a machine on `.95.14` or later.** The dump records 13073
+  and its bounds at 5621/5622, so comparing the register against the
+  machine's own rated maximum says which unit it is in without touching it.
+- **A `.95.14` machine that is not 10 kW.** The two explanations in that
+  thread — "the register is 0.1% of rated power" and "the register is in
+  units of 10 W" — predict *identical* numbers on a 10 kW inverter, where
+  100.0% and 10000 W coincide, and every reporter so far appears to have
+  one. On an 8 kW machine they diverge: writing 700 would mean 5600 W under
+  the percentage reading and 7000 W under the other.
+
+Beyond that, a third value on any firmware field is still worth having —
+there are two of the inverter's, two of the WiNet-S's and two of the SBR
+BCU's. Not ARM or DSP, for the reason above.
 
 A reading from a machine of an already-recorded model is worth as much as a
 new model here — more, in fact, because the model is then held constant and

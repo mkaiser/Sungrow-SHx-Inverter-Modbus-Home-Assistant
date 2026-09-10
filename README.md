@@ -13,6 +13,13 @@
 > package, evolved over five years, in use by thousands of people, and the only thing
 > that is finished.
 
+## Trying it
+
+`v0.1.0a2` is released and on PyPI. HACS cannot install this repository, for a reason
+that is about where HACS looks rather than about the release —
+**[doc/installing_a_preview.md](doc/installing_a_preview.md)** has the four
+steps and explains why.
+
 ## What this is
 
 A Home Assistant integration built on the Modbus architecture that arrived in
@@ -58,16 +65,14 @@ long-term statistics and their dashboards when they switch.
 
 **Not there yet:**
 
-- **A release, and a HACS install.** `v0.1.0a1` is tagged but nothing is
-  published yet, and HACS needs more than a release: it resolves a repository
-  to the latest **stable** release or else to the **default branch**, and this
-  one's default branch is `main`, which has no `custom_components/`. So HACS
-  cannot install this branch until the integration reaches `main` or a stable
-  release exists — see [doc/integration_plan.md](doc/integration_plan.md#what-is-next).
-  Copying `custom_components/sungrow_modbus/` into your own `config/` works
-  today and needs no HACS. The first releases are **preview** releases,
-  labelled as such in the version, the integration's name and a repair
-  notice.
+- **A HACS install.** `v0.1.0a2` **is** released and on PyPI, but HACS
+  cannot install it yet — not for want of a release: HACS resolves a
+  repository to the latest *stable* release or else to the *default branch*,
+  and this one's default branch is `main`, which has no `custom_components/`.
+  Installing a preview today means copying one folder, which takes about a
+  minute: **[doc/installing_a_preview.md](doc/installing_a_preview.md)**. All
+  early releases are **preview** releases, labelled as such in the version,
+  the integration's name and a repair notice.
 - The **iHomeManager** and the **Sungrow Logger**. Both are documented by
   Sungrow and neither has ever been measured by this project — if you have
   one, [doc/device-fingerprints/devices-wanted.md](doc/device-fingerprints/devices-wanted.md)

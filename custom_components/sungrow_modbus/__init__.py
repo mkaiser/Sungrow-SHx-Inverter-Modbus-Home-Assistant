@@ -35,11 +35,14 @@ from .const import (
     CONF_EXTERNAL_PLACEMENT,
     CONF_EXTERNAL_SOURCES,
     CONF_INTERVALS,
+    CONF_MODE,
     CONF_UNIT_ID,
     DEFAULT_EXTERNAL_PLACEMENT,
     DOMAIN,
     ENTITY_IDS_MIGRATE,
     INTERVAL_NEVER,
+    MODE_DEVICES,
+    MODE_DIAGNOSTICS,
 )
 from .coordinator import (
     SungrowBatteryCoordinator,
@@ -198,7 +201,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
     # Before the platforms, not after: an entity registered on the YAML
     # package's id continues its history, whereas renaming into that id
     # afterwards is refused outright. The user chose this at setup.
-    if legacy_ids:
+    #
+    # And never for a diagnostics entry: claiming an id is a change to
+    # somebody's registry made on behalf of entities that are not going to
+    # exist. `_async_create` stores ENTITY_IDS_NEW for those, so this is
+    # already false -- the mode is checked as well because the two must not
+    # be able to disagree.
+    if legacy_ids and entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DEVICES:
         serial = inverter.serial_number
         # Entities whose registry entry is gone but whose recorder rows are
         # not; claiming falls back to the un-renamed id for those.
@@ -218,6 +227,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
     # coordinator, how often each is polled, what a battery's maximum is -- so
     # there is nothing an option can change without rebuilding this.
     entry.async_on_unload(entry.add_update_listener(_async_options_changed))
+
+    # A diagnostics entry stops here: connected, identified, polling, and
+    # with no entities anywhere. Everything above it is what a survey needs
+    # -- the readings, the capability resolution, the device in the registry
+    # so the diagnostics download has somewhere to hang -- and the platforms
+    # are the part a contributor did not ask for. It is promoted from the
+    # options flow, which is where the entity-ids question finally gets put.
+    if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
+        _LOGGER.info(
+            "%s set up for diagnostics only: %d components polling, no entities",
+            entry.title,
+            len(coordinators),
+        )
+        return True
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
@@ -456,4 +479,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> 
     The shared connection closes itself once the last entry holding a unit on
     it unloads, so there is nothing to tear down here.
     """
+    if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
+        # Nothing was forwarded, so there is nothing to unload. Asking Home
+        # Assistant to unload platforms that were never set up is harmless
+        # but reads as though this entry had entities.
+        return True
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

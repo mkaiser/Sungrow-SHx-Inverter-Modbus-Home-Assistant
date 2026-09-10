@@ -1,0 +1,227 @@
+# Keeps a HACS-installable copy of this integration's latest preview release.
+#
+# **Copy this file into the preview repository** as
+# `.github/workflows/sync.yml`. It is the only file that repository needs;
+# everything else it contains, this workflow writes.
+#
+# ## Why a second repository exists
+#
+# HACS resolves a repository to the latest **stable** release, or else to the
+# **default branch** — read out of its own source (`repositories/base.py`,
+# `version_to_download`), which consults `data.last_version` (set only from
+# the first release that is *not* a pre-release), then a user-selected tag,
+# then `default_branch`. It never uses a pre-release for that decision, and
+# `show_beta` only changes which versions are offered *after* the repository
+# is accepted.
+#
+# The upstream repository's default branch is the five-year-old YAML package,
+# which has no `custom_components/` directory, so HACS rejects it outright:
+# *"Repository structure for main is not compliant"*. A repository whose
+# default branch does carry the integration is accepted, which is the whole
+# reason this one exists.
+#
+# It is temporary. When the integration reaches the upstream default branch,
+# this repository is archived.
+#
+# ## Why it pulls rather than being pushed to
+#
+# A workflow in the upstream repository could push here, and the first
+# version did. It needed a deploy key, because a workflow's automatic
+# `GITHUB_TOKEN` is scoped to its own repository and cannot write to another
+# one — so that design required generating a keypair, registering the public
+# half here with write access, and storing the private half upstream.
+#
+# Pulling needs no credential at all: upstream is public, so reading it takes
+# no token, and pushing *here* uses this repository's own `GITHUB_TOKEN`.
+# Nothing has to be configured, and there is no secret to leak or rotate.
+#
+# What made that possible is not copying upstream verbatim. An exact mirror
+# has to force-overwrite the default branch, which would delete this very
+# file — a scheduled workflow only runs from the default branch, so it cannot
+# live anywhere else. Copying *only what HACS needs* onto this repository's
+# own history keeps the workflow, and keeps this repository small: no
+# `legacy/`, no `src/`, no scripts, no imported history.
+#
+# ## What it syncs, and what it refuses to
+#
+# The newest **release** upstream, including pre-releases — which is all of
+# them so far. Releases rather than tags, so a stray tag cannot ship
+# anything, and never the branch head.
+#
+# It also refuses to publish a release whose pinned library is not yet
+# installable. `manifest.json` pins an exact `sungrow-modbus` version and
+# Home Assistant pip-installs it, so a copy that got ahead of PyPI would
+# hand every user an integration that cannot start. That is not
+# hypothetical: between 0.1.0a1 and 0.1.0a2 the integration began importing
+# `sungrow_modbus.fingerprint` while the published wheel did not contain it.
+name: Sync the newest preview release
+
+on:
+  schedule:
+    # Hourly, at 17 past, because GitHub's scheduler is busiest on the hour
+    # and runs late when it is. A release therefore appears here within the
+    # hour on its own; use "Run workflow" if you want it now.
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  UPSTREAM: mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
+  BRANCH: proper-ha-integration
+
+jobs:
+  sync:
+    name: Copy the latest release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Authenticated with this repository's own token, which is enough to
+      # read a public repository and raises the rate limit from 60 requests
+      # an hour to 5000. `/releases` is newest-first and includes
+      # pre-releases; `/releases/latest` would be useless here, because it
+      # skips them and every release so far is one.
+      - name: Which release is newest upstream?
+        id: upstream
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=$(curl -fsS \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${UPSTREAM}/releases?per_page=1" \
+            | python -c "import json,sys; r=json.load(sys.stdin); print(r[0]['tag_name'] if r else '')")
+
+          if [ -z "${TAG}" ]; then
+            echo "::error::${UPSTREAM} has no releases yet."
+            exit 1
+          fi
+
+          HAVE=$(cat UPSTREAM_TAG 2>/dev/null || echo "none")
+          echo "upstream=${TAG}"  >> "$GITHUB_OUTPUT"
+          echo "have=${HAVE}"     >> "$GITHUB_OUTPUT"
+          echo "upstream is at ${TAG}; this repository carries ${HAVE}"
+
+          if [ "${TAG}" = "${HAVE}" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Already up to date at ${TAG}. Nothing to do."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # A tarball rather than a clone: this repository wants one directory,
+      # not upstream's history.
+      - name: Fetch that release
+        if: steps.upstream.outputs.changed == 'true'
+        run: |
+          TAG="${{ steps.upstream.outputs.upstream }}"
+          curl -fsSL "https://github.com/${UPSTREAM}/archive/refs/tags/${TAG}.tar.gz" \
+            | tar xz --strip-components=1 -C /tmp --one-top-level=upstream
+          test -f /tmp/upstream/custom_components/sungrow_modbus/manifest.json
+
+      # The guard that makes this safe to run unattended. Home Assistant
+      # installs the pinned library itself, so publishing a release before
+      # its wheel exists breaks every install rather than delaying it.
+      - name: The pinned library must be installable
+        if: steps.upstream.outputs.changed == 'true'
+        run: |
+          VERSION=$(python -c "import json;print(json.load(open('/tmp/upstream/custom_components/sungrow_modbus/manifest.json'))['version'])")
+          echo "manifest pins sungrow-modbus==${VERSION}"
+          for attempt in $(seq 1 10); do
+            if curl -fsS "https://pypi.org/pypi/sungrow-modbus/${VERSION}/json" > /dev/null; then
+              echo "installable after ${attempt} attempt(s)"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::sungrow-modbus ${VERSION} is not on PyPI. Publishing this release here would give every HACS user an integration whose library cannot be installed. Waiting for the next run."
+          exit 1
+
+      - name: Take the integration, and only the integration
+        if: steps.upstream.outputs.changed == 'true'
+        run: |
+          rm -rf custom_components
+          cp -r /tmp/upstream/custom_components custom_components
+          cp /tmp/upstream/hacs.json hacs.json
+          cp /tmp/upstream/LICENSE LICENSE
+          echo "${{ steps.upstream.outputs.upstream }}" > UPSTREAM_TAG
+
+      # HACS renders a repository's README inside its own interface, so this
+      # is where a tester actually reads. Upstream's own README opens by
+      # telling people to use `main` instead, which would point at this
+      # repository's main — the integration — and mean the opposite of what
+      # it says there.
+      - name: Write the README
+        if: steps.upstream.outputs.changed == 'true'
+        run: |
+          TAG="${{ steps.upstream.outputs.upstream }}"
+          cat > README.md <<NOTICE
+          # Sungrow Modbus — preview channel
+
+          > **A distribution copy. Do not open issues here.**
+
+          This repository exists so that HACS can install a **preview** of the
+          Sungrow Modbus integration. HACS reads a repository's default branch
+          unless it finds a stable release, and the real repository's default
+          branch is its long-standing YAML package — so HACS cannot install
+          from there. This repository's default branch is the integration.
+
+          Currently carrying **${TAG}**, copied automatically from
+          [${UPSTREAM}](https://github.com/${UPSTREAM}).
+
+          - **Issues, discussions and pull requests:**
+            [${UPSTREAM}](https://github.com/${UPSTREAM}/issues)
+          - **What this is, what works and what does not:**
+            [the real README](https://github.com/${UPSTREAM}/tree/${BRANCH})
+          - **Installing without HACS:**
+            [doc/installing_a_preview.md](https://github.com/${UPSTREAM}/blob/${BRANCH}/doc/installing_a_preview.md)
+
+          ## Install
+
+          **HACS → three dots → Custom repositories**, this repository's URL,
+          category **Integration**. Then download it, restart Home Assistant,
+          and add **Sungrow Modbus (preview)** under Settings → Devices &
+          services.
+
+          HACS will show a commit hash rather than a version number, because
+          this repository publishes no releases of its own. The integration
+          reports its real version — \`${TAG}\` — in its own name and under
+          Settings → Repairs.
+
+          ## It is a preview
+
+          Registers can move and entity ids can change. If you want something
+          finished, use the **YAML package** on the real repository's default
+          branch: five years old, and in use by thousands of people.
+
+          The most useful thing you can do with it is send a reading. The
+          integration can produce one for you: add it in **Diagnostics only**
+          mode if you do not want any entities, fill in
+          **Options → Help this project**, and download the diagnostics.
+
+          ## When this repository goes away
+
+          The integration is meant to replace the YAML package. When it
+          reaches the real repository's default branch, this one is archived —
+          and at that point:
+
+          **Remove this repository from HACS before installing from the real
+          one.** Both provide the same integration at the same path, so
+          keeping both is a conflict rather than an upgrade.
+          NOTICE
+
+      - name: Commit and push
+        if: steps.upstream.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "::notice::${{ steps.upstream.outputs.upstream }} is new upstream but its files are identical here. Nothing committed."
+            exit 0
+          fi
+          git commit -m "Sync ${{ steps.upstream.outputs.upstream }} from ${UPSTREAM}"
+          git push
+          echo "::notice::Published ${{ steps.upstream.outputs.upstream }}. HACS will offer it as an update."

@@ -73,6 +73,11 @@ async def _connect(hass: HomeAssistant) -> dict:
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}
     )
+    # The flow opens by asking what the entry is for; these
+    # tests are about the ordinary one.
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "setup_devices"}
+    )
     # The flow now opens on a menu: search the network, or say where it is.
     assert result["type"] is FlowResultType.MENU
     result = await hass.config_entries.flow.async_configure(

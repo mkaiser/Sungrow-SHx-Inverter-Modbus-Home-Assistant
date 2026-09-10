@@ -34,7 +34,7 @@ class InverterRealtimeInput(Component):
 
 
 class InverterFastInput(Component):
-    """36 input registers, polled every 10s."""
+    """43 input registers, polled every 10s."""
 
     register_space = "input"
 
@@ -84,6 +84,12 @@ class InverterFastInput(Component):
     """Meter phase C active power (reg 5607)."""
     battery_current = gauge(5630, 0.1, signed=True, unit="A")
     """Battery current (reg 5631)."""
+    backup_phase_a_current = gauge(5719, 0.1, signed=True, nan=32767, unit="A")
+    """Backup phase A current (reg 5720)."""
+    backup_phase_b_current = gauge(5720, 0.1, signed=True, nan=32767, unit="A")
+    """Backup phase B current (reg 5721)."""
+    backup_phase_c_current = gauge(5721, 0.1, signed=True, nan=32767, unit="A")
+    """Backup phase C current (reg 5722)."""
     backup_phase_a_power = integer(5722, signed=True, unit="W")
     """Backup phase A power (reg 5723)."""
     backup_phase_b_power = integer(5723, signed=True, unit="W")
@@ -92,6 +98,14 @@ class InverterFastInput(Component):
     """Backup phase C power (reg 5725)."""
     total_backup_power = int32(5725, word_order="little", unit="W")
     """Total backup power (reg 5726)."""
+    backup_phase_a_voltage = gauge(5730, 0.1, signed=False, nan=65535, unit="V")
+    """Backup phase A voltage (reg 5731)."""
+    backup_phase_b_voltage = gauge(5731, 0.1, signed=False, nan=65535, unit="V")
+    """Backup phase B voltage (reg 5732)."""
+    backup_phase_c_voltage = gauge(5732, 0.1, signed=False, nan=65535, unit="V")
+    """Backup phase C voltage (reg 5733)."""
+    backup_frequency = gauge(5733, 0.01, signed=False, nan=65535, unit="Hz")
+    """Backup frequency (reg 5734)."""
     meter_phase_a_voltage = gauge(5740, 0.1, signed=True, nan=32767, unit="V")
     """Meter phase A voltage (reg 5741)."""
     meter_phase_b_voltage = gauge(5741, 0.1, signed=True, nan=32767, unit="V")
@@ -159,7 +173,7 @@ class InverterMeterChannel2(Component):
 
 
 class InverterFastHolding(Component):
-    """19 holding registers, polled every 10s."""
+    """20 holding registers, polled every 10s."""
 
     register_space = "holding"
 
@@ -167,6 +181,8 @@ class InverterFastHolding(Component):
     """Load adjustment mode selection raw (reg 13002)."""
     load_adjustment_mode_enable_raw = integer(13010, signed=False, writable=True)
     """Load adjustment mode enable raw (reg 13011)."""
+    forced_startup_under_low_soc_raw = integer(13016, signed=False, nan=65535)
+    """Forced startup under low SoC raw (reg 13017)."""
     pv_power_limitation_raw = integer(13017, signed=False, nan=65535)
     """PV power limitation raw (reg 13018)."""
     ems_mode_selection_raw = integer(13049, signed=False, writable=True)
@@ -252,7 +268,7 @@ class InverterMediumInput(Component):
 
 
 class InverterSlowestInput(Component):
-    """33 input registers, polled every 600s."""
+    """34 input registers, polled every 600s."""
 
     register_space = "input"
 
@@ -318,6 +334,8 @@ class InverterSlowestInput(Component):
     """Daily battery discharge (reg 13026)."""
     total_battery_discharge = uint32(13026, scale=0.1, word_order="little", unit="kWh")
     """Total battery discharge (reg 13027)."""
+    self_consumption_of_today = gauge(13028, 0.1, signed=False, nan=65535, unit="%")
+    """Self-consumption of today (reg 13029)."""
     daily_imported_energy = gauge(13035, 0.1, signed=False, unit="kWh")
     """Daily imported energy (reg 13036)."""
     total_imported_energy = uint32(13036, scale=0.1, word_order="little", unit="kWh")

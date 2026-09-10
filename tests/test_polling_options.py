@@ -29,7 +29,7 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType, InvalidData
-from sungrow_modbus import DEFAULT_INTERVALS
+from sungrow_modbus import COMPONENTS, DEFAULT_INTERVALS, TIER_COMPONENTS
 
 from .conftest import SERIAL
 
@@ -127,6 +127,7 @@ async def test_the_options_flow_shows_what_each_group_contains(
         "polling",
         "permissions",
         "external",
+        "survey",
         "settings",
     }
 
@@ -138,8 +139,15 @@ async def test_the_options_flow_shows_what_each_group_contains(
     table = result["description_placeholders"]["tiers"]
     for tier in DEFAULT_INTERVALS:
         assert f"`{tier}`" in table
-    # The register counts, so the trade is visible.
-    assert "| 61 |" in table
+    # The register counts, so the trade is visible. Derived rather than
+    # written down: this assertion was a literal `| 61 |` and broke the first
+    # time a register was added to a tier, which says nothing about the table
+    # being right and everything about the number having moved.
+    for tier, components in TIER_COMPONENTS.items():
+        count = len(
+            {name for c in components for name in COMPONENTS[c].declared_fields}
+        )
+        assert f"| {count} |" in table, f"{tier} should show its {count} registers"
     assert "load power" in table
 
 

@@ -125,10 +125,19 @@ last column says what that rules out before anything is even read.
 | `0x0D18` | SH4.0RS | RS | untested | battery_start_power, firmware_versions, meter_channel_2, mppt3, pv_power_limitation, three_phase |
 | `0x0D1A` | SH8.0RS | RS | untested | battery_start_power, firmware_versions, meter_channel_2, mppt3, pv_power_limitation, three_phase |
 | `0x0D1B` | SH10RS | RS | untested | battery_start_power, firmware_versions, meter_channel_2, mppt3, pv_power_limitation, three_phase |
-| `0x0D27` | MG5RL | MG | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, meter_channel_2, mppt3, mppt4, pv_power_limitation, three_phase |
-| `0x0D28` | MG6RL | MG | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, meter_channel_2, mppt3, mppt4, pv_power_limitation, three_phase |
-| `0x0D29` | MG8RL | MG | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, meter_channel_2, mppt3, mppt4, pv_power_limitation, three_phase |
-| `0x0D2A` | MG10RL | MG | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, meter_channel_2, mppt3, mppt4, pv_power_limitation, three_phase |
+| `0x0D27` | MG5RL | MG | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, meter_channel_2, mppt3, mppt4, pv_power_limitation |
+| `0x0D28` | MG6RL | MG | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, meter_channel_2, mppt3, mppt4, pv_power_limitation |
+| `0x0D29` | MG8RL | MG | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, meter_channel_2, mppt3, mppt4, pv_power_limitation |
+| `0x0D2A` | MG10RL | MG | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, meter_channel_2, mppt3, mppt4, pv_power_limitation |
+| `0x0D2B` | SH5RL | RL | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, meter_channel_2, pv_power_limitation, three_phase |
+| `0x0D2C` | SH6RL | RL | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, meter_channel_2, pv_power_limitation, three_phase |
+| `0x0D2D` | SH8RL | RL | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, meter_channel_2, pv_power_limitation, three_phase |
+| `0x0D2E` | SH10RL | RL | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, meter_channel_2, pv_power_limitation, three_phase |
+| `0x0D2F` | MG12RL | MG | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, meter_channel_2, mppt3, mppt4, pv_power_limitation |
+| `0x0D31` | MG7.5RL | MG | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, meter_channel_2, mppt3, mppt4, pv_power_limitation |
+| `0x0D41` | SH3RL | RL | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, meter_channel_2, pv_power_limitation, three_phase |
+| `0x0D42` | SH3.6RL | RL | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, meter_channel_2, pv_power_limitation, three_phase |
+| `0x0D43` | SH4RL | RL | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, meter_channel_2, pv_power_limitation, three_phase |
 | `0x0E00` | SH5.0RT | RT | untested | mppt3, mppt4, pv_power_limitation |
 | `0x0E01` | SH6.0RT | RT | untested | mppt3, mppt4, pv_power_limitation |
 | `0x0E02` | SH8.0RT | RT | untested | mppt3, mppt4, pv_power_limitation |
@@ -153,6 +162,11 @@ last column says what that rules out before anything is even read.
 | `0x0E25` | SH15T | T | untested | mppt4 |
 | `0x0E26` | SH20T | T | untested | mppt4 |
 | `0x0E28` | SH25T | T | untested | mppt4 |
+| `0x0E39` | SH100CX | CX | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, forced_startup, meter_channel_2, pv_power_limitation |
+| `0x0E3A` | SH110CX | CX | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, forced_startup, meter_channel_2, pv_power_limitation |
+| `0x0E3D` | SH125CX | CX | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, forced_startup, meter_channel_2, pv_power_limitation |
+| `0x0E51` | SH50CX | CX | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, forced_startup, meter_channel_2, pv_power_limitation |
+| `0x0E52` | SH80CX | CX | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, forced_startup, meter_channel_2, pv_power_limitation |
 
 ## Sending one
 

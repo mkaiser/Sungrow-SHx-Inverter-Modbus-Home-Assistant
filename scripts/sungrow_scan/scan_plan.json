@@ -17,7 +17,7 @@
         [5241, 1],
         [5600, 8],
         [5630, 1],
-        [5722, 24],
+        [5719, 27],
         [13009, 26]
       ]
     },
@@ -222,6 +222,23 @@
       "signed": false,
       "word_order": "big",
       "nan": [],
+      "unit": null
+    },
+    {
+      "name": "forced_startup_under_low_soc_raw",
+      "component": "fast_holding",
+      "space": "holding",
+      "address": 13016,
+      "count": 1,
+      "kind": "number",
+      "scale": 1.0,
+      "offset": 0.0,
+      "decimals": 0,
+      "signed": false,
+      "word_order": "big",
+      "nan": [
+        65535
+      ],
       "unit": null
     },
     {
@@ -1243,6 +1260,57 @@
       "unit": "kWh"
     },
     {
+      "name": "backup_phase_a_current",
+      "component": "fast_input",
+      "space": "input",
+      "address": 5719,
+      "count": 1,
+      "kind": "number",
+      "scale": 0.1,
+      "offset": 0.0,
+      "decimals": 1,
+      "signed": true,
+      "word_order": "big",
+      "nan": [
+        32767
+      ],
+      "unit": "A"
+    },
+    {
+      "name": "backup_phase_b_current",
+      "component": "fast_input",
+      "space": "input",
+      "address": 5720,
+      "count": 1,
+      "kind": "number",
+      "scale": 0.1,
+      "offset": 0.0,
+      "decimals": 1,
+      "signed": true,
+      "word_order": "big",
+      "nan": [
+        32767
+      ],
+      "unit": "A"
+    },
+    {
+      "name": "backup_phase_c_current",
+      "component": "fast_input",
+      "space": "input",
+      "address": 5721,
+      "count": 1,
+      "kind": "number",
+      "scale": 0.1,
+      "offset": 0.0,
+      "decimals": 1,
+      "signed": true,
+      "word_order": "big",
+      "nan": [
+        32767
+      ],
+      "unit": "A"
+    },
+    {
       "name": "backup_phase_a_power",
       "component": "fast_input",
       "space": "input",
@@ -1301,6 +1369,74 @@
       "word_order": "little",
       "nan": [],
       "unit": "W"
+    },
+    {
+      "name": "backup_phase_a_voltage",
+      "component": "fast_input",
+      "space": "input",
+      "address": 5730,
+      "count": 1,
+      "kind": "number",
+      "scale": 0.1,
+      "offset": 0.0,
+      "decimals": 1,
+      "signed": false,
+      "word_order": "big",
+      "nan": [
+        65535
+      ],
+      "unit": "V"
+    },
+    {
+      "name": "backup_phase_b_voltage",
+      "component": "fast_input",
+      "space": "input",
+      "address": 5731,
+      "count": 1,
+      "kind": "number",
+      "scale": 0.1,
+      "offset": 0.0,
+      "decimals": 1,
+      "signed": false,
+      "word_order": "big",
+      "nan": [
+        65535
+      ],
+      "unit": "V"
+    },
+    {
+      "name": "backup_phase_c_voltage",
+      "component": "fast_input",
+      "space": "input",
+      "address": 5732,
+      "count": 1,
+      "kind": "number",
+      "scale": 0.1,
+      "offset": 0.0,
+      "decimals": 1,
+      "signed": false,
+      "word_order": "big",
+      "nan": [
+        65535
+      ],
+      "unit": "V"
+    },
+    {
+      "name": "backup_frequency",
+      "component": "fast_input",
+      "space": "input",
+      "address": 5733,
+      "count": 1,
+      "kind": "number",
+      "scale": 0.01,
+      "offset": 0.0,
+      "decimals": 2,
+      "signed": false,
+      "word_order": "big",
+      "nan": [
+        65535
+      ],
+      "unit": "Hz"
     },
     {
       "name": "meter_phase_a_voltage",
@@ -2355,6 +2491,23 @@
       "unit": "kWh"
     },
     {
+      "name": "self_consumption_of_today",
+      "component": "slowest_input",
+      "space": "input",
+      "address": 13028,
+      "count": 1,
+      "kind": "number",
+      "scale": 0.1,
+      "offset": 0.0,
+      "decimals": 1,
+      "signed": false,
+      "word_order": "big",
+      "nan": [
+        65535
+      ],
+      "unit": "%"
+    },
+    {
       "name": "phase_a_current",
       "component": "fast_input",
       "space": "input",
@@ -3017,6 +3170,15 @@
     "0x0D28": "MG6RL",
     "0x0D29": "MG8RL",
     "0x0D2A": "MG10RL",
+    "0x0D2B": "SH5RL",
+    "0x0D2C": "SH6RL",
+    "0x0D2D": "SH8RL",
+    "0x0D2E": "SH10RL",
+    "0x0D2F": "MG12RL",
+    "0x0D31": "MG7.5RL",
+    "0x0D41": "SH3RL",
+    "0x0D42": "SH3.6RL",
+    "0x0D43": "SH4RL",
     "0x0E00": "SH5.0RT",
     "0x0E01": "SH6.0RT",
     "0x0E02": "SH8.0RT",
@@ -3040,7 +3202,12 @@
     "0x0E24": "SH12T",
     "0x0E25": "SH15T",
     "0x0E26": "SH20T",
-    "0x0E28": "SH25T"
+    "0x0E28": "SH25T",
+    "0x0E39": "SH100CX",
+    "0x0E3A": "SH110CX",
+    "0x0E3D": "SH125CX",
+    "0x0E51": "SH50CX",
+    "0x0E52": "SH80CX"
   },
   "battery_models": [
     {

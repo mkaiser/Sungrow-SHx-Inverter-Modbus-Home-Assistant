@@ -39,6 +39,8 @@ from probe import (
     transport_verdict,
 )
 
+from sungrow_modbus.fingerprint import COLLECTED_BY_INTEGRATION
+
 REPO = Path(__file__).resolve().parent.parent
 
 
@@ -814,14 +816,37 @@ def test_an_unset_option_is_absent_rather_than_guessed() -> None:
 
 
 @pytest.mark.parametrize("path", FINGERPRINTS, ids=lambda p: p.stem)
-def test_every_published_command_line_is_runnable_and_hostless(path) -> None:
-    document = json.loads(path.read_text(encoding="utf-8"))
-    words = shlex.split(document["command_line"])
+def test_every_published_command_line_is_runnable_or_names_its_tool(path) -> None:
+    """One of two shapes, and nothing in between.
 
-    assert words[:3] == [SCRIPT, "capabilities", "<host>"]
+    A document collected from a terminal carries the invocation that repeats
+    the reading, with the host replaced by a placeholder. A document
+    collected through Home Assistant's diagnostics download carries the name
+    of the tool instead, because **there is no command that would repeat
+    it** -- and printing a plausible one would invite somebody to run it and
+    then wonder why the output differs. A scan from a terminal is taken on an
+    idle inverter; a diagnostics download is taken while Home Assistant is
+    polling, which is why such a document also carries a `contention`
+    section.
+
+    Two accepted shapes rather than a loosened check: anything that is
+    neither is a field somebody has started writing prose into, and the
+    field is the one most likely to reintroduce an address.
+    """
+    document = json.loads(path.read_text(encoding="utf-8"))
+    line = document["command_line"]
+    words = shlex.split(line)
+
+    if line.startswith(COLLECTED_BY_INTEGRATION):
+        assert "contention" in document, (
+            f"{path.stem} says the integration collected it, so it must say "
+            "what was polling the inverter at the time"
+        )
+    else:
+        assert words[:3] == [SCRIPT, "capabilities", "<host>"]
     # The stronger check lives in the no-serial-or-address test, but the
     # command line is the field most likely to reintroduce one.
-    assert not re.search(r"\b\d{1,3}(\.\d{1,3}){3}\b", document["command_line"])
+    assert not re.search(r"\b\d{1,3}(\.\d{1,3}){3}\b", line)
 
 
 def test_the_stand_in_serial_cannot_be_mistaken_for_a_serial() -> None:
@@ -1303,7 +1328,79 @@ async def test_a_modbus_device_that_is_not_a_sungrow_is_not_claimed_as_one(
     # The exception type is in the message, because "refused" and "timed out"
     # lead to different next steps -- see scripts/layout.py.
     assert "_FakeRefusal" in who.error
-    assert connection.asked == [1, 2, 3, 4, 5], "every candidate is tried"
+    assert connection.asked == [1, 2, 3, 4, 5, 247], (
+        "every inverter candidate, then one look for an iHomeManager"
+    )
+
+
+async def test_an_ihomemanager_is_found_where_no_inverter_answers(
+    _fake_stack,
+) -> None:
+    """The device this project has never met, made findable rather than assumed.
+
+    An iHomeManager has no serial at input 4990 and does not answer unit 1 to
+    5, so `identify` refused it exactly as it refuses some other vendor's
+    Modbus box -- and a contributor who owns one would have been told there
+    was nothing there. It names itself at input 8000 on unit 247 instead.
+
+    Registers and unit come from *Communication Protocol of iHomeManager*
+    V1.0.2, not from a measurement: no reading of one exists at any house.
+    That is the point of the probe.
+    """
+    import probe as probe_module
+
+    connection = _fake_stack({247: {7999: [0x0130], 8000: [0x5631, 0x2E30]}})
+
+    who = await probe_module.identify("192.0.2.50", 502)
+
+    assert who.kind == "ihomemanager"
+    assert who.unit == 247
+    assert who.error is None
+    assert who.device_type_code == 0x0130
+    # No serial is asked for and none is reported: the iHM identity block has
+    # none, and this repository does not go hunting for one.
+    assert who.serial is None
+    assert "iHomeManager" in probe_module.described(who)
+    assert connection.asked == [1, 2, 3, 4, 5, 247]
+
+
+async def test_an_ihomemanager_probe_costs_nothing_when_an_inverter_answers(
+    _fake_stack,
+) -> None:
+    """The extra read is paid only where every inverter unit has already failed.
+
+    Most addresses in a survey are an inverter or a dongle. Asking unit 247 on
+    each of them would be one more timeout per address on a link where a
+    failed read costs ten seconds -- the fourth house in
+    `scripts/layout.py`'s notes.
+    """
+    import probe as probe_module
+
+    connection = _fake_stack({1: {4989: _serial_words("A123456789"), 4999: [0x0E03]}})
+
+    who = await probe_module.identify("192.0.2.51", 502)
+
+    assert who.kind is None, "an inverter is not an energy manager"
+    assert 247 not in connection.asked
+
+
+async def test_a_zero_device_type_is_not_read_as_an_ihomemanager(
+    _fake_stack,
+) -> None:
+    """A forwarding device can answer without knowing.
+
+    The same failure `ZERO_MEANS_ABSENT` guards against for capabilities: a
+    WiNet-S answers 0 where the inverter answers the specification's
+    unavailable sentinel. Granting on 0 here would label some other vendor's
+    box an iHomeManager and send a contributor down a long road.
+    """
+    import probe as probe_module
+
+    for code in (0, 0xFFFF):
+        _fake_stack({247: {7999: [code]}})
+        who = await probe_module.identify("192.0.2.52", 502)
+        assert who.kind is None, f"0x{code:04X} is not an identity"
+        assert who.error is not None
 
 
 async def test_a_device_that_answers_but_names_nothing_stops_the_sweep(

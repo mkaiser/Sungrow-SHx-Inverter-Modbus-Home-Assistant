@@ -17,7 +17,7 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues",
   "requirements": [
-    "sungrow-modbus==0.1.0a1"
+    "sungrow-modbus==0.1.0a2"
   ],
-  "version": "0.1.0a1"
+  "version": "0.1.0a2"
 }

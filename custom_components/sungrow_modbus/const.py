@@ -140,3 +140,54 @@ PLACEMENT_SEPARATE = "separately_metered"
 #: trouble of naming their other inverter's power sensor is telling us their
 #: load figure looks wrong, which is the behind-the-meter symptom.
 DEFAULT_EXTERNAL_PLACEMENT = PLACEMENT_BEHIND_METER
+
+#: The testimony a survey needs and no register can answer.
+#:
+#: All optional, and all default to empty. **Empty means the question was not
+#: put**, which the document format has always kept distinct from an answer of
+#: "unknown" -- so leaving these alone produces an honest document rather than
+#: an incomplete one.
+CONF_REPORTER = "reporter"
+CONF_SURVEY_COMMENT = "survey_comment"
+CONF_SURVEY_BATTERY = "survey_battery"
+CONF_SURVEY_TRANSPORT = "survey_transport"
+CONF_SURVEY_PROXY = "survey_proxy"
+
+#: What the owner says about anything *else* polling this inverter.
+#:
+#: The integration knows about itself and says so without being asked. What it
+#: cannot know is another Home Assistant, the YAML package, evcc or a logger
+#: on the same machine -- and that is exactly what decides whether a dropped
+#: block is a register fault or two clients competing for one of the very few
+#: sessions a Sungrow grants.
+CONF_SURVEY_POLLERS = "survey_pollers"
+
+#: Whether the last two octets of the address may be published.
+#:
+#: Off by default and asked rather than taken. The third octet is what
+#: separates one contributor's network from another's, and it is the more
+#: revealing half; a document that reads `xxx.xxx` is complete rather than
+#: damaged. What it buys the contributor is being able to tell which box each
+#: of four similar-looking documents came from.
+CONF_PUBLISH_ADDRESS = "publish_address"
+
+#: What an entry is for, chosen at setup and changeable afterwards.
+#:
+#: A contributor who wants to send a reading should not have to answer the
+#: migration question at all: it is the only irreversible decision in this
+#: flow, it decides which entity ids years of recorder history attach to, and
+#: it has nothing whatever to do with producing a document. So there are two
+#: kinds of entry.
+CONF_MODE = "mode"
+
+MODE_DEVICES = "devices"
+"""The ordinary integration: entities, migration, the whole thing."""
+
+MODE_DIAGNOSTICS = "diagnostics"
+"""Connect, identify, and create no entities at all.
+
+Still opens a Modbus connection -- so it still spends one of the very few
+sessions a Sungrow grants, which is cheaper than a full entry and not free.
+Promoted to a full entry later from the options flow, which is when the
+entity-ids question gets asked.
+"""

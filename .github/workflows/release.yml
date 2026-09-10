@@ -93,6 +93,40 @@ jobs:
         with:
           category: integration
 
+      # Release notes come from the annotated tag's own message, never from
+      # GitHub's generator.
+      #
+      # `generate_release_notes: true` writes "everything since the previous
+      # release", and for the *first* release of a repository there is no
+      # previous one -- so v0.1.0a1, an alpha of the integration, was
+      # published with every commit and pull request in this repository since
+      # 2022 in its body: the YAML package's entire history, mailed to every
+      # watcher, under a tag that changes nothing about the YAML package. The
+      # same trap waits for the first stable release, which GitHub would
+      # compare against nothing, pre-releases not counting.
+      #
+      # The tag message is written per release anyway, and `git push
+      # --follow-tags` requires the tag to be annotated, so the text is
+      # always there -- so write it for users, not for the maintainer: from
+      # here on the tag message *is* the published release note. Re-fetched
+      # with `--force` because actions/checkout can leave the triggering ref
+      # as a lightweight tag, whose `%(contents)` is the commit message
+      # instead.
+      - name: Release notes from the tag message
+        id: notes
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          git fetch --force origin "refs/tags/${TAG}:refs/tags/${TAG}"
+          NOTES="$(git tag -l --format='%(contents)' "$TAG")"
+          if [ -z "$(printf '%s' "$NOTES" | tr -d '[:space:]')" ]; then
+            NOTES="Release ${TAG}."
+          fi
+          {
+            echo 'body<<SUNGROW_RELEASE_NOTES_EOF'
+            printf '%s\n' "$NOTES"
+            echo 'SUNGROW_RELEASE_NOTES_EOF'
+          } >> "$GITHUB_OUTPUT"
+
       # HACS shows users the five most recent releases, so a release has to
       # exist — a bare tag is not enough, and is also what the HACS default
       # store requires.
@@ -101,7 +135,7 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ${{ steps.version.outputs.tag }}
-          generate_release_notes: true
+          body: ${{ steps.notes.outputs.body }}
           draft: false
           prerelease: ${{ steps.version.outputs.prerelease }}
 
