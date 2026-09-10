@@ -6,14 +6,14 @@ modbus-connection, so they need no inverter and no network.
 
 from __future__ import annotations
 
-from modbus_connection import ModbusTimeoutError
+from modbus_connection import ModbusProtocolError, ModbusTimeoutError
 from modbus_connection.mock import MockModbusUnit
 import pytest
 
-from sungrow_modbus import SungrowInverter, model_for
+from sungrow_modbus import Capability, SungrowInverter, model_for
 
-# "A2340600123" left-padded the way the inverter reports it, as 16-bit words.
-SERIAL = "A2340600123"
+# "A123456789" left-padded the way the inverter reports it, as 16-bit words.
+SERIAL = "A123456789"
 
 
 def _words(text: str, length: int) -> list[int]:
@@ -66,7 +66,7 @@ async def test_identity_is_one_block_read(unit: MockModbusUnit) -> None:
 async def test_total_dc_power_is_word_swapped(unit: MockModbusUnit) -> None:
     """A 32-bit Sungrow value arrives low word first."""
     inverter = SungrowInverter(unit)
-    report = await inverter.async_update_tier(10)
+    report = await inverter.async_update_tier("fast")
 
     assert inverter.fast_input.total_dc_power == 7000
     # Tier 10 covers both the input and holding components.
@@ -92,7 +92,55 @@ async def test_failed_component_is_reported_not_raised(
     unit.fail_read(5016, ModbusTimeoutError("no answer"), register_type="input")
     inverter = SungrowInverter(unit)
 
-    report = await inverter.async_update_tier(10)
+    report = await inverter.async_update_tier("fast")
 
     assert "fast_input" not in report.updated
     assert "fast_input" in report.failed
+
+
+async def test_an_absent_register_does_not_empty_its_whole_tier(
+    unit: MockModbusUnit,
+) -> None:
+    """Registers 2611 and beyond are unreadable on the reference SH10RT.
+
+    Not silent, not sentinel-valued: a single-register read of 2612 fails with
+    a protocol error. They hold two firmware strings, and while they were
+    pooled into `slowest_input`'s one 58-register read, those two absent
+    registers left all 36 other slowest-tier fields permanently empty -- on
+    the maintainer's own inverter. `scripts/layout.py` now reads each on its
+    own, so the cost of an absent register is that register.
+    """
+    for address in (2612, 2628):
+        unit.fail_read(
+            address,
+            ModbusProtocolError("no such register"),
+            register_type="input",
+        )
+    inverter = SungrowInverter(unit)
+
+    report = await inverter.async_update_tier("slowest")
+
+    assert set(report.failed) == {"sub_controller_firmware", "battery_firmware"}
+    assert "slowest_input" in report.updated
+    # The point of the fix: the tier's other fields carry values.
+    assert inverter.slowest_input.sungrow_version_1 is not None
+
+
+async def test_an_all_null_string_reads_as_no_value(unit: MockModbusUnit) -> None:
+    """Sungrow fills a UTF-8 field it has nothing for with 0x00.
+
+    The reference SH10RT does exactly that for the battery firmware string,
+    having a Pylontech rather than a Sungrow pack. Decoded literally that is
+    "", which would reach Home Assistant as a reading and, worse, count as
+    evidence of a battery firmware when capabilities are probed.
+    """
+    unit.input[2581] = _words("SAPPHIRE-H_01011.95.12", 11)
+    unit.input[2628] = [0] * 15
+    inverter = SungrowInverter(unit)
+
+    await inverter.async_update_tier("slowest")
+
+    assert inverter.field("sungrow_version_4_sungrow_battery") is None
+    assert Capability.BATTERY_FIRMWARE not in inverter.capabilities()
+    # A string that is present still arrives intact.
+    assert inverter.field("sungrow_version_1") == "SAPPHIRE-H_01011.95.12"

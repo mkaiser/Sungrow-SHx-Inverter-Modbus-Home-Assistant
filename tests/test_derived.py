@@ -12,7 +12,7 @@ from __future__ import annotations
 from modbus_connection.mock import MockModbusConnection
 import pytest
 
-from sungrow_modbus import TIERS, SungrowInverter
+from sungrow_modbus import TIER_COMPONENTS, SungrowInverter
 from sungrow_modbus.derived import RUNNING_STATES
 
 
@@ -57,8 +57,8 @@ async def _inverter(overrides: dict[int, int] | None = None) -> SungrowInverter:
     unit.input = {**INPUT, **(overrides or {})}
     unit.holding = dict(HOLDING)
     device = SungrowInverter(unit)
-    for interval in TIERS:
-        await device.async_update_tier(interval)
+    for tier in TIER_COMPONENTS:
+        await device.async_update_tier(tier)
     return device
 
 

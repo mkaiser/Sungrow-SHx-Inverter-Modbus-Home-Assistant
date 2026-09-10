@@ -11,10 +11,12 @@ from __future__ import annotations
 import pytest
 
 from sungrow_modbus.capabilities import (
+    ZERO_MEANS_ABSENT,
     Capability,
     Family,
     family_for,
     known_absent,
+    probe,
     resolve,
 )
 
@@ -95,3 +97,100 @@ def test_the_reference_inverter_resolves_as_measured() -> None:
     assert Capability.MPPT3 not in resolved
     assert Capability.MPPT4 not in resolved
     assert Capability.SUNGROW_BATTERY not in resolved
+
+
+def _reads(values: dict[str, object]):
+    """Return a `read` for `probe`, raising for a field the library lacks."""
+
+    def read(field: str) -> object:
+        if field not in values:
+            raise AttributeError(field)
+        return values[field]
+
+    return read
+
+
+def test_a_battery_that_answers_is_probed_as_present() -> None:
+    probed = probe(_reads({"battery_voltage": 199.2, "battery_level": 100.0}))
+    assert Capability.BATTERY in probed
+
+
+def test_a_cluster_slave_reporting_all_zeros_has_no_battery() -> None:
+    # Measured on a real master/slave pair of SH10RT-V112: the battery is
+    # wired to the master, and the slave answers 0 for voltage, level,
+    # temperature and capacity alike rather than the specification's 0xFFFF.
+    # Zero decodes to a value, so this used to grant BATTERY and create the
+    # whole 13xxx block as entities reporting zero forever.
+    probed = probe(_reads({"battery_voltage": 0.0, "battery_level": 0.0}))
+    assert Capability.BATTERY not in probed
+
+
+def test_a_flat_battery_is_still_a_battery() -> None:
+    # Level 0 is a reading, not an absence: a pack discharged to its floor
+    # still reports its voltage. Only the whole block being zero is absence,
+    # which is why level alone must never decide it.
+    probed = probe(_reads({"battery_voltage": 180.4, "battery_level": 0.0}))
+    assert Capability.BATTERY in probed
+
+
+def test_the_unavailable_sentinel_is_still_how_a_lone_inverter_says_no() -> None:
+    # The pre-existing path, unchanged: None is what the library decodes
+    # 0xFFFF to, and an inverter fitted without storage answers that.
+    probed = probe(_reads({"battery_voltage": None, "battery_level": None}))
+    assert Capability.BATTERY not in probed
+
+
+def test_zero_is_read_as_absence_only_where_it_was_measured_to_mean_that() -> None:
+    # The rule is still confined to ZERO_MEANS_ABSENT rather than applied to
+    # every probe -- three-phase output, the firmware strings and the power
+    # limits all legitimately read zero.
+    probed = probe(_reads({"phase_b_voltage": 0.0, "phase_c_voltage": 0.0}))
+    assert Capability.THREE_PHASE in probed
+    assert Capability.THREE_PHASE not in ZERO_MEANS_ABSENT
+
+
+def test_a_dongles_zeros_do_not_invent_trackers_or_a_second_meter() -> None:
+    """Measured on one inverter read both ways, 2026-09-08.
+
+    On its own LAN port MPPT3, MPPT4 and the second meter channel answered
+    0xFFFF -- correctly absent. Through its WiNet-S the same registers
+    answered 0, which granted all three and created ten entities reporting
+    zero forever. Most users are behind a dongle, so this is the common case
+    rather than the exotic one.
+    """
+    probed = probe(
+        _reads(
+            {
+                "mppt3_voltage": 0.0,
+                "mppt3_current": 0.0,
+                "mppt4_voltage": 0.0,
+                "mppt4_current": 0.0,
+                "meter_channel_2_total_active_power": 0,
+            }
+        )
+    )
+
+    assert Capability.MPPT3 not in probed
+    assert Capability.MPPT4 not in probed
+    assert Capability.METER_CHANNEL_2 not in probed
+
+
+def test_a_tracker_at_zero_volts_is_denied_and_then_granted_at_sunrise() -> None:
+    """The cost of the rule, and why it is affordable.
+
+    A real third tracker reads 0 V at night, so an inverter set up after dark
+    is denied MPPT3 -- which would be unacceptable if it were permanent. It is
+    not: capabilities are re-probed after every poll and the entry reloads when
+    they **grow**, so the first non-zero reading creates the entities.
+
+    Granting on zero has no matching recovery. Nothing ever removes an entity,
+    so a wrongly created one is permanent and manual to clean up, which is the
+    asymmetry that decides this.
+    """
+    night = probe(_reads({"mppt3_voltage": 0.0, "mppt3_current": 0.0}))
+    assert Capability.MPPT3 not in night
+
+    morning = probe(_reads({"mppt3_voltage": 412.5, "mppt3_current": 3.1}))
+    assert Capability.MPPT3 in morning
+    # Growth is what the coordinator reloads on.
+    assert morning - night == {Capability.MPPT3}

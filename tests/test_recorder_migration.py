@@ -269,7 +269,7 @@ async def test_rename_into_an_id_the_recorder_knows_is_refused(
         entity_registry.async_get_or_create(
             "sensor",
             "sungrow_modbus",
-            "A2340600123_total_pv_generation",
+            "A123456789_total_pv_generation",
             suggested_object_id="sh10rt_total_pv_generation",
         )
         await _record_meter(hass, freezer, start, MODERN_ID, [1003.0])
@@ -306,7 +306,7 @@ async def test_claiming_the_legacy_id_at_creation_continues_history(
         entry = entity_registry.async_get_or_create(
             "sensor",
             "sungrow_modbus",
-            "A2340600123_total_pv_generation",
+            "A123456789_total_pv_generation",
             suggested_object_id="total_pv_generation",
         )
         assert entry.entity_id == LEGACY_ID
@@ -516,7 +516,7 @@ async def test_archiving_the_occupant_unblocks_the_reverse_migration(
         entity_registry.async_get_or_create(
             "sensor",
             "sungrow_modbus",
-            "A2340600123_total_pv_generation",
+            "A123456789_total_pv_generation",
             suggested_object_id="sh10rt_total_pv_generation",
         )
         await _record_meter(hass, freezer, period1, MODERN_ID, [2000.0, 2002.0])

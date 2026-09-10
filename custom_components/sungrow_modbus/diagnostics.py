@@ -43,7 +43,7 @@ from sungrow_modbus import Capability
 from sungrow_modbus.capabilities import OUTPUT_TYPES, known_absent, probe
 
 from .const import CONF_REGISTER_DUMP, CONF_UNIT_ID, DOMAIN
-from .coordinator import COMPONENT_INTERVALS, SungrowConfigEntry
+from .coordinator import COMPONENT_TIERS, SungrowConfigEntry
 from .migration import DESCRIPTIONS, legacy_entity_id
 
 #: Identifying details, redacted because this file is meant to be shared.
@@ -143,7 +143,8 @@ def _polling(runtime: Any) -> list[dict[str, Any]]:
         rows.append(
             {
                 "component": component,
-                "interval_seconds": COMPONENT_INTERVALS.get(component),
+                "tier": COMPONENT_TIERS.get(component),
+                "interval_seconds": runtime.interval_of(component),
                 "last_poll_succeeded": coordinator.last_update_success,
                 "answered_last_poll": data is not None and component in data.updated,
                 "error": (

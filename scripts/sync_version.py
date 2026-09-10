@@ -37,7 +37,30 @@ MANIFEST = REPO / "custom_components" / "sungrow_modbus" / "manifest.json"
 #: has to move with the version too.
 REQUIREMENT_NAME = "sungrow-modbus"
 
-SEMVER = re.compile(r"^\d+\.\d+\.\d+([-.][0-9A-Za-z.]+)?$")
+#: A release, or a pre-release in the **one** spelling that is safe here.
+#:
+#: PEP 440 accepts `0.1.0a1`, `0.1.0-a1`, `0.1.0.alpha.1` and more, and pip
+#: normalises every one of them to `0.1.0a1`. That normalisation is the trap:
+#: Home Assistant compares the manifest's requirement pin against the version
+#: actually **installed**, so a pyproject saying `0.1.0-alpha.1` becomes an
+#: installed `0.1.0a1`, the two stop matching, and the config flow dies with
+#: `RequirementsNotFound` at the moment somebody clicks Add integration --
+#: which is exactly the failure this script exists to prevent, arriving by a
+#: new route.
+#:
+#: So only the normalised form is accepted: `a`, `b` or `rc` and a number,
+#: with no separator. Home Assistant reads it as PEP 440 and is happy, pip
+#: leaves it alone, and `pip install` will not take it without `--pre`, which
+#: is the point of using one.
+VERSION = re.compile(r"^\d+\.\d+\.\d+(?:(?:a|b|rc)\d+)?$")
+
+#: Spellings PEP 440 allows and pip would rewrite. Rejected with the reason,
+#: rather than with "not a version number", because the difference between
+#: `0.1.0-alpha.1` and `0.1.0a1` is invisible until Home Assistant refuses to
+#: start the integration.
+NORMALISES_AWAY = re.compile(
+    r"^\d+\.\d+\.\d+[-._]?(?:alpha|beta|a|b|c|rc|pre|preview)[-._]?\d*$"
+)
 
 
 def _read(path: Path) -> tuple[str, str]:
@@ -216,7 +239,15 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.set:
-        if not SEMVER.match(args.set):
+        if not VERSION.match(args.set):
+            if NORMALISES_AWAY.match(args.set):
+                raise SystemExit(
+                    f"{args.set} is a pre-release pip would rewrite. Use the "
+                    "normalised\nform instead -- 0.1.0a1, 0.1.0b1, 0.1.0rc1 "
+                    "-- because Home Assistant compares\nthe manifest pin "
+                    "against the installed version, and pip installs the\n"
+                    "normalised one."
+                )
             raise SystemExit(f"Not a version number: {args.set}")
         write_pyproject(args.set)
         write_manifest(args.set)

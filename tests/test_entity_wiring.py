@@ -9,8 +9,11 @@ never did.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from custom_components.sungrow_modbus.coordinator import (
-    COMPONENT_INTERVALS,
+    COMPONENT_TIERS,
     FIELD_COMPONENTS,
 )
 from custom_components.sungrow_modbus.derived_descriptions import (
@@ -18,6 +21,9 @@ from custom_components.sungrow_modbus.derived_descriptions import (
     DERIVED_SENSORS,
 )
 from custom_components.sungrow_modbus.sensor_descriptions import SENSOR_DESCRIPTIONS
+from sungrow_modbus import DEFAULT_INTERVALS
+
+ENTITY_MAP = Path(__file__).resolve().parent.parent / "doc" / "legacy_entity_map.json"
 
 ALL_DERIVED = (*DERIVED_SENSORS, *DERIVED_BINARY_SENSORS)
 ALL = (*SENSOR_DESCRIPTIONS, *ALL_DERIVED)
@@ -40,7 +46,7 @@ def test_a_derived_value_is_never_slower_than_its_inputs() -> None:
     # The rule: the entity follows the quickest thing it reads.
     for description in ALL_DERIVED:
         intervals = {
-            COMPONENT_INTERVALS[FIELD_COMPONENTS[field]]
+            DEFAULT_INTERVALS[COMPONENT_TIERS[FIELD_COMPONENTS[field]]]
             for field in description.depends_on
         }
         chosen = min(intervals)
@@ -48,10 +54,53 @@ def test_a_derived_value_is_never_slower_than_its_inputs() -> None:
 
 
 def test_the_derived_layer_covers_the_yaml_template_sensors() -> None:
-    # 21 computed sensors and 7 power-flow bits, matching the YAML's
-    # template layer minus its delayed duplicates and its controls.
-    assert len(DERIVED_SENSORS) == 21
-    assert len(DERIVED_BINARY_SENSORS) == 7
+    """Every YAML entity computed rather than read has a replacement.
+
+    Derived from the entity map rather than counted, because a count says
+    nothing about *which* one went missing -- and because the number moved
+    twice: once when the seven delayed twins were ported, once when the
+    filtered sensor was.
+
+    The controls are excluded: the YAML's `template number`, `switch` and
+    `button` entities are its workaround for having no write-then-read, and
+    they became real writable platforms and two admin actions instead.
+    """
+    entities = json.loads(ENTITY_MAP.read_text(encoding="utf-8"))["entities"]
+    expected = {
+        entity["entity_id"]
+        for entity in entities
+        if entity["layer"] in {"template", "filter"}
+        and entity["domain"] in {"sensor", "binary_sensor"}
+    }
+    ported = {f"sensor.{d.key}" for d in DERIVED_SENSORS} | {
+        f"binary_sensor.{d.key}" for d in DERIVED_BINARY_SENSORS
+    }
+
+    assert not expected - ported, "computed YAML entities with no replacement"
+
+    # And nothing invented *except* what a dropped entity points at. The rule
+    # was "an entity here that the YAML never had is a new entity_id nobody
+    # asked for", and it is still the rule -- but two entities were asked
+    # for: the binary sensors that decode Sungrow's 0xAA/0x55 mode registers,
+    # each of which is the stated replacement of a raw sensor modern mode no
+    # longer creates. So an addition has to be declared in both places to
+    # pass, which is stricter than the blanket "nothing new".
+    from pathlib import Path as _Path
+    import sys
+
+    sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / "scripts"))
+    from generate_derived import MODE_FLAGS
+    from naming import LEGACY_ONLY_SENSORS
+
+    declared = {f"binary_sensor.{key}" for key in MODE_FLAGS}
+    assert not ported - expected - declared, (
+        "derived entities with no YAML counterpart and no declaration"
+    )
+    for entity_id in declared:
+        assert entity_id in set(LEGACY_ONLY_SENSORS.values()), (
+            f"{entity_id} is a new entity that nothing names as its "
+            "replacement, so nobody asked for it"
+        )
 
 
 def test_no_entity_key_is_claimed_twice() -> None:

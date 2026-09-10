@@ -1,0 +1,29 @@
+# Starting and stopping the inverter. Deliberately actions rather than
+# buttons: Home Assistant has no confirmation dialog for a button press, and
+# an entity that stops an inverter would appear in every dashboard picker.
+#
+# Both are admin-only, which a button cannot be.
+#
+# Not `target:`, although that is the usual shape for something acting on a
+# device. Two reasons, and the second is the one that matters: hassfest
+# forbids a device filter on `target`, and Home Assistant's target expansion
+# delivers `device_id` as a **list** -- while `services.SCHEMA` requires a
+# single string, so a call made through the target picker would have been
+# rejected at validation. A `device` selector on the field renders the same
+# picker and passes the one id these actions accept.
+
+start_inverter:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: sungrow_modbus
+
+stop_inverter:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: sungrow_modbus

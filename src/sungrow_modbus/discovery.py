@@ -22,6 +22,7 @@ connection — the point is that both sides can use it.
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 import contextlib
 import ipaddress
 import socket
@@ -99,17 +100,33 @@ async def async_sweep(
     concurrency: int = CONCURRENCY,
     timeout: float = TIMEOUT,
     limit: int = MAX_HOSTS,
+    on_progress: Callable[[int, int], None] | None = None,
 ) -> list[str]:
     """Return the addresses in `network` with `port` open.
 
     Candidates, not inverters. The caller reads a register to decide.
+
+    `on_progress(done, total)` is called as each address is settled, so a
+    caller can show a bar. A `/24` at the default concurrency is quick, but
+    the timeout is what a sweep spends most of its time on -- every address
+    with nothing listening costs the full `timeout` -- so a sweep of a quiet
+    network is exactly the case where somebody wonders whether it has hung.
+    Plain callback rather than anything cleverer: this package has no Home
+    Assistant in it and no event loop of its own to hook into.
     """
     addresses = hosts_in(network, limit=limit)
     semaphore = asyncio.Semaphore(concurrency)
+    total = len(addresses)
+    settled = 0
 
     async def check(host: str) -> str | None:
+        nonlocal settled
         async with semaphore:
-            return host if await async_port_open(host, port, timeout) else None
+            open_port = await async_port_open(host, port, timeout)
+        settled += 1
+        if on_progress is not None:
+            on_progress(settled, total)
+        return host if open_port else None
 
     found = await asyncio.gather(*(check(host) for host in addresses))
     return [host for host in found if host is not None]

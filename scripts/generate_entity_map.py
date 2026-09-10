@@ -63,6 +63,80 @@ CARRIED = (
 )
 
 
+#: Registers the specification defines that the YAML package never read.
+#:
+#: These are the *only* entities here that do not come from
+#: `modbus_sungrow.yaml`, and they are marked `layer: "specification"` so that
+#: stays visible: they have no `unique_id` and no legacy entity, because there
+#: is no history of them to migrate. Everything downstream — the register map,
+#: the entity descriptions, the names, the simulator seed — picks them up from
+#: this table exactly as it picks the rest up from the YAML.
+#:
+#: **Addresses are protocol addresses, one below the register number the
+#: specification prints.** Every value below was read from *Communication
+#: Protocol of Residential Hybrid Inverter* **V1.1.11 (2025-11-17)** rather
+#: than inferred: a guessed scale produces a plausible wrong number, which is
+#: the failure this project can least afford.
+SPECIFICATION_ADDITIONS: list[dict[str, Any]] = [
+    # V1.1.7, reg 13088, U16, 0-1000, 0.1%. Not the same thing as the active
+    # power limit ratio at reg 13090, which the YAML already reads: the
+    # specification is explicit that feed-in limitation controls the grid
+    # connection point and power limiting controls the inverter's AC output.
+    {
+        "name": "Feed-in limitation ratio",
+        "domain": "sensor",
+        "input_type": "holding",
+        "address": 13087,
+        "data_type": "uint16",
+        "scale": 0.1,
+        "unit_of_measurement": "%",
+        "precision": 1,
+        "state_class": "measurement",
+        "nan_value": 0xFFFF,
+        "scan_interval": 10,
+    },
+    # V1.1.10, reg 13018, U16, 0xAA limit / 0x55 allow. A mode, not a power,
+    # and "Only SHT are supported" -- the reference SH10RT answers 0xFFFF.
+    {
+        "name": "PV power limitation raw",
+        "domain": "sensor",
+        "input_type": "holding",
+        "address": 13017,
+        "data_type": "uint16",
+        "nan_value": 0xFFFF,
+        "scan_interval": 10,
+    },
+]
+
+#: V1.1.9, regs 13200-13207, S32, 1 W each. "Only valid when the inverter is
+#: connected to a dual-channel meter (e.g. DTSU666-20)." S32 is little-endian
+#: across the two registers, which is the `swap: word` the YAML uses
+#: everywhere else, and 0x7FFFFFFF is the specification's "unavailable" for a
+#: signed 32-bit value.
+SPECIFICATION_ADDITIONS += [
+    {
+        "name": f"Meter channel 2 {what} active power",
+        "domain": "sensor",
+        "input_type": "input",
+        "address": address,
+        "data_type": "int32",
+        "scale": 1,
+        "swap": "word",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "nan_value": 0x7FFFFFFF,
+        "scan_interval": 10,
+    }
+    for what, address in (
+        ("total", 13199),
+        ("phase A", 13201),
+        ("phase B", 13203),
+        ("phase C", 13205),
+    )
+]
+
+
 def _load() -> dict[str, Any]:
     """Read the YAML package, tolerating its `!secret` references."""
     loader = yaml.SafeLoader
@@ -113,6 +187,10 @@ def collect() -> list[dict[str, Any]]:
                 if isinstance(raw, dict) and "name" in raw:
                     entries.append(_entry(domain, "template", raw))
 
+    # Last, so the YAML's own entities keep their order and their indices.
+    for raw in SPECIFICATION_ADDITIONS:
+        entries.append(_entry(raw["domain"], "specification", raw))
+
     return entries
 
 
@@ -129,7 +207,14 @@ def audit(entries: list[dict[str, Any]]) -> dict[str, Any]:
         entity_id: names for entity_id, names in by_entity_id.items() if len(names) > 1
     }
 
-    missing_unique_id = [e["entity_id"] for e in entries if not e.get("unique_id")]
+    # Only the YAML's own entities need one. A specification addition has no
+    # YAML entity behind it, so there is nothing to migrate through and
+    # nothing missing.
+    missing_unique_id = [
+        e["entity_id"]
+        for e in entries
+        if not e.get("unique_id") and e["layer"] != "specification"
+    ]
 
     # A statistics-bearing entity with no unit cannot be checked for the unit
     # class trap, so it needs looking at by hand.

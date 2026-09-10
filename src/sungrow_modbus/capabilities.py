@@ -58,11 +58,61 @@ class Capability(StrEnum):
     FIRMWARE_VERSIONS = "firmware_versions"
     """The firmware version registers."""
 
+    SUB_CONTROLLER_FIRMWARE = "sub_controller_firmware"
+    """The sub-controller firmware string, at register 2613.
+
+    **Absent through a communication module, present over a cable.** Measured
+    2026-09-08 across two houses: input 2612 refuses with exception 0x02,
+    three attempts out of three, on every WiNet-S path -- two dongles, two
+    dongle firmwares, two inverter models -- and reads normally on both
+    direct-LAN readings of the same register map.
+
+    This docstring used to say the reference SH10RT could not read register
+    2611 or beyond at all. That was measured before `scripts/layout.py`
+    existed: those registers arrive in a frame the device pads, and asking
+    for the count in `layout.COUNTS` reads them. The same machine now reads
+    all 27 blocks, three attempts each. What cannot read them is a dongle.
+    """
+
+    BATTERY_FIRMWARE = "battery_firmware"
+    """The battery firmware string, at register 2629.
+
+    The YAML package's own comment calls this the "fourth part of firmware
+    string (only for sungrow batteries)", so a third-party pack is expected
+    not to have it.
+    """
+
     ACTIVE_POWER_LIMIT = "active_power_limit"
     """Active power limitation and its ratio."""
 
     BATTERY_START_POWER = "battery_start_power"
     """Battery charge and discharge start-power thresholds."""
+
+    METER_CHANNEL_2 = "meter_channel_2"
+    """A dual-channel energy meter, such as a DTSU666-20.
+
+    Specification V1.1.9 added registers 13200-13207 for its second channel,
+    and states they are "only valid when the inverter is connected to a
+    dual-channel meter". A single-channel meter answers the first channel and
+    nothing here.
+    """
+
+    FEED_IN_LIMITATION_RATIO = "feed_in_limitation_ratio"
+    """The feed-in limitation expressed as a percentage (register 13088).
+
+    Distinct from the active power limit ratio at 13090, which the YAML
+    package already reads: the specification is explicit that feed-in
+    limitation controls the **grid connection point** while power limiting
+    controls the **inverter's AC output**. They are different measurements of
+    different things.
+    """
+
+    PV_POWER_LIMITATION = "pv_power_limitation"
+    """Whether PV generation itself may be limited (register 13018).
+
+    "Only SHT are supported", so every other family answers 0xFFFF — which is
+    what the reference SH10RT does.
+    """
 
 
 class Family(StrEnum):
@@ -109,6 +159,14 @@ ABSENT_IN: dict[Capability, frozenset[Family]] = {
     Capability.FIRMWARE_VERSIONS: frozenset({Family.RS, Family.MG}),
     # "not available on SHxRS as per issue #743"
     Capability.BATTERY_START_POWER: frozenset({Family.RS}),
+    # V1.1.9: "SH3.0-10RS and MG5-10RL are not supported."
+    Capability.METER_CHANNEL_2: frozenset({Family.RS, Family.MG}),
+    # V1.1.7: "MG5-10RL is not supported."
+    Capability.FEED_IN_LIMITATION_RATIO: frozenset({Family.MG}),
+    # V1.1.10: "Only SHT are supported."
+    Capability.PV_POWER_LIMITATION: frozenset(
+        {Family.RS, Family.MG, Family.RT, Family.K}
+    ),
     # Single-phase families have no phase B or C.
     Capability.THREE_PHASE: frozenset({Family.RS, Family.MG, Family.K}),
 }
@@ -116,6 +174,26 @@ ABSENT_IN: dict[Capability, frozenset[Family]] = {
 #: What register 5002 reports. Asking beats inferring, so this outranks the
 #: family table for THREE_PHASE.
 OUTPUT_TYPES: dict[int, str] = {0: "single phase", 1: "3P4L", 2: "3P3L"}
+
+#: 3P4L and 3P3L are both three-phase, so both resolve THREE_PHASE and get the
+#: same entities. But they are **not** interchangeable, and one register table
+#: entry says why:
+#:
+#:     22. A-B line voltage / phase A voltage   5019  U16  0.1V
+#:         Refer to Output type (address: 5002)
+#:         0: phase voltage; 1: phase voltage; 2: line voltage
+#:
+#: On 3P3L there is no neutral, so registers 5019-5021 report **line**
+#: voltages -- A-B, B-C, C-A -- rather than phase-to-neutral. Same registers,
+#: different measurement, and a value about 1.73x higher.
+#:
+#: **This integration does not yet model that**, and its entities are named
+#: `Phase A voltage` for everybody. On a 3P3L inverter that name, and the
+#: derived `phase_a_power` computed from it, are wrong -- they are line
+#: quantities. Nobody has 3P3L hardware to test against, so it is recorded
+#: here rather than guessed at; a fingerprint from such a system is what would
+#: unblock it.
+LINE_VOLTAGE_OUTPUT_TYPE = 2
 
 
 def family_for(device_type_code: int | None) -> Family | None:
@@ -152,9 +230,62 @@ PROBES: dict[Capability, tuple[str, ...]] = {
     Capability.BATTERY: ("battery_voltage", "battery_level"),
     Capability.METER_DIRECT: ("meter_phase_a_active_power",),
     Capability.FIRMWARE_VERSIONS: ("inverter_firmware_version",),
+    Capability.SUB_CONTROLLER_FIRMWARE: ("sungrow_version_3",),
+    Capability.BATTERY_FIRMWARE: ("sungrow_version_4_sungrow_battery",),
     Capability.BATTERY_START_POWER: ("battery_charging_start_power",),
     Capability.ACTIVE_POWER_LIMIT: ("active_power_limitation_raw",),
+    Capability.METER_CHANNEL_2: ("meter_channel_2_total_active_power",),
+    Capability.FEED_IN_LIMITATION_RATIO: ("feed_in_limitation_ratio",),
+    Capability.PV_POWER_LIMITATION: ("pv_power_limitation_raw",),
 }
+
+
+#: Capabilities that an all-zero answer must **not** grant.
+#:
+#: This is the numeric twin of the empty-string case `present()` handles: a
+#: reading of nothing arriving as a value. Two independent sources of it have
+#: been measured, and they need the same treatment for different reasons.
+#:
+#: **A cluster member with no hardware of its own answers zero.** Found on a
+#: real master/slave pair, where the slave inverter has no battery and answers
+#: 0 for voltage, level, temperature and capacity alike -- so the probe
+#: granted `BATTERY` and the whole 13xxx block became entities reporting zero
+#: forever. A lone inverter without storage answers 0xFFFF and never had the
+#: problem, which is why only a cluster exposes it.
+#:
+#: **A WiNet-S substitutes zero for the specification's sentinel.** Measured
+#: on one inverter read both ways on 2026-09-08: on its own LAN port MPPT3,
+#: MPPT4 and the second meter channel all answered 0xFFFF, correctly absent;
+#: through the dongle the same registers answered 0, which granted all three
+#: and created **ten entities reporting zero forever**. Most users are behind
+#: a dongle, so this is the wider of the two problems.
+#:
+#: Zero is only read as absence when **every** register of the capability is
+#: zero. A flat battery reports level 0 at its nominal voltage, so level alone
+#: must never decide it.
+#:
+#: For MPPT and meter channels, "absent" is a conclusion rather than a fact:
+#: a real third tracker reads 0 V at night, and a real second meter channel
+#: reads 0 W when nothing flows through it. Denying them is still right,
+#: because the recovery is automatic and the alternative is not. Capabilities
+#: are re-probed after every poll and the integration reloads when they
+#: **grow**, so the first non-zero reading creates the entities -- an inverter
+#: set up after dark gets its MPPT3 sensors at sunrise. Granting on zero has
+#: no such recovery: nothing ever removes an entity, and a permanently empty
+#: one is what `legacy/doc/cleanup_entities.md` exists to help people delete.
+#:
+#: Deliberately not conditional on the transport, though the transport is
+#: knowable (register 6100). A rule that reads the same everywhere is easier
+#: to reason about than one that changes behind a dongle, and the only cost of
+#: applying it to a direct connection is the sunrise case above.
+ZERO_MEANS_ABSENT: frozenset[Capability] = frozenset(
+    {
+        Capability.BATTERY,
+        Capability.MPPT3,
+        Capability.MPPT4,
+        Capability.METER_CHANNEL_2,
+    }
+)
 
 
 def probe(read: Callable[[str], object]) -> frozenset[Capability]:
@@ -165,6 +296,10 @@ def probe(read: Callable[[str], object]) -> frozenset[Capability]:
     as present when every register it needs came back with a value: a
     two-tracker inverter answers 0xFFFF for MPPT3 forever, and that is the
     device telling us, which is better evidence than any table.
+
+    Some hardware reports its absence as zeros instead of that sentinel; for
+    the capabilities in `ZERO_MEANS_ABSENT`, an all-zero answer is therefore
+    read as absence too.
     """
     found: set[Capability] = set()
     for capability, fields in PROBES.items():
@@ -172,8 +307,11 @@ def probe(read: Callable[[str], object]) -> frozenset[Capability]:
             values = [read(field) for field in fields]
         except AttributeError:
             continue
-        if values and all(v is not None for v in values):
-            found.add(capability)
+        if not values or any(v is None for v in values):
+            continue
+        if capability in ZERO_MEANS_ABSENT and all(v == 0 for v in values):
+            continue
+        found.add(capability)
     return frozenset(found)
 
 

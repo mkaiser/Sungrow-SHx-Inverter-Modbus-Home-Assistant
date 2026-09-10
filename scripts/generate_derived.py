@@ -91,6 +91,48 @@ FLAGS: dict[str, str] = {
     "negative_load_power": "negative_load_power",
 }
 
+#: Mode registers that read as a flag, and the register each decodes.
+#:
+#: Not power-flow bits and not `(delay)` twins: these are whole registers
+#: holding Sungrow's `0xAA`/`0x55` pair, which the YAML package exposed as the
+#: number itself -- `sensor.active_power_limitation_raw` reading 170 or 85 and
+#: leaving the reader to know which is which.
+#:
+#: There is no third one. `apl_shutdown_at_zero_raw` looks like these and is
+#: deliberately **not** here: register 31213 is absent from Sungrow's
+#: datasheet -- the comment that added it to the YAML says exactly that -- and
+#: all three surveyed inverters read the same single value, so its enum is a
+#: convention assumed rather than a pair observed. It stays a diagnostic
+#: number until a machine shows a second value.
+MODE_FLAGS: dict[str, tuple[str, str]] = {
+    # key: (the boolean on `Derived`, the register it decodes)
+    "active_power_limitation_enabled": (
+        "active_power_limitation_enabled",
+        "active_power_limitation_raw",
+    ),
+    "pv_power_limitation_enabled": (
+        "pv_power_limitation_enabled",
+        "pv_power_limitation_raw",
+    ),
+}
+
+#: Seconds a power-flow bit must hold before its `(delay)` twin reports it.
+#: One value for all seven, which is what the YAML uses.
+DELAY_ON = 60
+
+#: The one `filter` entity: `key` to the derived sensor it smooths and the
+#: window in seconds. The YAML asks for `time_simple_moving_average` over five
+#: minutes at precision 2.
+#:
+#: Its unit, device class and state class come from the **source**, because
+#: that is where Home Assistant's own filter sensor gets them -- it copies
+#: them off the source state at runtime, so the entity map has none recorded
+#: for it. Copying the wrong ones freezes long-term statistics flat while raw
+#: history keeps filling, which is the failure mode this project watches for.
+SMOOTHED: dict[str, tuple[str, float]] = {
+    "daily_consumed_energy_filtered": ("daily_consumed_energy", 300),
+}
+
 HEADER = '''"""Entity descriptions for the derived values, generated.
 
 Do not edit by hand: `scripts/generate_derived.py` writes this file, and CI
@@ -115,9 +157,16 @@ DERIVED_SENSORS: tuple[SungrowSensorDescription, ...] = (
 
 
 def _legacy() -> dict[str, dict]:
+    """Return the YAML entities this module replaces, keyed by object id.
+
+    Both the `template` layer and the one `filter` entity, which is a moving
+    average of a template sensor and so is derived twice over.
+    """
     entities = json.loads(ENTITY_MAP.read_text(encoding="utf-8"))["entities"]
     return {
-        e["entity_id"].split(".", 1)[1]: e for e in entities if e["layer"] == "template"
+        e["entity_id"].split(".", 1)[1]: e
+        for e in entities
+        if e["layer"] in {"template", "filter"}
     }
 
 
@@ -153,6 +202,9 @@ def render() -> str:
         lines.append(f'        translation_key="{key}",')
         if entry.get("name"):
             lines.append(f'        legacy_name="{entry["name"]}",')
+        if entry.get("unique_id"):
+            lines.append(f'        legacy_unique_id="{entry["unique_id"]}",')
+            lines.append('        legacy_platform="template",')
         lines.append(f"        depends_on={depends!r},")
         capability = _requires(field)
         if capability:
@@ -170,21 +222,78 @@ def render() -> str:
                 f'        native_unit_of_measurement="{entry["unit_of_measurement"]}",'
             )
         lines.append("    ),")
+
+    for key, (source_key, window) in SMOOTHED.items():
+        entry = legacy.get(key, {})
+        source_field, depends = DERIVED[source_key]
+        source = legacy.get(source_key, {})
+        lines.append("    SungrowSensorDescription(")
+        lines.append(f'        key="{key}",')
+        lines.append('        component="derived",')
+        lines.append(f'        field="{source_field}",')
+        lines.append(f'        translation_key="{key}",')
+        if entry.get("name"):
+            lines.append(f'        legacy_name="{entry["name"]}",')
+        if entry.get("unique_id"):
+            lines.append(f'        legacy_unique_id="{entry["unique_id"]}",')
+            # Registered by the `filter` platform, not `template`, and the
+            # migration finds the entity by (platform, unique_id).
+            lines.append('        legacy_platform="filter",')
+        lines.append(f"        depends_on={depends!r},")
+        lines.append(f"        smoothed_over={window},")
+        # From the source: see SMOOTHED.
+        if source.get("device_class"):
+            device_class = source["device_class"].upper()
+            lines.append(f"        device_class=SensorDeviceClass.{device_class},")
+        if source.get("state_class"):
+            state_class = source["state_class"].upper()
+            lines.append(f"        state_class=SensorStateClass.{state_class},")
+        if source.get("unit_of_measurement"):
+            lines.append(
+                f'        native_unit_of_measurement="{source["unit_of_measurement"]}",'
+            )
+        # The YAML rounds the filtered value to two decimals. Display
+        # precision does the same thing where it belongs, leaving statistics
+        # the full value instead of a rounded one.
+        lines.append("        suggested_display_precision=2,")
+        lines.append("    ),")
     lines.append(")")
 
     lines.append(
         "\nDERIVED_BINARY_SENSORS: tuple[SungrowBinarySensorDescription, ...] = ("
     )
     for field, key in FLAGS.items():
-        entry = legacy.get(key, {})
+        # The bit, then the twin that waits for it to hold, so the pair reads
+        # together in the generated file and in a diff.
+        for entity_key, delay in ((key, None), (f"{key}_delay", DELAY_ON)):
+            entry = legacy.get(entity_key, {})
+            lines.append("    SungrowBinarySensorDescription(")
+            lines.append(f'        key="{entity_key}",')
+            lines.append('        component="derived",')
+            lines.append(f'        field="{field}",')
+            lines.append(f'        translation_key="{entity_key}",')
+            if entry.get("name"):
+                lines.append(f'        legacy_name="{entry["name"]}",')
+            if entry.get("unique_id"):
+                lines.append(f'        legacy_unique_id="{entry["unique_id"]}",')
+                lines.append('        legacy_platform="template",')
+            lines.append('        depends_on=("power_flow_status",),')
+            if delay is not None:
+                lines.append(f"        delay_on={delay},")
+            lines.append("    ),")
+
+    for key, (field, register) in MODE_FLAGS.items():
+        # No legacy anything: the YAML exposed the number rather than a flag,
+        # so there is no id to inherit and nothing to migrate. The number it
+        # replaces keeps its own history in legacy mode, where it still
+        # exists.
         lines.append("    SungrowBinarySensorDescription(")
         lines.append(f'        key="{key}",')
         lines.append('        component="derived",')
         lines.append(f'        field="{field}",')
         lines.append(f'        translation_key="{key}",')
-        if entry.get("name"):
-            lines.append(f'        legacy_name="{entry["name"]}",')
-        lines.append('        depends_on=("power_flow_status",),')
+        lines.append(f"        depends_on={(register,)!r},")
+        lines.append("        entity_category=EntityCategory.DIAGNOSTIC,")
         lines.append("    ),")
     lines.append(")")
     return "\n".join(lines) + "\n"

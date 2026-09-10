@@ -12,11 +12,11 @@ long-term statistics under the entity ids it used. Home Assistant must be
 **stopped** while it runs, because it writes the registry and the recorder
 database directly.
 
-    scripts/develop                                  # once, to create config/
+    scripts/develop.sh                                  # once, to create config/
     # stop it
     python scripts/seed_migration_testbed.py         # seed
-    scripts/simulate &                               # an inverter to talk to
-    scripts/develop                                  # and now migrate in the UI
+    scripts/simulate.sh &                               # an inverter to talk to
+    scripts/develop.sh                                  # and now migrate in the UI
 
 By default the entities come from `doc/legacy_entity_map.json`, which is
 generated from the YAML package and carries no personal data. `--from` reads a
@@ -344,12 +344,13 @@ def main() -> int:
 
     if not CONFIG.exists():
         print(
-            "config/ does not exist. Run scripts/develop once first.", file=sys.stderr
+            "config/ does not exist. Run scripts/develop.sh once first.",
+            file=sys.stderr,
         )
         return 1
     if not DATABASE.exists():
         print(
-            f"{DATABASE.relative_to(REPO)} does not exist. Run scripts/develop once "
+            f"{DATABASE.relative_to(REPO)} does not exist. Run scripts/develop.sh once "
             "and let it start, then stop it.",
             file=sys.stderr,
         )
@@ -371,8 +372,8 @@ def main() -> int:
     print(f"Statistics: {statistics} hourly rows")
     print()
     print("Now start the simulator and Home Assistant:")
-    print("  scripts/simulate &")
-    print("  scripts/develop")
+    print("  scripts/simulate.sh &")
+    print("  scripts/develop.sh")
     return 0
 
 

@@ -4,7 +4,7 @@
     {
       "label": "Run Home Assistant",
       "type": "shell",
-      "command": "scripts/develop",
+      "command": "scripts/develop.sh",
       "problemMatcher": [],
       "isBackground": true,
       "presentation": { "panel": "dedicated", "group": "dev" }
@@ -12,7 +12,7 @@
     {
       "label": "Run Sungrow Modbus simulator",
       "type": "shell",
-      "command": "scripts/simulate",
+      "command": "scripts/simulate.sh",
       "problemMatcher": [],
       "isBackground": true,
       "presentation": { "panel": "dedicated", "group": "dev" }
@@ -20,7 +20,7 @@
     {
       "label": "Fetch upstream reference sources",
       "type": "shell",
-      "command": "scripts/fetch_references",
+      "command": "scripts/fetch_references.sh",
       "problemMatcher": []
     }
   ]

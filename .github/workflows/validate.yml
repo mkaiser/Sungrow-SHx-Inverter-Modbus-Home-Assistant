@@ -9,6 +9,10 @@ on:
       - "custom_components/**"
       - "src/**"
       - "tests/**"
+      # tests/test_makefile.py reads both, and asserts the generator list
+      # below matches the one in the Makefile.
+      - "Makefile"
+      - "scripts/*.sh"
       - "scripts/simulator.py"
       - "scripts/gen_simulator_registers.py"
       - "pyproject.toml"
@@ -23,6 +27,19 @@ on:
       - "scripts/generate_derived.py"
       - "scripts/generate_strings.py"
       - "scripts/naming.py"
+      - "scripts/writes.py"
+      - "scripts/generate_numbers.py"
+      - "scripts/generate_switches.py"
+      - "scripts/generate_selects.py"
+      - "scripts/generate_compatibility.py"
+      # The scanning scripts, absent until now, and layout.py, which feeds
+      # generate_registers.py. Only the push event is filtered -- pull
+      # requests run everything regardless -- so the gap only ever let a
+      # direct push to a protected branch skip validation.
+      - "scripts/sungrow_scan/**"
+      - "scripts/generate_scan_plan.py"
+      - "scripts/layout.py"
+      - "doc/device-fingerprints/**"
       - "LICENSE"
       - "README.md"
       - ".github/workflows/validate.yml"
@@ -66,10 +83,26 @@ jobs:
         run: python scripts/generate_registers.py --check
       - name: The sensor descriptions match the entity map
         run: python scripts/generate_sensors.py --check
+
+      - name: The scan plan matches the library
+        run: python scripts/generate_scan_plan.py --check
+      # The zip is the claim that this directory needs nothing installed, and
+      # it is the claim most easily broken by a convenient import. The AST
+      # test in pytest reads the imports; this unpacks the built zip and runs
+      # it with a bare interpreter, which is the half that cannot be fooled.
+      - name: The scan directory runs from a zip with nothing installed
+        run: python scripts/make_scan_zip.py --verify
       - name: The derived descriptions are current
         run: python scripts/generate_derived.py --check
+      - name: The writable registers match the write table
+        run: |
+          python scripts/generate_numbers.py --check
+          python scripts/generate_switches.py --check
+          python scripts/generate_selects.py --check
       - name: The entity names follow the naming convention
         run: python scripts/generate_strings.py --check
+      - name: The compatibility page matches the fingerprints
+        run: python scripts/generate_compatibility.py --check
       - name: Ruff
         run: |
           ruff check .

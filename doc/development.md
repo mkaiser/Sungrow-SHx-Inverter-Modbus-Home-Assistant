@@ -27,7 +27,7 @@ so it can be tested without Home Assistant and without an inverter.
 Open the repo in the devcontainer (VS Code: *Dev Containers: Reopen in
 Container*). It pins Python 3.14 - Home Assistant 2026.9 requires 3.14.2 or
 newer - installs Home Assistant and the tooling via
-`scripts/setup`, and forwards ports 8123 and 5020.
+`scripts/setup.sh`, and forwards ports 8123 and 5020.
 
 On Windows, clone into a **named container volume** (*Dev Containers: Clone
 Repository in Container Volume*) rather than bind-mounting the Windows
@@ -40,7 +40,7 @@ packages, so the same environment is one command:
 ```bash
 docker run --rm -it -p 8123:8123 -p 5020:5020 -v "$PWD:/workspace" -w /workspace \
   python:3.14-bookworm bash -lc \
-  'apt-get update -qq && apt-get install -y -qq ffmpeg libturbojpeg0 libpcap-dev && scripts/setup && bash'
+  'apt-get update -qq && apt-get install -y -qq ffmpeg libturbojpeg0 libpcap-dev && scripts/setup.sh && bash'
 ```
 
 ## Continuing a Claude Code session inside the container
@@ -65,10 +65,11 @@ directories. That is why the durable repo context lives in `CLAUDE.md` and
 
 | Command | What it does |
 | --- | --- |
-| `scripts/setup` | Install Home Assistant, the device library (editable) and tooling |
-| `scripts/develop` | Boot Home Assistant on <http://localhost:8123> against `config/` |
-| `scripts/simulate` | Regenerate the register seed and serve it on port 5020 |
-| `scripts/fetch_references` | Clone upstream sources into `.reference/` for reading |
+| `make help` | The shortcuts for everything below; `make check` is the CI gate |
+| `scripts/setup.sh` | Install Home Assistant, the device library (editable) and tooling |
+| `scripts/develop.sh` | Boot Home Assistant on <http://localhost:8123> against `config/` |
+| `scripts/simulate.sh` | Regenerate the register seed and serve it on port 5020 |
+| `scripts/fetch_references.sh` | Clone upstream sources into `.reference/` for reading |
 | `pytest` | Run the device library tests (no network needed) |
 | `ruff check . && ruff format .` | Lint and format |
 
@@ -148,14 +149,14 @@ registry entries `modbus_sungrow.yaml` leaves behind, plus a month of recorded
 readings and hourly statistics under the ids it used:
 
 ```console
-$ scripts/develop                            # once, to create config/
+$ scripts/develop.sh                            # once, to create config/
 # stop it
 $ python scripts/seed_migration_testbed.py
 Registry:   153 entities added
 History:    2880 states over 30 days
 Statistics: 2880 hourly rows
-$ scripts/simulate &                         # an inverter to talk to
-$ scripts/develop
+$ scripts/simulate.sh &                         # an inverter to talk to
+$ scripts/develop.sh
 ```
 
 Home Assistant must be **stopped** while it runs: it writes the entity
@@ -193,7 +194,7 @@ so the YAML's inconsistency is preserved there deliberately.
 
 ## First boot
 
-`scripts/develop` boots against `config/configuration.yaml`, which
+`scripts/develop.sh` boots against `config/configuration.yaml`, which
 deliberately avoids `default_config:`. That keeps the dev instance small:
 Home Assistant pip-installs each component's requirements the first time it
 sets it up, and `default_config` drags in bluetooth, dhcp, usb, ssdp,

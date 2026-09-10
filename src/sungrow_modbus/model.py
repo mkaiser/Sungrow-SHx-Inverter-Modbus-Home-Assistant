@@ -28,3 +28,23 @@ class UpdateReport:
             updated=(self.updated | other.updated) - other.failed.keys(),
             failed={**self.failed, **other.failed},
         )
+
+
+def present(value: object) -> object:
+    """Return the value, or None where the device said it has none.
+
+    The library already maps the numeric "unavailable" codes to None -- 0xFFFF
+    for a U16, 0x7FFFFFFF for an S32 -- because those are declared per field
+    as `nan=`. Strings have no such declaration: Sungrow's protocol says a
+    UTF-8 field it cannot fill is **all 0x00**, which decodes to the empty
+    string and would otherwise reach Home Assistant as a sensor reading of
+    "".
+
+    That matters beyond tidiness. Capabilities are probed by asking whether a
+    field came back with a value, so an empty firmware string would count as
+    a battery firmware being present on every inverter without a Sungrow
+    battery -- and create an entity to report nothing.
+    """
+    if isinstance(value, str) and not value.strip("\x00").strip():
+        return None
+    return value

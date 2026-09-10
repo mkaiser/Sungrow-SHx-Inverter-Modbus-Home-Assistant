@@ -13,6 +13,32 @@ from __future__ import annotations
 from modbus_connection.model import Component, gauge, integer, string, uint32
 
 
+class InverterControl(Component):
+    """The start/stop register, and only that.
+
+    Register 13000 appears in **both** of Sungrow's tables, and they are
+    different address spaces rather than two descriptions of one thing:
+
+    * Table 3 is read-only over function code 0x04 -- the *input* space --
+      where reading 13000 gives the running state, which is what
+      `running_state_raw` does;
+    * Table 4 is read/write over 0x03, 0x06 and 0x10 -- the *holding* space --
+      where 13000 is "Start/Stop", `0xCF` to boot and `0xCE` to shut down.
+
+    So the YAML package reads one space and writes the other, correctly, and
+    the library refuses to write the input field -- which is how this was
+    noticed. Hence a separate component, in the right space.
+
+    Never polled. There is nothing here worth a poll: the running state comes
+    from the input side, and a write is followed by a refresh of *that*.
+    """
+
+    register_space = "holding"
+
+    start_stop = integer(12999, signed=False, writable=True)
+    """Register 13000: 0xCF boots the inverter, 0xCE shuts it down."""
+
+
 class InverterIdentity(Component):
     """Who this inverter is: read once at setup, never polled.
 

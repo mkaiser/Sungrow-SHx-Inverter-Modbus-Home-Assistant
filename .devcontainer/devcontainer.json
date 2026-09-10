@@ -44,7 +44,7 @@
   // VS Code copies the host ~/.gitconfig in on every create. On a Windows
   // host that drags in safe.directory entries like C:\..., which are not
   // absolute paths on Linux, and git then warns on every invocation.
-  "postCreateCommand": "git config --global --unset-all safe.directory '^[A-Za-z]:' || true; scripts/setup",
+  "postCreateCommand": "git config --global --unset-all safe.directory '^[A-Za-z]:' || true; scripts/setup.sh",
 
   "containerEnv": {
     "TZ": "Europe/Berlin"

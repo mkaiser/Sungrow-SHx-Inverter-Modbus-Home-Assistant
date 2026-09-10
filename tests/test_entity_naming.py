@@ -88,3 +88,50 @@ async def test_both_show_the_name_they_were_given(
     legacy = hass.states.get(_entity_id(entity_registry, "legacy"))
     assert modern.attributes["friendly_name"] == TRANSLATED
     assert legacy.attributes["friendly_name"] == LEGACY
+
+
+async def test_renaming_later_does_not_move_an_existing_id(
+    hass: HomeAssistant,
+) -> None:
+    """What a rename after release actually costs, which is not history.
+
+    This was assumed the other way round for a while -- "the name *is* the
+    id, so changing it after release breaks every dashboard and years of
+    history" -- and that is wrong for anybody who already has the entity. The
+    registry keys on `(domain, platform, unique_id)`, and a name only ever
+    supplies the *suggested* object id, at creation. Come back a release later
+    with a different name and the same unique_id and the entity keeps the id
+    it was born with; only `original_name` moves.
+
+    So the real cost of renaming during a preview is **divergence**: an early
+    tester keeps `sensor.sh10rt_total_dc_power` while somebody installing
+    afterwards gets the new one, and the two houses no longer answer the same
+    question with the same id. That is a support and documentation problem,
+    not a data one -- and where it matters, a registry rename moves the early
+    tester's id and carries the history with it, which
+    `tests/test_recorder_migration.py` establishes.
+
+    Worth pinning because the whole alpha naming policy rests on it, and
+    because it is a fact about Home Assistant's registry rather than about
+    this integration.
+    """
+    registry = er.async_get(hass)
+    first = registry.async_get_or_create(
+        "sensor",
+        "sungrow_modbus",
+        "serial-total_dc_power",
+        suggested_object_id="sh10rt_total_dc_power",
+        original_name="Total DC power",
+    )
+
+    # The same entity, a release later, under a different name.
+    again = registry.async_get_or_create(
+        "sensor",
+        "sungrow_modbus",
+        "serial-total_dc_power",
+        suggested_object_id="sh10rt_dc_power_total",
+        original_name="DC power total",
+    )
+
+    assert again.entity_id == first.entity_id == "sensor.sh10rt_total_dc_power"
+    assert again.original_name == "DC power total"
