@@ -141,7 +141,12 @@ zip-sim: ## Run the whole survey from the zip against the simulator -- needs `ma
 build: ## Build the sdist and wheel, and check them
 	$(PY) -m build
 	twine check --strict dist/*
+	$(PY) scripts/check_pinned_library.py --wheel "$$(ls dist/*.whl)"
 .PHONY: build
+
+pin-check: ## Does the *published* library the manifest pins serve this integration?
+	$(PY) scripts/check_pinned_library.py
+.PHONY: pin-check
 
 version: ## Set the version everywhere (VERSION=X.Y.Z)
 	@test -n "$(VERSION)" || { echo "usage: make version VERSION=X.Y.Z"; exit 2; }
