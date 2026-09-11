@@ -39,6 +39,14 @@ on:
       - "scripts/sungrow_scan/**"
       - "scripts/generate_scan_plan.py"
       - "scripts/layout.py"
+      # The pin guard itself. Enumerating scripts one by one means a new one
+      # is unfiltered until somebody remembers -- and this is the script
+      # whose own bug would show up as a false pass.
+      - "scripts/check_pinned_library.py"
+      # The preview channel's workflow: the drift check compares this file
+      # to the copy running in that repository, so editing it must run the
+      # comparison.
+      - "doc/preview-mirror/sync.yml"
       - "doc/device-fingerprints/**"
       - "LICENSE"
       - "README.md"

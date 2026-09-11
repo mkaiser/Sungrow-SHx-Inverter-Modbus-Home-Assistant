@@ -144,8 +144,9 @@ That resolves itself when any of three things happens, and all are in
   install becomes the ordinary two clicks — which is the point of it.
 
   [doc/preview-mirror/sync.yml](preview-mirror/sync.yml) is the whole
-  mechanism: one workflow, dropped into that repository, which about once an
-  hour copies the **development branch** from here — `custom_components/`,
+  mechanism: one workflow, dropped into that repository, which polls a few
+  times an hour and copies the **development branch** from here —
+  `custom_components/`,
   `hacs.json` and a README of its own, and nothing else. It **pulls rather
   than being pushed to**, which is why it needs no credential in either
   repository: reading this one takes no token because it is public, and
