@@ -38,6 +38,10 @@ sim: ## Regenerate the register seed and serve it on :5020
 simulate: sim
 .PHONY: simulate
 
+hacs: ## Boot a second HA on :8124 that installs this integration through HACS
+	scripts/hacs_testbed.sh $(ARGS)
+.PHONY: hacs
+
 forget: ## Forget the stored inverter, so the next boot re-detects it
 	scripts/develop.sh --forget
 .PHONY: forget

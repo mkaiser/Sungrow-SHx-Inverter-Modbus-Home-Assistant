@@ -77,6 +77,7 @@ implementation for this pattern — read its real source, not blog posts.
 | `make help` | Every command below as a shortcut. `make check` is the CI gate, `make dev` and `make sim` the dev loop, `make gen` rewrites every generated file |
 | `scripts/setup.sh` | Install HA, the device library (editable) and tooling |
 | `scripts/develop.sh` | Boot HA on <http://localhost:8123> against `config/` |
+| `scripts/hacs_testbed.sh` | Boot a **second** HA on :8124 against `config-hacs/`, with HACS installed, to test the install a user gets. Nothing is symlinked there: HACS downloads the integration from the preview channel, so what runs is what was published, not the working tree |
 | `scripts/simulate.sh` | Regenerate the register seed and serve it on :5020 |
 | `scripts/fetch_references.sh` | Clone HA core + libs into `.reference/` (gitignored) |
 | `scripts/sungrow_scan/collect.py` | **The one entry point for a survey**: finds the devices, asks what no register can answer, runs the block read test, reads every register, writes the document and a transcript, and prints a maintainer-facing summary. Exit code says what happened (`0` fine, `3` the filename under-claims, `4` the transport is disputed, `1`/`2` nothing collected) |

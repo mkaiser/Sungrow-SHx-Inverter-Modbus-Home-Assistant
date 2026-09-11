@@ -50,10 +50,18 @@
     "TZ": "Europe/Berlin"
   },
 
-  "forwardPorts": [8123, 5020],
+  "forwardPorts": [8123, 5020, 8124],
   "portsAttributes": {
     "8123": {
       "label": "Home Assistant",
+      "onAutoForward": "notify"
+    },
+    // A second Home Assistant, from scripts/hacs_testbed.sh, which installs
+    // the integration through HACS instead of symlinking the working tree.
+    // Two instances at once is the point: one is the code you are writing,
+    // the other is what a user actually receives.
+    "8124": {
+      "label": "Home Assistant (HACS testbed)",
       "onAutoForward": "notify"
     },
     "5020": {
