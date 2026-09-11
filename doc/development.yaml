@@ -96,6 +96,30 @@ running:
       with the integration and Home Assistant would report a circular import
       when the config flow loads.
 
+  hacs_testbed:
+    why: >-
+      A second Home Assistant that installs this integration the way a user
+      does -- through HACS, from the preview channel -- so the install itself
+      can be tested rather than assumed. It is where you find out that a
+      manifest pin cannot be resolved, or that HACS shows a commit hash where
+      you expected a version.
+    command: scripts/hacs_testbed.sh      # --update, --setup-only, --reset
+    listens: 0.0.0.0:8124
+    config: config-hacs/                  # gitignored entirely
+    note: >-
+      Nothing in it is symlinked, which is the difference from the instance
+      above and is deliberate. HACS downloads into
+      <config>/custom_components/<domain>, so through a symlink it would write
+      into the repository over tracked files -- and the preview channel ships
+      the same domain, so two copies at one path is a conflict rather than an
+      upgrade. What runs here is what was published.
+    manual_steps: >-
+      Onboarding, then Add integration -> HACS, which authorises a GitHub
+      account through a device code at https://github.com/login/device --
+      HACS talking to GitHub, not to this project, and not automatable. Then
+      Custom repositories -> the preview URL, category Integration ->
+      Download -> restart. The script prints all of it before it boots.
+
   login:
     # Created by the onboarding API for this dev instance only.
     username: dev

@@ -4,6 +4,12 @@
 config/*
 !config/configuration.yaml
 
+# The HACS install testbed (scripts/hacs_testbed.sh). Nothing here is a
+# template: the script writes the configuration and HACS downloads the rest,
+# including a copy of this integration that must never be mistaken for the
+# working tree.
+config-hacs/
+
 # Generated simulator seed.
 
 # Upstream sources cloned for reference (scripts/fetch_references.sh).
