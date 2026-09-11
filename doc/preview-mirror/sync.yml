@@ -98,12 +98,29 @@ name: Sync the integration branch
 
 on:
   schedule:
-    # Hourly, at 17 past, because GitHub's scheduler is busiest on the hour
-    # and runs late when it is. Measured on this repository: the first two
-    # slots after the workflow was created were skipped entirely and the
-    # third fired at :12 — so the cadence is "about every hour", in both
-    # directions. Use "Run workflow" if you want a commit here now.
-    - cron: "17 * * * *"
+    # Three slots an hour, off the hour, because one slot an hour is not
+    # reliably honoured. GitHub runs scheduled workflows best-effort and
+    # deprioritises them under load.
+    #
+    # Measured here over the first eleven hours of an hourly cron at :17:
+    # runs at 23:12, 01:09 and 06:03, and nothing else. A cron cannot fire
+    # early, so those are not the :17 slots of their own hours arriving
+    # 4-13 minutes ahead of time -- each is the *previous* hour's slot
+    # arriving 56, 53 and 47 minutes late, and every slot in between was
+    # dropped. Two facts, not one: a roughly 50-minute lag, and most slots
+    # never running at all.
+    #
+    # More slots only addresses the second. Three chances an hour instead of
+    # one raises how often something runs; nothing here can shorten the lag
+    # on the run that does. Together that is "some time within the hour"
+    # rather than "within a few hours", which is as good as a pull design
+    # gets -- being *pushed* to would need a credential in one of the two
+    # repositories, which is the thing this whole arrangement avoids.
+    #
+    # The extra attempts are close to free: a few API calls and one tarball,
+    # and a run that finds nothing to do commits nothing, so a no-op run is
+    # invisible to testers. Use "Run workflow" if you want a commit here now.
+    - cron: "7,27,47 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -330,7 +347,8 @@ jobs:
 
           It follows the development branch of
           [${UPSTREAM}](https://github.com/${UPSTREAM}/tree/${BRANCH})
-          automatically, about once an hour, and publishes a commit only when
+          automatically — usually within an hour or two, since GitHub runs
+          scheduled work when it has room — and publishes a commit only when
           upstream's own CI passed for it and the library version it pins can
           actually serve it.
 
