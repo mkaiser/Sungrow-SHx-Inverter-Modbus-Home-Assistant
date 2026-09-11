@@ -1,4 +1,4 @@
-# Keeps a HACS-installable copy of this integration's latest preview release.
+# Keeps a HACS-installable copy of this integration's development branch.
 #
 # **Copy this file into the preview repository** as
 # `.github/workflows/sync.yml`. It is the only file that repository needs;
@@ -42,25 +42,67 @@
 # own history keeps the workflow, and keeps this repository small: no
 # `legacy/`, no `src/`, no scripts, no imported history.
 #
-# ## What it syncs, and what it refuses to
+# ## What it syncs
 #
-# The newest **release** upstream, including pre-releases — which is all of
-# them so far. Releases rather than tags, so a stray tag cannot ship
-# anything, and never the branch head.
+# The **head of the development branch**, not the newest release. The channel
+# exists to get current code in front of testers, and HACS already treats
+# this repository as a rolling one: with no releases of its own it runs in
+# *commit* mode, showing a commit hash as the version and offering an update
+# whenever this repository's default branch moves
+# (`pending_update`: `installed_commit != last_commit`).
 #
-# It also refuses to publish a release whose pinned library is not yet
-# installable. `manifest.json` pins an exact `sungrow-modbus` version and
-# Home Assistant pip-installs it, so a copy that got ahead of PyPI would
-# hand every user an integration that cannot start. That is not
-# hypothetical: between 0.1.0a1 and 0.1.0a2 the integration began importing
-# `sungrow_modbus.fingerprint` while the published wheel did not contain it.
-name: Sync the newest preview release
+# It keeps **no record of what it last synced**. It fetches the branch head
+# every time, writes the files, and commits only if `git diff` finds a
+# change. That is deliberate and it is what keeps the channel quiet: a commit
+# upstream that touches only `src/`, the scanner or the documentation changes
+# nothing here, so it produces no mirror commit and therefore no update
+# notification for a tester. A tracked `UPSTREAM_COMMIT` file would have
+# turned every upstream commit into a user-visible update with no change in
+# it. The upstream sha goes in the **commit message** instead, which is not a
+# tracked file and still maps a mirror commit to its origin in one click.
+#
+# ## What it refuses to publish
+#
+# Two gates, and neither is hypothetical — both describe things that have
+# already happened in this project.
+#
+# **A commit CI has not blessed.** A branch head is every state, including
+# the one pushed before the suite finished; a tag was at least a state
+# somebody chose. So it publishes the newest commit whose check-runs all
+# completed without failing, walking back from the head -- not the head
+# itself, because upstream's Validate workflow has path filters and a
+# documentation-only commit therefore has **no check runs at all**. Insisting
+# on the head would stall this channel behind such a commit and hold back the
+# good one underneath it. Walking back cannot move the channel backwards:
+# what is published here was green, so the walk either finds something newer
+# or finds that same commit and changes nothing.
+#
+# **A commit whose pinned library does not serve it.** `manifest.json` pins
+# an exact `sungrow-modbus` version and Home Assistant pip-installs it, so
+# what matters is not only that the version exists on PyPI but that its wheel
+# **provides every module the integration imports**. Between 0.1.0a1 and
+# 0.1.0a2 it did not: the integration began importing
+# `sungrow_modbus.fingerprint` while the pinned wheel had no such module, and
+# a checkout cannot see that because there the library is installed editable
+# from `src/`. Installable is not the same as sufficient, which is why this
+# runs upstream's own `scripts/check_pinned_library.py` — taken from the same
+# commit it is judging, so it knows that commit's imports, and stdlib-only,
+# so there is nothing to install.
+#
+# On a development branch that gate is expected to fail sometimes: any commit
+# that starts using a new library module is uninstallable until the library
+# is released to PyPI. When it does, the channel **stalls at the last good
+# commit**, which is the correct outcome — a tester keeps a working install
+# instead of receiving a broken one.
+name: Sync the integration branch
 
 on:
   schedule:
     # Hourly, at 17 past, because GitHub's scheduler is busiest on the hour
-    # and runs late when it is. A release therefore appears here within the
-    # hour on its own; use "Run workflow" if you want it now.
+    # and runs late when it is. Measured on this repository: the first two
+    # slots after the workflow was created were skipped entirely and the
+    # third fired at :12 — so the cadence is "about every hour", in both
+    # directions. Use "Run workflow" if you want a commit here now.
     - cron: "17 * * * *"
   workflow_dispatch:
 
@@ -73,90 +115,208 @@ env:
 
 jobs:
   sync:
-    name: Copy the latest release
+    name: Copy the branch head
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      # Which commit to publish, and the reason it is not simply the branch
+      # head.
+      #
+      # A branch head is every state the branch was ever in, including one
+      # pushed before the suite finished, so the channel serves only commits
+      # upstream CI has blessed. But "blessed" cannot mean "the head is
+      # green": upstream's Validate workflow has **path filters**, so a
+      # commit that touches only documentation or `src/` has *no check runs
+      # at all* -- measured, on be88ce4, which reports zero. Refusing that
+      # commit would stall the channel for as long as the branch head sat on
+      # a documentation commit, and would hold back the good integration
+      # commit underneath it.
+      #
+      # So it walks back to the newest commit that is green and publishes
+      # that. This cannot move the channel backwards: whatever is published
+      # here was green, so it is itself a candidate, and the walk stops at
+      # the newest one -- which is either newer (progress) or that same
+      # commit (no diff, no commit, no notification).
+      #
+      # `success`, `neutral` and `skipped` all count as not-failing: a job a
+      # path filter skipped is not evidence of anything wrong. A commit still
+      # being checked is skipped rather than waited for, because the
+      # commit under it is usually the same integration anyway and the next
+      # run is an hour away.
+      #
       # Authenticated with this repository's own token, which is enough to
       # read a public repository and raises the rate limit from 60 requests
-      # an hour to 5000. `/releases` is newest-first and includes
-      # pre-releases; `/releases/latest` would be useless here, because it
-      # skips them and every release so far is one.
-      - name: Which release is newest upstream?
+      # an hour to 5000 -- this step spends one request per commit it has to
+      # consider.
+      - name: Which commit is the newest green one?
         id: upstream
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG=$(curl -fsS \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${UPSTREAM}/releases?per_page=1" \
-            | python -c "import json,sys; r=json.load(sys.stdin); print(r[0]['tag_name'] if r else '')")
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os, sys, urllib.request
 
-          if [ -z "${TAG}" ]; then
-            echo "::error::${UPSTREAM} has no releases yet."
-            exit 1
-          fi
+          UPSTREAM = os.environ["UPSTREAM"]
+          BRANCH = os.environ["BRANCH"]
+          TOKEN = os.environ["GH_TOKEN"]
+          ACCEPTABLE = {"success", "neutral", "skipped"}
+          DEPTH = 30
 
-          HAVE=$(cat UPSTREAM_TAG 2>/dev/null || echo "none")
-          echo "upstream=${TAG}"  >> "$GITHUB_OUTPUT"
-          echo "have=${HAVE}"     >> "$GITHUB_OUTPUT"
-          echo "upstream is at ${TAG}; this repository carries ${HAVE}"
 
-          if [ "${TAG}" = "${HAVE}" ]; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Already up to date at ${TAG}. Nothing to do."
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
+          def api(path):
+              request = urllib.request.Request(
+                  f"https://api.github.com/repos/{UPSTREAM}/{path}",
+                  headers={
+                      "Authorization": f"Bearer {TOKEN}",
+                      "Accept": "application/vnd.github+json",
+                  },
+              )
+              with urllib.request.urlopen(request, timeout=30) as answer:
+                  return json.load(answer)
+
+
+          commits = api(f"commits?sha={BRANCH}&per_page={DEPTH}")
+          chosen = None
+          skipped = []
+
+          for commit in commits:
+              sha = commit["sha"]
+              runs = api(f"commits/{sha}/check-runs?per_page=100").get("check_runs", [])
+              failed = [
+                  r["name"]
+                  for r in runs
+                  if r["status"] == "completed" and r["conclusion"] not in ACCEPTABLE
+              ]
+              pending = [r["name"] for r in runs if r["status"] != "completed"]
+              if not runs:
+                  skipped.append(f"{sha[:7]} no checks")
+              elif failed:
+                  skipped.append(f"{sha[:7]} red ({', '.join(failed)})")
+              elif pending:
+                  skipped.append(f"{sha[:7]} still running ({', '.join(pending)})")
+              else:
+                  chosen = commit
+                  break
+
+          for line in skipped:
+              print(f"::notice::Skipped {line}", file=sys.stderr)
+
+          if chosen is None:
+              print("verdict=none")
+              print(f"skipped={len(skipped)}")
+          else:
+              subject = chosen["commit"]["message"].splitlines()[0]
+              print("verdict=green")
+              print(f"sha={chosen['sha']}")
+              print(f"short={chosen['sha'][:7]}")
+              print(f"behind={len(skipped)}")
+              # Through the environment file, so a subject containing a quote
+              # or a backtick cannot become shell.
+              with open(os.environ["GITHUB_ENV"], "a") as env:
+                  env.write(f"SUBJECT={subject}\n")
+          PY
+
+      - name: Wait rather than publish
+        if: steps.upstream.outputs.verdict != 'green'
+        run: |
+          echo "::warning::No commit in the last 30 on ${BRANCH} is green, so nothing vouches for any of them. This channel stays where it is."
 
       # A tarball rather than a clone: this repository wants one directory,
       # not upstream's history.
-      - name: Fetch that release
-        if: steps.upstream.outputs.changed == 'true'
+      - name: Fetch that commit
+        if: steps.upstream.outputs.verdict == 'green'
         run: |
-          TAG="${{ steps.upstream.outputs.upstream }}"
-          curl -fsSL "https://github.com/${UPSTREAM}/archive/refs/tags/${TAG}.tar.gz" \
+          curl -fsSL "https://github.com/${UPSTREAM}/archive/${{ steps.upstream.outputs.sha }}.tar.gz" \
             | tar xz --strip-components=1 -C /tmp --one-top-level=upstream
           test -f /tmp/upstream/custom_components/sungrow_modbus/manifest.json
 
-      # The guard that makes this safe to run unattended. Home Assistant
-      # installs the pinned library itself, so publishing a release before
-      # its wheel exists breaks every install rather than delaying it.
-      - name: The pinned library must be installable
-        if: steps.upstream.outputs.changed == 'true'
+      # The second gate, and the one that a green CI cannot give you: the pin
+      # in manifest.json is a promise about a *published wheel*, and every
+      # test upstream runs against an editable install from `src/`, which
+      # satisfies whatever the source tree can satisfy.
+      #
+      # Read the `requirements` entry rather than `version`: they are kept
+      # equal by `scripts/sync_version.py`, but the requirement is the string
+      # Home Assistant actually hands to pip.
+      - name: The pinned library must serve that commit
+        if: steps.upstream.outputs.verdict == 'green'
         run: |
-          VERSION=$(python -c "import json;print(json.load(open('/tmp/upstream/custom_components/sungrow_modbus/manifest.json'))['version'])")
+          MANIFEST=/tmp/upstream/custom_components/sungrow_modbus/manifest.json
+          VERSION=$(python - "$MANIFEST" <<'PY'
+          import json, sys
+          manifest = json.load(open(sys.argv[1]))
+          for requirement in manifest["requirements"]:
+              name, _, version = requirement.partition("==")
+              if name.strip() == "sungrow-modbus" and version:
+                  print(version.strip())
+                  break
+          else:
+              raise SystemExit("manifest.json does not pin sungrow-modbus==")
+          PY
+          )
           echo "manifest pins sungrow-modbus==${VERSION}"
+
+          # PyPI first, because "not published yet" is the ordinary case
+          # right after a release and deserves a wait rather than a refusal.
           for attempt in $(seq 1 10); do
             if curl -fsS "https://pypi.org/pypi/sungrow-modbus/${VERSION}/json" > /dev/null; then
-              echo "installable after ${attempt} attempt(s)"
+              echo "on PyPI after ${attempt} attempt(s)"
+              break
+            fi
+            if [ "${attempt}" = "10" ]; then
+              echo "::warning::sungrow-modbus ${VERSION} is not on PyPI. Publishing this commit would hand every HACS user an integration whose library cannot be installed. Waiting for the next run."
+              echo "publish=false" >> "$GITHUB_OUTPUT"
               exit 0
             fi
             sleep 15
           done
-          echo "::error::sungrow-modbus ${VERSION} is not on PyPI. Publishing this release here would give every HACS user an integration whose library cannot be installed. Waiting for the next run."
-          exit 1
+
+          # Then sufficiency. The script inspects the wheel with `ast` and
+          # never executes it, and comes from the same commit it is judging.
+          #
+          # A commit that predates the script gets the weaker answer rather
+          # than a refusal: existence on PyPI is what this workflow checked
+          # before the script existed, and refusing every older commit would
+          # be a worse failure than the one being guarded against.
+          CHECK=/tmp/upstream/scripts/check_pinned_library.py
+          if [ ! -f "${CHECK}" ]; then
+            echo "::notice::This commit predates scripts/check_pinned_library.py, so only the library's existence on PyPI was checked, not whether it provides what the integration imports."
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if python "${CHECK}"; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::${{ steps.upstream.outputs.short }} imports something sungrow-modbus ${VERSION} does not provide, so it cannot start from a fresh install. Not publishing it; this channel stays on the last good commit until the library is released."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          fi
+        id: pin
 
       - name: Take the integration, and only the integration
-        if: steps.upstream.outputs.changed == 'true'
+        if: steps.pin.outputs.publish == 'true'
         run: |
           rm -rf custom_components
           cp -r /tmp/upstream/custom_components custom_components
           cp /tmp/upstream/hacs.json hacs.json
           cp /tmp/upstream/LICENSE LICENSE
-          echo "${{ steps.upstream.outputs.upstream }}" > UPSTREAM_TAG
+          # From the release-syncing version of this workflow. Nothing here
+          # records what was last synced any more.
+          rm -f UPSTREAM_TAG
 
       # HACS renders a repository's README inside its own interface, so this
       # is where a tester actually reads. Upstream's own README opens by
       # telling people to use `main` instead, which would point at this
       # repository's main — the integration — and mean the opposite of what
       # it says there.
+      #
+      # It deliberately names no version or sha: this file is written on
+      # every sync, so anything that moves per commit would churn the
+      # repository and notify testers about a README.
       - name: Write the README
-        if: steps.upstream.outputs.changed == 'true'
+        if: steps.pin.outputs.publish == 'true'
         run: |
-          TAG="${{ steps.upstream.outputs.upstream }}"
           cat > README.md <<NOTICE
           # Sungrow Modbus — preview channel
 
@@ -168,8 +328,11 @@ jobs:
           branch is its long-standing YAML package — so HACS cannot install
           from there. This repository's default branch is the integration.
 
-          Currently carrying **${TAG}**, copied automatically from
-          [${UPSTREAM}](https://github.com/${UPSTREAM}).
+          It follows the development branch of
+          [${UPSTREAM}](https://github.com/${UPSTREAM}/tree/${BRANCH})
+          automatically, about once an hour, and publishes a commit only when
+          upstream's own CI passed for it and the library version it pins can
+          actually serve it.
 
           - **Issues, discussions and pull requests:**
             [${UPSTREAM}](https://github.com/${UPSTREAM}/issues)
@@ -185,16 +348,26 @@ jobs:
           and add **Sungrow Modbus (preview)** under Settings → Devices &
           services.
 
-          HACS will show a commit hash rather than a version number, because
-          this repository publishes no releases of its own. The integration
-          reports its real version — \`${TAG}\` — in its own name and under
-          Settings → Repairs.
+          ## Which code you are running
 
-          ## It is a preview
+          HACS shows a **commit hash** rather than a version number, because
+          this repository publishes no releases of its own — and that hash is
+          the one thing worth quoting in a bug report. It belongs to *this*
+          repository; the matching commit message names the upstream commit it
+          came from, so one click goes from what you installed to the code it
+          was built out of.
 
-          Registers can move and entity ids can change. If you want something
-          finished, use the **YAML package** on the real repository's default
-          branch: five years old, and in use by thousands of people.
+          The integration also reports a version of its own — in its name and
+          under Settings → Repairs — but between releases several commits here
+          share it, so it identifies the release, not your install.
+
+          ## It is a preview, and it tracks a branch
+
+          This is the development branch, not a release: registers can move
+          and entity ids can change. Updates arrive as they are committed. If
+          you want something finished, use the **YAML package** on the real
+          repository's default branch: five years old, and in use by thousands
+          of people.
 
           The most useful thing you can do with it is send a reading. The
           integration can produce one for you: add it in **Diagnostics only**
@@ -212,16 +385,18 @@ jobs:
           keeping both is a conflict rather than an upgrade.
           NOTICE
 
+      # No state file, so this is the only thing deciding whether testers see
+      # an update: the files HACS installs either changed or they did not.
       - name: Commit and push
-        if: steps.upstream.outputs.changed == 'true'
+        if: steps.pin.outputs.publish == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           if git diff --cached --quiet; then
-            echo "::notice::${{ steps.upstream.outputs.upstream }} is new upstream but its files are identical here. Nothing committed."
+            echo "::notice::Upstream is at ${{ steps.upstream.outputs.short }}, whose integration is identical to what is published here. Nothing committed, so testers are not notified."
             exit 0
           fi
-          git commit -m "Sync ${{ steps.upstream.outputs.upstream }} from ${UPSTREAM}"
+          git commit -m "$(printf 'Sync %s from %s\n\n%s' "${{ steps.upstream.outputs.short }}" "${UPSTREAM}" "${SUBJECT}")"
           git push
-          echo "::notice::Published ${{ steps.upstream.outputs.upstream }}. HACS will offer it as an update."
+          echo "::notice::Published ${{ steps.upstream.outputs.short }}. HACS will offer it as an update."
