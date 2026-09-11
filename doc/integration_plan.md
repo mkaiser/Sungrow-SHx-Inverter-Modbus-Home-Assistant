@@ -40,10 +40,13 @@ a decision only the maintainer can take, or work whose blocker is named.
 
 1. **The preview is out, and installable through HACS.** ✅
    `v0.1.0a1` and `v0.1.0a2` are released, both marked pre-release, and
-   `sungrow-modbus` is on PyPI at both versions. A preview channel serves
-   them to HACS. What is left is a decision rather than work: **when to
-   merge into `main`**, which retires the channel and unlocks the HACS
-   default store.
+   `sungrow-modbus` is on PyPI at both versions, and a preview channel
+   serves the integration to HACS -- **following this branch**, not the
+   releases, because the channel exists to get current code in front of
+   testers and HACS already treats a repository with no releases of its own
+   as a rolling one, showing a commit hash as the version. What is left is a
+   decision rather than work: **when to merge into `main`**, which retires
+   the channel and unlocks the HACS default store.
 
    Four things this cost, all of them fixed, and the last is the one worth
    remembering:
@@ -69,8 +72,8 @@ a decision only the maintainer can take, or work whose blocker is named.
      Found by opening the published wheel, not by any test. **Between
      releases, the branch is only safe to install as a tag**, which is what
      `doc/installing_a_preview.md` tells people, and the preview channel
-     enforces by syncing releases and refusing one whose pin is not yet on
-     PyPI.
+     enforces by refusing to publish a commit whose pinned library cannot
+     serve it.
 
      It is now a command rather than a lesson.
      `scripts/check_pinned_library.py` reads the integration's

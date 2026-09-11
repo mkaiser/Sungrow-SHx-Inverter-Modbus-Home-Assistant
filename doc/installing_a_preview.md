@@ -144,18 +144,27 @@ That resolves itself when any of three things happens, and all are in
   install becomes the ordinary two clicks — which is the point of it.
 
   [doc/preview-mirror/sync.yml](preview-mirror/sync.yml) is the whole
-  mechanism: one workflow, dropped into that repository, which hourly copies
-  the newest **release** from here — `custom_components/`, `hacs.json` and a
-  README of its own, and nothing else. It **pulls rather than being pushed
-  to**, which is why it needs no credential in either repository: reading
-  this one takes no token because it is public, and writing to itself uses
-  its own.
+  mechanism: one workflow, dropped into that repository, which about once an
+  hour copies the **development branch** from here — `custom_components/`,
+  `hacs.json` and a README of its own, and nothing else. It **pulls rather
+  than being pushed to**, which is why it needs no credential in either
+  repository: reading this one takes no token because it is public, and
+  writing to itself uses its own.
 
-  Two refusals in it. It syncs **releases**, never the branch head, so a
-  stray tag ships nothing. And it will not publish a release whose pinned
-  library is not yet installable — Home Assistant installs that library
-  itself, so getting ahead of PyPI breaks every install rather than delaying
-  it.
+  So that channel is a **rolling** one: you get the integration as it is
+  being written, and an update arrives whenever the files HACS installs
+  actually change. A commit here that touches only `src/`, the scanner or
+  the documentation produces nothing there, so it does not notify you.
+
+  Two refusals keep it usable. It publishes the newest commit whose **CI
+  passed**, walking back from the branch head rather than insisting on it —
+  a documentation-only commit has no checks at all, and stalling behind one
+  would hold back the good commit underneath. And it will not publish a
+  commit whose **pinned library cannot serve it**: Home Assistant installs
+  that library from PyPI, so a commit that imports a module the pinned wheel
+  does not contain cannot start, and the channel stays on the last good
+  commit until the library is released. That is not hypothetical — see
+  `scripts/check_pinned_library.py`, which is the check it runs.
 
   It is temporary, and it has one rule: **remove it from HACS before
   installing from this repository**, once the integration reaches `main`.
@@ -183,6 +192,15 @@ you can publish and a private one that stays on your machine — see
 It is how this project learns what varies between installations, which is the
 thing no specification has told it reliably.
 
-Then open an issue with the version you installed. The version is the point
-of the preview: a report that says `0.1.0a2` is worth several that say "the
-new integration".
+Then open an issue with **which code you installed**, because that is what
+makes the rest of the report usable.
+
+- Installed from a **tag**, by copying the folder: the version, `0.1.0a2`.
+- Installed through the **preview channel** in HACS: the **commit hash** HACS
+  shows you. That channel follows a branch and publishes no releases of its
+  own, so HACS displays a hash instead of a version — and between releases
+  several of those hashes share one version number, which means the version
+  alone does not say which code you ran. The hash belongs to the preview
+  repository; its commit message names the commit here that it came from.
+
+Either way it is worth more than a report that says "the new integration".
