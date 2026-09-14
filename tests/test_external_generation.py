@@ -28,6 +28,11 @@ from custom_components.sungrow_modbus.const import (
     DOMAIN,
     PLACEMENT_BEHIND_METER,
     PLACEMENT_SEPARATE,
+    SECTION_ADVANCED,
+    SECTION_EXTERNAL,
+    SECTION_PERMISSIONS,
+    SECTION_POLLING,
+    SECTION_SURVEY,
 )
 from custom_components.sungrow_modbus.external import combined, external_power
 from homeassistant.const import CONF_HOST, CONF_PORT, STATE_UNAVAILABLE, STATE_UNKNOWN
@@ -244,6 +249,24 @@ async def test_the_attributes_keep_one_shape_when_everything_answers(
 # -- the options flow ----------------------------------------------------------
 
 
+def _options(**sections: dict) -> dict:
+    """Build a full options submission, overriding one section at a time.
+
+    The options page is one form of sections, and the frontend submits all of
+    them; fields inside a section fall back to the defaults the form was
+    built with.
+    """
+    payload: dict = {
+        SECTION_POLLING: {},
+        SECTION_PERMISSIONS: {},
+        SECTION_EXTERNAL: {},
+        SECTION_ADVANCED: {},
+        SECTION_SURVEY: {},
+    }
+    payload.update(sections)
+    return payload
+
+
 async def test_the_options_flow_records_the_sources_and_creates_the_entities(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
@@ -253,21 +276,21 @@ async def test_the_options_flow_records_the_sources_and_creates_the_entities(
     assert hass.states.get(CORRECTED) is None
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "external"}
-    )
+    # One page of sections now, rather than a menu item of its own.
     assert result["type"] is FlowResultType.FORM
-    assert result["step_id"] == "external"
+    assert result["step_id"] == "init"
 
     with patch(
         "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
     ):
         result = await hass.config_entries.options.async_configure(
             result["flow_id"],
-            {
-                CONF_EXTERNAL_SOURCES: [FOREIGN],
-                CONF_EXTERNAL_PLACEMENT: PLACEMENT_BEHIND_METER,
-            },
+            _options(
+                external={
+                    CONF_EXTERNAL_SOURCES: [FOREIGN],
+                    CONF_EXTERNAL_PLACEMENT: PLACEMENT_BEHIND_METER,
+                }
+            ),
         )
         await hass.async_block_till_done()
 
@@ -286,18 +309,17 @@ async def test_emptying_the_list_removes_the_correction(
     assert hass.states.get(CORRECTED) is not None
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "external"}
-    )
     with patch(
         "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
     ):
         await hass.config_entries.options.async_configure(
             result["flow_id"],
-            {
-                CONF_EXTERNAL_SOURCES: [],
-                CONF_EXTERNAL_PLACEMENT: PLACEMENT_BEHIND_METER,
-            },
+            _options(
+                external={
+                    CONF_EXTERNAL_SOURCES: [],
+                    CONF_EXTERNAL_PLACEMENT: PLACEMENT_BEHIND_METER,
+                }
+            ),
         )
         await hass.async_block_till_done()
 

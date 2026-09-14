@@ -27,3 +27,14 @@ stop_inverter:
       selector:
         device:
           integration: sungrow_modbus
+
+# Producing a capability survey. Read-only, and the counterpart of the button
+# a diagnostics-only entry gets on its device page -- an ordinary entry has
+# no survey entities, so this is how its owner helps if they choose to.
+run_survey:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: sungrow_modbus

@@ -51,9 +51,11 @@ from .coordinator import (
     SungrowRuntimeData,
     SungrowWallboxCoordinator,
 )
+from .download import async_register as async_register_download
 from .external_descriptions import EXTERNAL_SENSORS
 from .migration import async_claim_legacy_ids, async_legacy_ids_with_history, keys_for
 from .services import async_setup_services
+from .survey import SurveyRunner
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,6 +66,25 @@ PLATFORMS: list[Platform] = [
     Platform.SENSOR,
     Platform.SWITCH,
 ]
+
+#: What a diagnostics-only entry sets up: the survey button and the three
+#: sensors that watch it, and nothing else.
+#:
+#: It used to be nothing at all. That was defensible while the survey lived
+#: in the options flow, and stopped being so when it moved to the device
+#: page: a device reaches the registry only when an entity carrying its
+#: `device_info` is added, so an entry with no entities has no page to put a
+#: button on. The platforms themselves decide what to build in this mode --
+#: `sensor.py` adds the survey's three and returns.
+#:
+#: And **only** this mode. An ordinary entry gets no survey entities: its
+#: owner installed this for solar readings and should not carry diagnostic
+#: tooling they never asked for, in their registry, their history or their
+#: entity pickers. They help through the `run_survey` action instead, which
+#: leaves nothing behind at all. Deleting an entry removes its entities
+#: either way -- asserted in `test_survey_device_page.py` -- but the cleanest
+#: cleanup is still the one that was never needed.
+DIAGNOSTIC_PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SENSOR]
 
 
 #: This integration is not configurable from YAML, and says so.
@@ -196,6 +217,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
         ),
     )
 
+    # The survey's own state, and the view that hands the finished document
+    # to whoever ran it. Both in every mode: a diagnostics entry is the one
+    # that exists *for* this.
+    entry.runtime_data.survey = SurveyRunner(hass, entry)
+    entry.async_on_unload(entry.runtime_data.survey.async_shutdown)
+    async_register_download(hass)
+
     _async_drop_unused_corrections(hass, entry, inverter.serial_number)
 
     # Before the platforms, not after: an entity registered on the YAML
@@ -236,9 +264,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
     # options flow, which is where the entity-ids question finally gets put.
     if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
         _LOGGER.info(
-            "%s set up for diagnostics only: %d components polling, no entities",
+            "%s set up for diagnostics only: %d components polling, "
+            "the survey button and its three sensors, and no readings",
             entry.title,
             len(coordinators),
+        )
+        await hass.config_entries.async_forward_entry_setups(
+            entry, DIAGNOSTIC_PLATFORMS
         )
         return True
 
@@ -479,9 +511,12 @@ async def async_unload_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> 
     The shared connection closes itself once the last entry holding a unit on
     it unloads, so there is nothing to tear down here.
     """
-    if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
-        # Nothing was forwarded, so there is nothing to unload. Asking Home
-        # Assistant to unload platforms that were never set up is harmless
-        # but reads as though this entry had entities.
-        return True
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    # Whatever was forwarded, and only that: unloading a platform that was
+    # never set up is harmless, but the pair must match or the next reload
+    # forwards onto entities that were left behind.
+    platforms = (
+        DIAGNOSTIC_PLATFORMS
+        if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS
+        else PLATFORMS
+    )
+    return await hass.config_entries.async_unload_platforms(entry, platforms)

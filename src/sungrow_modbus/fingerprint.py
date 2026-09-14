@@ -25,6 +25,10 @@ from __future__ import annotations
 
 from enum import StrEnum
 import hashlib
+from typing import Any
+
+from .battery import model_for_capacity
+from .const import model_for
 
 #: The document format both producers write. Bumped when the *shape* changes,
 #: not when a producer does.
@@ -38,7 +42,7 @@ import hashlib
 #:
 #: `test_the_two_producers_agree_on_the_schema` keeps this equal to
 #: `probe.SCHEMA`.
-SCHEMA = 17
+SCHEMA = 18
 
 #: How a document says it was collected, when no command line could repeat it.
 #:
@@ -182,6 +186,31 @@ TRANSPORT_CLAIMS: tuple[str, ...] = (
 #: testimony.
 PROXY_CLAIMS: tuple[str, ...] = ("yes", "no", "unknown")
 
+#: The values `user_inputs.other_inverter` may hold, with the same
+#: empty-means-unasked rule as the two above.
+#:
+#: The question is whether the installation holds a **non-Sungrow** inverter,
+#: and it is worth a field of its own because of what it does to a reading
+#: that otherwise looks like a fault. A Sungrow computes house load from its
+#: own output plus grid import, so a second inverter feeding the same meter
+#: makes `load_power` low by exactly that inverter's output -- silently, with
+#: every register answering normally. A maintainer reading a document whose
+#: load figures do not add up has no way to tell that from a decoding bug,
+#: and no register can answer it: the inverter cannot see the thing that is
+#: confusing it. `external.py` in the integration corrects for this from
+#: entities another integration owns, which is the only value in the project
+#: that comes from Home Assistant rather than from Modbus.
+#:
+#: Two answers rather than three. An owner knows what is on their own roof,
+#: where "is a proxy in the path" is genuinely a thing somebody may not know.
+OTHER_INVERTER_CLAIMS: tuple[str, ...] = ("yes", "no")
+
+#: The one of those two that opens the follow-up question, named rather than
+#: written out at the three places that compare against it. A literal "yes" in
+#: a flow, a scanner and a document builder is three chances to disagree about
+#: a string that decides whether anybody is asked what the other inverter is.
+OTHER_INVERTER_YES = OTHER_INVERTER_CLAIMS[0]
+
 
 def classify(words: list[int] | tuple[int, ...] | None) -> State:
     """Say what a successful read means, by the specification's convention.
@@ -309,3 +338,187 @@ def transport_verdict(*, answered_6100: bool, module_named: bool) -> str:
         "through a communication module (WiNet-S, WiNet-S2 or Logger), "
         "which did not name itself"
     )
+
+
+#: The filename word for each reported transport, where it gets one.
+#:
+#: Only the *unusual* route is named. A reading through the inverter's own LAN
+#: port is the plain case and adds nothing to a name; a reading through a
+#: dongle changes which registers answer, so it has to be in the filename --
+#: and not only for the reader. One dongle read wired and over WiFi produces
+#: two legitimate documents that are otherwise identical, so without this word
+#: they derive the same name and the second silently overwrites the first.
+#:
+#: Kept equal to the fourth element of each `probe.REPORTED_TRANSPORTS` row.
+TRANSPORT_WORDS: dict[str, str] = {
+    "direct_lan": "",
+    "winet_lan": "winet-lan",
+    "winet_wlan": "winet-wlan",
+    "winet": "winet",
+    "logger": "logger",
+    "unsure": "",
+}
+
+
+def _slug(text: str) -> str:
+    """Return text safe to put in a filename, or "anonymous" if nothing is left.
+
+    Contributor names arrive as free text and land in a filename that goes
+    into a public repository, so anything outside a-z, 0-9 and a dash becomes
+    a dash.
+    """
+    kept = "".join(c if c.isalnum() else "-" for c in text.strip().lower())
+    return "-".join(part for part in kept.split("-") if part) or "anonymous"
+
+
+def _probe(document: dict[str, Any], name: str) -> dict[str, Any]:
+    """Return one capability probe's published entry, or an empty one."""
+    probes = document.get("capability_probes") or {}
+    entry = probes.get(name)
+    return entry if isinstance(entry, dict) else {}
+
+
+def _answered(document: dict[str, Any], *names: str) -> bool:
+    """Whether any of these probes came back with a value."""
+    return any(_probe(document, name).get("state") == State.PRESENT for name in names)
+
+
+def _reached_directly(document: dict[str, Any]) -> bool:
+    """Whether this reading came through the inverter's own port.
+
+    Testimony outranks the measurement, which is the opposite of the rule
+    everywhere else here and has to be: a WiNet-S answers identically wired
+    and over WiFi, so the medium is knowable only to the person who plugged
+    the cable in. `unsure` is not testimony and overrides nothing.
+    """
+    said = str((document.get("user_inputs") or {}).get("transport") or "")
+    if said and said != "unsure":
+        return said == "direct_lan"
+    verdict = str((document.get("connection") or {}).get("verdict") or "")
+    return verdict.startswith("direct")
+
+
+def _battery_word(document: dict[str, Any]) -> str:
+    """Return what can honestly be said about the battery, in one word.
+
+    Every state is prefixed `battery-` so the words sort together and read as
+    one field. The distinction that earns its keep is the last pair: battery
+    registers answering while unit 200 stays silent means a third-party pack
+    **on a direct path**, where the specification puts the Sungrow module
+    block at unit 200 -- and means nothing at all behind a dongle, which
+    forwards the pack at an address of its own choosing. The two look
+    identical over the wire and are not the same fact.
+    """
+    module = _probe(document, "unit 200 SBR battery module block").get("state")
+    forwarded = (
+        _probe(document, "unit 2 SBR battery module block").get("state")
+        == State.PRESENT
+        and _probe(document, "unit 2 inverter device type code").get("state")
+        != State.PRESENT
+    )
+    if module == State.PRESENT or forwarded:
+        values = _probe(document, "battery capacity (5639)").get("values")
+        if values:
+            model = model_for_capacity(values[0] * 0.01)
+            if model is not None:
+                return f"battery-{model.name.lower()}"
+        return "battery-sungrow"
+
+    pair = ("battery voltage", "battery level")
+    read = [_probe(document, name) for name in pair]
+    if read and all(entry.get("values") and not any(entry["values"]) for entry in read):
+        # Zeros rather than the sentinel, which is how a cluster slave says it
+        # has no battery of its own. Checked before "present", because a zero
+        # decodes as a value and would otherwise read as a third-party pack.
+        return "battery-none"
+    states = [entry.get("state") for entry in read]
+    if any(state == State.PRESENT for state in states):
+        return (
+            "battery-thirdparty" if _reached_directly(document) else "battery-unknown"
+        )
+    if any(state == State.UNAVAILABLE for state in states):
+        return "battery-none"
+    return "battery-unreadable"
+
+
+def label_for(document: dict[str, Any]) -> str:
+    """Return the filename this document should carry, without its extension.
+
+    **Derived from the published document alone**, which is the whole point:
+    the standalone survey builds the same name from the structures it holds
+    before publishing, and this reaches the identical answer from the file
+    itself. `tests/test_document_filenames.py` asserts that over every
+    fingerprint this repository has committed, which is a stronger check than
+    any pair of unit tests -- the corpus is the specification.
+
+    Order is `model-firmware-phases-contributor-standin`, then everything
+    attached. The stand-in sits third so that every document from one machine
+    shares a prefix and they group when a directory is sorted: one inverter
+    read directly and through its dongle differs only in the words *after*
+    it, and with the hash last the pair ended up at opposite ends.
+
+    Nothing here can leak: the model, the firmware and the phases are
+    properties of a product line, the stand-in is the document's own and is
+    required to say so, and the contributor's name is one they typed.
+    """
+    device = document.get("device") or {}
+    said = document.get("user_inputs") or {}
+
+    code = str(device.get("device_type_code") or "")
+    model = "unknown"
+    if code.startswith("0x"):
+        try:
+            model = (model_for(int(code, 16)) or "unknown").lower().replace(".", "")
+        except ValueError:
+            model = "unknown"
+    parts = [model]
+
+    # Directly after the model, because it qualifies the model and nothing
+    # else: which registers a device answers moves between versions, so
+    # `sh80rt` alone does not say what to expect and `sh80rt-b001v000p022`
+    # does. Omitted rather than filled in when it did not read -- a name
+    # silent about firmware is honest, where `fw-unknown` would sort as
+    # though it were a version.
+    firmware = str((document.get("firmware") or {}).get("inverter") or "")
+    if firmware:
+        parts.append(_slug(firmware.split("_", 1)[-1]).replace("-", ""))
+
+    # Only the unusual wiring is named. 3P4L is an ordinary domestic supply
+    # and spelling it out lengthened every filename to say "normal"; 3P3L has
+    # no neutral and the same registers then report line voltages rather than
+    # phase voltages, about 1.73x higher, which a name has to warn about.
+    phases = str(device.get("output_type") or "")
+    if "3P3L" in phases:
+        parts.append("3p3w")
+    elif "3P4L" in phases:
+        parts.append("3p")
+    elif "single" in phases:
+        parts.append("1p")
+
+    parts.append(_slug(str(said.get("reporter") or "")))
+
+    # Only ever a value that says it is a stand-in. Putting the string in
+    # unchecked is how a real serial would reach a filename, and `anon-`
+    # cannot occur in a Sungrow serial -- which makes the mistake
+    # unrepresentable rather than merely unlikely.
+    stand_in = str(device.get("serial_anonymized_hashed") or "")
+    if stand_in.startswith(STAND_IN_PREFIX):
+        parts.append(_slug(stand_in))
+
+    parts.append(_battery_word(document))
+    if _answered(document, "meter phase A voltage (5741)"):
+        parts.append("meter")
+    if _answered(document, "unit 3 wallbox serial", "unit 248 wallbox serial (direct)"):
+        parts.append("wallbox")
+
+    word = TRANSPORT_WORDS.get(str(said.get("transport") or ""), "")
+    if not word:
+        verdict = str((document.get("connection") or {}).get("verdict") or "")
+        if verdict.startswith(("through a communication module", "through a WiNet-S")):
+            word = "winet"
+        elif verdict.startswith("through a Logger"):
+            word = "logger"
+    if word:
+        parts.append(word)
+
+    return "-".join(parts)

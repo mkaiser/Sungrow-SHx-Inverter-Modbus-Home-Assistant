@@ -42,6 +42,7 @@ from custom_components.sungrow_modbus.external_descriptions import EXTERNAL_SENS
 from custom_components.sungrow_modbus.number_descriptions import NUMBER_DESCRIPTIONS
 from custom_components.sungrow_modbus.select_descriptions import SELECT_DESCRIPTIONS
 from custom_components.sungrow_modbus.sensor_descriptions import SENSOR_DESCRIPTIONS
+from custom_components.sungrow_modbus.survey_entities import SURVEY_ENTITIES
 from custom_components.sungrow_modbus.switch_descriptions import SWITCH_DESCRIPTIONS
 from custom_components.sungrow_modbus.wallbox_descriptions import (
     WALLBOX_BINARY_DESCRIPTIONS,
@@ -111,10 +112,29 @@ def test_every_name_follows_the_convention(domain: str, key: str, name: str) -> 
 
 
 def test_every_entity_has_a_name_and_no_name_is_orphaned() -> None:
-    # A missing entry shows in the interface as the raw translation key; an
-    # extra one is a rename that left its old name behind.
+    """Every described entity is named, and every name describes something.
+
+    A missing entry shows in the interface as the raw translation key; an
+    extra one is a rename that left its old name behind.
+
+    The survey's own entities are the exception, and are subtracted rather
+    than exempted: they have no `EntityDescription` because there is no
+    register behind them -- they report what the integration is doing. They
+    are still named through the same generator and the same `OVERRIDES`
+    table, so the half of this test that matters to them still holds.
+    """
     for domain, group in DESCRIPTIONS.items():
-        assert {d.key for d in group} == set(NAMES[domain]), domain
+        named = set(NAMES[domain]) - {
+            key for section, key in SURVEY_ENTITIES if section == domain
+        }
+        assert {d.key for d in group} == named, domain
+
+
+def test_the_surveys_own_entities_are_named_too() -> None:
+    """The other half, for the entities the loop above subtracts."""
+    for domain, key in SURVEY_ENTITIES:
+        assert key in NAMES[domain], f"{domain}.{key} has no name"
+        assert NAMES[domain][key], f"{domain}.{key} is named with an empty string"
 
 
 @pytest.mark.parametrize("domain", sorted(DESCRIPTIONS))

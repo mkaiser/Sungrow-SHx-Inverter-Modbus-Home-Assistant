@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable, Mapping
+from contextlib import suppress
 from ipaddress import ip_address, ip_network
 import logging
 from typing import Any
@@ -21,9 +23,11 @@ from homeassistant.config_entries import (
 )
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.data_entry_flow import UnknownFlow, section
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.selector import (
     BooleanSelector,
+    BooleanSelectorConfig,
     EntitySelector,
     EntitySelectorConfig,
     NumberSelector,
@@ -40,7 +44,6 @@ from homeassistant.util import slugify
 from sungrow_modbus import (
     COMPONENTS,
     DEFAULT_INTERVALS,
-    DEFAULT_PORT as MODBUS_PORT,
     FALLBACK_W,
     MAX_HOSTS,
     TIER_COMPONENTS,
@@ -49,15 +52,23 @@ from sungrow_modbus import (
     SungrowInverter,
     async_hostname,
     async_sweep,
+    hosts_in,
     model_for_capacity,
     network_of,
     power_from_bms,
 )
-from sungrow_modbus.fingerprint import PROXY_CLAIMS, TRANSPORT_CLAIMS
+from sungrow_modbus.discovery import CONCURRENCY, TIMEOUT
+from sungrow_modbus.fingerprint import (
+    OTHER_INVERTER_CLAIMS,
+    OTHER_INVERTER_YES,
+    PROXY_CLAIMS,
+    TRANSPORT_CLAIMS,
+)
 
 from .const import (
     AUDIENCE_ADMINS,
     AUDIENCE_USERS,
+    CONF_ADD_DEVICES,
     CONF_BATTERY_MAX_POWER,
     CONF_ENTITY_IDS,
     CONF_EXTERNAL_PLACEMENT,
@@ -71,6 +82,9 @@ from .const import (
     CONF_REPORTER,
     CONF_SURVEY_BATTERY,
     CONF_SURVEY_COMMENT,
+    CONF_SURVEY_DUMP,
+    CONF_SURVEY_OTHER_INVERTER,
+    CONF_SURVEY_OTHER_INVERTER_DETAIL,
     CONF_SURVEY_POLLERS,
     CONF_SURVEY_PROXY,
     CONF_SURVEY_TRANSPORT,
@@ -80,6 +94,7 @@ from .const import (
     DEFAULT_PERMISSIONS,
     DEFAULT_PORT,
     DEFAULT_UNIT_ID,
+    DEVICES_MODE_OFFERED,
     DOMAIN,
     ENTITY_IDS_MIGRATE,
     ENTITY_IDS_NEW,
@@ -92,8 +107,13 @@ from .const import (
     PLACEMENT_BEHIND_METER,
     PLACEMENT_SEPARATE,
     ROLE_SLAVE,
+    SCAN_PORTS,
+    SECTION_ADVANCED,
+    SECTION_EXTERNAL,
+    SECTION_PERMISSIONS,
+    SECTION_POLLING,
+    SECTION_SURVEY,
 )
-from .fingerprint import async_build, summarise
 from .migration import (
     async_legacy_ids_known,
     async_legacy_ids_live,
@@ -165,7 +185,13 @@ def _network_options(detected: str, tried: list[str]) -> list[SelectOptionDict]:
 
 
 def _scan_schema(default_network: str, tried: list[str] | None = None) -> vol.Schema:
-    """Return the search form: a range to pick or type, and a port.
+    """Return the search form: a range to pick or type.
+
+    **No port.** It asked for one, defaulted to 502, and the honest question
+    behind the field -- "which number?" -- has a two-item answer this project
+    already knows: `SCAN_PORTS`. A sweep tries both. Somebody whose setup
+    really is elsewhere, behind a proxy or a forwarded port, has the manual
+    step, which is where a specific address and a specific port belong.
 
     A **selector rather than a text box**, so the range is something to
     choose. It still accepts anything typed -- `custom_value=True` -- because
@@ -187,12 +213,6 @@ def _scan_schema(default_network: str, tried: list[str] | None = None) -> vol.Sc
                     custom_value=True,
                     mode=SelectSelectorMode.DROPDOWN,
                 )
-            ),
-            vol.Required(CONF_PORT, default=MODBUS_PORT): vol.All(
-                NumberSelector(
-                    NumberSelectorConfig(mode=NumberSelectorMode.BOX, min=1, max=65535)
-                ),
-                vol.Coerce(int),
             ),
         }
     )
@@ -296,6 +316,73 @@ def _entity_ids_schema(default: str) -> vol.Schema:
             )
         }
     )
+
+
+def _other_inverter_schema(default: str) -> vol.Schema:
+    """Return the "what is it" box, asked only when the answer was yes.
+
+    Free text and published, like the comment field, so the label says to
+    keep identifying details out of it. What is wanted is the make and the
+    size -- those say *how large* the load error is, which is the whole
+    reason the question exists.
+    """
+    return vol.Schema(
+        {
+            vol.Optional(
+                CONF_SURVEY_OTHER_INVERTER_DETAIL, default=default
+            ): TextSelector(),
+        }
+    )
+
+
+#: What the greyed controls say, written once and rendered in two places.
+#:
+#: Both the opening step and the options page's promotion toggle explain the
+#: same gate, and a gate explained twice in two wordings is a gate somebody
+#: will misread. Markdown, because both slots render through `ha-markdown`.
+_DEVICES_MODE_COMING = (
+    "\n\n⚠️ **Sensors and controls are not in this release.** This is an "
+    "early alpha, and it exists to gather readings: it connects to your "
+    "inverter, works out what it is and which registers it answers, and "
+    "creates no entities for the values. Setting up the inverter properly -- "
+    "including taking over the entity IDs of the YAML package, which is the "
+    "one decision here that cannot be undone -- comes in a later release, and "
+    "an entry made now can be upgraded to it then without being deleted."
+)
+
+#: And what the same sentence has to say when the gate is open, because then
+#: both answers really are available and the step has to explain the choice
+#: rather than the restriction.
+_DEVICES_MODE_OPEN = (
+    "\n\nBoth answers are fine, and you can change your mind later: picking "
+    "**Diagnostics only** skips the one irreversible question in this dialog, "
+    "about which entity IDs to take over, because a reading does not need it."
+)
+
+
+def _alpha_placeholders() -> dict[str, str]:
+    """Return what the two gated dialogs should say about the gate.
+
+    A function rather than a constant because `DEVICES_MODE_OFFERED` is read
+    at call time: a module-level dict would freeze the answer at import and
+    quietly ignore the flag it exists to report.
+
+    Two keys rather than one because the two places need opposite things when
+    the gate is open. The opening step needs a sentence either way -- it is
+    explaining a choice. The options page's promotion toggle needs one only
+    while promotion is refused; with the gate open there is nothing to say
+    and the helper text beside it is already complete.
+
+    Both are always present and never absent: an unsubstituted placeholder
+    renders as the literal `{devices_mode}` in the dialog, which is the one
+    outcome worse than either sentence.
+    """
+    return {
+        "mode_choice": (
+            _DEVICES_MODE_OPEN if DEVICES_MODE_OFFERED else _DEVICES_MODE_COMING
+        ),
+        "devices_mode": "" if DEVICES_MODE_OFFERED else _DEVICES_MODE_COMING,
+    }
 
 
 #: Substituted into the step description. Two states, both stated as facts
@@ -458,43 +545,99 @@ def _described(found: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
 
 _LOGGER = logging.getLogger(__name__)
 
-#: Where a contributed reading goes. The compatibility report template asks
-#: for exactly what a survey produces, so the form arrives pre-shaped.
-SURVEY_ISSUE_URL = (
-    "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant"
-    "/issues/new?template=compatibility_report.yml"
-)
 
-#: And the route for somebody without a GitHub account, which is most people.
-DISCORD_URL = "https://discord.gg/ZvYBejFkm2"
+def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> vol.Schema:
+    """Return the questions a survey needs and no register can answer.
 
+    Shared by the diagnostics setup step and the options page's section:
+    the same questions in both places, because they produce the same fields
+    of the same document and a contributor who answers one should not find
+    the other asking something else.
 
-def _async_survey_notice(
-    hass: HomeAssistant, entry: ConfigEntry, document: dict[str, Any]
-) -> None:
-    """Leave the result somewhere it survives the dialog closing.
-
-    A config-flow page is gone the moment it is dismissed, and what it says
-    here -- which menu the file is behind, and where to send it -- is needed
-    *after* that. A persistent notification is the only surface in Home
-    Assistant that keeps a short instruction until somebody acts on it.
+    `suggested_value` rather than `default` on the two dropdowns -- a default
+    of "" is injected when the field is left alone and "" is not one of the
+    choices, which failed validation for anybody who had never answered.
     """
-    from homeassistant.components import persistent_notification
-
-    persistent_notification.async_create(
-        hass,
-        title=f"Sungrow survey ready: {entry.title}",
-        notification_id=f"{DOMAIN}_survey_{entry.entry_id}",
-        message=(
-            f"{summarise(document)}\n\n"
-            "**To send it:** Settings → Devices & services → Sungrow Modbus "
-            "→ the three dots beside this entry → **Download diagnostics**. "
-            "The file lands in your browser's downloads.\n\n"
-            f"Attach it to [a compatibility report]({SURVEY_ISSUE_URL}) or "
-            f"post it on [Discord]({DISCORD_URL}). Nothing was written to "
-            "your inverter, and the serial number is replaced by a stand-in "
-            "before it reaches the file."
-        ),
+    return vol.Schema(
+        {
+            vol.Optional(
+                CONF_REPORTER, default=options.get(CONF_REPORTER, "")
+            ): TextSelector(),
+            vol.Optional(
+                CONF_SURVEY_TRANSPORT,
+                description={
+                    "suggested_value": options.get(CONF_SURVEY_TRANSPORT) or None
+                },
+            ): SelectSelector(
+                SelectSelectorConfig(
+                    mode=SelectSelectorMode.DROPDOWN,
+                    translation_key="survey_transport",
+                    options=list(TRANSPORT_CLAIMS),
+                )
+            ),
+            vol.Optional(
+                CONF_SURVEY_PROXY,
+                description={"suggested_value": options.get(CONF_SURVEY_PROXY) or None},
+            ): SelectSelector(
+                SelectSelectorConfig(
+                    mode=SelectSelectorMode.DROPDOWN,
+                    translation_key="survey_proxy",
+                    options=list(PROXY_CLAIMS),
+                )
+            ),
+            vol.Optional(
+                CONF_SURVEY_POLLERS, default=options.get(CONF_SURVEY_POLLERS, "")
+            ): TextSelector(),
+            # Yes or no here, and *what it is* only after a yes, on a step of
+            # its own. A config flow form cannot show a field conditionally --
+            # there is no re-render on change, the whole form is built before
+            # it is sent -- so the choice is between a text box that sits
+            # there empty for everybody with one inverter, or a second step
+            # for the few who have two. The second step is the better trade:
+            # it costs a click to the people the question is actually about.
+            vol.Optional(
+                CONF_SURVEY_OTHER_INVERTER,
+                description={
+                    "suggested_value": options.get(CONF_SURVEY_OTHER_INVERTER) or None
+                },
+            ): SelectSelector(
+                SelectSelectorConfig(
+                    mode=SelectSelectorMode.DROPDOWN,
+                    translation_key="survey_other_inverter",
+                    options=list(OTHER_INVERTER_CLAIMS),
+                )
+            ),
+            vol.Optional(
+                CONF_SURVEY_BATTERY, default=options.get(CONF_SURVEY_BATTERY, "")
+            ): TextSelector(),
+            vol.Optional(
+                CONF_SURVEY_COMMENT, default=options.get(CONF_SURVEY_COMMENT, "")
+            ): TextSelector(TextSelectorConfig(multiline=True)),
+            # **On by default, and still a question.** Only the last two
+            # octets ever reach a document -- the third is what separates one
+            # contributor's network from another's and never leaves the
+            # machine -- and what the tail buys is being able to tell four
+            # similar-looking files from one house apart: a master, a slave
+            # and two dongles otherwise produce four documents that look
+            # alike. The box is on the screen and can be cleared before
+            # submitting, which is what makes it permission rather than an
+            # assumption; a document from somebody who cleared it reads
+            # `xxx.xxx` and is complete rather than damaged.
+            vol.Required(
+                CONF_PUBLISH_ADDRESS,
+                default=options.get(CONF_PUBLISH_ADDRESS, True),
+            ): BooleanSelector(),
+            # Last, and off, because it is the expensive one: the survey is
+            # two seconds without it and about five minutes with it. Asked
+            # in the same breath as the testimony because it is the same
+            # decision -- whether to spend something on this project -- and
+            # because a contributor who has been asked for a dump by name
+            # should find it where they were already answering questions.
+            vol.Required(
+                CONF_SURVEY_DUMP,
+                default=options.get(CONF_SURVEY_DUMP, True),
+            ): BooleanSelector(),
+        }
     )
 
 
@@ -520,6 +663,17 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         #: covered. A user on their third attempt otherwise has no idea.
         self._tried: list[str] = []
         self._candidates = 0
+        #: The sweep in flight, so the progress step can wait on it. A sweep
+        #: of a quiet /24 spends its whole time on connect timeouts, which is
+        #: exactly when a silent dialog looks broken.
+        self._sweep_task: asyncio.Task[None] | None = None
+        #: What the sweep is doing, rendered under the bar. Held here rather
+        #: than passed, because the progress step is re-entered to show it
+        #: and has no other way to know.
+        self._stage = ""
+        #: What the contributor said about their installation, on the
+        #: diagnostics path. Saved as options when the entry is created.
+        self._testimony: dict[str, Any] = {}
         self._role: str | None = None
         #: Whether the user was asked for a name and gave one.
         self._named = False
@@ -545,17 +699,56 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         identifies the hardware, creates no entities, and never mentions
         migration. It can be promoted to a full entry afterwards, which is
         when the id question is put.
+
+        While `DEVICES_MODE_OFFERED` is off the first answer is not available,
+        and the menu still offers it -- the step it leads to explains why and
+        carries on as diagnostics. Greying it is what a first version tried
+        and it cannot be done: a menu option has no disabled state at all,
+        and the form that replaced the menu could only grey the whole
+        control, which left the *working* answer greyed out too and read as
+        a dialog where nothing worked.
         """
         return self.async_show_menu(
-            step_id="user", menu_options=["setup_devices", "setup_diagnostics"]
+            step_id="user",
+            menu_options=["setup_devices", "setup_diagnostics"],
+            # The step description is shared with the form above, so the menu
+            # has to substitute too -- an unfilled placeholder is rendered
+            # literally rather than dropped.
+            description_placeholders=_alpha_placeholders(),
         )
 
     async def async_step_setup_devices(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Set up the inverter properly, with entities."""
+        if not DEVICES_MODE_OFFERED:
+            return await self.async_step_devices_later()
         self._mode = MODE_DEVICES
         return await self.async_step_find()
+
+    async def async_step_devices_later(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Say that the ordinary setup is not in this release, and carry on.
+
+        An abort would be the short way to write this and the wrong thing to
+        do to somebody: it closes the dialog, and the way back is to start
+        again and pick the other answer, having been told only that they
+        chose wrong. So this is a step with one button, and the button does
+        the thing they almost certainly want.
+
+        It is also where the refusal actually lives. `_mode` is never set to
+        `MODE_DEVICES` here, so a client posting the menu's step id by hand
+        gets a diagnostics entry rather than a devices one -- the control on
+        the screen is a courtesy and this is the rule.
+        """
+        if user_input is not None:
+            return await self.async_step_setup_diagnostics()
+        return self.async_show_form(
+            step_id="devices_later",
+            data_schema=vol.Schema({}),
+            last_step=False,
+        )
 
     async def async_step_setup_diagnostics(
         self, user_input: dict[str, Any] | None = None
@@ -597,9 +790,16 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             if self._searched not in self._tried:
                 self._tried.append(self._searched)
             try:
-                candidates = await async_sweep(
-                    user_input[CONF_NETWORK], port=user_input[CONF_PORT]
-                )
+                # Validated here rather than inside the task, so a typed
+                # range that cannot be parsed comes straight back to this
+                # form. A progress step that appeared for a second and
+                # returned an error would be a worse way to say the same
+                # thing.
+                hosts_in(self._searched)
+            # `NetworkTooLarge` subclasses `ValueError`, so this order is not
+            # cosmetic: catching the general one first turns "that is 16
+            # million addresses" into "that is not a network", which is both
+            # wrong and unhelpful.
             except NetworkTooLarge as err:
                 errors["base"] = "network_too_large"
                 placeholders["hosts"] = str(err.hosts)
@@ -608,16 +808,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors[CONF_NETWORK] = "invalid_network"
                 placeholders["error"] = str(err)
             else:
-                self._found = await self._async_identify(
-                    candidates, user_input[CONF_PORT]
-                )
-                if self._found:
-                    return await self.async_step_pick()
-                # A form can only carry an error, and an error leaves the user
-                # on a form with nowhere to go but the close button. A search
-                # that finds nothing is a dead end, so it gets a menu.
-                self._candidates = len(candidates)
-                return await self.async_step_nothing_found()
+                return await self.async_step_searching()
 
         return self.async_show_form(
             step_id="search",
@@ -645,6 +836,180 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             },
             last_step=False,
         )
+
+    async def async_step_searching(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Sweep, with a bar, because a quiet network is slow and silent.
+
+        Every address with nothing listening costs the full connect timeout,
+        so the sweep of a /24 spends most of its time proving absences. That
+        is exactly when somebody wonders whether it has hung -- and the old
+        form simply sat there, greyed out, for as long as it took.
+
+        The bar is driven by addresses settled rather than by time: how long
+        a sweep takes depends on how many addresses are quiet, which is the
+        thing nobody knows in advance.
+        """
+        if self._sweep_task is None:
+            self._sweep_task = self.hass.async_create_task(
+                self._async_sweep_and_identify(), eager_start=False
+            )
+
+        if not self._sweep_task.done():
+            return self.async_show_progress(
+                step_id="searching",
+                progress_action="searching",
+                progress_task=self._sweep_task,
+                description_placeholders={
+                    "network": self._searched,
+                    "stage": self._stage,
+                },
+            )
+
+        self._sweep_task = None
+        return self.async_show_progress_done(
+            next_step_id="pick" if self._found else "nothing_found"
+        )
+
+    async def _async_sweep_and_identify(self) -> None:
+        """Look on every port this project knows, and ask what answered.
+
+        Both passes matter, and the second is the one that decides: an open
+        port 502 is not a Modbus device. A sweep of the maintainer's own LAN
+        turned up a gateway that accepts the connection and echoes bytes
+        back, so nothing is called an inverter until it has answered a read
+        of its device type register.
+        """
+        candidates: list[tuple[str, int]] = []
+        addresses = len(hosts_in(self._searched))
+        settled = 0
+
+        # **Two phases, one bar**, and the split is the whole point of this
+        # rewrite. The first version counted only the sweep, so the bar hit
+        # 100% and the dialog then sat silent for 45 seconds -- measured on
+        # a real /24 -- while identification ran. That phase is the slow one
+        # and it is the one nobody could see: every candidate that is not a
+        # Sungrow costs one Modbus read per unit id in `IDENTIFY_UNITS`,
+        # each with its own timeout, before it can be ruled out.
+        #
+        # Weighted rather than counted, because the two phases are not the
+        # same size and the number of candidates is unknown until the first
+        # one ends. A connect timeout is 1 second and concurrent; a refused
+        # identification is five sequential reads.
+        sweeping = 0.7
+
+        def _sweep_progress(done: int, _of: int) -> None:
+            self.async_update_progress(sweeping * (settled + done) / (addresses * 2))
+
+        for port in SCAN_PORTS:
+            found = await async_sweep(
+                self._searched, port=port, on_progress=_sweep_progress
+            )
+            # The one line that makes a failed search diagnosable afterwards.
+            # A search that finds nothing leaves the user at "nothing found"
+            # and left the log completely silent -- not even which network was
+            # swept, which is the first thing anybody would ask and the one
+            # thing that cannot be recovered from the dialog. Measured the
+            # hard way: a real search failed twice on this project's own dev
+            # instance and the log held nothing but two asyncio slow-task
+            # warnings.
+            _LOGGER.debug(
+                "Swept %s on port %s: %s answered",
+                self._searched,
+                port,
+                ", ".join(found) or "nothing",
+            )
+            candidates.extend((host, port) for host in found)
+            settled += addresses
+            self._set_stage(
+                f"Checked {settled} of {addresses * len(SCAN_PORTS)} addresses; "
+                f"{len({host for host, _ in candidates})} answered so far."
+            )
+
+        # **A sweep that found nothing gets one slower second chance**, and
+        # this is not defensive programming -- it is a measured failure.
+        #
+        # `async_port_open` gives each address one connect and `wait_for`
+        # measures wall clock, so an address is ruled out on a stopwatch
+        # rather than on an answer. With 64 sockets in flight and a one
+        # second budget, anything that slows the event loop takes the budget
+        # away from connects that would have completed in six milliseconds.
+        # Measured here: under an asyncio debug-mode loop -- which is exactly
+        # what `hass --debug` runs -- a sweep of a /24 holding two live
+        # inverters reported **nothing at all**, three runs out of three,
+        # while the same sweep on a normal loop found both every time. A
+        # Raspberry Pi doing something else is the same shape of problem.
+        #
+        # Retried only when *nothing* answered, because that is both the
+        # cheapest moment to spend the time -- the alternative is telling
+        # somebody their inverter does not exist -- and the case where a
+        # false absence does the most damage. Half the concurrency and twice
+        # the timeout, which was enough for three runs out of three under the
+        # same debug loop that failed three out of three at the defaults.
+        if not candidates:
+            self._set_stage(
+                "Nothing answered. Trying again more slowly, because a busy "
+                "moment can make a sweep miss a device that is there."
+            )
+            for port in SCAN_PORTS:
+                found = await async_sweep(
+                    self._searched,
+                    port=port,
+                    concurrency=max(1, CONCURRENCY // 2),
+                    timeout=TIMEOUT * 2,
+                )
+                _LOGGER.debug(
+                    "Re-swept %s on port %s slowly: %s answered",
+                    self._searched,
+                    port,
+                    ", ".join(found) or "nothing",
+                )
+                candidates.extend((host, port) for host in found)
+
+        # Addresses, not address-and-port pairs. One device answering on
+        # both 502 and 503 is one thing that answered, and telling somebody
+        # "2 answered but none was a Sungrow" when there is one box on their
+        # wall is a worse lie than saying nothing.
+        self._candidates = len({host for host, _ in candidates})
+
+        def _identifying(host: str, index: int, of: int) -> None:
+            self.async_update_progress(sweeping + (1 - sweeping) * (index - 1) / of)
+            self._set_stage(
+                f"Asking {host} what it is ({index} of {of}). Anything that is "
+                "not a Sungrow has to time out on every unit id before it can "
+                "be ruled out, which is the slowest part of this."
+            )
+
+        self._found = await self._async_identify(candidates, on_candidate=_identifying)
+        _LOGGER.debug(
+            "Identified %s of %s candidate(s) on %s as Sungrow: %s",
+            len(self._found),
+            len(candidates),
+            self._searched,
+            ", ".join(sorted(self._found)) or "none",
+        )
+        self.async_update_progress(1.0)
+
+    @callback
+    def _set_stage(self, stage: str) -> None:
+        """Say what is happening, and make the dialog show it.
+
+        Home Assistant re-renders a progress step when its placeholders
+        change -- but only when the step is entered again, which nothing does
+        on its own while a task runs. So the flow is reconfigured from inside
+        the task, which is what HACS's own device-code step does. Without it
+        the first text stays on screen for the whole sweep, which is how
+        "found 0 so far" was still showing after an inverter had been found.
+        """
+        if stage == self._stage:
+            return
+        self._stage = stage
+        with suppress(UnknownFlow):
+            self.hass.async_create_task(
+                self.hass.config_entries.flow.async_configure(flow_id=self.flow_id),
+                eager_start=False,
+            )
 
     async def async_step_nothing_found(
         self, user_input: dict[str, Any] | None = None
@@ -776,9 +1141,17 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         return fallbacks[0] if fallbacks else ""
 
     async def _async_identify(
-        self, candidates: list[str], port: int
+        self,
+        candidates: list[tuple[str, int]],
+        on_candidate: Callable[[str, int, int], None] | None = None,
     ) -> dict[str, dict[str, Any]]:
         """Ask each candidate what it is, keeping only the ones that answer.
+
+        Takes address **and port** together, and every candidate in one call.
+        Both matter: a sweep tries more than one port now, and `_described`
+        at the end is the only thing that can see that two addresses carry
+        one serial -- so identifying them one at a time would describe a
+        two-path inverter as two strangers.
 
         Every candidate unit, not just unit 1. Measured at a two-inverter
         house: the second answers on unit **2** at its own LAN port and times
@@ -789,7 +1162,14 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         reads it always did.
         """
         found: dict[str, dict[str, Any]] = {}
-        for host in candidates:
+        for index, (host, port) in enumerate(candidates, start=1):
+            if on_candidate is not None:
+                on_candidate(host, index, len(candidates))
+            if host in found:
+                # Already identified on an earlier port. `SCAN_PORTS` is
+                # ordered so that is 502, the one Sungrow's own documentation
+                # names.
+                continue
             for unit_id in IDENTIFY_UNITS:
                 try:
                     inverter, direct = await _async_probe(
@@ -883,7 +1263,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         # casually, and answering it wrongly to get past a dialog is exactly
         # how somebody loses years of history.
         if self._mode == MODE_DIAGNOSTICS:
-            return self._async_create(ENTITY_IDS_NEW)
+            return await self.async_step_testimony()
 
         known = async_legacy_ids_known(self.hass)
         if not known:
@@ -998,6 +1378,95 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             return f"{self._title} slave"
         return self._title
 
+    @callback
+    def _async_measured(self) -> str:
+        """Say what discovery already worked out, so nobody re-answers it.
+
+        The transport is the one that matters and the one already settled:
+        register 6100 distinguishes a direct connection from a dongle, 9
+        times out of 9. What an owner adds is the half no register reaches --
+        whether a dongle is on its cable or its WiFi, which is not
+        determinable and not guessed.
+        """
+        device = self._found.get(self._data.get(CONF_HOST, ""), {})
+        model = device.get("model") or "an unidentified model"
+        if device.get("direct"):
+            route = (
+                "its own LAN port — nothing answered register 13265, which is "
+                "what a cable straight into the inverter looks like"
+            )
+        else:
+            route = (
+                "a communication module, so a WiNet-S, WiNet-S2 or Logger is in "
+                "the path. Whether it is using its Ethernet socket or its WiFi "
+                "is **not** determinable over Modbus, and that is the part only "
+                "you can tell us"
+            )
+        return (
+            f"Already measured, so you do not need to tell us: this is "
+            f"**{model}**, reached through {route}."
+        )
+
+    async def async_step_testimony(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ask the few things a survey needs and no register can answer.
+
+        Only on the diagnostics path, and at setup rather than later, because
+        this is the entry that exists **in order** to produce a document --
+        somebody who chose this mode has already said they want to help, and
+        finding the questions afterwards meant finding a section of an
+        options page they had no reason to open.
+
+        Measured on a real installation: the button produced a document in
+        under ten seconds with every one of these fields empty, and the
+        contributor's reasonable reaction was "why was I not asked?".
+
+        Every answer is optional, and blank is a real answer: the document
+        format distinguishes an empty field -- the question was not put --
+        from `unsure`, where it was put and the owner did not know. What is
+        asked is what no register reaches: no register reports a battery's
+        make, nothing distinguishes a cable from a dongle's Ethernet socket,
+        and a Modbus proxy in the path changes what every dropped block means
+        while being invisible from this end.
+        """
+        if user_input is not None:
+            self._testimony = dict(user_input)
+            if self._testimony.get(CONF_SURVEY_OTHER_INVERTER) == OTHER_INVERTER_YES:
+                return await self.async_step_other_inverter()
+            return self._async_create(ENTITY_IDS_NEW)
+
+        return self.async_show_form(
+            step_id="testimony",
+            data_schema=_testimony_schema({}),
+            description_placeholders={"measured": self._async_measured()},
+            # Not the last step when the answer turns out to be yes, and Home
+            # Assistant has to be told before it knows: the flag decides
+            # whether the button says "Submit" or "Next". It is set here
+            # because the common answer is no, and a dialog that says "Next"
+            # and then finishes is the worse surprise of the two.
+            last_step=True,
+        )
+
+    async def async_step_other_inverter(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ask what the other inverter is, having been told there is one.
+
+        A step rather than a field, because a config flow form is built
+        before it is sent and cannot reveal a box when an answer changes. So
+        the box is only ever shown to the people it is about.
+        """
+        if user_input is not None:
+            self._testimony.update(user_input)
+            return self._async_create(ENTITY_IDS_NEW)
+
+        return self.async_show_form(
+            step_id="other_inverter",
+            data_schema=_other_inverter_schema(""),
+            last_step=True,
+        )
+
     def _async_create(self, entity_ids: str) -> ConfigFlowResult:
         """Create the entry with the id style already decided."""
         data = {**self._data, CONF_ENTITY_IDS: entity_ids, CONF_MODE: self._mode}
@@ -1009,7 +1478,26 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         # never shown.
         if self._named:
             data[CONF_NAME] = self._title
-        return self.async_create_entry(title=self._title, data=data)
+        return self.async_create_entry(
+            title=self._title,
+            data=data,
+            # Straight into the options, which is where the survey reads
+            # them from and where the same questions are editable
+            # afterwards. Two places to store one answer would be one too
+            # many.
+            options=self._testimony or None,
+            # The last screen of the wizard, and the only place left to say
+            # what happens next. A diagnostics entry has just been created
+            # and has done nothing yet -- the survey is a button somebody has
+            # to find and press, and the document arrives in a notification
+            # they have no reason to be watching. Both were reported by a
+            # contributor who ran the survey and then asked where the file
+            # was. `async_create_entry` renders this as markdown on the
+            # success dialog; the key is `config.create_entry.<description>`.
+            description=(
+                "diagnostics" if self._mode == MODE_DIAGNOSTICS else "default"
+            ),
+        )
 
 
 class SungrowOptionsFlow(OptionsFlow):
@@ -1021,31 +1509,242 @@ class SungrowOptionsFlow(OptionsFlow):
     """
 
     def __init__(self) -> None:
-        """Start with no survey in flight."""
-        #: Answers given on the survey page, held until the flow ends.
-        self._testimony: dict[str, Any] = {}
-        #: The task reading the inverter, so the progress step can wait on it.
-        self._survey_task: asyncio.Task[None] | None = None
-        #: What it produced, or why it did not.
-        self._document: dict[str, Any] | None = None
-        self._survey_error: str | None = None
+        """Start with nothing collected."""
+        #: What the one page collected, held while the promotion question is
+        #: put. Options are only written when a flow *ends*, so an entry
+        #: promoted on the way out would otherwise lose everything typed
+        #: beside the checkbox that promoted it.
+        self._pending_options: dict[str, Any] | None = None
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Offer the things worth changing after setup.
+        """Everything worth changing after setup, on one page.
 
-        Built rather than fixed, for one entry in it: a diagnostics-only
-        entry has no entities and needs a way to become an ordinary one, and
-        offering that to an entry that is already ordinary would be a menu
-        item that does nothing.
+        This was a menu of five items, each opening a form of its own. The
+        menu was the problem: it made somebody guess which of five words
+        held the setting they wanted, and it turned "change the interval and
+        the battery maximum" into two trips through a dialog that closes
+        between them.
+
+        A config flow cannot show tabs -- the frontend has exactly seven step
+        types and none of them is one -- but it can show **collapsible
+        sections**, which is the same idea without the tab bar: every setting
+        on one page, grouped, with the groups nobody is looking for folded
+        away. `data_entry_flow.section` is the mechanism.
+
+        Sections arrive nested, one dict per section key, which is why the
+        merge below reads section by section rather than flattening.
         """
-        options = ["polling", "permissions", "external", "survey", "settings"]
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            intervals = {
+                tier: int(value) for tier, value in user_input[SECTION_POLLING].items()
+            }
+            if all(value == INTERVAL_NEVER for value in intervals.values()):
+                # The one refusal on this page. An entry polling nothing is
+                # not a configuration, it is an entry that should be deleted.
+                errors["base"] = "nothing_left_to_poll"
+            else:
+                external = user_input[SECTION_EXTERNAL]
+                options: dict[str, Any] = {
+                    **self.config_entry.options,
+                    CONF_INTERVALS: intervals,
+                    CONF_PERMISSIONS: {
+                        **DEFAULT_PERMISSIONS,
+                        **self.config_entry.options.get(CONF_PERMISSIONS, {}),
+                        **user_input[SECTION_PERMISSIONS],
+                    },
+                    CONF_EXTERNAL_SOURCES: external.get(CONF_EXTERNAL_SOURCES, []),
+                    CONF_EXTERNAL_PLACEMENT: external[CONF_EXTERNAL_PLACEMENT],
+                    **user_input[SECTION_SURVEY],
+                    **user_input[SECTION_ADVANCED],
+                }
+                # The flag is checked as well as the value: a disabled
+                # control is a frontend courtesy, and the payload arrives over
+                # a websocket anybody with a token can write by hand.
+                if options.get(
+                    CONF_SURVEY_OTHER_INVERTER
+                ) == OTHER_INVERTER_YES and not options.get(
+                    CONF_SURVEY_OTHER_INVERTER_DETAIL
+                ):
+                    # Only when the answer is yes *and* nothing has been said
+                    # about it yet. Asking again on every visit would punish
+                    # the people who answered, and the field is on this page
+                    # to edit once it has a value -- there is nothing to
+                    # reveal after the first time.
+                    self._pending_options = options
+                    return await self.async_step_other_inverter()
+                if DEVICES_MODE_OFFERED and user_input.get(CONF_ADD_DEVICES):
+                    # The promotion question is asked on its own page, and
+                    # that is deliberate: it is the only irreversible choice
+                    # this integration offers, and it does not belong folded
+                    # into a section beside a poll interval.
+                    self._pending_options = options
+                    return await self.async_step_promote()
+                return self.async_create_entry(data=options)
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=self._async_options_schema(),
+            errors=errors,
+            # Every section's own evidence, in one place. A form has one set
+            # of placeholders and the sections share them, so each of these
+            # is referenced from the section that needs it.
+            description_placeholders={
+                **self._async_tier_table(
+                    {
+                        **DEFAULT_INTERVALS,
+                        **self.config_entry.options.get(CONF_INTERVALS, {}),
+                    }
+                ),
+                "reported_load": self._async_load_now(),
+                "measured": self._async_survey_measured(),
+                "battery_status": self._async_battery_status(),
+                # Why the promotion toggle above is greyed, in the same words
+                # the config flow uses for the same gate.
+                **_alpha_placeholders(),
+            },
+        )
+
+    @callback
+    def _async_options_schema(self) -> vol.Schema:
+        """Build the one form, in the order somebody reads it.
+
+        Polling first because it is what people come here for, and the
+        survey last because it is an offer rather than a setting. Everything
+        except polling starts collapsed: an open section is a claim that you
+        probably want to change this, and three of the four are things most
+        owners will never touch.
+        """
+        options = self.config_entry.options
+        current = {**DEFAULT_INTERVALS, **options.get(CONF_INTERVALS, {})}
+        permissions = {**DEFAULT_PERMISSIONS, **options.get(CONF_PERMISSIONS, {})}
+
+        schema: dict[Any, Any] = {}
+
+        # Only where it means something. An entry that already has devices
+        # would be offered a box that does nothing, which is the menu item
+        # this page replaced.
         if self.config_entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
-            # First, because it is the only reason somebody with this kind of
-            # entry opens this menu.
-            options.insert(0, "promote")
-        return self.async_show_menu(step_id="init", menu_options=options)
+            # Greyed rather than dropped while the gate is closed, so an
+            # owner can see that promotion exists and is coming. `read_only`
+            # makes the frontend disable the field and leave it out of what
+            # it submits, which is why the default above is what comes back.
+            schema[vol.Required(CONF_ADD_DEVICES, default=False)] = BooleanSelector(
+                BooleanSelectorConfig(read_only=True)
+                if not DEVICES_MODE_OFFERED
+                else BooleanSelectorConfig()
+            )
+
+        schema[vol.Required(SECTION_POLLING)] = section(
+            self._async_polling_schema(current), {"collapsed": False}
+        )
+        schema[vol.Required(SECTION_PERMISSIONS)] = section(
+            vol.Schema(
+                {
+                    vol.Required(
+                        PERMISSION_START_STOP,
+                        default=permissions[PERMISSION_START_STOP],
+                    ): SelectSelector(
+                        SelectSelectorConfig(
+                            mode=SelectSelectorMode.LIST,
+                            translation_key="audience",
+                            options=[AUDIENCE_ADMINS, AUDIENCE_USERS],
+                        )
+                    )
+                }
+            ),
+            {"collapsed": True},
+        )
+        schema[vol.Required(SECTION_EXTERNAL)] = section(
+            vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_EXTERNAL_SOURCES,
+                        default=list(options.get(CONF_EXTERNAL_SOURCES, ())),
+                    ): EntitySelector(
+                        EntitySelectorConfig(
+                            domain="sensor",
+                            device_class=SensorDeviceClass.POWER,
+                            multiple=True,
+                        )
+                    ),
+                    vol.Required(
+                        CONF_EXTERNAL_PLACEMENT,
+                        default=options.get(
+                            CONF_EXTERNAL_PLACEMENT, DEFAULT_EXTERNAL_PLACEMENT
+                        ),
+                    ): SelectSelector(
+                        SelectSelectorConfig(
+                            mode=SelectSelectorMode.LIST,
+                            translation_key="external_placement",
+                            options=[PLACEMENT_BEHIND_METER, PLACEMENT_SEPARATE],
+                        )
+                    ),
+                }
+            ),
+            {"collapsed": True},
+        )
+        schema[vol.Required(SECTION_ADVANCED)] = section(
+            vol.Schema(
+                {
+                    vol.Required(
+                        CONF_BATTERY_MAX_POWER,
+                        default=options.get(CONF_BATTERY_MAX_POWER, 0),
+                    ): vol.All(
+                        NumberSelector(
+                            NumberSelectorConfig(
+                                mode=NumberSelectorMode.BOX,
+                                min=0,
+                                max=50000,
+                                step=100,
+                                unit_of_measurement="W",
+                            )
+                        ),
+                        vol.Coerce(int),
+                    ),
+                    vol.Required(
+                        CONF_REGISTER_DUMP,
+                        default=options.get(CONF_REGISTER_DUMP, False),
+                    ): BooleanSelector(),
+                }
+            ),
+            {"collapsed": True},
+        )
+        # The testimony a survey needs and no register can answer, plus the
+        # one switch that changes what it reads. Saved here; *run* from the
+        # button on the device page, or the `run_survey` action, which is
+        # where a progress bar and a download link can exist and a modal
+        # dialog cannot. Same questions as the diagnostics setup step asks,
+        # from one schema, so the two cannot drift.
+        schema[vol.Required(SECTION_SURVEY)] = section(
+            _testimony_schema(options), {"collapsed": True}
+        )
+        return vol.Schema(schema)
+
+    async def async_step_other_inverter(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ask what the other inverter is, on the way out of the options page.
+
+        The same pattern as `async_step_promote`: options are only written
+        when a flow *ends*, so everything typed on the page is held in
+        `_pending_options` while this question is put, and written with it.
+        Losing a page of answers to a follow-up question would be a poor
+        trade for the question.
+        """
+        options = self._pending_options or dict(self.config_entry.options)
+        if user_input is not None:
+            self._pending_options = None
+            return self.async_create_entry(data={**options, **user_input})
+
+        return self.async_show_form(
+            step_id="other_inverter",
+            data_schema=_other_inverter_schema(
+                options.get(CONF_SURVEY_OTHER_INVERTER_DETAIL, "")
+            ),
+        )
 
     async def async_step_promote(
         self, user_input: dict[str, Any] | None = None
@@ -1063,6 +1762,9 @@ class SungrowOptionsFlow(OptionsFlow):
         ran `modbus_sungrow.yaml` has no history and no decision, so the
         entry is simply promoted.
         """
+        if not DEVICES_MODE_OFFERED:
+            return self.async_abort(reason="devices_mode_not_offered")
+
         known = async_legacy_ids_known(self.hass)
         if not known:
             known = await async_legacy_ids_with_history(self.hass)
@@ -1115,83 +1817,13 @@ class SungrowOptionsFlow(OptionsFlow):
             },
         )
         # Updating `data` already schedules a reload, so this only has to end
-        # the flow without touching the options.
-        return self.async_create_entry(data=dict(self.config_entry.options))
-
-    async def async_step_permissions(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Decide who may do the things that are not entities.
-
-        Which is a short list, and saying so on the screen matters more than
-        the setting itself: an owner who comes here expecting to lock down the
-        export limit or the EMS mode needs to know that this page cannot do
-        that and what does -- Home Assistant checks entity control centrally,
-        by user group, before any integration sees the call.
-        """
-        if user_input is not None:
-            permissions = {
-                **DEFAULT_PERMISSIONS,
-                **self.config_entry.options.get(CONF_PERMISSIONS, {}),
-                **user_input,
-            }
-            return self.async_create_entry(
-                data={**self.config_entry.options, CONF_PERMISSIONS: permissions}
-            )
-
-        current = {
-            **DEFAULT_PERMISSIONS,
-            **self.config_entry.options.get(CONF_PERMISSIONS, {}),
-        }
-        return self.async_show_form(
-            step_id="permissions",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        PERMISSION_START_STOP,
-                        default=current[PERMISSION_START_STOP],
-                    ): SelectSelector(
-                        SelectSelectorConfig(
-                            mode=SelectSelectorMode.LIST,
-                            translation_key="audience",
-                            options=[AUDIENCE_ADMINS, AUDIENCE_USERS],
-                        )
-                    )
-                }
-            ),
-        )
-
-    async def async_step_polling(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Set how often each tier is polled.
-
-        The most useful knob this integration has, because the scarce resource
-        is not bandwidth but connections: a Sungrow accepts very few Modbus
-        sessions at once, and most reported dropouts are two clients competing
-        for one. Slowing a tier, or turning it off, is the cheapest fix there
-        is -- and data nobody looks at is the cheapest thing to stop reading.
-        """
-        errors: dict[str, str] = {}
-        current = {
-            **DEFAULT_INTERVALS,
-            **self.config_entry.options.get(CONF_INTERVALS, {}),
-        }
-
-        if user_input is not None:
-            current = {tier: int(user_input[tier]) for tier in DEFAULT_INTERVALS}
-            if all(value == INTERVAL_NEVER for value in current.values()):
-                errors["base"] = "nothing_left_to_poll"
-            else:
-                return self.async_create_entry(
-                    data={**self.config_entry.options, CONF_INTERVALS: current}
-                )
-
-        return self.async_show_form(
-            step_id="polling",
-            data_schema=self._async_polling_schema(current),
-            errors=errors,
-            description_placeholders=self._async_tier_table(current),
+        # the flow -- with whatever the options page collected on the way
+        # here, or the entry's existing options when promotion was reached
+        # any other way.
+        return self.async_create_entry(
+            data=self._pending_options
+            if self._pending_options is not None
+            else dict(self.config_entry.options)
         )
 
     @callback
@@ -1247,67 +1879,6 @@ class SungrowOptionsFlow(OptionsFlow):
             rows.append(f"| `{tier}` | {shown} | {len(fields)} | {examples}, … |")
         return {"tiers": "\n".join(rows)}
 
-    async def async_step_external(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Name a generator the Sungrow cannot see, and say where it sits.
-
-        The one page in this flow that fixes a **wrong number** rather than
-        changing a preference. A non-Sungrow inverter on the same supply
-        makes `load_power` low by exactly its output, because the inverter
-        computes load from its own production and its grid meter -- so the
-        figure looks like a measurement and is not one.
-
-        Nothing can be probed here. The inverter cannot see the generator by
-        definition, so the placement has to be asked, and asking it is the
-        difference between removing an error and introducing one.
-        """
-        if user_input is not None:
-            return self.async_create_entry(
-                data={
-                    **self.config_entry.options,
-                    CONF_EXTERNAL_SOURCES: user_input.get(CONF_EXTERNAL_SOURCES, []),
-                    CONF_EXTERNAL_PLACEMENT: user_input[CONF_EXTERNAL_PLACEMENT],
-                }
-            )
-
-        options = self.config_entry.options
-        return self.async_show_form(
-            step_id="external",
-            data_schema=vol.Schema(
-                {
-                    # Filtered to power sensors at the picker, which is worth
-                    # more than validating afterwards: the unit has to be a
-                    # power unit for the sum to mean anything, and a device
-                    # class is how Home Assistant knows that before anybody
-                    # submits the form.
-                    vol.Optional(
-                        CONF_EXTERNAL_SOURCES,
-                        default=list(options.get(CONF_EXTERNAL_SOURCES, ())),
-                    ): EntitySelector(
-                        EntitySelectorConfig(
-                            domain="sensor",
-                            device_class=SensorDeviceClass.POWER,
-                            multiple=True,
-                        )
-                    ),
-                    vol.Required(
-                        CONF_EXTERNAL_PLACEMENT,
-                        default=options.get(
-                            CONF_EXTERNAL_PLACEMENT, DEFAULT_EXTERNAL_PLACEMENT
-                        ),
-                    ): SelectSelector(
-                        SelectSelectorConfig(
-                            mode=SelectSelectorMode.LIST,
-                            translation_key="external_placement",
-                            options=[PLACEMENT_BEHIND_METER, PLACEMENT_SEPARATE],
-                        )
-                    ),
-                }
-            ),
-            description_placeholders={"reported_load": self._async_load_now()},
-        )
-
     @callback
     def _async_load_now(self) -> str:
         """Say what the inverter currently reports the house is using.
@@ -1338,84 +1909,6 @@ class SungrowOptionsFlow(OptionsFlow):
         return (
             f"Right now this inverter reports a house load of **{reported:.0f} W**, "
             "which does not include anything it cannot see."
-        )
-
-    async def async_step_survey(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Collect the testimony a capability survey needs and cannot read.
-
-        Every answer here is optional, and leaving one blank is a real
-        answer: the document format distinguishes an empty field -- **the
-        question was not put** -- from `unknown`, where it was put and the
-        owner did not know. So an untouched page still produces an honest
-        document, just a less useful one.
-
-        Why any of it is asked at all: no register reports a battery's make,
-        nothing distinguishes a cable from a dongle's Ethernet socket, and a
-        Modbus proxy in the path changes what every dropped block means while
-        being completely invisible from this end.
-        """
-        if user_input is not None:
-            # Held rather than saved. The survey has to run with these
-            # answers in it so the contributor can see what their reading
-            # actually found, and options are only persisted when a flow
-            # ends -- so the document is built first and the answers are
-            # committed by the step that follows.
-            self._testimony = dict(user_input)
-            return await self.async_step_survey_run()
-
-        options = self.config_entry.options
-        return self.async_show_form(
-            step_id="survey",
-            data_schema=vol.Schema(
-                {
-                    vol.Optional(
-                        CONF_REPORTER, default=options.get(CONF_REPORTER, "")
-                    ): TextSelector(),
-                    vol.Optional(
-                        CONF_SURVEY_TRANSPORT,
-                        default=options.get(CONF_SURVEY_TRANSPORT, ""),
-                    ): SelectSelector(
-                        SelectSelectorConfig(
-                            mode=SelectSelectorMode.DROPDOWN,
-                            translation_key="survey_transport",
-                            options=list(TRANSPORT_CLAIMS),
-                        )
-                    ),
-                    vol.Optional(
-                        CONF_SURVEY_PROXY,
-                        default=options.get(CONF_SURVEY_PROXY, ""),
-                    ): SelectSelector(
-                        SelectSelectorConfig(
-                            mode=SelectSelectorMode.DROPDOWN,
-                            translation_key="survey_proxy",
-                            options=list(PROXY_CLAIMS),
-                        )
-                    ),
-                    vol.Optional(
-                        CONF_SURVEY_POLLERS,
-                        default=options.get(CONF_SURVEY_POLLERS, ""),
-                    ): TextSelector(),
-                    vol.Optional(
-                        CONF_SURVEY_BATTERY,
-                        default=options.get(CONF_SURVEY_BATTERY, ""),
-                    ): TextSelector(),
-                    vol.Optional(
-                        CONF_SURVEY_COMMENT,
-                        default=options.get(CONF_SURVEY_COMMENT, ""),
-                    ): TextSelector(TextSelectorConfig(multiline=True)),
-                    # Off unless somebody turns it on, every time. The third
-                    # octet is what separates one contributor's network from
-                    # another's, and a document reading `xxx.xxx` is complete
-                    # rather than damaged.
-                    vol.Required(
-                        CONF_PUBLISH_ADDRESS,
-                        default=options.get(CONF_PUBLISH_ADDRESS, False),
-                    ): BooleanSelector(),
-                }
-            ),
-            description_placeholders={"measured": self._async_survey_measured()},
         )
 
     @callback
@@ -1454,126 +1947,6 @@ class SungrowOptionsFlow(OptionsFlow):
         return (
             f"Already measured, so you do not need to tell us: this is **{model}**, "
             f"reached through {route}."
-        )
-
-    async def async_step_survey_run(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Read the inverter, with a spinner, because it takes a moment.
-
-        Nineteen probe reads and five timing reads. On a direct cable that is
-        under a second; through a WiNet-S over a VPN it has been fifteen. A
-        form that simply closed and left nothing behind was the first version
-        of this and it was indefensible -- the user had no way to tell
-        whether anything had happened, and the honest answer was that nothing
-        had until they went and downloaded diagnostics.
-        """
-        if self._survey_task is None:
-            self._survey_task = self.hass.async_create_task(
-                self._async_run_survey(), eager_start=False
-            )
-
-        if not self._survey_task.done():
-            return self.async_show_progress(
-                step_id="survey_run",
-                progress_action="running_survey",
-                progress_task=self._survey_task,
-            )
-
-        return self.async_show_progress_done(next_step_id="survey_result")
-
-    async def _async_run_survey(self) -> None:
-        """Build the document and keep it, or keep the failure instead.
-
-        Failures are shown rather than raised. Somebody who has just offered
-        to help should be told what went wrong, not dropped back into a menu
-        -- and a link that fails here is worth reporting in its own right.
-        """
-        merged = {**self.config_entry.options, **self._testimony}
-        try:
-            self._document = await async_build(self.hass, self.config_entry, merged)
-        except Exception as err:  # the message is the useful part
-            _LOGGER.warning("Survey failed for %s: %s", self.config_entry.title, err)
-            self._survey_error = f"{type(err).__name__}: {err}"
-
-    async def async_step_survey_result(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Say what was found, where the file is, and what to do with it.
-
-        The three things missing from the first version, and the third was
-        the worst: a contributor who fills in a form and is told nothing has
-        no idea whether they have helped, and no idea that the file they are
-        being asked for is behind a menu on a different page.
-        """
-        if user_input is not None:
-            if self._document is not None:
-                _async_survey_notice(self.hass, self.config_entry, self._document)
-            return self.async_create_entry(
-                data={**self.config_entry.options, **self._testimony}
-            )
-
-        if self._document is None:
-            return self.async_show_form(
-                step_id="survey_failed",
-                data_schema=vol.Schema({}),
-                description_placeholders={"error": self._survey_error or "unknown"},
-            )
-
-        return self.async_show_form(
-            step_id="survey_result",
-            data_schema=vol.Schema({}),
-            description_placeholders={
-                "found": summarise(self._document),
-                "issue_url": SURVEY_ISSUE_URL,
-                "discord_url": DISCORD_URL,
-            },
-        )
-
-    async def async_step_survey_failed(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Save the answers anyway, so the attempt is not wasted."""
-        return self.async_create_entry(
-            data={**self.config_entry.options, **self._testimony}
-        )
-
-    async def async_step_settings(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Everything that is not a poll interval."""
-        if user_input is not None:
-            return self.async_create_entry(
-                data={**self.config_entry.options, **user_input}
-            )
-
-        options = self.config_entry.options
-        return self.async_show_form(
-            step_id="settings",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        CONF_BATTERY_MAX_POWER,
-                        default=options.get(CONF_BATTERY_MAX_POWER, 0),
-                    ): vol.All(
-                        NumberSelector(
-                            NumberSelectorConfig(
-                                mode=NumberSelectorMode.BOX,
-                                min=0,
-                                max=50000,
-                                step=100,
-                                unit_of_measurement="W",
-                            )
-                        ),
-                        vol.Coerce(int),
-                    ),
-                    vol.Required(
-                        CONF_REGISTER_DUMP,
-                        default=options.get(CONF_REGISTER_DUMP, False),
-                    ): BooleanSelector(),
-                }
-            ),
-            description_placeholders={"battery_status": self._async_battery_status()},
         )
 
     @callback

@@ -48,6 +48,18 @@ def test_the_two_producers_agree_on_the_schema() -> None:
     assert fingerprint.SCHEMA == probe.SCHEMA
 
 
+def test_the_two_producers_agree_on_the_other_inverter_answers() -> None:
+    """One question, one set of answers, whichever tool put it.
+
+    The scanner offers a menu and the integration a dropdown, and they end up
+    in the same `user_inputs.other_inverter` field of the same format. A
+    document saying "y" from one and "yes" from the other would make
+    `generate_compatibility.py` group the same installation two ways.
+    """
+    assert tuple(probe.OTHER_INVERTER_ANSWERS) == fingerprint.OTHER_INVERTER_CLAIMS
+    assert fingerprint.OTHER_INVERTER_YES in probe.OTHER_INVERTER_ANSWERS
+
+
 def test_the_two_producers_agree_on_the_stand_in() -> None:
     """One device, one stand-in, whichever tool read it.
 

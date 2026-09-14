@@ -144,10 +144,57 @@ a decision only the maintainer can take, or work whose blocker is named.
    and written up in [Working out the topology](#working-out-the-topology);
    discovery and the name question are done. What remains is presenting the
    role it derives, and saying which claims are measured and which inferred.
+7. **Modbus over TLS, on port 516.** Nothing is blocking it and nothing
+   justifies it yet, which is an unusual pair and the reason it is written
+   down rather than done.
+
+   **The path exists end to end.** `modbus-connection` exports
+   `ModbusTlsParams(host, port, verify, check_hostname, sslctx, ...)`, and
+   Home Assistant's `async_get_unit` takes `ModbusParams`, which resolves to
+   `ModbusTcpParams | ModbusUdpParams | ModbusTlsParams |
+   ModbusSerialParams` -- **the TLS one included** -- so a TLS endpoint
+   would share one serialized
+   connection exactly as a plain one does, with no change to core and no
+   second client. Checked, not assumed.
+
+   **What is measured about 516** is in `CLAUDE.md`: a WiNet-S serves Modbus
+   over TLS there and it is readable -- TLS 1.2,
+   ECDHE-RSA-AES256-GCM-SHA384, a Sungrow self-signed certificate, and a
+   read of input 4989 through the tunnel returning the start of the serial.
+   Replicated at a second site on different dongle firmware. It is a
+   **dongle** feature: open on two WiNet-S dongles and on neither inverter's
+   own LAN port, at a house with no iHomeManager at all.
+
+   **What stops it being work worth doing today** is that it buys nothing
+   measured. Inputs 2612 and 2628 refuse with exception 0x02 over TLS
+   exactly as they do on 502, and the SBR's cell block refuses on both -- so
+   it is the same firmware behaviour behind a different wrapper, not a way
+   around what a dongle will not forward. `SCAN_PORTS` therefore excludes
+   516 deliberately: finding it would mean offering somebody an endpoint
+   that answers the same questions the same way.
+
+   **The one thing that would justify it**, and it is worth testing before
+   building anything: a house where **502 is occupied**. A Sungrow grants
+   very few sessions, and most reported dropouts are two clients competing
+   for one -- so if 516 is a *separate* session pool rather than the same
+   one behind TLS, it is a second way in for a house running EVCC or the
+   YAML package alongside this. Nobody has measured that. One reading from
+   one house settles it: hold a connection on 502 until it refuses, then try
+   516.
+
+   **And a security note that must not be lost in the doing.** The
+   certificate looks baked into the firmware -- subject `CN=sun`, issuer
+   `CN=OT.SUNGROW`, a thirty-year window, and *identical to the second* on
+   two unrelated houses. If that holds, the private key ships with every
+   dongle and this TLS encrypts the link while authenticating nothing, so
+   `verify=False` would not be a downgrade from anything real. **Not yet
+   proven**: the two hashes compared were two interfaces of one dongle,
+   which is the same device. A certificate hash from a third site settles
+   it, and is a five-second thing to ask a contributor for.
 
 ### Work blocked on evidence, not effort
 
-7. **Milestone 5 — iHomeManager.** Never measured, on any network — but no
+8. **Milestone 5 — iHomeManager.** Never measured, on any network — but no
    longer unfindable, and no longer short of a licence-clean map. `identify()`
    probes input 8000 on unit 247, so a contributor who owns one is told what
    they have instead of that nothing is there, and
@@ -160,7 +207,7 @@ a decision only the maintainer can take, or work whose blocker is named.
    it is one endpoint with one device on it. `collect.py` reports it and does
    not survey it, because every block that survey reads is an inverter's. See
    [cross_reference_modbus_manager.md](cross_reference_modbus_manager.md).
-8. **Milestone 8 — Sungrow Logger.** Also unmeasured, also documented —
+9. **Milestone 8 — Sungrow Logger.** Also unmeasured, also documented —
    *Logger Communication Protocol AW0 1.0.2.9*. It fronts a whole
    installation, which is the shape the one-entry-per-endpoint model was
    built for, so a reading would test that design rather than only add a
@@ -176,10 +223,10 @@ a decision only the maintainer can take, or work whose blocker is named.
    installation and not the storage behind it — worth knowing before
    designing it, rather than being found by a contributor whose battery
    entities never appear.
-8. **The SBR's per-module entities.** All 24 registers are read; none is an
+10. **The SBR's per-module entities.** All 24 registers are read; none is an
    entity, because an unfitted module answers 0 V and something has to
    establish the module count first. An SBR128 settles it.
-9. **SBH support**, which needs a register document nobody has.
+11. **SBH support**, which needs a register document nobody has.
 
 What would help most from a contributor is in
 [devices-wanted.md](device-fingerprints/devices-wanted.md), and the single
@@ -1514,20 +1561,63 @@ ships as a zip and cannot import the library, and
 safe -- a probe label *is* the published format, so renaming one on one side
 would silently unrelate every new reading from every old one.
 
-**What is asked, because no register answers it.** An options page collects
-the testimony: which cable, whether a Modbus proxy is in the path, whether
-anything else was polling, who is reporting, and whether the address may be
-published. All optional, and empty stays distinct from `unknown` -- the
-question not put against the owner not knowing. The page opens by saying
-what has already been measured, so nobody is asked whether they use a dongle
-when register 6100 settled it 9 times out of 9.
+**What is asked, because no register answers it.** The testimony: which
+cable, whether a Modbus proxy is in the path, whether anything else was
+polling, who is reporting, and whether the address may be published. All
+optional, and empty stays distinct from `unknown` -- the question not put
+against the owner not knowing. It opens by saying what has already been
+measured, so nobody is asked whether they use a dongle when register 6100
+settled it 9 times out of 9.
 
-Submitting it runs the survey behind a progress step and then reports what
-was found, where the file is, and where to send it. That last part is not
-decoration: the file sits behind a menu on a different page, which nobody
-would guess, and a reading nobody sends is worth nothing. The same text is
-left under Notifications, because a config-flow page is gone the moment it
-is dismissed and that is exactly when the instructions are needed.
+It is asked in **two** places, and that is a correction rather than a
+convenience. It began life only on an options page, which is wrong for the
+one case it exists for: somebody who picked *Diagnostics only* did so in
+order to send a reading, and then had to find a settings page they had no
+reason to open. Measured, by the maintainer, on his own machine -- a survey
+ran to completion and produced a document whose entire `user_inputs` block
+was empty, because nothing had ever put the question. So the **diagnostics
+setup path asks it before the entry is created**, as the last step, and the
+options page keeps the same questions for changing an answer later.
+`_testimony_schema()` is one function used by both, because two schemas that
+drifted would publish two vocabularies.
+
+**Where the survey runs.** Not in the flow. It is a **button on the device
+page** -- `button.<name>_run_capability_survey` -- with three diagnostic
+sensors beside it: progress in percent, the current step, and when the last
+run finished. A config flow could not do three things that matter here. It
+cannot be left while it works, which on a VPN link means sitting on a modal
+for a quarter of an hour. Its progress step has no determinate bar worth the
+name for a job whose duration varies twentyfold by transport. And it has no
+download button at all, which is the whole delivery problem.
+
+As entities, all three fall out for free: the *step* sensor's recorded
+history **is** the log of what was probed and in what order, which is the
+thing asked for when a survey stalls at one house and nowhere else; the
+progress sensor draws a bar on a dashboard; and the button can be pressed by
+a script, so a maintainer can say "run this" rather than "click through
+there". The progress sensor deliberately carries **no `state_class`**:
+long-term statistics outlive the entity that made them, and somebody who
+uninstalls weeks later should not inherit an "entity no longer exists"
+repair for a progress bar.
+
+**How the document is handed over**, which took two attempts. When a run
+finishes, a persistent notification carries the summary and a **signed,
+one-hour link** (`download.py`) to the document -- the same mechanism core's
+own diagnostics download uses, rather than writing a file into `www/` where
+it would be served to anyone who can reach Home Assistant, forever.
+
+The correction: a notification outlives its signature. An hour later it was
+still sitting in the sidebar pointing at a URL that had started returning
+401, which reads as a broken integration rather than as an expired grant. So
+the message now names the time the link dies, a timer rewrites it when that
+arrives, and a new run cancels the previous run's timer -- both notifications
+share one `notification_id`, so a stale timer would stamp "expired" on a link
+minutes old.
+
+Named beside it in both messages is the route that never expires: the device
+page's own **Download diagnostics**, which builds the same document from the
+same code and reads the saved testimony from the entry options. The
+short-lived link is the convenience; that button is the guarantee.
 
 **Two pieces deliberately left out**, and both are the reasons this was
 harder than it looked:
@@ -1563,9 +1653,25 @@ document.
 
 The shape: a first step asking what the entry is *for*. **Diagnostics only**
 connects, identifies what answers, probes capabilities, registers the device
-and creates **no entities** — so `PLATFORMS` is empty for that entry, the
-entity-ids question is never asked, and `async_claim_legacy_ids` never runs.
-**Full integration** is today's flow, unchanged.
+and creates **no readings** — the entity-ids question is never asked and
+`async_claim_legacy_ids` never runs. **Full integration** is today's flow,
+unchanged.
+
+What it does create is the four survey entities, and that is a deliberate
+revision of "no entities at all". Home Assistant registers a **device** only
+as a side effect of adding an entity carrying its `device_info`, so an entry
+with nothing at all has no device page — and no device page means no button,
+no progress, and no Download diagnostics, which is to say no way to do the
+one thing the mode exists for. The four are `EntityCategory.DIAGNOSTIC`, so
+they sit under the diagnostic heading rather than among the readings, and
+they describe the integration rather than the inverter.
+
+The cost of that was weighed against the alternative and is bounded:
+deleting the entry takes all four entities, the device and their states with
+it -- asserted in `tests/test_survey_device_page.py`, because "some entities
+will be created and will stay on the system until manually removed" is a
+fair thing to object to, and the only mechanism that actually behaves that
+way is long-term statistics. Hence no `state_class` on the progress sensor.
 
 Then the options flow can switch an entry from diagnostics-only to full
 later, which it already does correctly: an options change reloads the entry,
@@ -1573,7 +1679,7 @@ and the entity-ids choice would be asked at that point instead.
 
 Three things to be honest about:
 
-- An entry with no entities is unusual but entirely legal, and the
+- An entry with no *readings* is unusual but entirely legal, and the
   diagnostics download does not depend on any existing.
 - It still opens a Modbus connection, so it still spends one of the very few
   sessions a Sungrow grants. Diagnostics-only is cheaper than a full entry
@@ -2846,6 +2952,64 @@ Only the third reaches an existing install, which is why it exists at all;
 normalised spellings (`0.1.0a1`, `b1`, `rc1`) and rejects `0.1.0-alpha.1` with
 the reason, because pip would rewrite it and the manifest pin would then no
 longer match what is installed.
+
+### The first alpha ships diagnostics mode only
+
+`DEVICES_MODE_OFFERED` in
+[const.py](../custom_components/sungrow_modbus/const.py) is `False`, and it
+shuts the two places a **devices** entry can be created: the question the
+config flow opens with, and the promotion toggle on a diagnostics entry's
+options page. Nothing else branches on it, and no existing entry is affected —
+an installation already carrying a devices entry loads, polls and configures
+as before.
+
+The reason is the entity-id decision. It is the only irreversible thing this
+integration does, it decides which ids years of recorder history attach to,
+and both ways of getting it wrong are silent. An alpha's job here is to gather
+readings, which is exactly what the other mode is for.
+
+**Nothing is removed**, so somebody evaluating the integration can see that
+the ordinary setup exists. The two ends are shaped differently, and the
+difference is a frontend constraint worth recording because it is not
+guessable and it cost two attempts:
+
+- **A flow menu option cannot be disabled.** `async_show_menu` carries step
+  ids and their labels, and the frontend resolves each to a localised string
+  with no state attached. A menu can drop an option or leave it pressable;
+  there is no third thing.
+- **A form field can be, but only as a whole.** `read_only` is a common
+  option on every selector (`BaseSelectorConfig`), and the flow dialog turns
+  it into `disabled: true` on the field and then **leaves the value out of
+  what it submits** — so the voluptuous `default` is what comes back, and a
+  `vol.Required` without one would fail validation instead. It works inside
+  `section()` too, because the frontend recurses into `expandable` schemas.
+  What it cannot do is disable one *option* of a select: a `SelectOptionDict`
+  is a value and a label and nothing else.
+
+The first attempt replaced the opening menu with a form carrying a greyed
+two-option list. It was wrong on sight: the whole control greys, so the
+answer that *does* work was greyed out beside the one that does not, and the
+dialog read as one where nothing worked.
+
+So the menu stays and both answers stay pressable. **Set up my inverter**
+leads to `devices_later`, a step with one button that says the ordinary setup
+comes later and then continues as a diagnostics entry. An abort would have
+been shorter and would have closed the dialog on somebody whose only mistake
+was pressing a button that was offered to them. That step is also where the
+refusal actually lives — it never sets `_mode`, so a client posting the menu's
+step id by hand gets a diagnostics entry, and `async_step_promote` aborts for
+the same reason.
+
+The **options page** end has no such problem, because the promotion toggle is
+a field rather than a menu option: it is `read_only` and genuinely greyed,
+with the same sentence underneath it.
+
+`tests/test_alpha_gate.py` asserts both sides, including that flipping the
+constant restores the menu exactly — the flag's whole promise is that
+re-enabling is one line, and a promise nothing checks is one that quietly
+stops being kept. The devices-path suites take a `devices_mode_offered`
+fixture from `tests/conftest.py` so that gating the door does not retire the
+tests for the room.
 
 **The rename policy.** During the preview, an entity name may still change.
 That is cheaper than it was long believed here: a name supplies an entity id

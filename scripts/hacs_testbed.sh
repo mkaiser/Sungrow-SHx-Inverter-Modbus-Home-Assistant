@@ -38,6 +38,37 @@ PORT="${PORT:-8124}"
 HACS_URL="https://github.com/hacs/integration/releases/latest/download/hacs.zip"
 PREVIEW="https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview"
 
+# Is an instance already serving this directory?
+#
+# Home Assistant 2026.9 takes an advisory `flock` on `<config>/.ha_run.lock`
+# and writes its pid there, and it deliberately does not unlink the file on
+# exit -- so the file's presence means nothing and the pid in it means
+# everything. Checked here rather than left to Home Assistant, for two
+# reasons: its own refusal arrives after this script has printed a banner
+# promising an instance it is not going to start, and everything below this
+# point *writes* to the directory. `scripts/ha_http_port.py` in particular
+# edits a store that a running instance holds in memory and rewrites on
+# change, which would lose one of the two writes.
+running_pid() {
+    local lock="${CONFIG}/.ha_run.lock"
+    [[ -f "${lock}" ]] || return 1
+    python3 - "${lock}" <<'PYTHON'
+import json, os, sys
+
+try:
+    pid = json.load(open(sys.argv[1]))["pid"]
+except (OSError, ValueError, KeyError):
+    raise SystemExit(1)
+try:
+    os.kill(pid, 0)          # signal 0 asks "is it there", and sends nothing
+except ProcessLookupError:
+    raise SystemExit(1)      # a stale file, which Home Assistant copes with
+except PermissionError:
+    pass                     # somebody else's process, so it is running
+print(pid)
+PYTHON
+}
+
 update=false
 boot=true
 for argument in "$@"; do
@@ -45,6 +76,11 @@ for argument in "$@"; do
         --update) update=true ;;
         --setup-only) boot=false ;;
         --reset)
+            if pid="$(running_pid)"; then
+                echo "config-hacs is being served right now by pid ${pid}." >&2
+                echo "Stop it first (kill ${pid}), then reset." >&2
+                exit 2
+            fi
             # Deliberately not `rm -rf $CONFIG` from a variable that could be
             # empty: an unset CONFIG would make that `rm -rf /`. The path is
             # spelled out, and checked first.
@@ -64,27 +100,60 @@ for argument in "$@"; do
     esac
 done
 
+if pid="$(running_pid)"; then
+    cat <<ALREADY
+A Home Assistant is already serving config-hacs/, as pid ${pid}.
+
+  Open it:   http://localhost:${PORT}   (log in as dev / dev)
+  Stop it:   kill ${pid}
+  Or stop both instances and the simulator:   make stop
+
+Nothing was changed. Home Assistant would have refused to start a second
+one anyway -- this says so before setting anything up, because the steps
+below write to that directory while it is in use.
+ALREADY
+    exit 0
+fi
+
 mkdir -p "${CONFIG}"
 
 if [[ ! -f "${CONFIG}/.HA_VERSION" ]]; then
     hass --config "${CONFIG}" --script ensure_config
 fi
 
-# `default_config:` rather than a hand-picked list. HACS depends on http,
-# websocket_api, frontend, persistent_notification, lovelace and repairs, and
-# this instance exists to behave like somebody's real one -- so it gets the
-# same bundle a real one has. The first boot is therefore slow: Home
-# Assistant pip-installs each component's requirements, and the UI 404s until
-# it is done. The next boot is quick.
-if [[ ! -f "${CONFIG}/configuration.yaml" ]] || ! grep -q "hacs_testbed" "${CONFIG}/configuration.yaml"; then
+# No `default_config:`, and the reason is worth keeping.
+#
+# That bundle depends on `go2rtc`, whose binary ships only inside Home
+# Assistant's container images -- a pip install cannot find it, so `go2rtc`
+# fails to initialise and takes `default_config` down with it. Three ERROR
+# lines on every boot, for a WebRTC camera proxy this instance will never
+# use.
+#
+# Nothing here needs the bundle. `homeassistant/bootstrap.py`'s
+# DEFAULT_INTEGRATIONS already sets up frontend, analytics, person, backup
+# and the helpers unless recovery mode is on; HACS's manifest declares http,
+# websocket_api, lovelace, repairs and persistent_notification, and Home
+# Assistant sets a config entry's dependencies up when it loads. So the list
+# below is only what somebody looking at this instance would otherwise miss.
+if [[ ! -f "${CONFIG}/configuration.yaml" ]] || ! grep -q "hacs_testbed v3" "${CONFIG}/configuration.yaml"; then
     cat > "${CONFIG}/configuration.yaml" <<YAML
 # Written by scripts/hacs_testbed.sh -- an instance for testing the HACS
 # install of this integration. Delete the directory to start over.
-# hacs_testbed
-default_config:
+# hacs_testbed v3
+#
+# No \`http:\` block, deliberately. Home Assistant 2026.9 keeps the HTTP
+# config in .storage/http and ignores this file once it has migrated it --
+# raising a repair issue to say so. A port set here becomes a *pending*
+# config that reverts itself after five minutes, which is how this instance
+# once came up on :8123 and collided with the dev one.
+# scripts/ha_http_port.py writes the port where it is actually read.
+#
+# No \`default_config:\` either: it depends on go2rtc, whose binary exists
+# only in Home Assistant's container images, and its failure takes the whole
+# bundle with it. What this instance needs, Home Assistant loads on its own.
 
-http:
-  server_port: ${PORT}
+# A recorder, so an entity has a graph behind it.
+history:
 
 logger:
   default: info
@@ -117,6 +186,11 @@ print(json.loads(pathlib.Path(sys.argv[1]).read_text())['version'])
     echo "HACS ${version} unpacked into config-hacs/custom_components/hacs"
 fi
 
+# The port, written where 2026.9 reads it. Not in configuration.yaml: see
+# scripts/ha_http_port.py, which has the whole mechanism. Harmless before the
+# first boot, when the store does not exist yet -- it says so and moves on.
+python3 "${PWD}/scripts/ha_http_port.py" "${CONFIG}" "${PORT}"
+
 # Nothing is symlinked here. Said out loud because every other script in this
 # repository does the opposite, and because a symlink at this path would let
 # HACS write into tracked files.
@@ -147,26 +221,27 @@ import json, pathlib
 print(json.loads(pathlib.Path('${CONFIG}/custom_components/hacs/manifest.json').read_text())['version'])
 ")
 
+  Onboarding is done for you, in the background, as soon as this
+  instance is serving: log in as dev / dev. Those credentials are
+  deliberately public and only ever acceptable because this directory is
+  gitignored and holds fabricated data.
+
   What this script cannot do for you
 
-  1  Onboarding. Create any account -- it is local to config-hacs/ and
-     holds nothing. dev / dev is fine; this instance talks to the
-     simulator unless you point it somewhere else.
-
-  2  Settings -> Devices & services -> Add integration -> HACS.
+  1  Settings -> Devices & services -> Add integration -> HACS.
      It asks you to authorise a GitHub account by typing a code at
      https://github.com/login/device. That is HACS talking to GitHub, not
      to this project, and it cannot be automated from here.
 
-  3  HACS -> three dots -> Custom repositories. Add
+  2  HACS -> three dots -> Custom repositories. Add
      ${PREVIEW}
      with category Integration. Then open it and Download.
 
-  4  Restart Home Assistant. The library comes from PyPI on the way up,
+  3  Restart Home Assistant. The library comes from PyPI on the way up,
      which is the step that surprises people -- it needs working internet
      and it makes that one boot slower.
 
-  5  Settings -> Devices & services -> Add integration ->
+  4  Settings -> Devices & services -> Add integration ->
      Sungrow Modbus (preview).
 
   What to watch for, because this is the install a user gets
@@ -194,4 +269,24 @@ if [[ "${boot}" == false ]]; then
     exit 0
 fi
 
-exec hass --config "${CONFIG}" --debug
+# Onboarding, in the background, while Home Assistant starts in front of it.
+#
+# A fresh instance opens on `onboarding.html` and asks for an account before
+# it shows anything, which is friction with no payoff here: the account is
+# local to a gitignored directory, it guards fabricated data, and it is the
+# same dev / dev the other instance uses. So this asks the API instead.
+#
+# It has to be concurrent, because the endpoint only exists once the instance
+# is serving -- and it is idempotent, so a second boot prints one line and
+# stops. Its output interleaves with the log, which is why it says what it
+# did rather than being silent.
+(
+    python3 "${PWD}/scripts/ha_onboard.py" --url "http://127.0.0.1:${PORT}" \
+        --username dev --password dev || true
+) &
+
+# Without `--debug`, for the reason spelled out in scripts/develop.sh: it is
+# a loop mode rather than a logging flag, and an asyncio debug loop makes this
+# integration's network search report an empty network. This testbed exists to
+# see what a user gets, and a user does not run with it.
+exec hass --config "${CONFIG}"

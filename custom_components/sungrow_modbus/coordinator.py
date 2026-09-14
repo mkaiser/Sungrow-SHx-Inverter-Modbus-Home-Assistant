@@ -6,6 +6,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import timedelta
 import logging
+from typing import Any
 
 from modbus_connection import ModbusConnectionError, ModbusError
 
@@ -437,6 +438,21 @@ class SungrowRuntimeData:
     Read by `serves`, because the answer decides which entities exist and not
     only what they are called: the seventeen `legacy_only` sensors are
     created for an entry carrying that history and for nothing else.
+    """
+
+    survey: Any = None
+    """The `SurveyRunner` for this entry, or None before setup finishes.
+
+    **Last, and it has to be.** Every caller in the tests builds this
+    positionally -- `SungrowRuntimeData(coordinators, capabilities,
+    intervals, ...)` -- so a field inserted anywhere above shifts all of
+    them silently: `intervals` lands in `capabilities`, and ninety tests
+    fail with a `KeyError` naming a component, a long way from the cause.
+    Measured, by doing exactly that.
+
+    Typed loosely on purpose: `survey.py` imports this module for the entry
+    type, so naming the class here would close the circle. The platforms
+    that use it import the real type.
     """
 
     @property

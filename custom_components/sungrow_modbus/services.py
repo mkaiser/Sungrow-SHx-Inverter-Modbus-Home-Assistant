@@ -65,6 +65,18 @@ _LOGGER = logging.getLogger(__name__)
 SERVICE_START_INVERTER = "start_inverter"
 SERVICE_STOP_INVERTER = "stop_inverter"
 
+#: Running a capability survey without a button to press.
+#:
+#: An ordinary entry has no survey entities -- somebody who installed this for
+#: solar sensors should not carry diagnostic tooling they never asked for --
+#: so this is how they help if they decide to. A diagnostics-only entry has
+#: the button as well, because producing a reading is the whole reason that
+#: kind of entry exists.
+#:
+#: An action rather than an entity leaves nothing behind: no registry row, no
+#: recorded history, nothing to remove afterwards.
+SERVICE_RUN_SURVEY = "run_survey"
+
 #: Register 13000, from V1.1.11: "0xCF: Boot, 0xCE: Shutdown".
 START = 0xCF
 STOP = 0xCE
@@ -101,6 +113,12 @@ def async_setup_services(hass: HomeAssistant) -> None:
     hass.services.async_register(
         DOMAIN, SERVICE_STOP_INVERTER, _async_stop, schema=SCHEMA
     )
+    # Not authorised the way start and stop are: this reads and writes
+    # nothing, and the worst a stray call can do is spend one connection for
+    # a few seconds.
+    hass.services.async_register(
+        DOMAIN, SERVICE_RUN_SURVEY, _async_run_survey, schema=SCHEMA
+    )
 
 
 async def _async_start(call: ServiceCall) -> None:
@@ -111,6 +129,20 @@ async def _async_start(call: ServiceCall) -> None:
 async def _async_stop(call: ServiceCall) -> None:
     """Shut the inverter down."""
     await _async_write(call, STOP, "stop")
+
+
+async def _async_run_survey(call: ServiceCall) -> None:
+    """Read the inverter and offer the document, as the button does.
+
+    Refuses politely when one is already running: two surveys interleaving
+    their reads on one serialized connection is what a Sungrow's very small
+    session count cannot take.
+    """
+    entry = _async_entry_for(call.hass, call.data[ATTR_DEVICE_ID])
+    if not entry.runtime_data.survey.async_start():
+        raise HomeAssistantError(
+            translation_domain=DOMAIN, translation_key="survey_already_running"
+        )
 
 
 async def _async_authorize(call: ServiceCall, entry: SungrowConfigEntry) -> None:

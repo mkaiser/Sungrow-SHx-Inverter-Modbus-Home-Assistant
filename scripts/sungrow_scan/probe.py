@@ -309,6 +309,24 @@ class BatteryMatch(NamedTuple):
     capacity_kwh: float
 
 
+def _model_for_code(code: object) -> str | None:
+    """Return the model name for a `0x….` device type code string, or None.
+
+    Takes the published hex string rather than an int because that is what
+    both producers hold at the point they need it, and because a code that is
+    missing or malformed has to come back as None rather than raise: a
+    document describing an unknown inverter is exactly the document this
+    project most wants to receive.
+    """
+    text = str(code or "")
+    if not text.startswith("0x"):
+        return None
+    try:
+        return _model_for(int(text, 16))
+    except ValueError:
+        return None
+
+
 def _battery_model_for_capacity(capacity_kwh: float | None) -> BatteryMatch | None:
     """Name a Sungrow pack from its rated capacity, library or not."""
     if have_library():
@@ -549,8 +567,16 @@ def _fake_serial(real: str) -> str:
 #: as one from a terminal. The tables, the schema and the stand-in
 #: derivation are duplicated in `sungrow_modbus.fingerprint` for that
 #: producer, and `tests/test_fingerprint_tables_agree.py` keeps the copies
-#: identical.
-SCHEMA = 17
+#: identical. 18 asks whether the installation holds a **non-Sungrow
+#: inverter**, in `user_inputs.other_inverter` and its free-text
+#: `other_inverter_detail`. It is a schema bump rather than an addition
+#: because the question changes how an existing field should be read: a
+#: Sungrow computes house load from its own output plus grid import, so a
+#: second inverter on the same meter makes every `load_power` figure low by
+#: exactly that inverter's output while every register answers normally. A
+#: document at 17 or below is silent on it, and silence there cannot be
+#: distinguished from "no".
+SCHEMA = 18
 
 #: Keys of the connection block that carry a claim rather than a measurement.
 #: They are moved into `user_inputs`, so the published `connection` holds only
@@ -565,6 +591,20 @@ PROXY_ANSWERS: dict[str, str] = {
     "yes": "yes -- modbus-proxy, evcc's proxy, a Home Assistant add-on",
     "no": "no, this talks straight to the inverter",
     "unknown": "I do not know what that is",
+}
+
+#: The answers to "is there a non-Sungrow inverter here", as a menu.
+#:
+#: Two, where the proxy question has three. Somebody who does not know what a
+#: Modbus proxy is has told us something useful by saying so; somebody who
+#: does not know what is on their own roof is not a case worth a menu entry.
+#:
+#: Kept equal to `sungrow_modbus.fingerprint.OTHER_INVERTER_CLAIMS`, which is
+#: what the integration offers in its own dialog, by
+#: `tests/test_fingerprint_tables_agree.py`.
+OTHER_INVERTER_ANSWERS: dict[str, str] = {
+    "yes": "yes -- there is another inverter that is not a Sungrow",
+    "no": "no, the Sungrow is the only inverter here",
 }
 
 #: Where the contributors are. Used only to render a local time beside the UTC
@@ -644,6 +684,8 @@ INVOCATION_FLAGS = (
     ("--reporter", "reporter"),
     ("--battery", "battery"),
     ("--comment", "comment"),
+    ("--other-inverter", "other_inverter"),
+    ("--other-inverter-detail", "other_inverter_detail"),
 )
 
 
@@ -2235,6 +2277,19 @@ def _document(raw: dict, fingerprint: dict) -> dict:
             # quirk away or introduce one, and frame quirks are why
             # `layout.py` exists.
             "modbus_proxy": raw.get("proxy", ""),
+            # Whether a **non-Sungrow** inverter shares the installation, and
+            # what it is. Empty means the question was not put, as above.
+            #
+            # It earns its place by what it explains: the inverter computes
+            # house load from its own output plus grid import, so a second
+            # inverter feeding the same meter makes `load_power` low by
+            # exactly its output -- with every register answering normally.
+            # Without this field a maintainer looking at figures that do not
+            # add up cannot tell that from a decoding fault, and no register
+            # can settle it, because the inverter cannot see the thing that
+            # is confusing it.
+            "other_inverter": raw.get("other_inverter", ""),
+            "other_inverter_detail": raw.get("other_inverter_detail", ""),
         },
         # The tail of the address, and only ever with permission. Observed
         # rather than claimed -- this is the address that answered -- so it
@@ -2254,6 +2309,14 @@ def _document(raw: dict, fingerprint: dict) -> dict:
         "ip_address_last_two_octets": _address_tail(raw),
         "device": {
             "device_type_code": fingerprint.get("device_type_code"),
+            # The model the code means, spelled out. The code is what the
+            # inverter actually reports and stays the authority; this is the
+            # lookup, kept beside it because `0x0E03` is not a thing anybody
+            # can read, and a document is mostly read by people -- including
+            # in an issue where nobody has the table to hand. Null when the
+            # code is one this project has never seen, which is a finding in
+            # itself and is why the code is not replaced by it.
+            "device_type": _model_for_code(fingerprint.get("device_type_code")),
             "output_type": fingerprint.get("output_type"),
             # One key, whose *name* is the explanation: three fields saying
             # "this is not the real serial" in three different ways was two
@@ -2522,6 +2585,11 @@ async def capabilities(args: argparse.Namespace) -> Reading:
         "battery": args.battery,
         "comment": args.comment,
         "proxy": args.proxy,
+        # `getattr`, because the bare `capabilities` subcommand's parser
+        # supplies these and older callers holding a hand-built Namespace do
+        # not. Absent reads the same as unasked, which is the honest default.
+        "other_inverter": getattr(args, "other_inverter", ""),
+        "other_inverter_detail": getattr(args, "other_inverter_detail", ""),
         "address_detail": args.address,
         # Reconstructed here rather than stored as the Namespace it came
         # from: `raw` is written out as JSON, and an argparse Namespace is not
@@ -3098,6 +3166,37 @@ def _ask_proxy() -> str:
     return _ask_menu(list(PROXY_ANSWERS), PROXY_ANSWERS, "unknown")
 
 
+def _ask_other_inverter() -> tuple[str, str]:
+    """Ask whether a non-Sungrow inverter shares this installation.
+
+    Returns the answer and, when it is yes, what they said it is.
+
+    Worth a question because of what it does to a figure that otherwise looks
+    like a fault. A Sungrow does not measure house load; it computes it, from
+    its own output plus what the grid meter says is coming in. A second
+    inverter feeding the same meter therefore makes `load_power` low by
+    exactly that inverter's output -- continuously, while every register
+    answers normally and every block reads clean.
+
+    From the maintainer's end that is indistinguishable from a decoding bug,
+    and no register can settle it: the inverter cannot see the thing that is
+    confusing it. So it has to be asked, and the make and size are worth
+    having because they say how large the error is.
+
+    The detail is asked **only after a yes**, rather than as a box that sits
+    there empty for the many people who have one inverter. A question nobody
+    has to answer is cheaper than a field nobody has to fill in.
+    """
+    answer = _ask_menu(list(OTHER_INVERTER_ANSWERS), OTHER_INVERTER_ANSWERS, "no")
+    if answer != "yes":
+        return answer, ""
+    print()
+    print("  What is it? The make, and its size if you know it -- 'Fronius")
+    print("  Symo 8.2' or '5 kW string inverter, south roof'. It explains a")
+    print("  load figure that would otherwise read as a bug in this project.")
+    return answer, _ask("The other inverter")
+
+
 class Identity(NamedTuple):
     """Who answered at one address, as evidence rather than as a sentence.
 
@@ -3656,6 +3755,24 @@ def main() -> int:
         "blocks that never drop describe the proxy, and it rebuilds every "
         "frame, which can hide or create the length quirks layout.py exists "
         "for. 'unknown' is a real answer",
+    )
+    p_caps.add_argument(
+        "--other-inverter",
+        default="",
+        choices=("", *OTHER_INVERTER_ANSWERS),
+        help="whether a non-Sungrow inverter shares this installation. It "
+        "explains a reading that otherwise looks like a fault: the Sungrow "
+        "computes house load from its own output plus grid import, so a "
+        "second inverter on the same meter makes every load figure low by "
+        "exactly that inverter's output while every register answers "
+        "normally",
+    )
+    p_caps.add_argument(
+        "--other-inverter-detail",
+        default="",
+        help="what that other inverter is -- make and size, e.g. 'Fronius "
+        "Symo 8.2'. Free text and **published in the document**, so keep "
+        "serials, addresses and names out of it",
     )
     p_caps.add_argument(
         "--comment",
