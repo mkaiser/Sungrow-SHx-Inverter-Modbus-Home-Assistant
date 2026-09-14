@@ -165,6 +165,151 @@ instance can be used to try the other answer. `--from <snapshot>` uses a
 registry exported from a real instance instead of the generated entity map —
 more faithful, but such a file belongs in `.testdata/`, never in the repo.
 
+## Testing the install a user actually gets
+
+Everything above runs the working tree: `scripts/develop.sh` symlinks
+`config/custom_components` to this repository, so the instance on :8123 is
+your editor with a UI attached. That is the wrong instrument for one class of
+question — *does this install?* — and the two failures that cost most time on
+this project were both of that class. A manifest pinning a library version
+whose wheel lacks a module the integration imports passes every test, ruff,
+hassfest and the release, and fails only in a real install. HACS refusing a
+repository whose default branch has no `custom_components/` is invisible
+from here entirely.
+
+`scripts/hacs_testbed.sh` (`make hacs`) is the other instrument: a **second**
+Home Assistant, on :8124, against `config-hacs/`, with HACS downloaded into
+it. Nothing in it is symlinked. HACS installs this integration from the
+preview channel, over the network, so what runs there is what was
+*published*.
+
+```console
+$ make hacs                       # sets up if needed, then boots
+$ make hacs ARGS=--setup-only     # prepare it without holding the terminal
+$ make hacs ARGS=--update         # re-download HACS first
+$ make hacs ARGS=--reset          # delete config-hacs/ and start over
+```
+
+It onboards itself (`dev` / `dev`, same as the other instance) and refuses to
+run while an instance is already serving that directory, printing the pid to
+kill — everything after that check writes to the directory, and one of the
+things it writes is a store a running Home Assistant holds in memory.
+
+Two steps are yours, and the script prints them before it boots:
+
+1. **Add integration → HACS**, which asks you to authorise a GitHub account
+   with a device code at <https://github.com/login/device>. There is no way
+   past it: HACS 2.x has no path through its config flow that skips the
+   device step, because it uses the token for GitHub API calls whose
+   unauthenticated limit is 60 requests an hour. Any account works. (Its
+   *catalogue* no longer comes from GitHub at all — HACS 2.x fetches that
+   from `data-v2.hacs.xyz`.)
+2. **HACS → ⋮ → Custom repositories**, the preview channel's URL, category
+   *Integration*, then **Download** and restart.
+
+What this instance is for is the part you cannot see from :8123:
+
+- **The version HACS shows is a commit hash**, because the channel publishes
+  no releases of its own. That is what a bug report should quote, and seeing
+  it here is how you learn to ask for it.
+- **The library is pip-installed from PyPI** against the pin, on the restart
+  after downloading. `RequirementsNotFound` surfaces here and nowhere else —
+  `scripts/check_pinned_library.py` is the check that catches it earlier.
+- **It is not your working tree.** A change you make in this repository does
+  not appear there until it reaches the preview channel, which is a commit,
+  a green CI run and a sync away. That lag is the point: it is what a user
+  is subject to.
+
+Why a separate config directory rather than HACS in `config/`: HACS downloads
+into `<config>/custom_components/<domain>`, so through the dev instance's
+symlink it would write into this repository over tracked files, and drop its
+own `hacs/` directory where hassfest and the test suite would find it. The
+preview channel also ships the same domain, `sungrow_modbus`, so two copies
+at one path is the conflict `doc/installing_a_preview.md` warns users about
+rather than an upgrade.
+
+## The survey on the device page
+
+A capability survey is what this project learns from, and it used to cost a
+contributor a Python run on a machine that can reach the inverter. It is now
+a button on the device page, with three diagnostic sensors beside it:
+
+| Entity | What it is for |
+| --- | --- |
+| `button.<name>_run_capability_survey` | Starts one. Unavailable while a run is in flight; the runner refuses a second anyway |
+| `sensor.<name>_survey_progress` | Percent complete. Counted reads, not elapsed time — the same survey is under a second on a cable and minutes over a VPN |
+| `sensor.<name>_survey_step` | What is being read right now. **Its recorded history is the point**: 19 probes and 5 timing reads in order — plus 52 band sweeps when a dump was asked for — which is what says *where* a slow link stalls rather than that it did |
+| `sensor.<name>_survey_finished` | When the last run ended, with `fields_read` and `has_document` as attributes |
+
+They exist in both setup modes. A *Diagnostics only* entry has no readings at
+all, and these four are the entirety of its device page — which is also why
+it has one: Home Assistant registers a device only as a side effect of an
+entity carrying its `device_info`.
+
+`survey.py` owns the run and holds the state; `fingerprint.py` does the
+reading and calls back with a fraction and a label; `survey_entities.py`
+turns that into states over one dispatcher signal per entry. Nothing in
+`survey.py` talks Modbus.
+
+**Three things that are easy to get wrong here.**
+
+The progress sensor has **no `state_class`**, deliberately and with a comment
+saying so. A measurement state class makes the recorder keep long-term
+statistics, and those are the one thing that outlives the entity: deleting
+the config entry takes the entities, the device and their states with it, but
+statistics rows survive and become an "entity no longer exists" repair for
+somebody who uninstalled weeks ago. Hourly averages of a progress bar are
+worth nothing anyway.
+
+The download link is **signed and short-lived** — an hour — and the
+notification that carries it is not. Left alone, an hour later there is a
+notification in the sidebar pointing at a URL that now 401s, which reads as a
+broken integration. So the message names the time, a timer rewrites it when
+that passes, and starting a new run cancels the old timer; both notifications
+share one `notification_id`, so a stale timer would otherwise stamp
+"expired" on a link minutes old. The timer is dropped on unload, or the test
+harness calls it a lingering timer and is right to.
+
+The route that does not expire is **Download diagnostics** on the same page.
+`diagnostics.py` builds the same document through the same `async_build`,
+reading the saved testimony from `entry.options`. Treat the notification as
+the convenience and that button as the guarantee.
+
+The raw band sweep is gated **twice, on purpose**. `survey_register_dump` in
+the options says the owner is willing to spend the time; `allow_dump=True` on
+`async_build` says the caller can afford to wait for it. Only the button and
+the `run_survey` action pass the second, because only they are background
+tasks with a progress bar. `diagnostics.py` builds the same document and
+leaves it off — five minutes of reading behind a download button reads as a
+hang, and an owner who enabled the option was answering a question about
+surveys. Reading the option directly inside `async_build` would be the
+obvious simplification and would break exactly that.
+
+Two switches in the options are called a register dump and they do different
+things. Advanced → *Include a raw register dump in diagnostics*
+(`CONF_REGISTER_DUMP`) re-reads the addresses the library already maps, into
+the diagnostics file, in seconds. Help this project → *Also sweep the raw
+register bands* (`CONF_SURVEY_DUMP`) sweeps `sungrow_modbus.dump.DUMP_BANDS`
+— 1510 addresses, mostly unmapped — into the survey document, in about five
+minutes. Only the second can discover a register. The bands are duplicated in
+`scripts/sungrow_scan/probe.py` because that has to run from a zip with the
+library absent, and `tests/test_dump_bands.py` is what stops the two drifting.
+
+To see any of this against a real run, the recorder is the fastest way in —
+the dev instance keeps it:
+
+```console
+$ sqlite3 config/home-assistant_v2.db \
+    "select m.entity_id, s.state, datetime(s.last_updated_ts,'unixepoch','localtime')
+     from states s join states_meta m on s.metadata_id = m.metadata_id
+     where m.entity_id like '%survey%' order by s.last_updated_ts"
+```
+
+Persistent notifications are **not** states and never have been since 2022.10
+— they live in memory behind the websocket command
+`persistent_notification/get`, so a survey that "produced no notification" is
+worth checking there before believing it.
+
 ## Naming entities
 
 Entity names are entity ids. With `has_entity_name` set, Home Assistant

@@ -98,9 +98,17 @@ def descriptions() -> list[tuple[str, str, str]]:
 
 def names() -> dict[str, dict[str, str]]:
     """Return the modern name of every entity, by domain and translation key."""
+    from custom_components.sungrow_modbus.survey_entities import SURVEY_ENTITIES
+
     result: dict[str, dict[str, str]] = {}
     for domain, key, legacy in descriptions():
         result.setdefault(domain, {})[key] = modern_name(key, legacy)
+
+    # The survey's own entities. They carry no `EntityDescription` -- there is
+    # no register behind them -- so they are listed rather than discovered,
+    # and `modern_name` finds each one in `naming.OVERRIDES`.
+    for domain, key in SURVEY_ENTITIES:
+        result.setdefault(domain, {})[key] = modern_name(key, "")
     return result
 
 

@@ -26,13 +26,14 @@ from custom_components.sungrow_modbus.const import (
     ROLE_SLAVE,
 )
 from homeassistant.config_entries import SOURCE_USER
-from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
+from homeassistant.const import CONF_HOST, CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
 from .conftest import SH10RT_HOLDING_REGISTERS, SH10RT_INPUT_REGISTERS
 
-SEARCH_INPUT = {CONF_NETWORK: "192.168.176.0/24", CONF_PORT: 502}
+# No port: the search form stopped asking. `SCAN_PORTS` is swept instead.
+SEARCH_INPUT = {CONF_NETWORK: "192.168.176.0/24"}
 
 
 @pytest.fixture
@@ -128,9 +129,28 @@ async def _pick_options(
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], SEARCH_INPUT
         )
+        # The sweep runs behind a progress bar; wait for it rather than
+        # asserting on the spinner.
+        while result["type"] is FlowResultType.SHOW_PROGRESS:
+            await hass.async_block_till_done()
+            result = await hass.config_entries.flow.async_configure(result["flow_id"])
     assert result["type"] is FlowResultType.FORM, result
     assert result["step_id"] == "pick"
     return result["data_schema"].schema[CONF_HOST].config["options"]
+
+
+@pytest.fixture(autouse=True)
+def _open_the_alpha_gate(devices_mode_offered: None) -> None:
+    """Every test in this file walks the devices path, which the alpha shuts.
+
+    `DEVICES_MODE_OFFERED` is off for the first release, so the config flow
+    will not create a devices entry. What it gates is the door; this file
+    tests the room behind it, and the room has not changed. Opening the gate
+    for the whole module keeps that coverage exactly as it was rather than
+    letting a release flag quietly retire it.
+
+    The door itself is tested in `tests/test_alpha_gate.py`, from both sides.
+    """
 
 
 async def test_a_slave_on_its_own_lan_port_is_found_at_all(
@@ -282,10 +302,19 @@ async def test_a_device_that_answers_without_naming_itself_stops_the_sweep(
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], SEARCH_INPUT
         )
+        result = await _finish_sweep(hass, result)
 
     # Nothing named itself, so nothing is offered -- and unit 2's serial is
     # not borrowed to describe an address it does not belong to.
     assert result["step_id"] == "nothing_found", result
+
+
+async def _finish_sweep(hass: HomeAssistant, result: dict) -> dict:
+    """Let the sweep's progress step run out and return what follows it."""
+    while result["type"] is FlowResultType.SHOW_PROGRESS:
+        await hass.async_block_till_done()
+        result = await hass.config_entries.flow.async_configure(result["flow_id"])
+    return result
 
 
 async def _to_name_step(hass: HomeAssistant, topology, host: str):
@@ -315,6 +344,7 @@ async def _to_name_step(hass: HomeAssistant, topology, host: str):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], SEARCH_INPUT
         )
+        result = await _finish_sweep(hass, result)
         return await hass.config_entries.flow.async_configure(
             result["flow_id"], {CONF_HOST: host}
         )
@@ -498,6 +528,7 @@ async def _pick_with_routes(hass, topology, direct):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], SEARCH_INPUT
         )
+        result = await _finish_sweep(hass, result)
     assert result["step_id"] == "pick", result
     return result
 

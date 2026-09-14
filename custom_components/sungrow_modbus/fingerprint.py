@@ -50,6 +50,7 @@ drift apart on what a probe is called or what a serial becomes.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import statistics
 import time
 from typing import Any
@@ -64,7 +65,8 @@ from modbus_connection import (
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
-from sungrow_modbus import fingerprint as survey
+from sungrow_modbus import dump as register_dump, fingerprint as survey
+from sungrow_modbus.const import model_for
 from sungrow_modbus.fingerprint import State
 
 from .const import (
@@ -72,11 +74,15 @@ from .const import (
     CONF_REPORTER,
     CONF_SURVEY_BATTERY,
     CONF_SURVEY_COMMENT,
+    CONF_SURVEY_DUMP,
+    CONF_SURVEY_OTHER_INVERTER,
+    CONF_SURVEY_OTHER_INVERTER_DETAIL,
     CONF_SURVEY_POLLERS,
     CONF_SURVEY_PROXY,
     CONF_SURVEY_TRANSPORT,
 )
 from .coordinator import SungrowConfigEntry
+from .survey import Progress
 
 #: Which register fields carry each published firmware string.
 #:
@@ -104,6 +110,9 @@ async def async_build(
     hass: HomeAssistant,
     entry: SungrowConfigEntry,
     options: dict[str, Any] | None = None,
+    on_progress: Progress | None = None,
+    *,
+    allow_dump: bool = False,
 ) -> dict[str, Any]:
     """Return one publishable survey document for this entry.
 
@@ -115,14 +124,55 @@ async def async_build(
     Read order matters slightly: the probes come first and the latency
     samples after, so a link that is about to fail fails on the measurement
     that is worth something rather than on the timing.
+
+    `on_progress(fraction, step)` is called after each read that can be
+    counted, so a device page can show how far along a survey is and what it
+    is reading. Counted rather than timed: the same survey is under a second
+    on a cable and a quarter of an hour over a VPN, and only the number of
+    reads is known in advance. Optional, because diagnostics downloads build
+    the same document with nobody watching.
+
+    `allow_dump` is what makes the owner's `survey_register_dump` option
+    count, and it is a separate argument rather than being read straight from
+    the options for one reason: **the caller decides whether it can afford
+    five minutes.** The survey button can -- it is a background task with a
+    progress bar and a notification at the end. The diagnostics download
+    cannot: it is a button somebody waits on, so it leaves this False and the
+    option has no effect there, however the owner set it.
     """
     runtime = entry.runtime_data
     device = next(iter(runtime.coordinators.values())).device
     if options is None:
         options = dict(entry.options)
 
-    probes = await _async_probes(device)
-    latency = await _async_latency(device)
+    # Asked for and affordable are two different things; see the docstring.
+    dumping = allow_dump and bool(options.get(CONF_SURVEY_DUMP, False))
+
+    # The denominator, so a fraction means something: every probe, every
+    # timing sample, one step for assembling what the coordinators already
+    # hold, and every block of the dump when there is one. Assembly is a
+    # single step because it does no reading -- it is the only part that
+    # cannot stall.
+    #
+    # The dump's share is counted here rather than discovered as it goes,
+    # because a bar whose total grows halfway through is worse than no bar --
+    # and with the dump on it is 52 of the 76 steps, so getting it wrong
+    # would not be a rounding error.
+    total = len(survey.PROBES) + LATENCY_SAMPLES + 1
+    if dumping:
+        total += register_dump.block_count()
+    done = 0
+
+    def step(label: str) -> None:
+        nonlocal done
+        done += 1
+        if on_progress is not None:
+            on_progress(done / total, label)
+
+    probes = await _async_probes(device, step)
+    latency = await _async_latency(device, step)
+    raw = await _async_dump(device, step) if dumping else None
+    step("assembling the document")
 
     answered_6100 = _state_of(probes, "PV power of today (6100, direct-only)")
     firmware = _firmware(device)
@@ -146,6 +196,18 @@ async def async_build(
             # What the owner says about anything *else* polling. What this
             # Home Assistant does is not testimony and is recorded below.
             "other_pollers": options.get(CONF_SURVEY_POLLERS, ""),
+            # Whether a **non-Sungrow** inverter shares the installation, and
+            # what the owner says it is. Empty means the question was not put,
+            # which the format has always kept distinct from an answer.
+            #
+            # The reason this is testimony and can never be a measurement:
+            # the inverter computes house load from its own output plus grid
+            # import, so a second inverter on the same meter makes
+            # `load_power` low by exactly that inverter's output, while every
+            # register answers normally. The Sungrow cannot see the thing
+            # that is confusing it, so only the owner can say.
+            "other_inverter": options.get(CONF_SURVEY_OTHER_INVERTER, ""),
+            "other_inverter_detail": options.get(CONF_SURVEY_OTHER_INVERTER_DETAIL, ""),
         },
         "ip_address_last_two_octets": survey.address_tail(
             entry.data.get(CONF_HOST, ""),
@@ -153,6 +215,14 @@ async def async_build(
         ),
         "device": {
             "device_type_code": _hex(device.device_type_code),
+            # The model the code means, spelled out beside it. `0x0E03` is
+            # not something a person reads, and a document is mostly read by
+            # people -- in an issue, usually, where nobody has the lookup
+            # table to hand. The code stays the authority because it is what
+            # the inverter actually said; this is null for a code the project
+            # has never seen, which is itself the most interesting document
+            # to receive.
+            "device_type": model_for(device.device_type_code),
             "output_type": survey.OUTPUT_TYPES.get(
                 device.output_type, device.output_type
             ),
@@ -182,6 +252,14 @@ async def async_build(
         "capability_probes": probes,
     }
 
+    # Same key and same shape as a standalone survey writes, so one
+    # generator keeps reading both and a document from a button is not a
+    # second format. Masked before it goes in, never after: the serial's ten
+    # registers sit inside the identity band and would otherwise be published
+    # as words.
+    if raw is not None:
+        document["register_dump"] = register_dump.masked(raw)
+
     pack = _battery_pack(runtime)
     if pack is not None:
         document["battery_pack"] = pack
@@ -193,7 +271,24 @@ async def async_build(
     return document
 
 
-async def _async_probes(device: Any) -> dict[str, dict[str, Any]]:
+async def _async_dump(device: Any, step: Progress) -> dict[str, Any]:
+    """Sweep the raw address bands, reporting each block as a step.
+
+    The band's reason -- "the block a WiNet-S does not forward" -- is what the
+    step sensor shows, rather than an address. Somebody watching a five-minute
+    bar wants to know what is being looked for, and an address tells them
+    nothing they can check.
+    """
+
+    def on_block(done: int, total: int, why: str) -> None:
+        step(f"reading raw registers: {why} ({done} of {total})")
+
+    return await register_dump.async_dump(device.async_read_words, on_progress=on_block)
+
+
+async def _async_probes(
+    device: Any, step: Callable[[str], None] | None = None
+) -> dict[str, dict[str, Any]]:
     """Read every curated probe, recording what each answer establishes.
 
     A refusal and a timeout are recorded differently and deliberately: an
@@ -207,6 +302,11 @@ async def _async_probes(device: Any) -> dict[str, dict[str, Any]]:
     """
     probes: dict[str, dict[str, Any]] = {}
     for label, space, address, count, _axis in survey.PROBES:
+        # Announced before the read, not after: on the link where this
+        # matters a single read can take ten seconds, and a step that
+        # appears only once it has finished shows the wrong one throughout.
+        if step is not None:
+            step(label)
         entry: dict[str, Any] = {}
         try:
             words = await device.async_read_words(space, address, count)
@@ -227,14 +327,18 @@ async def _async_probes(device: Any) -> dict[str, dict[str, Any]]:
     return probes
 
 
-async def _async_latency(device: Any) -> dict[str, float] | None:
+async def _async_latency(
+    device: Any, step: Callable[[str], None] | None = None
+) -> dict[str, float] | None:
     """Time a few reads of one address that every inverter answers.
 
     Register 5000, the device type code: it is the one address a Sungrow
     always has, so the samples describe the link rather than a capability.
     """
     samples: list[float] = []
-    for _ in range(LATENCY_SAMPLES):
+    for sample in range(LATENCY_SAMPLES):
+        if step is not None:
+            step(f"timing the link ({sample + 1} of {LATENCY_SAMPLES})")
         started = time.monotonic()
         try:
             await device.async_read_words("input", 4999, 1)
@@ -425,6 +529,38 @@ def summarise(document: dict[str, Any]) -> str:
         )
     readings = (document.get("readings") or {}).get("values") or {}
     lines.append(f"- {len(readings)} register values decoded.")
+    said = document.get("user_inputs") or {}
+    if said.get("other_inverter") == survey.OTHER_INVERTER_YES:
+        named = said.get("other_inverter_detail")
+        lines.append(
+            "- Another, non-Sungrow inverter shares this installation"
+            f"{': ' + named if named else ''}. That is in the file, and it "
+            "explains load figures that would otherwise read as a fault."
+        )
+
+    dump = document.get("register_dump") or {}
+    bands = {
+        space: values for space, values in dump.items() if isinstance(values, dict)
+    }
+    if bands:
+        covered = sum(len(values) for values in bands.values())
+        answered = sum(
+            1
+            for values in bands.values()
+            for word in values.values()
+            if word is not None
+        )
+        # The serial's ten masked registers count as unanswered here, as they
+        # do in every document a standalone survey writes. Understating what
+        # answered is the safe direction for a number a maintainer reads as
+        # evidence about the device.
+        lines.append(f"- Raw band sweep: {answered} of {covered} addresses answered.")
+        missed = dump.get("bands_not_reached")
+        if missed:
+            lines.append(
+                f"- The sweep ran out of time before {len(missed)} of its bands. "
+                "Those addresses are absent from the file rather than refused."
+            )
     if document.get("battery_pack"):
         lines.append("- A Sungrow battery answered, and its own registers are in.")
     if document.get("wallbox"):

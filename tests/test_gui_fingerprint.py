@@ -25,6 +25,7 @@ import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.sungrow_modbus.const import (
+    CONF_ADD_DEVICES,
     CONF_MODE,
     CONF_PUBLISH_ADDRESS,
     CONF_REPORTER,
@@ -37,6 +38,11 @@ from custom_components.sungrow_modbus.const import (
     DOMAIN,
     MODE_DEVICES,
     MODE_DIAGNOSTICS,
+    SECTION_ADVANCED,
+    SECTION_EXTERNAL,
+    SECTION_PERMISSIONS,
+    SECTION_POLLING,
+    SECTION_SURVEY,
 )
 from custom_components.sungrow_modbus.diagnostics import (
     async_get_config_entry_diagnostics,
@@ -373,6 +379,11 @@ async def test_the_testimony_is_published_when_it_is_given(
         "transport": "winet_lan",
         "modbus_proxy": "no",
         "other_pollers": "nothing else",
+        # Empty because this entry was never asked. The format has always
+        # kept that apart from an answer, and a new field arriving must not
+        # turn every older entry's silence into a "no".
+        "other_inverter": "",
+        "other_inverter_detail": "",
     }
     assert document["user_inputs"]["transport"] in survey.TRANSPORT_CLAIMS
     assert document["user_inputs"]["modbus_proxy"] in survey.PROXY_CLAIMS
@@ -433,178 +444,6 @@ ANSWERS = {
     CONF_SURVEY_COMMENT: "",
     CONF_PUBLISH_ADDRESS: False,
 }
-
-
-async def _survey_form(hass: HomeAssistant, entry: MockConfigEntry) -> dict:
-    """Open Options -> the survey page."""
-    result = await hass.config_entries.options.async_init(entry.entry_id)
-    return await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "survey"}
-    )
-
-
-async def _submit(hass: HomeAssistant, flow_id: str, answers: dict) -> dict:
-    """Submit the answers and let the progress step finish."""
-    result = await hass.config_entries.options.async_configure(flow_id, answers)
-    # A progress step yields before its task is done; the flow is resumed by
-    # Home Assistant when the task completes.
-    while result["type"] is FlowResultType.SHOW_PROGRESS:
-        await hass.async_block_till_done()
-        result = await hass.config_entries.options.async_configure(flow_id)
-    return result
-
-
-async def test_the_options_step_records_the_testimony(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
-) -> None:
-    """Reachable after setup, because a contributor decides to help later."""
-    entry = await _setup(hass, sungrow_unit)
-    form = await _survey_form(hass, entry)
-    assert form["type"] is FlowResultType.FORM
-    assert form["step_id"] == "survey"
-
-    with patch(
-        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
-    ):
-        result = await _submit(hass, form["flow_id"], ANSWERS)
-        # The result page, then the confirmation that ends the flow.
-        assert result["step_id"] == "survey_result"
-        await hass.config_entries.options.async_configure(form["flow_id"], {})
-        await hass.async_block_till_done()
-
-    assert entry.options[CONF_REPORTER] == "a contributor"
-    assert entry.options[CONF_SURVEY_TRANSPORT] == "direct_lan"
-
-
-async def test_submitting_the_form_actually_reads_the_inverter(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
-) -> None:
-    """The gap this closed: a form that saved silently and did nothing.
-
-    A contributor filled it in, submitted, and was shown nothing -- so they
-    had no way to tell whether they had helped, and the honest answer was
-    that nothing had happened yet. Asserted on the result rather than on a
-    call: the page reports a probe count, and a count can only come from
-    having read the inverter.
-    """
-    entry = await _setup(hass, sungrow_unit)
-    form = await _survey_form(hass, entry)
-
-    with patch(
-        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
-    ):
-        result = await _submit(hass, form["flow_id"], ANSWERS)
-
-    found = result["description_placeholders"]["found"]
-    assert f"**{len(survey.PROBES)} registers probed**" in found
-
-
-async def test_the_result_page_says_what_to_do_with_the_file(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
-) -> None:
-    """Where it is, and where to send it -- neither of which was said before.
-
-    The file is behind a menu on a different page, which nobody would guess,
-    and a reading nobody sends is worth nothing at all.
-    """
-    entry = await _setup(hass, sungrow_unit)
-    form = await _survey_form(hass, entry)
-
-    with patch(
-        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
-    ):
-        result = await _submit(hass, form["flow_id"], ANSWERS)
-
-    placeholders = result["description_placeholders"]
-    assert "issues/new?template=compatibility_report.yml" in placeholders["issue_url"]
-    assert "discord.gg" in placeholders["discord_url"]
-    # And what was actually found, so the page is a report rather than a
-    # thank-you note.
-    assert "registers probed" in placeholders["found"]
-    assert "stand-in" in placeholders["found"]
-
-
-async def test_the_result_survives_the_dialog_closing(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
-) -> None:
-    """A config-flow page is gone the moment it is dismissed.
-
-    What it says is needed afterwards -- the menu path to the download, and
-    where to send it -- so the same thing waits under Notifications, carrying
-    both links and the reassurance about the serial.
-    """
-    entry = await _setup(hass, sungrow_unit)
-    form = await _survey_form(hass, entry)
-
-    with (
-        patch(
-            "custom_components.sungrow_modbus.async_get_unit",
-            return_value=sungrow_unit,
-        ),
-        patch(
-            "homeassistant.components.persistent_notification.async_create"
-        ) as notify,
-    ):
-        await _submit(hass, form["flow_id"], ANSWERS)
-        await hass.config_entries.options.async_configure(form["flow_id"], {})
-        await hass.async_block_till_done()
-
-    assert notify.called
-    message = notify.call_args.kwargs["message"]
-    assert "Download diagnostics" in message
-    assert "compatibility_report.yml" in message
-    assert "discord.gg" in message
-    assert "stand-in" in message
-
-
-async def test_a_failed_reading_still_saves_the_answers(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
-) -> None:
-    """So that offering to help is never wasted effort.
-
-    And the failure is shown rather than swallowed: a link that cannot
-    complete 24 reads is a finding in its own right, and the most likely
-    cause -- something else competing for one of the inverter's very few
-    sessions -- is worth telling somebody about.
-    """
-    entry = await _setup(hass, sungrow_unit)
-    form = await _survey_form(hass, entry)
-
-    with patch(
-        "custom_components.sungrow_modbus.config_flow.async_build",
-        side_effect=RuntimeError("Response timeout after 10.0 seconds"),
-    ):
-        result = await _submit(hass, form["flow_id"], ANSWERS)
-
-    assert result["step_id"] == "survey_failed"
-    assert "timeout" in result["description_placeholders"]["error"]
-
-    with patch(
-        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
-    ):
-        await hass.config_entries.options.async_configure(form["flow_id"], {})
-        await hass.async_block_till_done()
-    assert entry.options[CONF_REPORTER] == "a contributor"
-
-
-async def test_the_step_says_what_has_already_been_measured(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
-) -> None:
-    """So nobody is asked a question the integration answered itself.
-
-    Cable against dongle is settled by register 6100, 9 times out of 9. What
-    the owner adds is the half no register reaches.
-    """
-    entry = await _setup(hass, sungrow_unit)
-
-    result = await hass.config_entries.options.async_init(entry.entry_id)
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "survey"}
-    )
-
-    measured = result["description_placeholders"]["measured"]
-    assert "SH10RT" in measured
-    assert "not determinable" in measured or "no communication module" in measured
 
 
 @pytest.mark.parametrize(
@@ -672,24 +511,141 @@ async def test_a_diagnostics_entry_still_produces_a_document(
     assert report["fingerprint"]["capability_probes"]
 
 
-async def test_a_diagnostics_entry_is_offered_a_way_to_become_a_full_one(
+# --- the options page, which now only collects testimony -------------------
+#
+# The survey used to run inside this flow, behind a spinner, and these tests
+# used to drive that. It runs from the device page now, so what is left to
+# assert here is narrower and more honest: the page saves what a person
+# typed, and it says what has already been measured so nobody answers a
+# question the integration answered itself.
+
+
+def _options(**sections: dict) -> dict:
+    """Build a full options submission, overriding one section at a time."""
+    payload: dict = {
+        SECTION_POLLING: {},
+        SECTION_PERMISSIONS: {},
+        SECTION_EXTERNAL: {},
+        SECTION_ADVANCED: {},
+        SECTION_SURVEY: {},
+    }
+    payload.update(sections)
+    return payload
+
+
+async def test_the_options_page_records_the_testimony(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """Otherwise it is a dead end, and the menu says so first.
+    """Reachable after setup, because a contributor decides to help later."""
+    entry = await _setup(hass, sungrow_unit)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "init"
+
+    with patch(
+        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
+    ):
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"], _options(survey=ANSWERS)
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options[CONF_REPORTER] == "a contributor"
+    assert entry.options[CONF_SURVEY_TRANSPORT] == "direct_lan"
+
+
+async def test_saving_the_page_does_not_read_the_inverter(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """Submitting testimony is not the same act as producing a document.
+
+    It used to be, and conflating them cost the contributor the choice: a
+    slow link made saving three text fields take a quarter of an hour behind
+    a modal that could not be left. The page saves; the button reads.
+    """
+    entry = await _setup(hass, sungrow_unit)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    with (
+        patch(
+            "custom_components.sungrow_modbus.async_get_unit",
+            return_value=sungrow_unit,
+        ),
+        patch(
+            "custom_components.sungrow_modbus.survey.SurveyRunner.async_start"
+        ) as run,
+    ):
+        await hass.config_entries.options.async_configure(
+            result["flow_id"], _options(survey=ANSWERS)
+        )
+        await hass.async_block_till_done()
+
+    assert not run.called
+
+
+async def test_the_page_says_what_has_already_been_measured(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """So nobody is asked a question the integration answered itself.
+
+    Cable against dongle is settled by register 6100, 9 times out of 9. What
+    the owner adds is the half no register reaches.
+    """
+    entry = await _setup(hass, sungrow_unit)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+
+    measured = result["description_placeholders"]["measured"]
+    assert "SH10RT" in measured
+    assert "not determinable" in measured or "no communication module" in measured
+
+
+async def test_every_sections_evidence_is_on_the_one_page(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """One form has one set of placeholders, and the sections share them.
+
+    Each section's description quotes the measurement that makes it
+    answerable -- the tier table, the load reading, the transport, the
+    battery maximum. Losing one to the consolidation would leave a section
+    asking for a number with nothing to check it against.
+    """
+    entry = await _setup(hass, sungrow_unit)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+
+    placeholders = result["description_placeholders"]
+    assert set(placeholders) >= {
+        "tiers",
+        "reported_load",
+        "measured",
+        "battery_status",
+    }
+
+
+async def test_a_diagnostics_entry_is_offered_a_way_to_become_a_full_one(
+    hass: HomeAssistant,
+    sungrow_unit: MockModbusUnit,
+    devices_mode_offered: None,
+) -> None:
+    """Otherwise it is a dead end, and the page says so first.
 
     It is also where the entity-ids question finally gets put -- the one
-    decision the diagnostics path skipped, and the only irreversible one.
+    decision the diagnostics path skipped, and the only irreversible one, so
+    it is asked on a page of its own rather than folded into a section.
     """
     entry = await _setup(hass, sungrow_unit, mode=MODE_DIAGNOSTICS)
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
-    assert result["menu_options"][0] == "promote"
+    assert CONF_ADD_DEVICES in str(result["data_schema"].schema)
 
     with patch(
         "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
     ):
         await hass.config_entries.options.async_configure(
-            result["flow_id"], {"next_step_id": "promote"}
+            result["flow_id"], _options(**{CONF_ADD_DEVICES: True})
         )
         await hass.async_block_till_done()
 
@@ -698,12 +654,39 @@ async def test_a_diagnostics_entry_is_offered_a_way_to_become_a_full_one(
     assert hass.states.get("sensor.sh10rt_total_dc_power") is not None
 
 
+async def test_promotion_keeps_what_was_typed_beside_the_checkbox(
+    hass: HomeAssistant,
+    sungrow_unit: MockModbusUnit,
+    devices_mode_offered: None,
+) -> None:
+    """Options are written when a flow *ends*, and promotion ends it elsewhere.
+
+    So a contributor who fills in their name and ticks "add the devices" in
+    one visit must not lose the name. The collected options travel to the
+    promotion step and are saved by it.
+    """
+    entry = await _setup(hass, sungrow_unit, mode=MODE_DIAGNOSTICS)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    with patch(
+        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
+    ):
+        await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            _options(survey=ANSWERS, **{CONF_ADD_DEVICES: True}),
+        )
+        await hass.async_block_till_done()
+
+    assert entry.data[CONF_MODE] == MODE_DEVICES
+    assert entry.options[CONF_REPORTER] == "a contributor"
+
+
 async def test_an_ordinary_entry_is_not_offered_the_promotion(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """A menu item that would do nothing is worse than no menu item."""
+    """A checkbox that would do nothing is worse than no checkbox."""
     entry = await _setup(hass, sungrow_unit)
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
 
-    assert "promote" not in result["menu_options"]
+    assert CONF_ADD_DEVICES not in str(result["data_schema"].schema)

@@ -68,7 +68,15 @@ async def test_neither_start_nor_stop_is_an_entity(
     """The point of the whole design.
 
     A button entity appears in every dashboard picker and every automation
-    editor, and a press has no confirmation. There must be nothing to pick.
+    editor, and a press has no confirmation. Stopping an inverter must not be
+    one press away from anybody browsing a picker -- so start and stop are
+    actions, which Home Assistant gates by user group.
+
+    There is a survey button in this integration, and it is not here: it
+    belongs to a **diagnostics-only** entry, which somebody sets up in order
+    to produce a reading. An ordinary entry like this one has no buttons at
+    all, so the original assertion holds unchanged -- and that is the point
+    of the split rather than a coincidence of it.
     """
     assert [state for state in hass.states.async_all("button")] == []
 

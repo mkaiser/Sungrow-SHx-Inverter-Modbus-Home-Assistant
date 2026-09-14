@@ -63,4 +63,30 @@ PY
     exit 0
 fi
 
-hass --config "${PWD}/config" --debug
+# Onboarding, in the background, while Home Assistant starts in front of it.
+# A fresh config/ -- or one whose .storage was cleared -- otherwise opens on
+# `onboarding.html` and asks for the account that doc/development.yaml already
+# publishes. Idempotent, so an instance that is already onboarded prints one
+# line and stops.
+(
+    python3 "${PWD}/scripts/ha_onboard.py" --url http://127.0.0.1:8123 \
+        --username dev --password dev || true
+) &
+
+# Deliberately **without `--debug`**, which is not a logging flag.
+#
+# It sets `loop.set_debug(True)`, and an asyncio debug-mode loop is slow
+# enough to break this integration's own network search: `async_sweep` opens
+# 64 sockets at a time and rules an address out on a one-second wall-clock
+# timeout, so loop overhead comes straight out of the budget for a connect
+# that takes six milliseconds. Measured on this machine against a /24 holding
+# two live inverters -- three runs out of three found **nothing** with
+# `--debug`, and three out of three found both without it. It cost a real
+# debugging session, on a search the maintainer ran against his own house.
+#
+# Nothing is lost. Log verbosity comes from the `logger:` block in
+# config/configuration.yaml, which already sets this integration and the
+# Modbus stack to debug; `--debug` adds only the loop mode and
+# `hass.config.debug`. If you want it back for an asyncio bug, add it -- and
+# expect the search to fail while it is on.
+hass --config "${PWD}/config"

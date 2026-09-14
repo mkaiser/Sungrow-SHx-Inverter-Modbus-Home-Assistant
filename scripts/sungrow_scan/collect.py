@@ -458,6 +458,9 @@ async def _ask_all(entry: Found, args, echo) -> argparse.Namespace:
         )
         answers.transport = probe._ask_transport()
         answers.proxy = probe._ask_proxy()
+        answers.other_inverter, answers.other_inverter_detail = (
+            probe._ask_other_inverter()
+        )
         answers.dump = probe._ask_dump(answers.transport)
         answers.address = probe._ask_address(entry.host)
         answers.reporter = probe._ask(
@@ -479,6 +482,10 @@ async def _ask_all(entry: Found, args, echo) -> argparse.Namespace:
         # though the question had not been asked.
         ("transport", probe.REPORTED_TRANSPORTS[answers.transport][0]),
         ("behind a proxy", answers.proxy),
+        (
+            "another inverter",
+            answers.other_inverter_detail or answers.other_inverter,
+        ),
         ("register dump", "yes" if answers.dump else "no"),
         ("address in the file", answers.address),
         ("reporter", answers.reporter),
@@ -503,6 +510,10 @@ async def _ask_all(entry: Found, args, echo) -> argparse.Namespace:
     line = f"      --address {answers.address} --reporter {answers.reporter!r}"
     if answers.battery:
         line += f" --battery {answers.battery!r}"
+    if answers.other_inverter:
+        line += f" --other-inverter {answers.other_inverter}"
+    if answers.other_inverter_detail:
+        line += f" --other-inverter-detail {answers.other_inverter_detail!r}"
     echo(line + " \\")
     echo(f"      --save {_workspace()[0]}")
     echo("")

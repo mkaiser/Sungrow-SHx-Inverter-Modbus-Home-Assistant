@@ -611,6 +611,11 @@ def test_a_supplied_value_lands_only_in_user_inputs() -> None:
         "battery": "Sungrow SBR096, 9.6 kWh",
         "transport": "direct_lan",
         "modbus_proxy": "no",
+        # Absent from `raw`, so empty: the question was not put. A field
+        # arriving must not turn an older run's silence into a "no", which is
+        # the distinction this whole section exists to keep.
+        "other_inverter": "",
+        "other_inverter_detail": "",
     }
     # The measured connection keeps the verdict and loses the claim.
     assert document["connection"] == {"verdict": "direct to the inverter's LAN port"}

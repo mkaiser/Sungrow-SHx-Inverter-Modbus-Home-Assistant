@@ -25,15 +25,20 @@ from custom_components.sungrow_modbus.const import (
     CONF_NETWORK,
     CONF_UNIT_ID,
     DOMAIN,
+    SCAN_PORTS,
 )
 from homeassistant.config_entries import SOURCE_USER
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from sungrow_modbus import hosts_in
+from sungrow_modbus.discovery import CONCURRENCY, TIMEOUT
 
 from .conftest import SERIAL
 
-SEARCH_INPUT = {CONF_NETWORK: "192.168.1.0/24", CONF_PORT: 502}
+# No port: the form stopped asking for one. A sweep tries every port this
+# project knows equipment answers on, which is a two-item list.
+SEARCH_INPUT = {CONF_NETWORK: "192.168.1.0/24"}
 
 
 @pytest.fixture
@@ -80,9 +85,38 @@ async def _search(hass: HomeAssistant, user_input: dict | None = None) -> dict:
         result["flow_id"], {"next_step_id": "search"}
     )
     assert result["step_id"] == "search"
-    return await hass.config_entries.flow.async_configure(
+    result = await hass.config_entries.flow.async_configure(
         result["flow_id"], user_input or SEARCH_INPUT
     )
+    return await _finish_sweep(hass, result)
+
+
+async def _finish_sweep(hass: HomeAssistant, result: dict) -> dict:
+    """Let the progress step run to completion and return what follows.
+
+    The sweep happens behind a progress bar now, which is a step of its own:
+    it yields immediately and Home Assistant resumes the flow when the task
+    ends. A test that stopped at the first result would be asserting on the
+    spinner.
+    """
+    while result["type"] is FlowResultType.SHOW_PROGRESS:
+        await hass.async_block_till_done()
+        result = await hass.config_entries.flow.async_configure(result["flow_id"])
+    return result
+
+
+@pytest.fixture(autouse=True)
+def _open_the_alpha_gate(devices_mode_offered: None) -> None:
+    """Every test in this file walks the devices path, which the alpha shuts.
+
+    `DEVICES_MODE_OFFERED` is off for the first release, so the config flow
+    will not create a devices entry. What it gates is the door; this file
+    tests the room behind it, and the room has not changed. Opening the gate
+    for the whole module keeps that coverage exactly as it was rather than
+    letting a release flag quietly retire it.
+
+    The door itself is tested in `tests/test_alpha_gate.py`, from both sides.
+    """
 
 
 async def test_the_range_is_prefilled_with_the_network_home_assistant_is_on(
@@ -99,13 +133,87 @@ async def test_the_range_is_prefilled_with_the_network_home_assistant_is_on(
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {"next_step_id": "search"}
     )
-    default = result["data_schema"]({CONF_PORT: 502})[CONF_NETWORK]
+    default = result["data_schema"]({})[CONF_NETWORK]
     # Whatever the test machine's adapters are, the prefill must be something
     # a sweep will actually accept rather than a /16 the user has to fix --
     # or **empty**, which is the honest answer when the only adapter is a
     # container bridge and there is nothing to detect from. What it must
     # never be is a range that looks usable and is not.
     assert default == "" or default.endswith(("/24", "/23")), default
+
+
+async def test_a_sweep_that_found_nothing_is_tried_again_more_slowly(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit, no_setup: None
+) -> None:
+    """Because "nothing answered" is a stopwatch result, not an answer.
+
+    `async_port_open` gives an address one connect and rules it out on a wall
+    clock, so anything that slows the event loop spends the budget for a
+    connect that would have taken milliseconds. Measured against a real /24
+    holding two inverters: under an asyncio debug-mode loop -- what
+    `hass --debug` runs -- the sweep reported an empty network three times out
+    of three, and found both every time on a normal loop.
+
+    So an empty result buys one more pass at half the concurrency and twice
+    the timeout. Only an empty one: the alternative at that moment is telling
+    somebody their inverter does not exist, which is the most expensive thing
+    this dialog can say and the one it has least right to.
+    """
+    calls: list[dict] = []
+
+    async def _sweep(network: str, *, port: int, **kwargs: object) -> list[str]:
+        calls.append({"port": port, **kwargs})
+        # Nothing on the fast pass, both ports; the inverter on the slow one.
+        return ["192.168.1.50"] if kwargs.get("concurrency") else []
+
+    with (
+        patch("custom_components.sungrow_modbus.config_flow.async_sweep", _sweep),
+        patch(
+            "custom_components.sungrow_modbus.config_flow.async_hostname",
+            return_value=None,
+        ),
+        _probe(sungrow_unit),
+    ):
+        result = await _search(hass)
+
+    assert result["step_id"] == "pick"
+
+    fast = [call for call in calls if "concurrency" not in call]
+    slow = [call for call in calls if "concurrency" in call]
+    assert len(fast) == len(SCAN_PORTS)
+    assert len(slow) == len(SCAN_PORTS)
+    # Gentler on both axes, which is what made the difference when measured.
+    assert all(call["concurrency"] < CONCURRENCY for call in slow)
+    assert all(call["timeout"] > TIMEOUT for call in slow)
+
+
+async def test_a_sweep_that_found_something_is_not_swept_twice(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit, no_setup: None
+) -> None:
+    """The retry costs real seconds, so it is not paid when it buys nothing.
+
+    One address answering is enough to say the network is reachable and the
+    sweep is working; a second pass would only slow down every successful
+    search to help the case that already succeeded.
+    """
+    calls: list[dict] = []
+
+    async def _sweep(network: str, *, port: int, **kwargs: object) -> list[str]:
+        calls.append({"port": port, **kwargs})
+        return ["192.168.1.50"] if port == 502 else []
+
+    with (
+        patch("custom_components.sungrow_modbus.config_flow.async_sweep", _sweep),
+        patch(
+            "custom_components.sungrow_modbus.config_flow.async_hostname",
+            return_value=None,
+        ),
+        _probe(sungrow_unit),
+    ):
+        result = await _search(hass)
+
+    assert result["step_id"] == "pick"
+    assert not [call for call in calls if "concurrency" in call]
 
 
 async def test_an_inverter_that_answers_is_offered(
@@ -296,7 +404,7 @@ async def test_a_range_too_large_is_refused_before_it_is_swept(
     hass: HomeAssistant,
 ) -> None:
     """Not after twenty seconds of sweeping: the size is knowable up front."""
-    result = await _search(hass, {CONF_NETWORK: "10.0.0.0/8", CONF_PORT: 502})
+    result = await _search(hass, {CONF_NETWORK: "10.0.0.0/8"})
 
     assert result["step_id"] == "search"
     assert result["errors"] == {"base": "network_too_large"}
@@ -306,7 +414,7 @@ async def test_a_range_too_large_is_refused_before_it_is_swept(
 async def test_a_nonsense_range_is_reported_on_its_own_field(
     hass: HomeAssistant,
 ) -> None:
-    result = await _search(hass, {CONF_NETWORK: "not a network", CONF_PORT: 502})
+    result = await _search(hass, {CONF_NETWORK: "not a network"})
 
     assert result["step_id"] == "search"
     assert result["errors"] == {CONF_NETWORK: "invalid_network"}
@@ -397,7 +505,7 @@ async def test_a_container_bridge_is_not_offered_as_the_network_to_search(
     # replaced: the common router defaults are guesses, and a guess somebody
     # can recognise beats a blank CIDR field.
     assert offered
-    default = result["data_schema"]({CONF_PORT: 502})[CONF_NETWORK]
+    default = result["data_schema"]({})[CONF_NETWORK]
     assert default in offered
     # And the form says the range could not be detected, so a suggestion is
     # not mistaken for a finding.
@@ -434,7 +542,7 @@ async def test_a_real_adapter_is_still_prefilled(hass: HomeAssistant) -> None:
             result["flow_id"], {"next_step_id": "search"}
         )
 
-    assert result["data_schema"]({CONF_PORT: 502})[CONF_NETWORK] == "192.168.178.0/24"
+    assert result["data_schema"]({})[CONF_NETWORK] == "192.168.178.0/24"
     assert (
         "almost always the right one"
         in (result["description_placeholders"]["detected"])
@@ -477,7 +585,7 @@ async def test_a_lan_adapter_wins_over_a_bridge_on_the_same_host(
             result["flow_id"], {"next_step_id": "search"}
         )
 
-    assert result["data_schema"]({CONF_PORT: 502})[CONF_NETWORK] == "192.168.1.0/24"
+    assert result["data_schema"]({})[CONF_NETWORK] == "192.168.1.0/24"
 
 
 async def test_a_range_is_something_to_pick_and_not_only_to_type(
@@ -554,3 +662,79 @@ async def test_the_detected_network_is_offered_first_and_labelled_as_detected(
     assert "own network" in options[0]["label"]
     # The common defaults follow it rather than replacing it.
     assert "192.168.178.0/24" in {option["value"] for option in options[1:]}
+
+
+async def test_the_search_no_longer_asks_which_port(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The honest question behind that field was "which number?".
+
+    It has a two-item answer this project already knows, so it is not a
+    question for the person setting up. Somebody whose equipment really is
+    somewhere else still has the manual step, where a specific address and a
+    specific port belong together.
+    """
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "setup_devices"}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "search"}
+    )
+
+    assert CONF_PORT not in str(result["data_schema"].schema)
+
+
+async def test_the_sweep_reports_progress_while_it_runs(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """A quiet network spends its whole sweep proving absences.
+
+    Every address with nothing listening costs the full connect timeout, so
+    the form used to sit greyed out for as long as that took with nothing to
+    say. The bar counts addresses settled, because how long it takes depends
+    on how many are quiet -- which is the thing nobody knows in advance.
+    """
+    updates: list[float] = []
+
+    def _record(event) -> None:
+        updates.append(event.data["progress"])
+
+    hass.bus.async_listen("data_entry_flow_progress_update", _record)
+
+    async def _sweep(network, *, port, on_progress=None, **kwargs):
+        """Settle every address, announcing each, and find nothing."""
+        addresses = hosts_in(network)
+        for done, _address in enumerate(addresses, start=1):
+            if on_progress is not None:
+                on_progress(done, len(addresses))
+        return []
+
+    with patch("custom_components.sungrow_modbus.config_flow.async_sweep", _sweep):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": SOURCE_USER}
+        )
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {"next_step_id": "setup_devices"}
+        )
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {"next_step_id": "search"}
+        )
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], SEARCH_INPUT
+        )
+
+        # The step yields immediately, with a bar rather than a frozen form.
+        assert result["type"] is FlowResultType.SHOW_PROGRESS
+        assert result["progress_action"] == "searching"
+        assert result["description_placeholders"]["network"] == "192.168.1.0/24"
+
+        result = await _finish_sweep(hass, result)
+
+    assert updates, "the bar never moved"
+    assert max(updates) == pytest.approx(1.0)
+    assert all(0.0 <= value <= 1.0 for value in updates)
+    # It ran to the end and reported honestly, rather than stalling.
+    assert result["step_id"] == "nothing_found"

@@ -77,6 +77,7 @@ implementation for this pattern — read its real source, not blog posts.
 | `make help` | Every command below as a shortcut. `make check` is the CI gate, `make dev` and `make sim` the dev loop, `make gen` rewrites every generated file |
 | `scripts/setup.sh` | Install HA, the device library (editable) and tooling |
 | `scripts/develop.sh` | Boot HA on <http://localhost:8123> against `config/` |
+| `scripts/ha_onboard.py` | Walk a fresh instance through onboarding over the API, so nobody types `dev`/`dev` into a wizard. Both boot scripts run it in the background; idempotent, and it refuses a non-loopback URL |
 | `scripts/hacs_testbed.sh` | Boot a **second** HA on :8124 against `config-hacs/`, with HACS installed, to test the install a user gets. Nothing is symlinked there: HACS downloads the integration from the preview channel, so what runs is what was published, not the working tree |
 | `scripts/simulate.sh` | Regenerate the register seed and serve it on :5020 |
 | `scripts/fetch_references.sh` | Clone HA core + libs into `.reference/` (gitignored) |
@@ -331,7 +332,15 @@ verified in a container.
   which is this repository exactly, since `main` is the YAML package. So
   "cut a release" is not the same as "available in HACS", and the fix is
   either the default branch or a stable version, never a `show_beta` hint to
-  the user.
+  the user. The third way out is the one taken: a **preview channel**, a
+  second repository whose default branch *is* the integration, synced by
+  `doc/preview-mirror/sync.yml`. `scripts/hacs_testbed.sh` installs from it
+  the way a user does. Worth knowing before sending anybody there: **HACS
+  itself requires a GitHub account** -- its config flow hands straight to a
+  device-code step with no path around it, because it uses the token for
+  GitHub API calls limited to 60 an hour unauthenticated. Its catalogue does
+  not come from GitHub any more (`data-v2.hacs.xyz`), but the account is
+  still mandatory.
 - **An empty string is a reading of nothing, not a reading of "".** Sungrow
   fills a UTF-8 field it cannot answer with 0x00, and unlike 0xFFFF that is
   not declared per field, so it decodes to `""` and sails through as a value.

@@ -87,7 +87,10 @@ running:
     listens: 0.0.0.0:8123
     background: nohup scripts/develop.sh > /tmp/ha.log 2>&1 &
     config: config/                  # gitignored except configuration.yaml
-    stop: pkill -f 'bin/hass'
+    # The bracket is not a typo: `pkill -f 'bin/hass'` matches the command
+    # line of the shell running it, so it kills itself before Home
+    # Assistant. Measured, twice, as an exit code 144 and no dead hass.
+    stop: pkill -f 'bin/has[s]'
     note: >-
       scripts/develop.sh symlinks config/custom_components to the repo's
       custom_components/, so the integration is loaded exactly as a HACS
@@ -114,7 +117,7 @@ running:
       the same domain, so two copies at one path is a conflict rather than an
       upgrade. What runs here is what was published.
     manual_steps: >-
-      Onboarding, then Add integration -> HACS, which authorises a GitHub
+      Add integration -> HACS, which authorises a GitHub
       account through a device code at https://github.com/login/device --
       HACS talking to GitHub, not to this project, and not automatable. Then
       Custom repositories -> the preview URL, category Integration ->
@@ -130,11 +133,12 @@ running:
       fabricated data and talks to a simulator. Do not reuse them anywhere,
       and think twice before exposing this instance beyond your own LAN.
     recreate: |
-      # If config/ is wiped, onboarding runs again:
-      curl -s -X POST http://127.0.0.1:8123/api/onboarding/users \
-        -H 'Content-Type: application/json' \
-        -d '{"client_id":"http://127.0.0.1:8123/","name":"Developer",
-             "username":"dev","password":"dev","language":"en"}'
+      # Both boot scripts do this in the background on every start, so a
+      # wiped config/ onboards itself. By hand, against a running instance:
+      python scripts/ha_onboard.py --url http://127.0.0.1:8123
+      # It is idempotent, finishes the steps after the account as well --
+      # without those the browser still opens on a wizard -- and refuses any
+      # URL that is not loopback, because these credentials are public.
 
 # ---------------------------------------------------------------------------
 
@@ -281,7 +285,7 @@ reviewing_the_migration:
   # continuous afterwards.
   steps:
     - scripts/develop.sh                       # once, to create config/
-    - pkill -f 'bin/hass'                   # it must be stopped for the next step
+    - pkill -f 'bin/has[s]'                 # it must be stopped for the next step
     - python scripts/seed_migration_testbed.py
     - nohup scripts/simulate.sh > /tmp/sim.log 2>&1 &
     - nohup scripts/develop.sh > /tmp/ha.log 2>&1 &
@@ -294,7 +298,7 @@ reviewing_the_migration:
     continues across the handover with a one-pixel gap where the YAML package
     stopped.
   other_answer: |
-    pkill -f 'bin/hass'
+    pkill -f 'bin/has[s]'
     python scripts/seed_migration_testbed.py --reset
     # delete the config entry in the UI, re-seed, restart
   diagnostics: >-

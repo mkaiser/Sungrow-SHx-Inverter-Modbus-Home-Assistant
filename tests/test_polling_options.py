@@ -24,6 +24,11 @@ from custom_components.sungrow_modbus.const import (
     DOMAIN,
     INTERVAL_NEVER,
     PERMISSION_START_STOP,
+    SECTION_ADVANCED,
+    SECTION_EXTERNAL,
+    SECTION_PERMISSIONS,
+    SECTION_POLLING,
+    SECTION_SURVEY,
 )
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_PORT
@@ -34,6 +39,25 @@ from sungrow_modbus import COMPONENTS, DEFAULT_INTERVALS, TIER_COMPONENTS
 from .conftest import SERIAL
 
 ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
+
+
+def _submission(**sections: dict) -> dict:
+    """Build a full options submission, overriding one section at a time.
+
+    The options page is one form of sections now, and every section key is
+    required -- the frontend always submits all of them. Fields *inside* a
+    section may be left out, because each carries a default, which is what
+    keeps these tests about the thing they are testing.
+    """
+    payload: dict = {
+        SECTION_POLLING: {"realtime": 5, "fast": 30, "medium": 60, "slowest": 600},
+        SECTION_PERMISSIONS: {},
+        SECTION_EXTERNAL: {},
+        SECTION_ADVANCED: {},
+        SECTION_SURVEY: {},
+    }
+    payload.update(sections)
+    return payload
 
 
 async def _setup(
@@ -122,19 +146,9 @@ async def test_the_options_flow_shows_what_each_group_contains(
     entry = await _setup(hass, sungrow_unit)
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
-    assert result["type"] is FlowResultType.MENU
-    assert set(result["menu_options"]) == {
-        "polling",
-        "permissions",
-        "external",
-        "survey",
-        "settings",
-    }
-
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "polling"}
-    )
-    assert result["step_id"] == "polling"
+    # One page, not a menu: every setting is on it, grouped into sections.
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "init"
 
     table = result["description_placeholders"]["tiers"]
     for tier in DEFAULT_INTERVALS:
@@ -157,15 +171,19 @@ async def test_setting_an_interval_through_the_flow_takes_effect(
     entry = await _setup(hass, sungrow_unit)
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "polling"}
-    )
     with patch(
         "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
     ):
         result = await hass.config_entries.options.async_configure(
             result["flow_id"],
-            {"realtime": 5, "fast": 30, "medium": 60, "slowest": INTERVAL_NEVER},
+            _submission(
+                polling={
+                    "realtime": 5,
+                    "fast": 30,
+                    "medium": 60,
+                    "slowest": INTERVAL_NEVER,
+                }
+            ),
         )
         await hass.async_block_till_done()
 
@@ -192,13 +210,17 @@ async def test_an_interval_below_five_seconds_is_not_accepted(
     entry = await _setup(hass, sungrow_unit)
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "polling"}
-    )
     with pytest.raises(InvalidData):
         await hass.config_entries.options.async_configure(
             result["flow_id"],
-            {"realtime": interval, "fast": 10, "medium": 60, "slowest": 600},
+            _submission(
+                polling={
+                    "realtime": interval,
+                    "fast": 10,
+                    "medium": 60,
+                    "slowest": 600,
+                }
+            ),
         )
 
 
@@ -234,20 +256,19 @@ async def test_the_permissions_step_saves_the_audience(
     entry = await _setup(hass, sungrow_unit)
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "permissions"}
-    )
-    assert result["step_id"] == "permissions"
+    assert result["step_id"] == "init"
 
-    # The safe answer is what the form offers before anything is chosen.
-    schema = result["data_schema"]({})
-    assert schema[PERMISSION_START_STOP] == AUDIENCE_ADMINS
+    # The safe answer is what the form offers before anything is chosen --
+    # inside the section it belongs to, which is where the defaults now live.
+    schema = result["data_schema"](_submission())
+    assert schema[SECTION_PERMISSIONS][PERMISSION_START_STOP] == AUDIENCE_ADMINS
 
     with patch(
         "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
     ):
         result = await hass.config_entries.options.async_configure(
-            result["flow_id"], {PERMISSION_START_STOP: AUDIENCE_USERS}
+            result["flow_id"],
+            _submission(permissions={PERMISSION_START_STOP: AUDIENCE_USERS}),
         )
         await hass.async_block_till_done()
 
@@ -258,26 +279,37 @@ async def test_the_permissions_step_saves_the_audience(
 async def test_the_permissions_step_leaves_the_other_options_alone(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """Each options screen writes its own key and nothing else.
+    """Changing one section must not quietly undo another.
 
-    They share one options dict, so a step that replaced it rather than
-    merging into it would silently reset the poll intervals -- and the symptom
-    would be an inverter polled every 5 seconds again, days later, with
-    nothing to connect it to a permission somebody changed.
+    One page means one save, so every section is written on every submit --
+    which is exactly when a form that offered the *wrong* default would eat a
+    setting. The protection is that each section is filled from the entry's
+    current options, so a value nobody touched survives the round trip.
+
+    What changed with the sections: the saved intervals are now the complete
+    set rather than the single key that was configured. That is the page
+    reporting what it showed, and the value that matters is still 30.
     """
     entry = await _setup(hass, sungrow_unit, {CONF_INTERVALS: {"realtime": 30}})
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "permissions"}
-    )
     with patch(
         "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
     ):
+        # Only the permissions section is given; everything else takes the
+        # defaults the form was built with.
         await hass.config_entries.options.async_configure(
-            result["flow_id"], {PERMISSION_START_STOP: AUDIENCE_USERS}
+            result["flow_id"],
+            {
+                SECTION_POLLING: {},
+                SECTION_PERMISSIONS: {PERMISSION_START_STOP: AUDIENCE_USERS},
+                SECTION_EXTERNAL: {},
+                SECTION_ADVANCED: {},
+                SECTION_SURVEY: {},
+            },
         )
         await hass.async_block_till_done()
 
-    assert entry.options[CONF_INTERVALS] == {"realtime": 30}
+    assert entry.options[CONF_INTERVALS]["realtime"] == 30
+    assert entry.options[CONF_INTERVALS]["fast"] == DEFAULT_INTERVALS["fast"]
     assert entry.options[CONF_PERMISSIONS] == {PERMISSION_START_STOP: AUDIENCE_USERS}

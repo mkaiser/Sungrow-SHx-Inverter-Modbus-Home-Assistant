@@ -15,10 +15,13 @@
 
 ## Trying it
 
-`v0.1.0a2` is released and on PyPI. HACS cannot install this repository, for a reason
-that is about where HACS looks rather than about the release —
+Install it through **HACS**, from the preview channel —
+`Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview`, a second repository
+that exists because HACS reads a repository's *default branch* and this
+one's is the YAML package. Add it under **HACS → ⋮ → Custom repositories**,
+category *Integration*.
 **[doc/installing_a_preview.md](doc/installing_a_preview.md)** has the four
-steps and explains why.
+steps and explains the rest.
 
 ## What this is
 
@@ -65,14 +68,15 @@ long-term statistics and their dashboards when they switch.
 
 **Not there yet:**
 
-- **A HACS install.** `v0.1.0a2` **is** released and on PyPI, but HACS
-  cannot install it yet — not for want of a release: HACS resolves a
-  repository to the latest *stable* release or else to the *default branch*,
+- **A HACS install from _this_ repository.** It installs through HACS today,
+  but from the preview channel rather than from here: HACS resolves a
+  repository to the latest *stable* release or else to its *default branch*,
   and this one's default branch is `main`, which has no `custom_components/`.
-  Installing a preview today means copying one folder, which takes about a
-  minute: **[doc/installing_a_preview.md](doc/installing_a_preview.md)**. All
-  early releases are **preview** releases, labelled as such in the version,
-  the integration's name and a repair notice.
+  That second repository follows the development branch and is removed once
+  the integration reaches `main` —
+  **[doc/installing_a_preview.md](doc/installing_a_preview.md)**. Everything
+  published so far is a **preview**, labelled as such in the version, the
+  integration's name and a repair notice.
 - The **iHomeManager** and the **Sungrow Logger**. Both are documented by
   Sungrow and neither has ever been measured by this project — if you have
   one, [doc/device-fingerprints/devices-wanted.md](doc/device-fingerprints/devices-wanted.md)

@@ -81,6 +81,17 @@ OVERRIDES: dict[str, str] = {
     # inverter reports "Battery voltage" as *its* view of the pack, and this
     # is the pack's own BMS reporting itself. A user comparing the two should
     # be able to tell which is which from the name.
+    # -- the survey, which is tooling rather than a reading ---------------
+    #
+    # Also without a legacy name: these describe what the integration is
+    # doing, not what the inverter reports. "Survey" leads every one of them
+    # so they sort together on a device page among entities that are
+    # otherwise all readings.
+    "run_survey": "Run capability survey",
+    "survey_progress": "Survey progress",
+    "survey_step": "Survey step",
+    "survey_finished": "Survey finished",
+    # -- the SBR pack, which is its own device on its own unit ------------
     "battery_pack_voltage": "Pack voltage",
     "battery_pack_current": "Pack current",
     "battery_pack_temperature": "Pack temperature",

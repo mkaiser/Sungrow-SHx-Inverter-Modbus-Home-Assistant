@@ -8,6 +8,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from sungrow_modbus.smoothing import TimeWeightedAverage
 
 from .battery_descriptions import CELL_DESCRIPTIONS, PACK_DESCRIPTIONS
+from .const import CONF_MODE, MODE_DEVICES, MODE_DIAGNOSTICS
 from .coordinator import SungrowConfigEntry, SungrowRuntimeData
 from .derived_descriptions import DERIVED_SENSORS
 from .entity import (
@@ -20,6 +21,7 @@ from .entity import (
 from .external import combined, external_power
 from .external_descriptions import EXTERNAL_SENSORS
 from .sensor_descriptions import SENSOR_DESCRIPTIONS
+from .survey_entities import SurveyProgressSensor, SurveyResultSensor, SurveyStepSensor
 from .wallbox_descriptions import WALLBOX_DESCRIPTIONS
 
 # The coordinator does the polling; entities never talk to the inverter.
@@ -33,6 +35,25 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Sungrow sensors."""
     runtime_data = entry.runtime_data
+
+    # A diagnostics-only entry is made of the survey and nothing else: three
+    # sensors here and a button beside them, which between them give the
+    # entry a device page -- a device reaches the registry only when an
+    # entity carrying its `device_info` is added.
+    #
+    # An ordinary entry gets none of them. It has readings to show and an
+    # owner who asked for those; the survey is an action for them, leaving no
+    # entity, no history and nothing to tidy up.
+    if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
+        async_add_entities(
+            [
+                SurveyProgressSensor(runtime_data),
+                SurveyStepSensor(runtime_data),
+                SurveyResultSensor(runtime_data),
+            ]
+        )
+        return
+
     async_add_entities(
         SungrowSensor(runtime_data, description)
         for description in (*SENSOR_DESCRIPTIONS, *DERIVED_SENSORS)
