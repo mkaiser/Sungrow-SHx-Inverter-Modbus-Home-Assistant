@@ -252,7 +252,7 @@ def models() -> dict:
     regenerating.
     """
     from sungrow_modbus.battery import (
-        CAPACITY_TOLERANCE_KWH,
+        CAPACITY_TOLERANCE_FRACTION,
         IDENTITY_REGISTER,
         MODELS,
         PACK_UNITS,
@@ -289,8 +289,11 @@ def models() -> dict:
         ],
         # Carried with the table it applies to: a capacity match is only a
         # match inside this tolerance, and a scanner that guessed its own
-        # would name an SBR096 for a 9.0 kWh third-party pack.
-        "battery_capacity_tolerance_kwh": CAPACITY_TOLERANCE_KWH,
+        # would name an SBR096 for a 9.0 kWh third-party pack. A fraction of
+        # the matched model's rating rather than a flat figure, because a
+        # measured SBH400 reports 0.55 kWh over its rating and the same
+        # absolute slack on an SBR064 would match almost anything.
+        "battery_capacity_tolerance_fraction": CAPACITY_TOLERANCE_FRACTION,
         # Which wallbox a device type code names. Two of the three come from
         # the community projects rather than from a reading here, which is
         # the point of carrying them: a contributor plugging in an AC011E-01

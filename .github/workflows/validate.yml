@@ -94,12 +94,6 @@ jobs:
 
       - name: The scan plan matches the library
         run: python scripts/generate_scan_plan.py --check
-      # The zip is the claim that this directory needs nothing installed, and
-      # it is the claim most easily broken by a convenient import. The AST
-      # test in pytest reads the imports; this unpacks the built zip and runs
-      # it with a bare interpreter, which is the half that cannot be fooled.
-      - name: The scan directory runs from a zip with nothing installed
-        run: python scripts/make_scan_zip.py --verify
       - name: The derived descriptions are current
         run: python scripts/generate_derived.py --check
       - name: The writable registers match the write table
@@ -111,10 +105,18 @@ jobs:
         run: python scripts/generate_strings.py --check
       - name: The compatibility page matches the fingerprints
         run: python scripts/generate_compatibility.py --check
+      - name: The entity name review sheet matches the descriptions
+        run: python scripts/review_names.py --check
       - name: Ruff
         run: |
           ruff check .
           ruff format --check .
+      # The library only -- `packages = ["sungrow_modbus"]` in pyproject.toml.
+      # The integration is deliberately out of scope: it is typed against Home
+      # Assistant, whose own annotations are not strict-clean, so checking it
+      # would mean a wall of ignores that hides the findings worth having.
+      - name: Mypy
+        run: mypy
       - name: Pytest
         run: pytest -q
 

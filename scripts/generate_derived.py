@@ -23,6 +23,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -188,75 +189,98 @@ def _requires(field: str) -> str | None:
     return None
 
 
+def _derived_description(
+    field: str, key: str, depends: tuple[str, ...], legacy: dict[str, Any]
+) -> list[str]:
+    """Emit one description for a value computed from other registers."""
+    lines: list[str] = []
+    entry = legacy.get(key, {})
+    lines.append("    SungrowSensorDescription(")
+    lines.append(f'        key="{key}",')
+    lines.append('        component="derived",')
+    lines.append(f'        field="{field}",')
+    lines.append(f'        translation_key="{key}",')
+    if entry.get("name"):
+        lines.append(f'        legacy_name="{entry["name"]}",')
+    if entry.get("unique_id"):
+        lines.append(f'        legacy_unique_id="{entry["unique_id"]}",')
+        lines.append('        legacy_platform="template",')
+    lines.append(f"        depends_on={depends!r},")
+    capability = _requires(field)
+    if capability:
+        lines.append(f"        requires=Capability.{capability},")
+    if key in DIAGNOSTIC:
+        lines.append("        entity_category=EntityCategory.DIAGNOSTIC,")
+    if entry.get("device_class"):
+        device_class = entry["device_class"].upper()
+        lines.append(f"        device_class=SensorDeviceClass.{device_class},")
+    if entry.get("state_class"):
+        state_class = entry["state_class"].upper()
+        lines.append(f"        state_class=SensorStateClass.{state_class},")
+    if entry.get("unit_of_measurement"):
+        lines.append(
+            f'        native_unit_of_measurement="{entry["unit_of_measurement"]}",'
+        )
+    lines.append("    ),")
+    return lines
+
+
+def _smoothed_description(
+    key: str, source_key: str, window: object, legacy: dict[str, Any]
+) -> list[str]:
+    """Emit one description for a moving average of a derived value.
+
+    Its device class, state class and unit come from the **source**, not
+    from the smoothed entry: an average of watts is still watts, and the
+    YAML entry for the filtered sensor does not restate them.
+    """
+    lines: list[str] = []
+    entry = legacy.get(key, {})
+    source_field, depends = DERIVED[source_key]
+    source = legacy.get(source_key, {})
+    lines.append("    SungrowSensorDescription(")
+    lines.append(f'        key="{key}",')
+    lines.append('        component="derived",')
+    lines.append(f'        field="{source_field}",')
+    lines.append(f'        translation_key="{key}",')
+    if entry.get("name"):
+        lines.append(f'        legacy_name="{entry["name"]}",')
+    if entry.get("unique_id"):
+        lines.append(f'        legacy_unique_id="{entry["unique_id"]}",')
+        # Registered by the `filter` platform, not `template`, and the
+        # migration finds the entity by (platform, unique_id).
+        lines.append('        legacy_platform="filter",')
+    lines.append(f"        depends_on={depends!r},")
+    lines.append(f"        smoothed_over={window},")
+    # From the source: see SMOOTHED.
+    if source.get("device_class"):
+        device_class = source["device_class"].upper()
+        lines.append(f"        device_class=SensorDeviceClass.{device_class},")
+    if source.get("state_class"):
+        state_class = source["state_class"].upper()
+        lines.append(f"        state_class=SensorStateClass.{state_class},")
+    if source.get("unit_of_measurement"):
+        lines.append(
+            f'        native_unit_of_measurement="{source["unit_of_measurement"]}",'
+        )
+    # The YAML rounds the filtered value to two decimals. Display
+    # precision does the same thing where it belongs, leaving statistics
+    # the full value instead of a rounded one.
+    lines.append("        suggested_display_precision=2,")
+    lines.append("    ),")
+    return lines
+
+
 def render() -> str:
     """Return the whole generated module."""
     legacy = _legacy()
     lines = [HEADER]
 
     for field, (key, depends) in DERIVED.items():
-        entry = legacy.get(key, {})
-        lines.append("    SungrowSensorDescription(")
-        lines.append(f'        key="{key}",')
-        lines.append('        component="derived",')
-        lines.append(f'        field="{field}",')
-        lines.append(f'        translation_key="{key}",')
-        if entry.get("name"):
-            lines.append(f'        legacy_name="{entry["name"]}",')
-        if entry.get("unique_id"):
-            lines.append(f'        legacy_unique_id="{entry["unique_id"]}",')
-            lines.append('        legacy_platform="template",')
-        lines.append(f"        depends_on={depends!r},")
-        capability = _requires(field)
-        if capability:
-            lines.append(f"        requires=Capability.{capability},")
-        if key in DIAGNOSTIC:
-            lines.append("        entity_category=EntityCategory.DIAGNOSTIC,")
-        if entry.get("device_class"):
-            device_class = entry["device_class"].upper()
-            lines.append(f"        device_class=SensorDeviceClass.{device_class},")
-        if entry.get("state_class"):
-            state_class = entry["state_class"].upper()
-            lines.append(f"        state_class=SensorStateClass.{state_class},")
-        if entry.get("unit_of_measurement"):
-            lines.append(
-                f'        native_unit_of_measurement="{entry["unit_of_measurement"]}",'
-            )
-        lines.append("    ),")
+        lines += _derived_description(field, key, depends, legacy)
 
     for key, (source_key, window) in SMOOTHED.items():
-        entry = legacy.get(key, {})
-        source_field, depends = DERIVED[source_key]
-        source = legacy.get(source_key, {})
-        lines.append("    SungrowSensorDescription(")
-        lines.append(f'        key="{key}",')
-        lines.append('        component="derived",')
-        lines.append(f'        field="{source_field}",')
-        lines.append(f'        translation_key="{key}",')
-        if entry.get("name"):
-            lines.append(f'        legacy_name="{entry["name"]}",')
-        if entry.get("unique_id"):
-            lines.append(f'        legacy_unique_id="{entry["unique_id"]}",')
-            # Registered by the `filter` platform, not `template`, and the
-            # migration finds the entity by (platform, unique_id).
-            lines.append('        legacy_platform="filter",')
-        lines.append(f"        depends_on={depends!r},")
-        lines.append(f"        smoothed_over={window},")
-        # From the source: see SMOOTHED.
-        if source.get("device_class"):
-            device_class = source["device_class"].upper()
-            lines.append(f"        device_class=SensorDeviceClass.{device_class},")
-        if source.get("state_class"):
-            state_class = source["state_class"].upper()
-            lines.append(f"        state_class=SensorStateClass.{state_class},")
-        if source.get("unit_of_measurement"):
-            lines.append(
-                f'        native_unit_of_measurement="{source["unit_of_measurement"]}",'
-            )
-        # The YAML rounds the filtered value to two decimals. Display
-        # precision does the same thing where it belongs, leaving statistics
-        # the full value instead of a rounded one.
-        lines.append("        suggested_display_precision=2,")
-        lines.append("    ),")
+        lines += _smoothed_description(key, source_key, window, legacy)
     lines.append(")")
 
     lines.append(

@@ -22,6 +22,7 @@ no fingerprint is listed as **untested** rather than assumed to work.
 | `sh10rt-v112-3p-fwitten-anon-33442450531-battery-none` | fwitten | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | no | — | no | — | no |
 | `sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-meter` | fwitten | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | yes | yes | — | no |
 | `sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-winet` | fwitten | SH10RT-V112 (`0x0E0F`) | WiNet-S (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
+| `sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-unknown-winet-wlan` | ra1k_0 | SH20T (`0x0E26`) | WiNet-S, WiFi (reported) | SBH400-V11 | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter` | gerd | SH8.0RT-V112 (`0x0E0E`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | yes | yes | yes | no |
 | `sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan` | gerd | SH8.0RT-V112 (`0x0E0E`) | WiNet-S, WiFi (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
 
@@ -89,6 +90,7 @@ What exists, and why none of it pairs up:
 | SH10RT-20 | unsure | B001.V000.P020 (2 readings) |
 | SH10RT-V112 | direct_lan | unknown (2 readings) |
 | SH10RT-V112 | winet | unknown (2 readings) |
+| SH20T | winet_wlan | B000.V000.P071 (1 reading) |
 | SH8.0RT-V112 | direct_lan | B001.V000.P022 (1 reading) |
 | SH8.0RT-V112 | winet_wlan | B001.V000.P022 (1 reading) |
 
@@ -100,6 +102,7 @@ contribution is the least obvious one.
 
 - **SH10RT** is recorded on B001.V000.P020. Any other firmware on one would make its capabilities attributable.
 - **SH10RT-20** is recorded on B001.V000.P020. Any other firmware on one would make its capabilities attributable.
+- **SH20T** is recorded on B000.V000.P071. Any other firmware on one would make its capabilities attributable.
 - **SH8.0RT-V112** is recorded on B001.V000.P022. Any other firmware on one would make its capabilities attributable.
 
 ## Models this library knows, and whether anybody has tested one
@@ -154,14 +157,14 @@ last column says what that rules out before anything is even read.
 | `0x0E11` | SH6.0RT-20 | RT | untested | mppt3, mppt4, pv_power_limitation |
 | `0x0E12` | SH8.0RT-20 | RT | untested | mppt3, mppt4, pv_power_limitation |
 | `0x0E13` | SH10RT-20 | RT | **yes** | mppt3, mppt4, pv_power_limitation |
-| `0x0E20` | SH5T | T | untested | mppt4 |
-| `0x0E21` | SH6T | T | untested | mppt4 |
-| `0x0E22` | SH8T | T | untested | mppt4 |
-| `0x0E23` | SH10T | T | untested | mppt4 |
-| `0x0E24` | SH12T | T | untested | mppt4 |
-| `0x0E25` | SH15T | T | untested | mppt4 |
-| `0x0E26` | SH20T | T | untested | mppt4 |
-| `0x0E28` | SH25T | T | untested | mppt4 |
+| `0x0E20` | SH5T | T | untested | battery_start_power, mppt4 |
+| `0x0E21` | SH6T | T | untested | battery_start_power, mppt4 |
+| `0x0E22` | SH8T | T | untested | battery_start_power, mppt4 |
+| `0x0E23` | SH10T | T | untested | battery_start_power, mppt4 |
+| `0x0E24` | SH12T | T | untested | battery_start_power, mppt4 |
+| `0x0E25` | SH15T | T | untested | battery_start_power, mppt4 |
+| `0x0E26` | SH20T | T | **yes** | battery_start_power, mppt4 |
+| `0x0E28` | SH25T | T | untested | battery_start_power, mppt4 |
 | `0x0E39` | SH100CX | CX | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, forced_startup, meter_channel_2, pv_power_limitation |
 | `0x0E3A` | SH110CX | CX | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, forced_startup, meter_channel_2, pv_power_limitation |
 | `0x0E3D` | SH125CX | CX | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, forced_startup, meter_channel_2, pv_power_limitation |

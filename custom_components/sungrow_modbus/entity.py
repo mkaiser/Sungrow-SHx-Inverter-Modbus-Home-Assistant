@@ -13,7 +13,11 @@ from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from sungrow_modbus import Capability, present
 
-from .coordinator import SungrowDataUpdateCoordinator, SungrowRuntimeData
+from .coordinator import (
+    SungrowDataUpdateCoordinator,
+    SungrowRuntimeData,
+    SungrowSubDeviceCoordinator,
+)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -183,6 +187,27 @@ class SungrowBinarySensorDescription(
     """
 
 
+def as_reading(value: object) -> float | int | str | None:
+    """Return a value a sensor can show, or None where there is nothing to show.
+
+    Written once because the `bool` line is the kind of thing that looks like
+    belt and braces and is not: **`isinstance(True, int)` is `True` in
+    Python**, so without it a boolean would pass the numeric test and reach
+    Home Assistant as a sensor reading of 1. Registers this project decodes as
+    flags belong on `binary_sensor`, and one arriving here means a description
+    is on the wrong platform -- so None is the honest answer rather than a
+    number nobody asked for.
+
+    None also covers "the block did not answer", which `present()` in the
+    library has already mapped from the specification's sentinels.
+    """
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float, str)):
+        return value
+    return None
+
+
 class SungrowEntity(CoordinatorEntity[SungrowDataUpdateCoordinator]):
     """Base entity backed by one field of one component."""
 
@@ -272,15 +297,13 @@ class SungrowDeviceEntity(CoordinatorEntity):
 
     def __init__(
         self,
-        coordinator: CoordinatorEntity,
+        coordinator: SungrowSubDeviceCoordinator,
         entity_description: SungrowEntityDescription,
     ) -> None:
         """Initialize the entity."""
         super().__init__(coordinator)
         self.entity_description = entity_description
-        serial = coordinator._inverter.serial_number
-        assert serial is not None
-        self._attr_unique_id = f"{serial}_{entity_description.key}"
+        self._attr_unique_id = f"{coordinator.inverter_serial}_{entity_description.key}"
         self._attr_device_info = coordinator.device_info
 
     @property

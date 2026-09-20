@@ -9,7 +9,7 @@ button.
 The fourth is the one that reshaped the integration. A device reaches the
 registry only when an entity carrying its `device_info` is added -- so a
 diagnostics-only entry, which deliberately had no entities at all, had no
-device page to put any of this on. It has four entities now, and nothing
+device page to put any of this on. It has five entities now, and nothing
 else: that set is what these tests pin.
 """
 
@@ -54,6 +54,10 @@ ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 #: What a diagnostics-only entry creates, and the whole of it.
 DIAGNOSTIC_ENTITIES = {
     "button.sh10rt_run_capability_survey",
+    # Part B, which writes. Present in this mode too: the contributor who set
+    # an entry up to send a reading is exactly the person whose hardware this
+    # project needs a write measurement from.
+    "button.sh10rt_run_control_write_test",
     "sensor.sh10rt_survey_progress",
     "sensor.sh10rt_survey_step",
     "sensor.sh10rt_survey_finished",
@@ -95,7 +99,7 @@ async def _setup(
 async def test_a_diagnostics_entry_has_the_survey_and_nothing_else(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """Four entities: the button, and the three that watch it.
+    """Five entities: the two buttons, and the three that watch them.
 
     The promise of this mode is that somebody who offered to send a reading
     does not get their house filled with entities. That still holds -- there
@@ -144,7 +148,7 @@ async def test_an_ordinary_entry_gets_none_of_them(
     """Somebody who installed this for solar readings asked for solar readings.
 
     Deleting an entry removes its entities cleanly either way, so this is not
-    about cleanup -- it is about not putting four diagnostic entities into
+    about cleanup -- it is about not putting five diagnostic entities into
     every install's registry, history and entity pickers to begin with. That
     owner helps through the `run_survey` action, which leaves nothing behind
     at all.

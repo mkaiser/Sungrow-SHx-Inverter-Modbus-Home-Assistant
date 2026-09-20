@@ -11,7 +11,8 @@
   "dependencies": [
     "http",
     "modbus",
-    "network"
+    "network",
+    "repairs"
   ],
   "documentation": "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant",
   "integration_type": "device",

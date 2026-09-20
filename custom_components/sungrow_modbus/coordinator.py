@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import timedelta
 import logging
@@ -46,7 +47,36 @@ COMPONENT_TIERS: dict[str, str] = {
 }
 
 
-class SungrowDataUpdateCoordinator(DataUpdateCoordinator[UpdateReport]):
+class PausableCoordinator:
+    """Lets a survey or control test have the link to itself for a while.
+
+    A mixin rather than a base class because the three coordinators here are
+    siblings, not a hierarchy: the inverter's tiers, the battery pack and the
+    wallbox each subclass Home Assistant's `DataUpdateCoordinator` directly.
+    What they do share is the endpoint -- one host, one port, one serialized
+    connection -- so a pause that covered only one of them would not be a
+    pause at all.
+    """
+
+    data: Any
+    config_entry: ConfigEntry
+
+    def _skip_while_paused(self) -> UpdateReport | None:
+        """Return what to report while paused, or None to go ahead and poll.
+
+        Returns the last report rather than raising `UpdateFailed`, so a paused
+        entry looks like one whose values are a little old -- which is what it
+        is -- and not like one that has lost its inverter.
+        """
+        runtime = getattr(self.config_entry, "runtime_data", None)
+        if runtime is None or not getattr(runtime, "polling_paused", False):
+            return None
+        return self.data if self.data is not None else UpdateReport()
+
+
+class SungrowDataUpdateCoordinator(
+    PausableCoordinator, DataUpdateCoordinator[UpdateReport]
+):
     """Poll one group of the inverter's registers."""
 
     config_entry: SungrowConfigEntry
@@ -98,7 +128,9 @@ class SungrowDataUpdateCoordinator(DataUpdateCoordinator[UpdateReport]):
         )
 
     async def _async_update_data(self) -> UpdateReport:
-        """Poll the inverter."""
+        """Poll the inverter, unless a survey has asked for the link."""
+        if (paused := self._skip_while_paused()) is not None:
+            return paused
         try:
             report = await self._poll()
         except ModbusConnectionError as err:
@@ -181,7 +213,118 @@ class SungrowDataUpdateCoordinator(DataUpdateCoordinator[UpdateReport]):
             _LOGGER.info("%s: %s is answering again", self.name, name)
 
 
-class SungrowBatteryCoordinator(DataUpdateCoordinator[UpdateReport]):
+class SungrowSubDeviceCoordinator(
+    PausableCoordinator, DataUpdateCoordinator[UpdateReport]
+):
+    """Poll one device that lives behind the inverter's endpoint.
+
+    The SBR pack and the wallbox are different hardware with different
+    registers and different polling rhythms, and almost everything else about
+    them is the same: both are reached through the inverter's connection, both
+    hang off it in the interface, both are identified by **its** serial with a
+    suffix because neither reports a usable one of its own, and both turn a
+    `ModbusError` into an `UpdateFailed` that names which device failed.
+
+    That was written twice, and the copies had drifted into storing the device
+    under different attribute names -- `self.battery` and `self.wallbox` --
+    behind a `device` property that existed only to paper over the difference.
+    The inverter's own coordinator stores `self.device` directly, so this now
+    does what that already did, and the two subclasses are left holding only
+    what genuinely differs: how a model name is found, and how often each
+    block is worth reading.
+    """
+
+    config_entry: SungrowConfigEntry
+
+    kind: str
+    """The suffix on the inverter's serial, the noun in this coordinator's
+    name, and the word an error message uses. One string, three jobs, so they
+    cannot disagree."""
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: SungrowConfigEntry,
+        device: Any,
+        inverter: SungrowInverter,
+        interval: timedelta,
+    ) -> None:
+        """Initialize the coordinator."""
+        super().__init__(
+            hass,
+            _LOGGER,
+            config_entry=entry,
+            name=f"{entry.title} {self.kind}",
+            update_interval=interval,
+        )
+        self.device = device
+        self._inverter = inverter
+
+    @property
+    def inverter_serial(self) -> str:
+        """Return the serial that identifies this device's entities.
+
+        The **inverter's**, not this device's, and public because the entities
+        need it: an SBR reports no serial anywhere in its seventeen registers,
+        and a wallbox reports one two registers below the model name that this
+        project deliberately never reads. So the only stable identity either
+        device has is the inverter it is reached through.
+        """
+        serial = self._inverter.serial_number
+        assert serial is not None
+        return serial
+
+    def _model(self) -> str | None:
+        """Return this device's model name, or None if it cannot be read."""
+        raise NotImplementedError
+
+    @property
+    def device_info(self) -> dr.DeviceInfo:
+        """Describe the device, hung off the inverter it is reached through.
+
+        Its own device rather than more entities on the inverter's, because it
+        is its own hardware with its own firmware and its own failure -- a
+        dongle can lose the pack's cell block while the inverter answers
+        everything. `via_device` is what puts it under the inverter in the
+        interface, which is also where it sits physically.
+
+        Identified by the **inverter's** serial with a suffix. An SBR reports
+        no serial anywhere in its seventeen registers, which the survey checked
+        by reading the whole 10740-10789 band. A wallbox does report one, at
+        input 21200 -- and one reached a published fingerprint as
+        `[16690, 13633]`, which decodes to `A25A`, before anybody thought about
+        the second device in the house. Nothing here reads it.
+        """
+        serial = self.inverter_serial
+        model = self._model()
+        label = self.kind.capitalize()
+        return dr.DeviceInfo(
+            identifiers={(DOMAIN, f"{serial}-{self.kind}")},
+            manufacturer=MANUFACTURER,
+            model=model or label,
+            name=model or label,
+            via_device=(DOMAIN, serial),
+        )
+
+    @asynccontextmanager
+    async def _reading(self) -> AsyncIterator[None]:
+        """Turn a Modbus failure into an `UpdateFailed` that names the device.
+
+        The two cases stay separate because they mean different things: a lost
+        connection is about the link and will take the next poll with it, while
+        an exception is about this device and this register.
+        """
+        try:
+            yield
+        except ModbusConnectionError as err:
+            raise UpdateFailed(
+                f"Lost the connection while reading the {self.kind}: {err}"
+            ) from err
+        except ModbusError as err:
+            raise UpdateFailed(f"Error reading the {self.kind}: {err}") from err
+
+
+class SungrowBatteryCoordinator(SungrowSubDeviceCoordinator):
     """Poll an SBR pack's own registers, on its own unit.
 
     One coordinator, not four. The pack has no tiers: seventeen registers in
@@ -191,101 +334,55 @@ class SungrowBatteryCoordinator(DataUpdateCoordinator[UpdateReport]):
     battery polled faster than its inverter.
 
     It shares the inverter's connection, because one config entry is one
-    endpoint and everything pointed at that host and port is serialized
-    behind a single link. That is not a limitation to work around: a Sungrow
-    accepts very few simultaneous sessions, and a second connection for the
-    battery would compete with the inverter for one.
+    endpoint and everything pointed at that host and port is serialized behind
+    a single link. That is not a limitation to work around: a Sungrow accepts
+    very few simultaneous sessions, and a second connection for the battery
+    would compete with the inverter for one.
     """
 
-    config_entry: SungrowConfigEntry
+    kind = "battery"
 
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        entry: SungrowConfigEntry,
-        battery: object,
-        inverter: SungrowInverter,
-        interval: timedelta,
-    ) -> None:
-        """Initialize the coordinator."""
-        super().__init__(
-            hass,
-            _LOGGER,
-            config_entry=entry,
-            name=f"{entry.title} battery",
-            update_interval=interval,
-        )
-        self.battery = battery
-        self._inverter = inverter
+    def _model(self) -> str | None:
+        """Name the pack from its capacity, which is all it tells anyone.
 
-    @property
-    def device(self):
-        """The library object this coordinator polls.
-
-        One name for it across both non-inverter devices, so
-        `SungrowDeviceEntity` can read a value without knowing which kind of
-        device it is on.
+        The capacity comes from the *inverter*, not the pack, and only as a
+        float -- anything else means the register did not answer, and a guess
+        at the model from a missing capacity would be a label nobody could
+        correct.
         """
-        return self.battery
-
-    @property
-    def device_info(self) -> dr.DeviceInfo:
-        """Describe the pack, hung off the inverter it is wired to.
-
-        Its own device rather than more entities on the inverter's, because it
-        is its own hardware with its own firmware and its own failure -- a
-        dongle can lose the pack's cell block while the inverter answers
-        everything. `via_device` is what puts it under the inverter in the
-        interface, which is also where it is physically.
-
-        The identifier is the **inverter's serial with a suffix**, not the
-        pack's own: an SBR does not report a serial number anywhere in its
-        seventeen registers. That is checked -- `NEVER_PUBLISH` aside, the
-        survey reads the whole 10740-10789 band and there is no serial in it.
-        So the pack is identified by the inverter it belongs to, which is
-        also the only thing that makes it unique on this endpoint.
-        """
-        serial = self._inverter.serial_number
-        assert serial is not None
         capacity = self._inverter.field("battery_capacity_high_precision")
-        model = self.battery.model(capacity if isinstance(capacity, float) else None)
-        return dr.DeviceInfo(
-            identifiers={(DOMAIN, f"{serial}-battery")},
-            manufacturer=MANUFACTURER,
-            model=model or "Battery",
-            name=model or "Battery",
-            via_device=(DOMAIN, serial),
+        model: str | None = self.device.model(
+            capacity if isinstance(capacity, float) else None
         )
+        return model
 
     async def _async_update_data(self) -> UpdateReport:
         """Poll the pack, tolerating either block failing on its own."""
-        try:
-            return await self.battery.async_update()
-        except ModbusConnectionError as err:
-            raise UpdateFailed(
-                f"Lost the connection while reading the battery: {err}"
-            ) from err
-        except ModbusError as err:
-            raise UpdateFailed(f"Error reading the battery: {err}") from err
+        if (paused := self._skip_while_paused()) is not None:
+            return paused
+        async with self._reading():
+            report: UpdateReport = await self.device.async_update()
+        return report
 
 
-class SungrowWallboxCoordinator(DataUpdateCoordinator[UpdateReport]):
+class SungrowWallboxCoordinator(SungrowSubDeviceCoordinator):
     """Poll a wallbox's own registers, on its own unit.
 
-    **Two intervals, not one**, which is the difference from the battery. A
+    **Two intervals, not one**, which is the difference from the battery and
+    the reason this class exists at all rather than being a `kind` string. A
     pack's seventeen registers all move slowly; a wallbox has twenty-three
     that change while a car is charging and nine that change when somebody
     reconfigures it. So this coordinator fires on the inverter's *fast* tier
-    and reads only `wallbox_live`, and refreshes the rest every `SLOW_EVERY`
+    and reads only `wallbox_live`, refreshing the rest every `SLOW_EVERY`
     firings -- reading the ratings every ten seconds would spend a Sungrow's
     scarce session time on a rated current that cannot change.
 
-    It shares the inverter's connection, because one config entry is one
-    endpoint and everything on that host and port is serialized behind a
-    single link.
+    It is reachable only as a unit behind the inverter's endpoint, never on an
+    address of its own: measured at a site whose wallbox has its own LAN cable
+    and still answered nowhere else.
     """
 
-    config_entry: SungrowConfigEntry
+    kind = "wallbox"
 
     #: How many fast polls pass before the slow components are read again.
     #:
@@ -295,84 +392,38 @@ class SungrowWallboxCoordinator(DataUpdateCoordinator[UpdateReport]):
     #: so nothing waits five minutes to appear.
     SLOW_EVERY = 30
 
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        entry: SungrowConfigEntry,
-        wallbox: object,
-        inverter: SungrowInverter,
-        interval: timedelta,
-    ) -> None:
-        """Initialize the coordinator."""
-        super().__init__(
-            hass,
-            _LOGGER,
-            config_entry=entry,
-            name=f"{entry.title} wallbox",
-            update_interval=interval,
-        )
-        self.wallbox = wallbox
-        self._inverter = inverter
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize the coordinator, and the counter the rhythm turns on."""
+        super().__init__(*args, **kwargs)
         self._polls = 0
 
-    @property
-    def device(self):
-        """The library object this coordinator polls.
-
-        One name for it across both non-inverter devices, so
-        `SungrowDeviceEntity` can read a value without knowing which kind of
-        device it is on.
-        """
-        return self.wallbox
-
-    @property
-    def device_info(self) -> dr.DeviceInfo:
-        """Describe the wallbox, hung off the inverter it is wired behind.
-
-        Its own device, because it is its own hardware -- and because it is
-        reachable *only* through the inverter's endpoint, which `via_device`
-        says exactly.
-
-        Identified by the inverter's serial with a suffix rather than by its
-        own, although a wallbox does report one: it sits at input 21200, and
-        one was published in a fingerprint as `[16690, 13633]` -- which
-        decodes to `A25A` -- before anybody thought about the second device in
-        the house. Nothing here reads it.
-        """
-        serial = self._inverter.serial_number
-        assert serial is not None
-        model = self.wallbox.model
-        return dr.DeviceInfo(
-            identifiers={(DOMAIN, f"{serial}-wallbox")},
-            manufacturer=MANUFACTURER,
-            model=model or "Wallbox",
-            name=model or "Wallbox",
-            via_device=(DOMAIN, serial),
-        )
+    def _model(self) -> str | None:
+        """Name the wallbox from the model register it does answer."""
+        model: str | None = self.device.model
+        return model
 
     async def _async_update_data(self) -> UpdateReport:
         """Poll the live block, and the rest every `SLOW_EVERY` firings."""
         from sungrow_modbus.wallbox_device import FAST, SLOW
 
+        if (paused := self._skip_while_paused()) is not None:
+            # Deliberately before the counter moves. A paused firing is not a
+            # poll, and letting it advance `_polls` would drift the slow block
+            # out of its every-nth rhythm for the rest of the entry's life.
+            return paused
         due = self._polls % self.SLOW_EVERY == 0
         self._polls += 1
-        try:
-            report = await self.wallbox.async_update(only=FAST)
+        async with self._reading():
+            report = await self.device.async_update(only=FAST)
             if due:
-                report = report | await self.wallbox.async_update(only=SLOW)
-        except ModbusConnectionError as err:
-            raise UpdateFailed(
-                f"Lost the connection while reading the wallbox: {err}"
-            ) from err
-        except ModbusError as err:
-            raise UpdateFailed(f"Error reading the wallbox: {err}") from err
+                report = report | await self.device.async_update(only=SLOW)
         # A slow component that was not read this time keeps the values it
         # had, so it must not be reported as failed -- an entity would go
         # unavailable for four minutes out of five.
         if not due and self.data is not None:
             report = UpdateReport(
                 updated=report.updated | (self.data.updated - set(FAST)),
-                failed={**{k: v for k, v in self.data.failed.items()}, **report.failed},
+                failed={**self.data.failed, **report.failed},
             )
         return report
 
@@ -463,6 +514,49 @@ class SungrowRuntimeData:
     def coordinator_for(self, component: str) -> SungrowDataUpdateCoordinator:
         """Return the coordinator that owns a component's data."""
         return self.coordinators[component]
+
+    polling_paused: bool = False
+    """True while a survey or control test wants the link to itself.
+
+    **Declared last on purpose.** The first three fields of this dataclass are
+    passed positionally where the entry is set up, so a field inserted among
+    them shifts every argument after it -- which is exactly what happened on
+    the first attempt at this, and surfaced as `KeyError: 'realtime'` from a
+    lookup three files away.
+
+    Read by every coordinator on this entry before it polls. Everything here
+    shares one serialized connection to one endpoint, so a survey taken while
+    the tiers keep firing is a survey taken under contention -- which is why
+    every document published from a device page before 2026-09-18 carried
+    `coordinators_paused: false`, honestly, and why it was worth fixing rather
+    than explaining.
+
+    Paused at the *poll* rather than by clearing `update_interval`, which would
+    have needed a private Home Assistant call to cancel the timer already
+    scheduled. A coordinator that wakes while this is set returns what it last
+    had and touches no register, so entities hold their values instead of going
+    unavailable for the length of a run.
+    """
+
+    @asynccontextmanager
+    async def async_paused(self) -> AsyncIterator[None]:
+        """Hold every coordinator on this entry off the link for the duration.
+
+        Restored in a `finally`, so a survey that raises, times out or is
+        cancelled cannot leave an entry that has silently stopped polling --
+        which would look exactly like the integration having died.
+
+        What it does **not** do is interrupt a poll already in flight. There is
+        no safe way to, and it does not matter: one more read has already been
+        paid for, and everything after it waits.
+        """
+        self.polling_paused = True
+        _LOGGER.debug("Polling paused: a survey or control test has the link")
+        try:
+            yield
+        finally:
+            self.polling_paused = False
+            _LOGGER.debug("Polling resumed")
 
     def serves(self, description: object) -> bool:
         """Whether this description should exist on this entry.

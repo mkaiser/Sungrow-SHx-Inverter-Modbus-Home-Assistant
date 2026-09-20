@@ -27,6 +27,18 @@ from .coordinator import SungrowConfigEntry
 from .entity import SungrowEntity, SungrowSelectDescription
 from .select_descriptions import SELECT_DESCRIPTIONS
 
+# One at a time, and not for the usual reason. A Sungrow accepts very few
+# simultaneous Modbus sessions, and everything on this endpoint is already
+# serialized behind one connection -- so two writes issued at once do not go
+# faster, they queue, and the second one's timeout starts while it is still
+# waiting. Worse, these registers interlock: `battery_min_soc` and
+# `battery_max_soc` are rejected if they cross, so an automation that sets both
+# in one call has an ordering that matters and must not be raced.
+#
+# `sensor` and `binary_sensor` set 0 instead because the coordinator does their
+# polling and the entities never talk to the inverter at all.
+PARALLEL_UPDATES = 1
+
 
 async def async_setup_entry(
     hass: HomeAssistant,

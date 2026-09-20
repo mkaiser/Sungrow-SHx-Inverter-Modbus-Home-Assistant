@@ -39,6 +39,7 @@ what it deliberately does not do.
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from modbus_connection import ModbusError
@@ -49,12 +50,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceEntry
 from sungrow_modbus import Capability
-from sungrow_modbus.capabilities import OUTPUT_TYPES, known_absent, probe
+from sungrow_modbus.capabilities import OUTPUT_TYPES, known_absent
 
 from .const import CONF_REGISTER_DUMP, CONF_UNIT_ID, DOMAIN
 from .coordinator import COMPONENT_TIERS, SungrowConfigEntry
 from .fingerprint import async_build
 from .migration import DESCRIPTIONS, legacy_entity_id
+
+_LOGGER = logging.getLogger(__name__)
 
 #: Identifying details, redacted because this file is meant to be shared.
 #: `sungrow_inverter_serial` is here as well as `serial_number` because the
@@ -108,9 +111,15 @@ async def async_get_config_entry_diagnostics(
     # register dump and not free -- an inverter grants very few sessions.
     try:
         report["fingerprint"] = await async_build(hass, entry)
-    # Deliberately broad: the report a user came for matters more than
-    # any one section of it.
-    except Exception as err:
+    # Deliberately broad: the report a user came for matters more than any one
+    # section of it.
+    except Exception as err:  # and deliberately logged, see below
+        # The report carries the short form because somebody reads it; the log
+        # carries the traceback because somebody has to fix it. Without this
+        # the only trace of a failure was one line inside a downloaded JSON
+        # file, and the person holding that file is rarely the person who can
+        # act on it.
+        _LOGGER.exception("Could not build the fingerprint for %s", entry.title)
         report["fingerprint"] = {"error": f"{type(err).__name__}: {err}"}
 
     if entry.options.get(CONF_REGISTER_DUMP, False):
@@ -154,7 +163,7 @@ def _capabilities(device: Any, resolved: frozenset[Capability]) -> dict[str, Any
     part: a capability the family table calls absent but the device answered
     for means the table is wrong, which is a bug worth a report.
     """
-    probed = probe(device._read_or_none)
+    probed = device.probed_capabilities()
     absent = known_absent(device.device_type_code)
     return {
         "resolved": sorted(c.value for c in resolved),
@@ -242,7 +251,7 @@ def _readings(device: Any) -> dict[str, Any]:
     """
     values: dict[str, Any] = {}
     unavailable: list[str] = []
-    for name in sorted(device._fields):
+    for name in sorted(device.field_names):
         try:
             value = device.field(name)
         except (AttributeError, KeyError):

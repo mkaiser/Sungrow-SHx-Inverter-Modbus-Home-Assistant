@@ -8,11 +8,17 @@ share one serialized connection instead of competing for its few sessions.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import timedelta
 from functools import partial
 import logging
 
-from modbus_connection import ModbusConnectionError, ModbusError, ModbusTcpParams
+from modbus_connection import (
+    ModbusConnectionError,
+    ModbusError,
+    ModbusTcpParams,
+    ModbusUnit,
+)
 
 from homeassistant.components.modbus import async_get_unit
 from homeassistant.const import CONF_HOST, CONF_PORT, Platform
@@ -24,7 +30,12 @@ from homeassistant.helpers import (
     issue_registry as ir,
 )
 from homeassistant.helpers.typing import ConfigType
-from sungrow_modbus import DEFAULT_INTERVALS, TIER_COMPONENTS, SungrowInverter
+from sungrow_modbus import (
+    DEFAULT_INTERVALS,
+    TIER_COMPONENTS,
+    Capability,
+    SungrowInverter,
+)
 from sungrow_modbus.battery import probe_units
 from sungrow_modbus.battery_device import SungrowBattery
 from sungrow_modbus.wallbox import probe_units as wallbox_probe_units
@@ -35,6 +46,7 @@ from .const import (
     CONF_EXTERNAL_PLACEMENT,
     CONF_EXTERNAL_SOURCES,
     CONF_INTERVALS,
+    CONF_LEGACY_SLOT,
     CONF_MODE,
     CONF_UNIT_ID,
     DEFAULT_EXTERNAL_PLACEMENT,
@@ -107,11 +119,45 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     on every reload would be a way to lose one.
     """
     async_setup_services(hass)
+    # The download view too, and for the same reason: one registration per
+    # Home Assistant, not one per entry. Doing it here is what lets
+    # `download.async_register` keep no state at all.
+    async_register_download(hass)
     return True
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> bool:
-    """Set up a Sungrow SHx inverter from a config entry."""
+@callback
+def _unit_factory(
+    hass: HomeAssistant, entry: SungrowConfigEntry
+) -> Callable[[int], ModbusUnit]:
+    """Return "give me this endpoint's unit N", for the probes that sweep ids.
+
+    Both probes need it because **which unit id answers depends on the
+    transport**: an SBR answers 200 on an inverter's own LAN port and 2 through
+    a WiNet-S, and a wallbox answers 3 only through the dongle. So neither
+    device can be asked for at a fixed address; each has to try the ids its
+    library knows, and each needs a way to get a unit for an id it has not
+    tried yet.
+
+    Every unit it hands back is on the same host and port, which is the point:
+    one config entry is one endpoint, and everything pointed at it shares one
+    serialized connection rather than competing for a Sungrow's few sessions.
+    """
+    params = ModbusTcpParams(host=entry.data[CONF_HOST], port=entry.data[CONF_PORT])
+    return lambda unit_id: async_get_unit(hass, entry, params, unit_id)
+
+
+async def _async_connect(
+    hass: HomeAssistant, entry: SungrowConfigEntry
+) -> tuple[ModbusUnit, SungrowInverter]:
+    """Open the shared unit and read the identity, or say why setup cannot go on.
+
+    The two failures are deliberately different kinds. A link that will not
+    answer is `ConfigEntryNotReady`, because it is about this moment and the
+    next attempt may work; a device that answers without a serial number is
+    `ConfigEntryError`, because every unique id downstream is built from that
+    serial and retrying every thirty seconds forever would only fill the log.
+    """
     unit = async_get_unit(
         hass,
         entry,
@@ -136,27 +182,33 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
             f"Could not read the identity of {entry.title}: {err}"
         ) from err
 
-    # Everything downstream builds unique ids out of the serial, so a device
-    # that answered without one cannot be set up at all. That is a property of
-    # the device rather than of this moment, so it is a permanent error --
-    # retrying every 30 seconds forever would only fill the log. The config
-    # flow refuses the same case at setup; this covers a device that changed
-    # its mind, or an entry restored from a backup.
+    # The config flow refuses the same case at setup; this covers a device
+    # that changed its mind, or an entry restored from a backup.
     if inverter.serial_number is None:
         raise ConfigEntryError(
             f"{entry.title} answered but reported no serial number, so its "
             "entities cannot be identified. Please open an issue with the "
             "model and firmware version."
         )
+    return unit, inverter
 
-    # One coordinator per tier, at whatever interval the user has chosen --
-    # defaulting to the YAML package's own 5, 10, 60 and 600 seconds, so
-    # somebody who changes nothing sees the freshness they are used to.
-    #
-    # A tier set to never gets no coordinator, and its entities are therefore
-    # not created. That is the point of the setting: a Sungrow accepts very
-    # few Modbus connections, and the cheapest way to stop competing for one
-    # is to stop asking for data nobody looks at.
+
+async def _async_tier_coordinators(
+    hass: HomeAssistant, entry: SungrowConfigEntry, inverter: SungrowInverter
+) -> tuple[dict[str, int], dict[str, SungrowDataUpdateCoordinator]]:
+    """Build one coordinator per poll tier, and refresh each once.
+
+    The intervals default to the YAML package's own 5, 10, 60 and 600 seconds,
+    so somebody who changes nothing sees the freshness they are used to.
+
+    A tier set to never gets no coordinator, and its entities are therefore not
+    created. That is the point of the setting: a Sungrow accepts very few
+    Modbus connections, and the cheapest way to stop competing for one is to
+    stop asking for data nobody looks at. Setting *every* tier to never is the
+    one case that cannot be honoured, because an entry that reads nothing has
+    nothing to offer -- so it is refused with the sentence that says how to
+    undo it.
+    """
     intervals = {**DEFAULT_INTERVALS, **entry.options.get(CONF_INTERVALS, {})}
     coordinators: dict[str, SungrowDataUpdateCoordinator] = {}
     for tier, components in TIER_COMPONENTS.items():
@@ -183,6 +235,56 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
             "nothing to read. Set at least one interval in the integration's "
             "options."
         )
+    return intervals, coordinators
+
+
+async def _async_take_over_legacy_ids(
+    hass: HomeAssistant,
+    entry: SungrowConfigEntry,
+    inverter: SungrowInverter,
+    capabilities: frozenset[Capability],
+    legacy_ids: bool,
+) -> None:
+    """Claim the YAML package's entity ids, where the owner asked for that.
+
+    Called **before the platforms**, and that ordering is the whole mechanism:
+    an entity registered on the YAML package's id continues its history,
+    whereas renaming into that id afterwards is refused outright with nothing
+    but a log line.
+
+    Never for a diagnostics entry. Claiming an id is a change to somebody's
+    registry made on behalf of entities that are not going to exist.
+    `_async_create` stores `ENTITY_IDS_NEW` for those, so `legacy_ids` is
+    already false -- the mode is checked as well because the two must not be
+    able to disagree.
+    """
+    if not legacy_ids or entry.data.get(CONF_MODE, MODE_DEVICES) != MODE_DEVICES:
+        return
+    # Entities whose registry entry is gone but whose recorder rows are not;
+    # claiming falls back to the un-renamed id for those.
+    #
+    # Asked of **this inverter's slot**, and both halves must use the same one.
+    # Querying the unsuffixed history and then claiming suffixed ids from it
+    # would let a second inverter take its own ids on the strength of the first
+    # one's recorder rows -- a claim that looks justified and is supported by
+    # nothing.
+    slot = entry.data.get(CONF_LEGACY_SLOT) or ""
+    with_history = keys_for(await async_legacy_ids_with_history(hass, slot), slot)
+    claimed = async_claim_legacy_ids(
+        hass, entry, inverter.serial_number, capabilities, with_history
+    )
+    _LOGGER.info(
+        "%s took over %d entity ids from the YAML package",
+        entry.title,
+        len(claimed),
+    )
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> bool:
+    """Set up a Sungrow SHx inverter from a config entry."""
+    unit, inverter = await _async_connect(hass, entry)
+
+    intervals, coordinators = await _async_tier_coordinators(hass, entry, inverter)
 
     # Probed after the first poll, not before: every optional block looks
     # absent until something has actually been read.
@@ -222,32 +324,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
     # that exists *for* this.
     entry.runtime_data.survey = SurveyRunner(hass, entry)
     entry.async_on_unload(entry.runtime_data.survey.async_shutdown)
-    async_register_download(hass)
 
     _async_drop_unused_corrections(hass, entry, inverter.serial_number)
 
-    # Before the platforms, not after: an entity registered on the YAML
-    # package's id continues its history, whereas renaming into that id
-    # afterwards is refused outright. The user chose this at setup.
-    #
-    # And never for a diagnostics entry: claiming an id is a change to
-    # somebody's registry made on behalf of entities that are not going to
-    # exist. `_async_create` stores ENTITY_IDS_NEW for those, so this is
-    # already false -- the mode is checked as well because the two must not
-    # be able to disagree.
-    if legacy_ids and entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DEVICES:
-        serial = inverter.serial_number
-        # Entities whose registry entry is gone but whose recorder rows are
-        # not; claiming falls back to the un-renamed id for those.
-        with_history = keys_for(await async_legacy_ids_with_history(hass))
-        claimed = async_claim_legacy_ids(
-            hass, entry, serial, capabilities, with_history
-        )
-        _LOGGER.info(
-            "%s took over %d entity ids from the YAML package",
-            entry.title,
-            len(claimed),
-        )
+    await _async_take_over_legacy_ids(hass, entry, inverter, capabilities, legacy_ids)
 
     _async_preview_notice(hass)
 
@@ -262,10 +342,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
     # so the diagnostics download has somewhere to hang -- and the platforms
     # are the part a contributor did not ask for. It is promoted from the
     # options flow, which is where the entity-ids question finally gets put.
+    # Did a control test stop halfway through putting things back? Checked
+    # here rather than fixed here: writing a register during setup is exactly
+    # what this integration does not do, so this raises a repair and the owner
+    # confirming it is the explicit action that does the writing.
+    await _async_check_control_test(hass, entry)
+
     if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
         _LOGGER.info(
             "%s set up for diagnostics only: %d components polling, "
-            "the survey button and its three sensors, and no readings",
+            "the survey and control test buttons, three sensors, and no readings",
             entry.title,
             len(coordinators),
         )
@@ -276,6 +362,41 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
+
+
+async def _async_check_control_test(
+    hass: HomeAssistant, entry: SungrowConfigEntry
+) -> None:
+    """Raise a repair when a control test left registers changed.
+
+    A snapshot outlives the run that took it precisely so that this can happen:
+    it is written before the first write and removed only once everything in it
+    is back. Finding one here means the last run did not get to the end of its
+    restore, and the registers it names may still hold a test's values rather
+    than the owner's.
+
+    Deliberately not repaired automatically. `doc/integration_plan.md` states
+    the rule -- the integration never writes a register during setup or reload,
+    only on an explicit user action -- and a setup that silently wrote to an
+    inverter would be a worse thing to have built than the problem it fixed.
+    """
+    from .control_test import async_leftover
+    from .repairs import async_clear, async_raise
+
+    snapshot = await async_leftover(hass, entry)
+    if snapshot is None:
+        async_clear(hass, entry)
+        return
+    _LOGGER.warning(
+        "%s: a control test did not finish putting things back. %d register(s) "
+        "may still hold its values%s. See Settings -> Repairs.",
+        entry.title,
+        len(snapshot.values),
+        ", and the inverter may still be stopped"
+        if snapshot.stopped_at is not None
+        else "",
+    )
+    async_raise(hass, entry, snapshot)
 
 
 async def _async_battery(
@@ -301,14 +422,7 @@ async def _async_battery(
     registers on a different unit.
     """
     try:
-        pack_unit = await probe_units(
-            lambda unit_id: async_get_unit(
-                hass,
-                entry,
-                ModbusTcpParams(host=entry.data[CONF_HOST], port=entry.data[CONF_PORT]),
-                unit_id,
-            )
-        )
+        pack_unit = await probe_units(_unit_factory(hass, entry))
     except (ModbusConnectionError, ModbusError) as err:
         # Not fatal, and not even worth a warning. The inverter is already
         # set up and working; this is an optional device that did not answer.
@@ -380,14 +494,7 @@ async def _async_wallbox(
     Finding nothing is the common case and never fails the entry.
     """
     try:
-        wallbox_unit = await wallbox_probe_units(
-            lambda unit_id: async_get_unit(
-                hass,
-                entry,
-                ModbusTcpParams(host=entry.data[CONF_HOST], port=entry.data[CONF_PORT]),
-                unit_id,
-            )
-        )
+        wallbox_unit = await wallbox_probe_units(_unit_factory(hass, entry))
     except (ModbusConnectionError, ModbusError) as err:
         _LOGGER.debug("%s: could not probe for a wallbox: %s", entry.title, err)
         return None
@@ -503,6 +610,30 @@ async def _async_options_changed(
 ) -> None:
     """Reload, because the options decide how the entry is built."""
     await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> None:
+    """Clean up what outlives the entry, which is the control test's snapshot.
+
+    Everything else this integration owns is either in the entry or in the
+    registries, and Home Assistant removes those itself. The snapshot is not:
+    it is a `Store`, so it is a file in `.storage/` keyed by entry id, and
+    deleting the entry would otherwise leave it there for good.
+
+    Worth being clear about what this does **not** mean. A snapshot present at
+    this moment is a house still carrying a run's values, and removing the
+    entry throws away the only record of which ones. There is nothing to be
+    done about that from here -- the entry is already going -- but it is the
+    reason `repairs.py` raises the issue at *setup*, where somebody can still
+    act on it.
+    """
+    # Imported here rather than at module level, matching
+    # `_async_check_control_test` above: `check_pinned_library.py` reads this
+    # module's `sungrow_modbus` imports, and `control_test` pulls in the
+    # library's own `control_test`, which only a released wheel provides.
+    from .control_test import async_forget
+
+    await async_forget(hass, entry)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> bool:

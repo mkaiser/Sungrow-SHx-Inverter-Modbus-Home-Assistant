@@ -202,3 +202,39 @@ async def test_a_shutdown_is_logged_where_somebody_will_find_it(
 
     assert "stop requested" in caplog.text
     assert "SH10RT" in caplog.text
+
+
+def test_every_action_has_a_name_and_a_description_in_both_files():
+    """An action with no strings shows in the UI as a slug and a bare field.
+
+    `run_control_test` shipped that way: it was in `services.yaml`, it was
+    registered, it worked -- and `strings.json` had no entry for it, so the one
+    action that **writes to somebody's inverter** would have appeared in the
+    action picker with no description of what it does, and its device field
+    with no label. Nothing failed; it simply read as unfinished, which for this
+    particular action is worse than a crash would have been.
+
+    The three files have to agree because they are three descriptions of the
+    same thing: `services.yaml` says what an action takes, `strings.json` says
+    what it is called, and `translations/en.json` is what Home Assistant
+    actually reads. A field in one and not the others is a gap a user sees.
+    """
+    import json
+    from pathlib import Path
+
+    import yaml
+
+    root = Path(__file__).resolve().parent.parent / "custom_components/sungrow_modbus"
+    actions = yaml.safe_load((root / "services.yaml").read_text())
+    strings = json.loads((root / "strings.json").read_text())["services"]
+    english = json.loads((root / "translations/en.json").read_text())["services"]
+
+    assert sorted(actions) == sorted(strings), "services.yaml and strings.json differ"
+    assert strings == english, "strings.json and translations/en.json differ"
+
+    for name, action in actions.items():
+        assert strings[name].get("name"), f"{name} has no name"
+        assert strings[name].get("description"), f"{name} has no description"
+        fields = set((action or {}).get("fields", {}) or {})
+        described = set(strings[name].get("fields", {}) or {})
+        assert fields == described, f"{name}: fields {fields} but strings {described}"

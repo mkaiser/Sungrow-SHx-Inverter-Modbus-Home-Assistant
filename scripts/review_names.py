@@ -196,20 +196,20 @@ def _topic(key: str) -> str:
     return "Everything else"
 
 
-def main() -> int:
-    """Print the review sheet."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--markdown", action="store_true")
-    args = parser.parse_args()
+def _rows() -> tuple[
+    dict[str, list[tuple[str, str, str, str, str]]],
+    list[tuple[str, str, str, str, str]],
+]:
+    """Group every reviewable name by topic, and set the rest aside.
 
+    The second list is sensors modern mode does not create. Nineteen of those
+    names need no judgement at all -- the entity exists only for an entry
+    carrying the YAML package's history -- and one of them, `Active power
+    limitation raw`, sorts directly beside the binary sensor that replaced it,
+    which is worse than useless to somebody reviewing a list.
+    """
     names = _names()
     rows: dict[str, list[tuple[str, str, str, str, str]]] = {}
-    # Sensors modern mode does not create, held back into their own section.
-    # Nineteen of these names need no judgement at all -- the entity exists
-    # only for an entry carrying the YAML package's history -- and one of
-    # them, `Active power limitation raw`, sorts directly beside the binary
-    # sensor that replaced it, which is worse than useless to somebody
-    # reviewing a list.
     dropped: list[tuple[str, str, str, str, str]] = []
     for entry in _descriptions():
         key = str(entry["translation_key"])
@@ -222,9 +222,23 @@ def main() -> int:
             dropped.append((*row[:4], LEGACY_ONLY_SENSORS[key]))
             continue
         rows.setdefault(_topic(key), []).append(row)
+    return rows, dropped
 
+
+REVIEW_DOC = Path(__file__).resolve().parent.parent / "doc" / "entity_name_review.md"
+
+
+def _render(markdown: bool) -> str:
+    """Return the review sheet, as markdown or as plain text."""
+    out: list[str] = []
+
+    def print(*parts: object, **_kw: object) -> None:
+        """Collect a line instead of writing it, so the sheet can be compared."""
+        out.append(" ".join(str(p) for p in parts))
+
+    rows, dropped = _rows()
     total = sum(len(group) for group in rows.values())
-    if args.markdown:
+    if markdown:
         print("# The entity names, for review\n")
         print(
             f"**{total} entities**, which is everything modern mode creates. "
@@ -249,7 +263,7 @@ def main() -> int:
         )
     for heading in sorted(rows):
         group = sorted(rows[heading], key=lambda row: row[1])
-        if args.markdown:
+        if markdown:
             print(f"\n## {heading} ({len(group)})\n")
             print("| Name | Entity id | Unit | Legacy name |")
             print("| --- | --- | --- | --- |")
@@ -265,7 +279,7 @@ def main() -> int:
             if legacy and legacy != name:
                 print(f"    {'was: ' + legacy:<44}{mark}")
     if dropped:
-        if args.markdown:
+        if markdown:
             print(f"\n## Legacy mode only ({len(dropped)})\n")
             print(
                 "Not created in modern mode. Each is a second copy of "
@@ -286,7 +300,7 @@ def main() -> int:
             ):
                 print(f"  {name:<44} -> {replacement}")
 
-    if not args.markdown:
+    if not markdown:
         print(f"\n{total} entities in modern mode. Renamed from the YAML: ", end="")
         print(
             sum(
@@ -296,6 +310,41 @@ def main() -> int:
                 if legacy and legacy != name
             )
         )
+
+    return "\n".join(out) + "\n"
+
+
+def main() -> int:
+    """Print the review sheet, or check the committed copy against it."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--markdown", action="store_true")
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="verify doc/entity_name_review.md matches what this would write",
+    )
+    args = parser.parse_args()
+
+    if args.check:
+        # Gated because it drifted. The committed sheet claimed **139
+        # entities, which is everything modern mode creates** long after the
+        # number was 186 -- the wallbox, the pack and the derived values had
+        # arrived and nothing compared the file to the code. A document that
+        # states a wrong number confidently is worse than no document.
+        want = _render(markdown=True)
+        have = REVIEW_DOC.read_text(encoding="utf-8")
+        if want != have:
+            print(
+                f"{REVIEW_DOC.relative_to(REVIEW_DOC.parents[1])} is stale. "
+                "Run: python scripts/review_names.py --markdown > "
+                f"{REVIEW_DOC.relative_to(REVIEW_DOC.parents[1])}",
+                file=sys.stderr,
+            )
+            return 1
+        print(f"{REVIEW_DOC.relative_to(REVIEW_DOC.parents[1])} is current")
+        return 0
+
+    sys.stdout.write(_render(markdown=args.markdown))
     return 0
 
 

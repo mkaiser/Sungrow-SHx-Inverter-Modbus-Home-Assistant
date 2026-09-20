@@ -119,20 +119,21 @@ def async_download_url(hass: HomeAssistant, entry: SungrowConfigEntry) -> str:
 
 @callback
 def async_register(hass: HomeAssistant) -> None:
-    """Register the view once, however many entries exist.
+    """Register the view. Called from `async_setup`, which runs once.
 
-    Home Assistant keeps views in a list and would happily hold several
-    identical ones; the flag keeps a second entry from adding a duplicate.
+    It used to be called per entry and guarded by a flag in `hass.data`,
+    because Home Assistant keeps views in a list and would happily hold
+    several identical ones. Registering from `async_setup` removes the
+    question rather than answering it: that runs once per Home Assistant,
+    before any entry exists, so there is no second caller to defend against
+    and no state to keep.
     """
-    if hass.data.get(f"{DOMAIN}_download_view"):
-        return
     if getattr(hass, "http", None) is None:
         # `http` is a manifest dependency, so a real Home Assistant has set
-        # it up before this runs. A test that drives `async_setup_entry`
-        # against a bare `hass` has not, and the survey does not need a
-        # download link to be tested -- so this declines rather than raising
-        # and taking the whole entry down with it.
+        # it up before this runs. A test that drives setup against a bare
+        # `hass` has not, and the survey does not need a download link to be
+        # tested -- so this declines rather than raising and taking the whole
+        # integration down with it.
         _LOGGER.debug("No HTTP component; the survey download link is unavailable")
         return
     hass.http.register_view(SurveyDownloadView())
-    hass.data[f"{DOMAIN}_download_view"] = True

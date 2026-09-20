@@ -23,6 +23,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from modbus_connection.model import Component
+
 from .battery import model_for_capacity
 from .battery_registers import SbrBatteryCells, SbrBatteryPack
 from .model import UpdateReport, present
@@ -58,6 +60,13 @@ class SungrowBattery:
     inverter's four.
     """
 
+    # Declared, not assigned: `__init__` sets one attribute per entry in
+    # COMPONENTS with `setattr`, which a type checker cannot see. Naming them
+    # here is what lets `mypy --strict` check the code that reads them, and it
+    # doubles as the list of what a pack actually holds.
+    pack: SbrBatteryPack
+    cells: SbrBatteryCells
+
     def __init__(self, unit: ModbusUnit, unit_id: int) -> None:
         """Bind both components to a unit handle, remembering which id it is."""
         self._unit = unit
@@ -75,9 +84,24 @@ class SungrowBattery:
             and name not in {"register_space", "declared_fields"}
         }
 
-    def component(self, attribute: str):
+    def component(self, attribute: str) -> Component:
         """Return one component by the name descriptions refer to it by."""
-        return getattr(self, attribute)
+        return getattr(self, attribute)  # type: ignore[no-any-return]
+
+    @property
+    def field_names(self) -> frozenset[str]:
+        """Every field name this device can be asked for, by `field()`.
+
+        Public because callers outside the library need to enumerate what a
+        device offers -- the survey publishes one value per field, and the
+        diagnostics download does the same. They used to read `_fields`
+        directly, which is worse here than it usually is: this library is
+        pinned by version in the integration's manifest, so renaming a private
+        attribute would ship as a perfectly good release and break the
+        integration at runtime. `check_pinned_library.py` compares *imports*
+        against the wheel and cannot see an attribute.
+        """
+        return frozenset(self._fields)
 
     def field(self, name: str) -> object:
         """Return one value by name, wherever it lives.

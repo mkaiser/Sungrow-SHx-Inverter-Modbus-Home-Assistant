@@ -1,16 +1,23 @@
-"""The scanning scripts must run from a zip, with nothing installed.
+"""The scanning scripts must run with nothing installed.
 
-`scripts/sungrow_scan/` is meant to be handed to a contributor: they unpack
-it, run one file, and send back a document. That only works if no module in it
-imports anything outside the standard library **at import time** -- and the
-one thing it would obviously want to import, `sungrow_modbus`, is exactly what
-a stranger will not have.
+`portable.py` is handed to a contributor on its own: they download one file,
+run it against their inverter, and send back a document. That only works if it
+imports nothing outside the standard library **at import time** -- and the one
+thing it would obviously want to import, `sungrow_modbus`, is exactly what a
+stranger will not have.
 
-Nothing but discipline enforces that. A single convenient
-`from sungrow_modbus import COMPONENTS` at the top of a file would break every
-zip user, and this suite would keep passing, because the library is installed
-here. So the boundary is asserted the way `test_library_is_standalone.py`
-asserts its own: by reading the imports rather than by trusting them.
+The rule covers its siblings too, and deliberately still does. There was a
+`sungrow_scan.zip` that shipped the whole directory, and it was retired once
+HACS could put the survey in front of testers instead -- but `collect.py` and
+`blocks.py` **import `portable`**, so a convenient import anywhere in here
+reaches the one file that is still handed over alone. The zip is gone; the
+boundary it protected is not.
+
+Nothing but discipline enforces it. A single
+`from sungrow_modbus import COMPONENTS` at the top of a file would break it,
+and this suite would keep passing, because the library is installed here. So
+the boundary is asserted the way `test_library_is_standalone.py` asserts its
+own: by reading the imports rather than by trusting them.
 
 Imports *inside* functions are fine and are how the scripts use the library
 when it happens to be there -- to verify the committed plan, or to drive the
@@ -89,7 +96,8 @@ def test_every_scanning_script_imports_only_the_standard_library() -> None:
         outside = _module_level_imports(path) - allowed
         assert not outside, (
             f"{path.name} imports {sorted(outside)} at module level, so it "
-            "cannot run from a zip with nothing installed."
+            "cannot run with nothing installed -- and `portable.py`, which is "
+            "downloaded on its own, is imported from here."
         )
 
 
@@ -107,8 +115,8 @@ def test_the_committed_plan_travels_with_them() -> None:
     """The scripts read their plan from a file, so the file has to be there."""
     plan = SCAN / "scan_plan.json"
     assert plan.exists(), (
-        "scan_plan.json is what replaces the library. Without it in the zip, "
-        "the block read test has no plan to test."
+        "scan_plan.json is what replaces the library for somebody who has not "
+        "installed it. Without it, the block read test has no plan to test."
     )
 
 

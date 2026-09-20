@@ -73,10 +73,10 @@ refs: ## Clone HA core and the Modbus libraries into .reference/
 
 ##@ Check
 
-check: version-check gen-check lint test ## Everything CI gates on, fast
+check: version-check gen-check lint typecheck test ## Everything CI gates on, fast
 .PHONY: check
 
-ci: check zip-verify build ## check, plus the zip and the package -- the full CI job
+ci: check build ## check, plus the package -- the full CI job
 .PHONY: ci
 
 test: ## Run the test suite
@@ -93,7 +93,7 @@ fmt: ## Reformat and autofix in place
 	ruff check --fix .
 .PHONY: fmt
 
-typecheck: ## mypy --strict. Not part of `check`: CI has never run it
+typecheck: ## mypy --strict over the library. Part of `check` and of CI
 	mypy
 .PHONY: typecheck
 
@@ -108,6 +108,10 @@ gen-check: ## Verify every generated file is current
 	@for g in $(GENERATORS); do \
 	    $(PY) scripts/generate_$$g.py --check || exit 1; \
 	done
+	@# Not a `generate_` script, so it is not in GENERATORS -- but it writes a
+	@# document that states a number, and the number went stale by 47 entities
+	@# before anything compared it to the code.
+	@$(PY) scripts/review_names.py --check
 .PHONY: gen-check
 
 version-check: ## Verify pyproject.toml and manifest.json agree
@@ -128,17 +132,27 @@ blocks: ## The block read test -- which read inside a component fails, and why
 	$(PY) scripts/sungrow_scan/blocks.py $(ARGS)
 .PHONY: blocks
 
-zip: ## Build sungrow_scan.zip
-	$(PY) scripts/make_scan_zip.py
-.PHONY: zip
+scan-sim: ## Run the whole survey against the simulator -- needs `make sim-bg`
+	$(PY) scripts/sungrow_scan/collect.py 127.0.0.1 --port 5020 $(ARGS)
+.PHONY: scan-sim
 
-zip-verify: ## Build it, then unpack and run it with a bare Python
-	$(PY) scripts/make_scan_zip.py --verify
-.PHONY: zip-verify
+##@ Control test (writes to the inverter)
 
-zip-sim: ## Run the whole survey from the zip against the simulator -- needs `make sim-bg`
-	$(PY) scripts/make_scan_zip.py --verify --against 5020
-.PHONY: zip-sim
+controltest-dry: ## Show what the control test would write, and write nothing (HOST=a.b.c.d)
+	$(PY) scripts/sungrow_control_test.py $(HOST) --dry-run $(ARGS)
+.PHONY: controltest-dry
+
+controltest: ## Write each control, read it back, and put it back (HOST=a.b.c.d)
+	$(PY) scripts/sungrow_control_test.py $(HOST) $(ARGS)
+.PHONY: controltest
+
+controltest-sim: ## Run it against the simulator -- needs `make sim-bg`
+	$(PY) scripts/sungrow_control_test.py 127.0.0.1 --port 5020 --simulated --no-restart
+.PHONY: controltest-sim
+
+controltest-restore: ## Put a saved snapshot back (HOST=a.b.c.d FILE=.testdata/...json)
+	$(PY) scripts/sungrow_control_test.py $(HOST) --restore $(FILE)
+.PHONY: controltest-restore
 
 ##@ Release
 

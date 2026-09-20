@@ -15,7 +15,7 @@ from .capabilities import Capability, probe, resolve
 from .components import InverterControl, InverterIdentity
 from .const import model_for
 from .derived import Derived
-from .model import UpdateReport, present
+from .model import RegisterValue, UpdateReport, present
 from .registers import COMPONENTS, TIER_COMPONENTS
 
 _LOGGER = logging.getLogger(__name__)
@@ -53,7 +53,22 @@ class SungrowInverter:
         """Return one component by the name entity descriptions refer to it by."""
         return getattr(self, attribute)  # type: ignore[no-any-return]
 
-    def field(self, name: str) -> object:
+    @property
+    def field_names(self) -> frozenset[str]:
+        """Every field name this device can be asked for, by `field()`.
+
+        Public because callers outside the library need to enumerate what a
+        device offers -- the survey publishes one value per field, and the
+        diagnostics download does the same. They used to read `_fields`
+        directly, which is worse here than it usually is: this library is
+        pinned by version in the integration's manifest, so renaming a private
+        attribute would ship as a perfectly good release and break the
+        integration at runtime. `check_pinned_library.py` compares *imports*
+        against the wheel and cannot see an attribute.
+        """
+        return frozenset(self._fields)
+
+    def field(self, name: str) -> RegisterValue:
         """Return one register's value by name, wherever it lives."""
         attribute = self._fields.get(name)
         if attribute is None:
@@ -92,6 +107,17 @@ class SungrowInverter:
         if probed is None:
             probed = probe(self._read_or_none)
         return resolve(self.device_type_code, self.output_type, probed)
+
+    def probed_capabilities(self) -> frozenset[Capability]:
+        """Return the capabilities whose registers actually answered.
+
+        The raw probe, before `resolve` weighs it against what the model is
+        *known* to have. `capabilities()` is what callers normally want; this
+        is for the diagnostics download, which reports the two side by side so
+        that a table disagreeing with the hardware is visible rather than
+        silently overruled.
+        """
+        return probe(self._read_or_none)
 
     def _read_or_none(self, name: str) -> object:
         """Return a register's value, or None if this device has no such field."""

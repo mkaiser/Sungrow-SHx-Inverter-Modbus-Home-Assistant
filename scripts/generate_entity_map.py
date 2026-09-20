@@ -259,32 +259,58 @@ def collect() -> list[dict[str, Any]]:
     document = _load()
     entries: list[dict[str, Any]] = []
 
-    for hub in document.get("modbus", []):
-        for raw in hub.get("sensors", []) or []:
-            entries.append(_entry("sensor", "modbus", raw))
-        for raw in hub.get("switches", []) or []:
-            entries.append(_entry("switch", "modbus", raw))
+    entries += _modbus_entries(document)
+    entries += _filter_entries(document)
+    entries += _template_entries(document)
+    # Last, so the YAML's own entities keep their order and their indices.
+    entries += [
+        _entry(raw["domain"], "specification", raw) for raw in SPECIFICATION_ADDITIONS
+    ]
+    return entries
 
-    # A top-level `sensor:` block holds the filter platform entities.
+
+def _modbus_entries(document: dict[str, Any]) -> list[dict[str, Any]]:
+    """Entities the `modbus:` hubs define -- the registers themselves."""
+    entries: list[dict[str, Any]] = []
+    for hub in document.get("modbus", []):
+        entries += [
+            _entry("sensor", "modbus", raw) for raw in hub.get("sensors", []) or []
+        ]
+        entries += [
+            _entry("switch", "modbus", raw) for raw in hub.get("switches", []) or []
+        ]
+    return entries
+
+
+def _filter_entries(document: dict[str, Any]) -> list[dict[str, Any]]:
+    """Entities from the top-level `sensor:` block, which is the filter platform.
+
+    `filters_source` is carried because a filter entity is defined in terms of
+    another entity's id, and the migration has to know which one: the smoothed
+    sensor replaces the filter, and it reads the register the source read.
+    """
+    entries: list[dict[str, Any]] = []
     for raw in document.get("sensor", []) or []:
         if isinstance(raw, dict) and "name" in raw:
             entry = _entry("sensor", raw.get("platform", "sensor"), raw)
             if "entity_id" in raw:
                 entry["filters_source"] = raw["entity_id"]
             entries.append(entry)
+    return entries
 
+
+def _template_entries(document: dict[str, Any]) -> list[dict[str, Any]]:
+    """Entities from `template:` blocks, keyed by the domain each one declares."""
+    entries: list[dict[str, Any]] = []
     for block in document.get("template", []) or []:
         for domain, raws in block.items():
             if not isinstance(raws, list):
                 continue
-            for raw in raws:
-                if isinstance(raw, dict) and "name" in raw:
-                    entries.append(_entry(domain, "template", raw))
-
-    # Last, so the YAML's own entities keep their order and their indices.
-    for raw in SPECIFICATION_ADDITIONS:
-        entries.append(_entry(raw["domain"], "specification", raw))
-
+            entries += [
+                _entry(domain, "template", raw)
+                for raw in raws
+                if isinstance(raw, dict) and "name" in raw
+            ]
     return entries
 
 

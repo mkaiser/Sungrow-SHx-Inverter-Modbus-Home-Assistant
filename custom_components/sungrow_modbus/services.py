@@ -56,6 +56,7 @@ from .const import (
     CONF_PERMISSIONS,
     DEFAULT_PERMISSIONS,
     DOMAIN,
+    PERMISSION_CONTROL_TEST,
     PERMISSION_START_STOP,
 )
 from .coordinator import SungrowConfigEntry
@@ -76,6 +77,9 @@ SERVICE_STOP_INVERTER = "stop_inverter"
 #: An action rather than an entity leaves nothing behind: no registry row, no
 #: recorded history, nothing to remove afterwards.
 SERVICE_RUN_SURVEY = "run_survey"
+
+#: Part A and then part B, which writes to every control and puts it back.
+SERVICE_RUN_CONTROL_TEST = "run_control_test"
 
 #: Register 13000, from V1.1.11: "0xCF: Boot, 0xCE: Shutdown".
 START = 0xCF
@@ -119,6 +123,37 @@ def async_setup_services(hass: HomeAssistant) -> None:
     hass.services.async_register(
         DOMAIN, SERVICE_RUN_SURVEY, _async_run_survey, schema=SCHEMA
     )
+    # Authorised the way start and stop are, and for the same reason: it
+    # writes. The button beside it is what most people will use; this exists so
+    # the run can be scripted, and so that an owner who has narrowed the
+    # audience has narrowed both routes to it at once.
+    hass.services.async_register(
+        DOMAIN, SERVICE_RUN_CONTROL_TEST, _async_run_control_test, schema=SCHEMA
+    )
+
+
+async def _async_run_control_test(call: ServiceCall) -> None:
+    """Run the survey and then the control test.
+
+    Refuses when a run is already in flight, as the survey action does -- but
+    here the reason is stronger than a session count: two runs writing at once
+    would restore each other's probe values, and each would then report the
+    other's leftovers as a finding.
+    """
+    entry = _async_entry_for(call.hass, call.data[ATTR_DEVICE_ID])
+    await _async_authorize(call, entry, PERMISSION_CONTROL_TEST)
+    _LOGGER.warning(
+        "%s: control test requested through the %s.%s action by %s. It writes to "
+        "every control this integration can write to, and puts each one back.",
+        entry.title,
+        DOMAIN,
+        SERVICE_RUN_CONTROL_TEST,
+        call.context.user_id or "an automation or script",
+    )
+    if not entry.runtime_data.survey.async_start(control_test=True):
+        raise HomeAssistantError(
+            translation_domain=DOMAIN, translation_key="survey_already_running"
+        )
 
 
 async def _async_start(call: ServiceCall) -> None:
@@ -145,8 +180,12 @@ async def _async_run_survey(call: ServiceCall) -> None:
         )
 
 
-async def _async_authorize(call: ServiceCall, entry: SungrowConfigEntry) -> None:
-    """Raise unless the caller may start and stop *this* inverter.
+async def _async_authorize(
+    call: ServiceCall,
+    entry: SungrowConfigEntry,
+    permission: str = PERMISSION_START_STOP,
+) -> None:
+    """Raise unless the caller may do this to *this* inverter.
 
     Follows `homeassistant.helpers.service._async_admin_handler` where the
     cases overlap, deliberately: no user on the context means an automation,
@@ -164,7 +203,7 @@ async def _async_authorize(call: ServiceCall, entry: SungrowConfigEntry) -> None
         return
 
     permissions = {**DEFAULT_PERMISSIONS, **entry.options.get(CONF_PERMISSIONS, {})}
-    if permissions.get(PERMISSION_START_STOP) != AUDIENCE_USERS:
+    if permissions.get(permission) != AUDIENCE_USERS:
         raise Unauthorized(context=call.context)
 
     # Opened to users means users who can already change this device, not

@@ -198,6 +198,20 @@ real_hardware:
       to the inverter, including the retrying dev instance, and wait a minute
       before drawing conclusions.
     - >-
+      Replicated 2026-09-16, and worth recording because of what it cost. The
+      control test died twice before writing anything, both times inside its
+      opening full read, with "Connection lost before response was received"
+      at 5010, then 5114, then 5241 -- each retry getting a little further
+      into the poll before the link dropped. That progression IS the
+      signature: a single bad block fails at the same address every time, and
+      exhaustion fails later each time as slots free up. Three things were
+      competing, and the third was self-inflicted: the production YAML
+      package polling, plus two of my own runs opened back to back. Waiting
+      is the cure, not retrying harder -- which is why the opening reads now
+      back off 5, 20, 45 and 90 seconds rather than a few seconds each. A
+      short retry spends every attempt inside the window where nothing can
+      work.
+    - >-
       Anything read from a real inverter carries a serial number and live
       household readings. It belongs in .testdata/, which is gitignored, never
       in doc/ or tests/.
@@ -211,6 +225,141 @@ real_hardware:
     seeded from modbus_sungrow.yaml, so it cannot drift from the map being
     ported. Use real hardware only when the point is to verify real-hardware
     behaviour.
+
+# ---------------------------------------------------------------------------
+# The control test -- the one thing here that WRITES to an inverter.
+#
+# Everything else in this file reads. This writes each control, reads the
+# register straight back against the scale the specification states, watches
+# what the inverter does with it, and puts every value back. It exists because
+# a wrong scale factor in registers.py is invisible to a readback through the
+# library: encode and decode share the factor, so the value returns intact and
+# every test stays green while the inverter does something ten times too big.
+control_test:
+  first: >-
+    make controltest-dry HOST=192.168.178.35
+    Reads only. Resolves every bound from the device, picks every probe value
+    and prints the raw word it expects each register to hold. Nothing is
+    written, so the whole plan can be reviewed before anything is at risk.
+    Run this before the real thing, every time, on a machine you have not run
+    it against before.
+
+  then: >-
+    make controltest HOST=192.168.178.35
+    About ten minutes. Writes, checks, restores, and reads each value back to
+    prove the restore took. Exit 0 all matched, 3 something was skipped or
+    inconclusive, 4 a value came back off by a decade -- the finding it exists
+    for -- and 5 something was not put back, which is the only code that means
+    the house is left changed.
+
+  if_it_dies_halfway: >-
+    make controltest-restore HOST=192.168.178.35 FILE=.testdata/control-tests/<stamp>-snapshot.json
+    The snapshot is flushed to disk before the first write and removed only
+    once every register is back AND has been read back. So a snapshot left on
+    disk is the list of what may still be changed, and this puts it back. It
+    reads before it writes, so it is safe to run repeatedly and safe to run
+    when nothing is actually wrong.
+
+  from_home_assistant: >-
+    The button on the device page runs the same engine with one difference:
+    allow_dark is always on. A CLI user chose the moment and can pass
+    --allow-dark; somebody on Home Assistant OS has no terminal, so a run
+    refused for want of sun is a run they can never make. The behavioural half
+    still self-skips and says why. The restart and export-limit permissions
+    stay the owner's, in the entry's options, and both default to off.
+
+    A run started there also holds this entry's own coordinators off the
+    inverter for its duration -- measured on hardware, not just in tests.
+
+  what_a_run_needs:
+    - >-
+      PV generating. The guard refuses below 200 W unless --allow-dark, because
+      half the procedure measures what the inverter does with the sun it has.
+      The readback half -- which is the half that finds a factor-10 error --
+      does not care, so --allow-dark is a real option and not a fudge.
+    - >-
+      A battery below 90 % for the forced-charge check. Above that the pack
+      tapers on its own and the check would measure the taper rather than the
+      setting, so it self-skips and says so.
+    - >-
+      Export for the export-limit check, and feed-in limitation on -- or
+      --enable-export-limit to let the run switch it on. Off by default: it is
+      the one setting whose failed restore leaves the house feeding in less
+      than it could.
+
+      With that leave the run also lifts the mode for the *readback* probe of
+      13074 and puts it straight back, which is the only way leg B ever runs on
+      that register: it ignores writes entirely while the mode is off, so the
+      probe would otherwise report UNCHANGED. Leg B is the only leg that can
+      catch a cap read a decade too LARGE, so this is not a nicety.
+
+      The run no longer waits for a sunny afternoon. If the house is not
+      exporting it makes it export, by discharging the battery harder than the
+      house is using -- the difference goes to the grid by definition, at
+      night, in December. It needs a battery with charge in it, and enough
+      headroom under the pack's own limit to cover the house plus MIN_EXPORT_W
+      on top; the run says which of those was short when it cannot.
+
+      A cap read ten times too LARGE still leaves the export exactly where it
+      was, indistinguishable from the write doing nothing, so this check can
+      only ever catch a decade too small. That direction is leg B's alone.
+    - >-
+      A battery that is charging, and above 55 %, for the charge-ceiling
+      check. It puts max_soc two percent under the state of charge and expects
+      the charge to stop -- which is the only safe behavioural test of a
+      state-of-charge limit, because it stops a charge rather than commanding
+      one. Read what it confirms narrowly: that the register is a ceiling the
+      inverter enforces, not that its scale is right. 95 % and 9.5 % would both
+      stop a charge.
+    - >-
+      Quiet on the link. See contention below; this is the one that actually
+      stops runs. Note that a run started from the device page now holds this
+      entry's own coordinators off the inverter for its duration, so the
+      contention a survey used to cause itself is gone; another Home Assistant,
+      EVCC or the YAML package is still yours to stop.
+
+  never_left_stopped: >-
+    --restart is opt-in and asked for before anything is written. Once 0xCE has
+    gone out the start is retried on fresh connections, and from Home Assistant
+    a shutdown hook runs before background tasks are cancelled.
+
+    Measured twice on 2026-09-19, on two models: stopped after 2.0 s and
+    2.06 s, back to 0x0040 Running after about four minutes (240 s and 260 s),
+    generating again 20 s and 2.4 s later. Settings survived both. Budget seven
+    minutes, not one: half the wait is spent in 0x0020 Starting, which is
+    neither stopped nor running, and an earlier deadline of 180 s gave up on an
+    inverter that was booting perfectly well.
+
+  # Run at three houses on three models. Full record in
+  # doc/integration_plan.md.
+  what_it_found: >-
+    It found the factor-10 error it was built to find. Register 13074, the
+    export power limit, READS in watts and WRITES in tens of watts: the word
+    sent is multiplied by ten before it is stored, so both this integration and
+    the YAML package were setting ten times what the user asked for. Six
+    measurements at the first house, replicated at two more on two other models
+    over both transports.
+
+    Fixed for the integration by registers.AsymmetricNumberField and confirmed
+    on hardware twice over: the raw word over a cable (900 W written leaves 900
+    in the register, where it would have been 9000), and the behaviour through
+    a dongle (a 1250 W cap curtailed export from 2579 W to 1280 W, where the
+    same check before the fix showed a cap ten times too large). The YAML
+    package on main still has it.
+
+    Only while feed-in limitation is on. With 13087 off the register ignores
+    writes entirely -- no exception, no change -- which is what UNCHANGED is in
+    the verdict vocabulary for, and what the fix is still blind to.
+
+    Everything else matched: the two-point slope was right on all four power
+    registers at every house, and forced charge and discharge measured 299 W,
+    298 W, 399 W and 398 W against 300 W and 400 W commanded.
+
+    A finding was withdrawn along the way: battery_min_soc refused 3 % on
+    2026-09-15 and accepted it on 2026-09-19 and again at a third house. One
+    refusal and one acceptance is not a firmware limit, and what differed is
+    unknown -- which is why a refused write now records which exception came
+    back.
 
 # ---------------------------------------------------------------------------
 

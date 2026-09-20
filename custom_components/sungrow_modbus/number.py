@@ -20,12 +20,25 @@ from homeassistant.components.number import NumberEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
-from sungrow_modbus import FALLBACK_W, Capability, model_for_capacity, power_from_bms
+from sungrow_modbus import FALLBACK_W, Capability
+from sungrow_modbus.battery import ceiling as battery_ceiling
 
 from .const import CONF_BATTERY_MAX_POWER
 from .coordinator import SungrowConfigEntry
 from .entity import SungrowEntity, SungrowNumberDescription
 from .number_descriptions import NUMBER_DESCRIPTIONS
+
+# One at a time, and not for the usual reason. A Sungrow accepts very few
+# simultaneous Modbus sessions, and everything on this endpoint is already
+# serialized behind one connection -- so two writes issued at once do not go
+# faster, they queue, and the second one's timeout starts while it is still
+# waiting. Worse, these registers interlock: `battery_min_soc` and
+# `battery_max_soc` are rejected if they cross, so an automation that sets both
+# in one call has an ordering that matters and must not be raced.
+#
+# `sensor` and `binary_sensor` set 0 instead because the coordinator does their
+# polling and the entities never talk to the inverter at all.
+PARALLEL_UPDATES = 1
 
 
 async def async_setup_entry(
@@ -73,39 +86,27 @@ class SungrowNumber(SungrowEntity, NumberEntity):
         return description.native_max_value
 
     def _battery_maximum(self) -> int:
-        """Return the lower of the inverter's rating and the pack's limit."""
-        limits = [
-            limit
-            for limit in (self._inverter_rating(), self._pack_limit())
-            if limit is not None
-        ]
-        return min(limits) if limits else FALLBACK_W
+        """Return the lower of the inverter's rating and the pack's limit.
 
-    def _inverter_rating(self) -> int | None:
-        """Return the BDC rated power, which the specification names as the cap."""
-        value = self._field("bdc_rated_power")
-        return None if value is None else int(value)
-
-    def _pack_limit(self) -> int | None:
-        """Return what the battery will take, from the best available source.
-
-        In order: what the user told us, which always wins because they may
-        know something the hardware does not; a Sungrow pack's datasheet
-        figure, looked up from the capacity it reports; and what the BMS says
-        it will take right now.
+        The ladder itself lives in the library, in `battery.ceiling`, because
+        the control test needs the same answer and an entity that disagreed
+        with it would refuse values the test had just written -- or accept ones
+        it would not. One home for the arithmetic; this decides only what to
+        feed it, which is the part that needs a config entry.
         """
-        configured = self.coordinator.config_entry.options.get(CONF_BATTERY_MAX_POWER)
-        if configured:
-            return int(configured)
-
+        sungrow_capacity = None
         if Capability.SUNGROW_BATTERY in self._runtime_data.capabilities:
-            model = model_for_capacity(self._float("battery_capacity_high_precision"))
-            if model is not None:
-                return model.conservative_w
-
-        return power_from_bms(
-            self._float("bms_max_charging_current"), self._float("battery_voltage")
+            sungrow_capacity = self._float("battery_capacity_high_precision")
+        limit = battery_ceiling(
+            configured_w=self.coordinator.config_entry.options.get(
+                CONF_BATTERY_MAX_POWER
+            ),
+            sungrow_capacity_kwh=sungrow_capacity,
+            bms_max_charging_current_a=self._float("bms_max_charging_current"),
+            battery_voltage_v=self._float("battery_voltage"),
+            bdc_rated_power_w=self._field("bdc_rated_power"),
         )
+        return limit if limit is not None else FALLBACK_W
 
     def _field(self, name: str) -> float | int | None:
         """Return one register's value, wherever it lives, or None."""
