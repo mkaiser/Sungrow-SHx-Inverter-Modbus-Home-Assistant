@@ -224,6 +224,17 @@ schema 19).
   told owners to start the machine by hand while it was starting perfectly well.
   `is_starting` exists for that; the deadline is seven minutes.
 
+  **And it varies by model, so the deadline is sized for the slowest.** An
+  SH8.0RT-V112 measured 2026-09-20: **2.1 s** to stopped, **179.5 s** back to
+  running, **5.1 s** more to generate -- a minute faster than the SH10RT and
+  four times quicker onto the generating line. Two things from the same run
+  worth keeping. **The Modbus link never dropped**: zero polls failed to
+  connect across the whole stop, so the reconnect-every-attempt handling is for
+  a case that *may* happen rather than one that does. And **the start took
+  three commands** -- `0xCF`, then twice more at 60-second intervals before the
+  state moved -- which is exactly why the start is retried from the `finally`
+  rather than sent once and trusted.
+
 ### Register 13074 reads in watts and writes in tens of watts
 
 The factor-10 error the whole procedure was built to find, and the one live bug
@@ -253,10 +264,29 @@ stays 1 because that is what the register *contains*; only the write side is
 divided. It cannot live in `modbus-connection` -- `NumberField` shares one
 `scale` by design and that library is Home Assistant core's dependency.
 
+**The fix is confirmed on hardware at three houses, on both legs that can catch
+it.** Measured 2026-09-20 through the shipped integration:
+
+| House | Model | Path | Leg | Result |
+| --- | --- | --- | --- | --- |
+| reference | SH10RT | cable | **B** | wrote 900 W, register held **900**, slope 1.0 |
+| gerd | SH8.0RT-V112 | cable | **B** | wrote 600 W, register held **600**, slope 1.0 |
+| bar12 | SH10RT-20 | dongle | **C** | commanded 1250 W, export fell 4583 → **1275 W** |
+
+Leg B needs feed-in limitation on, so those two runs lifted it for the probe and
+put `0x55` back seconds later; without that the register is inert and the probe
+can only report `UNCHANGED`, which is why this readback had never been obtained
+at any of them before. bar12 is a dongle on both of its addresses, so leg B
+there is a cache and **leg C is the only evidence available** -- and it is the
+one that matters most, because the write being *accepted at all* is the proof:
+pre-fix, 1250 W went out as word 1250, became 12500 W and was refused with
+exception 0x04, which is exactly what 3400 did at the reference house on
+2026-09-19.
+
 **The YAML package on `main` still has it**, and has had for years:
 `number.export_power_limit` writes `{{ value | int }}` to the same register.
 That is the one place a user of the shipping package is worse off than a user of
-the alpha.
+the alpha -- now against three houses' worth of evidence rather than one's.
 
 `doc/integration_plan.md` has the measurements, the replications and the two
 hardware confirmations -- raw word over a cable, and behaviour through a dongle.
@@ -390,6 +420,43 @@ and verified in a container or against hardware.
   and putting it first fails on an import that has nothing to do with this
   integration. This repository has already released a tag on a red hassfest
   once; it is two seconds to check.
+- **A failed read is not a refusal, and four bugs came from confusing them.**
+  All found on 2026-09-20, all the same shape: `except ModbusError: return
+  False`. An exception *response* is the device answering -- it is there and it
+  declined, and that is evidence. A connection lost, a timeout or a desync is
+  the link failing to carry the question, and says nothing about the register.
+  `modbus_connection` separates them and the taxonomy is backend-neutral:
+  **`ModbusExceptionError`** and its subclasses are answers,
+  `ModbusConnectionError` / `ModbusTimeoutError` / `ModbusProtocolError` are
+  not. `ServerDeviceBusyError` (0x06) is an answer that still settles nothing --
+  it means ask me later.
+
+  What it cost, measured rather than imagined:
+
+  - `control_test._detect_transport` read 6100 **once**, unretried, and called
+    any failure a dongle. At the reference SH10RT -- a cable, no communication
+    module fitted at all, 1.9 ms median -- a run made while Home Assistant was
+    polling produced one document whose survey half said "direct to the
+    inverter's LAN port" and whose control test said dongle, and which
+    therefore stamped its own readback table **"not evidence"**. That table
+    carried the 13074 result the whole procedure exists to produce.
+  - `config_flow._async_probe` did the same, and fed the picker's labels and
+    its `same_dongle` note.
+  - The CLI had no handler at all: `_retrying` re-raises after 5, 20, 45 and
+    90 seconds of backoff, and `main()` caught only `KeyboardInterrupt`, so the
+    most common failure this project documents ended in a traceback through
+    somebody else's library. Exit **1** is defined for exactly it, and the exit
+    codes are printed as the last line *because a pasted transcript loses `$?`*.
+
+  So the answer is **three-valued** -- direct, dongle, or undetermined -- and
+  `None` must never read as `False`. Asserting a dongle is the expensive
+  direction: it discards legs A and B. And a probe that decides something
+  published gets retries, because on a link somebody else is polling one read
+  can simply miss. `SNAPSHOT_PAUSE` already carried that lesson for the
+  before-state reads; the transport probe simply never had it.
+
+  **A test fixture that fakes a refusal with a bare `ModbusError` cannot see
+  any of this.** Two did, and they were green throughout. Raise the real type.
 - **A broad `except` without a traceback is a silent failure with extra steps.**
   Three places caught `Exception` and logged only the message, and the worst was
   the one that matters most: a **failed restore** in `repairs.py`, which means
@@ -545,6 +612,28 @@ and verified in a container or against hardware.
   direct link is slower than its own dongle. Register 6100 does distinguish
   direct from dongle, 9/9 — and register 13265 names the module that is
   *fitted*, which is not the same as the module in the path.
+- **Transport is 6100's question and 13265 cannot answer it, in either
+  direction.** Counted over the ten committed fingerprints on 2026-09-20: 6100
+  agrees with the owner's own account **10 times out of 10**, and a rule keyed
+  on 13265 would be wrong **3 times**. Both failures are real and they point
+  opposite ways:
+
+  - **fwitten, twice.** Through a dongle the module firmware string answers
+    with every character 0x00, which `present()` maps to None — so "no module
+    named" reads as *direct* at two endpoints that are demonstrably behind one.
+    Visible in the documents: on the cable the key is **absent** (the read was
+    refused), through the dongle it is **present and null** (it answered
+    empty). Same behaviour as inputs 13249 and 13279.
+  - **gerd, once.** A WiNet-S is fitted and names itself `…P043` while the LAN
+    cable goes straight into the inverter, so "a module is named" reads as
+    *dongle* on the path that is a cable. His own testimony says it: "it
+    reports the module that is fitted, not the module in use."
+
+  So a dongle that answers zeros looks like no dongle, and a dongle merely
+  screwed to the wall looks like one in the path. Anything deciding transport
+  reads **6100**; 13265 is worth reporting beside it as a separate fact -- an
+  owner who can see a dongle needs to know the tool can see it too, or a
+  correct "its own LAN port" reads as a mistake.
 - **A WiNet-S forwards a write and then reads it back stale, and waiting does
   not help.** Settled at the one site with both a cable and a dongle to one
   inverter. The two paths disagreed *before* anything was written -- 33047 read

@@ -601,7 +601,71 @@ async def test_the_page_says_what_has_already_been_measured(
 
     measured = result["description_placeholders"]["measured"]
     assert "SH10RT" in measured
-    assert "not determinable" in measured or "no communication module" in measured
+    assert "6100" in measured
+
+
+async def test_a_fitted_dongle_is_not_read_as_a_dongle_in_the_path(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """A house can have a dongle screwed to the wall *and* a cable in use.
+
+    This page keyed the question on register 13265 -- the communication
+    module's firmware version -- while its own docstring claimed 6100. 13265
+    names the module that is **fitted**; only 6100 says which path this
+    endpoint is, because Sungrow does not forward that block through a
+    dongle.
+
+    gerd's committed fingerprint is the counter-example and it is in this
+    repository: `transport: direct_lan`, `6100: answered` and
+    `WINET-SV200.001.00.P043`, all in one document, with the owner's note
+    saying "it reports the module that is fitted, not the module in use".
+    Keyed on 13265 this page told him he was behind a dongle -- and it is
+    this prose that steers `survey_transport`, which is published and feeds
+    `doc/compatibility.md`.
+    """
+    # A dongle is fitted and names itself, and 6100 answers: a cable.
+    for offset, word in enumerate([0x5749, 0x4E45, 0x542D, 0x5356, 0x3230]):
+        sungrow_unit.input[13264 + offset] = word
+    sungrow_unit.input[6099] = 1234
+    sungrow_unit.input[6100] = 0
+
+    entry = await _setup(hass, sungrow_unit)
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    measured = result["description_placeholders"]["measured"]
+
+    assert "its own LAN port" in measured
+    # The fitted module is still reported -- an owner who can see a dongle on
+    # the wall needs to know we can see it too, or a correct answer reads as
+    # a mistake -- but as a separate fact, not as the route.
+    assert "is fitted" in measured
+    assert "is in the path" not in measured
+
+
+async def test_a_refused_6100_is_a_dongle_and_a_lost_read_is_neither(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """Same three answers as the control test's probe, for the same reason.
+
+    A refusal is the transport answering. A dropped read is not, and saying
+    "dongle" on one puts a guess into a published field.
+    """
+    from modbus_connection import IllegalDataAddressError, ModbusConnectionError
+
+    entry = await _setup(hass, sungrow_unit)
+
+    sungrow_unit.fail_read(
+        6099, IllegalDataAddressError("exception 0x02"), register_type="input"
+    )
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert "WiNet-S" in result["description_placeholders"]["measured"]
+
+    sungrow_unit.fail_read(
+        6099, ModbusConnectionError("Connection lost"), register_type="input"
+    )
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    measured = result["description_placeholders"]["measured"]
+    assert "could not be measured" in measured
+    assert "WiNet-S" not in measured
 
 
 async def test_every_sections_evidence_is_on_the_one_page(

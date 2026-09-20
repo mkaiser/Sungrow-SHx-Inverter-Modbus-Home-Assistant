@@ -4169,6 +4169,58 @@ the honest answer is to contribute to Modbus Manager instead.
 
 ---
 
+### Part B against three houses (2026-09-20)
+
+The first day part B ran anywhere but the reference house, and the first time
+the factor-10 fix was checked on hardware it had not been derived from. Run
+through the shipped HACS install at the reference house and from the CLI at the
+other two; the blocks are merged into the three fingerprints under
+`doc/device-fingerprints/`, which are the first in this repository to carry a
+`control_test` at all.
+
+**Register 13074, the point of the exercise.** Two legs, three machines:
+
+| House | Model | Path | Leg | Result |
+| --- | --- | --- | --- | --- |
+| reference | SH10RT | cable | B | wrote 900 W → register held **900**, slope 1.0 |
+| gerd | SH8.0RT-V112 | cable | B | wrote 600 W → register held **600**, slope 1.0 |
+| bar12 | SH10RT-20 | dongle | C | commanded 1250 W → export 4583 → **1275 W** |
+
+Both leg-B runs lifted feed-in limitation for that probe alone and restored
+`0x55` within seconds; with it off the register ignores writes entirely, which
+is why neither house had ever produced this readback. bar12 answers 6100 with a
+refusal on both of its addresses, so its readback table is a dongle's cache and
+leg C is the only evidence there — and it is the strongest single result of the
+three, because the write being **accepted** is itself the proof. Pre-fix,
+1250 W left as word 1250, became 12500 W against a 10000 W maximum and returned
+exception 0x04, which is exactly what 3400 W did at the reference house the day
+before.
+
+**Restart on an SH8.0RT-V112**, never measured on this model: 2.1 s to stopped,
+**179.5 s** back to `0x0040 Running`, 5.1 s more to generating. Zero polls
+failed to connect across the whole stop, and the start needed **three** `0xCF`
+commands at 60-second intervals before the state moved.
+
+**What the day could not establish**, and why, because it is the honest half:
+
+- No leg C on the export limit at either cable house. The reference battery was
+  at 26.6 % and then 2.2 %, gerd's at 2.8 % against a 10 % floor — so there was
+  nothing to spend on manufacturing an export. bar12 at 62.5 % could, and did.
+- No forced-discharge or charge-ceiling check at gerd, same reason.
+- `battery_min_soc` and `battery_reserved_soc_for_backup` went unwritten at
+  gerd and at the reference house's second run: every admissible value was too
+  close to the battery's actual level for the guards to allow it.
+- Leg B at bar12 is a cache, by construction, and the report says so.
+
+**Four defects, one shape**, all found by running rather than by testing, all
+recorded in `CLAUDE.md` under *a failed read is not a refusal*:
+`control_test._detect_transport` and `config_flow._async_probe` both read any
+failure as a dongle; `config_flow._async_measured` never received the probe's
+answer on the manual path and fabricated one; the CLI had no handler for a link
+that would not open and ended in a traceback where exit 1 was defined for it.
+
+---
+
 Milestone 1 as built — the devcontainer, simulator, library, skeleton
 integration and their gotchas — is recorded in `CLAUDE.md` and in the git
 history from `7b42196` onward.

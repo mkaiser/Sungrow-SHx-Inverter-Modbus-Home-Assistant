@@ -373,7 +373,7 @@ web_gui:
 
   to_your_desktop:
     how: >-
-      Automatic. devcontainer.json declares forwardPorts [8123, 5020], so VS
+      Automatic. devcontainer.json declares forwardPorts [8123, 5020, 8124], so VS
       Code forwards 8123 to the host's localhost as soon as something listens.
     url: http://localhost:8123
     if_it_does_not_appear: >-

@@ -61,6 +61,10 @@ _LOGGER = logging.getLogger("control_test")
 #: a shell. Not 0 here: a *run* also succeeds with 0, and sharing the number
 #: made an ordinary run sign off with "everything in the snapshot is back" --
 #: a sentence about something it had not done.
+#: Exit 1 from `CODES`, named so the handler that returns it reads as what it
+#: means rather than as a bare integer.
+COULD_NOT_RUN = 1
+
 RESTORED = -1
 
 
@@ -612,6 +616,29 @@ def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stderr)
     try:
         code = asyncio.run(_run(args))
+    except (ModbusError, TimeoutError, OSError) as err:
+        # Exit 1 exists for exactly this and was unreachable: `_retrying`
+        # re-raises once it has spent 5, 20, 45 and 90 seconds of backoff, and
+        # nothing caught it, so the most common failure this project documents
+        # ended in a traceback through somebody else's library. The exit codes
+        # are printed as the last line precisely because a pasted transcript
+        # loses `$?`, and a stack trace defeats that where it is needed most.
+        #
+        # Measured 2026-09-20 against a house over a VPN whose Home Assistant
+        # was polling: `read_input_registers(5114, 2): Connection lost before
+        # response was received` -- 5114 being one of the three addresses
+        # CLAUDE.md names as the progressive signature of session exhaustion.
+        print(f"\n{err}", file=sys.stderr)
+        print(
+            "\nA Sungrow grants few Modbus sessions and wants about 90 seconds "
+            "of quiet to reclaim them. If something else is polling this "
+            "inverter -- a Home Assistant, another survey -- stop it and try "
+            "again; reads that die a little further into the poll each time "
+            "are contention, not a broken register.",
+            file=sys.stderr,
+        )
+        print(f"\nexit {COULD_NOT_RUN}: {CODES[COULD_NOT_RUN]}", file=sys.stderr)
+        return COULD_NOT_RUN
     except KeyboardInterrupt:
         print(
             "\nInterrupted. Everything this run wrote has been put back; if the "

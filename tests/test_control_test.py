@@ -1575,11 +1575,18 @@ async def test_a_dongle_endpoint_says_its_readbacks_cannot_be_believed(
 
     Four registers at bar12 were written up as dropped writes on exactly this
     evidence, and that conclusion had to be withdrawn hours later.
+
+    The refusal here is an `IllegalDataAddressError` rather than a bare
+    `ModbusError`, and the difference is the whole point of the probe: a
+    dongle **answers**, with exception 0x02. A bare transport failure is a
+    different question with a different answer, in the test below.
     """
-    from modbus_connection import ModbusError
+    from modbus_connection import IllegalDataAddressError
 
     # 6100 is the direct-only block; refusing it is what a dongle does.
-    full_unit.fail_read(6099, ModbusError("exception 0x02"), register_type="input")
+    full_unit.fail_read(
+        6099, IllegalDataAddressError("exception 0x02"), register_type="input"
+    )
     inverter = SungrowInverter(full_unit)
     await inverter.async_update()
     run = _runner(full_unit)
@@ -1604,6 +1611,109 @@ async def test_a_cable_endpoint_claims_nothing_extra(
 
     assert run.direct is True
     assert not any("WiNet-S" in note for note in run.unestablished)
+
+
+async def test_a_lost_read_is_undetermined_rather_than_a_dongle(
+    full_unit: MockModbusUnit,
+) -> None:
+    """A link that drops the question has not answered it.
+
+    The regression this pins: `_detect_transport` used to read 6100 once and
+    treat *any* failure as a dongle. Measured 2026-09-20 on the reference
+    SH10RT -- a cable, no communication module fitted at all, 1.9 ms median --
+    where a run made while Home Assistant was polling produced one document
+    whose survey half said "direct to the inverter's LAN port" and whose
+    control test said dongle, and which therefore stamped its own readback
+    table "not evidence". That table carried the 13074 result the whole
+    procedure exists to produce.
+
+    Wrong in the expensive direction, and likelier the worse the link: this
+    project has measured 10-second timeouts over a VPN against milliseconds
+    elsewhere. So a transport failure gets `None`, and `None` must not read as
+    `False` anywhere.
+    """
+    from modbus_connection import ModbusConnectionError
+
+    full_unit.fail_read(
+        6099,
+        ModbusConnectionError("Connection lost before response was received"),
+        register_type="input",
+    )
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    run = _runner(full_unit)
+
+    await run._preflight()
+
+    assert run.direct is None
+    assert run.conditions["direct_connection"] is None
+    # It must not claim a dongle, which is what discards legs A and B.
+    assert not any("WiNet-S" in note for note in run.unestablished)
+    assert any("could not be settled" in note for note in run.unestablished)
+
+
+async def test_a_read_that_misses_once_is_retried_before_concluding(
+    full_unit: MockModbusUnit,
+) -> None:
+    """One missed read is what contention looks like, not what a dongle is.
+
+    `SNAPSHOT_PAUSE` already carries this lesson for the before-state reads --
+    "on a link somebody else is polling the first one can simply miss" -- and
+    the transport probe simply never had it.
+    """
+    from modbus_connection import ModbusConnectionError
+
+    full_unit.input[6099] = 1234
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    run = _runner(full_unit)
+
+    attempts = 0
+    original = run.inverter.async_read_words
+
+    async def flaky(space: str, address: int, count: int) -> Any:
+        nonlocal attempts
+        if address == run.DIRECT_ONLY:
+            attempts += 1
+            if attempts == 1:
+                raise ModbusConnectionError("lost")
+        return await original(space, address, count)
+
+    run.inverter.async_read_words = flaky  # type: ignore[method-assign]
+
+    assert await run._detect_transport() is True
+    assert attempts == 2
+
+
+async def test_a_busy_device_is_retried_rather_than_called_a_dongle(
+    full_unit: MockModbusUnit,
+) -> None:
+    """Exception 0x06 means ask me later, not there is no such register.
+
+    It is the one exception *response* that is not evidence about the address,
+    and a Sungrow with too many sessions open is exactly where it turns up.
+    """
+    from modbus_connection import ServerDeviceBusyError
+
+    full_unit.input[6099] = 1234
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    run = _runner(full_unit)
+
+    attempts = 0
+    original = run.inverter.async_read_words
+
+    async def busy_once(space: str, address: int, count: int) -> Any:
+        nonlocal attempts
+        if address == run.DIRECT_ONLY:
+            attempts += 1
+            if attempts == 1:
+                raise ServerDeviceBusyError("exception 0x06")
+        return await original(space, address, count)
+
+    run.inverter.async_read_words = busy_once  # type: ignore[method-assign]
+
+    assert await run._detect_transport() is True
 
 
 async def test_the_export_probe_lifts_the_mode_only_when_it_is_allowed(

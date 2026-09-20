@@ -432,10 +432,13 @@ def _described(found: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
             notes: list[str] = []
             # How this address reaches the machine, which is measurable and
             # matters: the two routes do not answer the same registers.
+            direct = entry.get("direct")
             notes.append(
                 "the inverter's own LAN port"
-                if entry.get("direct")
+                if direct is True
                 else "through a WiNet-S or Logger"
+                if direct is False
+                else "route not measured -- 6100 neither answered nor refused"
             )
             # The role, where a direct path makes it readable.
             if entry[CONF_UNIT_ID] != DEFAULT_UNIT_ID:
@@ -459,7 +462,11 @@ def _described(found: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
                 # dongle is on both, and both addresses returned identical
                 # documents -- every probe, every field, even the TLS
                 # certificate.
-                if not any(found[other]["direct"] for other in hosts):
+                # `is False` for every address, not merely falsy: an
+                # undetermined route is not evidence of a dongle, and calling
+                # two addresses one dongle on the strength of two failed reads
+                # is the same mistake in a second place.
+                if all(found[other].get("direct") is False for other in hosts):
                     entry["same_dongle"] = True
             entry["notes"] = notes
             entry["label"] = " -- ".join(
