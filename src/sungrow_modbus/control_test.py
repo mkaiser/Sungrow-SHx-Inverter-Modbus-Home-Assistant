@@ -41,7 +41,7 @@ import math
 import time
 from typing import Any, NamedTuple, Protocol
 
-from modbus_connection import ModbusError
+from modbus_connection import ModbusError, ModbusExceptionError, ServerDeviceBusyError
 
 from .battery import ceiling as battery_ceiling
 from .capabilities import Capability
@@ -1166,11 +1166,14 @@ class ControlTest:
         self.capabilities: frozenset[Capability] = frozenset()
         self.plan: tuple[Probe, ...] = ()
         self.conditions: dict[str, Any] = {}
-        self.direct = True
+        self.direct: bool | None = True
         """Whether this endpoint is the inverter's own port rather than a
-        dongle. Decides whether the readback legs can be believed: a WiNet-S
-        forwards a write and then answers the old value when it is read
-        back, so through one "write it and read it back" settles nothing."""
+        dongle, or `None` where the link would not say. Decides whether the
+        readback legs can be believed: a WiNet-S forwards a write and then
+        answers the old value when it is read back, so through one "write it
+        and read it back" settles nothing. `None` is not `False` -- it means
+        the question could not be put, and the report says so rather than
+        discarding legs A and B on a guess."""
         self.unestablished: list[str] = []
         self._written: dict[str, float] = {}
         self._last_refused: str | None = None
@@ -1354,7 +1357,12 @@ class ControlTest:
     #: `fingerprint.PROBES` reads the same address for the survey.
     DIRECT_ONLY = 6099
 
-    async def _detect_transport(self) -> bool:
+    #: Three attempts, a second apart, for the same reason `SNAPSHOT_PAUSE`
+    #: has them: on a link somebody else is polling, one read can simply miss.
+    TRANSPORT_ATTEMPTS = 3
+    TRANSPORT_PAUSE = 1.0
+
+    async def _detect_transport(self) -> bool | None:
         """Whether this endpoint is the inverter's own port rather than a dongle.
 
         Worth its own read, because it decides what the run may claim. A WiNet-S
@@ -1373,12 +1381,41 @@ class ControlTest:
         figure it kept returning was hours old, not seconds. So there is no
         settling time the tool could sit out to earn legs A and B back on a
         dongle, and offering one would only make a stale answer look ripe.
+
+        **Three answers, not two**, and the third is the point. This used to
+        read the register once and treat *any* failure as a dongle, which is
+        wrong in the one direction that costs something: a lost read is not a
+        refusal. Measured 2026-09-20 on the reference SH10RT -- a cable, no
+        communication module fitted at all, 1.9 ms median -- where a run made
+        while Home Assistant was polling produced a document whose survey half
+        said "direct to the inverter's LAN port" and whose control test said
+        dongle, and which therefore stamped its own readback table "not
+        evidence". Over a VPN, where this project has measured 10-second
+        timeouts against milliseconds elsewhere, that would be the common case
+        rather than the unlucky one.
+
+        So a *refusal* -- the device answering with an exception code -- is
+        evidence and means a dongle, while a connection lost, a timeout or a
+        desync is the link failing to carry the question and is evidence of
+        nothing. `ServerDeviceBusyError` sits with the latter: it means ask me
+        later, not there is no such register. Undetermined returns `None`,
+        which the report renders as an unknown rather than as a dongle,
+        because asserting a dongle discards legs A and B.
         """
-        try:
-            await self.inverter.async_read_words("input", self.DIRECT_ONLY, 2)
-        except (ModbusError, TimeoutError, OSError):
-            return False
-        return True
+        for attempt in range(self.TRANSPORT_ATTEMPTS):
+            try:
+                await self.inverter.async_read_words("input", self.DIRECT_ONLY, 2)
+            except ServerDeviceBusyError:
+                pass
+            except ModbusExceptionError:
+                return False
+            except (ModbusError, TimeoutError, OSError):
+                pass
+            else:
+                return True
+            if attempt < self.TRANSPORT_ATTEMPTS - 1:
+                await self.clock.sleep(self.TRANSPORT_PAUSE)
+        return None
 
     def _guards(self) -> None:
         """Refuse a run the house is in no state for.
@@ -1469,7 +1506,7 @@ class ControlTest:
         self.capabilities = self.inverter.capabilities()
         self.direct = await self._detect_transport()
         self.conditions["direct_connection"] = self.direct
-        if not self.direct:
+        if self.direct is False:
             self._note(
                 "this endpoint is a WiNet-S rather than the inverter's own "
                 "port, and a WiNet-S answers a register stale after "
@@ -1478,6 +1515,19 @@ class ControlTest:
                 "holds. Waiting does not help: polled every 5 s for two "
                 "minutes one never reported a value the cable had confirmed. "
                 "The behavioural checks are unaffected"
+            )
+        elif self.direct is None:
+            self._note(
+                "the transport could not be settled: register 6100 was "
+                "neither answered nor refused in "
+                f"{self.TRANSPORT_ATTEMPTS} attempts -- the reads failed on "
+                "the link itself, which is what contention looks like from "
+                "this end. A cable answers that register and a dongle "
+                "refuses it, but a lost read says neither. So the readback "
+                "table below is reported as measured and carries whatever "
+                "weight an unknown transport deserves: if this endpoint is "
+                "in fact a dongle, those verdicts describe its cache rather "
+                "than the register. The behavioural checks are unaffected"
             )
         self.conditions["capabilities"] = sorted(
             capability.value for capability in self.capabilities

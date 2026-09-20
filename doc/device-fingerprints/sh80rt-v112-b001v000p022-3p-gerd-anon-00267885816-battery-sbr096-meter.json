@@ -1794,5 +1794,330 @@
     "unit 3 wallbox serial": {
       "state": "no answer"
     }
+  },
+  "control_test": {
+    "schema": 1,
+    "outcome": 3,
+    "outcome_means": "ran, but checks were skipped or inconclusive",
+    "conditions": {
+      "direct_connection": true,
+      "capabilities": [
+        "active_power_limit",
+        "battery",
+        "battery_firmware",
+        "battery_start_power",
+        "feed_in_limitation_ratio",
+        "firmware_versions",
+        "forced_startup",
+        "meter_direct",
+        "sub_controller_firmware",
+        "three_phase"
+      ],
+      "model": "SH8.0RT-V112",
+      "pv_w": 1682,
+      "soc_percent": 2.8,
+      "battery_ceiling_w": 5835,
+      "simulated": false,
+      "dry_run": false
+    },
+    "readback": [
+      {
+        "field": "battery_min_soc",
+        "register": 13059,
+        "spec_units_per_count": 0.1,
+        "unit": "%",
+        "original": 10.0,
+        "written": null,
+        "library_read": null,
+        "raw_word": null,
+        "expected_raw": null,
+        "ratio": null,
+        "slope": null,
+        "expected_slope": 10.0,
+        "verdict": "not run",
+        "visibility": "no decade error would be visible; it could only be refused",
+        "implicates": null,
+        "detail": "the house was in no state for it"
+      },
+      {
+        "field": "battery_max_soc",
+        "register": 13058,
+        "spec_units_per_count": 0.1,
+        "unit": "%",
+        "original": 90.0,
+        "written": 95.0,
+        "library_read": 95.0,
+        "raw_word": 950,
+        "expected_raw": 950,
+        "ratio": 1.0,
+        "slope": null,
+        "expected_slope": 10.0,
+        "verdict": "matched",
+        "visibility": "no decade error would be visible; it could only be refused",
+        "implicates": null,
+        "detail": null
+      },
+      {
+        "field": "battery_reserved_soc_for_backup",
+        "register": 13100,
+        "spec_units_per_count": 1,
+        "unit": "%",
+        "original": 0,
+        "written": null,
+        "library_read": null,
+        "raw_word": null,
+        "expected_raw": null,
+        "ratio": null,
+        "slope": null,
+        "expected_slope": 1.0,
+        "verdict": "not run",
+        "visibility": "no decade error would be visible; it could only be refused",
+        "implicates": null,
+        "detail": "the house was in no state for it"
+      },
+      {
+        "field": "battery_max_charge_power",
+        "register": 33047,
+        "spec_units_per_count": 10,
+        "unit": "W",
+        "original": 4400,
+        "written": 400,
+        "library_read": 400,
+        "raw_word": 40,
+        "expected_raw": 40,
+        "ratio": 1.0,
+        "slope": 0.1,
+        "expected_slope": 0.1,
+        "verdict": "matched",
+        "visibility": "a decade error either way would be visible",
+        "implicates": null,
+        "detail": null
+      },
+      {
+        "field": "battery_max_discharge_power",
+        "register": 33048,
+        "spec_units_per_count": 10,
+        "unit": "W",
+        "original": 3800,
+        "written": 300,
+        "library_read": 300,
+        "raw_word": 30,
+        "expected_raw": 30,
+        "ratio": 1.0,
+        "slope": 0.1,
+        "expected_slope": 0.1,
+        "verdict": "matched",
+        "visibility": "a decade error either way would be visible",
+        "implicates": null,
+        "detail": null
+      },
+      {
+        "field": "export_power_limit",
+        "register": 13074,
+        "spec_units_per_count": 1,
+        "unit": "W",
+        "original": 8000,
+        "written": 600.0,
+        "library_read": 600,
+        "raw_word": 600,
+        "expected_raw": 600,
+        "ratio": 1.0,
+        "slope": 1.0,
+        "expected_slope": 1.0,
+        "verdict": "matched",
+        "visibility": "a decade error either way would be visible",
+        "implicates": null,
+        "detail": null
+      },
+      {
+        "field": "battery_forced_charge_discharge_power",
+        "register": 13052,
+        "spec_units_per_count": 1,
+        "unit": "W",
+        "original": 0,
+        "written": 200,
+        "library_read": 200,
+        "raw_word": 200,
+        "expected_raw": 200,
+        "ratio": 1.0,
+        "slope": 1.0,
+        "expected_slope": 1.0,
+        "verdict": "matched",
+        "visibility": "a decade error either way would be visible",
+        "implicates": null,
+        "detail": null
+      },
+      {
+        "field": "battery_charging_start_power",
+        "register": 33149,
+        "spec_units_per_count": 10,
+        "unit": "W",
+        "original": 110,
+        "written": 90,
+        "library_read": 90,
+        "raw_word": 9,
+        "expected_raw": 9,
+        "ratio": 1.0,
+        "slope": null,
+        "expected_slope": 0.1,
+        "verdict": "matched",
+        "visibility": "a decade error either way would be visible",
+        "implicates": null,
+        "detail": null
+      },
+      {
+        "field": "battery_discharging_start_power",
+        "register": 33150,
+        "spec_units_per_count": 10,
+        "unit": "W",
+        "original": 110,
+        "written": 80.0,
+        "library_read": 80,
+        "raw_word": 8,
+        "expected_raw": 8,
+        "ratio": 1.0,
+        "slope": null,
+        "expected_slope": 0.1,
+        "verdict": "matched",
+        "visibility": "a decade error either way would be visible",
+        "implicates": null,
+        "detail": null
+      }
+    ],
+    "effects": [
+      {
+        "check": "forced charge",
+        "observable": "battery charge power",
+        "commanded": 1250.0,
+        "commanded_unit": "W",
+        "before": -0.0,
+        "during": 1251.0,
+        "after": -0.0,
+        "before_mad": 0.0,
+        "during_mad": 0.0,
+        "after_mad": 0.0,
+        "drift": 0.0,
+        "delta": 1251.0,
+        "ratio": 1.0008,
+        "verdict": "the inverter did as it was told",
+        "detail": null
+      }
+    ],
+    "restored": [
+      {
+        "field": "battery_forced_charge_discharge_cmd_raw",
+        "original": 204.0,
+        "readback": 204,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "ems_mode_selection_raw",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "battery_reserved_soc_for_backup",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "battery_max_charge_power",
+        "original": 4400.0,
+        "readback": 4400,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "battery_max_discharge_power",
+        "original": 3800.0,
+        "readback": 3800,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "export_power_limit",
+        "original": 8000.0,
+        "readback": 8000,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "battery_forced_charge_discharge_power",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "battery_charging_start_power",
+        "original": 110.0,
+        "readback": 110,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "battery_discharging_start_power",
+        "original": 110.0,
+        "readback": 110,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "export_power_limit_mode_raw",
+        "original": 85.0,
+        "readback": 85,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "battery_min_soc",
+        "original": 10.0,
+        "readback": 10.0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "battery_max_soc",
+        "original": 90.0,
+        "readback": 90.0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      }
+    ],
+    "restart": {
+      "stopped_after": 2.1171006840013433,
+      "running_after": 179.5056571009918,
+      "generating_after": 5.115980792004848,
+      "stop_word_seen": 2,
+      "polls_refused_connection": 0,
+      "settings_survived": true,
+      "verdict": "the inverter did as it was told",
+      "detail": null
+    },
+    "not_established": [
+      "battery_min_soc: not written, because every admissible value was too close to the battery's actual level to be safe",
+      "battery_max_soc: its bounds have no room for a value ten times larger or smaller, so a scale error here could only ever show as a refusal",
+      "battery_reserved_soc_for_backup: not written, because every admissible value was too close to the battery's actual level to be safe",
+      "no forced discharge check: the battery is at or near its minimum state of charge, so there is nothing to discharge",
+      "no charge-ceiling check: the battery is too low for the ceiling to be put under it, since battery_max_soc cannot go below 50 %",
+      "could not make the house export: the battery is at 2.8% against a floor of 10%, so there is nothing to spend on making one"
+    ]
   }
 }

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from modbus_connection import ModbusError
+from modbus_connection import IllegalDataAddressError, ModbusError
 from modbus_connection.mock import MockModbusConnection, MockModbusUnit
 import pytest
 
@@ -467,6 +467,12 @@ def _house_with_routes(topology, direct: set[str]):
     Register 6100 is the signal: Sungrow documents 6100-6195 as not forwarded
     by a WiNet-S, and four houses agree without exception -- it answers over
     the inverter's own LAN port and refuses behind a dongle.
+
+    The refusal is an `IllegalDataAddressError`, and the type is the whole
+    signal: a dongle **answers**, with exception 0x02. A bare `ModbusError`
+    stood for this until 2026-09-20, which made this fixture unable to tell a
+    refusal from a link that dropped the question -- the same conflation that
+    told a house with no communication module fitted that it had a dongle.
     """
 
     class _Unit:
@@ -480,7 +486,9 @@ def _house_with_routes(topology, direct: set[str]):
 
             async def gated(address, count):
                 if address == 6099 and not self._direct_ok:
-                    raise ModbusError("Modbus Exception 0x02 for function code 0x04")
+                    raise IllegalDataAddressError(
+                        "Modbus Exception 0x02 for function code 0x04"
+                    )
                 return await original(address, count)
 
             inner.read_input_registers = gated
@@ -618,3 +626,51 @@ async def test_no_wifi_note_where_one_path_is_a_cable(hass: HomeAssistant) -> No
     }
     result = await _pick_with_routes(hass, topology, direct={"192.168.176.34"})
     assert result["description_placeholders"]["note"] == ""
+
+
+def test_an_unmeasured_route_is_not_reported_as_a_dongle() -> None:
+    """A read that never arrived is not a refusal, and must not read as one.
+
+    `_described` decides what the picker says about each address and whether
+    two addresses are called one dongle. Both used to turn on the truthiness
+    of `direct`, so `None` -- the link dropped the question -- was
+    indistinguishable from `False` -- the device answered, refusing.
+
+    That conflation is not hypothetical. Measured 2026-09-20 at a house with
+    no communication module fitted at all: a run made while Home Assistant was
+    polling reported a dongle, and the document it produced stamped its own
+    readback table "not evidence". Here it would put "through a WiNet-S" into
+    a label and, worse, `same_dongle` into an entry, on two failed reads.
+    """
+    from custom_components.sungrow_modbus.config_flow_schemas import _described
+
+    found = {
+        "192.168.176.28": {
+            CONF_HOST: "192.168.176.28",
+            "port": 502,
+            CONF_UNIT_ID: 1,
+            "serial": SERIAL_A,
+            "model": "SH10RT",
+            "direct": None,
+            "label": "",
+        },
+        "192.168.176.34": {
+            CONF_HOST: "192.168.176.34",
+            "port": 502,
+            CONF_UNIT_ID: 1,
+            "serial": SERIAL_A,
+            "model": "SH10RT",
+            "direct": None,
+            "label": "",
+        },
+    }
+
+    described = _described(found)
+
+    for host, entry in described.items():
+        assert "WiNet-S" not in entry["label"], host
+        assert "own LAN port" not in entry["label"], host
+        assert "route not measured" in entry["label"], host
+        # Two addresses, one serial, and no evidence either way: calling that
+        # one dongle is the same guess in a second place.
+        assert "same_dongle" not in entry, host

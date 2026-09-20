@@ -8,7 +8,12 @@ from contextlib import suppress
 import logging
 from typing import Any
 
-from modbus_connection import ModbusError, ModbusTcpParams
+from modbus_connection import (
+    ModbusError,
+    ModbusExceptionError,
+    ModbusTcpParams,
+    ServerDeviceBusyError,
+)
 import voluptuous as vol
 
 from homeassistant.components import network
@@ -198,7 +203,7 @@ DIRECT_ONLY_REGISTER = 6099
 
 async def _async_probe(
     hass: HomeAssistant, host: str, port: int, unit_id: int
-) -> tuple[SungrowInverter, bool]:
+) -> tuple[SungrowInverter, bool | None]:
     """Read the identity and the route, or raise.
 
     Returns the inverter and whether it answered the direct-only register, so
@@ -217,10 +222,23 @@ async def _async_probe(
     async with async_get_temporary_unit(hass, params, unit_id) as unit:
         inverter = SungrowInverter(unit)
         await inverter.async_update_identity()
+        direct: bool | None
         try:
             await unit.read_input_registers(DIRECT_ONLY_REGISTER, 2)
+        except (ServerDeviceBusyError, ModbusExceptionError) as err:
+            # A refusal is the transport answering, and only a refusal is.
+            # 0x06 is the exception that says "ask me later" rather than
+            # "no such register", so it settles nothing either.
+            direct = None if isinstance(err, ServerDeviceBusyError) else False
         except (ModbusError, HomeAssistantError):
-            direct = False
+            # The link did not carry the question. That is not evidence about
+            # the register, and reading it as one told a house with no
+            # communication module fitted that it had a dongle -- measured
+            # 2026-09-20. No retry here, deliberately: this runs once per
+            # candidate address in a /24 sweep, so a retry multiplies the
+            # search rather than the certainty. `None` is the honest answer
+            # and the prose says so.
+            direct = None
         else:
             direct = True
     return inverter, direct
@@ -799,7 +817,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             try:
-                inverter, _direct = await _async_probe(
+                inverter, direct = await _async_probe(
                     self.hass,
                     user_input[CONF_HOST],
                     user_input[CONF_PORT],
@@ -823,6 +841,25 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                     self._abort_if_unique_id_configured()
                     self._data = dict(user_input)
                     self._title = inverter.model or DEFAULT_NAME
+                    # `_found` is what `_async_measured` reads to tell the
+                    # testimony step what has already been measured, and this
+                    # path used to leave it empty -- so every user who typed
+                    # an address was told "an unidentified model, reached
+                    # through a communication module" whatever the probe had
+                    # just found. Measured 2026-09-20 at a house with no
+                    # communication module fitted at all, whose entry was
+                    # titled SH10RT on the very next screen. It steers
+                    # `survey_transport`, which is published.
+                    self._found = {
+                        user_input[CONF_HOST]: {
+                            CONF_HOST: user_input[CONF_HOST],
+                            CONF_PORT: user_input[CONF_PORT],
+                            CONF_UNIT_ID: user_input[CONF_UNIT_ID],
+                            "serial": serial,
+                            "model": inverter.model,
+                            "direct": direct,
+                        }
+                    }
                     return await self.async_step_entity_ids()
 
         return self.async_show_form(
@@ -987,22 +1024,42 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         determinable and not guessed.
         """
         device = self._found.get(self._data.get(CONF_HOST, ""), {})
+        if not device:
+            # Nothing was probed for this address, so there is nothing to
+            # report. Saying so beats inventing it: this used to fall through
+            # to the "communication module" branch and assert a dongle at
+            # every house reached by typing an address.
+            return (
+                "Nothing has been measured for this address yet, so please "
+                "answer from what you know."
+            )
         model = device.get("model") or "an unidentified model"
-        if device.get("direct"):
+        direct = device.get("direct")
+        if direct is True:
             route = (
-                "its own LAN port — nothing answered register 13265, which is "
-                "what a cable straight into the inverter looks like"
+                "reached through its own LAN port — register 6100 answers, which "
+                "is what a cable straight into the inverter looks like"
+            )
+        elif direct is False:
+            route = (
+                "reached through a communication module, so a WiNet-S, WiNet-S2 "
+                "or Logger is in the path — register 6100 was refused. Whether it "
+                "is using its Ethernet socket or its WiFi is **not** determinable "
+                "over Modbus, and that is the part only you can tell us"
             )
         else:
+            # Neither answered nor refused: the read failed on the link. A
+            # guess here is worse than a question, because this steers the
+            # `survey_transport` answer and that is published.
             route = (
-                "a communication module, so a WiNet-S, WiNet-S2 or Logger is in "
-                "the path. Whether it is using its Ethernet socket or its WiFi "
-                "is **not** determinable over Modbus, and that is the part only "
-                "you can tell us"
+                "and the route could not be measured — register 6100 neither "
+                "answered nor was refused, which is what a busy link looks like "
+                "from here. A cable answers it and a dongle refuses it, so this "
+                "is one for you to tell us"
             )
         return (
             f"Already measured, so you do not need to tell us: this is "
-            f"**{model}**, reached through {route}."
+            f"**{model}**, {route}."
         )
 
     async def async_step_testimony(
@@ -1198,7 +1255,7 @@ class SungrowOptionsFlow(OptionsFlow):
                     }
                 ),
                 "reported_load": self._async_load_now(),
-                "measured": self._async_survey_measured(),
+                "measured": await self._async_survey_measured(),
                 "battery_status": self._async_battery_status(),
                 # Why the promotion toggle above is greyed, in the same words
                 # the config flow uses for the same gate.
@@ -1599,15 +1656,32 @@ class SungrowOptionsFlow(OptionsFlow):
             "which does not include anything it cannot see."
         )
 
-    @callback
-    def _async_survey_measured(self) -> str:
+    async def _async_survey_measured(self) -> str:
         """Say what the integration has already worked out for itself.
 
         So that nobody answers a question that has been measured. The
-        transport is the one that matters: register 6100 settles direct
-        against dongle 9 times out of 9, and what an owner adds is the half
+        transport is the one that matters, and what an owner adds is the half
         no register reaches -- whether a dongle is on its cable or its WiFi,
         which is not determinable and not guessed.
+
+        **It asks register 6100, not 13265**, and the difference is a wrong
+        answer rather than a detail. 13265 names the communication module
+        that is *fitted*; 6100 says which path this endpoint actually is,
+        because Sungrow does not forward the 6100 block through a dongle. A
+        house can have both -- and gerd's does. Its own fingerprint records
+        `transport: direct_lan`, `6100: answered`, and
+        `WINET-SV200.001.00.P043` in the same document, with the owner's note
+        saying it outright: "Register 13265 names a WiNet-S on this path too:
+        it reports the module that is fitted, not the module in use."
+
+        Keyed on 13265, this told every such house it was behind a dongle,
+        which is exactly the answer that steers `survey_transport` -- and
+        that field is published and feeds `doc/compatibility.md`.
+
+        Three answers, not two, on the same reasoning as
+        `control_test._detect_transport`: a refusal is the transport
+        answering, a lost read is not, and a guess is worse than a question
+        because this prose exists to stop people answering from guesswork.
         """
         runtime = getattr(self.config_entry, "runtime_data", None)
         if runtime is None:
@@ -1615,26 +1689,57 @@ class SungrowOptionsFlow(OptionsFlow):
 
         device = next(iter(runtime.coordinators.values())).device
         model = device.model or "an unidentified model"
+
+        direct: bool | None
+        try:
+            await device.async_read_words("input", DIRECT_ONLY_REGISTER, 2)
+        except ServerDeviceBusyError:
+            direct = None
+        except ModbusExceptionError:
+            direct = False
+        except (ModbusError, HomeAssistantError, TimeoutError, OSError):
+            direct = None
+        else:
+            direct = True
+
+        if direct is True:
+            route = (
+                "reached through its own LAN port — register 6100 answers, which "
+                "no communication module forwards"
+            )
+        elif direct is False:
+            route = (
+                "reached through a communication module, so a WiNet-S, WiNet-S2 "
+                "or Logger is in the path — register 6100 was refused. Whether it "
+                "is using its Ethernet socket or its WiFi is **not** determinable "
+                "over Modbus, and that is the part only you can tell us"
+            )
+        else:
+            route = (
+                "and the route could not be measured — register 6100 neither "
+                "answered nor was refused, which is what a busy link looks like. "
+                "A cable answers it and a dongle refuses it, so this one is for "
+                "you to tell us"
+            )
+
+        fitted = ""
         try:
             module = device.field("communication_module_firmware_version")
         except (AttributeError, KeyError):
             module = None
-
         if module:
-            route = (
-                f"a communication module, which names itself **{module}** — so a "
-                "WiNet-S, WiNet-S2 or Logger is in the path. Whether it is using "
-                "its Ethernet socket or its WiFi is **not** determinable over "
-                "Modbus, and that is the part only you can tell us"
+            # Worth saying, and worth saying separately: an owner who knows a
+            # dongle is screwed to the wall needs to see that we know too,
+            # or a correct "its own LAN port" reads as a mistake.
+            fitted = (
+                f" A communication module is fitted and names itself **{module}**,"
+                " which is a different question from which path this endpoint is:"
+                " a house can have a dongle and a cable at once."
             )
-        else:
-            route = (
-                "no communication module — nothing answered register 13265, which "
-                "is what a cable straight into the inverter looks like"
-            )
+
         return (
             f"Already measured, so you do not need to tell us: this is **{model}**, "
-            f"reached through {route}."
+            f"{route}.{fitted}"
         )
 
     @callback
