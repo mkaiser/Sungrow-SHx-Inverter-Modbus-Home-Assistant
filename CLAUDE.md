@@ -370,6 +370,26 @@ and verified in a container or against hardware.
   probe results -- and a release gate that cries wolf gets switched off. It
   also has to know what a device gains from `self.x =` in `__init__` and from
   the keys of a `COMPONENTS` map, neither of which appears in a class body.
+- **A repair issue is `title` + `description` *or* `title` + `fix_flow`, never
+  both.** Home Assistant's translation schema makes them mutually exclusive,
+  and `hassfest` says so as *"two or more values in the same group of exclusion
+  'fixable'"*, which does not obviously mean "delete the description". For a
+  fixable issue the text belongs in the fix flow's step, where the person
+  reading it is about to press the button.
+
+  **Run it before tagging**, and run it *locally* rather than trusting the
+  branch to be green:
+
+      python -c "import sys; sys.path.append('.reference/core'); \
+        sys.argv=['hassfest','--integration-path','custom_components/sungrow_modbus',\
+        '--action','validate']; \
+        from script.hassfest.__main__ import main; raise SystemExit(main())"
+
+  Appended to `sys.path`, not prepended, so the **installed** Home Assistant
+  wins: `.reference/core` is a partial clone with no `homeassistant.generated`,
+  and putting it first fails on an import that has nothing to do with this
+  integration. This repository has already released a tag on a red hassfest
+  once; it is two seconds to check.
 - **A broad `except` without a traceback is a silent failure with extra steps.**
   Three places caught `Exception` and logged only the message, and the worst was
   the one that matters most: a **failed restore** in `repairs.py`, which means

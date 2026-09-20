@@ -851,12 +851,11 @@
     },
     "control_test_unfinished": {
       "title": "A control write test on {name} did not finish",
-      "description": "The control write test changes a setting, checks it, and changes it back. This one did not get to the changing-back part — Home Assistant was restarted, the entry was reloaded, or the inverter stopped answering partway through.\n\nThese settings may still be holding the test's values rather than yours:\n\n{registers}\n\nFixing this writes each of them back and reads it again to check it took.",
       "fix_flow": {
         "step": {
           "confirm": {
             "title": "Put these settings back",
-            "description": "The following will be written back to your inverter and then read again to confirm:\n\n{registers}\n\nIf anything refuses the write, nothing is hidden — you will be told which and this will stay here. The usual cause is something else polling the inverter at the same time."
+            "description": "The control write test changes a setting, checks it, and changes it back. This one did not get to the changing-back part — Home Assistant was restarted, the entry was reloaded, or the inverter stopped answering partway through.\n\nThese settings may still be holding the test's values rather than yours:\n\n{registers}\n\nFixing this writes each of them back and reads it again to check it took.\n\nThe following will be written back to your inverter and then read again to confirm:\n\n{registers}\n\nIf anything refuses the write, nothing is hidden — you will be told which and this will stay here. The usual cause is something else polling the inverter at the same time."
           }
         },
         "abort": {
@@ -866,12 +865,11 @@
     },
     "control_test_left_stopped": {
       "title": "{name} may still be stopped after a control write test",
-      "description": "**Check whether your inverter is generating.** A control write test was given permission to stop and restart it, and did not get to the restart — Home Assistant was restarted, the entry was reloaded, or the inverter stopped answering partway through.\n\nFixing this starts the inverter, then puts these settings back and reads each one again to check it took:\n\n{registers}",
       "fix_flow": {
         "step": {
           "confirm": {
             "title": "Start the inverter and put these settings back",
-            "description": "The inverter will be started first, then the following written back and read again to confirm:\n\n{registers}\n\nIf anything refuses, you will be told which and this will stay here."
+            "description": "**Check whether your inverter is generating.** A control write test was given permission to stop and restart it, and did not get to the restart — Home Assistant was restarted, the entry was reloaded, or the inverter stopped answering partway through.\n\nFixing this starts the inverter, then puts these settings back and reads each one again to check it took:\n\n{registers}\n\nThe inverter will be started first, then the following written back and read again to confirm:\n\n{registers}\n\nIf anything refuses, you will be told which and this will stay here."
           }
         },
         "abort": {
