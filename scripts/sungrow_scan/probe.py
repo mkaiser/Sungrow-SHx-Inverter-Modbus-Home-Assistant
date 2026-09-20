@@ -575,8 +575,12 @@ def _fake_serial(real: str) -> str:
 #: second inverter on the same meter makes every `load_power` figure low by
 #: exactly that inverter's output while every register answers normally. A
 #: document at 17 or below is silent on it, and silence there cannot be
-#: distinguished from "no".
-SCHEMA = 18
+#: distinguished from "no". 19 admits an
+#: optional **`control_test`** block: what happened when each control was
+#: written, read back and watched. Nothing in this directory produces it --
+#: nothing here can write a register -- but the number is shared, so it moves
+#: when the shape of the document does.
+SCHEMA = 19
 
 #: Keys of the connection block that carry a claim rather than a measurement.
 #: They are moved into `user_inputs`, so the published `connection` holds only
@@ -1851,7 +1855,7 @@ def _battery_token(fingerprint: dict, connection: dict, raw: dict) -> str:
 
     * **`battery-sbr096`, `battery-sbh200`, …** — unit 200 answered, so it is
       a Sungrow pack, and the capacity it reports matches a model in the
-      datasheet table within `CAPACITY_TOLERANCE_KWH`. The **model**, size
+      datasheet table within `CAPACITY_TOLERANCE_FRACTION`. The **model**, size
       included.
 
       This used to be the family alone, on the grounds that a size in a

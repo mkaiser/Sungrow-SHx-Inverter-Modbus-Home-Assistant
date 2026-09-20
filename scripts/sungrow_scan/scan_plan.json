@@ -3267,7 +3267,7 @@
       "capacity_kwh": 40.0
     }
   ],
-  "battery_capacity_tolerance_kwh": 0.4,
+  "battery_capacity_tolerance_fraction": 0.02,
   "wallbox_models": {
     "0x3F80": "AC22E-01",
     "0x20DA": "AC011E-01",

@@ -26,7 +26,7 @@ from .discovery import (
     hosts_in,
     network_of,
 )
-from .model import UpdateReport, present
+from .model import RegisterValue, UpdateReport, present
 from .registers import COMPONENTS, DEFAULT_INTERVALS, TIER_COMPONENTS
 
 __all__ = [
@@ -48,6 +48,7 @@ __all__ = [
     "InverterIdentity",
     "InverterReadings",
     "NetworkTooLarge",
+    "RegisterValue",
     "SungrowInverter",
     "UpdateReport",
     "async_hostname",

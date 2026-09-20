@@ -25,7 +25,8 @@ somebody's battery life is a bad default even if the hardware permits it.
 
 from __future__ import annotations
 
-from typing import NamedTuple
+from collections.abc import Callable
+from typing import Any, NamedTuple
 
 
 class BatteryModel(NamedTuple):
@@ -65,10 +66,32 @@ MODELS: tuple[BatteryModel, ...] = (
 FALLBACK_W = 5000
 
 #: How far a reported capacity may sit from a model's rated capacity and still
-#: be that model. A pack degrades and reports a little less than its rating;
-#: 0.4 kWh is comfortably inside the gap between adjacent models, the closest
-#: pair being SBH250 at 25.0 and SBR256 at 25.6.
-CAPACITY_TOLERANCE_KWH = 0.4
+#: be that model, as a fraction of that model's rating.
+#:
+#: **Proportional since the first SBH was measured, and it had to become so.**
+#: This was a flat 0.4 kWh, written on the assumption that a pack reads a
+#: little *under* its rating as it degrades. The SH20T in
+#: [issue #772](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/772)
+#: falsified both halves at once: its SBH400 reports **40.55 kWh**, which is
+#: 0.55 *over* the 40.0 rating and therefore outside the old window. The pack
+#: is an SBH400 on two other signals -- its owner names it, and register 33047
+#: reads 23760 W, which is this table's `conservative_w` for that model to the
+#: watt -- so a rule that declined to name it was simply wrong.
+#:
+#: The consequence was not cosmetic. An unnamed Sungrow pack falls through to
+#: what the BMS reports, and that machine's BMS reported a maximum charge
+#: current of **0** because the battery was full, so a 40 kWh SBH400 was
+#: offered `FALLBACK_W` -- 5000 W, a fifth of what its datasheet allows.
+#:
+#: A fraction rather than a wider flat figure, because the error a pack can
+#: report plainly scales with its size: 0.55 kWh on 40 is 1.4 %, and the same
+#: 0.55 on an SBR064 would be 8.6 % and ought not to match. Widening the flat
+#: window to cover this one reading would have had to reach 0.6 kWh, which is
+#: more than the gap between the two closest models in the table -- SBR096 at
+#: 9.6 and SBH100 at 10.0, **0.4 apart**, a pair the old comment had wrong.
+#: 2 % keeps those two separable (+-0.19 and +-0.20 respectively) while
+#: admitting the measured SBH400.
+CAPACITY_TOLERANCE_FRACTION = 0.02
 
 
 #: Where an SBR's own registers answer, and why there are two.
@@ -97,7 +120,9 @@ IDENTITY_REGISTER = 4999
 IMPLAUSIBLE = (0, 0xFFFF)
 
 
-async def probe_units(unit_for, units=PACK_UNITS):
+async def probe_units(
+    unit_for: Callable[[int], Any], units: tuple[int, ...] = PACK_UNITS
+) -> int | None:
     """Return the unit id an SBR answers on, or None.
 
     `unit_for` is called with a unit id and returns something with
@@ -147,13 +172,23 @@ def model_for_capacity(capacity_kwh: float | None) -> BatteryModel | None:
     Only meaningful once the pack is known to be a Sungrow: a third-party
     battery of the same size is not an SBR, and would be given an SBR's power
     limit by a match here.
+
+    **Exactly one model, or none.** This took the nearest model inside the
+    tolerance, which meant a capacity sitting between two of them was resolved
+    by whichever was a hair closer -- and between SBH250 at 25.0 and SBR256 at
+    25.6 a reading of 25.3 was decided by floating-point noise. Naming no pack
+    is the honest answer there: the caller falls back to what the BMS reports,
+    which is a measurement rather than a coin toss.
     """
     if capacity_kwh is None:
         return None
-    closest = min(MODELS, key=lambda m: abs(m.capacity_kwh - capacity_kwh))
-    if abs(closest.capacity_kwh - capacity_kwh) > CAPACITY_TOLERANCE_KWH:
-        return None
-    return closest
+    within = [
+        model
+        for model in MODELS
+        if abs(model.capacity_kwh - capacity_kwh)
+        <= model.capacity_kwh * CAPACITY_TOLERANCE_FRACTION
+    ]
+    return within[0] if len(within) == 1 else None
 
 
 def power_from_bms(
@@ -169,3 +204,45 @@ def power_from_bms(
     if not max_charge_current_a or not voltage_v:
         return None
     return int(max_charge_current_a * voltage_v)
+
+
+def ceiling(
+    *,
+    configured_w: float | None = None,
+    sungrow_capacity_kwh: float | None = None,
+    bms_max_charging_current_a: float | None = None,
+    battery_voltage_v: float | None = None,
+    bdc_rated_power_w: float | None = None,
+) -> int | None:
+    """Return the most power this battery should be asked for, in watts.
+
+    Two ceilings, and both are real. V1.1.11 says the charge and discharge
+    range is "from 0 to BDC rated power (register 5628)", which is the
+    *inverter's* converter; the pack has its own limit, which the inverter does
+    not know. The lower of the two is the only one that is true.
+
+    The pack's own limit comes from the best source available, in this order:
+    what the owner told us, which always wins because they may know something
+    the hardware does not; the datasheet figure for a Sungrow pack of the
+    capacity it reports; and what the BMS says it will take right now. The last
+    is the weakest, because it is current times whatever voltage the pack
+    happens to be sitting at, which reads high on a full battery.
+
+    Lifted out of the number entity so the entity and the control test cannot
+    disagree about what a battery will take -- a disagreement that would show
+    up as the test writing a value the entity would have refused.
+    """
+    pack: int | None = None
+    if configured_w:
+        pack = int(configured_w)
+    elif (model := model_for_capacity(sungrow_capacity_kwh)) is not None:
+        pack = model.conservative_w
+    else:
+        pack = power_from_bms(bms_max_charging_current_a, battery_voltage_v)
+
+    limits = [
+        int(limit)
+        for limit in (pack, bdc_rated_power_w)
+        if limit is not None and limit > 0
+    ]
+    return min(limits) if limits else None

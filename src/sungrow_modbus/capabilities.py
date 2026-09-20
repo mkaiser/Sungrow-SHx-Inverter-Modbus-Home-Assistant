@@ -224,8 +224,16 @@ ABSENT_IN: dict[Capability, frozenset[Family]] = {
     Capability.FIRMWARE_VERSIONS: frozenset(
         {Family.RS, Family.MG, Family.RL, Family.CX}
     ),
-    # "not available on SHxRS as per issue #743"
-    Capability.BATTERY_START_POWER: frozenset({Family.RS}),
+    # "not available on SHxRS as per issue #743". T joins it from a
+    # measurement rather than a remark: the SH20T in
+    # [#772](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/772)
+    # answers **0xFFFF** at holding 33148 and 33149 -- the specification's own
+    # "unavailable", declared by the inverter and not a dongle's substituted
+    # zero -- where both measured RT houses return values. One machine on one
+    # firmware, so it is a head start rather than a verdict: `resolve` keeps
+    # anything a probe finds, so an SH5T that does answer these keeps its
+    # entities regardless of this line.
+    Capability.BATTERY_START_POWER: frozenset({Family.RS, Family.T}),
     # V1.1.16 regs 13200-13207: "SH3.0-10RS and MG5-12RL and SH3-10RL are not
     # supported. SH50~125CX are not supported."
     Capability.METER_CHANNEL_2: frozenset({Family.RS, Family.MG, Family.RL, Family.CX}),

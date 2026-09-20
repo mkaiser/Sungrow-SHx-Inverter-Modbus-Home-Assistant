@@ -28,3 +28,10 @@ pytest-homeassistant-custom-component
 # Tooling.
 ruff>=0.14
 mypy>=1.14
+
+# Packaging, so `make ci` can run the same steps CI does. Both workflows
+# install these themselves with `pip install --upgrade build twine`; without
+# them here, `make ci` -- which the Makefile calls "the full CI job" -- dies
+# on `twine: not found` in a devcontainer that followed scripts/setup.sh.
+build>=1.2
+twine>=5.0

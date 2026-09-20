@@ -136,6 +136,24 @@ ALL_ZERO_MEANS_ABSENT: dict[str, tuple[str, ...]] = {
 UNTRUSTWORTHY = "yes?[^dongle]"
 
 
+def _short_firmware(version: str) -> str:
+    """Drop the hardware platform from a firmware string.
+
+    `SAPPHIRE-H_B001.V000.P022` becomes `B001.V000.P022`. The platform is
+    already implied by the model in the same row, and repeating it makes the
+    cell wide enough to wrap.
+
+    **Any platform, not a named one.** This matched one platform literally
+    until the first non-RT fingerprint arrived: the SH20T of
+    [#772](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/772)
+    is a `PEARL-H` machine, and its version sailed through unshortened while
+    every other row was trimmed -- which reads as a difference in the data
+    rather than in this function.
+    """
+    prefix, separator, rest = version.partition("_")
+    return rest if separator and prefix.isupper() else version
+
+
 def _reports() -> list[tuple[str, dict]]:
     """Return (label, document) for every committed fingerprint."""
     return [
@@ -238,7 +256,7 @@ def _attribution(reports: list[tuple[str, dict]]) -> list[str]:
         ]
         for (model, transport), versions in sorted(groups.items()):
             for firmware, labels in sorted(versions.items()):
-                shown = firmware.replace("SAPPHIRE-H_", "")
+                shown = _short_firmware(firmware)
                 lines.append(
                     f"| {model} | {transport} | {shown} "
                     f"({len(labels)} reading{'s' if len(labels) > 1 else ''}) |"
@@ -256,7 +274,7 @@ def _attribution(reports: list[tuple[str, dict]]) -> list[str]:
             if versions:
                 lines.append(
                     f"- **{model}** is recorded on "
-                    + ", ".join(v.replace("SAPPHIRE-H_", "") for v in versions)
+                    + ", ".join(_short_firmware(v) for v in versions)
                     + ". Any other firmware on one would make its capabilities"
                     " attributable."
                 )
@@ -284,7 +302,7 @@ def _attribution(reports: list[tuple[str, dict]]) -> list[str]:
             lines += [
                 "**No capability differs.** Every curated probe answered the",
                 "same way on "
-                + " and ".join(sorted(fw.replace("SAPPHIRE-H_", "") for fw in known))
+                + " and ".join(sorted(_short_firmware(fw) for fw in known))
                 + ", which is a result worth having: it says this firmware",
                 "change moved nothing this project reads.",
                 "",

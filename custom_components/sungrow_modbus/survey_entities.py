@@ -44,6 +44,7 @@ if TYPE_CHECKING:
 #: pack's, which are hand-written for the same reason.
 SURVEY_ENTITIES: tuple[tuple[str, str], ...] = (
     ("button", "run_survey"),
+    ("button", "run_control_test"),
     ("sensor", "survey_progress"),
     ("sensor", "survey_step"),
     ("sensor", "survey_finished"),
@@ -54,6 +55,14 @@ SURVEY_ENTITIES: tuple[tuple[str, str], ...] = (
 #: failure message inherited from the stack can be, and a survey that
 #: silently stopped being recorded is worse than a truncated line.
 MAX_STATE = 255
+
+
+def _findings(control_test: dict[str, Any]) -> int | None:
+    """Count the decade findings in part B's block, or None if it never ran."""
+    readback = control_test.get("readback")
+    if readback is None:
+        return None
+    return sum(1 for row in readback if "decade" in str(row.get("verdict", "")))
 
 
 class SurveyEntity(Entity):
@@ -116,6 +125,47 @@ class SurveyButton(SurveyEntity, ButtonEntity):
         self._runner.async_start()
 
 
+class ControlTestButton(SurveyEntity, ButtonEntity):
+    """Run the survey and then the control test, which **writes** registers.
+
+    A separate button rather than an option on the first one, so that nothing a
+    person presses expecting a survey can write to their inverter.
+
+    Worth stating plainly, because Home Assistant gives a button no
+    confirmation dialog: pressing this changes settings on the device. It moves
+    the state-of-charge limits, commands a charge and a discharge at a power
+    derived from the battery's own rating, and -- where the entry's options say
+    it may -- limits export and restarts the inverter. Every one of those is
+    put back and read back before the run reports success, and anything that
+    could not be put back becomes a repair on the next start rather than a line
+    in a log.
+
+    What protects it is therefore not a dialog but the guard list in
+    `sungrow_modbus.control_test`, which refuses the run outright when the
+    inverter is not running, when there is no sun, when another client is
+    polling, or when the battery is at a state of charge that would make a
+    probe value unsafe.
+    """
+
+    def __init__(self, runtime_data: SungrowRuntimeData) -> None:
+        """Name it for what pressing it does."""
+        super().__init__(runtime_data, "run_control_test")
+
+    @property
+    def available(self) -> bool:
+        """Unavailable while either part is running.
+
+        One runner owns both parts and refuses a second run, because they share
+        a serialized connection. With writes in the picture that stops being a
+        politeness: two runs at once would restore each other's probe values.
+        """
+        return not self._runner.state.running
+
+    async def async_press(self) -> None:
+        """Run part A and then part B."""
+        self._runner.async_start(control_test=True)
+
+
 class SurveyProgressSensor(SurveyEntity, SensorEntity):
     """How far through the current survey is, in percent.
 
@@ -160,7 +210,7 @@ class SurveyStepSensor(SurveyEntity, SensorEntity):
         """The current step, the last failure, or idle."""
         state = self._runner.state
         if state.running:
-            return (state.step or "starting")[:MAX_STATE]
+            return (state.step or f"starting the {state.part or 'survey'}")[:MAX_STATE]
         if state.error:
             return f"failed: {state.error}"[:MAX_STATE]
         if state.finished:
@@ -186,8 +236,13 @@ class SurveyResultSensor(SurveyEntity, SensorEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         """The numbers a summary line needs, without a second entity each."""
         state = self._runner.state
+        control_test = state.control_test or {}
         return {
             "fields_read": state.fields_read,
             "error": state.error,
             "has_document": state.document is not None,
+            # None rather than 0 when part B did not run, so a reader cannot
+            # mistake "this run only read" for "the write test found nothing".
+            "control_test_outcome": control_test.get("outcome_means"),
+            "control_test_findings": _findings(control_test),
         }

@@ -50,7 +50,8 @@ drift apart on what a probe is called or what a serial becomes.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
+import json
 import statistics
 import time
 from typing import Any
@@ -106,6 +107,104 @@ FIRMWARE_FIELDS = {
 LATENCY_SAMPLES = 5
 
 
+def planned_steps(dumping: bool) -> int:
+    """Count the reads a survey will report progress for, before it starts.
+
+    Every probe, every timing sample, and one step for assembling what the
+    coordinators already hold -- assembly is a single step because it does no
+    reading and is the only part that cannot stall.
+
+    The dump's share is counted here rather than discovered as it goes, because
+    a bar whose total grows halfway through is worse than no bar: with the dump
+    on it is 52 of the 76 steps, so getting it wrong would not be a rounding
+    error. A caller sharing one bar between this and the control test needs the
+    number without starting a survey, which is why it is a function.
+    """
+    total = len(survey.PROBES) + LATENCY_SAMPLES + 1
+    if dumping:
+        total += register_dump.block_count()
+    return total
+
+
+def _testimony(options: Mapping[str, Any]) -> dict[str, str]:
+    """Return everything a person typed, so a claim cannot be misread as a reading.
+
+    Kept together and named for what it is: the document separates what was
+    *measured* from what was *said*, and a reader who cannot tell the two apart
+    will eventually quote one as the other.
+
+    `other_inverter` is the case that proves the distinction is not pedantry. A
+    non-Sungrow inverter on the same meter makes `load_power` low by exactly
+    its own output, because the Sungrow computes house load from its own output
+    plus grid import -- while every register answers normally. The inverter
+    cannot see the thing that is confusing it, so only the owner can say, and
+    an empty answer means the question was not put rather than that the answer
+    was no.
+    """
+    return {
+        "reporter": options.get(CONF_REPORTER) or "anonymous",
+        "comment": options.get(CONF_SURVEY_COMMENT, ""),
+        "battery": options.get(CONF_SURVEY_BATTERY, ""),
+        "transport": options.get(CONF_SURVEY_TRANSPORT, ""),
+        "modbus_proxy": options.get(CONF_SURVEY_PROXY, ""),
+        # What the owner says about anything *else* polling. What this Home
+        # Assistant does is not testimony and is measured separately.
+        "other_pollers": options.get(CONF_SURVEY_POLLERS, ""),
+        "other_inverter": options.get(CONF_SURVEY_OTHER_INVERTER, ""),
+        "other_inverter_detail": options.get(CONF_SURVEY_OTHER_INVERTER_DETAIL, ""),
+    }
+
+
+def _device_block(device: Any) -> dict[str, Any]:
+    """Return what the inverter says it is, code and meaning side by side.
+
+    `0x0E03` is not something a person reads, and these documents are mostly
+    read by people -- in an issue, usually, where nobody has the lookup table
+    to hand. So the name is spelled out beside the code, and the **code stays
+    the authority** because it is what the inverter actually said. A name of
+    null means the project has never seen that code, which is itself the most
+    interesting kind of document to receive.
+
+    The serial is a stand-in, derived by hash, and that is the only form of it
+    that exists anywhere this repository tracks.
+    """
+    return {
+        "device_type_code": _hex(device.device_type_code),
+        "device_type": model_for(device.device_type_code),
+        "output_type": survey.OUTPUT_TYPES.get(device.output_type, device.output_type),
+        "serial_anonymized_hashed": survey.stand_in(device.serial_number or ""),
+    }
+
+
+def _connection_block(
+    answered_6100: object, module: str | None, latency: dict[str, Any]
+) -> dict[str, Any]:
+    """Return how this document reached the inverter, as far as that is knowable.
+
+    Two registers answer different questions and are easy to confuse. Input
+    6100 is refused through a WiNet-S and answers on a cable, so it tells a
+    *path* from a dongle -- 9 sites out of 9. Register 13265 names the module
+    that is **fitted**, which is not the same thing: a house can have a dongle
+    plugged in and still be read over the inverter's own LAN port.
+
+    WiFi versus Ethernet is not determinable at all, which is why
+    `WIFI_OR_ETHERNET` is a fixed sentence rather than a guess. It was settled
+    against a controlled pair -- one dongle, read wired then over WiFi -- with a
+    nil structural diff, and latency cannot stand in either: direct-LAN medians
+    span 2.0-61.5 ms and dongle medians 24.3-48.3 across four houses.
+    """
+    return {
+        "communication_module_firmware": module,
+        "latency_ms": latency,
+        "verdict": survey.transport_verdict(
+            answered_6100=answered_6100 == survey.State.PRESENT,
+            module_named=bool(module),
+        ),
+        "wifi_or_ethernet": survey.WIFI_OR_ETHERNET,
+        "winet_restricted_block_6100": str(answered_6100),
+    }
+
+
 async def async_build(
     hass: HomeAssistant,
     entry: SungrowConfigEntry,
@@ -113,6 +212,7 @@ async def async_build(
     on_progress: Progress | None = None,
     *,
     allow_dump: bool = False,
+    control_test: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Return one publishable survey document for this entry.
 
@@ -139,6 +239,13 @@ async def async_build(
     progress bar and a notification at the end. The diagnostics download
     cannot: it is a button somebody waits on, so it leaves this False and the
     option has no effect there, however the owner set it.
+
+    `control_test` is part B's result, already measured, and it is passed in
+    rather than run from here for the same reason `allow_dump` is a parameter:
+    **the caller decides.** Only one caller may write to an inverter -- the
+    control test button -- and the diagnostics download, which builds this same
+    document from this same code, must never acquire that power by inheriting
+    a default.
     """
     runtime = entry.runtime_data
     device = next(iter(runtime.coordinators.values())).device
@@ -158,9 +265,7 @@ async def async_build(
     # because a bar whose total grows halfway through is worse than no bar --
     # and with the dump on it is 52 of the 76 steps, so getting it wrong
     # would not be a rounding error.
-    total = len(survey.PROBES) + LATENCY_SAMPLES + 1
-    if dumping:
-        total += register_dump.block_count()
+    total = planned_steps(dumping)
     done = 0
 
     def step(label: str) -> None:
@@ -185,60 +290,14 @@ async def async_build(
         "command_line": f"{survey.COLLECTED_BY_INTEGRATION} diagnostics",
         "read_on": dt_util.utcnow().isoformat()[:10],
         "read_at_local": dt_util.now().isoformat(timespec="seconds"),
-        # Everything a person typed, first and in one place, so a claim can
-        # never be quoted back as a measurement.
-        "user_inputs": {
-            "reporter": options.get(CONF_REPORTER) or "anonymous",
-            "comment": options.get(CONF_SURVEY_COMMENT, ""),
-            "battery": options.get(CONF_SURVEY_BATTERY, ""),
-            "transport": options.get(CONF_SURVEY_TRANSPORT, ""),
-            "modbus_proxy": options.get(CONF_SURVEY_PROXY, ""),
-            # What the owner says about anything *else* polling. What this
-            # Home Assistant does is not testimony and is recorded below.
-            "other_pollers": options.get(CONF_SURVEY_POLLERS, ""),
-            # Whether a **non-Sungrow** inverter shares the installation, and
-            # what the owner says it is. Empty means the question was not put,
-            # which the format has always kept distinct from an answer.
-            #
-            # The reason this is testimony and can never be a measurement:
-            # the inverter computes house load from its own output plus grid
-            # import, so a second inverter on the same meter makes
-            # `load_power` low by exactly that inverter's output, while every
-            # register answers normally. The Sungrow cannot see the thing
-            # that is confusing it, so only the owner can say.
-            "other_inverter": options.get(CONF_SURVEY_OTHER_INVERTER, ""),
-            "other_inverter_detail": options.get(CONF_SURVEY_OTHER_INVERTER_DETAIL, ""),
-        },
+        "user_inputs": _testimony(options),
         "ip_address_last_two_octets": survey.address_tail(
             entry.data.get(CONF_HOST, ""),
             bool(options.get(CONF_PUBLISH_ADDRESS, False)),
         ),
-        "device": {
-            "device_type_code": _hex(device.device_type_code),
-            # The model the code means, spelled out beside it. `0x0E03` is
-            # not something a person reads, and a document is mostly read by
-            # people -- in an issue, usually, where nobody has the lookup
-            # table to hand. The code stays the authority because it is what
-            # the inverter actually said; this is null for a code the project
-            # has never seen, which is itself the most interesting document
-            # to receive.
-            "device_type": model_for(device.device_type_code),
-            "output_type": survey.OUTPUT_TYPES.get(
-                device.output_type, device.output_type
-            ),
-            "serial_anonymized_hashed": survey.stand_in(device.serial_number or ""),
-        },
+        "device": _device_block(device),
         "firmware": firmware,
-        "connection": {
-            "communication_module_firmware": module,
-            "latency_ms": latency,
-            "verdict": survey.transport_verdict(
-                answered_6100=answered_6100 == survey.State.PRESENT,
-                module_named=bool(module),
-            ),
-            "wifi_or_ethernet": survey.WIFI_OR_ETHERNET,
-            "winet_restricted_block_6100": str(answered_6100),
-        },
+        "connection": _connection_block(answered_6100, module, latency),
         # Not a claim, and not optional: a document produced by a running
         # Home Assistant was taken while something was polling the inverter,
         # and this project *discards* readings taken under contention because
@@ -268,7 +327,51 @@ async def async_build(
     if wallbox is not None:
         document["wallbox"] = wallbox
 
+    # Part B, when a run did one. Absent from almost every document, and its
+    # absence means "this run only read" rather than "this inverter failed" --
+    # which is why the schema number moved rather than the key simply appearing.
+    #
+    # Attached only after `_carries_nothing_identifying` agrees. The block is
+    # anonymous by construction, so that check should never fire; it is here
+    # because "should never" is what was said about the two capability probes
+    # that published a wallbox serial as the words [16690, 13633].
+    if control_test is not None:
+        attach_control_test(document, control_test, device)
+
     return document
+
+
+def attach_control_test(
+    document: dict[str, Any], block: dict[str, Any], device: Any
+) -> None:
+    """Put part B's result into a document, having checked it may be published.
+
+    Its own function because the survey runs part B *after* part A -- it has to,
+    since part A is what establishes that this device answers and what it is --
+    so the block does not exist yet when `async_build` is called. Attaching it
+    afterwards must not mean attaching it unchecked, and one guarded door is
+    the only way to be sure it does not.
+    """
+    _refuse_if_identifying(block, device)
+    document["control_test"] = block
+
+
+def _refuse_if_identifying(block: dict[str, Any], device: Any) -> None:
+    """Raise rather than publish a block that turns out to name the device.
+
+    The block is anonymous by construction -- register numbers, chosen values,
+    words that came back -- so this should never fire. It is here because
+    "should never" is exactly what was true of the two capability probes that
+    published a wallbox serial as the words `[16690, 13633]`.
+
+    A refusal costs somebody a survey they can run again. Publishing costs
+    somebody else their serial number in a public repository, permanently.
+    """
+    serial = device.serial_number
+    if serial and serial in json.dumps(block, default=str):
+        raise ValueError(
+            "refusing to publish the control test block: it carries the serial"
+        )
 
 
 async def _async_dump(device: Any, step: Progress) -> dict[str, Any]:
@@ -396,7 +499,12 @@ def _contention(runtime: Any) -> dict[str, Any]:
                 if (interval := runtime.interval_of(component)) is not None
             }
         ),
-        "coordinators_paused": False,
+        # Truthful rather than constant. It was hardcoded False until
+        # 2026-09-18 and that was honest -- every document from a device page
+        # really was collected while this entry's own tiers kept polling the
+        # same serialized connection. Now the survey holds them off and says
+        # so, and an older document saying False means what it always said.
+        "coordinators_paused": bool(getattr(runtime, "polling_paused", False)),
         "block_read_test": (
             "not run: it costs 26 block reads times three rounds plus "
             "narrowing, which belongs in a background task rather than a "
@@ -417,7 +525,7 @@ def _readings(runtime: Any, device: Any) -> dict[str, Any]:
     """
     values: dict[str, Any] = {}
     unread: list[str] = []
-    for name in sorted(device._fields):
+    for name in sorted(device.field_names):
         if not survey.publishable(name):
             continue
         try:
@@ -453,7 +561,7 @@ def _battery_pack(runtime: Any) -> dict[str, Any] | None:
         return None
     device = coordinator.device
     values = {}
-    for name in sorted(device._fields):
+    for name in sorted(device.field_names):
         if not survey.publishable(name):
             continue
         try:
@@ -482,7 +590,7 @@ def _wallbox(runtime: Any) -> dict[str, Any] | None:
         return None
     device = coordinator.device
     values = {}
-    for name in sorted(device._fields):
+    for name in sorted(device.field_names):
         if not survey.publishable(name):
             continue
         try:

@@ -40,9 +40,23 @@ from .const import model_for
 #: earlier numbers is in `scripts/sungrow_scan/probe.py`, which is where the
 #: format grew up.
 #:
+#: 19 admits an optional **`control_test`** block, written by
+#: `sungrow_modbus.control_test` through either of its two drivers: the result
+#: of writing each control, reading it back and watching what the inverter did
+#: with it. That is the one question a survey made entirely of reads cannot
+#: answer, and the block is anonymous by construction -- register numbers, the
+#: values a run chose, the words that came back -- so it publishes the way the
+#: block read test already does.
+#:
+#: A bump rather than a silent addition, for the reason 18 was one: **its
+#: absence is not evidence.** Almost every document will lack the block,
+#: because producing it means writing to somebody's inverter, so a reader has
+#: to be able to tell "this run did not do that" from "this document predates
+#: the possibility".
+#:
 #: `test_the_two_producers_agree_on_the_schema` keeps this equal to
 #: `probe.SCHEMA`.
-SCHEMA = 18
+SCHEMA = 19
 
 #: How a document says it was collected, when no command line could repeat it.
 #:
@@ -483,17 +497,7 @@ def label_for(document: dict[str, Any]) -> str:
     if firmware:
         parts.append(_slug(firmware.split("_", 1)[-1]).replace("-", ""))
 
-    # Only the unusual wiring is named. 3P4L is an ordinary domestic supply
-    # and spelling it out lengthened every filename to say "normal"; 3P3L has
-    # no neutral and the same registers then report line voltages rather than
-    # phase voltages, about 1.73x higher, which a name has to warn about.
-    phases = str(device.get("output_type") or "")
-    if "3P3L" in phases:
-        parts.append("3p3w")
-    elif "3P4L" in phases:
-        parts.append("3p")
-    elif "single" in phases:
-        parts.append("1p")
+    parts += _phase_word(device)
 
     parts.append(_slug(str(said.get("reporter") or "")))
 
@@ -511,6 +515,43 @@ def label_for(document: dict[str, Any]) -> str:
     if _answered(document, "unit 3 wallbox serial", "unit 248 wallbox serial (direct)"):
         parts.append("wallbox")
 
+    parts += _transport_word(document, said)
+
+    return "-".join(parts)
+
+
+def _phase_word(device: dict[str, Any]) -> list[str]:
+    """Name the supply, but only where it is unusual.
+
+    3P4L is an ordinary domestic three-phase supply, and spelling it out
+    lengthened every filename to say "normal". **3P3L has to be named**: it has
+    no neutral, and the same registers then report line voltages rather than
+    phase voltages -- about 1.73x higher -- so a reader comparing two documents
+    needs the warning before they compare the numbers.
+
+    A list rather than a string so the caller stays a sequence of parts, and so
+    "say nothing" is the empty list rather than a falsy value to test for.
+    """
+    phases = str(device.get("output_type") or "")
+    if "3P3L" in phases:
+        return ["3p3w"]
+    if "3P4L" in phases:
+        return ["3p"]
+    if "single" in phases:
+        return ["1p"]
+    return []
+
+
+def _transport_word(document: dict[str, Any], said: dict[str, Any]) -> list[str]:
+    """Name how the survey reached the inverter: what was said, else what showed.
+
+    Testimony first, because the owner knows what is plugged in and no register
+    reports it. Where they did not say, the connection verdict is the
+    measurement -- input 6100 answers on a cable and is refused through a
+    WiNet-S, 9 sites out of 9 -- and that is worth a word in the filename
+    because a dongle forwards less than a cable does, so two documents from one
+    machine can legitimately disagree about which registers exist.
+    """
     word = TRANSPORT_WORDS.get(str(said.get("transport") or ""), "")
     if not word:
         verdict = str((document.get("connection") or {}).get("verdict") or "")
@@ -518,7 +559,4 @@ def label_for(document: dict[str, Any]) -> str:
             word = "winet"
         elif verdict.startswith("through a Logger"):
             word = "logger"
-    if word:
-        parts.append(word)
-
-    return "-".join(parts)
+    return [word] if word else []

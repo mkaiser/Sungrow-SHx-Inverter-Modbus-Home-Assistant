@@ -46,6 +46,8 @@ from __future__ import annotations
 
 from modbus_connection.model import Component, gauge, integer, string, uint32
 
+from .model import RegisterValue
+
 #: What register 21317's charging status codes mean.
 #:
 #: The one table here that **cannot** be measured. Watching a session end
@@ -85,7 +87,7 @@ MODELS: dict[int, str] = {
 }
 
 
-def _meaning(table: dict[int, str], code: object) -> str | None:
+def _meaning(table: dict[int, str], code: RegisterValue) -> str | None:
     """Return what a code means, or None -- never a made-up label.
 
     `None` for an unknown code rather than "unknown", because an entity

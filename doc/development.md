@@ -232,22 +232,57 @@ rather than an upgrade.
 
 A capability survey is what this project learns from, and it used to cost a
 contributor a Python run on a machine that can reach the inverter. It is now
-a button on the device page, with three diagnostic sensors beside it:
+a pair of buttons on the device page, with three diagnostic sensors beside them:
 
 | Entity | What it is for |
 | --- | --- |
 | `button.<name>_run_capability_survey` | Starts one. Unavailable while a run is in flight; the runner refuses a second anyway |
+| `button.<name>_run_control_write_test` | Part B: the same survey, and then it **writes** to every control and puts each one back. See below |
 | `sensor.<name>_survey_progress` | Percent complete. Counted reads, not elapsed time — the same survey is under a second on a cable and minutes over a VPN |
 | `sensor.<name>_survey_step` | What is being read right now. **Its recorded history is the point**: 19 probes and 5 timing reads in order — plus 52 band sweeps when a dump was asked for — which is what says *where* a slow link stalls rather than that it did |
 | `sensor.<name>_survey_finished` | When the last run ended, with `fields_read` and `has_document` as attributes |
 
 They exist in both setup modes. A *Diagnostics only* entry has no readings at
-all, and these four are the entirety of its device page — which is also why
+all, and these five are the entirety of its device page — which is also why
 it has one: Home Assistant registers a device only as a side effect of an
-entity carrying its `device_info`.
+entity carrying its `device_info`. The control test is there too: that mode is
+for the contributor who has hardware and offered to help, which is exactly whose
+inverter this project needs a write measurement from.
 
-`survey.py` owns the run and holds the state; `fingerprint.py` does the
-reading and calls back with a fraction and a label; `survey_entities.py`
+### Part B, which writes
+
+The survey answers *what is here* entirely by reading. It cannot answer *and
+does writing to it work*, and that second question has a whole class of bug
+behind it: `encode` and `decode` share one scale factor, so a wrong factor in
+`registers.py` returns the value you wrote, intact, while the inverter acts on
+something ten times bigger. The registers mix units on adjacent addresses —
+13052 counts in 1 W, 33047 next door in 0.01 kW — which is where such a factor
+comes from.
+
+So the control test writes each control and checks it three ways: through the
+library, against the **raw register word** compared to a scale typed by hand
+from the specification and never read from the map, and by watching what the
+inverter actually does. Only the second catches a wrong factor in our code;
+only the third catches a firmware that disagrees with the document.
+
+The same engine runs from a terminal — `make controltest-dry HOST=…` first,
+which writes nothing — and `doc/development.yaml`'s `control_test` section is
+the runbook. What matters if you touch it:
+
+- **the restore is never budgeted, deadlined or skipped**, and it reads before
+  it writes, because a restore is a statement about where the register *is*
+  rather than about whether a write succeeded;
+- **the snapshot is flushed before the first write** and removed only once
+  everything is back *and read back*, so one left on disk is the list of what
+  may still be changed — in Home Assistant it becomes a repair with a fix flow;
+- **the run refuses more often than it runs**, on a stopped inverter, in the
+  dark, at a state of charge where a probe value would command a grid charge,
+  and it says which. In Home Assistant that guard list is the only protection a
+  button press has, since a button gets no confirmation dialog.
+
+`survey.py` owns both parts and holds the state; `fingerprint.py` does the
+reading and calls back with a fraction and a label; `control_test.py` does the
+writing and reports into the tail of the same progress bar; `survey_entities.py`
 turns that into states over one dispatcher signal per entry. Nothing in
 `survey.py` talks Modbus.
 
@@ -292,8 +327,8 @@ the diagnostics file, in seconds. Help this project → *Also sweep the raw
 register bands* (`CONF_SURVEY_DUMP`) sweeps `sungrow_modbus.dump.DUMP_BANDS`
 — 1510 addresses, mostly unmapped — into the survey document, in about five
 minutes. Only the second can discover a register. The bands are duplicated in
-`scripts/sungrow_scan/probe.py` because that has to run from a zip with the
-library absent, and `tests/test_dump_bands.py` is what stops the two drifting.
+`scripts/sungrow_scan/probe.py` because that has to run with the library
+absent -- it imports `portable`, which is downloaded on its own -- and `tests/test_dump_bands.py` is what stops the two drifting.
 
 To see any of this against a real run, the recorder is the fastest way in —
 the dev instance keeps it:

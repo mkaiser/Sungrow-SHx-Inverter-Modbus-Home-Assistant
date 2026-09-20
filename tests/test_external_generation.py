@@ -29,6 +29,7 @@ from custom_components.sungrow_modbus.const import (
     PLACEMENT_BEHIND_METER,
     PLACEMENT_SEPARATE,
     SECTION_ADVANCED,
+    SECTION_CONTROL_TEST,
     SECTION_EXTERNAL,
     SECTION_PERMISSIONS,
     SECTION_POLLING,
@@ -262,6 +263,7 @@ def _options(**sections: dict) -> dict:
         SECTION_EXTERNAL: {},
         SECTION_ADVANCED: {},
         SECTION_SURVEY: {},
+        SECTION_CONTROL_TEST: {},
     }
     payload.update(sections)
     return payload

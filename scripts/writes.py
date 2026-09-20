@@ -59,6 +59,19 @@ class Number(TypedDict, total=False):
     maximum_field: str
     """Read the upper bound from this register instead of using `maximum`."""
 
+    requires: str
+    """The `Capability` this control needs, or absent where it needs none.
+
+    Declared here for the same reason writability is: one table, and the
+    entities derived from it cannot disagree with it. It was a conditional in
+    `generate_numbers.py` until 2026-09-18 -- `BATTERY` for everything except
+    the export limit -- which quietly overrode what the comment on the
+    start-power pair below already said. The consequence was not cosmetic: on
+    an SH*RS, where those two registers are reported absent (issue #743),
+    `BATTERY` is present whenever a battery is, so both entities were created
+    **writable** against registers that are not there.
+    """
+
     maximum_from_battery: bool
     """Cap at what the battery will take.
 
@@ -78,6 +91,7 @@ NUMBERS: tuple[Number, ...] = (
     # percent of state of charge are not a setting anybody wants to make.
     {
         "field": "battery_min_soc",
+        "requires": "BATTERY",
         "unit": "%",
         "legacy_unique_id": "uid_battery_min_soc",
         "minimum": 0,
@@ -87,6 +101,7 @@ NUMBERS: tuple[Number, ...] = (
     # Spec reg 13058, U16, 50.0~100.0, 0.1%, Read-Write.
     {
         "field": "battery_max_soc",
+        "requires": "BATTERY",
         "unit": "%",
         "legacy_unique_id": "uid_battery_max_soc",
         "minimum": 50,
@@ -98,6 +113,7 @@ NUMBERS: tuple[Number, ...] = (
     # rather than an optimisation.
     {
         "field": "battery_reserved_soc_for_backup",
+        "requires": "BATTERY",
         "unit": "%",
         "legacy_unique_id": "uid_battery_reserved_soc_for_backup",
         "minimum": 0,
@@ -114,6 +130,7 @@ NUMBERS += (
     # (reg 5628), further limited by the pack itself.
     {
         "field": "battery_max_charge_power",
+        "requires": "BATTERY",
         "legacy_unique_id": "uid_battery_max_charge_power",
         "minimum": 10,
         "maximum": 0,
@@ -124,6 +141,7 @@ NUMBERS += (
     # Spec reg 33048, U16, 0.01 kW, Read-Write.
     {
         "field": "battery_max_discharge_power",
+        "requires": "BATTERY",
         "legacy_unique_id": "uid_battery_max_discharge_power",
         "minimum": 10,
         "maximum": 0,
@@ -159,6 +177,7 @@ NUMBERS += (
 NUMBERS += (
     {
         "field": "battery_forced_charge_discharge_power",
+        "requires": "BATTERY",
         "legacy_unique_id": "uid_battery_forced_charge_discharge_power",
         "minimum": 0,
         "maximum": 0,
@@ -207,6 +226,7 @@ NUMBERS += (
 NUMBERS += (
     {
         "field": "battery_charging_start_power",
+        "requires": "BATTERY_START_POWER",
         "legacy_unique_id": "uid_battery_charging_start_power",
         "minimum": 0,
         "maximum": 1000,
@@ -215,6 +235,7 @@ NUMBERS += (
     },
     {
         "field": "battery_discharging_start_power",
+        "requires": "BATTERY_START_POWER",
         "legacy_unique_id": "uid_battery_discharging_start_power",
         "minimum": 0,
         "maximum": 1000,

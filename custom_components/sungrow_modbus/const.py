@@ -109,12 +109,55 @@ AUDIENCE_USERS = "users"
 #: house is on the grid until somebody makes it.
 PERMISSION_START_STOP = "start_stop"
 
+#: Running the control test, which writes to every control and puts it back.
+#:
+#: Admins only by default, for a reason the survey button does not share: this
+#: one commands a charge, limits an export and moves the state-of-charge
+#: limits. It restores all of it and re-reads to prove it did, but for the
+#: minute it is running the house is doing what the test says rather than what
+#: its owner set.
+PERMISSION_CONTROL_TEST = "control_test"
+
 #: The safe end of every choice. Changing one is a deliberate act by an
 #: administrator, and an absent key reads as the default rather than as
 #: permission.
 DEFAULT_PERMISSIONS: dict[str, str] = {
     PERMISSION_START_STOP: AUDIENCE_ADMINS,
+    PERMISSION_CONTROL_TEST: AUDIENCE_ADMINS,
 }
+
+#: Let the control test stop and start the inverter, and time how long it takes.
+#:
+#: Off by default and asked for in its own options step, with the consequences
+#: spelled out there rather than in a label. Everything else the control test
+#: does is a setting that goes back; this one takes the house off its own
+#: generation for as long as the inverter takes to boot, and how long that is
+#: has never been measured in this project -- which is precisely why the option
+#: exists, and precisely why it is not on by default.
+CONF_CONTROL_TEST_RESTART = "control_test_restart"
+
+#: Let the control test switch feed-in limitation on for the duration.
+#:
+#: Off by default. It is the one setting whose failed restore leaves the house
+#: generating less than it could, so a run will not turn it on unless somebody
+#: has said it may; where it is already on, the test uses it and this changes
+#: nothing.
+CONF_CONTROL_TEST_EXPORT = "control_test_export_limit"
+
+#: Which slot of a multi-inverter YAML install this entry's device was.
+#:
+#: `""` for a single-inverter package, `"_inv_2"` for the second inverter of a
+#: multi-inverter one. Entry **data** rather than an option: it is a fact about
+#: which history belongs to this device, settled once when the entry was made
+#: and never a preference to revise. Changing it later would point an entry at
+#: another inverter's years of readings.
+#:
+#: Written at setup because that is the only moment it can be: working it out
+#: means reading the YAML package's own serial sensors, and the migration tells
+#: people to remove the package afterwards. Absent on entries created before
+#: this existed, which reads as `""` -- correct for the single-inverter houses
+#: that is all of them.
+CONF_LEGACY_SLOT = "legacy_slot"
 
 #: Entities reporting generation the Sungrow cannot see, as a list of ids.
 #:
@@ -296,6 +339,11 @@ SECTION_PERMISSIONS = "permissions"
 SECTION_EXTERNAL = "external"
 SECTION_ADVANCED = "advanced"
 SECTION_SURVEY = "survey"
+
+#: The two consents part B needs, on their own so their description can say
+#: what they cost. Collapsed by default, like every section whose settings most
+#: people never touch.
+SECTION_CONTROL_TEST = "control_test"
 
 #: The one checkbox outside every section: a diagnostics-only entry offering
 #: to become an ordinary one. Not a section, because ticking it leads to a

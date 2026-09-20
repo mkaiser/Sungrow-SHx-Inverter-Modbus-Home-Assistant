@@ -12,6 +12,7 @@ which takes a path.
 
 from __future__ import annotations
 
+import ast
 import importlib.util
 import json
 from pathlib import Path
@@ -36,6 +37,7 @@ check = _load()
 
 def _wheel(path: Path, modules: dict[str, str]) -> Path:
     """Build a wheel-shaped zip holding exactly the given `module -> source`."""
+    path.mkdir(parents=True, exist_ok=True)
     wheel = path / "sungrow_modbus-9.9.9-py3-none-any.whl"
     with zipfile.ZipFile(wheel, "w") as archive:
         for name, source in modules.items():
@@ -81,15 +83,27 @@ def test_a_missing_module_is_reported(tmp_path, capsys):
 
 
 def test_a_wheel_that_has_everything_passes(tmp_path, capsys):
-    # Mirror the real imports: every module the integration names, each
-    # exporting every name it asks for.
+    """Both halves, because the check now asks two questions of a wheel.
+
+    Every module the integration imports, exporting every name it asks for --
+    and a device class carrying every attribute it reads off one. A wheel that
+    satisfies the imports and not the attributes is exactly the release that
+    starts and then fails on an inverter, so "everything" has to mean both.
+    """
     modules = {}
     for module, names in check.required().items():
         source = "".join(f"{name} = None\n" for name in sorted(names))
         modules[module] = source or "\n"
+
+    # Whatever a device is read for, declared. Asked of the checker rather than
+    # listed here, so this cannot drift from the integration it describes.
+    wanted = check.unresolved_attributes(_wheel(tmp_path / "bare", {}))
+    body = "".join(f"    {attr}: object\n" for attr in sorted(wanted))
+    modules["sungrow_modbus.device"] = f"class SungrowInverter:\n{body or '    pass\n'}"
+
     wheel = _wheel(tmp_path, modules)
     assert check.report(wheel, "test") == check.OK
-    assert "every import resolves" in capsys.readouterr().out
+    assert "every import and device attribute resolves" in capsys.readouterr().out
 
 
 def test_a_submodule_import_is_not_a_missing_symbol(tmp_path, capsys):
@@ -117,3 +131,63 @@ def test_a_wheel_that_is_not_there_is_undetermined_not_broken(tmp_path):
 @pytest.mark.parametrize("code", [check.OK, check.BROKEN, check.UNDETERMINED])
 def test_the_three_outcomes_are_distinct(code):
     assert {check.OK, check.BROKEN, check.UNDETERMINED} == {0, 1, 2}
+
+
+def test_attribute_names_sees_what_a_class_body_does_not():
+    """A device is assembled, not declared, so a class body is not the whole API.
+
+    `self.x = ...` in `__init__` and the keys of a `COMPONENTS` map both become
+    attributes the integration reads, and neither appears as a class-level
+    name. Missing them would make the check report a wheel as broken when it
+    is fine -- which is the failure that gets a release gate switched off.
+    """
+    source = (
+        "COMPONENTS = {'pack': object, 'cells': object}\n"
+        "class Device:\n"
+        "    declared: int\n"
+        "    def __init__(self):\n"
+        "        self.unit_id = 1\n"
+        "    def field(self, name):\n"
+        "        return None\n"
+    )
+    names = check.attribute_names(source, "device.py")
+
+    assert {"Device", "field", "declared", "unit_id", "pack", "cells"} <= names
+
+
+def test_an_attribute_the_wheel_lacks_is_reported(tmp_path, capsys):
+    """The half `required()` cannot see: an import that resolves, used wrongly.
+
+    A wheel can satisfy every `from sungrow_modbus import ...` in the
+    integration and still be missing a method somebody added beside it last
+    week. That fails at runtime, on an inverter, rather than here -- and it is
+    not hypothetical: `field_names`, `probed_capabilities` and
+    `inverter_serial` were added to the library and used from the integration
+    in one sitting, with `check_pinned_library.py` green throughout.
+    """
+    missing = check.unresolved_attributes(
+        _wheel(tmp_path, {"sungrow_modbus": "class SungrowInverter:\n    pass\n"})
+    )
+
+    # The integration reads plenty off a device; a near-empty wheel has none.
+    assert missing, "a wheel with no device API should not look satisfactory"
+    assert all(":" in where for where in missing.values()), "each names a source line"
+
+
+def test_a_variable_that_is_not_provably_a_device_is_left_alone(tmp_path):
+    """No false alarms, because a gate that cries wolf gets switched off.
+
+    `device` is also what Home Assistant calls a registry entry and what this
+    integration calls a dict of probe results -- `device.get("direct")` and
+    `device.config_entries` are both real lines here. Neither is a library
+    device, and reporting them would be worse than reporting nothing.
+    """
+    held = check._device_variables(
+        ast.parse(
+            "def f(hass):\n"
+            "    device = hass.devices.get('x')\n"
+            "    return device.config_entries\n"
+        ).body[0]
+    )
+
+    assert held == set()

@@ -18,7 +18,8 @@ flowchart TD
 
     subgraph integration["custom_components/sungrow_modbus &mdash; the integration, delivered by HACS"]
         direction TB
-        flow["config_flow<br/>probe, identify, scan the LAN,<br/>ask about entity ids"]
+        flow["config_flow<br/>probe, identify, scan the LAN,<br/>ask about entity ids<br/><br/>config_flow_schemas: the forms it shows,<br/>separated from the decisions about showing them"]
+        survey["survey &mdash; both parts, one progress bar<br/><br/>part A fingerprint: probe every capability,<br/>time the link, publish a document that<br/>carries a stand-in serial and no address<br/><br/>part B control_test (in the library): write each<br/>control, check the raw word against a hand-typed<br/>scale, watch what the inverter does, put it back<br/><br/>repairs: a run that did not finish restoring<br/>becomes a fix flow somebody can click<br/>download: a signed, short-lived link"]
         coord["coordinator<br/>four for the inverter, one per tier:<br/>realtime 5s, fast 10s, medium 60s, slowest 600s<br/><br/>one more per extra device that answered:<br/>the SBR pack on medium, the wallbox on fast<br/>with its slow blocks every 30th poll"]
         ent["entity<br/>sensor, binary_sensor,<br/>number, switch, select"]
         mig["migration<br/>claim the YAML entity_id,<br/>or take a modern id then rename"]
@@ -52,6 +53,40 @@ rides the other one. That is not a curiosity: it is why running the YAML
 package and the integration at the same time produces `Connection lost`
 before a response was received, and why the integration says so in the error
 rather than leaving people looking at their network.
+
+## How the modules are cut, and why
+
+The integration is cut along **what a piece decides**, not along size. Three
+lines are worth knowing before moving anything across them.
+
+**Decisions and data are separated where the data got big.**
+`config_flow_schemas.py` holds the `voluptuous` schemas, the option lists and
+the prose Home Assistant renders above them; `config_flow.py` holds the steps
+that decide which of those to show. The split exists because three quarters of
+what came before the flow's first class was not flow logic, and reading the
+flow meant scrolling past all of it. The same instinct puts the generated
+`*_descriptions.py` files beside the platforms that consume them.
+
+**Anything reachable without Home Assistant lives in the library.** That is why
+the control test's engine is `sungrow_modbus.control_test` and not here: it has
+to run from a terminal against an inverter with no Home Assistant anywhere, and
+the Home Assistant half of it is only a snapshot store, a shutdown hook, a
+progress callback and the options that say what a run may do.
+
+**One thing is polled by one coordinator, and coordinators that differ only in
+a noun share a base.** `SungrowSubDeviceCoordinator` holds what the SBR pack
+and the wallbox have in common -- reached through the inverter's connection,
+hung off it with `via_device`, identified by *its* serial because neither
+reports a usable one, and turning a `ModbusError` into an `UpdateFailed` that
+names which device failed. The two subclasses are left holding only what
+genuinely differs: how a model name is found, and how often each block is worth
+reading.
+
+**And `async_setup_entry` reads as a list of steps.** Connect and identify,
+build the tier coordinators, probe for a pack and a wallbox, assemble the
+runtime data, claim the legacy ids, forward the platforms. Each step is a named
+function that can be read on its own, which is the only way a setup path stays
+reviewable as it grows.
 
 ## Three devices, and why the unit ids are not settings
 

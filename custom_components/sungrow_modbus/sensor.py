@@ -17,6 +17,7 @@ from .entity import (
     SungrowEntity,
     SungrowExternalSensorDescription,
     SungrowSensorDescription,
+    as_reading,
 )
 from .external import combined, external_power
 from .external_descriptions import EXTERNAL_SENSORS
@@ -108,12 +109,7 @@ class SungrowWallboxSensor(SungrowDeviceEntity, SensorEntity):
     @property
     def native_value(self) -> float | int | str | None:
         """Return the reading, or None where the block did not answer."""
-        value = self.native_value_source
-        if isinstance(value, bool):
-            return None
-        if isinstance(value, (int, float, str)):
-            return value
-        return None
+        return as_reading(self.native_value_source)
 
 
 class SungrowBatterySensor(SungrowBatteryEntity, SensorEntity):
@@ -124,12 +120,7 @@ class SungrowBatterySensor(SungrowBatteryEntity, SensorEntity):
     @property
     def native_value(self) -> float | int | str | None:
         """Return the reading, or None where the block did not answer."""
-        value = self.native_value_source
-        if isinstance(value, bool):
-            return None
-        if isinstance(value, (int, float, str)):
-            return value
-        return None
+        return as_reading(self.native_value_source)
 
 
 class SungrowSensor(SungrowEntity, SensorEntity):
@@ -151,12 +142,7 @@ class SungrowSensor(SungrowEntity, SensorEntity):
     @property
     def _reading(self) -> float | int | str | None:
         """Return the decoded register value."""
-        value = self.native_value_source
-        if isinstance(value, bool):
-            return None
-        if isinstance(value, (int, float, str)):
-            return value
-        return None
+        return as_reading(self.native_value_source)
 
     @property
     def native_value(self) -> float | int | str | None:

@@ -102,9 +102,12 @@ def render() -> str:
         lines.append(f'        legacy_name="{legacy["name"]}",')
         lines.append(f'        legacy_unique_id="{row["legacy_unique_id"]}",')
         lines.append('        legacy_platform="template",')
-        # The export power limit is the inverter's, not the battery's.
-        capability = "BATTERY" if row["field"] != "export_power_limit" else None
-        if capability:
+        # Read from the table rather than decided here. The conditional this
+        # replaces said "BATTERY unless it is the export limit", which was
+        # right about the export limit and wrong about the two start-power
+        # thresholds: their own comment in `writes.py` says
+        # `Capability.BATTERY_START_POWER` gates them, and it did not.
+        if capability := row.get("requires"):
             lines.append(f"        requires=Capability.{capability},")
         lines.append(f"        native_min_value={row['minimum']},")
         lines.append(f"        native_max_value={row['maximum']},")

@@ -99,7 +99,7 @@ Three tools, three homes, and mixing them up produces confusing errors:
 | --- | --- | --- |
 | `python scripts/sungrow_scan/portable.py <ip>` | **host or container** | No dependencies at all |
 | `python scripts/sungrow_scan/probe.py mdns` | **host only** | Multicast does not cross the Docker bridge; needs `zeroconf` |
-| `python scripts/sungrow_scan/collect.py`, `probe.py capabilities/units/dump` | either | They prefer the device library where it is installed and fall back to this directory's own client, which is what makes the zip work |
+| `python scripts/sungrow_scan/collect.py`, `probe.py capabilities/units/dump` | either | They prefer the device library where it is installed and fall back to this directory's own client, which is what lets them run for somebody who has installed nothing |
 
 ## 3. Capture the test systems
 

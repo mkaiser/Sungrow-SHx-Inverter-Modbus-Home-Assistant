@@ -139,6 +139,125 @@ def provided(wheel: Path) -> tuple[dict[str, set[str]], list[str]]:
     return modules, sorted(m for m in members if m.endswith(".py"))
 
 
+#: Constructors whose result is definitely a library device, so that attribute
+#: use on it can be checked. Deliberately a short list: a variable this cannot
+#: prove is a device is left alone, because a false alarm in a release gate is
+#: worse than a gap in one.
+DEVICE_CONSTRUCTORS = frozenset({"SungrowInverter", "SungrowBattery", "SungrowWallbox"})
+
+
+def attribute_names(source: str, filename: str) -> set[str]:
+    """Collect the *attribute* names a library source makes available.
+
+    Beyond `public_names`, because an import resolving is not the whole
+    promise: the integration also reads attributes off library objects, and a
+    renamed method ships as a perfectly good release and fails at runtime.
+
+    Three things beyond the obvious, each because the library does it:
+
+    * `self.x = ...` anywhere, since much of a device is assembled in
+      `__init__` rather than declared on the class;
+    * the keys of a `COMPONENTS` map, because each becomes an attribute via
+      `setattr` and no static reader would otherwise see it;
+    * class-level annotations, which is how the sub-device coordinators and
+      the component holders declare what they hold.
+    """
+    names: set[str] = set()
+    tree = ast.parse(source, filename=filename)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
+            names.add(node.name)
+        if isinstance(node, ast.ClassDef):
+            for item in node.body:
+                if isinstance(item, ast.AnnAssign) and isinstance(
+                    item.target, ast.Name
+                ):
+                    names.add(item.target.id)
+                elif isinstance(item, ast.Assign):
+                    names.update(t.id for t in item.targets if isinstance(t, ast.Name))
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Attribute) and (
+                    getattr(target.value, "id", "") == "self"
+                ):
+                    names.add(target.attr)
+            if any(
+                getattr(t, "id", "") == "COMPONENTS" for t in node.targets
+            ) and isinstance(node.value, ast.Dict):
+                names.update(
+                    k.value
+                    for k in node.value.keys
+                    if isinstance(k, ast.Constant) and isinstance(k.value, str)
+                )
+    return names
+
+
+def _device_variables(function: ast.AST) -> set[str]:
+    """Names inside one function that definitely hold a library device."""
+    held: set[str] = set()
+    for node in ast.walk(function):
+        if (
+            isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+            and getattr(node.annotation, "id", "") in DEVICE_CONSTRUCTORS
+        ):
+            held.add(node.target.id)
+        if (
+            isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+        ):
+            value = node.value
+            if (
+                isinstance(value, ast.Call)
+                and (getattr(value.func, "id", "") in DEVICE_CONSTRUCTORS)
+            ) or (isinstance(value, ast.Attribute) and value.attr == "device"):
+                held.add(node.targets[0].id)
+    args = getattr(function, "args", None)
+    if args is not None:
+        for arg in [*args.args, *args.kwonlyargs]:
+            if getattr(arg.annotation, "id", "") in DEVICE_CONSTRUCTORS:
+                held.add(arg.arg)
+    return held
+
+
+def unresolved_attributes(wheel: Path) -> dict[str, str]:
+    """Attributes the integration reads off a library device that a wheel lacks.
+
+    This is the half `required()` cannot see. It reads imports; a wheel can
+    satisfy every one of them and still be missing the method somebody added
+    last week. That gap is not hypothetical -- `field_names`,
+    `probed_capabilities` and `inverter_serial` were all added to the library
+    and used from the integration in one sitting.
+
+    It only inspects variables it can *prove* hold a device, because a release
+    gate that cries wolf gets switched off.
+    """
+    available: set[str] = set()
+    with zipfile.ZipFile(wheel) as archive:
+        for member in archive.namelist():
+            if member.endswith(".py") and member.split("/")[0] == LIBRARY:
+                available |= attribute_names(
+                    archive.read(member).decode("utf-8"), member
+                )
+    missing: dict[str, str] = {}
+    for path in sorted(INTEGRATION.glob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for function in ast.walk(tree):
+            if not isinstance(function, ast.FunctionDef | ast.AsyncFunctionDef):
+                continue
+            held = _device_variables(function)
+            for node in ast.walk(function):
+                if (
+                    isinstance(node, ast.Attribute)
+                    and isinstance(node.value, ast.Name)
+                    and node.value.id in held
+                    and node.attr not in available
+                ):
+                    missing[node.attr] = f"{path.name}:{node.lineno}"
+    return missing
+
+
 def download(version: str, into: Path) -> Path:
     """Fetch the wheel for one published version. Raises on anything unclear."""
     url = PYPI.format(name=DISTRIBUTION, version=version)
@@ -186,19 +305,30 @@ def report(wheel: Path, label: str) -> int:
                 continue
             gaps.append(f"{module} does not provide {name}")
 
+    # The other half. An import can resolve against a wheel that is still
+    # missing the method added beside it -- which fails later, at runtime, on
+    # somebody's inverter rather than here.
+    attributes = unresolved_attributes(wheel)
+    gaps += [
+        f"a device has no {attr} in this wheel (used at {where})"
+        for attr, where in sorted(attributes.items())
+    ]
+
     print(f"integration  {len(wanted)} library modules imported")
     print(f"wheel        {wheel.name} -- {len(files)} modules ({label})")
     if not gaps:
-        print(f"verdict      every import resolves against {DISTRIBUTION} {label}")
+        print("verdict      every import and device attribute resolves against ")
+        print(f"             {DISTRIBUTION} {label}")
         return OK
 
-    print("verdict      the pin does not provide what the integration imports")
+    print("verdict      the pin does not provide what the integration uses")
     for gap in gaps:
         print(f"  {gap}")
     print()
     print("A copy of this integration installed against that version will fail")
-    print("to start. Either release a version that has it, or do not import it")
-    print("yet: `python scripts/sync_version.py --set X.Y.Z` moves both halves.")
+    print("to start, or to read a device. Either release a version that has it,")
+    print("or do not use it yet: `python scripts/sync_version.py --set X.Y.Z`")
+    print("moves both halves.")
     return BROKEN
 
 

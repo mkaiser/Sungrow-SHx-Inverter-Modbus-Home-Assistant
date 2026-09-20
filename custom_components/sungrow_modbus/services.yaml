@@ -38,3 +38,14 @@ run_survey:
       selector:
         device:
           integration: sungrow_modbus
+
+# Part A and then part B. Unlike every action above it, this one **writes**:
+# it sets each control the integration can set, reads the register back, and
+# puts it back. Behind the same audience setting as start and stop.
+run_control_test:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: sungrow_modbus

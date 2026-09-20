@@ -1,7 +1,8 @@
 {
   "config": {
     "abort": {
-      "already_configured": "Device is already configured"
+      "already_configured": "Device is already configured",
+      "devices_mode_not_offered": "Devices mode is not available in this preview. This build sets the integration up for diagnostics only -- it polls the inverter and can run the capability survey, but creates no sensors. Promotion will be offered in a later release, and the entry does not need to be removed and added again when it is."
     },
     "error": {
       "cannot_connect": "Failed to connect: {error}",
@@ -12,14 +13,6 @@
       "invalid_network": "Not a network range: {error}"
     },
     "step": {
-      "user": {
-        "title": "What is this for?",
-        "description": "**Set up my inverter** is what you want if you came here to see your solar production in Home Assistant.\n\n**Diagnostics only** connects to the inverter, works out what it is and what it answers, and creates **no entities at all**. It exists because this project has to *measure* which registers each model and firmware supports — Sungrow's own specification has been wrong in both directions — and today that evidence comes from four houses.{mode_choice}",
-        "menu_options": {
-          "setup_devices": "Set up my inverter — sensors, controls, the lot",
-          "setup_diagnostics": "Diagnostics only — help this project, create no entities"
-        }
-      },
       "devices_later": {
         "title": "Not in this release",
         "description": "⚠️ **Sensors and controls are not in this release.** This is an early alpha, and it exists to gather readings.\n\nSetting up the inverter properly — including taking over the entity IDs of the YAML package, which is the one decision here that cannot be undone — comes in a later release.\n\nPressing **Submit** sets this entry up for **diagnostics only**: it connects to your inverter, works out what it is and which registers it answers, and creates no entities for the values. You can upgrade it to a full entry later without deleting it."
@@ -34,21 +27,26 @@
           "entity_ids": "This can be changed later without losing anything."
         }
       },
-      "search": {
-        "title": "Search my network",
-        "description": "Home Assistant will try every address in this range on the Modbus port, then ask whatever answers what it is — an open port alone is not enough to call something an inverter.\n\n{detected}\n\nA `/24` takes about a second; anything much larger is rejected, because every address probed is real traffic on your network.",
-        "data": {
-          "network": "Network range"
-        },
-        "data_description": {
-          "network": "In CIDR notation, for example 192.168.1.0/24."
+      "find": {
+        "title": "Where is the inverter?",
+        "description": "Searching is usually easier: many people cannot say what their inverter's IP address is without going to look at the router. The search only probes addresses on the range you confirm.",
+        "menu_options": {
+          "search": "Search my network for it",
+          "manual": "I know the address"
         }
       },
-      "pick": {
-        "title": "Inverters found",
-        "description": "{count} device(s) answered and identified themselves. Names come from your router's DNS where it provides them, otherwise the address is shown.\n\nIf none of these is the inverter you meant, choose the last option and you can enter its address yourself.{note}",
+      "manual": {
+        "title": "The inverter's address",
+        "description": "The inverter's IP address, and the Modbus TCP port and device address it answers on. The defaults are right for almost every installation: port 502, device address 1.\n\nIf the inverter is behind a WiNet-S dongle, this is the dongle's address rather than the inverter's own. Give the address a reservation in your router first -- an inverter that moves has to be set up again.{error}",
         "data": {
-          "host": "Inverter"
+          "host": "IP address or hostname",
+          "port": "Port",
+          "unit_id": "Device address"
+        },
+        "data_description": {
+          "host": "As your router lists it.",
+          "port": "502 unless somebody changed it. A Sungrow Logger uses 503.",
+          "unit_id": "1 for a single inverter. A second inverter in a master/slave cluster answers on 2, and its own address is the one to give here."
         }
       },
       "name": {
@@ -70,12 +68,28 @@
           "start_over": "Back to the start"
         }
       },
-      "find": {
-        "title": "Where is the inverter?",
-        "description": "Searching is usually easier: many people cannot say what their inverter's IP address is without going to look at the router. The search only probes addresses on the range you confirm.",
-        "menu_options": {
-          "search": "Search my network for it",
-          "manual": "I know the address"
+      "other_inverter": {
+        "title": "What is the other inverter?",
+        "description": "The make, and its size if you know it — *Fronius Symo 8.2*, or *5 kW string inverter on the south roof*. The size is the useful part: it says how large the gap in the load figures is.\n\nThis goes into the document, so leave out serial numbers, addresses and names. You can leave it blank.",
+        "data": {
+          "survey_other_inverter_detail": "The other inverter"
+        }
+      },
+      "pick": {
+        "title": "Inverters found",
+        "description": "{count} device(s) answered and identified themselves. Names come from your router's DNS where it provides them, otherwise the address is shown.\n\nIf none of these is the inverter you meant, choose the last option and you can enter its address yourself.{note}",
+        "data": {
+          "host": "Inverter"
+        }
+      },
+      "search": {
+        "title": "Search my network",
+        "description": "Home Assistant will try every address in this range on the Modbus port, then ask whatever answers what it is — an open port alone is not enough to call something an inverter.\n\n{detected}\n\nA `/24` takes about a second; anything much larger is rejected, because every address probed is real traffic on your network.",
+        "data": {
+          "network": "Network range"
+        },
+        "data_description": {
+          "network": "In CIDR notation, for example 192.168.1.0/24."
         }
       },
       "testimony": {
@@ -104,11 +118,12 @@
           "survey_register_dump": "On, and worth turning off if you are in a hurry. Without it a survey reads the registers this integration already knows about and takes a couple of seconds. With it, it also sweeps 1510 addresses across twelve bands, including the ones no specification documents — which is how every undocumented register this project knows was found. That is slow because an address with nothing behind it goes quiet rather than refusing, so each empty one costs a full timeout: about five minutes on a direct cable, and considerably longer through a WiNet-S or a VPN. Your inverter keeps being polled throughout, and the survey button on the device page shows how far along it is."
         }
       },
-      "other_inverter": {
-        "title": "What is the other inverter?",
-        "description": "The make, and its size if you know it — *Fronius Symo 8.2*, or *5 kW string inverter on the south roof*. The size is the useful part: it says how large the gap in the load figures is.\n\nThis goes into the document, so leave out serial numbers, addresses and names. You can leave it blank.",
-        "data": {
-          "survey_other_inverter_detail": "The other inverter"
+      "user": {
+        "title": "What is this for?",
+        "description": "**Set up my inverter** is what you want if you came here to see your solar production in Home Assistant.\n\n**Diagnostics only** connects to the inverter, works out what it is and what it answers, and creates **no entities at all**. It exists because this project has to *measure* which registers each model and firmware supports — Sungrow's own specification has been wrong in both directions — and today that evidence comes from four houses.{mode_choice}",
+        "menu_options": {
+          "setup_devices": "Set up my inverter — sensors, controls, the lot",
+          "setup_diagnostics": "Diagnostics only — help this project, create no entities"
         }
       }
     },
@@ -177,6 +192,9 @@
       }
     },
     "button": {
+      "run_control_test": {
+        "name": "Run control write test"
+      },
       "run_survey": {
         "name": "Run capability survey"
       }
@@ -830,6 +848,36 @@
     "preview_release": {
       "title": "Sungrow Modbus is a preview",
       "description": "This integration is a preview release, for testers rather than for a system you depend on.\n\n**Entity names may still change.** A name supplies an entity id when the entity is first created, so a change does not move the ids you already have -- your history and dashboards are safe. What it does mean is that your ids can end up differing from somebody who installs later. Where that matters, a rename will ship with a migration that moves yours across and carries the history with it.\n\n**What is not in flux:** readings, units, and the migration from the YAML package. If you chose to keep the YAML package's entity ids, those are reproduced exactly and none of this touches them.\n\nPlease report anything that looks wrong -- that is what a preview is for."
+    },
+    "control_test_unfinished": {
+      "title": "A control write test on {name} did not finish",
+      "description": "The control write test changes a setting, checks it, and changes it back. This one did not get to the changing-back part — Home Assistant was restarted, the entry was reloaded, or the inverter stopped answering partway through.\n\nThese settings may still be holding the test's values rather than yours:\n\n{registers}\n\nFixing this writes each of them back and reads it again to check it took.",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Put these settings back",
+            "description": "The following will be written back to your inverter and then read again to confirm:\n\n{registers}\n\nIf anything refuses the write, nothing is hidden — you will be told which and this will stay here. The usual cause is something else polling the inverter at the same time."
+          }
+        },
+        "abort": {
+          "restore_failed": "Could not put everything back: {error}\n\nThis repair stays open so you can try again."
+        }
+      }
+    },
+    "control_test_left_stopped": {
+      "title": "{name} may still be stopped after a control write test",
+      "description": "**Check whether your inverter is generating.** A control write test was given permission to stop and restart it, and did not get to the restart — Home Assistant was restarted, the entry was reloaded, or the inverter stopped answering partway through.\n\nFixing this starts the inverter, then puts these settings back and reads each one again to check it took:\n\n{registers}",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Start the inverter and put these settings back",
+            "description": "The inverter will be started first, then the following written back and read again to confirm:\n\n{registers}\n\nIf anything refuses, you will be told which and this will stay here."
+          }
+        },
+        "abort": {
+          "restore_failed": "Could not finish: {error}\n\n**Check whether your inverter is running.** This repair stays open so you can try again."
+        }
+      }
     }
   },
   "options": {
@@ -864,10 +912,12 @@
             "name": "Permissions",
             "description": "**Starting and stopping the inverter** is an action rather than a switch, so this integration decides who may call it, and you decide here. Administrators only is the default: there is no way back from a stopped inverter except another call, and the house runs on the grid until somebody makes it.\n\nOpening it to users means users who can already change this device — a read-only login still cannot, and neither setting affects automations or scripts, which act for the household rather than for a person.\n\n**Everything else is not ours to decide, and it is worth knowing what already applies.** The settings this integration exposes — the state-of-charge limits, the EMS mode, the export and power limits — are entities, and Home Assistant checks who may control an entity itself, before any integration is asked. By default a normal user can change all of them and a read-only user none of them. To restrict one person, make their account read-only under *Settings → People*; there is no per-setting permission in Home Assistant for us to offer.",
             "data": {
-              "start_stop": "Start and stop the inverter"
+              "start_stop": "Start and stop the inverter",
+              "control_test": "Run the control write test"
             },
             "data_description": {
-              "start_stop": "Who may call the start and stop actions on this inverter."
+              "start_stop": "Who may call the start and stop actions on this inverter.",
+              "control_test": "Administrators only by default. The control write test changes settings on the inverter and puts them back, and — where you have allowed it above — stops and restarts it. Opening it to users means users who can already change this device; a read-only login still cannot."
             }
           },
           "external": {
@@ -919,6 +969,18 @@
               "publish_address": "On, and yours to turn off before you submit. Only the last two octets ever reach the document — never the third, which is what would identify your network — and clear this and it reads xxx.xxx instead. What it buys is telling several readings from one house apart: a master, a slave and two dongles otherwise produce four files that look alike.",
               "survey_register_dump": "On, and worth turning off if you are in a hurry. Without it a survey reads the registers this integration already knows about and takes a couple of seconds. With it, it also sweeps 1510 addresses across twelve bands, including the ones no specification documents — which is how every undocumented register this project knows was found. That is slow because an address with nothing behind it goes quiet rather than refusing, so each empty one costs a full timeout: about five minutes on a direct cable, and considerably longer through a WiNet-S or a VPN. Your inverter keeps being polled throughout, and the survey button on the device page shows how far along it is."
             }
+          },
+          "control_test": {
+            "name": "What the control write test may do",
+            "description": "The **Run control write test** button on the device page does something no other part of this integration does on its own: it **writes** to each setting it can, reads the register straight back, compares what came back against what Sungrow's specification says should be there, and puts your value back.\n\nIt exists because a whole class of bug is otherwise invisible. The registers mix units — one battery power setting counts in watts and the one beside it in hundredths of a kilowatt — so a value can be written, read back looking perfectly correct, and still be ten times what you asked for. Reading alone cannot find that. Writing and checking the raw register can.\n\nEverything it changes is changed back and read back before it reports success, and if anything could not be put back you get a repair here telling you exactly what and offering to fix it. The two settings below are the parts that go further than that, and both are off unless you say otherwise.",
+            "data": {
+              "control_test_restart": "May it stop and restart the inverter?",
+              "control_test_export_limit": "May it switch feed-in limitation on?"
+            },
+            "data_description": {
+              "control_test_restart": "Off by default. With this on, the test writes the stop register, waits for the inverter to report itself stopped, starts it again and times all three transitions — numbers nobody has measured for this hardware, which is why it is worth offering at all.\n\nWhile it is stopped you generate nothing, the battery neither charges nor discharges, and anything on a backup circuit loses power. Expect tens of seconds; it may be minutes. The inverter is never left stopped: the start is retried on fresh connections, it is started again if Home Assistant shuts down mid-test, and if all of that fails you get a repair that starts it.",
+              "control_test_export_limit": "Off by default. Where you already limit feed-in, the test uses that and this changes nothing. With this on it may also switch the limit on for about a minute where you do not.\n\nLeft off because it is the one setting whose failed restore costs you something ongoing rather than just accuracy: an export limit that did not get switched back means you feed in less than you could until somebody notices."
+            }
           }
         }
       },
@@ -951,6 +1013,26 @@
     }
   },
   "services": {
+    "run_control_test": {
+      "name": "Run control write test",
+      "description": "Writes to every control this integration can write to, checks each one three ways and puts it back. Unlike the capability survey, this CHANGES SETTINGS on the inverter: it limits the battery and the export, and it briefly forces a charge and a discharge. Everything is recorded before the first write and restored afterwards, and the run reports anything it could not put back. It exists because a wrong scale is invisible to a readback -- write 700 W, get 700 W back -- and only writing can find it. The restart and export-limit permissions are set in the integration's options and are off by default.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The Sungrow device to write to, and put back."
+        }
+      }
+    },
+    "run_survey": {
+      "name": "Run capability survey",
+      "description": "Reads this installation's registers and produces a document describing what answered, so support for it can be measured rather than guessed. Reads only; nothing is written to the inverter, and the serial number is replaced by a stand-in. The finished document arrives as a notification with a download link.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The Sungrow device to survey."
+        }
+      }
+    },
     "start_inverter": {
       "name": "Start inverter",
       "description": "Boots an inverter that has been shut down. Deliberately an action rather than a button: Home Assistant has no confirmation dialog for a button press, and admin rights are required to call this.",
@@ -968,16 +1050,6 @@
         "device_id": {
           "name": "Inverter",
           "description": "Which inverter to stop."
-        }
-      }
-    },
-    "run_survey": {
-      "name": "Run capability survey",
-      "description": "Reads this installation's registers and produces a document describing what answered, so support for it can be measured rather than guessed. Reads only; nothing is written to the inverter, and the serial number is replaced by a stand-in. The finished document arrives as a notification with a download link.",
-      "fields": {
-        "device_id": {
-          "name": "Device",
-          "description": "The Sungrow device to survey."
         }
       }
     }

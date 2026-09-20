@@ -71,9 +71,85 @@ coordinator.
 
 from __future__ import annotations
 
-from modbus_connection.model import Component, gauge, int32, integer, string, uint32
+from typing import Any
+
+from modbus_connection.model import (
+    Component,
+    NumberField,
+    gauge,
+    int32,
+    integer,
+    string,
+    uint32,
+)
+
+
+class AsymmetricNumberField(NumberField[int]):
+    """A register that reads in one unit and writes in another.
+
+    Every other register in this map uses one scale for both directions, which
+    is what `NumberField` is built for: `encode` and `decode` share `scale`.
+    Register 13074 does not. It **reads** in watts -- 10000 back against a
+    10000 W maximum from register 5623, so the read side agrees with its own
+    bounds -- and **writes** in tens of watts, multiplying the word it is
+    handed by ten before storing it.
+
+    Measured 2026-09-19 on the reference SH10RT with feed-in limitation on, six
+    times, including values no rounding could produce (123 -> 1230, 47 -> 470),
+    and replicated the same day at a second house on an SH10RT-20 through a
+    dongle. Two houses, two models, two transports.
+
+    It also explains the refusals: the multiply happens **before** the range
+    check, so writing 3400 becomes 34000, fails against the 10000 W maximum and
+    returns exception 0x04 -- which is why restoring 10000 was refused while the
+    register sat on 10000, and why writing 1000 is how you actually put 10000
+    back.
+
+    So this is a device quirk rather than a second scale: `scale` stays 1
+    because that is what the register *contains*, and only the write side is
+    divided. `control_test.py`'s `spec_units_per_count` stays 1 for the same
+    reason, and its leg B is what proves this on hardware -- before the fix a
+    900 W write left the raw word at 9000 and the verdict was `SCALED`.
+    """
+
+    def __init__(
+        self, address: int, *, write_units_per_count: float, **kwargs: Any
+    ) -> None:
+        """Initialize the field with a write scale of its own.
+
+        Refuses a field that also has a read `scale`. The two divisions would
+        compose -- `encode` would divide by the write scale and then the base
+        class would divide by the read one -- and the result would be wrong by
+        their product while still looking like a plain number in the register.
+        Nothing needs that combination today, so it is refused rather than
+        guessed at.
+        """
+        super().__init__(address, **kwargs)
+        if self.scale != 1:
+            raise ValueError(
+                "an asymmetric write scale needs a read scale of 1; "
+                f"{address} has {self.scale}"
+            )
+        self.write_units_per_count = write_units_per_count
+
+    def encode(self, value: Any, scale_exponent: int | None = None) -> list[int]:
+        """Encode the engineering value at the **write** scale.
+
+        Rounded here rather than left to the base class, which takes a fast
+        path on a scale-1 field -- `raw = int(value)` -- and would silently
+        **truncate** a value the division does not leave whole.
+        """
+        raw = round(float(value) / self.write_units_per_count)
+        return super().encode(float(raw), scale_exponent)
 
 '''
+
+#: Fields whose **write** scale differs from the scale they read back at, in
+#: engineering units per count on the write side. The entity map cannot carry
+#: this: it is derived from the YAML package, which has the same bug and reads
+#: a single scale for both directions. So it is stated here, from measurement,
+#: and `tests/test_writes.py` asserts the emitted behaviour.
+WRITE_UNITS_PER_COUNT: dict[str, float] = {"export_power_limit": 10}
 
 
 def _load() -> list[dict[str, Any]]:
@@ -92,7 +168,7 @@ def _load() -> list[dict[str, Any]]:
     )
 
 
-def _field(entity: dict[str, Any], *, writable: bool = False) -> str:
+def _field(entity: dict[str, Any], *, writable: bool = False, field: str = "") -> str:
     """Return the field expression for one entity."""
     address = entity["address"]
     data_type = entity.get("data_type")
@@ -131,6 +207,11 @@ def _field(entity: dict[str, Any], *, writable: bool = False) -> str:
     # write to any register the integration has not deliberately exposed.
     if writable:
         keywords.append("writable=True")
+
+    write_scale = WRITE_UNITS_PER_COUNT.get(field)
+    if write_scale is not None:
+        keywords.append(f"write_units_per_count={write_scale:g}")
+        factory = "AsymmetricNumberField"
 
     return f"{factory}({', '.join(parts + keywords)})"
 
@@ -179,9 +260,18 @@ def _order(
     )
 
 
-def render() -> str:
-    """Return the whole generated module."""
-    grouped: dict[tuple[int, str, str | None], list[dict[str, Any]]] = {}
+Grouped = dict[tuple[int, str, str | None], list[dict[str, Any]]]
+
+
+def _grouped() -> Grouped:
+    """Bucket the entity map by poll tier, register space and isolate group.
+
+    Those three are what decide which `Component` a register lands in: a
+    component reads one space on one interval, and an isolated field gets a
+    component of its own so that one unreadable register cannot take a whole
+    block down with it.
+    """
+    grouped: Grouped = {}
     for entity in _load():
         tier = entity.get("scan_interval")
         space = entity.get("input_type")
@@ -189,10 +279,16 @@ def render() -> str:
             continue
         field = entity["entity_id"].split(".", 1)[1]
         grouped.setdefault((tier, space, ISOLATE.get(field)), []).append(entity)
+    return grouped
 
-    # An isolate group is one component, so it cannot straddle register
-    # spaces — a Component reads exactly one. Caught here rather than as a
-    # duplicate class name in the generated module.
+
+def _check_isolate_groups(grouped: Grouped) -> None:
+    """Refuse an isolate group that spans register spaces.
+
+    An isolate group becomes one component, and a `Component` reads exactly
+    one space. Caught here, where it can be explained, rather than surfacing
+    as a duplicate class name in the generated module.
+    """
     spaces_per_group: dict[str, set[str]] = {}
     for _tier, space, group in grouped:
         if group is not None:
@@ -203,6 +299,12 @@ def render() -> str:
                 f"isolate group {group!r} spans register spaces {sorted(spaces)}; "
                 "give each space its own group"
             )
+
+
+def render() -> str:
+    """Return the whole generated module: group, check, then emit."""
+    grouped = _grouped()
+    _check_isolate_groups(grouped)
 
     lines = [HEADER]
     for key in _order(grouped):
@@ -215,7 +317,9 @@ def render() -> str:
         for entity in entities:
             field = entity["entity_id"].split(".", 1)[1]
             writable = field in WRITABLE_FIELDS
-            lines.append(f"    {field} = {_field(entity, writable=writable)}")
+            lines.append(
+                f"    {field} = {_field(entity, writable=writable, field=field)}"
+            )
             lines.append(f'    """{entity["name"]} (reg {entity["address"] + 1})."""')
         lines.append("")
 

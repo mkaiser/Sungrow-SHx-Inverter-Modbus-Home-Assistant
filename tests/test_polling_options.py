@@ -21,10 +21,12 @@ from custom_components.sungrow_modbus.const import (
     CONF_INTERVALS,
     CONF_PERMISSIONS,
     CONF_UNIT_ID,
+    DEFAULT_PERMISSIONS,
     DOMAIN,
     INTERVAL_NEVER,
     PERMISSION_START_STOP,
     SECTION_ADVANCED,
+    SECTION_CONTROL_TEST,
     SECTION_EXTERNAL,
     SECTION_PERMISSIONS,
     SECTION_POLLING,
@@ -55,6 +57,7 @@ def _submission(**sections: dict) -> dict:
         SECTION_EXTERNAL: {},
         SECTION_ADVANCED: {},
         SECTION_SURVEY: {},
+        SECTION_CONTROL_TEST: {},
     }
     payload.update(sections)
     return payload
@@ -273,7 +276,12 @@ async def test_the_permissions_step_saves_the_audience(
         await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert entry.options[CONF_PERMISSIONS] == {PERMISSION_START_STOP: AUDIENCE_USERS}
+    assert entry.options[CONF_PERMISSIONS][PERMISSION_START_STOP] == AUDIENCE_USERS
+    # Every other permission keeps its default rather than being dropped:
+    # the page writes the whole map, and a key missing from it would read
+    # as the default anyway -- but only because `DEFAULT_PERMISSIONS` is
+    # merged in first, which is the part worth pinning.
+    assert entry.options[CONF_PERMISSIONS].keys() == DEFAULT_PERMISSIONS.keys()
 
 
 async def test_the_permissions_step_leaves_the_other_options_alone(
@@ -306,10 +314,16 @@ async def test_the_permissions_step_leaves_the_other_options_alone(
                 SECTION_EXTERNAL: {},
                 SECTION_ADVANCED: {},
                 SECTION_SURVEY: {},
+                SECTION_CONTROL_TEST: {},
             },
         )
         await hass.async_block_till_done()
 
     assert entry.options[CONF_INTERVALS]["realtime"] == 30
     assert entry.options[CONF_INTERVALS]["fast"] == DEFAULT_INTERVALS["fast"]
-    assert entry.options[CONF_PERMISSIONS] == {PERMISSION_START_STOP: AUDIENCE_USERS}
+    assert entry.options[CONF_PERMISSIONS][PERMISSION_START_STOP] == AUDIENCE_USERS
+    # Every other permission keeps its default rather than being dropped:
+    # the page writes the whole map, and a key missing from it would read
+    # as the default anyway -- but only because `DEFAULT_PERMISSIONS` is
+    # merged in first, which is the part worth pinning.
+    assert entry.options[CONF_PERMISSIONS].keys() == DEFAULT_PERMISSIONS.keys()

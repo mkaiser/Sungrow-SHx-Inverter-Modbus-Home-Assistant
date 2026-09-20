@@ -483,14 +483,13 @@ def battery_model_for_capacity(plan, capacity_kwh):
     """
     if capacity_kwh is None:
         return None
-    closest = min(
-        plan["battery_models"],
-        key=lambda model: abs(model["capacity_kwh"] - capacity_kwh),
-    )
-    tolerance = plan["battery_capacity_tolerance_kwh"]
-    if abs(closest["capacity_kwh"] - capacity_kwh) > tolerance:
-        return None
-    return closest
+    fraction = plan["battery_capacity_tolerance_fraction"]
+    within = [
+        model
+        for model in plan["battery_models"]
+        if abs(model["capacity_kwh"] - capacity_kwh) <= model["capacity_kwh"] * fraction
+    ]
+    return within[0] if len(within) == 1 else None
 
 
 #: The library's `discovery.MAX_HOSTS`, kept as a literal because this is a

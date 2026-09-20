@@ -11,7 +11,7 @@
 | --- | --- |
 | Milestone 1 — foundations | ✅ done and verified |
 | Milestone 2 — inverter read parity | ✅ complete: read parity and three registers past it, capability gating, the naming convention, the migration, diagnostics and discovery |
-| Milestone 3 — controls | ✅ all five slices, including start/stop as **actions** rather than buttons |
+| Milestone 3 — controls | ✅ all five slices, including start/stop as **actions** rather than buttons, and the **control test** that measures whether writing them is right |
 | Milestone 4 — battery modules | ✅ **SBR done**: its own device, all 40 registers in three components, 17 entities, the unit found by probing rather than asked. SBH needs its protocol document |
 | Milestone 5 — iHomeManager | not started, and **nothing has ever been measured** — a sweep of one house on port 503 found nothing at all |
 | Milestone 6 — wallbox | ✅ **done**: 32 registers in four components, 21 entities on a device of its own, found by asking the endpoint rather than sweeping. Read-only |
@@ -37,6 +37,48 @@ Ordered by what it buys, not by milestone number. Everything below is either
 a decision only the maintainer can take, or work whose blocker is named.
 
 ### Decisions waiting on the maintainer
+
+**Live, as of 2026-09-19.** The numbered items below are settled and kept for
+their reasoning; these are the ones actually open.
+
+- **Cut `0.1.0a4`.** Decided: ship, *with* the 13074 fix. The version must move
+  rather than be reused -- PyPI already has an `0.1.0a3` that predates the
+  control test, and refuses a re-upload. Until it moves, the branch imports
+  `sungrow_modbus.control_test` and `battery.ceiling`, which that wheel does not
+  have, so `check_pinned_library.py` is red and the **preview channel is
+  correctly refusing to publish**. The channel is safely stale, not broken, and
+  no HACS tester can reach part B until the release happens.
+- **The YAML package's copy of the same bug**, still unfixed on `main`. The
+  change is one line in `legacy/modbus_sungrow.yaml`'s
+  `number.export_power_limit`, anchored on `*sg_reg_export_power_limit` because
+  two *other* writes in that file use the identical `{{ value | int }}` and are
+  **correct** (`reserved_soc_backup` at 1 %/count and
+  `forced_charge_discharge_power` at 1 W/count, the latter hardware-confirmed at
+  299 W for 300 W commanded):
+
+  ```diff
+  -              value: "{{ value | int }}"
+  +              value: "{{ (value | float / 10) | round | int }}"
+  ```
+
+  Only the source file changes; `main`'s workflow regenerates
+  `modbus_sungrow_multiple_inverters_{1,2,3}.yaml` on push. Note the Jinja: the
+  two neighbouring 10 W-per-count writes use `{{ value | float / 10 | int }}`,
+  which binds as `(value|float) / (10|int)` and renders `90.0` rather than
+  `90` -- tolerated, but not what it looks like, hence the brackets here. Not applied: `main` is
+  production and a different track. Open question is whether it goes in the same
+  pass or its own PR. Until it does, a user of the shipping package is worse off
+  than a user of the alpha.
+- **Commit the working tree.** Nothing from this work is committed.
+
+**Two things are untested by anything and neither needs more hardware**, so they
+belong here rather than under "blocked on evidence":
+
+- **The Home Assistant button path.** Every hardware run so far went through the
+  CLI. Button → runner → `Store` snapshot → repair flow → shutdown guard has
+  only ever run against mocks, and it is the path a HACS tester actually uses.
+- **The YAML patch on hardware.** Built, applies, parses. No inverter has
+  received a write through it.
 
 1. **The preview is out, and installable through HACS.** ✅
    `v0.1.0a1` and `v0.1.0a2` are released, both marked pre-release, and
@@ -137,9 +179,42 @@ a decision only the maintainer can take, or work whose blocker is named.
    [#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)
    needs. Designed in [When a firmware changes what a register
    means](#when-a-firmware-changes-what-a-register-means).
-5. **Migration per inverter.** The legacy ids are global and unprefixed, so
-   only one device can hold them, and today the second inverter is silently
-   not asked. Needs the `_inv_N` scheme.
+5. **Migration per inverter.** ✅ **Done 2026-09-18.** The legacy ids are
+   global and unprefixed, so only one device could hold them, and the second
+   inverter was silently never asked — it found the ids already claimed and
+   was handed new ones without a question.
+
+   **The slot is detected, not asked.** `modbus_sungrow_multiple_inverters_<n>.yaml`
+   appends ` inv <n>` to every name and `_inv_<n>` to every unique_id, and one
+   of those entities is `sensor.sungrow_inverter_serial_inv_<n>`, whose *state*
+   is that inverter's serial. An entry already knows which serial it is talking
+   to, so `migration.async_legacy_suffix` matches the two and the answer is
+   evidence rather than a question the owner has to remember the answer to —
+   possibly years later, about a file they have since deleted.
+
+   Three things that shaped it:
+
+   - **`None` is not `""`.** No match means the question could not be
+     answered, and reading that as the unsuffixed slot would hand a second
+     inverter the first one's history, silently and irreversibly. They are kept
+     apart everywhere, and `""` is only ever chosen as the deliberate
+     backwards-compatible default for a house that already had one inverter.
+   - **The slot is stored on the entry**, in `data` under `CONF_LEGACY_SLOT`.
+     Detection needs the YAML package installed, and the very next thing the
+     migration asks is that it be removed — so the answer has to be written
+     down at setup, when the evidence exists, rather than re-derived at every
+     start.
+   - **The suffix is applied to the name, not the id.** The generator renames
+     `Total DC power` to `Total DC power inv 2` and Home Assistant slugified
+     *that*. Appending `_inv_2` to the finished id agrees today and would stop
+     agreeing the first time a legacy name contains something `slugify` treats
+     differently.
+
+   A two-inverter house can also be running `_inv_1` plus `_inv_2` rather than
+   the plain file plus `_inv_2`, because the generator makes an `_inv_1`
+   variant — which is why the slots are searched rather than computed from an
+   index. Still unexercised against two real inverters; `tests/test_legacy_slot.py`
+   is the evidence until then.
 6. **The config flow's topology step.** What can be determined is measured
    and written up in [Working out the topology](#working-out-the-topology);
    discovery and the name question are done. What remains is presenting the
@@ -226,7 +301,35 @@ a decision only the maintainer can take, or work whose blocker is named.
 10. **The SBR's per-module entities.** All 24 registers are read; none is an
    entity, because an unfitted module answers 0 V and something has to
    establish the module count first. An SBR128 settles it.
-11. **SBH support**, which needs a register document nobody has.
+11. **SBH support**, which needs a register document nobody has — though it
+   is no longer entirely unread. The SBH400 in
+   [#772](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/772)
+   answers the SBR's block at unit 2 with the SBR's scales, agreeing with the
+   inverter's own view of the same pack on voltage, charge, health and
+   temperature. That is the common registers confirmed; the per-module
+   arrays are still unread, because the dongle in that path does not forward
+   them.
+12. **Two energy registers an SH20T does not fill in.** One reading, one
+   moment, and both need a second T before anything in `registers.py`
+   moves — but they are recorded because a T-series user will see them as
+   entities stuck at zero:
+
+   - **`daily_exported_energy` (register 13045) reads 0** while that machine
+     is exporting 8772 W and `daily_exported_energy_from_pv` at 13005 reads
+     72.0 kWh. Export from PV is a subset of export, so 0 cannot be right.
+     On every RT measured the two registers are equal to the decimal.
+     `daily_imported_energy` at 13036 reads 0 there too, which is plausible
+     on its own — a full battery on a sunny day — but the pair of them makes
+     "the T does not populate the daily *grid* counters" the simpler reading.
+     Its daily PV and battery counters are all populated.
+   - **Registers 5003 and 5004-5005 duplicate the export counters.** On that
+     machine 5003 equals 13005 exactly and 5004-5005 equals 13046-13047
+     exactly, where on all nine RT readings both pairs differ by thousands of
+     kWh. So `total_pv_generation_battery_discharge` is not that sum on a T;
+     it is a second copy of total export.
+
+   The honest status is *observed, not explained*. What would settle it is
+   one more T-series survey, ideally on a direct connection.
 
 What would help most from a contributor is in
 [devices-wanted.md](device-fingerprints/devices-wanted.md), and the single
@@ -328,7 +431,6 @@ is, both ways), and whether one entity class can serve both id shapes (it can
 These were open questions that the work answered. Kept in full because each
 records *why*, and a decision without its reasoning gets re-opened by the
 next person to find the code surprising.
-
 
 - **The `_raw` sensors go, in modern mode only** (2026-09-09). Legacy mode
   keeps all twelve, because that is what history is keyed to. Modern mode
@@ -1289,7 +1391,7 @@ and word order those fifteen fields use. `portable.read_fields` grew a `role`
 argument to select them, and `tests/test_portable_decoder.py` now compares all
 fifteen against the library with nothing written to make them agree. The unit
 ids travel in the plan as `battery_pack_units`, copied from
-`battery.PACK_UNITS`, because `probe.py` runs from a zip where the library
+`battery.PACK_UNITS`, because `probe.py` runs where the library
 does not exist.
 
 Two guards worth naming, both from measurements rather than caution. A slave
@@ -1556,7 +1658,7 @@ producers reach it: the 19 curated probes, the five firmware strings, the
 four-state vocabulary (`present`, `unavailable`, `refused`, `no answer`),
 the stand-in derivation, the transport verdict and the sentence about WiFi
 versus Ethernet. `probe.py` keeps literal copies, because that directory
-ships as a zip and cannot import the library, and
+cannot import the library, and
 `tests/test_fingerprint_tables_agree.py` is what makes that duplication
 safe -- a probe label *is* the published format, so renaming one on one side
 would silently unrelate every new reading from every old one.
@@ -1667,7 +1769,7 @@ they sit under the diagnostic heading rather than among the readings, and
 they describe the integration rather than the inverter.
 
 The cost of that was weighed against the alternative and is bounded:
-deleting the entry takes all four entities, the device and their states with
+deleting the entry takes all five entities, the device and their states with
 it -- asserted in `tests/test_survey_device_page.py`, because "some entities
 will be created and will stay on the system until manually removed" is a
 fair thing to object to, and the only mechanism that actually behaves that
@@ -1718,12 +1820,32 @@ scale would have to be expressed.
 **Which field to gate on, measured rather than assumed.** `sungrow_version_1`
 is the one that tracks updatable firmware and the one the issue quotes. It
 varies across the committed documents — `01011.95.03`, `.95.12`, `.95.13` —
-and it read on **9 of 9**, where `inverter_firmware_version` read on only 5
-because four documents refuse that block. ARM and DSP are constant across all
-nine and, per that thread, identify hardware rather than firmware, so they
-are the wrong thing to key on. `sungrow_protocol_version` is constant at
-16781568 everywhere so far; it is semantically the *right* field if Sungrow
-bumps it when meanings change, and there is no evidence yet that it does.
+and it read on **10 of 10**, where `inverter_firmware_version` read on only 6
+because four documents refuse that block. ARM and DSP move with the hardware
+platform rather than with firmware — `SAPPHIRE-H` on every RT,
+`PEARL-H` on the SH20T of
+[#772](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/772)
+— which is what that thread predicted and what makes them the wrong thing to
+key on.
+
+**And a version string is only comparable within its platform**, which that
+same reading established and which any gating table has to respect. The
+SH20T's `sungrow_version_1` is `PEARL-H_01011.01.45`, where every RT reads
+`SAPPHIRE-H_01011.95.xx`. The numbering restarts with the platform, so `.01.45`
+is not older than `.95.03` — they are different series that happen to sort.
+A deviation table therefore keys on the **whole string**, platform prefix
+included, and a range comparison is only ever meaningful inside one platform.
+Getting this wrong is not a cosmetic bug: a rule written as "before `.95.14`"
+would silently capture every PEARL-H machine ever made.
+
+`sungrow_protocol_version` was described here as constant at 16781568
+everywhere, and that is no longer true: the SH20T reads **16844544**, which is
+`0x01010700` against the RT's `0x01001100`. It moved with the platform rather
+than within one, so this still does not show Sungrow bumping it when a
+*meaning* changes — which is the property that would make it the right field
+to gate on. What it does show is that the field is not frozen, and that a
+second PEARL-H reading on another firmware is now the cheapest way to find
+out whether it tracks anything.
 
 **What the mechanism should not be.** Not a fork of the register map, and not
 a runtime `if` in a property. The honest shape is what `layout.py` already is
@@ -2220,6 +2342,740 @@ runs without Home Assistant and before the integration is installed, which is
 what a first-contact report needs. And the "one-click feedback upstream" idea
 is now cheap — a diagnostics file is already the payload.
 
+### Milestone 3, slice 6 — the control test
+
+The five slices above ship the write path. Nothing in them establishes that a
+value written arrives at the **scale** everybody involved believes it has, and
+nothing could: `NumberField.encode` and `decode` share one factor, so a wrong
+factor in `registers.py` is invisible to a readback through the library. Write
+700 W, read 700 W, every test green, and the inverter charging at 7 kW.
+
+That is not hypothetical arithmetic. The map mixes units on adjacent
+registers — 13052 is 1 W per count, 33047 is 0.01 kW, 13100 is whole percent
+between two 0.1 % gauges — and `scripts/writes.py:149-155` already names the
+first of those as the most likely future 10× error in the project.
+
+**The measurement is three legs**, and only the first is what a normal
+readback test does:
+
+| Leg | Mechanism | Catches |
+| --- | --- | --- |
+| A, plumbing | library write, library read | the write landed, at the right address, and the device kept it |
+| B, scale | the raw register word against a hand-typed `spec_units_per_count` | a wrong factor **in this library** |
+| C, behaviour | what the inverter does with the engineering value | a wrong scale **in the firmware**, where the raw word is right and leg B is happy |
+
+Leg B's column is typed from V1.1.11 and **never reads `field.scale`**; a column
+derived from the thing under test would be checking that a number equals itself.
+`tests/test_control_test.py` is where the two are made to meet, so the regression
+is caught at commit time rather than on a roof.
+
+**Where it lives.** `src/sungrow_modbus/control_test.py` — the library, because
+two drivers need it and neither may disagree with the other about what a
+measurement means: `scripts/sungrow_control_test.py` for a terminal, and
+`custom_components/sungrow_modbus/control_test.py` for the device page, where it
+is part B of the survey and publishes into the same fingerprint document
+(`control_test`, schema 19).
+
+**The rules it is built on**, each of which cost something to learn:
+
+- **The restore is never budgeted, never deadlined, never skipped.** Every early
+  exit goes through it, including a cancellation. The snapshot is flushed before
+  the first write and removed only after everything is back *and read back*; a
+  leftover becomes a repair on the next setup, which is the only mechanism that
+  still works after the run is gone. That is also the one place this integration
+  writes outside an explicit user action, and it stays inside the rule below
+  because confirming the repair **is** the action.
+- **A probe value must be able to show a decade error.** Both ten times and a
+  tenth of it have to stay inside the accepted range, or a scale error can only
+  appear as exception 0x04 — which is also what an out-of-range value returns,
+  so it settles nothing. Where no such window exists, as for `battery_max_soc`
+  in 50..100, the report says so rather than reporting a pass.
+- **Two points, not one.** A clamp reads back correctly on any single probe that
+  lands on it. The slope between two points a decade apart is zero for a clamp,
+  which no scale error imitates.
+- **The forced charge power is a tenth of the battery's own ceiling**, so a
+  decade error cannot command more than the pack is rated for. That is the whole
+  safety argument for commanding a charge at all, and it is why the power is
+  derived rather than a constant.
+- **Under fluctuating PV, bracket rather than model.** Before and after are two
+  readings of the same undisturbed house; disagreement means `INCONCLUSIVE`,
+  never a failure. Medians throughout — a cloud edge is a step change and an
+  MPPT search is a spike, and a mean survives neither.
+- **The export limit check can only catch a decade too small.** A cap read ten
+  times too large leaves the export exactly where it was, which is
+  indistinguishable from the write doing nothing, from the mode being off, and
+  from a cloud.
+- **A simulator can never produce a finding**, because it stores raw words with
+  no scale of its own. `--simulated` skips the behavioural phase and stamps the
+  report, so a simulator run cannot later be mistaken for a hardware one.
+
+**And one thing the register map nearly got away with:** `0x0000` in register
+13000 means *Running*. The obvious guess cost a first draft a guard that refused
+to run on every healthy inverter, and would then have mistaken a working
+inverter for a stopped one throughout a restart. Both the running and stopped
+sets are now derived from `derived.RUNNING_STATES` rather than typed out.
+
+### The first hardware run (2026-09-15, SH10RT, PV 0 W, SoC 86.6 %)
+
+Run against the maintainer's own inverter on its LAN port, with the YAML package
+still polling it, after dark — so `--allow-dark`, and `--no-restart`. The
+export-limit *behaviour* check needs sun and was skipped; everything else ran,
+because forced charge and discharge are commanded setpoints and do not care
+whether the sun is up. That is the property the design claimed, and this is the
+measurement of it.
+
+**No factor-10 error anywhere** — *true of this run, and not the project's
+conclusion: see "The factor-10 error, found" below.* The decade in 13074 was
+invisible here because feed-in limitation was off at this house, which makes the
+register ignore writes entirely rather than multiply them. Seven of the nine
+controls matched on both legs,
+raw word for raw word, with the two-point slope correct on all four power
+registers. And register **13052** — the one `scripts/writes.py:149-155` names as
+the most likely future 10× error in the map, 1 W per count beside a neighbour at
+0.01 kW — was commanded 300 W and measured **299 W** charging and **298 W**
+discharging, both `CONFIRMED`, brackets agreeing to 24 W and 5.5 W. The forced
+discharge pulled the battery down from 535 W to the commanded 300 W, so the
+command demonstrably overrides self-consumption.
+
+**Two findings about the hardware, neither of which a read-only survey could
+have made:**
+
+*The lesson, which outlives the finding:* **one measurement of something that
+does not repeat is not a property of the hardware.** The tool made that hard to
+see by recording only *that* a write was refused and never which exception came
+back, so there was nothing to compare between the two runs. It records the
+exception now.
+
+* ~~**`battery_min_soc` refuses 3 %.**~~ **Withdrawn 2026-09-19**, when the
+  identical write matched on the same inverter. See the run record below: one
+  refusal and one acceptance is not a firmware limit, and this was written up
+  from a single reading of something that does not repeat.
+* **`export_power_limit` silently ignores writes while feed-in limitation is
+  off.** Writing 900 W to 13074 raised **no exception** and the register still
+  read 10000. Then writing 10000 — the value it was already holding — was
+  *refused*. So the register is effectively read-only while the mode at 13087 is
+  0x55, and it says so in two different and contradictory ways. The `UNCHANGED`
+  verdict exists for exactly this and caught it; a check that only watched for
+  exceptions would have called the first write a success.
+
+**Three bugs in the procedure itself**, none of which any test or the simulator
+could have produced, all fixed:
+
+* **One dropped read excluded a control from the whole run.** The export limit
+  lost its single snapshot read to contention with the running YAML package and
+  was struck off permanently as "could not be read"; a read by hand a minute
+  later answered perfectly. A dropped read on a contended link is a moment, not
+  a state — the same thing `probe.py` learned when it began re-rounding the
+  components a survey had missed. Now three attempts.
+* **Probe values could collide between phases.** The behavioural check chose
+  700 W for a forced charge when 700 W had already gone to the charge limit,
+  defeating the uniqueness that makes a write to the wrong address visible. The
+  taken list is now run-wide.
+* **The restore reported a false failure**, as exit 5 — the one code that means
+  a house is left changed. `export_power_limit` was holding its original value
+  throughout: the probe write had been ignored, so there was nothing to undo,
+  and the write of the original was refused, so the restore called itself
+  failed. A restore is a statement about where the register *is*, not about
+  whether a write succeeded, so it now reads first and writes only on a
+  difference. Re-run afterwards: all twelve registers verified in place, zero
+  writes needed.
+
+Everything was confirmed back afterwards from the house's own Home Assistant,
+independently of this tool's self-report.
+
+### The daylight run, and a finding withdrawn (2026-09-19)
+
+Run at 09:00 local, PV 808 W, state of charge 36.6 % — which is 50 points below
+the first run's, and that turned out to matter.
+
+**Both behavioural checks confirmed again**, at a state of charge nothing like
+the first measurement's: commanded 300 W, measured **299 W** charging and
+**298 W** discharging. Register 13052's scale is now replicated across two days,
+two states of charge, and dark versus daylight.
+
+**`export_power_limit` ignored its write again** — 900 W written, no exception,
+the register still reading 10000. Replicated, so it stands.
+
+**And `battery_min_soc` accepted 3 %**, matching with raw 30 exactly as the
+specification says it should. On 2026-09-15 the identical write was refused, and
+that reading had been written up here as a firmware whose accepted range is
+narrower than V1.1.11's. **That conclusion is withdrawn.** One refusal and one
+acceptance is not a limit; it is an unexplained event, and publishing the first
+reading as a property of the hardware was the mistake.
+
+What made it unexplainable is a gap in the tool rather than in the reading: a
+refused write recorded *that* it was refused and never **which exception came
+back**. Exception 0x04 is the device saying a value is out of range, which is a
+fact about the register. 0x06 is the device saying it is busy, which on a link
+the YAML package was also polling is a fact about the afternoon. `probe.py` has
+distinguished them since an open port 502 turned out not to be an inverter;
+this did not. It does now, into `ControlTest.refusals` and through to the report
+and the published block — so the next refusal can be read rather than guessed at.
+
+**The restore fix is confirmed on hardware.** The same `export_power_limit`
+write-ignored behaviour that produced a false **exit 5** on 2026-09-15 — the one
+code meaning a house is left changed — produced exit 3 and "every setting was
+put back" today, with no register needing a write to get there.
+
+**Neither remaining gap could be closed**, and the reason is the house rather
+than the code: the export-limit check needs more than 2 kW going out and the
+meter read −70 W, and the charge-ceiling check needs a state of charge above
+55 % against 36.6 % after an overnight drain. Both want the middle of the day.
+
+### A conclusion withdrawn the same day (2026-09-19, gerd)
+
+Earlier that afternoon four controls at bar12 read unchanged after being written
+through a dongle, and this document and `CLAUDE.md` both recorded it as *a
+WiNet-S may drop a write entirely*. **That was wrong.** The writes arrive; the
+readback is stale.
+
+gerd settled it because it has what bar12 does not: a cable **and** a dongle to
+one inverter, confirmed by serial and by input 6100 answering on one path and
+being refused on the other.
+
+* **The two paths disagreed before anything was written.** Register 33047 read
+  450 through the dongle and 440 over the cable — same inverter, same minute.
+  That was visible at the time and should have stopped the earlier conclusion
+  where it stood.
+* **A write sent through the dongle arrived.** 430 written over the dongle, and
+  the cable then read 430, while the dongle went on reporting 450.
+
+So `UNCHANGED` through a WiNet-S distinguishes nothing, and `MATCH` is worth
+only what the cache is worth. The bar12 readings are not re-interpreted into a
+second conclusion — there is no cable at that house to check against, so they
+stay unresolved.
+
+**Leg C is the one that survives a dongle**, because watching real power change
+depends on no readback. Which is exactly how the factor-10 error was confirmed
+at bar12 while its readback reported nothing at all — two legs, and only one of
+them was ever trustworthy there.
+
+**The procedure now says so.** `_detect_transport` reads input 6100 during
+preflight, and a dongle endpoint carries a sentence saying its readback verdicts
+describe what the dongle reported rather than what the register holds.
+
+**Two process failures worth naming**, since the finding cost less than they
+did. The first conclusion was drawn from a single house that could not test it,
+having written in the same paragraph that it could not be told apart there. And
+the contradicting evidence — two paths, two answers, one register — was on
+screen before the write that was supposed to be decisive.
+
+### The restart, measured at last (2026-09-19, 12:26)
+
+The one number this project never had, and the procedure got it wrong on the
+first attempt while getting it.
+
+**What the inverter did**, from the run's own reading plus a watch kept
+alongside it:
+
+| | |
+| --- | --- |
+| stop command to a stopped state | **2.0 s**, reporting `0x0002 Key stop`, then settling into `0x0008 Standby` |
+| start command to `0x0040 Running` | **about 4 minutes**, roughly half of it in `0x0020 Starting` |
+| running to generating again | **about 20 s**, and back to its pre-stop 2797 W within two minutes |
+
+A stop is nearly instant; coming back is not. Worth knowing before anybody puts
+a restart in an automation.
+
+**And the procedure declared a false emergency.** It reported *"the inverter did
+not come back; start it by hand"* while the inverter was booting normally. Two
+faults, both mine:
+
+* **`0x0020 Starting` was neither running nor stopped.** `is_running` wanted
+  "running" in the label and `RUNNING_STATES_STOPPED` wanted "stop"; `Starting`
+  matched neither, so it fell between them and the wait could not tell a booting
+  inverter from a silent one. There is now `is_starting`, and a test that pins
+  all three states apart.
+* **The allowance was 180 seconds, divided into ten attempts of eighteen.** So
+  it re-sent the start command nine times into a machine already doing what it
+  had been asked, and gave up at less than half the time the boot actually
+  needs. It now sends once and watches on a single deadline; only a state that
+  is still *stopped* after a minute earns another command, in case the first was
+  lost rather than slow. The deadline is seven minutes -- one machine is one
+  machine, the FAQ's figure for a physical cold boot is five, and the cost of
+  waiting too long is a slow diagnostic where the cost of waiting too little is
+  telling somebody their inverter is dead.
+
+**The guarantee held even so.** The start command had been accepted and the
+inverter recovered on its own; nothing needed starting by hand. But the run had
+already said otherwise, and a false alarm on the one code that means *go and
+look at your inverter* is a real defect, not a cosmetic one.
+
+**`--restart-only` exists now**, added before this run rather than after: timing
+a reboot needs no control writes at all, and a contributor lending their
+inverter for the measurement this project still lacks should not have to accept
+nine register writes as the price.
+
+### The factor-10 error, found (2026-09-19, midday)
+
+**Register 13074 multiplies a write by ten.** This is what the procedure was
+built to find, and it is in the firmware rather than in this repository's map.
+
+Found by forcing the one condition the check had never had. On this house the
+battery absorbs the whole PV surplus, so the meter reads zero export however
+sunny it is — and the export-limit check needs power actually leaving. Capping
+`battery_max_charge_power` to 10 W turned 0 W of export into 2710 W, which is
+what finally let the check run.
+
+It then refused its write, and the refusal was worth more than the check:
+
+| written to 13074 | reads back |
+| --- | --- |
+| 100 | 1000 |
+| 80 | 800 |
+| 50 | 500 |
+| 500 | 5000 |
+| 123 | **1230** |
+| 47 | **470** |
+
+The last two rule out rounding, a clamp, or a coincidence of round numbers.
+
+**It reads in watts and writes in tens of watts.** The read side is right and
+agrees with the inverter's own bounds — 13074 reads 10000 against a 10000 W
+maximum from register 5623. The write side is a decade out. So
+`integer(13073, unit="W")`, one scale for both directions as every other
+register in the map wants, **sets ten times what the user asked for**: a limit
+of 900 W becomes 9000 W.
+
+**Every refusal on this register falls out of it.** The multiply happens before
+the range check, so 3400 becomes 34000, fails against the 10000 maximum, and
+returns exception 0x04. That is why restoring 10000 was refused while the
+register held 10000 — and why writing **1000** is how you actually put 10000
+back, which is how the house was restored.
+
+**Only while feed-in limitation is on.** With 13087 at 0x55 the register ignores
+writes entirely, no exception and no change. That is what the earlier
+"silently read-only" reading saw, and why the readback phase reported
+`UNCHANGED` rather than a decade: it probes with the mode as it found it, which
+here is off. **The procedure would have caught this in leg B on day one had the
+mode been on** — a gap in the test rather than in its design, and the reason
+`UNCHANGED` exists in the vocabulary at all.
+
+**What it means for the YAML package.** Its `number.export_power_limit` writes
+`{{ value | int }}` to the same register at the same scale, so it has carried
+this for years. Anyone who has set an export limit through either product, with
+feed-in limitation enabled, has been limiting at ten times their intended
+figure.
+
+~~**Not yet shippable as a fix.** One machine, one firmware.~~ **Superseded the
+same day.** That caution was right when it was written and was answered by
+measurement rather than by argument: a write-side scale that is right here would
+be wrong on a house whose firmware does not do this, and would fail in the same
+silent direction. Two more houses, two more models and both transports later, it
+is the firmware family. The fix and its confirmations are below.
+
+**The mode condition survived a challenge that nearly withdrew it.** bar12's
+dongle reported 13087 as `0x55` — off — while writes were plainly being
+multiplied, which looks exactly like the condition being wrong. Writing the mode
+*explicitly off* and retrying settled it: the write was then ignored, as at the
+first house. So the condition holds, and what the episode actually exposed is
+that **a dongle's read of 13087 lags its write** — worth knowing on its own,
+since 13087 is the register the export-limit switch displays. It is the first
+sighting of the staleness that was later measured properly at gerd.
+
+**Three mistakes of my own on the way here**, all in code that produced
+well-formed output while reporting the wrong thing:
+
+* the exception detail was added to the refused *readback* path only, so the
+  effect path discarded it and the first refusal said nothing;
+* the second attempt read the refusal **after** calling `undo`, which writes
+  too — so it reported the restore's exception while labelling it the attempt's.
+  The giveaway was the value: `write_register(13073, 10000)` is the original,
+  not the cap under test;
+* `MIN_EXPORT_W` was a flat 2000, a round number with no derivation, and it was
+  the thing standing between this check and its first run. It is now computed
+  from the tolerances the verdict already uses — and it was loosened *after* a
+  measurement failed to clear it, which is recorded in the constant's own
+  comment rather than left for somebody to discover.
+
+### The charge ceiling, measured (2026-09-19, later the same morning)
+
+Run with Home Assistant stopped, so nothing was competing for the link. PV
+2325 W, state of charge 64.4 %, battery charging at 1667 W — which is the state
+the ceiling check has been waiting for since it was written the night before.
+
+**It works, on its first contact with hardware.** The battery was charging at
+1729 W; `battery_max_soc` went to 62.4 %, two percent under the state of charge;
+charging went to **0 W**; and it resumed at 1846 W when the ceiling was put back.
+Drift across the bracket 116.5 W, comfortably inside tolerance.
+
+The other two confirmed again in a house doing something quite different from
+either previous run — this time the battery was *already* charging hard from PV,
+so both checks had to override a real flow rather than start one from idle:
+
+| Check | Before | Commanded | During |
+| --- | --- | --- | --- |
+| forced charge | 1745 W charging | 300 W | **297 W** |
+| forced discharge | 1650 W charging | 300 W | **301 W**, discharging |
+| charge ceiling | 1729 W charging | 62.4 % | **0 W** |
+
+Forced discharge is the one worth looking at twice: it turned a 1650 W charge
+into a 301 W discharge, which is a swing of about 1950 W to a commanded figure,
+and it did it with a MAD of 6 W before and 4 W after.
+
+**And the report had a unit bug**, found by reading this table rather than by a
+test: the ceiling's commanded value printed as `62.4 W`. It is a state of
+charge, in a column otherwise full of real watts, so nothing about it looked
+wrong. `EffectResult` carries the unit with the value now.
+
+**The export-limit check still could not run**, and this is the reading that
+shows why waiting for it is the wrong plan: 2325 W of *production* was 0 W of
+*export*, because the battery was absorbing 1667 W of it. Export only appears
+once the pack stops taking the surplus. Worth weighing against what the check
+can deliver — a limit read a decade too large leaves export exactly where it
+was, indistinguishable from the write doing nothing, so leg B remains the only
+way to catch that direction and leg B already covers the register.
+
+### The run that could not start (2026-09-16)
+
+Attempted in daylight to close the two gaps above, and it never wrote anything:
+two runs died inside the **opening full read** with `Connection lost before
+response was received` — at 5010, then 5114, then 5241, each retry reaching a
+little further into the poll before the link dropped. That progression is the
+signature of session exhaustion rather than a bad block, which fails at the same
+address every time. It is the pattern `doc/development.yaml` recorded on
+2026-09-06, met from a new direction.
+
+Three things were competing for the inverter's few sessions, and the third was
+self-inflicted: the production YAML package polling, a conditions probe, and two
+of my own runs opened back to back. The night before, the same code ran cleanly
+against the same inverter with the same poller — so "it worked yesterday" said
+nothing about the link, only about how many sessions had recently been spent.
+
+Two fixes, both in the CLI driver rather than the library:
+
+* **the opening full read had no retry at all.** The library treats a lost
+  connection as fatal to a poll, correctly — retrying the remaining components
+  would only multiply the timeout — so one drop propagated past every guard the
+  procedure has and killed the run before it could refuse politely;
+* **a short retry is not a retry.** The first attempt at a fix used three
+  seconds and spent all four attempts inside the window where nothing can work.
+  The recovery is **90 seconds of quiet**, so the opening reads now back off 5,
+  20, 45 and 90.
+
+Nothing was written on either attempt, and the structure proves it rather than
+the traceback: the snapshot is flushed before the first write, so no snapshot
+file for a day means no writes that day. All twelve controls were afterwards
+read back at their original values.
+
+### Still unmeasured after two days on hardware
+
+*Two of these three were closed on 2026-09-19 and are kept here with their
+outcomes, because what a check needed before it could run is the part that gets
+forgotten once it has.*
+
+* ~~**the export-limit behaviour check** has never run.~~ **Ran at bar12,
+  2026-09-19**, and it is the only leg that caught the firmware's own decade
+  independently: commanded 300 W, export fell 3616 W → 3011 W, ratio 10.0, exit
+  4. It needed more than 2 kW of export *and* feed-in limitation on, and got
+  there by **discharging the battery** to manufacture the export — which is why
+  that was built. The caveat below still stands and always will: a limit read a
+  decade too *large* leaves the export where it was, indistinguishable from the
+  write doing nothing, so that direction is leg B's alone.
+* ~~**the restart** has never run.~~ **Ran twice, 2026-09-19.** Stop → stopped
+  in **2.0 s** at the reference house and 2.06 s at bar12; start → `0x0040
+  Running` in about **four minutes** (240 s and 260.6 s); Running → generating
+  in 20 s and 2.4 s. Settings survived both. The FAQ's five minutes is for a
+  physical cold boot and remains a different thing.
+* **the forced-charge check** has run once, at night, and is the one still open.
+  It self-skips above 90 % state of charge, which is where the reference battery
+  sat on the second day and where bar12's sat at 100 % on the third.
+
+**Built 2026-09-18: the charge-ceiling check**, which had been designed, left
+out, and recorded here as missing. It puts `battery_max_soc` two percent under
+the current state of charge while the battery is charging, and expects the
+charge to stop. There are four behavioural checks now.
+
+Its direction is the whole reason it is safe. Lowering a *ceiling* stops a
+charge; the mirror-image test on `battery_min_soc` — raising the floor above
+where the battery sits — is an instruction to buy electricity on any hybrid
+permitted to charge from the grid, which is why the guards refuse it and why it
+is deliberately not written.
+
+And the limit of what it establishes is worth stating, because a `CONFIRMED`
+here is easy to over-read: it shows the register is a ceiling the inverter
+*enforces* rather than merely stores. It cannot catch a scale error in either
+direction, since 95 % and 9.5 % are both below a charging battery and both stop
+the charge. That remains leg B's to catch alone.
+
+It needs the battery to be charging and above 55 % — `battery_max_soc` cannot go
+below 50 %, so there has to be room under the state of charge. Both preconditions
+self-skip with a sentence rather than a silent pass.
+
+### The dongle readback question, closed (2026-09-19, gerd)
+
+The open question after the day's writing was whether a WiNet-S readback is
+merely *late*. If its cache expired on a timescale the tool could sit out, legs
+A and B would come back for every dongle user -- which is most of them -- and
+the control test would go from "cannot claim anything here" to "waits eight
+seconds and claims everything". It was the one remaining thread that could have
+**fixed** something rather than measured it, so it was worth the link time.
+
+Measured at gerd, the one site with a cable and a dongle to the same inverter.
+Written over the cable so the write itself was never in doubt, polled over the
+dongle, one connection at a time because holding both open had already dropped
+the link once that day:
+
+| | |
+| --- | --- |
+| cable, before | 33047 = 440 |
+| written over the cable | 420, confirmed 420 over the cable |
+| dongle, +1.4 s to +117.7 s, 24 polls | **450, every single time** |
+
+It never caught up. And 450 is not a value from that minute -- it is what the
+dongle had been reporting for **hours**, through a cable reading of 440 and
+then 420. So the cache is not late, and there is no settling time to offer;
+offering one would only make a stale answer look ripe.
+
+What that fixes in the tool is the *presentation* rather than the measurement.
+The caveat existed already, in the notes at the end of the report. It now goes
+**above the readback table**, because a reader skims a table and believes the
+word `matched`, and the note at the bottom arrives far too late to stop them.
+
+### The factor-10 fix, and the third house that confirmed it (2026-09-19)
+
+`registers.AsymmetricNumberField` is the fix for 13074: the write side is
+divided by ten, the read side is left alone. Three points about the shape,
+because the obvious alternatives are all worse.
+
+* **`scale` stays 1.** It describes what the register *contains*, which is
+  watts -- 10000 back against a 10000 W maximum from register 5623. Only the
+  write direction is a decade out. Setting `scale` to 10 would corrupt every
+  reading to fix every write.
+* **It cannot live in `modbus-connection`.** `NumberField.encode` and `decode`
+  share one `scale` by design, and that library is Home Assistant core's
+  dependency, so the asymmetry belongs here.
+* **It is a stated override in the generator**, `WRITE_UNITS_PER_COUNT` in
+  `scripts/generate_registers.py`, because `src/sungrow_modbus/registers.py` is
+  generated from the entity map and `make gen-check` fails on a hand edit. The
+  entity map could not carry it anyway: it is derived from the YAML package,
+  which has the same bug and reads one scale for both directions.
+
+**Confirmed on hardware at gerd**, a third house, over a **cable** -- the
+transport that makes a readback mean something -- and through `Component.write`,
+the exact path the number entity takes, rather than by restating the arithmetic
+in the test:
+
+```
+writing 900 W through the library...
+13074 raw word now = 900      (before the fix: 9000)
+restored 13074 to 8000
+restored 13087 to 0x55
+```
+
+The restore is a second reading of the same thing, and a stronger one: putting
+8000 W back now sends word 800. Under the old code it would have sent 8000,
+which the firmware multiplies to 80000 -- over U16 and over that house's own
+8000 W maximum -- so it would have come back as exception 0x04. Three houses,
+three models, both transports.
+
+Feed-in limitation was off at gerd, so it was switched on for the write and put
+back. Safe at that house specifically rather than in general: its export limit
+already sat at its own maximum, so the cap bound nothing, and PV was 553 W.
+
+**What the fix does not touch**, and should be said plainly because it is the
+next trap: with feed-in limitation off, a write to 13074 is silently ignored --
+no exception, no change -- before and after. An owner who sets a limit while
+that switch is off gets no limit and no error.
+
+**And the test double had to change with it.** The shared `sungrow_unit` fixture
+now multiplies a write to 13073 by ten, because a double that stored the word it
+was handed is a device nobody owns: against it the fix looks like a bug and the
+bug looks correct. That is the general lesson and it is cheap to state -- **a
+stub more honest than the hardware tests the wrong machine.**
+
+### The fix confirmed behaviourally, and two defects the houses found (2026-09-19, night)
+
+The raw-word confirmation at gerd proves the register holds the right number.
+This is the other half: that the inverter *acts* on it. Run at bar12, the house
+where the decade first showed up behaviourally, through the same dongle.
+
+| | Commanded | Cap actually applied | Verdict |
+| --- | --- | --- | --- |
+| Before the fix | 300 W | ~3000 W (export 3616 → 3011) | `EFFECT_SCALED`, ratio 10.0 |
+| After the fix | 1250 W | **~1250 W** (export 2579 → **1280**) | confirmed |
+
+2.4 % off the commanded figure, against 195 W of drift in a house that moves.
+Two mechanisms, two houses, two transports, two models: the register holds the
+right word at gerd over a cable, and the inverter does the right thing at bar12
+through a dongle. Neither leans on the other.
+
+Getting there cost two defects, both found by hardware and neither by 2600
+tests. They are worth more than the confirmation, because both were in code that
+produced confident, well-formed, wrong output.
+
+**A commanded power that escaped its own safety window.** `_forced_power` took
+the figure from the battery's ceiling so that ten times it stayed inside the
+pack's rating — the stated safety argument for commanding a charge at all. It
+borrowed `choose_probe`, which falls back from the decade window to the *whole
+range* once earlier probes have spent the window's values. Correct for a
+readback, where the number is only written and read. Wrong here, where it is
+**commanded**. At a house with a 5883 W ceiling the dry run resolved a **5800 W
+forced charge** — at night, 5.8 kW bought from the grid, and ten times it is
+58 kW against a pack rated for 5883.
+
+Two things kept it hidden. The window only runs out on a *small* battery, and
+the two houses that had run this before had 10 kW ceilings; and the test called
+`_forced_power` with nothing taken yet, which is the one state in which it
+cannot fail. It is a stated constant now (`FORCED_EFFECT_W`), and the regression
+test crowds the window first.
+
+**A clamp reported as a mismatch, which cost a whole check.** The manufactured
+discharge asked for 3158 W against a ceiling read at preflight as 3200 W; the
+pack accepted 3150 W and the export check was abandoned over **8 W**. The
+ceiling is not a property of the hardware — the same house read 10000 W in the
+afternoon and 3200 W at 99.8 % that night, because a BMS throttles as the pack
+fills and warms. So a clamp near a full battery is the normal case, not an
+anomaly, and asking for the last 1.5 % of a figure that drifts underneath you is
+asking to be clamped.
+
+The discharge now aims `FORCE_EXPORT_HEADROOM` below the ceiling and accepts a
+clamp within `CLAMP_TOLERANCE`, quoting what the device actually took. On the
+re-run the clamp was **1 W** — and that run produced the confirmation above. The
+guard that makes this safe is ordering: decade verdicts are classified *first*
+and excluded, so a 10 % tolerance can never absorb a 90 % shortfall.
+
+**Also measured that night**, at gerd over a cable, at 71 % state of charge:
+forced charge **399 W** and forced discharge **398 W** for 400 W commanded, and
+eight of nine controls matching raw word for raw word with the slopes right.
+That closes the forced-charge check, which had run exactly once before, at night,
+against a battery too full to tell a setting from the pack's own taper.
+
+### The Home Assistant path, on hardware at last (2026-09-19, night)
+
+Every hardware run until now went through the CLI. The button on the device page
+— the path a HACS tester actually uses, and the one `0.1.0a4` ships — had only
+ever run against mocks. Run at the reference house, over a cable, with
+`control_test_export_limit` granted.
+
+It worked end to end: part A 1→81 %, part B 81→100 % on one monotonic bar, 101
+fields read, schema 19 with the `control_test` block, `findings: 0`,
+`not_restored: null`. Three things that had no hardware evidence before:
+
+* **`polling_paused` is real.** `Polling paused: a survey or control test has
+  the link` in the log, from the coordinator, against a live inverter.
+* **The `Store` lifecycle is real.** No snapshot file remained afterwards, which
+  is the tool's own proof that every register was put back *and read back*.
+* **No repair was raised on a clean run**, and the run announced itself with the
+  warning the design promised.
+
+**And it could not have run at all.** `allow_dark` had no equivalent in the Home
+Assistant path — the CLI has `--allow-dark`, the button had nothing. That is not
+a testing inconvenience: a Home Assistant OS user has no terminal, so a button
+that refuses for want of sun means they can never run part B, and in a German
+December that is most of the day. What the refusal costs them is the *readback*
+half, which is the half that finds a factor-10 error and which does not care
+whether the sun is up. The button now always passes `allow_dark=True`; the
+behavioural half still self-skips and says why.
+
+### Leg B on 13074, which had never run (2026-09-19, night)
+
+The last gap in the three-leg check, and it was on the one register with a known
+firmware quirk. 13074 ignores writes entirely while feed-in limitation is off, so
+at any house with it off — most of them — the probe reported `UNCHANGED` and leg
+B did not happen. That matters more than it sounds: **leg B is the only leg that
+can catch a cap read a decade too *large*.** A cap ten times too big leaves the
+export where it was, which is indistinguishable from the write doing nothing, so
+leg C cannot cover for it.
+
+`_lift_export_mode` switches the mode on for that probe alone, and back to the
+snapshot's word the moment the register is restored — seconds rather than the
+phase, because while it is up the house is capped at whatever 13074 is holding,
+which is a probe value. Only where `--enable-export-limit` was granted.
+
+Measured immediately afterwards at the reference house, and it is the first
+**exit 0** this procedure has produced:
+
+| Control | Reg | Per count | Wrote | Raw | Expected raw | Slope | Verdict |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `export_power_limit` | 13074 | 1 W | 900 W | **900** | 900 | **1** | matched |
+
+Before the fix that write left **9000** in the register. The slope of 1 is the
+stronger half: the two-point test ran, and a decade error would have given 0.1
+or 10. All nine controls matched, forced charge and discharge both landed on
+exactly 1250 W, and the export cap measured 1245.5 W against 1250 commanded.
+
+So 13074 now has all three legs independently: A and B over a cable at the
+reference house, C there and again at bar12 through a dongle, and B again at
+gerd. Three houses, three models, both transports.
+
+**Two smaller things fixed in the same pass**, both found by reading rather than
+by failing. A config entry removed while a snapshot existed left the `Store`
+file in `.storage/` for good, because nothing implemented `async_remove_entry`.
+And the repair issue used `WARNING` whether the inverter was merely holding a
+test's setting or **still stopped** — those are not the same problem, and the
+severity now says so.
+
+### A restructuring pass, and four faults it turned up (2026-09-19, night)
+
+Cutting the integration along what a piece *decides* rather than along size.
+The numbers are the summary, not the point -- the point is that each of these
+was one function or one file doing several jobs, and the jobs are now findable:
+
+| | before | after |
+| --- | --- | --- |
+| `config_flow.py` | 2063 lines, first class at 648 | ~1600, first class at 329 |
+| `async_setup_entry` | 177 lines | 81, a list of named steps |
+| `_async_options_schema` | 139 lines | 36, one line per section |
+| `fingerprint.async_build` | 179 lines | 133, sections as builders |
+| `control_test._bracket` | 188 lines | 123, with `_verdict` beside it |
+| battery + wallbox coordinators | 194 lines | 102, sharing a documented base |
+
+`config_flow_schemas.py` holds the forms; `config_flow.py` holds the steps that
+choose between them. `SungrowSubDeviceCoordinator` holds what the pack and the
+wallbox share. `_verdict` holds the half of `_bracket` that has no `await` in
+it -- the decisions, which were the half nobody could find.
+
+**The faults are worth more than the tidying.** None of them would have been
+found by reading the diff; they came out of asking *why* a thing was shaped the
+way it was.
+
+* **Nothing logged a traceback where it mattered most.** `repairs.py` caught a
+  failed restore -- the one path in this integration that means somebody's
+  house is left carrying a test's values -- and logged the message only. So did
+  the survey's own failure path, and `diagnostics.py` had **no logger at all**,
+  swallowing any error into one line inside a downloaded JSON file held by
+  somebody who usually cannot act on it. All three now use `_LOGGER.exception`.
+* **The write platforms had no `PARALLEL_UPDATES`.** Everything on this
+  endpoint is already serialized behind one connection, so two writes issued at
+  once do not go faster -- they queue, and the second's timeout starts while it
+  waits. Worse, these registers interlock: `battery_min_soc` and
+  `battery_max_soc` are refused if they cross, so an automation that sets both
+  in one call has an ordering that must not be raced. Now 1 on `number`,
+  `switch` and `select`; 0 where nothing talks to the inverter.
+* **The integration reached into the library's private attributes** --
+  `device._fields`, `device._read_or_none` -- and into a coordinator's
+  `_inverter`. That is worse here than it usually is: the library is pinned by
+  version in the manifest, so renaming a private would ship as a perfectly good
+  release and break the integration at runtime, and
+  `check_pinned_library.py` compares *imports* and cannot see an attribute.
+  `field_names`, `probed_capabilities` and `inverter_serial` are the public
+  answers.
+* **The control test action had no strings at all.** `run_control_test` was in
+  `services.yaml`, registered, and working -- and `strings.json` had no entry
+  for it, so the one action that **writes to somebody's inverter** would have
+  appeared in the action picker as a slug with no description, and its device
+  field with no label. Nothing failed; it read as unfinished, which for that
+  action is worse than a crash. Three files describe every action and all three
+  must agree, so a test now says so and fails when one is removed.
+* **One `isinstance(value, bool)` check, written three times.** It looks like
+  belt and braces and is not: `isinstance(True, int)` is `True` in Python, so
+  without it a boolean reaches Home Assistant as a sensor reading of 1. Now
+  `as_reading`, explained once.
+
+**What was deliberately not done.** `scripts/sungrow_scan/probe.py` is 3833
+lines and the largest readability problem left. It is also the tool users run
+against their own inverters, with roughly half its 66
+top-level definitions untouched by any test, and tests that reference it as
+`probe.X` would break silently on a move that forgot a re-export. It wants a
+split; it wants one done deliberately, not unattended.
+
+`control_test._bracket` and `_verdict` are still above the complexity
+threshold, and that is essential rather than accidental: a decision tree with
+seven outcomes is complex because the question is. Splitting it further would
+scatter the ordering that *is* the design -- drift first, then the decade, then
+obedience, then the sign.
+
 ### Verified against real hardware (2026-09-07)
 
 Milestone 3 shipped having only ever written to a simulator. Run against the
@@ -2376,7 +3232,7 @@ What follows, in order of how much it buys:
    isolation is in fact *working*: each of these failures now costs one field
    instead of a tier, which is the outcome the module exists for, and the
    survey reported it as an outstanding problem. `layout.py` is not in the
-   zip, so the fact travels in `scan_plan.json` as `isolated` on the eight
+   library, so the fact travels in `scan_plan.json` as `isolated` on the eight
    component entries that exist only because a field was moved out of its
    tier -- and the advice now ends "nothing to do", pointing at
    `doc/compatibility.md` instead, which is where another machine refusing a
@@ -2667,9 +3523,12 @@ So capability is measured, and the structure for measuring it exists:
 - **One command**, [scripts/sungrow_scan/collect.py](../scripts/sungrow_scan/collect.py),
   which finds the devices, asks only what no register can answer, runs the
   block read test, reads every register in the map, dumps 1510 raw addresses,
-  and writes a publishable document plus a private one. It ships as a **zip**
-  a contributor runs on bare Python with nothing installed, proven end to end
-  against the simulator.
+  and writes a publishable document plus a private one. It needs nothing
+  installed -- `portable.py` is handed over on its own, and the rest of the
+  directory imports it -- and `make scan-sim` runs the whole thing against the
+  simulator. (A `sungrow_scan.zip` shipped the directory until HACS made the
+  survey reachable from the device page; the zip went, the standalone
+  requirement stayed.)
 - **A document schema that says what it measured**, at version 15, with the
   claims a person typed kept in `user_inputs` where they cannot be mistaken
   for readings. Nine documents from four houses are committed in

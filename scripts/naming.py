@@ -88,6 +88,11 @@ OVERRIDES: dict[str, str] = {
     # so they sort together on a device page among entities that are
     # otherwise all readings.
     "run_survey": "Run capability survey",
+    # Named for what it does to the inverter rather than for what it measures.
+    # "Control test" alone reads like a diagnostic that looks at the controls;
+    # this one writes to them, and the one place a person is guaranteed to see
+    # that word is the button they are about to press.
+    "run_control_test": "Run control write test",
     "survey_progress": "Survey progress",
     "survey_step": "Survey step",
     "survey_finished": "Survey finished",

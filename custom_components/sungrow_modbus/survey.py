@@ -21,8 +21,18 @@ Three things this buys that the flow could not:
 - **A document can be downloaded**, because a signed URL can be put in a
   notification. See `download.py`.
 
-Nothing here talks Modbus. `fingerprint.async_build` does the reading and
-calls back with a fraction and a label; this turns those into state.
+**A run has two parts.** Part A is the capability survey and reads only. Part
+B is the control test, which **writes** to each control and puts it back, and
+runs only when a caller asks for it by name -- the control test button and its
+action, and nothing else. One runner owns both because they share one
+serialized connection, and a Sungrow grants very few sessions: two runs at once
+would interleave, and with writes in the picture that means restoring each
+other's probe values.
+
+Nothing here talks Modbus. `fingerprint.async_build` does the reading,
+`control_test.ControlTestRunner` does the writing, and both call back with a
+fraction and a label; this turns those into state and splits one progress bar
+between them.
 """
 
 from __future__ import annotations
@@ -39,8 +49,20 @@ from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_call_later
 from homeassistant.util import dt as dt_util
+from sungrow_modbus.control_test import (
+    Options as ControlOptions,
+    planned_steps as control_test_steps,
+)
 
-from .const import DISCORD_URL, DOMAIN, LINK_VALID, SURVEY_ISSUE_URL
+from .const import (
+    CONF_CONTROL_TEST_EXPORT,
+    CONF_CONTROL_TEST_RESTART,
+    CONF_SURVEY_DUMP,
+    DISCORD_URL,
+    DOMAIN,
+    LINK_VALID,
+    SURVEY_ISSUE_URL,
+)
 
 if TYPE_CHECKING:
     from . import SungrowConfigEntry
@@ -50,6 +72,13 @@ _LOGGER = logging.getLogger(__name__)
 #: Dispatcher signal, per entry, fired whenever the state below changes.
 #: Entities subscribe to it rather than polling the runner.
 SIGNAL_SURVEY = "sungrow_modbus_survey_{}"
+
+#: The two halves of a full run. Part A asks what is here and answers it
+#: entirely by reading; part B asks whether writing to it works, which cannot
+#: be answered without writing. One runner owns both because they share one
+#: serialized connection, and a Sungrow grants very few sessions.
+PART_A = "survey"
+PART_B = "control test"
 
 
 @dataclass(frozen=True)
@@ -84,6 +113,19 @@ class SurveyState:
 
     error: str | None = None
     """Why the last run failed, or None. Kept until the next run starts."""
+
+    part: str | None = None
+    """Which half is running: `PART_A` reads, `PART_B` writes.
+
+    Recorded as state rather than inferred from the step label, because the
+    distinction is the one a person most needs while it is happening -- part A
+    only looks at their inverter and part B changes its settings, and somebody
+    deciding whether to interrupt a run deserves to know which is in front of
+    them without reading the label carefully.
+    """
+
+    control_test: dict[str, Any] | None = field(default=None, repr=False)
+    """Part B's result, or None when the last run only read."""
 
     document: dict[str, Any] | None = field(default=None, repr=False)
     """The last document, held in memory for the download view to serve.
@@ -124,13 +166,22 @@ class SurveyRunner:
         async_dispatcher_send(self.hass, self.signal)
 
     @callback
-    def async_start(self, options: dict[str, Any] | None = None) -> bool:
-        """Begin a survey. Returns False when one is already running.
+    def async_start(
+        self, options: dict[str, Any] | None = None, *, control_test: bool = False
+    ) -> bool:
+        """Begin a run. Returns False when one is already running.
 
-        Refusing rather than queueing: two surveys at once would interleave
-        their reads on one serialized connection, and a Sungrow grants few
-        sessions. The button is disabled while one runs, so this is the
-        second line of defence rather than the first.
+        `control_test` adds part B, which **writes** to every control the
+        integration can write to and puts each one back. It is off unless a
+        caller asks for it, and the only caller that asks is the control test
+        button and its matching action -- so the survey button, the options
+        flow and the diagnostics download cannot acquire the power to write by
+        inheriting a default.
+
+        Refusing rather than queueing: two runs at once would interleave on one
+        serialized connection, and a Sungrow grants few sessions. With part B
+        in the picture that stops being a politeness -- interleaved *writes*
+        are how two runs would restore each other's probe values.
         """
         if self._task is not None and not self._task.done():
             _LOGGER.debug("Survey already running for %s", self.entry.title)
@@ -150,15 +201,69 @@ class SurveyRunner:
             finished=None,
             error=None,
             fields_read=None,
+            part=PART_A,
+            control_test=None,
         )
         self._task = self.entry.async_create_background_task(
             self.hass,
-            self._async_run(options),
+            self._async_run(options, control_test),
             name=f"sungrow survey {self.entry.entry_id}",
         )
         return True
 
-    async def _async_run(self, options: dict[str, Any] | None) -> None:
+    def _shares(self, options: dict[str, Any], control_test: bool) -> tuple[float, int]:
+        """Split one progress bar between the two parts, before either starts.
+
+        Both halves can say how many steps they will report without being run,
+        which is what makes a single honest bar possible. The split is by step
+        count rather than by time, and that is a known approximation: part B
+        spends most of its minutes *waiting* inside a sampling window rather
+        than reading, so its share of the bar advances more slowly than part
+        A's. The alternative -- a bar that resets, or a second bar -- is worse
+        for the person watching, and the step label names the part throughout.
+        """
+        from .fingerprint import planned_steps as survey_steps
+
+        dumping = bool(options.get(CONF_SURVEY_DUMP, False))
+        a_steps = survey_steps(dumping)
+        if not control_test:
+            return 1.0, a_steps
+        b_steps = control_test_steps(self._control_options())
+        return a_steps / (a_steps + b_steps), a_steps
+
+    def _device(self) -> Any:
+        """Return the inverter this entry's coordinators share."""
+        return next(iter(self.entry.runtime_data.coordinators.values())).device
+
+    async def _async_control_test(self, share: float) -> dict[str, Any]:
+        """Run part B, reporting into the tail of the same progress bar.
+
+        The runner is built here rather than held, because it owns a shutdown
+        hook for the window in which the inverter may be stopped and that hook
+        should not outlive the run that armed it.
+        """
+        from .control_test import ControlTestRunner
+
+        self._set(part=PART_B, step="starting the control test")
+        runner = ControlTestRunner(self.hass, self.entry)
+        return await runner.async_run(
+            on_progress=lambda fraction, label: self._on_progress(
+                share + fraction * (1.0 - share), f"{PART_B}: {label}"
+            )
+        )
+
+    def _control_options(self) -> ControlOptions:
+        """Return what part B has leave to do, from this entry's options."""
+        return ControlOptions(
+            restart=bool(self.entry.options.get(CONF_CONTROL_TEST_RESTART, False)),
+            enable_export_limit=bool(
+                self.entry.options.get(CONF_CONTROL_TEST_EXPORT, False)
+            ),
+        )
+
+    async def _async_run(
+        self, options: dict[str, Any] | None, control_test: bool = False
+    ) -> None:
         """Build the document, and end in a state either way.
 
         A failure is kept and shown rather than raised. Somebody who pressed
@@ -166,32 +271,59 @@ class SurveyRunner:
         here is worth reporting in its own right -- the four states a probe
         can end in exist precisely because "it did not work" is not one
         answer but several.
+
+        Part B runs **after** part A and only if part A succeeded. Not for
+        tidiness: part A is what establishes that this device answers, what it
+        is and what it has, and writing to a device none of that is known about
+        is exactly the thing the control test's own guards exist to refuse.
         """
         # Imported here rather than at module level: `fingerprint` imports
         # the library, and this module is imported by the platforms.
-        from .fingerprint import async_build
+        from .fingerprint import async_build, attach_control_test
 
+        share, _a_steps = self._shares(
+            options or dict(self.entry.options), control_test
+        )
         try:
-            document = await async_build(
-                self.hass,
-                self.entry,
-                options,
-                on_progress=self._on_progress,
-                # Only here. This is the one caller that can spend five
-                # minutes: a background task, with a progress bar somebody
-                # can watch and a notification at the end. The diagnostics
-                # download builds the same document and leaves it off,
-                # because nothing there survives a wait like that.
-                allow_dump=True,
-            )
-        except Exception as err:  # the message is the useful part
-            _LOGGER.warning("Survey failed for %s: %s", self.entry.title, err)
+            # Both parts run with this entry's own polling held off. They read
+            # and write the same endpoint the coordinators do, over the same
+            # serialized connection, so without this a survey measures the
+            # inverter *and* the contention it is causing -- and part B's power
+            # sampling competes with tier polls for the whole of every window.
+            async with self.entry.runtime_data.async_paused():
+                document = await async_build(
+                    self.hass,
+                    self.entry,
+                    options,
+                    on_progress=lambda fraction, label: self._on_progress(
+                        fraction * share, label
+                    ),
+                    # Only here. This is the one caller that can spend five
+                    # minutes: a background task, with a progress bar somebody
+                    # can watch and a notification at the end. The diagnostics
+                    # download builds the same document and leaves it off,
+                    # because nothing there survives a wait like that.
+                    allow_dump=True,
+                )
+                if control_test:
+                    block = await self._async_control_test(share)
+                    attach_control_test(document, block, self._device())
+        except Exception as err:  # a button press must not be able to crash the loop
+            # `exception`, not `warning`: this catches everything, so the type
+            # alone is often useless -- a bare `KeyError: 'realtime'` says
+            # nothing about which of a dozen lookups it was. The person who
+            # hits this is usually a contributor who will paste the log into
+            # an issue, and a traceback is the difference between a fix and a
+            # conversation. The *state* keeps the short form, because that one
+            # is read in a dialog.
+            _LOGGER.exception("Survey failed for %s", self.entry.title)
             self._set(
                 running=False,
                 step=None,
                 fraction=None,
                 finished=dt_util.now(),
                 error=f"{type(err).__name__}: {err}",
+                part=None,
             )
             return
 
@@ -207,6 +339,8 @@ class SurveyRunner:
             fields_read=len(readings.get("values", {})),
             error=None,
             document=document,
+            part=None,
+            control_test=document.get("control_test"),
         )
         try:
             self._async_offer_the_document(document)

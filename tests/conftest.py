@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+from typing import Any
 from unittest.mock import patch
 
 from modbus_connection.mock import MockModbusConnection, MockModbusUnit
@@ -69,12 +70,38 @@ SH10RT_HOLDING_REGISTERS: dict[int, int | list[int]] = {
 }
 
 
+#: Protocol address of the export power limit (register 13074).
+EXPORT_LIMIT_ADDRESS = 13073
+
+
 @pytest.fixture
 def sungrow_unit() -> MockModbusUnit:
-    """Return a mock unit answering like an SH10RT."""
+    """Return a mock unit answering like an SH10RT.
+
+    Including the one place this firmware does not behave like a register.
+    **13074 multiplies a write by ten before storing it** -- measured six times
+    on the reference machine and replicated at a second house on a different
+    model through a dongle -- so a double that stored the word it was handed
+    would be a device nobody owns, and the asymmetric write scale that
+    `registers.AsymmetricNumberField` exists for would look like a bug here and
+    be correct on a roof.
+
+    What is deliberately *not* modelled: the register only behaves this way
+    while feed-in limitation is on, and ignores writes entirely while it is
+    off. Modelling that would turn every write in the suite into a silent
+    no-op, because the mode register is unseeded here -- so the multiply is
+    unconditional and the mode-dependence is tested where it belongs, against
+    hardware and in the control test's `UNCHANGED` verdict.
+    """
     unit = MockModbusConnection().for_unit(1)
     unit.input = dict(SH10RT_INPUT_REGISTERS)
     unit.holding = dict(SH10RT_HOLDING_REGISTERS)
+
+    def decuple_the_export_limit(event: Any) -> None:
+        if event.address == EXPORT_LIMIT_ADDRESS:
+            unit.holding[event.address] = event.values[0] * 10
+
+    unit.on_write(decuple_the_export_limit)
     return unit
 
 

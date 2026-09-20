@@ -219,8 +219,13 @@ MODULE_SHIFT = 8
 INDEX_MASK = 0xFF
 
 
-def _module(word: int | None) -> int | None:
+def _module(word: float | None) -> int | None:
     """Return the module a position word names, or None.
+
+    Takes a float because the position registers are declared as scale-1
+    `gauge` fields, which decode to a float even though the register holds a
+    word. The `int()` below is what makes that harmless, and stating the
+    parameter honestly is cheaper than restating fourteen field declarations.
 
     Zero is None rather than module 0. The registers are one-based, so a zero
     word is not "module 0, cell 0" -- it is a pack that has not answered
@@ -232,8 +237,11 @@ def _module(word: int | None) -> int | None:
     return int(word) >> MODULE_SHIFT or None
 
 
-def _index(word: int | None) -> int | None:
-    """Return the cell or sensor a position word names, or None."""
+def _index(word: float | None) -> int | None:
+    """Return the cell or sensor a position word names, or None.
+
+    A float for the same reason as `_module` above.
+    """
     if not word:
         return None
     return int(word) & INDEX_MASK or None

@@ -30,7 +30,16 @@ class UpdateReport:
         )
 
 
-def present(value: object) -> object:
+#: What a decoded register can actually be.
+#:
+#: Stated once so that `field()` and `present()` do not have to say `object`
+#: and leave every caller to launder it. No field in this map declares an
+#: `enum_type` or a `convert`, so these four are the whole set; an IntEnum
+#: would be covered by `int` anyway.
+RegisterValue = float | int | str | None
+
+
+def present(value: RegisterValue) -> RegisterValue:
     """Return the value, or None where the device said it has none.
 
     The library already maps the numeric "unavailable" codes to None -- 0xFFFF

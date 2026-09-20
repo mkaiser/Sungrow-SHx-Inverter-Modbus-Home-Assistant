@@ -36,6 +36,34 @@ OVERRIDES: dict[int, int | list[int]] = {
     5016: [7000, 0],  # total DC power, W
     5007: 285,  # inverter temperature, x0.1 -> 28.5 C
     13033: [4200, 0],  # total active power, W
+    # Running, on both sides of register 13000. The address is in two of
+    # Sungrow's tables -- read-only over 0x04 where it is the running state,
+    # read/write over 0x03/0x06/0x10 where it is Start/Stop -- and the seed used
+    # to say "Stop" on the input side, which is a faithful reading of nothing in
+    # particular and enough to make the control test refuse to run at all.
+    #
+    # Note the value: **0x0000 means Running**, not stopped, per the map in
+    # `derived.RUNNING_STATES`. The obvious guess is wrong.
+    12999: 0x0000,
+    # Bounds the inverter is supposed to state about itself. Without them the
+    # control test correctly declines to guess, which is worth seeing once but
+    # not worth having as the only thing the simulator can show.
+    5621: 0,  # export power limit minimum, 10 W per count
+    5622: 1000,  # export power limit maximum -> 10 kW
+    5627: 50,  # BDC rated power, 100 W per count -> 5 kW
+}
+
+#: Registers that exist only in the holding space and that no sensor reads, so
+#: nothing above would ever create them.
+#:
+#: Register 13000 is the case that matters. It is in **two** of Sungrow's
+#: tables: read-only over function code 0x04, where reading it gives the running
+#: state, and read/write over 0x03/0x06/0x10, where it is Start/Stop. Only the
+#: first is a sensor, so only the first was ever seeded -- which left the one
+#: piece of this project that can turn an inverter off with no way to be
+#: exercised except against somebody's house.
+HOLDING_ONLY: dict[int, list[int]] = {
+    12999: [0xCF],  # Start/Stop, currently "started"
 }
 
 STRINGS = {
@@ -74,6 +102,30 @@ def _default_value(entry: dict[str, Any], width: int) -> list[int]:
     return [1] + [0] * (width - 1)
 
 
+def _apply_fixtures(spaces: dict[str, dict[int, list[int]]]) -> None:
+    """Overwrite the defaults where a plausible value matters more than a zero.
+
+    Three passes, in this order, because each is narrower than the last:
+    `STRINGS` gives the text fields something readable, `OVERRIDES` pins
+    individual registers a probe would otherwise misread, and `HOLDING_ONLY`
+    adds words that exist on the holding side alone -- 12999 among them, which
+    is what makes the control test's restart phase exercisable offline.
+    """
+    for address, text in STRINGS.items():
+        for space in spaces.values():
+            if address in space:
+                space[address] = _string_words(text, len(space[address]))
+
+    for address, value in OVERRIDES.items():
+        words = value if isinstance(value, list) else [value]
+        for space in spaces.values():
+            if address in space:
+                space[address] = words
+
+    for address, words in HOLDING_ONLY.items():
+        spaces["holding"][address] = list(words)
+
+
 def collect() -> dict[str, dict[str, list[int]]]:
     """Walk the YAML package and build the seed."""
     document = yaml.load(SOURCE.read_text(encoding="utf-8"), Loader=_SecretLoader)
@@ -103,17 +155,7 @@ def collect() -> dict[str, dict[str, list[int]]]:
         width = int(entry.get("count", WIDTHS.get(data_type, 1)))
         spaces[space][int(entry["address"])] = _default_value(entry, width)
 
-    for address, text in STRINGS.items():
-        for space in spaces.values():
-            if address in space:
-                space[address] = _string_words(text, len(space[address]))
-
-    for address, value in OVERRIDES.items():
-        words = value if isinstance(value, list) else [value]
-        for space in spaces.values():
-            if address in space:
-                space[address] = words
-
+    _apply_fixtures(spaces)
     return {
         name: {str(address): words for address, words in sorted(space.items())}
         for name, space in spaces.items()

@@ -18,6 +18,9 @@ measured here, so 248 is tried and nothing is assumed about it.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 #: Unit ids a wallbox may answer on, in the order to try them.
 #:
 #: 3 first, because that is the one measured: a WiNet-S forwards the wallbox
@@ -49,7 +52,9 @@ IDENTITY_LENGTH = 5
 IMPLAUSIBLE = (0, 0xFFFF)
 
 
-async def probe_units(unit_for, units: tuple[int, ...] = UNITS) -> int | None:
+async def probe_units(
+    unit_for: Callable[[int], Any], units: tuple[int, ...] = UNITS
+) -> int | None:
     """Return the unit id a wallbox answers on, or None.
 
     `unit_for` is called with a unit id and returns something with
@@ -79,7 +84,7 @@ async def probe_units(unit_for, units: tuple[int, ...] = UNITS) -> int | None:
     return None
 
 
-def model_name(words) -> str | None:
+def model_name(words: list[int]) -> str | None:
     """Decode a model name from the identity registers, or None.
 
     Sungrow fills a text field it cannot answer with 0x00, which decodes to

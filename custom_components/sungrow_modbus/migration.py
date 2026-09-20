@@ -48,7 +48,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.util import slugify
 from sungrow_modbus import Capability
 
-from .const import DOMAIN
+from .const import CONF_LEGACY_SLOT, DOMAIN
 from .derived_descriptions import DERIVED_BINARY_SENSORS, DERIVED_SENSORS
 from .entity import SungrowEntityDescription
 from .number_descriptions import NUMBER_DESCRIPTIONS
@@ -71,20 +71,108 @@ DESCRIPTIONS: tuple[tuple[str, SungrowEntityDescription], ...] = (
 )
 
 
+#: The YAML package's own sensor holding the inverter's serial number.
+#:
+#: The key to a two-inverter migration, and the reason it needs no question.
+#: Its **state** is that inverter's serial, so an entry can find which of the
+#: YAML's numbered slots was its own device by comparing against a serial it
+#: already knows -- rather than asking the owner to remember which physical
+#: inverter they called `inv 2` when they set the package up, possibly years
+#: ago, in a file they may since have deleted.
+LEGACY_SERIAL_UNIQUE_ID = "sg_inverter_serial"
+
+#: What *registered* that sensor, which is not the domain it lives in. The
+#: YAML package reads the serial over Modbus, so the registry records the
+#: platform as `modbus` while the entity is a `sensor`. Getting this wrong
+#: costs nothing visible -- the lookup simply never matches, and a
+#: multi-inverter house silently migrates as though it had one inverter.
+LEGACY_SERIAL_PLATFORM = "modbus"
+LEGACY_SERIAL_DOMAIN = "sensor"
+
+#: The suffixes a YAML install can have used, in the order they are tried.
+#:
+#: `legacy/modbus_sungrow.yaml` carries none;
+#: `modbus_sungrow_multiple_inverters_<n>.yaml` appends ` inv <n>` to every
+#: name and `_inv_<n>` to every unique_id. Both shapes exist in the wild for a
+#: first inverter: the generator makes an `_inv_1` file, so a two-inverter
+#: house may be running either the plain file plus `_inv_2`, or `_inv_1` plus
+#: `_inv_2`. Which is why this is a search rather than arithmetic on an index.
+LEGACY_SUFFIXES: tuple[str, ...] = ("", "_inv_1", "_inv_2", "_inv_3")
+
+
+@callback
+def async_legacy_suffix(hass: HomeAssistant, serial: str | None) -> str | None:
+    """Return which of the YAML package's inverter slots holds this device.
+
+    `""` for a single-inverter install, `"_inv_2"` for the second inverter of a
+    multi-inverter one, and `None` when the question cannot be answered --
+    which is not a failure and must not be treated as `""`. Claiming the first
+    inverter's ids for the second inverter's entry would hand one device the
+    other's years of history, silently, and there is no undoing that by
+    guessing again.
+
+    Answered by **evidence rather than by asking**: the YAML's serial sensor
+    for each slot holds that inverter's own serial as its state, and this entry
+    already knows which serial it is talking to. A match is proof; the absence
+    of one is only ignorance.
+
+    Unanswerable in two ordinary cases, both of which mean the YAML package is
+    not running right now: the package has already been removed, or the sensor
+    is unavailable because the inverter is. So a caller that gets `None` should
+    fall back to what it has stored rather than re-deriving.
+    """
+    if not serial:
+        return None
+    registry = er.async_get(hass)
+    for suffix in LEGACY_SUFFIXES:
+        entity_id = registry.async_get_entity_id(
+            LEGACY_SERIAL_DOMAIN,
+            LEGACY_SERIAL_PLATFORM,
+            f"{LEGACY_SERIAL_UNIQUE_ID}{suffix}",
+        )
+        if entity_id is None:
+            continue
+        state = hass.states.get(entity_id)
+        if state is not None and state.state == serial:
+            _LOGGER.debug(
+                "Serial %s matches the YAML package's %s slot (%s)",
+                serial,
+                suffix or "single-inverter",
+                entity_id,
+            )
+            return suffix
+    return None
+
+
 def legacy_entity_id(
-    platform: str, description: SungrowEntityDescription
+    platform: str, description: SungrowEntityDescription, suffix: str = ""
 ) -> str | None:
     """Return the entity_id the YAML package gave this entity, if it had one.
 
     Derived the same way Home Assistant derived it in the first place — by
     slugifying the name — rather than from a table, so the two cannot drift.
+
+    `suffix` is a slot from `LEGACY_SUFFIXES`, and it is applied to the **name**
+    rather than to the finished id, because that is where the generator applies
+    it: `modbus_sungrow_multiple_inverters_2.yaml` renames `Total DC power` to
+    `Total DC power inv 2`, and Home Assistant slugified *that*. Appending
+    `_inv_2` to the id reaches the same answer here and would stop doing so the
+    first time a name contained something slugify treats differently.
     """
     if description.legacy_name is None:
         return None
-    return f"{platform}.{slugify(description.legacy_name)}"
+    name = description.legacy_name
+    if suffix:
+        name = f"{name} inv {suffix.removeprefix('_inv_')}"
+    return f"{platform}.{slugify(name)}"
 
 
-def legacy_entity_ids() -> frozenset[str]:
+def legacy_unique_id(description: SungrowEntityDescription, suffix: str = "") -> str:
+    """Return the YAML unique_id for one description in one inverter slot."""
+    return f"{description.legacy_unique_id}{suffix}"
+
+
+def legacy_entity_ids(suffix: str = "") -> frozenset[str]:
     """Return the entity_id each YAML entity had **if it was never renamed**.
 
     Only the naming tests use this. Identification goes through
@@ -93,12 +181,14 @@ def legacy_entity_ids() -> frozenset[str]:
     return frozenset(
         entity_id
         for platform, description in DESCRIPTIONS
-        if (entity_id := legacy_entity_id(platform, description)) is not None
+        if (entity_id := legacy_entity_id(platform, description, suffix)) is not None
     )
 
 
 @callback
-def async_legacy_entities(hass: HomeAssistant) -> dict[tuple[str, str], str]:
+def async_legacy_entities(
+    hass: HomeAssistant, suffix: str = ""
+) -> dict[tuple[str, str], str]:
     """Return each description's YAML entity, as `{(platform, key): id now}`.
 
     Keyed by platform *and* key, because a setting has two descriptions with
@@ -128,7 +218,9 @@ def async_legacy_entities(hass: HomeAssistant) -> dict[tuple[str, str], str]:
         if not (description.legacy_unique_id and description.legacy_platform):
             continue
         entity_id = registry.async_get_entity_id(
-            platform, description.legacy_platform, description.legacy_unique_id
+            platform,
+            description.legacy_platform,
+            legacy_unique_id(description, suffix),
         )
         if entity_id is not None:
             found[platform, description.key] = entity_id
@@ -136,25 +228,30 @@ def async_legacy_entities(hass: HomeAssistant) -> dict[tuple[str, str], str]:
 
 
 @callback
-def async_legacy_ids_known(hass: HomeAssistant) -> set[str]:
+def async_legacy_ids_known(hass: HomeAssistant, suffix: str = "") -> set[str]:
     """Return the entity ids the YAML package's own entities hold right now.
 
-    Evidence that it is or was installed.
+    Evidence that it is or was installed. `suffix` narrows that to one
+    inverter's slot, so a second inverter is offered its *own* history rather
+    than the first one's -- which is what it would be offered if this kept
+    answering for the unsuffixed set.
     """
-    return set(async_legacy_entities(hass).values())
+    return set(async_legacy_entities(hass, suffix).values())
 
 
 @callback
-def keys_for(entity_ids: set[str]) -> frozenset[tuple[str, str]]:
+def keys_for(entity_ids: set[str], suffix: str = "") -> frozenset[tuple[str, str]]:
     """Return the (platform, key) pairs whose un-renamed legacy id is here."""
     return frozenset(
         (platform, description.key)
         for platform, description in DESCRIPTIONS
-        if legacy_entity_id(platform, description) in entity_ids
+        if legacy_entity_id(platform, description, suffix) in entity_ids
     )
 
 
-async def async_legacy_ids_with_history(hass: HomeAssistant) -> set[str]:
+async def async_legacy_ids_with_history(
+    hass: HomeAssistant, suffix: str = ""
+) -> set[str]:
     """Return legacy ids the recorder still holds rows for.
 
     The registry lookup is the good path, but it is not the only evidence that
@@ -184,7 +281,7 @@ async def async_legacy_ids_with_history(hass: HomeAssistant) -> set[str]:
     from homeassistant.components.recorder.db_schema import StatesMeta
     from homeassistant.components.recorder.util import session_scope
 
-    wanted = legacy_entity_ids()
+    wanted = legacy_entity_ids(suffix)
 
     def _query() -> set[str]:
         with session_scope(hass=hass, read_only=True) as session:
@@ -203,7 +300,7 @@ async def async_legacy_ids_with_history(hass: HomeAssistant) -> set[str]:
 
 
 @callback
-def async_legacy_ids_live(hass: HomeAssistant) -> set[str]:
+def async_legacy_ids_live(hass: HomeAssistant, suffix: str = "") -> set[str]:
     """Return the legacy ids that still have a state.
 
     A live entity holds its id against the registry, so adopting one would
@@ -213,7 +310,7 @@ def async_legacy_ids_live(hass: HomeAssistant) -> set[str]:
     """
     return {
         entity_id
-        for entity_id in async_legacy_ids_known(hass)
+        for entity_id in async_legacy_ids_known(hass, suffix)
         if hass.states.get(entity_id) is not None
     }
 
@@ -235,16 +332,25 @@ def async_claim_legacy_ids(
     MPPT3 on a two-tracker inverter would leave a registry entry that nothing
     ever fills, which is the dead-entity problem this integration exists to
     avoid.
+
+    Which **slot** of a multi-inverter YAML install this device was comes from
+    the entry, written there when it was set up. It is not re-derived here, and
+    that is the point: detection needs the YAML package to be running, and by
+    the second setup it usually is not -- the user removed it, which is what
+    the migration told them to do. Re-deriving would answer `None` then, and a
+    `None` read as "no suffix" would point the second inverter at the first
+    one's ids.
     """
+    suffix = entry.data.get(CONF_LEGACY_SLOT) or ""
     registry = er.async_get(hass)
     claimed: list[str] = []
-    legacy = async_legacy_entities(hass)
+    legacy = async_legacy_entities(hass, suffix)
 
     for platform, description in DESCRIPTIONS:
         legacy_id = legacy.get((platform, description.key))
         if legacy_id is None and (platform, description.key) in with_history:
             # No registry entry left, but the recorder still has the rows.
-            legacy_id = legacy_entity_id(platform, description)
+            legacy_id = legacy_entity_id(platform, description, suffix)
         if legacy_id is None:
             continue
         if (

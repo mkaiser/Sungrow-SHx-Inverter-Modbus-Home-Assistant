@@ -17,7 +17,76 @@ coordinator.
 
 from __future__ import annotations
 
-from modbus_connection.model import Component, gauge, int32, integer, string, uint32
+from typing import Any
+
+from modbus_connection.model import (
+    Component,
+    NumberField,
+    gauge,
+    int32,
+    integer,
+    string,
+    uint32,
+)
+
+
+class AsymmetricNumberField(NumberField[int]):
+    """A register that reads in one unit and writes in another.
+
+    Every other register in this map uses one scale for both directions, which
+    is what `NumberField` is built for: `encode` and `decode` share `scale`.
+    Register 13074 does not. It **reads** in watts -- 10000 back against a
+    10000 W maximum from register 5623, so the read side agrees with its own
+    bounds -- and **writes** in tens of watts, multiplying the word it is
+    handed by ten before storing it.
+
+    Measured 2026-09-19 on the reference SH10RT with feed-in limitation on, six
+    times, including values no rounding could produce (123 -> 1230, 47 -> 470),
+    and replicated the same day at a second house on an SH10RT-20 through a
+    dongle. Two houses, two models, two transports.
+
+    It also explains the refusals: the multiply happens **before** the range
+    check, so writing 3400 becomes 34000, fails against the 10000 W maximum and
+    returns exception 0x04 -- which is why restoring 10000 was refused while the
+    register sat on 10000, and why writing 1000 is how you actually put 10000
+    back.
+
+    So this is a device quirk rather than a second scale: `scale` stays 1
+    because that is what the register *contains*, and only the write side is
+    divided. `control_test.py`'s `spec_units_per_count` stays 1 for the same
+    reason, and its leg B is what proves this on hardware -- before the fix a
+    900 W write left the raw word at 9000 and the verdict was `SCALED`.
+    """
+
+    def __init__(
+        self, address: int, *, write_units_per_count: float, **kwargs: Any
+    ) -> None:
+        """Initialize the field with a write scale of its own.
+
+        Refuses a field that also has a read `scale`. The two divisions would
+        compose -- `encode` would divide by the write scale and then the base
+        class would divide by the read one -- and the result would be wrong by
+        their product while still looking like a plain number in the register.
+        Nothing needs that combination today, so it is refused rather than
+        guessed at.
+        """
+        super().__init__(address, **kwargs)
+        if self.scale != 1:
+            raise ValueError(
+                "an asymmetric write scale needs a read scale of 1; "
+                f"{address} has {self.scale}"
+            )
+        self.write_units_per_count = write_units_per_count
+
+    def encode(self, value: Any, scale_exponent: int | None = None) -> list[int]:
+        """Encode the engineering value at the **write** scale.
+
+        Rounded here rather than left to the base class, which takes a fast
+        path on a scale-1 field -- `raw = int(value)` -- and would silently
+        **truncate** a value the division does not leave whole.
+        """
+        raw = round(float(value) / self.write_units_per_count)
+        return super().encode(float(raw), scale_exponent)
 
 
 class InverterRealtimeInput(Component):
@@ -199,7 +268,9 @@ class InverterFastHolding(Component):
     """Battery max SoC (reg 13058)."""
     battery_min_soc = gauge(13058, 0.1, signed=False, unit="%", writable=True)
     """Battery min SoC (reg 13059)."""
-    export_power_limit = integer(13073, signed=False, unit="W", writable=True)
+    export_power_limit = AsymmetricNumberField(
+        13073, signed=False, unit="W", writable=True, write_units_per_count=10
+    )
     """Export power limit (reg 13074)."""
     backup_mode_raw = integer(13074, signed=False, writable=True)
     """Backup mode raw (reg 13075)."""

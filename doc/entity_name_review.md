@@ -1,6 +1,6 @@
 # The entity names, for review
 
-**139 entities**, which is everything modern mode creates. The **entity id**
+**186 entities**, which is everything modern mode creates. The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
 it -- but only at creation. Rename later and anybody who already has the entity
 keeps the id they were born with; only the label changes. So the cost of a late
@@ -16,14 +16,21 @@ history keyed to them carries on, and modern mode replaces each with something
 better.
 
 
-## Backup power (5)
+## Backup power (12)
 
 | Name | Entity id | Unit | Legacy name |
 | --- | --- | --- | --- |
+| Backup frequency | `sensor.sh10rt_backup_frequency` | Hz |  |
 | Backup mode | `switch.sh10rt_backup_mode` |  | Backup Mode **←** |
+| Backup phase A current | `sensor.sh10rt_backup_phase_a_current` | A |  |
 | Backup phase A power | `sensor.sh10rt_backup_phase_a_power` | W | Backup phase A power |
+| Backup phase A voltage | `sensor.sh10rt_backup_phase_a_voltage` | V |  |
+| Backup phase B current | `sensor.sh10rt_backup_phase_b_current` | A |  |
 | Backup phase B power | `sensor.sh10rt_backup_phase_b_power` | W | Backup phase B power |
+| Backup phase B voltage | `sensor.sh10rt_backup_phase_b_voltage` | V |  |
+| Backup phase C current | `sensor.sh10rt_backup_phase_c_current` | A |  |
 | Backup phase C power | `sensor.sh10rt_backup_phase_c_power` | W | Backup phase C power |
+| Backup phase C voltage | `sensor.sh10rt_backup_phase_c_voltage` | V |  |
 | Total backup power | `sensor.sh10rt_total_backup_power` | W | Total backup power |
 
 ## Control (4)
@@ -35,37 +42,52 @@ better.
 | EMS mode | `select.sh10rt_ems_mode` |  | EMS mode |
 | Feed-in limitation ratio | `sensor.sh10rt_feed_in_limitation_ratio` | % |  |
 
-## Energy totals (7)
+## Energy totals (9)
 
 | Name | Entity id | Unit | Legacy name |
 | --- | --- | --- | --- |
 | Daily consumed energy | `sensor.sh10rt_daily_consumed_energy` | kWh | Daily consumed energy |
 | Daily consumed energy (smoothed) | `sensor.sh10rt_daily_consumed_energy_smoothed` | kWh | Daily consumed energy (filtered) **←** |
 | Daily direct energy consumption | `sensor.sh10rt_daily_direct_energy_consumption` | kWh | Daily direct energy consumption |
+| Lifetime energy | `sensor.sh10rt_lifetime_energy` | Wh |  |
+| Session energy | `sensor.sh10rt_session_energy` | Wh |  |
 | Total DC power | `sensor.sh10rt_total_dc_power` | W | Total DC power |
 | Total active power | `sensor.sh10rt_total_active_power` | W | Total active power |
 | Total consumed energy | `sensor.sh10rt_total_consumed_energy` | kWh | Total consumed energy |
 | Total direct energy consumption | `sensor.sh10rt_total_direct_energy_consumption` | kWh | Total direct energy consumption |
 
-## Everything else (13)
+## Everything else (26)
 
 | Name | Entity id | Unit | Legacy name |
 | --- | --- | --- | --- |
 | ARM software version | `sensor.sh10rt_arm_software_version` |  | Sungrow Arm Software **←** |
 | Active power limitation shutdown at zero | `sensor.sh10rt_active_power_limitation_shutdown_at_zero` |  | APL shutdown at zero raw **←** |
+| Available current | `sensor.sh10rt_available_current` | A |  |
 | BDC rated power | `sensor.sh10rt_bdc_rated_power` | W | BDC rated power |
+| Charging | `binary_sensor.sh10rt_charging` |  |  |
+| Charging power | `sensor.sh10rt_charging_power` | W |  |
+| Charging status | `sensor.sh10rt_charging_status` |  |  |
+| Configured output current | `sensor.sh10rt_configured_output_current` | A |  |
+| Control pilot voltage | `sensor.sh10rt_control_pilot_voltage` | V |  |
 | DSP software version | `sensor.sh10rt_dsp_software_version` |  | Sungrow DSP Software **←** |
+| Enabled | `binary_sensor.sh10rt_enabled` |  |  |
 | Firmware version part 1 | `sensor.sh10rt_firmware_version_part_1` |  | Sungrow Version 1 **←** |
 | Firmware version part 2 | `sensor.sh10rt_firmware_version_part_2` |  | Sungrow Version 2 **←** |
 | Firmware version part 3 | `sensor.sh10rt_firmware_version_part_3` |  | Sungrow Version 3 **←** |
+| Forced startup under low SoC raw | `sensor.sh10rt_forced_startup_under_low_soc_raw` |  |  |
+| Maximum charging power | `sensor.sh10rt_maximum_charging_power` | W |  |
+| Minimum charging power | `sensor.sh10rt_minimum_charging_power` | W |  |
 | Power factor | `sensor.sh10rt_power_factor` |  | Power factor |
 | Power flow status | `sensor.sh10rt_power_flow_status` |  | Power Flow Status **←** |
 | Protocol version | `sensor.sh10rt_protocol_version` |  | Sungrow Protocol Version **←** |
+| Rated current | `sensor.sh10rt_rated_current` | A |  |
 | Rated output power | `sensor.sh10rt_rated_output_power` | W | Inverter rated output **←** |
 | Reactive power | `sensor.sh10rt_reactive_power` | W | Reactive power |
 | Running state | `sensor.sh10rt_running_state` |  | Sungrow inverter state **←** |
+| Self-consumption of today | `sensor.sh10rt_self_consumption_of_today` | % |  |
+| Start mode | `sensor.sh10rt_start_mode` |  |  |
 
-## Identity and firmware (5)
+## Identity and firmware (6)
 
 | Name | Entity id | Unit | Legacy name |
 | --- | --- | --- | --- |
@@ -73,21 +95,29 @@ better.
 | Device type | `sensor.sh10rt_device_type` |  | Sungrow device type **←** |
 | Device type code | `sensor.sh10rt_device_type_code` |  | Sungrow device type code **←** |
 | Firmware version | `sensor.sh10rt_firmware_version` |  | Inverter Firmware Version **←** |
+| Firmware version | `sensor.sh10rt_firmware_version` |  |  |
 | Serial number | `sensor.sh10rt_serial_number` |  | Sungrow inverter serial **←** |
 
-## Per phase (9)
+## Per phase (16)
 
 | Name | Entity id | Unit | Legacy name |
 | --- | --- | --- | --- |
 | Phase A current | `sensor.sh10rt_phase_a_current` | A | Phase A current |
+| Phase A current | `sensor.sh10rt_phase_a_current` | A |  |
 | Phase A power | `sensor.sh10rt_phase_a_power` | W | Phase A power |
 | Phase A voltage | `sensor.sh10rt_phase_a_voltage` | V | Phase A voltage |
+| Phase A voltage | `sensor.sh10rt_phase_a_voltage` | V |  |
 | Phase B current | `sensor.sh10rt_phase_b_current` | A | Phase B current |
+| Phase B current | `sensor.sh10rt_phase_b_current` | A |  |
 | Phase B power | `sensor.sh10rt_phase_b_power` | W | Phase B power |
 | Phase B voltage | `sensor.sh10rt_phase_b_voltage` | V | Phase B voltage |
+| Phase B voltage | `sensor.sh10rt_phase_b_voltage` | V |  |
 | Phase C current | `sensor.sh10rt_phase_c_current` | A | Phase C current |
+| Phase C current | `sensor.sh10rt_phase_c_current` | A |  |
 | Phase C power | `sensor.sh10rt_phase_c_power` | W | Phase C power |
 | Phase C voltage | `sensor.sh10rt_phase_c_voltage` | V | Phase C voltage |
+| Phase C voltage | `sensor.sh10rt_phase_c_voltage` | V |  |
+| Phase mode | `sensor.sh10rt_phase_mode` |  |  |
 
 ## Temperatures (1)
 
@@ -119,7 +149,7 @@ better.
 | Total PV generation | `sensor.sh10rt_total_pv_generation` | kWh | Total PV generation |
 | Total exported energy from PV | `sensor.sh10rt_total_exported_energy_from_pv` | kWh | Total exported energy from PV |
 
-## The battery (40)
+## The battery (57)
 
 | Name | Entity id | Unit | Legacy name |
 | --- | --- | --- | --- |
@@ -154,15 +184,32 @@ better.
 | Battery state of health | `sensor.sh10rt_battery_state_of_health` | % | Battery state of health |
 | Battery temperature | `sensor.sh10rt_battery_temperature` | °C | Battery temperature |
 | Battery voltage | `sensor.sh10rt_battery_voltage` | V | Battery voltage |
+| Coolest module | `sensor.sh10rt_coolest_module` |  |  |
+| Coolest module temperature | `sensor.sh10rt_coolest_module_temperature` | °C |  |
 | Daily PV generation & battery discharge | `sensor.sh10rt_daily_pv_generation_battery_discharge` | kWh | Daily PV generation & battery discharge |
 | Daily battery charge | `sensor.sh10rt_daily_battery_charge` | kWh | Daily battery charge |
 | Daily battery charge from PV | `sensor.sh10rt_daily_battery_charge_from_pv` | kWh | Daily battery charge from PV |
 | Daily battery discharge | `sensor.sh10rt_daily_battery_discharge` | kWh | Daily battery discharge |
 | Firmware version part 4 (Sungrow battery) | `sensor.sh10rt_firmware_version_part_4_sungrow_battery` |  | Sungrow Version 4 (Sungrow Battery) **←** |
+| Highest cell module | `sensor.sh10rt_highest_cell_module` |  |  |
+| Highest cell number | `sensor.sh10rt_highest_cell_number` |  |  |
+| Highest cell voltage | `sensor.sh10rt_highest_cell_voltage` | V |  |
+| Lowest cell module | `sensor.sh10rt_lowest_cell_module` |  |  |
+| Lowest cell number | `sensor.sh10rt_lowest_cell_number` |  |  |
+| Lowest cell voltage | `sensor.sh10rt_lowest_cell_voltage` | V |  |
+| Pack current | `sensor.sh10rt_pack_current` | A |  |
+| Pack level | `sensor.sh10rt_pack_level` | % |  |
+| Pack state of health | `sensor.sh10rt_pack_state_of_health` | % |  |
+| Pack temperature | `sensor.sh10rt_pack_temperature` | °C |  |
+| Pack total charge | `sensor.sh10rt_pack_total_charge` | kWh |  |
+| Pack total discharge | `sensor.sh10rt_pack_total_discharge` | kWh |  |
+| Pack voltage | `sensor.sh10rt_pack_voltage` | V |  |
 | Total PV generation & battery discharge | `sensor.sh10rt_total_pv_generation_battery_discharge` | kWh | Total PV generation & battery discharge |
 | Total battery charge | `sensor.sh10rt_total_battery_charge` | kWh | Total battery charge |
 | Total battery charge from PV | `sensor.sh10rt_total_battery_charge_from_pv` | kWh | Total battery charge from PV |
 | Total battery discharge | `sensor.sh10rt_total_battery_discharge` | kWh | Total battery discharge |
+| Warmest module | `sensor.sh10rt_warmest_module` |  |  |
+| Warmest module temperature | `sensor.sh10rt_warmest_module_temperature` | °C |  |
 
 ## The grid (15)
 

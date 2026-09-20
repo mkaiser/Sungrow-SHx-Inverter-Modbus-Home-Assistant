@@ -15,6 +15,42 @@ one map for every model, but which parts of it a device answers varies by
 model, phase count, wiring, transport and firmware — so a fingerprint from a
 real machine is worth more than an inference from the YAML's comments.
 
+## A `control_test` block, where a document has one
+
+Almost none do, and that is not a gap in the evidence — it is the difference
+between reading an inverter and writing to one. A fingerprint is produced by
+reading; the `control_test` block is produced by `Run control write test` on the
+device page, or by `scripts/sungrow_control_test.py`, and both of those change
+settings on a real installation and change them back.
+
+So **the absence of the block means "this run only read"**, never "the writes
+failed". That is why schema 19 is a bump rather than a key that quietly
+appeared: a reader of an older document has to be able to tell the two apart.
+
+What is in it, when it is there: for each control, the value the run chose, the
+raw register word that came back, the word the specification says should have
+been there, and a verdict. Then what the inverter actually did while limits were
+applied, what could not be put back (ideally nothing), how long a restart took
+if one was done, and a list of what the run could **not** establish. It carries
+no serial and no address — there is nothing in it that could, since it is made
+of register numbers and the values the run itself picked.
+
+**Check `direct_connection` before you believe the readback table.** Where it is
+false the run reached the inverter through a WiNet-S, and a WiNet-S forwards a
+write and then answers the register **stale** -- measured against a cable on the
+same inverter, and it does not catch up: polled every five seconds for two
+minutes it never once reported a value the cable had confirmed. So on those
+documents `matched` means the dongle's cache agreed, and `the device kept its
+old value` cannot tell a dropped write from a stale read. The run says so above
+its own table. Only the behavioural section is unaffected, because watching real
+power change needs no readback at all.
+
+The one thing worth reading it for is a verdict of *off by a clean decade*. It
+names which side is implicated: the library, if the register map's scale
+disagrees with the specification, or the device, if the two agree and the
+firmware stored something else anyway. The second is a finding about Sungrow and
+is the reason these are published.
+
 ## The serial numbers here are not real
 
 Every published file carries a **stand-in** serial, in a field whose name is
@@ -266,7 +302,7 @@ it where they are reachable, which is only on a direct connection — through a
 WiNet-S just 10740-10751 are forwarded and the arrays are refused.
 
 So the size is named when the capacity lands within
-`CAPACITY_TOLERANCE_KWH` of exactly one model, and `battery-sungrow` still
+`CAPACITY_TOLERANCE_FRACTION` of exactly one model, and `battery-sungrow` still
 covers the case where it matches none. The module arrays are corroboration
 rather than the source: their layout is not in any Sungrow document here, and
 `battery.py`'s table is.
@@ -465,8 +501,8 @@ version made the destination a choice and the documentation told people to
 choose this directory.
 
 Fixed does not mean one path: in a checkout it is `.testdata/fingerprints`,
-which `.gitignore` covers, and anywhere else — a contributor who unpacked the
-zip — it is `sungrow-scan-private/`. A *hidden* directory holding somebody's
+which `.gitignore` covers, and anywhere else — a contributor running
+`portable.py` on its own — it is `sungrow-scan-private/`. A *hidden* directory holding somebody's
 serial and address, created inside the folder they were told to send back, is
 how a private file gets forwarded by accident.
 

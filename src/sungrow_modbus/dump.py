@@ -75,7 +75,9 @@ Read = Callable[[str, int, int], Awaitable[list[int]]]
 Progress = Callable[[int, int, str], None]
 
 
-def block_count(bands: tuple = DUMP_BANDS, block: int = BLOCK) -> int:
+def block_count(
+    bands: tuple[tuple[str, int, int, str], ...] = DUMP_BANDS, block: int = BLOCK
+) -> int:
     """How many requests a dump of these bands will make, before failures.
 
     Needed *before* the dump runs: a progress bar whose denominator grows
@@ -85,13 +87,65 @@ def block_count(bands: tuple = DUMP_BANDS, block: int = BLOCK) -> int:
     return sum(len(range(0, count, block)) for _space, _start, count, _why in bands)
 
 
+def _note_skipped(
+    skipped: list[str],
+    space: str,
+    start: int,
+    count: int,
+    why: str,
+    offset: int,
+) -> None:
+    """Record a band the budget cut short, distinguishing partly from not at all.
+
+    The distinction is the point. A band that was never reached tells a reader
+    nothing about the firmware; a band that was *part* read has real addresses
+    in the dump and a boundary that is an artefact of the clock rather than of
+    the device. Publishing the second as though it were complete is how an
+    absent register gets inferred from a timeout -- which this project has
+    already had to unlearn once, and which `bands_not_reached` exists to stop.
+    """
+    label = f"{space} {start}+{count} ({why})"
+    if label not in skipped:
+        skipped.append(label if not offset else f"{label}, part read")
+
+
+async def _async_narrow(
+    read: Read,
+    space: str,
+    address: int,
+    size: int,
+    into: dict[str, int | None],
+) -> None:
+    """Read a failed block one address at a time, recording what each one says.
+
+    A block fails as a whole, and a whole block recorded as absent is a map
+    with a hole in it: one refused address in a block of 32 would hide the 31
+    that answer, and the point of a dump is exactly which addresses this
+    firmware has.
+
+    One attempt each, deliberately. The retry that the block read gets is there
+    for a link that dropped; here, a refusal is the answer -- an inverter that
+    does not have a register says so in milliseconds -- and retrying 32 of them
+    on a slow link costs minutes to learn nothing. An address that fails is
+    recorded as `None`, which is a reading of "asked, and it would not say",
+    not a gap.
+    """
+    for single in range(address, address + size):
+        try:
+            value = await read(space, single, 1)
+        except (ModbusError, TimeoutError, OSError):
+            into[str(single)] = None
+        else:
+            into[str(single)] = value[0]
+
+
 async def async_dump(
     read: Read,
     *,
     on_progress: Progress | None = None,
     budget: float = BUDGET,
     block: int = BLOCK,
-    bands: tuple = DUMP_BANDS,
+    bands: tuple[tuple[str, int, int, str], ...] = DUMP_BANDS,
 ) -> dict[str, dict[str, int | None] | list[str]]:
     """Read every band raw, one small block at a time.
 
@@ -127,9 +181,7 @@ async def async_dump(
             # it is already inside, which is the opposite of what a budget is
             # for.
             if time.perf_counter() - started > budget:
-                label = f"{space} {start}+{count} ({why})"
-                if label not in skipped:
-                    skipped.append(label if not offset else f"{label}, part read")
+                _note_skipped(skipped, space, start, count, why, offset)
                 for _ in range(offset, count, block):
                     step("out of budget")
                 break
@@ -139,15 +191,7 @@ async def async_dump(
             try:
                 words = await _async_read_retrying(read, space, address, size)
             except (ModbusError, TimeoutError, OSError):
-                # Down to single reads, one attempt each: one refused address
-                # in a block of 32 would otherwise hide the 31 that answer.
-                for single in range(address, address + size):
-                    try:
-                        value = await read(space, single, 1)
-                    except (ModbusError, TimeoutError, OSError):
-                        into[str(single)] = None
-                    else:
-                        into[str(single)] = value[0]
+                await _async_narrow(read, space, address, size, into)
                 continue
             for index, word in enumerate(words):
                 into[str(address + index)] = word
@@ -158,7 +202,7 @@ async def async_dump(
 
 def masked(
     dump: dict[str, dict[str, int | None] | list[str]],
-    mask: tuple = DUMP_MASKED,
+    mask: tuple[tuple[str, int, int], ...] = DUMP_MASKED,
 ) -> dict[str, dict[str, int | None] | list[str]]:
     """Return the dump with the masked addresses blanked rather than removed.
 
