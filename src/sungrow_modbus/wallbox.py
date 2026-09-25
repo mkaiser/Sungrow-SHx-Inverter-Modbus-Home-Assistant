@@ -21,6 +21,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
+from .addresses import field_address, read
+
 #: Unit ids a wallbox may answer on, in the order to try them.
 #:
 #: 3 first, because that is the one measured: a WiNet-S forwards the wallbox
@@ -40,8 +42,7 @@ UNITS: tuple[int, ...] = (3, 248)
 #: before this at 21200, so probing the name rather than the serial keeps a
 #: serial out of a capability probe entirely, which is a rule this project
 #: has already broken once.
-IDENTITY_REGISTER = 21215
-IDENTITY_LENGTH = 5
+MODEL_NAME = field_address("model_name", "wallbox")
 
 #: Words that mean "nothing here", whatever they decode to.
 #:
@@ -72,9 +73,7 @@ async def probe_units(
 
     for unit in units:
         try:
-            words = await unit_for(unit).read_input_registers(
-                IDENTITY_REGISTER, IDENTITY_LENGTH
-            )
+            words = await read(unit_for(unit), MODEL_NAME)
         except (ModbusError, TimeoutError, OSError):
             continue
         if not words or all(int(word) in IMPLAUSIBLE for word in words):

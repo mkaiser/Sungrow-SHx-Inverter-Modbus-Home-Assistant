@@ -67,6 +67,7 @@ from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 from sungrow_modbus import dump as register_dump, fingerprint as survey
+from sungrow_modbus.addresses import field_address
 from sungrow_modbus.const import model_for
 from sungrow_modbus.fingerprint import State
 
@@ -105,6 +106,11 @@ FIRMWARE_FIELDS = {
 #: and worth having; they are explicitly not evidence about the transport,
 #: which the sentence in `wifi_or_ethernet` explains at length.
 LATENCY_SAMPLES = 5
+
+#: What is timed: the device type code, register 5000, the one address a
+#: Sungrow always answers -- so the samples describe the link rather than a
+#: capability.
+LATENCY_PROBE = field_address("device_type_code")
 
 
 def planned_steps(dumping: bool) -> int:
@@ -433,18 +439,14 @@ async def _async_probes(
 async def _async_latency(
     device: Any, step: Callable[[str], None] | None = None
 ) -> dict[str, float] | None:
-    """Time a few reads of one address that every inverter answers.
-
-    Register 5000, the device type code: it is the one address a Sungrow
-    always has, so the samples describe the link rather than a capability.
-    """
+    """Time a few reads of `LATENCY_PROBE`, which every inverter answers."""
     samples: list[float] = []
     for sample in range(LATENCY_SAMPLES):
         if step is not None:
             step(f"timing the link ({sample + 1} of {LATENCY_SAMPLES})")
         started = time.monotonic()
         try:
-            await device.async_read_words("input", 4999, 1)
+            await device.async_read(LATENCY_PROBE)
         except (ModbusError, TimeoutError, OSError):
             continue
         samples.append((time.monotonic() - started) * 1000)

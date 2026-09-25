@@ -59,6 +59,7 @@ from sungrow_modbus import (
     network_of,
     power_from_bms,
 )
+from sungrow_modbus.addresses import DIRECT_ONLY_PROBE, read
 from sungrow_modbus.discovery import CONCURRENCY, TIMEOUT
 from sungrow_modbus.fingerprint import OTHER_INVERTER_YES
 
@@ -191,16 +192,6 @@ _PACKAGE_NOT_LOADED = (
 )
 
 
-#: Register 6100, as a protocol address. **Direct-only**, 9 readings out of 9.
-#:
-#: Sungrow documents 6100-6195 as not forwarded by a WiNet-S/S2 or Logger, and
-#: that is what four houses show: it answers over the inverter's own LAN port
-#: and refuses behind a dongle, without exception. So it is the one signal
-#: that says which *route* a reading came in by -- which is worth showing,
-#: because the two routes do not answer the same registers.
-DIRECT_ONLY_REGISTER = 6099
-
-
 async def _async_probe(
     hass: HomeAssistant, host: str, port: int, unit_id: int
 ) -> tuple[SungrowInverter, bool | None]:
@@ -224,7 +215,7 @@ async def _async_probe(
         await inverter.async_update_identity()
         direct: bool | None
         try:
-            await unit.read_input_registers(DIRECT_ONLY_REGISTER, 2)
+            await read(unit, DIRECT_ONLY_PROBE)
         except (ServerDeviceBusyError, ModbusExceptionError) as err:
             # A refusal is the transport answering, and only a refusal is.
             # 0x06 is the exception that says "ask me later" rather than
@@ -1692,7 +1683,7 @@ class SungrowOptionsFlow(OptionsFlow):
 
         direct: bool | None
         try:
-            await device.async_read_words("input", DIRECT_ONLY_REGISTER, 2)
+            await device.async_read(DIRECT_ONLY_PROBE)
         except ServerDeviceBusyError:
             direct = None
         except ModbusExceptionError:

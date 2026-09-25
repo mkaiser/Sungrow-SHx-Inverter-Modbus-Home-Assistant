@@ -440,6 +440,40 @@ def load_plan():
     return plan
 
 
+def address(plan: dict, name: str, device: str = "inverter") -> tuple[str, int, int]:
+    """Return ``(space, address, count)`` for one register, by name.
+
+    The survey's copy of ``sungrow_modbus.addresses.field_address``, reading
+    the plan instead of the library. A mapped field comes from ``fields``; the
+    few registers no component maps come from ``addresses``, under the name
+    the library gives them. The device is part of the question because names
+    repeat across devices -- an inverter and a wallbox both have a
+    ``device_type_code`` -- and an ambiguous name is refused, not guessed.
+    """
+    named = plan.get("addresses", {}).get(name)
+    if named is not None:
+        return named["space"], named["address"], named["count"]
+    roles = {
+        row["component"]: row.get("unit", "inverter") for row in plan["components"]
+    }
+    found = {
+        (row["space"], row["address"], row["count"])
+        for row in plan["fields"]
+        if row["name"] == name and roles.get(row["component"], "inverter") == device
+    }
+    if len(found) != 1:
+        raise KeyError(f"{name!r} on the {device}: {len(found)} addresses in the plan")
+    return found.pop()
+
+
+async def read_block(unit, where: tuple[str, int, int]) -> list[int]:
+    """Read one ``(space, address, count)`` from ``address``. Raises, like the unit."""
+    space, start, count = where
+    if space == "holding":
+        return list(await unit.read_holding_registers(start, count))
+    return list(await unit.read_input_registers(start, count))
+
+
 def _derived(derive, models):
     """Run the generator's two derivations, from sync code or from async.
 

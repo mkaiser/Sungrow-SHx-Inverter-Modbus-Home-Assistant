@@ -524,6 +524,20 @@ and verified in a container or against hardware.
   restart. Both sets are now derived from the labels rather than typed out.
 - **Addresses are protocol addresses**, one below the register number in
   Sungrow's document and in the YAML comments (`address: 4989 # reg 4990`).
+  **The register maps are written in the document's numbers**, through
+  `addresses.reg()`: `power_flow_status = integer(reg(13001))`. As a bare
+  protocol address that line said 13000, which is the *running state's*
+  number, one line above it. `tests/test_addresses.py` fails on a field
+  declared any other way, so the two conventions cannot mix in one map.
+- **No register is read by a literal address.** A mapped field is looked up
+  with `addresses.field_address(name, device)`; the few registers no component
+  maps are named constants in `addresses.py` (`DIRECT_ONLY_PROBE`, ...), and
+  `Address.register` gives the document's number beside the protocol one. The
+  survey scripts cannot import the library, so they use
+  `portable.address(plan, name)` against `scan_plan.json`, which carries both.
+  `tests/test_addresses.py` fails on a new literal. **Tests are exempt on
+  purpose**: a fixture should carry the specification's numbers, not the
+  code's.
 - **Ask the inverter, do not infer.** Register 5002 reports the output type
   (0 single, 1 3P4L, 2 3P3L); 5000 is the device type code. Sungrow's own
   protocol document also warns that some measuring points are *not*

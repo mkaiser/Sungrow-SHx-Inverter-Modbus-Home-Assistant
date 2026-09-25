@@ -5,7 +5,7 @@
 > asserted in `tests/`; this file records decisions and the measurements
 > behind them rather than repeating what the code says.
 
-**Status, 2026-09-09.**
+**Status, 2026-09-25.**
 
 | | State |
 | --- | --- |
@@ -18,18 +18,16 @@
 | Milestone 7 — third-party generation | ✅ **done**: two corrected sensors from another integration's entities, gated on where the foreign inverter sits relative to the grid meter. No hardware needed and none involved |
 | Milestone 8 — Sungrow Logger | not started |
 
-**Version `0.1.0a1` is set and ready to tag** (2026-09-09). A PEP 440
-pre-release, which `pip` will not install without `--pre`, matched by the
-"(preview)" name in both manifests and by the repair notice an install
-already running will see — the three places in [The preview
+**Released through `0.1.0a6`** (2026-09-25), every one a PEP 440 pre-release
+that `pip` will not install without `--pre`, matched by the "(preview)" name in
+both manifests -- see [The preview
 phase](#the-preview-phase-and-what-a-rename-costs-during-it).
 
-Cutting it is `git tag v0.1.0a1 && git push --follow-tags`. `release.yml`
-then verifies the tag against both files, runs ruff, pytest, hassfest and the
-HACS action, publishes a GitHub release marked **pre-release**, and publishes
-the library to PyPI over OIDC. The `0.0.1` that was to claim the name was
-never uploaded, so this is the first real version and `0.1.0` stays free for
-the release worth the number.
+A release is `scripts/sync_version.py --set X`, a commit, an **annotated** tag
+and `git push --follow-tags`. `release.yml` then verifies the tag against both
+files, runs ruff, pytest, hassfest and the HACS action, publishes a GitHub
+release marked **pre-release**, and publishes the library to PyPI over OIDC.
+Run hassfest locally first (the command is in `CLAUDE.md`).
 
 ## What is next
 
@@ -38,17 +36,10 @@ a decision only the maintainer can take, or work whose blocker is named.
 
 ### Decisions waiting on the maintainer
 
-**Live, as of 2026-09-19.** The numbered items below are settled and kept for
+**Live, as of 2026-09-25.** The numbered items below are settled and kept for
 their reasoning; these are the ones actually open.
 
-- **Cut `0.1.0a4`.** Decided: ship, *with* the 13074 fix. The version must move
-  rather than be reused -- PyPI already has an `0.1.0a3` that predates the
-  control test, and refuses a re-upload. Until it moves, the branch imports
-  `sungrow_modbus.control_test` and `battery.ceiling`, which that wheel does not
-  have, so `check_pinned_library.py` is red and the **preview channel is
-  correctly refusing to publish**. The channel is safely stale, not broken, and
-  no HACS tester can reach part B until the release happens.
-- **The YAML package's copy of the same bug**, still unfixed on `main`. The
+- **The YAML package's copy of the 13074 factor-10 bug**, still unfixed on `main`. The
   change is one line in `legacy/modbus_sungrow.yaml`'s
   `number.export_power_limit`, anchored on `*sg_reg_export_power_limit` because
   two *other* writes in that file use the identical `{{ value | int }}` and are
@@ -86,31 +77,18 @@ their reasoning; these are the ones actually open.
   setup (write the word the register already holds and see whether it is
   accepted unchanged -- the check that settled it at fwitten, and a no-op on
   either firmware), or key on the cluster role if the pattern holds.
-- **Release the slow-tier fix; 0.1.0a5 cannot set up at fwitten.** Confirmed
-  in Home Assistant by the owner's own HACS install on 2026-09-25: *"Lost the
-  connection to the inverter: read_input_registers(13264, 15): Connection lost
-  before response was received"*, retried forever. Inputs 13249, 13264 and
-  13279 time out on the inverter's own LAN port and the inverter then closes
-  the session, so the next read in the `slowest` tier reported a dead link and
-  `_async_update_components` abandoned the tier -- and a tier's first refresh
-  failing is `ConfigEntryNotReady`. Fixed in the library: a lost connection now
-  gets one retry per component before the poll is abandoned. It reaches HACS
-  only with a new library release. Cost at fwitten: about 30 s of timeouts per
-  slow poll, every 10 minutes, on the shared connection.
-- **Commit the working tree.** Nothing from this work is committed.
+- **Does 0.1.0a6 set up at fwitten?** It carries the fix for the setup that
+  0.1.0a5 retried forever there -- see "Part B at fwitten" at the end. Only the
+  owner's install can confirm it.
 
-**Two things are untested by anything and neither needs more hardware**, so they
-belong here rather than under "blocked on evidence":
-
-- **The Home Assistant button path.** Every hardware run so far went through the
-  CLI. Button → runner → `Store` snapshot → repair flow → shutdown guard has
-  only ever run against mocks, and it is the path a HACS tester actually uses.
-- **The YAML patch on hardware.** Built, applies, parses. No inverter has
-  received a write through it.
+**One thing is untested by anything**: the YAML patch above on hardware. Built,
+applies, parses; no inverter has received a write through it -- and it is on
+hold anyway. (The Home Assistant button path was the other, until it ran end to
+end at the reference house on 2026-09-19.)
 
 1. **The preview is out, and installable through HACS.** ✅
-   `v0.1.0a1` and `v0.1.0a2` are released, both marked pre-release, and
-   `sungrow-modbus` is on PyPI at both versions, and a preview channel
+   Every alpha from `v0.1.0a1` to `v0.1.0a6` is released and marked
+   pre-release, `sungrow-modbus` is on PyPI at each, and a preview channel
    serves the integration to HACS -- **following this branch**, not the
    releases, because the channel exists to get current code in front of
    testers and HACS already treats a repository with no releases of its own
@@ -197,11 +175,10 @@ belong here rather than under "blocked on evidence":
 
 3. **The rest of the interface survey.** The survey itself is **built** --
    see [Fingerprinting from the interface](#fingerprinting-from-the-interface)
-   -- and two pieces of it are deliberately not: the **block read test**,
-   which is 26 block reads times three rounds plus narrowing and belongs in
-   a background task rather than a form, and **pausing the coordinators** for
-   the duration, without which every document from the interface is taken
-   under contention and says so.
+   -- and runs with the entry's own polling paused (`async_paused`, on
+   hardware since 2026-09-19). One piece is deliberately not built: the
+   **block read test**, which is 26 block reads times three rounds plus
+   narrowing and belongs in a background task rather than a form.
 4. **Firmware-dependent register semantics**, which nothing here supports
    today and issue
    [#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)
@@ -294,6 +271,18 @@ belong here rather than under "blocked on evidence":
    proven**: the two hashes compared were two interfaces of one dongle,
    which is the same device. A certificate hash from a third site settles
    it, and is a five-second thing to ask a contributor for.
+
+**The scan scripts still read register 6100 two ways, not three.**
+`control_test._detect_transport` and the config flow's topology prose tell an
+exception response (evidence: a dongle) from a lost read (evidence of nothing),
+per "a failed read is not a refusal" in `CLAUDE.md`. `probe._async_connection`
+and `collect._check_transport` do not: after their retries, a timeout is
+published as `winet_restricted_block_6100: "refused"` and the verdict becomes a
+dongle. Retrying makes that rare -- `collect.py` did not retry at all until
+2026-09-25 -- but not impossible on a contested link. The fix is a third value
+(`"undetermined"`), which changes the published document and
+`transport_verdict`'s truth table, and has to work with `portable.py`'s own
+client, whose exception types are not `modbus_connection`'s.
 
 ### Work blocked on evidence, not effort
 
