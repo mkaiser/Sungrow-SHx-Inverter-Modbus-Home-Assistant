@@ -154,6 +154,11 @@ schema 19).
   and removed only once everything is back **and read back**. A leftover
   snapshot on the next setup becomes a repair. Corollary worth keeping: **no
   snapshot file for a day means no writes that day.**
+- **A restore writes the snapshot's raw word, and checks it by raw read.**
+  Writing the *value* back goes through the scale under test, and at fwitten
+  that wrote 1188 for 11880 W and left a slave capped at 1.2 kW -- the first run
+  to leave a house changed. The scaled write is only the fallback, for the
+  firmware that multiplies the raw word too.
 - **A restore is a statement about where the register is, not about whether a
   write succeeded.** It reads before it writes. Reporting a register as
   unrestored when it had held its original value the whole time was the worst
@@ -287,6 +292,18 @@ exception 0x04, which is exactly what 3400 did at the reference house on
 `number.export_power_limit` writes `{{ value | int }}` to the same register.
 That is the one place a user of the shipping package is worse off than a user of
 the alpha -- now against three houses' worth of evidence rather than one's.
+
+**And not every firmware multiplies.** fwitten's master/slave pair of
+SH10RT-V112, measured 2026-09-25 over both cables with limitation on (`0xAA`),
+stores the word it is handed: the master accepted a raw 24990 and refused 2499
+with 0x04 (its minimum is 11880 W), and the slave took the integration's 600 W
+as word 60 and held **60**. So `AsymmetricNumberField`'s constant divide sets a
+tenth of what the user asks for there, and the pending one-line YAML fix would
+break the one house where the YAML package is currently right. ARM and DSP
+strings are identical to the multiplying houses; the inverter firmware string
+is the field fwitten will not answer. It is the only cluster measured -- a
+hypothesis, not a finding. **The write scale of 13074 is per device, and
+nothing yet detects it.**
 
 `doc/integration_plan.md` has the measurements, the replications and the two
 hardware confirmations -- raw word over a cable, and behaviour through a dongle.
@@ -589,7 +606,13 @@ and verified in a container or against hardware.
   and battery firmware strings — **fail 3/3 on the inverter's own LAN port**
   and answer through its dongle, with every character 0x00. So `present()`
   maps them to None and the fields are absent either way; the cable refuses
-  the read, the dongle invents an empty answer for it. The same pair refuses
+  the read, the dongle invents an empty answer for it. **"Refuses" here is a
+  10 s timeout, and the inverter then closes the session** (re-measured
+  2026-09-25), so the *next* read reports a dead link and the library abandons
+  the whole poll -- which is how the control test's opening full read died five
+  attempts out of five at fwitten, always at 13264, and how 0.1.0a5 failed to
+  set up there at all. `_async_update_components` now retries a lost
+  connection once per component before calling the link dead. The same pair refuses
   2612 and 2628 through the dongle while the cable reads them, so the two
   paths fail *complementary* sets of blocks. Consequence for capability
   probing: **"the block answered" is not evidence.** A dongle can answer

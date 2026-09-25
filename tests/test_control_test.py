@@ -968,6 +968,61 @@ async def test_one_register_that_will_not_go_back_does_not_take_the_rest_with_it
     assert run.code == 5
 
 
+async def test_the_restore_puts_back_the_word_where_writes_are_not_multiplied() -> None:
+    """At fwitten's SH10RT-V112 on 2026-09-25, 13074 stored the word it was handed.
+
+    The restore used to write the *value* back through the write scale, so
+    11880 W went out as 1188, read back 1180, and left the slave capped at
+    1.2 kW. The snapshot already held the word, which is correct whatever the
+    firmware's scale is.
+    """
+    from modbus_connection.mock import MockModbusConnection
+
+    from .conftest import SH10RT_HOLDING_REGISTERS, SH10RT_INPUT_REGISTERS
+
+    unit = MockModbusConnection().for_unit(1)
+    unit.input = dict(SH10RT_INPUT_REGISTERS)
+    unit.holding = dict(SH10RT_HOLDING_REGISTERS)
+    unit.input[5621] = 0  # export limit minimum
+    unit.input[5622] = 1188  # export limit maximum, 10 W per count: 11880 W
+    unit.holding[13073] = 11880
+    inverter = SungrowInverter(unit)
+    await inverter.async_update()
+    run = ControlTest(inverter, clock=FakeClock())
+    await run._preflight()
+    unit.holding[13073] = 60  # what a scaled write of 600 W left there
+
+    restores = await run.async_restore()
+
+    row = next(row for row in restores if row.field == "export_power_limit")
+    assert row.restored
+    assert row.attempts == 1
+    assert unit.holding[13073] == 11880
+
+
+async def test_the_restore_still_puts_back_the_word_on_a_firmware_that_multiplies(
+    full_unit: MockModbusUnit,
+) -> None:
+    """The other firmware, where the raw word is multiplied too.
+
+    So the scaled write is the one that lands, and the check is against the
+    snapshot's word either way.
+    """
+    full_unit.holding[13073] = 5000
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    run = ControlTest(inverter, clock=FakeClock())
+    await run._preflight()
+    full_unit.holding[13073] = 600
+
+    restores = await run.async_restore()
+
+    row = next(row for row in restores if row.field == "export_power_limit")
+    assert row.restored
+    assert full_unit.holding[13073] == 5000
+    assert run.code != 5
+
+
 async def test_a_cancelled_run_still_puts_everything_back(
     full_unit: MockModbusUnit, monkeypatch: pytest.MonkeyPatch
 ) -> None:

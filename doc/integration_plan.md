@@ -69,6 +69,34 @@ their reasoning; these are the ones actually open.
   production and a different track. Open question is whether it goes in the same
   pass or its own PR. Until it does, a user of the shipping package is worse off
   than a user of the alpha.
+
+  **Hold it until the next item is decided** (2026-09-25): fwitten's
+  SH10RT-V112 writes 13074 **1:1**, which is what the YAML package already
+  does. This diff would fix three measured houses and cut the fourth's export
+  limit to a tenth of what its owner sets.
+- **13074's write scale is per firmware, not a constant** (2026-09-25). Three
+  houses multiply a write by ten and fwitten's cluster does not -- see "Part B
+  at fwitten" at the end. `AsymmetricNumberField` divides every write by ten, so
+  at fwitten the integration sets a tenth of what the user asks for. The
+  control test's *restore* no longer depends on the scale (it writes the
+  snapshot's raw word first and checks it by raw read); ordinary writes from
+  the `number` entity still do. Nothing any register reports tells the two
+  firmwares apart yet -- ARM and DSP strings are identical, and the inverter
+  firmware string is the one fwitten refuses. Candidates: measure it once at
+  setup (write the word the register already holds and see whether it is
+  accepted unchanged -- the check that settled it at fwitten, and a no-op on
+  either firmware), or key on the cluster role if the pattern holds.
+- **Release the slow-tier fix; 0.1.0a5 cannot set up at fwitten.** Confirmed
+  in Home Assistant by the owner's own HACS install on 2026-09-25: *"Lost the
+  connection to the inverter: read_input_registers(13264, 15): Connection lost
+  before response was received"*, retried forever. Inputs 13249, 13264 and
+  13279 time out on the inverter's own LAN port and the inverter then closes
+  the session, so the next read in the `slowest` tier reported a dead link and
+  `_async_update_components` abandoned the tier -- and a tier's first refresh
+  failing is `ConfigEntryNotReady`. Fixed in the library: a lost connection now
+  gets one retry per component before the poll is abandoned. It reaches HACS
+  only with a new library release. Cost at fwitten: about 30 s of timeouts per
+  slow poll, every 10 minutes, on the shared connection.
 - **Commit the working tree.** Nothing from this work is committed.
 
 **Two things are untested by anything and neither needs more hardware**, so they
@@ -4218,6 +4246,75 @@ recorded in `CLAUDE.md` under *a failed read is not a refusal*:
 failure as a dongle; `config_flow._async_measured` never received the probe's
 answer on the manual path and fabricated one; the CLI had no handler for a link
 that would not open and ended in a traceback where exit 1 was defined for it.
+
+### Part B at fwitten: a firmware that does not multiply (2026-09-25)
+
+The first control test at a master/slave cluster, and the first house where
+13074 does **not** multiply a write by ten. Both SH10RT-V112s read over their
+own LAN ports and over a VPN, with nothing else polling and the owner's consent
+to the restart and the export limit. The blocks are merged into
+`sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-meter.json` (master)
+and `…-33442450531-battery-none.json` (slave); all four fwitten fingerprints
+were re-read the same afternoon and replace the 2026-09-07 ones.
+
+**The run could not start at first.** The CLI's opening read was the full
+poll, and on this cable inputs 13249, 13264 and 13279 each time out after 10 s
+-- three reads out of three, neighbours answering in 50 ms -- after which the
+inverter closes the session. The next read then reports a dead link, the
+library abandons the poll, and all five backoff attempts died at the same
+address. The library's tier poll now retries a lost connection once per
+component, which fixes this and the same failure in the integration's setup.
+
+**Register 13074, at both inverters, feed-in limitation already on (`0xAA`):**
+
+| Inverter | Write | Word sent | Result |
+| --- | --- | --- | --- |
+| master | control test, 24900 W | 2490 | refused 0x04 |
+| master | behaviour check, 11880 W | 1188 | refused 0x04 |
+| master | raw, by hand | 24990 | **accepted**, held 24990 |
+| master | raw, by hand | 2499 | refused 0x04 |
+| slave | control test, 600 W | 60 | held **60**: slope 0.11, "two points, wrong slope" |
+| slave | control test's restore, 11880 W | 1188 | held **1180** |
+
+The master reports its own bounds as 11880-24990 W, so the three refusals are
+all words below the minimum, and the one accepted word is the one a 1:1
+register takes. The slave agrees from the other side. Three houses multiply;
+this one stores the word. The ARM and DSP strings match the reference house
+and gerd exactly; the inverter firmware string, the one field that might
+separate them, is the one this cable will not answer. What *is* different:
+this is the only cluster measured, and the master's bounds are cluster-sized
+on a 10 kW unit. A hypothesis, not a finding.
+
+**The restore left the slave changed**, the first time a run has: it wrote
+the snapshot's *value* back through the write scale, so 11880 W went out as
+1188 and the slave sat capped at 1180 W for about five minutes, until a raw
+write of 11880 put it back. The merged block still says "not restored",
+because that is what the run recorded. Fixed: the restore now writes the
+snapshot's raw word first and checks by raw read, falling back to the scaled
+write for the firmware that multiplies (where the raw word is multiplied too
+and is refused, or lands ten times high for one settle). Both firmwares are in
+`tests/test_control_test.py`.
+
+**Everything else matched.** Master: eight of nine readbacks on the spec's
+scale; forced discharge commanded 1250 W, measured 1098 W, "did as it was
+told"; no charge checks, the pack was at 100 %. Slave: both start powers
+matched; no battery.
+
+**Restart on an SH10RT-V112**, both inverters, one after the other:
+
+| | stopped | back to running | to generating | starts needed |
+| --- | --- | --- | --- | --- |
+| master | 2.0 s | 196.7 s | 2.3 s | 3 |
+| slave | 2.0 s | 170.3 s | 6.7 s | 3 |
+
+Zero polls failed to connect on either, and three start commands again, as at
+gerd. The slave's settings did not all survive its restart only because 13074
+was already wrong going in.
+
+**The survey**, all four endpoints: 113 fields each. The cables lose the three
+firmware-string blocks and `meter_channel_2`, all by timeout; the dongles lose
+the battery and sub-controller firmware blocks by exception 0x02, as at every
+other dongle. Register 6100 called the transport right at all four.
 
 ---
 
