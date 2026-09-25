@@ -1889,7 +1889,10 @@ class ControlTest:
         original = self.snapshot.values.get(probe.field)
         if original is None or probe.field not in self._written:
             return
-        if await self._write(probe, float(original)) is None:
+        restored, _detail = await self._write_back(
+            probe, float(original), self.snapshot.raw.get(probe.field)
+        )
+        if restored:
             self._written.pop(probe.field, None)
 
     # -- effect: leg C -------------------------------------------------------
@@ -2652,12 +2655,16 @@ class ControlTest:
             original = snapshot.values.get(name)
             if probe is None or original is None:
                 continue
-            results.append(await self._restore_one(probe, float(original)))
+            results.append(
+                await self._restore_one(probe, float(original), snapshot.raw.get(name))
+            )
         if any(not row.restored for row in results):
             self._worst(5)
         return results
 
-    async def _restore_one(self, probe: Probe, original: float) -> RestoreResult:
+    async def _restore_one(
+        self, probe: Probe, original: float, word: int | None = None
+    ) -> RestoreResult:
         """Put one control back, and prove it: read first, write only if needed.
 
         Reading first is not an optimisation. The first hardware run reported
@@ -2672,16 +2679,16 @@ class ControlTest:
         whether a write succeeded. Asking the register settles it, and it also
         means a control this run never managed to change cannot be reported as
         one it failed to change back.
+
+        `word` is the snapshot's raw word, and where there is one it is the
+        target: see `_write_back`.
         """
         await self._refresh(probe.component)
-        current = self._value(probe.field)
-        if current is not None and math.isclose(
-            float(current), original, rel_tol=1e-6, abs_tol=1e-6
-        ):
+        if await self._holds(probe, original, word):
             return RestoreResult(
                 field=probe.field,
                 original=original,
-                readback=current,
+                readback=self._value(probe.field),
                 restored=True,
                 attempts=0,
                 detail="already holding its original value",
@@ -2689,25 +2696,16 @@ class ControlTest:
 
         detail: str | None = None
         for attempt in range(1, RESTORE_ATTEMPTS + 1):
-            failure = await self._write(probe, original)
-            if failure is None:
-                await self.clock.sleep(self.WRITE_SETTLE)
-                await self._refresh(probe.component)
-                readback = self._value(probe.field)
-                if readback is not None and math.isclose(
-                    float(readback), original, rel_tol=1e-6, abs_tol=1e-6
-                ):
-                    return RestoreResult(
-                        field=probe.field,
-                        original=original,
-                        readback=readback,
-                        restored=True,
-                        attempts=attempt,
-                        detail=None,
-                    )
-                detail = f"wrote it back but read {readback!r}"
-            else:
-                detail = f"the write {failure}"
+            restored, detail = await self._write_back(probe, original, word)
+            if restored:
+                return RestoreResult(
+                    field=probe.field,
+                    original=original,
+                    readback=self._value(probe.field),
+                    restored=True,
+                    attempts=attempt,
+                    detail=None,
+                )
             if attempt < RESTORE_ATTEMPTS:
                 await self.clock.sleep(RESTORE_PAUSE)
         _LOGGER.warning(
@@ -2721,6 +2719,85 @@ class ControlTest:
             attempts=RESTORE_ATTEMPTS,
             detail=detail,
         )
+
+    async def _holds(self, probe: Probe, original: float, word: int | None) -> bool:
+        """Say whether the register is back where the snapshot found it.
+
+        By its own word where the snapshot has one, because the decoded value
+        goes through the scale this whole procedure exists to doubt. The
+        decoded comparison is the fallback, for a snapshot saved without words.
+        """
+        if word is not None:
+            raw = await self._raw(probe)
+            if raw is not None:
+                return raw == word
+        current = self._value(probe.field)
+        return current is not None and math.isclose(
+            float(current), original, rel_tol=1e-6, abs_tol=1e-6
+        )
+
+    async def _write_back(
+        self, probe: Probe, original: float, word: int | None
+    ) -> tuple[bool, str | None]:
+        """Write one control back, raw word first, and read it to check.
+
+        The raw word, because writing the *value* back goes through the write
+        scale, and a restore that depends on the scale is only as right as the
+        scale. It was wrong at fwitten's SH10RT-V112 on 2026-09-25: 13074 there
+        stores the word it is handed, where three other houses multiply it by
+        ten, so the scaled restore wrote 1188 for 11880 W, read back 1180, and
+        left the slave capped at 1.2 kW until the word was put back by hand.
+
+        The scaled write stays as the fallback, and the multiplying firmware is
+        why: there the raw word is itself multiplied -- 10000 goes in as 100000
+        and is refused with 0x04, or a small word lands ten times too high --
+        and only the scaled write puts it back. Each attempt is checked against
+        the snapshot's word, so whichever firmware this is, the register ends
+        where it started and a wrong intermediate lasts one settle.
+        """
+        detail: str | None = None
+        writes: list[Callable[[], Awaitable[str | None]]] = []
+        if word is not None:
+            writes.append(lambda: self._write_word(probe, word))
+        writes.append(lambda: self._write(probe, original))
+        for write in writes:
+            failure = await write()
+            if failure is None:
+                await self.clock.sleep(self.WRITE_SETTLE)
+                await self._refresh(probe.component)
+                if await self._holds(probe, original, word):
+                    return True, None
+                detail = f"wrote it back but read {self._value(probe.field)!r}"
+            else:
+                detail = f"the write {failure}"
+        return False, detail
+
+    async def _write_word(self, probe: Probe, word: int) -> str | None:
+        """Write one raw word to a control's register. None on success.
+
+        Refusals are deliberately **not** recorded in `self.refusals`: on a
+        multiplying firmware this write is expected to be refused, and that
+        table is what the report quotes for the probe's own write.
+        """
+        if self.options.dry_run:
+            return None
+        component = self.inverter.component(probe.component)
+        resolved = component.resolved_fields.get(probe.field)
+        if resolved is None or resolved.count != 1:
+            return REFUSED
+        try:
+            await self.inverter.async_write_word(resolved.address, word)
+        except ModbusError as err:
+            _LOGGER.debug(
+                "control test: %s refused word %s: %s", probe.field, word, err
+            )
+            return REFUSED
+        except (TimeoutError, OSError) as err:
+            _LOGGER.debug(
+                "control test: %s dropped word %s: %s", probe.field, word, err
+            )
+            return DROPPED
+        return None
 
     # -- restart -------------------------------------------------------------
 

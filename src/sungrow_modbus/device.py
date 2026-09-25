@@ -140,6 +140,15 @@ class SungrowInverter:
             return list(await self._unit.read_holding_registers(address, count))
         return list(await self._unit.read_input_registers(address, count))
 
+    async def async_write_word(self, address: int, word: int) -> None:
+        """Write one raw holding word, bypassing every field's scale.
+
+        The control test's restore needs it: putting back the word a register
+        held is the one write whose correctness does not depend on the scale
+        under test. Raises, like `async_read_words`.
+        """
+        await self._unit.write_register(address, word)
+
     async def async_update_identity(self) -> None:
         """Read the identity block. Raises on failure; the caller decides."""
         await self.identity.async_update()
@@ -170,12 +179,24 @@ class SungrowInverter:
         Sungrow inverter answers a different subset of its map depending on
         model, wiring and firmware, so a block that does not answer is normal
         operation rather than a failure of the device.
+
+        A lost connection gets one retry per component first, because it is
+        not always a dead link. fwitten's SH10RT-V112 times out on its three
+        firmware strings over its own LAN port and then **closes the session**,
+        so the next read in the tier reported a lost connection and the whole
+        tier was abandoned -- which kept the entry from ever setting up
+        (0.1.0a5, 2026-09-25). The retry reconnects; a link that is really dead
+        fails it too, and the poll ends as before.
         """
         updated: set[str] = set()
         failed: dict[str, ModbusError] = {}
         for name in names:
             try:
-                await self.component(name).async_update()
+                try:
+                    await self.component(name).async_update()
+                except ModbusConnectionError as err:
+                    _LOGGER.debug("%s lost the connection, retrying: %s", name, err)
+                    await self.component(name).async_update()
             except ModbusConnectionError:
                 raise
             except ModbusError as err:

@@ -6,7 +6,11 @@ modbus-connection, so they need no inverter and no network.
 
 from __future__ import annotations
 
-from modbus_connection import ModbusProtocolError, ModbusTimeoutError
+from modbus_connection import (
+    ModbusConnectionError,
+    ModbusProtocolError,
+    ModbusTimeoutError,
+)
 from modbus_connection.mock import MockModbusUnit
 import pytest
 
@@ -124,6 +128,57 @@ async def test_an_absent_register_does_not_empty_its_whole_tier(
     assert "slowest_input" in report.updated
     # The point of the fix: the tier's other fields carry values.
     assert inverter.slowest_input.sungrow_version_1 is not None
+
+
+async def test_a_session_closed_after_a_timeout_does_not_abandon_the_tier(
+    unit: MockModbusUnit,
+) -> None:
+    """An SH10RT-V112 at fwitten closes the session after each firmware timeout.
+
+    On its own LAN port, inputs 13249, 13264 and 13279 time out, and the
+    inverter then drops the connection, so the *next* read reports a lost
+    connection. Read as a dead link, that abandoned the whole slowest tier and
+    kept a 0.1.0a5 entry from ever setting up. The read after the drop is
+    retried on a fresh connection instead.
+    """
+    hangs = {13249, 13264, 13279}
+    closed = False
+    read = unit.read_input_registers
+
+    async def read_like_fwitten(address: int, count: int) -> list[int]:
+        nonlocal closed
+        if closed:
+            closed = False
+            raise ModbusConnectionError("Connection lost before response")
+        if address in hangs:
+            closed = True
+            raise ModbusTimeoutError("Response timeout after 10 seconds")
+        return await read(address, count)
+
+    unit.read_input_registers = read_like_fwitten  # type: ignore[method-assign]
+    inverter = SungrowInverter(unit)
+
+    report = await inverter.async_update_tier("slowest")
+
+    assert set(report.failed) == {
+        "firmware_block_battery",
+        "firmware_block_communication_module",
+        "firmware_block_inverter",
+    }
+    assert {
+        "slowest_input",
+        "battery_firmware",
+        "sub_controller_firmware",
+    } <= report.updated
+
+
+async def test_a_dead_link_still_fails_the_whole_poll(unit: MockModbusUnit) -> None:
+    """One retry per component, and a link that fails it too ends the poll."""
+    unit.fail_requests(ModbusConnectionError("connection refused"))
+    inverter = SungrowInverter(unit)
+
+    with pytest.raises(ModbusConnectionError):
+        await inverter.async_update_tier("slowest")
 
 
 async def test_an_all_null_string_reads_as_no_value(unit: MockModbusUnit) -> None:
