@@ -28,6 +28,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any, NamedTuple
 
+from .addresses import field_address, read
+
 
 class BatteryModel(NamedTuple):
     """One Sungrow battery, and what it will take."""
@@ -108,7 +110,11 @@ PACK_UNITS: tuple[int, ...] = (200, 2)
 #: check, a master/slave installation read through a dongle would have its
 #: slave filed as a battery -- which is not a hypothetical shape, it is the
 #: fourth site in `doc/device-fingerprints/`.
-IDENTITY_REGISTER = 4999
+INVERTER_TYPE = field_address("device_type_code")
+
+#: The pack's voltage, which is what a pack is recognised by: every SBR has
+#: one, and no SBR reads 0 V.
+PACK_VOLTAGE = field_address("voltage", "battery")
 
 
 #: What a pack's voltage register may not read for the pack to be believed.
@@ -142,7 +148,7 @@ async def probe_units(
 
     for unit in units:
         try:
-            words = await unit_for(unit).read_input_registers(10740, 2)
+            words = await read(unit_for(unit), PACK_VOLTAGE)
         except (ModbusError, TimeoutError, OSError):
             continue
         if not words or int(words[0]) in IMPLAUSIBLE:
@@ -151,7 +157,7 @@ async def probe_units(
             # Only a battery answers here, so nothing further to ask.
             return unit
         try:
-            code = await unit_for(unit).read_input_registers(IDENTITY_REGISTER, 1)
+            code = await read(unit_for(unit), INVERTER_TYPE)
         except (ModbusError, TimeoutError, OSError):
             # No device type code at all: a battery rather than an inverter.
             return unit

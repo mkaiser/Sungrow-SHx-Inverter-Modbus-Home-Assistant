@@ -11,6 +11,7 @@ import logging
 from modbus_connection import ModbusConnectionError, ModbusError, ModbusUnit
 from modbus_connection.model import Component
 
+from .addresses import Address, read
 from .capabilities import Capability, probe, resolve
 from .components import InverterControl, InverterIdentity
 from .const import model_for
@@ -139,6 +140,10 @@ class SungrowInverter:
         if space == "holding":
             return list(await self._unit.read_holding_registers(address, count))
         return list(await self._unit.read_input_registers(address, count))
+
+    async def async_read(self, where: Address) -> list[int]:
+        """Read one named block -- see `addresses`. Raises, like `async_read_words`."""
+        return await read(self._unit, where)
 
     async def async_write_word(self, address: int, word: int) -> None:
         """Write one raw holding word, bypassing every field's scale.

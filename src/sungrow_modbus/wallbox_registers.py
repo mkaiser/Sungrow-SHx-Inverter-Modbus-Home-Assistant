@@ -46,6 +46,7 @@ from __future__ import annotations
 
 from modbus_connection.model import Component, gauge, integer, string, uint32
 
+from .addresses import reg
 from .model import RegisterValue
 
 #: What register 21317's charging status codes mean.
@@ -109,24 +110,24 @@ class WallboxIdentity(Component):
 
     register_space = "input"
 
-    model_name = string(21215, 5)
-    """Model as text (reg 21216-21220). Read `AC22E-01`. Two sources."""
+    model_name = string(reg(21216), 5)
+    """Model as text. Read `AC22E-01`. Two sources."""
 
-    device_type_code = integer(21223, signed=False)
-    """Model as a code (reg 21224). Read `0x3F80`. Two sources.
+    device_type_code = integer(reg(21224), signed=False)
+    """Model as a code. Read `0x3F80`. Two sources.
 
     Cross-checks the name above, and is the field `MODELS` is looked up by --
     a device answering `0x20DA` is an AC011E-01 that nobody here has read.
     """
 
-    phase_count = integer(21224, signed=False)
-    """How many phases are wired (reg 21225). Read 1. Two sources.
+    phase_count = integer(reg(21225), signed=False)
+    """How many phases are wired. Read 1. Two sources.
 
     Not the same question as `phase_mode`, which is how many it is *using*.
     """
 
-    version_string = string(21225, 10)
-    """Firmware as text (reg 21226-21235). Read `LE-01.1E1.001.`.
+    version_string = string(reg(21226), 10)
+    """Firmware as text. Read `LE-01.1E1.001.`.
 
     Measured here, and known to be a **fragment**: the string is cut off at
     ten registers and the document records that rather than guessing the
@@ -154,25 +155,25 @@ class WallboxRatings(Component):
 
     register_space = "input"
 
-    nominal_voltage = integer(21261, signed=False, unit="V")
-    """Rated voltage (reg 21262). Read 230 V. Three sources."""
+    nominal_voltage = integer(reg(21262), signed=False, unit="V")
+    """Rated voltage. Read 230 V. Three sources."""
 
-    rated_current = gauge(21262, 0.1, signed=False, unit="A")
-    """Rated current (reg 21263). Read 32.0 A. Measured here."""
+    rated_current = gauge(reg(21263), 0.1, signed=False, unit="A")
+    """Rated current. Read 32.0 A. Measured here."""
 
-    phase_mode_raw = integer(21269, signed=False)
-    """Single or three phase, as a code (reg 21270). Read 1. Three sources."""
+    phase_mode_raw = integer(reg(21270), signed=False)
+    """Single or three phase, as a code. Read 1. Three sources."""
 
-    minimum_charging_power = integer(21271, signed=False, unit="W")
-    """Lowest power it will deliver (reg 21272). Read 1380 W. Named elsewhere.
+    minimum_charging_power = integer(reg(21272), signed=False, unit="W")
+    """Lowest power it will deliver. Read 1380 W. Named elsewhere.
 
     1380 W is 6 A at 230 V, which is the minimum a Type 2 charge point may
     offer -- so the value is consistent with the name, which is what "named
     elsewhere" means and all it means.
     """
 
-    maximum_charging_power = integer(21272, signed=False, unit="W")
-    """Highest power it will deliver (reg 21273). Read 22080 W. Two sources.
+    maximum_charging_power = integer(reg(21273), signed=False, unit="W")
+    """Highest power it will deliver. Read 22080 W. Two sources.
 
     22080 W is 32 A across three phases at 230 V, and this unit is an
     AC22E-01 -- the 22 in the model name. That agreement is why this one is
@@ -194,44 +195,44 @@ class WallboxLive(Component):
 
     register_space = "input"
 
-    lifetime_energy = uint32(21299, word_order="little", unit="Wh")
-    """Energy delivered since installation (reg 21300-21301). Measured here.
+    lifetime_energy = uint32(reg(21300), word_order="little", unit="Wh")
+    """Energy delivered since installation. Measured here.
 
     Read 280557 Wh. Low word first, which is what this is -- read the other
     way round a 280 kWh counter reads as 1.2 GWh, and that is the mistake
     this field is most likely to hide.
     """
 
-    phase_a_voltage = gauge(21301, 0.1, signed=False, unit="V")
-    """Phase A voltage (reg 21302). Three sources."""
+    phase_a_voltage = gauge(reg(21302), 0.1, signed=False, unit="V")
+    """Phase A voltage. Three sources."""
 
-    phase_a_current = gauge(21302, 0.1, signed=False, unit="A")
-    """Phase A current (reg 21303). Three sources."""
+    phase_a_current = gauge(reg(21303), 0.1, signed=False, unit="A")
+    """Phase A current. Three sources."""
 
-    phase_b_voltage = gauge(21303, 0.1, signed=False, unit="V")
-    """Phase B voltage (reg 21304). Three sources."""
+    phase_b_voltage = gauge(reg(21304), 0.1, signed=False, unit="V")
+    """Phase B voltage. Three sources."""
 
-    phase_b_current = gauge(21304, 0.1, signed=False, unit="A")
-    """Phase B current (reg 21305). Three sources."""
+    phase_b_current = gauge(reg(21305), 0.1, signed=False, unit="A")
+    """Phase B current. Three sources."""
 
-    phase_c_voltage = gauge(21305, 0.1, signed=False, unit="V")
-    """Phase C voltage (reg 21306). Three sources."""
+    phase_c_voltage = gauge(reg(21306), 0.1, signed=False, unit="V")
+    """Phase C voltage. Three sources."""
 
-    phase_c_current = gauge(21306, 0.1, signed=False, unit="A")
-    """Phase C current (reg 21307). Three sources."""
+    phase_c_current = gauge(reg(21307), 0.1, signed=False, unit="A")
+    """Phase C current. Three sources."""
 
-    charging_power = uint32(21307, word_order="little", unit="W")
-    """Power being delivered (reg 21308-21309). Three sources."""
+    charging_power = uint32(reg(21308), word_order="little", unit="W")
+    """Power being delivered. Three sources."""
 
-    session_energy = uint32(21309, word_order="little", unit="Wh")
-    """Energy delivered this session (reg 21310-21311). Three sources.
+    session_energy = uint32(reg(21310), word_order="little", unit="Wh")
+    """Energy delivered this session. Three sources.
 
     Read 105 Wh against a lifetime 280557 Wh, which is the pairing that
     identifies which of the two counters is which.
     """
 
-    control_pilot_voltage = gauge(21311, 0.01, signed=False, unit="V")
-    """Control pilot voltage (reg 21312). Read 9.04 V. Two sources.
+    control_pilot_voltage = gauge(reg(21312), 0.01, signed=False, unit="V")
+    """Control pilot voltage. Read 9.04 V. Two sources.
 
     The Type 2 signalling line, and its value is diagnostic in itself: 12 V
     is nothing plugged in, 9 V a vehicle connected and not charging, 6 V a
@@ -239,7 +240,7 @@ class WallboxLive(Component):
     agrees.
     """
 
-    unnamed_register_21313 = integer(21312, signed=False)
+    unnamed_register_21313 = integer(reg(21313), signed=False)
     """Register 21313, which **nobody can name**. Read 0. Open.
 
     Named for its address on purpose. Three independent measurements of this
@@ -248,25 +249,25 @@ class WallboxLive(Component):
     inventing a meaning would be worse than the gap.
     """
 
-    start_mode_raw = integer(21313, signed=False)
-    """How a session starts, as a code (reg 21314). Read 1. Two sources."""
+    start_mode_raw = integer(reg(21314), signed=False)
+    """How a session starts, as a code. Read 1. Two sources."""
 
-    power_request = integer(21314, signed=False)
-    """Whether it is asking for power (reg 21315). Named elsewhere."""
+    power_request = integer(reg(21315), signed=False)
+    """Whether it is asking for power. Named elsewhere."""
 
-    power_control_allowed = integer(21315, signed=False)
-    """Whether an EMS may set its power (reg 21316). Named elsewhere."""
+    power_control_allowed = integer(reg(21316), signed=False)
+    """Whether an EMS may set its power. Named elsewhere."""
 
-    charging_status_raw = integer(21316, signed=False)
-    """Session state, as a code (reg 21317). Read 6. Three sources.
+    charging_status_raw = integer(reg(21317), signed=False)
+    """Session state, as a code. Read 6. Three sources.
 
     See `CHARGING_STATUS`, which is the one table in this file that could not
     be measured: a finished session settles on 6, and only a source with the
     whole table says 6 means *completed* rather than idle.
     """
 
-    charging_started = uint32(21317, word_order="little")
-    """When this session began (reg 21318-21319). Named elsewhere.
+    charging_started = uint32(reg(21318), word_order="little")
+    """When this session began. Named elsewhere.
 
     An epoch-shaped number that is the **wallbox's own local time**, not UTC
     -- decoded as UTC it read two hours off in Berlin and matched the wall
@@ -274,16 +275,16 @@ class WallboxLive(Component):
     anything rendering this must not attach a zone.
     """
 
-    charging_ended = uint32(21319, word_order="little")
-    """When this session ended (reg 21320-21321). Named elsewhere.
+    charging_ended = uint32(reg(21320), word_order="little")
+    """When this session ended. Named elsewhere.
 
     Equal to `charging_started` on the reading taken, because the session had
     finished -- which is consistent and is also why neither field is better
     than "named elsewhere" on one reading.
     """
 
-    available_current = gauge(21321, 0.1, signed=False, unit="A")
-    """Current currently available to the vehicle (reg 21322). Measured here.
+    available_current = gauge(reg(21322), 0.1, signed=False, unit="A")
+    """Current currently available to the vehicle. Measured here.
 
     Read 16.1 A while `output_current_setting` held 15.1, so the two are not
     the same number and this is the one the vehicle sees.
@@ -326,17 +327,17 @@ class WallboxSettings(Component):
 
     register_space = "holding"
 
-    output_current_setting = gauge(21202, 0.1, signed=False, unit="A")
-    """Current the charge point is set to offer (reg 21203). Two sources."""
+    output_current_setting = gauge(reg(21203), 0.1, signed=False, unit="A")
+    """Current the charge point is set to offer. Two sources."""
 
-    phase_mode_setpoint_raw = integer(21203, signed=False)
-    """Single or three phase, as configured (reg 21204). Three sources."""
+    phase_mode_setpoint_raw = integer(reg(21204), signed=False)
+    """Single or three phase, as configured. Three sources."""
 
-    charger_enabled_raw = integer(21210, signed=False)
-    """Whether the charge point is enabled (reg 21211). Read 1. Two sources."""
+    charger_enabled_raw = integer(reg(21211), signed=False)
+    """Whether the charge point is enabled. Read 1. Two sources."""
 
-    start_stop_raw = integer(21211, signed=False)
-    """Start/stop command state (reg 21212). Two sources.
+    start_stop_raw = integer(reg(21212), signed=False)
+    """Start/stop command state. Two sources.
 
     Note the polarity, which is the trap: **0 is start and 1 is stop**, the
     opposite way round from `charger_enabled` above where 1 is enabled. Both
@@ -344,8 +345,8 @@ class WallboxSettings(Component):
     that had finished charging and was not stopped.
     """
 
-    mileage_per_kwh = gauge(21231, 0.1, signed=False, unit="km/kWh")
-    """Range added per kWh, as configured (reg 21232). Named elsewhere.
+    mileage_per_kwh = gauge(reg(21232), 0.1, signed=False, unit="km/kWh")
+    """Range added per kWh, as configured. Named elsewhere.
 
     A display preference rather than a measurement: it is what the wallbox
     multiplies by to show a driver how far they have charged.

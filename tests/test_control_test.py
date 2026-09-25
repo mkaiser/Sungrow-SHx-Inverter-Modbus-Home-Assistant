@@ -1724,17 +1724,17 @@ async def test_a_read_that_misses_once_is_retried_before_concluding(
     run = _runner(full_unit)
 
     attempts = 0
-    original = run.inverter.async_read_words
+    original = run.inverter.async_read
 
-    async def flaky(space: str, address: int, count: int) -> Any:
+    async def flaky(where: Any) -> Any:
         nonlocal attempts
-        if address == run.DIRECT_ONLY:
+        if where.address == 6099:  # register 6100, from the specification
             attempts += 1
             if attempts == 1:
                 raise ModbusConnectionError("lost")
-        return await original(space, address, count)
+        return await original(where)
 
-    run.inverter.async_read_words = flaky  # type: ignore[method-assign]
+    run.inverter.async_read = flaky  # type: ignore[method-assign]
 
     assert await run._detect_transport() is True
     assert attempts == 2
@@ -1756,19 +1756,20 @@ async def test_a_busy_device_is_retried_rather_than_called_a_dongle(
     run = _runner(full_unit)
 
     attempts = 0
-    original = run.inverter.async_read_words
+    original = run.inverter.async_read
 
-    async def busy_once(space: str, address: int, count: int) -> Any:
+    async def busy_once(where: Any) -> Any:
         nonlocal attempts
-        if address == run.DIRECT_ONLY:
+        if where.address == 6099:  # register 6100, from the specification
             attempts += 1
             if attempts == 1:
                 raise ServerDeviceBusyError("exception 0x06")
-        return await original(space, address, count)
+        return await original(where)
 
-    run.inverter.async_read_words = busy_once  # type: ignore[method-assign]
+    run.inverter.async_read = busy_once  # type: ignore[method-assign]
 
     assert await run._detect_transport() is True
+    assert attempts == 2
 
 
 async def test_the_export_probe_lifts_the_mode_only_when_it_is_allowed(

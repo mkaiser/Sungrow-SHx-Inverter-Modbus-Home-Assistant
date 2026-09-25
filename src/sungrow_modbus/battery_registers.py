@@ -22,6 +22,8 @@ from __future__ import annotations
 
 from modbus_connection.model import Component, gauge, uint32
 
+from .addresses import reg
+
 
 class SbrBatteryPack(Component):
     """The SBR's own registers, on the battery's own unit id.
@@ -40,26 +42,26 @@ class SbrBatteryPack(Component):
 
     register_space = "input"
 
-    voltage = gauge(10740, 0.1, signed=False, nan=0xFFFF, unit="V")
-    """Pack voltage (reg 10741). Read 199.0 V."""
+    voltage = gauge(reg(10741), 0.1, signed=False, nan=0xFFFF, unit="V")
+    """Pack voltage. Read 199.0 V."""
 
-    current = gauge(10741, 0.1, nan=0xFFFF, unit="A")
-    """Pack current (reg 10742), signed: negative while discharging."""
+    current = gauge(reg(10742), 0.1, nan=0xFFFF, unit="A")
+    """Pack current, signed: negative while discharging."""
 
-    temperature = gauge(10742, 0.1, nan=0xFFFF, unit="°C")
-    """Pack temperature (reg 10743). Read 23.0 °C."""
+    temperature = gauge(reg(10743), 0.1, nan=0xFFFF, unit="°C")
+    """Pack temperature. Read 23.0 °C."""
 
-    state_of_charge = gauge(10743, 0.1, signed=False, nan=0xFFFF, unit="%")
-    """State of charge (reg 10744), in tenths of a percent. Read 93.9 %."""
+    state_of_charge = gauge(reg(10744), 0.1, signed=False, nan=0xFFFF, unit="%")
+    """State of charge, in tenths of a percent. Read 93.9 %."""
 
-    state_of_health = gauge(10744, 1, signed=False, nan=0xFFFF, unit="%")
-    """State of health (reg 10745), whole percent. Read 98 %."""
+    state_of_health = gauge(reg(10745), 1, signed=False, nan=0xFFFF, unit="%")
+    """State of health, whole percent. Read 98 %."""
 
-    total_charge = uint32(10745, scale=0.1, word_order="little", unit="kWh")
-    """Lifetime energy into the pack (reg 10746-10747)."""
+    total_charge = uint32(reg(10746), scale=0.1, word_order="little", unit="kWh")
+    """Lifetime energy into the pack."""
 
-    total_discharge = uint32(10747, scale=0.1, word_order="little", unit="kWh")
-    """Lifetime energy out of the pack (reg 10748-10749)."""
+    total_discharge = uint32(reg(10748), scale=0.1, word_order="little", unit="kWh")
+    """Lifetime energy out of the pack."""
 
 
 class SbrBatteryCells(Component):
@@ -128,29 +130,29 @@ class SbrBatteryCells(Component):
 
     register_space = "input"
 
-    max_cell_voltage = gauge(10756, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Highest cell voltage (reg 10757), in tenths of a millivolt."""
+    max_cell_voltage = gauge(reg(10757), 0.0001, signed=False, nan=0xFFFF, unit="V")
+    """Highest cell voltage, in tenths of a millivolt."""
 
-    max_cell_position = gauge(10757, 1, signed=False, nan=0xFFFF)
-    """Which cell that was (reg 10758)."""
+    max_cell_position = gauge(reg(10758), 1, signed=False, nan=0xFFFF)
+    """Which cell that was."""
 
-    min_cell_voltage = gauge(10758, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Lowest cell voltage (reg 10759)."""
+    min_cell_voltage = gauge(reg(10759), 0.0001, signed=False, nan=0xFFFF, unit="V")
+    """Lowest cell voltage."""
 
-    min_cell_position = gauge(10759, 1, signed=False, nan=0xFFFF)
-    """Which cell that was (reg 10760)."""
+    min_cell_position = gauge(reg(10760), 1, signed=False, nan=0xFFFF)
+    """Which cell that was."""
 
-    max_module_temperature = gauge(10760, 0.1, nan=0xFFFF, unit="°C")
-    """Warmest module (reg 10761)."""
+    max_module_temperature = gauge(reg(10761), 0.1, nan=0xFFFF, unit="°C")
+    """Warmest module."""
 
-    max_module_temperature_position = gauge(10761, 1, signed=False, nan=0xFFFF)
-    """Which module that was (reg 10762)."""
+    max_module_temperature_position = gauge(reg(10762), 1, signed=False, nan=0xFFFF)
+    """Which module that was."""
 
-    min_module_temperature = gauge(10762, 0.1, nan=0xFFFF, unit="°C")
-    """Coolest module (reg 10763)."""
+    min_module_temperature = gauge(reg(10763), 0.1, nan=0xFFFF, unit="°C")
+    """Coolest module."""
 
-    min_module_temperature_position = gauge(10763, 1, signed=False, nan=0xFFFF)
-    """Which module that was (reg 10764)."""
+    min_module_temperature_position = gauge(reg(10764), 1, signed=False, nan=0xFFFF)
+    """Which module that was."""
 
     # -- the position words, unpacked -------------------------------------
     #
@@ -292,86 +294,118 @@ class SbrBatteryModules(Component):
 
     register_space = "input"
 
-    max_cell_voltage_module_1 = gauge(10764, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Highest cell in module 1 (reg 10765). Read 3.3507 V."""
+    max_cell_voltage_module_1 = gauge(
+        reg(10765), 0.0001, signed=False, nan=0xFFFF, unit="V"
+    )
+    """Highest cell in module 1. Read 3.3507 V."""
 
-    max_cell_voltage_module_2 = gauge(10765, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Highest cell in module 2 (reg 10766). Read 3.3484 V."""
+    max_cell_voltage_module_2 = gauge(
+        reg(10766), 0.0001, signed=False, nan=0xFFFF, unit="V"
+    )
+    """Highest cell in module 2. Read 3.3484 V."""
 
-    max_cell_voltage_module_3 = gauge(10766, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Highest cell in module 3 (reg 10767). Read 3.3487 V."""
+    max_cell_voltage_module_3 = gauge(
+        reg(10767), 0.0001, signed=False, nan=0xFFFF, unit="V"
+    )
+    """Highest cell in module 3. Read 3.3487 V."""
 
-    max_cell_voltage_module_4 = gauge(10767, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Highest cell in module 4 (reg 10768).
-
-    Absent on the pack measured, which has three modules: read 0.
-    """
-
-    max_cell_voltage_module_5 = gauge(10768, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Highest cell in module 5 (reg 10769).
-
-    Absent on the pack measured, which has three modules: read 0.
-    """
-
-    max_cell_voltage_module_6 = gauge(10769, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Highest cell in module 6 (reg 10770).
+    max_cell_voltage_module_4 = gauge(
+        reg(10768), 0.0001, signed=False, nan=0xFFFF, unit="V"
+    )
+    """Highest cell in module 4.
 
     Absent on the pack measured, which has three modules: read 0.
     """
 
-    max_cell_voltage_module_7 = gauge(10770, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Highest cell in module 7 (reg 10771).
+    max_cell_voltage_module_5 = gauge(
+        reg(10769), 0.0001, signed=False, nan=0xFFFF, unit="V"
+    )
+    """Highest cell in module 5.
 
     Absent on the pack measured, which has three modules: read 0.
     """
 
-    max_cell_voltage_module_8 = gauge(10771, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Highest cell in module 8 (reg 10772).
+    max_cell_voltage_module_6 = gauge(
+        reg(10770), 0.0001, signed=False, nan=0xFFFF, unit="V"
+    )
+    """Highest cell in module 6.
 
     Absent on the pack measured, which has three modules: read 0.
     """
 
-    min_cell_voltage_module_1 = gauge(10772, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Lowest cell in module 1 (reg 10773). Read 3.3436 V."""
-
-    min_cell_voltage_module_2 = gauge(10773, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Lowest cell in module 2 (reg 10774). Read 3.3448 V."""
-
-    min_cell_voltage_module_3 = gauge(10774, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Lowest cell in module 3 (reg 10775). Read 3.3449 V."""
-
-    min_cell_voltage_module_4 = gauge(10775, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Lowest cell in module 4 (reg 10776).
+    max_cell_voltage_module_7 = gauge(
+        reg(10771), 0.0001, signed=False, nan=0xFFFF, unit="V"
+    )
+    """Highest cell in module 7.
 
     Absent on the pack measured, which has three modules: read 0.
     """
 
-    min_cell_voltage_module_5 = gauge(10776, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Lowest cell in module 5 (reg 10777).
+    max_cell_voltage_module_8 = gauge(
+        reg(10772), 0.0001, signed=False, nan=0xFFFF, unit="V"
+    )
+    """Highest cell in module 8.
 
     Absent on the pack measured, which has three modules: read 0.
     """
 
-    min_cell_voltage_module_6 = gauge(10777, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Lowest cell in module 6 (reg 10778).
+    min_cell_voltage_module_1 = gauge(
+        reg(10773), 0.0001, signed=False, nan=0xFFFF, unit="V"
+    )
+    """Lowest cell in module 1. Read 3.3436 V."""
+
+    min_cell_voltage_module_2 = gauge(
+        reg(10774), 0.0001, signed=False, nan=0xFFFF, unit="V"
+    )
+    """Lowest cell in module 2. Read 3.3448 V."""
+
+    min_cell_voltage_module_3 = gauge(
+        reg(10775), 0.0001, signed=False, nan=0xFFFF, unit="V"
+    )
+    """Lowest cell in module 3. Read 3.3449 V."""
+
+    min_cell_voltage_module_4 = gauge(
+        reg(10776), 0.0001, signed=False, nan=0xFFFF, unit="V"
+    )
+    """Lowest cell in module 4.
 
     Absent on the pack measured, which has three modules: read 0.
     """
 
-    min_cell_voltage_module_7 = gauge(10778, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Lowest cell in module 7 (reg 10779).
+    min_cell_voltage_module_5 = gauge(
+        reg(10777), 0.0001, signed=False, nan=0xFFFF, unit="V"
+    )
+    """Lowest cell in module 5.
 
     Absent on the pack measured, which has three modules: read 0.
     """
 
-    min_cell_voltage_module_8 = gauge(10779, 0.0001, signed=False, nan=0xFFFF, unit="V")
-    """Lowest cell in module 8 (reg 10780).
+    min_cell_voltage_module_6 = gauge(
+        reg(10778), 0.0001, signed=False, nan=0xFFFF, unit="V"
+    )
+    """Lowest cell in module 6.
 
     Absent on the pack measured, which has three modules: read 0.
     """
 
-    cell_type_module_1 = gauge(10780, 1, signed=False, nan=0xFFFF)
-    """What cell chemistry module 1 reports (reg 10781).
+    min_cell_voltage_module_7 = gauge(
+        reg(10779), 0.0001, signed=False, nan=0xFFFF, unit="V"
+    )
+    """Lowest cell in module 7.
+
+    Absent on the pack measured, which has three modules: read 0.
+    """
+
+    min_cell_voltage_module_8 = gauge(
+        reg(10780), 0.0001, signed=False, nan=0xFFFF, unit="V"
+    )
+    """Lowest cell in module 8.
+
+    Absent on the pack measured, which has three modules: read 0.
+    """
+
+    cell_type_module_1 = gauge(reg(10781), 1, signed=False, nan=0xFFFF)
+    """What cell chemistry module 1 reports.
 
     Read 66.
     Sungrow documents no code table for this. 66 is what all three
@@ -380,8 +414,8 @@ class SbrBatteryModules(Component):
     "non-zero means fitted".
     """
 
-    cell_type_module_2 = gauge(10781, 1, signed=False, nan=0xFFFF)
-    """What cell chemistry module 2 reports (reg 10782).
+    cell_type_module_2 = gauge(reg(10782), 1, signed=False, nan=0xFFFF)
+    """What cell chemistry module 2 reports.
 
     Read 66.
     Sungrow documents no code table for this. 66 is what all three
@@ -390,8 +424,8 @@ class SbrBatteryModules(Component):
     "non-zero means fitted".
     """
 
-    cell_type_module_3 = gauge(10782, 1, signed=False, nan=0xFFFF)
-    """What cell chemistry module 3 reports (reg 10783).
+    cell_type_module_3 = gauge(reg(10783), 1, signed=False, nan=0xFFFF)
+    """What cell chemistry module 3 reports.
 
     Read 66.
     Sungrow documents no code table for this. 66 is what all three
@@ -400,8 +434,8 @@ class SbrBatteryModules(Component):
     "non-zero means fitted".
     """
 
-    cell_type_module_4 = gauge(10783, 1, signed=False, nan=0xFFFF)
-    """What cell chemistry module 4 reports (reg 10784).
+    cell_type_module_4 = gauge(reg(10784), 1, signed=False, nan=0xFFFF)
+    """What cell chemistry module 4 reports.
 
     Read 0, this module not being fitted.
     Sungrow documents no code table for this. 66 is what all three
@@ -410,8 +444,8 @@ class SbrBatteryModules(Component):
     "non-zero means fitted".
     """
 
-    cell_type_module_5 = gauge(10784, 1, signed=False, nan=0xFFFF)
-    """What cell chemistry module 5 reports (reg 10785).
+    cell_type_module_5 = gauge(reg(10785), 1, signed=False, nan=0xFFFF)
+    """What cell chemistry module 5 reports.
 
     Read 0, this module not being fitted.
     Sungrow documents no code table for this. 66 is what all three
@@ -420,8 +454,8 @@ class SbrBatteryModules(Component):
     "non-zero means fitted".
     """
 
-    cell_type_module_6 = gauge(10785, 1, signed=False, nan=0xFFFF)
-    """What cell chemistry module 6 reports (reg 10786).
+    cell_type_module_6 = gauge(reg(10786), 1, signed=False, nan=0xFFFF)
+    """What cell chemistry module 6 reports.
 
     Read 0, this module not being fitted.
     Sungrow documents no code table for this. 66 is what all three
@@ -430,8 +464,8 @@ class SbrBatteryModules(Component):
     "non-zero means fitted".
     """
 
-    cell_type_module_7 = gauge(10786, 1, signed=False, nan=0xFFFF)
-    """What cell chemistry module 7 reports (reg 10787).
+    cell_type_module_7 = gauge(reg(10787), 1, signed=False, nan=0xFFFF)
+    """What cell chemistry module 7 reports.
 
     Read 0, this module not being fitted.
     Sungrow documents no code table for this. 66 is what all three
@@ -440,8 +474,8 @@ class SbrBatteryModules(Component):
     "non-zero means fitted".
     """
 
-    cell_type_module_8 = gauge(10787, 1, signed=False, nan=0xFFFF)
-    """What cell chemistry module 8 reports (reg 10788).
+    cell_type_module_8 = gauge(reg(10788), 1, signed=False, nan=0xFFFF)
+    """What cell chemistry module 8 reports.
 
     Read 0, this module not being fitted.
     Sungrow documents no code table for this. 66 is what all three
@@ -450,8 +484,8 @@ class SbrBatteryModules(Component):
     "non-zero means fitted".
     """
 
-    dc_contactor_state = gauge(10788, 1, signed=False, nan=0xFFFF)
-    """State of the pack's DC contactor (reg 10789). Read 2.
+    dc_contactor_state = gauge(reg(10789), 1, signed=False, nan=0xFFFF)
+    """State of the pack's DC contactor. Read 2.
 
     The legacy package calls this "State of DC Switch", from a German
     comment reading *Zustand DC-Schuetz*. Its code table is undocumented,

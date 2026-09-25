@@ -59,8 +59,9 @@ Do not edit by hand: `scripts/generate_registers.py` writes this file from
 that it matches. Hand-written register knowledge — the identity block, decoded
 enumerations, derived values — lives in `components.py` instead.
 
-Addresses are protocol addresses, one below the register number printed in
-Sungrow's documentation and in the YAML's comments. Sungrow sends 32-bit
+Registers are declared by the number Sungrow's documentation and the YAML's
+comments give them; `reg()` turns that into the protocol address, one below,
+which is what goes on the wire. Sungrow sends 32-bit
 values low word first, which the YAML spells `swap: word` and this spells
 `word_order="little"`.
 
@@ -82,6 +83,8 @@ from modbus_connection.model import (
     string,
     uint32,
 )
+
+from .addresses import reg
 
 
 class AsymmetricNumberField(NumberField[int]):
@@ -176,7 +179,7 @@ def _field(entity: dict[str, Any], *, writable: bool = False, field: str = "") -
     nan = entity.get("nan_value")
     unit = entity.get("unit_of_measurement")
 
-    parts: list[str] = [str(address)]
+    parts: list[str] = [f"reg({address + 1})"]
     keywords: list[str] = []
 
     if data_type == "string":
@@ -320,7 +323,7 @@ def render() -> str:
             lines.append(
                 f"    {field} = {_field(entity, writable=writable, field=field)}"
             )
-            lines.append(f'    """{entity["name"]} (reg {entity["address"] + 1})."""')
+            lines.append(f'    """{entity["name"]}."""')
         lines.append("")
 
     # The device composes these by attribute name, and the integration gives

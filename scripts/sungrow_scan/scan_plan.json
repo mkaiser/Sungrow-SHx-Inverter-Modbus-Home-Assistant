@@ -3272,5 +3272,27 @@
     "0x3F80": "AC22E-01",
     "0x20DA": "AC011E-01",
     "0x20ED": "AC007-00"
+  },
+  "addresses": {
+    "direct_only_probe": {
+      "space": "input",
+      "address": 6099,
+      "count": 2
+    },
+    "ihomemanager_type": {
+      "space": "input",
+      "address": 7999,
+      "count": 1
+    },
+    "ihomemanager_protocol": {
+      "space": "input",
+      "address": 8000,
+      "count": 2
+    },
+    "wallbox_serial": {
+      "space": "input",
+      "address": 21200,
+      "count": 6
+    }
   }
 }

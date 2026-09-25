@@ -32,6 +32,7 @@ from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 import json
 import logging
+import os
 from pathlib import Path
 import sys
 from typing import Any
@@ -378,8 +379,6 @@ def _save(directory: Path, stamp: str, name: str, text: str) -> Path:
     with path.open("w", encoding="utf-8") as handle:
         handle.write(text)
         handle.flush()
-        import os
-
         os.fsync(handle.fileno())
     return path
 

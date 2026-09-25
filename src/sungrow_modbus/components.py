@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from modbus_connection.model import Component, gauge, integer, string, uint32
 
+from .addresses import reg
+
 
 class InverterControl(Component):
     """The start/stop register, and only that.
@@ -35,7 +37,7 @@ class InverterControl(Component):
 
     register_space = "holding"
 
-    start_stop = integer(12999, signed=False, writable=True)
+    start_stop = integer(reg(13000), signed=False, writable=True)
     """Register 13000: 0xCF boots the inverter, 0xCE shuts it down."""
 
 
@@ -48,25 +50,25 @@ class InverterIdentity(Component):
 
     register_space = "input"
 
-    protocol_version = uint32(4951, word_order="little")
+    protocol_version = uint32(reg(4952), word_order="little")
     """Sungrow Modbus protocol version."""
 
-    arm_software = string(4953, 15)
+    arm_software = string(reg(4954), 15)
     """ARM firmware version string."""
 
-    dsp_software = string(4968, 15)
+    dsp_software = string(reg(4969), 15)
     """DSP firmware version string."""
 
-    serial_number = string(4989, 10)
+    serial_number = string(reg(4990), 10)
     """Inverter serial number, used as the Home Assistant unique id."""
 
-    device_type_code = integer(4999, signed=False)
+    device_type_code = integer(reg(5000), signed=False)
     """Model code; see ``const.DEVICE_TYPES``."""
 
-    nominal_output_power = gauge(5000, 100, signed=False, unit="W")
+    nominal_output_power = gauge(reg(5001), 100, signed=False, unit="W")
     """Rated output power of the inverter."""
 
-    output_type = integer(5001, signed=False)
+    output_type = integer(reg(5002), signed=False)
     """0 single phase, 1 three-phase 3P4L, 2 three-phase 3P3L.
 
     Sungrow states the phase count outright here, so it is never inferred from
@@ -86,5 +88,5 @@ class InverterReadings(Component):
 
     register_space = "input"
 
-    total_dc_power = uint32(5016, word_order="little", unit="W")
+    total_dc_power = uint32(reg(5017), word_order="little", unit="W")
     """Combined DC input power over all MPP trackers."""

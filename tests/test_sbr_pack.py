@@ -19,12 +19,7 @@ import re
 from modbus_connection.mock import MockModbusConnection
 import pytest
 
-from sungrow_modbus.battery import (
-    IDENTITY_REGISTER,
-    IMPLAUSIBLE,
-    PACK_UNITS,
-    probe_units,
-)
+from sungrow_modbus.battery import IMPLAUSIBLE, PACK_UNITS, probe_units
 from sungrow_modbus.battery_registers import (
     SbrBatteryCells,
     SbrBatteryModules,
@@ -157,7 +152,9 @@ async def test_a_slave_inverter_at_unit_2_is_not_a_battery() -> None:
     read through a dongle would file its second inverter as a battery.
     """
     connection = MockModbusConnection()
-    connection.for_unit(2).input = {**MEASURED, IDENTITY_REGISTER: 0x0E13}
+    # Address 4999 is register 5000, the device type code, from the
+    # specification rather than from the code under test.
+    connection.for_unit(2).input = {**MEASURED, 4999: 0x0E13}
 
     assert await probe_units(connection.for_unit) is None
 

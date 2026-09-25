@@ -548,12 +548,22 @@ async def _check_transport(entry: Found, answers, echo) -> Transport:
     try:
         unit = connection.for_unit(answers.unit)
         try:
-            await unit.read_input_registers(6099, 2)
+            # Retried, like `probe._async_connection`'s read of the same
+            # register: a failure here is reported as "refused", the verdict
+            # becomes a dongle, and the owner is then offered to change a
+            # correct answer to match it. One read lost to contention was
+            # enough to do that on a cable.
+            space, start, count = probe._where("direct_only_probe")
+            await probe._async_read_retrying(
+                probe._reader(unit, space), start, count, probe.IDENTITY_ATTEMPTS
+            )
             answered_6100 = True
         except (ModbusError, TimeoutError, OSError):
             answered_6100 = False
         try:
-            words = await unit.read_input_registers(13264, 15)
+            words = await portable.read_block(
+                unit, probe._where("communication_module_firmware_version")
+            )
             module = portable.present(portable._decode_string(list(words))) or None
         except (ModbusError, TimeoutError, OSError):
             module = None

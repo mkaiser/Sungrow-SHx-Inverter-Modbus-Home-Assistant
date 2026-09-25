@@ -772,6 +772,44 @@ NEVER_PUBLISH = ("serial",)
 IDENTITY_ATTEMPTS = 6
 
 
+#: How many words a presence probe reads -- "does anything answer at this unit"
+#: -- whatever the register's own width. Enough to tell an answer from a
+#: refusal, and the count every published document was read with.
+PRESENCE_WORDS = 2
+
+
+def _where(name: str, device: str = "inverter") -> tuple[str, int, int]:
+    """Return ``(space, address, count)`` for a register, by the plan's name.
+
+    So no read here carries a bare address: a mapped field is where the
+    library's map puts it, and the few unmapped ones are named in the plan.
+    """
+    from portable import address, load_plan
+
+    return address(load_plan(), name, device)
+
+
+def _scale(name: str, device: str = "inverter") -> float:
+    """Return a field's scale from the plan, so a decoding carries no factor."""
+    from portable import load_plan
+
+    plan = load_plan()
+    roles = {
+        row["component"]: row.get("unit", "inverter") for row in plan["components"]
+    }
+    for row in plan["fields"]:
+        if row["name"] == name and roles.get(row["component"], "inverter") == device:
+            return float(row["scale"])
+    raise KeyError(f"{name!r} on the {device}: not in the plan")
+
+
+def _reader(unit, space: str):
+    """Return the unit's read function for one register table."""
+    if space == "holding":
+        return unit.read_holding_registers
+    return unit.read_input_registers
+
+
 async def _async_read_retrying(
     read, address: int, count: int, attempts: int = 3
 ) -> list[int]:
@@ -1683,19 +1721,23 @@ async def _async_connection(unit, host: str, firmware: dict, ModbusError) -> dic
         # put `winet` in the filename of a reading taken on an inverter's own
         # LAN port, while the curated probe of the same register, two seconds
         # later and retried, answered.
+        space, start, count = _where("direct_only_probe")
         await _async_read_retrying(
-            unit.read_input_registers, 6099, 2, IDENTITY_ATTEMPTS
+            _reader(unit, space), start, count, IDENTITY_ATTEMPTS
         )
         signals["winet_restricted_block_6100"] = "answered"
     except (ModbusError, TimeoutError, OSError):
         signals["winet_restricted_block_6100"] = "refused"
     signals["communication_module_firmware"] = firmware.get("communication_module", "")
 
+    # Timed on the device type code, the one register every Sungrow answers,
+    # so the samples describe the link rather than a capability.
+    space, start, count = _where("device_type_code")
     samples: list[float] = []
     for _ in range(7):
         started = time.perf_counter()
         try:
-            await unit.read_input_registers(4999, 1)
+            await _reader(unit, space)(start, count)
         except (ModbusError, TimeoutError, OSError):
             break
         samples.append(round((time.perf_counter() - started) * 1000, 1))
@@ -2614,8 +2656,9 @@ async def capabilities(args: argparse.Namespace) -> Reading:
     print(f"{args.host}:{args.port} unit {args.unit}")
     try:
         try:
+            space, start, count = _where("serial_number")
             serial = await _async_read_retrying(
-                unit.read_input_registers, 4989, 10, IDENTITY_ATTEMPTS
+                _reader(unit, space), start, count, IDENTITY_ATTEMPTS
             )
             text = b"".join(int(v).to_bytes(2, "big") for v in serial)
             decoded = text.decode("ascii", "replace").strip("\x00")
@@ -2772,16 +2815,20 @@ async def capabilities(args: argparse.Namespace) -> Reading:
             print(f"  {label:<38}{values}{note}")
 
         # Devices that live on their own unit ids behind the same endpoint.
+        # `PRESENCE_WORDS` at each, whatever the register's own width.
+        pack = _where("voltage", "battery")[1]
+        inverter_type = _where("device_type_code")[1]
+        wallbox_serial = _where("wallbox_serial")[1]
         for label, other_unit, address in (
-            ("SBR battery module block", 200, 10740),
+            ("SBR battery module block", 200, pack),
             # A WiNet-S forwards the pack here instead of at 200 -- measured
             # on three dongles. Unit 2 is also where a slave inverter lives,
             # so the device type code is read alongside: a slave answers it
             # and a battery does not, which is what tells the two apart.
-            ("SBR battery module block", 2, 10740),
-            ("inverter device type code", 2, 4999),
-            ("wallbox serial", 3, 21200),
-            ("wallbox serial (direct)", 248, 21200),
+            ("SBR battery module block", 2, pack),
+            ("inverter device type code", 2, inverter_type),
+            ("wallbox serial", 3, wallbox_serial),
+            ("wallbox serial (direct)", 248, wallbox_serial),
         ):
             try:
                 # Retried, like every other read here. Single-shot, this
@@ -2795,7 +2842,7 @@ async def capabilities(args: argparse.Namespace) -> Reading:
                 values = await _async_read_retrying(
                     conn.for_unit(other_unit).read_input_registers,
                     address,
-                    2,
+                    PRESENCE_WORDS,
                     IDENTITY_ATTEMPTS,
                 )
             except (ModbusError, TimeoutError, OSError):
@@ -3253,10 +3300,6 @@ class Identity(NamedTuple):
 #: to find one, which weakens the four negative sweeps rather than confirming
 #: them.
 IHOMEMANAGER_UNIT = 247
-#: Input register 8000, the device type code. Address 7999.
-IHOMEMANAGER_TYPE_ADDRESS = 7999
-#: Input registers 8001-8002, the protocol number as a UTF-8 string.
-IHOMEMANAGER_PROTOCOL_ADDRESS = 8000
 
 
 #: The unit ids `identify` tries for an inverter, in order, and why each.
@@ -3295,10 +3338,12 @@ async def identify(host: str, port: int) -> Identity:
     connection = ModbusConnection(ModbusTcpParams(host=host, port=port), timeout=5)
     try:
         first_error: str | None = None
+        serial_at = _where("serial_number")
+        type_at = _where("device_type_code")
         for unit_id in IDENTIFY_UNITS:
             unit = connection.for_unit(unit_id)
             try:
-                values = await unit.read_input_registers(4989, 10)
+                values = await _reader(unit, serial_at[0])(*serial_at[1:])
             except (ModbusError, TimeoutError, OSError) as err:
                 if first_error is None:
                     first_error = type(err).__name__
@@ -3314,7 +3359,7 @@ async def identify(host: str, port: int) -> Identity:
                     None, None, None, "answered, but reported no serial", unit_id
                 )
             try:
-                code = await unit.read_input_registers(4999, 1)
+                code = await _reader(unit, type_at[0])(*type_at[1:])
             except (ModbusError, TimeoutError, OSError):
                 return Identity(serial, None, None, None, unit_id)
             return Identity(
@@ -3349,7 +3394,8 @@ async def _identify_ihomemanager(
     """
     unit = connection.for_unit(IHOMEMANAGER_UNIT)  # type: ignore[attr-defined]
     try:
-        values = await unit.read_input_registers(IHOMEMANAGER_TYPE_ADDRESS, 1)
+        space, start, count = _where("ihomemanager_type")
+        values = await _reader(unit, space)(start, count)
     except (modbus_error, TimeoutError, OSError):  # type: ignore[misc]
         return None
     code = int(values[0])
@@ -3360,7 +3406,8 @@ async def _identify_ihomemanager(
         # forwarding device can answer without knowing.
         return None
     try:
-        raw = await unit.read_input_registers(IHOMEMANAGER_PROTOCOL_ADDRESS, 2)
+        space, start, count = _where("ihomemanager_protocol")
+        raw = await _reader(unit, space)(start, count)
     except (modbus_error, TimeoutError, OSError):  # type: ignore[misc]
         return Identity(
             None, code, "iHomeManager", None, IHOMEMANAGER_UNIT, "ihomemanager"
@@ -3547,40 +3594,44 @@ async def _ask_battery(host: str, port: int, unit_id: int) -> str:
     try:
         unit = connection.for_unit(unit_id)
         try:
-            words = await _async_read_retrying(unit.read_input_registers, 5638, 1, 2)
+            space, start, count = _where("battery_capacity_high_precision")
+            words = await _async_read_retrying(_reader(unit, space), start, count, 2)
         except (ModbusError, TimeoutError, OSError):
             pass
         else:
             if words[0] not in (0, 0xFFFF):
-                capacity = words[0] * 0.01
+                capacity = words[0] * _scale("battery_capacity_high_precision")
         try:
-            level = await _async_read_retrying(unit.read_input_registers, 13019, 1, 2)
+            space, start, count = _where("battery_voltage")
+            voltage = await _async_read_retrying(_reader(unit, space), start, count, 2)
         except (ModbusError, TimeoutError, OSError):
             pass
         else:
-            has_battery = level[0] not in (0, 0xFFFF)
+            has_battery = voltage[0] not in (0, 0xFFFF)
         # Read even where capacity is not, because a third-party pack answers
         # these: showing them keeps the question down to the unreadable fact.
-        for name, address, scale, space in (
-            ("charge_power", 33046, 10, "holding"),
-            ("discharge_power", 33047, 10, "holding"),
-            ("health", 13023, 0.1, "input"),
+        for name, field in (
+            ("charge_power", "battery_max_charge_power"),
+            ("discharge_power", "battery_max_discharge_power"),
+            ("health", "battery_state_of_health"),
         ):
-            read = (
-                unit.read_input_registers
-                if space == "input"
-                else unit.read_holding_registers
-            )
+            space, start, count = _where(field)
             try:
-                got = await _async_read_retrying(read, address, 1, 2)
+                got = await _async_read_retrying(_reader(unit, space), start, count, 2)
             except (ModbusError, TimeoutError, OSError):
                 continue
             if got[0] not in (0, 0xFFFF):
-                extras[name] = got[0] * scale
-        for pack_unit in (200, 2):
+                extras[name] = got[0] * _scale(field)
+        space, start, _count = _where("voltage", "battery")
+        from portable import load_plan
+
+        for pack_unit in load_plan()["battery_pack_units"]:
             try:
                 await _async_read_retrying(
-                    connection.for_unit(pack_unit).read_input_registers, 10740, 2, 2
+                    _reader(connection.for_unit(pack_unit), space),
+                    start,
+                    PRESENCE_WORDS,
+                    2,
                 )
             except (ModbusError, TimeoutError, OSError):
                 continue

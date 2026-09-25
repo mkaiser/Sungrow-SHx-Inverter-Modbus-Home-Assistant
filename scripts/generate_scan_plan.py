@@ -251,16 +251,21 @@ def models() -> dict:
     inverter to `const.DEVICE_TYPES` or a pack to `battery.MODELS` without
     regenerating.
     """
+    from sungrow_modbus.addresses import (
+        DIRECT_ONLY_PROBE,
+        IHOMEMANAGER_PROTOCOL,
+        IHOMEMANAGER_TYPE,
+        WALLBOX_SERIAL,
+    )
     from sungrow_modbus.battery import (
         CAPACITY_TOLERANCE_FRACTION,
-        IDENTITY_REGISTER,
+        INVERTER_TYPE,
         MODELS,
         PACK_UNITS,
     )
     from sungrow_modbus.const import DEVICE_TYPES
     from sungrow_modbus.wallbox import (
-        IDENTITY_LENGTH as WALLBOX_LENGTH,
-        IDENTITY_REGISTER as WALLBOX_IDENTITY,
+        MODEL_NAME as WALLBOX_IDENTITY,
         UNITS as WALLBOX_UNITS,
     )
     from sungrow_modbus.wallbox_registers import MODELS as WALLBOX_MODELS
@@ -271,14 +276,14 @@ def models() -> dict:
         # answers: a slave answers the device type code at this register and
         # a battery does not.
         "battery_pack_units": list(PACK_UNITS),
-        "battery_identity_register": IDENTITY_REGISTER,
+        "battery_identity_register": INVERTER_TYPE.address,
         # Where to look for a component the plan marks `"unit": "wallbox"`.
         # Neither number has a safe default: 3 is measured, behind a
         # WiNet-S, and 248 comes from the community projects for an
         # RS485-to-TCP adapter.
         "wallbox_units": list(WALLBOX_UNITS),
-        "wallbox_identity_register": WALLBOX_IDENTITY,
-        "wallbox_identity_length": WALLBOX_LENGTH,
+        "wallbox_identity_register": WALLBOX_IDENTITY.address,
+        "wallbox_identity_length": WALLBOX_IDENTITY.length,
         # Hex keys, because a device type code is hex everywhere else it
         # appears -- Sungrow's document, the model table, and the survey's own
         # output. JSON has no integer keys anyway, and "3598" beside "0x0E0E"
@@ -300,6 +305,22 @@ def models() -> dict:
         # gets a named device from evidence this repository never gathered.
         "wallbox_models": {
             f"0x{code:04X}": name for code, name in WALLBOX_MODELS.items()
+        },
+        # Registers no component maps, by the name `sungrow_modbus.addresses`
+        # gives them, so the survey reads them by name as well. A mapped
+        # field needs no entry here: `fields` already carries it.
+        "addresses": {
+            name: {
+                "space": where.space,
+                "address": where.address,
+                "count": where.length,
+            }
+            for name, where in (
+                ("direct_only_probe", DIRECT_ONLY_PROBE),
+                ("ihomemanager_type", IHOMEMANAGER_TYPE),
+                ("ihomemanager_protocol", IHOMEMANAGER_PROTOCOL),
+                ("wallbox_serial", WALLBOX_SERIAL),
+            )
         },
     }
 

@@ -43,6 +43,7 @@ from typing import Any, NamedTuple, Protocol
 
 from modbus_connection import ModbusError, ModbusExceptionError, ServerDeviceBusyError
 
+from .addresses import DIRECT_ONLY_PROBE
 from .battery import ceiling as battery_ceiling
 from .capabilities import Capability
 from .derived import RUNNING_STATES
@@ -1352,10 +1353,9 @@ class ControlTest:
             return None
         return low, high
 
-    #: The address that tells a cable from a dongle. Sungrow does not forward
-    #: the 6100 block over a WiNet-S, so a refusal is the transport answering.
-    #: `fingerprint.PROBES` reads the same address for the survey.
-    DIRECT_ONLY = 6099
+    #: What tells a cable from a dongle: see `addresses.DIRECT_ONLY_PROBE`.
+    #: `fingerprint.PROBES` reads the same register for the survey.
+    DIRECT_ONLY = DIRECT_ONLY_PROBE
 
     #: Three attempts, a second apart, for the same reason `SNAPSHOT_PAUSE`
     #: has them: on a link somebody else is polling, one read can simply miss.
@@ -1404,7 +1404,7 @@ class ControlTest:
         """
         for attempt in range(self.TRANSPORT_ATTEMPTS):
             try:
-                await self.inverter.async_read_words("input", self.DIRECT_ONLY, 2)
+                await self.inverter.async_read(self.DIRECT_ONLY)
             except ServerDeviceBusyError:
                 pass
             except ModbusExceptionError:

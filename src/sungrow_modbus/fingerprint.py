@@ -160,14 +160,6 @@ FIRMWARE_STRINGS: tuple[tuple[str, str, int, int], ...] = (
     ("battery", "input", 13279, 15),
 )
 
-#: The register that says which way in we came, and what it means.
-#:
-#: Sungrow states the 6100-6195 block is not forwarded by a WiNet-S over
-#: TCP/IP. Measured 9 of 9 across four houses, which makes it the only
-#: reliable transport signal there is -- latency is not one, and WiFi versus
-#: Ethernet is not determinable at all.
-DIRECT_ONLY_ADDRESS = 6099
-
 #: What a stand-in serial always begins with, and cannot occur in a real one.
 STAND_IN_PREFIX = "anon-"
 

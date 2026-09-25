@@ -50,6 +50,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceEntry
 from sungrow_modbus import Capability
+from sungrow_modbus.addresses import field_address
 from sungrow_modbus.capabilities import OUTPUT_TYPES, known_absent
 
 from .const import CONF_REGISTER_DUMP, CONF_UNIT_ID, DOMAIN
@@ -69,7 +70,8 @@ TO_REDACT = {CONF_HOST, "serial_number", "sungrow_inverter_serial"}
 #: Register addresses holding the serial number, excluded from the raw dump.
 #: A dump is words, not strings, so no amount of key redaction reaches it —
 #: the range has to be dropped by address.
-SERIAL_ADDRESSES = range(4989, 4999)
+_SERIAL = field_address("serial_number")
+SERIAL_ADDRESSES = range(_SERIAL.address, _SERIAL.address + _SERIAL.length)
 
 
 async def async_get_config_entry_diagnostics(
