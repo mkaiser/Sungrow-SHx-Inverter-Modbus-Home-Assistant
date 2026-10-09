@@ -26,21 +26,21 @@ serial and address. See [Contributing one](README.md#contributing-one).
 
 ## Where the coverage is today
 
-Ten documents, five houses, and the honest summary is that **one axis is
+Thirteen documents, six houses, and the honest summary is that **one axis is
 almost entirely unmeasured**:
 
 | Axis | Covered | Missing |
 | --- | --- | --- |
-| Inverter model | **5 of 42** — SH10RT, SH10RT-20, SH10RT-V112, SH8.0RT-V112, SH20T | every model outside RT and T, and 12 of the 16 RTs |
+| Inverter model | **6 of 42** — SH10RT, SH10RT-20, SH10RT-V112, SH8.0RT-V112, SH15T, SH20T | every model outside RT and T, and 12 of the 16 RTs |
 | Product family | **two** — RT and T | RS, MG, RL, K, CX |
 | Phase / output type | three phase 3P4L only | **single phase**, and three phase 3P3L |
 | ARM and DSP | **two strings each**, and both track the *platform* — `ARM_SAPPHIRE-H_V11_V01_B` on every RT, `ARM_PEARL-H_V11_V01_A` on the T | probably nothing: see below, these look like *hardware* identifiers, and the SH20T is what that now rests on |
-| **Version 1 / 2** (the updatable firmware) | **four** — `SAPPHIRE-H_01011.95.03`, `.95.12`, `.95.13` and `PEARL-H_01011.01.45`, and reads on **10 of 10** | a fourth *SAPPHIRE* value, especially `.95.14` — see [#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763). The PEARL value is not a fourth point on that series: see below |
-| Inverter firmware | **three** — `B001.V000.P020`, `P022` and `B000.V000.P071`; reads on only **6 of 10**, the rest refuse the block | a fourth |
-| Communication module firmware | **three** — WiNet-S `P040` and `P043`, and WiNet-S2 `V300.001.03.P032` | a second WiNet-S2, and a Logger |
-| Battery BCU firmware | **three** — SBR `22011.01.27` and `.30`, SBH `SBHBCU-S_22011.04.11` | a second SBH |
-| Transport | direct LAN, WiNet-S wired, WiNet-S WiFi, WiNet-S2 WiFi | a Logger, a Modbus proxy in the path |
-| Battery | **2 of 14** — SBR096 and SBH400 | every other SBR and SBH size, third-party packs other than one Pylontech |
+| **Version 1 / 2** (the updatable firmware) | **five** — `SAPPHIRE-H_01011.95.03`, `.95.12`, `.95.13`, `.95.14` and `PEARL-H_01011.01.45`, and reads on **13 of 13** | a `.95.14` machine that is not 10 kW — see [#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763) and item 2. The PEARL value is not one more point on that series: see below |
+| Inverter firmware | **four** — `B001.V000.P020`, `P022`, `P023` and `B000.V000.P071`; reads on **9 of 13**, fwitten's four refuse the block | a fifth |
+| Communication module firmware | **three** — WiNet-S `P040` and `P043`, and WiNet-S2 `V300.001.03.P032` (two houses) | a second WiNet-S2 *firmware*, and a Logger |
+| Battery BCU firmware | **three** — SBR `22011.01.27` and `.30`, SBH `SBHBCU-S_22011.04.11` (two packs) | a second SBH firmware |
+| Transport | direct LAN, WiNet-S wired, WiNet-S WiFi, WiNet-S2 wired, WiNet-S2 WiFi | a Logger, a Modbus proxy in the path, a **T on its own LAN port** |
+| Battery | **3 of 14** — SBR096, SBH200 and SBH400 | every other SBR and SBH size, third-party packs other than one Pylontech |
 | Wallbox | 1 — AC22E-01 | AC011E-01, AC007-00 |
 | iHomeManager | **none**, but there is now a **lead** — see item 3 | any |
 | Sungrow Logger | **none** | any |
@@ -114,16 +114,17 @@ beside it), and it was in the readings all along:
 | House | Version 1 |
 | --- | --- |
 | fwitten SH10RT-V112 | `SAPPHIRE-H_01011.95.03` |
-| bar12 SH10RT-20, mkaiser SH10RT | `SAPPHIRE-H_01011.95.12` |
+| bar12 SH10RT-20 (P020), mkaiser SH10RT | `SAPPHIRE-H_01011.95.12` |
+| bar12 SH10RT-20 after its update to P023 | `SAPPHIRE-H_01011.95.14` |
 | gerd SH8.0RT-V112 | `SAPPHIRE-H_01011.95.13` |
-| ra1k_0 SH20T | `PEARL-H_01011.01.45` |
+| ra1k_0 SH20T, jm493 SH15T | `PEARL-H_01011.01.45` |
 
-Four values across five houses, on 10 of 10 documents — better coverage than
+Five values across six houses, on 13 of 13 documents — better coverage than
 `inverter_firmware_version`, which four houses' worth of readings refuse.
 That is the field to compare two machines by, and the one worth naming in a
 report.
 
-**The fourth row is not a fourth point on the same scale, and treating it as
+**The PEARL-H row is not one more point on the same scale, and treating it as
 one would be a real mistake.** `PEARL-H_01011.01.45` carries its platform in
 the string, and its numbering restarts with it: `.01.45` is not "older than"
 `.95.03`, because the two series are not the same series. Anything that ever
@@ -168,11 +169,31 @@ register reads **8000 on an 8 kW machine** and matches its own maximum at
 5622, so it is plainly watts there. That brackets any change to *after*
 `.95.13`, which is as close as this project can currently get.
 
+**Since 2026-10-08 there is a `.95.14` machine here, and it changes how the
+issue reads.** bar12's SH10RT-20 updated itself to `.95.14` (inverter
+`B001.V000.P023`) between two surveys. On `.95.14`, 13074 still *reads* in
+watts: 10000 against a maximum of 10000 at 5622. It still *writes* in tens of
+watts, as it did on `.95.12` in September. So "write 700, get 7000 W" is the
+write asymmetry described in `CLAUDE.md` under *Register 13074 reads in watts
+and writes in tens of watts*. The reference house has it on `.95.12` and gerd
+on `.95.13`, so `.95.14` is not where it starts. And the issue's two
+explanations are already told apart on a machine that is not 10 kW: gerd's
+8 kW inverter held word 60 as **600 W**, where "0.1 % of rated power" would
+have given 480. The unit is 10 W.
+
+What is left is *where* it starts. The one machine that stores the word 1:1 is
+fwitten's pair on **`.95.03`**, the oldest Version 1 measured. Every
+machine on `.95.12` or later multiplies. That fits "after a firmware update",
+but it is one cluster against three houses, and a cluster is also the obvious
+other difference. A hypothesis, not a finding.
+
 Two things would settle it, and neither needs a write:
 
-- **A survey from a machine on `.95.14` or later.** The dump records 13073
-  and its bounds at 5621/5622, so comparing the register against the
-  machine's own rated maximum says which unit it is in without touching it.
+- ~~**A survey from a machine on `.95.14` or later.**~~ bar12, 2026-10-08:
+  watts on read, tens of watts on write, as above.
+- **A machine between `.95.03` and `.95.12`, with its 13074 write measured**,
+  which is what would place the change. A survey cannot: the read side is
+  watts on every firmware seen. It needs part B, with feed-in limitation on.
 - **A `.95.14` machine that is not 10 kW.** The two explanations in that
   thread — "the register is 0.1% of rated power" and "the register is in
   units of 10 W" — predict *identical* numbers on a 10 kW inverter, where
@@ -305,6 +326,22 @@ WiNet-S forwards only 10740-10751 and refuses the per-module arrays from
 10765, so the module and cell layout — the part that would need the SBH's
 protocol document — is still unread. An SBH on an inverter's own LAN port is
 what would finish this.
+
+**A second SBH, read the same way.** jm493's SH15T, 2026-10-07, with an
+SBH200 behind a *wired* WiNet-S2. It agrees on everything above: the pack
+answers at unit 2 with the SBR's scales (299.6 V, 97 % health, 12.5 °C
+against the inverter's 12.0 °C, −15.1 A while the inverter reports 3758 W into
+the battery), and the cell and module blocks are refused. One thing does
+**not** agree: the pack says **85.5 %** and the inverter 80.0 %. bar12's SBR
+disagrees too, by less and the other way (pack 65-66 %, inverter 67-68 %), so
+the two are separate measurements rather than one value copied.
+The pack's current also settled a sign: it follows the inverter's
+`battery_power`, positive while discharging, and the library's docstring had
+it backwards. Same BCU firmware as the SBH400,
+`SBHBCU-S_22011.04.11`. It also reads **over** its rating, as the SBH400
+did: 20.27 kWh on a 20.0 kWh pack, +1.35 %, inside the 2 % window, so it is
+named. Two of two SBHs reading high is now a pattern, not one reading. Still
+behind a dongle, so the cell layout is still unread.
 
 It also corrected a rule about naming a pack, which is worth recording
 because it was wrong in an unobvious direction. That SBH400 reports

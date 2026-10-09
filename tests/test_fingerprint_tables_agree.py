@@ -95,7 +95,7 @@ def test_the_two_producers_agree_on_the_wifi_sentence() -> None:
     """Byte for byte, because a difference here would look like a finding.
 
     `wifi_or_ethernet` is the same sentence in every document: it says the
-    question cannot be answered over Modbus and why latency cannot stand in.
+    question cannot be answered over Modbus and where the answer lives.
     Two spellings of that would read, to somebody diffing two files, as
     though something had been established.
     """

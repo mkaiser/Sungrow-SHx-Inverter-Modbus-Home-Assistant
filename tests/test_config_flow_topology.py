@@ -581,8 +581,7 @@ async def test_one_dongle_on_two_addresses_says_wifi_cannot_be_told_apart(
     register -- so both are the same WiNet-S: its network socket and its
     WiFi. Which is which cannot be determined over Modbus. Settled against a
     controlled pair, one dongle read wired and then over WiFi, with a nil
-    structural diff; and latency cannot stand in, because at that very site
-    the two medians were 25.2 ms and 23.4 ms.
+    structural diff.
 
     The dialog therefore says three things, and the third is the useful one:
     it cannot tell, it does not matter, and here is where the answer lives.

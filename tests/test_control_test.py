@@ -1675,7 +1675,7 @@ async def test_a_lost_read_is_undetermined_rather_than_a_dongle(
 
     The regression this pins: `_detect_transport` used to read 6100 once and
     treat *any* failure as a dongle. Measured 2026-09-20 on the reference
-    SH10RT -- a cable, no communication module fitted at all, 1.9 ms median --
+    SH10RT -- a cable, no communication module fitted at all --
     where a run made while Home Assistant was polling produced one document
     whose survey half said "direct to the inverter's LAN port" and whose
     control test said dongle, and which therefore stamped its own readback

@@ -109,7 +109,7 @@ async def async_get_config_entry_diagnostics(
     # Wrapped, and that is not caution for its own sake: diagnostics is what
     # somebody downloads when the integration is *already* misbehaving, so a
     # survey that raised would take away the report they came for. It costs
-    # 19 probe reads and five timing reads, which is small beside the
+    # 19 probe reads, which is small beside the
     # register dump and not free -- an inverter grants very few sessions.
     try:
         report["fingerprint"] = await async_build(hass, entry)

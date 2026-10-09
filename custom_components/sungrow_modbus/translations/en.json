@@ -1004,7 +1004,7 @@
       "nothing_left_to_poll": "Every group is set to never, which would leave the integration with nothing to read and no entities at all. Leave at least one group with an interval."
     },
     "progress": {
-      "running_survey": "Reading your inverter: 19 capability probes and a few timing samples. Through a WiNet-S this can take a minute."
+      "running_survey": "Reading your inverter: 19 capability probes. Through a WiNet-S this can take a minute."
     },
     "abort": {
       "devices_mode_not_offered": "Setting up sensors and controls is not in this release. This alpha creates diagnostics-only entries; start again and choose **Diagnostics only**."

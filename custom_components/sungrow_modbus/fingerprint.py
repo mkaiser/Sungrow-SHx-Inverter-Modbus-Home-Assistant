@@ -52,8 +52,6 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 import json
-import statistics
-import time
 from typing import Any
 
 from modbus_connection import (
@@ -67,7 +65,6 @@ from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 from sungrow_modbus import dump as register_dump, fingerprint as survey
-from sungrow_modbus.addresses import field_address
 from sungrow_modbus.const import model_for
 from sungrow_modbus.fingerprint import State
 
@@ -100,23 +97,11 @@ FIRMWARE_FIELDS = {
     "battery": "battery_firmware_version",
 }
 
-#: How many times to read one address when timing the link.
-#:
-#: The samples are published because latency is evidence about the *network*
-#: and worth having; they are explicitly not evidence about the transport,
-#: which the sentence in `wifi_or_ethernet` explains at length.
-LATENCY_SAMPLES = 5
-
-#: What is timed: the device type code, register 5000, the one address a
-#: Sungrow always answers -- so the samples describe the link rather than a
-#: capability.
-LATENCY_PROBE = field_address("device_type_code")
-
 
 def planned_steps(dumping: bool) -> int:
     """Count the reads a survey will report progress for, before it starts.
 
-    Every probe, every timing sample, and one step for assembling what the
+    Every probe, and one step for assembling what the
     coordinators already hold -- assembly is a single step because it does no
     reading and is the only part that cannot stall.
 
@@ -126,7 +111,7 @@ def planned_steps(dumping: bool) -> int:
     error. A caller sharing one bar between this and the control test needs the
     number without starting a survey, which is why it is a function.
     """
-    total = len(survey.PROBES) + LATENCY_SAMPLES + 1
+    total = len(survey.PROBES) + 1
     if dumping:
         total += register_dump.block_count()
     return total
@@ -182,9 +167,7 @@ def _device_block(device: Any) -> dict[str, Any]:
     }
 
 
-def _connection_block(
-    answered_6100: object, module: str | None, latency: dict[str, Any]
-) -> dict[str, Any]:
+def _connection_block(answered_6100: object, module: str | None) -> dict[str, Any]:
     """Return how this document reached the inverter, as far as that is knowable.
 
     Two registers answer different questions and are easy to confuse. Input
@@ -196,12 +179,14 @@ def _connection_block(
     WiFi versus Ethernet is not determinable at all, which is why
     `WIFI_OR_ETHERNET` is a fixed sentence rather than a guess. It was settled
     against a controlled pair -- one dongle, read wired then over WiFi -- with a
-    nil structural diff, and latency cannot stand in either: direct-LAN medians
-    span 2.0-61.5 ms and dongle medians 24.3-48.3 across four houses.
+    nil structural diff.
+
+    No round-trip time is recorded. It was, until 2026-10-09, and it described
+    the path from whoever read -- usually a VPN -- rather than anything about
+    the inverter or how it is attached.
     """
     return {
         "communication_module_firmware": module,
-        "latency_ms": latency,
         "verdict": survey.transport_verdict(
             answered_6100=answered_6100 == survey.State.PRESENT,
             module_named=bool(module),
@@ -226,10 +211,6 @@ async def async_build(
     runs the survey to show the contributor what was found *before* it
     commits their answers, so the document has to be built from testimony
     that is not saved yet.
-
-    Read order matters slightly: the probes come first and the latency
-    samples after, so a link that is about to fail fails on the measurement
-    that is worth something rather than on the timing.
 
     `on_progress(fraction, step)` is called after each read that can be
     counted, so a device page can show how far along a survey is and what it
@@ -261,8 +242,8 @@ async def async_build(
     # Asked for and affordable are two different things; see the docstring.
     dumping = allow_dump and bool(options.get(CONF_SURVEY_DUMP, False))
 
-    # The denominator, so a fraction means something: every probe, every
-    # timing sample, one step for assembling what the coordinators already
+    # The denominator, so a fraction means something: every probe, one step
+    # for assembling what the coordinators already
     # hold, and every block of the dump when there is one. Assembly is a
     # single step because it does no reading -- it is the only part that
     # cannot stall.
@@ -281,7 +262,6 @@ async def async_build(
             on_progress(done / total, label)
 
     probes = await _async_probes(device, step)
-    latency = await _async_latency(device, step)
     raw = await _async_dump(device, step) if dumping else None
     step("assembling the document")
 
@@ -303,7 +283,7 @@ async def async_build(
         ),
         "device": _device_block(device),
         "firmware": firmware,
-        "connection": _connection_block(answered_6100, module, latency),
+        "connection": _connection_block(answered_6100, module),
         # Not a claim, and not optional: a document produced by a running
         # Home Assistant was taken while something was polling the inverter,
         # and this project *discards* readings taken under contention because
@@ -434,29 +414,6 @@ async def _async_probes(
                 entry["values"] = [int(word) for word in words]
         probes[label] = entry
     return probes
-
-
-async def _async_latency(
-    device: Any, step: Callable[[str], None] | None = None
-) -> dict[str, float] | None:
-    """Time a few reads of `LATENCY_PROBE`, which every inverter answers."""
-    samples: list[float] = []
-    for sample in range(LATENCY_SAMPLES):
-        if step is not None:
-            step(f"timing the link ({sample + 1} of {LATENCY_SAMPLES})")
-        started = time.monotonic()
-        try:
-            await device.async_read(LATENCY_PROBE)
-        except (ModbusError, TimeoutError, OSError):
-            continue
-        samples.append((time.monotonic() - started) * 1000)
-    if not samples:
-        return None
-    return {
-        "min": round(min(samples), 1),
-        "median": round(statistics.median(samples), 1),
-        "max": round(max(samples), 1),
-    }
 
 
 def _state_of(probes: dict[str, dict[str, Any]], label: str) -> str:

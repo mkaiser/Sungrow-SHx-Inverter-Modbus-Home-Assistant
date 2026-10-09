@@ -1386,7 +1386,7 @@ class ControlTest:
         read the register once and treat *any* failure as a dongle, which is
         wrong in the one direction that costs something: a lost read is not a
         refusal. Measured 2026-09-20 on the reference SH10RT -- a cable, no
-        communication module fitted at all, 1.9 ms median -- where a run made
+        communication module fitted at all -- where a run made
         while Home Assistant was polling produced a document whose survey half
         said "direct to the inverter's LAN port" and whose control test said
         dongle, and which therefore stamped its own readback table "not

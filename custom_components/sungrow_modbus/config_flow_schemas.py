@@ -194,9 +194,7 @@ _NOT_DETECTED = (
 #: That is a WiNet-S's Ethernet socket and its WiFi radio, and **which is
 #: which cannot be determined over Modbus**. Settled against a controlled
 #: pair -- one dongle read wired and then over WiFi -- with a nil structural
-#: diff, and latency cannot stand in: measured at four houses, direct-LAN
-#: medians run 2.0 to 61.5 ms and dongle medians 24.3 to 48.3, and one
-#: house's cable is slower than its own dongle.
+#: diff.
 #:
 #: So the dialog says it cannot tell, says it does not matter, and says where
 #: the answer actually lives. "It does not matter" is the load-bearing part
@@ -208,9 +206,9 @@ _NOT_DETECTED = (
 _SAME_DONGLE = (
     "\n\n**Two of these are one inverter behind one WiNet-S** — its network "
     "socket and its WiFi, which have separate addresses. Modbus cannot say "
-    "which is which: nothing in the protocol reports it, and the round-trip "
-    "times are too close to tell apart.\n\nIt makes no difference which you "
-    "pick. Both go through the same dongle to the same inverter, and both "
+    "which is which: nothing in the protocol reports it.\n\nIt makes no "
+    "difference which you pick. Both go through the same dongle to the same "
+    "inverter, and both "
     "answer identically — measured on a dongle read on both of its addresses, "
     "where every register matched. If you want to know anyway, your router's "
     "client list shows them as two devices with different MAC addresses, and "
@@ -454,9 +452,7 @@ def _described(found: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
                 # Ethernet socket and its WiFi radio. Which is which cannot be
                 # told from here, and saying so beats leaving somebody to
                 # wonder -- settled against a controlled pair, one dongle read
-                # wired and then over WiFi, with a nil structural diff, and
-                # latency cannot stand in either: at this very site the two
-                # medians were 25.2 ms and 23.4 ms.
+                # wired and then over WiFi, with a nil structural diff.
                 #
                 # It also does not matter, which is the useful half: the same
                 # dongle is on both, and both addresses returned identical

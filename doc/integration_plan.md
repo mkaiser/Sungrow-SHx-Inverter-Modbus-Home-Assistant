@@ -1875,7 +1875,23 @@ map meaning different things depending on where you read it.
 **And it is blocked on evidence, not effort.** Every measured machine reads
 13073 in watts and matches its own maximum at 5622 — 10000 on the 10 kW
 machines, 8000 on gerd's 8 kW one, 24990 on fwitten's — so the deviation has
-never been observed here. Worse, the two explanations in the thread are
+never been observed here *on the read side*.
+
+**Revisited 2026-10-09: the write side is where it was all along.** "Write
+700, get 7000 W" is the factor-10 write that part B found at the reference
+house on 2026-09-19 and that `registers.AsymmetricNumberField` fixes. It
+shows up on `.95.12` (reference, bar12 in September), `.95.13` (gerd) and,
+since bar12 updated itself, `.95.14`, so that update is not where it starts.
+gerd also tells the thread's two explanations apart: an 8 kW machine held
+word 60 as **600 W**, where "0.1 % of rated power" gives 480, so the unit is
+10 W. The one machine that stores the word 1:1 is fwitten's, on `.95.03`, the
+oldest Version 1 seen. That is the version range a gate would need, and it
+rests on one cluster, so it stays a hypothesis.
+
+The paragraph below predates that, and is kept because its reasoning about
+the two hypotheses on a 10 kW machine still holds.
+
+The two explanations in the thread are
 indistinguishable from the reports so far: "0.1% of rated power" and "units
 of 10 W" predict the same number on a 10 kW inverter, and every reporter
 appears to have one. Writing a version-gated scale on that basis would be
@@ -2560,7 +2576,8 @@ being refused on the other.
 So `UNCHANGED` through a WiNet-S distinguishes nothing, and `MATCH` is worth
 only what the cache is worth. The bar12 readings are not re-interpreted into a
 second conclusion — there is no cable at that house to check against, so they
-stay unresolved.
+stay unresolved. (There is one since 2026-10-08: see "bar12 over a cable at
+last".)
 
 **Leg C is the one that survives a dongle**, because watching real power change
 depends on no readback. Which is exactly how the factor-10 error was confirmed
@@ -3096,7 +3113,7 @@ obedience, then the sign.
 ### Verified against real hardware (2026-09-07)
 
 Milestone 3 shipped having only ever written to a simulator. Run against the
-reference SH10RT over direct LAN, at about 2 ms round trip:
+reference SH10RT over direct LAN:
 
 - **The write path works.** `battery_min_soc` read 10.0 %, was written
   11.0 %, **read back 11.0 %**, and was restored to 10.0 %. Function code 6,
@@ -3158,18 +3175,17 @@ identical capability probe states, identical failed components, identical
 fields filled, identical firmware strings. Nothing in the register space
 moves.
 
-Latency was the standing hypothesis and does not survive either. Across four
-installations the direct-LAN medians span 2.0 to 61.5 ms and the WiNet medians
-24.3 to 48.3, so they overlap — and gerd's direct link is *slower* than his
-own dongle, because he reaches it over a VPN. Jitter fails too: the same
-dongle spread 1.6 ms wired and 4.9 over WiFi, while another house's wired
-WiNet spread 8.6. It measures the path between the client and the device, not
-how the device is attached.
-
-So the samples stay as evidence, `--transport` carries what only the owner
-knows, and no code guesses. The sentence this replaces claimed "about 2 ms
-with almost no spread" as a general fact and shipped inside every published
-fingerprint for a week.
+Round-trip time was the standing hypothesis, and it was published in every
+document as `connection.latency_ms` until **2026-10-09, when it was removed**.
+It timed the path from whoever read the inverter, which for most documents was
+a VPN, so it described that path and not the attachment. Each claim made from
+it fell to the next reading: "about 2 ms with almost no spread" for a cable
+(shipped in every fingerprint for a week), then a range per transport, which
+two WiNet-S2 houses at 6.5 and 9.1 ms broke, and a dump duration estimated per
+transport. The same bar12 dongle measured 23 ms one night and 39 another --
+more than its cable and dongle differed within one night. Nothing ever acted on
+it, so it went rather than gaining another caveat. `--transport` carries what
+only the owner knows, and no code guesses.
 
 **Register 13265 reports what is attached, not the route taken.** gerd's
 SH8.0RT names its WiNet-S on a reading taken through the inverter's own LAN
@@ -3273,13 +3289,11 @@ is the inverter's.
 The two readings of this machine, forty minutes apart with Home Assistant
 polling and then stopped, were compared leaf by leaf: 988 leaves, 122
 differing, and **every one of them a live number** -- PV voltages, phase
-voltages, meter current, the battery's own registers, the latency figures and
-the timestamp. Every structural fact was identical: the same four missed
+voltages, meter current, the battery's own registers, the round-trip figures
+then recorded, and the timestamp. Every structural fact was identical: the same four missed
 components, the same seven fields that did not read, the same capability
 verdict on every probe including MPPT3/4 and the second meter channel, and
-the same 816 addresses dumped with the same six bands unreached. Even the
-latency medians agree -- 23.8 ms against 24.0 -- so Home Assistant's polling
-did not measurably load the link either.
+the same 816 addresses dumped with the same six bands unreached.
 
 So the discarded readings were, in substance, right. Two things follow, and
 the second is the one that matters:
@@ -4202,6 +4216,7 @@ other two; the blocks are merged into the three fingerprints under
 | reference | SH10RT | cable | B | wrote 900 W → register held **900**, slope 1.0 |
 | gerd | SH8.0RT-V112 | cable | B | wrote 600 W → register held **600**, slope 1.0 |
 | bar12 | SH10RT-20 | dongle | C | commanded 1250 W → export 4583 → **1275 W** |
+| bar12, 2026-10-08 | SH10RT-20 | cable | B | wrote 600 W → register held **600**, slope 1.0 |
 
 Both leg-B runs lifted feed-in limitation for that probe alone and restored
 `0x55` within seconds; with it off the register ignores writes entirely, which
@@ -4227,7 +4242,8 @@ commands at 60-second intervals before the state moved.
 - `battery_min_soc` and `battery_reserved_soc_for_backup` went unwritten at
   gerd and at the reference house's second run: every admissible value was too
   close to the battery's actual level for the guards to allow it.
-- Leg B at bar12 is a cache, by construction, and the report says so.
+- Leg B at bar12 is a cache, by construction, and the report says so. (Taken
+  over a cable on 2026-10-08, once the house had one: 600 held 600.)
 
 **Four defects, one shape**, all found by running rather than by testing, all
 recorded in `CLAUDE.md` under *a failed read is not a refusal*:
@@ -4304,6 +4320,111 @@ was already wrong going in.
 firmware-string blocks and `meter_channel_2`, all by timeout; the dongles lose
 the battery and sub-controller firmware blocks by exception 0x02, as at every
 other dongle. Register 6100 called the transport right at all four.
+
+### bar12 over a cable at last (2026-10-08)
+
+Until this evening every bar12 reading went through its WiNet-S: the owner's
+LAN cable went into the **dongle**, not the inverter. That is what the
+September documents already said (6100 refused on both addresses), but their
+transport was "not sure", so which address was which medium had not been
+established. The owner then moved the cable into the inverter's own LAN
+port, and the network says the rest: 178.041 disappeared, 178.023 kept
+answering, and the inverter appeared at 178.064. So .041 was the dongle's
+Ethernet and .023 its WiFi, and both September documents now say so --
+renamed `…-winet-lan` and `…-winet-wlan`, with the correction dated in their
+comments. `command_line` is left as it was run.
+
+Read on the same evening over both remaining paths, both on inverter firmware
+**P023** (September's was P020), so what differs is the transport:
+
+| | cable (.064) | dongle, WiFi (.023) |
+| --- | --- | --- |
+| input 6100 | answers | refused 0x02 |
+| block read test | **27 of 27** | 2612 and 2628 refused |
+| dump coverage | 1461 of 1510 | 1020 of 1510 |
+| MPPT3/4 | 0xFFFF, absent | 0, granted |
+| meter phase V/I (5741-5746) | real values | 0 in the block, 0x02 alone |
+| running state, 13000 | 0x0040 | **0x0000** |
+| SBR | unit **200**, 48 values | unit **2**, 7 (cells and modules refused) |
+| unit 247 | timeout | refused 0x02 |
+| port 516 (TLS) | closed | open |
+
+Everything gerd showed between his two paths, bar12 now shows too: a second
+house, a second model. The dongle answers 0 where the cable answers 0xFFFF on
+23 ranges of the input dump. Two things are new:
+
+* **This cable reads the firmware-string blocks 13249, 13264 and 13279**,
+  which fwitten's cables time out on and which close the session there. So that
+  is fwitten's firmware, not a property of the inverter's LAN port.
+* **Register 13000 reads 0x0000 through the dongle and 0x0040 over the cable,
+  within minutes**, and that is not one pair's oddity. It holds at **every
+  house with both paths**: gerd's cable 0x0040 against dongle 0x0000, and
+  fwitten's cable 0x0080 against dongle **0x8100**, both "Derating Running".
+  Both T houses, both behind a dongle, read 0x8100 as well. So
+  `derived.RUNNING_STATES` lists one state twice because a dongle **re-encodes**
+  it, not because the inverter has two codes for it. Nothing reads wrong
+  today: each pair maps to the same label. But a code seen only through a
+  dongle is not evidence of what the inverter sends.
+
+And **13265 names the fitted WiNet-S on the cable path** here as at gerd, so a
+rule keyed on 13265 would now be wrong four times. 6100 is still never wrong.
+
+**The firmware change moved nothing this project reads.** With the September
+documents carrying their real transport, the two WiFi readings form the first
+pair that `doc/compatibility.md` can attribute: same model, same path, P020 to
+P023, every curated probe the same. `sungrow_version_1` moved with it,
+`…95.12` to `…95.14` -- the first time that field has been seen to follow an
+update, which is what `devices-wanted.md` argued it would do.
+
+**Part B over the cable, in the dark, feed-in limitation lifted from `0x55`.**
+Nine readbacks matched. **13074: wrote 600 W, register held 600, slope 1.0**, so
+the integration's word 60 was multiplied by ten -- bar12 now has leg B to go
+with September's leg C, and it agrees. Behaviour on battery alone: forced
+charge 1250 → 1249 W, forced discharge 1250 → 1251 W, and an export made by
+discharging 2990 W held at 1251 W under a 1250 W limit (2573 W either side).
+Every register read back at the snapshot's raw word, by the tool and then
+separately by hand. Not run: the charge-ceiling check (discharging) and the
+restart.
+
+**Still open, and now answerable:** the four bar12 controls that read
+unchanged through the dongle on 2026-09-19 were left unresolved because there
+was no cable to check against. There is one now.
+
+### jm493: an SH15T with an SBH200 (2026-10-07)
+
+A contributor's own survey, sent as a document: an **SH15T** (`0x0E25`, new
+here) with an **SBH200**, read through a **wired WiNet-S2**. It is the second
+T and the second SBH, and on the same firmware as ra1k's SH20T on every
+field: PEARL-H `B000.V000.P071`, Version 1 `01011.01.45`, WiNet-S2
+`V300.001.03.P032`, BCU `SBHBCU-S_22011.04.11`. Their capability probes are
+identical, so two T models on one firmware agree, and ra1k's reading was not a
+one-off.
+
+What it adds:
+
+* **The SBH's pack-level registers again**, at unit 2, on the SBR's scales,
+  with cells and modules refused, as at every dongle. The capacity reads
+  **20.27 kWh** on a 20.0 kWh pack: high again, like the SBH400's 40.55, so
+  the 2 % window in `battery.CAPACITY_TOLERANCE_FRACTION` names it. The pack's
+  state of charge is **85.5 %** where the inverter says 80.0, the largest gap
+  measured between the two.
+* **The pack current's sign is settled, and the library had it backwards.**
+  −15.1 A while the inverter reports 3758 W of charging, and bar12's SBR at
+  +1.8 A while discharging. It follows `battery_power`; the docstring said the
+  opposite and is corrected. No code depended on it.
+* **Feed-in limitation on (`0xAA`) at 0 W**: a zero-export house. It is a T
+  on PEARL-H firmware, where 13074's write scale has **never been measured**,
+  and its bounds start at 0, so `10*v` and `v/10` both fit. That makes it the
+  best candidate yet for part B on the second platform, if its owner agrees.
+* **13018 answers (`0x55`)**, as on the SH20T, so the "SHT only" register is
+  now a T-family property on two models.
+
+The block read test agrees with every other dongle: everything answers except
+2612 and 2628, refused 0x02.
+
+`read_at_local` says 23:54, but the house was making 4.2 kW of PV with
+3.5 kWh on the day, so the clock that stamped it is not the house's. That
+affects no finding here; it is noted so nobody reads the timestamp as a night.
 
 ---
 

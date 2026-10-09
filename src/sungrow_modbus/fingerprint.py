@@ -54,6 +54,9 @@ from .const import model_for
 #: to be able to tell "this run did not do that" from "this document predates
 #: the possibility".
 #:
+#: `connection.latency_ms` was removed on 2026-10-09 **without** a bump: nothing
+#: read it, so its absence tells a reader nothing. `probe.py` has the reasoning.
+#:
 #: `test_the_two_producers_agree_on_the_schema` keeps this equal to
 #: `probe.SCHEMA`.
 SCHEMA = 19
@@ -289,23 +292,16 @@ def address_tail(host: str, permitted: bool) -> str:
 #: Settled against the controlled case rather than argued: bar12's SH10RT-20,
 #: one dongle, read wired and then over WiFi. The structural diff is **nil** --
 #: identical probe states, identical failed components, identical firmware
-#: strings. Latency was the standing hypothesis and does not survive either,
-#: which is what the sentence itself explains to whoever opens the document.
+#: strings. Nothing in the register space moves, so a person has to say it.
 #:
 #: Copied from `probe.WIFI_OR_ETHERNET` and kept identical by
 #: `test_the_two_producers_agree_on_the_wifi_sentence`, because a reader
 #: comparing two documents must never have to wonder whether a difference
 #: here means something.
 WIFI_OR_ETHERNET = (
-    "not determinable over Modbus. Nothing in the protocol reports it, "
-    "and latency cannot stand in: measured across four installations, "
-    "direct-LAN medians run from 2.0 to 61.5 ms and WiNet medians from "
-    "24.3 to 48.3, so the ranges overlap -- one house's direct link is "
-    "slower than its own dongle. Jitter does not separate them either: a "
-    "WiNet-S measured 1.6 ms of spread wired and 4.9 over WiFi on the "
-    "same dongle, while another house's wired WiNet spread 8.6. Latency "
-    "describes the network between the client and the device, not how the "
-    "device is attached. Use the reported_by_hand field."
+    "not determinable over Modbus. Nothing in the protocol reports it, and "
+    "a WiNet-S answers identically wired and over WiFi. Use "
+    "user_inputs.transport, which is what the contributor said."
 )
 
 

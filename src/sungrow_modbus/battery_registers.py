@@ -46,7 +46,12 @@ class SbrBatteryPack(Component):
     """Pack voltage. Read 199.0 V."""
 
     current = gauge(reg(10742), 0.1, nan=0xFFFF, unit="A")
-    """Pack current, signed: negative while discharging."""
+    """Pack current, signed: **positive while discharging**, negative while
+    charging -- the same sign as the inverter's `battery_power`.
+
+    This said the opposite until 2026-10-09, when two houses settled it: bar12's
+    SBR096 read +1.8 A while discharging about 330 W, and jm493's SBH200 read
+    -15.1 A while the inverter reported 3758 W into it."""
 
     temperature = gauge(reg(10743), 0.1, nan=0xFFFF, unit="°C")
     """Pack temperature. Read 23.0 °C."""

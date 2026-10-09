@@ -499,19 +499,24 @@ def test_a_module_named_on_a_direct_reading_is_reported_as_fitted() -> None:
     assert "fitted as well but not in the path" in verdict
 
 
-def test_the_document_does_not_claim_latency_can_tell_wifi_from_ethernet() -> None:
-    """It cannot, and the claim was published in every fingerprint for a week.
+def test_no_document_carries_a_round_trip_time() -> None:
+    """Removed on 2026-10-09, because every reading of it misled.
 
-    Direct-LAN medians measured 2.0 to 61.5 ms and WiNet medians 24.3 to 48.3
-    across four installations -- overlapping, with one house's direct link
-    slower than its own dongle. The text has to say so, because a reader who
-    believes the old sentence will mislabel their own setup.
+    Published as `connection.latency_ms`, it timed the path from whoever read
+    the inverter -- a VPN for most documents -- and the same dongle varied more
+    between two nights than a cable and a dongle did within one. First it was
+    "about 2 ms" for a direct link; then ranges per transport, which two
+    WiNet-S2 houses at 6.5 and 9.1 ms broke. Nothing ever acted on it, so it
+    went rather than gaining a third caveat. The sentence that says WiFi and
+    Ethernet cannot be told apart stays, without the figures.
     """
-    from probe import _async_connection
+    from probe import WIFI_OR_ETHERNET
 
-    text = _async_connection.__doc__
-    assert "not determinable" in text
-    assert "about 2 ms" not in text, "the disproved claim is back in the docstring"
+    assert "not determinable" in WIFI_OR_ETHERNET
+    assert " ms" not in WIFI_OR_ETHERNET
+    for path in (REPO / "doc" / "device-fingerprints").glob("*.json"):
+        document = json.loads(path.read_text(encoding="utf-8"))
+        assert "latency_ms" not in document["connection"], path.name
 
 
 # -- what a person typed stays where a reader can see that it was typed -----

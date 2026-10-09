@@ -461,7 +461,7 @@ async def _ask_all(entry: Found, args, echo) -> argparse.Namespace:
         answers.other_inverter, answers.other_inverter_detail = (
             probe._ask_other_inverter()
         )
-        answers.dump = probe._ask_dump(answers.transport)
+        answers.dump = probe._ask_dump()
         answers.address = probe._ask_address(entry.host)
         answers.reporter = probe._ask(
             "Who is reporting this, to credit and to ask (blank for anonymous)",

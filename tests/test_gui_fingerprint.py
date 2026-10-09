@@ -276,9 +276,8 @@ async def test_the_transport_verdict_follows_the_6100_probe(
 ) -> None:
     """Register 6100 is the only reliable transport signal there is.
 
-    Not latency: direct-LAN medians run 2.0-61.5 ms and WiNet medians
-    24.3-48.3 across four houses, and one house's direct link is slower than
-    its own dongle.
+    And no round-trip time beside it: that described the path from whoever
+    read, not how the inverter is attached, and was removed on 2026-10-09.
     """
     entry = await _setup(hass, sungrow_unit)
     document = await async_build(hass, entry)
@@ -291,6 +290,7 @@ async def test_the_transport_verdict_follows_the_6100_probe(
         answered_6100=answered == "present", module_named=bool(module)
     )
     assert document["connection"]["wifi_or_ethernet"] == survey.WIFI_OR_ETHERNET
+    assert "latency_ms" not in document["connection"]
 
 
 # -- honesty about the circumstances -------------------------------------------

@@ -251,17 +251,7 @@ def _attribution(reports: list[tuple[str, dict]]) -> list[str]:
             "",
             "What exists, and why none of it pairs up:",
             "",
-            "| Model | Transport | Inverter firmware |",
-            "| --- | --- | --- |",
-        ]
-        for (model, transport), versions in sorted(groups.items()):
-            for firmware, labels in sorted(versions.items()):
-                shown = _short_firmware(firmware)
-                lines.append(
-                    f"| {model} | {transport} | {shown} "
-                    f"({len(labels)} reading{'s' if len(labels) > 1 else ''}) |"
-                )
-        lines += [
+            *_what_exists(groups),
             "",
             "So the reading that would unlock this is **not** a new model. It",
             "is a second reading of a model already here, on a different",
@@ -314,7 +304,35 @@ def _attribution(reports: list[tuple[str, dict]]) -> list[str]:
             row = " | ".join(marks[fw].get(name, "—") for fw in sorted(known))
             lines.append(f"| {name} | {row} |")
         lines.append("")
+    lines += [
+        "### Everything else",
+        "",
+        "Every reading by model and transport. A second firmware in any row",
+        "that has only one would make the next pair.",
+        "",
+        *_what_exists(groups),
+        "",
+    ]
     return lines
+
+
+def _what_exists(groups: dict[tuple[str, str], dict[str, list[str]]]) -> list[str]:
+    """Tabulate model, transport and firmware, one row per firmware.
+
+    Shown whether or not a pair exists. While none does it is the whole
+    answer; once one does it is still what a contributor reads to see which
+    reading would make the next one -- and it was dropped from the page the
+    day the first pair appeared, which is when it became most useful.
+    """
+    rows = ["| Model | Transport | Inverter firmware |", "| --- | --- | --- |"]
+    for (model, transport), versions in sorted(groups.items()):
+        for firmware, labels in sorted(versions.items()):
+            shown = _short_firmware(firmware)
+            rows.append(
+                f"| {model} | {transport} | {shown} "
+                f"({len(labels)} reading{'s' if len(labels) > 1 else ''}) |"
+            )
+    return rows
 
 
 def render() -> str:
@@ -438,7 +456,7 @@ def render() -> str:
             "carries.",
             "**WiFi versus Ethernet on a WiNet-S is not determinable over",
             "Modbus** — nothing in the protocol reports it — so the fingerprint",
-            "records the round-trip latency as evidence and draws no conclusion.",
+            "records what the contributor said and draws no conclusion.",
             "",
         ]
 

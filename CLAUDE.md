@@ -277,16 +277,19 @@ it.** Measured 2026-09-20 through the shipped integration:
 | reference | SH10RT | cable | **B** | wrote 900 W, register held **900**, slope 1.0 |
 | gerd | SH8.0RT-V112 | cable | **B** | wrote 600 W, register held **600**, slope 1.0 |
 | bar12 | SH10RT-20 | dongle | **C** | commanded 1250 W, export fell 4583 → **1275 W** |
+| bar12, 2026-10-08 | SH10RT-20 | cable | **B** | wrote 600 W, register held **600**, slope 1.0 |
 
 Leg B needs feed-in limitation on, so those two runs lifted it for the probe and
 put `0x55` back seconds later; without that the register is inert and the probe
 can only report `UNCHANGED`, which is why this readback had never been obtained
-at any of them before. bar12 is a dongle on both of its addresses, so leg B
-there is a cache and **leg C is the only evidence available** -- and it is the
-one that matters most, because the write being *accepted at all* is the proof:
+at any of them before. Until 2026-10-08 bar12 was a dongle on both of its
+addresses -- the owner's LAN cable went into the WiNet-S, not the inverter -- so
+leg B there was a cache and **leg C was the only evidence available**. It is
+the one that matters most, because the write being *accepted at all* is the proof:
 pre-fix, 1250 W went out as word 1250, became 12500 W and was refused with
 exception 0x04, which is exactly what 3400 did at the reference house on
-2026-09-19.
+2026-09-19. With the cable moved into the inverter, leg B there agrees: 600
+held 600, on inverter firmware P023.
 
 **The YAML package on `main` still has it**, and has had for years:
 `number.export_power_limit` writes `{{ value | int }}` to the same register.
@@ -452,7 +455,7 @@ and verified in a container or against hardware.
 
   - `control_test._detect_transport` read 6100 **once**, unretried, and called
     any failure a dongle. At the reference SH10RT -- a cable, no communication
-    module fitted at all, 1.9 ms median -- a run made while Home Assistant was
+    module fitted at all -- a run made while Home Assistant was
     polling produced one document whose survey half said "direct to the
     inverter's LAN port" and whose control test said dongle, and which
     therefore stamped its own readback table **"not evidence"**. That table
@@ -522,6 +525,10 @@ and verified in a container or against hardware.
   control test a guard that refused to run on every healthy inverter, and would
   have gone on to mistake a working inverter for a stopped one during a
   restart. Both sets are now derived from the labels rather than typed out.
+  **And the duplicates are a dongle's doing.** At all three houses read both
+  ways, a WiNet-S re-encodes 13000: cable 0x0040 becomes 0x0000, and cable
+  0x0080 becomes 0x8100, each pair sharing a label. So a code seen only
+  through a dongle says nothing about what the inverter itself sends.
 - **Addresses are protocol addresses**, one below the register number in
   Sungrow's document and in the YAML comments (`address: 4989 # reg 4990`).
   **The register maps are written in the document's numbers**, through
@@ -640,13 +647,22 @@ and verified in a container or against hardware.
   until sunrise, which is affordable only because capabilities are re-probed
   every poll and the entry reloads when they **grow**; nothing ever removes an
   entity, so granting on zero has no recovery at all.
+- **Round-trip time says nothing about the inverter, so it is not recorded.**
+  Documents carried `connection.latency_ms` until 2026-10-09. It timed the path
+  from whoever read -- a VPN for most of them -- so the same bar12 dongle
+  measured 23 ms one night and 39 another, more than its cable and dongle
+  differed within one night, and two WiNet-S2 houses read 6.5 and 9.1 ms on
+  their own LANs where cables over a VPN read 30. Each claim built on it -- 2 ms
+  for a cable, a range per transport, a dump duration per transport -- was
+  broken by the next reading. Nothing acted on it, so it was removed rather
+  than caveated again. Do not bring it back as evidence about transport.
 - **WiFi versus Ethernet on a WiNet-S is not determinable.** Settled against a
   controlled pair — one dongle, read wired then over WiFi — with a nil
   structural diff, and **extended to writes on 2026-09-19**: the same control
   test over each of bar12's two interfaces dropped the same four registers and
-  accepted the same five. Latency cannot stand in either: direct-LAN medians span
-  2.0-61.5 ms and WiNet medians 24.3-48.3 across four houses, and one house's
-  direct link is slower than its own dongle. Register 6100 does distinguish
+  accepted the same five. Which address was which medium was confirmed only on
+  2026-10-08, when the dongle's cable moved into the inverter and its wired
+  address vanished: 178.041 was Ethernet, 178.023 WiFi. Register 6100 does distinguish
   direct from dongle, 9/9 — and register 13265 names the module that is
   *fitted*, which is not the same as the module in the path.
 - **Transport is 6100's question and 13265 cannot answer it, in either
@@ -665,6 +681,8 @@ and verified in a container or against hardware.
     cable goes straight into the inverter, so "a module is named" reads as
     *dongle* on the path that is a cable. His own testimony says it: "it
     reports the module that is fitted, not the module in use."
+  - **bar12, once more on 2026-10-08**, the same way as gerd: its cable path
+    names the fitted `…P040`. 6100 called it right, as it has every time.
 
   So a dongle that answers zeros looks like no dongle, and a dongle merely
   screwed to the wall looks like one in the path. Anything deciding transport
@@ -683,7 +701,8 @@ and verified in a container or against hardware.
 
   **This replaces an earlier claim that a dongle may drop a write entirely.** It
   does not; the write lands and the readback is stale. The four bar12 readings
-  that produced that claim are not evidence of anything and stay unresolved.
+  that produced that claim are not evidence of anything and stay unresolved --
+  though since 2026-10-08 bar12 has a cable as well, so they can be re-checked.
 
   **What it costs the control test:** leg A cannot tell a dropped write from a
   stale read, and leg B reads the raw word over the same path. **Only leg C

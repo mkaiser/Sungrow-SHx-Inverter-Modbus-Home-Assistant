@@ -28,13 +28,8 @@
   },
   "connection": {
     "communication_module_firmware": null,
-    "latency_ms": {
-      "max": 29.8,
-      "median": 27.3,
-      "min": 26.8
-    },
     "verdict": "through a communication module (WiNet-S, WiNet-S2 or Logger), which did not name itself",
-    "wifi_or_ethernet": "not determinable over Modbus. Nothing in the protocol reports it, and latency cannot stand in: measured across four installations, direct-LAN medians run from 2.0 to 61.5 ms and WiNet medians from 24.3 to 48.3, so the ranges overlap -- one house's direct link is slower than its own dongle. Jitter does not separate them either: a WiNet-S measured 1.6 ms of spread wired and 4.9 over WiFi on the same dongle, while another house's wired WiNet spread 8.6. Latency describes the network between the client and the device, not how the device is attached. Use the reported_by_hand field.",
+    "wifi_or_ethernet": "not determinable over Modbus. Nothing in the protocol reports it, and a WiNet-S answers identically wired and over WiFi. Use user_inputs.transport, which is what the contributor said.",
     "winet_restricted_block_6100": "refused"
   },
   "readings": {

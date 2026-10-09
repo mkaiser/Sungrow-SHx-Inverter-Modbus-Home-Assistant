@@ -579,7 +579,10 @@ def _fake_serial(real: str) -> str:
 #: optional **`control_test`** block: what happened when each control was
 #: written, read back and watched. Nothing in this directory produces it --
 #: nothing here can write a register -- but the number is shared, so it moves
-#: when the shape of the document does.
+#: when the shape of the document does. `connection.latency_ms` was then
+#: **removed without a bump**, on 2026-10-09: nothing ever read it, so its
+#: absence tells a reader nothing, and it was stripped from every committed
+#: document at the same time.
 SCHEMA = 19
 
 #: Keys of the connection block that carry a claim rather than a measurement.
@@ -1628,15 +1631,9 @@ async def _async_decoded_readings(unit, passes: int = 8) -> dict[str, object]:
 #: comparing two documents should not have to wonder whether a difference in
 #: this field means anything.
 WIFI_OR_ETHERNET = (
-    "not determinable over Modbus. Nothing in the protocol reports it, "
-    "and latency cannot stand in: measured across four installations, "
-    "direct-LAN medians run from 2.0 to 61.5 ms and WiNet medians from "
-    "24.3 to 48.3, so the ranges overlap -- one house's direct link is "
-    "slower than its own dongle. Jitter does not separate them either: "
-    "a WiNet-S measured 1.6 ms of spread wired and 4.9 over WiFi on the "
-    "same dongle, while another house's wired WiNet spread 8.6. Latency "
-    "describes the network between the client and the device, not how "
-    "the device is attached. Use the reported_by_hand field."
+    "not determinable over Modbus. Nothing in the protocol reports it, and "
+    "a WiNet-S answers identically wired and over WiFi. Use "
+    "user_inputs.transport, which is what the contributor said."
 )
 
 
@@ -1686,34 +1683,26 @@ async def _async_connection(unit, host: str, firmware: dict, ModbusError) -> dic
     presence adds anything.
 
     What neither signal can reach is the **medium**: a WiNet-S answers the
-    same wired as it does over WiFi. Nothing in the protocol reports it and
-    latency is only a hint, so `--transport` is how a contributor supplies
-    what only they can know. Both signals stay in the document regardless.
+    same wired as it does over WiFi. Nothing in the protocol reports it, so
+    `--transport` is how a contributor supplies what only they can know. Both
+    signals stay in the document regardless.
 
     Both are recorded, not just the conclusion, because the conclusion is a
     reading of them and somebody may later read them differently.
 
-    **WiFi versus Ethernet on a WiNet-S is not determinable over Modbus, and
-    latency does not help.** Settled on 2026-09-08 against the controlled
+    **WiFi versus Ethernet on a WiNet-S is not determinable over Modbus.**
+    Settled on 2026-09-08 against the controlled
     case: bar12's SH10RT-20, one dongle, read wired and then over WiFi. The
     structural diff is *nil* -- identical capability probe states, identical
     failed components, identical fields filled, identical firmware strings.
     Nothing in the register space moves.
 
-    Latency was the standing hypothesis and it does not survive either. Across
-    four installations the direct-LAN medians span 2.0 to 61.5 ms and the
-    WiNet medians 24.3 to 48.3, so they overlap -- and gerd's direct link is
-    *slower* than his own dongle, because he reaches it over a VPN. Jitter
-    fails too: the same dongle spread 1.6 ms wired and 4.9 over WiFi, while
-    another house's wired WiNet spread 8.6. It measures the path between the
-    client and the device.
-
-    So the samples stay in the document as evidence, `--transport` carries
-    what only the owner knows, and no code guesses.
+    Round-trip time was measured and published here until 2026-10-09, and
+    removed: it describes the path from whoever reads to the inverter -- a VPN
+    for most documents -- and the same dongle varied more between two nights
+    than a cable and a dongle did within one. So `--transport` carries what only
+    the owner knows, and no code guesses.
     """
-    import statistics
-    import time
-
     signals: dict[str, object] = {}
     try:
         # Retried: this single read decides the transport verdict, and losing
@@ -1729,24 +1718,6 @@ async def _async_connection(unit, host: str, firmware: dict, ModbusError) -> dic
     except (ModbusError, TimeoutError, OSError):
         signals["winet_restricted_block_6100"] = "refused"
     signals["communication_module_firmware"] = firmware.get("communication_module", "")
-
-    # Timed on the device type code, the one register every Sungrow answers,
-    # so the samples describe the link rather than a capability.
-    space, start, count = _where("device_type_code")
-    samples: list[float] = []
-    for _ in range(7):
-        started = time.perf_counter()
-        try:
-            await _reader(unit, space)(start, count)
-        except (ModbusError, TimeoutError, OSError):
-            break
-        samples.append(round((time.perf_counter() - started) * 1000, 1))
-    if samples:
-        signals["latency_ms"] = {
-            "median": statistics.median(samples),
-            "min": min(samples),
-            "max": max(samples),
-        }
 
     # Register 6100 decides; 13265 only ever corroborates. The truth table
     # below is measured on three installations, not reasoned:
@@ -1811,7 +1782,7 @@ def _all_zero(raw: dict, names: tuple[str, ...]) -> bool:
 #:
 #: `winet_lan` and `winet_wlan` are worth separating even though Modbus cannot
 #: tell them apart -- that is exactly why. The protocol reports nothing about
-#: the medium and latency is only a hint, so if a fingerprint is ever to say
+#: the medium, so if a fingerprint is ever to say
 #: whether a reading came over WiFi, a person has to be the one to say it.
 REPORTED_TRANSPORTS: dict[str, tuple[str, str, str, str]] = {
     "direct_lan": (
@@ -1875,8 +1846,7 @@ def _effective_verdict(connection: dict) -> str:
 
     One dongle read on both of its addresses produced *identical* documents --
     all 22 capability probes, all 104 decoded fields, and the same TLS
-    certificate on port 443 down to the second it was issued. Only round-trip
-    latency differed, and over a VPN even that is swamped. So the medium is
+    certificate on port 443 down to the second it was issued. So the medium is
     knowable only to the person who plugged the cable in, and `unsure`
     overrides nothing.
     """
@@ -3148,41 +3118,23 @@ def _ask_transport() -> str:
     return _ask_menu(keys, {k: v[0] for k, v in REPORTED_TRANSPORTS.items()}, "unsure")
 
 
-#: What a complete dump costs, by link. Measured on 2026-09-08 against the
-#: reference SH10RT, with the extra latency injected by a local proxy so the
-#: numbers are measurements and not arithmetic: +24 ms reproduces a WiNet-S
-#: over WiFi (25.7 ms median, bar12's) and +46 ms the slowest WiNet reading on
-#: record (48.3 ms median, gerd's).
-#:
-#: 1510 addresses either way. The dump is 48 block reads plus a single read
-#: for each address in a block that refused, so the cost is per-read latency
-#: multiplied by roughly a hundred -- which is why a link 12 times slower
-#: takes four times as long rather than 12.
-DUMP_SECONDS: dict[str, int] = {
-    "direct_lan": 7,
-    "winet_lan": 30,
-    "winet_wlan": 30,
-    "winet": 30,
-    "logger": 40,
-    "unsure": 30,
-}
-
-
-def _ask_dump(transport: str) -> bool:
-    """Offer the complete register dump, with what it will cost on this link.
+def _ask_dump() -> bool:
+    """Offer the complete register dump.
 
     Worth offering rather than assuming either way. It is where the inverter's
     own clock at holding 5000-5005 was found, and the 45 holding registers
     nothing reads that answer real values -- neither of which any curated
-    probe would have reached. And it is the one part of a run that a WiNet-S
-    can feel: about 7 seconds on a direct LAN against about 30 through a
-    dongle, which is also the link least able to spare them.
+    probe would have reached.
+
+    No duration is quoted. It used to be estimated from the transport, on the
+    premise that a dongle is the slow link, and a WiNet-S2 read at 6.5 ms on
+    its owner's LAN against 30 ms for a cable over a VPN ended that: the
+    path from the reader decides it, and the answer to "how is it connected"
+    says nothing about that path.
     """
-    seconds = DUMP_SECONDS.get(transport, 30)
     print(
-        f"\nA complete dump reads 1510 documented addresses raw -- about "
-        f"{seconds}s on\nthe link you described. It is where the inverter's "
-        "clock and 45 undocumented\nholding registers were found."
+        "\nA complete dump reads 1510 documented addresses raw. It is where the "
+        "inverter's\nclock and 45 undocumented holding registers were found."
     )
     return _ask_yes("Include the complete dump?", default=True)
 
@@ -3201,8 +3153,6 @@ def _ask_proxy() -> str:
 
     * a component that never drops says the proxy is serialising well, not
       that this inverter is generous with connections;
-    * latency includes a hop, and the samples here have already been shown to
-      say more about the network than about the device;
     * a proxy rebuilds every request and response, so a frame quirk can be
       normalised away -- or introduced. The padded frames at registers 2613
       and 2629 are exactly that class of finding, and they are the reason

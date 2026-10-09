@@ -256,7 +256,7 @@ async def test_the_step_sensor_records_what_is_being_read(
     # Every probe announced itself, in order, before the run ended.
     assert len(seen) > 10
     assert seen[-1] == "finished"
-    assert any("timing the link" in step for step in seen)
+    assert any("assembling the document" in step for step in seen)
 
 
 async def test_a_second_press_while_one_runs_is_refused(

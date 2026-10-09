@@ -196,9 +196,9 @@ class SurveyProgressSensor(SurveyEntity, SensorEntity):
 class SurveyStepSensor(SurveyEntity, SensorEntity):
     """What the survey is reading right now.
 
-    Its recorded history is the point of it: 19 probes and five timing reads
-    in the order they happened, which is what tells a maintainer *where* a
-    slow link stalls rather than that it did.
+    Its recorded history is the point of it: 19 probes in the order they
+    happened, which is what tells a maintainer *where* a slow link stalls
+    rather than that it did.
     """
 
     def __init__(self, runtime_data: SungrowRuntimeData) -> None:

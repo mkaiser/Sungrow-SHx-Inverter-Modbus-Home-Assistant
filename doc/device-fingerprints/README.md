@@ -177,9 +177,7 @@ this was found.
 WiNet-S answers identically wired and over WiFi. One dongle read on both of
 its addresses produced *identical* documents — all 22 capability probes, all
 104 decoded fields, and the same TLS certificate on port 443 down to the
-second it was issued. Only round-trip latency differed, and over a VPN even
-that is nearly swamped: 24.3 ms median wired against 25.7 ms on WiFi, though
-the spread trebled.
+second it was issued.
 
 So the document records it as `user_inputs.transport`. Run the script with
 no arguments and it asks; `--transport` sets it directly:
@@ -382,17 +380,26 @@ Several files can come from one inverter, and the reason is always the path.
   blocks at input 2612 and 2628, reports eight fields as `0` that the cable
   declares unavailable, moves the battery from unit 200 to unit 2 and reveals
   a wallbox at unit 3 that the cable cannot see.
-* **bar12's SH10RT-20**, read at two addresses that are *both* behind a
-  communication module. These are **identical** in everything measured: same
+* **bar12's SH10RT-20**, read on 2026-09-08 at two addresses that are *both*
+  the WiNet-S — its Ethernet port (`…-winet-lan`) and its WiFi
+  (`…-winet-wlan`). These are **identical** in everything measured: same
   device, same firmware, no differing capability probe, no field present in
   one and absent in the other, the same dump coverage. Both are published
   anyway, so that identity is something a reader can check rather than a
-  claim to be taken on trust.
+  claim to be taken on trust. They were filed as transport "not sure" until
+  the owner moved the cable from the dongle into the inverter on 2026-10-08,
+  which settled which was which.
+* **bar12 again on 2026-10-08**, over the inverter's own LAN port (`…-meter`)
+  and the dongle's WiFi, both on firmware P023. These differ the way gerd's
+  do — 6100, 2612/2628, MPPT3/4 as 0 against 0xFFFF, the meter phases, the SBR
+  at unit 2 against 200 — so the pattern now holds on two models. The two WiFi
+  readings, P020 and P023, are the first pair that differs only in firmware.
 
 A filename ends in the address tail — `-178-041` — when a name is already
 taken by a reading from a *different* address. Without that, two paths whose
 contributor answered "not sure" for the transport derive the same name and the
-second silently replaces the first.
+second silently replaces the first. bar12's September pair carried such tails
+until their transport was established; none in this directory does now.
 
 ## The command that reproduces it
 
@@ -463,8 +470,6 @@ device:
 
 - a component that never drops says the proxy is serialising well, not that
   this inverter is generous with connections;
-- the latency samples gain a hop, on top of already saying more about the
-  network than about the device;
 - a proxy rebuilds every request and response, so a frame quirk can be
   normalised away — or introduced. The padded frames at registers 2613 and
   2629 are exactly that class of finding, and they are why
@@ -523,10 +528,13 @@ reading of them and somebody may later read them differently. Where the two
 disagree the verdict says so rather than picking one.
 
 **WiFi versus Ethernet on a WiNet-S cannot be determined over Modbus.**
-Nothing in the protocol reports it. Round-trip latency is the only hint — a
-direct LAN link answers in about 2 ms with almost no spread, where WiFi is
-tens of milliseconds and jitters — so the measurement is recorded as evidence
-and no conclusion is drawn from it.
+Nothing in the protocol reports it, so only `user_inputs.transport` says it.
+
+**No round-trip time is recorded.** Documents carried `connection.latency_ms`
+until 2026-10-09, and it was removed from all of them: it timed the path from
+whoever read the inverter, usually over a VPN, and said nothing about the
+inverter or how it is attached. The same dongle varied more between two nights
+than a cable and a dongle did within one.
 
 ## Contributing one
 
