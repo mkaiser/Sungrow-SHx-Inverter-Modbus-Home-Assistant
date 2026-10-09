@@ -52,6 +52,10 @@ ignore = ["D203", "D213"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D100", "D103"]
+# E402 here rather than as a `# noqa` on the import: with the comment the line
+# sits exactly where ruff 0.16 and 0.17 disagree about wrapping it, so each
+# version's isort rejects the other's output and CI fails on a ruff upgrade.
+"tests/test_firmware_attribution.py" = ["D100", "D103", "E402"]
 
 [tool.ruff.lint.isort]
 # Mirrors Home Assistant core's isort settings, so the integration reads the

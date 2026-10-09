@@ -21,11 +21,7 @@ import sys
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
 
-from generate_compatibility import (  # noqa: E402
-    _attribution,
-    _capability_marks,
-    _comparable,
-)
+from generate_compatibility import _attribution, _capability_marks, _comparable
 
 FINGERPRINTS = sorted((REPO / "doc" / "device-fingerprints").glob("*.json"))
 
