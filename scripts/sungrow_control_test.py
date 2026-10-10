@@ -40,7 +40,7 @@ from typing import Any
 from modbus_connection import ModbusError, ModbusTcpParams
 from modbus_connection.tmodbus import ModbusConnection
 
-from sungrow_modbus import SungrowInverter
+from sungrow_modbus import SungrowInverter, export_scale
 from sungrow_modbus.control_test import (
     CODES,
     ControlTest,
@@ -419,6 +419,41 @@ async def _restore_mode(inverter: SungrowInverter, args: argparse.Namespace) -> 
     return RESTORED
 
 
+async def _export_scale_mode(
+    inverter: SungrowInverter, args: argparse.Namespace
+) -> int:
+    """Ask how this firmware writes 13074, and nothing else.
+
+    At most one write, chosen so that it changes nothing on either known
+    firmware -- `sungrow_modbus.export_scale` has the argument. With
+    `--enable-export-limit` it may switch feed-in limitation on for that one
+    write, and only where the limit already held caps nothing. Exit 0 with an
+    answer, 3 without one, 5 if anything was left changed.
+    """
+    result = await export_scale.async_probe(
+        inverter, lift_mode=args.enable_export_limit, dry_run=args.dry_run
+    )
+    answer = {
+        export_scale.MULTIPLIER: "multiplies a written word by ten",
+        1: "stores a written word as handed",
+        None: "not determined",
+    }[result.write_units_per_count]
+    print(f"\n13074 write scale: {answer}", file=sys.stderr)
+    print(f"  held     {result.held} W", file=sys.stderr)
+    if result.wrote is not None:
+        print(f"  wrote    {result.wrote}", file=sys.stderr)
+        print(f"  answer   {result.response}", file=sys.stderr)
+    if result.mode_lifted:
+        print(
+            "  feed-in limitation was lifted for the write and put back",
+            file=sys.stderr,
+        )
+    print(f"  because  {result.reason}", file=sys.stderr)
+    if result.left_changed:
+        return 5
+    return 0 if result.write_units_per_count is not None else 3
+
+
 async def _start_only_mode(inverter: SungrowInverter) -> int:
     """Start the inverter and wait for it, and nothing else.
 
@@ -458,6 +493,9 @@ async def _run(args: argparse.Namespace) -> int:
 
         if args.start_only:
             return await _start_only_mode(inverter)
+
+        if args.export_scale:
+            return await _export_scale_mode(inverter, args)
 
         restart = _ask_restart(args.restart)
 
@@ -598,6 +636,12 @@ def main() -> int:
         "--restart-only",
         action="store_true",
         help="measure the stop and start and nothing else; writes no control",
+    )
+    parser.add_argument(
+        "--export-scale",
+        action="store_true",
+        help="ask how this firmware writes 13074 (times ten, or as handed) with "
+        "one write that changes nothing on either, and do nothing else",
     )
     parser.add_argument(
         "--simulated",

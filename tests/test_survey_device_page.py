@@ -46,6 +46,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.util import dt as dt_util
+from sungrow_modbus import block_test, fingerprint as survey
 
 from .conftest import SERIAL
 
@@ -228,6 +229,47 @@ async def test_the_button_runs_a_survey_and_the_sensors_follow(
     assert state.fields_read
     assert hass.states.get("sensor.sh10rt_survey_progress").state == "100"
     assert hass.states.get("sensor.sh10rt_survey_step").state == "finished"
+
+
+async def test_the_button_runs_the_block_read_test_first(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The measurement `scripts/layout.py` is changed from, without a terminal.
+
+    Until it ran here only a contributor with Python and a checkout could take
+    it, so somebody on Home Assistant OS could report "these entities stay empty"
+    but never send the reading that says which register empties them. It runs
+    before the probes, on an idle link, with every block the poll makes.
+    """
+    entry = await _setup(hass, sungrow_unit, mode=MODE_DIAGNOSTICS)
+    seen: list[str] = []
+
+    def _watch(event) -> None:
+        if event.data["entity_id"] == "sensor.sh10rt_survey_step":
+            new = event.data["new_state"]
+            if new is not None:
+                seen.append(new.state)
+
+    hass.bus.async_listen("state_changed", _watch)
+    await hass.services.async_call(
+        "button",
+        "press",
+        {"entity_id": "button.sh10rt_run_capability_survey"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    document = entry.runtime_data.survey.state.document
+    measured = document["block_read_test"]
+    assert len(measured["answered"]) == len(await block_test.inverter_blocks())
+    assert measured["never_answered"] == []
+    assert measured["client"] == block_test.CLIENT
+    assert document["contention"]["block_read_test"].startswith("run")
+    # First, before any probe: the probes are reads too.
+    probes = {label for label, *_ in survey.PROBES}
+    last_block = max(i for i, step in enumerate(seen) if "block read" in step)
+    first_probe = min(i for i, step in enumerate(seen) if step in probes)
+    assert last_block < first_probe
 
 
 async def test_the_step_sensor_records_what_is_being_read(

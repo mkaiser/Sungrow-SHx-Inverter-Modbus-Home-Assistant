@@ -29,13 +29,12 @@ reader to discover:
   as a measurement rather than as testimony: the integration knows precisely
   what it was doing. Holding the coordinators off for the duration is the
   fix, and is not done here yet.
-* **There is no block read test.** That measurement is what
-  `scripts/layout.py` is ever changed from, and it costs 26 block reads times
-  three rounds plus binary-tree narrowing — a background task with a progress
-  notification, not something a diagnostics download can wait for.
-  `test_a_collect_run_at_schema_16_carries_its_block_read_test` is keyed on
-  the tool for this reason, so a document from here is not expected to carry
-  one.
+* **The block read test runs from the button, never from the download.**
+  That measurement is what `scripts/layout.py` is ever changed from, and it
+  costs 27 block reads times three rounds, twice each, plus narrowing — fine
+  for a background task with a progress bar, too long for a download somebody
+  is waiting on. So a document from **Download diagnostics** carries none, and
+  says so under `contention`.
 * **Nothing is asked that the owner has not been asked.** The testimony no
   register can answer — which cable, whether a proxy is in the path, whether
   the address may be published — comes from the options flow and defaults to
@@ -64,7 +63,7 @@ from modbus_connection import (
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
-from sungrow_modbus import dump as register_dump, fingerprint as survey
+from sungrow_modbus import block_test, dump as register_dump, fingerprint as survey
 from sungrow_modbus.const import model_for
 from sungrow_modbus.fingerprint import State
 
@@ -98,12 +97,15 @@ FIRMWARE_FIELDS = {
 }
 
 
-def planned_steps(dumping: bool) -> int:
+def planned_steps(dumping: bool, block_reads: int = 0) -> int:
     """Count the reads a survey will report progress for, before it starts.
 
     Every probe, and one step for assembling what the
     coordinators already hold -- assembly is a single step because it does no
-    reading and is the only part that cannot stall.
+    reading and is the only part that cannot stall. `block_reads` is the block
+    read test's countable share, from `block_test.planned_steps`; its
+    narrowing is not counted, because how much there is depends on what
+    fails.
 
     The dump's share is counted here rather than discovered as it goes, because
     a bar whose total grows halfway through is worse than no bar: with the dump
@@ -111,7 +113,7 @@ def planned_steps(dumping: bool) -> int:
     error. A caller sharing one bar between this and the control test needs the
     number without starting a survey, which is why it is a function.
     """
-    total = len(survey.PROBES) + 1
+    total = len(survey.PROBES) + 1 + block_reads
     if dumping:
         total += register_dump.block_count()
     return total
@@ -203,6 +205,7 @@ async def async_build(
     on_progress: Progress | None = None,
     *,
     allow_dump: bool = False,
+    allow_block_test: bool = False,
     control_test: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Return one publishable survey document for this entry.
@@ -226,6 +229,12 @@ async def async_build(
     progress bar and a notification at the end. The diagnostics download
     cannot: it is a button somebody waits on, so it leaves this False and the
     option has no effect there, however the owner set it.
+
+    `allow_block_test` is the same decision for the block read test, which is
+    not an option at all: the survey button always runs it and the download
+    never does. It runs **first**, before the probes, because it is the
+    measurement that only means anything on an idle link -- the probes and the
+    dump are themselves reads.
 
     `control_test` is part B's result, already measured, and it is passed in
     rather than run from here for the same reason `allow_dump` is a parameter:
@@ -252,15 +261,22 @@ async def async_build(
     # because a bar whose total grows halfway through is worse than no bar --
     # and with the dump on it is 52 of the 76 steps, so getting it wrong
     # would not be a rounding error.
-    total = planned_steps(dumping)
+    blocks = await block_test.inverter_blocks() if allow_block_test else []
+    total = planned_steps(dumping, block_test.planned_steps(blocks) if blocks else 0)
     done = 0
 
-    def step(label: str) -> None:
+    def step(label: str, counted: bool = True) -> None:
         nonlocal done
-        done += 1
+        if counted:
+            done += 1
         if on_progress is not None:
             on_progress(done / total, label)
 
+    blocks_measured = (
+        await block_test.measure(device.async_read_words, blocks, step=step)
+        if blocks
+        else None
+    )
     probes = await _async_probes(device, step)
     raw = await _async_dump(device, step) if dumping else None
     step("assembling the document")
@@ -292,7 +308,7 @@ async def async_build(
         # measurement -- the integration knows exactly what it was doing --
         # and a maintainer reading one knows what it is worth without having
         # to infer it from the tool name.
-        "contention": _contention(runtime),
+        "contention": _contention(runtime, block_test_run=blocks_measured is not None),
         "readings": _readings(runtime, device),
         "capability_probes": probes,
     }
@@ -304,6 +320,11 @@ async def async_build(
     # as words.
     if raw is not None:
         document["register_dump"] = register_dump.masked(raw)
+
+    # Same key and shape as `collect.py` writes, so `doc/compatibility.md` and
+    # anybody reading a document need not know which producer made it.
+    if blocks_measured is not None:
+        document["block_read_test"] = block_test.document(blocks_measured)
 
     pack = _battery_pack(runtime)
     if pack is not None:
@@ -438,7 +459,7 @@ def _firmware(device: Any) -> dict[str, str | None]:
     return values
 
 
-def _contention(runtime: Any) -> dict[str, Any]:
+def _contention(runtime: Any, *, block_test_run: bool = False) -> dict[str, Any]:
     """State what this Home Assistant was doing while the document was made.
 
     The standalone survey asks an owner to confirm nothing else was polling,
@@ -465,9 +486,12 @@ def _contention(runtime: Any) -> dict[str, Any]:
         # so, and an older document saying False means what it always said.
         "coordinators_paused": bool(getattr(runtime, "polling_paused", False)),
         "block_read_test": (
-            "not run: it costs 26 block reads times three rounds plus "
-            "narrowing, which belongs in a background task rather than a "
-            "diagnostics download"
+            "run, before the probes, with this entry's polling held off; see "
+            "block_read_test"
+            if block_test_run
+            else "not run: it costs 27 block reads times three rounds plus "
+            "narrowing, which the survey button affords and a diagnostics "
+            "download does not"
         ),
     }
 
@@ -596,6 +620,7 @@ def summarise(document: dict[str, Any]) -> str:
         )
     readings = (document.get("readings") or {}).get("values") or {}
     lines.append(f"- {len(readings)} register values decoded.")
+    lines += _block_summary(document.get("block_read_test"))
     said = document.get("user_inputs") or {}
     if said.get("other_inverter") == survey.OTHER_INVERTER_YES:
         named = said.get("other_inverter_detail")
@@ -633,3 +658,28 @@ def summarise(document: dict[str, Any]) -> str:
     if document.get("wallbox"):
         lines.append("- A wallbox answered, and its registers are in.")
     return "\n".join(lines)
+
+
+def _block_summary(measured: dict[str, Any] | None) -> list[str]:
+    """Say what the block read test found, in a line or two, or nothing.
+
+    The line a contributor most needs is the one naming a block that never
+    answered: that is a whole group of entities this inverter will leave
+    empty, and the reason is in the file they are about to send.
+    """
+    if not measured:
+        return []
+    never = measured.get("never_answered") or []
+    total = (
+        len(measured.get("answered") or [])
+        + len(never)
+        + len(measured.get("intermittent") or [])
+    )
+    if not never:
+        return [f"- Block read test: all {total} of the poll's reads answered."]
+    named = ", ".join(f"{block['component']} at {block['register']}" for block in never)
+    return [
+        f"- Block read test: {len(never)} of {total} reads never answered "
+        f"({named}). Entities read in those blocks stay empty on this "
+        "inverter; the file says which register is at fault."
+    ]

@@ -5,7 +5,7 @@
 > asserted in `tests/`; this file records decisions and the measurements
 > behind them rather than repeating what the code says.
 
-**Status, 2026-09-25.**
+**Status, 2026-10-10.**
 
 | | State |
 | --- | --- |
@@ -18,7 +18,8 @@
 | Milestone 7 — third-party generation | ✅ **done**: two corrected sensors from another integration's entities, gated on where the foreign inverter sits relative to the grid meter. No hardware needed and none involved |
 | Milestone 8 — Sungrow Logger | not started |
 
-**Released through `0.1.0a6`** (2026-09-25), every one a PEP 440 pre-release
+**Released through `0.1.0a9`** (2026-10-09; `0.1.0a8` was tagged but never
+published -- a newer ruff in CI failed its lint), every one a PEP 440 pre-release
 that `pip` will not install without `--pre`, matched by the "(preview)" name in
 both manifests -- see [The preview
 phase](#the-preview-phase-and-what-a-rename-costs-during-it).
@@ -73,13 +74,20 @@ their reasoning; these are the ones actually open.
   snapshot's raw word first and checks it by raw read); ordinary writes from
   the `number` entity still do. Nothing any register reports tells the two
   firmwares apart yet -- ARM and DSP strings are identical, and the inverter
-  firmware string is the one fwitten refuses. Candidates: measure it once at
-  setup (write the word the register already holds and see whether it is
-  accepted unchanged -- the check that settled it at fwitten, and a no-op on
-  either firmware), or key on the cluster role if the pattern holds.
-- **Does 0.1.0a6 set up at fwitten?** It carries the fix for the setup that
-  0.1.0a5 retried forever there -- see "Part B at fwitten" at the end. Only the
-  owner's install can confirm it.
+  firmware string is the one fwitten refuses. **A probe is built**
+  (2026-10-10): `sungrow_modbus.export_scale`, one write chosen to be a no-op
+  on one firmware and refused on the other, so it changes nothing either way
+  -- `CLAUDE.md` has the argument. The plan's first idea, "write the held word
+  back", is only that when ten times the held word is out of range; at 600 W
+  a multiplying firmware would have taken it as 6000. Open: running it on
+  hardware (`sungrow_control_test.py --export-scale`, at fwitten and one
+  multiplying house), then wiring it into the integration -- the `number`
+  entity would write 13074's raw word itself with the probed factor, since
+  `AsymmetricNumberField` is a class attribute shared by every inverter in one
+  Home Assistant, master and slave included.
+- **Does a release from 0.1.0a6 on set up at fwitten?** 0.1.0a6 carries the
+  fix for the setup that 0.1.0a5 retried forever there -- see "Part B at
+  fwitten" at the end. Only the owner's install can confirm it.
 
 **One thing is untested by anything**: the YAML patch above on hardware. Built,
 applies, parses; no inverter has received a write through it -- and it is on
@@ -87,7 +95,7 @@ hold anyway. (The Home Assistant button path was the other, until it ran end to
 end at the reference house on 2026-09-19.)
 
 1. **The preview is out, and installable through HACS.** ✅
-   Every alpha from `v0.1.0a1` to `v0.1.0a6` is released and marked
+   Every alpha from `v0.1.0a1` to `v0.1.0a9` (bar `a8`) is released and marked
    pre-release, `sungrow-modbus` is on PyPI at each, and a preview channel
    serves the integration to HACS -- **following this branch**, not the
    releases, because the channel exists to get current code in front of
@@ -176,9 +184,15 @@ end at the reference house on 2026-09-19.)
 3. **The rest of the interface survey.** The survey itself is **built** --
    see [Fingerprinting from the interface](#fingerprinting-from-the-interface)
    -- and runs with the entry's own polling paused (`async_paused`, on
-   hardware since 2026-09-19). One piece is deliberately not built: the
-   **block read test**, which is 26 block reads times three rounds plus
-   narrowing and belongs in a background task rather than a form.
+   hardware since 2026-09-19). ✅ **The block read test runs from the button
+   too, since 2026-10-10** -- `sungrow_modbus.block_test`, a port of
+   `blocks.py`'s measurement onto the library's exception taxonomy, run first
+   in the survey's background task with the same rounds, attempts and
+   narrowing budget as `collect.py` and published in its shape. The one thing
+   it cannot do is name the count that reconciles a padded frame: that needs
+   the raw reply, which `modbus-connection` discards, so `blocks.py --client
+   raw` is still where that number comes from. Not in the diagnostics
+   download, which somebody is waiting on.
 4. **Firmware-dependent register semantics**, which nothing here supports
    today and issue
    [#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)
@@ -1752,7 +1766,10 @@ harder than it looked:
    duration is the fix and is not done. A *second* poller outside the entry
    — another Home Assistant, the YAML package, evcc — remains undetectable
    either way, which is why the question is asked.
-2. **The block read test is the expensive part**, and is not run at all.
+2. **The block read test is the expensive part**, and was not run at all.
+   ✅ Runs from the survey button since 2026-10-10, as item 3 of "What is
+   next" describes; the download still leaves it out. What follows is why it
+   took a background task.
    Twenty-six block reads times three rounds, plus binary-tree narrowing over
    whatever failed, which on a slow link ran a survey past its own cap.
    `blocks.NARROW_BUDGET` exists for that and would have to be enforced

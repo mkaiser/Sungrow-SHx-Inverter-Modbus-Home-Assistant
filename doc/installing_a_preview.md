@@ -216,9 +216,13 @@ register dump in diagnostics*. That one is a different, much cheaper thing: it
 re-reads only the addresses already mapped, into the diagnostics file. It
 cannot find a register nobody knows about.)
 
+The button also runs the **block read test** first: every block read the
+integration's poll makes, three rounds, and any block that never answers
+narrowed down to the register at fault. If some of your entities stay empty,
+that section of the document is what says why.
+
 There is still a standalone scanner for anyone who would rather not install
-anything, and it does more: it runs the block read test, which the button
-does not. See
+anything. See
 [contributing a fingerprint](device-fingerprints/README.md#contributing-one).
 
 Then open an issue quoting **the commit hash HACS shows you**. The channel

@@ -313,6 +313,8 @@ async def test_it_admits_home_assistant_was_polling_throughout(
     assert contention["components"] > 0
     assert contention["coordinators_paused"] is False
     assert "not run" in contention["block_read_test"]
+    # The download never runs it: somebody is waiting on that button.
+    assert "block_read_test" not in document
 
 
 async def test_the_contention_note_is_a_measurement_not_testimony(

@@ -88,7 +88,7 @@ implementation for this pattern — read its real source, not blog posts.
 | `scripts/hacs_testbed.sh` | Boot a **second** HA on :8124 against `config-hacs/`, with HACS installed, to test the install a user gets. Nothing is symlinked there: HACS downloads the integration from the preview channel, so what runs is what was published, not the working tree |
 | `scripts/simulate.sh` | Regenerate the register seed and serve it on :5020 |
 | `scripts/fetch_references.sh` | Clone HA core + libs into `.reference/` (gitignored) |
-| `scripts/sungrow_control_test.py` | **Part B, from a terminal**: writes each control, reads the register back against the specification's scale, watches what the inverter does, and puts everything back. `make controltest-dry HOST=...` first -- it resolves the whole plan and writes nothing. `--restore <snapshot>` is the way out of a run that died halfway |
+| `scripts/sungrow_control_test.py` | **Part B, from a terminal**: writes each control, reads the register back against the specification's scale, watches what the inverter does, and puts everything back. `make controltest-dry HOST=...` first -- it resolves the whole plan and writes nothing. `--restore <snapshot>` is the way out of a run that died halfway. `--export-scale` asks how this firmware writes 13074 with one write that changes nothing, and does nothing else |
 | `scripts/sungrow_scan/collect.py` | **The one entry point for a survey** (`make scan HOST=...`, or `make scan-sim` against the simulator): finds the devices, asks what no register can answer, runs the block read test, reads every register, writes the document and a transcript, and prints a maintainer-facing summary. Exit code says what happened (`0` fine, `3` the filename under-claims, `4` the transport is disputed, `1`/`2` nothing collected) |
 | `scripts/sungrow_scan/probe.py` | Probe for Sungrow devices: `mdns`, `sweep <cidr>` (502, 503 for a Logger or iHomeManager, 516 for an iHomeManager's TLS port — found, not readable), `units <host>`, `capabilities <host>`, `dump <host>`. Uses the library where it is installed and `portable.py`'s client where it is not, so it runs for somebody who has installed nothing |
 | `scripts/sync_version.py` | Single source of truth for the version; `--check` in CI, `--set X.Y.Z` to release |
@@ -305,8 +305,21 @@ tenth of what the user asks for there, and the pending one-line YAML fix would
 break the one house where the YAML package is currently right. ARM and DSP
 strings are identical to the multiplying houses; the inverter firmware string
 is the field fwitten will not answer. It is the only cluster measured -- a
-hypothesis, not a finding. **The write scale of 13074 is per device, and
-nothing yet detects it.**
+hypothesis, not a finding. **The write scale of 13074 is per device.**
+
+**`sungrow_modbus.export_scale` asks the inverter, with one write that changes
+nothing on either firmware** (built 2026-10-10, not yet wired into the
+integration or run on hardware). The multiply happens before the range check,
+and a refused write leaves the register alone, so: write the held word back
+when ten times it would be out of range (a no-op if stored as handed, refused
+if multiplied), or a tenth of it when that tenth is below the minimum (a no-op
+if multiplied, refused if not). The answer is the **refusal**, which survives a
+dongle's stale readback. Where no such word exists -- a zero-export house at
+0 W -- it declines and writes nothing, and with feed-in limitation off it needs
+leave to lift the mode, granted only where the held limit caps nothing.
+`tests/test_export_scale.py` sweeps both firmwares, with and without 16-bit
+wrapping, and asserts the register never moves.
+`scripts/sungrow_control_test.py --export-scale` runs it from a terminal.
 
 `doc/integration_plan.md` has the measurements, the replications and the two
 hardware confirmations -- raw word over a cable, and behaviour through a dongle.

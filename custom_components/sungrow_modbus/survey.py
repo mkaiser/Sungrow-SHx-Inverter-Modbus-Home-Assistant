@@ -49,6 +49,7 @@ from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_call_later
 from homeassistant.util import dt as dt_util
+from sungrow_modbus import block_test
 from sungrow_modbus.control_test import (
     Options as ControlOptions,
     planned_steps as control_test_steps,
@@ -211,7 +212,9 @@ class SurveyRunner:
         )
         return True
 
-    def _shares(self, options: dict[str, Any], control_test: bool) -> tuple[float, int]:
+    def _shares(
+        self, options: dict[str, Any], control_test: bool, block_reads: int
+    ) -> tuple[float, int]:
         """Split one progress bar between the two parts, before either starts.
 
         Both halves can say how many steps they will report without being run,
@@ -225,7 +228,7 @@ class SurveyRunner:
         from .fingerprint import planned_steps as survey_steps
 
         dumping = bool(options.get(CONF_SURVEY_DUMP, False))
-        a_steps = survey_steps(dumping)
+        a_steps = survey_steps(dumping, block_reads)
         if not control_test:
             return 1.0, a_steps
         b_steps = control_test_steps(self._control_options())
@@ -282,7 +285,9 @@ class SurveyRunner:
         from .fingerprint import async_build, attach_control_test
 
         share, _a_steps = self._shares(
-            options or dict(self.entry.options), control_test
+            options or dict(self.entry.options),
+            control_test,
+            block_test.planned_steps(await block_test.inverter_blocks()),
         )
         try:
             # Both parts run with this entry's own polling held off. They read
@@ -304,6 +309,10 @@ class SurveyRunner:
                     # download builds the same document and leaves it off,
                     # because nothing there survives a wait like that.
                     allow_dump=True,
+                    # Likewise only here, and not an option: the measurement
+                    # `scripts/layout.py` is changed from, which until now only
+                    # somebody with a terminal could take.
+                    allow_block_test=True,
                 )
                 if control_test:
                     block = await self._async_control_test(share)
