@@ -167,6 +167,16 @@ def choose(held: int, minimum: int, maximum: int) -> Plan | str:
     )
 
 
+def word_for(watts: float, write_units_per_count: int) -> int:
+    """Return the raw word that sets `watts` on a firmware with this factor.
+
+    The one piece of arithmetic a caller needs once `async_probe` has
+    answered. Rounded, not truncated: 1255 W on a multiplying firmware is
+    word 126, not 125.
+    """
+    return round(float(watts) / write_units_per_count)
+
+
 async def _word(device: Device, where: Address) -> int:
     """Read one register's raw word."""
     return (await device.async_read(where))[0]

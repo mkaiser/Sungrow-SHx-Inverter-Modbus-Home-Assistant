@@ -19,7 +19,7 @@ from pathlib import Path
 import sys
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts"))
+sys.path.insert(0, str(REPO / "scripts" / "generate"))
 
 from generate_compatibility import _attribution, _capability_marks, _comparable
 

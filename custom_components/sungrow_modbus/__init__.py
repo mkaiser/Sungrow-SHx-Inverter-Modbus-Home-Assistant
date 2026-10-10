@@ -12,6 +12,7 @@ from collections.abc import Callable
 from datetime import timedelta
 from functools import partial
 import logging
+from typing import Any
 
 from modbus_connection import (
     ModbusConnectionError,
@@ -43,6 +44,8 @@ from sungrow_modbus.wallbox_device import SungrowWallbox
 
 from .const import (
     CONF_ENTITY_IDS,
+    CONF_EXPORT_WRITE_SCALE,
+    CONF_EXPORT_WRITE_SCALE_FIRMWARE,
     CONF_EXTERNAL_PLACEMENT,
     CONF_EXTERNAL_SOURCES,
     CONF_INTERVALS,
@@ -335,6 +338,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
     # coordinator, how often each is polled, what a battery's maximum is -- so
     # there is nothing an option can change without rebuilding this.
     entry.async_on_unload(entry.add_update_listener(_async_options_changed))
+    entry.runtime_data.built_from = _built_from(entry)
 
     # A diagnostics entry stops here: connected, identified, polling, and
     # with no entities anywhere. Everything above it is what a survey needs
@@ -608,8 +612,23 @@ def _async_drop_unused_corrections(
 async def _async_options_changed(
     hass: HomeAssistant, entry: SungrowConfigEntry
 ) -> None:
-    """Reload, because the options decide how the entry is built."""
+    """Reload, because the options decide how the entry is built.
+
+    Except when nothing setup reads has changed. The export limit's write
+    scale is stored in `data` by the entity, in the middle of a write, and a
+    reload there would tear the entity down under its own service call.
+    """
+    built_from = entry.runtime_data.built_from
+    if built_from is not None and built_from == _built_from(entry):
+        return
     await hass.config_entries.async_reload(entry.entry_id)
+
+
+def _built_from(entry: SungrowConfigEntry) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Return what setup builds an entry from: everything but what it never reads."""
+    measured = {CONF_EXPORT_WRITE_SCALE, CONF_EXPORT_WRITE_SCALE_FIRMWARE}
+    data = {k: v for k, v in entry.data.items() if k not in measured}
+    return data, dict(entry.options)
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> None:

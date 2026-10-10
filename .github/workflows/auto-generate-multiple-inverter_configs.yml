@@ -19,11 +19,10 @@ jobs:
           python-version: '3.x'
 
       - name: Generate configs for inverter 1..3
-        working-directory: scripts
         run: |
-          python3 ./generate_second_inverter_config.py 1
-          python3 ./generate_second_inverter_config.py 2
-          python3 ./generate_second_inverter_config.py 3
+          python3 scripts/generate/generate_second_inverter_config.py 1
+          python3 scripts/generate/generate_second_inverter_config.py 2
+          python3 scripts/generate/generate_second_inverter_config.py 3
 
       - name: Commit and push generated files
         run: |

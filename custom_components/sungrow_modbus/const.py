@@ -18,9 +18,9 @@ DEFAULT_UNIT_ID = 1
 #: which the specification allows for further slaves and which nothing has
 #: been measured on.
 #:
-#: The same list exists in `scripts/sungrow_scan/probe.py` as
+#: The same list exists in `scripts/sungrow_survey/probe.py` as
 #: `IDENTIFY_UNITS`, and the duplication is deliberate rather than sloppy:
-#: that directory ships as a zip and may not import this package or the
+#: that directory runs with nothing installed and may not import this package or the
 #: library. Two short tuples that must agree is a smaller problem than a
 #: survey that cannot run standalone.
 IDENTIFY_UNITS: tuple[int, ...] = (1, 2, 3, 4, 5)
@@ -158,6 +158,25 @@ CONF_CONTROL_TEST_EXPORT = "control_test_export_limit"
 #: this existed, which reads as `""` -- correct for the single-inverter houses
 #: that is all of them.
 CONF_LEGACY_SLOT = "legacy_slot"
+
+#: How this inverter's firmware writes register 13074: 10 if it multiplies a
+#: written word by ten, 1 if it stores it as handed. Measured, not assumed --
+#: three houses multiply and fwitten's pair does not, and no register tells
+#: them apart -- by `sungrow_modbus.export_scale` on the first write to the
+#: export limit, and kept here so the probe runs once per inverter.
+#:
+#: Entry **data**, because it is a fact about the firmware on the far end of
+#: this endpoint and not a preference. Absent until the probe has answered;
+#: the entity then falls back to dividing by ten, which is what every entry
+#: did before this existed.
+CONF_EXPORT_WRITE_SCALE = "export_write_scale"
+
+#: The firmware `CONF_EXPORT_WRITE_SCALE` was measured on, as the device's
+#: `firmware` string. A different one discards the factor and measures again,
+#: because a firmware update is exactly what changed this register's behaviour
+#: for the YAML package's users (#763: "Firmware update changed the behaviour
+#: of Export Power Limit"). Kept beside the factor, in `data`, for its reasons.
+CONF_EXPORT_WRITE_SCALE_FIRMWARE = "export_write_scale_firmware"
 
 #: Entities reporting generation the Sungrow cannot see, as a list of ids.
 #:

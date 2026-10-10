@@ -11,8 +11,8 @@ somebody plugs a car in or reconfigures the unit. Polling the ratings every
 ten seconds would read thirty registers nobody is watching, on a link a
 Sungrow inverter grants very few sessions on.
 
-**Nothing here writes.** The write table in `scripts/writes.py` is the only
-place a writable register is declared and no wallbox register is in it. That
+**Nothing here writes.** The write table in `scripts/generate/tables/writes.py` is the
+only place a writable register is declared and no wallbox register is in it. That
 is a decision, not an omission: the registers that would start and stop a
 charge are known -- holding 21211 and 21212 -- and starting somebody's car
 charging from a stale automation is not a thing to enable on one measurement

@@ -1,9 +1,9 @@
 """The block read test, which had no test of its own.
 
-`scripts/sungrow_scan/blocks.py` answers one question -- which read inside a
+`scripts/sungrow_survey/blocks.py` answers one question -- which read inside a
 component fails, and whether that is a register fault or another client
 competing for the inverter -- and its answers get written into
-`scripts/layout.py`, which is only ever added to from a measurement. So a
+`src/sungrow_modbus/layout.py`, which is only ever added to from a measurement. So a
 wrong answer here becomes a permanent wrong fix.
 
 It shipped with no test, and the cost was exactly what that predicts: with
@@ -20,7 +20,7 @@ import sys
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_scan"))
+sys.path.insert(0, str(REPO / "scripts" / "sungrow_survey"))
 
 import blocks  # noqa: E402
 from blocks import (  # noqa: E402
@@ -350,7 +350,7 @@ def test_the_block_test_reads_only_the_inverters_own_components() -> None:
     10740 and 21215 answer 0xFFFF or refuse at the inverter's unit whatever
     the pack and the charge point are doing. All eight would have failed, all
     eight would then have been narrowed at the cost of the narrowing budget,
-    and all eight would have been offered to `scripts/layout.py` as register
+    and all eight would have been offered to `src/sungrow_modbus/layout.py` as register
     faults.
 
     So the filter is on the plan's own `unit` role rather than on a list of
@@ -395,7 +395,7 @@ def test_naming_another_devices_component_still_selects_it() -> None:
 def test_narrowing_goes_wherever_the_caller_sends_its_output() -> None:
     """`echo` all the way down, matching `measure`.
 
-    It made no practical difference to `collect.py`, which replaces
+    It made no practical difference to `sungrow_survey.py`, which replaces
     `sys.stdout` with its transcript so a bare `print` landed there anyway.
     It is fixed because a caller that passes `echo` and then finds half the
     output on stdout is a trap, and this file's own tests pass `_silent` --

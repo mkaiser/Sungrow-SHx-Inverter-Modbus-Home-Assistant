@@ -2,8 +2,8 @@
 
 There are two implementations of the band dump and there have to be. The
 integration's runs inside Home Assistant against the library; the standalone
-survey's runs from a zip on a stranger's laptop with nothing installed, which
-is the whole point of `scripts/sungrow_scan/` and rules out importing the
+survey's runs on a stranger's laptop with nothing installed, which
+is the whole point of `scripts/sungrow_survey/` and rules out importing the
 library there.
 
 What must not happen is the two quietly covering different addresses. A
@@ -21,7 +21,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(
-    0, str(Path(__file__).resolve().parent.parent / "scripts" / "sungrow_scan")
+    0, str(Path(__file__).resolve().parent.parent / "scripts" / "sungrow_survey")
 )
 
 from probe import DUMP_BANDS as SCANNER_BANDS, DUMP_MASKED as SCANNER_MASKED

@@ -1,6 +1,6 @@
 {
   "schema": 14,
-  "command_line": "scripts/sungrow_scan/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport direct_lan --proxy no --reporter mkaiser --battery 'Pylontech Force H1, 14.4 kWh' --comment 'The reference installation: a cable straight into the inverter, and no communication module fitted at all -- register 13265 names none, register 6100 answers, port 443 refuses. A third-party pack. Nothing was polling the inverter for this reading.' --dump",
+  "command_line": "scripts/sungrow_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport direct_lan --proxy no --reporter mkaiser --battery 'Pylontech Force H1, 14.4 kWh' --comment 'The reference installation: a cable straight into the inverter, and no communication module fitted at all -- register 13265 names none, register 6100 answers, port 443 refuses. A third-party pack. Nothing was polling the inverter for this reading.' --dump",
   "read_on": "2026-09-08",
   "read_at_local": "2026-09-08T18:07:48+02:00",
   "user_inputs": {

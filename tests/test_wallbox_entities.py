@@ -1,9 +1,7 @@
 """A wallbox as its own device, from the words one actually answered.
 
-Its descriptions are hand-written -- the third module that has to be, because
-`sensor_descriptions.py` is generated from the YAML package's entity map and
-the package never covered a wallbox at all. So this file gives them the guard
-generation gives everything else.
+The package never covered a wallbox, so there is no entity map entry to test
+these descriptions against. This file is their guard instead.
 
 The fixture is the raw dump in the committed fingerprint, which is the only
 wallbox reading this project has. Nothing here is invented: every number came

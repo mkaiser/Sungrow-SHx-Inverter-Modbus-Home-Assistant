@@ -24,7 +24,7 @@ import sys
 import pytest
 
 sys.path.insert(
-    0, str(Path(__file__).resolve().parent.parent / "scripts" / "sungrow_scan")
+    0, str(Path(__file__).resolve().parent.parent / "scripts" / "sungrow_survey")
 )
 
 from probe import (
@@ -822,7 +822,7 @@ def test_an_unset_option_is_absent_rather_than_guessed() -> None:
     assert "--comment" not in line
     # The one place the path is written out rather than derived, so that
     # SCRIPT cannot quietly drift from where the file actually is.
-    assert _invocation(None) == "scripts/sungrow_scan/probe.py capabilities <host>"
+    assert _invocation(None) == "scripts/sungrow_survey/probe.py capabilities <host>"
 
 
 @pytest.mark.parametrize("path", FINGERPRINTS, ids=lambda p: p.stem)
@@ -921,7 +921,7 @@ def test_the_filename_now_follows_the_stand_in_deliberately() -> None:
 def test_the_recorded_command_names_the_path_that_works_where_it_ran(
     monkeypatch, tmp_path
 ) -> None:
-    """Inside the checkout, the repository path; unpacked from a zip, the file.
+    """Inside the checkout, the repository path; in a downloaded copy, the file.
 
     `command_line` is an instruction to repeat a reading. A contributor who
     unpacked the directory into a folder of its own has no `scripts/` above
@@ -932,7 +932,7 @@ def test_the_recorded_command_names_the_path_that_works_where_it_ran(
 
     assert probe._script_name() == probe.SCRIPT
 
-    unpacked = tmp_path / "sungrow_scan" / "probe.py"
+    unpacked = tmp_path / "sungrow_survey" / "probe.py"
     unpacked.parent.mkdir()
     unpacked.write_text("")
     monkeypatch.setattr(probe, "__file__", str(unpacked))
@@ -1183,7 +1183,7 @@ def test_the_table_and_the_filename_agree_about_the_battery(path: Path) -> None:
     row = _table_rows().get(path.stem)
     assert row is not None, (
         f"{path.stem} is in device-fingerprints/ but not in compatibility.md -- "
-        "run scripts/generate_compatibility.py"
+        "run scripts/generate/generate_compatibility.py"
     )
 
     # The filename's own word, which is what a reader sees first.
@@ -1336,7 +1336,7 @@ async def test_a_modbus_device_that_is_not_a_sungrow_is_not_claimed_as_one(
     assert who.error is not None
     assert "no serial at unit 1, 2, 3, 4, 5" in who.error
     # The exception type is in the message, because "refused" and "timed out"
-    # lead to different next steps -- see scripts/layout.py.
+    # lead to different next steps -- see src/sungrow_modbus/layout.py.
     assert "_FakeRefusal" in who.error
     assert connection.asked == [1, 2, 3, 4, 5, 247], (
         "every inverter candidate, then one look for an iHomeManager"
@@ -1382,7 +1382,7 @@ async def test_an_ihomemanager_probe_costs_nothing_when_an_inverter_answers(
     Most addresses in a survey are an inverter or a dongle. Asking unit 247 on
     each of them would be one more timeout per address on a link where a
     failed read costs ten seconds -- the fourth house in
-    `scripts/layout.py`'s notes.
+    `src/sungrow_modbus/layout.py`'s notes.
     """
     import probe as probe_module
 
@@ -1490,7 +1490,7 @@ def test_a_collect_run_at_schema_16_carries_its_block_read_test(path: Path) -> N
     """Schema 16 added `block_read_test`, and only one tool produces it.
 
     Keyed on `command_line` rather than on the schema alone, because the
-    absence is legitimate for one of the two tools: `collect.py` always runs
+    absence is legitimate for one of the two tools: `sungrow_survey.py` always runs
     the block read test, and the bare `capabilities` subcommand never does.
     Requiring it of every schema-16 document would fail an honest one.
 
@@ -1502,11 +1502,11 @@ def test_a_collect_run_at_schema_16_carries_its_block_read_test(path: Path) -> N
     document = json.loads(path.read_text(encoding="utf-8"))
     if document["schema"] < 16:
         return
-    if "collect.py" not in str(document.get("command_line", "")):
+    if "sungrow_survey.py" not in str(document.get("command_line", "")):
         return
 
     assert "block_read_test" in document, (
-        f"{path.stem} was collected by collect.py at schema "
+        f"{path.stem} was collected by sungrow_survey.py at schema "
         f"{document['schema']}, which always runs the block read test, so the "
         "section it added must be here"
     )

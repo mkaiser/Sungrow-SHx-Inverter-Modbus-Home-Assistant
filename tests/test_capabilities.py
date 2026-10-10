@@ -11,6 +11,7 @@ from __future__ import annotations
 import pytest
 
 from sungrow_modbus.capabilities import (
+    ABSENT_ON_FIRMWARE,
     ZERO_MEANS_ABSENT,
     Capability,
     Family,
@@ -256,3 +257,55 @@ def test_a_tracker_at_zero_volts_is_denied_and_then_granted_at_sunrise() -> None
     assert Capability.MPPT3 in morning
     # Growth is what the coordinator reloads on.
     assert morning - night == {Capability.MPPT3}
+
+
+def test_the_meter_phase_registers_read_zero_through_a_dongle() -> None:
+    """Every WiNet-S path in the committed fingerprints, five houses.
+
+    Read alone, 5741 and 5744 are refused; inside the pooled block the library
+    actually reads, they answer zero -- six entities at 0 V and 0 A forever.
+    A meter on a live grid does not read 0 V, so zero is safe to deny on.
+    """
+    dongle = probe(_reads({"meter_phase_a_voltage": 0.0}))
+    cable = probe(_reads({"meter_phase_a_voltage": 231.7}))
+
+    assert Capability.METER_PHASE_MEASUREMENTS not in dongle
+    assert Capability.METER_PHASE_MEASUREMENTS in cable
+
+
+def test_firmware_absence_is_an_exact_measured_version() -> None:
+    """Keyed exactly: 95.13 is not 95.03, and unsurveyed firmware is not gated.
+
+    #756 blames 95.14 for the meter phase registers, and bar12 reads them on
+    95.14 -- the reason a bug report alone does not make an entry.
+    """
+    gated = known_absent(SH10RT, "SAPPHIRE-H_01011.95.03")
+    assert {Capability.FIRMWARE_VERSIONS, Capability.METER_CHANNEL_2} <= gated
+    assert Capability.FIRMWARE_VERSIONS not in known_absent(
+        SH10RT, "SAPPHIRE-H_01011.95.13"
+    )
+    assert known_absent(None, None) == frozenset()
+    assert Capability.METER_PHASE_MEASUREMENTS not in {
+        c for caps in ABSENT_ON_FIRMWARE.values() for c in caps
+    }
+
+
+def test_every_firmware_entry_names_a_committed_fingerprint() -> None:
+    """The rule for getting into the table, enforced: evidence, not a report."""
+    from pathlib import Path
+
+    source = (
+        Path(__file__).resolve().parent.parent / "src/sungrow_modbus/capabilities.py"
+    ).read_text(encoding="utf-8")
+    fingerprints = Path(__file__).resolve().parent.parent / "doc/device-fingerprints"
+    block = source.split("ABSENT_ON_FIRMWARE: dict", 1)[1].split("\n}\n", 1)[0]
+    for version in ABSENT_ON_FIRMWARE:
+        cited = [
+            line.strip().lstrip("#").strip()
+            for line in block.splitlines()
+            if line.strip().startswith("#") and line.strip().endswith(".json")
+        ]
+        assert cited, f"{version} cites no fingerprint"
+        for name in cited:
+            assert (fingerprints / name).exists(), name
+            assert version in (fingerprints / name).read_text(encoding="utf-8"), name

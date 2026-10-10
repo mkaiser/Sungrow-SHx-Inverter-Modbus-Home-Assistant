@@ -1,15 +1,12 @@
 """Entity descriptions for a Sungrow AC wallbox, hand-written.
 
-Third hand-written description module, and the reason is the same each time:
-`sensor_descriptions.py` is generated from the YAML package's entity map, and
-the wallbox is not in it. Unlike the SBR there is not even an opt-in YAML file
-to port -- the package never covered a wallbox at all -- so there is nothing
-to generate from and **no legacy id to preserve**. Every entity here is new,
+The wallbox is not in the YAML package's entity map, and unlike the SBR
+there is not even an opt-in YAML file to port -- the package never covered a
+wallbox at all -- so there is **no legacy id to preserve**. Every entity here is new,
 which makes this the one device with no migration question at all.
 
-`tests/test_wallbox_entities.py` gives these the guard generation gives the
-others: every `field` resolves to a real field or property, and no key
-collides with another device's.
+`tests/test_wallbox_entities.py` is their guard: every `field` resolves to a
+real field or property, and no key collides with another device's.
 
 **What gets an entity, and what does not.** Thirty-two registers, and three
 kinds of thing are deliberately left out:

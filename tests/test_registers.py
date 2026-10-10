@@ -1,10 +1,9 @@
-"""The generated register map, checked against the YAML it came from.
+"""The register map, checked against the YAML package it replaces.
 
-`registers.py` is generated, so the risk is not that somebody mistypes an
-address — it is that the generator quietly drops or mistranslates something
-and nobody notices, because a wrong scale produces a plausible number rather
-than an error. These tests compare every generated field against the entity
-map entry it was derived from.
+`registers.py` is edited by hand, so the risk is the ordinary one: somebody
+mistypes an address or a scale, and nobody notices, because a wrong scale
+produces a plausible number rather than an error. These tests compare every
+field against the entity map entry it was ported from.
 """
 
 from __future__ import annotations
@@ -17,10 +16,7 @@ from modbus_connection.model import Component
 import pytest
 
 from sungrow_modbus import registers
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-
-from layout import COUNTS, ISOLATE
+from sungrow_modbus.layout import COUNTS, ISOLATE
 
 ENTITY_MAP = Path(__file__).resolve().parent.parent / "doc" / "legacy_entity_map.json"
 
@@ -150,11 +146,26 @@ def test_a_corrected_length_is_isolated(field: str) -> None:
     assert others == [field], f"{field} shares a component with {others}"
 
 
+@pytest.mark.parametrize("group", sorted(set(ISOLATE.values())))
+def test_an_isolated_group_is_a_component_of_its_own(group: str) -> None:
+    """`layout.ISOLATE` is the record; `registers.py` has to honour it.
+
+    This is what stops a field being moved back into its tier's pooled
+    component -- which reads fine on most hardware and empties the whole
+    component again on the firmware the entry was measured on.
+    """
+    assert group in registers.COMPONENTS, f"no component named {group}"
+    expected = {f for f, g in ISOLATE.items() if g == group}
+    component = registers.COMPONENTS[group]
+    actual = {name for name, (owner, _f) in GENERATED.items() if owner is component}
+    assert actual == expected
+
+
 def test_the_scan_plan_matches_the_library() -> None:
     """The artefact that lets the scanner run without the library.
 
-    `scripts/sungrow_scan/` is handed to contributors as a zip, so it cannot
-    import `sungrow_modbus` -- it reads which blocks to fetch and how to
+    `scripts/sungrow_survey/` is run by contributors with nothing installed, so it
+    cannot import `sungrow_modbus` -- it reads which blocks to fetch and how to
     decode them out of a committed JSON instead. Stale, that file would make
     the scanner measure a plan the integration no longer uses, which is worse
     than not measuring: the numbers would look fine.
@@ -162,8 +173,11 @@ def test_the_scan_plan_matches_the_library() -> None:
     CI checks this too; asserting it here means a local `pytest` catches the
     staleness before a push does.
     """
+    sys.path.insert(
+        0, str(Path(__file__).resolve().parent.parent / "scripts" / "generate")
+    )
     from generate_scan_plan import OUTPUT, render
 
     assert OUTPUT.read_text(encoding="utf-8") == render(), (
-        "Run scripts/generate_scan_plan.py and commit the result."
+        "Run scripts/generate/generate_scan_plan.py and commit the result."
     )

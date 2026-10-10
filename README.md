@@ -2,12 +2,12 @@
 
 [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2)
 
-> ## ⚠️ Experimental. Do not use this branch on a system you care about.
+> ## ⚠️ Preview. Do not use this branch on a system you care about.
 >
 > This is the `proper-ha-integration` branch: a rewrite of this project as a
-> real Home Assistant integration. It is **unreleased, unversioned in any
-> meaningful sense, and not on HACS.** Registers can move, entity IDs can
-> change, and nothing here promises backwards compatibility yet.
+> real Home Assistant integration, released only as previews (`0.1.0aN`).
+> Registers can move, entity IDs can change, and nothing here promises
+> backwards compatibility yet.
 >
 > **If you are a normal user, you want [`main`](../../tree/main)** — the YAML
 > package, evolved over five years, in use by thousands of people, and the only thing
@@ -38,7 +38,7 @@ long-term statistics and their dashboards when they switch.
 
 **Works:**
 
-- All 127 read entities of the YAML package, generated from it so they cannot
+- All 127 read entities of the YAML package, tested against it so they cannot
   drift, with the unit and state class of every entry they replace.
 - **Writes.** The state-of-charge limits, the charge and discharge maxima, the
   export power limit, the three mode flags and the three selects. Starting and
@@ -68,15 +68,8 @@ long-term statistics and their dashboards when they switch.
 
 **Not there yet:**
 
-- **A HACS install from _this_ repository.** It installs through HACS today,
-  but from the preview channel rather than from here: HACS resolves a
-  repository to the latest *stable* release or else to its *default branch*,
-  and this one's default branch is `main`, which has no `custom_components/`.
-  That second repository follows the development branch and is removed once
-  the integration reaches `main` —
-  **[doc/installing_a_preview.md](doc/installing_a_preview.md)**. Everything
-  published so far is a **preview**, labelled as such in the version, the
-  integration's name and a repair notice.
+- **A HACS install from _this_ repository.** Until the integration reaches
+  `main`, HACS installs it from the preview channel above.
 - The **iHomeManager** and the **Sungrow Logger**. Both are documented by
   Sungrow and neither has ever been measured by this project — if you have
   one, [doc/device-fingerprints/devices-wanted.md](doc/device-fingerprints/devices-wanted.md)
@@ -129,14 +122,14 @@ record and says what is decided, what is open, and why.
 [doc/compatibility.md](doc/compatibility.md) says which setups anybody has
 actually tested.
 
-## Trying it
+## Developing
 
 Nothing here needs an inverter — there is a simulator.
 
 ```bash
-scripts/setup.sh       # devcontainer does this for you
-scripts/simulate.sh &  # a fake SH10RT on :5020
-scripts/develop.sh     # Home Assistant on :8123
+scripts/dev/setup.sh       # devcontainer does this for you
+scripts/dev/simulate.sh &  # a fake SH10RT on :5020
+scripts/dev/develop.sh     # Home Assistant on :8123
 ```
 
 Or `make setup`, `make sim-bg`, `make dev`. `make` on its own lists every
@@ -153,8 +146,7 @@ way they are.
 ## The YAML package
 
 It lives in [legacy/](legacy/) on this branch, and at the repository root on
-`main`, which is where users should get it. Nothing about it changes until
-this integration reaches parity.
+`main`, which is where users should get it.
 
 - [Installation / Configuration](legacy/doc/installation.md)
 - [Migration from versions before 2026](legacy/doc/migration_guide.md)
@@ -164,15 +156,9 @@ this integration reaches parity.
 
 ## Register documentation
 
-The mapping comes from Sungrow's official *Modbus communication protocol
-specification*, available from Sungrow support and updated only sporadically.
-If you have a newer version, say so in the
-[discussions](../../discussions).
-
-```
-TI_20251119_Communication_Protocol_of_Residential_Hybrid_Inverter_V1.1.11_EN.pdf
-TI_20230117_Communication.Protocol.of.Residential.and.Commerical.PV.Grid-connected.Inverter_V1.1.53_EN.pdf
-```
+The mapping follows Sungrow's *Communication Protocol of Residential and Small
+Industrial Hybrid Inverter*, **V1.1.16**, available from Sungrow support. If you
+have a newer version, say so in the [discussions](../../discussions).
 
 ## Help and contributions
 

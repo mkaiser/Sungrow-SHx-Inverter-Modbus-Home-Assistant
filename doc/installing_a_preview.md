@@ -162,7 +162,7 @@ Two refusals keep it usable:
   Assistant installs that library from PyPI, so a commit importing something
   the pinned wheel does not contain could not start; the channel stays on the
   last good commit until the library is released. Not hypothetical — see
-  `scripts/check_pinned_library.py`, which is the check it runs.
+  `scripts/release/check_pinned_library.py`, which is the check it runs.
 
 It is temporary, and it has one rule: **remove it from HACS before installing
 from this repository**, once the integration reaches `main`. Both provide the

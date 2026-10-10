@@ -88,7 +88,7 @@ class SungrowSensorDescription(SungrowEntityDescription, SensorEntityDescription
     decoded counterpart exists -- and they are here because the YAML package
     had them, not because anybody wants them. Legacy mode has to create them
     or history keyed to `sensor.battery_max_soc` stops; modern mode is the
-    clean cut, and does not. `scripts/naming.py` holds the list and the
+    clean cut, and does not. `scripts/generate/tables/naming.py` holds the list and the
     reasoning.
     """
 

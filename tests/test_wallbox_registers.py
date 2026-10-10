@@ -26,7 +26,7 @@ from modbus_connection.mock import MockModbusConnection
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_scan"))
+sys.path.insert(0, str(REPO / "scripts" / "sungrow_survey"))
 
 from probe import WALLBOX_FIELDS, _wallbox_readings  # noqa: E402
 
@@ -205,7 +205,7 @@ def test_nothing_writes_to_a_wallbox() -> None:
 
     Starting somebody's car charging from a stale automation is not a thing
     to enable on one measurement of one unit, so no wallbox register is
-    declared writable and none is in `scripts/writes.py`.
+    declared writable and none is in `scripts/generate/tables/writes.py`.
     """
     for klass in COMPONENTS.values():
         for name, descriptor in klass.declared_fields.items():

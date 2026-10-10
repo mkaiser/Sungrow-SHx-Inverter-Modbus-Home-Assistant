@@ -15,7 +15,7 @@ import sys
 
 import pytest
 
-sys.path.insert(0, "scripts")
+sys.path.insert(0, "scripts/release")
 
 from sync_version import (
     NORMALISES_AWAY,

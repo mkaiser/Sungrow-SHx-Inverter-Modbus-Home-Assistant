@@ -33,14 +33,10 @@ body:
         **Settings → Devices & Services → Sungrow Modbus → the three-dot menu →
         Download diagnostics**, then drag the file into this box.
 
-        Not installed it yet? Either of these needs nothing but Python:
-
-        - `python scripts/sungrow_scan/portable.py <ip>` — one file, one
-          report, pasteable.
-        - `python collect.py` from the `sungrow_scan` folder — the full
-          survey: it finds the device, asks a few things no register can
-          answer, tests the block reads and tells you which file to send.
-          Ask for the zip if you do not have a checkout.
+        Not installed it yet? `python sungrow_survey.py` from the
+        `scripts/sungrow_survey` folder needs nothing but Python: it finds the
+        device, asks a few things no register can answer, tests the block
+        reads and tells you which file to send.
       placeholder: Drag the .json file here, or paste its contents.
     validations:
       required: true

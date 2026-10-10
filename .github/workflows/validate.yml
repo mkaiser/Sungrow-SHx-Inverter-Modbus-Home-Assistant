@@ -12,37 +12,14 @@ on:
       # tests/test_makefile.py reads both, and asserts the generator list
       # below matches the one in the Makefile.
       - "Makefile"
-      - "scripts/*.sh"
-      - "scripts/simulator.py"
-      - "scripts/gen_simulator_registers.py"
       - "pyproject.toml"
       - "requirements_dev.txt"
       - "hacs.json"
       - "legacy/modbus_sungrow.yaml"
       - "doc/legacy_entity_map.json"
-      - "scripts/sync_version.py"
-      - "scripts/generate_entity_map.py"
-      - "scripts/generate_registers.py"
-      - "scripts/generate_sensors.py"
-      - "scripts/generate_derived.py"
-      - "scripts/generate_strings.py"
-      - "scripts/naming.py"
-      - "scripts/writes.py"
-      - "scripts/generate_numbers.py"
-      - "scripts/generate_switches.py"
-      - "scripts/generate_selects.py"
-      - "scripts/generate_compatibility.py"
-      # The scanning scripts, absent until now, and layout.py, which feeds
-      # generate_registers.py. Only the push event is filtered -- pull
-      # requests run everything regardless -- so the gap only ever let a
-      # direct push to a protected branch skip validation.
-      - "scripts/sungrow_scan/**"
-      - "scripts/generate_scan_plan.py"
-      - "scripts/layout.py"
-      # The pin guard itself. Enumerating scripts one by one means a new one
-      # is unfiltered until somebody remembers -- and this is the script
-      # whose own bug would show up as a false pass.
-      - "scripts/check_pinned_library.py"
+      # Every script, generators, tables, the survey and the pin guard
+      # alike, so a new one is covered without being listed here.
+      - "scripts/**"
       # The preview channel's workflow: the drift check compares this file
       # to the copy running in that repository, so editing it must run the
       # comparison.
@@ -84,29 +61,22 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install --requirement requirements_dev.txt
       - name: Versions in lockstep
-        run: python scripts/sync_version.py --check
-      - name: The legacy entity map matches the YAML package
-        run: python scripts/generate_entity_map.py --check
-      - name: The register map matches the entity map
-        run: python scripts/generate_registers.py --check
-      - name: The sensor descriptions match the entity map
-        run: python scripts/generate_sensors.py --check
-
+        run: python scripts/release/sync_version.py --check
       - name: The scan plan matches the library
-        run: python scripts/generate_scan_plan.py --check
+        run: python scripts/generate/generate_scan_plan.py --check
       - name: The derived descriptions are current
-        run: python scripts/generate_derived.py --check
+        run: python scripts/generate/descriptions.py derived --check
       - name: The writable registers match the write table
         run: |
-          python scripts/generate_numbers.py --check
-          python scripts/generate_switches.py --check
-          python scripts/generate_selects.py --check
+          python scripts/generate/descriptions.py numbers --check
+          python scripts/generate/descriptions.py switches --check
+          python scripts/generate/descriptions.py selects --check
       - name: The entity names follow the naming convention
-        run: python scripts/generate_strings.py --check
+        run: python scripts/generate/descriptions.py strings --check
       - name: The compatibility page matches the fingerprints
-        run: python scripts/generate_compatibility.py --check
+        run: python scripts/generate/generate_compatibility.py --check
       - name: The entity name review sheet matches the descriptions
-        run: python scripts/review_names.py --check
+        run: python scripts/helpers/review_names.py --check
       - name: Ruff
         run: |
           ruff check .
@@ -145,10 +115,10 @@ jobs:
       # NOT ask it of the version on PyPI: between releases the integration
       # legitimately moves ahead of the last published library, which is why
       # `doc/installing_a_preview.md` says to install a tag rather than the
-      # branch. Run `python scripts/check_pinned_library.py` with no argument
+      # branch. Run `python scripts/release/check_pinned_library.py` with no argument
       # for that question, before pointing anybody at a build.
       - name: The built wheel provides what the integration imports
-        run: python scripts/check_pinned_library.py --wheel "$(ls dist/*.whl)"
+        run: python scripts/release/check_pinned_library.py --wheel "$(ls dist/*.whl)"
 
       # `doc/preview-mirror/sync.yml` is the source of record for the preview
       # channel: the copy that runs lives in a separate repository which gets

@@ -3,7 +3,7 @@
 # The whole flow is driven by a tag, so the git history is the record of what
 # was released:
 #
-#   scripts/sync_version.py --set 0.2.0
+#   scripts/release/sync_version.py --set 0.2.0
 #   git commit -am "Release 0.2.0" && git tag v0.2.0 && git push --follow-tags
 #
 # The version in pyproject.toml and manifest.json must match the tag. That is
@@ -54,7 +54,7 @@ jobs:
           #
           # `contains(version, '-')` was the test, and it was wrong in the
           # one direction that matters: pip normalises `0.1.0-alpha.1` to
-          # `0.1.0a1`, so `scripts/sync_version.py` requires the normalised
+          # `0.1.0a1`, so `scripts/release/sync_version.py` requires the normalised
           # spelling and rejects the hyphenated one. Every pre-release this
           # project can actually cut therefore has **no hyphen**, and would
           # have been published as a stable GitHub release -- which is what
@@ -72,7 +72,7 @@ jobs:
           fi
 
       - name: The tag, pyproject.toml and manifest.json must agree
-        run: python scripts/sync_version.py --check --expect "${{ steps.version.outputs.version }}"
+        run: python scripts/release/sync_version.py --check --expect "${{ steps.version.outputs.version }}"
 
       - name: Install
         run: |

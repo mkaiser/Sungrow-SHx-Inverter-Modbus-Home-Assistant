@@ -32,7 +32,7 @@ from sungrow_modbus.addresses import (
 )
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_scan"))
+sys.path.insert(0, str(REPO / "scripts" / "sungrow_survey"))
 
 import portable  # noqa: E402
 
@@ -50,8 +50,7 @@ EXEMPT = {
     "registers.py",
     "battery_registers.py",
     "wallbox_registers.py",
-    "generate_entity_map.py",
-    "gen_simulator_registers.py",
+    "generate_simulator_registers.py",
     "simulator.py",
 }
 

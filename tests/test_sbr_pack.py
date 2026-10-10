@@ -195,7 +195,7 @@ def _yaml_registers() -> dict[int, dict]:
 
     Two things stop `safe_load` reading this file on its own, and neither is
     a problem with the file: `!secret` for the unit id, which
-    `scripts/generate_entity_map.py` handles the same way, and anchors like
+    the entity map's generator handled the same way, and anchors like
     `*scan_interval_medium` that are defined in the *main* package YAML. This
     is an include, not a document.
     """
@@ -283,18 +283,12 @@ def test_the_port_covers_the_pack_summary_the_yaml_exposes() -> None:
         assert name in ported
 
 
-def test_the_pack_registers_live_outside_the_generated_module() -> None:
-    """Where they are is part of whether they survive.
+def test_the_pack_registers_live_outside_the_inverter_module() -> None:
+    """The SBR's registers belong to the battery, not to the inverter's map.
 
-    These components were written into `src/sungrow_modbus/registers.py`,
-    which is generated from the inverter's entity map, and the next run of
-    `scripts/generate_registers.py` deleted all eighty-one lines of them
-    without a word. Nothing failed: the generator's job is to make that file
-    equal its input, and it did.
-
-    So this asserts the arrangement rather than the code: the SBR's registers
-    are in a module nothing generates, and the generated one does not mention
-    them.
+    `registers.py` is held field by field to the inverter's entity map, and
+    the pack has no entry there. Its components live in `battery_registers.py`
+    so that each module is checked against the source it was ported from.
     """
     from pathlib import Path as _Path
 
@@ -302,11 +296,8 @@ def test_the_pack_registers_live_outside_the_generated_module() -> None:
     import sungrow_modbus.registers as inverter
 
     assert _Path(pack.__file__).name == "battery_registers.py"
-    generated = _Path(inverter.__file__).read_text(encoding="utf-8")
-    assert "SbrBattery" not in generated, (
-        "the SBR is back in the generated module, where a regeneration will delete it"
-    )
-    assert "do not edit" in generated.lower() or "generated" in generated.lower()
+    text = _Path(inverter.__file__).read_text(encoding="utf-8")
+    assert "SbrBattery" not in text, "the SBR is in the inverter's register module"
 
 
 #: The eight position words this decoding rests on, each with what it means.

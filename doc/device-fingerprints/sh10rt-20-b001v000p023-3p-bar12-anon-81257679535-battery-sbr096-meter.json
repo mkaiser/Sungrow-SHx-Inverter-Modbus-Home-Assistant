@@ -1,6 +1,6 @@
 {
   "schema": 19,
-  "command_line": "scripts/sungrow_scan/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport direct_lan --proxy no --reporter bar12 --comment 'Read by the maintainer over a VPN on 2026-10-08 after the owner moved the LAN cable from the WiNet-S into the inverter'\"'\"'s own LAN port. Same inverter as the two September readings at 178.023 and 178.041, which both went through the dongle.' --other-inverter no --dump",
+  "command_line": "scripts/sungrow_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport direct_lan --proxy no --reporter bar12 --comment 'Read by the maintainer over a VPN on 2026-10-08 after the owner moved the LAN cable from the WiNet-S into the inverter'\"'\"'s own LAN port. Same inverter as the two September readings at 178.023 and 178.041, which both went through the dongle.' --other-inverter no --dump",
   "read_on": "2026-10-08",
   "read_at_local": "2026-10-08T22:23:46+02:00",
   "user_inputs": {

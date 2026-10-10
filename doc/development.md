@@ -27,7 +27,7 @@ so it can be tested without Home Assistant and without an inverter.
 Open the repo in the devcontainer (VS Code: *Dev Containers: Reopen in
 Container*). It pins Python 3.14 - Home Assistant 2026.9 requires 3.14.2 or
 newer - installs Home Assistant and the tooling via
-`scripts/setup.sh`, and forwards ports 8123 and 5020.
+`scripts/dev/setup.sh`, and forwards ports 8123 and 5020.
 
 On Windows, clone into a **named container volume** (*Dev Containers: Clone
 Repository in Container Volume*) rather than bind-mounting the Windows
@@ -40,7 +40,7 @@ packages, so the same environment is one command:
 ```bash
 docker run --rm -it -p 8123:8123 -p 5020:5020 -v "$PWD:/workspace" -w /workspace \
   python:3.14-bookworm bash -lc \
-  'apt-get update -qq && apt-get install -y -qq ffmpeg libturbojpeg0 libpcap-dev && scripts/setup.sh && bash'
+  'apt-get update -qq && apt-get install -y -qq ffmpeg libturbojpeg0 libpcap-dev && scripts/dev/setup.sh && bash'
 ```
 
 ## Continuing a Claude Code session inside the container
@@ -66,10 +66,10 @@ directories. That is why the durable repo context lives in `CLAUDE.md` and
 | Command | What it does |
 | --- | --- |
 | `make help` | The shortcuts for everything below; `make check` is the CI gate |
-| `scripts/setup.sh` | Install Home Assistant, the device library (editable) and tooling |
-| `scripts/develop.sh` | Boot Home Assistant on <http://localhost:8123> against `config/` |
-| `scripts/simulate.sh` | Regenerate the register seed and serve it on port 5020 |
-| `scripts/fetch_references.sh` | Clone upstream sources into `.reference/` for reading |
+| `scripts/dev/setup.sh` | Install Home Assistant, the device library (editable) and tooling |
+| `scripts/dev/develop.sh` | Boot Home Assistant on <http://localhost:8123> against `config/` |
+| `scripts/dev/simulate.sh` | Regenerate the register seed and serve it on port 5020 |
+| `scripts/dev/fetch_references.sh` | Clone upstream sources into `.reference/` for reading |
 | `pytest` | Run the device library tests (no network needed) |
 | `ruff check . && ruff format .` | Lint and format |
 
@@ -90,9 +90,10 @@ contention warning, and the network-search caveat.
 
 ## The simulator
 
-`scripts/gen_simulator_registers.py` reads `modbus_sungrow.yaml` — still the
-most complete description of the SHx register map we have — and writes a
-register seed to `scripts/simulator_registers.json`. `scripts/simulator.py`
+`scripts/generate/generate_simulator_registers.py` reads `modbus_sungrow.yaml`
+— still the most complete description of the SHx register map we have — and
+writes a
+register seed to `scripts/dev/simulator_registers.json`. `scripts/dev/simulator.py`
 serves that seed over Modbus TCP. Seeding from the YAML package means the
 simulator cannot drift away from the register map the integration is being
 ported from.
@@ -144,19 +145,19 @@ should be polled matters more than grouping them by address.
 The migration is the one feature a unit test cannot fully judge. Whether the
 setup dialog explains the choice well enough to make it, and whether the
 history graph really is continuous afterwards, are things you have to look at.
-`scripts/seed_migration_testbed.py` fabricates the starting state — the
+`scripts/dev/seed_migration_testbed.py` fabricates the starting state — the
 registry entries `modbus_sungrow.yaml` leaves behind, plus a month of recorded
 readings and hourly statistics under the ids it used:
 
 ```console
-$ scripts/develop.sh                            # once, to create config/
+$ scripts/dev/develop.sh                            # once, to create config/
 # stop it
-$ python scripts/seed_migration_testbed.py
+$ python scripts/dev/seed_migration_testbed.py
 Registry:   153 entities added
 History:    2880 states over 30 days
 Statistics: 2880 hourly rows
-$ scripts/simulate.sh &                         # an inverter to talk to
-$ scripts/develop.sh
+$ scripts/dev/simulate.sh &                         # an inverter to talk to
+$ scripts/dev/develop.sh
 ```
 
 Home Assistant must be **stopped** while it runs: it writes the entity
@@ -167,7 +168,7 @@ more faithful, but such a file belongs in `.testdata/`, never in the repo.
 
 ## Testing the install a user actually gets
 
-Everything above runs the working tree: `scripts/develop.sh` symlinks
+Everything above runs the working tree: `scripts/dev/develop.sh` symlinks
 `config/custom_components` to this repository, so the instance on :8123 is
 your editor with a UI attached. That is the wrong instrument for one class of
 question — *does this install?* — and the two failures that cost most time on
@@ -177,7 +178,7 @@ hassfest and the release, and fails only in a real install. HACS refusing a
 repository whose default branch has no `custom_components/` is invisible
 from here entirely.
 
-`scripts/hacs_testbed.sh` (`make hacs`) is the other instrument: a **second**
+`scripts/dev/hacs_testbed.sh` (`make hacs`) is the other instrument: a **second**
 Home Assistant, on :8124, against `config-hacs/`, with HACS downloaded into
 it. Nothing in it is symlinked. HACS installs this integration from the
 preview channel, over the network, so what runs there is what was
@@ -214,7 +215,7 @@ What this instance is for is the part you cannot see from :8123:
   it here is how you learn to ask for it.
 - **The library is pip-installed from PyPI** against the pin, on the restart
   after downloading. `RequirementsNotFound` surfaces here and nowhere else —
-  `scripts/check_pinned_library.py` is the check that catches it earlier.
+  `scripts/release/check_pinned_library.py` is the check that catches it earlier.
 - **It is not your working tree.** A change you make in this repository does
   not appear there until it reaches the preview channel, which is a commit,
   a green CI run and a sync away. That lag is the point: it is what a user
@@ -327,8 +328,8 @@ the diagnostics file, in seconds. Help this project → *Also sweep the raw
 register bands* (`CONF_SURVEY_DUMP`) sweeps `sungrow_modbus.dump.DUMP_BANDS`
 — 1510 addresses, mostly unmapped — into the survey document, in about five
 minutes. Only the second can discover a register. The bands are duplicated in
-`scripts/sungrow_scan/probe.py` because that has to run with the library
-absent -- it imports `portable`, which is downloaded on its own -- and `tests/test_dump_bands.py` is what stops the two drifting.
+`scripts/sungrow_survey/probe.py` because that has to run with the library
+absent -- a contributor runs it with nothing installed -- and `tests/test_dump_bands.py` is what stops the two drifting.
 
 To see any of this against a real run, the recorder is the fastest way in —
 the dev instance keeps it:
@@ -353,13 +354,13 @@ slugifies the object id **from the name**, so "Sungrow inverter serial" gives
 `sensor.sh10rt_serial_number`. A name is cheap to get right before release and
 impossible to change afterwards.
 
-The convention is in [scripts/naming.py](../scripts/naming.py) — sentence case,
+The convention is in [scripts/generate/tables/naming.py](../scripts/generate/tables/naming.py) — sentence case,
 a fixed acronym list, no device name at the front, no guessable abbreviations,
 and `_raw` entities under `EntityCategory.DIAGNOSTIC`. Do not write a name into
 `strings.json` by hand:
 
 ```console
-$ python scripts/generate_strings.py
+$ python scripts/generate/descriptions.py strings
 Wrote 127 entity names
 ```
 
@@ -374,7 +375,7 @@ so the YAML's inconsistency is preserved there deliberately.
 
 ## First boot
 
-`scripts/develop.sh` boots against `config/configuration.yaml`, which
+`scripts/dev/develop.sh` boots against `config/configuration.yaml`, which
 deliberately avoids `default_config:`. That keeps the dev instance small:
 Home Assistant pip-installs each component's requirements the first time it
 sets it up, and `default_config` drags in bluetooth, dhcp, usb, ssdp,

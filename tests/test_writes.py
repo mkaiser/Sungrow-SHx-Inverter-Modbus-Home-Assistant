@@ -1,8 +1,8 @@
 """The write table cannot drift from the sources it was read out of.
 
 Milestone 3 is being taken in slices, safest first, and every bound in
-`scripts/writes.py` was read from two sources that agree: the YAML package's
-own `number:` templates, which are field-proven, and specification V1.1.11.
+`scripts/generate/tables/writes.py` was read from two sources that agree: the YAML
+package's own `number:` templates, which are field-proven, and specification V1.1.11.
 This re-extracts the YAML's and fails if the table has drifted — a bound typed
 twice is a bound that disagrees with itself eventually, and the number
 deciding how far a battery discharges is not one to get wrong.
@@ -16,7 +16,7 @@ import sys
 import pytest
 import yaml
 
-sys.path.insert(0, "scripts")
+sys.path.insert(0, "scripts/generate/tables")
 
 from writes import NUMBERS, WRITABLE_FIELDS
 

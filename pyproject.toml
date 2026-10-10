@@ -44,7 +44,7 @@ include = [
 target-version = "py313"
 # The YAML package and its helper scripts predate this tooling; linting them
 # is a separate job from bootstrapping the integration.
-extend-exclude = [".reference", "debug", "scripts/generate_second_inverter_config.py"]
+extend-exclude = [".reference", "debug", "scripts/generate/generate_second_inverter_config.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "D"]

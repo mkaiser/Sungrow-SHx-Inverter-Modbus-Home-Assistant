@@ -1,7 +1,7 @@
 """What a capability survey reads, and how to publish it.
 
-The survey in `scripts/sungrow_scan/` has always owned this knowledge, and it
-had to: that directory ships as a zip a stranger runs on bare Python, so it
+The survey in `scripts/sungrow_survey/` has always owned this knowledge, and it
+had to: that directory is run by strangers on bare Python, so it
 cannot import this library. But the *integration* can, and a user who has
 already set the integration up has by definition a working connection to
 their inverter and no way to turn it into evidence. Every document in
@@ -10,7 +10,7 @@ to the maintainer, which is the single biggest filter on what this project
 knows.
 
 So the tables live here, where both a Home Assistant integration and a test
-can reach them, and `scripts/sungrow_scan/probe.py` keeps its own literal
+can reach them, and `scripts/sungrow_survey/probe.py` keeps its own literal
 copy. **That duplication is deliberate and asserted**, the same trade already
 made for `IDENTIFY_UNITS`: a survey that cannot run standalone is a worse
 problem than two tables a test keeps identical.
@@ -37,7 +37,7 @@ from .const import model_for
 #: download rather than by running the script. Everything else is identical;
 #: what changes is that `command_line` may name a *tool* instead of an
 #: invocation, because there is no command to repeat. The full history of the
-#: earlier numbers is in `scripts/sungrow_scan/probe.py`, which is where the
+#: earlier numbers is in `scripts/sungrow_survey/probe.py`, which is where the
 #: format grew up.
 #:
 #: 19 admits an optional **`control_test`** block, written by

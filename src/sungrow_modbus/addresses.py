@@ -5,8 +5,8 @@ Two sources, and the rule for choosing between them:
 * **A register the map already knows is looked up, never re-typed.**
   `field_address("communication_module_firmware_version")` returns what
   `registers.py` says, so a field the map moves is followed everywhere it is
-  read. `registers.py` is generated from the YAML package's entity map, and a
-  second copy of an address anywhere else is a second thing to get wrong.
+  read. A second copy of an address anywhere else is a second thing to get
+  wrong.
 * **A register no component maps gets a constant here**, named for what it
   is for rather than where it is. There are only a few, and each is read as a
   *question* -- is a dongle in the path, is an iHomeManager at this unit --

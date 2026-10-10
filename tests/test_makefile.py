@@ -32,23 +32,45 @@ WORKFLOW = REPO / ".github/workflows/validate.yml"
 
 
 def makefile_generators() -> list[str]:
-    """Return the Makefile's GENERATORS names, line continuations joined."""
+    """Return the Makefile's GENERATORS paths under scripts/, continuations joined."""
     text = MAKEFILE.read_text(encoding="utf-8")
     match = re.search(r"^GENERATORS :=((?:[^\n\\]*\\\n)*[^\n]*)", text, re.MULTILINE)
     assert match, "the Makefile has no GENERATORS variable"
     return match.group(1).replace("\\\n", " ").split()
 
 
-def workflow_generators() -> list[str]:
-    """Return the generators `validate.yml` runs with --check, in its own order."""
+def _workflow_checks() -> list[tuple[str, str]]:
+    """Return (script, target) for every generator `validate.yml` checks."""
     document = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
     steps = document["jobs"]["lint-and-test"]["steps"]
     commands = "\n".join(step["run"] for step in steps if "run" in step)
-    return re.findall(r"scripts/generate_(\w+)\.py --check", commands)
+    return re.findall(r"scripts/(generate/[\w/]+\.py)(?: (\w+))? --check", commands)
+
+
+def workflow_generators() -> list[str]:
+    """Return the generator scripts `validate.yml` runs with --check."""
+    return sorted({script for script, _target in _workflow_checks()})
 
 
 def test_make_check_gates_on_exactly_what_ci_gates_on() -> None:
-    assert sorted(makefile_generators()) == sorted(workflow_generators())
+    assert sorted(makefile_generators()) == workflow_generators()
+
+
+def test_ci_checks_every_description_target() -> None:
+    """CI names each of `descriptions.py`'s targets as its own step.
+
+    The Makefile runs the script once with no target, which is all of them;
+    CI runs one target per step so a failure says which artefact broke. So
+    a target added to the script must be added to CI too, or `make check`
+    gates on something CI never runs.
+    """
+    import sys
+
+    sys.path.insert(0, str(REPO / "scripts" / "generate"))
+    from descriptions import TARGETS
+
+    ran = {target for script, target in _workflow_checks() if "descriptions" in script}
+    assert ran == set(TARGETS)
 
 
 def test_no_generator_is_listed_twice_in_the_makefile() -> None:
@@ -58,9 +80,7 @@ def test_no_generator_is_listed_twice_in_the_makefile() -> None:
 
 def test_every_generator_exists() -> None:
     missing = [
-        name
-        for name in makefile_generators()
-        if not (REPO / f"scripts/generate_{name}.py").exists()
+        name for name in makefile_generators() if not (REPO / "scripts" / name).exists()
     ]
     assert not missing
 
@@ -68,8 +88,8 @@ def test_every_generator_exists() -> None:
 def test_every_script_the_makefile_runs_exists() -> None:
     """Catches a rename that leaves a target failing only when someone runs it."""
     text = MAKEFILE.read_text(encoding="utf-8")
-    # Requiring the extension skips `scripts/generate_$$g.py`, whose loop
-    # variable the generator checks above cover instead.
+    # `scripts/$$g` has no extension to match, and the generator checks above
+    # cover its loop variable instead.
     referenced = set(re.findall(r"scripts/[\w./]+\.(?:py|sh)", text))
     assert referenced, "no scripts referenced -- the regex stopped matching"
     missing = sorted(path for path in referenced if not (REPO / path).exists())
@@ -78,7 +98,7 @@ def test_every_script_the_makefile_runs_exists() -> None:
 
 def test_the_shell_scripts_are_executable() -> None:
     """A .sh without its exec bit fails as "permission denied" from make."""
-    scripts = sorted((REPO / "scripts").glob("*.sh"))
+    scripts = sorted((REPO / "scripts").rglob("*.sh"))
     assert scripts, "no shell scripts found"
     assert not [path.name for path in scripts if not os.access(path, os.X_OK)]
 

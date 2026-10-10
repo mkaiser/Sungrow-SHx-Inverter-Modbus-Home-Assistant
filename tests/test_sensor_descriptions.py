@@ -171,7 +171,12 @@ def test_every_dropped_sensor_names_a_replacement_that_exists() -> None:
     from pathlib import Path as _Path
     import sys
 
-    sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / "scripts"))
+    sys.path.insert(
+        0,
+        str(
+            _Path(__file__).resolve().parent.parent / "scripts" / "generate" / "tables"
+        ),
+    )
     from naming import LEGACY_ONLY_SENSORS
 
     from custom_components.sungrow_modbus.derived_descriptions import (
@@ -271,3 +276,67 @@ def test_legacy_mode_keeps_everything_and_modern_mode_does_not() -> None:
         legacy_ids=False,
     )
     assert both.serves(ordinary)
+
+
+# `sensor_descriptions.py` is edited by hand. These make the properties below
+# true by assertion, so a hand edit cannot quietly undo one.
+
+
+def _tables():
+    """Return `naming`'s two tables, which this file has to follow."""
+    import sys
+
+    tables = Path(__file__).resolve().parent.parent / "scripts" / "generate" / "tables"
+    sys.path.insert(0, str(tables))
+    from naming import DIAGNOSTIC, LEGACY_ONLY_SENSORS
+
+    return DIAGNOSTIC, LEGACY_ONLY_SENSORS
+
+
+@pytest.mark.parametrize("key", sorted(LEGACY))
+def test_the_legacy_identity_is_the_yamls(key: str) -> None:
+    """What the migration claims an entity by has to be the YAML's, exactly.
+
+    A wrong `legacy_unique_id` finds nothing to adopt, and a wrong
+    `legacy_name` produces a different entity id -- either way a user's
+    history is left behind under the old id, with nothing looking broken.
+    """
+    description, entry = BY_KEY[key], LEGACY[key]
+    assert description.field == key
+    assert description.translation_key == key
+    assert description.legacy_name == entry["name"]
+    assert description.legacy_unique_id == entry["unique_id"]
+    assert description.legacy_platform == "modbus"
+    expected_class = (entry.get("device_class") or "").upper() or None
+    actual_class = description.device_class.name if description.device_class else None
+    assert actual_class == expected_class, "device class"
+    assert description.suggested_display_precision == entry.get("precision")
+
+
+@pytest.mark.parametrize("description", SENSOR_DESCRIPTIONS, ids=lambda d: d.key)
+def test_the_component_named_is_the_one_that_reads_the_field(description) -> None:
+    """An entity names its component by string; a wrong one finds nothing.
+
+    It is easy to leave a field pointing at its tier's pooled component after
+    `registers.py` moves it into one of its own.
+    """
+    from custom_components.sungrow_modbus.coordinator import FIELD_COMPONENTS
+
+    assert FIELD_COMPONENTS[description.field] == description.component
+
+
+def test_exactly_the_tabled_sensors_are_legacy_only() -> None:
+    """`naming.LEGACY_ONLY_SENSORS` is the list; the flag has to follow it."""
+    _diagnostic, legacy_only = _tables()
+    flagged = {d.key for d in SENSOR_DESCRIPTIONS if d.legacy_only}
+    assert flagged == set(legacy_only)
+
+
+def test_exactly_the_diagnostic_sensors_are_in_the_diagnostic_category() -> None:
+    """`naming.DIAGNOSTIC` decides the category, for sensors as for the rest."""
+    from homeassistant.const import EntityCategory
+
+    diagnostic, _legacy_only = _tables()
+    for description in SENSOR_DESCRIPTIONS:
+        is_diagnostic = description.entity_category is EntityCategory.DIAGNOSTIC
+        assert is_diagnostic == (description.key in diagnostic), description.key

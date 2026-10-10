@@ -24,7 +24,7 @@ tautological. So every value is checked on three legs:
 
 Nothing here talks to Home Assistant, opens a file, prints, or parses an
 argument. It takes a `SungrowInverter`, a clock it can be lied to about, and a
-progress callback; `scripts/sungrow_control_test.py` and the integration's
+progress callback; `scripts/hardware/sungrow_control_test.py` and the integration's
 `control_test.py` are the two drivers that give it those.
 
 **The rule that outranks every other rule in this file:** a restore is never
@@ -257,8 +257,8 @@ class Probe(NamedTuple):
     from it. If it were taken from `field.scale` this whole module would be
     checking that a number equals itself.
 
-    The bounds mirror `scripts/writes.py` exactly, which a test asserts. That
-    duplication is deliberate and is the trade already made for `IDENTIFY_UNITS`
+    The bounds mirror `scripts/generate/tables/writes.py` exactly, which a test asserts.
+    That duplication is deliberate and is the trade already made for `IDENTIFY_UNITS`
     and for `fingerprint.PROBES`: the library cannot import a file from
     `scripts/`, and a table two copies of which are kept equal by a test beats a
     module that only works inside a checkout.
@@ -397,8 +397,8 @@ PROBES: tuple[Probe, ...] = (
     # Spec reg 13052, U16, **1 W per count**, "0-100% of BDC rated power".
     #
     # One register below 33047's neighbourhood in purpose and a decade away
-    # from it in units. `scripts/writes.py:149-155` names this as the single
-    # most likely future 10x error in the map, which is why it gets both a
+    # from it in units. `scripts/generate/tables/writes.py:149-155` names this as the
+    # single most likely future 10x error in the map, which is why it gets both a
     # two-point slope and a behavioural check.
     Probe(
         field="battery_forced_charge_discharge_power",
@@ -482,9 +482,9 @@ MODE_ON = 0xAA
 
 #: Writable registers this procedure deliberately does not probe, and why.
 #:
-#: A test requires every name in `scripts/writes.py`'s writable set to be either
-#: in `PROBES` or in here, so a control added to the integration cannot quietly
-#: escape the procedure -- it fails the suite until somebody decides which of
+#: A test requires every name in `scripts/generate/tables/writes.py`'s writable set to
+#: be either in `PROBES` or in here, so a control added to the integration cannot
+#: quietly escape the procedure -- it fails the suite until somebody decides which of
 #: the two it is.
 NOT_PROBED: dict[str, str] = {
     "backup_mode_raw": (
@@ -1034,8 +1034,8 @@ STOPPED_W = 200.0
 #: after a measurement failed to clear it -- the defence is that the new value
 #: is computed from the tolerances the verdict already uses, and that at 1881 W
 #: the drop under test is 1130 W against a 200 W floor.
-#: The step `scripts/writes.py` gives the export limit, and the smallest cap
-#: that can therefore be asked for.
+#: The step `scripts/generate/tables/writes.py` gives the export limit, and the smallest
+#: cap that can therefore be asked for.
 EXPORT_STEP_W = 100.0
 
 #: What the behavioural checks command, in watts, for the forced charge, the
@@ -3103,7 +3103,7 @@ def document(outcome: Outcome) -> dict[str, Any]:
     """Return the publishable block, which carries no serial and no host.
 
     Anonymous by construction rather than by redaction, which is the shape
-    `collect._block_document` established: what goes in is register numbers,
+    `sungrow_survey._block_document` established: what goes in is register numbers,
     the values this run chose, the words that came back and the words that were
     expected. None of that identifies an installation, so there is nothing here
     for a filter to miss.

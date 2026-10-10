@@ -1,6 +1,6 @@
 # Compatibility
 
-**Generated — do not edit.** `scripts/generate_compatibility.py` builds
+**Generated — do not edit.** `scripts/generate/generate_compatibility.py` builds
 this from the fingerprints in
 [device-fingerprints/](device-fingerprints/), and CI checks that it
 matches.
@@ -184,8 +184,8 @@ public without any private channel needing to exist.
 1. **From the integration** — Settings → Devices & Services → Sungrow
    Modbus → the three-dot menu → *Download diagnostics*.
 2. **Before installing anything** —
-   [`scripts/sungrow_scan/portable.py`](../scripts/sungrow_scan/portable.py),
-   which needs nothing but Python and the inverter's address.
+   [`scripts/sungrow_survey/sungrow_survey.py`](../scripts/sungrow_survey/sungrow_survey.py),
+   run from that folder, which needs nothing but Python.
 
 ### Then send it, by whichever route you already have
 

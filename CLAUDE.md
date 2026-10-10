@@ -15,22 +15,18 @@ Its scope is wider than the YAML package's. Two of the three extra devices
 are now done:
 
 - ✅ the **SBR battery** — its own device, 40 registers in three components,
-  on unit **200** direct or **2** through a WiNet-S. The earlier claim that it
-  is "not reachable via WiNet-S at all" was wrong and is measured: it is
-  reachable, under a different number.
+  on unit **200** direct or **2** through a WiNet-S.
 - ✅ the **wallbox** (AC011E-01 / AC22E-01) — its own device, 32 registers in
   four components, at unit **3** through a WiNet-S or **248** direct. Read
   only; nothing writes to it. Unit 248 is the charger's own RS485 address,
   reachable only through a serial gateway wired to the charger — never over
-  Modbus TCP, which is why it has never answered there.
-- ⬜ the **iHomeManager** (port **502 *or* 503**, slave 247) — still the only
-  one **never measured**, but no longer unfindable and no longer short of a
-  map. `identify()` probes input 8000 on unit 247, so a contributor who owns
-  one is told what they have rather than that nothing answered, and
-  `collect.py` reports it without surveying it. Not 503 alone: Sungrow's
-  setting is "Modbus TCP on the iHM", which lands on 502 on some units and
-  503 where 502 is busy — so the four sweeps that found nothing on 503 are
-  weaker evidence than they looked. And it is **not a gateway**: it forwards
+  Modbus TCP.
+- ⬜ the **iHomeManager** (port **502 *or* 503**, slave 247) — **never
+  measured**; to do: survey one. `identify()` probes input 8000 on unit 247, so
+  a contributor who owns one is told what they have, and `sungrow_survey.py`
+  reports it without surveying it. Not 503 alone: Sungrow's setting is "Modbus
+  TCP on the iHM", which lands on 502 on some units and 503 where 502 is busy.
+  It is **not a gateway**: it forwards
   system energy dispatch data, not the devices behind it, so its inverters
   are separate endpoints. `doc/cross_reference_modbus_manager.md` has the
   53-register map, MIT-licensed.
@@ -50,20 +46,31 @@ One config entry is **one Modbus endpoint** (host + port) plus the devices
 discovered on it, which is exactly the set sharing one serialized connection.
 The config flow probes and identifies devices by what answers, never by unit
 id. `doc/integration_plan.md` has the register sources, their licences, and
-the milestone order.
+what is next.
 
 ## Do not hand-edit
 
-- `legacy/modbus_sungrow_multiple_inverters_{1,2,3}.yaml` are generated from
-  `legacy/modbus_sungrow.yaml` by `scripts/generate_second_inverter_config.py`
-  and committed by CI. Edit the source, not the output.
-- **`src/sungrow_modbus/registers.py` is generated too**, by
-  `scripts/generate_registers.py` from `doc/legacy_entity_map.json`, and
-  `make gen-check` fails on a hand edit. Its own header says so; the table of
-  commands above does not list the generator, which is how a hand edit gets
-  made in the first place. A property the entity map cannot express -- a write
-  scale that differs from the read scale, say -- goes in a **stated override**
-  in the generator, next to `WRITE_UNITS_PER_COUNT`, not in the output.
+Everything under `scripts/generate/` writes a committed file, and `make
+gen-check` (and CI) fails on a hand edit of any of them:
+
+- `custom_components/sungrow_modbus/{derived,number,switch,select}_descriptions.py`
+  and `strings.json` / `translations/en.json` -- `scripts/generate/descriptions.py`,
+  from `sungrow_modbus.derived` and the tables in `scripts/generate/tables/`;
+- `scripts/sungrow_survey/scan_plan.json` -- `generate_scan_plan.py`, from the
+  library;
+- `doc/compatibility.md` -- `generate_compatibility.py`, from the fingerprints;
+- `legacy/modbus_sungrow_multiple_inverters_{1,2,3}.yaml` --
+  `generate_second_inverter_config.py`, from `legacy/modbus_sungrow.yaml`,
+  committed by CI. Edit the source, not the output.
+
+**`src/sungrow_modbus/registers.py` and `sensor_descriptions.py` are source.**
+`doc/legacy_entity_map.json` is the record of what the YAML package produces
+-- the entity ids, units and state classes users have -- and is not
+regenerated. `tests/test_registers.py` and `tests/test_sensor_descriptions.py` hold the
+two files to it, field by field. Where a field must differ from the YAML, the
+difference is declared where the test can see it -- `layout.COUNTS` for a
+string length, `write_units_per_count` for 13074's write scale, asserted in
+`tests/test_writes.py` -- never made silently.
 
 ## The integration, in one paragraph
 
@@ -82,33 +89,36 @@ implementation for this pattern — read its real source, not blog posts.
 | Command | What it does |
 | --- | --- |
 | `make help` | Every command below as a shortcut. `make check` is the CI gate, `make dev` and `make sim` the dev loop, `make gen` rewrites every generated file |
-| `scripts/setup.sh` | Install HA, the device library (editable) and tooling |
-| `scripts/develop.sh` | Boot HA on <http://localhost:8123> against `config/` |
-| `scripts/ha_onboard.py` | Walk a fresh instance through onboarding over the API, so nobody types `dev`/`dev` into a wizard. Both boot scripts run it in the background; idempotent, and it refuses a non-loopback URL |
-| `scripts/hacs_testbed.sh` | Boot a **second** HA on :8124 against `config-hacs/`, with HACS installed, to test the install a user gets. Nothing is symlinked there: HACS downloads the integration from the preview channel, so what runs is what was published, not the working tree |
-| `scripts/simulate.sh` | Regenerate the register seed and serve it on :5020 |
-| `scripts/fetch_references.sh` | Clone HA core + libs into `.reference/` (gitignored) |
-| `scripts/sungrow_control_test.py` | **Part B, from a terminal**: writes each control, reads the register back against the specification's scale, watches what the inverter does, and puts everything back. `make controltest-dry HOST=...` first -- it resolves the whole plan and writes nothing. `--restore <snapshot>` is the way out of a run that died halfway. `--export-scale` asks how this firmware writes 13074 with one write that changes nothing, and does nothing else |
-| `scripts/sungrow_scan/collect.py` | **The one entry point for a survey** (`make scan HOST=...`, or `make scan-sim` against the simulator): finds the devices, asks what no register can answer, runs the block read test, reads every register, writes the document and a transcript, and prints a maintainer-facing summary. Exit code says what happened (`0` fine, `3` the filename under-claims, `4` the transport is disputed, `1`/`2` nothing collected) |
-| `scripts/sungrow_scan/probe.py` | Probe for Sungrow devices: `mdns`, `sweep <cidr>` (502, 503 for a Logger or iHomeManager, 516 for an iHomeManager's TLS port — found, not readable), `units <host>`, `capabilities <host>`, `dump <host>`. Uses the library where it is installed and `portable.py`'s client where it is not, so it runs for somebody who has installed nothing |
-| `scripts/sync_version.py` | Single source of truth for the version; `--check` in CI, `--set X.Y.Z` to release |
-| `scripts/check_pinned_library.py` | Do the integration's `sungrow_modbus` imports resolve against the library version `manifest.json` pins? `--wheel dist/*.whl` asks it of a local build and gates CI; with no argument it asks it of **PyPI**, which is legitimately red between releases |
-| `scripts/generate_entity_map.py` | Derive `doc/legacy_entity_map.json` from the YAML package; `--check` in CI |
-| `scripts/generate_registers.py` | Derive the inverter's `Component` classes from `doc/legacy_entity_map.json` — 99 read registers are too many to transcribe by hand, and a scale off by ten produces a plausible-looking number. A property the entity map cannot express goes in a **stated override** here, next to `WRITE_UNITS_PER_COUNT`; `--check` in CI |
-| `scripts/generate_sensors.py` | Write the `sensor` descriptions from the same entity map, so an entity cannot quietly disagree with the register it reads or the YAML entry it replaces; `--check` in CI |
-| `scripts/generate_derived.py` | Write the entity descriptions for the computed values in `sungrow_modbus.derived`; `--check` in CI |
-| `scripts/generate_numbers.py` | Write the `number` descriptions from the write table in `scripts/writes.py`; `--check` in CI |
-| `scripts/generate_switches.py` | Write the `switch` descriptions from the write table; `--check` in CI |
-| `scripts/generate_selects.py` | Write the `select` descriptions and their option labels from the write table; `--check` in CI |
-| `scripts/generate_strings.py` | Write the entity names to the convention in `scripts/naming.py`; `--check` in CI |
-| `scripts/influx_migration.py` | Print Grafana regexes and rewrite recipes for InfluxDB users; connects to nothing |
-| `scripts/seed_migration_testbed.py` | Make the dev instance look like a house that ran the YAML package for years, so the migration can be reviewed in the GUI |
-| `scripts/generate_compatibility.py` | Build `doc/compatibility.md` from the committed fingerprints; `--check` in CI |
-| `scripts/generate_scan_plan.py` | Record the library's block reads and register decoding into `scripts/sungrow_scan/scan_plan.json`, so the scanner works without it. Covers the inverter, the SBR pack and the wallbox — the last two marked with the **role** whose unit they answer on rather than a number, because that moves with the transport; `--check` in CI |
-| `scripts/sungrow_scan/portable.py` | The stdlib-only Modbus client, register decoder and plan loader the other two build on, and a one-file report users run against their own inverter |
-| `scripts/sungrow_scan/blocks.py` | The block read test: which read inside a component fails, and whether it is a fault or contention. `--client library` fails where the integration does; `--client raw` names the count a padded frame needs; `--narrow-budget` bounds the narrowing, which is unaffordable on a link where reads time out |
-| `scripts/review_names.py` | Lay the entity names out for the open naming decision — grouped by subject, each with the entity id it produces and its legacy name. `--markdown` prints the sheet (redirect it into `doc/entity_name_review.md`); `--check` fails when that file has drifted, which it silently had by 47 entities |
-| `scripts/make_brand_icon.py` | Regenerate the integration's `brand/` icons (`--preview` renders a check sheet) |
+| **`scripts/dev/`** | **The dev loop** |
+| `scripts/dev/setup.sh` | Install HA, the device library (editable) and tooling |
+| `scripts/dev/develop.sh` | Boot HA on <http://localhost:8123> against `config/` |
+| `scripts/dev/ha_onboard.py` | Walk a fresh instance through onboarding over the API, so nobody types `dev`/`dev` into a wizard. Both boot scripts run it in the background; idempotent, and it refuses a non-loopback URL |
+| `scripts/dev/hacs_testbed.sh` | Boot a **second** HA on :8124 against `config-hacs/`, with HACS installed, to test the install a user gets. Nothing is symlinked there: HACS downloads the integration from the preview channel, so what runs is what was published, not the working tree |
+| `scripts/dev/simulate.sh` | Regenerate the register seed and serve it on :5020 (`simulator.py`, seed in `simulator_registers.json`) |
+| `scripts/dev/fetch_references.sh` | Clone HA core + libs into `.reference/` (gitignored) |
+| `scripts/dev/seed_migration_testbed.py` | Make the dev instance look like a house that ran the YAML package for years, so the migration can be reviewed in the GUI |
+| **`scripts/generate/`** | **Everything that writes a committed file; each has `--check`, all are in CI** |
+| `scripts/generate/descriptions.py` | The entity descriptions and names: `derived`, `numbers`, `switches`, `selects`, `strings`, or all five with no argument (`strings` last, since it reads the others) |
+| `scripts/generate/tables/writes.py` | **Input table**: which registers the integration may write and within what bounds. Feeds the number/switch/select descriptions; `tests/test_writes.py` holds `registers.py`'s writable set to it |
+| `scripts/generate/tables/naming.py` | **Input table**: the entity-name convention. Feeds `strings.json`, `review_names.py` and the Influx helper |
+| `scripts/generate/generate_scan_plan.py` | Record the library's block reads and register decoding into `scripts/sungrow_survey/scan_plan.json`, so the scanner works without it. Covers the inverter, the SBR pack and the wallbox — the last two marked with the **role** whose unit they answer on rather than a number, because that moves with the transport |
+| `scripts/generate/generate_compatibility.py` | Build `doc/compatibility.md` from the committed fingerprints |
+| `scripts/generate/generate_simulator_registers.py` | The simulator's seed, from the entity map |
+| `scripts/generate/generate_second_inverter_config.py` | The `legacy/` multi-inverter YAML files; run by CI on a change to the YAML package |
+| **`scripts/release/`** | **Release gates** |
+| `scripts/release/sync_version.py` | Single source of truth for the version; `--check` in CI, `--set X.Y.Z` to release |
+| `scripts/release/check_pinned_library.py` | Do the integration's `sungrow_modbus` imports resolve against the library version `manifest.json` pins? `--wheel dist/*.whl` asks it of a local build and gates CI; with no argument it asks it of **PyPI**, which is legitimately red between releases |
+| **`scripts/hardware/`** | **Writes to a real inverter** |
+| `scripts/hardware/sungrow_control_test.py` | **Part B, from a terminal**: writes each control, reads the register back against the specification's scale, watches what the inverter does, and puts everything back. `make controltest-dry HOST=...` first -- it resolves the whole plan and writes nothing. `--restore <snapshot>` is the way out of a run that died halfway. `--export-scale` asks how this firmware writes 13074 with one write that changes nothing, and does nothing else |
+| **`scripts/sungrow_survey/`** | **Part A, read only, runs with nothing installed** |
+| `scripts/sungrow_survey/sungrow_survey.py` | **The one entry point for a survey** (`make scan HOST=...`, or `make scan-sim` against the simulator): finds the devices, asks what no register can answer, runs the block read test, reads every register, writes the document and a transcript, and prints a maintainer-facing summary. Exit code says what happened (`0` fine, `3` the filename under-claims, `4` the transport is disputed, `1`/`2` nothing collected) |
+| `scripts/sungrow_survey/probe.py` | Probe for Sungrow devices: `mdns`, `sweep <cidr>` (502, 503 for a Logger or iHomeManager, 516 for an iHomeManager's TLS port — found, not readable), `units <host>`, `capabilities <host>`, `dump <host>`. Uses the library where it is installed and `portable.py`'s client where it is not, so it runs for somebody who has installed nothing |
+| `scripts/sungrow_survey/blocks.py` | The block read test: which read inside a component fails, and whether it is a fault or contention. `--client library` fails where the integration does; `--client raw` names the count a padded frame needs; `--narrow-budget` bounds the narrowing, which is unaffordable on a link where reads time out |
+| `scripts/sungrow_survey/portable.py` | The stdlib-only Modbus client, register decoder and plan loader the other scripts build on. Not runnable by itself |
+| **`scripts/helpers/`** | **One-off tools** |
+| `scripts/helpers/influx_migration.py` | Print Grafana regexes and rewrite recipes for InfluxDB users; connects to nothing |
+| `scripts/helpers/review_names.py` | Lay the entity names out for the open naming decision — grouped by subject, each with the entity id it produces and its legacy name. `--markdown` prints the sheet (redirect it into `doc/entity_name_review.md`); `--check` fails when that file has drifted, which it silently had by 47 entities |
+| `scripts/helpers/make_brand_icon.py` | Regenerate the integration's `brand/` icons (`--preview` renders a check sheet) |
 | `pytest` | Device library + integration tests, no network needed |
 | `ruff check . && ruff format .` | Lint and format |
 | `mypy` | `--strict` over **the library only** (`packages = ["sungrow_modbus"]`). In `make check` and in CI. The integration is deliberately out of scope: it is typed against Home Assistant, whose own annotations are not strict-clean, so checking it would mean a wall of ignores that hides the findings worth having |
@@ -141,7 +151,7 @@ scale is hand-typed. `tests/test_control_test.py` makes the two meet, so a
 decade error fails the suite on the commit that introduces it rather than on
 somebody's roof.
 
-The engine is in the library so both drivers share it: `scripts/sungrow_control_test.py`
+The engine is in the library so both drivers share it: `scripts/hardware/sungrow_control_test.py`
 and the `Run control write test` button on the device page, which runs part A
 then part B and publishes both in one fingerprint document (`control_test`,
 schema 19).
@@ -149,180 +159,100 @@ schema 19).
 ### Rules the procedure turns on
 
 - **The restore is never budgeted, never deadlined and never skipped.** Every
-  early exit goes through it. The snapshot is flushed *before the first write* --
-  `.testdata/control-tests/` from the CLI, HA's own store from the integration --
-  and removed only once everything is back **and read back**. A leftover
-  snapshot on the next setup becomes a repair. Corollary worth keeping: **no
-  snapshot file for a day means no writes that day.**
+  early exit goes through it. The snapshot is flushed *before the first write*
+  -- `.testdata/control-tests/` from the CLI, HA's own store from the
+  integration -- and removed only once everything is back **and read back**. A
+  leftover snapshot on the next setup becomes a repair. **No snapshot file for
+  a day means no writes that day.**
 - **A restore writes the snapshot's raw word, and checks it by raw read.**
-  Writing the *value* back goes through the scale under test, and at fwitten
-  that wrote 1188 for 11880 W and left a slave capped at 1.2 kW -- the first run
-  to leave a house changed. The scaled write is only the fallback, for the
-  firmware that multiplies the raw word too.
+  Writing the *value* back goes through the scale under test, which can leave a
+  register a decade off. The scaled write is only the fallback, for firmware
+  that multiplies the raw word too.
 - **A restore is a statement about where the register is, not about whether a
-  write succeeded.** It reads before it writes. Reporting a register as
-  unrestored when it had held its original value the whole time was the worst
-  false alarm this tool has produced -- exit 5 is the one code meaning a house
-  is left changed.
+  write succeeded.** It reads before it writes, so a register that held its
+  value throughout is never reported unrestored. Exit 5 is the one code meaning
+  a house is left changed.
 - **Probe values must be able to show a decade error.** Both `10*v` and `v/10`
   have to stay inside the accepted range, or the error can only surface as
   exception 0x04 -- which is also what a legitimately out-of-range value
   returns, so it is not evidence. `battery_max_soc` has no such window at all
   (50..100) and the report says so rather than claiming a pass.
-- **What the behavioural checks command is a stated constant**, `FORCED_EFFECT_W`
-  (1250 W), clamped to the register's live bounds. It was derived from the
-  battery's own ceiling, and the derivation borrowed `choose_probe`, which
-  escapes the decade window once earlier probes have spent it -- resolving a
-  **5800 W forced charge against a 5883 W pack** at a real house. A number that
-  must be reconstructed from three functions is a number nobody checks.
-- **A pack's ceiling moves, so a clamp is normal near a full battery.** The same
-  house read 10000 W in the afternoon and 3200 W at 99.8 % that night. A
+- **What the behavioural checks command is a stated constant**,
+  `FORCED_EFFECT_W` (1250 W), clamped to the register's live bounds -- never
+  derived from other probes, which can walk it up to the pack's ceiling.
+- **A pack's ceiling moves, so a clamp is normal near a full battery.** A
   manufactured discharge aims `FORCE_EXPORT_HEADROOM` below the ceiling and
-  accepts a clamp within `CLAMP_TOLERANCE`, because the device saying "I will
-  give you 3150 of the 3158 you asked for" is a yes. Decade verdicts are
-  classified **first** and excluded, so the tolerance can never absorb the error
-  the procedure exists to find.
+  accepts a clamp within `CLAMP_TOLERANCE`. Decade verdicts are classified
+  **first** and excluded, so the tolerance can never absorb the error the
+  procedure exists to find.
 - **Leg B on 13074 needs the mode lifted, and the run lifts it.** The register
-  ignores writes entirely while feed-in limitation is off, so at any house with
-  it off -- which is most of them -- the probe read `UNCHANGED` and the one leg
-  that can catch a cap read a decade *too large* never ran. So the register
-  carrying the only firmware quirk this project has found was also the one whose
-  readback was routinely unavailable. `_lift_export_mode` switches it on for
-  that probe alone, and back to **the snapshot's word** the moment the register
-  is restored -- seconds, not the phase, because while it is up the house is
-  capped at whatever 13074 is holding, which is a probe value. Only with
-  `--enable-export-limit`, because it curtails a real house.
-- **The button always runs `allow_dark`, and the CLI does not.** A CLI user
-  chose the moment; somebody on Home Assistant OS has no terminal, so a run
-  refused for want of sun is a run they can never make -- and in a German
-  December that is most of the day. What the refusal costs them is the readback
-  half, which is the half that finds a factor-10 error and does not care whether
-  the sun is up. The behavioural half still self-skips and says why.
-- **Under fluctuating PV the answer is a bracket, not a model.** Before and
-  after are two readings of the same undisturbed house; when they disagree the
-  run reports `INCONCLUSIVE` and never a failure. Medians, not means: a cloud
-  edge is a step change and an MPPT search is a spike, so a mean survives
-  neither.
-- **The export limit check can only catch a decade too small.** A cap read ten
-  times too large leaves the export where it was, indistinguishable from the
-  write doing nothing. Leg B is the only way to catch that direction.
+  ignores writes while feed-in limitation is off, which is most houses.
+  `_lift_export_mode` switches it on for that probe alone and back to **the
+  snapshot's word** the moment the register is restored -- seconds, not the
+  phase, because while it is up the house is capped at a probe value. Only
+  with `--enable-export-limit`, because it curtails a real house.
+- **The button always runs `allow_dark`, and the CLI does not.** Somebody on
+  Home Assistant OS has no terminal, so a run refused for want of sun is one
+  they can never make. The readback half finds a factor-10 error whether or not
+  the sun is up; the behavioural half self-skips and says why.
+- **Under fluctuating PV the answer is a bracket, not a model.** When the
+  before and after readings disagree the run reports `INCONCLUSIVE`, never a
+  failure. Medians, not means: a cloud edge is a step and an MPPT search a
+  spike.
+- **The export limit check can only catch a decade too small.** A cap ten
+  times too large leaves the export where it was. Leg B is the only way to
+  catch that direction.
 - **The charge-ceiling check is the only safe behavioural test of a
-  state-of-charge limit**, because of its direction: lowering `max_soc` under a
-  charging battery **stops** a charge. Raising `min_soc` above the battery is an
-  instruction to buy electricity, which the guards refuse. Read a `CONFIRMED`
-  narrowly: it shows the register is a ceiling the inverter enforces, not that
-  its scale is right, since 95 % and 9.5 % both stop a charge.
+  state-of-charge limit**: lowering `max_soc` under a charging battery
+  **stops** a charge, while raising `min_soc` above the battery buys
+  electricity, which the guards refuse. A `CONFIRMED` shows the register is an
+  enforced ceiling, not that its scale is right.
 - **A simulator cannot produce a finding.** It stores raw words with no scale,
-  so legs A and B agree there by construction and leg C has no signal. Hence
+  so legs A and B agree by construction and leg C has no signal. Hence
   `--simulated`, which skips the behavioural phase and stamps the report.
-- **A run holds this entry's own polling off the inverter.** Every coordinator
-  on an entry shares one serialized connection, so a survey that ran while they
-  kept firing measured the inverter *and* the contention it was causing.
-  `SungrowRuntimeData.async_paused()` is the mechanism, `polling_paused` the flag
-  each coordinator reads. Paused at the *poll* rather than by clearing
-  `update_interval`, which does not cancel the timer already scheduled. A paused
-  coordinator returns what it last had, so entities hold their values.
-- **A Modbus stop is nearly instant and the recovery is not**: **2 s** to
-  stopped, **about four minutes** back to `0x0040 Running`, ~20 s more to
-  generate. Half the wait is `0x0020 Starting`, which contains neither "stop"
-  nor "running" and so belonged to neither set -- the first version of the wait
-  told owners to start the machine by hand while it was starting perfectly well.
-  `is_starting` exists for that; the deadline is seven minutes.
+- **A run holds this entry's own polling off the inverter**, through
+  `SungrowRuntimeData.async_paused()` and the `polling_paused` flag each
+  coordinator reads -- at the *poll*, because clearing `update_interval` does
+  not cancel a timer already scheduled. A paused coordinator returns what it
+  last had, so entities hold their values.
+- **A Modbus stop is nearly instant and the recovery is not**: about 2 s to
+  stopped, 3 to 4 minutes back to `0x0040 Running` depending on the model,
+  then up to 20 s to generate. Much of the wait is `0x0020 Starting`, which
+  `is_starting` recognises; the deadline is seven minutes. A start can take
+  several `0xCF` commands before the state moves, so it is retried from the
+  `finally` rather than sent once.
 
-  **And it varies by model, so the deadline is sized for the slowest.** An
-  SH8.0RT-V112 measured 2026-09-20: **2.1 s** to stopped, **179.5 s** back to
-  running, **5.1 s** more to generate -- a minute faster than the SH10RT and
-  four times quicker onto the generating line. Two things from the same run
-  worth keeping. **The Modbus link never dropped**: zero polls failed to
-  connect across the whole stop, so the reconnect-every-attempt handling is for
-  a case that *may* happen rather than one that does. And **the start took
-  three commands** -- `0xCF`, then twice more at 60-second intervals before the
-  state moved -- which is exactly why the start is retried from the `finally`
-  rather than sent once and trusted.
+### Register 13074's write scale is per device
 
-### Register 13074 reads in watts and writes in tens of watts
+13074 (export power limit) **reads** in watts, agreeing with its 10000 W
+maximum from register 5623. On most measured firmware it **writes in tens of
+watts**: the word is multiplied by ten **before** the range check, so a plain
+write sets ten times what was asked, or is refused with 0x04 when ten times is
+out of range. On fwitten's SH10RT-V112 pair it stores the word as handed. **The
+write scale of 13074 is per device**, and only while feed-in limitation (13087)
+is on: with it off the register ignores writes -- no exception, no change.
 
-The factor-10 error the whole procedure was built to find, and the one live bug
-it has produced. Measured six times on the reference SH10RT with feed-in
-limitation **on**, including values no rounding could produce (123 → 1230,
-47 → 470), then replicated at two further houses on two more models over both
-transports.
+- `registers.AsymmetricNumberField` carries the common case:
+  `write_units_per_count=10`, `scale` 1 because that is what the register
+  contains. It cannot live in `modbus-connection`, whose `NumberField` shares
+  one scale by design.
+- **`sungrow_modbus.export_scale` asks the inverter**, with one write that
+  changes nothing on either firmware: write the held word back when ten times
+  it would be out of range, or a tenth of it when that tenth is below the
+  minimum. The answer is the **refusal**, which survives a dongle's stale
+  readback. Where no such word exists it declines, and with feed-in
+  limitation off it needs leave to lift the mode.
+  `tests/test_export_scale.py` sweeps both firmwares and asserts the register
+  never moves; `scripts/hardware/sungrow_control_test.py --export-scale` runs
+  it from a terminal.
+- `number.SungrowExportLimitNumber` probes on the first write, stores the
+  factor in entry data (`CONF_EXPORT_WRITE_SCALE`) with the firmware it was
+  measured on, re-measures after a firmware change, and writes the raw word
+  itself. An unanswered probe falls back to ten and is not stored. The update
+  listener skips the reload when that key is all that changed (`_built_from`).
+- **To do:** run the probe at fwitten, the 1:1 side it exists for.
 
-The read side is right and agrees with its own bounds: 13074 reads 10000 against
-a 10000 W maximum from register 5623. **The write side is a decade out**, so one
-scale for both directions -- what every other register in this map wants -- sets
-ten times what the user asked for. Somebody limiting export to 900 W gets 9000 W.
-
-It also explains every refusal on this register: the multiply happens **before**
-the range check, so 3400 becomes 34000, fails against a 10000 W maximum and
-returns exception 0x04. Writing 1000 is how you actually put 10000 back.
-
-**Only while feed-in limitation is on.** With 13087 at 0x55 the register ignores
-writes entirely -- no exception, no change. A register that is inert in one mode
-and wrong by a decade in the other is why `UNCHANGED` is in the verdict
-vocabulary at all, and it is what the fix is still blind to: set a limit with
-that switch off and you get no limit and no error.
-
-**Fixed for the integration** by `registers.AsymmetricNumberField`, a stated
-override in `scripts/generate_registers.py` (`WRITE_UNITS_PER_COUNT`). `scale`
-stays 1 because that is what the register *contains*; only the write side is
-divided. It cannot live in `modbus-connection` -- `NumberField` shares one
-`scale` by design and that library is Home Assistant core's dependency.
-
-**The fix is confirmed on hardware at three houses, on both legs that can catch
-it.** Measured 2026-09-20 through the shipped integration:
-
-| House | Model | Path | Leg | Result |
-| --- | --- | --- | --- | --- |
-| reference | SH10RT | cable | **B** | wrote 900 W, register held **900**, slope 1.0 |
-| gerd | SH8.0RT-V112 | cable | **B** | wrote 600 W, register held **600**, slope 1.0 |
-| bar12 | SH10RT-20 | dongle | **C** | commanded 1250 W, export fell 4583 → **1275 W** |
-| bar12, 2026-10-08 | SH10RT-20 | cable | **B** | wrote 600 W, register held **600**, slope 1.0 |
-
-Leg B needs feed-in limitation on, so those two runs lifted it for the probe and
-put `0x55` back seconds later; without that the register is inert and the probe
-can only report `UNCHANGED`, which is why this readback had never been obtained
-at any of them before. Until 2026-10-08 bar12 was a dongle on both of its
-addresses -- the owner's LAN cable went into the WiNet-S, not the inverter -- so
-leg B there was a cache and **leg C was the only evidence available**. It is
-the one that matters most, because the write being *accepted at all* is the proof:
-pre-fix, 1250 W went out as word 1250, became 12500 W and was refused with
-exception 0x04, which is exactly what 3400 did at the reference house on
-2026-09-19. With the cable moved into the inverter, leg B there agrees: 600
-held 600, on inverter firmware P023.
-
-**The YAML package on `main` still has it**, and has had for years:
-`number.export_power_limit` writes `{{ value | int }}` to the same register.
-That is the one place a user of the shipping package is worse off than a user of
-the alpha -- now against three houses' worth of evidence rather than one's.
-
-**And not every firmware multiplies.** fwitten's master/slave pair of
-SH10RT-V112, measured 2026-09-25 over both cables with limitation on (`0xAA`),
-stores the word it is handed: the master accepted a raw 24990 and refused 2499
-with 0x04 (its minimum is 11880 W), and the slave took the integration's 600 W
-as word 60 and held **60**. So `AsymmetricNumberField`'s constant divide sets a
-tenth of what the user asks for there, and the pending one-line YAML fix would
-break the one house where the YAML package is currently right. ARM and DSP
-strings are identical to the multiplying houses; the inverter firmware string
-is the field fwitten will not answer. It is the only cluster measured -- a
-hypothesis, not a finding. **The write scale of 13074 is per device.**
-
-**`sungrow_modbus.export_scale` asks the inverter, with one write that changes
-nothing on either firmware** (built 2026-10-10, not yet wired into the
-integration or run on hardware). The multiply happens before the range check,
-and a refused write leaves the register alone, so: write the held word back
-when ten times it would be out of range (a no-op if stored as handed, refused
-if multiplied), or a tenth of it when that tenth is below the minimum (a no-op
-if multiplied, refused if not). The answer is the **refusal**, which survives a
-dongle's stale readback. Where no such word exists -- a zero-export house at
-0 W -- it declines and writes nothing, and with feed-in limitation off it needs
-leave to lift the mode, granted only where the held limit caps nothing.
-`tests/test_export_scale.py` sweeps both firmwares, with and without 16-bit
-wrapping, and asserts the register never moves.
-`scripts/sungrow_control_test.py --export-scale` runs it from a terminal.
-
-`doc/integration_plan.md` has the measurements, the replications and the two
-hardware confirmations -- raw word over a cable, and behaviour through a dongle.
+The readings behind this are in `doc/device-fingerprints/`.
 
 ## How the integration is cut up
 
@@ -331,10 +261,9 @@ because it decides where a change belongs:
 
 - **`config_flow.py` decides, `config_flow_schemas.py` describes.** Schemas,
   option lists and the prose above them live in the second; the steps that
-  choose between them live in the first. One thing deliberately stayed behind:
-  `_alpha_placeholders` reads `DEVICES_MODE_OFFERED` at call time so a test can
-  patch the flag on `config_flow`, and moving it would put it beyond that
-  patch's reach **while every test still passed**.
+  choose between them live in the first. `_alpha_placeholders` stays in
+  `config_flow` and reads `DEVICES_MODE_OFFERED` at call time, so a test can
+  patch the flag there.
 - **Anything that must work without Home Assistant lives in `src/`.** The
   control test's engine is there for that reason; what is here is a snapshot
   store, a shutdown hook, a progress callback and the options.
@@ -343,41 +272,27 @@ because it decides where a change belongs:
   `via_device`, and identified by *its* serial because neither reports a usable
   one. The subclasses hold only what differs: how a model name is found, and
   how often each block is worth reading.
-- **`async_setup_entry` is a list of named steps**, not a wall. It was 177
-  lines; each step is now a function that can be read on its own.
-- **The generated `*_descriptions.py` are not hand-edited**, like
-  `registers.py`. `make gen-check` fails on it.
+- **`async_setup_entry` is a list of named steps**, each a function that can
+  be read on its own.
+- **The generated `*_descriptions.py` are not hand-edited** -- all but
+  `sensor_descriptions.py`, which is source. `make gen-check` fails on it.
 
-## The survey is installed, not posted
+## The survey runs with nothing installed
 
-There was a `sungrow_scan.zip`: the whole `scripts/sungrow_scan/` directory,
-packaged so a contributor could unpack it and run the survey with a bare
-Python. It was retired once `scripts/hacs_testbed.sh` made the HACS install
-testable, because a tester who has the integration gets **part A on the device
-page** and a download link for the document, which is the same evidence with
-none of the unpacking.
+A tester who has the integration gets **part A on the device page** and a
+download link for the document. A contributor who will not install anything
+runs `sungrow_survey.py` from `scripts/sungrow_survey/` with a bare Python, so
+**nothing in that directory may import a third-party package at module
+level** -- a convenient `from sungrow_modbus import ...` breaks it.
+`tests/test_scan_is_standalone.py` asserts it by reading the imports.
 
-Two things survived it and are not the same thing:
-
-- **`portable.py` is still handed over on its own.** It is one file, stdlib
-  only, read-only by construction -- only the two Modbus *read* function codes
-  exist in it -- and it is what `doc/compatibility.md` points a contributor at
-  when they will not install anything. `tests/test_scan_is_standalone.py` keeps
-  it importable by itself.
-- **The no-third-party-imports rule still covers the whole directory**, because
-  `collect.py` and `blocks.py` import `portable`. A convenient
-  `from sungrow_modbus import ...` anywhere in there reaches the file that is
-  still downloaded alone. The zip is gone; the boundary it protected is not.
-
-What went with it: `make zip`, `make zip-verify`, `make zip-sim`, the CI step
-that unpacked it, and the *runtime* half of the standalone proof. The static
-half -- reading the imports -- is what remains, and it is the half that catches
-the mistake anyone would actually make. `make scan-sim` replaces `zip-sim`.
+**`portable.py` is a module, not a tool.** It holds the client, the decoder
+and the plan loader; **`scan_plan.json` is the only register list in the
+directory**, and a contributor runs `sungrow_survey.py`.
 
 ## Things that will bite you
 
-These each cost real debugging time. They are not guesses — each was hit
-and verified in a container or against hardware.
+Each of these is verified in a container or against hardware.
 
 ### Environment, versions and the install
 
@@ -392,56 +307,31 @@ and verified in a container or against hardware.
 - **The version in `pyproject.toml` must equal the `requirements` entry in
   `custom_components/sungrow_modbus/manifest.json`.** HA checks the installed
   version on every start and will try to pip-install the package if they
-  differ. Never edit either by hand: `python scripts/sync_version.py --set X.Y.Z`
-  moves both, `--check` is enforced in CI, in pytest and at release.
+  differ. Never edit either by hand: `scripts/release/sync_version.py --set
+  X.Y.Z` moves both **and re-installs the editable library** -- HA compares the
+  pin against what is *installed*, and a stale install sends pip after a
+  version not on PyPI (`RequirementsNotFound` on Add integration). `--check`
+  runs in CI, in pytest and at release.
 - **The integration's domain is also the library's import name.** Both are
   `sungrow_modbus`. So `config/custom_components` is a **symlink** to the
-  repo's `custom_components/`, the way a real install looks. Putting
-  `custom_components/` on `PYTHONPATH` instead — which `scripts/develop.sh` used
-  to do, and which worked until the domain was renamed — exposes the
-  *integration* as top-level `sungrow_modbus`, shadowing the library, and
-  `from sungrow_modbus import TIERS` then imports the integration from inside
-  itself. Home Assistant reports it as a circular import while loading the
-  config flow, a long way from the cause.
-- **`--set` must re-install the library, not just edit the files.** Bumping
-  the version does not touch an installed editable package's metadata, and
-  Home Assistant compares the manifest pin against what is *installed*. Left
-  alone it asks pip for a version that is not on PyPI yet and the config flow
-  dies with `RequirementsNotFound` at the moment somebody clicks Add
-  integration. `scripts/sync_version.py --set` now does the re-install, and
-  `--check` fails on the drift.
+  repo's `custom_components/`, the way a real install looks. Never put
+  `custom_components/` on `PYTHONPATH`: that exposes the *integration* as
+  top-level `sungrow_modbus`, shadowing the library, and HA reports a circular
+  import while loading the config flow, a long way from the cause.
 - **The pin is a promise about a published wheel, and an editable install
-  cannot test it.** `--check` above only compares two version *strings*. What
-  it cannot see is the integration importing a library module that the pinned
-  version does not have -- which happened between a1 and a2 with
-  `sungrow_modbus.fingerprint`, passing every test, ruff, hassfest and the
-  release, and failing only in a real install. `scripts/check_pinned_library.py`
-  is the check: `--wheel` against a local build gates CI, and with no argument
-  it asks the same of PyPI, which is legitimately red mid-development.
-
-  **It checks attributes too, since 2026-09-19.** An import resolving was only
-  half the promise: a wheel can satisfy every `from sungrow_modbus import X`
-  and still lack the method somebody added beside it, which fails at runtime on
-  an inverter rather than in CI. That is not hypothetical -- `field_names`,
-  `probed_capabilities` and `inverter_serial` were added to the library and used
-  from the integration in one sitting, with this script green throughout.
-
-  It only inspects variables it can **prove** hold a device: constructed from
+  cannot test it.** `scripts/release/check_pinned_library.py` checks that every
+  `sungrow_modbus` import *and* every device attribute the integration uses
+  exists in the pinned version: `--wheel` against a local build gates CI, and
+  with no argument it asks PyPI, which is legitimately red mid-development. It
+  only inspects variables it can **prove** hold a device -- constructed from
   `SungrowInverter` and friends, annotated as one, or assigned from a
-  `.device`. Anything else is left alone, because `device` is also what Home
-  Assistant calls a registry entry and what the config flow calls a dict of
-  probe results -- and a release gate that cries wolf gets switched off. It
-  also has to know what a device gains from `self.x =` in `__init__` and from
-  the keys of a `COMPONENTS` map, neither of which appears in a class body.
+  `.device` -- because `device` also names registry entries and probe dicts,
+  and a gate that cries wolf gets switched off. It knows what a device gains
+  from `self.x =` in `__init__` and from the keys of a `COMPONENTS` map.
 - **A repair issue is `title` + `description` *or* `title` + `fix_flow`, never
-  both.** Home Assistant's translation schema makes them mutually exclusive,
-  and `hassfest` says so as *"two or more values in the same group of exclusion
-  'fixable'"*, which does not obviously mean "delete the description". For a
-  fixable issue the text belongs in the fix flow's step, where the person
-  reading it is about to press the button.
-
-  **Run it before tagging**, and run it *locally* rather than trusting the
-  branch to be green:
+  both.** `hassfest` says so as *"two or more values in the same group of
+  exclusion 'fixable'"*. For a fixable issue the text belongs in the fix
+  flow's step. **Run hassfest locally before tagging:**
 
       python -c "import sys; sys.path.append('.reference/core'); \
         sys.argv=['hassfest','--integration-path','custom_components/sungrow_modbus',\
@@ -449,366 +339,167 @@ and verified in a container or against hardware.
         from script.hassfest.__main__ import main; raise SystemExit(main())"
 
   Appended to `sys.path`, not prepended, so the **installed** Home Assistant
-  wins: `.reference/core` is a partial clone with no `homeassistant.generated`,
-  and putting it first fails on an import that has nothing to do with this
-  integration. This repository has already released a tag on a red hassfest
-  once; it is two seconds to check.
-- **A failed read is not a refusal, and four bugs came from confusing them.**
-  All found on 2026-09-20, all the same shape: `except ModbusError: return
-  False`. An exception *response* is the device answering -- it is there and it
-  declined, and that is evidence. A connection lost, a timeout or a desync is
-  the link failing to carry the question, and says nothing about the register.
-  `modbus_connection` separates them and the taxonomy is backend-neutral:
-  **`ModbusExceptionError`** and its subclasses are answers,
+  wins: `.reference/core` is a partial clone with no `homeassistant.generated`.
+- **A failed read is not a refusal.** An exception *response* is the device
+  answering -- it is there and it declined, which is evidence. A connection
+  lost, a timeout or a desync is the link failing to carry the question, and
+  says nothing about the register. In `modbus_connection`,
+  **`ModbusExceptionError`** and its subclasses are answers;
   `ModbusConnectionError` / `ModbusTimeoutError` / `ModbusProtocolError` are
-  not. `ServerDeviceBusyError` (0x06) is an answer that still settles nothing --
-  it means ask me later.
-
-  What it cost, measured rather than imagined:
-
-  - `control_test._detect_transport` read 6100 **once**, unretried, and called
-    any failure a dongle. At the reference SH10RT -- a cable, no communication
-    module fitted at all -- a run made while Home Assistant was
-    polling produced one document whose survey half said "direct to the
-    inverter's LAN port" and whose control test said dongle, and which
-    therefore stamped its own readback table **"not evidence"**. That table
-    carried the 13074 result the whole procedure exists to produce.
-  - `config_flow._async_probe` did the same, and fed the picker's labels and
-    its `same_dongle` note.
-  - The CLI had no handler at all: `_retrying` re-raises after 5, 20, 45 and
-    90 seconds of backoff, and `main()` caught only `KeyboardInterrupt`, so the
-    most common failure this project documents ended in a traceback through
-    somebody else's library. Exit **1** is defined for exactly it, and the exit
-    codes are printed as the last line *because a pasted transcript loses `$?`*.
-
-  So the answer is **three-valued** -- direct, dongle, or undetermined -- and
-  `None` must never read as `False`. Asserting a dongle is the expensive
-  direction: it discards legs A and B. And a probe that decides something
-  published gets retries, because on a link somebody else is polling one read
-  can simply miss. `SNAPSHOT_PAUSE` already carried that lesson for the
-  before-state reads; the transport probe simply never had it.
-
-  **A test fixture that fakes a refusal with a bare `ModbusError` cannot see
-  any of this.** Two did, and they were green throughout. Raise the real type.
-- **A broad `except` without a traceback is a silent failure with extra steps.**
-  Three places caught `Exception` and logged only the message, and the worst was
-  the one that matters most: a **failed restore** in `repairs.py`, which means
-  somebody's inverter is still carrying a test's values and this line is the
-  only record of why. `diagnostics.py` had no logger at all and put the error
-  inside a downloaded JSON file, where it is held by the one person who cannot
-  act on it. Use `_LOGGER.exception`; keep the short form for whatever a user
-  reads in a dialog. A bare `KeyError: 'realtime'` names nothing.
-- **`make ci` could not run in a fresh devcontainer.** It is documented as
-  "the full CI job", and it died on `twine: not found` -- because the GitHub
-  workflows install `build` and `twine` themselves with
-  `pip install --upgrade build twine`, and `requirements_dev.txt`, which is
-  what `scripts/setup.sh` installs, listed neither. So the one command that
-  claims parity with CI had never been run locally to the end. Both are
-  declared now. The general shape: **a workflow that installs its own tools is
-  a workflow whose dependencies are invisible to everybody else.**
-- **A type checker with nothing to check reports success-shaped nothing.**
-  `make typecheck` existed, was documented, and had **never checked a single
-  file**: without a `py.typed` marker mypy refuses the package outright, and
-  PEP 561 says an unmarked package is untyped, so every consumer was silently
-  getting no checking either. The marker is one empty file, it ships in the
-  wheel, and adding it surfaced 24 strict errors in code that had passed every
-  gate for months. The lesson is the shape of the failure, not the fix: **a
-  check nobody runs and a check that cannot run look identical from the
-  outside**, which is why `mypy` is in `make check` and in CI now rather than
-  sitting in a target for somebody to remember.
+  not. `ServerDeviceBusyError` (0x06) is an answer that settles nothing. So
+  probes are **three-valued** -- yes, no, undetermined -- and `None` must never
+  read as `False`; a probe that decides something published gets retries; the
+  CLI exits **1** on a link failure and prints the exit codes last, because a
+  pasted transcript loses `$?`. **A test fixture that fakes a refusal with a
+  bare `ModbusError` cannot see any of this.** Raise the real type.
+- **Never catch `Exception` without a traceback.** Use `_LOGGER.exception`;
+  keep the short form for whatever a user reads in a dialog. A failed restore
+  in `repairs.py` is the only record of why somebody's inverter still carries
+  a test's values, and an error inside a downloaded diagnostics file is held by
+  the one person who cannot act on it.
+- **A workflow that installs its own tools hides its dependencies.** Anything
+  CI needs -- `build` and `twine` included -- is declared in
+  `requirements_dev.txt`, so `make ci` runs to the end in a fresh devcontainer.
+- **A check nobody runs and a check that cannot run look identical.** The
+  library ships a `py.typed` marker, without which mypy refuses the package
+  and every consumer silently gets no checking; `mypy` is in `make check` and
+  in CI rather than in a target somebody has to remember.
 - **`PARALLEL_UPDATES` is 1 on the write platforms, and 0 everywhere else.**
-  Not a style choice. Everything on this endpoint is already serialized behind
-  one connection, so two writes issued at once do not go faster -- they queue,
-  and the second one's timeout starts while it is still waiting. And these
-  registers **interlock**: `battery_min_soc` and `battery_max_soc` are refused
-  if they cross, so an automation that sets both in one call has an ordering
-  that matters and must not be raced. `sensor` and `binary_sensor` are 0
-  because the coordinator does their polling and the entities never talk to
-  the inverter; `button` is 0 because a press schedules the run and returns,
-  and the runner refuses a second run itself.
+  Everything on this endpoint is serialized behind one connection, so two
+  writes issued at once queue, and the second one's timeout starts while it is
+  still waiting. And these registers **interlock**: `battery_min_soc` and
+  `battery_max_soc` are refused if they cross, so their order matters.
+  `sensor` and `binary_sensor` are 0 because the coordinator polls; `button`
+  is 0 because a press schedules the run and the runner refuses a second.
 - **A first boot in a fresh container logs ~20 setup errors** while HA
   downloads component requirements, and the UI 404s. The next boot is clean
   in ~2s. Not a bug.
 
 ### Reading registers
 
-- **Register 13000 does not mean what zero looks like it means: `0x0000` is
-  "Running".** The whole map is in `derived.RUNNING_STATES`, and the obvious
-  guess -- that zero is off -- is wrong. Guessing it cost a first draft of the
-  control test a guard that refused to run on every healthy inverter, and would
-  have gone on to mistake a working inverter for a stopped one during a
-  restart. Both sets are now derived from the labels rather than typed out.
-  **And the duplicates are a dongle's doing.** At all three houses read both
-  ways, a WiNet-S re-encodes 13000: cable 0x0040 becomes 0x0000, and cable
-  0x0080 becomes 0x8100, each pair sharing a label. So a code seen only
-  through a dongle says nothing about what the inverter itself sends.
+- **Register 13000: `0x0000` is "Running", not off.** The whole map is in
+  `derived.RUNNING_STATES`, and the running and stopped sets are derived from
+  its labels. The duplicates are a dongle's doing: a WiNet-S re-encodes 13000
+  (cable 0x0040 becomes 0x0000, 0x0080 becomes 0x8100), so a code seen only
+  through a dongle says nothing about what the inverter sends.
 - **Addresses are protocol addresses**, one below the register number in
   Sungrow's document and in the YAML comments (`address: 4989 # reg 4990`).
   **The register maps are written in the document's numbers**, through
-  `addresses.reg()`: `power_flow_status = integer(reg(13001))`. As a bare
-  protocol address that line said 13000, which is the *running state's*
-  number, one line above it. `tests/test_addresses.py` fails on a field
-  declared any other way, so the two conventions cannot mix in one map.
+  `addresses.reg()`: `power_flow_status = integer(reg(13001))`.
+  `tests/test_addresses.py` fails on a field declared any other way.
 - **No register is read by a literal address.** A mapped field is looked up
   with `addresses.field_address(name, device)`; the few registers no component
   maps are named constants in `addresses.py` (`DIRECT_ONLY_PROBE`, ...), and
   `Address.register` gives the document's number beside the protocol one. The
-  survey scripts cannot import the library, so they use
-  `portable.address(plan, name)` against `scan_plan.json`, which carries both.
-  `tests/test_addresses.py` fails on a new literal. **Tests are exempt on
-  purpose**: a fixture should carry the specification's numbers, not the
-  code's.
+  survey scripts use `portable.address(plan, name)` against `scan_plan.json`,
+  which carries both. `tests/test_addresses.py` fails on a new literal.
+  **Tests are exempt on purpose**: a fixture carries the specification's
+  numbers, not the code's.
 - **Ask the inverter, do not infer.** Register 5002 reports the output type
-  (0 single, 1 3P4L, 2 3P3L); 5000 is the device type code. Sungrow's own
-  protocol document also warns that some measuring points are *not*
-  forwarded by WiNet-S over TCP/IP, so capability varies by transport too.
+  (0 single, 1 3P4L, 2 3P3L); 5000 is the device type code. Some measuring
+  points are *not* forwarded by WiNet-S over TCP/IP, so capability varies by
+  transport too.
 - **`swap: word` in the YAML means `word_order="little"`** in the library.
   Sungrow sends 32-bit values low word first.
 - **Not every register answers.** An SH10RT returns 0xFFFF for MPPT3/4, and
   battery blocks are absent without storage. A poll losing one block is
   normal; that is what `UpdateReport` is for.
 - **An empty string is a reading of nothing, not a reading of "".** Sungrow
-  fills a UTF-8 field it cannot answer with 0x00, and unlike 0xFFFF that is
-  not declared per field, so it decodes to `""` and sails through as a value.
-  `present()` in `model.py` maps it to None — without it a capability probe
-  counts an absent Sungrow battery's firmware string as evidence of one.
+  fills a UTF-8 field it cannot answer with 0x00, so it decodes to `""`.
+  `present()` in `model.py` maps it to None, or an absent battery's firmware
+  string counts as evidence of one.
 - **Some registers come back in a padded frame.** At 2612 and 2628 the
   inverter sends a frame sized for **15 registers while declaring the correct
-  byte count** — `mbap_len` 33 against `byte_count` 22 for a request of 11.
-  The data is right; the frame is not, and `modbus-connection` validates
-  against the MBAP length and rejects the whole answer. Asking for exactly 15
-  makes the two agree, which is why `layout.COUNTS` works and why it is a
-  workaround rather than a correction. Because the library pools neighbours
-  into one block read, those two fields failed the whole 58-register
-  `slowest_input` request and left **36 unrelated entities permanently
-  empty**.
-- **A lenient Modbus client will tell you the register is fine.** The first
-  diagnosis of the above was wrong for a day because a raw-socket probe trusts
-  `byte_count` and reads these registers perfectly, while the shipping stack
-  cannot read them at all. `scripts/sungrow_scan/blocks.py` is deliberately as strict
-  as the shipping stack, and reports both numbers plus the count that
-  reconciles them. Add to `scripts/layout.py` only from *its* measurement.
+  byte count**, and `modbus-connection` rejects it. Asking for exactly 15
+  makes the two agree -- `layout.COUNTS` -- and `layout.ISOLATE` keeps each in
+  a read of its own, or the failure takes the whole pooled block with it.
+- **A lenient Modbus client will tell you the register is fine.** A raw
+  socket trusts `byte_count` and reads the padded frames perfectly while the
+  shipping stack cannot. `scripts/sungrow_survey/blocks.py` is as strict as
+  the shipping stack and reports both numbers plus the count that reconciles
+  them. Add to `src/sungrow_modbus/layout.py` only from *its* measurement.
 - **A Sungrow accepts very few simultaneous sessions, and the recovery is
-  90 seconds of quiet.** This is the most common practical failure here: it has
-  killed whole runs, twice, before a single register was written.
-
-  Its signature is a *progressive* one, and that is what tells it from a bad
-  block. Reads died at 5010, then 5114, then 5241 — each retry reaching a
-  little further into the poll before the link dropped. A bad block fails at
-  the same address every time.
-
-  Two consequences. **A short retry is not a retry**: a three-second backoff
-  spends every attempt inside the window where nothing can work, which is why
-  the control test's opening reads back off **5, 20, 45 and 90** seconds. And
-  **the contention is often self-inflicted** — a probe and two runs opened back
-  to back, on top of a polling YAML package. "It worked yesterday" says nothing
-  about the link, only about how many sessions have recently been spent.
-- **A failed read does not always fail quickly, and that changes what a
-  diagnostic costs.** Three houses refuse an unmapped register with exception
-  0x02 in milliseconds. On a fourth, read over a VPN, the same reads instead
-  produced `Response timeout after 10.0 seconds` and `Connection lost before
-  response was received` — so with `--attempts 3` every failed read cost 30
-  seconds. Worth stating what this does **not** establish: from this end a
-  silent inverter and a tunnel that lost the answer look identical, so a
-  timeout is not evidence about the register the way an exception 0x02 is.
-  Either way the cost is real. Narrowing a failing block walks a binary tree
-  over it, about 29 reads for fifteen registers — free on the first three
-  links, a quarter of an hour on the fourth. Four such blocks outran a
-  survey's own cap and the run was killed **before writing a document**.
-  Hence `blocks.NARROW_BUDGET`, which bounds the whole narrowing phase,
-  divides it across the blocks that failed, and marks what it did not reach
-  rather than reporting a wide range as if it were narrow. When reading a
-  survey taken over a slow link: check for `not narrowed` before believing a
-  range, and do not put a timeout-only finding in `scripts/layout.py`.
+  90 seconds of quiet.** Contention's signature is *progressive*: each retry
+  dies a little further into the poll. A bad block fails at the same address
+  every time. **A short retry is not a retry** -- the control test's opening
+  reads back off **5, 20, 45 and 90** seconds -- and **the contention is often
+  self-inflicted**: probes and runs opened back to back, on top of a polling
+  YAML package.
+- **A failed read does not always fail quickly.** Over a slow link a refusal
+  can arrive as a 10 s timeout instead of exception 0x02, and a timeout is not
+  evidence about the register. `blocks.NARROW_BUDGET` bounds the narrowing of
+  failing blocks and marks what it did not reach. Over a slow link, check for
+  `not narrowed` before believing a range, and never put a timeout-only
+  finding in `layout.py`.
 
 ### What a WiNet-S does, and does not
 
-- **A WiNet-S does not forward input 2612 or 2628** — the sub-controller and
-  battery firmware strings. Both refuse with exception 0x02, three attempts
-  out of three, and both read perfectly over a cable on the same machine.
-  Replicated across two houses, two inverter models (SH8.0RT-V112, SH10RT-20)
-  and two dongle firmwares (P043, P040), against two direct-LAN readings where
-  all 27 blocks answer — so this is what the dongle does, not what one machine
-  does. It is therefore **not** a `layout.ISOLATE` case: isolating them would
-  cost every direct-LAN user a per-field read for a dongle's behaviour and
-  still leave a dongle user without the fields. It belongs in capability
-  gating by transport. The same pairing shows a dongle forwarding **1020 of
-  1510** dumped addresses where a cable forwards 1461, twice, to the address.
-- **A WiNet-S also answers an empty string where the inverter refuses the
-  read.** Measured on one SH10RT-V112 read both ways within six minutes, with
-  nothing else polling: input 13249, 13264 and 13279 — the inverter, module
-  and battery firmware strings — **fail 3/3 on the inverter's own LAN port**
-  and answer through its dongle, with every character 0x00. So `present()`
-  maps them to None and the fields are absent either way; the cable refuses
-  the read, the dongle invents an empty answer for it. **"Refuses" here is a
-  10 s timeout, and the inverter then closes the session** (re-measured
-  2026-09-25), so the *next* read reports a dead link and the library abandons
-  the whole poll -- which is how the control test's opening full read died five
-  attempts out of five at fwitten, always at 13264, and how 0.1.0a5 failed to
-  set up there at all. `_async_update_components` now retries a lost
-  connection once per component before calling the link dead. The same pair refuses
-  2612 and 2628 through the dongle while the cable reads them, so the two
-  paths fail *complementary* sets of blocks. Consequence for capability
-  probing: **"the block answered" is not evidence.** A dongle can answer
-  without knowing, which is what `ZERO_MEANS_ABSENT` handles for numbers and
-  the emptiness check in `present()` handles for strings.
+- **A WiNet-S does not forward input 2612 or 2628** (sub-controller and
+  battery firmware strings): exception 0x02, while a cable reads them. That is
+  the dongle, not the machine, so it is **not** a `layout.ISOLATE` case; it
+  belongs in capability gating by transport. A dongle forwards about 1020 of
+  1510 dumped addresses where a cable forwards 1461.
+- **A WiNet-S answers an empty string where the inverter refuses the read.**
+  Inputs 13249, 13264 and 13279 (inverter, module and battery firmware
+  strings) can time out on the inverter's own LAN port -- after which the
+  inverter closes the session, so `_async_update_components` retries a lost
+  connection once per component -- and answer with every character 0x00
+  through the dongle. **"The block answered" is not evidence**:
+  `ZERO_MEANS_ABSENT` handles numbers and `present()` strings.
 - **A WiNet-S answers 0 where the inverter answers 0xFFFF**, which invents
-  capabilities: measured on one inverter read both ways, the dongle granted
-  MPPT3, MPPT4 and a second meter channel that its own LAN port correctly
-  refused — ten entities reporting zero forever. `ZERO_MEANS_ABSENT` in
-  `capabilities.py` is the guard. It costs a real third tracker its entities
-  until sunrise, which is affordable only because capabilities are re-probed
-  every poll and the entry reloads when they **grow**; nothing ever removes an
-  entity, so granting on zero has no recovery at all.
-- **Round-trip time says nothing about the inverter, so it is not recorded.**
-  Documents carried `connection.latency_ms` until 2026-10-09. It timed the path
-  from whoever read -- a VPN for most of them -- so the same bar12 dongle
-  measured 23 ms one night and 39 another, more than its cable and dongle
-  differed within one night, and two WiNet-S2 houses read 6.5 and 9.1 ms on
-  their own LANs where cables over a VPN read 30. Each claim built on it -- 2 ms
-  for a cable, a range per transport, a dump duration per transport -- was
-  broken by the next reading. Nothing acted on it, so it was removed rather
-  than caveated again. Do not bring it back as evidence about transport.
-- **WiFi versus Ethernet on a WiNet-S is not determinable.** Settled against a
-  controlled pair — one dongle, read wired then over WiFi — with a nil
-  structural diff, and **extended to writes on 2026-09-19**: the same control
-  test over each of bar12's two interfaces dropped the same four registers and
-  accepted the same five. Which address was which medium was confirmed only on
-  2026-10-08, when the dongle's cable moved into the inverter and its wired
-  address vanished: 178.041 was Ethernet, 178.023 WiFi. Register 6100 does distinguish
-  direct from dongle, 9/9 — and register 13265 names the module that is
-  *fitted*, which is not the same as the module in the path.
-- **Transport is 6100's question and 13265 cannot answer it, in either
-  direction.** Counted over the ten committed fingerprints on 2026-09-20: 6100
-  agrees with the owner's own account **10 times out of 10**, and a rule keyed
-  on 13265 would be wrong **3 times**. Both failures are real and they point
-  opposite ways:
-
-  - **fwitten, twice.** Through a dongle the module firmware string answers
-    with every character 0x00, which `present()` maps to None — so "no module
-    named" reads as *direct* at two endpoints that are demonstrably behind one.
-    Visible in the documents: on the cable the key is **absent** (the read was
-    refused), through the dongle it is **present and null** (it answered
-    empty). Same behaviour as inputs 13249 and 13279.
-  - **gerd, once.** A WiNet-S is fitted and names itself `…P043` while the LAN
-    cable goes straight into the inverter, so "a module is named" reads as
-    *dongle* on the path that is a cable. His own testimony says it: "it
-    reports the module that is fitted, not the module in use."
-  - **bar12, once more on 2026-10-08**, the same way as gerd: its cable path
-    names the fitted `…P040`. 6100 called it right, as it has every time.
-
-  So a dongle that answers zeros looks like no dongle, and a dongle merely
-  screwed to the wall looks like one in the path. Anything deciding transport
-  reads **6100**; 13265 is worth reporting beside it as a separate fact -- an
-  owner who can see a dongle needs to know the tool can see it too, or a
-  correct "its own LAN port" reads as a mistake.
+  capabilities such as MPPT3, MPPT4 and a second meter channel.
+  `ZERO_MEANS_ABSENT` in `capabilities.py` is the guard; capabilities are
+  re-probed every poll and the entry reloads when they **grow**, since nothing
+  ever removes an entity.
+- **Round-trip time says nothing about the inverter**, so it is not recorded.
+  It times the path from whoever reads, usually a VPN. Do not use it as
+  evidence about transport.
+- **WiFi versus Ethernet on a WiNet-S is not determinable** over Modbus, for
+  reads or writes. `user_inputs.transport` is the only source.
+- **Transport is register 6100's question**: input 6100 answers on a cable
+  and is refused through a dongle. Register 13265 names the module that is
+  *fitted*, not the one in the path, and through a dongle it can answer
+  empty -- so it is wrong in both directions. Report it beside 6100 as a
+  separate fact, never decide transport with it.
 - **A WiNet-S forwards a write and then reads it back stale, and waiting does
-  not help.** Settled at the one site with both a cable and a dongle to one
-  inverter. The two paths disagreed *before* anything was written -- 33047 read
-  450 through the dongle and 440 over the cable, same minute -- and a write sent
-  through the dongle arrived: 430 written over it, and the cable then read 430,
-  while the dongle went on reporting 450. Polled every 5 s for **two minutes**
-  it never once reported a value the cable had confirmed, and the figure it kept
-  returning was **hours** old. So there is no settling time to wait out, and
-  offering one would only make a stale answer look ripe.
-
-  **This replaces an earlier claim that a dongle may drop a write entirely.** It
-  does not; the write lands and the readback is stale. The four bar12 readings
-  that produced that claim are not evidence of anything and stay unresolved --
-  though since 2026-10-08 bar12 has a cable as well, so they can be re-checked.
-
-  **What it costs the control test:** leg A cannot tell a dropped write from a
-  stale read, and leg B reads the raw word over the same path. **Only leg C
-  survives a dongle**, which is how the factor-10 error was confirmed at bar12
-  while its readback reported nothing. A run through a dongle says so above its
-  readback table, where a reader skimming for `matched` will see it.
-  `identify` has the discriminator: **input 6100 answers on a cable and is
-  refused through a dongle.**
-- **A WiNet-S serves Modbus over TLS on port 516, and it works.** Measured at
-  two houses on two dongle firmwares, and it corrects what the web says: this
-  was written up from
-  [discussion #571](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions/571)
-  as an *iHomeManager* port and it is not one. It was open on both dongles and
-  **neither inverter's own LAN port**, at a house with no iHomeManager at all.
-  It is genuinely Modbus, genuinely TLS 1.2, and reads real registers; a plain
-  socket gets the connection accepted and then closed, which is why it looks
-  dead without a TLS client.
-
-  **It is not a workaround for what a dongle will not forward.** Inputs 2612 and
-  2628 refuse with exception 0x02 over TLS exactly as on 502, and the SBR's cell
-  block refuses on both. Same firmware behaviour behind a different wrapper.
-  Rapid reconnects exhaust it exactly as they do on 502, so a failed handshake is
-  usually a fact about session count, not about TLS.
-
-  **Its certificate looks baked into the firmware** -- identical subject, issuer
-  and thirty-year validity on two unrelated houses -- which would mean the
-  private key ships with every dongle and this TLS authenticates nothing. **Not
-  proven**: the two hashes compared are two interfaces of one dongle. A hash from
-  a third site would settle it. `collect.py` sweeps 516 and reports it; reading
-  it would need a TLS client the survey does not have, and on this evidence
-  verifying the certificate would achieve nothing. Detail in
-  `doc/integration_plan.md`.
+  not help.** The write lands; the dongle keeps reporting an old value for as
+  long as anyone has watched. So through a dongle legs A and B are not
+  evidence and **only leg C survives**; a run through a dongle says so above
+  its readback table.
+- **A WiNet-S serves Modbus over TLS on port 516**, not an iHomeManager. It is
+  real Modbus behind TLS 1.2, refuses the same registers as 502, and exhausts
+  under rapid reconnects like 502. Its certificate may be identical on every
+  dongle, which would mean this TLS authenticates nothing; a hash from a third
+  site would settle it. `sungrow_survey.py` sweeps 516 and reports it without
+  reading it.
 
 ### Finding devices
 
-- **An open port 502 is not an inverter, and unit 1 is not always where it
-  is.** Both halves measured on 2026-09-09 at one house, by sweeping the /24
-  rather than assuming. Of five endpoints answering on 502, four were the two
-  inverters and their two dongles — and one of those four answers on unit
-  **2**, because a cluster slave's own device address is 2 and unit 1 there
-  times out. `identify()` asked unit 1 and gave up, so that inverter was
-  reported absent; it now sweeps `IDENTIFY_UNITS` (1, then 2-5) and returns
-  which unit answered, paying the extra probes only where the first fails.
-  The fifth endpoint was **not a Sungrow at all**: it refuses input 4989 on
-  every unit with exception 0x02, ignores the unit id entirely, and answers
-  only registers 0-19. So identify by what answers, never by an open port —
-  and `identify`'s error names the exception type, because a refusal and a
-  timeout lead to different next steps. Nothing answered on **port 503** on
-  that subnet, so the iHomeManager still has no measurement at any house.
-- **Which unit ids answer depends on the transport.** On one SH8.0RT the SBR
-  answered unit 200 on the LAN port and unit **2** through the dongle, while
-  the wallbox answered unit 3 *only* through the dongle. One config entry is
-  one endpoint, so a house like that may need two entries to see everything.
-  Re-measured on the same machine on 2026-09-08, both paths within four
-  minutes — the pair is in `doc/device-fingerprints/`. Replicated the same
-  day at a second house, on an SH10RT-20 whose SBR answers unit **2** through
-  its dongle and nothing at 200.
-- **A wallbox is only reachable through an endpoint that already answered, even
-  when it has its own LAN cable.** Measured at a site whose owner confirms a
-  cable into the wallbox: a full sweep of the /24 found Modbus TCP on exactly
-  two addresses, the inverter and its dongle, and the wallbox answered only as
-  unit 3 behind the dongle -- never at 248, never on an address of its own.
-  Nothing answered on 503 either, so no iHomeManager. **A config flow therefore
-  cannot find a wallbox by sweeping for it; it has to ask the endpoints it
-  already has.** Its registers are undocumented by Sungrow;
-  `doc/wallbox_registers.md` is what three independent measurements agree on,
-  and the survey decodes 32 of them into every fingerprint. One register, 21313,
-  is nameable by nobody.
+- **Identify by what answers, never by an open port.** Not every endpoint on
+  502 is a Sungrow, and an inverter is not always unit 1: a cluster slave
+  answers on unit **2**. `identify()` sweeps `IDENTIFY_UNITS` (1, then 2-5),
+  returns which unit answered, and names the exception type on failure,
+  because a refusal and a timeout lead to different next steps.
+- **Which unit ids answer depends on the transport.** The SBR answers unit
+  200 on the LAN port and unit **2** through a dongle; a wallbox answers unit
+  3 through a dongle. One config entry is one endpoint, so a house may need
+  two entries to see everything.
+- **A wallbox is only reachable through an endpoint that already answered**,
+  even with its own LAN cable. A config flow cannot find one by sweeping; it
+  has to ask the endpoints it already has. Its registers are undocumented by
+  Sungrow; `doc/wallbox_registers.md` is what three measurements agree on.
 
 ### Shipping it
 
-- **HACS reads the *default branch* unless there is a stable release**, so a
-  pre-release-only repository whose integration is not on the default branch
-  cannot be added to HACS at all. Read out of HACS's source, not assumed:
-  `version_to_download()` in `repositories/base.py` consults
-  `data.last_version` -- set only from the first release that is **not** a
-  pre-release -- then a user-selected tag, then `default_branch`. It never
-  consults `data.prerelease`; `show_beta` only changes which versions are
-  offered *after* registration. `repositories/integration.py` then looks for
-  the first directory under `custom_components` at that ref and raises
-  *"Repository structure for main is not compliant"* when there is none --
-  which is this repository exactly, since `main` is the YAML package. So
-  "cut a release" is not the same as "available in HACS", and the fix is
-  either the default branch or a stable version, never a `show_beta` hint to
-  the user. The third way out is the one taken: a **preview channel**, a
-  second repository whose default branch *is* the integration, synced by
-  `doc/preview-mirror/sync.yml`. `scripts/hacs_testbed.sh` installs from it
-  the way a user does. Worth knowing before sending anybody there: **HACS
-  itself requires a GitHub account** -- its config flow hands straight to a
-  device-code step with no path around it, because it uses the token for
-  GitHub API calls limited to 60 an hour unauthenticated. Its catalogue does
-  not come from GitHub any more (`data-v2.hacs.xyz`), but the account is
-  still mandatory.
+- **HACS reads the *default branch* unless there is a stable release**, and
+  this repository's default branch is the YAML package, so the integration
+  cannot be added to HACS from here while it is pre-release
+  (`version_to_download()` in HACS's `repositories/base.py`). The **preview
+  channel** is the way in: a second repository whose default branch *is* the
+  integration, synced by `doc/preview-mirror/sync.yml`, which must stay
+  byte-identical to the copy running there. `scripts/dev/hacs_testbed.sh`
+  installs from it the way a user does. **HACS itself requires a GitHub
+  account.**
 
 ## Hard constraint: migration must preserve history
 
@@ -821,8 +512,8 @@ Get this wrong and years of history and every dashboard card break silently.
 
 The intended shape is a choice at setup: keep the legacy ids, or take modern
 ids and migrate the data across. How that works is **settled and asserted**
-in `tests/test_recorder_migration.py`; `doc/integration_plan.md` has the
-detail. In short:
+in `tests/test_recorder_migration.py`; `doc/integration_migration.md` is the
+user's guide. In short:
 
 - A registry rename carries raw history *and* long-term statistics, and a
   `total_increasing` sum keeps climbing across it.
@@ -860,8 +551,8 @@ Three rules, each of which can lose somebody's history if broken:
 - **The slot is stored in `data` under `CONF_LEGACY_SLOT`**, because detection
   needs the YAML package installed and the migration's next instruction is to
   remove it. Re-deriving at a later start answers `None`.
-- **The suffix goes on the name, not the id.** The generator writes
-  `Total DC power inv 2` and Home Assistant slugified that. Appending `_inv_2`
+- **The suffix goes on the name, not the id.** The YAML names the entity
+  `Total DC power inv 2` and Home Assistant slugifies that. Appending `_inv_2`
   to the finished id agrees today and stops agreeing the first time a name
   contains something `slugify` treats differently.
 
@@ -893,23 +584,16 @@ be careful:
 - `RAW_DIR` in `probe.py` is **fixed**, so `--save doc/device-fingerprints`
   cannot write a real serial there even when asked to;
 - `NEVER_PUBLISH = ("serial",)` filters anything whose *name* mentions a
-  serial, values and key lists alike — added after `sungrow_inverter_serial`
-  reached a published document's `fields_read_individually`;
+  serial, values and key lists alike;
 - a wallbox's serial sits two registers below the model name, so
-  `wallbox.probe_units` reads the **name**, keeping a serial out of a
-  capability probe entirely. It is masked at the publishing boundary too,
-  after `A25A…` was once published as the words `[16690, 13633]`.
+  `wallbox.probe_units` reads the **name**, and the serial is masked at the
+  publishing boundary too.
 
-**And the source tree is checked, because for a while it was not.** Those
-protections all guard *documents*. Over one session six real serials reached
-test fixtures and docstrings — three houses' worth belonging to other people —
-and were a `git push` away from publication. Every one was a fixture or an
-illustration and not one needed to be real.
-`tests/test_no_real_serials.py` now asserts it over every tracked file: it
-matches the **shape** of a serial rather than embedding real ones, and
-requires each hit to be on a list of strings known to be invented. A new
-serial in a fixture fails the suite until somebody adds it there deliberately,
-which is the moment to ask where it came from.
+**The source tree is checked as well.** `tests/test_no_real_serials.py`
+matches the **shape** of a serial over every tracked file and requires each
+hit to be on a list of strings known to be invented, so a new serial in a
+fixture fails the suite until somebody adds it there deliberately -- the
+moment to ask where it came from.
 
 So when a test needs a serial, use an obviously fake one — `A123456789`, or
 `A987654321` where two must differ. When prose needs to name a device, use

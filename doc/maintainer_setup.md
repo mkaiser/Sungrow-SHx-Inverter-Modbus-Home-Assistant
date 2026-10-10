@@ -13,7 +13,7 @@ Applies to the **integration** track only. The YAML package needs none of it.
 `sungrow-modbus==<version>`, and Home Assistant pip-installs a custom
 integration's requirements exactly as it does a built-in one. That package does
 not exist yet, so **a HACS install fails at start-up**. It works in the
-devcontainer only because `scripts/setup.sh` installs the library editable, which
+devcontainer only because `scripts/dev/setup.sh` installs the library editable, which
 no user has.
 
 There is no way to reserve a name on PyPI. A name is claimed by uploading, and
@@ -39,7 +39,7 @@ release that deserves the number. So:
 4. Tag a release. The first publish creates the project and claims the name:
 
    ```bash
-   python scripts/sync_version.py --set 0.0.1   # already true
+   python scripts/release/sync_version.py --set 0.0.1   # already true
    git commit -am "Release 0.0.1"
    git tag v0.0.1
    git push --follow-tags
@@ -72,8 +72,8 @@ the host is genuinely better:
 - **Any site the container cannot route to**, though in practice it follows the
   host's routing already.
 
-[scripts/sungrow_scan/portable.py](../scripts/sungrow_scan/portable.py) is built
-for exactly this: no dependencies, plain Python 3.9 or newer, so it runs on the
+[scripts/sungrow_survey/sungrow_survey.py](../scripts/sungrow_survey/sungrow_survey.py) is built
+for exactly this: no dependencies, plain Python 3.11 or newer, so it runs on the
 host with nothing installed. Write its output into the repository folder and it
 appears on both sides.
 
@@ -83,7 +83,7 @@ Run this **on the host**, not in the container:
 
 ```bash
 pip install zeroconf          # the only dependency, and only for this check
-python scripts/sungrow_scan/probe.py mdns
+python scripts/sungrow_survey/probe.py mdns
 ```
 
 If the dongle advertises its serial and model, host discovery becomes free and
@@ -93,13 +93,12 @@ install anything, say so and a standard-library-only version can be written.
 
 ### Which command runs where
 
-Three tools, three homes, and mixing them up produces confusing errors:
+Two tools, two homes, and mixing them up produces confusing errors:
 
 | Command | Runs | Because |
 | --- | --- | --- |
-| `python scripts/sungrow_scan/portable.py <ip>` | **host or container** | No dependencies at all |
-| `python scripts/sungrow_scan/probe.py mdns` | **host only** | Multicast does not cross the Docker bridge; needs `zeroconf` |
-| `python scripts/sungrow_scan/collect.py`, `probe.py capabilities/units/dump` | either | They prefer the device library where it is installed and fall back to this directory's own client, which is what lets them run for somebody who has installed nothing |
+| `python scripts/sungrow_survey/probe.py mdns` | **host only** | Multicast does not cross the Docker bridge; needs `zeroconf` |
+| `python scripts/sungrow_survey/sungrow_survey.py`, `probe.py capabilities/units/dump` | either | They prefer the device library where it is installed and fall back to this directory's own client, which is what lets them run for somebody who has installed nothing |
 
 ## 3. Capture the test systems
 
@@ -115,13 +114,13 @@ the transport against the answer, runs the block read test on the still-idle
 link, reads every register and prints what it found:
 
 ```bash
-python scripts/sungrow_scan/collect.py <host>
+python scripts/sungrow_survey/sungrow_survey.py <host>
 ```
 
 For the reading on its own, without the other phases:
 
 ```bash
-python scripts/sungrow_scan/probe.py capabilities <host> \
+python scripts/sungrow_survey/probe.py capabilities <host> \
     --save doc/device-fingerprints --label sh10rt-v112
 ```
 
@@ -135,17 +134,17 @@ python scripts/sungrow_scan/probe.py capabilities <host> \
 On the wallbox system, also dump the undocumented gaps:
 
 ```bash
-python scripts/sungrow_scan/probe.py dump <host> --unit 3 --start 21230 --count 40 --save
-python scripts/sungrow_scan/probe.py dump <host> --unit 3 --start 21266 --count 40 --save
+python scripts/sungrow_survey/probe.py dump <host> --unit 3 --start 21230 --count 40 --save
+python scripts/sungrow_survey/probe.py dump <host> --unit 3 --start 21266 --count 40 --save
 ```
 
-Everything above is **read-only**. No command in `scripts/sungrow_scan/` writes a
+Everything above is **read-only**. No command in `scripts/sungrow_survey/` writes a
 register.
 
 For anyone outside this repo — the users whose models nobody here owns —
-[scripts/sungrow_scan/portable.py](../scripts/sungrow_scan/portable.py) does the
-same job with no dependencies and no checkout: a single file they can download
-and run on plain Python. See [doc/device-fingerprints/](fingerprints/).
+[scripts/sungrow_survey/](../scripts/sungrow_survey/) does the
+same job with no dependencies: a folder they can download and run with
+`python sungrow_survey.py` on plain Python. See [doc/device-fingerprints/](fingerprints/).
 
 Then commit the `.capabilities.json` and `.readings.json` files. Leave the
 `.raw.json` alone — it is gitignored, and it carries the real serial and the
@@ -210,7 +209,7 @@ The protections in place:
 
 - `.testdata/` is gitignored and holds raw dumps, the production database copy,
   and anything else from a real installation.
-- `scripts/sungrow_scan/probe.py` splits every capture into a publishable part and
+- `scripts/sungrow_survey/probe.py` splits every capture into a publishable part and
   a private part rather than leaving the judgement to whoever runs it.
 - Connection details for the maintainer's own inverter are deliberately not in
   the repo; they live in his `secrets.yaml`.

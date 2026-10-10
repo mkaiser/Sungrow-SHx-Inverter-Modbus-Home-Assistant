@@ -44,7 +44,7 @@
   // VS Code copies the host ~/.gitconfig in on every create. On a Windows
   // host that drags in safe.directory entries like C:\..., which are not
   // absolute paths on Linux, and git then warns on every invocation.
-  "postCreateCommand": "git config --global --unset-all safe.directory '^[A-Za-z]:' || true; scripts/setup.sh",
+  "postCreateCommand": "git config --global --unset-all safe.directory '^[A-Za-z]:' || true; scripts/dev/setup.sh",
 
   "containerEnv": {
     "TZ": "Europe/Berlin"
@@ -56,7 +56,7 @@
       "label": "Home Assistant",
       "onAutoForward": "notify"
     },
-    // A second Home Assistant, from scripts/hacs_testbed.sh, which installs
+    // A second Home Assistant, from scripts/dev/hacs_testbed.sh, which installs
     // the integration through HACS instead of symlinking the working tree.
     // Two instances at once is the point: one is the code you are writing,
     // the other is what a user actually receives.

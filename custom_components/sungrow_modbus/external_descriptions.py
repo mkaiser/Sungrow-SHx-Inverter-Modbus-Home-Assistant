@@ -1,12 +1,10 @@
 """The two entities that exist only when another inverter shares the supply.
 
-Fourth hand-written description module, and the reason is new: these are not
-registers. `sensor_descriptions.py` is generated from the YAML package's
-entity map, the battery's and the wallbox's are hand-written because the
-package never covered those devices -- but all three describe something a
-Modbus read returns. These describe **arithmetic over another integration's
-entities**, so there is nothing to generate them from and no register behind
-them. `external.py` has the reasoning and the sign convention.
+These are not registers. `sensor_descriptions.py`, the battery's and the
+wallbox's all describe something a Modbus read returns; these describe
+**arithmetic over another integration's entities**, so there is no register
+behind them and no YAML entity to match. `external.py` has the reasoning and
+the sign convention.
 
 **Why only two, and no kWh.** The temptation is a matching pair of energy
 totals, and it is the wrong instinct: Home Assistant's Energy dashboard

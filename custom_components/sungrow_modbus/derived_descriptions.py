@@ -1,7 +1,7 @@
 """Entity descriptions for the derived values, generated.
 
-Do not edit by hand: `scripts/generate_derived.py` writes this file, and CI
-checks it. The arithmetic itself lives in `sungrow_modbus.derived`.
+Do not edit by hand: `scripts/generate/descriptions.py derived` writes this
+file, and CI checks it. The arithmetic itself lives in `sungrow_modbus.derived`.
 
 Each entry names the registers its value reads, which decides both the
 coordinator that writes it — the fastest tier among them, so a derived value

@@ -310,8 +310,8 @@ class SurveyRunner:
                     # because nothing there survives a wait like that.
                     allow_dump=True,
                     # Likewise only here, and not an option: the measurement
-                    # `scripts/layout.py` is changed from, which until now only
-                    # somebody with a terminal could take.
+                    # `src/sungrow_modbus/layout.py` is changed from, which until now
+                    # only somebody with a terminal could take.
                     allow_block_test=True,
                 )
                 if control_test:

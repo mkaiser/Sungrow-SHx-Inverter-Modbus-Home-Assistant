@@ -1,20 +1,18 @@
-"""The generated map of what the YAML package produces, and its invariants.
+"""The map of what the YAML package produces, and its invariants.
 
-`doc/legacy_entity_map.json` is what the port is built and checked against, so
-it has to stay true to `modbus_sungrow.yaml`. These tests fail if it goes
-stale, and if any of the properties a migration depends on stop holding.
+`doc/legacy_entity_map.json` is what the port is checked against: the entity
+ids, units and state classes existing users have, which a migration must keep.
+These tests fail if any of those properties stop holding.
 """
 
 from __future__ import annotations
 
 import json
-import sys
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, "scripts")
-
-from generate_entity_map import OUTPUT, build
+OUTPUT = Path(__file__).resolve().parent.parent / "doc" / "legacy_entity_map.json"
 
 #: Entities whose ids appear in dashboards, the Energy dashboard and years of
 #: history. If one of these moves, somebody's data is about to be orphaned.
@@ -29,13 +27,6 @@ CANARIES = {
 @pytest.fixture(scope="module")
 def committed() -> dict:
     return json.loads(OUTPUT.read_text(encoding="utf-8"))
-
-
-def test_the_committed_map_is_current() -> None:
-    expected = json.dumps(build(), indent=2, ensure_ascii=False) + "\n"
-    assert OUTPUT.read_text(encoding="utf-8") == expected, (
-        "doc/legacy_entity_map.json is stale — run scripts/generate_entity_map.py"
-    )
 
 
 def test_no_two_entities_want_the_same_entity_id(committed: dict) -> None:

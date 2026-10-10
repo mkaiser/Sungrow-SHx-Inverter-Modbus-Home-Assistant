@@ -14,45 +14,45 @@ ARGS    ?=
 HOST    ?=
 VERSION ?=
 
-# The generated files CI checks, in dependency order: entity_map feeds
-# registers, which feeds sensors and derived. Adding a generator means adding
-# it here and in .github/workflows/validate.yml -- the two lists must agree.
-GENERATORS := entity_map registers sensors scan_plan derived \
-              numbers switches selects strings compatibility
+# The generators CI checks, under scripts/. `descriptions.py` with no target
+# runs all five of its own, strings last. Adding a generator means adding it
+# here and in .github/workflows/validate.yml -- the two lists must agree.
+GENERATORS := generate/generate_scan_plan.py generate/descriptions.py \
+              generate/generate_compatibility.py
 
 .DEFAULT_GOAL := help
 
 ##@ Develop
 
 dev: ## Boot Home Assistant on :8123 against config/ (ARGS=--forget to drop the config entry)
-	scripts/develop.sh $(ARGS)
+	scripts/dev/develop.sh $(ARGS)
 .PHONY: dev
 
 develop: dev
 .PHONY: develop
 
 sim: ## Regenerate the register seed and serve it on :5020
-	scripts/simulate.sh $(ARGS)
+	scripts/dev/simulate.sh $(ARGS)
 .PHONY: sim
 
 simulate: sim
 .PHONY: simulate
 
 hacs: ## Boot a second HA on :8124 that installs this integration through HACS
-	scripts/hacs_testbed.sh $(ARGS)
+	scripts/dev/hacs_testbed.sh $(ARGS)
 .PHONY: hacs
 
 forget: ## Forget the stored inverter, so the next boot re-detects it
-	scripts/develop.sh --forget
+	scripts/dev/develop.sh --forget
 .PHONY: forget
 
 dev-bg: ## Same as `dev`, in the background, logging to /tmp/ha.log
-	nohup scripts/develop.sh $(ARGS) > /tmp/ha.log 2>&1 &
+	nohup scripts/dev/develop.sh $(ARGS) > /tmp/ha.log 2>&1 &
 	@echo "Home Assistant starting on :8123 -- tail -f /tmp/ha.log"
 .PHONY: dev-bg
 
 sim-bg: ## Same as `sim`, in the background, logging to /tmp/sim.log
-	nohup scripts/simulate.sh $(ARGS) > /tmp/sim.log 2>&1 &
+	nohup scripts/dev/simulate.sh $(ARGS) > /tmp/sim.log 2>&1 &
 	@echo "Simulator starting on :5020 -- tail -f /tmp/sim.log"
 .PHONY: sim-bg
 
@@ -64,11 +64,11 @@ stop: ## Stop a backgrounded Home Assistant and simulator
 .PHONY: stop
 
 setup: ## Install Home Assistant, the library (editable) and the tooling
-	scripts/setup.sh
+	scripts/dev/setup.sh
 .PHONY: setup
 
 refs: ## Clone HA core and the Modbus libraries into .reference/
-	scripts/fetch_references.sh
+	scripts/dev/fetch_references.sh
 .PHONY: refs
 
 ##@ Check
@@ -99,59 +99,59 @@ typecheck: ## mypy --strict over the library. Part of `check` and of CI
 
 gen: ## Rewrite every generated file
 	@for g in $(GENERATORS); do \
-	    echo "  generate_$$g.py"; \
-	    $(PY) scripts/generate_$$g.py || exit 1; \
+	    echo "  $$g"; \
+	    $(PY) scripts/$$g || exit 1; \
 	done
 .PHONY: gen
 
 gen-check: ## Verify every generated file is current
 	@for g in $(GENERATORS); do \
-	    $(PY) scripts/generate_$$g.py --check || exit 1; \
+	    $(PY) scripts/$$g --check || exit 1; \
 	done
-	@# Not a `generate_` script, so it is not in GENERATORS -- but it writes a
+	@# Not a generator, so it is not in GENERATORS -- but it writes a
 	@# document that states a number, and the number went stale by 47 entities
 	@# before anything compared it to the code.
-	@$(PY) scripts/review_names.py --check
+	@$(PY) scripts/helpers/review_names.py --check
 .PHONY: gen-check
 
 version-check: ## Verify pyproject.toml and manifest.json agree
-	$(PY) scripts/sync_version.py --check
+	$(PY) scripts/release/sync_version.py --check
 .PHONY: version-check
 
 ##@ Scan
 
 scan: ## Survey an installation and write a document (HOST=a.b.c.d optional)
-	$(PY) scripts/sungrow_scan/collect.py $(HOST) $(ARGS)
+	$(PY) scripts/sungrow_survey/sungrow_survey.py $(HOST) $(ARGS)
 .PHONY: scan
 
 probe: ## Probe for devices, e.g. make probe ARGS="sweep 192.168.178.0/24"
-	$(PY) scripts/sungrow_scan/probe.py $(ARGS)
+	$(PY) scripts/sungrow_survey/probe.py $(ARGS)
 .PHONY: probe
 
 blocks: ## The block read test -- which read inside a component fails, and why
-	$(PY) scripts/sungrow_scan/blocks.py $(ARGS)
+	$(PY) scripts/sungrow_survey/blocks.py $(ARGS)
 .PHONY: blocks
 
 scan-sim: ## Run the whole survey against the simulator -- needs `make sim-bg`
-	$(PY) scripts/sungrow_scan/collect.py 127.0.0.1 --port 5020 $(ARGS)
+	$(PY) scripts/sungrow_survey/sungrow_survey.py 127.0.0.1 --port 5020 $(ARGS)
 .PHONY: scan-sim
 
 ##@ Control test (writes to the inverter)
 
 controltest-dry: ## Show what the control test would write, and write nothing (HOST=a.b.c.d)
-	$(PY) scripts/sungrow_control_test.py $(HOST) --dry-run $(ARGS)
+	$(PY) scripts/hardware/sungrow_control_test.py $(HOST) --dry-run $(ARGS)
 .PHONY: controltest-dry
 
 controltest: ## Write each control, read it back, and put it back (HOST=a.b.c.d)
-	$(PY) scripts/sungrow_control_test.py $(HOST) $(ARGS)
+	$(PY) scripts/hardware/sungrow_control_test.py $(HOST) $(ARGS)
 .PHONY: controltest
 
 controltest-sim: ## Run it against the simulator -- needs `make sim-bg`
-	$(PY) scripts/sungrow_control_test.py 127.0.0.1 --port 5020 --simulated --no-restart
+	$(PY) scripts/hardware/sungrow_control_test.py 127.0.0.1 --port 5020 --simulated --no-restart
 .PHONY: controltest-sim
 
 controltest-restore: ## Put a saved snapshot back (HOST=a.b.c.d FILE=.testdata/...json)
-	$(PY) scripts/sungrow_control_test.py $(HOST) --restore $(FILE)
+	$(PY) scripts/hardware/sungrow_control_test.py $(HOST) --restore $(FILE)
 .PHONY: controltest-restore
 
 ##@ Release
@@ -159,18 +159,18 @@ controltest-restore: ## Put a saved snapshot back (HOST=a.b.c.d FILE=.testdata/.
 build: ## Build the sdist and wheel, and check them
 	$(PY) -m build
 	twine check --strict dist/*
-	$(PY) scripts/check_pinned_library.py --wheel "$$(ls dist/*.whl)"
+	$(PY) scripts/release/check_pinned_library.py --wheel "$$(ls dist/*.whl)"
 .PHONY: build
 
 pin-check: ## Does the *published* library the manifest pins serve this integration?
-	$(PY) scripts/check_pinned_library.py
+	$(PY) scripts/release/check_pinned_library.py
 .PHONY: pin-check
 
 version: ## Set the version everywhere (VERSION=X.Y.Z)
 	@test -n "$(VERSION)" || { echo "usage: make version VERSION=X.Y.Z"; exit 2; }
 	@# --set also re-installs the editable library: Home Assistant compares the
 	@# manifest pin against what is *installed*, not against pyproject.toml.
-	$(PY) scripts/sync_version.py --set $(VERSION)
+	$(PY) scripts/release/sync_version.py --set $(VERSION)
 .PHONY: version
 
 ##@ Other

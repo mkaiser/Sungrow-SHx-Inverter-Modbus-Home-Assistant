@@ -39,8 +39,8 @@ if TYPE_CHECKING:
 #: Domain and translation key of every entity in this module.
 #:
 #: Here rather than in the generator so that adding one cannot forget to name
-#: it: `scripts/generate_strings.py` reads this, and these keys have no legacy
-#: name to derive from -- they are named in `naming.OVERRIDES` like the SBR
+#: it: `scripts/generate/descriptions.py strings` reads this, and these keys have no
+#: legacy name to derive from -- they are named in `naming.OVERRIDES` like the SBR
 #: pack's, which are hand-written for the same reason.
 SURVEY_ENTITIES: tuple[tuple[str, str], ...] = (
     ("button", "run_survey"),

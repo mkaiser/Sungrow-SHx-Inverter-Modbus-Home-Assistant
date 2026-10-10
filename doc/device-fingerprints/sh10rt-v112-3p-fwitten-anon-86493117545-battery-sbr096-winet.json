@@ -1,6 +1,6 @@
 {
   "schema": 19,
-  "command_line": "scripts/sungrow_scan/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport winet --proxy no --reporter fwitten --comment 'Read by the maintainer over a VPN on 2026-09-25 with nothing else polling the inverters, and no Modbus proxy in the path. This house has two inverters in a master/slave cluster, each reachable at two addresses. The master through its WiNet-S; which medium the dongle uses is not established.' --other-inverter no --dump",
+  "command_line": "scripts/sungrow_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport winet --proxy no --reporter fwitten --comment 'Read by the maintainer over a VPN on 2026-09-25 with nothing else polling the inverters, and no Modbus proxy in the path. This house has two inverters in a master/slave cluster, each reachable at two addresses. The master through its WiNet-S; which medium the dongle uses is not established.' --other-inverter no --dump",
   "read_on": "2026-09-25",
   "read_at_local": "2026-09-25T17:06:01+02:00",
   "user_inputs": {

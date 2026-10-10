@@ -1,17 +1,13 @@
 """The SBR battery's own registers, which are not the inverter's.
 
-Hand-written, and in its own module for a reason worth stating: `registers.py`
-is **generated** from `doc/legacy_entity_map.json`, which is the inverter's
-map. These components were added to that file by hand and the next run of
-`scripts/generate_registers.py` deleted all eighty-one lines of them --
-exactly the failure mode this project keeps meeting from both directions,
-somebody's careful work written into a file whose contents are computed.
+In its own module because it is the battery's map, not the inverter's:
+`registers.py` is held field by field to `doc/legacy_entity_map.json`, the
+inverter's record, and these components have no entry there.
 
 The source here is
 `legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml`, proven by years
 of use, and `tests/test_sbr_pack.py` checks every address and scale against
-it -- the same protection the generated modules get from `--check`, arrived at
-the other way round.
+it -- the same protection `registers.py` gets from `tests/test_registers.py`.
 
 **Not on the inverter's unit.** Which unit the pack answers on depends on the
 transport: 200 over the inverter's own LAN port, 2 through a WiNet-S. See
@@ -284,8 +280,8 @@ class SbrBatteryModules(Component):
 
     **Eight explicit fields per family rather than a `repeating_group`.**
     The shape is a repeating group and declaring it as one would be shorter,
-    but `scripts/generate_scan_plan.py` records the library's block reads
-    into a committed artefact that a contributor's zip decodes from, and that
+    but `scripts/generate/generate_scan_plan.py` records the library's block reads
+    into a committed artefact that the standalone survey decodes from, and that
     agreement currently holds partly because this map has no repeating
     groups. Twenty-four declarations is the cheaper price.
 

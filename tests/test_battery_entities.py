@@ -1,10 +1,8 @@
 """The SBR pack as its own device, and the two gates in front of its entities.
 
-Its descriptions are the only hand-written ones in the integration --
-`sensor_descriptions.py` is generated from the YAML package's entity map, and
-the pack's registers are not in it, because they live in
-`legacy/additional_sensors/`, an opt-in file a user copies in by hand. So the
-guard that generation gives everything else has to be written here instead.
+The pack's registers are not in the YAML package's entity map, because they
+live in `legacy/additional_sensors/`, an opt-in file a user copies in by hand,
+so the inverter's tests against that map do not cover them. This file does.
 
 The two gates are the substance. A pack answers or it does not, and
 *separately* its cell block answers or it does not -- measured on one SBR096

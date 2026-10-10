@@ -1,8 +1,8 @@
 """Two producers of one document format, held to one definition.
 
-`scripts/sungrow_scan/probe.py` keeps literal copies of the probe table, the
+`scripts/sungrow_survey/probe.py` keeps literal copies of the probe table, the
 firmware table, the schema number and the stand-in derivation, because that
-directory ships as a zip a stranger runs on bare Python and must not import
+directory is run by strangers on bare Python and must not import
 this library. The integration reads the library's copies, because it can.
 
 The duplication is a deliberate trade -- a survey that cannot run standalone
@@ -22,7 +22,7 @@ from pathlib import Path
 import sys
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_scan"))
+sys.path.insert(0, str(REPO / "scripts" / "sungrow_survey"))
 
 import probe  # noqa: E402
 

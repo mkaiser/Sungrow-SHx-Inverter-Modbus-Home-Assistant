@@ -11,8 +11,8 @@ name supplies an entity_id only at *creation*, so a rename after release
 leaves an existing install's id alone and merely diverges it from a fresh
 one. `tests/test_entity_naming.py` pins that.
 
-So the rule is written down in `scripts/naming.py` and asserted here against
-the **committed** `strings.json`, not against the generator's output. Checking
+So the rule is written down in `scripts/generate/tables/naming.py` and asserted here
+against the **committed** `strings.json`, not against the generator's output. Checking
 the generator against itself would prove nothing, and would let an entry in the
 override table opt itself out of the convention it exists to serve.
 
@@ -29,7 +29,8 @@ import sys
 
 import pytest
 
-sys.path.insert(0, "scripts")
+sys.path.insert(0, "scripts/generate/tables")
+sys.path.insert(0, "scripts/generate")
 
 from naming import DIAGNOSTIC, violations
 
@@ -218,7 +219,7 @@ def test_legacy_names_are_untouched() -> None:
 def test_the_committed_names_are_what_the_generator_produces() -> None:
     # The convention is checked above; this only catches a strings.json edited
     # by hand, which would come back the next time anybody runs the generator.
-    from generate_strings import render
+    from descriptions import render_strings as render
 
     assert (COMPONENT / "strings.json").read_text(encoding="utf-8") == render()
     assert (COMPONENT / "translations" / "en.json").read_text(

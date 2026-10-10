@@ -25,11 +25,11 @@ flowchart TD
         mig["migration<br/>claim the YAML entity_id,<br/>or take a modern id then rename"]
         svc["services<br/>start_inverter, stop_inverter<br/>audience set per entry,<br/>admins only by default"]
         diag["diagnostics<br/>the downloadable report"]
-        gen["sensor/number/switch/select_descriptions.py<br/>generated from the YAML package's entity map"]
-        hand["battery_descriptions.py, wallbox_descriptions.py<br/>hand-written: their registers are not<br/>in the entity map, so there is<br/>nothing to generate them from"]
+        gen["sensor_descriptions.py: source, tested against the entity map<br/>derived/number/switch/select: generated from<br/>scripts/generate/tables"]
+        hand["battery_descriptions.py, wallbox_descriptions.py<br/>source: their registers are not<br/>in the entity map"]
     end
 
-    lib["sungrow_modbus &mdash; the library, installed from PyPI<br/>no Home Assistant imports anywhere<br/><br/>registers: the generated map<br/>components: block reads, per tier<br/>layout: registers that must be read alone<br/>capabilities: what this device actually has<br/>derived: MPPT power, power-flow bits<br/>smoothing: delay_on, moving average<br/>battery, battery_registers, battery_device: the SBR pack<br/>wallbox, wallbox_registers, wallbox_device: the charge point<br/>discovery: LAN sweep, reverse DNS"]
+    lib["sungrow_modbus &mdash; the library, installed from PyPI<br/>no Home Assistant imports anywhere<br/><br/>registers: the inverter's map<br/>components: block reads, per tier<br/>layout: registers that must be read alone<br/>capabilities: what this device actually has<br/>derived: MPPT power, power-flow bits<br/>smoothing: delay_on, moving average<br/>battery, battery_registers, battery_device: the SBR pack<br/>wallbox, wallbox_registers, wallbox_device: the charge point<br/>discovery: LAN sweep, reverse DNS"]
 
     subgraph modbus["homeassistant.components.modbus &mdash; owns the connection"]
         direction TB
@@ -119,58 +119,67 @@ rather than by unit id.
 
 ## At build time
 
-Most of the committed source is generated from the YAML package, because
-transcribing 105 registers by hand produces a mistyped address or a scale off
-by ten — a plausible-looking wrong number, which is the failure this project
-can least afford.
+The inverter's register map and its sensor descriptions are source, held by
+tests to the record of what the YAML package produces. A mistyped address or a
+scale off by ten gives a plausible-looking wrong number, which is the failure
+this project can least afford, so every field is checked against that record
+rather than trusted.
 
 ```mermaid
 flowchart LR
-    yaml["legacy/modbus_sungrow.yaml<br/>the specification of<br/>what has to be reproduced"]
-    map["doc/legacy_entity_map.json<br/>entity_id, unique_id,<br/>unit and state class"]
+    map["doc/legacy_entity_map.json<br/>record of the YAML package:<br/>entity_id, unique_id, unit, state class"]
 
-    subgraph hand["hand-maintained: each the single place its kind of fact lives"]
+    subgraph tables["scripts/generate/tables: judgement, one fact per table"]
         direction TB
-        writes["scripts/writes.py<br/>what is writable,<br/>and what is held back"]
-        naming["scripts/naming.py<br/>the naming convention"]
-        layout["scripts/layout.py<br/>where hardware<br/>contradicts the YAML"]
+        writes["writes.py<br/>what is writable,<br/>and what is held back"]
+        naming["naming.py<br/>the naming convention"]
     end
 
-    subgraph generated["committed source"]
+    subgraph source["source, edited by hand"]
         direction TB
         regs["src/sungrow_modbus/registers.py"]
-        descs["sensor, derived, number,<br/>switch and select descriptions"]
+        layout["src/sungrow_modbus/layout.py<br/>where hardware<br/>contradicts the YAML"]
+        sensors["sensor_descriptions.py"]
+    end
+
+    subgraph generated["generated, committed, --check in CI"]
+        direction TB
+        descs["derived, number, switch<br/>and select descriptions"]
         strings["strings.json<br/>translations/en.json"]
     end
 
-    yaml -- "generate_entity_map.py" --> map
-    map --> regs
+    map -. "tests" .-> regs
+    map -. "tests" .-> sensors
+    layout -. "tests" .-> regs
+    writes -. "tests" .-> regs
     map --> descs
-    map --> strings
-    writes --> regs
     writes --> descs
     naming --> strings
-    layout --> regs
-    layout --> descs
+    descs --> strings
+    sensors --> strings
 ```
 
-Every arrow has a `--check` mode that runs in CI **and** in pytest, so a
-generated file cannot drift from what it was derived from. Editing one by hand
-is undone the next time anybody runs the generator, which is the point.
+A solid arrow is `scripts/generate/descriptions.py`, whose `--check` runs in CI
+**and** in pytest, so a generated file cannot drift from what it was derived
+from. A dotted arrow is a test: `tests/test_registers.py` holds every field of
+`registers.py` to its entity-map entry — address, type, scale, word order,
+poll interval — and to `layout.py`'s isolation;
+`tests/test_sensor_descriptions.py` holds every sensor to the YAML entity it
+replaces — legacy name and id, unit, state class, category, component; and
+`tests/test_writes.py` holds the writable set to `writes.py`. So a hand edit
+is free, and a hand edit that breaks one of those properties fails on its own
+commit.
 
-The three hand-maintained tables are where judgement lives, and each records
-why rather than just what: `writes.py` says why a register is exposed or held
-back, `naming.py` states the convention a test then enforces, and `layout.py`
-carries measurements from real hardware where the YAML turned out to be wrong
-about a register's length.
+The tables are where judgement lives, and each records why rather than just
+what: `writes.py` says why a register is exposed or held back, `naming.py`
+states the convention a test then enforces, and `layout.py` carries
+measurements from real hardware where the YAML turned out to be wrong about a
+register's length or a block's readability.
 
-**And two register maps are hand-written, for a reason worth stating.** The
-generators derive everything from `doc/legacy_entity_map.json`, which is
-generated from `legacy/modbus_sungrow.yaml` — the *inverter's* map. The SBR's
+**The battery and wallbox maps have no entity-map record.** The SBR's
 registers are in an opt-in file a user copy-pastes, and the wallbox's are in
-no Sungrow document at all. So `battery_registers.py`, `wallbox_registers.py`
-and their description modules are written by hand, and get the guard
-generation gives everything else from tests instead:
+no Sungrow document at all, so `battery_registers.py`, `wallbox_registers.py`
+and their description modules are checked like this:
 
 | Hand-written | Checked against |
 | --- | --- |
@@ -178,8 +187,8 @@ generation gives everything else from tests instead:
 | `wallbox_registers.py` | the raw words in a committed fingerprint, decoded independently by `probe.py`, field by field |
 | `battery_descriptions.py`, `wallbox_descriptions.py` | every `field` resolves to a real field or property; no key collides across devices |
 
-That is the same discipline from the other direction: where a generator
-cannot prove a file is right, a measurement does.
+That is the same discipline as the inverter's map: where nothing generates a
+file, a test or a measurement says whether it is right.
 
 ## Why the library has no Home Assistant imports
 
@@ -189,7 +198,7 @@ Home Assistant and without an inverter — which is most of the test suite, and
 runs in about a second. Core's `sofar` integration is the reference
 implementation for this shape.
 
-It also means the library is useful on its own: `scripts/sungrow_scan/probe.py`
+It also means the library is useful on its own: `scripts/sungrow_survey/probe.py`
 drives it directly to fingerprint an installation, with no Home Assistant
 anywhere in the process.
 

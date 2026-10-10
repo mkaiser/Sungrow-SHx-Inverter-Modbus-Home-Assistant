@@ -1,11 +1,11 @@
 """Select descriptions, generated from the write table.
 
-Do not edit by hand: `scripts/generate_selectes.py` writes this file from
-`scripts/writes.py`, and CI checks that it matches.
+Do not edit by hand: `scripts/generate/descriptions.py selects` writes this
+file from `scripts/generate/tables/writes.py`, and CI checks that it matches.
 
-Each is one holding register carrying 0xAA or 0x55. The specification states
-both values for all three, so there is nothing to infer -- the `on` and `off`
-codes travel with the description rather than being assumed.
+Each is one holding register with a fixed set of values. The options and the
+value each one writes come from the same row of the write table as the labels
+in `strings.json`, so a label cannot drift from the value behind it.
 """
 
 from __future__ import annotations

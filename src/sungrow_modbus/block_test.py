@@ -7,17 +7,17 @@ either updates or raises -- so one bad register can empty a whole tier of
 entities. That has happened twice, and both times only a block read test said
 which register it was.
 
-This is the same measurement `scripts/sungrow_scan/blocks.py` makes from a
+This is the same measurement `scripts/sungrow_survey/blocks.py` makes from a
 terminal, for the integration to run from the device page. Two producers, one
 measurement:
 
 * **The outcome words are the tool's**, `OK` to `UNNARROWED`, because they are
-  quoted in `scripts/layout.py` and a measurement's phrasing is part of it.
-* **The published shape is `collect.py`'s**, key for key, so one reader handles
+  quoted in `src/sungrow_modbus/layout.py` and a measurement's phrasing is part of it.
+* **The published shape is `sungrow_survey.py`'s**, key for key, so one reader handles
   a document from either. `tests/test_block_test.py` holds the two together.
 * **The blocks are recorded, not computed** -- `inverter_blocks` drives every
   polled component against a recorder and keeps what it asked for, which is
-  how `scripts/generate_scan_plan.py` builds the plan the terminal tool reads.
+  how `scripts/generate/generate_scan_plan.py` builds the plan the terminal tool reads.
   So both test exactly the reads the poll makes, and the test asserts it.
 
 What this cannot do that the terminal tool can: name the count that would
@@ -49,15 +49,15 @@ REJECTED = "the library rejected the frame"
 
 #: Answered some attempts and not others: contention, not a fault. A block
 #: that answers *any* attempt is never narrowed and never offered to
-#: `scripts/layout.py`, because isolating a register on that evidence would be
-#: isolating whatever else was polling the inverter at the time.
+#: `src/sungrow_modbus/layout.py`, because isolating a register on that evidence would
+#: be isolating whatever else was polling the inverter at the time.
 INCONSISTENT = "inconsistent"
 
 #: Narrowing ran out of time here, so this range is as small as the run made
 #: it -- not as small as it goes. `layout.py` takes an exact register.
 UNNARROWED = "not narrowed"
 
-#: Rounds over the whole plan and attempts per read, as `collect.py` runs them.
+#: Rounds over the whole plan and attempts per read, as `sungrow_survey.py` runs them.
 #: Two different measurements: three back-to-back reads of one block can all
 #: land in one busy moment, where three rounds with the other blocks between
 #: them cannot. A register fault fails in every round.
@@ -305,7 +305,7 @@ async def measure(
 def document(
     outcome: Outcome, *, rounds: int = ROUNDS, attempts: int = ATTEMPTS
 ) -> dict[str, Any]:
-    """Render a block read test in the shape `collect.py` publishes.
+    """Render a block read test in the shape `sungrow_survey.py` publishes.
 
     Register numbers as Sungrow's document prints them, one above the protocol
     address. Carries no host and no serial: block numbers and outcome words

@@ -1,7 +1,7 @@
 # Capability fingerprints
 
 What a particular Sungrow installation actually answers, recorded by
-`python scripts/sungrow_scan/collect.py` — the one entry point, which finds
+`python scripts/sungrow_survey/sungrow_survey.py` — the one entry point, which finds
 the devices, asks what no register can answer, runs the block read test and
 writes the document. `probe.py capabilities <host> --save doc/device-fingerprints`
 is the single phase inside it, for when only that is wanted.
@@ -20,7 +20,7 @@ real machine is worth more than an inference from the YAML's comments.
 Almost none do, and that is not a gap in the evidence — it is the difference
 between reading an inverter and writing to one. A fingerprint is produced by
 reading; the `control_test` block is produced by `Run control write test` on the
-device page, or by `scripts/sungrow_control_test.py`, and both of those change
+device page, or by `scripts/hardware/sungrow_control_test.py`, and both of those change
 settings on a real installation and change them back.
 
 So **the absence of the block means "this run only read"**, never "the writes
@@ -407,12 +407,12 @@ until their transport was established; none in this directory does now.
 owner, or by somebody asking "what did you actually run?".
 
 It names the `capabilities` phase even when the reading came from
-`collect.py`, which is deliberate: that command repeats *this reading* with
-these answers, where `collect.py <host>` would ask the questions again
+`sungrow_survey.py`, which is deliberate: that command repeats *this reading* with
+these answers, where `sungrow_survey.py <host>` would ask the questions again
 interactively. The field is what to run, not a record of what was typed.
 
 ```
-scripts/sungrow_scan/probe.py capabilities <host> --port 502 --unit 1 --timeout 10
+scripts/sungrow_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10
   --passes 8 --transport direct_lan --proxy no --reporter mkaiser
   --battery 'Pylontech Force H1, 14.4 kWh' --comment '...' --dump
 ```
@@ -473,7 +473,7 @@ device:
 - a proxy rebuilds every request and response, so a frame quirk can be
   normalised away — or introduced. The padded frames at registers 2613 and
   2629 are exactly that class of finding, and they are why
-  [`scripts/layout.py`](../../scripts/layout.py) exists.
+  [`src/sungrow_modbus/layout.py`](../../src/sungrow_modbus/layout.py) exists.
 
 `unknown` is a real answer and the default. Somebody who does not know what a
 Modbus proxy is almost certainly has not installed one — but "probably not" is
@@ -507,7 +507,7 @@ choose this directory.
 
 Fixed does not mean one path: in a checkout it is `.testdata/fingerprints`,
 which `.gitignore` covers, and anywhere else — a contributor running
-`portable.py` on its own — it is `sungrow-scan-private/`. A *hidden* directory holding somebody's
+the survey outside a checkout — it is `sungrow-scan-private/`. A *hidden* directory holding somebody's
 serial and address, created inside the folder they were told to send back, is
 how a private file gets forwarded by accident.
 
@@ -542,26 +542,30 @@ If you have a model that is not here — especially an RS, an MG, a T-series, or
 anything with a wallbox, an SBR battery or a Logger — a report from it is the
 single most useful thing you can send.
 
-Download [scripts/sungrow_scan/portable.py](../../scripts/sungrow_scan/portable.py)
-and run it against your inverter:
+If you have the integration installed, the device page runs the survey and
+offers the document for download — nothing else is needed.
+
+Otherwise, get the [scripts/sungrow_survey/](../../scripts/sungrow_survey/) folder
+(GitHub's *Code → Download ZIP* on this branch has it) and run, from inside it:
 
 ```bash
-python collect_fingerprint.py 192.168.1.50
+python sungrow_survey.py
 ```
 
-It needs **nothing installed** — plain Python 3.9 or newer, no packages — and
-it **only reads**: the two Modbus read function codes are the only ones the
-file implements, and you are welcome to check before running it. It writes one
-JSON file and publishes nothing by itself.
+or `python sungrow_survey.py 192.168.1.50` if you know the address. It needs
+**nothing installed** — plain Python 3.11 or newer, no packages — and it **only
+reads**: the two Modbus read function codes are the only ones in the folder,
+and you are welcome to check before running it. It finds the device, asks a
+few things no register can answer, and ends by printing which file to send.
+It publishes nothing by itself.
 
 Look at the file, then attach it to an issue if you are happy to. Your serial
 number is replaced with a stand-in and your inverter's address is not in it.
+The private `.raw.json` it writes alongside stays with you.
 
 If the output says the device hung up several times, that is normal on Sungrow
-hardware — the script reconnects around each one, so the report is still
+hardware — the survey reconnects around each one, so the report is still
 complete.
 
-Maintainers working in this repo can use `python
-scripts/sungrow_scan/collect.py` instead, which runs every phase and writes
-the private `.raw.json` alongside — or `probe.py capabilities <host> --save
+Maintainers can use `probe.py capabilities <host> --save
 doc/device-fingerprints` for the reading on its own.

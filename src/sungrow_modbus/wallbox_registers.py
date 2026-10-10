@@ -33,8 +33,8 @@ by looking for it; it has to be asked for on a connection that exists. See
 `sungrow_modbus.wallbox.probe_units`.
 
 **Codes stay integers.** `modbus_connection` has an `enum()` field, and using
-it here would be neater to read -- but `scripts/generate_scan_plan.py`
-records this map into a committed artefact that a contributor's zip decodes
+it here would be neater to read -- but `scripts/generate/generate_scan_plan.py`
+records this map into a committed artefact that the standalone survey decodes
 from with its own decoder, and that decoder produces an `int` where an
 `enum()` field produces an `Enum`. The two would disagree, and
 `tests/test_portable_decoder.py` compares them field by field for good
@@ -319,8 +319,8 @@ class WallboxSettings(Component):
     """The holding registers, which are settings rather than readings.
 
     Read, not written. Nothing in this library writes to a wallbox: the write
-    table in `scripts/writes.py` is the only place a writable register is
-    declared, and no wallbox register is in it. Starting somebody's car
+    table in `scripts/generate/tables/writes.py` is the only place a writable register
+    is declared, and no wallbox register is in it. Starting somebody's car
     charging from a stale automation is not a thing to enable on one
     measurement of one unit.
     """

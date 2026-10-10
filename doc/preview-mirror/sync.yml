@@ -85,7 +85,7 @@
 # `sungrow_modbus.fingerprint` while the pinned wheel had no such module, and
 # a checkout cannot see that because there the library is installed editable
 # from `src/`. Installable is not the same as sufficient, which is why this
-# runs upstream's own `scripts/check_pinned_library.py` — taken from the same
+# runs upstream's own `scripts/release/check_pinned_library.py` — taken from the same
 # commit it is judging, so it knows that commit's imports, and stdlib-only,
 # so there is nothing to install.
 #
@@ -254,7 +254,7 @@ jobs:
       # satisfies whatever the source tree can satisfy.
       #
       # Read the `requirements` entry rather than `version`: they are kept
-      # equal by `scripts/sync_version.py`, but the requirement is the string
+      # equal by `scripts/release/sync_version.py`, but the requirement is the string
       # Home Assistant actually hands to pip.
       - name: The pinned library must serve that commit
         if: steps.upstream.outputs.verdict == 'green'
@@ -296,9 +296,11 @@ jobs:
           # than a refusal: existence on PyPI is what this workflow checked
           # before the script existed, and refusing every older commit would
           # be a worse failure than the one being guarded against.
-          CHECK=/tmp/upstream/scripts/check_pinned_library.py
+          # Older commits have it one level up.
+          CHECK=/tmp/upstream/scripts/release/check_pinned_library.py
+          [ -f "${CHECK}" ] || CHECK=/tmp/upstream/scripts/check_pinned_library.py
           if [ ! -f "${CHECK}" ]; then
-            echo "::notice::This commit predates scripts/check_pinned_library.py, so only the library's existence on PyPI was checked, not whether it provides what the integration imports."
+            echo "::notice::This commit predates scripts/release/check_pinned_library.py, so only the library's existence on PyPI was checked, not whether it provides what the integration imports."
             echo "publish=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi

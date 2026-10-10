@@ -1,6 +1,6 @@
 """The portable decoder must agree with the library, field for field.
 
-`scripts/sungrow_scan/` is handed to contributors as a zip, so it cannot
+`scripts/sungrow_survey/` is run by contributors with nothing installed, so it cannot
 import `sungrow_modbus` -- it decodes registers itself, from the description
 in `scan_plan.json`. That makes two decoders for one job, which is a liability
 the whole project otherwise avoids: `layout.py` exists because *one*
@@ -12,8 +12,8 @@ must be identical -- not close, identical, because a fingerprint's value is
 compared against other fingerprints and a rounding difference in the tenth
 field would be invisible and wrong.
 
-The seed is the right corpus: `scripts/gen_simulator_registers.py` derives it
-from the YAML package, so it covers every ported address, and
+The seed is the right corpus: `scripts/generate/generate_simulator_registers.py` derives
+it from the YAML package, so it covers every ported address, and
 `tests/test_registers_decode.py` already drives the library against it.
 """
 
@@ -26,7 +26,7 @@ import sys
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_scan"))
+sys.path.insert(0, str(REPO / "scripts" / "sungrow_survey"))
 
 from portable import (  # noqa: E402
     NetworkTooLarge,
@@ -38,8 +38,8 @@ from portable import (  # noqa: E402
     present,
 )
 
-PLAN = json.loads((REPO / "scripts" / "sungrow_scan" / "scan_plan.json").read_text())
-SEED = json.loads((REPO / "scripts" / "simulator_registers.json").read_text())
+PLAN = json.loads((REPO / "scripts" / "sungrow_survey" / "scan_plan.json").read_text())
+SEED = json.loads((REPO / "scripts" / "dev" / "simulator_registers.json").read_text())
 
 #: Written to, never read: the library refuses to decode a field it only
 #: knows how to write, and the scanner never reads it either.

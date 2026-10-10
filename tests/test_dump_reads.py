@@ -93,7 +93,7 @@ async def test_the_budget_says_which_bands_it_never_reached() -> None:
 
     A document whose dump quietly stops at band four is worse than one that
     says it stopped: the missing addresses read as refusals, and refusals are
-    what this project changes `scripts/layout.py` from.
+    what this project changes `src/sungrow_modbus/layout.py` from.
     """
 
     async def read(space: str, address: int, count: int) -> list[int]:

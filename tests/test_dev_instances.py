@@ -20,7 +20,9 @@ REPO = Path(__file__).resolve().parent.parent
 
 
 def _load(name: str) -> ModuleType:
-    spec = importlib.util.spec_from_file_location(name, REPO / "scripts" / f"{name}.py")
+    spec = importlib.util.spec_from_file_location(
+        name, REPO / "scripts" / "dev" / f"{name}.py"
+    )
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)

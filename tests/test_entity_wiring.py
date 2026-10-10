@@ -88,8 +88,10 @@ def test_the_derived_layer_covers_the_yaml_template_sensors() -> None:
     from pathlib import Path as _Path
     import sys
 
-    sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / "scripts"))
-    from generate_derived import MODE_FLAGS
+    scripts = _Path(__file__).resolve().parent.parent / "scripts" / "generate"
+    sys.path.insert(0, str(scripts))
+    sys.path.insert(0, str(scripts / "tables"))
+    from descriptions import MODE_FLAGS
     from naming import LEGACY_ONLY_SENSORS
 
     declared = {f"binary_sensor.{key}" for key in MODE_FLAGS}

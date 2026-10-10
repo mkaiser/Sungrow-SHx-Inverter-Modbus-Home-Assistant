@@ -1,9 +1,15 @@
-"""Sungrow inverter registers, generated from the YAML package.
+"""Sungrow inverter registers.
 
-Do not edit by hand: `scripts/generate_registers.py` writes this file from
-[doc/legacy_entity_map.json](../../doc/legacy_entity_map.json), and CI checks
-that it matches. Hand-written register knowledge — the identity block, decoded
-enumerations, derived values — lives in `components.py` instead.
+**Source, edited by hand.**
+[doc/legacy_entity_map.json](../../doc/legacy_entity_map.json) is the record
+of what the YAML package produces, and `tests/test_registers.py` holds every
+field here to it -- address, type, scale, word order and poll interval -- so a
+scale off by ten fails on the commit that introduces it. A field that must
+differ from the YAML says so where a test can see it -- `layout.COUNTS` for a
+string length, `write_units_per_count` for a write scale -- never silently.
+Other register knowledge -- the identity block, decoded enumerations, derived
+values -- lives in `components.py`; why some fields sit in components of their
+own is recorded in `layout.py`.
 
 Registers are declared by the number Sungrow's documentation and the YAML's
 comments give them; `reg()` turns that into the protocol address, one below,
@@ -102,7 +108,11 @@ class InverterRealtimeInput(Component):
     power_flow_status = integer(reg(13001), signed=False)
     """Power Flow Status."""
     load_power = int32(reg(13008), word_order="little", nan=2147483647, unit="W")
-    """Load power."""
+    """Load power.
+
+    YAML package: read 0x7FFFFFFF while the meter was disconnected, and the
+    totals derived from it were wrong for good (#692); hence nan.
+    """
 
 
 class InverterFastInput(Component):
@@ -141,7 +151,11 @@ class InverterFastInput(Component):
     grid_frequency = gauge(reg(5242), 0.01, signed=False, unit="Hz")
     """Grid frequency."""
     meter_active_power = int32(reg(5601), word_order="little", nan=2147483647, unit="W")
-    """Meter active power."""
+    """Meter active power.
+
+    YAML package: read 0x7FFFFFFF while the meter was disconnected, and the
+    totals derived from it were wrong for good (#692); hence nan.
+    """
     meter_phase_a_active_power = int32(
         reg(5603), word_order="little", nan=2147483647, unit="W"
     )
@@ -179,19 +193,65 @@ class InverterFastInput(Component):
     backup_frequency = gauge(reg(5734), 0.01, signed=False, nan=65535, unit="Hz")
     """Backup frequency."""
     meter_phase_a_voltage = gauge(reg(5741), 0.1, signed=True, nan=32767, unit="V")
-    """Meter phase A voltage."""
+    """Meter phase A voltage.
+
+    YAML package: refused on every poll for many users (#655, #660, #678,
+    #756), including over the LAN port of an SH10RT-20 on 95.14 (#756).
+    Measured: answers over every cable with a meter, bar12's SH10RT-20 on 95.14
+    included; through every WiNet-S it is refused alone and answers zero in a
+    block. Gated by METER_PHASE_MEASUREMENTS.
+    """
     meter_phase_b_voltage = gauge(reg(5742), 0.1, signed=True, nan=32767, unit="V")
-    """Meter phase B voltage."""
+    """Meter phase B voltage.
+
+    YAML package: refused on every poll for many users (#655, #660, #678,
+    #756), including over the LAN port of an SH10RT-20 on 95.14 (#756).
+    Measured: answers over every cable with a meter, bar12's SH10RT-20 on 95.14
+    included; through every WiNet-S it is refused alone and answers zero in a
+    block. Gated by METER_PHASE_MEASUREMENTS.
+    """
     meter_phase_c_voltage = gauge(reg(5743), 0.1, signed=True, nan=32767, unit="V")
-    """Meter phase C voltage."""
+    """Meter phase C voltage.
+
+    YAML package: refused on every poll for many users (#655, #660, #678,
+    #756), including over the LAN port of an SH10RT-20 on 95.14 (#756).
+    Measured: answers over every cable with a meter, bar12's SH10RT-20 on 95.14
+    included; through every WiNet-S it is refused alone and answers zero in a
+    block. Gated by METER_PHASE_MEASUREMENTS.
+    """
     meter_phase_a_current = gauge(reg(5744), 0.01, signed=False, nan=65535, unit="A")
-    """Meter phase A current."""
+    """Meter phase A current.
+
+    YAML package: refused on every poll for many users (#655, #660, #678,
+    #756), including over the LAN port of an SH10RT-20 on 95.14 (#756).
+    Measured: answers over every cable with a meter, bar12's SH10RT-20 on 95.14
+    included; through every WiNet-S it is refused alone and answers zero in a
+    block. Gated by METER_PHASE_MEASUREMENTS.
+    """
     meter_phase_b_current = gauge(reg(5745), 0.01, signed=False, nan=65535, unit="A")
-    """Meter phase B current."""
+    """Meter phase B current.
+
+    YAML package: refused on every poll for many users (#655, #660, #678,
+    #756), including over the LAN port of an SH10RT-20 on 95.14 (#756).
+    Measured: answers over every cable with a meter, bar12's SH10RT-20 on 95.14
+    included; through every WiNet-S it is refused alone and answers zero in a
+    block. Gated by METER_PHASE_MEASUREMENTS.
+    """
     meter_phase_c_current = gauge(reg(5746), 0.01, signed=False, nan=65535, unit="A")
-    """Meter phase C current."""
+    """Meter phase C current.
+
+    YAML package: refused on every poll for many users (#655, #660, #678,
+    #756), including over the LAN port of an SH10RT-20 on 95.14 (#756).
+    Measured: answers over every cable with a meter, bar12's SH10RT-20 on 95.14
+    included; through every WiNet-S it is refused alone and answers zero in a
+    block. Gated by METER_PHASE_MEASUREMENTS.
+    """
     export_power_raw = int32(reg(13010), word_order="little", nan=2147483647, unit="W")
-    """Export power raw."""
+    """Export power raw.
+
+    YAML package: read 0x7FFFFFFF while the meter was disconnected, and the
+    totals derived from it were wrong for good (#692); hence nan.
+    """
     battery_voltage = gauge(reg(13020), 0.1, signed=False, unit="V")
     """Battery voltage."""
     phase_a_current = gauge(reg(13031), 0.1, signed=True, unit="A")
@@ -214,7 +274,11 @@ class InverterBatteryPower(Component):
     register_space = "input"
 
     battery_power = int32(reg(5214), word_order="little", unit="W")
-    """Battery power."""
+    """Battery power.
+
+    YAML package: refused on an SH8.0RS through a WiNet-S (#655), reported.
+    Measured refused over gerd's cable, so read on its own.
+    """
 
 
 class InverterMeterChannel2(Component):
@@ -260,7 +324,11 @@ class InverterFastHolding(Component):
     pv_power_limitation_raw = integer(reg(13018), signed=False, nan=65535)
     """PV power limitation raw."""
     ems_mode_selection_raw = integer(reg(13050), signed=False, writable=True)
-    """EMS mode selection raw."""
+    """EMS mode selection raw.
+
+    YAML package: External EMS (3) reverts to self-consumption within about 20
+    s, for want of a heartbeat Sungrow does not document (#721).
+    """
     battery_forced_charge_discharge_cmd_raw = integer(
         reg(13051), signed=False, writable=True
     )
@@ -276,13 +344,28 @@ class InverterFastHolding(Component):
     export_power_limit = AsymmetricNumberField(
         reg(13074), signed=False, unit="W", writable=True, write_units_per_count=10
     )
-    """Export power limit."""
+    """Export power limit.
+
+    YAML package: off by ten in one direction or the other since 2026-02 -- a
+    divide by ten added for SHxRS and reverted (#666, #677), added for SHxRT
+    and removed (#707), then 700 setting 7000 W on SH10RT-20 95.14 (#734,
+    #763). The write scale is per firmware: export_scale measures it.
+    """
     backup_mode_raw = integer(reg(13075), signed=False, writable=True)
     """Backup mode raw."""
     export_power_limit_mode_raw = integer(reg(13087), signed=False, writable=True)
-    """Export power limit mode raw."""
+    """Export power limit mode raw.
+
+    YAML package: switching limitation off did not stick on an SH8.0RT 95.13
+    while a direct write did (#746). Confirm by reading it back.
+    """
     feed_in_limitation_ratio = gauge(reg(13088), 0.1, signed=False, nan=65535, unit="%")
-    """Feed-in limitation ratio."""
+    """Feed-in limitation ratio.
+
+    YAML package: not read (#768). Overrides 13074 when both are set, and an
+    installer may have set it (60 % seen), which makes a limit in watts look
+    like it does nothing (#763, #768).
+    """
     active_power_limitation_raw = integer(reg(13089), signed=False)
     """Active power limitation raw."""
     active_power_limitation_ratio_raw = gauge(reg(13090), 0.1, signed=False, unit="%")
@@ -294,19 +377,37 @@ class InverterFastHolding(Component):
     battery_max_charge_power = gauge(
         reg(33047), 10, signed=False, unit="W", writable=True
     )
-    """Battery max charge power."""
+    """Battery max charge power.
+
+    YAML package: an SH10RS refuses more than 10600 W with exception 0x04 while
+    its BDC rated power (5628) reads 0 (#705); a wallbox managing the battery
+    can overwrite it (#654).
+    """
     battery_max_discharge_power = gauge(
         reg(33048), 10, signed=False, unit="W", writable=True
     )
-    """Battery max discharge power."""
+    """Battery max discharge power.
+
+    YAML package: an SH10RS refuses more than 10600 W with exception 0x04 while
+    its BDC rated power (5628) reads 0 (#705); a wallbox managing the battery
+    can overwrite it (#654).
+    """
     battery_charging_start_power = gauge(
         reg(33149), 10, signed=False, nan=65535, unit="W", writable=True
     )
-    """Battery charging start power."""
+    """Battery charging start power.
+
+    YAML package: 0xFFFF on SHxRS and SHxT, shown as 655350 W, and never takes
+    a write (#654, #743). Gated by BATTERY_START_POWER.
+    """
     battery_discharging_start_power = gauge(
         reg(33150), 10, signed=False, nan=65535, unit="W", writable=True
     )
-    """Battery discharging start power."""
+    """Battery discharging start power.
+
+    YAML package: 0xFFFF on SHxRS and SHxT, shown as 655350 W, and never takes
+    a write (#654, #743). Gated by BATTERY_START_POWER.
+    """
 
 
 class InverterAplShutdownAtZero(Component):
@@ -353,7 +454,11 @@ class InverterSlowestInput(Component):
     sungrow_version_1 = string(reg(2582), 11)
     """Sungrow Version 1."""
     sungrow_version_2 = string(reg(2597), 11)
-    """Sungrow Version 2."""
+    """Sungrow Version 2.
+
+    YAML package: refused on SHxRS and through some WiNet-S (#654, #674, #678).
+    Reported, not measured: every fingerprint so far reads it.
+    """
     sungrow_protocol_version = uint32(reg(4952), word_order="little")
     """Sungrow Protocol Version."""
     sungrow_arm_software = string(reg(4954), 15)
@@ -450,7 +555,11 @@ class InverterBatteryFirmware(Component):
     register_space = "input"
 
     sungrow_version_4_sungrow_battery = string(reg(2629), 15)
-    """Sungrow Version 4 (Sungrow Battery)."""
+    """Sungrow Version 4 (Sungrow Battery).
+
+    YAML package: refused on SHxRS (#674, #678). Measured: refused through
+    every WiNet-S, read over every cable.
+    """
 
 
 class InverterFirmwareBlockBattery(Component):
@@ -463,7 +572,13 @@ class InverterFirmwareBlockBattery(Component):
     register_space = "input"
 
     battery_firmware_version = string(reg(13280), 15)
-    """Battery Firmware Version."""
+    """Battery Firmware Version.
+
+    YAML package: timed out on old firmware (51.0x reported, #660, #673) and on
+    SHxRS, and the retries slowed every other sensor to a five minute cadence
+    (#664) and HA's start-up (#742). Measured: closes the connection on
+    SAPPHIRE 95.03, so not read at all there (capabilities.ABSENT_ON_FIRMWARE).
+    """
 
 
 class InverterFirmwareBlockCommunicationModule(Component):
@@ -477,7 +592,13 @@ class InverterFirmwareBlockCommunicationModule(Component):
     register_space = "input"
 
     communication_module_firmware_version = string(reg(13265), 15)
-    """Communication Module Firmware Version."""
+    """Communication Module Firmware Version.
+
+    YAML package: timed out on old firmware (51.0x reported, #660, #673) and on
+    SHxRS, and the retries slowed every other sensor to a five minute cadence
+    (#664) and HA's start-up (#742). Measured: closes the connection on
+    SAPPHIRE 95.03, so not read at all there (capabilities.ABSENT_ON_FIRMWARE).
+    """
 
 
 class InverterFirmwareBlockInverter(Component):
@@ -490,7 +611,13 @@ class InverterFirmwareBlockInverter(Component):
     register_space = "input"
 
     inverter_firmware_version = string(reg(13250), 15)
-    """Inverter Firmware Version."""
+    """Inverter Firmware Version.
+
+    YAML package: timed out on old firmware (51.0x reported, #660, #673) and on
+    SHxRS, and the retries slowed every other sensor to a five minute cadence
+    (#664) and HA's start-up (#742). Measured: closes the connection on
+    SAPPHIRE 95.03, so not read at all there (capabilities.ABSENT_ON_FIRMWARE).
+    """
 
 
 class InverterSubControllerFirmware(Component):
@@ -503,7 +630,11 @@ class InverterSubControllerFirmware(Component):
     register_space = "input"
 
     sungrow_version_3 = string(reg(2613), 15)
-    """Sungrow Version 3."""
+    """Sungrow Version 3.
+
+    YAML package: refused on SHxRS (#674, #678). Measured: refused through
+    every WiNet-S, read over every cable.
+    """
 
 
 #: Attribute name on the device to the Component it holds.

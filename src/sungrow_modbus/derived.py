@@ -64,7 +64,7 @@ RUNNING_STATES: dict[int, str] = {
 }
 
 #: What Sungrow's writable mode registers mean. One pair, used by every one of
-#: them, and `scripts/writes.py` sends exactly these two values.
+#: them, and `scripts/generate/tables/writes.py` sends exactly these two values.
 MODE_ENABLED = 0xAA
 MODE_DISABLED = 0x55
 
@@ -112,8 +112,8 @@ class Derived:
         """Return a Sungrow on/off mode register as a boolean, or None.
 
         `0xAA` is enabled and `0x55` disabled -- the same pair every writable
-        mode register in this map uses, and what `scripts/writes.py` sends.
-        Anything else, including the `0xFFFF` an SH-series inverter answers
+        mode register in this map uses, and what `scripts/generate/tables/writes.py`
+        sends. Anything else, including the `0xFFFF` an SH-series inverter answers
         for a mode only SHT hardware supports, is **None** rather than False:
         "we do not know" and "limiting is off" are different claims, and a
         False here would be the second one made up out of the first.

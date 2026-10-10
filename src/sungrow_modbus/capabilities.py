@@ -70,7 +70,7 @@ class Capability(StrEnum):
     direct-LAN readings of the same register map.
 
     This docstring used to say the reference SH10RT could not read register
-    2611 or beyond at all. That was measured before `scripts/layout.py`
+    2611 or beyond at all. That was measured before `src/sungrow_modbus/layout.py`
     existed: those registers arrive in a frame the device pads, and asking
     for the count in `layout.COUNTS` reads them. The same machine now reads
     all 27 blocks, three attempts each. What cannot read them is a dongle.
@@ -107,6 +107,24 @@ class Capability(StrEnum):
     limitation controls the **grid connection point** while power limiting
     controls the **inverter's AC output**. They are different measurements of
     different things.
+    """
+
+    METER_PHASE_MEASUREMENTS = "meter_phase_measurements"
+    """The meter's per-phase voltage and current, registers 5741-5746.
+
+    Undocumented by Sungrow, and the YAML package's most complained-about
+    registers: "pymodbus returned isError True" on every poll, for years
+    (#655, #660, #678, #756). **Measured, the problem is the dongle.** All
+    five houses read through a WiNet-S on 2026-09/10 refuse these registers
+    read alone and answer **zero** inside a pooled block -- which is how the
+    library reads them, so behind a dongle six entities would report 0 V and
+    0 A forever. Every cable reading with a meter answers, on firmware 95.03,
+    95.12, 95.13 and 95.14.
+
+    That last one matters: #756 reports them refused over the LAN port of an
+    SH10RT-20 on **95.14**, and bar12's SH10RT-20 on 95.14 reads 231.7 V over
+    its cable. So this is *not* a firmware gate, and `ABSENT_ON_FIRMWARE`
+    does not carry it.
     """
 
     FORCED_STARTUP = "forced_startup"
@@ -269,6 +287,41 @@ ABSENT_IN: dict[Capability, frozenset[Family]] = {
     Capability.THREE_PHASE: frozenset({Family.RS, Family.RL, Family.K}),
 }
 
+#: Where a capability is **measured** absent on one firmware, keyed by the ARM
+#: version string in register 2582 (`sungrow_version_1`) -- the part a
+#: firmware update changes, as opposed to the hardware strings beside it.
+#:
+#: The firmware twin of `ABSENT_IN`, with a stricter rule for getting in:
+#: **a committed fingerprint, not a bug report.** Issue reports name firmware
+#: that is wrong as often as right -- #756 blames 95.14 for refusing the meter
+#: phase registers, and bar12 reads them on 95.14 -- and a gate keyed on a
+#: version string hides entities from everyone on that version. So an entry
+#: names the fingerprints it rests on, and a version is matched **exactly**:
+#: the neighbouring versions are unmeasured, not implied.
+#:
+#: Unlike the family table this also stops the **read**, through
+#: `device.FIRMWARE_GATED_COMPONENTS`. That is the point of it: these
+#: registers are not refused with an exception but answered by **closing the
+#: connection**, so polling them costs a timeout and a reconnect every time.
+#: That is how 0.1.0a5 failed to set up at all on the firmware below.
+ABSENT_ON_FIRMWARE: dict[str, frozenset[Capability]] = {
+    # fwitten's SH10RT-V112 master and slave, both over their own LAN port,
+    # 2026-09-07 and again 2026-09-25: the three firmware strings at 13250,
+    # 13265 and 13280, and the second meter channel at 13200, each closed the
+    # connection 3 of 3 while their neighbours answered in the same session
+    # (`src/sungrow_modbus/layout.py` has the transcript). Both machines identically.
+    #   sh10rt-v112-3p-fwitten-anon-33442450531-battery-none.json
+    #   sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-meter.json
+    # The same model reads all four on 95.13 (gerd's SH8.0RT-V112), as do an
+    # SH10RT on 95.12 and an SH10RT-20 on 95.14, so it is the firmware.
+    #
+    # The YAML package's reports go further -- 13250-13280 missing on 51.0x
+    # (#660, #673) -- but nothing on 51.0x has been surveyed, so it stays out.
+    "SAPPHIRE-H_01011.95.03": frozenset(
+        {Capability.FIRMWARE_VERSIONS, Capability.METER_CHANNEL_2}
+    ),
+}
+
 #: What register 5002 reports. Asking beats inferring, so this outranks the
 #: family table for THREE_PHASE.
 OUTPUT_TYPES: dict[int, str] = {0: "single phase", 1: "3P4L", 2: "3P3L"}
@@ -320,18 +373,32 @@ def family_for(device_type_code: int | None) -> Family | None:
     return None
 
 
-def known_absent(device_type_code: int | None) -> frozenset[Capability]:
-    """Return the capabilities this model is documented not to have.
+def known_absent(
+    device_type_code: int | None, firmware: str | None = None
+) -> frozenset[Capability]:
+    """Return the capabilities this model, on this firmware, is known not to have.
 
-    An unknown code returns nothing, which is deliberate: a model nobody has
-    written down should be probed rather than assumed crippled.
+    An unknown code returns nothing from the family table, which is
+    deliberate: a model nobody has written down should be probed rather than
+    assumed crippled. The same goes for firmware nobody has surveyed.
     """
+    by_firmware = absent_on_firmware(firmware)
     family = family_for(device_type_code)
     if family is None:
-        return frozenset()
-    return frozenset(
+        return by_firmware
+    return by_firmware | frozenset(
         capability for capability, families in ABSENT_IN.items() if family in families
     )
+
+
+def absent_on_firmware(firmware: str | None) -> frozenset[Capability]:
+    """Return what this firmware was measured not to have; see `ABSENT_ON_FIRMWARE`.
+
+    Matched exactly after trimming, because the next version up is unmeasured.
+    """
+    if not firmware:
+        return frozenset()
+    return ABSENT_ON_FIRMWARE.get(firmware.strip(), frozenset())
 
 
 #: A capability to a register that is present only when it is. The
@@ -343,6 +410,9 @@ PROBES: dict[Capability, tuple[str, ...]] = {
     Capability.THREE_PHASE: ("phase_b_voltage", "phase_c_voltage"),
     Capability.BATTERY: ("battery_voltage", "battery_level"),
     Capability.METER_DIRECT: ("meter_phase_a_active_power",),
+    # Voltage alone, and only phase A: a real meter on a live grid never reads
+    # 0 V, where a current of 0 A is an ordinary night.
+    Capability.METER_PHASE_MEASUREMENTS: ("meter_phase_a_voltage",),
     Capability.FIRMWARE_VERSIONS: ("inverter_firmware_version",),
     Capability.SUB_CONTROLLER_FIRMWARE: ("sungrow_version_3",),
     Capability.BATTERY_FIRMWARE: ("sungrow_version_4_sungrow_battery",),
@@ -399,6 +469,10 @@ ZERO_MEANS_ABSENT: frozenset[Capability] = frozenset(
         Capability.MPPT3,
         Capability.MPPT4,
         Capability.METER_CHANNEL_2,
+        # A third source of the same zero, and the safest of the four to read
+        # as absence: the grid's own voltage is not zero while it is there.
+        # See the capability's docstring for the five dongle paths.
+        Capability.METER_PHASE_MEASUREMENTS,
     }
 )
 
@@ -434,6 +508,7 @@ def resolve(
     device_type_code: int | None,
     output_type: int | None = None,
     probed: frozenset[Capability] | None = None,
+    firmware: str | None = None,
 ) -> frozenset[Capability]:
     """Work out what a device has, from what it said and what answered.
 
@@ -443,7 +518,7 @@ def resolve(
     said it should not be there — the table is a record of bug reports, not a
     specification, and a device that answers is the better authority.
     """
-    absent = known_absent(device_type_code)
+    absent = known_absent(device_type_code, firmware)
     resolved = set(probed or frozenset())
 
     if output_type is not None:

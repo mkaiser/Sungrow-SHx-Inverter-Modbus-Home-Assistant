@@ -4,8 +4,8 @@ Two kinds of test live here and they defend different things.
 
 The **static** ones compare the procedure's hand-typed specification column
 against the register map, and the procedure's plan against
-`scripts/writes.py`. They need no hardware and no hardware is what makes them
-valuable: they would have caught a factor-10 error in the map at the moment
+`scripts/generate/tables/writes.py`. They need no hardware and no hardware is what makes
+them valuable: they would have caught a factor-10 error in the map at the moment
 somebody committed it, months before a hardware run could have found it.
 
 The **behavioural** ones drive the engine against a stub that lies in a chosen
@@ -67,7 +67,9 @@ from sungrow_modbus.control_test import (
     visibility,
 )
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+sys.path.insert(
+    0, str(Path(__file__).resolve().parents[1] / "scripts" / "generate" / "tables")
+)
 
 import writes
 
@@ -119,8 +121,8 @@ def test_every_probe_is_one_register(
 def test_every_writable_register_is_either_probed_or_excused() -> None:
     """A new control cannot quietly escape the procedure.
 
-    `scripts/writes.py` is where writability is declared. Anything it names has
-    to be either something this test writes or something this test has written
+    `scripts/generate/tables/writes.py` is where writability is declared. Anything it
+    names has to be either something this test writes or something this test has written
     down a reason for not writing -- and adding a control to the integration
     fails this suite until somebody decides which of the two it is.
     """
@@ -146,7 +148,7 @@ def test_the_start_stop_register_is_not_in_the_writable_table() -> None:
 
 @pytest.mark.parametrize("probe", PROBES, ids=lambda probe: probe.field)
 def test_the_bounds_are_the_ones_the_entities_use(probe: Probe) -> None:
-    """The plan's bounds equal `scripts/writes.py`'s, field by field.
+    """The plan's bounds equal `scripts/generate/tables/writes.py`'s, field by field.
 
     The duplication is deliberate -- the library cannot import a file from
     `scripts/` -- and this is the assertion that makes it safe, the same trade
@@ -167,8 +169,8 @@ def test_the_capability_matches_the_write_table(probe: Probe) -> None:
     """The procedure gates a control exactly as the entity for it is gated.
 
     Two tables again, kept equal by a test, for the reason the library cannot
-    import `scripts/writes.py`. The direction that matters is this one: if the
-    entity for a register is not created on some hardware because a capability
+    import `scripts/generate/tables/writes.py`. The direction that matters is this one:
+    if the entity for a register is not created on some hardware because a capability
     is absent, the control test must not go writing to that register there
     either.
 

@@ -1,6 +1,6 @@
 """The pin in manifest.json is a promise about a published wheel.
 
-`scripts/check_pinned_library.py` is the only thing in this repository that
+`scripts/release/check_pinned_library.py` is the only thing in this repository that
 tests that promise, because everything else runs against the editable install
 from `src/`, which satisfies whatever the source tree can satisfy. So these
 tests are about the *check*, not about the library: they build wheels by hand,
@@ -21,7 +21,7 @@ import zipfile
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-SCRIPT = REPO / "scripts" / "check_pinned_library.py"
+SCRIPT = REPO / "scripts" / "release" / "check_pinned_library.py"
 
 
 def _load():

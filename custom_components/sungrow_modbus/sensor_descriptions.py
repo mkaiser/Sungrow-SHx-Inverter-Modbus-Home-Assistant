@@ -1,7 +1,9 @@
-"""Sensor descriptions, generated from the YAML package.
+"""Sensor descriptions for the inverter's registers.
 
-Do not edit by hand: `scripts/generate_sensors.py` writes this file from
-`doc/legacy_entity_map.json`, and CI checks that it matches.
+**Source, edited by hand.** `doc/legacy_entity_map.json` is the record of what
+the YAML package produces, and `tests/test_sensor_descriptions.py` holds this
+file to it: every YAML sensor must have a description here, with the same
+legacy name, unit, state class, category and component.
 
 Every entry carries the unit and state class of the YAML entry it replaces,
 because a replacement in a different unit class silently freezes long-term
@@ -236,6 +238,7 @@ SENSOR_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         legacy_name="Battery Firmware Version",
         legacy_unique_id="sg_battery_firmware_version",
         legacy_platform="modbus",
+        requires=Capability.FIRMWARE_VERSIONS,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SungrowSensorDescription(
@@ -444,6 +447,7 @@ SENSOR_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         legacy_name="Communication Module Firmware Version",
         legacy_unique_id="sg_communication_module_firmware_version",
         legacy_platform="modbus",
+        requires=Capability.FIRMWARE_VERSIONS,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SungrowSensorDescription(
@@ -680,6 +684,7 @@ SENSOR_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         legacy_name="Inverter Firmware Version",
         legacy_unique_id="sg_inverter_firmware_version",
         legacy_platform="modbus",
+        requires=Capability.FIRMWARE_VERSIONS,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SungrowSensorDescription(
@@ -819,6 +824,7 @@ SENSOR_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         legacy_name="Meter phase A current",
         legacy_unique_id="sg_meter_phase_a_current",
         legacy_platform="modbus",
+        requires=Capability.METER_PHASE_MEASUREMENTS,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="A",
@@ -832,6 +838,7 @@ SENSOR_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         legacy_name="Meter phase A voltage",
         legacy_unique_id="sg_meter_phase_a_voltage",
         legacy_platform="modbus",
+        requires=Capability.METER_PHASE_MEASUREMENTS,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="V",
@@ -858,6 +865,7 @@ SENSOR_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         legacy_name="Meter phase B current",
         legacy_unique_id="sg_meter_phase_b_current",
         legacy_platform="modbus",
+        requires=Capability.METER_PHASE_MEASUREMENTS,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="A",
@@ -871,6 +879,7 @@ SENSOR_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         legacy_name="Meter phase B voltage",
         legacy_unique_id="sg_meter_phase_b_voltage",
         legacy_platform="modbus",
+        requires=Capability.METER_PHASE_MEASUREMENTS,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="V",
@@ -897,6 +906,7 @@ SENSOR_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         legacy_name="Meter phase C current",
         legacy_unique_id="sg_meter_phase_c_current",
         legacy_platform="modbus",
+        requires=Capability.METER_PHASE_MEASUREMENTS,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="A",
@@ -910,6 +920,7 @@ SENSOR_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         legacy_name="Meter phase C voltage",
         legacy_unique_id="sg_meter_phase_c_voltage",
         legacy_platform="modbus",
+        requires=Capability.METER_PHASE_MEASUREMENTS,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="V",

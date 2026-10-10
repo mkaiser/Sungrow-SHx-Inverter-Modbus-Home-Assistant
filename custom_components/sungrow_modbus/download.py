@@ -91,7 +91,7 @@ def _filename(document: dict) -> str:
     """Name the file the way this repository names a fingerprint.
 
     Not a naming scheme of its own, and that is the point: a document from
-    this button and one from `scripts/sungrow_scan/collect.py` describe the
+    this button and one from `scripts/sungrow_survey/sungrow_survey.py` describe the
     same thing in the same format, so they should arrive under the same name.
     A maintainer receiving twenty of these sorts them together, and
     `doc/device-fingerprints/` can take one without renaming it.

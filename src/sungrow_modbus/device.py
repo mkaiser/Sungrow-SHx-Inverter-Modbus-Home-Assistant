@@ -12,7 +12,7 @@ from modbus_connection import ModbusConnectionError, ModbusError, ModbusUnit
 from modbus_connection.model import Component
 
 from .addresses import Address, read
-from .capabilities import Capability, probe, resolve
+from .capabilities import Capability, absent_on_firmware, probe, resolve
 from .components import InverterControl, InverterIdentity
 from .const import model_for
 from .derived import Derived
@@ -20,6 +20,21 @@ from .model import RegisterValue, UpdateReport, present
 from .registers import COMPONENTS, TIER_COMPONENTS
 
 _LOGGER = logging.getLogger(__name__)
+
+#: The components a capability's absence takes off the wire, for the
+#: capabilities `capabilities.ABSENT_ON_FIRMWARE` can rule out. Only those:
+#: the family table decides which entities exist and leaves the polling alone,
+#: because a family entry is a remark and a probe outranks it. A firmware
+#: entry is a measurement of a register that hangs up the link, and not
+#: reading it is the whole fix.
+FIRMWARE_GATED_COMPONENTS: dict[Capability, tuple[str, ...]] = {
+    Capability.FIRMWARE_VERSIONS: (
+        "firmware_block_inverter",
+        "firmware_block_communication_module",
+        "firmware_block_battery",
+    ),
+    Capability.METER_CHANNEL_2: ("meter_channel_2",),
+}
 
 
 class SungrowInverter:
@@ -92,6 +107,27 @@ class SungrowInverter:
         return model_for(self.device_type_code)
 
     @property
+    def firmware(self) -> str | None:
+        """The ARM firmware version (register 2582), or None until it is read.
+
+        What `capabilities.ABSENT_ON_FIRMWARE` is keyed by, and what changes
+        when the inverter is updated -- `sungrow_version_1` reads
+        `SAPPHIRE-H_01011.95.14`, where the hardware strings beside it do not
+        move. Read by the slowest tier, so it is None until that first poll:
+        a gate keyed on it costs one round of the reads it exists to skip.
+        """
+        value = self._read_or_none("sungrow_version_1")
+        return value.strip() if isinstance(value, str) and value.strip() else None
+
+    def skipped_components(self) -> frozenset[str]:
+        """Components this firmware is measured not to answer, so never read."""
+        return frozenset(
+            name
+            for capability in absent_on_firmware(self.firmware)
+            for name in FIRMWARE_GATED_COMPONENTS.get(capability, ())
+        )
+
+    @property
     def output_type(self) -> int | None:
         """What register 5002 says about phases, which beats inferring it."""
         return self.identity.output_type
@@ -107,7 +143,7 @@ class SungrowInverter:
         """
         if probed is None:
             probed = probe(self._read_or_none)
-        return resolve(self.device_type_code, self.output_type, probed)
+        return resolve(self.device_type_code, self.output_type, probed, self.firmware)
 
     def probed_capabilities(self) -> frozenset[Capability]:
         """Return the capabilities whose registers actually answered.
@@ -196,6 +232,13 @@ class SungrowInverter:
         updated: set[str] = set()
         failed: dict[str, ModbusError] = {}
         for name in names:
+            # Asked per component rather than once per tier: the firmware
+            # string arrives with `slowest_input`, which is read before the
+            # firmware blocks in the same tier, so the very first poll gates.
+            if name in self.skipped_components():
+                # Neither updated nor failed: never asked. Its entities do not
+                # exist, because the same table took their capability away.
+                continue
             try:
                 try:
                     await self.component(name).async_update()

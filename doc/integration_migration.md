@@ -76,7 +76,7 @@ Things that do **not** follow the entity IDs automatically:
 
 - **InfluxDB, and anything else writing to an external store.** Those keep
   their own copy keyed by entity ID, so a `Create new entities` migration
-  splits the series there. See `scripts/influx_migration.py`.
+  splits the series there. See `scripts/helpers/influx_migration.py`.
 - **Hand-built Lovelace cards that hard-code an entity ID**, if you chose new
   entities.
 

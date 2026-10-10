@@ -506,6 +506,14 @@ class SungrowRuntimeData:
     that use it import the real type.
     """
 
+    built_from: Any = None
+    """The entry's data and options as setup last read them.
+
+    After `survey`, for the reason `survey` gives. Compared by the update
+    listener, so a change setup never reads -- the export limit's measured
+    write scale -- does not reload the entry under the entity storing it.
+    """
+
     @property
     def served_components(self) -> frozenset[str]:
         """Component names this entry polls, answered or not."""

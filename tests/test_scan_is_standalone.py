@@ -1,17 +1,10 @@
 """The scanning scripts must run with nothing installed.
 
-`portable.py` is handed to a contributor on its own: they download one file,
-run it against their inverter, and send back a document. That only works if it
-imports nothing outside the standard library **at import time** -- and the one
-thing it would obviously want to import, `sungrow_modbus`, is exactly what a
-stranger will not have.
-
-The rule covers its siblings too, and deliberately still does. There was a
-`sungrow_scan.zip` that shipped the whole directory, and it was retired once
-HACS could put the survey in front of testers instead -- but `collect.py` and
-`blocks.py` **import `portable`**, so a convenient import anywhere in here
-reaches the one file that is still handed over alone. The zip is gone; the
-boundary it protected is not.
+A contributor who will not install anything gets the `sungrow_survey` folder and
+runs `sungrow_survey.py` with a bare Python. That only works if nothing in the
+folder imports anything outside the standard library **at import time** --
+and the one thing they would obviously want to import, `sungrow_modbus`, is
+exactly what a stranger will not have.
 
 Nothing but discipline enforces it. A single
 `from sungrow_modbus import COMPONENTS` at the top of a file would break it,
@@ -33,15 +26,11 @@ import sys
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-SCAN = REPO / "scripts" / "sungrow_scan"
+SCAN = REPO / "scripts" / "sungrow_survey"
 
 #: The modules that may be imported at module level, beyond the standard
-#: library: each other. They travel together in the zip.
+#: library: each other. They travel together as a folder.
 SIBLINGS = {path.stem for path in SCAN.glob("*.py")}
-
-#: `portable.py` is the file somebody downloads on its own, so it may not even
-#: import a sibling -- one file has to be enough.
-ALONE = "portable"
 
 
 def _module_level_imports(path: Path) -> set[str]:
@@ -96,19 +85,9 @@ def test_every_scanning_script_imports_only_the_standard_library() -> None:
         outside = _module_level_imports(path) - allowed
         assert not outside, (
             f"{path.name} imports {sorted(outside)} at module level, so it "
-            "cannot run with nothing installed -- and `portable.py`, which is "
-            "downloaded on its own, is imported from here."
+            "cannot run with nothing installed -- and `sungrow_survey.py`, which "
+            "contributors run with a bare Python, imports this folder."
         )
-
-
-def test_the_downloadable_file_needs_no_siblings() -> None:
-    """`portable.py` is handed over on its own, so one file has to be enough."""
-    path = SCAN / f"{ALONE}.py"
-    outside = _module_level_imports(path) - set(sys.stdlib_module_names)
-    assert not outside, (
-        f"{path.name} imports {sorted(outside)}, but it is the file somebody "
-        "downloads by itself."
-    )
 
 
 def test_the_committed_plan_travels_with_them() -> None:
@@ -120,13 +99,27 @@ def test_the_committed_plan_travels_with_them() -> None:
     )
 
 
-@pytest.mark.parametrize("path", sorted(SCAN.glob("*.py")), ids=lambda p: p.name)
+#: The scripts somebody runs, as against the modules they import. Found by
+#: what the file does rather than listed, so a new script cannot be missed.
+SCRIPTS = sorted(
+    path
+    for path in SCAN.glob("*.py")
+    if 'if __name__ == "__main__":' in path.read_text(encoding="utf-8")
+)
+
+
+def test_the_folder_has_a_script_to_run() -> None:
+    """A filter that quietly matched nothing would make the test below pass."""
+    assert "sungrow_survey" in {path.stem for path in SCRIPTS}, SCRIPTS
+
+
+@pytest.mark.parametrize("path", SCRIPTS, ids=lambda p: p.name)
 def test_every_script_can_be_run_the_way_it_is_documented(path) -> None:
     """A shebang and the bit that makes it mean something.
 
-    `collect.py` shipped without the executable bit -- the one file in this
+    `sungrow_survey.py` shipped without the executable bit -- the one file in this
     directory that the README, the issue template and `probe.py` itself all
-    tell people to run. `./collect.py` answered *Permission denied*, which
+    tell people to run. `./sungrow_survey.py` answered *Permission denied*, which
     reads as "this does not exist" to somebody who was handed a folder and a
     sentence, and the sentence I printed alongside it named an absolute
     `/workspaces/...` path and the interpreter `python`, which many systems

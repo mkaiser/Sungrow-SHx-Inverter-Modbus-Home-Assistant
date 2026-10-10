@@ -1,9 +1,9 @@
 """The block read test from the device page, held to the terminal tool's.
 
 `sungrow_modbus.block_test` is the second producer of a measurement that
-`scripts/sungrow_scan/blocks.py` and `collect.py` already make, and its answers
+`scripts/sungrow_survey/blocks.py` and `sungrow_survey.py` already make, and its answers
 end up in the same place: a published document, read by a maintainer deciding
-what goes in `scripts/layout.py`. So most of what is asserted here is
+what goes in `src/sungrow_modbus/layout.py`. So most of what is asserted here is
 *agreement* -- the same blocks, the same outcome words, the same budget and the
 same document shape -- and the rest is the classification that four bugs in
 this project got wrong: an exception response is an answer, a lost link is not.
@@ -42,10 +42,10 @@ from sungrow_modbus.block_test import (
 )
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_scan"))
+sys.path.insert(0, str(REPO / "scripts" / "sungrow_survey"))
 
 import blocks as terminal  # noqa: E402
-import collect  # noqa: E402
+import sungrow_survey  # noqa: E402
 
 Reader = Callable[[str, int, int], object]
 
@@ -87,7 +87,7 @@ async def test_it_reads_exactly_the_blocks_the_scan_plan_records() -> None:
     they ever disagree, one of the two producers is testing reads the poll
     does not make.
     """
-    plan = json.loads((REPO / "scripts/sungrow_scan/scan_plan.json").read_text())
+    plan = json.loads((REPO / "scripts/sungrow_survey/scan_plan.json").read_text())
     recorded = [
         (entry["component"], entry["space"], address, count)
         for entry in plan["components"]
@@ -102,14 +102,14 @@ async def test_it_reads_exactly_the_blocks_the_scan_plan_records() -> None:
 
 
 def test_the_outcome_words_and_the_budget_are_the_terminal_tools() -> None:
-    """`scripts/layout.py` quotes these words, so they are part of the result."""
+    """`sungrow_modbus.layout` quotes these words, so they are part of the result."""
     for name in ("OK", "DROPPED", "REFUSED", "REJECTED", "INCONSISTENT"):
         assert getattr(block_test, name) == getattr(terminal, name), name
     assert block_test.UNNARROWED == terminal.UNNARROWED
     assert block_test.NARROW_BUDGET == terminal.NARROW_BUDGET
     assert (block_test.ROUNDS, block_test.ATTEMPTS) == (
-        collect.ROUNDS,
-        collect.ATTEMPTS,
+        sungrow_survey.ROUNDS,
+        sungrow_survey.ATTEMPTS,
     )
 
 
@@ -128,7 +128,7 @@ async def test_the_document_has_collects_shape_key_for_key() -> None:
     )
 
     key = ("sub_controller_firmware", "input", 2612, 15)
-    theirs = collect._block_document(
+    theirs = sungrow_survey._block_document(
         terminal.BlockOutcome(
             tally={
                 ("fast_input", "input", 5010, 25): {terminal.OK: 3},

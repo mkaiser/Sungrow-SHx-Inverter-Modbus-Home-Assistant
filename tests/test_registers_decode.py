@@ -21,7 +21,12 @@ import pytest
 from custom_components.sungrow_modbus.sensor_descriptions import SENSOR_DESCRIPTIONS
 from sungrow_modbus import TIER_COMPONENTS, SungrowInverter
 
-SEED = Path(__file__).resolve().parent.parent / "scripts" / "simulator_registers.json"
+SEED = (
+    Path(__file__).resolve().parent.parent
+    / "scripts"
+    / "dev"
+    / "simulator_registers.json"
+)
 
 
 @pytest.fixture(scope="module")

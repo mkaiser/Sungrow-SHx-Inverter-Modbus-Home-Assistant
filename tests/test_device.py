@@ -111,7 +111,7 @@ async def test_an_absent_register_does_not_empty_its_whole_tier(
     a protocol error. They hold two firmware strings, and while they were
     pooled into `slowest_input`'s one 58-register read, those two absent
     registers left all 36 other slowest-tier fields permanently empty -- on
-    the maintainer's own inverter. `scripts/layout.py` now reads each on its
+    the maintainer's own inverter. `src/sungrow_modbus/layout.py` now reads each on its
     own, so the cost of an absent register is that register.
     """
     for address in (2612, 2628):
@@ -199,3 +199,51 @@ async def test_an_all_null_string_reads_as_no_value(unit: MockModbusUnit) -> Non
     assert Capability.BATTERY_FIRMWARE not in inverter.capabilities()
     # A string that is present still arrives intact.
     assert inverter.field("sungrow_version_1") == "SAPPHIRE-H_01011.95.12"
+
+
+async def test_firmware_that_hangs_up_on_a_block_is_never_asked(
+    unit: MockModbusUnit,
+) -> None:
+    """Firmware 95.03 at fwitten closes the connection on 13250-13280 and 13200.
+
+    `capabilities.ABSENT_ON_FIRMWARE` records it, and the device stops asking:
+    not one read reaches those addresses once the firmware string is known,
+    and nothing is reported as failed, because nothing was tried. It is learned
+    in the same tier: `slowest_input` carries the string and is read first.
+    """
+    unit.input[2581] = _words("SAPPHIRE-H_01011.95.03", 11)
+    asked: list[int] = []
+    read = unit.read_input_registers
+
+    async def recording(address: int, count: int) -> list[int]:
+        asked.append(address)
+        return await read(address, count)
+
+    unit.read_input_registers = recording  # type: ignore[method-assign]
+    inverter = SungrowInverter(unit)
+
+    slowest = await inverter.async_update_tier("slowest")
+    fast = await inverter.async_update_tier("fast")
+
+    assert inverter.firmware == "SAPPHIRE-H_01011.95.03"
+    assert not {13249, 13264, 13279, 13199} & set(asked)
+    gated = {
+        "firmware_block_inverter",
+        "firmware_block_communication_module",
+        "firmware_block_battery",
+        "meter_channel_2",
+    }
+    assert not gated & (set(slowest.failed) | set(fast.failed))
+    assert not gated & (slowest.updated | fast.updated)
+    assert Capability.FIRMWARE_VERSIONS not in inverter.capabilities()
+    assert Capability.METER_CHANNEL_2 not in inverter.capabilities()
+
+
+async def test_other_firmware_is_still_asked(unit: MockModbusUnit) -> None:
+    """The gate is an exact match: 95.13 on the same model reads all four."""
+    unit.input[2581] = _words("SAPPHIRE-H_01011.95.13", 11)
+    inverter = SungrowInverter(unit)
+
+    await inverter.async_update_tier("slowest")
+
+    assert inverter.skipped_components() == frozenset()

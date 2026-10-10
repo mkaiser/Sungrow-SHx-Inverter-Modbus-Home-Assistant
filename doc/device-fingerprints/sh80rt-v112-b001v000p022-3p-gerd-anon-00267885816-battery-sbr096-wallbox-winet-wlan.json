@@ -1,6 +1,6 @@
 {
   "schema": 14,
-  "command_line": "scripts/sungrow_scan/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport winet_wlan --proxy no --reporter gerd --comment 'The WiNet-S dongle on the same inverter, reached over WiFi: register 6100 refuses here, port 443 answers, and the one LAN cable in this house goes into the inverter itself (scanned separately at another address). Same serial, one machine, two paths. Home Assistant stopped for this reading.' --dump",
+  "command_line": "scripts/sungrow_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport winet_wlan --proxy no --reporter gerd --comment 'The WiNet-S dongle on the same inverter, reached over WiFi: register 6100 refuses here, port 443 answers, and the one LAN cable in this house goes into the inverter itself (scanned separately at another address). Same serial, one machine, two paths. Home Assistant stopped for this reading.' --dump",
   "read_on": "2026-09-08",
   "read_at_local": "2026-09-08T17:53:23+02:00",
   "user_inputs": {

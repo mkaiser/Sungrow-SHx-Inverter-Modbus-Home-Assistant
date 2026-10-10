@@ -8,7 +8,7 @@ inverter, and almost nobody who has a Sungrow has that.
 
 Somebody who has set this integration up has the hard part already — a
 working, identified connection to their inverter. This turns it into a
-document, in exactly the format `scripts/sungrow_scan/collect.py` writes, so
+document, in exactly the format `scripts/sungrow_survey/sungrow_survey.py` writes, so
 one generator keeps building `doc/compatibility.md` from both and a reading
 from somebody who only ever clicked a button counts the same as one from a
 terminal.
@@ -30,7 +30,7 @@ reader to discover:
   what it was doing. Holding the coordinators off for the duration is the
   fix, and is not done here yet.
 * **The block read test runs from the button, never from the download.**
-  That measurement is what `scripts/layout.py` is ever changed from, and it
+  That measurement is what `src/sungrow_modbus/layout.py` is ever changed from, and it
   costs 27 block reads times three rounds, twice each, plus narrowing — fine
   for a background task with a progress bar, too long for a download somebody
   is waiting on. So a document from **Download diagnostics** carries none, and
@@ -321,7 +321,7 @@ async def async_build(
     if raw is not None:
         document["register_dump"] = register_dump.masked(raw)
 
-    # Same key and shape as `collect.py` writes, so `doc/compatibility.md` and
+    # Same key and shape as `sungrow_survey.py` writes, so `doc/compatibility.md` and
     # anybody reading a document need not know which producer made it.
     if blocks_measured is not None:
         document["block_read_test"] = block_test.document(blocks_measured)

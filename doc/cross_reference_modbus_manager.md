@@ -382,7 +382,7 @@ Four facts from this that change the design here, not just add registers:
    weaker evidence than they looked.
 3. **Nothing here can recognise one.** Both identification paths ask for the
    inverter serial at input 4990 — `identify()` in
-   [probe.py](../scripts/sungrow_scan/probe.py), across units 1-5, and
+   [probe.py](../scripts/sungrow_survey/probe.py), across units 1-5, and
    `_async_identify` in
    [config_flow.py](../custom_components/sungrow_modbus/config_flow.py),
    which fails with `no_serial_number`. An iHM has no such register and
@@ -485,7 +485,7 @@ Landed with this document:
   SoC (holding 13017), self-consumption of today (13029), and the backup
   port's three currents, three voltages and frequency.
 - **An iHomeManager probe.** `identify()` now falls back to input 8000 on unit
-  247 where no inverter unit answers, so the device is *findable*. `collect.py`
+  247 where no inverter unit answers, so the device is *findable*. `sungrow_survey.py`
   reports it and deliberately does **not** survey it — every block the survey
   reads is an inverter's, and pointing them at unit 247 would write a document
   full of refusals. The probe costs one read, and only at an address where

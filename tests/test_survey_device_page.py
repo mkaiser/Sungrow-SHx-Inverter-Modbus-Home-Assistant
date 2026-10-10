@@ -234,7 +234,7 @@ async def test_the_button_runs_a_survey_and_the_sensors_follow(
 async def test_the_button_runs_the_block_read_test_first(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """The measurement `scripts/layout.py` is changed from, without a terminal.
+    """The measurement `sungrow_modbus.layout` is changed from, without a terminal.
 
     Until it ran here only a contributor with Python and a checkout could take
     it, so somebody on Home Assistant OS could report "these entities stay empty"

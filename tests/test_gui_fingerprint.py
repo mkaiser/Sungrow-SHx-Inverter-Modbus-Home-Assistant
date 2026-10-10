@@ -120,7 +120,7 @@ async def test_it_says_a_tool_made_it_rather_than_printing_a_command(
 
     assert document["command_line"].startswith(survey.COLLECTED_BY_INTEGRATION)
     assert "probe.py" not in document["command_line"]
-    assert "collect.py" not in document["command_line"]
+    assert "sungrow_survey.py" not in document["command_line"]
 
 
 # -- what must never be in it --------------------------------------------------

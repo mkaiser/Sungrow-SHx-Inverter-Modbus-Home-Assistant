@@ -1,6 +1,6 @@
 """The portable reading path must produce what the library's produces.
 
-`scripts/sungrow_scan/` is handed to contributors as a zip, so it reads and
+`scripts/sungrow_survey/` is run by contributors with nothing installed, so it reads and
 decodes registers itself, driven by the committed `scan_plan.json`. That is
 the second implementation of the thing `sungrow_modbus` exists to do, and the
 only reason it is tolerable is this test: both paths are driven against the
@@ -29,21 +29,21 @@ from modbus_connection.mock import MockModbusConnection
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_scan"))
+sys.path.insert(0, str(REPO / "scripts" / "sungrow_survey"))
 
 from portable import NEVER_PUBLISH, read_fields  # noqa: E402
 from probe import _async_decoded_readings  # noqa: E402
 
-PLAN = json.loads((REPO / "scripts" / "sungrow_scan" / "scan_plan.json").read_text())
-SEED = json.loads((REPO / "scripts" / "simulator_registers.json").read_text())
+PLAN = json.loads((REPO / "scripts" / "sungrow_survey" / "scan_plan.json").read_text())
+SEED = json.loads((REPO / "scripts" / "dev" / "simulator_registers.json").read_text())
 
 
 def _seeded_unit():
     """Return a mock unit answering like the simulator does.
 
-    The same seed `scripts/simulate.sh` serves, so this is the inverter both
+    The same seed `scripts/dev/simulate.sh` serves, so this is the inverter both
     paths are compared against -- and it covers every ported address, because
-    `gen_simulator_registers.py` derives it from the YAML package.
+    `generate_simulator_registers.py` derives it from the YAML package.
     """
     unit = MockModbusConnection().for_unit(1)
     unit.input = {int(a): v for a, v in SEED.get("input", {}).items()}
@@ -126,7 +126,7 @@ def test_the_portable_path_never_reports_a_serial() -> None:
     A sweep of the register map walks straight into a field that holds the
     real serial. The library path drops those by name; the portable path did
     not, until this test's subject was written -- so a document collected
-    from a zip would have published it.
+    without the library would have published it.
     """
 
     async def run() -> dict:
@@ -207,7 +207,7 @@ def test_the_survey_reads_the_same_with_the_library_switched_off(
     The tests above compare the two implementations; this one checks the
     branch that chooses between them. Without it the portable path could be
     perfect and never reached -- which is the state this repository was in
-    until the fallback was wired, and a zip user would have got a
+    until the fallback was wired, and a contributor without the library would have got a
     ModuleNotFoundError rather than a document.
     """
     import probe
@@ -224,7 +224,7 @@ def test_the_survey_reads_the_same_with_the_library_switched_off(
 #: What one SBR096 actually said, read on 2026-09-09 at unit 200 over the
 #: inverter's own LAN port -- the only path that answers the cell block at
 #: all. Used instead of the simulator seed because the seed has none of these
-#: addresses and `scripts/simulate.sh` serves a single unit id, so it cannot
+#: addresses and `scripts/dev/simulate.sh` serves a single unit id, so it cannot
 #: stand in for a pack on unit 200 beside an inverter on unit 1. Real words
 #: are the better fixture anyway: these are the numbers a document has to
 #: come out of.

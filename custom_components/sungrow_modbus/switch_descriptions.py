@@ -1,7 +1,7 @@
 """Switch descriptions, generated from the write table.
 
-Do not edit by hand: `scripts/generate_switches.py` writes this file from
-`scripts/writes.py`, and CI checks that it matches.
+Do not edit by hand: `scripts/generate/descriptions.py switches` writes this
+file from `scripts/generate/tables/writes.py`, and CI checks that it matches.
 
 Each is one holding register carrying 0xAA or 0x55. The specification states
 both values for all three, so there is nothing to infer -- the `on` and `off`

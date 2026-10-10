@@ -17,7 +17,7 @@ before `ZERO_MEANS_ABSENT` caught it.
 So capability is measured rather than read. One command does it:
 
 ```bash
-python scripts/sungrow_scan/collect.py
+python scripts/sungrow_survey/sungrow_survey.py
 ```
 
 It reads and never writes, takes 5–40 minutes depending on the link, and
@@ -225,7 +225,7 @@ a Home Assistant diagnostics download, so it describes the **one endpoint**
 the integration is configured against and nothing else on the network. An
 iHomeManager is a separate endpoint and is not reachable through an inverter.
 
-So what is wanted from that house specifically is a `collect.py` run, or just
+So what is wanted from that house specifically is a `sungrow_survey.py` run, or just
 a sweep — and it is the first time this list has had somebody to ask. It
 would settle both item 3 and item 6 at once.
 
@@ -243,7 +243,7 @@ confirmed that against a machine.
 If you have one, the survey needs pointing at port 503:
 
 ```bash
-python scripts/sungrow_scan/probe.py sweep 192.168.1.0/24 --port 503
+python scripts/sungrow_survey/probe.py sweep 192.168.1.0/24 --port 503
 ```
 
 **Port 516 turned out to be something else.** Reported in [discussion

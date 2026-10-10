@@ -13,7 +13,7 @@ import sys
 
 import pytest
 
-sys.path.insert(0, "scripts")
+sys.path.insert(0, "scripts/helpers")
 
 from influx_migration import flux, grafana, influxql, pairs
 

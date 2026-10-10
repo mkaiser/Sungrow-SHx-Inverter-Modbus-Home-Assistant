@@ -1,7 +1,7 @@
 """Number descriptions, generated from the write table.
 
-Do not edit by hand: `scripts/generate_numbers.py` writes this file from
-`scripts/writes.py`, and CI checks that it matches.
+Do not edit by hand: `scripts/generate/descriptions.py numbers` writes this
+file from `scripts/generate/tables/writes.py`, and CI checks that it matches.
 
 Each of these reads and writes one register. The YAML package needed three
 pieces for that — a `template number`, a `modbus.write_register` action and a
