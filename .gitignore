@@ -37,8 +37,7 @@ build/
 # scripts/sungrow_read_only_survey/probe.py.
 .testdata/
 
-# Written by scripts/sungrow_read_only_survey/sungrow_survey.py when it runs outside a checkout,
-# and by probe.py's fixed raw destination in the same case. Both carry the
-# real serial and address; `.testdata/` covers the in-checkout case above.
-sungrow-scan-private/
+# The survey's transcript, written beside the run when it runs outside a
+# checkout. It carries the real serial and addresses; `.testdata/` covers the
+# in-checkout case above.
 sungrow-scan-*.log

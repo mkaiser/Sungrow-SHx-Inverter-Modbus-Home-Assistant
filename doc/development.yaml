@@ -253,7 +253,7 @@ control_test:
     the house is left changed.
 
   if_it_dies_halfway: >-
-    make controltest-restore HOST=192.168.178.35 FILE=.testdata/control-tests/<stamp>-snapshot.json
+    make controltest-restore HOST=192.168.178.35 FILE=.testdata/fingerprints/<stamp>-snapshot.json
     The snapshot is flushed to disk before the first write and removed only
     once every register is back AND has been read back. So a snapshot left on
     disk is the list of what may still be changed, and this puts it back. It

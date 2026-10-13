@@ -1159,6 +1159,60 @@ def test_re_reading_the_same_device_does_overwrite(tmp_path) -> None:
     assert len(list(tmp_path.glob("*.json"))) == 1
 
 
+def test_a_reading_writes_one_document_and_no_private_copy(tmp_path) -> None:
+    """The document is the only file a reading writes.
+
+    An un-redacted copy beside it once carried the real serial and the full
+    address, and added nothing else: the transcript holds both already. One
+    private file fewer is one fewer to forward by mistake.
+    """
+    from probe import _save
+
+    fingerprint, raw = _sbr_fingerprint()
+    raw = {
+        **raw,
+        "serial": "A123456789",
+        "host": "192.168.178.41",
+        "read_at": "2026-09-08T18:00:00+00:00",
+    }
+    written = _save(tmp_path, "one-machine", raw, fingerprint)
+
+    assert written == [tmp_path / "one-machine.json"]
+    assert sorted(path.name for path in tmp_path.rglob("*")) == ["one-machine.json"]
+    text = written[0].read_text()
+    assert "A123456789" not in text
+    assert "192.168.178.41" not in text
+
+
+def test_a_withheld_address_never_overwrites_a_reading(tmp_path) -> None:
+    """Two documents saying `xxx.xxx` cannot be told apart, so both survive.
+
+    Without the address tail nothing published says whether the second
+    reading came from the same place as the first, and losing a reading is
+    the worse mistake than a spare filename.
+    """
+    from probe import _save
+
+    fingerprint, raw = _sbr_fingerprint()
+    raw = {**raw, "serial": "A123456789", "host": "192.168.178.41"}
+    first = _save(
+        tmp_path,
+        "one-machine",
+        {**raw, "read_at": "2026-09-08T18:00:00+00:00"},
+        fingerprint,
+    )
+    again = _save(
+        tmp_path,
+        "one-machine",
+        {**raw, "read_at": "2026-09-08T18:05:00+00:00"},
+        fingerprint,
+    )
+
+    assert first[0].name == "one-machine.json"
+    assert again[0].name == "one-machine-2.json"
+    assert first[0].exists()
+
+
 def _table_rows() -> dict[str, dict[str, str]]:
     """Return the committed compatibility table, row by row, keyed by stem."""
     lines = (REPO / "doc" / "compatibility.md").read_text(encoding="utf-8").splitlines()

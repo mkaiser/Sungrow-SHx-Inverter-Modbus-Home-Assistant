@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.13"
-# dependencies = ["sungrow-modbus==0.1.0a11", "modbus-connection[tmodbus]>=4.10.0"]
+# dependencies = [
+#     "sungrow-modbus==0.1.0a11",
+#     "modbus-connection[tmodbus]>=4.10.0",
+# ]
 # ///
 """Run the control test against a real inverter, from a terminal.
 
@@ -65,10 +68,11 @@ from sungrow_modbus.control_test import (
 )
 from sungrow_modbus.fingerprint import SCHEMA, stand_in
 
-#: Where a run's private record goes. Gitignored, and it carries the real serial
-#: and the real address -- which is exactly why the publishable block is built
-#: separately rather than by redacting this.
-PRIVATE_DIR = Path(".testdata/control-tests")
+#: Where a run's files go inside a checkout: the folder the read-only survey
+#: writes its document to, gitignored, so both tools' results sit together.
+#: Nothing written there carries the serial or the address -- the result
+#: block is anonymous by construction, and the snapshot holds register values.
+RESULTS_DIR = Path(".testdata/fingerprints")
 
 _LOGGER = logging.getLogger("control_test")
 
@@ -82,6 +86,9 @@ COULD_NOT_RUN = 1
 
 RESTORED = -1
 
+#: Cancelled at the last prompt, before anything was written.
+CANCELLED = -2
+
 
 def _stamp() -> str:
     """Return a sortable timestamp for this run's filenames."""
@@ -91,16 +98,16 @@ def _stamp() -> str:
 def _workspace() -> Path:
     """Return the directory this run's files belong in, creating it.
 
-    Inside a checkout that is `.testdata/control-tests`, which is gitignored.
-    Outside one it is the working directory, visibly, so nobody is left
-    wondering where a file carrying their serial number went.
+    The same place the read-only survey writes to: inside a checkout
+    `.testdata/fingerprints`, which is gitignored, and outside one the working
+    directory, where the launcher runs and a person looks.
     """
     parents = Path(__file__).resolve().parents
     root = parents[2] if len(parents) > 2 else None
     if root is not None and (root / ".git").exists():
-        directory = root / PRIVATE_DIR
+        directory = root / RESULTS_DIR
     else:
-        directory = Path.cwd() / "sungrow-control-test"
+        directory = Path.cwd()
     directory.mkdir(parents=True, exist_ok=True)
     return directory
 
@@ -108,7 +115,7 @@ def _workspace() -> Path:
 # -- asking ------------------------------------------------------------------
 
 RESTART_QUESTION = """
-Also stop and restart the inverter as part of this run?
+The test can also stop the inverter and start it again, and time both.
 
   This writes 0xCE to register 13000, waits for the inverter to report a
   stopped state, then writes 0xCF to start it again. While it is stopped:
@@ -119,9 +126,9 @@ Also stop and restart the inverter as part of this run?
       power.
     * Home Assistant, the Sungrow app and anything else watching will see
       the inverter as unavailable, and automations may fire on that.
-    * How long it takes to come back has never been measured in this
-      project. Expect tens of seconds; this run will time it and say. It
-      may add several minutes.
+    * Measured so far: stopped within about 2 seconds, running again after
+      3 to 4 minutes, and generating up to 20 seconds after that. The run
+      waits up to 7 minutes for it and says how long it took.
 
   The inverter is never left stopped: if the start fails, this retries it on
   fresh connections and, failing that, prints the command to run.
@@ -140,8 +147,26 @@ def _ask_restart(default: bool | None) -> bool:
     if not sys.stdin.isatty():
         return False
     print(RESTART_QUESTION, file=sys.stderr)
-    answer = input("  Stop and start the inverter? [y/N] ").strip().lower()
-    return answer in ("y", "yes")
+    answer = input("  Do you permit the test to stop and restart the inverter? [y/N] ")
+    return answer.strip().lower() in ("y", "yes")
+
+
+def _ready(dry_run: bool) -> bool:
+    """Wait for Enter before the first write, or say the run was cancelled.
+
+    The questions are answered and nothing has been written yet: the last
+    moment where stopping costs nothing. Skipped where nobody is at a
+    terminal, so a scripted run with `--restart` or `--no-restart` goes ahead.
+    """
+    if not sys.stdin.isatty():
+        return True
+    what = "the dry run (it writes nothing)" if dry_run else "testing"
+    try:
+        input(f"\n  Press Enter to start {what}, or Ctrl+C to cancel. ")
+    except (EOFError, KeyboardInterrupt):
+        print("\n  Cancelled. Nothing was written to the inverter.", file=sys.stderr)
+        return False
+    return True
 
 
 # -- reporting ---------------------------------------------------------------
@@ -535,6 +560,10 @@ async def _run(args: argparse.Namespace) -> int:
             return await _export_scale_mode(inverter, args, serial)
 
         restart = _ask_restart(args.restart)
+        # A simulator has no house to protect, and `make controltest-sim` is
+        # run from a terminal; waiting there for Enter would only be in the way.
+        if not args.simulated and not _ready(args.dry_run):
+            return CANCELLED
 
         async def keep(snapshot: Snapshot) -> None:
             snapshot_path.write_text(json.dumps(snapshot.to_dict(), indent=2))
@@ -567,15 +596,17 @@ async def _run(args: argparse.Namespace) -> int:
         await connection.close()
 
     title = f"Control test -- {inverter.model or 'unknown model'}"
-    private = report(outcome, title=f"{title} ({serial or 'no serial'})")
-    public = report(
-        outcome, title=f"{title} ({stand_in(serial) if serial else 'anon'})"
+    # Printed rather than saved: the one file a run writes is the result block,
+    # and this is the same result for a person to read now. The stand-in, not
+    # the serial, so a pasted transcript carries nothing that identifies a house.
+    print(
+        "\n"
+        + report(outcome, title=f"{title} ({stand_in(serial) if serial else 'anon'})"),
+        file=sys.stderr,
     )
     block = document(outcome)
 
     paths = [
-        _save(directory, stamp, "private.md", private),
-        _save(directory, stamp, "public.md", public),
         _save(directory, stamp, "control_test.json", json.dumps(block, indent=2)),
     ]
     if args.merge_into:
@@ -583,13 +614,12 @@ async def _run(args: argparse.Namespace) -> int:
             _merge(Path(args.merge_into), "control_test", block, serial, args.host)
         )
 
+    # The count alone: what the run could not establish is a section of the
+    # report printed above, and saying it twice buried the files list.
     print(f"\n{summarise(outcome)}", file=sys.stderr)
-    for sentence in outcome.unestablished:
-        print(f"  not established: {sentence}", file=sys.stderr)
     print("\nWrote:", file=sys.stderr)
     for path in paths:
-        role = "keep this -- real serial" if "private" in path.name else "send this"
-        print(f"  {path}  ({role})", file=sys.stderr)
+        print(f"  {path}  (send this)", file=sys.stderr)
     if snapshot_path.exists():
         print(
             f"  {snapshot_path}  (the before-state; --restore takes it)",
@@ -637,6 +667,47 @@ def _merge(
     document_data[key] = block
     target.write_text(json.dumps(document_data, indent=2) + "\n")
     return target
+
+
+class _LinkDrops(logging.Handler):
+    """Count the Modbus backend's reconnects instead of printing each one.
+
+    `tmodbus` logs every connection it opens and every one the inverter drops,
+    and re-opens it by itself. Printed as they happen they are noise: the run
+    carries on, and a read that really fails is reported by `_retrying` or ends
+    the run with exit 1. What they say together is worth one line -- a Sungrow
+    that keeps dropping the link has another client polling it.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.count = 0
+
+    def emit(self, record: logging.LogRecord) -> None:
+        message = record.getMessage()
+        if "connection lost" in message or "closed by remote host" in message:
+            self.count += 1
+
+
+def _quiet_backend() -> _LinkDrops:
+    """Keep the backend's connection log off the terminal, and count drops."""
+    drops = _LinkDrops()
+    backend = logging.getLogger("tmodbus")
+    backend.addHandler(drops)
+    backend.propagate = False
+    return drops
+
+
+def _say_drops(drops: _LinkDrops) -> None:
+    """One line about the dropped connections, if there were any."""
+    if drops.count:
+        print(
+            f"\nThe inverter dropped the connection {drops.count} time(s); each "
+            "was re-opened and the run carried on. Frequent drops mean "
+            "something else is polling it -- stop Home Assistant for a "
+            "cleaner run.",
+            file=sys.stderr,
+        )
 
 
 def main() -> int:
@@ -708,6 +779,7 @@ def main() -> int:
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stderr)
+    drops = _quiet_backend()
     try:
         code = asyncio.run(_run(args))
     except (ModbusError, TimeoutError, OSError) as err:
@@ -731,15 +803,25 @@ def main() -> int:
             "are contention, not a broken register.",
             file=sys.stderr,
         )
+        _say_drops(drops)
         print(f"\nexit {COULD_NOT_RUN}: {CODES[COULD_NOT_RUN]}", file=sys.stderr)
         return COULD_NOT_RUN
     except KeyboardInterrupt:
+        _say_drops(drops)
         print(
             "\nInterrupted. Everything this run wrote has been put back; if the "
             "last line below says otherwise, use --restore.",
             file=sys.stderr,
         )
         return 5
+    _say_drops(drops)
+    if code == CANCELLED:
+        print(
+            f"\nexit {COULD_NOT_RUN}: nothing ran -- cancelled before anything "
+            "was written",
+            file=sys.stderr,
+        )
+        return COULD_NOT_RUN
     if code == RESTORED:
         # A restore is not a run, so it does not get a run's verdict. Saying
         # "every planned check ran" after putting things back would be a

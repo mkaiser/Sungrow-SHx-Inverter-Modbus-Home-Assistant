@@ -146,9 +146,9 @@ For anyone outside this repo — the users whose models nobody here owns —
 same job: a folder they can download and run with `./read_only_survey.sh` or
 `read_only_survey.cmd`, which fetch what the survey needs through uv. See [doc/device-fingerprints/](fingerprints/).
 
-Then commit the `.capabilities.json` and `.readings.json` files. Leave the
-`.raw.json` alone — it is gitignored, and it carries the real serial and the
-exact time. And if a system belongs to somebody else, **ask them before
+Then commit the `<label>.json` document. Leave the `sungrow-scan-*.log`
+transcript alone — it is gitignored, and it carries the real serial and the
+addresses. And if a system belongs to somebody else, **ask them before
 publishing its readings**; a stand-in serial is not consent.
 
 ## 4. Reaching the remote systems

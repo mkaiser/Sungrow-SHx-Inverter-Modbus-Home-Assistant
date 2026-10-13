@@ -1,9 +1,9 @@
 """No real device serial may reach the tracked tree.
 
 The fingerprint documents were designed around this: every published one
-carries a **stand-in**, `serial_anonymized_hashed`, and the real serial goes
-only to `.testdata/`, which is gitignored. `RAW_DIR` is fixed in `probe.py`
-so `--save doc/device-fingerprints` cannot put a real one there even if asked.
+carries a **stand-in**, `serial_anonymized_hashed`, and no un-redacted copy
+is written at all: the real serial reaches only the run's transcript, which
+stays in the gitignored `.testdata/`.
 
 None of that covered the **source tree**, and that gap nearly published six
 of them. Over one session, real serials from four houses -- three of them

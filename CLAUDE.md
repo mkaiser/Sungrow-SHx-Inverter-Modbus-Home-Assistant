@@ -160,7 +160,7 @@ schema 19). `--export-scale --merge-into` adds the `export_scale` block
 
 - **The restore is never budgeted, never deadlined and never skipped.** Every
   early exit goes through it. The snapshot is flushed *before the first write*
-  -- `.testdata/control-tests/` from the CLI, HA's own store from the
+  -- `.testdata/fingerprints/` from the CLI, HA's own store from the
   integration -- and removed only once everything is back **and read back**. A
   leftover snapshot on the next setup becomes a repair. **No snapshot file for
   a day means no writes that day.**
@@ -597,10 +597,10 @@ be careful:
   it is: `serial_anonymized_hashed`. Derived by hash, so one device always
   maps to one stand-in and files stay diffable, and the shape is preserved so
   the string decoder stays under test;
-- the real serial, the host and the exact time go only to `.testdata/`, which
-  is gitignored;
-- `RAW_DIR` in `probe.py` is **fixed**, so `--save doc/device-fingerprints`
-  cannot write a real serial there even when asked to;
+- the real serial and the full address reach no file the survey writes but
+  its transcript, which stays in `.testdata/` (gitignored) inside a checkout.
+  No un-redacted copy of the document is written, so `--save
+  doc/device-fingerprints` cannot put a real serial there whatever it is asked;
 - `NEVER_PUBLISH = ("serial",)` filters anything whose *name* mentions a
   serial, values and key lists alike;
 - a wallbox's serial sits two registers below the model name, so

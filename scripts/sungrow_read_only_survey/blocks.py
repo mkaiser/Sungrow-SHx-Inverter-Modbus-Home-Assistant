@@ -370,11 +370,10 @@ def attempt(
     if OK in kinds:
         # Not a verdict. Isolating a register on this evidence would be
         # isolating whatever else was polling the inverter at the time.
+        # Just the count: it is printed once per block per round, and
+        # `report` says what an intermittent block means, once, afterwards.
         failures = sum(1 for kind, _ in outcomes if kind != OK)
-        return INCONSISTENT, (
-            f"failed {failures}/{attempts} -- most likely another Modbus "
-            "client, not this register; re-run when the inverter is quiet"
-        )
+        return INCONSISTENT, f"failed {failures}/{attempts}"
     kind, detail = outcomes[0]
     every = f"{attempts}/{attempts}"
     return kind, f"{every}, {detail}" if detail else every

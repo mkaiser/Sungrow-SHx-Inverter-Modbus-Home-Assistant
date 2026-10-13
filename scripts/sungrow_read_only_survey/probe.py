@@ -605,6 +605,10 @@ def _local_time(read_at: str) -> str:
     Falls back to the UTC string unchanged if the zone database is missing,
     which it can be on a slim container -- a wrong local time would be worse
     than an honest UTC one, and the offset in the value says which it is.
+
+    Windows ships no zone database at all, so `zoneinfo` there reads the
+    `tzdata` package, which the survey's PEP 723 header declares for that
+    reason. Without it every Windows reading published in UTC.
     """
     from datetime import datetime
 
@@ -2143,23 +2147,6 @@ def _ordered(document: dict) -> dict:
     return {key: _sorted_deep(value) for key, value in document.items()}
 
 
-#: The raw reading never goes anywhere else, whatever --save is pointed at.
-#: An earlier version wrote all three files to the chosen directory, so
-#: `--save doc/device-fingerprints` — which is what the documentation told people to
-#: run — put the real serial number into a directory that gets committed to a
-#: public repository. The destination is no longer a choice.
-RAW_DIR = Path(".testdata/fingerprints")
-
-#: Where it goes when there is no `.testdata/` to hide it in. Still not a
-#: parameter -- a caller cannot redirect the real serial anywhere, which is
-#: the rule -- but the name has to work outside the checkout too. Outside
-#: it, `.testdata` would be a *hidden* directory holding somebody's
-#: serial and address, created inside the very folder they were told to send
-#: back; a visible name that says what it is beats that in the one situation
-#: where nobody has read this comment.
-PRIVATE_DIR = Path("sungrow-scan-private")
-
-
 def _checkout_root(start: Path | None = None) -> Path | None:
     """Return the repository this is running inside, or None.
 
@@ -2167,25 +2154,15 @@ def _checkout_root(start: Path | None = None) -> Path | None:
     *current directory* held a `.git`, so running the survey from inside
     `scripts/sungrow_read_only_survey/` -- the obvious place to run it from,
     and where the folder's README says to -- concluded "not a checkout" and
-    wrote a document into the source tree. The private file and the transcript
-    were covered by `.gitignore`; the document was not, and sat there staged
-    for the next `git add`.
+    wrote a document into the source tree. The transcript was covered by
+    `.gitignore`; the document was not, and sat there staged for the next
+    `git add`.
     """
     here = (start or Path.cwd()).resolve()
     for directory in (here, *here.parents):
         if (directory / ".git").exists() and (directory / "scripts").is_dir():
             return directory
     return None
-
-
-def _raw_dir() -> Path:
-    """Return the directory the un-redacted reading goes to.
-
-    A checkout has `.testdata/`, which `.gitignore` covers. Anywhere else the
-    file needs a name a stranger will recognise as private.
-    """
-    root = _checkout_root()
-    return root / RAW_DIR if root else PRIVATE_DIR
 
 
 def _destination(directory: Path, label: str, raw: dict, document: dict) -> Path:
@@ -2196,44 +2173,33 @@ def _destination(directory: Path, label: str, raw: dict, document: dict) -> Path
     they came through -- which the label spells out only when somebody *said*
     which path it was. Answer "not sure" twice, as a first-time contributor
     reasonably does, and the second reading lands on the first one's filename.
-    That has already cost a file in this project, and it happened again in the
-    run that prompted this: one inverter, two dongle addresses, "not sure"
-    both times.
+    That has already cost a file in this project.
 
     Same device re-read still overwrites, because that is a correction and a
     directory of `-2`, `-3` copies of one machine is worse than none. The two
-    cases are told apart by the **host**, which the raw file beside each
-    document carries -- and has to be, because a contributor who declines to
-    publish the address leaves both documents saying `xxx.xxx`, so the
-    document alone cannot distinguish them.
+    cases are told apart by the **address tail** both documents carry. Where
+    its owner withheld it, both say `xxx.xxx` and nothing published can tell
+    them apart, so the reading is treated as another device: a spurious
+    second file costs a filename, and being wrong the other way costs a
+    reading.
     """
-    host = str(raw.get("host", ""))
     tail = str(document.get("ip_address_last_two_octets") or "")
+    known = bool(tail) and tail != ADDRESS_HIDDEN
 
     def is_this_device(stem: str) -> bool:
-        """Whether the document called `stem` was read from this same host."""
-        beside = _raw_dir() / f"{stem}.raw.json"
-        if not beside.exists():
-            # No raw file to ask -- which happens when the two live in
-            # different places, or somebody moved one. Fall back to the tail,
-            # and where that is withheld, treat it as a different device: a
-            # spurious second file costs a filename, and being wrong the other
-            # way costs a reading.
-            existing = directory / f"{stem}.json"
-            try:
-                theirs = json.loads(existing.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
-                return False
-            return bool(tail) and theirs.get("ip_address_last_two_octets") == tail
+        """Whether the document called `stem` came from this same address."""
+        if not known:
+            return False
         try:
-            return str(json.loads(beside.read_text(encoding="utf-8")).get("host")) == (
-                host
+            theirs = json.loads(
+                (directory / f"{stem}.json").read_text(encoding="utf-8")
             )
         except (OSError, ValueError):
             return False
+        return theirs.get("ip_address_last_two_octets") == tail
 
     candidates = [label]
-    if tail and tail != ADDRESS_HIDDEN:
+    if known:
         # The address tail, which is in the document precisely so that several
         # readings from one house can be told apart.
         candidates.append(f"{label}-{tail.replace('.', '-')}")
@@ -2244,45 +2210,30 @@ def _destination(directory: Path, label: str, raw: dict, document: dict) -> Path
         if not path.exists() or is_this_device(stem):
             if stem != label:
                 print(
-                    f"\n  {label}.json is already here from another address, so"
-                    f"\n  this reading is written as {path.name} rather than"
+                    f"\n  {label}.json is already here from another reading, so"
+                    f"\n  this one is written as {path.name} rather than"
                     "\n  over the top of it."
                 )
             return path
-    # Twenty readings of one label without a matching host is not a case worth
-    # coding for; overwriting the first is still wrong, so the timestamp goes
-    # in the name.
+    # Twenty readings of one label is not a case worth coding for; overwriting
+    # the first is still wrong, so the timestamp goes in the name.
     return directory / f"{label}-{str(raw.get('read_at', '')).replace(':', '')}.json"
 
 
 def _save(directory: Path, label: str, raw: dict, fingerprint: dict) -> list[Path]:
-    """Write one publishable document, and the raw one out of harm's way.
+    """Write the one publishable document, and nothing else.
 
-    It used to be two publishable files -- a `capabilities` one saying *which*
-    registers answered and a `readings` one with the values -- and they carried
-    the same register labels twice. One document says both per register, which
-    is what anybody reading it wants and one fewer thing to keep in step.
-
-    The raw file still lands in the gitignored `.testdata/`, because it carries
-    the real serial, the host and the exact time. The publishable document
-    carries a stand-in serial, no host, and the day rather than the moment.
+    The reading in memory carries the real serial and the full address; the
+    document carries a stand-in serial and, with permission, two octets. No
+    un-redacted copy is written: the transcript beside it already holds what
+    the document leaves out, so a second private file would only be one more
+    thing to forward by mistake.
     """
-    written = []
     directory.mkdir(parents=True, exist_ok=True)
     document = _ordered(_document(raw, fingerprint))
-    path = directory / f"{label}.json"
-
     path = _destination(directory, label, raw, document)
     path.write_text(json.dumps(document, indent=2) + "\n")
-    written.append(path)
-    label = path.stem
-
-    raw_dir = _raw_dir()
-    raw_dir.mkdir(parents=True, exist_ok=True)
-    raw_path = raw_dir / f"{label}.raw.json"
-    raw_path.write_text(json.dumps(raw, indent=2, sort_keys=True) + "\n")
-    written.append(raw_path)
-    return written
+    return [path]
 
 
 async def capabilities(args: argparse.Namespace) -> Reading:
@@ -2809,27 +2760,6 @@ def _ask_transport() -> str:
     # that it is testimony. Pre-filling the likeliest answer turns a guess
     # into a record, and this is the one field no measurement can correct.
     return _ask_menu(keys, {k: v[0] for k, v in REPORTED_TRANSPORTS.items()}, "unsure")
-
-
-def _ask_dump() -> bool:
-    """Offer the complete register dump.
-
-    Worth offering rather than assuming either way. It is where the inverter's
-    own clock at holding 5000-5005 was found, and the 45 holding registers
-    nothing reads that answer real values -- neither of which any curated
-    probe would have reached.
-
-    No duration is quoted. It used to be estimated from the transport, on the
-    premise that a dongle is the slow link, and a WiNet-S2 read at 6.5 ms on
-    its owner's LAN against 30 ms for a cable over a VPN ended that: the
-    path from the reader decides it, and the answer to "how is it connected"
-    says nothing about that path.
-    """
-    print(
-        "\nA complete dump reads 1510 documented addresses raw. It is where the "
-        "inverter's\nclock and 45 undocumented holding registers were found."
-    )
-    return _ask_yes("Include the complete dump?", default=True)
 
 
 def _ask_proxy() -> str:
@@ -3365,7 +3295,7 @@ def main() -> int:
         "--save",
         nargs="?",
         const=".testdata/fingerprints",
-        help="write <label>.json here, and <label>.raw.json to .testdata/ "
+        help="write <label>.json here, the publishable document "
         "(default .testdata/fingerprints, which is gitignored)",
     )
     p_caps.add_argument(

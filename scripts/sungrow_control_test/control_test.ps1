@@ -24,13 +24,15 @@ $Script = 'sungrow_control_test.py'
 
 # The pin and the dependency list, read from the header so the version lives
 # in one place.
-$Header = Select-String -LiteralPath $Script -Pattern '^#\s*dependencies = \[(.*)\]$' | Select-Object -First 1
-if (-not $Header -or $Header.Matches[0].Groups[1].Value -notmatch '"sungrow-modbus==([^"]*)"') {
+# One quoted entry per line between `# dependencies = [` and `# ]`.
+$Text = Get-Content -LiteralPath $Script -Raw
+$Block = if ($Text -match '(?ms)^# dependencies = \[(.*?)^# \]') { $Matches[1] } else { '' }
+if ($Block -notmatch '"sungrow-modbus==([^"]*)"') {
     Write-Host "$Script names no sungrow-modbus version in its header; this copy is damaged."
     exit 1
 }
 $Pin = $Matches[1]
-$Dependencies = $Header.Matches[0].Groups[1].Value -replace ', ', ' '
+$Dependencies = ([regex]::Matches($Block, '"[^"]+"') | ForEach-Object { $_.Value }) -join ' '
 
 function Find-Uv {
     $onPath = Get-Command uv -ErrorAction SilentlyContinue

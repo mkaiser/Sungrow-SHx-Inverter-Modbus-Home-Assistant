@@ -48,11 +48,11 @@ SCRIPTS = (
     REPO / "scripts" / "sungrow_control_test" / "sungrow_control_test.py",
 )
 
-#: The pin inside a script's `# /// script` block. Anchored to a comment line,
-#: so a mention of the requirement in prose is never rewritten.
-SCRIPT_PIN = re.compile(
-    rf'(?m)^(#\s*dependencies = \[.*"{REQUIREMENT_NAME}==)([^"]*)(")'
-)
+#: The pin inside a script's `# /// script` block, where the dependency list
+#: is written one quoted entry per comment line. Anchored to a line that is
+#: nothing but that entry, so a mention of the requirement in prose is never
+#: rewritten.
+SCRIPT_PIN = re.compile(rf'(?m)^(#\s+"{REQUIREMENT_NAME}==)([^"]*)(",?)$')
 
 #: A release, or a pre-release in the **one** spelling that is safe here.
 #:

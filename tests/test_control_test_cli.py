@@ -95,3 +95,67 @@ def test_a_block_carrying_the_serial_is_never_written(cli, tmp_path):
         cli._merge(path, "export_scale", block, "A123456789", "192.0.2.10")
 
     assert "A123456789" not in path.read_text()
+
+
+# -- the two prompts before the first write ----------------------------------
+
+
+def _at_a_terminal(monkeypatch, cli, answers: list[str | type[BaseException]]):
+    """Make the script believe a person is typing these answers."""
+    monkeypatch.setattr(cli.sys.stdin, "isatty", lambda: True)
+    queue = list(answers)
+
+    def typed(_prompt: str = "") -> str:
+        answer = queue.pop(0)
+        if isinstance(answer, type):
+            raise answer
+        return answer
+
+    monkeypatch.setattr("builtins.input", typed)
+
+
+def test_the_restart_is_asked_as_a_permission(cli, monkeypatch, capsys) -> None:
+    prompts: list[str] = []
+    monkeypatch.setattr(cli.sys.stdin, "isatty", lambda: True)
+    monkeypatch.setattr(
+        "builtins.input", lambda prompt="": prompts.append(prompt) or "y"
+    )
+
+    assert cli._ask_restart(None) is True
+    assert "Do you permit the test to stop and restart the inverter?" in prompts[0]
+    # The measured times, not the guess that was there before measuring.
+    assert "3 to 4 minutes" in capsys.readouterr().err
+
+
+def test_enter_starts_the_run(cli, monkeypatch) -> None:
+    _at_a_terminal(monkeypatch, cli, [""])
+    assert cli._ready(dry_run=False) is True
+
+
+@pytest.mark.parametrize("stop", [KeyboardInterrupt, EOFError])
+def test_cancelling_at_the_last_prompt_writes_nothing(
+    cli, monkeypatch, capsys, stop
+) -> None:
+    _at_a_terminal(monkeypatch, cli, [stop])
+    assert cli._ready(dry_run=False) is False
+    assert "Nothing was written" in capsys.readouterr().err
+
+
+def test_nobody_at_a_terminal_is_not_waited_for(cli, monkeypatch) -> None:
+    """A scripted run answers the questions with flags and goes ahead."""
+    monkeypatch.setattr(cli.sys.stdin, "isatty", lambda: False)
+    monkeypatch.setattr("builtins.input", lambda *_: pytest.fail("asked anyway"))
+    assert cli._ready(dry_run=False) is True
+    assert cli._ask_restart(None) is False
+
+
+def test_a_run_writes_where_the_read_only_survey_writes(cli) -> None:
+    """One folder for both tools' results, so nobody has to look in two."""
+    import sys
+
+    sys.path.insert(0, str(SCRIPT.parents[1] / "sungrow_read_only_survey"))
+    import sungrow_survey
+
+    survey_documents, _transcripts, in_checkout = sungrow_survey._workspace()
+    assert in_checkout, "the test suite runs inside the checkout"
+    assert cli._workspace() == survey_documents

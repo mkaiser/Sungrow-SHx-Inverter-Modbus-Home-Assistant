@@ -109,8 +109,25 @@ def test_one_failure_among_successes_is_named_contention_not_a_fault() -> None:
         Stub(ModbusError("exception 0x02"), [1], [1]), "input", 5010, 25, 3
     )
     assert kind == blocks.INCONSISTENT
-    assert "another Modbus" in detail
-    assert "quiet" in detail
+    # The count only: the line is printed per block per round, and has to fit.
+    assert detail == "failed 1/3"
+
+    # What it means is said once, by the report, where it cannot be missed.
+    key = ("fast_input", "input", 5010, 25)
+    said: list[str] = []
+    blocks.report(
+        blocks.BlockOutcome(
+            tally={key: {blocks.OK: 2, blocks.INCONSISTENT: 1}},
+            intermittent=[key],
+            failing=[],
+            culprits=[],
+            reconnects=0,
+        ),
+        echo=said.append,
+    )
+    text = "\n".join(said)
+    assert "contention rather than a fault" in text
+    assert "Re-run when nothing else is polling" in text
 
 
 def test_a_fault_fails_every_round_and_contention_moves() -> None:

@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.13"
-# dependencies = ["sungrow-modbus==0.1.0a11", "modbus-connection[tmodbus]>=4.10.0"]
+# dependencies = [
+#     "sungrow-modbus==0.1.0a11",
+#     "modbus-connection[tmodbus]>=4.10.0",
+#     "tzdata",
+# ]
 # ///
 """Scan a Sungrow installation and write one report -- run this file.
 
@@ -55,6 +59,7 @@ import asyncio
 import contextlib
 from datetime import datetime
 import ipaddress
+import logging
 from pathlib import Path
 import sys
 import textwrap
@@ -213,7 +218,7 @@ class Tee:
 
 
 def _workspace() -> tuple[Path, Path, bool]:
-    """Return where the document, the transcript and the private file go.
+    """Return where the document and the transcript go.
 
     Two situations, and the difference matters more than it looks. Inside the
     checkout, `.testdata/` is gitignored and is where anything carrying a real
@@ -223,10 +228,8 @@ def _workspace() -> tuple[Path, Path, bool]:
     accident. So outside a checkout everything lands in the working directory
     under a visible name, and the summary says which file is which.
     """
-    # `probe` owns the walk, so the document, the private reading and the
-    # transcript cannot end up in different houses -- which is exactly what
-    # happened when this asked about the current directory and `_raw_dir`
-    # asked about it separately.
+    # `probe` owns the walk, so nothing here can disagree with it about whether
+    # this is a checkout.
     root = probe._checkout_root()
     if root:
         return root / ".testdata" / "fingerprints", root / ".testdata", True
@@ -234,7 +237,17 @@ def _workspace() -> tuple[Path, Path, bool]:
     return here, here, False
 
 
-def _preamble(echo, transcript: Path, client_label: str) -> None:
+def _library_version() -> str:
+    """Return the installed `sungrow-modbus` version, or say it is unknown."""
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        return version("sungrow-modbus")
+    except PackageNotFoundError:
+        return "(version unknown)"
+
+
+def _preamble(echo, transcript: Path) -> None:
     """Say what this is, what it will do, and what it will not do."""
     echo("=" * 72)
     echo("Sungrow device survey")
@@ -248,10 +261,12 @@ def _preamble(echo, transcript: Path, client_label: str) -> None:
     echo("    2  ask you the few things no register can answer")
     echo("    3  work out how the reading reaches the device")
     echo("    4  test the block reads the integration makes")
-    echo("    5  read every register in the map and write the report")
+    echo("    5  read every register in the map, sweep the raw register bands,")
+    echo("       and write the report")
     echo("    6  print what it found")
     echo("")
-    echo(f"  Modbus client   {client_label}")
+    echo(f"  Library         sungrow-modbus {_library_version()}, the PyPI package")
+    echo("                  the Home Assistant integration uses as well")
     started = datetime.now().astimezone().isoformat(timespec="seconds")
     echo(f"  Started         {started}")
     echo(f"  Transcript      {transcript}")
@@ -499,7 +514,10 @@ async def _ask_all(entry: Found, args, echo) -> argparse.Namespace:
         answers.other_inverter, answers.other_inverter_detail = (
             probe._ask_other_inverter()
         )
-        answers.dump = probe._ask_dump()
+        # Always, and not asked: the raw bands are where registers nothing
+        # maps were found -- the inverter's clock, 45 holding registers that
+        # answer real values -- and a survey is the only thing that reads them.
+        answers.dump = True
         answers.address = probe._ask_address(entry.host)
         answers.reporter = probe._ask(
             "Who is reporting this, to credit and to ask (blank for anonymous)",
@@ -524,7 +542,6 @@ async def _ask_all(entry: Found, args, echo) -> argparse.Namespace:
             "another inverter",
             answers.other_inverter_detail or answers.other_inverter,
         ),
-        ("register dump", "yes" if answers.dump else "no"),
         ("address in the file", answers.address),
         ("reporter", answers.reporter),
         ("comment", answers.comment or "(none)"),
@@ -543,7 +560,7 @@ async def _ask_all(entry: Found, args, echo) -> argparse.Namespace:
     echo(f"    python3 {probe.SCRIPT} capabilities {entry.host} \\")
     echo(
         f"      --unit {answers.unit} --transport {answers.transport} "
-        f"--proxy {answers.proxy}{' --dump' if answers.dump else ''} \\"
+        f"--proxy {answers.proxy} --dump \\"
     )
     line = f"      --address {answers.address} --reporter {answers.reporter!r}"
     if answers.battery:
@@ -557,9 +574,10 @@ async def _ask_all(entry: Found, args, echo) -> argparse.Namespace:
     echo("")
     echo("  Starting now, and this is the long part: two registers that say")
     echo("  how the reading reaches the device, then every block read the")
-    echo("  integration makes, then the whole register map. Over a slow link")
-    echo("  the whole thing is about six minutes and it will look stuck more")
-    echo("  than once. Every step says what it is waiting for.")
+    echo("  integration makes, then the whole register map, then 1510 raw")
+    echo("  addresses. Over a slow link that can take a quarter of an hour, and")
+    echo("  it will look stuck more than once. Every step says what it is")
+    echo("  waiting for.")
     echo("")
     return answers
 
@@ -896,16 +914,14 @@ def _summary(results: list[Outcome], transcript: Path, echo) -> None:
         echo("")
         _summary_unreadable(echo)
         echo("  Wrote")
-        # Named by what to do with them, not by their extension: the first is
-        # the file to send, the second holds the real serial and address and
-        # stays put. A `.raw.json` inside a hidden directory is a private file
-        # a stranger will not know they are about to forward.
-        for number, path in enumerate(result.written):
-            role = "send this" if number == 0 else "keep this -- real serial"
+        # Named by what to do with them, not by their extension: the document
+        # is the file to send, and the transcript holds the real serial and
+        # address and stays put.
+        for path in result.written:
             echo(f"        {path}")
-            echo(f"          {role}")
+            echo("          send this")
         echo(f"        {transcript}")
-        echo("          keep this -- the whole session, real addresses")
+        echo("          keep this -- the whole session, real serial and addresses")
         echo("=" * 72)
         echo("")
 
@@ -1153,10 +1169,11 @@ async def run(args) -> int:
         print(text, file=out, flush=True)
 
     try:
-        _preamble(echo, transcript, "modbus-connection (the one the integration uses)")
+        _preamble(echo, transcript)
         if not in_checkout:
-            echo("  Two files are written. Send the first; the second stays with")
-            echo("  you -- it holds your real serial number and address.")
+            echo("  Two files are written: a report to send, and a log of this")
+            echo("  session that stays with you -- it holds your real serial")
+            echo("  number and address.")
             echo("")
 
         try:
@@ -1191,8 +1208,50 @@ async def run(args) -> int:
         errors.close()
 
 
+class _LinkDrops(logging.Handler):
+    """Count the Modbus backend's reconnects instead of printing each one.
+
+    `tmodbus` logs every connection the inverter drops, at ERROR, and re-opens
+    it by itself -- so with no logging configured those lines reach the
+    terminal through Python's last-resort handler, in the middle of a progress
+    bar. The survey already tolerates and retries each drop. What they say
+    together is worth one line: a Sungrow that keeps dropping the link has
+    another client polling it.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.count = 0
+
+    def emit(self, record: logging.LogRecord) -> None:
+        message = record.getMessage()
+        if "connection lost" in message or "closed by remote host" in message:
+            self.count += 1
+
+
+#: Installed by `main`; `_finish` reports what it counted.
+_DROPS = _LinkDrops()
+
+
+def _quiet_backend() -> None:
+    """Keep the backend's connection log off the terminal, and count drops."""
+    backend = logging.getLogger("tmodbus")
+    backend.addHandler(_DROPS)
+    backend.propagate = False
+
+
 def _finish(code: int, echo) -> int:
     """Print the code and the sentence it means, and return it."""
+    if _DROPS.count:
+        echo(
+            f"The inverter dropped the connection {_DROPS.count} time(s); each "
+            "was re-opened and the scan carried on."
+        )
+        echo(
+            "Frequent drops mean something else is polling it -- stop Home "
+            "Assistant for a fuller report."
+        )
+        echo("")
     echo(f"exit {code} -- {CODES[code]}.")
     return code
 
@@ -1215,6 +1274,7 @@ def main() -> int:
     parser.add_argument("--timeout", type=float, default=10.0)
     parser.add_argument("--passes", type=int, default=8)
     args = parser.parse_args()
+    _quiet_backend()
     try:
         return asyncio.run(run(args))
     except KeyboardInterrupt:

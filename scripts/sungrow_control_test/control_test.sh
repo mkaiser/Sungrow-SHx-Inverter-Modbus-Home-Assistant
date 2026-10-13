@@ -25,8 +25,9 @@ SCRIPT=sungrow_control_test.py
 
 # The pin and the dependency list, read from the header so the version lives
 # in one place.
-PIN=$(sed -n 's/^#[[:space:]]*dependencies = \[.*"sungrow-modbus==\([^"]*\)".*/\1/p' "$SCRIPT" | head -n 1)
-DEPENDENCIES=$(sed -n 's/^#[[:space:]]*dependencies = \[\(.*\)\]$/\1/p' "$SCRIPT" | head -n 1 | sed 's/, / /g')
+# One quoted entry per line between `# dependencies = [` and `# ]`.
+DEPENDENCIES=$(sed -n '/^# dependencies = \[/,/^# \]/s/^#[[:space:]]*\("[^"]*"\),\{0,1\}$/\1/p' "$SCRIPT" | tr '\n' ' ' | sed 's/ $//')
+PIN=$(printf '%s\n' "$DEPENDENCIES" | sed -n 's/.*"sungrow-modbus==\([^"]*\)".*/\1/p')
 if [ -z "$PIN" ]; then
     echo "$SCRIPT names no sungrow-modbus version in its header; this copy is damaged." >&2
     exit 1

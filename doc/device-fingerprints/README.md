@@ -85,9 +85,10 @@ serial by hash, so it keeps the same shape — a Sungrow serial is ASCII across 
 is itself under test — and one device always maps to one stand-in, so files
 stay diffable across reads and two setups stay distinguishable.
 
-The real serial, the host and the exact time go only to `.testdata/`, which is
-gitignored. That split is not optional in the tooling: `RAW_DIR` is fixed, so
-`--save doc/device-fingerprints` cannot put a real serial here even if asked to.
+The real serial and the full address are written to no file but the run's
+transcript, which stays with whoever ran it -- in `.testdata/`, gitignored,
+inside a checkout. No un-redacted copy of the document exists, so `--save
+doc/device-fingerprints` cannot put a real serial here whatever it is asked.
 
 ## The filename
 
@@ -515,27 +516,18 @@ name to contribute one.
 It is `reporter` rather than `provided_by` because the field names a person,
 where "provided by" described the transaction they were part of.
 
-## Two files, and why
+## What a run writes
 
 | File | Where | What is in it |
 | --- | --- | --- |
-| `<label>.json` | here, committed | Everything publishable: model, phase count, firmware, how the connection was made, and per register both whether it answered and what it said |
-| `<label>.raw.json` | `.testdata/`, gitignored | The same read with the **real** serial, the host and the exact time |
+| `<label>.json` | `.testdata/fingerprints/` in a checkout, else beside the run; committed here | Everything publishable: model, phase count, firmware, how the connection was made, the time of the reading, and per register both whether it answered and what it said |
+| `sungrow-scan-<time>.log` | `.testdata/` in a checkout, else beside the run | The transcript, with the **real** serial and addresses. Never published |
 
-It used to be three: a `capabilities` file saying *which* registers answered
-and a `readings` file with the values, which carried the same register labels
-twice and had to be kept in step. One document says both per register.
-
-The raw destination in `probe.py` is fixed, not a parameter, so `--save
-doc/device-fingerprints` cannot put a real serial here even if asked to. An earlier
-version made the destination a choice and the documentation told people to
-choose this directory.
-
-Fixed does not mean one path: in a checkout it is `.testdata/fingerprints`,
-which `.gitignore` covers, and anywhere else — a contributor running
-the survey outside a checkout — it is `sungrow-scan-private/`. A *hidden* directory holding somebody's
-serial and address, created inside the folder they were told to send back, is
-how a private file gets forwarded by accident.
+The document is the only reading written. Apart from the serial, which it
+replaces with a stand-in, it leaves out only the first two octets of the
+address -- and the last two as well unless its owner allowed them -- so an
+un-redacted copy would add nothing worth a second private file to forward by
+mistake.
 
 ## What the connection field means
 
@@ -589,7 +581,7 @@ It publishes nothing by itself.
 
 Look at the file, then attach it to an issue if you are happy to. Your serial
 number is replaced with a stand-in and your inverter's address is not in it.
-The private `.raw.json` it writes alongside stays with you.
+The log it writes alongside holds both, and stays with you.
 
 If the output says the device hung up several times, that is normal on Sungrow
 hardware — the survey reconnects around each one, so the report is still

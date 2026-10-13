@@ -143,25 +143,21 @@ def test_consecutive_registers_are_reported_as_a_range(numbers, expected) -> Non
     assert sungrow_survey._ranges(numbers) == expected
 
 
-def test_the_private_file_is_not_hidden_outside_a_checkout(
-    tmp_path, monkeypatch
-) -> None:
+def test_the_transcript_is_not_hidden_outside_a_checkout(tmp_path, monkeypatch) -> None:
     """The hazard a run outside a checkout actually produced.
 
-    In the checkout the un-redacted reading belongs in `.testdata/`, which is
-    gitignored. Anywhere else, a *hidden* directory holding somebody's serial
-    and address -- created inside the folder they were told to send back --
-    is how a private file gets forwarded by accident.
+    In the checkout the transcript, which holds the real serial, belongs in
+    `.testdata/`, which is gitignored. Anywhere else, a *hidden* directory
+    holding somebody's serial and address -- created inside the folder they
+    were told to send back -- is how a private file gets forwarded by
+    accident, so everything lands visibly where the run was started.
     """
     monkeypatch.chdir(tmp_path)
-    assert probe._raw_dir() == probe.PRIVATE_DIR
-    assert not probe._raw_dir().name.startswith(".")
     documents, private, in_checkout = sungrow_survey._workspace()
     assert (documents, private, in_checkout) == (tmp_path, tmp_path, False)
 
     (tmp_path / ".git").mkdir()
     (tmp_path / "scripts").mkdir()
-    assert probe._raw_dir() == tmp_path / probe.RAW_DIR
     assert sungrow_survey._workspace() == (
         tmp_path / ".testdata" / "fingerprints",
         tmp_path / ".testdata",
@@ -174,14 +170,13 @@ def test_a_run_from_inside_the_checkout_still_writes_to_testdata(
 ) -> None:
     """The defect a real run produced, from the obvious directory.
 
-    Both `_workspace` and `_raw_dir` asked whether the **current** directory
-    was a checkout. Run from `scripts/sungrow_read_only_survey/` -- which is where the
-    folder's README tells people to run it, and where a maintainer naturally is
-    -- they concluded "not a checkout" and wrote the document into the source
-    tree. `.gitignore` covered the private reading and the transcript; the
-    document it did not, so it sat there waiting for the next `git add`.
-
-    Both now ask one function, which walks up.
+    `_workspace` asked whether the **current** directory was a checkout. Run
+    from `scripts/sungrow_read_only_survey/` -- which is where the folder's
+    README tells people to run it, and where a maintainer naturally is -- it
+    concluded "not a checkout" and wrote the document into the source tree.
+    `.gitignore` covered the transcript; the document it did not, so it sat
+    there waiting for the next `git add`. It now asks `probe._checkout_root`,
+    which walks up.
     """
     (tmp_path / ".git").mkdir()
     (tmp_path / "scripts" / "sungrow_read_only_survey").mkdir(parents=True)
@@ -191,9 +186,7 @@ def test_a_run_from_inside_the_checkout_still_writes_to_testdata(
     assert in_checkout
     assert documents == tmp_path / ".testdata" / "fingerprints"
     assert private == tmp_path / ".testdata"
-    # And the private reading lands beside it rather than in the source tree.
-    assert probe._raw_dir() == tmp_path / probe.RAW_DIR
-    assert "scripts" not in probe._raw_dir().parts
+    assert "scripts" not in documents.parts
 
 
 def test_a_directory_that_merely_looks_like_a_checkout_is_not_one(

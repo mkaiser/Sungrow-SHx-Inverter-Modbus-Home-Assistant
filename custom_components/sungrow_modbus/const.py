@@ -118,9 +118,8 @@ DEFAULT_PERMISSIONS: dict[str, str] = {
 #: Off by default and asked for in its own options step, with the consequences
 #: spelled out there rather than in a label. Everything else the control test
 #: does is a setting that goes back; this one takes the house off its own
-#: generation for as long as the inverter takes to boot, and how long that is
-#: has never been measured in this project -- which is precisely why the option
-#: exists, and precisely why it is not on by default.
+#: generation for as long as the inverter takes to boot -- 3 to 4 minutes on
+#: the models measured so far -- which is why it is not on by default.
 CONF_CONTROL_TEST_RESTART = "control_test_restart"
 
 #: Let the control test switch feed-in limitation on for the duration.

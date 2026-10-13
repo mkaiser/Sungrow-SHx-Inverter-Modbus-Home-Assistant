@@ -46,24 +46,23 @@ survey writes stay on your machine until you send one.
 What gets written, and what to send
 -----------------------------------
 
-Three files. The run tells you which is which, and so does this:
+Two files. The run tells you which is which, and so does this:
 
   <name>.json                       SEND THIS ONE
-                                    Your inverter's capabilities. No serial
-                                    number, no address beyond the last two
-                                    numbers of it, and the date rather than
-                                    the time.
-
-  sungrow-scan-private/<name>.raw.json    KEEP THIS ONE
-                                    The same reading with your real serial
-                                    number, your address and the exact time.
-                                    It is for you, in case a question comes
-                                    up. Do not post it anywhere.
+                                    What your inverter is and what it
+                                    answered. Your serial number is replaced
+                                    by a stand-in starting "anon-", and your
+                                    address is left out except, if you allow
+                                    it, its last two numbers. It does carry
+                                    the date and time of the reading, and
+                                    the live values read at that moment --
+                                    power, battery, meter.
 
   sungrow-scan-<date>.log           KEEP THIS ONE
-                                    Everything the run printed, addresses
-                                    included. Useful to send *privately* if
-                                    something went wrong.
+                                    Everything the run printed, including
+                                    your real serial number and addresses.
+                                    Useful to send *privately* if something
+                                    went wrong. Do not post it anywhere.
 
 If you would rather not publish even the last two numbers of your address,
 answer "no" when it asks -- the file then says xxx.xxx and is still useful.
