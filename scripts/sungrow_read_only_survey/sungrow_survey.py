@@ -1,7 +1,16 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.13"
+# dependencies = ["sungrow-modbus==0.1.0a11", "modbus-connection[tmodbus]>=4.10.0"]
+# ///
 """Scan a Sungrow installation and write one report -- run this file.
 
-    python sungrow_survey.py
+    ./read_only_survey.sh            (Linux, macOS)
+    read_only_survey.cmd             (Windows, or double-click it)
+
+The launchers fetch what this needs -- a Python and the `sungrow-modbus`
+library, pinned in the header above -- through `uv`. In a checkout with the
+library installed, `python3 sungrow_survey.py` runs it directly.
 
 Nothing else to remember: no flags, no order, no second command. It finds the
 devices, asks the handful of things no register can answer, measures, and
@@ -54,28 +63,14 @@ from typing import NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-#: Checked before anything else imports, because the alternative is a
-#: traceback about `datetime.UTC` at a stranger who was told this needs
-#: nothing installed. 3.11 is the floor for `datetime.UTC` and
-#: `asyncio.Runner`, both of which are conveniences rather than
-#: requirements -- so this says the version rather than blaming the user.
-# ruff reads this against the *repository's* requires-python, which is 3.14
-# because Home Assistant needs it. This file does not run here -- it runs on
-# a contributor's own machine, where 3.11 is a real possibility and 3.14 is
-# not. Hence the exemption rather than a raised bound.
-if sys.version_info < (3, 11):  # noqa: UP036
-    have = ".".join(str(part) for part in sys.version_info[:3])
-    raise SystemExit(
-        f"This needs Python 3.11 or newer, and this is Python {have}.\n\n"
-        "  Try `python3` if you ran `python`.\n\n"
-        "If 3.11 is genuinely not available to you, say so in the issue: the\n"
-        "floor is two conveniences deep, not a real requirement, and it can\n"
-        "be lowered."
-    )
-
 import blocks
-import portable
 import probe
+
+from sungrow_modbus import model_for
+from sungrow_modbus.addresses import field_address, read
+from sungrow_modbus.discovery import NetworkTooLarge, hosts_in
+from sungrow_modbus.layout import ISOLATE
+from sungrow_modbus.model import present
 
 #: How the block read test is driven, and why it is not one round.
 #:
@@ -430,8 +425,8 @@ def _ask_network(echo) -> str:
             "Network to scan -- Enter to accept, or type another range", default
         )
         try:
-            portable.hosts_in(network)
-        except portable.NetworkTooLarge as error:
+            hosts_in(network)
+        except NetworkTooLarge as error:
             echo(f"  {error}")
         except ValueError:
             echo(f"  {network!r} is not a network. Type it as an address and a")
@@ -582,9 +577,9 @@ async def _check_transport(entry: Found, answers, echo) -> Transport:
     echo("3  How the reading reaches the device")
     echo("-" * 72)
 
-    ModbusError, params, connection_class = probe._require_library()
-    connection = connection_class(
-        params(host=entry.host, port=entry.port), timeout=answers.timeout
+    connection = probe.ModbusConnection(
+        probe.ModbusTcpParams(host=entry.host, port=entry.port),
+        timeout=answers.timeout,
     )
     answered_6100 = False
     module: str | None = None
@@ -596,19 +591,18 @@ async def _check_transport(entry: Found, answers, echo) -> Transport:
             # becomes a dongle, and the owner is then offered to change a
             # correct answer to match it. One read lost to contention was
             # enough to do that on a cable.
-            space, start, count = probe._where("direct_only_probe")
+            space, start, count = probe.DIRECT_ONLY_PROBE
             await probe._async_read_retrying(
                 probe._reader(unit, space), start, count, probe.IDENTITY_ATTEMPTS
             )
             answered_6100 = True
-        except (ModbusError, TimeoutError, OSError):
+        except (probe.ModbusError, TimeoutError, OSError):
             answered_6100 = False
+        name = "communication_module_firmware_version"
         try:
-            words = await portable.read_block(
-                unit, probe._where("communication_module_firmware_version")
-            )
-            module = portable.present(portable._decode_string(list(words))) or None
-        except (ModbusError, TimeoutError, OSError):
+            words = await read(unit, field_address(name))
+            module = present(probe._field(name).decode(words)) or None
+        except (probe.ModbusError, TimeoutError, OSError):
             module = None
     finally:
         await connection.close()
@@ -662,13 +656,8 @@ def _block_test(entry: Found, answers, echo) -> blocks.BlockOutcome | None:
     echo("-" * 72)
     echo("4  Block read test")
     echo("-" * 72)
-    plan = portable.load_plan()
-    to_read = blocks._blocks_of(plan, None)
-    verified = "verified against the library" if plan["verified"] else "not verified"
-    echo(
-        f"  plan    {portable.PLAN_FILE.name} -- "
-        f"{len(plan['components'])} components, {verified}"
-    )
+    to_read = blocks._blocks_of(None)
+    echo("  plan    the library's own block reads, recorded from the poll")
     client = blocks.client_for(
         entry.host, answers.port, answers.unit, answers.timeout, 0.05
     )
@@ -690,7 +679,7 @@ def _block_test(entry: Found, answers, echo) -> blocks.BlockOutcome | None:
         return None
     finally:
         client.close()
-    blocks.report(outcome, plan, echo=echo)
+    blocks.report(outcome, echo=echo)
     echo("")
     return outcome
 
@@ -831,14 +820,6 @@ def _summary(results: list[Outcome], transcript: Path, echo) -> None:
     what makes it paste-safe: the document carries two octets of the address
     and a stand-in serial, so this cannot carry more.
     """
-    # Read here rather than in `_summary_actions` so a failure to load it
-    # cannot take the whole summary down: by this point the documents are
-    # already written and the summary is the last thing owed to whoever ran
-    # it. Without the plan the advice loses only its "already isolated" half.
-    try:
-        plan = portable.load_plan()
-    except Exception:
-        plan = None
     for result in results:
         document = result.document
         device = document.get("device", {})
@@ -854,7 +835,7 @@ def _summary(results: list[Outcome], transcript: Path, echo) -> None:
         echo("")
         echo("  The machine")
         code = device.get("device_type_code")
-        named = probe._model_for(int(code, 16)) if code else None
+        named = model_for(int(code, 16)) if code else None
         echo(f"  read  model            {named or 'not in the model table'} ({code})")
         echo(f"  read  output           {device.get('output_type') or 'not read'}")
         stand_in = device.get("serial_anonymized_hashed", "not read")
@@ -902,7 +883,7 @@ def _summary(results: list[Outcome], transcript: Path, echo) -> None:
             echo(f"  read  register dump    {dump.get('summary', 'written')}")
         echo("")
         _summary_blocks(result, echo)
-        _summary_actions(result, echo, plan)
+        _summary_actions(result, echo)
         echo("  Told to this run, not measured")
         for key in sorted(inputs):
             # An empty answer is not silence. The battery question is only
@@ -1022,7 +1003,7 @@ def _summary_unreadable(echo) -> None:
     echo("")
 
 
-def _summary_actions(result: Outcome, echo, plan: dict | None = None) -> None:
+def _summary_actions(result: Outcome, echo) -> None:
     """Say what to do about what was measured, with the evidence beside it."""
     actions = []
     outcome = result.block_outcome
@@ -1052,11 +1033,9 @@ def _summary_actions(result: Outcome, echo, plan: dict | None = None) -> None:
         through_module = result.transport is not None and probe._claim_of(
             result.transport.verdict
         ) not in ("direct",)
-        isolated_components = {
-            entry["component"]
-            for entry in (plan or {}).get("components", [])
-            if entry.get("isolated")
-        }
+        # The components that exist only because a field was moved out of
+        # its tier, which is what "already isolated" means.
+        isolated_components = set(ISOLATE.values())
         for (name, space, kind), addresses in grouped.items():
             isolated_already = name in isolated_components
             registers = _ranges(sorted(address + 1 for address in addresses))
@@ -1174,12 +1153,7 @@ async def run(args) -> int:
         print(text, file=out, flush=True)
 
     try:
-        client_label = (
-            "modbus-connection (the one the integration uses)"
-            if probe.have_library()
-            else "this directory's own client -- nothing installed"
-        )
-        _preamble(echo, transcript, client_label)
+        _preamble(echo, transcript, "modbus-connection (the one the integration uses)")
         if not in_checkout:
             echo("  Two files are written. Send the first; the second stays with")
             echo("  you -- it holds your real serial number and address.")

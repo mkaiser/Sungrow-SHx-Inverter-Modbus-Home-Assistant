@@ -2,28 +2,15 @@
 
 from datetime import timedelta
 
+# The unit ids the config flow tries when looking for an inverter, in order.
+# The reasoning is in the library, beside the list.
+from sungrow_modbus.discovery import IDENTIFY_UNITS as IDENTIFY_UNITS
+
 DOMAIN = "sungrow_modbus"
 
 DEFAULT_NAME = "Sungrow SHx"
 DEFAULT_PORT = 502
 DEFAULT_UNIT_ID = 1
-
-#: Unit ids the config flow tries when looking for an inverter, in order.
-#:
-#: 1 first, because it is what Sungrow's app and manual assume and what all
-#: but one measured machine uses. Then 2, measured on 2026-09-09 at a house
-#: with two inverters: the second answers on unit **2** at its own LAN port
-#: and times out on 1, because a cluster slave's own device address is 2.
-#: Discovery asked only unit 1 and reported that inverter absent. Then 3 to 5,
-#: which the specification allows for further slaves and which nothing has
-#: been measured on.
-#:
-#: The same list exists in `scripts/sungrow_survey/probe.py` as
-#: `IDENTIFY_UNITS`, and the duplication is deliberate rather than sloppy:
-#: that directory runs with nothing installed and may not import this package or the
-#: library. Two short tuples that must agree is a smaller problem than a
-#: survey that cannot run standalone.
-IDENTIFY_UNITS: tuple[int, ...] = (1, 2, 3, 4, 5)
 
 #: What a device address says about an inverter's role in a cluster.
 #:

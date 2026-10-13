@@ -55,8 +55,9 @@ pre-release and the library to PyPI over OIDC. Run hassfest locally first
 6. **Transport as three values in the scan scripts.** `probe._async_connection`
    and `sungrow_survey._check_transport` still publish a timed-out read of 6100
    as `"refused"`, i.e. a dongle. Add `"undetermined"`; it changes the
-   document and `transport_verdict`'s truth table, and has to work with
-   `portable.py`'s own exception types.
+   document and `transport_verdict`'s truth table. The library's exception
+   taxonomy already separates the two: `ModbusExceptionError` is a refusal,
+   `ModbusTimeoutError` is not.
 7. **Switching an entry between legacy and modern ids** in the options flow.
    Until then the answer is to remove and re-add the entry, which keeps
    history (`doc/integration_migration.md` says so).
@@ -238,8 +239,9 @@ installs from it the way a user does.
 
 The YAML track lives under [legacy/](../legacy/) on this branch; on `main` it
 stays at the root until the integration replaces it. `scripts/` is grouped by
-job — `dev/`, `generate/`, `release/`, `hardware/`, `helpers/` and
-`sungrow_survey/` — and `CLAUDE.md` lists every script.
+job — `dev/`, `generate/`, `release/`, `helpers/`, and the two folders a
+contributor is handed, `sungrow_read_only_survey/` and `sungrow_control_test/`
+— and `CLAUDE.md` lists every script.
 
 ## Documentation
 

@@ -157,7 +157,7 @@ real_hardware:
   what_does_not_work:
     - >-
       Multicast, so mDNS discovery finds nothing from in here -- a Docker
-      bridge does not carry it. Run `scripts/sungrow_survey/probe.py mdns` on the
+      bridge does not carry it. Run `scripts/sungrow_read_only_survey/probe.py mdns` on the
       Windows host instead.
     - >-
       Inbound. Reaching the container's Home Assistant from another machine is
@@ -469,8 +469,6 @@ generated_files:
       targets: derived, numbers, switches, selects, strings (no argument = all)
       writes: custom_components/sungrow_modbus/{derived,number,switch,select}_descriptions.py, strings.json (+ translations/en.json)
       tables: scripts/generate/tables/writes.py, scripts/generate/tables/naming.py
-    - script: scripts/generate/generate_scan_plan.py
-      writes: scripts/sungrow_survey/scan_plan.json
     - script: scripts/generate/generate_compatibility.py
       writes: doc/compatibility.md
   check_all: make gen-check

@@ -1,20 +1,10 @@
-"""The portable reading path must produce what the library's produces.
+"""What the survey reads and publishes, driven against in-memory devices.
 
-`scripts/sungrow_survey/` is run by contributors with nothing installed, so it reads and
-decodes registers itself, driven by the committed `scan_plan.json`. That is
-the second implementation of the thing `sungrow_modbus` exists to do, and the
-only reason it is tolerable is this test: both paths are driven against the
-same in-memory device and the results must be **identical**, not similar.
-
-Identical matters more than it sounds. A fingerprint's value is read by
-comparing it against other fingerprints, so a difference in one field's
-rounding, sign or word order would not look like a bug -- it would look like
-a different inverter.
-
-`tests/test_portable_decoder.py` pins the decoding of a single field; this
-pins everything above it: which blocks are read, how a field is sliced out of
-them, what happens when a component misses, and which fields are excluded
-from a report altogether.
+`probe._async_decoded_readings` is every register the integration reads,
+decoded through the library, and `probe._async_battery_readings` the SBR's
+own blocks. A fingerprint's value is read by comparing it against other
+fingerprints, so what these report -- and what they leave out -- is part of
+the format: a component missed has to be said, a serial never.
 """
 
 from __future__ import annotations
@@ -29,12 +19,16 @@ from modbus_connection.mock import MockModbusConnection
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_survey"))
+sys.path.insert(0, str(REPO / "scripts" / "sungrow_read_only_survey"))
 
-from portable import NEVER_PUBLISH, read_fields  # noqa: E402
 from probe import _async_decoded_readings  # noqa: E402
 
-PLAN = json.loads((REPO / "scripts" / "sungrow_survey" / "scan_plan.json").read_text())
+from sungrow_modbus.block_test import inverter_blocks  # noqa: E402
+from sungrow_modbus.fingerprint import NEVER_PUBLISH  # noqa: E402
+
+#: Every read the poll makes, recorded once: `_filled_unit` is also called
+#: from inside a running loop, where recording again could not start one.
+BLOCKS = asyncio.run(inverter_blocks())
 SEED = json.loads((REPO / "scripts" / "dev" / "simulator_registers.json").read_text())
 
 
@@ -52,7 +46,7 @@ def _seeded_unit():
 
 
 def _filled_unit():
-    """Return a unit that answers every address the plan reads.
+    """Return a unit that answers every address the poll reads.
 
     The mock refuses an address it was not seeded with, and the seed covers
     the addresses the YAML package ports rather than every address a *block*
@@ -63,79 +57,43 @@ def _filled_unit():
     has to slice a field out of a pooled read -- unexercised.
     """
     unit = _seeded_unit()
-    for entry in PLAN["components"]:
-        store = unit.input if entry["space"] == "input" else unit.holding
-        for address, count in entry["blocks"]:
-            for offset in range(count):
-                store.setdefault(address + offset, 0)
+    for block in BLOCKS:
+        store = unit.input if block.space == "input" else unit.holding
+        for offset in range(block.count):
+            store.setdefault(block.address + offset, 0)
     return unit
 
 
-@pytest.mark.parametrize("device", [_seeded_unit, _filled_unit], ids=["gappy", "whole"])
-def test_both_paths_read_the_same_values(device) -> None:
-    """Both scenarios, because they take different routes to the same file.
-
-    `gappy` misses every component and salvages field by field; `whole` reads
-    the pooled blocks and slices fields out of them. The two paths have to
-    agree in each.
-    """
-
-    async def run() -> tuple[dict, dict]:
-        # One pass each: the mock answers on the first try or not at all, so
-        # retries would only slow the test down.
-        mine = await read_fields(PLAN, device(), passes=1)
-        theirs = await _async_decoded_readings(device(), 1)
-        return mine, theirs
-
-    mine, theirs = asyncio.run(run())
-
-    assert set(mine["values"]) == set(theirs["values"]), (
-        "the two paths report different fields: "
-        f"only portable {sorted(set(mine['values']) - set(theirs['values']))}, "
-        f"only library {sorted(set(theirs['values']) - set(mine['values']))}"
-    )
-    differing = {
-        name: (mine["values"][name], theirs["values"][name])
-        for name in mine["values"]
-        if mine["values"][name] != theirs["values"][name]
-    }
-    assert not differing, f"values differ: {differing}"
-    # The whole report, not only the values: a reader compares documents, so
-    # a key one path publishes and the other omits is as misleading as a
-    # wrong number.
-    assert mine == theirs, (
-        f"report shape differs: only portable {sorted(set(mine) - set(theirs))}, "
-        f"only library {sorted(set(theirs) - set(mine))}"
-    )
-
-
-def test_the_comparison_is_not_vacuous() -> None:
-    """Two empty dicts would be identical, and would prove nothing."""
+def test_a_gappy_device_still_yields_a_reading() -> None:
+    """Every component misses on the seed, and salvage recovers the fields."""
 
     async def run() -> dict:
-        return await read_fields(PLAN, _seeded_unit(), passes=1)
+        return await _async_decoded_readings(_seeded_unit(), 1)
 
     readings = asyncio.run(run())
     answered = [v for v in readings["values"].values() if v is not None]
     assert len(answered) > 80, f"only {len(answered)} fields answered"
 
 
-def test_the_portable_path_never_reports_a_serial() -> None:
-    """The rule the whole document is built around, and which I broke once.
+@pytest.mark.parametrize("device", [_seeded_unit, _filled_unit], ids=["gappy", "whole"])
+def test_the_readings_never_report_a_serial(device) -> None:
+    """The rule the whole document is built around.
 
     A sweep of the register map walks straight into a field that holds the
-    real serial. The library path drops those by name; the portable path did
-    not, until this test's subject was written -- so a document collected
-    without the library would have published it.
+    real serial, so it is dropped by name -- from the values and from both
+    lists of field names.
     """
 
     async def run() -> dict:
-        return await read_fields(PLAN, _seeded_unit(), passes=1)
+        return await _async_decoded_readings(device(), 1)
 
     readings = asyncio.run(run())
-    leaked = [
-        name for name in readings["values"] if any(w in name for w in NEVER_PUBLISH)
+    named = [
+        *readings["values"],
+        *readings.get("fields_read_individually", []),
+        *readings.get("fields_that_did_not_read", []),
     ]
+    leaked = [name for name in named if any(w in name for w in NEVER_PUBLISH)]
     assert not leaked, leaked
 
 
@@ -144,18 +102,16 @@ def test_a_component_that_never_answers_is_reported_not_hidden() -> None:
 
     async def run() -> dict:
         unit = _seeded_unit()
-        # An unseeded address reads 0, which is a *value*; a component that
-        # is not fitted refuses instead. The library's own `ModbusError` and
-        # not a stand-in, because it derives from plain `Exception` -- which
-        # is exactly why such a miss used to escape `read_fields` instead of
-        # being recorded by it.
+        # A component that is not fitted refuses. The library's own
+        # `ModbusError` and not a stand-in, because it derives from plain
+        # `Exception` -- a handler written for `OSError` lets it escape.
         for address in range(13199, 13215):
             unit.fail_read(
                 address,
                 ModbusError("illegal data address"),
                 register_type="input",
             )
-        return await read_fields(PLAN, unit, passes=1)
+        return await _async_decoded_readings(unit, 1)
 
     readings = asyncio.run(run())
     assert "meter_channel_2" in readings["components_that_did_not_answer"]
@@ -164,18 +120,10 @@ def test_a_component_that_never_answers_is_reported_not_hidden() -> None:
     )
 
 
-@pytest.mark.parametrize("component", [e["component"] for e in PLAN["components"]])
-def test_every_component_in_the_plan_has_blocks_to_read(component: str) -> None:
-    """A component with no blocks would be silently skipped by both paths."""
-    entry = next(e for e in PLAN["components"] if e["component"] == component)
-    assert entry["blocks"], component
-    assert all(count > 0 for _address, count in entry["blocks"]), component
-
-
 def test_a_device_that_answers_everything_reports_nothing_missed() -> None:
     """The regression that produced a wrong document from a healthy inverter.
 
-    Both loops kept `pending` from the pass they were entering rather than
+    The loop kept `pending` from the pass it was entering rather than
     the pass's own failures, so a device that answered every component on the
     first attempt was reported as having missed **all of them** -- and then
     had all 104 fields re-read one at a time, which succeeded, so the values
@@ -185,40 +133,10 @@ def test_a_device_that_answers_everything_reports_nothing_missed() -> None:
     somebody's inverter (gerd's direct-LAN fingerprint said no component
     answered as a whole) that came from this code and not from the wire.
     """
-
-    async def run() -> tuple[dict, dict]:
-        mine = await read_fields(PLAN, _filled_unit(), passes=1)
-        theirs = await _async_decoded_readings(_filled_unit(), 1)
-        return mine, theirs
-
-    mine, theirs = asyncio.run(run())
-    for report in (mine, theirs):
-        assert report["components_that_did_not_answer"] == []
-        assert "fields_read_individually" not in report
-        assert "fields_that_did_not_read" not in report
-
-
-@pytest.mark.parametrize("device", [_seeded_unit, _filled_unit], ids=["gappy", "whole"])
-def test_the_survey_reads_the_same_with_the_library_switched_off(
-    device, monkeypatch
-) -> None:
-    """Go through `_async_decoded_readings`, not around it.
-
-    The tests above compare the two implementations; this one checks the
-    branch that chooses between them. Without it the portable path could be
-    perfect and never reached -- which is the state this repository was in
-    until the fallback was wired, and a contributor without the library would have got a
-    ModuleNotFoundError rather than a document.
-    """
-    import probe
-
-    async def run(library: bool) -> dict:
-        monkeypatch.setattr(probe, "have_library", lambda: library)
-        return await probe._async_decoded_readings(device(), 1)
-
-    with_library = asyncio.run(run(True))
-    without = asyncio.run(run(False))
-    assert without == with_library
+    report = asyncio.run(_async_decoded_readings(_filled_unit(), 1))
+    assert report["components_that_did_not_answer"] == []
+    assert "fields_read_individually" not in report
+    assert "fields_that_did_not_read" not in report
 
 
 #: What one SBR096 actually said, read on 2026-09-09 at unit 200 over the
@@ -273,19 +191,12 @@ def _pack_unit(unit_id: int = 200):
     return unit
 
 
-def test_the_battery_pack_reads_the_same_both_ways() -> None:
-    """The two decoders, over the fifteen fields nobody wrote a decoder for.
+def test_the_battery_pack_decodes_to_what_the_pack_said() -> None:
+    """Scales, sentinels and word order, against one SBR096's real words."""
+    library = asyncio.run(_battery_via_library())
 
-    This is the payoff of recording the SBR into `scan_plan.json` rather than
-    hand-rolling a decoder for it, the way the wallbox needed: the portable
-    path decodes all fifteen from the plan, and `_field_detail` already knew
-    every scale, sentinel and word order they use. So the assertion is that
-    two independent paths agree, with nothing written to make them.
-    """
-    portable = asyncio.run(read_fields(PLAN, _pack_unit(), role="battery"))
-
-    assert portable["components_that_did_not_answer"] == []
-    values = portable["values"]
+    assert library["components_that_did_not_answer"] == []
+    values = library["values"]
     assert values["voltage"] == pytest.approx(199.3)
     assert values["current"] == pytest.approx(0.4)
     assert values["state_of_charge"] == pytest.approx(100.0)
@@ -296,10 +207,6 @@ def test_the_battery_pack_reads_the_same_both_ways() -> None:
     # other way round a 5.8 MWh counter reads as 3.8 GWh.
     assert values["total_charge"] == pytest.approx(5802.1)
     assert values["total_discharge"] == pytest.approx(5427.5)
-
-    library = asyncio.run(_battery_via_library())
-    for name, value in values.items():
-        assert library["values"][name] == pytest.approx(value), name
 
 
 async def _battery_via_library():
@@ -313,14 +220,11 @@ async def _battery_via_library():
     return await _async_battery_readings(_Connection(), 200)
 
 
-def test_the_library_path_also_unpacks_the_position_words() -> None:
+def test_the_position_words_are_unpacked() -> None:
     """The eight halves, which are the reason for carrying this at all.
 
     A document holding 780 makes a reader ask what cell 780 is; one holding
-    module 3, cell 12 does not. The portable path reports the raw words only
-    -- it decodes from the plan, and the unpacking is a property on the
-    component -- so this is the one thing the two paths deliberately differ
-    on, and the difference is additive.
+    module 3, cell 12 does not.
     """
     library = asyncio.run(_battery_via_library())
     values = library["values"]
@@ -337,35 +241,6 @@ def test_the_library_path_also_unpacks_the_position_words() -> None:
     ) == (1, 1)
     # And the raw word stays, so a reader who disputes the encoding can check.
     assert values["max_cell_position"] == 780
-
-
-def test_the_inverters_own_reading_does_not_touch_the_battery_blocks() -> None:
-    """Role selection, and why it is not cosmetic.
-
-    The SBR's addresses read at the *inverter's* unit answer 0xFFFF. Without
-    the role filter, `read_fields` would read 10740 and 10756 on unit 1 and
-    report a pack that is not there -- which is a smaller version of exactly
-    how the survey came to record "something answered at unit 200" without
-    ever recording what it said.
-    """
-    inverter = read_fields(PLAN, _seeded_unit())
-    values = asyncio.run(inverter)["values"]
-
-    for name in ("voltage", "max_cell_voltage", "max_cell_position"):
-        assert name not in values, f"{name} belongs to the pack, not the inverter"
-
-    # And the battery role reads only its own two components.
-    reads: list[tuple[int, int]] = []
-    unit = _pack_unit()
-    original = unit.read_input_registers
-
-    async def logged(address, count):
-        reads.append((address, count))
-        return await original(address, count)
-
-    unit.read_input_registers = logged
-    asyncio.run(read_fields(PLAN, unit, role="battery"))
-    assert sorted(reads) == [(10740, 9), (10756, 8), (10764, 25)], reads
 
 
 def test_a_cell_block_a_dongle_refuses_leaves_the_pack_summary_intact() -> None:

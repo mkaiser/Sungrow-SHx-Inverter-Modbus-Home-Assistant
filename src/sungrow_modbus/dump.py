@@ -19,7 +19,7 @@ out its full timeout. A measured SH10RT takes about 300 seconds to read these
 bounded by a budget, reports which bands it never reached rather than
 pretending it covered them, and belongs behind a switch that is off.
 
-`scripts/sungrow_survey/probe.py` carries the same bands for the standalone
+`scripts/sungrow_read_only_survey/probe.py` carries the same bands for the standalone
 survey, which has to run with this library absent.
 `tests/test_dump_bands.py` asserts the two have not drifted.
 """

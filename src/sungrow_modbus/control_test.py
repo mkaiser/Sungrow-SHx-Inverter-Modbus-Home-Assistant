@@ -24,8 +24,8 @@ tautological. So every value is checked on three legs:
 
 Nothing here talks to Home Assistant, opens a file, prints, or parses an
 argument. It takes a `SungrowInverter`, a clock it can be lied to about, and a
-progress callback; `scripts/hardware/sungrow_control_test.py` and the integration's
-`control_test.py` are the two drivers that give it those.
+progress callback; `scripts/sungrow_control_test/sungrow_control_test.py` and
+the integration's `control_test.py` are the two drivers that give it those.
 
 **The rule that outranks every other rule in this file:** a restore is never
 budgeted, never deadlined, and never skipped. Every early exit goes through it.
@@ -43,6 +43,7 @@ from typing import Any, NamedTuple, Protocol
 
 from modbus_connection import ModbusError, ModbusExceptionError, ServerDeviceBusyError
 
+from . import export_scale
 from .addresses import DIRECT_ONLY_PROBE
 from .battery import ceiling as battery_ceiling
 from .capabilities import Capability
@@ -54,7 +55,12 @@ _LOGGER = logging.getLogger(__name__)
 #: Bumped when the shape of the published `control_test` block changes, not
 #: when a driver does. Carried into the block so a reader of an old document
 #: knows which fields to expect.
-BLOCK_SCHEMA = 1
+#:
+#: 2 writes 13074 at the factor `export_scale` measured on this device, and
+#: says so in `conditions.export_write_scale`. A block at 1 wrote it divided
+#: by ten everywhere, so its 13074 row from a 1:1 firmware is a refusal of a
+#: tenth of the probe value, not a finding about the register.
+BLOCK_SCHEMA = 2
 
 # -- budgets -----------------------------------------------------------------
 #
@@ -258,8 +264,7 @@ class Probe(NamedTuple):
     checking that a number equals itself.
 
     The bounds mirror `scripts/generate/tables/writes.py` exactly, which a test asserts.
-    That duplication is deliberate and is the trade already made for `IDENTIFY_UNITS`
-    and for `fingerprint.PROBES`: the library cannot import a file from
+    That duplication is deliberate: the library cannot import a file from
     `scripts/`, and a table two copies of which are kept equal by a test beats a
     module that only works inside a checkout.
     """
@@ -1186,6 +1191,11 @@ class ControlTest:
         facts, and only one of them is about the register.
         """
         self._taken: list[float] = []
+        self.export_write_scale: int | None = None
+        """How this firmware writes 13074, as `export_scale` measured it, or
+        `None` before it is asked or where it could not answer. `None` writes
+        through the field, which divides by ten: what the integration falls
+        back to as well."""
         self.accepted_forced_w: float | None = None
         """What the pack actually took for the last forced command.
 
@@ -1638,7 +1648,16 @@ class ControlTest:
         if self.options.dry_run:
             return None
         try:
-            await self.inverter.component(probe.component).write(probe.field, value)
+            if (
+                probe.field == "export_power_limit"
+                and self.export_write_scale is not None
+            ):
+                await self.inverter.async_write_word(
+                    export_scale.LIMIT.address,
+                    export_scale.word_for(value, self.export_write_scale),
+                )
+            else:
+                await self.inverter.component(probe.component).write(probe.field, value)
         except ModbusError as err:
             _LOGGER.debug("control test: %s refused %s: %s", probe.field, value, err)
             self.refusals[probe.field] = f"{type(err).__name__}: {err}"
@@ -1763,6 +1782,8 @@ class ControlTest:
             taken.append(value)
             self._step(f"{probe.field}, writing {value:g} {probe.unit}".strip())
             lifted = await self._lift_export_mode(probe)
+            if probe.field == "export_power_limit":
+                await self._measure_export_scale()
             first = await self._probe_once(probe, value, bounds)
             if seen == DECADE_OUT_OF_RANGE:
                 self._note(
@@ -1883,6 +1904,42 @@ class ControlTest:
         if self.snapshot.values.get(EXPORT_MODE.field) == MODE_ON:
             return False
         return await self._write(EXPORT_MODE, MODE_ON) is None
+
+    async def _measure_export_scale(self) -> None:
+        """Ask how this firmware writes 13074, before writing it.
+
+        The firmwares differ -- three houses multiply the word by ten, fwitten
+        stores it as handed -- and a probe written at the wrong factor is
+        refused or lands a decade off, which leg B would then report as a
+        finding about the register when it is a finding about this run. So
+        the run writes at the factor the device states, as the integration's
+        entity does, and leg B checks the *register*: whatever the factor, a
+        right write leaves the watts asked for.
+
+        Never lifts the mode itself: `_lift_export_mode` has already done that
+        where it was allowed, and where it was not the register ignores every
+        write anyway. The probe's one write changes nothing on either firmware.
+        """
+        try:
+            result = await export_scale.async_probe(
+                self.inverter, dry_run=self.options.dry_run
+            )
+        except ModbusError as err:
+            self.conditions["export_write_scale"] = None
+            self._note(
+                "the export limit's write scale could not be asked, so it was "
+                f"written divided by ten: {type(err).__name__}: {err}"
+            )
+            return
+        self.conditions["export_write_scale"] = export_scale.document(result)
+        if result.left_changed:
+            self._worst(5)
+        self.export_write_scale = result.write_units_per_count
+        if result.write_units_per_count is None:
+            self._note(
+                "the export limit's write scale was not determined, so it was "
+                f"written divided by ten: {result.reason}"
+            )
 
     async def _put_back(self, probe: Probe) -> None:
         """Restore one control immediately after its own check."""

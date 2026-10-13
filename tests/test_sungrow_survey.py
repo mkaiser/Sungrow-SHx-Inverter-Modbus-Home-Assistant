@@ -1,4 +1,4 @@
-"""The one entry point: `scripts/sungrow_survey/sungrow_survey.py`.
+"""The one entry point: `scripts/sungrow_read_only_survey/sungrow_survey.py`.
 
 Its failure modes are not the interesting kind. It asks eight questions, runs
 four phases and writes three files, so what goes wrong is that one answer is
@@ -23,7 +23,7 @@ import sys
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-SCAN = REPO / "scripts" / "sungrow_survey"
+SCAN = REPO / "scripts" / "sungrow_read_only_survey"
 sys.path.insert(0, str(SCAN))
 
 import blocks  # noqa: E402
@@ -175,7 +175,7 @@ def test_a_run_from_inside_the_checkout_still_writes_to_testdata(
     """The defect a real run produced, from the obvious directory.
 
     Both `_workspace` and `_raw_dir` asked whether the **current** directory
-    was a checkout. Run from `scripts/sungrow_survey/` -- which is where the
+    was a checkout. Run from `scripts/sungrow_read_only_survey/` -- which is where the
     folder's README tells people to run it, and where a maintainer naturally is
     -- they concluded "not a checkout" and wrote the document into the source
     tree. `.gitignore` covered the private reading and the transcript; the
@@ -184,8 +184,8 @@ def test_a_run_from_inside_the_checkout_still_writes_to_testdata(
     Both now ask one function, which walks up.
     """
     (tmp_path / ".git").mkdir()
-    (tmp_path / "scripts" / "sungrow_survey").mkdir(parents=True)
-    monkeypatch.chdir(tmp_path / "scripts" / "sungrow_survey")
+    (tmp_path / "scripts" / "sungrow_read_only_survey").mkdir(parents=True)
+    monkeypatch.chdir(tmp_path / "scripts" / "sungrow_read_only_survey")
 
     documents, private, in_checkout = sungrow_survey._workspace()
     assert in_checkout
@@ -398,8 +398,7 @@ def test_an_already_isolated_block_is_not_offered_to_layout_again() -> None:
     days earlier. The summary printed nine numbered recommendations to add
     them, and the isolation was in fact *working* -- each failure cost one
     field instead of a whole tier, which is the outcome that module exists
-    for. `layout.py` is not in that folder, so the fact travels in
-    `scan_plan.json` as `isolated` on the component.
+    for. The summary reads `layout.ISOLATE` to tell the two apart.
     """
     text = _with_blocks(
         _outcome(
@@ -486,35 +485,6 @@ def test_a_timeout_only_failure_is_not_evidence_about_the_register() -> None:
     assert "do not add it to src/sungrow_modbus/layout.py" in text
     assert "fails fast" in text
     assert "this is the device refusing" not in text
-
-
-def test_the_advice_survives_a_plan_it_could_not_load(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """By summary time the documents are written; nothing may take it down.
-
-    The plan is only needed for the "already isolated" half of one sentence,
-    and a summary is the last thing owed to whoever sat through the scan.
-    """
-    monkeypatch.setattr(
-        sungrow_survey.portable,
-        "load_plan",
-        lambda: (_ for _ in ()).throw(RuntimeError("no plan here")),
-    )
-    text = _with_blocks(
-        _outcome(
-            (
-                "fast_input",
-                "input",
-                5241,
-                1,
-                blocks.REFUSED,
-                "3/3, Modbus Exception 0x02 for function code 0x04",
-            )
-        )
-    )
-    assert "What this scan found" in text
-    assert "Add the field(s) these belong to" in text
 
 
 def test_the_sweep_looks_at_the_ihomemanager_ports() -> None:
@@ -679,9 +649,7 @@ def test_the_block_document_carries_no_address_and_no_serial() -> None:
         culprits=[],
         reconnects=1,
     )
-    sungrow_survey._CLIENT_LABEL[:] = [
-        "this directory's own client -- nothing installed"
-    ]
+    sungrow_survey._CLIENT_LABEL[:] = [blocks.LibraryClient.label]
     text = json.dumps(sungrow_survey._block_document(outcome))
 
     assert SERIAL not in text

@@ -56,8 +56,6 @@ gen-check` (and CI) fails on a hand edit of any of them:
 - `custom_components/sungrow_modbus/{derived,number,switch,select}_descriptions.py`
   and `strings.json` / `translations/en.json` -- `scripts/generate/descriptions.py`,
   from `sungrow_modbus.derived` and the tables in `scripts/generate/tables/`;
-- `scripts/sungrow_survey/scan_plan.json` -- `generate_scan_plan.py`, from the
-  library;
 - `doc/compatibility.md` -- `generate_compatibility.py`, from the fingerprints;
 - `legacy/modbus_sungrow_multiple_inverters_{1,2,3}.yaml` --
   `generate_second_inverter_config.py`, from `legacy/modbus_sungrow.yaml`,
@@ -101,20 +99,21 @@ implementation for this pattern — read its real source, not blog posts.
 | `scripts/generate/descriptions.py` | The entity descriptions and names: `derived`, `numbers`, `switches`, `selects`, `strings`, or all five with no argument (`strings` last, since it reads the others) |
 | `scripts/generate/tables/writes.py` | **Input table**: which registers the integration may write and within what bounds. Feeds the number/switch/select descriptions; `tests/test_writes.py` holds `registers.py`'s writable set to it |
 | `scripts/generate/tables/naming.py` | **Input table**: the entity-name convention. Feeds `strings.json`, `review_names.py` and the Influx helper |
-| `scripts/generate/generate_scan_plan.py` | Record the library's block reads and register decoding into `scripts/sungrow_survey/scan_plan.json`, so the scanner works without it. Covers the inverter, the SBR pack and the wallbox — the last two marked with the **role** whose unit they answer on rather than a number, because that moves with the transport |
 | `scripts/generate/generate_compatibility.py` | Build `doc/compatibility.md` from the committed fingerprints |
 | `scripts/generate/generate_simulator_registers.py` | The simulator's seed, from the entity map |
 | `scripts/generate/generate_second_inverter_config.py` | The `legacy/` multi-inverter YAML files; run by CI on a change to the YAML package |
 | **`scripts/release/`** | **Release gates** |
-| `scripts/release/sync_version.py` | Single source of truth for the version; `--check` in CI, `--set X.Y.Z` to release |
+| `scripts/release/sync_version.py` | Single source of truth for the version: moves it into `manifest.json` and into the PEP 723 header of the survey and the control test; `--check` in CI, `--set X.Y.Z` to release |
 | `scripts/release/check_pinned_library.py` | Do the integration's `sungrow_modbus` imports resolve against the library version `manifest.json` pins? `--wheel dist/*.whl` asks it of a local build and gates CI; with no argument it asks it of **PyPI**, which is legitimately red between releases |
-| **`scripts/hardware/`** | **Writes to a real inverter** |
-| `scripts/hardware/sungrow_control_test.py` | **Part B, from a terminal**: writes each control, reads the register back against the specification's scale, watches what the inverter does, and puts everything back. `make controltest-dry HOST=...` first -- it resolves the whole plan and writes nothing. `--restore <snapshot>` is the way out of a run that died halfway. `--export-scale` asks how this firmware writes 13074 with one write that changes nothing, and does nothing else |
-| **`scripts/sungrow_survey/`** | **Part A, read only, runs with nothing installed** |
-| `scripts/sungrow_survey/sungrow_survey.py` | **The one entry point for a survey** (`make scan HOST=...`, or `make scan-sim` against the simulator): finds the devices, asks what no register can answer, runs the block read test, reads every register, writes the document and a transcript, and prints a maintainer-facing summary. Exit code says what happened (`0` fine, `3` the filename under-claims, `4` the transport is disputed, `1`/`2` nothing collected) |
-| `scripts/sungrow_survey/probe.py` | Probe for Sungrow devices: `mdns`, `sweep <cidr>` (502, 503 for a Logger or iHomeManager, 516 for an iHomeManager's TLS port — found, not readable), `units <host>`, `capabilities <host>`, `dump <host>`. Uses the library where it is installed and `portable.py`'s client where it is not, so it runs for somebody who has installed nothing |
-| `scripts/sungrow_survey/blocks.py` | The block read test: which read inside a component fails, and whether it is a fault or contention. `--client library` fails where the integration does; `--client raw` names the count a padded frame needs; `--narrow-budget` bounds the narrowing, which is unaffordable on a link where reads time out |
-| `scripts/sungrow_survey/portable.py` | The stdlib-only Modbus client, register decoder and plan loader the other scripts build on. Not runnable by itself |
+| **`scripts/sungrow_control_test/`** | **Writes to a real inverter; runs on the published library** |
+| `scripts/sungrow_control_test/control_test.sh`, `control_test.cmd` | The launchers, built like the survey's and tested to stay alike (`test_the_two_folders_launchers_differ_only_where_they_must`): uv, else a ready Python, else offer to install uv. Every argument and the test's exit code pass through, exit 5 included |
+| `scripts/sungrow_control_test/sungrow_control_test.py` | **Part B, from a terminal**: writes each control, reads the register back against the specification's scale, watches what the inverter does, and puts everything back. `make controltest-dry HOST=...` first -- it resolves the whole plan and writes nothing. `--restore <snapshot>` is the way out of a run that died halfway. `--export-scale` asks how this firmware writes 13074 with one write that changes nothing, and does nothing else |
+| **`scripts/sungrow_read_only_survey/`** | **Part A, read only, runs on the published library** |
+| `scripts/sungrow_read_only_survey/read_only_survey.sh`, `read_only_survey.cmd` | **What a contributor runs.** Find `uv` (PATH, then `~/.local/bin`) and hand it `sungrow_survey.py`; else use a Python 3.13+ that has exactly the pinned library; else offer to install uv, asking first. Every argument and the survey's exit code pass through. `read_only_survey.cmd` only starts `read_only_survey.ps1`, which does the Windows half |
+| `scripts/sungrow_read_only_survey/sungrow_survey.py` | **The one entry point for a survey** (`make scan HOST=...`, or `make scan-sim` against the simulator): finds the devices, asks what no register can answer, runs the block read test, reads every register, writes the document and a transcript, and prints a maintainer-facing summary. Exit code says what happened (`0` fine, `3` the filename under-claims, `4` the transport is disputed, `1`/`2` nothing collected) |
+| `scripts/sungrow_read_only_survey/probe.py` | Probe for Sungrow devices: `mdns`, `sweep <cidr>` (502, 503 for a Logger or iHomeManager, 516 for an iHomeManager's TLS port — found, not readable), `units <host>`, `capabilities <host>`, `dump <host>` |
+| `scripts/sungrow_read_only_survey/blocks.py` | The block read test: which read inside a component fails, and whether it is a fault or contention. `--client library` fails where the integration does; `--client raw` names the count a padded frame needs; `--narrow-budget` bounds the narrowing, which is unaffordable on a link where reads time out |
+| `scripts/sungrow_read_only_survey/raw_client.py` | The bare-socket client behind `blocks.py --client raw`: a measuring instrument that trusts `byte_count`, not a second copy of the library's client. Not runnable by itself |
 | **`scripts/helpers/`** | **One-off tools** |
 | `scripts/helpers/influx_migration.py` | Print Grafana regexes and rewrite recipes for InfluxDB users; connects to nothing |
 | `scripts/helpers/review_names.py` | Lay the entity names out for the open naming decision — grouped by subject, each with the entity id it produces and its legacy name. `--markdown` prints the sheet (redirect it into `doc/entity_name_review.md`); `--check` fails when that file has drifted, which it silently had by 47 entities |
@@ -151,10 +150,11 @@ scale is hand-typed. `tests/test_control_test.py` makes the two meet, so a
 decade error fails the suite on the commit that introduces it rather than on
 somebody's roof.
 
-The engine is in the library so both drivers share it: `scripts/hardware/sungrow_control_test.py`
+The engine is in the library so both drivers share it: `scripts/sungrow_control_test/sungrow_control_test.py`
 and the `Run control write test` button on the device page, which runs part A
 then part B and publishes both in one fingerprint document (`control_test`,
-schema 19).
+schema 19). `--export-scale --merge-into` adds the `export_scale` block
+(schema 20), and a full run writes 13074 at the factor that probe answers.
 
 ### Rules the procedure turns on
 
@@ -243,14 +243,15 @@ is on: with it off the register ignores writes -- no exception, no change.
   readback. Where no such word exists it declines, and with feed-in
   limitation off it needs leave to lift the mode.
   `tests/test_export_scale.py` sweeps both firmwares and asserts the register
-  never moves; `scripts/hardware/sungrow_control_test.py --export-scale` runs
+  never moves; `scripts/sungrow_control_test/sungrow_control_test.py --export-scale` runs
   it from a terminal.
 - `number.SungrowExportLimitNumber` probes on the first write, stores the
   factor in entry data (`CONF_EXPORT_WRITE_SCALE`) with the firmware it was
   measured on, re-measures after a firmware change, and writes the raw word
   itself. An unanswered probe falls back to ten and is not stored. The update
   listener skips the reload when that key is all that changed (`_built_from`).
-- **To do:** run the probe at fwitten, the 1:1 side it exists for.
+- Measured by the probe on both sides: bar12 answers times ten, fwitten's
+  master and slave answer 1:1, each over the inverter's own LAN port.
 
 The readings behind this are in `doc/device-fingerprints/`.
 
@@ -277,18 +278,33 @@ because it decides where a change belongs:
 - **The generated `*_descriptions.py` are not hand-edited** -- all but
   `sensor_descriptions.py`, which is source. `make gen-check` fails on it.
 
-## The survey runs with nothing installed
+## The survey runs on the published library
 
 A tester who has the integration gets **part A on the device page** and a
-download link for the document. A contributor who will not install anything
-runs `sungrow_survey.py` from `scripts/sungrow_survey/` with a bare Python, so
-**nothing in that directory may import a third-party package at module
-level** -- a convenient `from sungrow_modbus import ...` breaks it.
-`tests/test_scan_is_standalone.py` asserts it by reading the imports.
+download link for the document. A contributor without it runs `read_only_survey.sh` or
+`read_only_survey.cmd`, which hand `sungrow_survey.py` to `uv run --script`: uv reads
+the script's **PEP 723 header** and fetches a Python and exactly the
+`sungrow-modbus` version it pins. So the register map, the decoding and the
+fingerprint tables all come from the library; the directory keeps no copy.
 
-**`portable.py` is a module, not a tool.** It holds the client, the decoder
-and the plan loader; **`scan_plan.json` is the only register list in the
-directory**, and a contributor runs `sungrow_survey.py`.
+Two things follow:
+
+- **The header is the survey's whole install.** Module-level imports in
+  `scripts/sungrow_read_only_survey/` are the standard library, the sibling modules,
+  `sungrow_modbus` and `modbus_connection`, and the header must declare
+  every one -- `[tmodbus]` included, since the library depends on bare
+  `modbus-connection`. `tests/test_survey_dependencies.py` reads the imports
+  and the header and holds them to each other.
+- **The survey can use only what the pinned wheel has.** The pin is the
+  version `pyproject.toml` declares, moved by `sync_version.py`, so between
+  releases the PyPI wheel lags the tree. `check_pinned_library.py` reads the
+  survey's and the control test's imports beside the integration's, so
+  `--wheel` gates a release and the no-argument form says what PyPI lacks.
+
+`scripts/sungrow_control_test/` is built the same way and kept separate: the
+same header and pin on `sungrow_control_test.py`, and launchers named
+`control_test.{sh,ps1,cmd}` beside it. The two folders stay apart because the
+survey's promise is that nothing in its folder can write.
 
 ## Things that will bite you
 
@@ -308,7 +324,8 @@ Each of these is verified in a container or against hardware.
   `custom_components/sungrow_modbus/manifest.json`.** HA checks the installed
   version on every start and will try to pip-install the package if they
   differ. Never edit either by hand: `scripts/release/sync_version.py --set
-  X.Y.Z` moves both **and re-installs the editable library** -- HA compares the
+  X.Y.Z` moves both, and the scripts' PEP 723 pins, **and re-installs the
+  editable library** -- HA compares the
   pin against what is *installed*, and a stale install sends pip after a
   version not on PyPI (`RequirementsNotFound` on Add integration). `--check`
   runs in CI, in pytest and at release.
@@ -391,8 +408,8 @@ Each of these is verified in a container or against hardware.
   with `addresses.field_address(name, device)`; the few registers no component
   maps are named constants in `addresses.py` (`DIRECT_ONLY_PROBE`, ...), and
   `Address.register` gives the document's number beside the protocol one. The
-  survey scripts use `portable.address(plan, name)` against `scan_plan.json`,
-  which carries both. `tests/test_addresses.py` fails on a new literal.
+  survey scripts import the same names. `tests/test_addresses.py` fails on a
+  new literal.
   **Tests are exempt on purpose**: a fixture carries the specification's
   numbers, not the code's.
 - **Ask the inverter, do not infer.** Register 5002 reports the output type
@@ -415,7 +432,7 @@ Each of these is verified in a container or against hardware.
   a read of its own, or the failure takes the whole pooled block with it.
 - **A lenient Modbus client will tell you the register is fine.** A raw
   socket trusts `byte_count` and reads the padded frames perfectly while the
-  shipping stack cannot. `scripts/sungrow_survey/blocks.py` is as strict as
+  shipping stack cannot. `scripts/sungrow_read_only_survey/blocks.py` is as strict as
   the shipping stack and reports both numbers plus the count that reconciles
   them. Add to `src/sungrow_modbus/layout.py` only from *its* measurement.
 - **A Sungrow accepts very few simultaneous sessions, and the recovery is
@@ -477,7 +494,8 @@ Each of these is verified in a container or against hardware.
 
 - **Identify by what answers, never by an open port.** Not every endpoint on
   502 is a Sungrow, and an inverter is not always unit 1: a cluster slave
-  answers on unit **2**. `identify()` sweeps `IDENTIFY_UNITS` (1, then 2-5),
+  answers on unit **2**. `identify()` and the config flow sweep
+  `discovery.IDENTIFY_UNITS` (1, then 2-5),
   returns which unit answered, and names the exception type on failure,
   because a refusal and a timeout lead to different next steps.
 - **Which unit ids answer depends on the transport.** The SBR answers unit

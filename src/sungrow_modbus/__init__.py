@@ -19,6 +19,7 @@ from .derived import RUNNING_STATES, Derived
 from .device import SungrowInverter
 from .discovery import (
     DEFAULT_PORT,
+    IDENTIFY_UNITS,
     MAX_HOSTS,
     NetworkTooLarge,
     async_hostname,
@@ -35,6 +36,7 @@ __all__ = [
     "DEFAULT_PORT",
     "DEVICE_TYPES",
     "FALLBACK_W",
+    "IDENTIFY_UNITS",
     "MANUFACTURER",
     "MAX_HOSTS",
     "MODELS",

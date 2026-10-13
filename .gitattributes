@@ -1,0 +1,6 @@
+# The survey's launchers run where they are unpacked, so their line endings are
+# fixed here rather than left to whoever checks them out: cmd.exe misreads a
+# batch file with bare LF line endings, and /bin/sh chokes on a CR.
+*.sh text eol=lf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf

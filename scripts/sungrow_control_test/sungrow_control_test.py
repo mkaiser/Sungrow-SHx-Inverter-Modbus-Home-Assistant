@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.13"
+# dependencies = ["sungrow-modbus==0.1.0a11", "modbus-connection[tmodbus]>=4.10.0"]
+# ///
 """Run the control test against a real inverter, from a terminal.
 
 This is one of the two drivers over `sungrow_modbus.control_test`; the other is
@@ -9,16 +13,26 @@ things a library has no business doing: opening a connection, asking a person a
 question, writing files, and choosing an exit code.
 
 **It writes to your inverter.** That is the point of it, and it is why nothing
-in `scripts/sungrow_survey/` does: that directory is handed to strangers and
-promises in six places that no file in it can write a register. This one is not
-in it and never will be.
+in `scripts/sungrow_read_only_survey/` does: that directory is handed to
+strangers and promises in six places that no file in it can write a register.
+This one is not in it and never will be.
 
 Start with `--dry-run`. It resolves every bound, picks every probe value and
 prints exactly what it would write, without writing any of it.
 
-    python scripts/hardware/sungrow_control_test.py 192.168.1.50 --dry-run
-    python scripts/hardware/sungrow_control_test.py 192.168.1.50
-    python scripts/hardware/sungrow_control_test.py 192.168.1.50 --restore SNAPSHOT
+Everything it needs is the published `sungrow-modbus` library, pinned in the
+header above. The launchers beside this file fetch it through uv, the way the
+read-only survey's do, and ask before installing uv:
+
+    ./control_test.sh 192.168.1.50 --dry-run       (Linux, macOS)
+    control_test.cmd 192.168.1.50 --dry-run        (Windows)
+
+In a checkout with the library installed, run it with Python directly:
+
+    cd scripts/sungrow_control_test
+    python sungrow_control_test.py 192.168.1.50 --dry-run
+    python sungrow_control_test.py 192.168.1.50
+    python sungrow_control_test.py 192.168.1.50 --restore SNAPSHOT
 
 Run it while the sun is up. Half the procedure measures what the inverter does
 with the power it has, and in the dark there is nothing for it to do.
@@ -49,7 +63,7 @@ from sungrow_modbus.control_test import (
     Snapshot,
     document,
 )
-from sungrow_modbus.fingerprint import stand_in
+from sungrow_modbus.fingerprint import SCHEMA, stand_in
 
 #: Where a run's private record goes. Gitignored, and it carries the real serial
 #: and the real address -- which is exactly why the publishable block is built
@@ -81,8 +95,9 @@ def _workspace() -> Path:
     Outside one it is the working directory, visibly, so nobody is left
     wondering where a file carrying their serial number went.
     """
-    root = Path(__file__).resolve().parents[2]
-    if (root / ".git").exists():
+    parents = Path(__file__).resolve().parents
+    root = parents[2] if len(parents) > 2 else None
+    if root is not None and (root / ".git").exists():
         directory = root / PRIVATE_DIR
     else:
         directory = Path.cwd() / "sungrow-control-test"
@@ -250,6 +265,18 @@ def report(outcome: Outcome, *, title: str) -> str:
         for row in outcome.probes
     ]
     lines.append("")
+    if "export_write_scale" in outcome.conditions:
+        scale = outcome.conditions["export_write_scale"]
+        lines += [
+            "`export_power_limit` was written at the factor this inverter "
+            + (
+                f"states: it {scale['answer']} ({scale['reason']})."
+                if scale and scale["write_units_per_count"] is not None
+                else "could not be asked for, so divided by ten"
+                + (f" ({scale['reason']})." if scale else ".")
+            ),
+            "",
+        ]
 
     if outcome.effects:
         lines += [
@@ -420,7 +447,7 @@ async def _restore_mode(inverter: SungrowInverter, args: argparse.Namespace) -> 
 
 
 async def _export_scale_mode(
-    inverter: SungrowInverter, args: argparse.Namespace
+    inverter: SungrowInverter, args: argparse.Namespace, serial: str | None
 ) -> int:
     """Ask how this firmware writes 13074, and nothing else.
 
@@ -433,11 +460,7 @@ async def _export_scale_mode(
     result = await export_scale.async_probe(
         inverter, lift_mode=args.enable_export_limit, dry_run=args.dry_run
     )
-    answer = {
-        export_scale.MULTIPLIER: "multiplies a written word by ten",
-        1: "stores a written word as handed",
-        None: "not determined",
-    }[result.write_units_per_count]
+    answer = export_scale.ANSWERS[result.write_units_per_count]
     print(f"\n13074 write scale: {answer}", file=sys.stderr)
     print(f"  held     {result.held} W", file=sys.stderr)
     if result.wrote is not None:
@@ -449,6 +472,20 @@ async def _export_scale_mode(
             file=sys.stderr,
         )
     print(f"  because  {result.reason}", file=sys.stderr)
+    if args.merge_into and not args.dry_run:
+        path = _merge(
+            Path(args.merge_into),
+            "export_scale",
+            # The date, as the document's own `read_on` gives it: the block is
+            # usually merged into a reading taken on another day.
+            {
+                **export_scale.document(result),
+                "read_on": datetime.now().date().isoformat(),
+            },
+            serial,
+            args.host,
+        )
+        print(f"\nWrote:\n  {path}  (send this)", file=sys.stderr)
     if result.left_changed:
         return 5
     return 0 if result.write_units_per_count is not None else 3
@@ -495,7 +532,7 @@ async def _run(args: argparse.Namespace) -> int:
             return await _start_only_mode(inverter)
 
         if args.export_scale:
-            return await _export_scale_mode(inverter, args)
+            return await _export_scale_mode(inverter, args, serial)
 
         restart = _ask_restart(args.restart)
 
@@ -542,7 +579,9 @@ async def _run(args: argparse.Namespace) -> int:
         _save(directory, stamp, "control_test.json", json.dumps(block, indent=2)),
     ]
     if args.merge_into:
-        paths.append(_merge(Path(args.merge_into), block, serial, args.host))
+        paths.append(
+            _merge(Path(args.merge_into), "control_test", block, serial, args.host)
+        )
 
     print(f"\n{summarise(outcome)}", file=sys.stderr)
     for sentence in outcome.unestablished:
@@ -565,7 +604,9 @@ async def _run(args: argparse.Namespace) -> int:
     return outcome.code
 
 
-def _merge(target: Path, block: dict[str, Any], serial: str | None, host: str) -> Path:
+def _merge(
+    target: Path, key: str, block: dict[str, Any], serial: str | None, host: str
+) -> Path:
     """Fold the block into an existing fingerprint document, and refuse to leak.
 
     The block is anonymous by construction -- register numbers, chosen values,
@@ -583,7 +624,17 @@ def _merge(target: Path, block: dict[str, Any], serial: str | None, host: str) -
         )
 
     document_data = json.loads(target.read_text())
-    document_data["control_test"] = block
+    if key == "export_scale" and document_data.get("schema", 0) < SCHEMA:
+        # The schema says what a document *can* carry, so a reader takes the
+        # block's absence as "not asked". A document from before 19 lacks
+        # other fields that number promises; survey it again instead.
+        if document_data.get("schema", 0) < SCHEMA - 1:
+            raise SystemExit(
+                f"refusing to merge: {target} is at schema "
+                f"{document_data.get('schema')}, too old to be stamped {SCHEMA}"
+            )
+        document_data["schema"] = SCHEMA
+    document_data[key] = block
     target.write_text(json.dumps(document_data, indent=2) + "\n")
     return target
 

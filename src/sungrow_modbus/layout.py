@@ -38,7 +38,7 @@ was never wrong and the count was never wrong either. A lenient client that
 trusts the byte count reads these registers perfectly well, which is exactly
 how the first diagnosis went astray -- a raw-socket probe called them fine
 while the shipping stack could not read them at all.
-`scripts/sungrow_survey/blocks.py` is deliberately as strict as the shipping
+`scripts/sungrow_read_only_survey/blocks.py` is deliberately as strict as the shipping
 stack for that reason, and reports both numbers plus the count that
 reconciles them.
 
@@ -74,7 +74,7 @@ from __future__ import annotations
 #:
 #: Add to this when hardware proves a register unreadable — not when a
 #: document hints it might be, and not when a lenient client says it is fine.
-#: `scripts/sungrow_survey/blocks.py` is the measurement, because it fails
+#: `scripts/sungrow_read_only_survey/blocks.py` is the measurement, because it fails
 #: wherever the shipping stack fails. Every entry should name the machine that
 #: proved it.
 #:
@@ -124,7 +124,7 @@ ISOLATE: dict[str, str] = {
     "meter_channel_2_phase_c_active_power": "meter_channel_2",
     # Measured on gerd's SH8.0RT-V112 (0x0E0E, ARM SAPPHIRE-H_V11_V01_B,
     # 2026-09-07) with the block read test -- then `discover_probe.py
-    # components`, now `scripts/sungrow_survey/blocks.py`: each of these
+    # components`, now `scripts/sungrow_read_only_survey/blocks.py`: each of these
     # refused on **every** round while its neighbours answered, and each was
     # the only unanswerable read in a component that then lost every field it
     # had. One field apiece, so isolating them costs one extra read and saves

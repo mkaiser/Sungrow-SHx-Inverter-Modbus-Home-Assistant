@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-import sys
 
 from modbus_connection.model import Component
 import pytest
@@ -159,25 +158,3 @@ def test_an_isolated_group_is_a_component_of_its_own(group: str) -> None:
     component = registers.COMPONENTS[group]
     actual = {name for name, (owner, _f) in GENERATED.items() if owner is component}
     assert actual == expected
-
-
-def test_the_scan_plan_matches_the_library() -> None:
-    """The artefact that lets the scanner run without the library.
-
-    `scripts/sungrow_survey/` is run by contributors with nothing installed, so it
-    cannot import `sungrow_modbus` -- it reads which blocks to fetch and how to
-    decode them out of a committed JSON instead. Stale, that file would make
-    the scanner measure a plan the integration no longer uses, which is worse
-    than not measuring: the numbers would look fine.
-
-    CI checks this too; asserting it here means a local `pytest` catches the
-    staleness before a push does.
-    """
-    sys.path.insert(
-        0, str(Path(__file__).resolve().parent.parent / "scripts" / "generate")
-    )
-    from generate_scan_plan import OUTPUT, render
-
-    assert OUTPUT.read_text(encoding="utf-8") == render(), (
-        "Run scripts/generate/generate_scan_plan.py and commit the result."
-    )

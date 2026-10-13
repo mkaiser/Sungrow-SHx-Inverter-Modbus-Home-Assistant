@@ -50,7 +50,7 @@ thing the control test's restore rules exist to prevent.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Any, Protocol
 
 from modbus_connection import (
     IllegalDataValueError,
@@ -119,6 +119,38 @@ class Result:
     left_changed: bool = False
     """True only if the register moved and could not be put back. The one
     outcome that leaves a house different from how it was found."""
+
+
+#: The version of the block `document` returns.
+BLOCK_SCHEMA = 1
+
+#: What each `write_units_per_count` means, in the words a report prints.
+ANSWERS: dict[int | None, str] = {
+    MULTIPLIER: "multiplies a written word by ten",
+    1: "stores a written word as handed",
+    None: "not determined",
+}
+
+
+def document(result: Result) -> dict[str, Any]:
+    """Return the publishable block: the answer, and the one write behind it.
+
+    Anonymous by construction, like the control test's block: the held limit
+    in watts, the word written, the inverter's reply. The fingerprint it is
+    merged into already says which transport carried it, which matters less
+    here than anywhere: the answer is the refusal, and a WiNet-S forwards that.
+    """
+    return {
+        "schema": BLOCK_SCHEMA,
+        "write_units_per_count": result.write_units_per_count,
+        "answer": ANSWERS[result.write_units_per_count],
+        "held_w": result.held,
+        "wrote": result.wrote,
+        "response": result.response,
+        "mode_lifted": result.mode_lifted,
+        "left_changed": result.left_changed,
+        "reason": result.reason,
+    }
 
 
 def choose(held: int, minimum: int, maximum: int) -> Plan | str:

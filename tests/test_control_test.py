@@ -76,6 +76,9 @@ import writes
 #: Protocol address of register 13087, the feed-in limitation switch.
 EXPORT_MODE_ADDRESS = 13086
 
+#: Protocol address of register 13074, the export power limit.
+EXPORT_LIMIT_ADDRESS = 13073
+
 ALL_PROBES = (*PROBES, EMS_MODE, FORCED_CMD, EXPORT_MODE, START_WORD_PROBE)
 
 
@@ -151,8 +154,7 @@ def test_the_bounds_are_the_ones_the_entities_use(probe: Probe) -> None:
     """The plan's bounds equal `scripts/generate/tables/writes.py`'s, field by field.
 
     The duplication is deliberate -- the library cannot import a file from
-    `scripts/` -- and this is the assertion that makes it safe, the same trade
-    already made for `IDENTIFY_UNITS` and `fingerprint.PROBES`.
+    `scripts/` -- and this is the assertion that makes it safe.
     """
     row = next(entry for entry in writes.NUMBERS if entry["field"] == probe.field)
     assert probe.minimum == row.get("minimum", 0)
@@ -1000,6 +1002,75 @@ async def test_the_restore_puts_back_the_word_where_writes_are_not_multiplied() 
     assert row.restored
     assert row.attempts == 1
     assert unit.holding[13073] == 11880
+
+
+def _firmware(unit: MockModbusUnit, *, multiplies: bool) -> None:
+    """Make 13074 behave as a measured firmware does, range check included.
+
+    Multiplied **before** the check where the firmware multiplies, refused
+    with 0x04 out of its bounds, ignored while feed-in limitation is off --
+    the three facts `export_scale` is built on, which the shared double
+    leaves out.
+    """
+    from modbus_connection import ServerDeviceFailureError
+
+    plain = unit.write_register
+
+    async def write_register(address: int, value: int) -> None:
+        if address != EXPORT_LIMIT_ADDRESS:
+            await plain(address, value)
+            return
+        if unit.holding.get(EXPORT_MODE_ADDRESS) != 0xAA:
+            return
+        stored = value * 10 if multiplies else value
+        if not unit.input[5621] * 10 <= stored <= unit.input[5622] * 10:
+            raise ServerDeviceFailureError
+        await plain(address, stored)
+
+    unit.write_register = write_register  # type: ignore[method-assign]
+
+
+@pytest.mark.parametrize(
+    ("house", "multiplies", "factor"),
+    [("fwitten", False, 1), ("bar12", True, 10)],
+)
+async def test_the_run_writes_the_export_limit_at_the_factor_the_device_states(
+    house: str, multiplies: bool, factor: int
+) -> None:
+    """A probe written at the wrong factor is a finding about the run.
+
+    Divided by ten everywhere, fwitten's 1:1 pair refused the probe on
+    2026-09-25 -- a tenth of it was below the minimum -- and leg B recorded a
+    refusal of a value nobody asked for. Asked first, both firmwares store
+    the watts the probe chose, and leg B checks the register rather than the
+    run's arithmetic.
+    """
+    from modbus_connection.mock import MockModbusConnection
+
+    from .conftest import SH10RT_HOLDING_REGISTERS, SH10RT_INPUT_REGISTERS
+
+    unit = MockModbusConnection().for_unit(1)
+    unit.input = dict(SH10RT_INPUT_REGISTERS)
+    unit.holding = dict(SH10RT_HOLDING_REGISTERS)
+    unit.input[5621] = 0  # export limit minimum
+    unit.input[5622] = 1188  # export limit maximum, 10 W per count: 11880 W
+    unit.holding[EXPORT_LIMIT_ADDRESS] = 11880
+    unit.holding[EXPORT_MODE_ADDRESS] = 0xAA
+    _firmware(unit, multiplies=multiplies)
+    inverter = SungrowInverter(unit)
+    await inverter.async_update()
+    run = ControlTest(inverter, clock=FakeClock())
+    await run._preflight()
+
+    rows = await run._readback()
+
+    row = next(row for row in rows if row.field == "export_power_limit")
+    assert row.verdict == MATCH, (house, row)
+    assert row.raw_word == row.expected_raw
+    scale = run.conditions["export_write_scale"]
+    assert scale["write_units_per_count"] == factor
+    assert not scale["left_changed"]
+    assert unit.holding[EXPORT_LIMIT_ADDRESS] == 11880
 
 
 async def test_the_restore_still_puts_back_the_word_on_a_firmware_that_multiplies(

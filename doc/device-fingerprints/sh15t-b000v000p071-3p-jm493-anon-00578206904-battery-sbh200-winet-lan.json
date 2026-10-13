@@ -1,6 +1,6 @@
 {
   "schema": 19,
-  "command_line": "scripts/sungrow_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport winet_lan --proxy no --reporter jm493 --comment 'SBH200. All house circuits on Backup side.' --other-inverter no --dump",
+  "command_line": "scripts/sungrow_read_only_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport winet_lan --proxy no --reporter jm493 --comment 'SBH200. All house circuits on Backup side.' --other-inverter no --dump",
   "read_on": "2026-10-07",
   "read_at_local": "2026-10-07T23:54:35+02:00",
   "user_inputs": {

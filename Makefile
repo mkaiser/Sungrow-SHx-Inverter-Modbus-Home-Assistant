@@ -17,8 +17,7 @@ VERSION ?=
 # The generators CI checks, under scripts/. `descriptions.py` with no target
 # runs all five of its own, strings last. Adding a generator means adding it
 # here and in .github/workflows/validate.yml -- the two lists must agree.
-GENERATORS := generate/generate_scan_plan.py generate/descriptions.py \
-              generate/generate_compatibility.py
+GENERATORS := generate/descriptions.py generate/generate_compatibility.py
 
 .DEFAULT_GOAL := help
 
@@ -121,37 +120,37 @@ version-check: ## Verify pyproject.toml and manifest.json agree
 ##@ Scan
 
 scan: ## Survey an installation and write a document (HOST=a.b.c.d optional)
-	$(PY) scripts/sungrow_survey/sungrow_survey.py $(HOST) $(ARGS)
+	$(PY) scripts/sungrow_read_only_survey/sungrow_survey.py $(HOST) $(ARGS)
 .PHONY: scan
 
 probe: ## Probe for devices, e.g. make probe ARGS="sweep 192.168.178.0/24"
-	$(PY) scripts/sungrow_survey/probe.py $(ARGS)
+	$(PY) scripts/sungrow_read_only_survey/probe.py $(ARGS)
 .PHONY: probe
 
 blocks: ## The block read test -- which read inside a component fails, and why
-	$(PY) scripts/sungrow_survey/blocks.py $(ARGS)
+	$(PY) scripts/sungrow_read_only_survey/blocks.py $(ARGS)
 .PHONY: blocks
 
 scan-sim: ## Run the whole survey against the simulator -- needs `make sim-bg`
-	$(PY) scripts/sungrow_survey/sungrow_survey.py 127.0.0.1 --port 5020 $(ARGS)
+	$(PY) scripts/sungrow_read_only_survey/sungrow_survey.py 127.0.0.1 --port 5020 $(ARGS)
 .PHONY: scan-sim
 
 ##@ Control test (writes to the inverter)
 
 controltest-dry: ## Show what the control test would write, and write nothing (HOST=a.b.c.d)
-	$(PY) scripts/hardware/sungrow_control_test.py $(HOST) --dry-run $(ARGS)
+	$(PY) scripts/sungrow_control_test/sungrow_control_test.py $(HOST) --dry-run $(ARGS)
 .PHONY: controltest-dry
 
 controltest: ## Write each control, read it back, and put it back (HOST=a.b.c.d)
-	$(PY) scripts/hardware/sungrow_control_test.py $(HOST) $(ARGS)
+	$(PY) scripts/sungrow_control_test/sungrow_control_test.py $(HOST) $(ARGS)
 .PHONY: controltest
 
 controltest-sim: ## Run it against the simulator -- needs `make sim-bg`
-	$(PY) scripts/hardware/sungrow_control_test.py 127.0.0.1 --port 5020 --simulated --no-restart
+	$(PY) scripts/sungrow_control_test/sungrow_control_test.py 127.0.0.1 --port 5020 --simulated --no-restart
 .PHONY: controltest-sim
 
 controltest-restore: ## Put a saved snapshot back (HOST=a.b.c.d FILE=.testdata/...json)
-	$(PY) scripts/hardware/sungrow_control_test.py $(HOST) --restore $(FILE)
+	$(PY) scripts/sungrow_control_test/sungrow_control_test.py $(HOST) --restore $(FILE)
 .PHONY: controltest-restore
 
 ##@ Release

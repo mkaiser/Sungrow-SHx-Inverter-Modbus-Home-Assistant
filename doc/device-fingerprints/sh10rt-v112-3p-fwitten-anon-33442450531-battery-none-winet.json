@@ -1,6 +1,6 @@
 {
-  "schema": 19,
-  "command_line": "scripts/sungrow_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport winet --proxy no --reporter fwitten --comment 'Read by the maintainer over a VPN on 2026-09-25 with nothing else polling the inverters, and no Modbus proxy in the path. This house has two inverters in a master/slave cluster, each reachable at two addresses. The slave through its WiNet-S; which medium the dongle uses is not established.' --other-inverter no --dump",
+  "schema": 20,
+  "command_line": "scripts/sungrow_read_only_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport winet --proxy no --reporter fwitten --comment 'Read by the maintainer over a VPN on 2026-09-25 with nothing else polling the inverters, and no Modbus proxy in the path. This house has two inverters in a master/slave cluster, each reachable at two addresses. The slave through its WiNet-S; which medium the dongle uses is not established.' --other-inverter no --dump",
   "read_on": "2026-09-25",
   "read_at_local": "2026-09-25T17:12:14+02:00",
   "user_inputs": {
@@ -1794,5 +1794,17 @@
     "unit 3 wallbox serial": {
       "state": "no answer"
     }
+  },
+  "export_scale": {
+    "schema": 1,
+    "write_units_per_count": 1,
+    "answer": "stores a written word as handed",
+    "held_w": 11880,
+    "wrote": 11880,
+    "response": "accepted",
+    "mode_lifted": false,
+    "left_changed": false,
+    "reason": "this firmware stores a written word as handed: accepted, because writing the held 11880 back is a no-op if stored as handed, and 118800 W -- above the 11880 W maximum -- if multiplied, which is refused",
+    "read_on": "2026-10-13"
   }
 }

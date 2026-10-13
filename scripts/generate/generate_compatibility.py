@@ -33,7 +33,7 @@ from sungrow_modbus import DEVICE_TYPES, family_for, known_absent
 REPO = Path(__file__).resolve().parents[2]
 FINGERPRINTS = REPO / "doc" / "device-fingerprints"
 
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_survey"))
+sys.path.insert(0, str(REPO / "scripts" / "sungrow_read_only_survey"))
 from probe import REPORTED_TRANSPORTS  # noqa: E402
 
 
@@ -502,8 +502,8 @@ def render() -> str:
         "1. **From the integration** — Settings → Devices & Services → Sungrow",
         "   Modbus → the three-dot menu → *Download diagnostics*.",
         "2. **Before installing anything** —",
-        "   [`scripts/sungrow_survey/sungrow_survey.py`]"
-        "(../scripts/sungrow_survey/sungrow_survey.py),",
+        "   [`scripts/sungrow_read_only_survey/sungrow_survey.py`]"
+        "(../scripts/sungrow_read_only_survey/sungrow_survey.py),",
         "   run from that folder, which needs nothing but Python.",
         "",
         "### Then send it, by whichever route you already have",

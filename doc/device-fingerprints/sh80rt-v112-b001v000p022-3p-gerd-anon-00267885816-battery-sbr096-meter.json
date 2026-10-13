@@ -1,6 +1,6 @@
 {
   "schema": 14,
-  "command_line": "scripts/sungrow_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport direct_lan --proxy no --reporter gerd --comment 'LAN cable in the inverter itself: register 6100 answers here and ports 80/443 refuse. A WiNet-S is fitted as well and is on WiFi at another address, scanned separately. Home Assistant stopped for this reading.' --dump",
+  "command_line": "scripts/sungrow_read_only_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport direct_lan --proxy no --reporter gerd --comment 'LAN cable in the inverter itself: register 6100 answers here and ports 80/443 refuse. A WiNet-S is fitted as well and is on WiFi at another address, scanned separately. Home Assistant stopped for this reading.' --dump",
   "read_on": "2026-09-08",
   "read_at_local": "2026-09-08T16:07:24+02:00",
   "user_inputs": {

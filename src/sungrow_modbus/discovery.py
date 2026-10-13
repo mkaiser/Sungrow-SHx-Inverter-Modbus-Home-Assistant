@@ -41,6 +41,20 @@ TIMEOUT = 1.0
 
 DEFAULT_PORT = 502
 
+#: Unit ids tried when looking for an inverter at an address, in order.
+#:
+#: 1 first, because it is what Sungrow's app and manual assume and what all
+#: but one measured machine uses. Then 2, measured on 2026-09-09 at a house
+#: with two inverters: the second answers on unit **2** at its own LAN port
+#: and times out on 1, because a cluster slave's own device address is 2.
+#: Then 3 to 5, which the specification allows for further slaves and which
+#: nothing has been measured on.
+#:
+#: Only inverter-shaped units: a battery at 200 and a wallbox at 3 are found
+#: behind an endpoint that has already answered. The config flow and the
+#: survey's `identify()` both sweep this list.
+IDENTIFY_UNITS: tuple[int, ...] = (1, 2, 3, 4, 5)
+
 
 class NetworkTooLarge(ValueError):
     """Raised when a sweep would probe more addresses than MAX_HOSTS."""

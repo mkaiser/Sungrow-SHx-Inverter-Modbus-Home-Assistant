@@ -1,6 +1,6 @@
 {
-  "schema": 19,
-  "command_line": "scripts/sungrow_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport direct_lan --proxy no --reporter fwitten --comment 'Read by the maintainer over a VPN on 2026-09-25 with nothing else polling the inverters, and no Modbus proxy in the path. This house has two inverters in a master/slave cluster, each reachable at two addresses. The master, at its own LAN port, with the SBR096.' --other-inverter no --dump",
+  "schema": 20,
+  "command_line": "scripts/sungrow_read_only_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport direct_lan --proxy no --reporter fwitten --comment 'Read by the maintainer over a VPN on 2026-09-25 with nothing else polling the inverters, and no Modbus proxy in the path. This house has two inverters in a master/slave cluster, each reachable at two addresses. The master, at its own LAN port, with the SBR096.' --other-inverter no --dump",
   "read_on": "2026-09-25",
   "read_at_local": "2026-09-25T16:03:32+02:00",
   "user_inputs": {
@@ -1512,5 +1512,17 @@
       "no forced charge check: the battery is too full for a charge to measure the setting rather than the pack's own taper",
       "no charge-ceiling check: the battery was not charging (0 W), so there was no charge to stop"
     ]
+  },
+  "export_scale": {
+    "schema": 1,
+    "write_units_per_count": 1,
+    "answer": "stores a written word as handed",
+    "held_w": 24990,
+    "wrote": 24990,
+    "response": "accepted",
+    "mode_lifted": false,
+    "left_changed": false,
+    "reason": "this firmware stores a written word as handed: accepted, because writing the held 24990 back is a no-op if stored as handed, and 249900 W -- above the 24990 W maximum -- if multiplied, which is refused",
+    "read_on": "2026-10-13"
   }
 }

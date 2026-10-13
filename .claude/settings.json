@@ -1,8 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python scripts/hardware/sungrow_control_test.py:*)",
-      "Bash(timeout * python scripts/hardware/sungrow_control_test.py:*)"
+      "Bash(python scripts/sungrow_control_test/sungrow_control_test.py:*)",
+      "Bash(timeout * python scripts/sungrow_control_test/sungrow_control_test.py:*)"
     ]
   }
 }

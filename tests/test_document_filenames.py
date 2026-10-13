@@ -1,6 +1,6 @@
 """A document from the button is named the way this repository names one.
 
-Two tools write this format: `scripts/sungrow_survey/sungrow_survey.py` from a
+Two tools write this format: `scripts/sungrow_read_only_survey/sungrow_survey.py` from a
 terminal, and the survey button inside Home Assistant. They already agree on
 the schema, the probe table, the stand-in and the vocabulary. The filename was
 the last thing they did not agree on, and it is the one a maintainer sees

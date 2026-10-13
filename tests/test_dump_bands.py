@@ -1,42 +1,12 @@
-"""The two register dumps must cover exactly the same ground.
+"""The register dump's bands and its mask, which the survey and the integration share.
 
-There are two implementations of the band dump and there have to be. The
-integration's runs inside Home Assistant against the library; the standalone
-survey's runs on a stranger's laptop with nothing installed, which
-is the whole point of `scripts/sungrow_survey/` and rules out importing the
-library there.
-
-What must not happen is the two quietly covering different addresses. A
-document says `register_dump` and a maintainer reads it as "these bands were
-read"; if the two tools disagree about which bands those are, the same key
-means two things and nobody finds out from the file. Worse for the mask: the
-serial's ten registers are blanked by a tuple in each file, and a dump that
-forgets one publishes a real serial number.
-
-So: the bands and the mask are compared here, and adding a band means adding
-it twice on purpose rather than once by accident.
+Both producers read `sungrow_modbus.dump.DUMP_BANDS`, so a document's
+`register_dump` means the same addresses whichever tool wrote it. What is left
+to check is that the mask still guards something, and that the progress
+denominator is honest.
 """
 
-from pathlib import Path
-import sys
-
-sys.path.insert(
-    0, str(Path(__file__).resolve().parent.parent / "scripts" / "sungrow_survey")
-)
-
-from probe import DUMP_BANDS as SCANNER_BANDS, DUMP_MASKED as SCANNER_MASKED
-
 from sungrow_modbus.dump import DUMP_BANDS, DUMP_MASKED, block_count
-
-
-def test_the_two_dumps_read_the_same_bands() -> None:
-    """Including the reason strings, which land in `bands_not_reached`."""
-    assert DUMP_BANDS == SCANNER_BANDS
-
-
-def test_the_two_dumps_mask_the_same_addresses() -> None:
-    """The one drift that would publish a real serial number."""
-    assert DUMP_MASKED == SCANNER_MASKED
 
 
 def test_the_serial_is_inside_a_band_that_is_dumped() -> None:

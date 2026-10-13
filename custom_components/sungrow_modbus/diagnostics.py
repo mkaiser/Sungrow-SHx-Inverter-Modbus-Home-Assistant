@@ -28,12 +28,12 @@ options. It performs a full extra read of every mapped address, which through
 a WiNet-S is slow enough to disturb polling, so it is opt-in rather than free.
 
 It also carries a **`fingerprint`** section: a complete capability survey in
-the same format `scripts/sungrow_survey/sungrow_survey.py` writes, so a user who has
-the integration running can contribute one by clicking a button instead of
-running Python. Everything else in this file answers "what is wrong with
-mine"; that section answers "what does this model and this firmware actually
-do", which is the question `doc/compatibility.md` exists for and which nine
-documents from four houses cannot answer. See `fingerprint.py`, including
+the same format `scripts/sungrow_read_only_survey/sungrow_survey.py` writes, so
+a user who has the integration running can contribute one by clicking a button
+instead of running Python. Everything else in this file answers "what is wrong
+with mine"; that section answers "what does this model and this firmware
+actually do", which is the question `doc/compatibility.md` exists for and which
+nine documents from four houses cannot answer. See `fingerprint.py`, including
 what it deliberately does not do.
 """
 

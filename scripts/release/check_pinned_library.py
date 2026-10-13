@@ -51,6 +51,25 @@ import zipfile
 REPO = Path(__file__).resolve().parents[2]
 INTEGRATION = REPO / "custom_components" / "sungrow_modbus"
 MANIFEST = INTEGRATION / "manifest.json"
+
+#: The scripts that run on the published library rather than on a checkout:
+#: the survey, fetched by its launchers through `uv`, and the control test.
+#: Both pin the same version the manifest does, so the same wheel has to serve
+#: their imports too.
+SCRIPT_DIRECTORIES = (
+    REPO / "scripts" / "sungrow_read_only_survey",
+    REPO / "scripts" / "sungrow_control_test",
+)
+
+
+def sources() -> list[Path]:
+    """Every file whose library imports the pinned wheel has to satisfy."""
+    found = sorted(INTEGRATION.glob("*.py"))
+    for directory in SCRIPT_DIRECTORIES:
+        found += sorted(directory.glob("*.py"))
+    return found
+
+
 LIBRARY = "sungrow_modbus"
 DISTRIBUTION = "sungrow-modbus"
 PYPI = "https://pypi.org/pypi/{name}/{version}/json"
@@ -73,13 +92,13 @@ def pinned_version() -> str:
 
 
 def required() -> dict[str, set[str]]:
-    """Collect what the integration imports from the library: module -> names.
+    """Collect what the integration and the scripts import: module -> names.
 
     The empty module name is the package itself, so `from sungrow_modbus
     import TIERS` is recorded against `sungrow_modbus`.
     """
     wanted: dict[str, set[str]] = {}
-    for source in sorted(INTEGRATION.glob("*.py")):
+    for source in sources():
         tree = ast.parse(source.read_text(), filename=str(source))
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom):
@@ -241,7 +260,7 @@ def unresolved_attributes(wheel: Path) -> dict[str, str]:
                     archive.read(member).decode("utf-8"), member
                 )
     missing: dict[str, str] = {}
-    for path in sorted(INTEGRATION.glob("*.py")):
+    for path in sources():
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for function in ast.walk(tree):
             if not isinstance(function, ast.FunctionDef | ast.AsyncFunctionDef):
@@ -314,7 +333,7 @@ def report(wheel: Path, label: str) -> int:
         for attr, where in sorted(attributes.items())
     ]
 
-    print(f"integration  {len(wanted)} library modules imported")
+    print(f"imports      {len(wanted)} library modules, integration and scripts")
     print(f"wheel        {wheel.name} -- {len(files)} modules ({label})")
     if not gaps:
         print("verdict      every import and device attribute resolves against ")
@@ -326,9 +345,10 @@ def report(wheel: Path, label: str) -> int:
         print(f"  {gap}")
     print()
     print("A copy of this integration installed against that version will fail")
-    print("to start, or to read a device. Either release a version that has it,")
+    print("to start, or to read a device, and so will a survey or control test")
+    print("fetched through uv. Either release a version that has it,")
     print("or do not use it yet: `python scripts/release/sync_version.py --set X.Y.Z`")
-    print("moves both halves.")
+    print("moves every pin.")
     return BROKEN
 
 

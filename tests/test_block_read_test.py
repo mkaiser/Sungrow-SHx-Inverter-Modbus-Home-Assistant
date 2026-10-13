@@ -1,6 +1,6 @@
 """The block read test, which had no test of its own.
 
-`scripts/sungrow_survey/blocks.py` answers one question -- which read inside a
+`scripts/sungrow_read_only_survey/blocks.py` answers one question -- which read inside a
 component fails, and whether that is a register fault or another client
 competing for the inverter -- and its answers get written into
 `src/sungrow_modbus/layout.py`, which is only ever added to from a measurement. So a
@@ -20,7 +20,7 @@ import sys
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_survey"))
+sys.path.insert(0, str(REPO / "scripts" / "sungrow_read_only_survey"))
 
 import blocks  # noqa: E402
 from blocks import (  # noqa: E402
@@ -345,38 +345,34 @@ def test_no_budget_narrows_the_whole_way() -> None:
 def test_the_block_test_reads_only_the_inverters_own_components() -> None:
     """A regression that happened, and would have corrupted every survey.
 
-    Recording the SBR's and the wallbox's components into `scan_plan.json`
-    added eight blocks to the test, on unit ids the test does not use: input
-    10740 and 21215 answer 0xFFFF or refuse at the inverter's unit whatever
-    the pack and the charge point are doing. All eight would have failed, all
-    eight would then have been narrowed at the cost of the narrowing budget,
-    and all eight would have been offered to `src/sungrow_modbus/layout.py` as register
-    faults.
-
-    So the filter is on the plan's own `unit` role rather than on a list of
-    names, which means a device added later is excluded by default -- the
-    safe direction.
+    Adding the SBR's and the wallbox's components to the plan added eight
+    blocks to the test, on unit ids the test does not use: input 10740 and
+    21215 answer 0xFFFF or refuse at the inverter's unit whatever the pack and
+    the charge point are doing. All eight would have failed, all eight would
+    then have been narrowed at the cost of the narrowing budget, and all
+    eight would have been offered to `src/sungrow_modbus/layout.py` as
+    register faults.
     """
-    from portable import load_plan
+    from sungrow_modbus.addresses import device_components
 
-    plan = load_plan()
     elsewhere = {
-        entry["component"] for entry in plan["components"] if entry.get("unit")
+        name
+        for device, components in device_components().items()
+        if device != "inverter"
+        for name in components
     }
-    assert elsewhere, "the plan should carry components on other units"
+    assert elsewhere, "the library should map components on other units"
 
-    tested = {name for name, _space, _address, _count in blocks._blocks_of(plan, None)}
+    tested = {name for name, _space, _address, _count in blocks._blocks_of(None)}
     assert not tested & elsewhere, (
         f"the block read test would read {sorted(tested & elsewhere)} at the "
         "inverter's unit id, where they cannot answer"
     )
-    # Every inverter component is still tested, or the guard has gone too far.
-    inverter = {
-        entry["component"]
-        for entry in plan["components"]
-        if not entry.get("unit") and entry["blocks"]
-    }
-    assert inverter <= tested
+    # Every polled inverter component is still tested, or the guard has gone
+    # too far.
+    from sungrow_modbus.registers import COMPONENTS
+
+    assert {*COMPONENTS, "identity"} <= tested
 
 
 def test_naming_another_devices_component_still_selects_it() -> None:
@@ -386,10 +382,20 @@ def test_naming_another_devices_component_still_selects_it() -> None:
     to say so: `blocks.py <host> --unit 200 -c sbr_battery_cells`. The
     default is what had to change, not the capability.
     """
-    from portable import load_plan
-
-    selected = blocks._blocks_of(load_plan(), "sbr_battery_cells")
+    selected = blocks._blocks_of("sbr_battery_cells")
     assert selected == [("sbr_battery_cells", "input", 10756, 8)], selected
+
+
+def test_an_unknown_component_is_refused_with_the_known_ones() -> None:
+    """A typo names what exists, rather than testing nothing."""
+    with pytest.raises(SystemExit, match="fast_input"):
+        blocks._blocks_of("no_such_component")
+
+
+def test_a_failing_address_is_named_by_the_field_that_declares_it() -> None:
+    """The library's own map names the register, or says nothing reads it."""
+    assert blocks._declared("input", 4989).startswith("serial_number (in ")
+    assert "nothing reads this" in blocks._declared("input", 39999)
 
 
 def test_narrowing_goes_wherever_the_caller_sends_its_output() -> None:

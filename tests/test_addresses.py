@@ -2,8 +2,7 @@
 
 `sungrow_modbus.addresses` is where a register's location is decided: a field
 the map knows is looked up in the map, and the few it does not know are
-constants there. The survey scripts, which cannot import the library, get the
-same names from `scan_plan.json`. This file holds the two to each other and
+constants there. The survey scripts import both from the library. This file
 keeps new literal addresses out of the code.
 
 Tests are the exception, deliberately. A fixture that models a device should
@@ -16,25 +15,12 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
-import sys
 
 import pytest
 
-from sungrow_modbus.addresses import (
-    DIRECT_ONLY_PROBE,
-    IHOMEMANAGER_PROTOCOL,
-    IHOMEMANAGER_TYPE,
-    WALLBOX_SERIAL,
-    Address,
-    device_components,
-    field_address,
-    reg,
-)
+from sungrow_modbus.addresses import Address, field_address, reg
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_survey"))
-
-import portable  # noqa: E402
 
 #: The code that must not read a register by a literal address.
 CHECKED = (
@@ -198,39 +184,3 @@ def test_an_unknown_name_is_refused() -> None:
     """A typo must fail loudly, not read address zero."""
     with pytest.raises(KeyError):
         field_address("no_such_field")
-
-
-def test_the_survey_finds_every_field_where_the_library_does() -> None:
-    """The plan's name lookup and the library's agree on every field.
-
-    Two routes to one answer, one of which runs on bare Python. If they part,
-    the survey reads a different register from the one the integration polls,
-    and every document it writes describes the wrong thing.
-    """
-    plan = portable.load_plan()
-    device_of = {
-        component: device
-        for device, components in device_components().items()
-        for component in components
-    }
-    for row in plan["fields"]:
-        device = device_of[row["component"]]
-        assert portable.address(plan, row["name"], device) == tuple(
-            field_address(row["name"], device)
-        ), row["name"]
-
-
-@pytest.mark.parametrize(
-    ("name", "where"),
-    [
-        ("direct_only_probe", DIRECT_ONLY_PROBE),
-        ("ihomemanager_type", IHOMEMANAGER_TYPE),
-        ("ihomemanager_protocol", IHOMEMANAGER_PROTOCOL),
-        ("wallbox_serial", WALLBOX_SERIAL),
-    ],
-)
-def test_the_survey_names_the_unmapped_registers_as_the_library_does(
-    name: str, where: Address
-) -> None:
-    """The registers no component maps reach the survey under the same name."""
-    assert portable.address(portable.load_plan(), name) == tuple(where)

@@ -6,10 +6,10 @@ That is not because nobody else would help. It is because contributing meant
 cloning a repository and running Python on a machine that can reach the
 inverter, and almost nobody who has a Sungrow has that.
 
-Somebody who has set this integration up has the hard part already — a
-working, identified connection to their inverter. This turns it into a
-document, in exactly the format `scripts/sungrow_survey/sungrow_survey.py` writes, so
-one generator keeps building `doc/compatibility.md` from both and a reading
+Somebody who has set this integration up has the hard part already — a working,
+identified connection to their inverter. This turns it into a document, in
+exactly the format `scripts/sungrow_read_only_survey/sungrow_survey.py` writes,
+so one generator keeps building `doc/compatibility.md` from both and a reading
 from somebody who only ever clicked a button counts the same as one from a
 terminal.
 

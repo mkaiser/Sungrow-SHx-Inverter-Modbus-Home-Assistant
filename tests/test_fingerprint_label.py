@@ -21,10 +21,14 @@ import re
 import shlex
 import sys
 
+from modbus_connection import ModbusExceptionError
 import pytest
 
 sys.path.insert(
-    0, str(Path(__file__).resolve().parent.parent / "scripts" / "sungrow_survey")
+    0,
+    str(
+        Path(__file__).resolve().parent.parent / "scripts" / "sungrow_read_only_survey"
+    ),
 )
 
 from probe import (
@@ -39,6 +43,7 @@ from probe import (
     transport_verdict,
 )
 
+from sungrow_modbus import fingerprint
 from sungrow_modbus.fingerprint import COLLECTED_BY_INTEGRATION
 
 REPO = Path(__file__).resolve().parent.parent
@@ -524,7 +529,7 @@ def test_no_document_carries_a_round_trip_time() -> None:
 FINGERPRINTS = sorted((REPO / "doc" / "device-fingerprints").glob("*.json"))
 
 #: The stand-in serial these labels are built from, exactly as
-#: `_fake_serial("A123456789")` writes it. Spelled out rather than computed,
+#: `stand_in("A123456789")` writes it. Spelled out rather than computed,
 #: so a change to that derivation fails a test instead of silently agreeing
 #: with itself.
 STAND_IN = "anon-5155200572"
@@ -822,7 +827,10 @@ def test_an_unset_option_is_absent_rather_than_guessed() -> None:
     assert "--comment" not in line
     # The one place the path is written out rather than derived, so that
     # SCRIPT cannot quietly drift from where the file actually is.
-    assert _invocation(None) == "scripts/sungrow_survey/probe.py capabilities <host>"
+    assert (
+        _invocation(None)
+        == "scripts/sungrow_read_only_survey/probe.py capabilities <host>"
+    )
 
 
 @pytest.mark.parametrize("path", FINGERPRINTS, ids=lambda p: p.stem)
@@ -868,18 +876,18 @@ def test_the_stand_in_serial_cannot_be_mistaken_for_a_serial() -> None:
     being named `serial_anonymized_hashed` stops helping the moment the value
     is copied out of it. So the value says what it is.
     """
-    from probe import _fake_serial
+    from sungrow_modbus.fingerprint import stand_in as _stand_in
 
-    stand_in = _fake_serial("A123456789")
+    stand_in = _stand_in("A123456789")
 
     assert stand_in.startswith("anon-")
     assert not stand_in.startswith("A")
     # Still stable, and still distinguishes two machines.
-    assert stand_in == _fake_serial("A123456789")
-    assert stand_in != _fake_serial("A987654321")
+    assert stand_in == _stand_in("A123456789")
+    assert stand_in != _stand_in("A987654321")
     # And nothing of the real serial survives in it.
     assert "2311227462" not in stand_in
-    assert _fake_serial("") == ""
+    assert _stand_in("") == ""
 
 
 def test_the_filename_now_follows_the_stand_in_deliberately() -> None:
@@ -932,7 +940,7 @@ def test_the_recorded_command_names_the_path_that_works_where_it_ran(
 
     assert probe._script_name() == probe.SCRIPT
 
-    unpacked = tmp_path / "sungrow_survey" / "probe.py"
+    unpacked = tmp_path / "sungrow_read_only_survey" / "probe.py"
     unpacked.parent.mkdir()
     unpacked.write_text("")
     monkeypatch.setattr(probe, "__file__", str(unpacked))
@@ -1216,12 +1224,8 @@ class _FakeUnit:
     async def read_input_registers(self, address: int, count: int) -> list[int]:
         """Answer, or raise the way a device refusing an address does."""
         if address not in self._answers:
-            raise _FakeRefusal("Modbus Exception 0x02 for function code 0x04")
+            raise ModbusExceptionError(0x02)
         return self._answers[address]
-
-
-class _FakeRefusal(Exception):
-    """Stands in for the library's ModbusError."""
 
 
 class _FakeConnection:
@@ -1253,9 +1257,7 @@ def _fake_stack(monkeypatch: pytest.MonkeyPatch):
     def install(units: dict[int, dict[int, list[int]]]) -> _FakeConnection:
         connection = _FakeConnection(units)
         monkeypatch.setattr(
-            probe_module,
-            "_require_library",
-            lambda: (_FakeRefusal, lambda **_kw: None, lambda *_a, **_kw: connection),
+            probe_module, "ModbusConnection", lambda *_a, **_kw: connection
         )
         return connection
 
@@ -1337,7 +1339,7 @@ async def test_a_modbus_device_that_is_not_a_sungrow_is_not_claimed_as_one(
     assert "no serial at unit 1, 2, 3, 4, 5" in who.error
     # The exception type is in the message, because "refused" and "timed out"
     # lead to different next steps -- see src/sungrow_modbus/layout.py.
-    assert "_FakeRefusal" in who.error
+    assert "ModbusExceptionError" in who.error
     assert connection.asked == [1, 2, 3, 4, 5, 247], (
         "every inverter candidate, then one look for an iHomeManager"
     )
@@ -1486,6 +1488,28 @@ def test_a_document_carries_what_the_schema_it_claims_added(path: Path) -> None:
 
 
 @pytest.mark.parametrize("path", FINGERPRINTS, ids=lambda p: p.stem)
+def test_an_export_scale_block_sits_in_a_document_that_admits_it(path: Path) -> None:
+    """Schema 20 added `export_scale`; a document carrying it claims at least 20.
+
+    The other direction from its siblings: there a number claimed content the
+    document lacked, here content would sit under a number that says it
+    cannot exist -- and a reader of a 19 takes the block's absence elsewhere
+    as "predates the question" rather than "not asked".
+    """
+    document = json.loads(path.read_text(encoding="utf-8"))
+    if "export_scale" not in document:
+        return
+
+    assert document["schema"] >= 20, path.stem
+    block = document["export_scale"]
+    assert block["write_units_per_count"] in (1, 10, None)
+    assert block["left_changed"] is False, (
+        f"{path.stem}: the probe left the house changed, which is a repair "
+        "for its owner before it is a finding for this directory"
+    )
+
+
+@pytest.mark.parametrize("path", FINGERPRINTS, ids=lambda p: p.stem)
 def test_a_collect_run_at_schema_16_carries_its_block_read_test(path: Path) -> None:
     """Schema 16 added `block_read_test`, and only one tool produces it.
 
@@ -1520,3 +1544,39 @@ def test_a_collect_run_at_schema_16_carries_its_block_read_test(path: Path) -> N
         "which Modbus client read it decides what a refusal means -- the "
         "library one fails wherever the integration does"
     )
+
+
+def test_every_probe_state_the_committed_documents_use_is_a_known_one() -> None:
+    """The vocabulary is part of the format, so it is closed.
+
+    `refused` and `no answer` are the pair worth keeping apart: one is the
+    device saying the register is not there, the other is nothing coming
+    back, and only the first is evidence about a register.
+    """
+    seen = set()
+    for path in (REPO / "doc" / "device-fingerprints").glob("*.json"):
+        document = json.loads(path.read_text(encoding="utf-8"))
+        for entry in (document.get("capability_probes") or {}).values():
+            if isinstance(entry, dict) and entry.get("state"):
+                seen.add(entry["state"])
+
+    assert seen, "there should be committed documents with probe states"
+    assert seen <= {state.value for state in fingerprint.State}, seen
+
+
+def test_the_probe_addresses_are_protocol_addresses() -> None:
+    """One below the register number the label quotes, every time.
+
+    Nine of the labels name their register explicitly, which makes them
+    checkable: `device type code (5000)` must read address 4999. This is the
+    off-by-one that this project's comments warn about most often, and the
+    table is where getting it wrong would be least visible.
+    """
+    checked = 0
+    for label, _space, address, _count, _axis in fingerprint.PROBES:
+        match = re.search(r"\((\d{4,5})", label)
+        if match is None:
+            continue
+        assert address == int(match.group(1)) - 1, label
+        checked += 1
+    assert checked >= 5, "the self-describing labels should be the majority"

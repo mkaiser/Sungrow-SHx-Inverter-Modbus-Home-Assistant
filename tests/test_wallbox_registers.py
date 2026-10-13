@@ -10,9 +10,7 @@ So the guard is the reading itself. `doc/device-fingerprints/` holds a
 committed fingerprint carrying the raw words an AC22E-01 answered, and the
 survey decodes them with its own decoder in `probe.WALLBOX_FIELDS`. This file
 drives the **library's** components against the same words and requires the
-two to agree -- which is the same discipline
-`tests/test_portable_decoder.py` applies to the inverter, arrived at from the
-other direction.
+two to agree.
 """
 
 from __future__ import annotations
@@ -26,7 +24,7 @@ from modbus_connection.mock import MockModbusConnection
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_survey"))
+sys.path.insert(0, str(REPO / "scripts" / "sungrow_read_only_survey"))
 
 from probe import WALLBOX_FIELDS, _wallbox_readings  # noqa: E402
 

@@ -15,9 +15,9 @@ discover devices:
    is each one?
 
 Usage:
-    python scripts/sungrow_survey/probe.py mdns
-    python scripts/sungrow_survey/probe.py sweep 192.168.1.0/24 [--port 502]
-    python scripts/sungrow_survey/probe.py units <host> [--port 502]
+    python scripts/sungrow_read_only_survey/probe.py mdns
+    python scripts/sungrow_read_only_survey/probe.py sweep 192.168.1.0/24 [--port 502]
+    python scripts/sungrow_read_only_survey/probe.py units <host> [--port 502]
 """
 
 from __future__ import annotations
@@ -26,7 +26,6 @@ import argparse
 import asyncio
 import contextlib
 from datetime import UTC, datetime
-import hashlib
 import ipaddress
 import json
 from pathlib import Path
@@ -34,6 +33,51 @@ import shlex
 import sys
 import time
 from typing import NamedTuple
+
+from modbus_connection import ModbusError, ModbusTcpParams
+from modbus_connection.model import Component
+from modbus_connection.tmodbus import ModbusConnection
+
+from sungrow_modbus import (
+    COMPONENTS,
+    SungrowInverter,
+    hosts_in,
+    model_for,
+    model_for_capacity,
+    network_of,
+)
+from sungrow_modbus.addresses import (
+    DIRECT_ONLY_PROBE,
+    IHOMEMANAGER_PROTOCOL,
+    IHOMEMANAGER_TYPE,
+    WALLBOX_SERIAL,
+    Device,
+    device_components,
+    field_address,
+)
+from sungrow_modbus.battery import PACK_UNITS, PACK_VOLTAGE
+from sungrow_modbus.battery_registers import (
+    SbrBatteryCells,
+    SbrBatteryModules,
+    SbrBatteryPack,
+)
+from sungrow_modbus.discovery import IDENTIFY_UNITS
+from sungrow_modbus.dump import DUMP_BANDS, DUMP_MASKED
+from sungrow_modbus.fingerprint import (
+    FIRMWARE_STRINGS,
+    NEVER_PUBLISH,
+    OTHER_INVERTER_CLAIMS,
+    OUTPUT_TYPES,
+    PROBES,
+    SCHEMA,
+    STAND_IN_PREFIX,
+    UNAVAILABLE,
+    WIFI_OR_ETHERNET,
+    classify,
+    stand_in,
+    transport_verdict,
+)
+from sungrow_modbus.model import present
 
 MODBUS_PORTS = (502, 503)
 
@@ -65,11 +109,11 @@ IDENTITY_PROBES = [
 async def cmd_mdns(args: argparse.Namespace) -> int:
     """Browse every mDNS service type and report anything Sungrow-shaped.
 
-    The one command in this file that needs a third-party package and cannot
-    fall back: `zeroconf` implements multicast DNS-SD, which the standard
-    library does not. Everything else here works with nothing installed, so a
-    traceback from this one would read as "the directory is broken" -- hence
-    a sentence naming the alternative, which is the sweep.
+    The one command in this file that needs a package the survey does not
+    declare: `zeroconf` implements multicast DNS-SD, and a survey has no use
+    for it. So a missing one gets a sentence naming the alternative, which is
+    the sweep, rather than a traceback that reads as "the directory is
+    broken".
     """
     try:
         from zeroconf import ServiceBrowser, ServiceStateChange, Zeroconf
@@ -230,86 +274,6 @@ async def cmd_sweep(args: argparse.Namespace) -> int:
     return 0 if live else 1
 
 
-def have_library() -> bool:
-    """Whether the device library is importable in this run.
-
-    Asked rather than assumed, and said out loud in the output, because the
-    two stacks are not equivalent for every purpose: `modbus-connection`
-    rejects a padded frame exactly as the integration does, which is the
-    behaviour a block read test is measuring. A survey's *readings* are
-    identical either way -- `tests/test_portable_readings.py` requires it --
-    but a reader of a document should still know which client took it.
-    """
-    try:
-        import modbus_connection  # noqa: F401
-
-        import sungrow_modbus  # noqa: F401
-    except ModuleNotFoundError:
-        return False
-    return True
-
-
-def _require_library() -> tuple:
-    """Return the Modbus stack this run will use, preferring the library.
-
-    This used to refuse to run without `modbus-connection` and point at the
-    other script. It no longer has to: `portable.py` grew a client with the
-    same shape -- `for_unit`, `read_input_registers`,
-    `read_holding_registers`, `close` -- so every command here works with
-    nothing installed, which is what lets a contributor run this directory
-    with a bare Python.
-
-    The library is still preferred where it exists. It is the client the
-    integration uses, so a refusal it reports is a refusal a user will
-    actually see, and it is the one whose block pooling the plan was recorded
-    from.
-    """
-    try:
-        from modbus_connection import ModbusError, ModbusTcpParams
-        from modbus_connection.tmodbus import ModbusConnection
-    except ModuleNotFoundError:
-        from portable import ModbusError, PortableConnection, PortableParams
-
-        return ModbusError, PortableParams, PortableConnection
-    return ModbusError, ModbusTcpParams, ModbusConnection
-
-
-def _modbus_error() -> type[Exception]:
-    """Return the exception class a failed read raises on this run's stack.
-
-    Every `except (ModbusError, TimeoutError, OSError)` in this file needs
-    it, and which class it is depends on which client is installed. Asking
-    here rather than importing at each site is what let the fallback be one
-    change instead of five -- and the first attempt missed two of the five,
-    which a contributor without the library would have met as a
-    ModuleNotFoundError three seconds into a survey.
-    """
-    try:
-        from modbus_connection import ModbusError
-    except ModuleNotFoundError:
-        from portable import ModbusError
-
-    return ModbusError
-
-
-def _model_for(device_type_code: int | None) -> str | None:
-    """Name an inverter from its device type code, library or not."""
-    if have_library():
-        from sungrow_modbus import model_for
-
-        return model_for(device_type_code)
-    from portable import load_plan, model_for
-
-    return model_for(load_plan(), device_type_code)
-
-
-class BatteryMatch(NamedTuple):
-    """A Sungrow pack matched by capacity, in one shape for both stacks."""
-
-    name: str
-    capacity_kwh: float
-
-
 def _model_for_code(code: object) -> str | None:
     """Return the model name for a `0x….` device type code string, or None.
 
@@ -323,32 +287,13 @@ def _model_for_code(code: object) -> str | None:
     if not text.startswith("0x"):
         return None
     try:
-        return _model_for(int(text, 16))
+        return model_for(int(text, 16))
     except ValueError:
         return None
 
 
-def _battery_model_for_capacity(capacity_kwh: float | None) -> BatteryMatch | None:
-    """Name a Sungrow pack from its rated capacity, library or not."""
-    if have_library():
-        from sungrow_modbus import model_for_capacity
-
-        model = model_for_capacity(capacity_kwh)
-        if model is None:
-            return None
-        return BatteryMatch(model.name, model.capacity_kwh)
-    from portable import battery_model_for_capacity, load_plan
-
-    row = battery_model_for_capacity(load_plan(), capacity_kwh)
-    if row is None:
-        return None
-    return BatteryMatch(row["name"], row["capacity_kwh"])
-
-
 async def cmd_units(args: argparse.Namespace) -> int:
     """Ask each candidate unit id what it is, using the device library."""
-    ModbusError, ModbusTcpParams, ModbusConnection = _require_library()
-
     total = len(CANDIDATE_UNITS) * len(IDENTITY_PROBES)
     print(f"Probing {args.host}:{args.port} for devices.")
     print(
@@ -412,103 +357,9 @@ async def cmd_units(args: argparse.Namespace) -> int:
     return 0
 
 
-#: What to read to establish each capability axis. Addresses are protocol
-#: addresses, one below the register number in Sungrow's document.
-#: (label, space, address, count, axis)
-FINGERPRINT = [
-    ("device type code (5000)", "input", 4999, 1, "model"),
-    ("nominal output power (5001)", "input", 5000, 1, "model"),
-    ("output type (5002)", "input", 5001, 1, "phase"),
-    ("MPPT1 voltage", "input", 5010, 1, "mppt"),
-    ("MPPT2 voltage", "input", 5012, 1, "mppt"),
-    ("MPPT3 voltage", "input", 5014, 1, "mppt"),
-    ("MPPT4 voltage", "input", 5114, 1, "mppt"),
-    ("phase A voltage", "input", 5018, 1, "phase"),
-    ("phase B voltage", "input", 5019, 1, "phase"),
-    ("phase C voltage", "input", 5020, 1, "phase"),
-    ("meter phase A voltage (5741)", "input", 5740, 1, "meter"),
-    ("meter phase A current (5744)", "input", 5743, 1, "meter"),
-    ("battery voltage", "input", 13019, 1, "battery"),
-    ("battery level", "input", 13022, 1, "battery"),
-    ("battery temperature", "input", 13024, 1, "battery"),
-    # 0.01 kWh per count. Only meaningful for telling SBR from SBH once unit
-    # 200 has established that the pack is a Sungrow one at all.
-    ("battery capacity (5639)", "input", 5638, 1, "battery"),
-    ("firmware block (13250, spec V1.1.7+)", "input", 13249, 1, "firmware"),
-    # Sungrow states the 6100-6195 block is not forwarded by a WiNet-S over
-    # TCP/IP, so whether it answers says which way in we came.
-    ("PV power of today (6100, direct-only)", "input", 6099, 2, "transport"),
-    ("PV power limitation (13018, V1.1.10+)", "holding", 13017, 1, "firmware"),
-]
-
-#: Firmware strings, which decide more than the model does: which registers a
-#: device answers moves between versions, so a fingerprint without them cannot
-#: be compared to another taken a year later.
-#:
-#: `communication module` is also the second of the two connection signals.
-#: A direct-LAN inverter has no module and returns the specification's UTF-8
-#: unavailable, which is an empty string; anything behind a WiNet-S names it.
-FIRMWARE: list[tuple[str, str, int, int]] = [
-    ("arm", "input", 4953, 15),
-    ("dsp", "input", 4968, 15),
-    ("inverter", "input", 13249, 15),
-    ("communication_module", "input", 13264, 15),
-    ("battery", "input", 13279, 15),
-]
-
-#: The output type register says what the model cannot.
-OUTPUT_TYPE = {0: "single phase", 1: "three phase 3P4L", 2: "three phase 3P3L"}
-
-#: Unavailable, per the specification: U16, U32, S16, S32.
-UNAVAILABLE = {0xFFFF, 0x7FFF}
-
-
-def _classify(values: list[int]) -> str:
-    """Say what a read means, using the specification's own convention."""
-    if all(v in UNAVAILABLE for v in values):
-        return "unavailable"
-    return "present"
-
-
-#: What a stand-in serial always starts with, and cannot occur in a real one.
-#: `_fake_serial` writes it; `_derive_label` requires it before putting the
-#: value in a filename.
-STAND_IN_PREFIX = "anon-"
-
-
-def _fake_serial(real: str) -> str:
-    """Return a stable stand-in for a serial, that cannot be read as one.
-
-    Deriving it from a hash rather than at random means one machine always
-    maps to one stand-in, so published files stay diffable across reads and
-    two setups stay distinguishable -- without the real serials leaving the
-    building.
-
-    **It used to keep the real serial's leading letters**, on the reasoning
-    that a Sungrow serial is ASCII across ten registers and a stand-in of the
-    same shape keeps the published reading exercising the string decoder.
-    That was a bad trade: `A123456789` became `A5155200572`, which is not a
-    serial and looks exactly like one. Somebody quoting it into an issue, or
-    searching for it, or comparing it against a label on a wall, gets a
-    plausible wrong answer -- and the field being called
-    `serial_anonymized_hashed` does not help once the value has been copied
-    out of it.
-
-    So the value says what it is. `anon-` cannot appear in a Sungrow serial,
-    which makes the string self-describing wherever it ends up, and the digits
-    after it are the same stable derivation as before.
-    """
-    if not real:
-        return real
-    digest = hashlib.sha256(real.encode("ascii", "replace")).hexdigest()
-    digits = "".join(str(int(c, 16) % 10) for c in digest)
-    # As many digits as the real serial had, so two setups stay as
-    # distinguishable as they were, behind a prefix no Sungrow serial can
-    # carry.
-    return f"{STAND_IN_PREFIX}{digits[: len(real)]}"
-
-
-#: Bumped when the shape changes, so a reader can tell a document written
+#: The document format's history, by schema number; the number itself is
+#: `sungrow_modbus.fingerprint.SCHEMA`. Bumped when the shape changes, so a
+#: reader can tell a document written
 #: before the two files were merged from one written after. 4 added `comment`
 #: and `ip_address_last_octet`, the latter a zero-filled string, not a number.
 #: 5 gathered everything a person typed into one `user_inputs` section at the
@@ -565,10 +416,7 @@ def _fake_serial(real: str) -> str:
 #: reproduced by typing anything. The shape is otherwise identical, which is
 #: the point: one generator keeps building `doc/compatibility.md` from both,
 #: and a reading from somebody who only ever clicked a button counts the same
-#: as one from a terminal. The tables, the schema and the stand-in
-#: derivation are duplicated in `sungrow_modbus.fingerprint` for that
-#: producer, and `tests/test_fingerprint_tables_agree.py` keeps the copies
-#: identical. 18 asks whether the installation holds a **non-Sungrow
+#: as one from a terminal. 18 asks whether the installation holds a **non-Sungrow
 #: inverter**, in `user_inputs.other_inverter` and its free-text
 #: `other_inverter_detail`. It is a schema bump rather than an addition
 #: because the question changes how an existing field should be read: a
@@ -583,8 +431,9 @@ def _fake_serial(real: str) -> str:
 #: when the shape of the document does. `connection.latency_ms` was then
 #: **removed without a bump**, on 2026-10-09: nothing ever read it, so its
 #: absence tells a reader nothing, and it was stripped from every committed
-#: document at the same time.
-SCHEMA = 19
+#: document at the same time. 20 admits an optional **`export_scale`** block,
+#: how the firmware writes register 13074; like `control_test` it is written by
+#: `scripts/sungrow_control_test/sungrow_control_test.py`, never from here.
 
 #: Keys of the connection block that carry a claim rather than a measurement.
 #: They are moved into `user_inputs`, so the published `connection` holds only
@@ -607,13 +456,18 @@ PROXY_ANSWERS: dict[str, str] = {
 #: Modbus proxy is has told us something useful by saying so; somebody who
 #: does not know what is on their own roof is not a case worth a menu entry.
 #:
-#: Kept equal to `sungrow_modbus.fingerprint.OTHER_INVERTER_CLAIMS`, which is
-#: what the integration offers in its own dialog, by
-#: `tests/test_fingerprint_tables_agree.py`.
-OTHER_INVERTER_ANSWERS: dict[str, str] = {
-    "yes": "yes -- there is another inverter that is not a Sungrow",
-    "no": "no, the Sungrow is the only inverter here",
-}
+#: Keyed by `sungrow_modbus.fingerprint.OTHER_INVERTER_CLAIMS`, which is what
+#: the integration offers in its own dialog, so the two cannot disagree.
+OTHER_INVERTER_ANSWERS: dict[str, str] = dict(
+    zip(
+        OTHER_INVERTER_CLAIMS,
+        (
+            "yes -- there is another inverter that is not a Sungrow",
+            "no, the Sungrow is the only inverter here",
+        ),
+        strict=True,
+    )
+)
 
 #: Where the contributors are. Used only to render a local time beside the UTC
 #: one, so that two readings taken minutes apart can be told apart and ordered
@@ -641,7 +495,7 @@ class Reading(NamedTuple):
 #: This script's own path, as a fingerprint records it. One constant because
 #: it is written into every document and asserted in the tests, and because it
 #: has already moved once: `scripts/discover_probe.py` until 2026-09-08.
-SCRIPT = "scripts/sungrow_survey/probe.py"
+SCRIPT = "scripts/sungrow_read_only_survey/probe.py"
 
 
 def _run_command(script: str) -> str:
@@ -674,7 +528,10 @@ def _script_name() -> str:
     repository path there would be an instruction that fails.
     """
     here = Path(__file__).resolve()
-    if here.parent.name == "sungrow_survey" and here.parent.parent.name == "scripts":
+    if (
+        here.parent.name == "sungrow_read_only_survey"
+        and here.parent.parent.name == "scripts"
+    ):
         return SCRIPT
     return here.name
 
@@ -760,13 +617,6 @@ def _local_time(read_at: str) -> str:
     return moment.isoformat(timespec="seconds")
 
 
-#: Fields never published, whatever else is. Anything whose name mentions a
-#: serial: the whole point of the stand-in is that the real one does not leave
-#: `.testdata/`, and a full sweep of the map would otherwise walk straight
-#: into `sungrow_inverter_serial`.
-NEVER_PUBLISH = ("serial",)
-
-
 #: Attempts for a read whose loss changes the *filename*: the serial, the
 #: device type code, the output type and the 6100 transport signal. A busy
 #: inverter beat three attempts repeatedly on one measured machine, and each
@@ -782,29 +632,17 @@ IDENTITY_ATTEMPTS = 6
 PRESENCE_WORDS = 2
 
 
-def _where(name: str, device: str = "inverter") -> tuple[str, int, int]:
-    """Return ``(space, address, count)`` for a register, by the plan's name.
+def _field(name: str, device: Device = "inverter"):
+    """Return the library's own field for a name, to decode a read with.
 
-    So no read here carries a bare address: a mapped field is where the
-    library's map puts it, and the few unmapped ones are named in the plan.
+    A reading is decoded by the field that declares it rather than by a scale
+    copied out of it, so a scale changed in `registers.py` is followed here.
     """
-    from portable import address, load_plan
-
-    return address(load_plan(), name, device)
-
-
-def _scale(name: str, device: str = "inverter") -> float:
-    """Return a field's scale from the plan, so a decoding carries no factor."""
-    from portable import load_plan
-
-    plan = load_plan()
-    roles = {
-        row["component"]: row.get("unit", "inverter") for row in plan["components"]
-    }
-    for row in plan["fields"]:
-        if row["name"] == name and roles.get(row["component"], "inverter") == device:
-            return float(row["scale"])
-    raise KeyError(f"{name!r} on the {device}: not in the plan")
+    for klass in device_components()[device].values():
+        field = klass.declared_fields.get(name)
+        if field is not None:
+            return field
+    raise KeyError(f"no field named {name!r} on the {device}")
 
 
 def _reader(unit, space: str):
@@ -826,8 +664,6 @@ async def _async_read_retrying(
     "refused" for precisely this reason, when the truth -- established on the
     same machine, twice -- is that it answers 0xFFFF.
     """
-    ModbusError = _modbus_error()
-
     for attempt in range(1, max(1, attempts) + 1):
         try:
             return list(await read(address, count))
@@ -837,42 +673,6 @@ async def _async_read_retrying(
             await asyncio.sleep(1.5)
     raise AssertionError("unreachable")
 
-
-#: Address bands worth dumping raw, with why each is here. Protocol
-#: addresses, so one below the register number in Sungrow's document.
-#:
-#: Bands rather than the whole space: a blind sweep of 0-40000 is some 300
-#: reads, almost all of them "Reserved", and every one is a chance to drop the
-#: link on a device that grants few sessions. These are the neighbourhoods the
-#: specification and the YAML package actually use, plus the two that have
-#: already paid for themselves -- 6100, which decides the transport, and
-#: 33000-33200, where registers nothing documents were found reading 200 W and
-#: 100 W.
-DUMP_BANDS: tuple[tuple[str, int, int, str], ...] = (
-    ("input", 2580, 80, "the 26xx firmware strings"),
-    ("input", 4949, 210, "identity, firmware, AC and DC basics"),
-    ("input", 5600, 160, "meter and battery"),
-    ("input", 6099, 100, "the block a WiNet-S does not forward"),
-    ("input", 10740, 60, "an SBR's own registers, when it answers here"),
-    ("input", 12999, 110, "the 13xxx measurements"),
-    ("input", 13199, 160, "meter channel 2 and the firmware block"),
-    ("holding", 4999, 60, "holding-side identity"),
-    ("holding", 12999, 110, "the 13xxx settings"),
-    ("holding", 31200, 60, "the active-power-limit block"),
-    ("input", 33000, 200, "undocumented, and known to hold real values"),
-    # The same band on the holding side, which is where the registers this
-    # project actually uses there live: battery max charge and discharge power
-    # at 33047-33048, and the charge/discharge start thresholds at
-    # 33149-33150. The first dump asked for 33000 on the *input* side only and
-    # missed all four -- and got 200 answers back from the input space
-    # regardless, which is its own thing worth having on record.
-    ("holding", 33000, 200, "battery power limits and start thresholds"),
-)
-
-#: Never published raw, whatever band covers it: the serial number's ten
-#: registers. The document carries a stand-in precisely so the real one stays
-#: out, and a raw dump would hand it over in words instead of characters.
-DUMP_MASKED: tuple[tuple[str, int, int], ...] = (("input", 4989, 10),)
 
 #: The wallbox's own registers, read at the unit that answered for it. Its
 #: register space is the least documented thing this project touches -- Sungrow
@@ -1304,10 +1104,6 @@ async def _async_field_by_field(
     Expensive by design: one read per field instead of a pooled handful, so it
     runs only after the whole-component attempts have failed.
     """
-    from modbus_connection.model import Component
-
-    from sungrow_modbus.model import present
-
     values: dict[str, object] = {}
     pending = dict(component_class.declared_fields)
     # Swept repeatedly, and the reason is a mistake this made on its first
@@ -1345,23 +1141,6 @@ async def _async_field_by_field(
     return values, sorted(pending)
 
 
-def _plan_battery_units() -> list[int]:
-    """Return the unit ids an SBR pack may answer on, from the committed plan.
-
-    200 over the inverter's own LAN port, 2 through a WiNet-S -- measured at
-    three houses, and it moves with the transport rather than with the pack.
-    Read from `scan_plan.json` because this file runs where
-    `sungrow_modbus.battery` does not exist.
-    """
-    from portable import load_plan
-
-    try:
-        units = load_plan().get("battery_pack_units")
-    except Exception:
-        units = None
-    return [int(unit) for unit in units] if units else [200, 2]
-
-
 async def _async_battery_readings(connection, unit_id: int) -> dict[str, object]:
     """Read the SBR's own two blocks, on the unit that answered for it.
 
@@ -1384,23 +1163,6 @@ async def _async_battery_readings(connection, unit_id: int) -> dict[str, object]
     unreadable when it was not.
     """
     unit = connection.for_unit(unit_id)
-    if not have_library():
-        from portable import load_plan, read_fields
-
-        # `role="battery"` selects the two components the plan marks as not
-        # being on the inverter's unit. Without it this would read the
-        # inverter's own map at unit 200.
-        return await read_fields(load_plan(), unit, passes=2, role="battery")
-
-    from modbus_connection import ModbusError
-
-    from sungrow_modbus.battery_registers import (
-        SbrBatteryCells,
-        SbrBatteryModules,
-        SbrBatteryPack,
-    )
-    from sungrow_modbus.model import present
-
     values: dict[str, object] = {}
     missed: list[str] = []
     for name, klass in (
@@ -1461,24 +1223,7 @@ async def _async_decoded_readings(unit, passes: int = 8) -> dict[str, object]:
     Decoded rather than raw, deliberately. A raw word says the read worked; a
     decoded value says the scale and word order are right, which is the
     mistake worth catching.
-
-    Without the library this hands the same job to `portable.read_fields`,
-    which drives the committed plan and decodes from it. The report is the
-    same report -- same keys, same values, same omissions --
-    `tests/test_portable_readings.py` requires it of both scenarios, blocks
-    and salvage. The one thing only this branch reports is
-    `identity_did_not_read`, because only this branch has capability gating
-    to be working blind.
     """
-    if not have_library():
-        from portable import load_plan, read_fields
-
-        return await read_fields(load_plan(), unit, passes)
-
-    from modbus_connection import ModbusError
-
-    from sungrow_modbus import COMPONENTS, SungrowInverter
-
     inverter = SungrowInverter(unit)
     # Retried and then tolerated. This one call was the only un-guarded read
     # in the function, so a single drop here raised past all the per-component
@@ -1588,9 +1333,7 @@ async def _async_decoded_readings(unit, passes: int = 8) -> dict[str, object]:
     report: dict[str, object] = {
         "values": readings,
         # Sorted, so two readings of one machine differ only where the
-        # machine did. It is also what makes a document from the portable
-        # path comparable with one from the library path, which is the
-        # property `tests/test_portable_readings.py` rests on.
+        # machine did.
         "components_that_did_not_answer": sorted(missed),
     }
     # `NEVER_PUBLISH` applies to these two lists as well, and did not: the
@@ -1621,49 +1364,6 @@ async def _async_decoded_readings(unit, passes: int = 8) -> dict[str, object]:
         # gating is working from nothing, so every field below is suspect.
         report["identity_did_not_read"] = identity_failed
     return report
-
-
-#: What a document says about WiFi versus Ethernet, which is that it cannot say.
-#:
-#: A constant rather than an inline string because the integration publishes
-#: the same sentence -- `sungrow_modbus.fingerprint` carries a copy for the
-#: producer that cannot import this file, and
-#: `tests/test_fingerprint_tables_agree.py` keeps the two identical. A reader
-#: comparing two documents should not have to wonder whether a difference in
-#: this field means anything.
-WIFI_OR_ETHERNET = (
-    "not determinable over Modbus. Nothing in the protocol reports it, and "
-    "a WiNet-S answers identically wired and over WiFi. Use "
-    "user_inputs.transport, which is what the contributor said."
-)
-
-
-def transport_verdict(*, answered_6100: bool, module_named: bool) -> str:
-    """Read the two transport signals, one measured row at a time.
-
-    Separated from the reading so the truth table can be asserted without a
-    device. Every row below happened on somebody's house; see
-    `_async_connection` for which.
-    """
-    if answered_6100 and module_named:
-        # Worth saying out loud rather than leaving in the two raw signals.
-        # This installation has both routes, and the one it is not using
-        # forwards fewer measuring points and answers zero where the inverter
-        # answers "unavailable" -- which fabricates capabilities. Somebody
-        # reading their own fingerprint should be able to see that they are
-        # already on the better path, or that they have a choice.
-        return (
-            "direct to the inverter's LAN port, with a communication module "
-            "fitted as well but not in the path"
-        )
-    if answered_6100:
-        return "direct to the inverter's LAN port"
-    if module_named:
-        return "through a communication module (WiNet-S, WiNet-S2 or Logger)"
-    return (
-        "through a communication module (WiNet-S, WiNet-S2 or Logger), "
-        "which did not name itself"
-    )
 
 
 async def _async_connection(unit, host: str, firmware: dict, ModbusError) -> dict:
@@ -1711,7 +1411,7 @@ async def _async_connection(unit, host: str, firmware: dict, ModbusError) -> dic
         # put `winet` in the filename of a reading taken on an inverter's own
         # LAN port, while the curated probe of the same register, two seconds
         # later and retried, answered.
-        space, start, count = _where("direct_only_probe")
+        space, start, count = DIRECT_ONLY_PROBE
         await _async_read_retrying(
             _reader(unit, space), start, count, IDENTITY_ATTEMPTS
         )
@@ -1762,7 +1462,7 @@ def _all_zero(raw: dict, names: tuple[str, ...]) -> bool:
     """Say whether every one of these registers answered, and answered zero.
 
     Sungrow's specification defines an "unavailable" sentinel per field, and
-    `_classify` reads anything else as a value -- correctly, for a register
+    `classify` reads anything else as a value -- correctly, for a register
     that reports a measurement. Some absent hardware does not use the
     sentinel: it fills the block with 0x0000, which decodes to a perfectly
     plausible zero and sails through as a reading.
@@ -1919,7 +1619,7 @@ def _battery_token(fingerprint: dict, connection: dict, raw: dict) -> str:
     if module_block == "present" or forwarded:
         values = raw.get("registers", {}).get("battery capacity (5639)")
         if values:
-            model = _battery_model_for_capacity(values[0] * 0.01)
+            model = model_for_capacity(values[0] * 0.01)
             if model is not None:
                 return f"battery-{model.name.lower()}"
         return "battery-sungrow"
@@ -2010,7 +1710,7 @@ def _derive_label(
     code = str(fingerprint.get("device_type_code", ""))
     model = "unknown"
     if code.startswith("0x"):
-        model = (_model_for(int(code, 16)) or "unknown").lower().replace(".", "")
+        model = (model_for(int(code, 16)) or "unknown").lower().replace(".", "")
 
     parts = [model]
 
@@ -2338,9 +2038,9 @@ def _document(raw: dict, fingerprint: dict) -> dict:
             # One key, whose *name* is the explanation: three fields saying
             # "this is not the real serial" in three different ways was two
             # fields too many, and the note repeated what the README says
-            # properly. `_fake_serial` keeps the shape and derives it by hash,
+            # properly. `stand_in` keeps the shape and derives it by hash,
             # so one device always maps to one value and files stay diffable.
-            "serial_anonymized_hashed": _fake_serial(str(raw.get("serial", ""))),
+            "serial_anonymized_hashed": stand_in(str(raw.get("serial", ""))),
         },
         "firmware": raw.get("firmware", {}),
         "connection": measured_connection,
@@ -2465,11 +2165,11 @@ def _checkout_root(start: Path | None = None) -> Path | None:
 
     Walks **up**, which the first version did not: it asked whether the
     *current directory* held a `.git`, so running the survey from inside
-    `scripts/sungrow_survey/` -- the obvious place to run it from, and where the
-    folder's README says to -- concluded "not a checkout" and wrote a document
-    into the source tree. The private file and the transcript were covered by
-    `.gitignore`; the document was not, and sat there staged for the next
-    `git add`.
+    `scripts/sungrow_read_only_survey/` -- the obvious place to run it from,
+    and where the folder's README says to -- concluded "not a checkout" and
+    wrote a document into the source tree. The private file and the transcript
+    were covered by `.gitignore`; the document was not, and sat there staged
+    for the next `git add`.
     """
     here = (start or Path.cwd()).resolve()
     for directory in (here, *here.parents):
@@ -2587,8 +2287,6 @@ def _save(directory: Path, label: str, raw: dict, fingerprint: dict) -> list[Pat
 
 async def capabilities(args: argparse.Namespace) -> Reading:
     """Print one device's capability fingerprint, for comparing setups."""
-    ModbusError, ModbusTcpParams, ModbusConnection = _require_library()
-
     conn = ModbusConnection(
         ModbusTcpParams(host=args.host, port=args.port), timeout=args.timeout
     )
@@ -2627,7 +2325,7 @@ async def capabilities(args: argparse.Namespace) -> Reading:
     print(f"{args.host}:{args.port} unit {args.unit}")
     try:
         try:
-            space, start, count = _where("serial_number")
+            space, start, count = field_address("serial_number")
             serial = await _async_read_retrying(
                 _reader(unit, space), start, count, IDENTITY_ATTEMPTS
             )
@@ -2636,14 +2334,14 @@ async def capabilities(args: argparse.Namespace) -> Reading:
             raw["serial"] = decoded
             # Both, so that somebody about to send the file can see exactly
             # what leaves the building in place of their serial.
-            print(f"  {'serial':<38}{decoded}  (anonymized to {_fake_serial(decoded)})")
+            print(f"  {'serial':<38}{decoded}  (anonymized to {stand_in(decoded)})")
         except (ModbusError, TimeoutError, OSError) as err:
             print(f"  {'serial':<38}unreadable ({type(err).__name__})")
 
         # Firmware first, because it is what makes two fingerprints
         # comparable: which registers a device answers moves between versions.
         firmware: dict[str, str] = {}
-        for name, space, address, count in FIRMWARE:
+        for name, space, address, count in FIRMWARE_STRINGS:
             read = (
                 unit.read_input_registers
                 if space == "input"
@@ -2744,7 +2442,7 @@ async def capabilities(args: argparse.Namespace) -> Reading:
         verdict = _effective_verdict(raw["connection"])
         print(f"  {'connection':<38}{verdict}")
 
-        for label, space, address, count, _axis in FINGERPRINT:
+        for label, space, address, count, _axis in PROBES:
             read = (
                 unit.read_input_registers
                 if space == "input"
@@ -2771,7 +2469,7 @@ async def capabilities(args: argparse.Namespace) -> Reading:
                 print(f"  {label:<38}refused ({type(err).__name__})")
                 continue
             raw["registers"][label] = values
-            fingerprint["registers"][label] = _classify(values)
+            fingerprint["registers"][label] = classify(values).value
             if all(v in UNAVAILABLE for v in values):
                 print(f"  {label:<38}unavailable (0x{values[0]:04X})")
                 continue
@@ -2781,15 +2479,15 @@ async def capabilities(args: argparse.Namespace) -> Reading:
                 # The model and phase are capability facts, not private ones.
                 fingerprint["device_type_code"] = f"0x{values[0]:04X}"
             elif label.startswith("output type"):
-                note = f"  -> {OUTPUT_TYPE.get(values[0], 'unknown')}"
-                fingerprint["output_type"] = OUTPUT_TYPE.get(values[0], "unknown")
+                note = f"  -> {OUTPUT_TYPES.get(values[0], 'unknown')}"
+                fingerprint["output_type"] = OUTPUT_TYPES.get(values[0], "unknown")
             print(f"  {label:<38}{values}{note}")
 
         # Devices that live on their own unit ids behind the same endpoint.
         # `PRESENCE_WORDS` at each, whatever the register's own width.
-        pack = _where("voltage", "battery")[1]
-        inverter_type = _where("device_type_code")[1]
-        wallbox_serial = _where("wallbox_serial")[1]
+        pack = PACK_VOLTAGE.address
+        inverter_type = field_address("device_type_code").address
+        wallbox_serial = WALLBOX_SERIAL.address
         for label, other_unit, address in (
             ("SBR battery module block", 200, pack),
             # A WiNet-S forwards the pack here instead of at 200 -- measured
@@ -2834,11 +2532,7 @@ async def capabilities(args: argparse.Namespace) -> Reading:
 
         # The battery's own registers, on whichever unit answered for it.
         # Seventeen registers, so it is not behind the dump question either.
-        # From the plan, not from the library: this file has to run without
-        # the library, and `generate_scan_plan.py` copies `battery.PACK_UNITS` into
-        # it for exactly that reason. Falls back to the pair every measured
-        # house has used, so a plan that predates the key still works.
-        for pack_unit in _plan_battery_units():
+        for pack_unit in PACK_UNITS:
             if (
                 fingerprint["registers"].get(
                     f"unit {pack_unit} SBR battery module block"
@@ -2979,8 +2673,6 @@ async def cmd_dump(args: argparse.Namespace) -> int:
     retried one register at a time, so one bad address does not hide the
     fifteen good ones beside it.
     """
-    ModbusError, ModbusTcpParams, ModbusConnection = _require_library()
-
     conn = ModbusConnection(
         ModbusTcpParams(host=args.host, port=args.port), timeout=args.timeout
     )
@@ -3253,23 +2945,6 @@ class Identity(NamedTuple):
 IHOMEMANAGER_UNIT = 247
 
 
-#: The unit ids `identify` tries for an inverter, in order, and why each.
-#:
-#: Only inverter-shaped units: a battery at 200 and a wallbox at 3 are found
-#: later by `cmd_capabilities`, which probes for them behind an endpoint that
-#: has already answered. This list is for the question "is there an inverter
-#: here at all", and getting it wrong means a contributor is told their
-#: inverter is absent.
-#:
-#: 1 first, because it is what Sungrow's app and manual assume and what all
-#: but one measured machine uses. Then 2, measured on fwitten's second
-#: inverter on 2026-09-09: at its own LAN port unit 1 times out and unit 2
-#: answers, because a cluster slave's own device address is 2. Then 3 to 5,
-#: which the specification allows for further slaves and which nothing has
-#: yet been measured on.
-IDENTIFY_UNITS: tuple[int, ...] = (1, 2, 3, 4, 5)
-
-
 async def identify(host: str, port: int) -> Identity:
     """Ask whoever is at this address who they are, on whichever unit answers.
 
@@ -3283,14 +2958,15 @@ async def identify(host: str, port: int) -> Identity:
     unit 2 as "inverter slave" the whole time.
 
     The cost is paid only where the first attempt fails: an address with an
-    inverter on unit 1 makes exactly the two reads it always did.
+    inverter on unit 1 makes exactly the two reads it always did. The list is
+    `sungrow_modbus.discovery.IDENTIFY_UNITS`, which the config flow sweeps
+    too.
     """
-    ModbusError, ModbusTcpParams, ModbusConnection = _require_library()
     connection = ModbusConnection(ModbusTcpParams(host=host, port=port), timeout=5)
     try:
         first_error: str | None = None
-        serial_at = _where("serial_number")
-        type_at = _where("device_type_code")
+        serial_at = field_address("serial_number")
+        type_at = field_address("device_type_code")
         for unit_id in IDENTIFY_UNITS:
             unit = connection.for_unit(unit_id)
             try:
@@ -3314,7 +2990,7 @@ async def identify(host: str, port: int) -> Identity:
             except (ModbusError, TimeoutError, OSError):
                 return Identity(serial, None, None, None, unit_id)
             return Identity(
-                serial, int(code[0]), _model_for(int(code[0])), None, unit_id
+                serial, int(code[0]), model_for(int(code[0])), None, unit_id
             )
         # No inverter. Before reporting nothing, ask whether this is an
         # iHomeManager: it is a Sungrow, it is in scope, and it answers a
@@ -3345,7 +3021,7 @@ async def _identify_ihomemanager(
     """
     unit = connection.for_unit(IHOMEMANAGER_UNIT)  # type: ignore[attr-defined]
     try:
-        space, start, count = _where("ihomemanager_type")
+        space, start, count = IHOMEMANAGER_TYPE
         values = await _reader(unit, space)(start, count)
     except (modbus_error, TimeoutError, OSError):  # type: ignore[misc]
         return None
@@ -3357,7 +3033,7 @@ async def _identify_ihomemanager(
         # forwarding device can answer without knowing.
         return None
     try:
-        space, start, count = _where("ihomemanager_protocol")
+        space, start, count = IHOMEMANAGER_PROTOCOL
         raw = await _reader(unit, space)(start, count)
     except (modbus_error, TimeoutError, OSError):  # type: ignore[misc]
         return Identity(
@@ -3384,7 +3060,7 @@ def described(who: Identity) -> str:
         # device, because 247 is the whole reason it was found.
         model = who.model or "iHomeManager"
         return f"{model} -- on unit {who.unit}, port answered as an energy manager"
-    described = f"serial {who.serial}, anonymized to {_fake_serial(who.serial)}"
+    described = f"serial {who.serial}, anonymized to {stand_in(who.serial)}"
     if who.device_type_code is not None:
         model = who.model or f"0x{who.device_type_code:04X}"
         described = f"{model}, {described}"
@@ -3403,11 +3079,6 @@ async def _sweep_addresses(network: str, port: int) -> tuple[list[str], float]:
     speed; the same /24 taking half a minute went through a tunnel, and a
     tunnelled sweep that finds nothing is worth repeating before believing.
     """
-    if have_library():
-        from sungrow_modbus import hosts_in
-    else:
-        from portable import hosts_in
-
     try:
         hosts = hosts_in(network)
     except Exception as error:
@@ -3449,11 +3120,6 @@ def _default_network() -> str:
     than offering nothing, so a private-looking address that is not the
     bridge is used and otherwise a common home range is suggested.
     """
-    if have_library():
-        from sungrow_modbus import network_of
-    else:
-        from portable import network_of
-
     try:
         import socket
 
@@ -3462,7 +3128,10 @@ def _default_network() -> str:
         address = probe.getsockname()[0]
         probe.close()
         if not address.startswith("172.17."):
-            return network_of(address)
+            # A /24, which is what a home router hands out. The prefix is not
+            # knowable from a socket, and a wrong guess only changes the
+            # default offered, which the person can type over.
+            return network_of(address, 24)
     except Exception:
         pass
     return "192.168.178.0/24"
@@ -3535,8 +3204,6 @@ async def _ask_battery(host: str, port: int, unit_id: int) -> str:
     the same size. So that is the only thing asked, and only when there is a
     battery whose module block did not answer.
     """
-    ModbusError, ModbusTcpParams, ModbusConnection = _require_library()
-
     connection = ModbusConnection(ModbusTcpParams(host=host, port=port), timeout=6)
     capacity: float | None = None
     sungrow_pack = False
@@ -3545,15 +3212,15 @@ async def _ask_battery(host: str, port: int, unit_id: int) -> str:
     try:
         unit = connection.for_unit(unit_id)
         try:
-            space, start, count = _where("battery_capacity_high_precision")
+            space, start, count = field_address("battery_capacity_high_precision")
             words = await _async_read_retrying(_reader(unit, space), start, count, 2)
         except (ModbusError, TimeoutError, OSError):
             pass
         else:
             if words[0] not in (0, 0xFFFF):
-                capacity = words[0] * _scale("battery_capacity_high_precision")
+                capacity = _field("battery_capacity_high_precision").decode(words)
         try:
-            space, start, count = _where("battery_voltage")
+            space, start, count = field_address("battery_voltage")
             voltage = await _async_read_retrying(_reader(unit, space), start, count, 2)
         except (ModbusError, TimeoutError, OSError):
             pass
@@ -3566,17 +3233,15 @@ async def _ask_battery(host: str, port: int, unit_id: int) -> str:
             ("discharge_power", "battery_max_discharge_power"),
             ("health", "battery_state_of_health"),
         ):
-            space, start, count = _where(field)
+            space, start, count = field_address(field)
             try:
                 got = await _async_read_retrying(_reader(unit, space), start, count, 2)
             except (ModbusError, TimeoutError, OSError):
                 continue
             if got[0] not in (0, 0xFFFF):
-                extras[name] = got[0] * _scale(field)
-        space, start, _count = _where("voltage", "battery")
-        from portable import load_plan
-
-        for pack_unit in load_plan()["battery_pack_units"]:
+                extras[name] = _field(field).decode(got)
+        space, start, _count = PACK_VOLTAGE
+        for pack_unit in PACK_UNITS:
             try:
                 await _async_read_retrying(
                     _reader(connection.for_unit(pack_unit), space),
@@ -3592,7 +3257,7 @@ async def _ask_battery(host: str, port: int, unit_id: int) -> str:
         await connection.close()
 
     if sungrow_pack:
-        model = _battery_model_for_capacity(capacity)
+        model = model_for_capacity(capacity)
         if model is not None:
             print(
                 f"\n  Battery: a Sungrow {model.name}, {model.capacity_kwh} kWh. "

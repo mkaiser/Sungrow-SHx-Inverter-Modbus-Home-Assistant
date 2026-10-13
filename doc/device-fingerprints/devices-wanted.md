@@ -17,7 +17,7 @@ before `ZERO_MEANS_ABSENT` caught it.
 So capability is measured rather than read. One command does it:
 
 ```bash
-python scripts/sungrow_survey/sungrow_survey.py
+scripts/sungrow_read_only_survey/read_only_survey.sh          # Windows: scripts\sungrow_read_only_survey\read_only_survey.cmd
 ```
 
 It reads and never writes, takes 5–40 minutes depending on the link, and
@@ -243,7 +243,7 @@ confirmed that against a machine.
 If you have one, the survey needs pointing at port 503:
 
 ```bash
-python scripts/sungrow_survey/probe.py sweep 192.168.1.0/24 --port 503
+python scripts/sungrow_read_only_survey/probe.py sweep 192.168.1.0/24 --port 503
 ```
 
 **Port 516 turned out to be something else.** Reported in [discussion

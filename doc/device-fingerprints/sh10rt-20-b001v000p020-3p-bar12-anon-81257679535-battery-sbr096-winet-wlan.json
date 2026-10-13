@@ -1,6 +1,6 @@
 {
   "schema": 14,
-  "command_line": "scripts/sungrow_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport unsure --proxy no --reporter bar12 --comment 'Read by the maintainer over a VPN; the site'\"'\"'s owner reports nothing else was polling the inverter. Both of this house'\"'\"'s addresses answer with the same serial, so it is one inverter reached two ways. Measured on both: register 6100 refuses and port 443 answers, so both paths go through a communication module, and register 13265 names the same WiNet-S firmware on each. Which medium each path uses -- the dongle has an Ethernet port and WiFi -- is not established, which is why the transport is recorded as not sure.' --dump",
+  "command_line": "scripts/sungrow_read_only_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport unsure --proxy no --reporter bar12 --comment 'Read by the maintainer over a VPN; the site'\"'\"'s owner reports nothing else was polling the inverter. Both of this house'\"'\"'s addresses answer with the same serial, so it is one inverter reached two ways. Measured on both: register 6100 refuses and port 443 answers, so both paths go through a communication module, and register 13265 names the same WiNet-S firmware on each. Which medium each path uses -- the dongle has an Ethernet port and WiFi -- is not established, which is why the transport is recorded as not sure.' --dump",
   "read_on": "2026-09-08",
   "read_at_local": "2026-09-08T19:57:45+02:00",
   "user_inputs": {

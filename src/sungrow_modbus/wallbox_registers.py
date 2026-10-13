@@ -32,14 +32,9 @@ own -- only behind the endpoint that already answered. So it cannot be found
 by looking for it; it has to be asked for on a connection that exists. See
 `sungrow_modbus.wallbox.probe_units`.
 
-**Codes stay integers.** `modbus_connection` has an `enum()` field, and using
-it here would be neater to read -- but `scripts/generate/generate_scan_plan.py`
-records this map into a committed artefact that the standalone survey decodes
-from with its own decoder, and that decoder produces an `int` where an
-`enum()` field produces an `Enum`. The two would disagree, and
-`tests/test_portable_decoder.py` compares them field by field for good
-reason. So the raw code is the field and the meaning is a property, which is
-the same shape the SBR's packed position words take.
+**Codes stay integers.** The raw code is the field and the meaning is a
+property, the same shape the SBR's packed position words take, so a document
+publishes the number the charger sent beside what it is taken to mean.
 """
 
 from __future__ import annotations

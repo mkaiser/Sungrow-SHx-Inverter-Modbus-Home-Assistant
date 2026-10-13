@@ -32,7 +32,7 @@ The claim "every component missed as a whole while 95 of 104 fields read
 individually" was published in this docstring and in a committed fingerprint
 on that basis, and it was the tool, not the inverter. Fixed in
 `probe.py`, guarded by
-`tests/test_portable_readings.py::test_a_device_that_answers_everything_reports_nothing_missed`.
+`tests/test_survey_readings.py::test_a_device_that_answers_everything_reports_nothing_missed`.
 The measurement that stands is the one above, and it came from *this* file --
 which is the argument for the block read test being a fixed phase of every
 survey rather than something run when a document looks odd.
@@ -51,40 +51,51 @@ halves are here now: `--rounds` is the interleaved measurement, `--attempts`
 the back-to-back one, and `--client` chooses which Modbus stack makes the
 reads.
 
-    python scripts/sungrow_survey/blocks.py 192.168.1.10               # every component
-    python scripts/sungrow_survey/blocks.py 192.168.1.10 -c fast_input # one of them
-    python scripts/sungrow_survey/blocks.py 192.168.1.10 -r input:5010:25   # a range
+    cd scripts/sungrow_read_only_survey
+    python blocks.py 192.168.1.10                     # every component
+    python blocks.py 192.168.1.10 -c fast_input       # one of them
+    python blocks.py 192.168.1.10 -r input:5010:25    # a range
 
 It reads and never writes. Nothing here can change a setting.
 
-**It needs no packages** -- the Modbus client comes from
-`portable.py` next door, which speaks the protocol over a plain
-socket. The block plan comes from the device library when this runs somewhere
-that has it (the devcontainer, or after `pip install sungrow-modbus`); without
-it, pass ranges by hand with `-r` and the script works just the same.
+The block plan is the library's own: `sungrow_modbus.block_test` records the
+reads the poll makes, so this tests exactly what the integration asks for.
+The raw client is `raw_client.py` next door, a plain socket that reads the
+reply byte by byte -- which is what lets it name the count a padded frame
+needs.
 """
 
 from __future__ import annotations
 
 import argparse
+import asyncio
 import contextlib
 from pathlib import Path
 import struct
 import sys
+import time
 from time import monotonic
 from typing import NamedTuple
 
+from modbus_connection import (
+    ModbusConnectionError,
+    ModbusError as LibraryModbusError,
+    ModbusTcpParams,
+)
+from modbus_connection.tmodbus import ModbusConnection
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from portable import (
+from raw_client import (
     _FC_READ_HOLDING,
     _FC_READ_INPUT,
-    PLAN_FILE,
     Connection,
     Dropped,
     ModbusError,
-    load_plan,
 )
+
+from sungrow_modbus.addresses import device_components
+from sungrow_modbus.block_test import component_blocks, inverter_blocks
 
 #: How a read came back. `WRONG_LENGTH` is its own outcome rather than an
 #: error, because it is the one that names its own fix: a device answering 15
@@ -116,7 +127,7 @@ class Reader(Connection):
     """A connection strict enough to fail where the integration fails.
 
     This is the whole reason the script exists rather than a couple of raw
-    reads. `portable.Connection` trusts the PDU byte count and
+    reads. `raw_client.Connection` trusts the PDU byte count and
     reads whatever the MBAP length says is there, so it accepts frames the
     shipping stack rejects -- and a diagnostic that reports "ok" for a read
     the integration cannot make is worse than no diagnostic.
@@ -232,11 +243,6 @@ class LibraryClient:
 
     def __init__(self, host: str, port: int, unit: int, timeout: float, delay: float):
         """Open one connection and keep one loop for the whole run."""
-        import asyncio
-
-        from modbus_connection import ModbusTcpParams
-        from modbus_connection.tmodbus import ModbusConnection
-
         self._runner = asyncio.Runner()
         self._connection = ModbusConnection(
             ModbusTcpParams(host=host, port=port), timeout=timeout
@@ -248,20 +254,14 @@ class LibraryClient:
     reconnects = 0
 
     def read(self, space: str, address: int, count: int) -> list[int]:
-        """Read one block through the library, translating what it raises."""
-        import time
+        """Read one block through the library, translating what it raises.
 
-        # Imported under another name **on purpose**. As
-        # `from modbus_connection import ModbusError` this shadowed the
-        # module-level one this file raises and `attempt` catches, so a
-        # refused register came back as a class nothing here handles: the
-        # default client crashed on the first refusal instead of recording
-        # it, which is the one measurement the tool exists to take.
-        from modbus_connection import (
-            ModbusConnectionError,
-            ModbusError as LibraryModbusError,
-        )
-
+        The library's `ModbusError` is imported as `LibraryModbusError` **on
+        purpose**: under its own name it shadows the one this file raises and
+        `attempt` catches, so a refused register comes back as a class nothing
+        here handles, and the run crashes on the one measurement the tool
+        exists to take.
+        """
         read = (
             self._unit.read_input_registers
             if space == "input"
@@ -469,43 +469,45 @@ def bisect(
     return [(address, count, kind, f"{detail}; both halves read on their own")]
 
 
-#: The artefact this reads instead of the library. Written by
-#: `scripts/generate/generate_scan_plan.py`, committed, and checked in CI, so it cannot
-#: drift from what the integration actually asks for.
-def _blocks_of(plan: dict, component: str | None) -> list[tuple[str, str, int, int]]:
+def _components() -> dict[str, type]:
+    """Every component the library maps, on any device, by name."""
+    return {
+        name: klass
+        for components in device_components().values()
+        for name, klass in components.items()
+    }
+
+
+def _blocks_of(component: str | None) -> list[tuple[str, str, int, int]]:
     """Return the reads to test, as (component, space, address, count).
 
     **Only the inverter's own components**, unless one is named explicitly.
-    A plan entry carrying a `unit` role belongs to a device on another unit
-    id -- the SBR pack at 200 or 2, the wallbox at 3 or 248 -- and reading
-    its addresses at the inverter's unit tests nothing: input 10740 and
-    21215 answer 0xFFFF or refuse there whatever the pack and the charge
-    point are doing.
+    The SBR pack at 200 or 2 and the wallbox at 3 or 248 live on other unit
+    ids, and reading their addresses at the inverter's unit tests nothing:
+    input 10740 and 21215 answer 0xFFFF or refuse there whatever the pack and
+    the charge point are doing. Recording them into every survey once added
+    eight guaranteed failures, each narrowed at the cost of the budget and
+    offered to `src/sungrow_modbus/layout.py` as a register fault. Naming a
+    component still selects it, so `-c sbr_battery_cells` works against a
+    pack when that is what somebody is testing.
 
-    This is a regression that happened: recording those components into the
-    plan added eight blocks to every survey's block read test, all of them
-    guaranteed to fail, all of them then narrowed at the cost of the
-    narrowing budget, and all of them offered to `src/sungrow_modbus/layout.py` as
-    register faults. Naming a component still selects it, so
-    `-c sbr_battery_cells` works against a pack when that is what somebody
-    is testing.
+    Synchronous, because the tool is: the recording runs in a loop of its own.
     """
-    known = [entry["component"] for entry in plan["components"]]
-    if component is not None and component not in known:
-        raise SystemExit(f"No such component: {component}.\nKnown: {', '.join(known)}")
+    if component is None:
+        recorded = asyncio.run(inverter_blocks())
+    else:
+        known = _components()
+        if component not in known:
+            raise SystemExit(
+                f"No such component: {component}.\nKnown: {', '.join(known)}"
+            )
+        recorded = asyncio.run(component_blocks(component, known[component]))
     return [
-        (entry["component"], entry["space"], address, count)
-        for entry in plan["components"]
-        if (
-            entry["component"] == component
-            if component is not None
-            else not entry.get("unit")
-        )
-        for address, count in entry["blocks"]
+        (block.component, block.space, block.address, block.count) for block in recorded
     ]
 
 
-def _declared(plan: dict, space: str, address: int) -> str:
+def _declared(space: str, address: int) -> str:
     """Return the field at an address, or say that nothing reads it.
 
     The distinction decides the fix. A bad **declared** register is isolated
@@ -513,11 +515,12 @@ def _declared(plan: dict, space: str, address: int) -> str:
     for in the first place, and the answer there is to stop bridging the gap
     rather than to isolate anything.
     """
-    for field in plan["fields"]:
-        if field["space"] != space:
+    for name, klass in _components().items():
+        if klass.register_space != space:
             continue
-        if field["address"] <= address < field["address"] + field["count"]:
-            return f"{field['name']} (in {field['component']})"
+        for field_name, field in klass.declared_fields.items():
+            if field.address <= address < field.address + field.count:
+                return f"{field_name} (in {name})"
     return "nothing reads this -- pooling bridges a gap to reach it"
 
 
@@ -612,7 +615,7 @@ def measure(
     return BlockOutcome(tally, intermittent, failing, culprits, client.reconnects)
 
 
-def report(outcome: BlockOutcome, plan: dict, echo=print) -> None:
+def report(outcome: BlockOutcome, echo=print) -> None:
     """Say what the measurement means, and what to do about it."""
     if outcome.intermittent:
         echo("\nIntermittent, so contention rather than a fault:")
@@ -652,7 +655,7 @@ def report(outcome: BlockOutcome, plan: dict, echo=print) -> None:
         # and imply all fifteen are suspect.
         if kind != UNNARROWED:
             for offset in range(count):
-                named = _declared(plan, space, address + offset)
+                named = _declared(space, address + offset)
                 echo(f"     {address + offset + 1}: {named}")
         if kind in {WRONG_LENGTH, PADDED}:
             echo("     -> the count named above belongs in layout.COUNTS")
@@ -669,7 +672,7 @@ def report(outcome: BlockOutcome, plan: dict, echo=print) -> None:
         )
         for name, space, address, count, _kind, _detail in stopped:
             echo(
-                f"  python scripts/sungrow_survey/blocks.py <host> "
+                f"  python scripts/sungrow_read_only_survey/blocks.py <host> "
                 f"-r {space}:{address}:{count}    # {name}"
             )
         echo("\nA lower --timeout, or --attempts 1, buys depth on a link like this.")
@@ -685,25 +688,16 @@ def report(outcome: BlockOutcome, plan: dict, echo=print) -> None:
 
 
 def client_for(host, port, unit, timeout, delay, prefer="auto"):
-    """Return the Modbus client to measure with, and why it is that one.
+    """Return the Modbus client to measure with.
 
-    The library client is the default where it can be had, because whatever
-    it cannot read the integration cannot read either -- there is no second
-    frame validator to keep in step. The raw client is not a fallback so much
-    as the other half of the tool: it is the one that turns a rejected frame
-    into the count that would have worked.
+    The library client is the default, because whatever it cannot read the
+    integration cannot read either -- there is no second frame validator to
+    keep in step. The raw client is the other half of the tool: it is the one
+    that turns a rejected frame into the count that would have worked.
     """
     if prefer == "raw":
         return RawClient(host, port, unit, timeout, delay)
-    try:
-        return LibraryClient(host, port, unit, timeout, delay)
-    except ModuleNotFoundError:
-        if prefer == "library":
-            raise SystemExit(
-                "--client library needs modbus-connection, which is not "
-                "installed here. Leave the flag off to use the raw client."
-            ) from None
-        return RawClient(host, port, unit, timeout, delay)
+    return LibraryClient(host, port, unit, timeout, delay)
 
 
 def main() -> int:
@@ -752,13 +746,12 @@ def main() -> int:
     )
     parser.add_argument(
         "--client",
-        choices=("auto", "library", "raw"),
-        default="auto",
-        help="which Modbus client makes the reads. `library` is what the "
-        "integration uses, so whatever it cannot read the integration cannot "
-        "either; `raw` is a strict socket that additionally reports the count "
-        "which reconciles a padded frame. `auto` (the default) prefers the "
-        "library and falls back to raw where it is not installed",
+        choices=("library", "raw"),
+        default="library",
+        help="which Modbus client makes the reads. `library` (the default) is "
+        "what the integration uses, so whatever it cannot read the integration "
+        "cannot either; `raw` is a strict socket that additionally reports the "
+        "count which reconciles a padded frame",
     )
     parser.add_argument("-c", "--component", help="test only this component")
     parser.add_argument(
@@ -772,7 +765,6 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    loaded = load_plan()
     if args.range:
         blocks = []
         for raw in args.range:
@@ -786,18 +778,14 @@ def main() -> int:
         if any(space not in {"input", "holding"} for _, space, *_ in blocks):
             raise SystemExit("Space must be 'input' or 'holding'.")
     else:
-        blocks = _blocks_of(loaded, args.component)
+        blocks = _blocks_of(args.component)
 
     print(f"Reading {args.host}:{args.port}, unit {args.unit}. This only reads.")
     # Both axes, because they are independent: which reads to make, and which
     # client makes them. A clean result from a lenient client is worth much
     # less, which is how registers the integration cannot read at all were
     # once measured as fine.
-    verified = "verified against the library" if loaded["verified"] else "not verified"
-    print(
-        f"  plan   {PLAN_FILE.name} -- "
-        f"{len(loaded['components'])} components, {verified}"
-    )
+    print("  plan   the library's own block reads, recorded from the poll")
     client = client_for(
         args.host, args.port, args.unit, args.timeout, args.delay, args.client
     )
@@ -814,7 +802,7 @@ def main() -> int:
         )
     finally:
         client.close()
-    report(outcome, loaded)
+    report(outcome)
     return 0
 
 

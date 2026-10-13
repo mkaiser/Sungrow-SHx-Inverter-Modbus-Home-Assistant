@@ -4,12 +4,12 @@
 moment the two lists disagree, a clean local run stops meaning anything and
 the Makefile is worse than no Makefile — it is a false all-clear. That is not
 hypothetical: the loop this replaced in `doc/development.yaml` ran five of the
-ten generators, so a stale `numbers`, `switches`, `selects`, `scan_plan` or
-`compatibility` sailed through locally and failed on push.
+ten generators, so a stale `numbers`, `switches`, `selects` or `compatibility`
+sailed through locally and failed on push.
 
 The obvious fix is to have CI call `make ci` and keep one list. That is
 rejected on purpose: each CI step carries a name that says what broke ("The
-scan plan matches the library"), and collapsing thirteen of them into one
+compatibility page matches the fingerprints"), and collapsing thirteen of them into one
 opaque `make ci` trades a readable failure for a log to go and read. So the
 two lists stay, and this asserts they agree.
 

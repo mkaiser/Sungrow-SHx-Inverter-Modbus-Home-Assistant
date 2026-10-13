@@ -1,7 +1,7 @@
 # Capability fingerprints
 
 What a particular Sungrow installation actually answers, recorded by
-`python scripts/sungrow_survey/sungrow_survey.py` — the one entry point, which finds
+`python scripts/sungrow_read_only_survey/sungrow_survey.py` — the one entry point, which finds
 the devices, asks what no register can answer, runs the block read test and
 writes the document. `probe.py capabilities <host> --save doc/device-fingerprints`
 is the single phase inside it, for when only that is wanted.
@@ -20,7 +20,7 @@ real machine is worth more than an inference from the YAML's comments.
 Almost none do, and that is not a gap in the evidence — it is the difference
 between reading an inverter and writing to one. A fingerprint is produced by
 reading; the `control_test` block is produced by `Run control write test` on the
-device page, or by `scripts/hardware/sungrow_control_test.py`, and both of those change
+device page, or by `scripts/sungrow_control_test/sungrow_control_test.py`, and both of those change
 settings on a real installation and change them back.
 
 So **the absence of the block means "this run only read"**, never "the writes
@@ -50,6 +50,32 @@ names which side is implicated: the library, if the register map's scale
 disagrees with the specification, or the device, if the two agree and the
 firmware stored something else anyway. The second is a finding about Sungrow and
 is the reason these are published.
+
+## An `export_scale` block, where a document has one
+
+Register 13074, the export power limit, reads in watts on every firmware
+measured, but **writes** two ways: most multiply the word they are handed by
+ten, some store it as handed. Schema 20 admits a block that records which,
+written by `scripts/sungrow_control_test/sungrow_control_test.py --export-scale
+--merge-into <document>`:
+
+| Field | Meaning |
+| --- | --- |
+| `write_units_per_count` | `10` multiplies, `1` stores as handed, `null` could not be asked |
+| `held_w`, `wrote` | the limit the register held, and the one word written to ask |
+| `response` | the inverter's reply to that write |
+| `mode_lifted` | whether feed-in limitation was switched on for the write and back |
+| `left_changed` | whether anything was left different; always `false` so far |
+| `reason` | why that write answers the question |
+| `read_on` | the day it was asked, which is often not the document's own `read_on` |
+
+The write is chosen so that it changes nothing on either firmware: a no-op
+under one reading, out of range and refused under the other. The answer is the
+**refusal**, not a readback, so unlike the readback table above it holds
+through a WiNet-S too. Its absence means the question was not asked.
+
+A `control_test` block at schema 2 carries the same block in
+`conditions.export_write_scale`: the factor the run wrote 13074 at.
 
 ## The serial numbers here are not real
 
@@ -412,7 +438,7 @@ these answers, where `sungrow_survey.py <host>` would ask the questions again
 interactively. The field is what to run, not a record of what was typed.
 
 ```
-scripts/sungrow_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10
+scripts/sungrow_read_only_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10
   --passes 8 --transport direct_lan --proxy no --reporter mkaiser
   --battery 'Pylontech Force H1, 14.4 kWh' --comment '...' --dump
 ```
@@ -545,16 +571,18 @@ single most useful thing you can send.
 If you have the integration installed, the device page runs the survey and
 offers the document for download — nothing else is needed.
 
-Otherwise, get the [scripts/sungrow_survey/](../../scripts/sungrow_survey/) folder
+Otherwise, get the [scripts/sungrow_read_only_survey/](../../scripts/sungrow_read_only_survey/) folder
 (GitHub's *Code → Download ZIP* on this branch has it) and run, from inside it:
 
 ```bash
-python sungrow_survey.py
+./read_only_survey.sh            # Linux, macOS
+read_only_survey.cmd             # Windows, or double-click it
 ```
 
-or `python sungrow_survey.py 192.168.1.50` if you know the address. It needs
-**nothing installed** — plain Python 3.11 or newer, no packages — and it **only
-reads**: the two Modbus read function codes are the only ones in the folder,
+or `./read_only_survey.sh 192.168.1.50` if you know the address. The launcher fetches
+Python and the `sungrow-modbus` library through
+[uv](https://docs.astral.sh/uv/), and asks before installing uv if it is not
+there. The survey **only reads**: nothing in the folder calls a Modbus write,
 and you are welcome to check before running it. It finds the device, asks a
 few things no register can answer, and ends by printing which file to send.
 It publishes nothing by itself.

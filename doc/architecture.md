@@ -198,7 +198,7 @@ Home Assistant and without an inverter — which is most of the test suite, and
 runs in about a second. Core's `sofar` integration is the reference
 implementation for this shape.
 
-It also means the library is useful on its own: `scripts/sungrow_survey/probe.py`
+It also means the library is useful on its own: `scripts/sungrow_read_only_survey/probe.py`
 drives it directly to fingerprint an installation, with no Home Assistant
 anywhere in the process.
 

@@ -278,13 +278,6 @@ class SbrBatteryModules(Component):
     maximum and names module 1 in the high byte of its position word,
     checkable inside one reading.
 
-    **Eight explicit fields per family rather than a `repeating_group`.**
-    The shape is a repeating group and declaring it as one would be shorter,
-    but `scripts/generate/generate_scan_plan.py` records the library's block reads
-    into a committed artefact that the standalone survey decodes from, and that
-    agreement currently holds partly because this map has no repeating
-    groups. Twenty-four declarations is the cheaper price.
-
     **Nothing here becomes an entity yet.** A module that is not fitted reads
     0, and a cell voltage of 0 V is indistinguishable from a fault -- so
     something has to establish how many modules there are before these can be

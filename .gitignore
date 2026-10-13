@@ -34,16 +34,10 @@ build/
 # Register dumps and production data from real installations. These carry
 # serial numbers and live household readings, and this repo is public.
 # Redacted capability fingerprints are committed instead; see
-# scripts/sungrow_survey/probe.py.
+# scripts/sungrow_read_only_survey/probe.py.
 .testdata/
 
-# Reports written by scripts/sungrow_survey/portable.py, which defaults to the
-# working directory — so running it inside a checkout drops one here. They are
-# redacted by construction, but they are somebody's data and not repo content:
-# a curated copy belongs in doc/device-fingerprints/ under a deliberate name.
-sungrow-fingerprint-*.json
-
-# Written by scripts/sungrow_survey/sungrow_survey.py when it runs outside a checkout,
+# Written by scripts/sungrow_read_only_survey/sungrow_survey.py when it runs outside a checkout,
 # and by probe.py's fixed raw destination in the same case. Both carry the
 # real serial and address; `.testdata/` covers the in-checkout case above.
 sungrow-scan-private/

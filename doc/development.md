@@ -327,9 +327,8 @@ things. Advanced → *Include a raw register dump in diagnostics*
 the diagnostics file, in seconds. Help this project → *Also sweep the raw
 register bands* (`CONF_SURVEY_DUMP`) sweeps `sungrow_modbus.dump.DUMP_BANDS`
 — 1510 addresses, mostly unmapped — into the survey document, in about five
-minutes. Only the second can discover a register. The bands are duplicated in
-`scripts/sungrow_survey/probe.py` because that has to run with the library
-absent -- a contributor runs it with nothing installed -- and `tests/test_dump_bands.py` is what stops the two drifting.
+minutes. Only the second can discover a register. The survey's `--dump` reads
+the same bands.
 
 To see any of this against a real run, the recorder is the fastest way in —
 the dev instance keeps it:

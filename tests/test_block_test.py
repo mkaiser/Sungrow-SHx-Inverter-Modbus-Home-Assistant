@@ -1,12 +1,13 @@
 """The block read test from the device page, held to the terminal tool's.
 
 `sungrow_modbus.block_test` is the second producer of a measurement that
-`scripts/sungrow_survey/blocks.py` and `sungrow_survey.py` already make, and its answers
-end up in the same place: a published document, read by a maintainer deciding
-what goes in `src/sungrow_modbus/layout.py`. So most of what is asserted here is
-*agreement* -- the same blocks, the same outcome words, the same budget and the
-same document shape -- and the rest is the classification that four bugs in
-this project got wrong: an exception response is an answer, a lost link is not.
+`scripts/sungrow_read_only_survey/blocks.py` and `sungrow_survey.py` already
+make, and its answers end up in the same place: a published document, read by
+a maintainer deciding what goes in `src/sungrow_modbus/layout.py`. So most of
+what is asserted here is *agreement* -- the same blocks, the same outcome
+words, the same budget and the same document shape -- and the rest is the
+classification that four bugs in this project got wrong: an exception response
+is an answer, a lost link is not.
 
 Fakes raise the library's real exception types. A fixture that fakes a
 refusal with a bare `ModbusError` cannot see the difference this module exists
@@ -16,7 +17,6 @@ to keep.
 from __future__ import annotations
 
 from collections.abc import Callable
-import json
 from pathlib import Path
 import sys
 
@@ -42,7 +42,7 @@ from sungrow_modbus.block_test import (
 )
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_survey"))
+sys.path.insert(0, str(REPO / "scripts" / "sungrow_read_only_survey"))
 
 import blocks as terminal  # noqa: E402
 import sungrow_survey  # noqa: E402
@@ -78,27 +78,6 @@ def refuses(register: int) -> Callable[[str, int, int], BaseException | None]:
 
 
 # -- agreement with the terminal tool ----------------------------------------
-
-
-async def test_it_reads_exactly_the_blocks_the_scan_plan_records() -> None:
-    """The same 27 reads, in the same order, as `scan_plan.json`.
-
-    Both are recorded from the library's own pooling, by different code. If
-    they ever disagree, one of the two producers is testing reads the poll
-    does not make.
-    """
-    plan = json.loads((REPO / "scripts/sungrow_survey/scan_plan.json").read_text())
-    recorded = [
-        (entry["component"], entry["space"], address, count)
-        for entry in plan["components"]
-        if not entry.get("unit")
-        for address, count in entry["blocks"]
-    ]
-    mine = [
-        (block.component, block.space, block.address, block.count)
-        for block in await inverter_blocks()
-    ]
-    assert mine == recorded
 
 
 def test_the_outcome_words_and_the_budget_are_the_terminal_tools() -> None:

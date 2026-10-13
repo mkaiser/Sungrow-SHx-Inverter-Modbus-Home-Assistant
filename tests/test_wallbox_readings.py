@@ -20,7 +20,7 @@ import sys
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_survey"))
+sys.path.insert(0, str(REPO / "scripts" / "sungrow_read_only_survey"))
 
 from probe import (  # noqa: E402
     WALLBOX_DUMP_MASKED,

@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
-"""Keep the integration's two version strings in lockstep.
+"""Keep every copy of the version string in lockstep.
 
 The version lives in exactly one place — ``pyproject.toml`` — and is mirrored
-into ``custom_components/sungrow_modbus/manifest.json``. They must be identical:
-Home Assistant checks the installed version of the ``requirements`` entry on
-every start and will try to pip-install the library if the manifest asks for a
-version that is not installed. In a devcontainer, where the library is
-installed editable from this repo, that means a broken start-up.
+into ``custom_components/sungrow_modbus/manifest.json`` and into the PEP 723
+header of each script that runs on the published library. They must be
+identical. Home Assistant checks the installed version of the ``requirements``
+entry on every start and will try to pip-install the library if the manifest
+asks for a version that is not installed; in a devcontainer, where the library
+is installed editable from this repo, that means a broken start-up. And a
+script whose header pins an older release runs, through ``uv``, on a library
+that lacks whatever the script was written against.
 
 This script is the single place that knows that rule, and it is used three
 ways:
 
-    scripts/release/sync_version.py              # pyproject's version -> manifest
+    scripts/release/sync_version.py              # pyproject's version -> the rest
     scripts/release/sync_version.py --check      # verify they agree; exit 1 if not
-    scripts/release/sync_version.py --set 0.2.0  # bump both, for a release
+    scripts/release/sync_version.py --set 0.2.0  # bump all of them, for a release
 
 Tag ``vX.Y.Z`` on top of a ``--set`` commit and the release workflow verifies
 the tag against these files before it publishes anything.
@@ -36,6 +39,20 @@ MANIFEST = REPO / "custom_components" / "sungrow_modbus" / "manifest.json"
 #: The library is pinned exactly in the manifest's requirements, so that string
 #: has to move with the version too.
 REQUIREMENT_NAME = "sungrow-modbus"
+
+#: Scripts that declare their dependencies inline (PEP 723), so `uv run
+#: --script` and the survey's launchers can fetch the library for somebody who
+#: has no checkout. Each pins the library exactly, as the manifest does.
+SCRIPTS = (
+    REPO / "scripts" / "sungrow_read_only_survey" / "sungrow_survey.py",
+    REPO / "scripts" / "sungrow_control_test" / "sungrow_control_test.py",
+)
+
+#: The pin inside a script's `# /// script` block. Anchored to a comment line,
+#: so a mention of the requirement in prose is never rewritten.
+SCRIPT_PIN = re.compile(
+    rf'(?m)^(#\s*dependencies = \[.*"{REQUIREMENT_NAME}==)([^"]*)(")'
+)
 
 #: A release, or a pre-release in the **one** spelling that is safe here.
 #:
@@ -179,6 +196,23 @@ def write_manifest(version: str) -> None:
     _write(MANIFEST, text, newline)
 
 
+def script_pin(path: Path) -> str | None:
+    """Return the library version a script's PEP 723 header pins, or None."""
+    text, _ = _read(path)
+    match = SCRIPT_PIN.search(text)
+    return match.group(2) if match else None
+
+
+def write_scripts(version: str) -> None:
+    """Move each script's pin, touching nothing else in the file."""
+    for path in SCRIPTS:
+        text, newline = _read(path)
+        text, count = SCRIPT_PIN.subn(rf"\g<1>{version}\g<3>", text, count=1)
+        if count != 1:
+            raise SystemExit(f"No pinned {REQUIREMENT_NAME} in the header of {path}")
+        _write(path, text, newline)
+
+
 def check(expected: str | None = None) -> int:
     """Report whether every version string agrees. Returns a process exit code."""
     version = project_version()
@@ -203,6 +237,13 @@ def check(expected: str | None = None) -> int:
             f"manifest pins {REQUIREMENT_NAME}=={pinned}, "
             f"pyproject.toml says {version!r}"
         )
+    for path in SCRIPTS:
+        pinned = script_pin(path)
+        if pinned != version:
+            problems.append(
+                f"{path.relative_to(REPO)} pins {REQUIREMENT_NAME}=={pinned}, "
+                f"pyproject.toml says {version!r}"
+            )
     if expected is not None and expected != version:
         problems.append(f"release tag says {expected!r}, the files say {version!r}")
 
@@ -217,7 +258,10 @@ def check(expected: str | None = None) -> int:
         )
         return 1
 
-    print(f"Version {version} is consistent across pyproject.toml and manifest.json")
+    print(
+        f"Version {version} is consistent across pyproject.toml, manifest.json "
+        f"and {len(SCRIPTS)} script headers"
+    )
     return 0
 
 
@@ -251,7 +295,11 @@ def main() -> int:
             raise SystemExit(f"Not a version number: {args.set}")
         write_pyproject(args.set)
         write_manifest(args.set)
-        print(f"Set version {args.set} in pyproject.toml and manifest.json")
+        write_scripts(args.set)
+        print(
+            f"Set version {args.set} in pyproject.toml, manifest.json and the "
+            "script headers"
+        )
         reinstall_editable(args.set)
         return 0
 
@@ -260,7 +308,11 @@ def main() -> int:
 
     version = project_version()
     write_manifest(version)
-    print(f"Mirrored version {version} into {MANIFEST.relative_to(REPO)}")
+    write_scripts(version)
+    print(
+        f"Mirrored version {version} into {MANIFEST.relative_to(REPO)} and the "
+        "script headers"
+    )
     return 0
 
 

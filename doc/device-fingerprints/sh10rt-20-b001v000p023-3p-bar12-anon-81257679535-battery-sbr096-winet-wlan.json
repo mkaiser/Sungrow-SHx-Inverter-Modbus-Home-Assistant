@@ -1,6 +1,6 @@
 {
   "schema": 19,
-  "command_line": "scripts/sungrow_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport winet_wlan --proxy no --reporter bar12 --comment 'Read by the maintainer over a VPN on 2026-10-08, minutes after the same inverter was read over its own LAN port at 178.064. The dongle'\"'\"'s Ethernet cable now goes into the inverter and its wired address (178.041) has disappeared, so this path is WiFi. Same-night pair so a firmware change since September (P020 to P023) is not mistaken for a transport difference.' --other-inverter no --dump",
+  "command_line": "scripts/sungrow_read_only_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport winet_wlan --proxy no --reporter bar12 --comment 'Read by the maintainer over a VPN on 2026-10-08, minutes after the same inverter was read over its own LAN port at 178.064. The dongle'\"'\"'s Ethernet cable now goes into the inverter and its wired address (178.041) has disappeared, so this path is WiFi. Same-night pair so a firmware change since September (P020 to P023) is not mistaken for a transport difference.' --other-inverter no --dump",
   "read_on": "2026-10-08",
   "read_at_local": "2026-10-08T22:34:33+02:00",
   "user_inputs": {

@@ -1,19 +1,12 @@
 """What a capability survey reads, and how to publish it.
 
-The survey in `scripts/sungrow_survey/` has always owned this knowledge, and it
-had to: that directory is run by strangers on bare Python, so it
-cannot import this library. But the *integration* can, and a user who has
-already set the integration up has by definition a working connection to
-their inverter and no way to turn it into evidence. Every document in
-`doc/device-fingerprints/` comes from one of four houses, all of them known
-to the maintainer, which is the single biggest filter on what this project
-knows.
-
-So the tables live here, where both a Home Assistant integration and a test
-can reach them, and `scripts/sungrow_survey/probe.py` keeps its own literal
-copy. **That duplication is deliberate and asserted**, the same trade already
-made for `IDENTIFY_UNITS`: a survey that cannot run standalone is a worse
-problem than two tables a test keeps identical.
+One definition of the document format, and two producers of it. The survey in
+`scripts/sungrow_read_only_survey/` imports these tables to read a device from a
+terminal; the integration imports them to write the same document from Home
+Assistant's diagnostics download, because a user who has already set the
+integration up has a working connection and otherwise no way to turn it into
+evidence. Every document in `doc/device-fingerprints/` is read by one
+generator, whichever of the two wrote it.
 
 Nothing here talks to a device. `PROBES` says which addresses answer the
 question, `classify()` says what an answer means, and `stand_in()` is how a
@@ -36,8 +29,8 @@ from .const import model_for
 #: 17 allows a document collected through Home Assistant's diagnostics
 #: download rather than by running the script. Everything else is identical;
 #: what changes is that `command_line` may name a *tool* instead of an
-#: invocation, because there is no command to repeat. The full history of the
-#: earlier numbers is in `scripts/sungrow_survey/probe.py`, which is where the
+#: invocation, because there is no command to repeat. The history of the
+#: earlier numbers is in `scripts/sungrow_read_only_survey/probe.py`, which is where the
 #: format grew up.
 #:
 #: 19 admits an optional **`control_test`** block, written by
@@ -55,11 +48,14 @@ from .const import model_for
 #: the possibility".
 #:
 #: `connection.latency_ms` was removed on 2026-10-09 **without** a bump: nothing
-#: read it, so its absence tells a reader nothing. `probe.py` has the reasoning.
+#: read it, so its absence tells a reader nothing.
 #:
-#: `test_the_two_producers_agree_on_the_schema` keeps this equal to
-#: `probe.SCHEMA`.
-SCHEMA = 19
+#: 20 admits an optional **`export_scale`** block: how this firmware writes
+#: register 13074, as `sungrow_modbus.export_scale` asked it -- multiplied by
+#: ten, or stored as handed -- with the one write that asked. A bump for the
+#: same reason as 19: almost no document will carry it, and "not asked" has to
+#: be told apart from "predates the question".
+SCHEMA = 20
 
 #: How a document says it was collected, when no command line could repeat it.
 #:
@@ -171,7 +167,6 @@ STAND_IN_PREFIX = "anon-"
 #: Keys only. The human wording lives with each producer -- a menu line in the
 #: script, a translated string in the integration -- because that is
 #: presentation, while the key is what `generate_compatibility.py` groups by.
-#: Kept equal to `probe.REPORTED_TRANSPORTS`' keys.
 #:
 #: `unsure` is not a gap in the list. A WiNet-S answers identically wired and
 #: over WiFi, so an owner who does not know which their dongle is using is
@@ -250,10 +245,8 @@ def stand_in(serial: str) -> str:
     being called `serial_anonymized_hashed` does not help once the value has
     been copied out of it.
 
-    Must stay identical to `probe._fake_serial`, or one device would get two
-    stand-ins depending on which tool read it -- which is exactly the thing
-    the hash exists to prevent. `test_the_two_producers_agree_on_the_stand_in`
-    holds them together.
+    Both producers call this, so one device gets one stand-in whichever tool
+    read it -- which is exactly the thing the hash exists to prevent.
     """
     if not serial:
         return serial
@@ -294,10 +287,8 @@ def address_tail(host: str, permitted: bool) -> str:
 #: identical probe states, identical failed components, identical firmware
 #: strings. Nothing in the register space moves, so a person has to say it.
 #:
-#: Copied from `probe.WIFI_OR_ETHERNET` and kept identical by
-#: `test_the_two_producers_agree_on_the_wifi_sentence`, because a reader
-#: comparing two documents must never have to wonder whether a difference
-#: here means something.
+#: One sentence for every document, because a reader comparing two must never
+#: have to wonder whether a difference here means something.
 WIFI_OR_ETHERNET = (
     "not determinable over Modbus. Nothing in the protocol reports it, and "
     "a WiNet-S answers identically wired and over WiFi. Use "
@@ -319,9 +310,8 @@ def transport_verdict(*, answered_6100: bool, module_named: bool) -> str:
     can be *fitted* while not being in the path -- which is a real
     installation rather than a hypothetical, and the top row below.
 
-    Kept identical to `probe.transport_verdict`; the four-row truth table is
-    asserted against it, because `doc/compatibility.md` groups readings by
-    this string and two spellings of one route would split a comparison.
+    Both producers call this, because `doc/compatibility.md` groups readings
+    by this string and two spellings of one route would split a comparison.
     """
     if answered_6100 and module_named:
         # This installation has both routes and is on the better one. Worth

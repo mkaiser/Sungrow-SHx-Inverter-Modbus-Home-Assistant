@@ -62,8 +62,6 @@ jobs:
           python -m pip install --requirement requirements_dev.txt
       - name: Versions in lockstep
         run: python scripts/release/sync_version.py --check
-      - name: The scan plan matches the library
-        run: python scripts/generate/generate_scan_plan.py --check
       - name: The derived descriptions are current
         run: python scripts/generate/descriptions.py derived --check
       - name: The writable registers match the write table

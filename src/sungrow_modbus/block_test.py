@@ -7,7 +7,7 @@ either updates or raises -- so one bad register can empty a whole tier of
 entities. That has happened twice, and both times only a block read test said
 which register it was.
 
-This is the same measurement `scripts/sungrow_survey/blocks.py` makes from a
+This is the same measurement `scripts/sungrow_read_only_survey/blocks.py` makes from a
 terminal, for the integration to run from the device page. Two producers, one
 measurement:
 
@@ -16,9 +16,9 @@ measurement:
 * **The published shape is `sungrow_survey.py`'s**, key for key, so one reader handles
   a document from either. `tests/test_block_test.py` holds the two together.
 * **The blocks are recorded, not computed** -- `inverter_blocks` drives every
-  polled component against a recorder and keeps what it asked for, which is
-  how `scripts/generate/generate_scan_plan.py` builds the plan the terminal tool reads.
-  So both test exactly the reads the poll makes, and the test asserts it.
+  polled component against a recorder and keeps what it asked for, and the
+  terminal tool takes its plan from the same function. So both test exactly
+  the reads the poll makes.
 
 What this cannot do that the terminal tool can: name the count that would
 reconcile a padded frame. That needs the raw reply, and `modbus-connection`
@@ -34,12 +34,15 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from modbus_connection import ModbusError, ModbusExceptionError, ModbusProtocolError
 
 from .components import InverterIdentity
 from .registers import COMPONENTS
+
+if TYPE_CHECKING:
+    from modbus_connection.model import Component
 
 #: How a block read came back. The same words as `blocks.py`.
 OK = "ok"
@@ -128,6 +131,19 @@ class _Recorder:
         return [0] * count
 
 
+async def component_blocks(name: str, klass: type[Component]) -> list[Block]:
+    """Return the block reads one component makes, recorded rather than computed.
+
+    Any component, on any device: the terminal tool aims a test at the SBR's
+    or the wallbox's by name, on the unit that answers for it.
+    """
+    recorder = _Recorder()
+    await klass(recorder).async_update()  # type: ignore[arg-type]
+    return [
+        Block(name, space, address, count) for space, address, count in recorder.seen
+    ]
+
+
 async def inverter_blocks() -> list[Block]:
     """Return every block read the inverter's poll makes, in poll order.
 
@@ -141,12 +157,7 @@ async def inverter_blocks() -> list[Block]:
     """
     blocks: list[Block] = []
     for name, klass in {**COMPONENTS, "identity": InverterIdentity}.items():
-        recorder = _Recorder()
-        await klass(recorder).async_update()
-        blocks += [
-            Block(name, space, address, count)
-            for space, address, count in recorder.seen
-        ]
+        blocks += await component_blocks(name, klass)
     return blocks
 
 

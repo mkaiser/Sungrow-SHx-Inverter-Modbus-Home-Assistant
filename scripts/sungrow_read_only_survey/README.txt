@@ -9,32 +9,38 @@ work with your setup rather than guessed at.
 What to run
 -----------
 
-    python sungrow_survey.py
+On Linux or a Mac, in a terminal in this folder:
 
-That is all of it. Python 3.11 or newer, nothing to install. It will find
-the inverter on your network, ask you a handful of questions, read for a
-minute or two, and finish by printing which file to send back.
+    ./read_only_survey.sh
 
-If `python` is not found, try `python3`. If it says the version is too old,
-say so in the issue -- the floor is 3.11 today and is not there for a good
-reason, so it can be lowered.
+On Windows, double-click read_only_survey.cmd.
+
+That is all of it. It will find the inverter on your network, ask you a
+handful of questions, read for a minute or two, and finish by printing which
+file to send back.
+
+The survey needs Python and the integration's own Python library, `sungrow-modbus`.
+The launcher gets both through uv (https://docs.astral.sh/uv/), which keeps
+them in a cache of its own and changes nothing else on your machine. If uv is
+not installed, the launcher says so and asks before installing it. Answer no
+and it prints how to do it by hand instead.
 
 If you already know the address, save it the search:
 
-    python sungrow_survey.py 192.168.1.50
+    ./read_only_survey.sh 192.168.1.50          (or: read_only_survey.cmd 192.168.1.50)
 
 
 It only reads
 -------------
 
-No file in this directory can write to your inverter. The Modbus function
-codes for writing -- 6 and 16 -- are not implemented anywhere in it; the two
-that are, 3 and 4, are both reads. You are welcome to check: the reading
-happens in portable.py, and every place it talks to the network is in the
-first 250 lines.
+No file in this directory can write to your inverter. They talk to it
+through the library's read functions and nothing else; you are welcome to
+check -- search these files for "write" and every hit is a file on your own
+disk.
 
-It also never sends anything anywhere. Nothing here opens an internet
-connection; the files it writes stay on your machine until you send one.
+The survey never sends anything anywhere. The launcher goes to the internet
+once, to fetch uv and the library the first time; after that the files the
+survey writes stay on your machine until you send one.
 
 
 What gets written, and what to send
@@ -79,7 +85,7 @@ If something goes wrong
 The last line of the run says what happened and what it means. Common ones:
 
   "nothing was collected"   -- it found no inverter. Try giving the address:
-                               python sungrow_survey.py 192.168.1.50
+                               ./read_only_survey.sh 192.168.1.50
                                Port 502 is usual; a Logger uses 503.
 
   "this cannot run here"    -- the network you typed could not be read.
@@ -94,13 +100,20 @@ Nothing here changes anything on your inverter, so re-running is always safe.
 What is in this directory
 -------------------------
 
-  sungrow_survey.py  the one thing to run: the whole survey, start to finish
-  probe.py           the individual steps -- find, identify, read, dump
-  blocks.py          the block read test: which grouped read a device refuses
-  portable.py        the Modbus client and register decoder, standard library
-                     only, which is why none of this needs installing
-  scan_plan.json     which registers to read and how to decode them, generated
-                   from the integration's own definitions
+  read_only_survey.sh    the launcher on Linux and macOS
+  read_only_survey.cmd   the launcher on Windows; read_only_survey.ps1 does
+                         the work
+  sungrow_survey.py      the survey itself, start to finish. Its header names
+                         the library version it runs on
+  probe.py               the individual steps -- find, identify, read, dump
+  blocks.py              the block read test: which grouped read a device
+                         refuses
+  raw_client.py          a bare-socket Modbus client blocks.py can measure
+                         with, because it reports what a stricter client
+                         rejects
+
+The control test, which writes to an inverter, is a separate folder,
+scripts/sungrow_control_test/, and is never part of this one.
 
 This directory is part of
 https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
