@@ -7,10 +7,11 @@ and it is what three independent measurements agree on -- one reading taken
 here plus the two community projects.
 
 So the guard is the reading itself. `doc/device-fingerprints/` holds a
-committed fingerprint carrying the raw words an AC22E-01 answered, and the
-survey decodes them with its own decoder in `probe.WALLBOX_FIELDS`. This file
-drives the **library's** components against the same words and requires the
-two to agree.
+committed fingerprint carrying the raw words an AC22E-01 answered **and** the
+readings an independent decoder -- the survey's own, before it moved into the
+library -- made of them. This file holds the library to both: its document
+decoder must reproduce the committed readings exactly, and its components must
+read the same values from the same words.
 """
 
 from __future__ import annotations
@@ -18,23 +19,21 @@ from __future__ import annotations
 import asyncio
 import json
 from pathlib import Path
-import sys
 
 from modbus_connection.mock import MockModbusConnection
 import pytest
 
-REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_read_only_survey"))
-
-from probe import WALLBOX_FIELDS, _wallbox_readings  # noqa: E402
-
-from sungrow_modbus.wallbox_registers import (  # noqa: E402
+from sungrow_modbus.dump import WALLBOX_MASKED, masked
+from sungrow_modbus.wallbox import readings
+from sungrow_modbus.wallbox_registers import (
     CHARGING_STATUS,
     COMPONENTS,
     MODELS,
     WallboxLive,
     WallboxSettings,
 )
+
+REPO = Path(__file__).resolve().parent.parent
 
 #: The one committed fingerprint that carries a wallbox.
 FINGERPRINT = next((REPO / "doc" / "device-fingerprints").glob("*wallbox*.json"))
@@ -63,44 +62,23 @@ def _component(klass):
     return instance
 
 
-#: What the survey decoded from the same words, keyed by its own field names.
-#: Fed the **raw** dump, string keys and all, because that is what
-#: `_wallbox_readings` reads -- it decodes a document's dump in place rather
-#: than a parsed one, which is how a fingerprint carries both the words and
-#: their meaning without a second read.
-SURVEY = {
-    name: entry["value"]
-    for name, entry in _wallbox_readings(
-        json.loads(FINGERPRINT.read_text(encoding="utf-8"))["wallbox"]["register_dump"]
-    ).items()
-}
+#: The document's section, as committed.
+SECTION = json.loads(FINGERPRINT.read_text(encoding="utf-8"))["wallbox"]
+
+#: What the independent decoder published from those words, by field name.
+SURVEY = {name: entry["value"] for name, entry in SECTION["readings"].items()}
 
 
-@pytest.mark.parametrize(
-    ("field", "space", "address"),
-    [(f[0], f[1], f[2]) for f in WALLBOX_FIELDS],
-    ids=[f[0] for f in WALLBOX_FIELDS],
-)
-def test_the_library_reads_every_register_the_survey_decodes(
-    field: str, space: str, address: int
-) -> None:
-    """Neither side may know a register the other does not.
+def test_the_committed_dump_decodes_to_the_committed_readings() -> None:
+    """The golden test: byte for byte, from the masked words.
 
-    The survey has decoded 32 of these into every fingerprint since before
-    the library could read any of them, so it is the older and better-tested
-    of the two. A register it names and the library cannot read is a gap in
-    the port; the reverse would be a register nothing has ever recorded.
+    The committed readings were made by the survey's own decoder before it
+    moved into the library, so this is the move's proof as well as a guard
+    against a later change to a scale, a code table or a confidence mark.
     """
-    # Flattened: which addresses the library reads, per space.
-    by_space: dict[str, set[int]] = {}
-    for klass in COMPONENTS.values():
-        addresses = by_space.setdefault(klass.register_space, set())
-        for descriptor in klass.declared_fields.values():
-            count = getattr(descriptor, "count", 1) or 1
-            addresses.update(range(descriptor.address, descriptor.address + count))
-    assert address in by_space.get(space, set()), (
-        f"the survey decodes {space} {address} (reg {address + 1}) as "
-        f"{field!r} and no library component reads it"
+    assert (
+        readings(masked(SECTION["register_dump"], WALLBOX_MASKED))
+        == (SECTION["readings"])
     )
 
 
@@ -124,12 +102,12 @@ def test_the_library_reads_every_register_the_survey_decodes(
     ],
 )
 def test_every_value_matches_what_the_survey_decoded(field: str) -> None:
-    """Two decoders, one set of words, and the scales are where it goes wrong.
+    """The components and the published readings agree on every scale.
 
     A transposed scale reads a plausible number: 22080 W at the wrong scale
     is 2208 W, which is a believable wallbox and completely wrong. So each
-    value is compared against the survey's independent decoding of the same
-    register rather than against an expectation written twice.
+    value the poll reads is compared against the committed decoding of the
+    same register rather than against an expectation written twice.
     """
     for klass in COMPONENTS.values():
         if field in klass.declared_fields:
@@ -143,7 +121,7 @@ def test_every_value_matches_what_the_survey_decoded(field: str) -> None:
         assert value == expected
     else:
         assert value == pytest.approx(expected), (
-            f"{field}: library {value!r}, survey {expected!r}"
+            f"{field}: library {value!r}, committed {expected!r}"
         )
 
 

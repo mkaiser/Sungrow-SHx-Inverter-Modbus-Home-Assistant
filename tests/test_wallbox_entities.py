@@ -286,3 +286,48 @@ async def test_a_device_answering_zeros_is_not_taken_for_a_wallbox(
 
     assert entry.state is ConfigEntryState.LOADED
     assert _entities(hass, entry.entry_id) == []
+
+
+# -- the survey's wallbox section, from the device page ----------------------
+
+
+@pytest.mark.parametrize("dumping", [False, True], ids=["readings", "with dump"])
+async def test_the_device_page_publishes_the_surveys_wallbox_section(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit, dumping: bool
+) -> None:
+    """Same key, same per-field shape, as `sungrow_survey.py` writes.
+
+    The committed document is the survey's, so its readings are the expected
+    ones; with the dump option the section also carries the masked words, and
+    the serial -- answered here, two registers below the model name -- is in
+    neither half.
+    """
+    from custom_components.sungrow_modbus.const import CONF_SURVEY_DUMP
+    from custom_components.sungrow_modbus.fingerprint import async_build
+
+    serial_words = [0x4139, 0x3837, 0x3635, 0x3433, 0x3231, 0x3000]
+    words = {
+        "input": {
+            **WORDS["input"],
+            **dict(zip(range(21200, 21206), serial_words, strict=True)),
+        },
+        "holding": WORDS["holding"],
+    }
+    entry = await _setup(hass, sungrow_unit, words=words)
+    committed = json.loads(FINGERPRINT.read_text(encoding="utf-8"))["wallbox"]
+
+    document = await async_build(
+        hass, entry, options={CONF_SURVEY_DUMP: dumping}, allow_dump=True
+    )
+
+    section = document["wallbox"]
+    assert section["unit"] == 3
+    assert section["readings"] == committed["readings"]
+    if dumping:
+        assert set(section) == {"unit", "readings", "register_dump"}
+        published = section["register_dump"]["input"]
+        assert [published[str(a)] for a in range(21200, 21206)] == [None] * 6
+        assert published["21299"] == committed["register_dump"]["input"]["21299"]
+    else:
+        assert set(section) == {"unit", "readings"}
+    assert "A987654321" not in json.dumps(document)

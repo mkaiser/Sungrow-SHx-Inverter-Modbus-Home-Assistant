@@ -19,7 +19,7 @@ session boundary tells them apart.
 
 | Source | Device | Licence | Notes |
 | --- | --- | --- | --- |
-| **Here** | AC22E-01, one firmware, one session, via a WiNet-S | MIT, this repo | `.testdata/dumps/wallbox-charging-*` holds the raw readings; they carry the real serial and stay local |
+| **Here** | AC22E-01, one firmware, one session, via a WiNet-S | MIT, this repo | `probe.py dump --save` writes the raw readings beside the script; they carry the real serial and stay local |
 | [Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant](https://github.com/Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant) | Not stated | **No licence file** — used with the author's permission, and only for *which register means what* | Its charging-status enum is the single most useful thing any of the three has |
 | [KevinD987/sungrow-ac011e](https://github.com/KevinD987/sungrow-ac011e) | AC011E-01, by measurement | **MIT** | Carries its own confidence marks — VERIFIED, LIKELY, UNVERIFIED — and says plainly that the allocation is not manufacturer-confirmed and may move between firmwares |
 | [Discussion #571](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions/571) on this repo | AC22E-01 | this repo's own tracker | Found 2026-09-09. The **same model measured here**, which none of the other sources is. Gives names in the manufacturer's own idiom — `SetOutI`, `PhaseSwitch`, `Availability`, `RemoteControl`, `State` — and one scale that this project's reading contradicts, below |
@@ -154,11 +154,11 @@ to:
 - **input 21201-21280 and 21297-21340 answer; 21281-21296 refuse.**
 - **holding 21201-21248 answers**, then only scattered addresses up to 21328.
 
-`WALLBOX_DUMP_BANDS` in `scripts/sungrow_read_only_survey/probe.py` is those ranges, and
+`WALLBOX_BANDS` in `src/sungrow_modbus/dump.py` is those ranges, and
 `scripts/sungrow_read_only_survey/sungrow_survey.py` dumps them whenever a wallbox answers —
 independently of the inverter's own dump question, because 206 addresses is a
 tenth of that dump's cost and a wallbox is the rarest thing this project sees.
-The serial is masked by `WALLBOX_DUMP_MASKED`, which exists because it was
+The serial is masked by `WALLBOX_MASKED`, which exists because it was
 once published.
 
 ## What a fingerprint now carries

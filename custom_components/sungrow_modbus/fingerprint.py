@@ -63,7 +63,12 @@ from modbus_connection import (
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
-from sungrow_modbus import block_test, dump as register_dump, fingerprint as survey
+from sungrow_modbus import (
+    block_test,
+    dump as register_dump,
+    fingerprint as survey,
+    wallbox as wallbox_reader,
+)
 from sungrow_modbus.const import model_for
 from sungrow_modbus.fingerprint import State
 
@@ -97,7 +102,7 @@ FIRMWARE_FIELDS = {
 }
 
 
-def planned_steps(dumping: bool, block_reads: int = 0) -> int:
+def planned_steps(dumping: bool, block_reads: int = 0, *, wallbox: bool = False) -> int:
     """Count the reads a survey will report progress for, before it starts.
 
     Every probe, and one step for assembling what the
@@ -116,6 +121,8 @@ def planned_steps(dumping: bool, block_reads: int = 0) -> int:
     total = len(survey.PROBES) + 1 + block_reads
     if dumping:
         total += register_dump.block_count()
+        if wallbox:
+            total += register_dump.block_count(register_dump.WALLBOX_BANDS)
     return total
 
 
@@ -262,7 +269,11 @@ async def async_build(
     # and with the dump on it is 52 of the 76 steps, so getting it wrong
     # would not be a rounding error.
     blocks = await block_test.inverter_blocks() if allow_block_test else []
-    total = planned_steps(dumping, block_test.planned_steps(blocks) if blocks else 0)
+    total = planned_steps(
+        dumping,
+        block_test.planned_steps(blocks) if blocks else 0,
+        wallbox=runtime.wallbox is not None,
+    )
     done = 0
 
     def step(label: str, counted: bool = True) -> None:
@@ -279,6 +290,7 @@ async def async_build(
     )
     probes = await _async_probes(device, step)
     raw = await _async_dump(device, step) if dumping else None
+    wallbox = await _async_wallbox(runtime, dumping, step)
     step("assembling the document")
 
     answered_6100 = _state_of(probes, "PV power of today (6100, direct-only)")
@@ -330,7 +342,6 @@ async def async_build(
     if pack is not None:
         document["battery_pack"] = pack
 
-    wallbox = _wallbox(runtime)
     if wallbox is not None:
         document["wallbox"] = wallbox
 
@@ -560,31 +571,46 @@ def _battery_pack(runtime: Any) -> dict[str, Any] | None:
     return {"unit": device.unit_id, "readings": {"values": values}}
 
 
-def _wallbox(runtime: Any) -> dict[str, Any] | None:
-    """Return the wallbox's readings, when one answered behind this endpoint.
+async def _async_wallbox(
+    runtime: Any, dumping: bool, step: Progress
+) -> dict[str, Any] | None:
+    """Return the wallbox's section, when one answered behind this endpoint.
 
-    Nothing here reads its serial. It sits two registers below the model name
-    the library probes instead, and it reached a published document once as
-    the words `[16690, 13633]` -- so `publishable` is applied to these names
-    as well, and the library never asks for the field at all.
+    The survey's shape, from the library's decoder, so a document from the
+    device page and one from `sungrow_survey.py` read the same: `unit` and
+    per-field `readings`, plus the masked `register_dump` of its 206 addresses
+    when the owner's dump option is on. Without it, one read per component
+    -- the spans the poll already covers, which no serial is in.
+
+    The readings are decoded from the **masked** words, so none can come from
+    a register the document refuses to publish. The serial sits two registers
+    below the model name, and it once reached a published document as the
+    words `[16690, 13633]`.
     """
     coordinator = runtime.wallbox
     if coordinator is None:
         return None
     device = coordinator.device
-    values = {}
-    for name in sorted(device.field_names):
-        if not survey.publishable(name):
-            continue
-        try:
-            value = device.field(name)
-        except (AttributeError, KeyError):
-            continue
-        if value is not None:
-            values[name] = value
-    if not values:
-        return None
-    return {"unit": device.unit_id, "readings": {"values": values}}
+    if not dumping:
+        found = wallbox_reader.readings(
+            await wallbox_reader.async_mapped_words(device.async_read_words)
+        )
+        return {"unit": device.unit_id, "readings": found} if found else None
+
+    def on_block(done: int, total: int, why: str) -> None:
+        step(f"reading the wallbox's raw registers: {why} ({done} of {total})")
+
+    raw = await register_dump.async_dump(
+        device.async_read_words,
+        on_progress=on_block,
+        bands=register_dump.WALLBOX_BANDS,
+    )
+    masked = register_dump.masked(raw, register_dump.WALLBOX_MASKED)
+    return {
+        "unit": device.unit_id,
+        "readings": wallbox_reader.readings(masked),
+        "register_dump": masked,
+    }
 
 
 def summarise(document: dict[str, Any]) -> str:

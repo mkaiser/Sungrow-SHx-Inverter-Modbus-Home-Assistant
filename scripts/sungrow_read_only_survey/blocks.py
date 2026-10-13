@@ -94,6 +94,7 @@ from raw_client import (
     ModbusError,
 )
 
+from sungrow_modbus import block_test
 from sungrow_modbus.addresses import device_components
 from sungrow_modbus.block_test import component_blocks, inverter_blocks
 
@@ -541,6 +542,26 @@ class BlockOutcome(NamedTuple):
     #: (name, space, address, count, outcome, detail) -- the narrowed ranges.
     culprits: list
     reconnects: int
+
+
+def to_outcome(outcome: BlockOutcome) -> block_test.Outcome:
+    """Return this tool's measurement in the library's shape.
+
+    So a document is rendered by `block_test.document` alone, whichever of
+    the two measured it.
+    """
+    return block_test.Outcome(
+        tally={
+            block_test.Block(*key): dict(counts)
+            for key, counts in outcome.tally.items()
+        },
+        intermittent=[block_test.Block(*key) for key in outcome.intermittent],
+        failing=[block_test.Block(*key) for key in outcome.failing],
+        culprits=[
+            (block_test.Block(name, space, address, count), kind, detail)
+            for name, space, address, count, kind, detail in outcome.culprits
+        ],
+    )
 
 
 def measure(

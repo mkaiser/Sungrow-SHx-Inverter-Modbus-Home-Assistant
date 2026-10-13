@@ -207,8 +207,10 @@ is also on disk in the clear.
 anything committed is public and stays in the history even if deleted later.
 The protections in place:
 
-- `.testdata/` is gitignored and holds raw dumps, the production database copy,
-  and anything else from a real installation.
+- `.testdata/` is gitignored and holds the production database copy and
+  anything else from a real installation. The survey and the control test
+  write beside themselves instead, and `.gitignore` names each file they
+  write.
 - `scripts/sungrow_read_only_survey/probe.py` splits every capture into a publishable part and
   a private part rather than leaving the judgement to whoever runs it.
 - Connection details for the maintainer's own inverter are deliberately not in

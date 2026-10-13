@@ -72,6 +72,13 @@ START_MODE: dict[int, str] = {
     2: "start by swiping",
 }
 
+#: Whether the charge point is enabled, holding 21211.
+ENABLED: dict[int, str] = {0: "disabled", 1: "enabled"}
+
+#: The start/stop command, holding 21212. **0 is start and 1 is stop**, the
+#: opposite polarity to `ENABLED`.
+START_STOP: dict[int, str] = {0: "start", 1: "stop"}
+
 #: Which wallbox a device type code names.
 #:
 #: `0x3F80` was read here; the other two come from the community projects, so
@@ -376,3 +383,57 @@ COMPONENTS: dict[str, type[Component]] = {
     "wallbox_live": WallboxLive,
     "wallbox_settings": WallboxSettings,
 }
+
+
+#: How strongly each field is held, as `doc/wallbox_registers.md`'s
+#: Confidence column marks it, by the name a document publishes it under --
+#: a coded field without its `_raw`. Travels with every published value, so a
+#: reader of one fingerprint need not find that document to know how much to
+#: trust a line. The marks are the five the module docstring defines.
+CONFIDENCE: dict[str, str] = {
+    "model_name": "two sources",
+    "device_type_code": "two sources",
+    "phase_count": "two sources",
+    "version_string": "measured here",
+    "nominal_voltage": "three sources",
+    "rated_current": "measured here",
+    "phase_mode": "three sources",
+    "minimum_charging_power": "named elsewhere",
+    "maximum_charging_power": "two sources",
+    "lifetime_energy": "measured here",
+    "phase_a_voltage": "three sources",
+    "phase_a_current": "three sources",
+    "phase_b_voltage": "three sources",
+    "phase_b_current": "three sources",
+    "phase_c_voltage": "three sources",
+    "phase_c_current": "three sources",
+    "charging_power": "three sources",
+    "session_energy": "three sources",
+    "control_pilot_voltage": "two sources",
+    "unnamed_register_21313": "open",
+    "start_mode": "two sources",
+    "power_request": "named elsewhere",
+    "power_control_allowed": "named elsewhere",
+    "charging_status": "three sources",
+    "charging_started": "named elsewhere",
+    "charging_ended": "named elsewhere",
+    "available_current": "measured here",
+    "output_current_setting": "two sources",
+    "phase_mode_setpoint": "three sources",
+    "charger_enabled": "two sources",
+    "start_stop": "two sources",
+    "mileage_per_kwh": "named elsewhere",
+}
+
+#: What each coded field's number means, by its published name.
+CODES: dict[str, dict[int, str]] = {
+    "phase_mode": PHASE_MODE,
+    "phase_mode_setpoint": PHASE_MODE,
+    "start_mode": START_MODE,
+    "charging_status": CHARGING_STATUS,
+    "charger_enabled": ENABLED,
+    "start_stop": START_STOP,
+}
+
+#: The two epoch-shaped fields whose value is the wallbox's local clock.
+LOCAL_CLOCK: frozenset[str] = frozenset({"charging_started", "charging_ended"})

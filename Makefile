@@ -149,7 +149,7 @@ controltest-sim: ## Run it against the simulator -- needs `make sim-bg`
 	$(PY) scripts/sungrow_control_test/sungrow_control_test.py 127.0.0.1 --port 5020 --simulated --no-restart
 .PHONY: controltest-sim
 
-controltest-restore: ## Put a saved snapshot back (HOST=a.b.c.d FILE=.testdata/...json)
+controltest-restore: ## Put a saved snapshot back (HOST=a.b.c.d FILE=scripts/sungrow_control_test/<stamp>-snapshot.json)
 	$(PY) scripts/sungrow_control_test/sungrow_control_test.py $(HOST) --restore $(FILE)
 .PHONY: controltest-restore
 

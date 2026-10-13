@@ -46,7 +46,7 @@ survey writes stay on your machine until you send one.
 What gets written, and what to send
 -----------------------------------
 
-Two files. The run tells you which is which, and so does this:
+Two files, both in this folder. The run tells you which is which, and so does this:
 
   <name>.json                       SEND THIS ONE
                                     What your inverter is and what it

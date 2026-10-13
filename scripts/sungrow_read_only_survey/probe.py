@@ -41,10 +41,12 @@ from modbus_connection.tmodbus import ModbusConnection
 from sungrow_modbus import (
     COMPONENTS,
     SungrowInverter,
+    dump as register_dump,
     hosts_in,
     model_for,
     model_for_capacity,
     network_of,
+    wallbox,
 )
 from sungrow_modbus.addresses import (
     DIRECT_ONLY_PROBE,
@@ -62,7 +64,7 @@ from sungrow_modbus.battery_registers import (
     SbrBatteryPack,
 )
 from sungrow_modbus.discovery import IDENTIFY_UNITS
-from sungrow_modbus.dump import DUMP_BANDS, DUMP_MASKED
+from sungrow_modbus.dump import DUMP_BANDS, WALLBOX_BANDS, WALLBOX_MASKED
 from sungrow_modbus.fingerprint import (
     FIRMWARE_STRINGS,
     NEVER_PUBLISH,
@@ -78,6 +80,11 @@ from sungrow_modbus.fingerprint import (
     transport_verdict,
 )
 from sungrow_modbus.model import present
+
+#: Where every file this folder's tools write goes: beside the scripts,
+#: whichever directory they were started from. `.gitignore` covers the names
+#: inside a checkout.
+HERE = Path(__file__).resolve().parent
 
 MODBUS_PORTS = (502, 503)
 
@@ -678,195 +685,6 @@ async def _async_read_retrying(
     raise AssertionError("unreachable")
 
 
-#: The wallbox's own registers, read at the unit that answered for it. Its
-#: register space is the least documented thing this project touches -- Sungrow
-#: publishes nothing for the AC wallboxes at all -- so a fingerprint that says
-#: only "a wallbox answered" throws away the one chance to record what it
-#: holds. What is known is in `doc/wallbox_registers.md`, which compares this
-#: measurement against the two projects that made their own.
-#:
-#: The bands are **measured**, on an AC22E-01 through a WiNet-S on
-#: 2026-09-08 -- register 21224 reads 0x3F80, and its 22080 W maximum agrees --
-#: input 21201-21280 and 21297-21340 answer, 21281-21296 refuse,
-#: and the holding space answers 21201-21248 and scattered addresses up to
-#: 21328. Another model may differ; a band that reads nothing costs one
-#: refused block and says so, which is the cheaper mistake.
-WALLBOX_DUMP_BANDS: tuple[tuple[str, int, int, str], ...] = (
-    ("input", 21200, 80, "identity, model, firmware, ratings"),
-    ("input", 21296, 44, "the live measurements: state, power, energy"),
-    ("holding", 21200, 50, "settings, as far as they answer"),
-    ("holding", 21297, 32, "the scattered upper settings"),
-)
-
-#: The wallbox's serial, which is a serial like any other. `A25A123456` was
-#: published in a fingerprint as the words `[16690, 13633]` before anybody
-#: thought about the second device in the house.
-WALLBOX_DUMP_MASKED: tuple[tuple[str, int, int], ...] = (("input", 21200, 6),)
-
-
-#: What the wallbox's registers mean, so a fingerprint carries readings and
-#: not only words. Sungrow documents none of this; every line was measured,
-#: and `doc/wallbox_registers.md` says by whom -- the `held` field here is
-#: that document's confidence mark, travelling with the value so a reader of
-#: one file does not have to go and find the other.
-#:
-#: Addresses, not register numbers: one below what the tables say, as
-#: everywhere else in this project. `kind` is how to read the words --
-#: `u16`, `u32` (low word first, which is what these are), `ascii`, or an
-#: enum named below.
-WALLBOX_FIELDS: tuple[tuple, ...] = (
-    # (name, space, address, count, kind, scale, unit, held)
-    ("model_name", "input", 21215, 5, "ascii", 1, None, "two sources"),
-    ("device_type_code", "input", 21223, 1, "hex", 1, None, "two sources"),
-    ("phase_count", "input", 21224, 1, "u16", 1, None, "two sources"),
-    ("version_string", "input", 21225, 10, "ascii", 1, None, "measured here"),
-    ("nominal_voltage", "input", 21261, 1, "u16", 1, "V", "three sources"),
-    ("rated_current", "input", 21262, 1, "u16", 0.1, "A", "measured here"),
-    ("phase_mode", "input", 21269, 1, "phase_mode", 1, None, "three sources"),
-    ("minimum_charging_power", "input", 21271, 1, "u16", 1, "W", "named elsewhere"),
-    ("maximum_charging_power", "input", 21272, 1, "u16", 1, "W", "two sources"),
-    ("lifetime_energy", "input", 21299, 2, "u32", 1, "Wh", "measured here"),
-    ("phase_a_voltage", "input", 21301, 1, "u16", 0.1, "V", "three sources"),
-    ("phase_a_current", "input", 21302, 1, "u16", 0.1, "A", "three sources"),
-    ("phase_b_voltage", "input", 21303, 1, "u16", 0.1, "V", "three sources"),
-    ("phase_b_current", "input", 21304, 1, "u16", 0.1, "A", "three sources"),
-    ("phase_c_voltage", "input", 21305, 1, "u16", 0.1, "V", "three sources"),
-    ("phase_c_current", "input", 21306, 1, "u16", 0.1, "A", "three sources"),
-    ("charging_power", "input", 21307, 2, "u32", 1, "W", "three sources"),
-    ("session_energy", "input", 21309, 2, "u32", 1, "Wh", "three sources"),
-    ("control_pilot_voltage", "input", 21311, 1, "u16", 0.01, "V", "two sources"),
-    # Named for its register precisely because nobody can name it: three
-    # independent measurements of this wallbox family, and none of them knows
-    # what this is. An entity must not be invented for it.
-    ("unnamed_register_21313", "input", 21312, 1, "u16", 1, None, "open"),
-    ("start_mode", "input", 21313, 1, "start_mode", 1, None, "two sources"),
-    ("power_request", "input", 21314, 1, "u16", 1, None, "named elsewhere"),
-    ("power_control_allowed", "input", 21315, 1, "u16", 1, None, "named elsewhere"),
-    ("charging_status", "input", 21316, 1, "status", 1, None, "three sources"),
-    ("charging_started", "input", 21317, 2, "local_epoch", 1, None, "named elsewhere"),
-    ("charging_ended", "input", 21319, 2, "local_epoch", 1, None, "named elsewhere"),
-    ("available_current", "input", 21321, 1, "u16", 0.1, "A", "measured here"),
-    ("output_current_setting", "holding", 21202, 1, "u16", 0.1, "A", "two sources"),
-    (
-        "phase_mode_setpoint",
-        "holding",
-        21203,
-        1,
-        "phase_mode",
-        1,
-        None,
-        "three sources",
-    ),
-    ("charger_enabled", "holding", 21210, 1, "enabled", 1, None, "two sources"),
-    ("start_stop", "holding", 21211, 1, "start_stop", 1, None, "two sources"),
-    ("mileage_per_kwh", "holding", 21231, 1, "u16", 0.1, "km/kWh", "named elsewhere"),
-)
-
-#: The enums, kept out of the table above so they can be read as a list. The
-#: charging status is the one that cannot be measured: watching a session end
-#: shows the register settle on 6, and only a source with the whole table says
-#: 6 is *Completed* rather than idle -- a distinction every finished charge
-#: depends on.
-WALLBOX_ENUMS: dict[str, dict[int, str]] = {
-    "status": {
-        1: "idle",
-        2: "standby",
-        3: "charging",
-        4: "suspended by the charge point",
-        5: "suspended by the vehicle",
-        6: "completed",
-        7: "reserved",
-        8: "disabled",
-        9: "fault",
-    },
-    "phase_mode": {0: "three phase", 1: "single phase"},
-    "start_mode": {0: "stopped", 1: "start with EMS", 2: "start by swiping"},
-    "enabled": {0: "disabled", 1: "enabled"},
-    "start_stop": {0: "start", 1: "stop"},
-}
-
-
-def _wallbox_readings(dump: dict) -> dict:
-    """Decode a wallbox dump into named readings, from the dump already read.
-
-    No extra Modbus traffic: the survey reads 206 addresses once and this
-    reads them again out of the result. So a fingerprint carries both -- the
-    words, for whoever disagrees with an interpretation here, and the
-    interpretation, for whoever does not want to decode a JSON object of
-    integers by hand.
-
-    Every value keeps the register it came from and the confidence
-    `doc/wallbox_registers.md` records. A reading nobody can name is
-    published under its register number rather than dropped, because the next
-    person to see one may recognise it.
-    """
-    readings: dict[str, dict] = {}
-    for name, space, address, count, kind, scale, unit, held in WALLBOX_FIELDS:
-        words = [(dump.get(space) or {}).get(str(address + i)) for i in range(count)]
-        if any(word is None for word in words):
-            continue
-        entry: dict[str, object] = {
-            "register": address + 1,
-            "held": held,
-        }
-        if kind == "ascii":
-            raw = b"".join(int(word).to_bytes(2, "big") for word in words)
-            text = raw.decode("ascii", "replace").strip("\x00").strip()
-            if not text:
-                continue
-            entry["value"] = text
-        elif kind == "hex":
-            entry["value"] = f"0x{int(words[0]):04X}"
-            model = WALLBOX_MODELS.get(int(words[0]))
-            if model:
-                entry["model"] = model
-        elif kind == "u32":
-            # Low word first, which is what these are -- read the other way
-            # round, a 280 kWh lifetime counter reads as 1.2 GWh.
-            value = (int(words[1]) << 16) | int(words[0])
-            entry["value"] = round(value * scale, 2) if scale != 1 else value
-        elif kind == "local_epoch":
-            value = (int(words[1]) << 16) | int(words[0])
-            entry["value"] = value
-            entry["local_time"] = _wallbox_time(value)
-            entry["note"] = "epoch, but the value is the wallbox's local clock"
-        elif kind in WALLBOX_ENUMS:
-            entry["value"] = int(words[0])
-            entry["means"] = WALLBOX_ENUMS[kind].get(int(words[0]), "unknown code")
-        else:
-            value = int(words[0]) * scale
-            entry["value"] = round(value, 2) if scale != 1 else int(value)
-        if unit:
-            entry["unit"] = unit
-        readings[name] = entry
-    return readings
-
-
-def _wallbox_time(value: int) -> str | None:
-    """Render a wallbox timestamp, which is local time wearing an epoch's shape.
-
-    Decoded as UTC it reads two hours off in Berlin, and matched the wall
-    clock exactly -- so the number is the device's own local time, the same
-    quirk the inverter's clock registers have. Rendered without a zone
-    suffix, because attaching one would be a claim this cannot support.
-    """
-    if not value:
-        return None
-    try:
-        return datetime.fromtimestamp(value, UTC).strftime("%Y-%m-%dT%H:%M:%S")
-    except (OSError, OverflowError, ValueError):
-        return None
-
-
-#: Which wallbox a device type code names. `0x3F80` was read here; the other
-#: two come from the projects in `doc/wallbox_registers.md`.
-WALLBOX_MODELS: dict[int, str] = {
-    0x3F80: "AC22E-01",
-    0x20DA: "AC011E-01",
-    0x20ED: "AC007-00",
-}
-
-
 class _Progress:
     """A line that rewrites itself while something slow happens.
 
@@ -1064,26 +882,6 @@ async def _async_dump_bands(
     if skipped:
         dump["bands_not_reached"] = skipped  # type: ignore[assignment]
     return dump
-
-
-def _masked_dump(dump: dict, mask: tuple = DUMP_MASKED) -> dict:
-    """Return the dump with the serial's registers removed.
-
-    The mask is a parameter because there is more than one serial in a house:
-    the inverter's at input 4990, and the wallbox's at input 21201 on its own
-    unit. The second one was published as raw words before anybody thought
-    about the device attached to the inverter, so the masking is now applied
-    by whoever writes a dump rather than assumed to be the inverter's.
-    """
-    masked = {
-        space: (dict(values) if isinstance(values, dict) else values)
-        for space, values in dump.items()
-    }
-    for space, start, count in mask:
-        for address in range(start, start + count):
-            if str(address) in masked.get(space, {}):
-                masked[space][str(address)] = None
-    return masked
 
 
 async def _async_field_by_field(
@@ -2055,7 +1853,7 @@ def _document(raw: dict, fingerprint: dict) -> dict:
         # Raw words for the bands worth keeping, with the serial's registers
         # blanked. Absent unless --dump asked for it, because it costs reads.
         **(
-            {"register_dump": _masked_dump(raw["register_dump"])}
+            {"register_dump": register_dump.masked(raw["register_dump"])}
             if raw.get("register_dump")
             else {}
         ),
@@ -2070,13 +1868,13 @@ def _document(raw: dict, fingerprint: dict) -> dict:
                     # Decoded from the masked dump, not from the raw one, so
                     # a reading can never come from a register the document
                     # is refusing to publish -- the serial included.
-                    "readings": _wallbox_readings(
-                        _masked_dump(
-                            raw["wallbox"]["register_dump"], WALLBOX_DUMP_MASKED
+                    "readings": wallbox.readings(
+                        register_dump.masked(
+                            raw["wallbox"]["register_dump"], WALLBOX_MASKED
                         )
                     ),
-                    "register_dump": _masked_dump(
-                        raw["wallbox"]["register_dump"], WALLBOX_DUMP_MASKED
+                    "register_dump": register_dump.masked(
+                        raw["wallbox"]["register_dump"], WALLBOX_MASKED
                     ),
                 }
             }
@@ -2145,24 +1943,6 @@ def _ordered(document: dict) -> dict:
     22 register probes and buried what setup it was underneath them.
     """
     return {key: _sorted_deep(value) for key, value in document.items()}
-
-
-def _checkout_root(start: Path | None = None) -> Path | None:
-    """Return the repository this is running inside, or None.
-
-    Walks **up**, which the first version did not: it asked whether the
-    *current directory* held a `.git`, so running the survey from inside
-    `scripts/sungrow_read_only_survey/` -- the obvious place to run it from,
-    and where the folder's README says to -- concluded "not a checkout" and
-    wrote a document into the source tree. The transcript was covered by
-    `.gitignore`; the document was not, and sat there staged for the next
-    `git add`.
-    """
-    here = (start or Path.cwd()).resolve()
-    for directory in (here, *here.parents):
-        if (directory / ".git").exists() and (directory / "scripts").is_dir():
-            return directory
-    return None
 
 
 def _destination(directory: Path, label: str, raw: dict, document: dict) -> Path:
@@ -2543,7 +2323,7 @@ async def capabilities(args: argparse.Namespace) -> Reading:
                     "register_dump": await _async_dump_bands(
                         conn.for_unit(wallbox_unit),
                         ModbusError,
-                        bands=WALLBOX_DUMP_BANDS,
+                        bands=WALLBOX_BANDS,
                         what="wallbox dump",
                     ),
                 }
@@ -3294,9 +3074,9 @@ def main() -> int:
     p_caps.add_argument(
         "--save",
         nargs="?",
-        const=".testdata/fingerprints",
+        const=str(HERE),
         help="write <label>.json here, the publishable document "
-        "(default .testdata/fingerprints, which is gitignored)",
+        "(default: this script's folder)",
     )
     p_caps.add_argument(
         "--label",
@@ -3405,7 +3185,12 @@ def main() -> int:
     p_dump.add_argument("--block", type=int, default=16)
     p_dump.add_argument("--port", type=int, default=502)
     p_dump.add_argument("--timeout", type=float, default=5.0)
-    p_dump.add_argument("--save", nargs="?", const=".testdata/dumps")
+    p_dump.add_argument(
+        "--save",
+        nargs="?",
+        const=str(HERE),
+        help="write <label>.dump.json here (default: this script's folder)",
+    )
     p_dump.add_argument("--label")
     p_dump.set_defaults(func=cmd_dump)
 

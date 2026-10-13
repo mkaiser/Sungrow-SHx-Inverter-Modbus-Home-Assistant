@@ -147,6 +147,16 @@ class SungrowWallbox:
         """
         return None
 
+    async def async_read_words(self, space: str, address: int, count: int) -> list[int]:
+        """Read raw words at one address, for a survey's dump of this unit.
+
+        The same seam `SungrowInverter` offers. Raises, because only the
+        caller can tell a refusal from a timeout.
+        """
+        if space == "holding":
+            return list(await self._unit.read_holding_registers(address, count))
+        return list(await self._unit.read_input_registers(address, count))
+
     async def async_update(self, only: tuple[str, ...] | None = None) -> UpdateReport:
         """Refresh the components in `only`, tolerating each failing alone.
 

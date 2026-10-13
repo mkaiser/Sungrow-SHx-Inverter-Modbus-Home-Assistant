@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "sungrow-modbus==0.1.0a11",
+#     "sungrow-modbus==0.1.0a12",
 #     "modbus-connection[tmodbus]>=4.10.0",
 #     "tzdata",
 # ]
@@ -71,31 +71,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import blocks
 import probe
 
-from sungrow_modbus import model_for
+from sungrow_modbus import block_test, model_for
 from sungrow_modbus.addresses import field_address, read
+from sungrow_modbus.block_test import ATTEMPTS, ROUNDS
 from sungrow_modbus.discovery import NetworkTooLarge, hosts_in
 from sungrow_modbus.layout import ISOLATE
 from sungrow_modbus.model import present
-
-#: How the block read test is driven, and why it is not one round.
-#:
-#: `--rounds` and `--attempts` measure different things, and the survey used
-#: to use only the weaker one. Attempts are back-to-back reads of one block;
-#: rounds go round the whole plan and come back. Contention correlates in
-#: time, so three attempts at one block can all land inside the same busy
-#: moment and be filed as a deterministic fault -- which is exactly what
-#: happened. Home Assistant's fastest tier polls every five seconds
-#: indefinitely, so a competing client is not a moment but a *state*, and
-#: three rounds with twenty-six other blocks in between is what tells the two
-#: apart.
-#:
-#: Three rounds of two attempts rather than one round of three: six reads per
-#: block either way, spread out instead of bunched. The cost is that the
-#: tally phase now takes three passes over the plan, which on a fast link is
-#: seconds and on a slow one is minutes -- against a wrong `layout.py` entry,
-#: which is permanent.
-ROUNDS = 3
-ATTEMPTS = 2
 
 #: The ports a sweep looks at, what answering on each one means, and whether
 #: this tool can then read it.
@@ -217,24 +198,16 @@ class Tee:
             self._file.close()
 
 
-def _workspace() -> tuple[Path, Path, bool]:
-    """Return where the document and the transcript go.
+def _workspace() -> tuple[Path, Path]:
+    """Return where the document and the transcript go: this script's folder.
 
-    Two situations, and the difference matters more than it looks. Inside the
-    checkout, `.testdata/` is gitignored and is where anything carrying a real
-    serial belongs. Outside a checkout there is no `.testdata/`, and creating
-    a *hidden* directory holding somebody's serial and address inside the
-    folder they were told to send back is how a private file gets published by
-    accident. So outside a checkout everything lands in the working directory
-    under a visible name, and the summary says which file is which.
+    Anchored on the script, not the working directory, so the launcher, `make
+    scan` and a plain `python` from anywhere all land in the same place --
+    beside the launcher a person double-clicked, under visible names, with the
+    summary saying which file is which. Inside a checkout `.gitignore` covers
+    both names, which matters because the transcript carries the real serial.
     """
-    # `probe` owns the walk, so nothing here can disagree with it about whether
-    # this is a checkout.
-    root = probe._checkout_root()
-    if root:
-        return root / ".testdata" / "fingerprints", root / ".testdata", True
-    here = Path.cwd()
-    return here, here, False
+    return probe.HERE, probe.HERE
 
 
 def _library_version() -> str:
@@ -272,15 +245,6 @@ def _preamble(echo, transcript: Path) -> None:
     echo(f"  Transcript      {transcript}")
     echo("")
 
-
-#: Which Modbus client the block read test used, for the document to record.
-#:
-#: Module level for the same reason `_UNREADABLE` is: it is a fact about the
-#: run rather than about a device, `_block_test` is where it is known, and
-#: `BlockOutcome` has no business carrying it -- `blocks.py` is a tool in its
-#: own right and its return type should not grow a field for one caller's
-#: document.
-_CLIENT_LABEL: list[str] = []
 
 #: Addresses that answered a port this tool cannot read, as (host, port).
 #:
@@ -656,7 +620,7 @@ async def _check_transport(entry: Found, answers, echo) -> Transport:
     return Transport(answered_6100, module, verdict, web_ui)
 
 
-def _block_test(entry: Found, answers, echo) -> blocks.BlockOutcome | None:
+def _block_test(entry: Found, answers, echo) -> tuple[blocks.BlockOutcome, str] | None:
     """Run the block read test as a phase, not as an afterthought.
 
     Every block the integration issues, read the way the integration reads
@@ -680,7 +644,6 @@ def _block_test(entry: Found, answers, echo) -> blocks.BlockOutcome | None:
         entry.host, answers.port, answers.unit, answers.timeout, 0.05
     )
     echo(f"  client  {client.label}")
-    _CLIENT_LABEL[:] = [client.label]
     echo(f"  {len(to_read)} blocks, {ROUNDS} rounds, {ATTEMPTS} attempts each")
     # Said out loud because this is the phase that has to be bounded, and
     # somebody watching a run that has gone quiet needs to know it will end.
@@ -699,23 +662,24 @@ def _block_test(entry: Found, answers, echo) -> blocks.BlockOutcome | None:
         client.close()
     blocks.report(outcome, echo=echo)
     echo("")
-    return outcome
+    return outcome, client.label
 
 
 async def _survey(entry: Found, args, echo) -> Outcome:
     """Take one device through every phase and return what it produced."""
     answers = await _ask_all(entry, args, echo)
     transport = await _check_transport(entry, answers, echo)
-    outcome = await asyncio.to_thread(_block_test, entry, answers, echo)
+    tested = await asyncio.to_thread(_block_test, entry, answers, echo)
+    outcome, client = tested or (None, None)
 
     echo("-" * 72)
     echo("5  Reading the registers")
     echo("-" * 72)
-    documents, _private, _in_checkout = _workspace()
+    documents, _private = _workspace()
     answers.save = str(documents)
     # Handed over before the document is written, so the block evidence is
     # published rather than left in a transcript the contributor keeps.
-    answers.block_read_test = _block_document(outcome)
+    answers.block_read_test = _block_document(outcome, client)
     reading = await probe.capabilities(answers)
     echo("")
 
@@ -731,7 +695,9 @@ async def _survey(entry: Found, args, echo) -> Outcome:
     )
 
 
-def _block_document(outcome: blocks.BlockOutcome | None) -> dict | None:
+def _block_document(
+    outcome: blocks.BlockOutcome | None, client: str | None = None
+) -> dict | None:
     """Render a block read test for the published document, or None.
 
     The measurement `src/sungrow_modbus/layout.py` is ever changed from, and it used to
@@ -752,55 +718,19 @@ def _block_document(outcome: blocks.BlockOutcome | None) -> dict | None:
       re-running on a quiet inverter is the fix.
 
     Carries no host and no serial: block numbers and outcome words only.
+    `client` is the label of the client that measured, which decides what
+    the rest means: a lenient raw socket reports a padded frame as a clean
+    read, which is how the first diagnosis of 2612 was wrong for a day.
     """
     if outcome is None:
         return None
-
-    def where(key: tuple[str, str, int, int]) -> dict:
-        name, space, address, count = key
-        return {
-            "component": name,
-            "space": space,
-            "register": address + 1,
-            "count": count,
-        }
-
-    return {
-        "rounds": ROUNDS,
-        "attempts": ATTEMPTS,
-        # Said in the document because it changes what the rest of it means:
-        # the library client fails wherever the integration fails, and the
-        # raw one is deliberately more forgiving -- a lenient client reports
-        # a padded frame as a clean read, which is how the first diagnosis of
-        # 2612 was wrong for a day.
-        "client": _CLIENT_LABEL[0] if _CLIENT_LABEL else None,
-        "answered": [
-            where(key)
-            for key in outcome.tally
-            if key not in outcome.failing and key not in outcome.intermittent
-        ],
-        "never_answered": [
-            {**where(key), "outcomes": sorted(outcome.tally[key])}
-            for key in outcome.failing
-        ],
-        "intermittent": [
-            {**where(key), "outcomes": sorted(outcome.tally[key])}
-            for key in outcome.intermittent
-        ],
-        # The narrowed ranges, which are what a fix is written from.
-        "narrowed": [
-            {
-                "component": name,
-                "space": space,
-                "register": address + 1,
-                "count": count,
-                "outcome": kind,
-                "detail": detail,
-            }
-            for name, space, address, count, kind, detail in outcome.culprits
-        ],
-        "reconnects": outcome.reconnects,
-    }
+    return block_test.document(
+        blocks.to_outcome(outcome),
+        rounds=ROUNDS,
+        attempts=ATTEMPTS,
+        client=client,
+        reconnects=outcome.reconnects,
+    )
 
 
 def _code_for(reading: probe.Reading, transport: Transport, answers) -> int:
@@ -1156,7 +1086,7 @@ def _worst(codes: list[int]) -> int:
 
 async def run(args) -> int:
     """Run the whole scan, and return the exit code."""
-    _documents, private, in_checkout = _workspace()
+    _documents, private = _workspace()
     private.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     transcript = private / f"sungrow-scan-{stamp}.log"
@@ -1170,11 +1100,10 @@ async def run(args) -> int:
 
     try:
         _preamble(echo, transcript)
-        if not in_checkout:
-            echo("  Two files are written: a report to send, and a log of this")
-            echo("  session that stays with you -- it holds your real serial")
-            echo("  number and address.")
-            echo("")
+        echo("  Two files are written: a report to send, and a log of this")
+        echo("  session that stays with you -- it holds your real serial")
+        echo("  number and address.")
+        echo("")
 
         try:
             found = await _find(args, echo)

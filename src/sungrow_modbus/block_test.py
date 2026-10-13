@@ -203,10 +203,7 @@ async def attempt(
         return OK, every
     if OK in kinds:
         failures = sum(1 for kind, _ in outcomes if kind != OK)
-        return INCONSISTENT, (
-            f"failed {failures}/{attempts} -- most likely another Modbus "
-            "client, not this register"
-        )
+        return INCONSISTENT, f"failed {failures}/{attempts}"
     kind, detail = outcomes[0]
     return kind, f"{every}, {detail}" if detail else every
 
@@ -314,13 +311,21 @@ async def measure(
 
 
 def document(
-    outcome: Outcome, *, rounds: int = ROUNDS, attempts: int = ATTEMPTS
+    outcome: Outcome,
+    *,
+    rounds: int = ROUNDS,
+    attempts: int = ATTEMPTS,
+    client: str | None = CLIENT,
+    reconnects: int = 0,
 ) -> dict[str, Any]:
-    """Render a block read test in the shape `sungrow_survey.py` publishes.
+    """Render a block read test as a fingerprint publishes it.
 
-    Register numbers as Sungrow's document prints them, one above the protocol
-    address. Carries no host and no serial: block numbers and outcome words
-    only, so it publishes the way the rest of a fingerprint does.
+    The one renderer: the integration and `sungrow_survey.py` both publish
+    through it, the survey saying which of its clients measured and how often
+    its raw socket reconnected. Register numbers as Sungrow's document prints
+    them, one above the protocol address. Carries no host and no serial: block
+    numbers and outcome words only, so it publishes the way the rest of a
+    fingerprint does.
     """
 
     def where(block: Block) -> dict[str, Any]:
@@ -334,7 +339,9 @@ def document(
     return {
         "rounds": rounds,
         "attempts": attempts,
-        "client": CLIENT,
+        # Said because it changes what the rest means: a lenient client reports
+        # a padded frame as a clean read.
+        "client": client,
         "answered": [
             where(block)
             for block in outcome.tally
@@ -352,8 +359,9 @@ def document(
             {**where(block), "outcome": kind, "detail": detail}
             for block, kind, detail in outcome.culprits
         ],
-        # The terminal tool counts reconnects its raw socket made. This stack
-        # reconnects inside the shared connection and does not say so, and a
-        # reconnect here is already counted as the failed read that caused it.
-        "reconnects": 0,
+        # The terminal tool counts reconnects its raw socket made. The
+        # integration's stack reconnects inside the shared connection and does
+        # not say so, and a reconnect there is already counted as the failed
+        # read that caused it -- hence 0 by default.
+        "reconnects": reconnects,
     }

@@ -19,9 +19,7 @@ out its full timeout. A measured SH10RT takes about 300 seconds to read these
 bounded by a budget, reports which bands it never reached rather than
 pretending it covered them, and belongs behind a switch that is off.
 
-`scripts/sungrow_read_only_survey/probe.py` carries the same bands for the standalone
-survey, which has to run with this library absent.
-`tests/test_dump_bands.py` asserts the two have not drifted.
+The standalone survey imports these bands, and the wallbox's, from here.
 """
 
 from __future__ import annotations
@@ -54,6 +52,26 @@ DUMP_BANDS: tuple[tuple[str, int, int, str], ...] = (
 #: stays out of it, and a raw dump would hand it over in words instead of
 #: characters. Applied by `masked`, which every caller runs before publishing.
 DUMP_MASKED: tuple[tuple[str, int, int], ...] = (("input", 4989, 10),)
+
+#: A wallbox's own register space, on the unit that answered for it. Sungrow
+#: publishes nothing for its AC wallboxes, so a document that said only "a
+#: wallbox answered" would throw away the one chance to record what it holds.
+#:
+#: Measured on an AC22E-01 through a WiNet-S (`doc/wallbox_registers.md`):
+#: input 21201-21280 and 21297-21340 answer, 21281-21296 refuse, and holding
+#: answers 21201-21248 and scattered addresses up to 21328. Another model may
+#: differ; a band that reads nothing costs one refused block and says so.
+WALLBOX_BANDS: tuple[tuple[str, int, int, str], ...] = (
+    ("input", 21200, 80, "identity, model, firmware, ratings"),
+    ("input", 21296, 44, "the live measurements: state, power, energy"),
+    ("holding", 21200, 50, "settings, as far as they answer"),
+    ("holding", 21297, 32, "the scattered upper settings"),
+)
+
+#: The wallbox's serial, input 21201-21206. A serial like any other: one was
+#: published as the words `[16690, 13633]` before anybody thought about the
+#: second device in the house.
+WALLBOX_MASKED: tuple[tuple[str, int, int], ...] = (("input", 21200, 6),)
 
 #: Reads per request. Small, because the point is coverage: a band that fails
 #: as a whole tells nobody anything, where a band with eight addresses missing

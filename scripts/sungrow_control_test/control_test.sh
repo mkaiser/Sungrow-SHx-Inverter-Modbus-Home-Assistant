@@ -105,12 +105,24 @@ while :; do
             ;;
     esac
 
+    # Downloaded whole before anything runs: `download | sh` reports only
+    # whether sh succeeded, and sh succeeds on an empty script, so a failed
+    # download would go on as though uv had been installed.
+    URL=https://astral.sh/uv/install.sh
     if command -v curl >/dev/null 2>&1; then
-        curl -LsSf https://astral.sh/uv/install.sh | sh || exit 1
+        installer=$(curl -LsSf "$URL") && [ -n "$installer" ] ||
+            { echo "Could not download $URL." >&2; manual; exit 1; }
+        printf '%s\n' "$installer" | sh || exit 1
     elif command -v wget >/dev/null 2>&1; then
-        wget -qO- https://astral.sh/uv/install.sh | sh || exit 1
+        installer=$(wget -qO- "$URL") && [ -n "$installer" ] ||
+            { echo "Could not download $URL." >&2; manual; exit 1; }
+        printf '%s\n' "$installer" | sh || exit 1
+    elif command -v python3 >/dev/null 2>&1; then
+        # A slim container image has neither of the two above, and astral's
+        # installer needs one of them itself. pip puts uv in ~/.local/bin.
+        python3 -m pip install --user --quiet uv || { manual; exit 1; }
     else
-        echo "Neither curl nor wget is here to download the installer with." >&2
+        echo "Neither curl, wget nor python3 is here to install uv with." >&2
         manual
         exit 1
     fi

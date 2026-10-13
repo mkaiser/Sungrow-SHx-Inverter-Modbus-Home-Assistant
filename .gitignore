@@ -37,7 +37,12 @@ build/
 # scripts/sungrow_read_only_survey/probe.py.
 .testdata/
 
-# The survey's transcript, written beside the run when it runs outside a
-# checkout. It carries the real serial and addresses; `.testdata/` covers the
-# in-checkout case above.
-sungrow-scan-*.log
+# What the two contributor tools write, beside themselves, checkout or not.
+# The transcript carries the real serial and address; the documents are
+# published only by being copied into doc/device-fingerprints/ deliberately.
+# Neither folder tracks a .json or .log of its own.
+# tests/test_survey_dependencies.py holds every name a run writes to this.
+scripts/sungrow_read_only_survey/*.json
+scripts/sungrow_read_only_survey/sungrow-scan-*.log
+scripts/sungrow_control_test/*-control_test.json
+scripts/sungrow_control_test/*-snapshot.json

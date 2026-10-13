@@ -92,22 +92,21 @@ def test_the_outcome_words_and_the_budget_are_the_terminal_tools() -> None:
     )
 
 
-async def test_the_document_has_collects_shape_key_for_key() -> None:
-    """One reader for both producers, so the keys must not drift.
+async def test_the_terminal_tools_measurement_renders_through_the_library() -> None:
+    """One renderer for both producers: the survey converts, it does not render.
 
-    Built from the same measurement on both sides: a block that refuses, one
-    that answers, and the narrowing that names the register.
+    The same measurement on both sides -- a block that refuses, one that
+    answers, and the narrowing that names the register -- must come out as
+    the same document.
     """
     blocks = [
         Block("fast_input", "input", 5010, 25),
         Block("sub_controller_firmware", "input", 2612, 15),
     ]
-    mine = block_test.document(
-        await measure(reader(refuses(2613)), blocks, narrow_budget=0)
-    )
+    mine = await measure(reader(refuses(2613)), blocks, narrow_budget=0)
 
     key = ("sub_controller_firmware", "input", 2612, 15)
-    theirs = sungrow_survey._block_document(
+    theirs = terminal.to_outcome(
         terminal.BlockOutcome(
             tally={
                 ("fast_input", "input", 5010, 25): {terminal.OK: 3},
@@ -116,23 +115,18 @@ async def test_the_document_has_collects_shape_key_for_key() -> None:
             intermittent=[],
             failing=[key],
             culprits=[
-                (
-                    "sub_controller_firmware",
-                    "input",
-                    2612,
-                    1,
-                    terminal.REFUSED,
-                    "2/2, exception 0x02",
-                )
+                (*key[:3], 1, terminal.REFUSED, "2/2, exception 0x02"),
             ],
             reconnects=0,
         )
     )
-    assert mine.keys() == theirs.keys()
-    assert mine["never_answered"] == theirs["never_answered"]
-    assert mine["narrowed"][0].keys() == theirs["narrowed"][0].keys()
-    assert mine["narrowed"][0]["register"] == 2613
-    assert mine["narrowed"][0]["detail"] == "2/2, exception 0x02"
+
+    assert theirs.failing == mine.failing
+    assert theirs.culprits == mine.culprits
+    assert block_test.document(theirs).keys() == block_test.document(mine).keys()
+    assert sungrow_survey._block_document(
+        terminal.BlockOutcome({}, [], [], [], 0), "raw"
+    ) == block_test.document(block_test.Outcome(), client="raw")
 
 
 # -- classification ------------------------------------------------------------
@@ -167,7 +161,7 @@ async def test_one_failure_among_successes_is_contention() -> None:
     answers = iter([IllegalDataAddressError(2), None])
     kind, detail = await attempt(reader(lambda *_: next(answers)), "input", 1, 1, 2)
     assert kind == INCONSISTENT
-    assert "another Modbus client" in detail
+    assert detail == "failed 1/2"
 
 
 # -- measuring and narrowing ---------------------------------------------------

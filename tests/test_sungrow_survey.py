@@ -143,64 +143,23 @@ def test_consecutive_registers_are_reported_as_a_range(numbers, expected) -> Non
     assert sungrow_survey._ranges(numbers) == expected
 
 
-def test_the_transcript_is_not_hidden_outside_a_checkout(tmp_path, monkeypatch) -> None:
-    """The hazard a run outside a checkout actually produced.
+@pytest.mark.parametrize("start", ["root", "folder", "elsewhere"])
+def test_a_run_writes_beside_the_script_from_any_directory(
+    tmp_path, monkeypatch, start
+) -> None:
+    """One place, whoever started it and from where.
 
-    In the checkout the transcript, which holds the real serial, belongs in
-    `.testdata/`, which is gitignored. Anywhere else, a *hidden* directory
-    holding somebody's serial and address -- created inside the folder they
-    were told to send back -- is how a private file gets forwarded by
-    accident, so everything lands visibly where the run was started.
+    `make scan` runs from the repository root, the launchers `cd` into their
+    folder, and somebody else types `python` from wherever they are. All three
+    land beside the launcher, under visible names -- never in a hidden
+    directory, which is how a private file gets forwarded by accident.
     """
-    monkeypatch.chdir(tmp_path)
-    documents, private, in_checkout = sungrow_survey._workspace()
-    assert (documents, private, in_checkout) == (tmp_path, tmp_path, False)
-
-    (tmp_path / ".git").mkdir()
-    (tmp_path / "scripts").mkdir()
-    assert sungrow_survey._workspace() == (
-        tmp_path / ".testdata" / "fingerprints",
-        tmp_path / ".testdata",
-        True,
+    here = Path(sungrow_survey.__file__).resolve().parent
+    monkeypatch.chdir(
+        {"root": here.parents[1], "folder": here, "elsewhere": tmp_path}[start]
     )
-
-
-def test_a_run_from_inside_the_checkout_still_writes_to_testdata(
-    tmp_path, monkeypatch
-) -> None:
-    """The defect a real run produced, from the obvious directory.
-
-    `_workspace` asked whether the **current** directory was a checkout. Run
-    from `scripts/sungrow_read_only_survey/` -- which is where the folder's
-    README tells people to run it, and where a maintainer naturally is -- it
-    concluded "not a checkout" and wrote the document into the source tree.
-    `.gitignore` covered the transcript; the document it did not, so it sat
-    there waiting for the next `git add`. It now asks `probe._checkout_root`,
-    which walks up.
-    """
-    (tmp_path / ".git").mkdir()
-    (tmp_path / "scripts" / "sungrow_read_only_survey").mkdir(parents=True)
-    monkeypatch.chdir(tmp_path / "scripts" / "sungrow_read_only_survey")
-
-    documents, private, in_checkout = sungrow_survey._workspace()
-    assert in_checkout
-    assert documents == tmp_path / ".testdata" / "fingerprints"
-    assert private == tmp_path / ".testdata"
-    assert "scripts" not in documents.parts
-
-
-def test_a_directory_that_merely_looks_like_a_checkout_is_not_one(
-    tmp_path, monkeypatch
-) -> None:
-    """`.git` alone is not enough, and neither is a `scripts` directory.
-
-    A contributor who copied the folder into some other project's checkout
-    would otherwise have their reading filed in that project's `.testdata`.
-    """
-    (tmp_path / "scripts").mkdir()
-    monkeypatch.chdir(tmp_path)
-    assert sungrow_survey._workspace()[2] is False
-    assert probe._checkout_root() is None
+    assert sungrow_survey._workspace() == (here, here)
+    assert here == probe.HERE
 
 
 #: A document shaped like a real one, with the two values that must never
@@ -597,10 +556,9 @@ def test_the_block_read_test_reaches_the_published_document() -> None:
         ],
         reconnects=0,
     )
-    sungrow_survey._CLIENT_LABEL[:] = [
-        "modbus-connection (the one the integration uses)"
-    ]
-    document = sungrow_survey._block_document(outcome)
+    document = sungrow_survey._block_document(
+        outcome, "modbus-connection (the one the integration uses)"
+    )
     assert document is not None
 
     # The three lists are kept apart, because confusing them is how a wrong
@@ -642,8 +600,9 @@ def test_the_block_document_carries_no_address_and_no_serial() -> None:
         culprits=[],
         reconnects=1,
     )
-    sungrow_survey._CLIENT_LABEL[:] = [blocks.LibraryClient.label]
-    text = json.dumps(sungrow_survey._block_document(outcome))
+    text = json.dumps(
+        sungrow_survey._block_document(outcome, blocks.LibraryClient.label)
+    )
 
     assert SERIAL not in text
     assert HOST not in text

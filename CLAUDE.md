@@ -160,8 +160,9 @@ schema 19). `--export-scale --merge-into` adds the `export_scale` block
 
 - **The restore is never budgeted, never deadlined and never skipped.** Every
   early exit goes through it. The snapshot is flushed *before the first write*
-  -- `.testdata/fingerprints/` from the CLI, HA's own store from the
-  integration -- and removed only once everything is back **and read back**. A
+  -- beside the script from the CLI, HA's own store from the integration --
+  and removed by both drivers only once everything is back **and read back**;
+  a dry run writes none, and `--restore` removes the file it restored. A
   leftover snapshot on the next setup becomes a repair. **No snapshot file for
   a day means no writes that day.**
 - **A restore writes the snapshot's raw word, and checks it by raw read.**
@@ -598,7 +599,8 @@ be careful:
   maps to one stand-in and files stay diffable, and the shape is preserved so
   the string decoder stays under test;
 - the real serial and the full address reach no file the survey writes but
-  its transcript, which stays in `.testdata/` (gitignored) inside a checkout.
+  its transcript, written beside the script and gitignored there by name
+  (`tests/test_survey_dependencies.py` holds every name a run writes to that).
   No un-redacted copy of the document is written, so `--save
   doc/device-fingerprints` cannot put a real serial there whatever it is asked;
 - `NEVER_PUBLISH = ("serial",)` filters anything whose *name* mentions a
@@ -620,7 +622,7 @@ this project depends on a serial being real.
 
 The same applies to **addresses**. A published document carries
 `ip_address_last_two_octets` and only when its owner agreed to that; the full
-address stays in `.testdata/`. And to **consent**: a stand-in serial is not
+address stays in the transcript. And to **consent**: a stand-in serial is not
 consent, so ask an owner before publishing readings from their installation.
 
 ## Local-only context

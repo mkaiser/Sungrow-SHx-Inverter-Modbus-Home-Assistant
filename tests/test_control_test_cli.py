@@ -8,10 +8,12 @@ number keeps saying what the document can carry.
 
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import json
 from pathlib import Path
 
+from modbus_connection.mock import MockModbusUnit
 import pytest
 
 from sungrow_modbus import export_scale
@@ -149,13 +151,120 @@ def test_nobody_at_a_terminal_is_not_waited_for(cli, monkeypatch) -> None:
     assert cli._ask_restart(None) is False
 
 
-def test_a_run_writes_where_the_read_only_survey_writes(cli) -> None:
-    """One folder for both tools' results, so nobody has to look in two."""
-    import sys
+def test_a_run_writes_beside_itself(cli, tmp_path, monkeypatch) -> None:
+    """Beside the launcher, whatever folder the run was started from."""
+    monkeypatch.chdir(tmp_path)
+    assert cli._workspace() == SCRIPT.parent
 
-    sys.path.insert(0, str(SCRIPT.parents[1] / "sungrow_read_only_survey"))
-    import sungrow_survey
 
-    survey_documents, _transcripts, in_checkout = sungrow_survey._workspace()
-    assert in_checkout, "the test suite runs inside the checkout"
-    assert cli._workspace() == survey_documents
+# -- the snapshot: written before the first write, gone once all is back ------
+
+
+class _Clock:
+    """Advance instead of waiting, so a ten-minute budget costs no time."""
+
+    def __init__(self) -> None:
+        self.now = 0.0
+
+    def monotonic(self) -> float:
+        return self.now
+
+    async def sleep(self, seconds: float) -> None:
+        self.now += seconds
+
+
+class _Connection:
+    async def close(self) -> None:
+        pass
+
+
+def _args(**overrides) -> argparse.Namespace:
+    values = {
+        "host": "192.0.2.10",
+        "port": 502,
+        "unit": 1,
+        "timeout": 1.0,
+        "dry_run": False,
+        "allow_dark": False,
+        "enable_export_limit": False,
+        "restart": False,
+        "start_only": False,
+        "restart_only": False,
+        "export_scale": False,
+        "simulated": True,
+        "restore": None,
+        "merge_into": None,
+    }
+    return argparse.Namespace(**{**values, **overrides})
+
+
+@pytest.fixture
+def wired(cli, monkeypatch, tmp_path, sungrow_unit: MockModbusUnit):
+    """Point `_run` at a mock inverter and a temporary folder.
+
+    Returns a list the snapshot paths are recorded in as they are written, so a
+    test can tell "never written" from "written and then removed".
+    """
+    sungrow_unit.input[5621] = 0
+    sungrow_unit.input[5622] = 1000
+    sungrow_unit.input[5627] = 50
+
+    async def connect(*_args):
+        return _Connection(), sungrow_unit
+
+    written: list[Path] = []
+
+    class Recording(cli.ControlTest):
+        def __init__(self, *args, on_snapshot=None, **kwargs):
+            async def record(snapshot):
+                await on_snapshot(snapshot)
+                written.extend(tmp_path.glob("*-snapshot.json"))
+
+            super().__init__(
+                *args,
+                clock=_Clock(),
+                on_snapshot=None if on_snapshot is None else record,
+                **kwargs,
+            )
+
+    monkeypatch.setattr(cli, "_connect", connect)
+    monkeypatch.setattr(cli, "_workspace", lambda: tmp_path)
+    monkeypatch.setattr(cli, "ControlTest", Recording)
+    return written
+
+
+async def test_a_clean_run_removes_its_snapshot(cli, wired, tmp_path) -> None:
+    code = await cli._run(_args())
+
+    assert code != 5
+    assert wired, "the snapshot is written before the first write"
+    assert not list(tmp_path.glob("*-snapshot.json"))
+    assert list(tmp_path.glob("*-control_test.json"))
+
+
+async def test_a_run_that_left_something_keeps_its_snapshot(
+    cli, wired, tmp_path, monkeypatch, capsys
+) -> None:
+    """The snapshot is the way out, so it stays until the house is back."""
+    original = cli.ControlTest
+
+    class Stubborn(original):
+        async def async_run(self):
+            outcome = await super().async_run()
+            stuck = outcome.restores[0]._replace(restored=False)
+            return outcome._replace(code=5, restores=(stuck, *outcome.restores[1:]))
+
+    monkeypatch.setattr(cli, "ControlTest", Stubborn)
+
+    code = await cli._run(_args())
+
+    assert code == 5
+    (snapshot,) = tmp_path.glob("*-snapshot.json")
+    assert f"--restore {snapshot}" in capsys.readouterr().err
+
+
+async def test_a_dry_run_never_writes_a_snapshot(cli, wired, tmp_path) -> None:
+    await cli._run(_args(dry_run=True))
+
+    assert not wired
+    assert not list(tmp_path.glob("*-snapshot.json"))

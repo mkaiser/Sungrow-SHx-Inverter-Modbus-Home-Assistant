@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "sungrow-modbus==0.1.0a11",
+#     "sungrow-modbus==0.1.0a12",
 #     "modbus-connection[tmodbus]>=4.10.0",
 # ]
 # ///
@@ -68,12 +68,6 @@ from sungrow_modbus.control_test import (
 )
 from sungrow_modbus.fingerprint import SCHEMA, stand_in
 
-#: Where a run's files go inside a checkout: the folder the read-only survey
-#: writes its document to, gitignored, so both tools' results sit together.
-#: Nothing written there carries the serial or the address -- the result
-#: block is anonymous by construction, and the snapshot holds register values.
-RESULTS_DIR = Path(".testdata/fingerprints")
-
 _LOGGER = logging.getLogger("control_test")
 
 #: What `--restore` returns internally on success, mapped to 0 before it reaches
@@ -96,20 +90,15 @@ def _stamp() -> str:
 
 
 def _workspace() -> Path:
-    """Return the directory this run's files belong in, creating it.
+    """Return the directory this run's files belong in: this script's own.
 
-    The same place the read-only survey writes to: inside a checkout
-    `.testdata/fingerprints`, which is gitignored, and outside one the working
-    directory, where the launcher runs and a person looks.
+    Anchored on the script, not the working directory, so a launcher, `make`
+    and a plain `python` all land in the same place -- beside the launcher a
+    person double-clicked. Nothing written there carries the serial or the
+    address: the result block is anonymous by construction, and the snapshot
+    holds register values. `.gitignore` covers both by name inside a checkout.
     """
-    parents = Path(__file__).resolve().parents
-    root = parents[2] if len(parents) > 2 else None
-    if root is not None and (root / ".git").exists():
-        directory = root / RESULTS_DIR
-    else:
-        directory = Path.cwd()
-    directory.mkdir(parents=True, exist_ok=True)
-    return directory
+    return Path(__file__).resolve().parent
 
 
 # -- asking ------------------------------------------------------------------
@@ -464,6 +453,10 @@ async def _restore_mode(inverter: SungrowInverter, args: argparse.Namespace) -> 
             file=sys.stderr,
         )
         return 5
+    if not args.dry_run:
+        # Everything is back and read back, so the snapshot has done its job;
+        # left behind it would turn the next look into a false alarm.
+        Path(args.restore).unlink(missing_ok=True)
     print(
         f"\nPut {len(results)} register(s) back, and read each one to check it took.",
         file=sys.stderr,
@@ -589,11 +582,18 @@ async def _run(args: argparse.Namespace) -> int:
             on_progress=lambda fraction, label: print(
                 f"  [{fraction:>4.0%}] {label}", file=sys.stderr
             ),
-            on_snapshot=keep,
+            # A dry run writes nothing, so there is nothing to put back and no
+            # before-state worth keeping.
+            on_snapshot=None if args.dry_run else keep,
         )
         outcome = await run.async_run()
     finally:
         await connection.close()
+
+    # Removed only once everything is back and read back; anything else keeps
+    # it, and the hint below names it.
+    if not outcome.not_restored and outcome.code != 5:
+        snapshot_path.unlink(missing_ok=True)
 
     title = f"Control test -- {inverter.model or 'unknown model'}"
     # Printed rather than saved: the one file a run writes is the result block,

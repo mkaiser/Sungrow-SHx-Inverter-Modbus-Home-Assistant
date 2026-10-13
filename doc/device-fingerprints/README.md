@@ -86,8 +86,8 @@ is itself under test — and one device always maps to one stand-in, so files
 stay diffable across reads and two setups stay distinguishable.
 
 The real serial and the full address are written to no file but the run's
-transcript, which stays with whoever ran it -- in `.testdata/`, gitignored,
-inside a checkout. No un-redacted copy of the document exists, so `--save
+transcript, which stays with whoever ran it -- beside the script, gitignored
+by name inside a checkout. No un-redacted copy of the document exists, so `--save
 doc/device-fingerprints` cannot put a real serial here whatever it is asked.
 
 ## The filename
@@ -520,8 +520,8 @@ where "provided by" described the transaction they were part of.
 
 | File | Where | What is in it |
 | --- | --- | --- |
-| `<label>.json` | `.testdata/fingerprints/` in a checkout, else beside the run; committed here | Everything publishable: model, phase count, firmware, how the connection was made, the time of the reading, and per register both whether it answered and what it said |
-| `sungrow-scan-<time>.log` | `.testdata/` in a checkout, else beside the run | The transcript, with the **real** serial and addresses. Never published |
+| `<label>.json` | beside the script, checkout or not; committed here by copying it | Everything publishable: model, phase count, firmware, how the connection was made, the time of the reading, and per register both whether it answered and what it said |
+| `sungrow-scan-<time>.log` | beside the script, gitignored | The transcript, with the **real** serial and addresses. Never published |
 
 The document is the only reading written. Apart from the serial, which it
 replaces with a stand-in, it leaves out only the first two octets of the

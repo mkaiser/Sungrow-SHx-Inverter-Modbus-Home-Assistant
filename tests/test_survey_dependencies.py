@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
+import subprocess
 import sys
 
 import pytest
@@ -217,8 +218,6 @@ def test_every_script_can_be_run_the_way_it_is_documented(path) -> None:
     what a contributor's copy is unpacked from -- a local `chmod` would
     satisfy a filesystem check and fix nothing for them.
     """
-    import subprocess
-
     assert path.read_text(encoding="utf-8").startswith("#!/usr/bin/env python3"), (
         f"{path.name} has no shebang, so `./{path.name}` cannot work"
     )
@@ -250,8 +249,6 @@ def test_the_launchers_are_there(case: tuple[Path, str]) -> None:
 @pytest.mark.parametrize("folder", list(FOLDERS), ids=lambda f: f.name)
 def test_the_shell_launcher_can_be_run_the_way_it_is_documented(folder: Path) -> None:
     """A shebang, and the executable bit in git's index, as for the scripts."""
-    import subprocess
-
     path = folder / f"{FOLDERS[folder][0]}.sh"
     assert path.read_text(encoding="utf-8").startswith("#!/bin/sh\n")
     entry = subprocess.run(
@@ -330,3 +327,27 @@ def test_the_line_endings_are_fixed_for_the_launchers() -> None:
     attributes = (REPO / ".gitattributes").read_text(encoding="utf-8")
     for rule in ("*.sh text eol=lf", "*.cmd text eol=crlf", "*.ps1 text eol=crlf"):
         assert rule in attributes, rule
+
+
+#: One of each name a run writes, in the folder it writes it to: a survey
+#: document, a register dump, a transcript, a control-test result and its
+#: snapshot. Only the transcript carries the real serial, and this list is all
+#: that stands between it and a commit.
+WRITTEN = [
+    SCAN / "sh10rt-v112-3p-anon-abc123-battery-meter.json",
+    SCAN / "sh10rt-v112-3p-anon-abc123-2026-10-13T120000.json",
+    SCAN / "sh10rt.dump.json",
+    SCAN / "sungrow-scan-20261013-120000.log",
+    CONTROL / "20261013-120000-control_test.json",
+    CONTROL / "20261013-120000-snapshot.json",
+]
+
+
+@pytest.mark.parametrize("path", WRITTEN, ids=lambda path: path.name)
+def test_everything_a_run_writes_is_ignored(path: Path) -> None:
+    result = subprocess.run(
+        ["git", "check-ignore", "--no-index", "-q", str(path)],
+        cwd=REPO,
+        check=False,
+    )
+    assert result.returncode == 0, f"{path.relative_to(REPO)} is not gitignored"

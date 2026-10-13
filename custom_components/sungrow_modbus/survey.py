@@ -228,7 +228,11 @@ class SurveyRunner:
         from .fingerprint import planned_steps as survey_steps
 
         dumping = bool(options.get(CONF_SURVEY_DUMP, False))
-        a_steps = survey_steps(dumping, block_reads)
+        a_steps = survey_steps(
+            dumping,
+            block_reads,
+            wallbox=self.entry.runtime_data.wallbox is not None,
+        )
         if not control_test:
             return 1.0, a_steps
         b_steps = control_test_steps(self._control_options())

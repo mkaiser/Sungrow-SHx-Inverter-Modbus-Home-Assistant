@@ -14,21 +14,21 @@ fingerprint unnoticed and be read as evidence about somebody's hardware.
 
 from __future__ import annotations
 
-from pathlib import Path
-import sys
-
 import pytest
 
-REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_read_only_survey"))
+from sungrow_modbus.dump import WALLBOX_MASKED, masked
+from sungrow_modbus.wallbox import readings as decode
+from sungrow_modbus.wallbox_registers import CODES, COMPONENTS, CONFIDENCE
 
-from probe import (  # noqa: E402
-    WALLBOX_DUMP_MASKED,
-    WALLBOX_ENUMS,
-    WALLBOX_FIELDS,
-    _masked_dump,
-    _wallbox_readings,
-)
+#: The five marks `doc/wallbox_registers.md` defines, and no others.
+MARKS = {"three sources", "two sources", "measured here", "named elsewhere", "open"}
+
+#: Every field the library declares, as (published name, space, address, count).
+FIELDS = [
+    (name.removesuffix("_raw"), component.register_space, field.address, field.count)
+    for component in COMPONENTS.values()
+    for name, field in component.declared_fields.items()
+]
 
 #: The measured session, at the moment it was charging at 3.4 kW. Register
 #: numbers are one above these addresses.
@@ -82,7 +82,7 @@ DUMP = {
 @pytest.fixture
 def readings() -> dict:
     """Return the decoded session."""
-    return _wallbox_readings(DUMP)
+    return decode(DUMP)
 
 
 def test_the_session_reads_back_as_it_was_measured(readings) -> None:
@@ -119,7 +119,7 @@ def test_the_control_pilot_voltage_is_a_charging_state(readings) -> None:
     assert readings["control_pilot_voltage"]["unit"] == "V"
 
     idle = {"input": {**DUMP["input"], "21311": 903}}
-    assert _wallbox_readings(idle)["control_pilot_voltage"]["value"] == 9.03
+    assert decode(idle)["control_pilot_voltage"]["value"] == 9.03
 
 
 def test_a_timestamp_is_local_time_wearing_an_epoch_shape(readings) -> None:
@@ -158,7 +158,7 @@ def test_a_register_nobody_can_name_is_published_anyway(readings) -> None:
 def test_no_reading_can_come_from_a_masked_register() -> None:
     """The serial cannot reach a reading, because the mask runs first.
 
-    `_document` decodes the *masked* dump rather than the raw one, so this
+    A document decodes the *masked* dump rather than the raw one, so this
     is a property of the order rather than of the field table -- and the
     field table not listing the serial is then a second line of defence
     instead of the only one.
@@ -174,13 +174,11 @@ def test_no_reading_can_come_from_a_masked_register() -> None:
             "21205": 0,
         }
     }
-    masked = _masked_dump(unmasked, WALLBOX_DUMP_MASKED)
-    text = "".join(str(entry) for entry in _wallbox_readings(masked).values())
+    hidden = masked(unmasked, WALLBOX_MASKED)
+    text = "".join(str(entry) for entry in decode(hidden).values())
     assert "A25A" not in text
     # And even from the unmasked words, no field reads that range.
-    assert "A25A" not in "".join(
-        str(entry) for entry in _wallbox_readings(unmasked).values()
-    )
+    assert "A25A" not in "".join(str(entry) for entry in decode(unmasked).values())
 
 
 def test_a_field_that_did_not_answer_is_absent_rather_than_zero() -> None:
@@ -191,30 +189,20 @@ def test_a_field_that_did_not_answer_is_absent_rather_than_zero() -> None:
     working mode, which is a claim about somebody's configuration.
     """
     thin = {"input": {"21316": 3}}
-    readings = _wallbox_readings(thin)
+    readings = decode(thin)
     assert set(readings) == {"charging_status"}
 
 
-@pytest.mark.parametrize("field", WALLBOX_FIELDS, ids=lambda f: f[0])
-def test_every_field_is_declared_completely(field) -> None:
-    """Eight parts per row, and the enum kinds must exist.
+def test_every_field_carries_one_of_the_five_marks() -> None:
+    """`CONFIDENCE` covers every field and nothing else, in the md's words.
 
-    A typo in a `kind` would silently fall through to the plain integer
-    branch, which is the one way this table can be wrong without failing.
+    A field without a mark would raise while a document is being written --
+    on the one run a contributor makes with a wallbox in the house.
     """
-    name, space, address, count, kind, scale, _unit, held = field
-    assert space in {"input", "holding"}
-    assert 21200 <= address <= 21340, name
-    assert count >= 1 and scale > 0
-    assert held in {
-        "three sources",
-        "two sources",
-        "measured here",
-        "named elsewhere",
-        "open",
-    }, name
-    if kind not in {"u16", "u32", "ascii", "hex", "local_epoch"}:
-        assert kind in WALLBOX_ENUMS, f"{name} names a kind that does not exist"
+    names = {name for name, *_ in FIELDS}
+    assert set(CONFIDENCE) == names
+    assert set(CONFIDENCE.values()) <= MARKS
+    assert set(CODES) <= names
 
 
 def test_the_field_table_never_reads_the_serial() -> None:
@@ -229,9 +217,9 @@ def test_the_field_table_never_reads_the_serial() -> None:
     """
     masked = {
         (space, address)
-        for space, start, count in WALLBOX_DUMP_MASKED
+        for space, start, count in WALLBOX_MASKED
         for address in range(start, start + count)
     }
-    for name, space, address, count, *_ in WALLBOX_FIELDS:
+    for name, space, address, count in FIELDS:
         overlap = masked & {(space, a) for a in range(address, address + count)}
         assert not overlap, f"{name} reads masked addresses {sorted(overlap)}"

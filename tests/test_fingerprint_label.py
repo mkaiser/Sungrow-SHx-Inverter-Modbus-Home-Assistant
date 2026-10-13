@@ -1057,7 +1057,7 @@ def test_a_wallbox_dump_is_masked_at_the_wallbox_serial() -> None:
     careful and publish a serial. `A25A123456` was already published once,
     as the words of a capability probe.
     """
-    from probe import WALLBOX_DUMP_MASKED, _masked_dump
+    from sungrow_modbus.dump import DUMP_MASKED, WALLBOX_MASKED, masked as _masked_dump
 
     # The words this wallbox actually answered at 21201-21206, and one
     # measurement that must survive.
@@ -1072,14 +1072,12 @@ def test_a_wallbox_dump_is_masked_at_the_wallbox_serial() -> None:
             "21307": 3324,
         }
     }
-    masked = _masked_dump(dump, WALLBOX_DUMP_MASKED)
+    masked = _masked_dump(dump, WALLBOX_MASKED)
 
     serial_words = [masked["input"][str(a)] for a in range(21200, 21206)]
     assert serial_words == [None] * 6
     assert masked["input"]["21307"] == 3324, "the measurements must survive"
     # And the inverter's mask would not have covered it, which is the point.
-    from probe import DUMP_MASKED
-
     wrong = _masked_dump(dump, DUMP_MASKED)
     text = b"".join(
         int(wrong["input"][str(a)]).to_bytes(2, "big") for a in range(21200, 21206)
