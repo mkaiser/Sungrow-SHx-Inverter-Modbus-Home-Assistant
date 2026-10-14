@@ -137,8 +137,8 @@ Measured at gerd's AC22E-01 on 2026-10-14; the run log is
 - [x] The start-address map (above).
 - [x] The integration's five wallbox reads, through the real library over
       TLS: all answer.
-- [ ] A test holding every wallbox component read to a start in the map,
-      so a future field cannot pool into a read the direct path refuses.
+- [x] `test_every_wallbox_read_starts_where_the_direct_path_answers`
+      holds every wallbox component read to the map.
 - [ ] A **wallbox endpoint** in the config flow: the wallbox's own address,
       TLS on 516, unit 248, as a device of its own (or hung off the
       inverter's entry). It solves gerd's choice -- today the wallbox is

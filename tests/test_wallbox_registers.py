@@ -221,3 +221,84 @@ def test_no_dump_block_splits_a_wallbox_string() -> None:
                 and last < start + count
             ]
             assert inside, f"{name} ({first}-{last}) is split between dump reads"
+
+
+#: Where an AC22E-01 answers a read over TLS on its own LAN address (unit
+#: 248): the first register of each data point, measured with one-register
+#: reads at every address (input 21199-21205, the serial, not read). A read
+#: starting anywhere else times out. Protocol addresses.
+TLS_READ_STARTS = {
+    "input": {
+        21210,
+        21212,
+        21214,
+        21215,
+        21223,
+        21224,
+        21225,
+        21240,
+        21243,
+        21258,
+        *range(21261, 21273),
+        *range(21274, 21280),
+        *range(21281, 21300, 2),
+        *range(21301, 21308),
+        21309,
+        *range(21311, 21318),
+        21319,
+        21321,
+        21322,
+        21326,
+        21330,
+        21331,
+        21336,
+        21337,
+        *range(21339, 21346),
+        21347,
+        *range(21349, 21356),
+        21357,
+        *range(21359, 21366),
+        21369,
+        21373,
+        21374,
+    },
+    "holding": {
+        21200,
+        21202,
+        21203,
+        21204,
+        21206,
+        21208,
+        21210,
+        21211,
+        21212,
+        21214,
+        21215,
+        21216,
+        21220,
+        21222,
+        *range(21223, 21234),
+        21249,
+        21281,
+        *range(21297, 21302),
+        *range(21311, 21318),
+    },
+}
+
+
+async def test_every_wallbox_read_starts_where_the_direct_path_answers() -> None:
+    """A pooled read must begin on a data point, or TLS refuses it by silence.
+
+    Through a WiNet-S any start answers, so nothing else would catch a new
+    field that moves a block's start: it would work through the dongle and
+    time out on the wallbox's own address.
+    """
+    from sungrow_modbus.block_test import component_blocks
+    from sungrow_modbus.wallbox_registers import COMPONENTS
+
+    for name, klass in COMPONENTS.items():
+        for block in await component_blocks(name, klass):
+            assert block.address in TLS_READ_STARTS[block.space], (
+                f"{name} reads {block.space} {block.address}, which the wallbox "
+                "does not answer as a start over TLS"
+            )
