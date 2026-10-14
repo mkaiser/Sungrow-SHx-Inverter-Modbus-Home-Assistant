@@ -6,12 +6,12 @@ dongle), mkaiser, bar12 (both paths), and fwitten's master (both paths).
 What the wallbox reading settled is in `doc/wallbox_registers.md`. This file
 holds only what is still open.
 
-**Status: 2026-10-14, 19:25. fwitten done for tonight: both slave
-documents published (nothing lost), the master's control test merged (9 of
-9 matched, restart included). `make check` green. Open at fwitten: the
-slave's control test, which needs daylight. Then gerd (19:25 on): integration test
-passed, control test running. Nothing committed yet.** Updated as runs finish, so a
-later session can pick it up from here.
+**Status: 2026-10-14, 20:45. Every site re-read and published; control
+tests at fwitten's master and gerd merged; the integration passed on gerd's
+hardware; 0.1.0a13 on PyPI, and gerd's dongle re-surveyed on it. Open: the
+fwitten slave's control test (daylight), and the history rewrite
+(`plans/force-serial-number-push.md`).** Updated as runs finish, so a later
+session can pick it up from here.
 
 Consent: the maintainer has it from gerd, fwitten and bar12 for every test,
 writes included, and all three allowed `ip_address_last_two_octets`.
@@ -117,7 +117,7 @@ deprecated (stops working in 2027.8).
 | --- | --- |
 | control test, cable, `--allow-dark --enable-export-limit --restart`, 19:43 | exit 3: **9 of 9 matched**, all restored and read back; merged into the cable document |
 | `--export-scale`, cable and dongle | both **x10** (0x04 refusal), limitation lifted for the write and put back; merged into both |
-| after 0.1.0a13 is on PyPI: dongle survey again, so the wallbox gains `serial_anonymized_hashed` | not yet; needs gerd's VPN still up |
+| dongle survey on PyPI 0.1.0a13, 20:30 | exit 0, schema 21, nothing lost (1010 inverter and 200 wallbox dump addresses), wallbox `serial_anonymized_hashed` anon-41346964423 -- the stand-in the integration produced; **published**, `export_scale` carried |
 
 **The control test at gerd's.** The scale probe answered x10, and 13074
 was written at it: 600 W went in as raw 600 and read back 600, slope 1 --
@@ -164,7 +164,7 @@ All three surfaced together when fwitten's VPN dropped mid-run on
 - [x] fwitten's slave, both paths, published
 - [x] fwitten's master control test merged (with restart)
 - [ ] fwitten's slave control test, in daylight
-- [ ] `make gen` and `make check` green, committed
+- [x] `make gen` and `make check` green, committed, pushed; 0.1.0a13 released
 - [x] the integration passes on gerd's dongle, dump option off and on
-- [ ] gerd's control test merged; gerd's dongle re-surveyed on 0.1.0a13
+- [x] gerd's control test merged; gerd's dongle re-surveyed on 0.1.0a13
 - [ ] the maintainer has decided about the serial in the history

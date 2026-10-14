@@ -1,18 +1,20 @@
 Todo.md contains only next steps (forward looking).
 Anything done should be removed here.
 
-# Summary (2026-10-14)
+# Summary (2026-10-14, evening)
 
-Library and survey: 0.1.0a12 on PyPI, survey and control test run on it.
-Every site was re-fingerprinted on 2026-10-13. Still open:
+0.1.0a13 on PyPI; survey and control test run on it. Every site
+re-fingerprinted and published; control tests merged at fwitten's master
+and gerd; the integration passed on gerd's hardware (wallbox included).
+Still open:
 
-1. **fwitten** -- re-fingerprinted and the master control-tested on
-   2026-10-14, `make check` green, **not committed**. Left: the slave's
-   control test, in daylight (it sits in Standby without PV).
+1. **The history rewrite** for the leaked wallbox serial --
+   `plans/force-serial-number-push.md`, corrected by a trial: rewrite only
+   `ec9eb62^..` and the 13 tags, or `main` changes too. Backup in
+   `/home/vscode/sungrow-rewrite/`. Before the force-push: tell gerd,
+   announce the freeze, pause the preview mirror's schedule.
+2. **fwitten's slave control test**, in daylight (Standby without PV):
    `plans/fingerprint-results.md`.
-2. **The leaked wallbox serial in the public history** -- your decision:
-   rewrite and force-push, or not. `plans/force-serial-number-push.md`.
-   Tell gerd either way. Nothing is pushed until this is decided.
 3. **Survey bugs** found on 2026-10-13, none fixed: timeouts labelled
    "refused", a run that read nothing exits 3, a lost link decides the
    transport verdict. Details in `plans/fingerprint-results.md`.

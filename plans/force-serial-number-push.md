@@ -24,7 +24,8 @@ Searched and **not** affected:
   as hex.
 - **PyPI**: every `sungrow-modbus` sdist ships only `src/`,
   `tests/test_device.py` and `tests/conftest.py`; checked at all twelve
-  tags, and the 0.1.0a12 sdist downloaded and grepped. No PyPI file needs
+  tags, and the 0.1.0a12 sdist downloaded and grepped; 0.1.0a13 was built
+  from the fixed tree. No PyPI file needs
   yanking.
 - **`main`**: does not contain the commit.
 - **The preview mirror**: copies `custom_components/`, `hacs.json` and
@@ -38,7 +39,7 @@ Searched and **not** affected:
 - First published in **ec9eb62** (2026-09-10, "Milestones 3, 4, 6 and 7 …
   v0.1.0a1"). Every later commit on `proper-ha-integration` carries it:
   29 commits up to b3d0e70.
-- **All twelve tags** `v0.1.0a1` … `v0.1.0a12` point at commits that carry
+- **All thirteen tags** `v0.1.0a1` … `v0.1.0a13` point at commits that carry
   it, and so do the GitHub releases made from them (source archives).
 - **One fork has the branch**: `BuggiTheBeat/Sungrow-SHx-Inverter-Modbus-Home-Assistant`,
   `proper-ha-integration` at 68d8ca0 (Release 0.1.0a5). Checked over the
@@ -47,13 +48,13 @@ Searched and **not** affected:
   Support is still needed for cached commits (step 6).
 - No pull request was ever opened from the branch.
 
-## The fix in the tree (done, uncommitted)
+## The fix in the tree (done, committed and pushed as 795f804)
 
 Both tests now use the words of the invented `A123456789` (`16689, 12851,
 13365, 13879, 14393, 0`). The wallbox serial is now published as the
 inverter's is: a hashed stand-in, `wallbox.serial_anonymized_hashed`, with
-the words masked (schema 21). Commit this **first**, as an ordinary commit,
-so the rewrite below has a clean tree to rewrite onto.
+the words masked (schema 21). Committed first, as an ordinary
+commit, so the rewrite below has a clean tree to rewrite onto.
 
 ## The rewrite
 
@@ -79,7 +80,10 @@ history still reads the same; only the SHAs change.
     cp -a sungrow-rewrite.git sungrow-backup.git     # kept offline, deleted once step 7 passes
 
 `--mirror` takes every branch and tag, which is what the rewrite has to
-cover. The backup **contains the serial**: keep it local, and delete it at
+cover. On 2026-10-14 this lives in `/home/vscode/sungrow-rewrite/`, with a
+bundle of the dev checkout's own `.git` (`local-checkout-*.bundle`) beside
+it; re-clone both after the last ordinary push, so the rewrite starts from
+what the remote holds. The backup **contains the serial**: keep it local, and delete it at
 the end.
 
 ### 2. The replacement file
@@ -114,9 +118,19 @@ acceptable: old commits are not re-run. The current tree asserts `A123`.
 
     pip install git-filter-repo
     cd sungrow-rewrite.git
-    git filter-repo --replace-text ../replacements.txt
+    REFS="ec9eb62^..proper-ha-integration $(for t in $(git tag -l 'v0.1.0a*'); do printf 'ec9eb62^..refs/tags/%s ' $t; done)"
+    git filter-repo --replace-text ../replacements.txt --refs $REFS
 
-It rewrites every ref, tags included, and drops the old objects.
+**Only the range that carries the leak, never the whole repository.** A
+trial on 2026-10-14 showed why: run without `--refs`, filter-repo re-exports
+every commit and drops GPG signatures as it goes, so the GitHub-signed
+commits change hash all the way down to the root -- and `main`, the YAML
+package everybody has forked, would be rewritten with them. Limited to
+`ec9eb62^..`, the 32 commits from the leak to the head (none signed, none on
+any other branch) and the 13 tags are rewritten; `main`, every other branch,
+the pull-request refs and the commit below `ec9eb62` keep their hashes.
+filter-repo also updates short hashes quoted in commit messages to the new
+ones, which is the only difference in any message.
 
 ### 4. Verify, before pushing anything
 
@@ -124,7 +138,7 @@ It rewrites every ref, tags included, and drops the old objects.
     cut -d'=' -f1 ../replacements.txt | while read -r old; do
         git log --all --format=%h -S"$old"            # must print nothing
     done
-    git tag | wc -l                                               # still 12
+    git tag | wc -l                                               # still 13
     git log --oneline proper-ha-integration | wc -l               # unchanged count
     git diff <old-head-sha> proper-ha-integration --stat          # only the two test files
 
@@ -134,14 +148,13 @@ committed before the rewrite.
 
 ### 5. Push
 
-    git push --force --mirror origin
-
-`--mirror` rewrites branches **and tags** and would delete any remote ref
-missing locally; the clone was a mirror, so there are none. If that feels
-too broad, push the branch and the twelve tags explicitly instead:
-
     git push --force origin proper-ha-integration
     git push --force origin 'refs/tags/v0.1.0a*'
+
+The branch and the thirteen tags, explicitly. **Not `--mirror`**: the
+mirror clone holds GitHub's read-only `refs/pull/*`, which a mirror push
+would try to update and GitHub refuses. None of them carries the leak
+(checked 2026-10-14), so they need nothing.
 
 **The tags' SHAs change.** The GitHub releases stay attached to the tag
 names, but their source archives are rebuilt from the new commits. PyPI is
