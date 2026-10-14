@@ -77,10 +77,41 @@ WALLBOX_BANDS: tuple[tuple[str, int, int, str], ...] = (
     ("holding", 21297, 32, "the scattered upper settings"),
 )
 
-#: The wallbox's serial, input 21201-21206. A serial like any other: one was
-#: published as the words `[16690, 13633]` before anybody thought about the
-#: second device in the house.
-WALLBOX_MASKED: tuple[tuple[str, int, int], ...] = (("input", 21200, 6),)
+#: The same wallbox read at its **own address**, over TLS (port 516, unit
+#: 248), where a read must **start on a data point's first register** or it
+#: times out -- a WiNet-S answers any start, so `WALLBOX_BANDS` cannot be used
+#: there. Each band is one read (none is longer than `BLOCK`), starting on a
+#: start measured on an AC22E-01 and spanning whole data points up to 32
+#: registers; all twelve answered on that unit. Holding 21249-21312 answers
+#: here where no read through the dongle reached it.
+WALLBOX_TLS_BANDS: tuple[tuple[str, int, int, str], ...] = (
+    ("input", 21200, 25, "identity, model, type code, phases"),
+    ("input", 21225, 18, "the firmware string, read whole, and a second version"),
+    ("input", 21243, 32, "ratings and phase mode"),
+    ("input", 21275, 32, "the live measurements, first half"),
+    ("input", 21307, 32, "the live measurements, second half"),
+    ("input", 21339, 30, "above the live block"),
+    ("input", 21369, 9, "the last answering data points"),
+    ("holding", 21200, 32, "settings"),
+    ("holding", 21232, 17, "settings, and the clock"),
+    ("holding", 21249, 32, "the upper settings, first half"),
+    ("holding", 21281, 32, "the upper settings, second half"),
+    ("holding", 21313, 8, "the last answering settings"),
+)
+
+#: The wallbox's serial, input 21201-21206, first -- `wallbox.SERIAL_*` reads
+#: its position from that entry. A serial like any other: one was published
+#: as the words `[16690, 13633]` before anybody thought about the second
+#: device in the house.
+#:
+#: Then input 21211-21214: a short code the wallbox answers only at its own
+#: address (a WiNet-S answers 0 there). One unit has been read, so whether it
+#: is the same on every AC22E-01 or tells one apart is unknown -- and until a
+#: second wallbox says which, it is treated as the serial is.
+WALLBOX_MASKED: tuple[tuple[str, int, int], ...] = (
+    ("input", 21200, 6),
+    ("input", 21210, 4),
+)
 
 #: Reads per request. Small, because the point is coverage: a band that fails
 #: as a whole tells nobody anything, where a band with eight addresses missing

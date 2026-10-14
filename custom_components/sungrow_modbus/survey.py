@@ -226,13 +226,15 @@ class SurveyRunner:
         A's. The alternative -- a bar that resets, or a second bar -- is worse
         for the person watching, and the step label names the part throughout.
         """
-        from .fingerprint import planned_steps as survey_steps
+        from .fingerprint import planned_steps as survey_steps, wallbox_is_direct
 
         dumping = bool(options.get(CONF_SURVEY_DUMP, DEFAULT_SURVEY_DUMP))
         a_steps = survey_steps(
             dumping,
             block_reads,
             wallbox=self.entry.runtime_data.wallbox is not None,
+            wallbox_direct=self.entry.runtime_data.wallbox is not None
+            and wallbox_is_direct(self.entry.runtime_data.wallbox),
         )
         if not control_test:
             return 1.0, a_steps

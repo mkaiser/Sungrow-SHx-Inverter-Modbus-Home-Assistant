@@ -29,6 +29,10 @@ If you already know the address, save it the search:
 
     ./read_only_survey.sh 192.168.1.50          (or: read_only_survey.cmd 192.168.1.50)
 
+A Sungrow wallbox with a network cable or WiFi of its own is found and read
+too, and gets a file of its own. Its address can be given the same way, alone
+or beside the inverter's.
+
 
 It only reads
 -------------

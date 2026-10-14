@@ -21,8 +21,12 @@ are now done:
   only; nothing writes to it. "Direct" is the wallbox's **own LAN address**:
   Modbus TCP inside TLS on port **516**, unit 248 (measured on gerd's
   AC22E-01; RS485 at 248 is reported by others, never measured here). The
-  integration reaches it only through a dongle today; a direct endpoint is
-  open in `Todo.md`, "Wall box integration".
+  integration reaches it through the dongle by itself, or at its own address
+  when the inverter's entry has the **`wallbox_host` option** set -- an
+  option, not an entry, so the device and its entity ids are the same either
+  way. `sungrow_survey.py` finds a wallbox on 516 and surveys it into a
+  **wallbox document** of its own, published under
+  `doc/device-fingerprints/wallbox/`, outside the inverter corpus.
 - ⬜ the **iHomeManager** (port **502 *or* 503**, slave 247) — **never
   measured**; to do: survey one. `identify()` probes input 8000 on unit 247, so
   a contributor who owns one is told what they have, and `sungrow_survey.py`
@@ -114,7 +118,7 @@ implementation for this pattern — read its real source, not blog posts.
 | **`scripts/sungrow_read_only_survey/`** | **Part A, read only, runs on the published library** |
 | `scripts/sungrow_read_only_survey/read_only_survey.sh`, `read_only_survey.cmd` | **What a contributor runs.** Find `uv` (PATH, then `~/.local/bin`) and hand it `sungrow_survey.py`; else use a Python 3.13+ that has exactly the pinned library; else offer to install uv, asking first. Every argument and the survey's exit code pass through. `read_only_survey.cmd` only starts `read_only_survey.ps1`, which does the Windows half |
 | `scripts/sungrow_read_only_survey/sungrow_survey.py` | **The one entry point for a survey** (`make scan HOST=...`, or `make scan-sim` against the simulator): finds the devices, asks what no register can answer, runs the block read test, reads every register, writes the document and a transcript, and prints a maintainer-facing summary. Exit code says what happened (`0` fine, `3` the filename under-claims, `4` the transport is disputed, `1`/`2` nothing collected) |
-| `scripts/sungrow_read_only_survey/probe.py` | Probe for Sungrow devices: `mdns`, `sweep <cidr>` (502, 503 for a Logger or iHomeManager, 516 for Modbus over TLS on a WiNet-S or a wallbox — found, not readable), `units <host>`, `capabilities <host>`, `dump <host>` |
+| `scripts/sungrow_read_only_survey/probe.py` | Probe for Sungrow devices: `mdns`, `sweep <cidr>` (502, 503 for a Logger or iHomeManager, 516 for Modbus over TLS on a WiNet-S or a wallbox — found, not read here; `sungrow_survey.py` reads a wallbox there), `units <host>`, `capabilities <host>`, `dump <host>` |
 | `scripts/sungrow_read_only_survey/blocks.py` | The block read test: which read inside a component fails, and whether it is a fault or contention. `--client library` fails where the integration does; `--client raw` names the count a padded frame needs; `--narrow-budget` bounds the narrowing, which is unaffordable on a link where reads time out |
 | `scripts/sungrow_read_only_survey/raw_client.py` | The bare-socket client behind `blocks.py --client raw`: a measuring instrument that trusts `byte_count`, not a second copy of the library's client. Not runnable by itself |
 | **`scripts/helpers/`** | **One-off tools** |
@@ -494,7 +498,8 @@ Each of these is verified in a container or against hardware.
   address**, unit 248, with no port 502 at all. Both present a Sungrow-signed
   certificate (issuer `OT.SUNGROW`, CN `sun`), byte-identical between the
   dongle and the wallbox at one house -- so this TLS authenticates nothing.
-  `sungrow_survey.py` sweeps 516 and reports it without reading it.
+  `sungrow_survey.py` sweeps 516: a wallbox there is read (`wallbox_direct.py`),
+  a WiNet-S's TLS port is reported without reading it.
 
 ### Finding devices
 

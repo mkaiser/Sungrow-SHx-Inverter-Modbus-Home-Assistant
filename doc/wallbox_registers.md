@@ -300,5 +300,13 @@ that measured the same model:
 - Holding 21316-21329, in the scattered region above 21248, reads the same
   words in both readings but **shifted by one address**. A record that moves
   is not a set of registers, and nothing here should be decoded from it.
-- Everything here is one unit, one firmware, through a dongle. A second
-  AC22E would settle most of the remaining marks.
+- Holding **21249-21312 answers at the wallbox's own address**, where no
+  read through the dongle reached it; nothing decodes it yet. The holding
+  21316-21329 shift above may be the dongle's own block reads landing off a
+  data point's start -- the direct path's map of starts is the place to
+  check it.
+- Input **21210-21213** holds a short code only the direct path answers.
+  Whether it differs between units is unknown, so the dump masks it like the
+  serial until a second wallbox is read.
+- Everything here is one unit, one firmware, read through a dongle and at
+  its own address. A second AC22E would settle most of the remaining marks.

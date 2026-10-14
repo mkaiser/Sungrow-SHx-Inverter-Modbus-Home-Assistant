@@ -328,12 +328,14 @@ async def test_the_device_page_publishes_the_surveys_wallbox_section(
 
     section = document["wallbox"]
     assert section["unit"] == 3
+    assert section["path"] == "dongle"
     assert section["readings"] == committed["readings"]
     # The serial as the inverter's is published: a stand-in, in both modes.
     assert section["serial_anonymized_hashed"] == stand_in("A987654321")
     if dumping:
         assert set(section) == {
             "unit",
+            "path",
             "serial_anonymized_hashed",
             "readings",
             "register_dump",
@@ -342,5 +344,115 @@ async def test_the_device_page_publishes_the_surveys_wallbox_section(
         assert [published[str(a)] for a in range(21200, 21206)] == [None] * 6
         assert published["21299"] == committed["register_dump"]["input"]["21299"]
     else:
-        assert set(section) == {"unit", "serial_anonymized_hashed", "readings"}
+        assert set(section) == {"unit", "path", "serial_anonymized_hashed", "readings"}
     assert "A987654321" not in json.dumps(document)
+
+
+# -- the wallbox at its own address, over TLS ---------------------------------
+
+
+async def _setup_direct(
+    hass: HomeAssistant, inverter: MockModbusUnit, answers: bool = True
+) -> tuple[MockConfigEntry, list]:
+    """Set up an entry with the wallbox's address set; record each unit asked for."""
+    from custom_components.sungrow_modbus.const import CONF_WALLBOX_HOST
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data=ENTRY_DATA,
+        options={CONF_WALLBOX_HOST: "192.0.2.23"},
+        unique_id=SERIAL,
+        title="SH10RT",
+    )
+    entry.add_to_hass(hass)
+    empty = MockModbusConnection().for_unit(9)
+    empty.input = {}
+    empty.holding = {}
+    asked: list = []
+
+    def units(_hass, _entry, params, unit_id):
+        asked.append((type(params).__name__, params.host, params.port, unit_id))
+        if unit_id == 1:
+            return inverter
+        if type(params).__name__ == "ModbusTlsParams" and unit_id == 248 and answers:
+            return _wallbox_unit(unit_id)
+        if unit_id == 3:
+            # A dongle would answer here too; the direct address must win.
+            return _wallbox_unit(unit_id)
+        return empty
+
+    with patch("custom_components.sungrow_modbus.async_get_unit", side_effect=units):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+    return entry, asked
+
+
+async def test_a_wallbox_address_is_read_over_tls_at_unit_248(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The option reaches the wallbox directly, and the endpoint is not asked."""
+    entry, asked = await _setup_direct(hass, sungrow_unit)
+    assert entry.state is ConfigEntryState.LOADED
+
+    tls = [a for a in asked if a[0] == "ModbusTlsParams"]
+    assert tls and all(a[1:] == ("192.0.2.23", 516, 248) for a in tls)
+    assert not [a for a in asked if a[0] == "ModbusTcpParams" and a[3] in (3, 248)]
+    assert entry.runtime_data.wallbox is not None
+
+
+async def test_a_wallbox_keeps_its_entities_when_it_moves_to_its_own_address(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """Same device, same unique ids: its history follows it off the dongle."""
+    entry, _asked = await _setup_direct(hass, sungrow_unit)
+
+    assert {e.unique_id for e in _entities(hass, entry.entry_id)} == WALLBOX_UNIQUE_IDS
+    registry = dr.async_get(hass)
+    assert registry.async_get_device_by_identifier(
+        (DOMAIN, f"{SERIAL}-wallbox"), entry.entry_id
+    )
+
+
+async def test_a_wallbox_address_that_answers_nothing_does_not_fail_the_entry(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The inverter still loads; the wallbox is simply not polled."""
+    entry, _asked = await _setup_direct(hass, sungrow_unit, answers=False)
+    assert entry.state is ConfigEntryState.LOADED
+    assert entry.runtime_data.wallbox is None
+
+
+async def test_a_survey_of_the_direct_path_dumps_where_tls_answers(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """At its own address the wallbox is dumped with the TLS bands, and says so.
+
+    The dongle's bands start reads where the wallbox, over TLS, answers
+    nothing; the document's `path` says which reading it is, because the two
+    differ in more than speed.
+    """
+    from custom_components.sungrow_modbus.const import CONF_SURVEY_DUMP
+    from custom_components.sungrow_modbus.fingerprint import async_build
+    from sungrow_modbus.dump import WALLBOX_TLS_BANDS
+
+    entry, _asked = await _setup_direct(hass, sungrow_unit)
+
+    document = await async_build(
+        hass, entry, options={CONF_SURVEY_DUMP: True}, allow_dump=True
+    )
+
+    section = document["wallbox"]
+    assert section["unit"] == 248
+    assert section["path"] == "tls"
+    dumped = {
+        (space, int(address))
+        for space, values in section["register_dump"].items()
+        if isinstance(values, dict)
+        for address in values
+    }
+    expected = {
+        (space, address)
+        for space, start, count, _why in WALLBOX_TLS_BANDS
+        for address in range(start, start + count)
+    }
+    assert dumped == expected

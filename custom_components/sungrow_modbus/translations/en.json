@@ -931,15 +931,17 @@
             }
           },
           "advanced": {
-            "name": "Battery and diagnostics",
+            "name": "Battery, wallbox and diagnostics",
             "description": "**Battery charge power.** {battery_status}\n\nThe maximum a battery will take is not something the inverter knows — it reports its own converter rating, but not the pack's limit. Sungrow's own technical training recommends the **rated current × the low end of the voltage range**, not the nominal voltage: being conservative here is good for the battery's health.\n\n*Example — a Pylontech Force H1, 14.4 kWh: the datasheet gives a recommended charge current and an operating voltage range per module. Take the current × the lowest voltage in the range, not the nominal one. For a stack reporting 25 A at 355 V that is 25 × 355 ≈ 8875 W, and rounding down to 8500 W costs almost nothing.* Check your own datasheet — the arithmetic is the point, not these numbers.\n\nLeave it at 0 to let the integration work it out.\n\n---\n\n**Diagnostics.** Settings → Devices & Services → Sungrow Modbus → **Download diagnostics** produces a file describing this setup: the model, which capabilities the inverter confirmed, which registers reported themselves unavailable, how each poll group is doing, and why any entity was not created. The serial number and host address are removed from it.",
             "data": {
               "battery_max_power": "Maximum battery charge power (W)",
-              "register_dump": "Include a raw register dump in diagnostics"
+              "register_dump": "Include a raw register dump in diagnostics",
+              "wallbox_host": "Wallbox address, when it is on the network itself"
             },
             "data_description": {
               "battery_max_power": "0 means work it out: a Sungrow pack is identified from the capacity it reports and looked up against its datasheet, and any other pack that reports a BMS charge current gets that instead. Set a value to override either.",
-              "register_dump": "Adds every mapped register's raw value. Only useful when a value looks wrong and the decoding itself is in question. Producing it is a second full read of the register map on top of normal polling, which is slow over a WiNet-S dongle, so leave it off unless you have been asked for it."
+              "register_dump": "Adds every mapped register's raw value. Only useful when a value looks wrong and the decoding itself is in question. Producing it is a second full read of the register map on top of normal polling, which is slow over a WiNet-S dongle, so leave it off unless you have been asked for it.",
+              "wallbox_host": "Only for a Sungrow wallbox with a network cable or WiFi of its own. Without this, the integration finds a wallbox behind a WiNet-S by itself, and that is all most installations need. With it, the wallbox is read at its own address instead -- encrypted, on port 516 -- which also works when this entry is on the inverter's own LAN port, where a wallbox cannot otherwise be seen. Its entities and their history stay as they are. Leave empty to go back to the WiNet-S."
             }
           },
           "survey": {
@@ -1001,7 +1003,8 @@
       }
     },
     "error": {
-      "nothing_left_to_poll": "Every group is set to never, which would leave the integration with nothing to read and no entities at all. Leave at least one group with an interval."
+      "nothing_left_to_poll": "Every group is set to never, which would leave the integration with nothing to read and no entities at all. Leave at least one group with an interval.",
+      "wallbox_not_found": "No Sungrow wallbox answered at that address. It has to be the wallbox's own address (not the inverter's or the WiNet-S's), reachable from Home Assistant, and not busy with another client."
     },
     "progress": {
       "running_survey": "Reading your inverter: 19 capability probes. Through a WiNet-S this can take a minute."

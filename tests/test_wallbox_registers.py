@@ -229,6 +229,8 @@ def test_no_dump_block_splits_a_wallbox_string() -> None:
 #: starting anywhere else times out. Protocol addresses.
 TLS_READ_STARTS = {
     "input": {
+        # Not probed alone (the serial), but every read starting here answers.
+        21200,
         21210,
         21212,
         21214,
@@ -302,3 +304,28 @@ async def test_every_wallbox_read_starts_where_the_direct_path_answers() -> None
                 f"{name} reads {block.space} {block.address}, which the wallbox "
                 "does not answer as a start over TLS"
             )
+
+
+def test_every_tls_dump_read_starts_where_the_wallbox_answers() -> None:
+    """The direct path's dump: one read per band, each on a measured start."""
+    from sungrow_modbus.dump import BLOCK, WALLBOX_TLS_BANDS
+
+    for space, start, count, why in WALLBOX_TLS_BANDS:
+        assert count <= BLOCK, f"{why} would be read as more than one block"
+        assert start in TLS_READ_STARTS[space], f"{why} starts at {start}"
+
+
+def test_the_tls_dump_covers_every_field_the_integration_reads() -> None:
+    """Nothing the integration decodes is missing from a direct-path dump."""
+    from sungrow_modbus.dump import WALLBOX_TLS_BANDS
+    from sungrow_modbus.wallbox_registers import COMPONENTS
+
+    covered = {
+        (space, address)
+        for space, start, count, _why in WALLBOX_TLS_BANDS
+        for address in range(start, start + count)
+    }
+    for component in COMPONENTS.values():
+        for name, field in component.declared_fields.items():
+            for address in range(field.address, field.address + field.count):
+                assert (component.register_space, address) in covered, name

@@ -40,7 +40,10 @@ from sungrow_modbus import (
 )
 from sungrow_modbus.battery import probe_units
 from sungrow_modbus.battery_device import SungrowBattery
-from sungrow_modbus.wallbox import probe_units as wallbox_probe_units
+from sungrow_modbus.wallbox import (
+    UNITS as WALLBOX_UNITS,
+    probe_units as wallbox_probe_units,
+)
 from sungrow_modbus.wallbox_device import SungrowWallbox
 
 from .const import (
@@ -53,12 +56,15 @@ from .const import (
     CONF_LEGACY_SLOT,
     CONF_MODE,
     CONF_UNIT_ID,
+    CONF_WALLBOX_HOST,
     DEFAULT_EXTERNAL_PLACEMENT,
     DOMAIN,
     ENTITY_IDS_MIGRATE,
     INTERVAL_NEVER,
     MODE_DEVICES,
     MODE_DIAGNOSTICS,
+    WALLBOX_TLS_PORT,
+    WALLBOX_TLS_UNIT,
 )
 from .coordinator import (
     SungrowBatteryCoordinator,
@@ -69,6 +75,7 @@ from .coordinator import (
 )
 from .download import async_register as async_register_download
 from .external_descriptions import EXTERNAL_SENSORS
+from .links import wallbox_tls_params
 from .migration import async_claim_legacy_ids, async_legacy_ids_with_history, keys_for
 from .services import async_setup_services
 from .survey import SurveyRunner
@@ -505,14 +512,18 @@ async def _async_wallbox(
     inverter: SungrowInverter,
     intervals: dict[str, int],
 ) -> SungrowWallboxCoordinator | None:
-    """Find a wallbox behind this endpoint and start polling it, or not.
+    """Find this inverter's wallbox and start polling it, or not.
 
-    Asked, never swept for. Measured at the one site with a wallbox: a full
-    /24 found Modbus TCP on two addresses, the inverter and its dongle, and
-    the wallbox answered **only** as unit 3 behind the dongle -- never at 248
-    and never on an address of its own, despite having its own LAN cable. So
-    a config flow cannot discover a wallbox by looking for one; it has to ask
-    the endpoint it already has.
+    Two places it can answer, both measured on an AC22E-01: as unit 3 behind
+    a WiNet-S, which is asked here of the endpoint this entry already has,
+    and as unit 248 at its **own address**, over TLS on port 516 -- never
+    through the inverter's own LAN port. The second is an option
+    (`CONF_WALLBOX_HOST`), because nothing on a network says which TLS host
+    is whose wallbox. With it set, the endpoint is not asked as well.
+
+    Either way the device, its entities and their unique ids are the same:
+    they are built from the inverter's serial, so a wallbox moved from the
+    dongle to its own address keeps its history.
 
     The probe reads the model *name*, not the serial two registers below it,
     and not the device type code: a name is self-validating where a code has
@@ -521,25 +532,38 @@ async def _async_wallbox(
 
     Finding nothing is the common case and never fails the entry.
     """
+    if host := entry.options.get(CONF_WALLBOX_HOST):
+        # Its own address, over TLS. The endpoint is not probed as well: a
+        # dongle would find the same wallbox at unit 3 and make it twice.
+        direct = async_get_unit(hass, entry, wallbox_tls_params(host), WALLBOX_TLS_UNIT)
+
+        def unit_for(_unit_id: int) -> ModbusUnit:
+            return direct
+
+        units: tuple[int, ...] = (WALLBOX_TLS_UNIT,)
+    else:
+        unit_for = _unit_factory(hass, entry)
+        units = WALLBOX_UNITS
     try:
-        wallbox_unit = await wallbox_probe_units(_unit_factory(hass, entry))
+        wallbox_unit = await wallbox_probe_units(unit_for, units)
     except (ModbusConnectionError, ModbusError) as err:
         _LOGGER.debug("%s: could not probe for a wallbox: %s", entry.title, err)
         return None
 
     if wallbox_unit is None:
-        _LOGGER.debug("%s: no Sungrow wallbox on this endpoint", entry.title)
+        if host:
+            _LOGGER.warning(
+                "%s: no wallbox answered at its configured address over TLS "
+                "(port %s, unit %s); polling it is skipped until it does",
+                entry.title,
+                WALLBOX_TLS_PORT,
+                WALLBOX_TLS_UNIT,
+            )
+        else:
+            _LOGGER.debug("%s: no Sungrow wallbox on this endpoint", entry.title)
         return None
 
-    device = SungrowWallbox(
-        async_get_unit(
-            hass,
-            entry,
-            ModbusTcpParams(host=entry.data[CONF_HOST], port=entry.data[CONF_PORT]),
-            wallbox_unit,
-        ),
-        wallbox_unit,
-    )
+    device = SungrowWallbox(unit_for(wallbox_unit), wallbox_unit)
     coordinator = SungrowWallboxCoordinator(
         hass,
         entry,

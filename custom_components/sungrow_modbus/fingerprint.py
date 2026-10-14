@@ -83,6 +83,7 @@ from .const import (
     CONF_SURVEY_POLLERS,
     CONF_SURVEY_PROXY,
     CONF_SURVEY_TRANSPORT,
+    CONF_WALLBOX_HOST,
     DEFAULT_SURVEY_DUMP,
 )
 from .coordinator import SungrowConfigEntry
@@ -103,7 +104,13 @@ FIRMWARE_FIELDS = {
 }
 
 
-def planned_steps(dumping: bool, block_reads: int = 0, *, wallbox: bool = False) -> int:
+def planned_steps(
+    dumping: bool,
+    block_reads: int = 0,
+    *,
+    wallbox: bool = False,
+    wallbox_direct: bool = False,
+) -> int:
     """Count the reads a survey will report progress for, before it starts.
 
     Every probe, and one step for assembling what the
@@ -123,8 +130,22 @@ def planned_steps(dumping: bool, block_reads: int = 0, *, wallbox: bool = False)
     if dumping:
         total += register_dump.block_count()
         if wallbox:
-            total += register_dump.block_count(register_dump.WALLBOX_BANDS)
+            total += register_dump.block_count(wallbox_bands(wallbox_direct))
     return total
+
+
+def wallbox_bands(direct: bool) -> tuple[tuple[str, int, int, str], ...]:
+    """Return the wallbox's dump bands for the path it is read on.
+
+    Its own address over TLS answers a read only where a data point starts,
+    so it gets bands cut to measured starts; a WiNet-S answers any start.
+    """
+    return register_dump.WALLBOX_TLS_BANDS if direct else register_dump.WALLBOX_BANDS
+
+
+def wallbox_is_direct(coordinator: Any) -> bool:
+    """Whether this wallbox is read at its own address rather than through a dongle."""
+    return bool(coordinator.config_entry.options.get(CONF_WALLBOX_HOST))
 
 
 def _testimony(options: Mapping[str, Any]) -> dict[str, str]:
@@ -274,6 +295,8 @@ async def async_build(
         dumping,
         block_test.planned_steps(blocks) if blocks else 0,
         wallbox=runtime.wallbox is not None,
+        wallbox_direct=runtime.wallbox is not None
+        and wallbox_is_direct(runtime.wallbox),
     )
     done = 0
 
@@ -592,6 +615,11 @@ async def _async_wallbox(
     if coordinator is None:
         return None
     device = coordinator.device
+    direct = wallbox_is_direct(coordinator)
+    # Which way it was reached, because the two do not read alike: the
+    # dongle answers 0 for several registers the wallbox's own address
+    # answers with values.
+    path = {"path": "tls" if direct else "dongle"}
     if not dumping:
         found = wallbox_reader.readings(
             await wallbox_reader.async_mapped_words(device.async_read_words)
@@ -600,6 +628,7 @@ async def _async_wallbox(
             return None
         return {
             "unit": device.unit_id,
+            **path,
             **_stand_in(
                 await wallbox_reader.async_serial_stand_in(device.async_read_words)
             ),
@@ -612,11 +641,12 @@ async def _async_wallbox(
     raw = await register_dump.async_dump(
         device.async_read_words,
         on_progress=on_block,
-        bands=register_dump.WALLBOX_BANDS,
+        bands=wallbox_bands(direct),
     )
     masked = register_dump.masked(raw, register_dump.WALLBOX_MASKED)
     return {
         "unit": device.unit_id,
+        **path,
         **_stand_in(wallbox_reader.serial_stand_in(raw)),
         "readings": wallbox_reader.readings(masked),
         "register_dump": masked,

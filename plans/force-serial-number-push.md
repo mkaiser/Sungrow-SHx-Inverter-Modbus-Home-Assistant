@@ -190,13 +190,23 @@ installs from the mirror, which is unaffected.
       a stale worktree and `ORIG_HEAD` that still held `ec9eb62` removed,
       reflog expired and gc'd; no ref or object carries the words.
 - [ ] Resume the preview mirror; its next sync finds the rewritten head.
+???
 - [ ] Delete `/home/vscode/sungrow-rewrite/` (backup mirror, rewritten
       mirror, bundle, `replacements.txt` -- the backup and the bundle hold
       the serial) once GitHub Support has answered.
+
+
+      --> I wont contact github support
+
+
 - [x] The two test files at `6668ecb` on raw.githubusercontent.com hold
       the invented words and none of the real ones.
+
 - [ ] The maintainer's other clones (the Windows checkout): re-clone, never
       pull into the old one.
+
+      --> done
+
 - [ ] Close it out with gerd.
 
 ## So it does not happen again

@@ -41,6 +41,7 @@ from homeassistant.helpers.selector import (
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
+    TextSelector,
 )
 from homeassistant.util import slugify
 from sungrow_modbus import (
@@ -62,6 +63,7 @@ from sungrow_modbus import (
 from sungrow_modbus.addresses import DIRECT_ONLY_PROBE, read
 from sungrow_modbus.discovery import CONCURRENCY, TIMEOUT
 from sungrow_modbus.fingerprint import OTHER_INVERTER_YES
+from sungrow_modbus.wallbox import probe_units as wallbox_probe_units
 
 from .config_flow_schemas import (
     _ALREADY_TRIED,
@@ -96,6 +98,7 @@ from .const import (
     CONF_SURVEY_OTHER_INVERTER,
     CONF_SURVEY_OTHER_INVERTER_DETAIL,
     CONF_UNIT_ID,
+    CONF_WALLBOX_HOST,
     DEFAULT_EXTERNAL_PLACEMENT,
     DEFAULT_NAME,
     DEFAULT_PERMISSIONS,
@@ -118,7 +121,9 @@ from .const import (
     SECTION_PERMISSIONS,
     SECTION_POLLING,
     SECTION_SURVEY,
+    WALLBOX_TLS_UNIT,
 )
+from .links import wallbox_tls_params
 from .migration import (
     async_legacy_ids_known,
     async_legacy_ids_live,
@@ -1146,6 +1151,27 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
 
+async def _async_wallbox_answers(hass: HomeAssistant, host: str) -> bool:
+    """Whether a Sungrow wallbox answers at this address, over TLS at unit 248.
+
+    The same test setup applies -- a model *name* at input 21216, never the
+    serial below it -- through a temporary unit, so checking an address does
+    not hold a connection the entry has not asked for yet. A link failure is
+    a no: the address is refused either way, and the dialog says why.
+    """
+    try:
+        async with async_get_temporary_unit(
+            hass, wallbox_tls_params(host), WALLBOX_TLS_UNIT
+        ) as unit:
+            found = await wallbox_probe_units(
+                lambda _unit_id: unit, (WALLBOX_TLS_UNIT,)
+            )
+    except (ModbusError, TimeoutError, OSError, HomeAssistantError) as err:
+        _LOGGER.debug("no wallbox over TLS at %s: %s", host, err)
+        return False
+    return found is not None
+
+
 class SungrowOptionsFlow(OptionsFlow):
     """Settings that can be changed after setup.
 
@@ -1207,10 +1233,21 @@ class SungrowOptionsFlow(OptionsFlow):
                     **user_input[SECTION_CONTROL_TEST],
                     **user_input[SECTION_ADVANCED],
                 }
+                host = (options.get(CONF_WALLBOX_HOST) or "").strip()
+                options[CONF_WALLBOX_HOST] = host
+                if (
+                    host
+                    and host != self.config_entry.options.get(CONF_WALLBOX_HOST)
+                    and not await _async_wallbox_answers(self.hass, host)
+                ):
+                    # Refused here rather than discovered at the next poll:
+                    # an address that answers nothing would otherwise leave
+                    # the wallbox's entities unavailable with only a log line.
+                    errors["base"] = "wallbox_not_found"
                 # The flag is checked as well as the value: a disabled
                 # control is a frontend courtesy, and the payload arrives over
                 # a websocket anybody with a token can write by hand.
-                if options.get(
+                elif options.get(
                     CONF_SURVEY_OTHER_INVERTER
                 ) == OTHER_INVERTER_YES and not options.get(
                     CONF_SURVEY_OTHER_INVERTER_DETAIL
@@ -1222,14 +1259,15 @@ class SungrowOptionsFlow(OptionsFlow):
                     # reveal after the first time.
                     self._pending_options = options
                     return await self.async_step_other_inverter()
-                if DEVICES_MODE_OFFERED and user_input.get(CONF_ADD_DEVICES):
+                elif DEVICES_MODE_OFFERED and user_input.get(CONF_ADD_DEVICES):
                     # The promotion question is asked on its own page, and
                     # that is deliberate: it is the only irreversible choice
                     # this integration offers, and it does not belong folded
                     # into a section beside a poll interval.
                     self._pending_options = options
                     return await self.async_step_promote()
-                return self.async_create_entry(data=options)
+                else:
+                    return self.async_create_entry(data=options)
 
         return self.async_show_form(
             step_id="init",
@@ -1392,6 +1430,13 @@ class SungrowOptionsFlow(OptionsFlow):
                         CONF_REGISTER_DUMP,
                         default=options.get(CONF_REGISTER_DUMP, False),
                     ): BooleanSelector(),
+                    # Suggested rather than defaulted, so it can be cleared.
+                    vol.Optional(
+                        CONF_WALLBOX_HOST,
+                        description={
+                            "suggested_value": options.get(CONF_WALLBOX_HOST, "")
+                        },
+                    ): TextSelector(),
                 }
             ),
             {"collapsed": True},

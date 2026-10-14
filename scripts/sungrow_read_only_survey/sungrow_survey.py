@@ -70,6 +70,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import blocks
 import probe
+import wallbox_direct
 
 from sungrow_modbus import block_test, model_for
 from sungrow_modbus.addresses import field_address, read
@@ -84,20 +85,13 @@ from sungrow_modbus.model import present
 #: 502 and 503 are Modbus TCP and get identified. **516 is swept and not
 #: read**, and what it is was measured rather than taken from the web.
 #:
-#: It is a **WiNet-S** port serving Modbus over TLS. Found open on both
-#: dongles of a house with no iHomeManager anywhere on it, and refused on
-#: both inverters' own LAN ports -- so the report that called it an
-#: iHomeManager port was wrong about whose it is. TLS 1.2 with a Sungrow
-#: self-signed certificate, and a request through the tunnel returns real
-#: registers.
-#:
-#: Not read here because this survey has no TLS client: a plain socket gets
-#: the connection accepted and then closed, which is why the port looks dead
-#: without one. Worth sweeping anyway -- it is a real Modbus interface, and a
-#: user told their dongle has nothing on 516 would be told something false.
-#:
-#: And it is **not** a way round what a dongle will not forward: inputs 2612
-#: and 2628 refuse with exception 0x02 over TLS exactly as on 502.
+#: It is Modbus TCP **inside TLS**, served by two different devices. A
+#: **WiNet-S** has it beside its 502, and is not read here: it refuses the same
+#: registers over TLS as on 502 -- inputs 2612 and 2628 with 0x02 -- so it is
+#: not a way round what a dongle will not forward. A **wallbox with a network
+#: connection of its own** has only this, answering as unit 248, and is read:
+#: `wallbox_direct.py` finds it by its model name and surveys it into a
+#: document of its own.
 #:
 #: 503 is the port an iHomeManager is *documented* on, at unit 247, and it is
 #: also the Logger's. Neither has ever answered on any network surveyed.
@@ -109,7 +103,12 @@ SWEEP_PORTS: tuple[tuple[int, str, bool], ...] = (
         True,
     ),
     (503, "a Logger1000/3000, or an iHomeManager at unit 247", True),
-    (516, "a WiNet-S serving Modbus over TLS, which this cannot speak", False),
+    (
+        516,
+        "Modbus over TLS: a wallbox at its own address (read),"
+        "\n          or a WiNet-S (reported only)",
+        False,
+    ),
 )
 
 #: Exit codes, and the sentence each one means. Printed as the last line,
@@ -255,6 +254,11 @@ def _preamble(echo, transcript: Path) -> None:
 #: global here: the summary is the only reader, and this is what it reads.
 _UNREADABLE: list[tuple[str, int]] = []
 
+#: Wallboxes answering at their own address, found by `_find`, surveyed by
+#: `run` after the inverters. Module state like `_UNREADABLE`, for the same
+#: reason: `_find` returns the inverters, which is what every caller expects.
+_WALLBOXES: list[wallbox_direct.Found] = []
+
 
 async def _find(args, echo) -> list[Found]:
     """Find every device worth surveying, and ask each who it is.
@@ -265,12 +269,23 @@ async def _find(args, echo) -> list[Found]:
     """
     unreadable = _UNREADABLE
     unreadable.clear()
+    wallboxes = _WALLBOXES
+    wallboxes.clear()
     echo("-" * 72)
     echo("1  Finding devices")
     echo("-" * 72)
 
     if args.host:
-        addresses = [(host, args.port) for host in args.host]
+        addresses = []
+        for host in args.host:
+            # A wallbox at its own address has no 502, so asking it as an
+            # inverter would only produce a document of nothing.
+            if found_wallbox := await wallbox_direct.async_identify(host):
+                wallboxes.append(found_wallbox)
+                echo(f"  {host}:{wallbox_direct.PORT}  a {found_wallbox.model} wallbox")
+                if not await probe._tcp_open(host, args.port, 2.0):
+                    continue
+            addresses.append((host, args.port))
     else:
         echo("")
         echo("  Which addresses to look at. The default below is this")
@@ -298,10 +313,15 @@ async def _find(args, echo) -> list[Found]:
             if readable:
                 addresses += [(host, port) for host in hosts]
                 continue
-            # Found and not read. Saying so is the whole value: a user whose
-            # iHomeManager answers here would otherwise conclude it has no
-            # Modbus at all, when it has Modbus this tool cannot speak.
+            # A wallbox at its own address is read; anything else here is
+            # found and not read. Saying so is the whole value: a user whose
+            # dongle answers here would otherwise conclude it has no Modbus
+            # at all, when it has Modbus this tool does not read.
             for host in hosts:
+                if found_wallbox := await wallbox_direct.async_identify(host):
+                    wallboxes.append(found_wallbox)
+                    echo(f"    {host}:{port} a {found_wallbox.model} wallbox")
+                    continue
                 unreadable.append((host, port))
                 echo(f"    {host}:{port} answered, and cannot be read -- see below")
         if not addresses:
@@ -1119,6 +1139,65 @@ def _worst(codes: list[int]) -> int:
     return max(codes, key=SEVERITY.index) if codes else 1
 
 
+async def _survey_wallbox(found: wallbox_direct.Found, args, echo) -> int:
+    """Ask the three questions a wallbox needs, read it, and say what was written.
+
+    Fewer than an inverter's: transport is measured (it is this address), and
+    a wallbox has no battery, proxy or second inverter to ask about. The
+    address and the reporter are consent, and asked as they are for an
+    inverter.
+    """
+    echo("-" * 72)
+    echo(f"Wallbox at {found.host}:{wallbox_direct.PORT}, a {found.model}")
+    echo("-" * 72)
+    with contextlib.redirect_stdout(sys.stderr):
+        consent = probe._ask_address(found.host)
+        reporter = probe._ask(
+            "Who is reporting this, to credit and to ask (blank for anonymous)",
+            "anonymous",
+        )
+        comment = probe._ask("Anything else worth recording (blank to skip)")
+    tail = (
+        probe._last_two_octets(found.host) or probe.ADDRESS_HIDDEN
+        if consent == "two_octets"
+        else probe.ADDRESS_HIDDEN
+    )
+    answers = argparse.Namespace(
+        timeout=args.timeout, reporter=reporter, comment=comment
+    )
+    directory, _private = _workspace()
+    echo("  reading over TLS, unit 248, every read on a data point's start")
+    try:
+        reading = await wallbox_direct.async_survey(
+            found,
+            answers,
+            directory,
+            echo,
+            address_tail=tail,
+            local_time=probe._local_time,
+        )
+    except (OSError, RuntimeError, probe.ModbusError) as error:
+        echo(f"  {found.host}:{wallbox_direct.PORT} failed: {error}")
+        return 1
+    section = reading.document["wallbox"]
+    answered = sum(
+        1
+        for band in section["register_dump"].values()
+        if isinstance(band, dict)
+        for word in band.values()
+        if word is not None
+    )
+    echo("")
+    echo(f"  read  readings         {len(section['readings'])}")
+    echo(f"  read  raw addresses    {answered} answered")
+    if reading.written is None:
+        echo("  Nothing was read from the wallbox -- the link, not the device.")
+    else:
+        echo(f"  Wrote\n        {reading.written}\n          send this")
+    echo("")
+    return reading.code
+
+
 async def run(args) -> int:
     """Run the whole scan, and return the exit code."""
     _documents, private = _workspace()
@@ -1145,7 +1224,7 @@ async def run(args) -> int:
         except ValueError as error:
             echo(f"  {error}")
             return _finish(2, echo)
-        if not found:
+        if not found and not _WALLBOXES:
             echo("  Nothing to scan.")
             return _finish(1, echo)
 
@@ -1161,11 +1240,20 @@ async def run(args) -> int:
                 raise
             except (OSError, RuntimeError) as error:
                 echo(f"  {entry.host}:{entry.port} failed: {error}")
-        if not results:
+        wallbox_codes = []
+        for found_wallbox in _WALLBOXES:
+            if results or wallbox_codes:
+                echo("  Pausing 10s before the next device.")
+                time.sleep(10)
+            wallbox_codes.append(await _survey_wallbox(found_wallbox, args, echo))
+        if not results and not wallbox_codes:
             return _finish(1, echo)
 
-        _summary(results, transcript, echo)
-        return _finish(_worst([result.code for result in results]), echo)
+        if results:
+            _summary(results, transcript, echo)
+        return _finish(
+            _worst([result.code for result in results] + wallbox_codes), echo
+        )
     finally:
         sys.stdout, sys.stderr = out._stream, errors._stream
         out.close()

@@ -5,9 +5,9 @@ Anything done should be removed here.
 
 0.1.0a13 on PyPI. Every site re-fingerprinted; control tests merged at
 fwitten's master and gerd; the integration passed on gerd's hardware.
-**In progress: `plans/wallbox-lan-sweep-and-fixes.md`** -- gerd's wallbox
-answers Modbus over TLS on its own LAN address, and the issues below are
-being fixed there. Still open besides:
+**In progress: `plans/wallbox-direct-endpoint.md`** -- the wallbox as an
+endpoint of its own (TLS, 516, unit 248) in the integration and the survey.
+Still open besides:
 
 1. **Finish the history rewrite** (force-pushed 2026-10-14): GitHub Support
    to purge the old SHAs (still served), the fork `BuggiTheBeat/...`, resume
@@ -76,8 +76,8 @@ renames every cable document.
 
 ## Wall box integration
 
-Measured at gerd's AC22E-01 on 2026-10-14; the run log is
-`plans/wallbox-lan-sweep-and-fixes.md`. Addresses are in memory, not here.
+Measured at gerd's AC22E-01 on 2026-10-14. Implementation in progress:
+`plans/wallbox-direct-endpoint.md`. Addresses are in memory, not here.
 
 **What is now known**
 
@@ -139,21 +139,22 @@ Measured at gerd's AC22E-01 on 2026-10-14; the run log is
       TLS: all answer.
 - [x] `test_every_wallbox_read_starts_where_the_direct_path_answers`
       holds every wallbox component read to the map.
-- [ ] A **wallbox endpoint** in the config flow: the wallbox's own address,
-      TLS on 516, unit 248, as a device of its own (or hung off the
-      inverter's entry). It solves gerd's choice -- today the wallbox is
-      reachable only through the dongle, while the cable gives the fuller
-      inverter and battery reading (138 vs 130 and 17 vs 7 entities) and one
-      inverter can have only one entry. Decide how it relates to the
-      inverter's entry (see "Integration" above).
+- [x] **The wallbox's own address in the integration**: the `wallbox_host`
+      option on the inverter's entry (TLS 516, unit 248), checked when
+      saved; device and entity ids unchanged. On gerd's hardware: one entry
+      on the cable gives inverter 138, SBR096 17 and wallbox 21 entities.
+- [x] **The survey reads a wallbox on 516** (`wallbox_direct.py`), with the
+      TLS dump bands, into a wallbox document of its own.
+- [ ] **Release 0.1.0a14** -- the integration and the survey import
+      `dump.WALLBOX_TLS_BANDS`, so the commit is held back from the branch
+      until the release goes with it (`plans/wallbox-direct-endpoint.md`).
+- [ ] Publish gerd's first wallbox document under
+      `doc/device-fingerprints/wallbox/` once the survey runs on 0.1.0a14,
+      and add the corpus checks that folder needs.
 - [ ] Decode what only the direct path shows: 21240-21249 (version
-      string), 21331-21335, 21359, 21362-21364, 21267; find out what
-      21210-21213 is before anything publishes it, and add it to the mask
-      if it identifies the unit.
-- [ ] The survey: sweep port 516 hosts for a wallbox at unit 248 over TLS
-      (today it reports 516 "found, not readable"), and read it with the
-      start-address rule; the dump bands for the direct path need the same
-      rule.
+      string), 21331-21335, 21359, 21362-21364, 21267, holding 21249-21312.
+      21210-21213 is masked until a second wallbox shows whether it
+      identifies the unit.
 - [x] CLAUDE.md and `doc/wallbox_registers.md` corrected: two paths, the
       start-address rule, the certificate.
 - [ ] Still only a charging car can settle 21313 and the signedness of

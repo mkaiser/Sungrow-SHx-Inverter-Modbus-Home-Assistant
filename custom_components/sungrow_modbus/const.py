@@ -62,6 +62,19 @@ INTERVAL_MINIMUM = 5
 #: to disturb it.
 CONF_REGISTER_DUMP = "register_dump"
 
+#: An option: the wallbox's own LAN address, when it is reached there rather
+#: than through a WiNet-S. Empty or absent: the endpoint is probed for one as
+#: before.
+#:
+#: Measured on an AC22E-01: the wallbox serves Modbus TCP inside TLS on its
+#: own address, with no port 502, and answers only as unit 248. So the port
+#: and the unit are constants, not options -- they are the only values
+#: anybody has measured. The certificate is Sungrow-signed and identical
+#: across devices, so there is nothing to verify it against.
+CONF_WALLBOX_HOST = "wallbox_host"
+WALLBOX_TLS_PORT = 516
+WALLBOX_TLS_UNIT = 248
+
 #: Maximum battery charge power in watts, when the integration cannot work it
 #: out. A Sungrow pack is identified from the capacity it reports and looked
 #: up in `sungrow_modbus.battery`; a third-party pack that reports a BMS
