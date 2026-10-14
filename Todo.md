@@ -8,11 +8,11 @@ re-fingerprinted and published; control tests merged at fwitten's master
 and gerd; the integration passed on gerd's hardware (wallbox included).
 Still open:
 
-1. **The history rewrite** for the leaked wallbox serial --
-   `plans/force-serial-number-push.md`, corrected by a trial: rewrite only
-   `ec9eb62^..` and the 13 tags, or `main` changes too. Backup in
-   `/home/vscode/sungrow-rewrite/`. Before the force-push: tell gerd,
-   announce the freeze, pause the preview mirror's schedule.
+1. **Finish the history rewrite** (force-pushed 2026-10-14):
+   GitHub Support to purge the old SHAs (still served), the fork
+   `BuggiTheBeat/...`, resume the preview mirror, re-clone the Windows
+   checkout, then delete the backup in `/home/vscode/sungrow-rewrite/`
+   (it holds the serial). `plans/force-serial-number-push.md`, steps 6-7.
 2. **fwitten's slave control test**, in daylight (Standby without PV):
    `plans/fingerprint-results.md`.
 3. **Survey bugs** found on 2026-10-13, none fixed: timeouts labelled

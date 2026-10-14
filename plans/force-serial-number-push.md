@@ -1,9 +1,17 @@
 # Erasing gerd's wallbox serial from the public history
 
-A real device serial is in the public history of this repository, against
-CLAUDE.md's hard constraint. This is the plan for removing it. Nothing here
-has been done yet: every step that changes a remote is the maintainer's to
-run.
+A real device serial was in the public history of this repository, against
+CLAUDE.md's hard constraint. This is the plan for removing it.
+
+**Status, 2026-10-14 21:00: rewritten and force-pushed.** The branch
+(`405f577` -> `6668ecb`) and the 13 tags (`v0.1.0a1`-`v0.1.0a13`), with
+leases; `main`, every other branch and the pull-request refs untouched. No
+tag push started a release run (GitHub runs no workflow for more than three
+tags in one push). The dev checkout is reset onto the new history and holds
+no old object. **Still open: step 6 (GitHub Support, the fork) and step 7
+(other clones, the preview mirror, the backups, gerd).** The old commits are
+still served by SHA -- `/commits/405f577` answered 200 after the push -- so
+the Support request is what actually finishes this.
 
 ## What leaked, and where
 
@@ -62,7 +70,7 @@ commit, so the rewrite below has a clean tree to rewrite onto.
 dropping files or commits. It keeps every commit and every message, so the
 history still reads the same; only the SHAs change.
 
-### 0. Before anything
+### 0. Before anything (confirmed by the maintainer 2026-10-14)
 
 - [ ] Tell gerd: what leaked, since when, and that it is being removed. Ask
       whether he wants anything beyond this (e.g. telling Sungrow support).
@@ -178,13 +186,17 @@ installs from the mirror, which is unaffected.
 
 ### 7. Afterwards
 
-- [ ] Re-clone the dev checkout (or `git fetch && git reset --hard
-      origin/proper-ha-integration` after stashing nothing worth keeping).
+- [x] Re-clone the dev checkout: reset onto `6668ecb`, tags force-fetched,
+      a stale worktree and `ORIG_HEAD` that still held `ec9eb62` removed,
+      reflog expired and gc'd; no ref or object carries the words.
 - [ ] Resume the preview mirror; its next sync finds the rewritten head.
-- [ ] Delete `sungrow-backup.git` and the old clone.
-- [ ] Confirm on github.com that a search for one of the words in the
-      repository finds nothing (code search indexes only the default
-      branch, so also open the two test files on the branch).
+- [ ] Delete `/home/vscode/sungrow-rewrite/` (backup mirror, rewritten
+      mirror, bundle, `replacements.txt` -- the backup and the bundle hold
+      the serial) once GitHub Support has answered.
+- [x] The two test files at `6668ecb` on raw.githubusercontent.com hold
+      the invented words and none of the real ones.
+- [ ] The maintainer's other clones (the Windows checkout): re-clone, never
+      pull into the old one.
 - [ ] Close it out with gerd.
 
 ## So it does not happen again

@@ -8,9 +8,9 @@ holds only what is still open.
 
 **Status: 2026-10-14, 20:45. Every site re-read and published; control
 tests at fwitten's master and gerd merged; the integration passed on gerd's
-hardware; 0.1.0a13 on PyPI, and gerd's dongle re-surveyed on it. Open: the
-fwitten slave's control test (daylight), and the history rewrite
-(`plans/force-serial-number-push.md`).** Updated as runs finish, so a later
+hardware; 0.1.0a13 on PyPI, and gerd's dongle re-surveyed on it. History rewritten and
+force-pushed at 21:00. Open: the fwitten slave's control test (daylight),
+and the rewrite's follow-ups in `plans/force-serial-number-push.md`.** Updated as runs finish, so a later
 session can pick it up from here.
 
 Consent: the maintainer has it from gerd, fwitten and bar12 for every test,
@@ -167,4 +167,4 @@ All three surfaced together when fwitten's VPN dropped mid-run on
 - [x] `make gen` and `make check` green, committed, pushed; 0.1.0a13 released
 - [x] the integration passes on gerd's dongle, dump option off and on
 - [x] gerd's control test merged; gerd's dongle re-surveyed on 0.1.0a13
-- [ ] the maintainer has decided about the serial in the history
+- [x] the serial in the history: rewritten and force-pushed (follow-ups in its own plan)
