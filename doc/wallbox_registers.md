@@ -1,8 +1,9 @@
 # The wallbox registers, and how each one was established
 
 Sungrow publishes no register document for its AC wallboxes. What follows was
-read off one — an **AC22E-01** on 2026-09-08, through the WiNet-S of an
-SH8.0RT-V112 at unit 3 — and then compared against every other source that
+read off one — an **AC22E-01**, through the WiNet-S of an SH8.0RT-V112 at
+unit 3, on 2026-09-08 while a car charged and on 2026-10-13 with none
+connected — and then compared against every other source that
 could be found: two community projects that measured their own, a discussion
 on this repo covering the same model, and a GPL-licensed project read for
 what exists rather than copied. Every row says how strongly it is held and by
@@ -19,7 +20,7 @@ session boundary tells them apart.
 
 | Source | Device | Licence | Notes |
 | --- | --- | --- | --- |
-| **Here** | AC22E-01, one firmware, one session, via a WiNet-S | MIT, this repo | `probe.py dump --save` writes the raw readings beside the script; they carry the real serial and stay local |
+| **Here** | AC22E-01, one firmware, two readings via a WiNet-S: a session ending (single phase), and idle with no car (three phase) | MIT, this repo | `probe.py dump --save` writes the raw readings beside the script; they carry the real serial and stay local |
 | [Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant](https://github.com/Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant) | Not stated | **No licence file** — used with the author's permission, and only for *which register means what* | Its charging-status enum is the single most useful thing any of the three has |
 | [KevinD987/sungrow-ac011e](https://github.com/KevinD987/sungrow-ac011e) | AC011E-01, by measurement | **MIT** | Carries its own confidence marks — VERIFIED, LIKELY, UNVERIFIED — and says plainly that the allocation is not manufacturer-confirmed and may move between firmwares |
 | [Discussion #571](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions/571) on this repo | AC22E-01 | this repo's own tracker | Found 2026-09-09. The **same model measured here**, which none of the other sources is. Gives names in the manufacturer's own idiom — `SetOutI`, `PhaseSwitch`, `Availability`, `RemoteControl`, `State` — and one scale that this project's reading contradicts, below |
@@ -51,26 +52,26 @@ unit 1.
 | 21201-21206 | ASCII | — | Serial number. **Never published**; masked out of every fingerprint | 11 characters | three sources |
 | 21216-21220 | ASCII | — | Model string, spelled out | `AC22E-01` | two sources |
 | 21224 | u16 | — | Device type code: `0x3F80` AC22E-01, `0x20DA` AC011E-01, `0x20ED` AC007-00 | `0x3F80` | two sources |
-| 21225 | u16 | — | Phase count as wired | 1 | two sources |
+| 21225 | u16 | — | Phase count in use. **Follows the phase mode**, not the wiring: 1 in single-phase mode, 3 in three-phase mode, on the same three-phase installation | 1 / 3 | two sources |
 | 21226-21235 | ASCII | — | A version string, and a fragment: the field is longer than the ten registers read | `LE-01.1E1.001.` | measured here |
 | 21262 | u16 | 1 V | Nominal voltage | 230 | three sources |
-| 21263 | u16 | 0.1 A | Rated current — 32.0 A, which is what a 22 kW three-phase unit draws. The AC011E project reads this address as a work mode and marks it UNVERIFIED; an enum would not be 320, so either the models differ or that mark is optimistic | 320 | measured here |
+| 21263 | u16 | 0.1 A | Rated current — 32.0 A, which is what a 22 kW three-phase unit draws. The AC011E project reads this address as a work mode and marks it UNVERIFIED; an enum would not be 320, so either the models differ or that mark is optimistic. It held 320 across a change of both phase mode and start mode, which a work mode would not | 320 | measured here |
 | 21268 | u16 | — | Remote control status | 1 | named elsewhere |
 | 21270 | u16 | — | Actual phase mode: 0 three phase, 1 single phase. The holding setpoint agrees | 1 | three sources |
-| 21272 | u16 | 1 W | Minimum charging power | 1380 | named elsewhere |
+| 21272 | u16 | 1 W | Minimum charging power: 6 A at 230 V on each phase in use, so it follows the phase mode | 1380 / 4140 | named elsewhere |
 | 21273 | u16 | 1 W | Nominal (maximum) charging power. 22080 names the model as surely as the type code does | 22080 | two sources |
 | 21300/21301 | u32, **low word first** | 1 Wh | Lifetime energy. **32-bit, not 16** — see below | 280.157 → 280.305 kWh | measured here |
 | 21302, 21304, 21306 | u16 | 0.1 V | Charging voltage, phases A/B/C. **0 when not charging** | 2279, 0, 0 | three sources |
 | 21303, 21305, 21307 | u16 | 0.1 A | Charging current, phases A/B/C | 88-146, 0, 0 | three sources |
 | 21308/21309 | u32, low word first | 1 W | Charging power | 1995-3324 W | three sources |
 | 21310/21311 | u32, low word first | 1 Wh | **This session's** energy. Reset to 15 when a new session began, which is what separates it from 21300 | 15 → 124 Wh | three sources |
-| 21312 | u16 | 0.01 V | **Control-pilot voltage.** 5.97 V charging, 9.03 V connected and not — the two levels IEC 61851 defines for states C and B, drifting as an analogue reading should | 597 / 903-893 | two sources |
-| 21313 | u16 | — | **Open.** 131-256 while charging, 0 when not; roughly a thirteenth of the power but not consistently. Neither project documents it | 192-256 | open |
+| 21312 | u16 | 0.01 V | **Control-pilot voltage.** 5.97 V charging, 9.03 V connected and not, 11.91 V with no vehicle — the levels IEC 61851 defines for states C, B and A, drifting as an analogue reading should | 597 / 903-893 / 1191 | two sources |
+| 21313 | u16 | — | **Open.** 131-256 while charging, 0 when not, and 0 with no vehicle; roughly a thirteenth of the power but not consistently. Neither project documents it | 192-256 | open |
 | 21314 | u16 | — | Start mode: 0 stopped, 1 start with EMS, 2 start by swiping | 1 | two sources |
 | 21315 | u16 | — | Power request | 1 | named elsewhere |
 | 21316 | u16 | — | Power control allowed | 1 | named elsewhere |
-| 21317 | u16 | — | **Charging status.** Codes below | 3 / 4 / 6 | three sources |
-| 21318/21319 | u32, low word first | epoch | Charging **start** time. See the note on the clock | 17:25:24 | named elsewhere |
+| 21317 | u16 | — | **Charging status.** Codes below | 1 / 3 / 4 / 6 | three sources |
+| 21318/21319 | u32, low word first | epoch | Charging **start** time. See the note on the clock. 0 with no vehicle connected, as is 21320 | 17:25:24 | named elsewhere |
 | 21320/21321 | u32, low word first | epoch | Charging **end** time; it advances while charging and freezes when the session ends | 17:28:28 | named elsewhere |
 | 21322 | u16 | 0.1 A | Tracks the output current setting in holding 21203 — 160 against 160 — but read 161 once while the setting stayed at 160, so "available current" fits better than "the setting, echoed" | 160-161 | measured here |
 
@@ -88,16 +89,16 @@ and no file in `scripts/sungrow_read_only_survey/` implements a Modbus write fun
 | 21231 | u16 | — | Configured unit id, read-only | — | named elsewhere |
 | 21232 | u16 | 0.1 km/kWh | Mileage per kWh, for the app's range estimate | 50 → 5.0 | named elsewhere |
 | 21233 | u16 | — | Configured minimum current | — | named elsewhere |
+| 21225-21230 | u16 × 6 | — | **The wallbox's clock**, local time: year (two digits), month, day, hour, minute, second. Read 26, 10, 13, 21, 12, 23 at 21:12 local on 2026-10-13, and 26, 9, 8, 17, 57, 44 during the run of 2026-09-08 | 26-10-13 21:12:23 | measured here |
 | 21263 | u16 | — | Working mode: 0 network, 2 plug and play, 6 EMS. **Did not answer here**, though one project names it | no answer | named elsewhere |
 
 ## The charging status codes
 
-Nine codes, from the wallbox project; the three this session visited are
-marked.
+Nine codes, from the wallbox project; the four measured here are marked.
 
 | Code | Meaning | Seen |
 | --- | --- | --- |
-| 1 | Idle | |
+| 1 | Idle | **yes**, with no vehicle connected |
 | 2 | Standby | |
 | 3 | Charging | **yes** |
 | 4 | Suspended by the charge point | **yes**, briefly, between two sessions |
@@ -146,6 +147,10 @@ at a moment when local time was 17:29 and UTC was 15:29. So decode as an
 epoch, then read the result as local time — the same quirk the inverter's own
 clock registers have.
 
+The wallbox's own clock agrees: holding 21225-21230 spell out the date and
+time field by field, and both readings showed local summer time (UTC+2), not
+UTC. Nothing decodes them yet; they are in the dump.
+
 ## What answers at all
 
 Measured across the whole span, so a reader knows where to look and where not
@@ -158,16 +163,18 @@ to:
 `scripts/sungrow_read_only_survey/sungrow_survey.py` dumps them whenever a wallbox answers —
 independently of the inverter's own dump question, because 206 addresses is a
 tenth of that dump's cost and a wallbox is the rarest thing this project sees.
-The serial is masked by `WALLBOX_MASKED`, which exists because it was
-once published.
+The serial's words are masked by `WALLBOX_MASKED`, and the document
+carries a hashed stand-in in their place, as it does for the inverter.
 
 ## What a fingerprint now carries
 
-Schema 14. The `wallbox` section of a document holds both halves:
+Schema 21. The `wallbox` section of a document holds both halves, and the
+serial's stand-in:
 
 ```json
 "wallbox": {
   "unit": 3,
+  "serial_anonymized_hashed": "anon-5155200572",
   "readings": {
     "charging_status": {"register": 21317, "value": 3, "means": "charging",
                         "held": "three sources"},
@@ -273,10 +280,17 @@ that measured the same model:
 ## What is still open
 
 - Register **21313**: measured behaviour, and no name in any of the three
-  sources.
-- The version string at 21226-21235 is a fragment.
-- Holding 21263 did not answer here.
+  sources. Only a second charging session can say more.
+- The version string at 21226-21235 is a fragment, the same in both readings.
+- Holding 21263 did not answer in either reading.
 - Register 21263 *input* reads 320, where the AC011E project reads that
-  address as a work mode. One of the two is wrong about this model.
-- Everything here is one unit, one firmware, one session, through a dongle. A
-  second AC22E would settle most of the remaining marks.
+  address as a work mode. It held 320 while the phase mode and start mode both
+  changed, so the work-mode reading looks wrong for this model; a manufacturer
+  document would settle it.
+- Input 21215 changed from 123 to 251 between the readings, and nothing names
+  it.
+- Holding 21316-21329, in the scattered region above 21248, reads the same
+  words in both readings but **shifted by one address**. A record that moves
+  is not a set of registers, and nothing here should be decoded from it.
+- Everything here is one unit, one firmware, through a dongle. A second
+  AC22E would settle most of the remaining marks.

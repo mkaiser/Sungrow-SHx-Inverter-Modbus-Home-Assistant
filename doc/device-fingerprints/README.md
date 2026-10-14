@@ -27,6 +27,12 @@ So **the absence of the block means "this run only read"**, never "the writes
 failed". That is why schema 19 is a bump rather than a key that quietly
 appeared: a reader of an older document has to be able to tell the two apart.
 
+**The block can be older than the document.** A re-survey replaces the
+reading and carries the `control_test` block forward unchanged, because a
+write test is not repeated just to refresh a reading. The block carries no
+date of its own, so the document's `read_on` dates the reading, not the
+writes; the commit that added the block dates those.
+
 What is in it, when it is there: for each control, the value the run chose, the
 raw register word that came back, the word the specification says should have
 been there, and a verdict. Then what the inverter actually did while limits were

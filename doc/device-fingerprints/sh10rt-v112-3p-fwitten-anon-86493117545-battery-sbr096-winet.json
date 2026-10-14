@@ -1,18 +1,18 @@
 {
   "schema": 20,
-  "command_line": "scripts/sungrow_read_only_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport winet --proxy no --reporter fwitten --comment 'Read by the maintainer over a VPN on 2026-09-25 with nothing else polling the inverters, and no Modbus proxy in the path. This house has two inverters in a master/slave cluster, each reachable at two addresses. The master through its WiNet-S; which medium the dongle uses is not established.' --other-inverter no --dump",
-  "read_on": "2026-09-25",
-  "read_at_local": "2026-09-25T17:06:01+02:00",
+  "command_line": "probe.py capabilities <host> --port 502 --unit 1 --timeout 10 --passes 8 --transport winet --proxy no --reporter fwitten --comment 'Read by the maintainer over a VPN on 2026-10-13 with nothing else polling the inverters, and no Modbus proxy in the path. This house has two inverters in a master/slave cluster, each reachable at two addresses. The master through its WiNet-S; which medium the dongle uses is not established.' --other-inverter no --dump",
+  "read_on": "2026-10-13",
+  "read_at_local": "2026-10-13T21:48:16+02:00",
   "user_inputs": {
     "battery": "",
-    "comment": "Read by the maintainer over a VPN on 2026-09-25 with nothing else polling the inverters, and no Modbus proxy in the path. This house has two inverters in a master/slave cluster, each reachable at two addresses. The master through its WiNet-S; which medium the dongle uses is not established.",
+    "comment": "Read by the maintainer over a VPN on 2026-10-13 with nothing else polling the inverters, and no Modbus proxy in the path. This house has two inverters in a master/slave cluster, each reachable at two addresses. The master through its WiNet-S; which medium the dongle uses is not established.",
     "modbus_proxy": "no",
     "other_inverter": "no",
     "other_inverter_detail": "",
     "reporter": "fwitten",
     "transport": "winet"
   },
-  "ip_address_last_two_octets": "176.028",
+  "ip_address_last_two_octets": "205.241",
   "device": {
     "device_type": "SH10RT-V112",
     "device_type_code": "0x0E0F",
@@ -48,91 +48,91 @@
       "backup_frequency": 0.0,
       "backup_mode_raw": 170,
       "backup_phase_a_current": 0.2,
-      "backup_phase_a_power": -2,
-      "backup_phase_a_voltage": 234.1,
+      "backup_phase_a_power": -30,
+      "backup_phase_a_voltage": 235.5,
       "backup_phase_b_current": 0.2,
-      "backup_phase_b_power": 7,
-      "backup_phase_b_voltage": 233.1,
+      "backup_phase_b_power": -26,
+      "backup_phase_b_voltage": 234.7,
       "backup_phase_c_current": 0.2,
-      "backup_phase_c_power": -2,
-      "backup_phase_c_voltage": 233.5,
+      "backup_phase_c_power": -31,
+      "backup_phase_c_voltage": 235.0,
       "battery_capacity_high_precision": 9.6,
       "battery_charging_start_power": 200,
-      "battery_current": 0.0,
+      "battery_current": 2.3,
       "battery_discharging_start_power": 0,
       "battery_firmware_version": null,
       "battery_forced_charge_discharge_cmd_raw": 204,
       "battery_forced_charge_discharge_power": 0,
-      "battery_level": 100.0,
+      "battery_level": 65.4,
       "battery_max_charge_power": 3600,
       "battery_max_discharge_power": 5900,
       "battery_max_soc": 100.0,
       "battery_min_soc": 7.0,
-      "battery_power": 0,
+      "battery_power": 473,
       "battery_reserved_soc_for_backup": 0,
       "battery_state_of_health": 96.0,
-      "battery_temperature": 23.0,
-      "battery_voltage": 199.2,
+      "battery_temperature": 21.0,
+      "battery_voltage": 196.0,
       "bdc_rated_power": 10000,
-      "bms_max_charging_current": 0,
+      "bms_max_charging_current": 30,
       "bms_max_discharging_current": 30,
       "communication_module_firmware_version": null,
-      "daily_battery_charge": 8.5,
-      "daily_battery_charge_from_pv": 8.4,
-      "daily_battery_discharge": 4.8,
+      "daily_battery_charge": 7.4,
+      "daily_battery_charge_from_pv": 5.1,
+      "daily_battery_discharge": 6.3,
       "daily_direct_energy_consumption": 0.0,
-      "daily_exported_energy": 12.0,
-      "daily_exported_energy_from_pv": 12.0,
-      "daily_imported_energy": 0.3,
-      "daily_pv_generation": 28.7,
-      "daily_pv_generation_battery_discharge": 24.2,
+      "daily_exported_energy": 4.9,
+      "daily_exported_energy_from_pv": 4.9,
+      "daily_imported_energy": 0.2,
+      "daily_pv_generation": 8.9,
+      "daily_pv_generation_battery_discharge": 9.4,
       "ems_mode_selection_raw": 0,
       "export_power_limit": 24990,
       "export_power_limit_max": 24990,
       "export_power_limit_min": 11880,
       "export_power_limit_mode_raw": 170,
-      "export_power_raw": 0,
+      "export_power_raw": 20,
       "feed_in_limitation_ratio": null,
       "forced_startup_under_low_soc_raw": null,
-      "grid_frequency": 50.0,
+      "grid_frequency": 49.98,
       "inverter_firmware_version": null,
       "inverter_rated_output": 10000,
-      "inverter_temperature": 43.0,
+      "inverter_temperature": 35.7,
       "load_adjustment_mode_enable_raw": 85,
       "load_adjustment_mode_selection_raw": 3,
-      "load_power": 2930,
-      "meter_active_power": 30,
+      "load_power": 400,
+      "meter_active_power": -3,
       "meter_channel_2_phase_a_active_power": 0,
       "meter_channel_2_phase_b_active_power": 0,
       "meter_channel_2_phase_c_active_power": 0,
       "meter_channel_2_total_active_power": 0,
-      "meter_phase_a_active_power": 65,
+      "meter_phase_a_active_power": 103,
       "meter_phase_a_current": 0.0,
       "meter_phase_a_voltage": 0.0,
-      "meter_phase_b_active_power": -45,
+      "meter_phase_b_active_power": -3,
       "meter_phase_b_current": 0.0,
       "meter_phase_b_voltage": 0.0,
-      "meter_phase_c_active_power": -72,
+      "meter_phase_c_active_power": -62,
       "meter_phase_c_current": 0.0,
       "meter_phase_c_voltage": 0.0,
-      "mppt1_current": 3.4,
-      "mppt1_voltage": 337.8,
-      "mppt2_current": 4.2,
-      "mppt2_voltage": 451.6,
+      "mppt1_current": 0.0,
+      "mppt1_voltage": 0.0,
+      "mppt2_current": 0.0,
+      "mppt2_voltage": 0.0,
       "mppt3_current": 0.0,
       "mppt3_voltage": 0.0,
       "mppt4_current": 0.0,
       "mppt4_voltage": 0.0,
-      "phase_a_current": 4.1,
-      "phase_a_voltage": 234.1,
-      "phase_b_current": 4.1,
-      "phase_b_voltage": 234.7,
-      "phase_c_current": 4.2,
-      "phase_c_voltage": 234.3,
+      "phase_a_current": 0.6,
+      "phase_a_voltage": 235.5,
+      "phase_b_current": 0.6,
+      "phase_b_voltage": 236.5,
+      "phase_c_current": 0.6,
+      "phase_c_voltage": 235.7,
       "power_factor": 1.0,
-      "power_flow_status": 9,
+      "power_flow_status": 44,
       "pv_power_limitation_raw": null,
-      "reactive_power": 1,
+      "reactive_power": -2,
       "running_state_raw": 33024,
       "self_consumption_of_today": 0.0,
       "sungrow_arm_software": "ARM_SAPPHIRE-H_V11_V01_B",
@@ -143,18 +143,18 @@
       "sungrow_version_2": "SAPPHIRE-H_03011.95.03",
       "sungrow_version_3": null,
       "sungrow_version_4_sungrow_battery": null,
-      "total_active_power": 2897,
-      "total_backup_power": 1,
-      "total_battery_charge": 5925.6,
-      "total_battery_charge_from_pv": 4027.5,
-      "total_battery_discharge": 5543.3,
-      "total_dc_power": 3018,
+      "total_active_power": 426,
+      "total_backup_power": -87,
+      "total_battery_charge": 6091.9,
+      "total_battery_charge_from_pv": 4163.5,
+      "total_battery_discharge": 5702.8,
+      "total_dc_power": 0,
       "total_direct_energy_consumption": 322.6,
-      "total_exported_energy": 44421.2,
-      "total_exported_energy_from_pv": 39570.0,
-      "total_imported_energy": 2612.2,
-      "total_pv_generation": 31287.4,
-      "total_pv_generation_battery_discharge": 31953.1
+      "total_exported_energy": 44721.3,
+      "total_exported_energy_from_pv": 39870.5,
+      "total_imported_energy": 2654.0,
+      "total_pv_generation": 31652.3,
+      "total_pv_generation_battery_discharge": 32323.8
     }
   },
   "register_dump": {
@@ -530,11 +530,11 @@
       "33198": 65535,
       "33199": 65535,
       "4999": 2026,
-      "5000": 9,
-      "5001": 25,
-      "5002": 17,
-      "5003": 6,
-      "5004": 49,
+      "5000": 10,
+      "5001": 13,
+      "5002": 21,
+      "5003": 49,
+      "5004": 4,
       "5005": 207,
       "5006": 85,
       "5007": 1000,
@@ -567,7 +567,7 @@
       "5034": 65535,
       "5035": 164,
       "5036": 65535,
-      "5037": 9229,
+      "5037": 106,
       "5038": 65535,
       "5039": 65535,
       "5040": 65535,
@@ -652,52 +652,52 @@
       "10798": null,
       "10799": null,
       "12999": 33024,
-      "13000": 13,
-      "13001": 287,
-      "13002": 50730,
+      "13000": 44,
+      "13001": 89,
+      "13002": 54379,
       "13003": 4,
-      "13004": 120,
-      "13005": 2484,
+      "13004": 49,
+      "13005": 5489,
       "13006": 6,
-      "13007": 2936,
+      "13007": 400,
       "13008": 0,
-      "13009": 0,
-      "13010": 0,
-      "13011": 84,
-      "13012": 40275,
+      "13009": 65513,
+      "13010": 65535,
+      "13011": 51,
+      "13012": 41635,
       "13013": 0,
       "13014": 0,
       "13015": 0,
       "13016": 0,
       "13017": 3226,
       "13018": 0,
-      "13019": 1992,
+      "13019": 1960,
       "13020": 23,
-      "13021": 461,
-      "13022": 1000,
+      "13021": 473,
+      "13022": 653,
       "13023": 960,
-      "13024": 230,
-      "13025": 48,
-      "13026": 55433,
+      "13024": 210,
+      "13025": 63,
+      "13026": 57028,
       "13027": 0,
       "13028": 0,
       "13029": 0,
-      "13030": 41,
-      "13031": 41,
-      "13032": 41,
-      "13033": 2931,
+      "13030": 6,
+      "13031": 6,
+      "13032": 6,
+      "13033": 426,
       "13034": 0,
-      "13035": 3,
-      "13036": 26122,
+      "13035": 2,
+      "13036": 26540,
       "13037": 0,
       "13038": 96,
-      "13039": 85,
-      "13040": 59256,
+      "13039": 74,
+      "13040": 60919,
       "13041": 0,
       "13042": 0,
       "13043": 0,
-      "13044": 120,
-      "13045": 50996,
+      "13044": 49,
+      "13045": 53997,
       "13046": 6,
       "13047": 0,
       "13048": 0,
@@ -752,7 +752,7 @@
       "13097": 0,
       "13098": 0,
       "13099": 0,
-      "13100": 0,
+      "13100": 30,
       "13101": 30,
       "13102": 0,
       "13103": 0,
@@ -1254,25 +1254,25 @@
       "4999": 3599,
       "5000": 100,
       "5001": 1,
-      "5002": 243,
-      "5003": 57388,
+      "5002": 95,
+      "5003": 61095,
       "5004": 4,
       "5005": 0,
       "5006": 0,
-      "5007": 430,
+      "5007": 357,
       "5008": 0,
       "5009": 0,
-      "5010": 3456,
-      "5011": 28,
-      "5012": 4565,
-      "5013": 39,
+      "5010": 0,
+      "5011": 0,
+      "5012": 0,
+      "5013": 0,
       "5014": 0,
       "5015": 0,
-      "5016": 2615,
+      "5016": 0,
       "5017": 0,
-      "5018": 2341,
-      "5019": 2347,
-      "5020": 2343,
+      "5018": 2355,
+      "5019": 2365,
+      "5020": 2357,
       "5021": 0,
       "5022": 0,
       "5023": 0,
@@ -1284,10 +1284,10 @@
       "5029": 0,
       "5030": 0,
       "5031": 0,
-      "5032": 65533,
+      "5032": 65532,
       "5033": 65535,
       "5034": 1000,
-      "5035": 500,
+      "5035": 499,
       "5036": 0,
       "5037": 0,
       "5038": 0,
@@ -1338,7 +1338,7 @@
       "5083": 0,
       "5084": 0,
       "5085": 0,
-      "5086": 2935,
+      "5086": 426,
       "5087": 0,
       "5088": 0,
       "5089": 0,
@@ -1411,13 +1411,13 @@
       "5156": null,
       "5157": null,
       "5158": null,
-      "5600": 65503,
-      "5601": 65535,
-      "5602": 117,
+      "5600": 2,
+      "5601": 0,
+      "5602": 103,
       "5603": 0,
-      "5604": 65492,
+      "5604": 65533,
       "5605": 65535,
-      "5606": 65493,
+      "5606": 65474,
       "5607": 65535,
       "5608": 0,
       "5609": 0,
@@ -1441,11 +1441,11 @@
       "5627": 100,
       "5628": 0,
       "5629": 0,
-      "5630": 18,
+      "5630": 23,
       "5631": 0,
       "5632": 0,
       "5633": 0,
-      "5634": 0,
+      "5634": 30,
       "5635": 30,
       "5636": 0,
       "5637": 0,
@@ -1533,22 +1533,22 @@
       "5719": 2,
       "5720": 2,
       "5721": 2,
-      "5722": 65533,
-      "5723": 7,
-      "5724": 65535,
-      "5725": 2,
-      "5726": 0,
+      "5722": 65506,
+      "5723": 65511,
+      "5724": 65504,
+      "5725": 65449,
+      "5726": 65535,
       "5727": 0,
       "5728": 0,
       "5729": 0,
-      "5730": 2341,
-      "5731": 2331,
-      "5732": 2335,
+      "5730": 2355,
+      "5731": 2347,
+      "5732": 2350,
       "5733": 0,
       "5734": 0,
       "5735": 0,
       "5736": 0,
-      "5737": 65080,
+      "5737": 65470,
       "5738": 65535,
       "5739": 65535,
       "5740": 0,
@@ -1673,6 +1673,427 @@
       "6198": null
     }
   },
+  "block_read_test": {
+    "answered": [
+      {
+        "component": "realtime_input",
+        "count": 10,
+        "register": 13000,
+        "space": "input"
+      },
+      {
+        "component": "fast_input",
+        "count": 25,
+        "register": 5011,
+        "space": "input"
+      },
+      {
+        "component": "fast_input",
+        "count": 2,
+        "register": 5115,
+        "space": "input"
+      },
+      {
+        "component": "fast_input",
+        "count": 1,
+        "register": 5242,
+        "space": "input"
+      },
+      {
+        "component": "fast_input",
+        "count": 8,
+        "register": 5601,
+        "space": "input"
+      },
+      {
+        "component": "fast_input",
+        "count": 1,
+        "register": 5631,
+        "space": "input"
+      },
+      {
+        "component": "fast_input",
+        "count": 27,
+        "register": 5720,
+        "space": "input"
+      },
+      {
+        "component": "fast_input",
+        "count": 26,
+        "register": 13010,
+        "space": "input"
+      },
+      {
+        "component": "battery_power",
+        "count": 2,
+        "register": 5214,
+        "space": "input"
+      },
+      {
+        "component": "meter_channel_2",
+        "count": 8,
+        "register": 13200,
+        "space": "input"
+      },
+      {
+        "component": "fast_holding",
+        "count": 17,
+        "register": 13002,
+        "space": "holding"
+      },
+      {
+        "component": "fast_holding",
+        "count": 51,
+        "register": 13050,
+        "space": "holding"
+      },
+      {
+        "component": "fast_holding",
+        "count": 2,
+        "register": 33047,
+        "space": "holding"
+      },
+      {
+        "component": "fast_holding",
+        "count": 2,
+        "register": 33149,
+        "space": "holding"
+      },
+      {
+        "component": "apl_shutdown_at_zero",
+        "count": 1,
+        "register": 31213,
+        "space": "holding"
+      },
+      {
+        "component": "medium_input",
+        "count": 1,
+        "register": 5008,
+        "space": "input"
+      },
+      {
+        "component": "medium_input",
+        "count": 3,
+        "register": 13023,
+        "space": "input"
+      },
+      {
+        "component": "slowest_input",
+        "count": 26,
+        "register": 2582,
+        "space": "input"
+      },
+      {
+        "component": "slowest_input",
+        "count": 54,
+        "register": 4952,
+        "space": "input"
+      },
+      {
+        "component": "slowest_input",
+        "count": 18,
+        "register": 5622,
+        "space": "input"
+      },
+      {
+        "component": "slowest_input",
+        "count": 46,
+        "register": 13002,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_battery",
+        "count": 15,
+        "register": 13280,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_communication_module",
+        "count": 15,
+        "register": 13265,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_inverter",
+        "count": 15,
+        "register": 13250,
+        "space": "input"
+      },
+      {
+        "component": "identity",
+        "count": 51,
+        "register": 4952,
+        "space": "input"
+      }
+    ],
+    "attempts": 2,
+    "client": "modbus-connection -- rejects a frame exactly as the integration does",
+    "intermittent": [],
+    "narrowed": [
+      {
+        "component": "battery_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2628, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2629,
+        "space": "input"
+      },
+      {
+        "component": "battery_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2629, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2630,
+        "space": "input"
+      },
+      {
+        "component": "battery_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2630, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2631,
+        "space": "input"
+      },
+      {
+        "component": "battery_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2631, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2632,
+        "space": "input"
+      },
+      {
+        "component": "battery_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2632, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2633,
+        "space": "input"
+      },
+      {
+        "component": "battery_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2633, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2634,
+        "space": "input"
+      },
+      {
+        "component": "battery_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2634, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2635,
+        "space": "input"
+      },
+      {
+        "component": "battery_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2635, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2636,
+        "space": "input"
+      },
+      {
+        "component": "battery_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2636, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2637,
+        "space": "input"
+      },
+      {
+        "component": "battery_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2637, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2638,
+        "space": "input"
+      },
+      {
+        "component": "battery_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2638, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2639,
+        "space": "input"
+      },
+      {
+        "component": "battery_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2639, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2640,
+        "space": "input"
+      },
+      {
+        "component": "battery_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2640, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2641,
+        "space": "input"
+      },
+      {
+        "component": "battery_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2641, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2642,
+        "space": "input"
+      },
+      {
+        "component": "battery_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2642, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2643,
+        "space": "input"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2612, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2613,
+        "space": "input"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2613, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2614,
+        "space": "input"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2614, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2615,
+        "space": "input"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2615, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2616,
+        "space": "input"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2616, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2617,
+        "space": "input"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2617, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2618,
+        "space": "input"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2618, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2619,
+        "space": "input"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2619, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2620,
+        "space": "input"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2620, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2621,
+        "space": "input"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2621, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2622,
+        "space": "input"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2622, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2623,
+        "space": "input"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2623, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2624,
+        "space": "input"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2624, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2625,
+        "space": "input"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2625, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2626,
+        "space": "input"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "count": 1,
+        "detail": "2/2, read_input_registers(2626, 1): Modbus Exception 0x02 for function code 0x04",
+        "outcome": "refused with an exception",
+        "register": 2627,
+        "space": "input"
+      }
+    ],
+    "never_answered": [
+      {
+        "component": "battery_firmware",
+        "count": 15,
+        "outcomes": [
+          "refused with an exception"
+        ],
+        "register": 2629,
+        "space": "input"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "count": 15,
+        "outcomes": [
+          "refused with an exception"
+        ],
+        "register": 2613,
+        "space": "input"
+      }
+    ],
+    "reconnects": 0,
+    "rounds": 3
+  },
   "battery_pack": {
     "readings": {
       "components_that_did_not_answer": [
@@ -1680,13 +2101,13 @@
         "sbr_battery_modules (IllegalDataAddressError)"
       ],
       "values": {
-        "current": 1.3,
-        "state_of_charge": 100.0,
+        "current": 2.5,
+        "state_of_charge": 67.4,
         "state_of_health": 96,
-        "temperature": 23.2,
-        "total_charge": 5925.6,
-        "total_discharge": 5543.4,
-        "voltage": 198.3
+        "temperature": 21.3,
+        "total_charge": 6091.9,
+        "total_discharge": 5702.8,
+        "voltage": 196.0
       }
     },
     "unit": 2
@@ -1695,13 +2116,13 @@
     "MPPT1 voltage": {
       "state": "present",
       "values": [
-        3381
+        0
       ]
     },
     "MPPT2 voltage": {
       "state": "present",
       "values": [
-        4645
+        0
       ]
     },
     "MPPT3 voltage": {
@@ -1734,19 +2155,19 @@
     "battery level": {
       "state": "present",
       "values": [
-        1000
+        652
       ]
     },
     "battery temperature": {
       "state": "present",
       "values": [
-        230
+        210
       ]
     },
     "battery voltage": {
       "state": "present",
       "values": [
-        1992
+        1960
       ]
     },
     "device type code (5000)": {
@@ -1782,26 +2203,26 @@
     "phase A voltage": {
       "state": "present",
       "values": [
-        2341
+        2355
       ]
     },
     "phase B voltage": {
       "state": "present",
       "values": [
-        2347
+        2365
       ]
     },
     "phase C voltage": {
       "state": "present",
       "values": [
-        2343
+        2357
       ]
     },
     "unit 2 SBR battery module block": {
       "state": "present",
       "values": [
-        1980,
-        35
+        1960,
+        25
       ]
     },
     "unit 2 inverter device type code": {

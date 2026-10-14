@@ -69,7 +69,7 @@ fi
 # publishes. Idempotent, so an instance that is already onboarded prints one
 # line and stops.
 (
-    python3 "${PWD}/scripts/ha_onboard.py" --url http://127.0.0.1:8123 \
+    python3 "${PWD}/scripts/dev/ha_onboard.py" --url http://127.0.0.1:8123 \
         --username dev --password dev || true
 ) &
 

@@ -27,6 +27,7 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
+from sungrow_modbus.fingerprint import stand_in
 from sungrow_modbus.wallbox_registers import COMPONENTS
 
 from .conftest import SERIAL
@@ -34,7 +35,10 @@ from .conftest import SERIAL
 ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
 REPO = Path(__file__).resolve().parent.parent
-FINGERPRINT = next((REPO / "doc" / "device-fingerprints").glob("*wallbox*.json"))
+#: A session that had just completed (status 6), which the published document
+#: no longer is: it was replaced by an idle reading. Completed is the state
+#: that tells the status table apart from a guess, so the tests keep it.
+FINGERPRINT = REPO / "tests" / "data" / "wallbox_ac22e01_completed_session.json"
 
 
 def _words() -> dict[str, dict[int, int]]:
@@ -305,7 +309,7 @@ async def test_the_device_page_publishes_the_surveys_wallbox_section(
     from custom_components.sungrow_modbus.const import CONF_SURVEY_DUMP
     from custom_components.sungrow_modbus.fingerprint import async_build
 
-    serial_words = [0x4139, 0x3837, 0x3635, 0x3433, 0x3231, 0x3000]
+    serial_words = [0x4139, 0x3837, 0x3635, 0x3433, 0x3231, 0x0000]
     words = {
         "input": {
             **WORDS["input"],
@@ -323,11 +327,18 @@ async def test_the_device_page_publishes_the_surveys_wallbox_section(
     section = document["wallbox"]
     assert section["unit"] == 3
     assert section["readings"] == committed["readings"]
+    # The serial as the inverter's is published: a stand-in, in both modes.
+    assert section["serial_anonymized_hashed"] == stand_in("A987654321")
     if dumping:
-        assert set(section) == {"unit", "readings", "register_dump"}
+        assert set(section) == {
+            "unit",
+            "serial_anonymized_hashed",
+            "readings",
+            "register_dump",
+        }
         published = section["register_dump"]["input"]
         assert [published[str(a)] for a in range(21200, 21206)] == [None] * 6
         assert published["21299"] == committed["register_dump"]["input"]["21299"]
     else:
-        assert set(section) == {"unit", "readings"}
+        assert set(section) == {"unit", "serial_anonymized_hashed", "readings"}
     assert "A987654321" not in json.dumps(document)

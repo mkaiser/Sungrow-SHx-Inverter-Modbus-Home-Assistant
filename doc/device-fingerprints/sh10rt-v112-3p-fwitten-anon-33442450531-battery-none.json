@@ -1,18 +1,18 @@
 {
   "schema": 20,
-  "command_line": "scripts/sungrow_read_only_survey/probe.py capabilities <host> --port 502 --unit 2 --timeout 10 --passes 8 --transport direct_lan --proxy no --reporter fwitten --comment 'Read by the maintainer over a VPN on 2026-09-25 with nothing else polling the inverters, and no Modbus proxy in the path. This house has two inverters in a master/slave cluster, each reachable at two addresses. The slave, at its own LAN port, where it answers on device address 2.' --other-inverter no --dump",
-  "read_on": "2026-09-25",
-  "read_at_local": "2026-09-25T16:39:12+02:00",
+  "command_line": "probe.py capabilities <host> --port 502 --unit 2 --timeout 10 --passes 8 --transport direct_lan --proxy no --reporter fwitten --comment 'Read by the maintainer over a VPN on 2026-10-14 with nothing else polling the inverters, and no Modbus proxy in the path. This house has two inverters in a master/slave cluster, each reachable at two addresses. The slave, at its own LAN port, where it answers on device address 2.' --other-inverter no --dump",
+  "read_on": "2026-10-14",
+  "read_at_local": "2026-10-14T18:10:28+02:00",
   "user_inputs": {
     "battery": "",
-    "comment": "Read by the maintainer over a VPN on 2026-09-25 with nothing else polling the inverters, and no Modbus proxy in the path. This house has two inverters in a master/slave cluster, each reachable at two addresses. The slave, at its own LAN port, where it answers on device address 2.",
+    "comment": "Read by the maintainer over a VPN on 2026-10-14 with nothing else polling the inverters, and no Modbus proxy in the path. This house has two inverters in a master/slave cluster, each reachable at two addresses. The slave, at its own LAN port, where it answers on device address 2.",
     "modbus_proxy": "no",
     "other_inverter": "no",
     "other_inverter_detail": "",
     "reporter": "fwitten",
     "transport": "direct_lan"
   },
-  "ip_address_last_two_octets": "176.029",
+  "ip_address_last_two_octets": "205.140",
   "device": {
     "device_type": "SH10RT-V112",
     "device_type_code": "0x0E0F",
@@ -51,15 +51,15 @@
       "apl_shutdown_at_zero_raw": 85,
       "backup_frequency": null,
       "backup_mode_raw": 170,
-      "backup_phase_a_current": 0.1,
-      "backup_phase_a_power": -3,
-      "backup_phase_a_voltage": 233.8,
+      "backup_phase_a_current": 0.2,
+      "backup_phase_a_power": -31,
+      "backup_phase_a_voltage": 228.2,
       "backup_phase_b_current": 0.1,
-      "backup_phase_b_power": 6,
-      "backup_phase_b_voltage": 234.0,
+      "backup_phase_b_power": -28,
+      "backup_phase_b_voltage": 227.8,
       "backup_phase_c_current": 0.2,
-      "backup_phase_c_power": -3,
-      "backup_phase_c_voltage": 235.3,
+      "backup_phase_c_power": -32,
+      "backup_phase_c_voltage": 229.8,
       "battery_capacity_high_precision": 0.0,
       "battery_charging_start_power": 200,
       "battery_current": 0.0,
@@ -88,8 +88,8 @@
       "daily_exported_energy": 0.0,
       "daily_exported_energy_from_pv": 0.0,
       "daily_imported_energy": 0.0,
-      "daily_pv_generation": 22.4,
-      "daily_pv_generation_battery_discharge": 21.8,
+      "daily_pv_generation": 19.5,
+      "daily_pv_generation_battery_discharge": 18.9,
       "ems_mode_selection_raw": 0,
       "export_power_limit": 11880,
       "export_power_limit_max": 11880,
@@ -101,7 +101,7 @@
       "grid_frequency": 49.97,
       "inverter_firmware_version": null,
       "inverter_rated_output": 10000,
-      "inverter_temperature": 40.8,
+      "inverter_temperature": 33.9,
       "load_adjustment_mode_enable_raw": 85,
       "load_adjustment_mode_selection_raw": 3,
       "load_power": null,
@@ -119,25 +119,25 @@
       "meter_phase_c_active_power": null,
       "meter_phase_c_current": 327.67,
       "meter_phase_c_voltage": -0.1,
-      "mppt1_current": 6.1,
-      "mppt1_voltage": 546.5,
-      "mppt2_current": 0.6,
-      "mppt2_voltage": 362.5,
+      "mppt1_current": 0.2,
+      "mppt1_voltage": 504.9,
+      "mppt2_current": 0.1,
+      "mppt2_voltage": 314.8,
       "mppt3_current": null,
       "mppt3_voltage": null,
       "mppt4_current": null,
       "mppt4_voltage": null,
-      "phase_a_current": 4.9,
-      "phase_a_voltage": 234.7,
-      "phase_b_current": 4.9,
-      "phase_b_voltage": 234.2,
-      "phase_c_current": 4.9,
-      "phase_c_voltage": 234.0,
+      "phase_a_current": 0.5,
+      "phase_a_voltage": 228.8,
+      "phase_b_current": 0.5,
+      "phase_b_voltage": 227.8,
+      "phase_c_current": 0.4,
+      "phase_c_voltage": 228.2,
       "power_factor": 1.0,
-      "power_flow_status": 1,
+      "power_flow_status": 0,
       "pv_power_limitation_raw": null,
-      "reactive_power": -1,
-      "running_state_raw": 128,
+      "reactive_power": -7,
+      "running_state_raw": 64,
       "self_consumption_of_today": 0.0,
       "sungrow_arm_software": "ARM_SAPPHIRE-H_V11_V01_B",
       "sungrow_device_type_code": 3599,
@@ -147,18 +147,18 @@
       "sungrow_version_2": "SAPPHIRE-H_03011.95.03",
       "sungrow_version_3": "SUBCTL-S_04011.01.01",
       "sungrow_version_4_sungrow_battery": null,
-      "total_active_power": 3490,
-      "total_backup_power": 1,
+      "total_active_power": 112,
+      "total_backup_power": 0,
       "total_battery_charge": 0.0,
       "total_battery_charge_from_pv": 0.0,
       "total_battery_discharge": 0.0,
-      "total_dc_power": 3578,
+      "total_dc_power": 0,
       "total_direct_energy_consumption": 8052.1,
       "total_exported_energy": 0.0,
       "total_exported_energy_from_pv": 0.0,
       "total_imported_energy": 0.0,
-      "total_pv_generation": 26909.7,
-      "total_pv_generation_battery_discharge": 26470.9
+      "total_pv_generation": 27267.1,
+      "total_pv_generation_battery_discharge": 26818.3
     }
   },
   "register_dump": {
@@ -231,10 +231,10 @@
       "10797": 65535,
       "10798": 65535,
       "10799": 65535,
-      "12999": 128,
-      "13000": 1,
-      "13001": 229,
-      "13002": 6958,
+      "12999": 64,
+      "13000": 0,
+      "13001": 195,
+      "13002": 10527,
       "13003": 4,
       "13004": 0,
       "13005": 0,
@@ -246,7 +246,7 @@
       "13011": 0,
       "13012": 0,
       "13013": 0,
-      "13014": 57299,
+      "13014": 59797,
       "13015": 2,
       "13016": 0,
       "13017": 14985,
@@ -262,10 +262,10 @@
       "13027": 0,
       "13028": 0,
       "13029": 65535,
-      "13030": 47,
-      "13031": 47,
-      "13032": 47,
-      "13033": 3367,
+      "13030": 4,
+      "13031": 4,
+      "13032": 4,
+      "13033": 77,
       "13034": 0,
       "13035": 0,
       "13036": 0,
@@ -279,7 +279,7 @@
       "13044": 0,
       "13045": 0,
       "13046": 0,
-      "13047": 3472,
+      "13047": 0,
       "13048": 0,
       "13049": 0,
       "13050": 16384,
@@ -570,37 +570,37 @@
       "4999": 3599,
       "5000": 100,
       "5001": 1,
-      "5002": 223,
-      "5003": 2570,
+      "5002": 189,
+      "5003": 6039,
       "5004": 4,
       "5005": 65535,
       "5006": 65535,
-      "5007": 406,
-      "5008": 3368,
+      "5007": 337,
+      "5008": 78,
       "5009": 0,
-      "5010": 5406,
-      "5011": 59,
-      "5012": 3595,
-      "5013": 6,
+      "5010": 5276,
+      "5011": 1,
+      "5012": 2784,
+      "5013": 1,
       "5014": 65535,
       "5015": 65535,
-      "5016": 3474,
+      "5016": 0,
       "5017": 0,
-      "5018": 2336,
-      "5019": 2337,
-      "5020": 2341,
-      "5021": 47,
-      "5022": 47,
-      "5023": 47,
+      "5018": 2292,
+      "5019": 2277,
+      "5020": 2285,
+      "5021": 4,
+      "5022": 4,
+      "5023": 4,
       "5024": 65535,
       "5025": 65535,
       "5026": 65535,
       "5027": 65535,
       "5028": 65535,
       "5029": 65535,
-      "5030": 3368,
+      "5030": 77,
       "5031": 0,
-      "5032": 65531,
+      "5032": 65533,
       "5033": 65535,
       "5034": 1000,
       "5035": 500,
@@ -638,7 +638,7 @@
       "5067": 65535,
       "5068": 65535,
       "5069": 65535,
-      "5070": 689,
+      "5070": 631,
       "5071": 65535,
       "5072": 65535,
       "5073": 65535,
@@ -655,7 +655,7 @@
       "5084": 65535,
       "5085": 65535,
       "5086": 65535,
-      "5087": 3368,
+      "5087": 78,
       "5088": 0,
       "5089": 65535,
       "5090": 65535,
@@ -714,7 +714,7 @@
       "5143": 65535,
       "5144": 65535,
       "5145": 65535,
-      "5146": 6340,
+      "5146": 6200,
       "5147": 5001,
       "5148": 65535,
       "5149": 65535,
@@ -786,8 +786,8 @@
       "5656": 65535,
       "5657": 65535,
       "5658": 100,
-      "5659": 229,
-      "5660": 6958,
+      "5659": 195,
+      "5660": 10527,
       "5661": 4,
       "5662": 0,
       "5663": 0,
@@ -802,8 +802,8 @@
       "5672": 0,
       "5673": 0,
       "5674": 0,
-      "5675": 223,
-      "5676": 2570,
+      "5675": 189,
+      "5676": 6039,
       "5677": 4,
       "5678": 0,
       "5679": 2,
@@ -846,20 +846,20 @@
       "5716": 65535,
       "5717": 65535,
       "5718": 65535,
-      "5719": 1,
+      "5719": 2,
       "5720": 1,
       "5721": 2,
-      "5722": 65534,
-      "5723": 5,
-      "5724": 65533,
+      "5722": 65505,
+      "5723": 65510,
+      "5724": 65503,
       "5725": 0,
       "5726": 0,
       "5727": 0,
       "5728": 0,
       "5729": 0,
-      "5730": 2330,
-      "5731": 2335,
-      "5732": 2358,
+      "5730": 2286,
+      "5731": 2277,
+      "5732": 2302,
       "5733": 65535,
       "5734": 65535,
       "5735": 65535,
@@ -918,49 +918,49 @@
       "6127": 0,
       "6128": 0,
       "6129": 0,
-      "6130": 110,
-      "6131": 267,
-      "6132": 304,
-      "6133": 354,
-      "6134": 387,
-      "6135": 421,
-      "6136": 446,
-      "6137": 470,
-      "6138": 497,
-      "6139": 513,
-      "6140": 538,
-      "6141": 548,
-      "6142": 576,
-      "6143": 1043,
-      "6144": 1639,
-      "6145": 1837,
-      "6146": 1984,
-      "6147": 1973,
-      "6148": 2220,
-      "6149": 2331,
-      "6150": 2436,
-      "6151": 2233,
-      "6152": 4271,
-      "6153": 5395,
-      "6154": 5724,
-      "6155": 5878,
-      "6156": 5812,
-      "6157": 5621,
-      "6158": 5531,
-      "6159": 5286,
-      "6160": 5123,
-      "6161": 4581,
-      "6162": 2869,
-      "6163": 4097,
-      "6164": 3906,
-      "6165": 3587,
-      "6166": 3567,
-      "6167": 0,
-      "6168": 0,
-      "6169": 0,
-      "6170": 0,
-      "6171": 0,
-      "6172": 0,
+      "6130": 0,
+      "6131": 0,
+      "6132": 217,
+      "6133": 341,
+      "6134": 533,
+      "6135": 592,
+      "6136": 687,
+      "6137": 734,
+      "6138": 813,
+      "6139": 1098,
+      "6140": 1161,
+      "6141": 1182,
+      "6142": 795,
+      "6143": 1118,
+      "6144": 1489,
+      "6145": 1794,
+      "6146": 1925,
+      "6147": 1865,
+      "6148": 2110,
+      "6149": 2522,
+      "6150": 2444,
+      "6151": 3872,
+      "6152": 4317,
+      "6153": 5131,
+      "6154": 4817,
+      "6155": 3824,
+      "6156": 4047,
+      "6157": 4207,
+      "6158": 3719,
+      "6159": 3102,
+      "6160": 2010,
+      "6161": 2889,
+      "6162": 1931,
+      "6163": 2201,
+      "6164": 2124,
+      "6165": 2385,
+      "6166": 881,
+      "6167": 1606,
+      "6168": 566,
+      "6169": 450,
+      "6170": 297,
+      "6171": 22,
+      "6172": 14,
       "6173": 0,
       "6174": 0,
       "6175": 0,
@@ -983,23 +983,394 @@
       "6192": 0,
       "6193": 0,
       "6194": 0,
-      "6195": 316,
-      "6196": 339,
-      "6197": 266,
-      "6198": 184
+      "6195": 73,
+      "6196": 252,
+      "6197": 223,
+      "6198": 196
     }
+  },
+  "block_read_test": {
+    "answered": [
+      {
+        "component": "realtime_input",
+        "count": 10,
+        "register": 13000,
+        "space": "input"
+      },
+      {
+        "component": "fast_input",
+        "count": 25,
+        "register": 5011,
+        "space": "input"
+      },
+      {
+        "component": "fast_input",
+        "count": 2,
+        "register": 5115,
+        "space": "input"
+      },
+      {
+        "component": "fast_input",
+        "count": 1,
+        "register": 5242,
+        "space": "input"
+      },
+      {
+        "component": "fast_input",
+        "count": 8,
+        "register": 5601,
+        "space": "input"
+      },
+      {
+        "component": "fast_input",
+        "count": 1,
+        "register": 5631,
+        "space": "input"
+      },
+      {
+        "component": "fast_input",
+        "count": 27,
+        "register": 5720,
+        "space": "input"
+      },
+      {
+        "component": "fast_input",
+        "count": 26,
+        "register": 13010,
+        "space": "input"
+      },
+      {
+        "component": "battery_power",
+        "count": 2,
+        "register": 5214,
+        "space": "input"
+      },
+      {
+        "component": "fast_holding",
+        "count": 17,
+        "register": 13002,
+        "space": "holding"
+      },
+      {
+        "component": "fast_holding",
+        "count": 51,
+        "register": 13050,
+        "space": "holding"
+      },
+      {
+        "component": "fast_holding",
+        "count": 2,
+        "register": 33047,
+        "space": "holding"
+      },
+      {
+        "component": "fast_holding",
+        "count": 2,
+        "register": 33149,
+        "space": "holding"
+      },
+      {
+        "component": "apl_shutdown_at_zero",
+        "count": 1,
+        "register": 31213,
+        "space": "holding"
+      },
+      {
+        "component": "medium_input",
+        "count": 1,
+        "register": 5008,
+        "space": "input"
+      },
+      {
+        "component": "medium_input",
+        "count": 3,
+        "register": 13023,
+        "space": "input"
+      },
+      {
+        "component": "slowest_input",
+        "count": 26,
+        "register": 2582,
+        "space": "input"
+      },
+      {
+        "component": "slowest_input",
+        "count": 54,
+        "register": 4952,
+        "space": "input"
+      },
+      {
+        "component": "slowest_input",
+        "count": 18,
+        "register": 5622,
+        "space": "input"
+      },
+      {
+        "component": "slowest_input",
+        "count": 46,
+        "register": 13002,
+        "space": "input"
+      },
+      {
+        "component": "battery_firmware",
+        "count": 15,
+        "register": 2629,
+        "space": "input"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "count": 15,
+        "register": 2613,
+        "space": "input"
+      },
+      {
+        "component": "identity",
+        "count": 51,
+        "register": 4952,
+        "space": "input"
+      }
+    ],
+    "attempts": 2,
+    "client": "modbus-connection -- rejects a frame exactly as the integration does",
+    "intermittent": [],
+    "narrowed": [
+      {
+        "component": "meter_channel_2",
+        "count": 1,
+        "detail": "2/2, read_input_registers(13199, 1): Response timeout after 10.0 seconds for transaction with ID 0x01",
+        "outcome": "refused with an exception",
+        "register": 13200,
+        "space": "input"
+      },
+      {
+        "component": "meter_channel_2",
+        "count": 1,
+        "detail": "2/2, read_input_registers(13200, 1): Response timeout after 10.0 seconds for transaction with ID 0x01",
+        "outcome": "refused with an exception",
+        "register": 13201,
+        "space": "input"
+      },
+      {
+        "component": "meter_channel_2",
+        "count": 1,
+        "detail": "2/2, read_input_registers(13201, 1): Response timeout after 10.0 seconds for transaction with ID 0x01",
+        "outcome": "refused with an exception",
+        "register": 13202,
+        "space": "input"
+      },
+      {
+        "component": "meter_channel_2",
+        "count": 1,
+        "detail": "2/2, read_input_registers(13202, 1): Response timeout after 10.0 seconds for transaction with ID 0x01",
+        "outcome": "refused with an exception",
+        "register": 13203,
+        "space": "input"
+      },
+      {
+        "component": "meter_channel_2",
+        "count": 4,
+        "detail": "narrowing ran out of time here",
+        "outcome": "not narrowed",
+        "register": 13204,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_battery",
+        "count": 1,
+        "detail": "2/2, read_input_registers(13279, 1): Response timeout after 10.0 seconds for transaction with ID 0x01",
+        "outcome": "refused with an exception",
+        "register": 13280,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_battery",
+        "count": 1,
+        "detail": "2/2, read_input_registers(13280, 1): Response timeout after 10.0 seconds for transaction with ID 0x01",
+        "outcome": "refused with an exception",
+        "register": 13281,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_battery",
+        "count": 1,
+        "detail": "2/2, read_input_registers(13281, 1): Response timeout after 10.0 seconds for transaction with ID 0x01",
+        "outcome": "refused with an exception",
+        "register": 13282,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_battery",
+        "count": 2,
+        "detail": "narrowing ran out of time here",
+        "outcome": "not narrowed",
+        "register": 13283,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_battery",
+        "count": 2,
+        "detail": "narrowing ran out of time here",
+        "outcome": "not narrowed",
+        "register": 13285,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_battery",
+        "count": 8,
+        "detail": "narrowing ran out of time here",
+        "outcome": "not narrowed",
+        "register": 13287,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_communication_module",
+        "count": 1,
+        "detail": "2/2, read_input_registers(13264, 1): Response timeout after 10.0 seconds for transaction with ID 0x01",
+        "outcome": "refused with an exception",
+        "register": 13265,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_communication_module",
+        "count": 1,
+        "detail": "2/2, read_input_registers(13265, 1): Response timeout after 10.0 seconds for transaction with ID 0x01",
+        "outcome": "refused with an exception",
+        "register": 13266,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_communication_module",
+        "count": 1,
+        "detail": "2/2, read_input_registers(13266, 1): Response timeout after 10.0 seconds for transaction with ID 0x01",
+        "outcome": "refused with an exception",
+        "register": 13267,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_communication_module",
+        "count": 2,
+        "detail": "narrowing ran out of time here",
+        "outcome": "not narrowed",
+        "register": 13268,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_communication_module",
+        "count": 2,
+        "detail": "narrowing ran out of time here",
+        "outcome": "not narrowed",
+        "register": 13270,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_communication_module",
+        "count": 8,
+        "detail": "narrowing ran out of time here",
+        "outcome": "not narrowed",
+        "register": 13272,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_inverter",
+        "count": 1,
+        "detail": "2/2, read_input_registers(13249, 1): Response timeout after 10.0 seconds for transaction with ID 0x01",
+        "outcome": "refused with an exception",
+        "register": 13250,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_inverter",
+        "count": 1,
+        "detail": "2/2, read_input_registers(13250, 1): Response timeout after 10.0 seconds for transaction with ID 0x01",
+        "outcome": "refused with an exception",
+        "register": 13251,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_inverter",
+        "count": 1,
+        "detail": "2/2, read_input_registers(13251, 1): Response timeout after 10.0 seconds for transaction with ID 0x01",
+        "outcome": "refused with an exception",
+        "register": 13252,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_inverter",
+        "count": 2,
+        "detail": "narrowing ran out of time here",
+        "outcome": "not narrowed",
+        "register": 13253,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_inverter",
+        "count": 2,
+        "detail": "narrowing ran out of time here",
+        "outcome": "not narrowed",
+        "register": 13255,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_inverter",
+        "count": 8,
+        "detail": "narrowing ran out of time here",
+        "outcome": "not narrowed",
+        "register": 13257,
+        "space": "input"
+      }
+    ],
+    "never_answered": [
+      {
+        "component": "meter_channel_2",
+        "count": 8,
+        "outcomes": [
+          "refused with an exception"
+        ],
+        "register": 13200,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_battery",
+        "count": 15,
+        "outcomes": [
+          "refused with an exception"
+        ],
+        "register": 13280,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_communication_module",
+        "count": 15,
+        "outcomes": [
+          "refused with an exception"
+        ],
+        "register": 13265,
+        "space": "input"
+      },
+      {
+        "component": "firmware_block_inverter",
+        "count": 15,
+        "outcomes": [
+          "refused with an exception"
+        ],
+        "register": 13250,
+        "space": "input"
+      }
+    ],
+    "reconnects": 0,
+    "rounds": 3
   },
   "capability_probes": {
     "MPPT1 voltage": {
       "state": "present",
       "values": [
-        5496
+        5471
       ]
     },
     "MPPT2 voltage": {
       "state": "present",
       "values": [
-        3473
+        2065
       ]
     },
     "MPPT3 voltage": {
@@ -1087,19 +1458,19 @@
     "phase A voltage": {
       "state": "present",
       "values": [
-        2343
+        2285
       ]
     },
     "phase B voltage": {
       "state": "present",
       "values": [
-        2336
+        2280
       ]
     },
     "phase C voltage": {
       "state": "present",
       "values": [
-        2340
+        2282
       ]
     },
     "unit 2 SBR battery module block": {

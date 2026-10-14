@@ -1,46 +1,109 @@
+Todo.md contains only next steps (forward looking).
+Anything done should be removed here.
+
+# Summary (2026-10-14)
+
+Library and survey: 0.1.0a12 on PyPI, survey and control test run on it.
+Every site was re-fingerprinted on 2026-10-13. Still open:
+
+1. **fwitten** -- re-fingerprinted and the master control-tested on
+   2026-10-14, `make check` green, **not committed**. Left: the slave's
+   control test, in daylight (it sits in Standby without PV).
+   `plans/fingerprint-results.md`.
+2. **The leaked wallbox serial in the public history** -- your decision:
+   rewrite and force-push, or not. `plans/force-serial-number-push.md`.
+   Tell gerd either way. Nothing is pushed until this is decided.
+3. **Survey bugs** found on 2026-10-13, none fixed: timeouts labelled
+   "refused", a run that read nothing exits 3, a lost link decides the
+   transport verdict. Details in `plans/fingerprint-results.md`.
+4. **A charging car at gerd's** for 21313 and the signedness of
+   21308/21310.
+5. Small items below.
+
 # Next steps
 
-1. Release the library: fingerprint schema 20 (`export_scale` block) and the control test writing 13074 at the measured factor are not in 0.1.0a10, and the integration stamps whatever `SCHEMA` the pinned library has.
-2. Optional: have the integration's own fingerprint carry `export_scale` once its entity has probed. It stores only the factor in entry data, not the write behind it.
+## Fingerprinting
 
-Done 2026-10-13:
+- Write the actual used console command (for bypassing the CLI questions
+  and answers) to the fingerprint json file. Today `command_line` holds
+  the equivalent `probe.py capabilities ... --unit 2 --transport
+  direct_lan --proxy no --dump` line; `sungrow_survey.py` itself takes no
+  flags for the answers, so there is no command that replays a survey.
+- `tests/test_no_real_serials.py`: decode runs of 16-bit integers that
+  are printable ASCII pairs to text before matching the serial shape, so a
+  serial stored as register words fails the suite (how gerd's leaked).
+- `control_test.sh --simulated` exits 4: the simulator stores 13074 as
+  handed and the run writes at the default x10 when the scale probe gives
+  no answer, so leg B reports a wrong slope. Contradicts "a simulator
+  cannot produce a finding".
+- A dry run of the control test prints "exit 0: every planned check ran
+  and every readback matched" although nothing ran.
+- The fwitten master's LAN port takes ~39 min per survey: 13199 and the
+  three firmware strings time out (10 s each) instead of refusing, and
+  the narrowing retries them register by register.
+- The control test's restart deadline (7 min) is tight at night: after a
+  Modbus stop with no PV, fwitten's master took 381 s and gerd's 369 s to
+  run again, where daylight runs took 197 s and 180 s. Raise it, or say in CLAUDE.md that a
+  dark restart is slower.
+- Windows: a `ConnectionResetError [WinError 10054]` traceback during
+  identification; harmless, but reads as a failure.
 
-- fwitten, `--export-scale` over each inverter's own LAN port: master (.247, unit 1) and slave (.140, unit 2) both answer **stores a written word as handed** (1:1). Held words written back (24990, 11880) were accepted and left in place; limitation was already on (0xAA).
-- The per-inverter wiring is committed and released: 0.1.0a10 on PyPI ships `export_scale`.
-- Same answer through both WiNet-S (.241 master, .144 slave, unit 1 each). Merged as an `export_scale` block (schema 20) into all four fwitten fingerprints.
+## Naming footprint
 
-## Sweep for step 1 (PowerShell, on the desktop)
+`...-battery-sbr096-meter.json`: `-meter` does **not** mean direct LAN. It
+means the meter's phase registers (input 5741) answered. Direct LAN adds no
+transport word at all (`TRANSPORT_WORDS["direct_lan"] == ""`); a dongle adds
+`-winet`, `-winet-lan` or `-winet-wlan`. The two coincide because a WiNet-S
+does not forward 5741, so a dongle document never says `-meter`.
+Decide whether direct LAN should get its own word (e.g. `-lan`) -- that
+renames every cable document.
 
-$net = "192.168.3"      # first three octets of fwitten's subnet
-$port = 502             # rerun with 516: open there means a WiNet-S dongle
-$timeoutMs = 3000
+## Integration
 
-$probes = 1..254 | ForEach-Object {
-    $c = New-Object System.Net.Sockets.TcpClient
-    [pscustomobject]@{ Ip = "$net.$_"; Client = $c; Task = $c.ConnectAsync("$net.$_", $port) }
-}
-[void][System.Threading.Tasks.Task]::WaitAll(@($probes.Task), $timeoutMs) 2>$null
-$probes | Where-Object { $_.Task.Status -eq 'RanToCompletion' -and $_.Client.Connected } |
-    ForEach-Object { "{0}:{1} open" -f $_.Ip, $port }
-$probes | ForEach-Object { $_.Client.Dispose() }
+- The wallbox's firmware string (input 21226, 10 words) is cut to
+  `LE-01.1E1.001.` when decoded from a dump: the dump's block boundary
+  splits it, and the wallbox answers the tail as 0 to a read that starts
+  mid-string. Read whole it is `LE-01.1E1.001.901.25`. Align the wallbox
+  bands to field boundaries, or decode strings from their own read.
+- The options form shows *survey register dump* ticked (`default=True`),
+  while `survey.py` and `fingerprint.py` read
+  `options.get(CONF_SURVEY_DUMP, False)`: an entry whose options were
+  never saved runs without the dump. Make the two defaults one.
+- A second entry for the same inverter on another endpoint aborts
+  `already_configured`, even with the first disabled (the unique id is the
+  serial). Decide whether one inverter may have a cable and a dongle entry
+  -- CLAUDE.md says one entry is one endpoint.
+- `device_registry.async_get_or_create(via_device=...)` is deprecated;
+  use `via_device_id` (binary_sensor.py:47, sensor.py:87/98). Stops
+  working in Home Assistant 2027.8.
 
-## Running the scripts from Windows (no `make`)
+- Optional: have the integration's own fingerprint carry `export_scale`
+  once its entity has probed. It stores only the factor in entry data, not
+  the write behind it.
 
-Survey, read-only, stdlib only — needs nothing but Python 3:
+## Maintainer, on your machines
 
-cd <repo>\scripts\sungrow_scan
-py sungrow_survey.py                                   # asks which network to sweep, e.g. 192.168.x.0/24
-py sungrow_survey.py <ip1> <ip2>                       # skip the sweep once the hosts are known
-py probe.py sweep 192.168.x.0/24 --concurrency 32 --timeout 3   # 502 only
-py probe.py sweep 192.168.x.0/24 --port 516     # dongles only
-py probe.py units <ip>                          # which unit ids answer
-py probe.py capabilities <ip>
+- `control_test.cmd <host> --dry-run` on Windows from a pull: the
+  permission question, "Press Enter", Ctrl+C at that pause (expect exit 1,
+  nothing written), results beside the `.cmd`.
+- Clean-machine test of the launchers (Docker or Windows Sandbox), answering
+  N then y:
 
-Export-scale probe, which writes and needs the library installed:
+      docker run --rm -it -v "${PWD}/scripts/sungrow_read_only_survey:/s" -w /s python:3.13-slim sh ./read_only_survey.sh <inverter-ip>
+      docker run --rm -it -v "${PWD}/scripts/sungrow_control_test:/c" -w /c python:3.13-slim sh ./control_test.sh <inverter-ip> --dry-run
 
-cd <repo>
-py -m pip install -e .
-py scripts\sungrow_control_test.py <master-ip> --unit 1 --export-scale --dry-run
-py scripts\sungrow_control_test.py <master-ip> --unit 1 --export-scale
-py scripts\sungrow_control_test.py <slave-ip> --unit 2 --export-scale
+- Delete `/home/vscode/testdata-archive-20261013/` (old `.testdata/`
+  output, moved rather than deleted) once checked.
 
+## Running the scripts from Windows
+
+Each folder has a launcher that fetches uv and the pinned library, and writes
+its results beside itself:
+
+    cd <repo>\scripts\sungrow_read_only_survey
+    read_only_survey.cmd                         # asks which network to sweep
+    read_only_survey.cmd <ip1> <ip2>             # skip the sweep once the hosts are known
+
+    cd <repo>\scripts\sungrow_control_test
+    control_test.cmd <ip> --dry-run              # writes nothing
+    control_test.cmd <ip> --unit 2 --export-scale

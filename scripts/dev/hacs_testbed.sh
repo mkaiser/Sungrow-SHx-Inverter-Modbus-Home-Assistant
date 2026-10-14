@@ -281,7 +281,7 @@ fi
 # stops. Its output interleaves with the log, which is why it says what it
 # did rather than being silent.
 (
-    python3 "${PWD}/scripts/ha_onboard.py" --url "http://127.0.0.1:${PORT}" \
+    python3 "${PWD}/scripts/dev/ha_onboard.py" --url "http://127.0.0.1:${PORT}" \
         --username dev --password dev || true
 ) &
 
