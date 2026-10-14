@@ -217,9 +217,10 @@ schema 19). `--export-scale --merge-into` adds the `export_scale` block
   not cancel a timer already scheduled. A paused coordinator returns what it
   last had, so entities hold their values.
 - **A Modbus stop is nearly instant and the recovery is not**: about 2 s to
-  stopped, 3 to 4 minutes back to `0x0040 Running` depending on the model,
-  then up to 20 s to generate. Much of the wait is `0x0020 Starting`, which
-  `is_starting` recognises; the deadline is seven minutes. A start can take
+  stopped, 3 to 4 minutes back to `0x0040 Running` in daylight and over six
+  at night (no PV), then up to 20 s to generate. Much of the wait is
+  `0x0020 Starting`, which `is_starting` recognises; the deadline is ten
+  minutes. A start can take
   several `0xCF` commands before the state moves, so it is retried from the
   `finally` rather than sent once.
 

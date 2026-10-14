@@ -268,3 +268,24 @@ async def test_a_dry_run_never_writes_a_snapshot(cli, wired, tmp_path) -> None:
 
     assert not wired
     assert not list(tmp_path.glob("*-snapshot.json"))
+
+
+async def test_a_dry_run_does_not_claim_its_checks_ran(cli, wired, tmp_path) -> None:
+    """A dry run's 0 says "the plan resolved", never "every check ran".
+
+    Measured: a dry run against a real inverter printed "every planned check
+    ran and every readback matched (exit 0)" over a table of "not run" rows.
+    """
+    import json
+
+    from sungrow_modbus import control_test
+
+    assert cli.DRY_RUN_MEANS == control_test.DRY_RUN_MEANS
+    code = await cli._run(_args(dry_run=True))
+
+    assert code == 0
+    (result,) = tmp_path.glob("*-control_test.json")
+    document = json.loads(result.read_text())
+    assert document["outcome_means"] == control_test.DRY_RUN_MEANS
+    assert cli._means(0, True) == control_test.DRY_RUN_MEANS
+    assert cli._means(0, False) == control_test.CODES[0]

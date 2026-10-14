@@ -61,8 +61,17 @@ DUMP_MASKED: tuple[tuple[str, int, int], ...] = (("input", 4989, 10),)
 #: input 21201-21280 and 21297-21340 answer, 21281-21296 refuse, and holding
 #: answers 21201-21248 and scattered addresses up to 21328. Another model may
 #: differ; a band that reads nothing costs one refused block and says so.
+#:
+#: The first band is cut at the firmware string (input 21226, ten registers)
+#: so that it is read whole, in a request of its own. The wallbox answers a
+#: read that starts inside a string with zeros for the rest of it: a 32-word
+#: block ending at 21231 cut `LE-01.1E1.001.901.25` to `LE-01.1E1.001.`,
+#: while the integration's own read of the field got all of it.
+#: `tests/test_wallbox_registers.py` holds every string field to one block.
 WALLBOX_BANDS: tuple[tuple[str, int, int, str], ...] = (
-    ("input", 21200, 80, "identity, model, firmware, ratings"),
+    ("input", 21200, 25, "identity, model, type code, phases"),
+    ("input", 21225, 10, "the firmware string, read whole"),
+    ("input", 21235, 45, "ratings"),
     ("input", 21296, 44, "the live measurements: state, power, energy"),
     ("holding", 21200, 50, "settings, as far as they answer"),
     ("holding", 21297, 32, "the scattered upper settings"),

@@ -27,6 +27,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 from homeassistant.helpers import (
     config_validation as cv,
+    device_registry as dr,
     entity_registry as er,
     issue_registry as ir,
 )
@@ -301,12 +302,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
         hass, entry, unit, inverter, intervals
     )
     wallbox = await _async_wallbox(hass, entry, inverter, intervals)
+    inverter_device_id = _async_register_inverter(hass, entry, coordinators)
 
     legacy_ids = entry.data.get(CONF_ENTITY_IDS) == ENTITY_IDS_MIGRATE
     entry.runtime_data = SungrowRuntimeData(
         coordinators,
         capabilities,
         intervals,
+        inverter_device_id=inverter_device_id,
         battery=battery,
         wallbox=wallbox,
         battery_has_cells=battery_has_cells,
@@ -366,6 +369,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
+
+
+@callback
+def _async_register_inverter(
+    hass: HomeAssistant,
+    entry: SungrowConfigEntry,
+    coordinators: dict[str, SungrowDataUpdateCoordinator],
+) -> str:
+    """Put the inverter in the device registry before any entity, and return its id.
+
+    Up front because a battery or a wallbox names the inverter it hangs off
+    by **device id** (`via_device_id`), and that id exists only once the
+    inverter is registered. Left to the platforms, a sub-device's entities
+    could be added before the inverter's. Core's `sofar` does the same.
+    """
+    device_info = next(iter(coordinators.values())).device_info
+    return (
+        dr.async_get(hass)
+        .async_get_or_create(config_entry_id=entry.entry_id, **device_info)
+        .id
+    )
 
 
 async def _async_check_control_test(

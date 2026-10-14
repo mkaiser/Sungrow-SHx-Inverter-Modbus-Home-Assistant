@@ -189,3 +189,35 @@ def test_nothing_writes_to_a_wallbox() -> None:
             assert not getattr(descriptor, "writable", False), (
                 f"{klass.__name__}.{name} is writable"
             )
+
+
+def test_no_dump_block_splits_a_wallbox_string() -> None:
+    """Every string field is read whole by the wallbox dump.
+
+    The wallbox answers a read that starts inside a string with zeros for the
+    rest of it, so a block boundary inside a string publishes a truncated
+    value -- the firmware string came out as `LE-01.1E1.001.` that way.
+    """
+    from modbus_connection.model import StringField
+
+    from sungrow_modbus.dump import BLOCK, WALLBOX_BANDS
+    from sungrow_modbus.wallbox_registers import COMPONENTS
+
+    reads = [
+        (space, start + offset, min(BLOCK, count - offset))
+        for space, start, count, _why in WALLBOX_BANDS
+        for offset in range(0, count, BLOCK)
+    ]
+    for component in COMPONENTS.values():
+        for name, field in component.declared_fields.items():
+            if not isinstance(field, StringField):
+                continue
+            first, last = field.address, field.address + field.count - 1
+            inside = [
+                (start, count)
+                for space, start, count in reads
+                if space == component.register_space
+                and start <= first
+                and last < start + count
+            ]
+            assert inside, f"{name} ({first}-{last}) is split between dump reads"

@@ -97,6 +97,86 @@ def test_no_unrecognised_serial_shaped_string_is_tracked(path: Path) -> None:
     )
 
 
+#: An integer that could be a register word: four or five digits, not part of
+#: a longer number, and not a key -- `"21200": 16690` and `{21200: 16690}`
+#: carry the address as a key, and decoding it would split every value from
+#: the next one.
+WORD = re.compile(r"""(?<![\d."'])(\d{4,5})(?![\d."']|\s*:)""")
+
+
+#: What may stand between two words of one value: a comma, whitespace, and
+#: at most the next address as a key. Anything else -- a bracket closing, a
+#: line of code -- ends the run, so words from different places in a file
+#: never join into one string.
+SEPARATOR = re.compile(r"""[\s,]*(?:["']?\d+["']?\s*:\s*)?""")
+
+
+def _words_as_text(text: str) -> str:
+    """Read every run of integers in a file as the ASCII it would spell.
+
+    A Sungrow register holds two characters, high byte first. A word that is
+    not two printable characters -- or one followed by 0x00, the padding at
+    the end of a string -- ends a run, and so does anything between two
+    words that is not a list or dict separator.
+    """
+    out: list[str] = []
+    end = None
+    for match in WORD.finditer(text):
+        if end is not None and not SEPARATOR.fullmatch(text, end, match.start()):
+            out.append(" ")
+        end = match.end()
+        word = int(match.group(1))
+        high, low = word >> 8, word & 0xFF
+        if not 0x20 < high < 0x7F or word > 0xFFFF:
+            out.append(" ")
+        elif low == 0:
+            out.append(chr(high) + " ")
+        elif 0x20 < low < 0x7F:
+            out.append(chr(high) + chr(low))
+        else:
+            out.append(" ")
+    return "".join(out)
+
+
+@pytest.mark.parametrize("path", _tracked(), ids=lambda p: p.name)
+def test_no_serial_is_tracked_as_register_words(path: Path) -> None:
+    """The same rule for a serial written as the words a device answered.
+
+    The string check cannot see `[16690, 13633, ...]`, and that is the form
+    a real wallbox serial took in two test fixtures, published for a month:
+    "the words this wallbox actually answered". Decoded, those words are the
+    serial, so they are decoded here and held to the same list.
+    """
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        pytest.skip("not readable as text")
+
+    unknown = sorted(set(SERIAL_SHAPE.findall(_words_as_text(text))) - set(FABRICATED))
+    assert not unknown, (
+        f"{path.relative_to(REPO)} holds register words that spell "
+        f"{', '.join(unknown)}, which looks like a device serial and is not on "
+        "the fabricated list. If the words came off a device, replace them "
+        "with the words of an invented serial (A123456789 is "
+        "16689, 12851, 13365, 13879, 14393, 0)."
+    )
+
+
+def test_the_word_decoder_reads_a_serial_the_way_a_device_sends_it() -> None:
+    """Eleven characters in words, as a list or keyed by address, decode back.
+
+    Built at run time, so this file carries no serial-shaped literal of its
+    own for the string check to find.
+    """
+    expected = "A" + "1234567890"
+    padded = expected.encode() + b"\0"
+    words = [int.from_bytes(padded[i : i + 2], "big") for i in range(0, 12, 2)]
+    as_list = repr(words)
+    as_dict = repr({str(21200 + i): word for i, word in enumerate(words)})
+    for form in (as_list, as_dict):
+        assert SERIAL_SHAPE.findall(_words_as_text(form)) == [expected]
+
+
 def test_the_fabricated_list_has_no_dead_entries() -> None:
     """An entry left behind by a rename would stop guarding anything.
 

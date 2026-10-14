@@ -59,6 +59,7 @@ from .const import (
     CONF_CONTROL_TEST_EXPORT,
     CONF_CONTROL_TEST_RESTART,
     CONF_SURVEY_DUMP,
+    DEFAULT_SURVEY_DUMP,
     DISCORD_URL,
     DOMAIN,
     LINK_VALID,
@@ -227,7 +228,7 @@ class SurveyRunner:
         """
         from .fingerprint import planned_steps as survey_steps
 
-        dumping = bool(options.get(CONF_SURVEY_DUMP, False))
+        dumping = bool(options.get(CONF_SURVEY_DUMP, DEFAULT_SURVEY_DUMP))
         a_steps = survey_steps(
             dumping,
             block_reads,

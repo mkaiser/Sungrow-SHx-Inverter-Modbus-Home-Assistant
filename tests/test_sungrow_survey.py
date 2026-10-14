@@ -653,3 +653,74 @@ def test_a_hostname_or_a_whole_address_or_nothing_is_taken_as_typed(
 ) -> None:
     _answering(monkeypatch, typed)
     assert sungrow_survey._ask_host(lambda line: None) == typed
+
+
+def test_a_run_that_read_nothing_exits_1_not_3() -> None:
+    """A document of nothing is "nothing was collected", not a thin document.
+
+    Measured: a VPN that went away before the first read left every field
+    missing, and the run exited 3 -- "the filename under-claims" -- with the
+    empty file announced as the one to send.
+    """
+    from types import SimpleNamespace
+
+    empty = {
+        "readings": {"values": {"device_type_code": None}},
+        "register_dump": {"input": {"4999": None}, "holding": {}},
+    }
+    reading = probe.Reading({}, {}, empty, [], ["device_type_code"])
+    answers = SimpleNamespace(transport="direct_lan")
+
+    assert sungrow_survey._code_for(reading, None, answers) == 1
+
+
+@pytest.mark.parametrize(
+    "path",
+    sorted(Path(__file__).parents[1].glob("doc/device-fingerprints/*.json")),
+    ids=lambda path: path.stem,
+)
+def test_no_published_document_counts_as_collecting_nothing(path: Path) -> None:
+    """The guard must never fire on a real reading, however thin."""
+    assert not sungrow_survey._collected_nothing(json.loads(path.read_text()))
+
+
+@pytest.mark.parametrize(
+    ("error", "state"),
+    [
+        ("IllegalDataAddressError", "refused"),
+        ("ModbusTimeoutError", "no answer"),
+        ("ModbusConnectionError", "no answer"),
+        ("ModbusDesyncError", "no answer"),
+    ],
+)
+def test_only_an_exception_response_is_published_as_refused(error, state) -> None:
+    """A lost link is "no answer", never "refused".
+
+    Measured: a VPN that dropped mid-run printed every capability probe as
+    "refused (ModbusConnectionError)" -- a claim about the device that only
+    the device can make.
+    """
+    import modbus_connection
+
+    kind = getattr(modbus_connection, error)
+    err = kind(2) if error == "IllegalDataAddressError" else kind("lost")
+    assert probe.failure_state(err) == state
+
+
+def test_a_6100_nobody_answered_decides_no_route() -> None:
+    """With 6100 unanswered, the verdict claims nothing and contradicts no one.
+
+    Measured: the same lost link read 6100 as refused, the verdict became a
+    dongle, and the survey offered the owner of a cable to change a correct
+    answer to match it.
+    """
+    verdict = probe.TRANSPORT_NOT_DETERMINED
+    assert probe._claim_of(verdict) is None
+    document = {
+        "device": {"device_type_code": "0x0E0F"},
+        "connection": {"verdict": verdict},
+        "user_inputs": {},
+    }
+    from sungrow_modbus.fingerprint import label_for
+
+    assert not label_for(document).endswith(("winet", "logger"))

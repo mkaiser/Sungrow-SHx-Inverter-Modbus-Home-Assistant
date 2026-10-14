@@ -1475,14 +1475,17 @@ async def test_a_slowly_booting_inverter_is_waited_for_not_shouted_at(
 
 
 def test_the_running_deadline_outlasts_a_measured_boot() -> None:
-    """Four minutes measured; 180 seconds was the guess that broke.
+    """The slowest measured restart, with room: 381 s, at night.
 
-    The cost of waiting too long is a slow diagnostic. The cost of waiting too
-    little is telling somebody their inverter is dead while it boots.
+    180 seconds was the guess that broke, against four minutes measured in
+    daylight; in the dark two inverters took over six. The cost of waiting
+    too long is a slow diagnostic. The cost of waiting too little is telling
+    somebody their inverter is dead while it boots.
     """
     from sungrow_modbus.control_test import RESTART_RUNNING_DEADLINE
 
-    assert RESTART_RUNNING_DEADLINE > 240
+    slowest_measured = 381
+    assert 1.5 * slowest_measured <= RESTART_RUNNING_DEADLINE
 
 
 def test_starting_is_neither_running_nor_stopped() -> None:

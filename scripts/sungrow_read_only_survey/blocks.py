@@ -80,7 +80,9 @@ from typing import NamedTuple
 from modbus_connection import (
     ModbusConnectionError,
     ModbusError as LibraryModbusError,
+    ModbusExceptionError,
     ModbusTcpParams,
+    ModbusTimeoutError,
 )
 from modbus_connection.tmodbus import ModbusConnection
 
@@ -104,6 +106,13 @@ from sungrow_modbus.block_test import component_blocks, inverter_blocks
 OK = "ok"
 DROPPED = "dropped the connection"
 REFUSED = "refused with an exception"
+
+#: No answer within the timeout. Not a refusal: from this end a silent
+#: inverter and an answer lost on the way are the same event, so a timeout
+#: says nothing about the register. It used to be labelled `REFUSED`, which
+#: put "refused with an exception" into published documents for reads that
+#: no device had refused.
+TIMED_OUT = "timed out"
 WRONG_LENGTH = "answered a different length"
 PADDED = "padded the frame"
 
@@ -272,12 +281,17 @@ class LibraryClient:
             words = list(self._runner.run(read(address, count)))
         except ModbusConnectionError as err:
             raise Dropped(str(err)) from err
+        except ModbusTimeoutError as err:
+            raise TimedOut(str(err)) from err
+        except ModbusExceptionError as err:
+            # The one failure that is the device answering.
+            raise ModbusError(str(err)) from err
         except LibraryModbusError as err:
             # A protocol error is the padded-frame case, and the library has
             # already thrown away the length that would have worked.
             if "PDU length" in str(err) or "Protocol" in type(err).__name__:
                 raise FrameRejected(str(err)) from err
-            raise ModbusError(str(err)) from err
+            raise Dropped(str(err)) from err
         if self._delay:
             time.sleep(self._delay)
         return words
@@ -292,6 +306,14 @@ class LibraryClient:
 
 class FrameRejected(Exception):
     """The library refused the reply, without saying what would have read."""
+
+
+class TimedOut(Dropped):
+    """No answer within the timeout: the link failing, not the device refusing.
+
+    A `Dropped`, so anything that tolerates a lost link tolerates this too;
+    `attempt` catches it first to name it.
+    """
 
 
 def _recv(sock, size):
@@ -351,6 +373,8 @@ def attempt(
             outcomes.append((WRONG_LENGTH, f"got {err.got} registers"))
         except ModbusError as err:
             outcomes.append((REFUSED, str(err)))
+        except TimedOut as err:
+            outcomes.append((TIMED_OUT, str(err)))
         except (Dropped, OSError) as err:
             outcomes.append((DROPPED, str(err)))
         else:

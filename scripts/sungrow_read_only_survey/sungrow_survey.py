@@ -140,7 +140,8 @@ class Found(NamedTuple):
 class Transport(NamedTuple):
     """What the wire says about how we got in."""
 
-    answered_6100: bool
+    state_6100: str
+    """`answered`, `refused` (an exception response) or `no answer` (the link)."""
     module_named: str | None
     verdict: str
     web_ui: bool
@@ -563,23 +564,24 @@ async def _check_transport(entry: Found, answers, echo) -> Transport:
         probe.ModbusTcpParams(host=entry.host, port=entry.port),
         timeout=answers.timeout,
     )
-    answered_6100 = False
+    # Three-valued: "answered", "refused" (the device's exception response)
+    # or "no answer" (the link). A lost link once read as "refused" here, the
+    # verdict became a dongle, and the owner of a cable was offered to change
+    # a correct answer to match it.
+    state_6100 = str(probe.State.NO_ANSWER)
     module: str | None = None
     try:
         unit = connection.for_unit(answers.unit)
         try:
             # Retried, like `probe._async_connection`'s read of the same
-            # register: a failure here is reported as "refused", the verdict
-            # becomes a dongle, and the owner is then offered to change a
-            # correct answer to match it. One read lost to contention was
-            # enough to do that on a cable.
+            # register: one read lost to contention is not an answer.
             space, start, count = probe.DIRECT_ONLY_PROBE
             await probe._async_read_retrying(
                 probe._reader(unit, space), start, count, probe.IDENTITY_ATTEMPTS
             )
-            answered_6100 = True
-        except (probe.ModbusError, TimeoutError, OSError):
-            answered_6100 = False
+            state_6100 = "answered"
+        except (probe.ModbusError, TimeoutError, OSError) as err:
+            state_6100 = probe.failure_state(err)
         name = "communication_module_firmware_version"
         try:
             words = await read(unit, field_address(name))
@@ -594,10 +596,14 @@ async def _check_transport(entry: Found, answers, echo) -> Transport:
     web_ui = await probe._tcp_open(entry.host, 443, 1.0) or await probe._tcp_open(
         entry.host, 80, 1.0
     )
-    verdict = probe.transport_verdict(
-        answered_6100=answered_6100, module_named=bool(module)
-    )
-    echo(f"  register 6100        {'answered' if answered_6100 else 'refused'}")
+    answered_6100 = state_6100 == "answered"
+    if state_6100 == str(probe.State.NO_ANSWER):
+        verdict = probe.TRANSPORT_NOT_DETERMINED
+    else:
+        verdict = probe.transport_verdict(
+            answered_6100=answered_6100, module_named=bool(module)
+        )
+    echo(f"  register 6100        {state_6100}")
     echo(f"  register 13265       {module or 'no module named'}")
     echo(f"  port 80 or 443       {'open' if web_ui else 'refused'}")
     echo(f"  verdict              {verdict}")
@@ -617,7 +623,7 @@ async def _check_transport(entry: Found, answers, echo) -> Transport:
                     "direct_lan" if measured.startswith("direct") else "winet"
                 )
                 echo(f"  answer changed to    {answers.transport}")
-    return Transport(answered_6100, module, verdict, web_ui)
+    return Transport(state_6100, module, verdict, web_ui)
 
 
 def _block_test(entry: Found, answers, echo) -> tuple[blocks.BlockOutcome, str] | None:
@@ -741,6 +747,13 @@ def _code_for(reading: probe.Reading, transport: Transport, answers) -> int:
     whose filename under-claims because the device type did not read exits 3,
     because nobody reading the file afterwards can see that.
     """
+    # Before anything else: a document of nothing is not a degraded document.
+    # A link that went away before the first read leaves every field missing,
+    # and that used to come out as 3 -- "the filename under-claims" -- for a
+    # run that had collected nothing at all, with the empty file announced
+    # as the one to send.
+    if _collected_nothing(reading.document):
+        return 1
     # `capabilities` computes this for exactly this purpose: the fields whose
     # absence the *filename* hides. A document carries no model name -- only
     # the device type code, because naming it is the reader's job -- so
@@ -753,6 +766,24 @@ def _code_for(reading: probe.Reading, transport: Transport, answers) -> int:
     if measured is not None and reported is not None and measured != reported:
         return 4
     return 0
+
+
+def _collected_nothing(document: dict) -> bool:
+    """Whether a document holds no value read from the device at all.
+
+    No decoded reading and no answered address in the raw bands. Either one
+    is a reading worth keeping, however thin.
+    """
+    values = (document.get("readings") or {}).get("values") or {}
+    if any(value is not None for value in values.values()):
+        return False
+    dump = document.get("register_dump") or {}
+    return not any(
+        word is not None
+        for band in dump.values()
+        if isinstance(band, dict)
+        for word in band.values()
+    )
 
 
 def _summary(results: list[Outcome], transcript: Path, echo) -> None:
@@ -792,10 +823,7 @@ def _summary(results: list[Outcome], transcript: Path, echo) -> None:
         echo("  The way in")
         if result.transport is not None:
             echo(f"  read  verdict          {result.transport.verdict}")
-            echo(
-                "  read  register 6100    "
-                f"{'answered' if result.transport.answered_6100 else 'refused'}"
-            )
+            echo(f"  read  register 6100    {result.transport.state_6100}")
             echo(
                 "  read  register 13265   "
                 f"{result.transport.module_named or 'no module named'}"
@@ -1054,6 +1082,13 @@ def _summary_actions(result: Outcome, echo) -> None:
             "Some blocks answered only sometimes, which is contention rather "
             "than a fault. Re-run with nothing else polling the inverter "
             "before reading anything into it."
+        )
+    if result.code == 1:
+        actions.append(
+            "Nothing was read from this device: not one value, not one raw "
+            "address. That is the link, not the inverter -- check that the "
+            "address still answers and nothing else holds the connection, "
+            "then run again. The file written for it is not worth sending."
         )
     if result.code == 3:
         actions.append(

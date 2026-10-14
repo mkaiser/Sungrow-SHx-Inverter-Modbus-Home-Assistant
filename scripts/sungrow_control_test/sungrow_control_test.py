@@ -116,8 +116,9 @@ The test can also stop the inverter and start it again, and time both.
     * Home Assistant, the Sungrow app and anything else watching will see
       the inverter as unavailable, and automations may fire on that.
     * Measured so far: stopped within about 2 seconds, running again after
-      3 to 4 minutes, and generating up to 20 seconds after that. The run
-      waits up to 7 minutes for it and says how long it took.
+      3 to 4 minutes in daylight and over 6 at night, and generating up to
+      20 seconds after that. The run waits up to 10 minutes for it and says
+      how long it took.
 
   The inverter is never left stopped: if the start fails, this retries it on
   fresh connections and, failing that, prints the command to run.
@@ -223,7 +224,8 @@ def report(outcome: Outcome, *, title: str) -> str:
     its own rather than an absence somebody has to notice.
     """
     lines = [f"# {title}", ""]
-    lines += [f"**{CODES[outcome.code]}** (exit {outcome.code}).", ""]
+    means = _means(outcome.code, outcome.conditions.get("dry_run"))
+    lines += [f"**{means}** (exit {outcome.code}).", ""]
 
     lines += ["## What is still changed", ""]
     if outcome.not_restored:
@@ -710,6 +712,17 @@ def _say_drops(drops: _LinkDrops) -> None:
         )
 
 
+#: The library's `control_test.DRY_RUN_MEANS`, kept here because this script
+#: runs on the published library, which may predate it.
+#: `test_control_test_cli.py` holds the two equal.
+DRY_RUN_MEANS = "dry run: the plan resolved, and nothing was written"
+
+
+def _means(code: int, dry_run: bool | None) -> str:
+    """Return the sentence for an exit code; a dry run's 0 says what it did."""
+    return DRY_RUN_MEANS if dry_run and code == 0 else CODES[code]
+
+
 def main() -> int:
     """Parse arguments and run."""
     parser = argparse.ArgumentParser(
@@ -828,7 +841,7 @@ def main() -> int:
         # sentence about something that did not happen.
         print("\nexit 0: everything in the snapshot is back", file=sys.stderr)
         return 0
-    print(f"\nexit {code}: {CODES[code]}", file=sys.stderr)
+    print(f"\nexit {code}: {_means(code, args.dry_run)}", file=sys.stderr)
     return code
 
 

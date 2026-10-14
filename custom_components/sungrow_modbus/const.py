@@ -263,6 +263,11 @@ CONF_PUBLISH_ADDRESS = "publish_address"
 #: addresses this library already maps, and discovers nothing new by design.
 CONF_SURVEY_DUMP = "survey_register_dump"
 
+#: On unless the user turned it off. One value for the form and for every
+#: reader of the option: the form used to show it ticked while the survey,
+#: reading an entry whose options were never saved, ran without it.
+DEFAULT_SURVEY_DUMP = True
+
 #: What an entry is for, chosen at setup and changeable afterwards.
 #:
 #: A contributor who wants to send a reading should not have to answer the

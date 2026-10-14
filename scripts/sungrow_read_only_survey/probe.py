@@ -34,7 +34,7 @@ import sys
 import time
 from typing import NamedTuple
 
-from modbus_connection import ModbusError, ModbusTcpParams
+from modbus_connection import ModbusError, ModbusExceptionError, ModbusTcpParams
 from modbus_connection.model import Component
 from modbus_connection.tmodbus import ModbusConnection
 
@@ -75,6 +75,7 @@ from sungrow_modbus.fingerprint import (
     STAND_IN_PREFIX,
     UNAVAILABLE,
     WIFI_OR_ETHERNET,
+    State,
     classify,
     stand_in,
     transport_verdict,
@@ -685,6 +686,27 @@ async def _async_read_retrying(
     raise AssertionError("unreachable")
 
 
+def failure_state(err: BaseException) -> str:
+    """Name a failed read for publishing: refused, or no answer.
+
+    Only an exception *response* is the device refusing. A timeout, a lost
+    connection or a frame this client could not use is the link failing to
+    carry the question, and says nothing about the register -- the same rule
+    the integration's survey applies, in the same words (`State`).
+    """
+    if isinstance(err, ModbusExceptionError):
+        return str(State.REFUSED)
+    return str(State.NO_ANSWER)
+
+
+#: The verdict when register 6100 got no answer at all: neither route is
+#: shown, so none is claimed. `_claim_of` reads it as no claim, so it cannot
+#: contradict the owner's answer, and it puts no transport in a filename.
+TRANSPORT_NOT_DETERMINED = (
+    "not determined: register 6100 got no answer, so the route could not be told"
+)
+
+
 class _Progress:
     """A line that rewrites itself while something slow happens.
 
@@ -1218,8 +1240,8 @@ async def _async_connection(unit, host: str, firmware: dict, ModbusError) -> dic
             _reader(unit, space), start, count, IDENTITY_ATTEMPTS
         )
         signals["winet_restricted_block_6100"] = "answered"
-    except (ModbusError, TimeoutError, OSError):
-        signals["winet_restricted_block_6100"] = "refused"
+    except (ModbusError, TimeoutError, OSError) as err:
+        signals["winet_restricted_block_6100"] = failure_state(err)
     signals["communication_module_firmware"] = firmware.get("communication_module", "")
 
     # Register 6100 decides; 13265 only ever corroborates. The truth table
@@ -1240,10 +1262,13 @@ async def _async_connection(unit, host: str, firmware: dict, ModbusError) -> dic
     # Which leaves 13265 unable to conclude anything in either direction:
     # fwitten's dongles return it **empty**, exactly as an inverter with no
     # module does. It is recorded, and it decides nothing.
-    verdict = transport_verdict(
-        answered_6100=signals["winet_restricted_block_6100"] == "answered",
-        module_named=bool(signals["communication_module_firmware"]),
-    )
+    if signals["winet_restricted_block_6100"] == str(State.NO_ANSWER):
+        verdict = TRANSPORT_NOT_DETERMINED
+    else:
+        verdict = transport_verdict(
+            answered_6100=signals["winet_restricted_block_6100"] == "answered",
+            module_named=bool(signals["communication_module_firmware"]),
+        )
 
     return {
         "verdict": verdict,
@@ -2207,8 +2232,9 @@ async def capabilities(args: argparse.Namespace) -> Reading:
                 )
                 values = await _async_read_retrying(read, address, count, attempts)
             except (ModbusError, TimeoutError, OSError) as err:
-                fingerprint["registers"][label] = "refused"
-                print(f"  {label:<38}refused ({type(err).__name__})")
+                state = failure_state(err)
+                fingerprint["registers"][label] = state
+                print(f"  {label:<38}{state} ({type(err).__name__})")
                 continue
             raw["registers"][label] = values
             fingerprint["registers"][label] = classify(values).value

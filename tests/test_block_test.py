@@ -34,6 +34,7 @@ from sungrow_modbus.block_test import (
     INCONSISTENT,
     REFUSED,
     REJECTED,
+    TIMED_OUT,
     UNNARROWED,
     Block,
     attempt,
@@ -136,7 +137,7 @@ async def test_the_terminal_tools_measurement_renders_through_the_library() -> N
     ("error", "expected"),
     [
         (IllegalDataAddressError(2), REFUSED),
-        (ModbusTimeoutError("Response timeout after 10.0 seconds"), DROPPED),
+        (ModbusTimeoutError("Response timeout after 10.0 seconds"), TIMED_OUT),
         (ModbusConnectionError("Connection lost"), DROPPED),
         (ModbusDesyncError("PDU length mismatch"), REJECTED),
         (OSError("No route to host"), DROPPED),

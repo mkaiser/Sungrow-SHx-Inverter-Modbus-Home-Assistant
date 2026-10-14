@@ -1,26 +1,30 @@
 Todo.md contains only next steps (forward looking).
 Anything done should be removed here.
 
-# Summary (2026-10-14, evening)
+# Summary (2026-10-14, night)
 
-0.1.0a13 on PyPI; survey and control test run on it. Every site
-re-fingerprinted and published; control tests merged at fwitten's master
-and gerd; the integration passed on gerd's hardware (wallbox included).
-Still open:
+0.1.0a13 on PyPI. Every site re-fingerprinted; control tests merged at
+fwitten's master and gerd; the integration passed on gerd's hardware.
+**In progress: `plans/wallbox-lan-sweep-and-fixes.md`** -- gerd's wallbox
+answers Modbus over TLS on its own LAN address, and the issues below are
+being fixed there. Still open besides:
 
-1. **Finish the history rewrite** (force-pushed 2026-10-14):
-   GitHub Support to purge the old SHAs (still served), the fork
-   `BuggiTheBeat/...`, resume the preview mirror, re-clone the Windows
-   checkout, then delete the backup in `/home/vscode/sungrow-rewrite/`
-   (it holds the serial). `plans/force-serial-number-push.md`, steps 6-7.
-2. **fwitten's slave control test**, in daylight (Standby without PV):
-   `plans/fingerprint-results.md`.
-3. **Survey bugs** found on 2026-10-13, none fixed: timeouts labelled
-   "refused", a run that read nothing exits 3, a lost link decides the
-   transport verdict. Details in `plans/fingerprint-results.md`.
-4. **A charging car at gerd's** for 21313 and the signedness of
-   21308/21310.
-5. Small items below.
+1. **Finish the history rewrite** (force-pushed 2026-10-14): GitHub Support
+   to purge the old SHAs (still served), the fork `BuggiTheBeat/...`, resume
+   the preview mirror, re-clone the Windows checkout, then delete the backup
+   in `/home/vscode/sungrow-rewrite/` (it holds the serial).
+   `plans/force-serial-number-push.md`, steps 6-7.
+2. **fwitten's slave control test, in daylight.** It sits in Standby without
+   PV (no battery), and the test refuses a stopped inverter. From a copy of
+   `scripts/sungrow_control_test/` outside the checkout: `control_test.sh
+   <slave> --unit 2 --allow-dark --enable-export-limit --restart
+   --merge-into <its LAN document>`. Its carried 2026-09-25 block (exit 5,
+   13074 written at x10, settings lost after the restart) is replaced by it.
+3. **A charging car at gerd's** for 21313 against 21308 over a session (does
+   it go to 0 when charging stops?) and the signedness of 21308/21310. Two
+   dongle runs about five minutes apart, 90 s of quiet before each, while the
+   car charges.
+4. Small items below.
 
 # Next steps
 
@@ -62,23 +66,10 @@ renames every cable document.
 
 ## Integration
 
-- The wallbox's firmware string (input 21226, 10 words) is cut to
-  `LE-01.1E1.001.` when decoded from a dump: the dump's block boundary
-  splits it, and the wallbox answers the tail as 0 to a read that starts
-  mid-string. Read whole it is `LE-01.1E1.001.901.25`. Align the wallbox
-  bands to field boundaries, or decode strings from their own read.
-- The options form shows *survey register dump* ticked (`default=True`),
-  while `survey.py` and `fingerprint.py` read
-  `options.get(CONF_SURVEY_DUMP, False)`: an entry whose options were
-  never saved runs without the dump. Make the two defaults one.
 - A second entry for the same inverter on another endpoint aborts
   `already_configured`, even with the first disabled (the unique id is the
   serial). Decide whether one inverter may have a cable and a dongle entry
   -- CLAUDE.md says one entry is one endpoint.
-- `device_registry.async_get_or_create(via_device=...)` is deprecated;
-  use `via_device_id` (binary_sensor.py:47, sensor.py:87/98). Stops
-  working in Home Assistant 2027.8.
-
 - Optional: have the integration's own fingerprint carry `export_scale`
   once its entity has probed. It stores only the factor in entry data, not
   the write behind it.

@@ -180,12 +180,12 @@ def test_the_library_client_raises_what_attempt_catches() -> None:
     level. Asserted against `blocks.ModbusError` by identity rather than by
     name, because the bug was two different classes with the same name.
     """
-    from modbus_connection import ModbusError as LibraryModbusError
+    from modbus_connection import IllegalDataAddressError
 
     client = object.__new__(LibraryClient)
     client._delay = 0
     client._runner = _Runner()
-    client._unit = _Unit(LibraryModbusError("exception 0x02 for function code 0x04"))
+    client._unit = _Unit(IllegalDataAddressError(2))
 
     with pytest.raises(ModbusError) as raised:
         client.read("input", 13199, 8)
@@ -205,6 +205,27 @@ def test_a_dropped_link_from_the_library_client_stays_a_drop() -> None:
 
     with pytest.raises(Dropped):
         client.read("input", 5010, 25)
+
+
+def test_a_timeout_from_the_library_client_is_not_a_refusal() -> None:
+    """A read nobody answered is labelled as such, never "refused".
+
+    The 10 s timeouts at input 13199 and the firmware strings were published
+    as "refused with an exception" -- a claim about the device made from a
+    silence that could as well be the VPN.
+    """
+    from modbus_connection import ModbusTimeoutError
+
+    client = object.__new__(LibraryClient)
+    client._delay = 0
+    client._runner = _Runner()
+    client._unit = _Unit(ModbusTimeoutError("Response timeout after 10.0 seconds"))
+
+    with pytest.raises(Dropped) as raised:
+        client.read("input", 13199, 8)
+    kind, detail = attempt(Stub(raised.value), "input", 13199, 8, 2)
+    assert kind == blocks.TIMED_OUT
+    assert "Response timeout" in detail
 
 
 class _Runner:

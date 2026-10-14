@@ -36,7 +36,12 @@ from dataclasses import dataclass, field
 import time
 from typing import TYPE_CHECKING, Any
 
-from modbus_connection import ModbusError, ModbusExceptionError, ModbusProtocolError
+from modbus_connection import (
+    ModbusError,
+    ModbusExceptionError,
+    ModbusProtocolError,
+    ModbusTimeoutError,
+)
 
 from .components import InverterIdentity
 from .registers import COMPONENTS
@@ -49,6 +54,10 @@ OK = "ok"
 DROPPED = "dropped the connection"
 REFUSED = "refused with an exception"
 REJECTED = "the library rejected the frame"
+
+#: No answer within the timeout -- the link, not the device. Its own word so
+#: that neither "refused" nor "dropped the connection" is claimed for it.
+TIMED_OUT = "timed out"
 
 #: Answered some attempts and not others: contention, not a fault. A block
 #: that answers *any* attempt is never narrowed and never offered to
@@ -174,6 +183,8 @@ def _describe(err: ModbusError) -> tuple[str, str]:
         return REFUSED, f"exception 0x{code:02X}" if code is not None else str(err)
     if isinstance(err, ModbusProtocolError):
         return REJECTED, str(err)
+    if isinstance(err, ModbusTimeoutError):
+        return TIMED_OUT, str(err)
     return DROPPED, str(err) or type(err).__name__
 
 
@@ -192,7 +203,9 @@ async def attempt(
             await read(space, address, count)
         except ModbusError as err:
             outcomes.append(_describe(err))
-        except (TimeoutError, OSError) as err:
+        except TimeoutError as err:
+            outcomes.append((TIMED_OUT, str(err) or type(err).__name__))
+        except OSError as err:
             outcomes.append((DROPPED, str(err) or type(err).__name__))
         else:
             outcomes.append((OK, ""))

@@ -125,11 +125,13 @@ RESTART_DWELL = 10.0
 #: `0x0020 Starting`. The original 180 seconds, divided into ten attempts of
 #: eighteen, expired while the inverter was booting perfectly normally.
 #:
-#: Seven minutes because one machine is one machine: this is the only reading
-#: this project has, the FAQ's figure for a *physical* cold boot is five
-#: minutes, and the cost of waiting too long is a slow diagnostic where the
-#: cost of waiting too little is telling somebody their inverter is dead.
-RESTART_RUNNING_DEADLINE = 420.0
+#: **Twice as long in the dark.** With no PV, fwitten's SH10RT-V112 took 381
+#: seconds and gerd's SH8.0RT-V112 369, against 197 and 180 in daylight --
+#: four start commands before the state moved. Ten minutes is about one and
+#: a half times the slowest measured, because the cost of waiting too long is
+#: a slow diagnostic where the cost of waiting too little is telling somebody
+#: their inverter is dead while it boots.
+RESTART_RUNNING_DEADLINE = 600.0
 RESTART_GENERATING_DEADLINE = 120.0
 RESTART_POLL = 2.0
 
@@ -246,6 +248,12 @@ CODES = {
     4: "a scale finding: at least one value came back off by a decade",
     5: "something was not restored, or the inverter may still be stopped",
 }
+
+#: What a dry run's 0 means. Code 0's own sentence -- "every planned check
+#: ran and every readback matched" -- is false for a run that wrote nothing,
+#: and a dry run printed it. 0 stays the code, because "the plan resolved" is
+#: the success a dry run exists to report.
+DRY_RUN_MEANS = "dry run: the plan resolved, and nothing was written"
 
 #: Worst last. Note where 4 sits: a run that found a decade error is a
 #: **successful** run -- it found the thing it exists to find -- so it ranks
@@ -3173,7 +3181,11 @@ def document(outcome: Outcome) -> dict[str, Any]:
     return {
         "schema": BLOCK_SCHEMA,
         "outcome": outcome.code,
-        "outcome_means": CODES[outcome.code],
+        "outcome_means": (
+            DRY_RUN_MEANS
+            if outcome.conditions.get("dry_run") and outcome.code == 0
+            else CODES[outcome.code]
+        ),
         "conditions": outcome.conditions,
         "readback": [row._asdict() for row in outcome.probes],
         "effects": [row._asdict() for row in outcome.effects],

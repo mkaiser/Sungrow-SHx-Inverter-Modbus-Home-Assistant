@@ -83,6 +83,7 @@ from .const import (
     CONF_SURVEY_POLLERS,
     CONF_SURVEY_PROXY,
     CONF_SURVEY_TRANSPORT,
+    DEFAULT_SURVEY_DUMP,
 )
 from .coordinator import SungrowConfigEntry
 from .survey import Progress
@@ -256,7 +257,7 @@ async def async_build(
         options = dict(entry.options)
 
     # Asked for and affordable are two different things; see the docstring.
-    dumping = allow_dump and bool(options.get(CONF_SURVEY_DUMP, False))
+    dumping = allow_dump and bool(options.get(CONF_SURVEY_DUMP, DEFAULT_SURVEY_DUMP))
 
     # The denominator, so a fraction means something: every probe, one step
     # for assembling what the coordinators already

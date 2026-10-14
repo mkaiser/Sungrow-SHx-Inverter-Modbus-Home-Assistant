@@ -56,6 +56,7 @@ from .const import (
     CONF_UNIT_ID,
     DEFAULT_NAME,
     DEFAULT_PORT,
+    DEFAULT_SURVEY_DUMP,
     DEFAULT_UNIT_ID,
     ENTITY_IDS_MIGRATE,
     ENTITY_IDS_NEW,
@@ -377,15 +378,17 @@ def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> vol.Schema
                 CONF_PUBLISH_ADDRESS,
                 default=options.get(CONF_PUBLISH_ADDRESS, True),
             ): BooleanSelector(),
-            # Last, and off, because it is the expensive one: the survey is
-            # two seconds without it and about five minutes with it. Asked
+            # Last, because it is the expensive one: the survey is two
+            # seconds without it and about five minutes with it. On by
+            # default all the same -- the sweep is how every undocumented
+            # register was found -- and the description says so. Asked
             # in the same breath as the testimony because it is the same
             # decision -- whether to spend something on this project -- and
             # because a contributor who has been asked for a dump by name
             # should find it where they were already answering questions.
             vol.Required(
                 CONF_SURVEY_DUMP,
-                default=options.get(CONF_SURVEY_DUMP, True),
+                default=options.get(CONF_SURVEY_DUMP, DEFAULT_SURVEY_DUMP),
             ): BooleanSelector(),
         }
     )

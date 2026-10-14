@@ -285,7 +285,7 @@ class SungrowSubDeviceCoordinator(
         Its own device rather than more entities on the inverter's, because it
         is its own hardware with its own firmware and its own failure -- a
         dongle can lose the pack's cell block while the inverter answers
-        everything. `via_device` is what puts it under the inverter in the
+        everything. `via_device_id` is what puts it under the inverter in the
         interface, which is also where it sits physically.
 
         Identified by the **inverter's** serial with a suffix. An SBR reports
@@ -303,7 +303,7 @@ class SungrowSubDeviceCoordinator(
             manufacturer=MANUFACTURER,
             model=model or label,
             name=model or label,
-            via_device=(DOMAIN, serial),
+            via_device_id=self.config_entry.runtime_data.inverter_device_id,
         )
 
     @asynccontextmanager
@@ -445,6 +445,13 @@ class SungrowRuntimeData:
 
     intervals: dict[str, int] = field(default_factory=dict)
     """Seconds per tier, as configured. A tier missing here is not polled."""
+
+    inverter_device_id: str | None = None
+    """The inverter's device-registry id, which a sub-device hangs off.
+
+    Registered in setup before any platform runs, so it is set whenever an
+    entity reads it; `None` only for runtime data built by hand in a test.
+    """
 
     battery: SungrowBatteryCoordinator | None = None
     """The pack's coordinator, when this endpoint has one.

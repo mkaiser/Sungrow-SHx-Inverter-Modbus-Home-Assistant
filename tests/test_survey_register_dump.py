@@ -58,11 +58,27 @@ async def _setup(
     return entry
 
 
-async def test_a_survey_does_not_dump_unless_it_is_asked_to(
+async def test_a_survey_dumps_when_the_option_was_never_saved(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """The default, and the case every existing document was taken in."""
+    """The default is what the options form shows: on.
+
+    An entry whose options were never opened used to run without the dump
+    while the form showed the box ticked, so a contributor who checked it and
+    pressed the button got less than they were shown.
+    """
     entry = await _setup(hass, sungrow_unit)
+
+    document = await async_build(hass, entry, allow_dump=True)
+
+    assert "register_dump" in document
+
+
+async def test_a_survey_does_not_dump_when_it_is_turned_off(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """Off is the user's answer, and it holds."""
+    entry = await _setup(hass, sungrow_unit, {CONF_SURVEY_DUMP: False})
 
     document = await async_build(hass, entry, allow_dump=True)
 

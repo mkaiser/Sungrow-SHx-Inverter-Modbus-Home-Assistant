@@ -153,14 +153,15 @@ def test_no_raw_code_and_no_unnamed_register_becomes_an_entity() -> None:
 
 
 async def test_a_wallbox_that_answers_becomes_its_own_device(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+    hass: HomeAssistant,
+    sungrow_unit: MockModbusUnit,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Named from its own type code, and hung off the inverter.
 
-    `via_device` is not decoration here: a wallbox is reachable *only*
-    through the endpoint the inverter is on -- measured, a full sweep of a /24
-    found it on no address of its own -- so the inverter really is how you
-    get to it.
+    Linked by `via_device_id`, the inverter's registry id, and not by the
+    deprecated `via_device` identifier, which Home Assistant stops accepting
+    in 2027.8 and warns about until then.
     """
     entry = await _setup(hass, sungrow_unit)
     assert entry.state is ConfigEntryState.LOADED
@@ -177,6 +178,7 @@ async def test_a_wallbox_that_answers_becomes_its_own_device(
     inverter = registry.async_get_device_by_identifier((DOMAIN, SERIAL), entry.entry_id)
     assert inverter is not None
     assert wallbox.via_device_id == inverter.id
+    assert "deprecated `via_device`" not in caplog.text
 
 
 async def test_the_wallbox_reports_what_it_read(
