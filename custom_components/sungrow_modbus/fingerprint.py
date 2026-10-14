@@ -595,7 +595,15 @@ async def _async_wallbox(
         found = wallbox_reader.readings(
             await wallbox_reader.async_mapped_words(device.async_read_words)
         )
-        return {"unit": device.unit_id, "readings": found} if found else None
+        if not found:
+            return None
+        return {
+            "unit": device.unit_id,
+            **_stand_in(
+                await wallbox_reader.async_serial_stand_in(device.async_read_words)
+            ),
+            "readings": found,
+        }
 
     def on_block(done: int, total: int, why: str) -> None:
         step(f"reading the wallbox's raw registers: {why} ({done} of {total})")
@@ -608,9 +616,15 @@ async def _async_wallbox(
     masked = register_dump.masked(raw, register_dump.WALLBOX_MASKED)
     return {
         "unit": device.unit_id,
+        **_stand_in(wallbox_reader.serial_stand_in(raw)),
         "readings": wallbox_reader.readings(masked),
         "register_dump": masked,
     }
+
+
+def _stand_in(value: str | None) -> dict[str, str]:
+    """Return the wallbox's stand-in serial as a key, or nothing when none was read."""
+    return {"serial_anonymized_hashed": value} if value else {}
 
 
 def summarise(document: dict[str, Any]) -> str:

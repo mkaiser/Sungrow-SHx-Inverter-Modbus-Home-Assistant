@@ -606,8 +606,10 @@ be careful:
 - `NEVER_PUBLISH = ("serial",)` filters anything whose *name* mentions a
   serial, values and key lists alike;
 - a wallbox's serial sits two registers below the model name, so
-  `wallbox.probe_units` reads the **name**, and the serial is masked at the
-  publishing boundary too.
+  `wallbox.probe_units` reads the **name**; at the publishing boundary its
+  words are masked and the document carries a stand-in in their place,
+  `wallbox.serial_anonymized_hashed`, from the same `stand_in` as the
+  inverter's.
 
 **The source tree is checked as well.** `tests/test_no_real_serials.py`
 matches the **shape** of a serial over every tracked file and requires each

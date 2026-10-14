@@ -55,7 +55,12 @@ from .const import model_for
 #: ten, or stored as handed -- with the one write that asked. A bump for the
 #: same reason as 19: almost no document will carry it, and "not asked" has to
 #: be told apart from "predates the question".
-SCHEMA = 20
+#:
+#: 21 admits **`wallbox.serial_anonymized_hashed`**: the wallbox's serial
+#: treated as the inverter's is, a `stand_in` hashed from it, so one wallbox
+#: is recognisable across readings. Before 21 the serial was only masked, and
+#: a reader has to tell "no stand-in could be read" from "predates it".
+SCHEMA = 21
 
 #: How a document says it was collected, when no command line could repeat it.
 #:

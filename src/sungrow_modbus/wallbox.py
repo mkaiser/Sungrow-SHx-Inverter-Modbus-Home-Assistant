@@ -23,6 +23,8 @@ from datetime import UTC, datetime
 from typing import Any
 
 from .addresses import field_address, read
+from .dump import WALLBOX_MASKED
+from .fingerprint import stand_in
 from .wallbox_registers import CODES, COMPONENTS, CONFIDENCE, LOCAL_CLOCK, MODELS
 
 #: Unit ids a wallbox may answer on, in the order to try them.
@@ -95,6 +97,11 @@ def model_name(words: list[int]) -> str | None:
     wallbox that is not there does not have a name and a garbled one is
     evidence of reading the wrong device.
     """
+    return _printable(words)
+
+
+def _printable(words: list[int]) -> str | None:
+    """Decode words as printable ASCII, or None where they are not text."""
     if not words:
         return None
     try:
@@ -108,6 +115,48 @@ def model_name(words: list[int]) -> str | None:
     if not all(32 <= ord(character) < 127 for character in text):
         return None
     return text
+
+
+#: Where the serial is: the one band `WALLBOX_MASKED` names.
+SERIAL_SPACE, SERIAL_START, SERIAL_COUNT = WALLBOX_MASKED[0]
+
+
+def serial_stand_in(dump: Mapping[str, Any]) -> str | None:
+    """Return the wallbox's stand-in serial from an **unmasked** dump, or None.
+
+    The same treatment as the inverter's serial: the words are masked out of
+    the published dump, and the document carries `stand_in(serial)` in their
+    place, so one wallbox is recognisable across readings without its serial
+    leaving the house. None where any word is missing or the words are not
+    text -- a stand-in hashed from garbage would claim an identity nobody has.
+    """
+    values = dump.get(SERIAL_SPACE) or {}
+    found = [values.get(str(SERIAL_START + i)) for i in range(SERIAL_COUNT)]
+    words = [int(word) for word in found if word is not None]
+    if len(words) != SERIAL_COUNT:
+        return None
+    serial = _printable(words)
+    return stand_in(serial) if serial else None
+
+
+async def async_serial_stand_in(
+    read_words: Callable[[str, int, int], Any],
+) -> str | None:
+    """Read the serial and return only its stand-in, or None.
+
+    For a caller that has no dump: `read_words(space, address, count)` is the
+    seam a device offers. The real serial lives only inside this function.
+    """
+    from modbus_connection import ModbusError
+
+    try:
+        words = await read_words(SERIAL_SPACE, SERIAL_START, SERIAL_COUNT)
+    except (ModbusError, TimeoutError, OSError):
+        return None
+    if not words:
+        return None
+    dump = {SERIAL_SPACE: {str(SERIAL_START + i): w for i, w in enumerate(words)}}
+    return serial_stand_in(dump)
 
 
 def readings(dump: Mapping[str, Any]) -> dict[str, dict[str, Any]]:

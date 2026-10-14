@@ -861,7 +861,10 @@ def test_every_published_command_line_is_runnable_or_names_its_tool(path) -> Non
             "what was polling the inverter at the time"
         )
     else:
-        assert words[:3] == [SCRIPT, "capabilities", "<host>"]
+        # The repository path from a checkout, the bare name from a copy of
+        # the folder: `_script_name` writes whichever repeats the reading.
+        assert words[0] in (SCRIPT, Path(SCRIPT).name)
+        assert words[1:3] == ["capabilities", "<host>"]
     # The stronger check lives in the no-serial-or-address test, but the
     # command line is the field most likely to reintroduce one.
     assert not re.search(r"\b\d{1,3}(\.\d{1,3}){3}\b", line)
@@ -1059,8 +1062,8 @@ def test_a_wallbox_dump_is_masked_at_the_wallbox_serial() -> None:
     """
     from sungrow_modbus.dump import DUMP_MASKED, WALLBOX_MASKED, masked as _masked_dump
 
-    # The words this wallbox actually answered at 21201-21206, and one
-    # measurement that must survive.
+    # A serial in the shape a wallbox answers at 21201-21206 (an invented
+    # one: A123456789), and one measurement that must survive.
     dump = {
         "input": {
             "21200": 16689,
@@ -1082,7 +1085,7 @@ def test_a_wallbox_dump_is_masked_at_the_wallbox_serial() -> None:
     text = b"".join(
         int(wrong["input"][str(a)]).to_bytes(2, "big") for a in range(21200, 21206)
     )
-    assert text.decode("ascii").startswith("A25A"), (
+    assert text.decode("ascii").startswith("A123"), (
         "this is what using the inverter's mask published"
     )
 

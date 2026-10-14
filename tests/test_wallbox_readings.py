@@ -14,10 +14,14 @@ fingerprint unnoticed and be read as evidence about somebody's hardware.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
 from sungrow_modbus.dump import WALLBOX_MASKED, masked
-from sungrow_modbus.wallbox import readings as decode
+from sungrow_modbus.fingerprint import stand_in
+from sungrow_modbus.wallbox import readings as decode, serial_stand_in
 from sungrow_modbus.wallbox_registers import CODES, COMPONENTS, CONFIDENCE
 
 #: The five marks `doc/wallbox_registers.md` defines, and no others.
@@ -176,9 +180,9 @@ def test_no_reading_can_come_from_a_masked_register() -> None:
     }
     hidden = masked(unmasked, WALLBOX_MASKED)
     text = "".join(str(entry) for entry in decode(hidden).values())
-    assert "A25A" not in text
+    assert "A123" not in text
     # And even from the unmasked words, no field reads that range.
-    assert "A25A" not in "".join(str(entry) for entry in decode(unmasked).values())
+    assert "A123" not in "".join(str(entry) for entry in decode(unmasked).values())
 
 
 def test_a_field_that_did_not_answer_is_absent_rather_than_zero() -> None:
@@ -223,3 +227,58 @@ def test_the_field_table_never_reads_the_serial() -> None:
     for name, space, address, count in FIELDS:
         overlap = masked & {(space, a) for a in range(address, address + count)}
         assert not overlap, f"{name} reads masked addresses {sorted(overlap)}"
+
+
+#: Every wallbox reading on record: the published documents, and the
+#: completed session the tests keep since its document was replaced.
+REPO = Path(__file__).resolve().parent.parent
+RECORDED = sorted(
+    [
+        *(REPO / "doc" / "device-fingerprints").glob("*wallbox*.json"),
+        REPO / "tests" / "data" / "wallbox_ac22e01_completed_session.json",
+    ]
+)
+
+
+@pytest.mark.parametrize("path", RECORDED, ids=lambda p: p.stem[-40:])
+def test_every_recorded_dump_decodes_to_what_it_published(path) -> None:
+    """The golden test: today's decoder against every reading ever published.
+
+    A document carries the words and the readings decoded from them at the
+    time. Decoding the words again must give the readings again, or a change
+    to the decoder has quietly reinterpreted somebody's published hardware.
+    """
+    section = json.loads(path.read_text(encoding="utf-8"))["wallbox"]
+    assert decode(section["register_dump"]) == section["readings"]
+
+
+#: An invented serial in the words a wallbox answers it in, at input 21200.
+SERIAL = "A123456789"
+SERIAL_WORDS = {
+    "21200": 16689,
+    "21201": 12851,
+    "21202": 13365,
+    "21203": 13879,
+    "21204": 14393,
+    "21205": 0,
+}
+
+
+def test_the_wallbox_serial_is_published_as_a_stand_in() -> None:
+    """The inverter's treatment: hashed, prefixed, never the words."""
+    dump = {"input": {**DUMP["input"], **SERIAL_WORDS}}
+    assert serial_stand_in(dump) == stand_in(SERIAL)
+    assert serial_stand_in(dump).startswith("anon-")
+
+
+def test_no_stand_in_from_a_masked_or_partial_serial() -> None:
+    """A stand-in hashed from nothing would claim an identity nobody has.
+
+    `DUMP` is already masked, as a published document is; a word missing,
+    or words that are not text, give none either.
+    """
+    assert serial_stand_in(DUMP) is None
+    partial = {k: v for k, v in SERIAL_WORDS.items() if k != "21203"}
+    assert serial_stand_in({"input": partial}) is None
+    assert serial_stand_in({"input": dict.fromkeys(SERIAL_WORDS, 0)}) is None
+    assert serial_stand_in({"input": dict.fromkeys(SERIAL_WORDS, 0xFFFF)}) is None

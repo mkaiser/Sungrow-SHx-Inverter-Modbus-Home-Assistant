@@ -1865,6 +1865,17 @@ def _document(raw: dict, fingerprint: dict) -> dict:
             {
                 "wallbox": {
                     "unit": raw["wallbox"]["unit"],
+                    # The serial as the inverter's is published: a stand-in
+                    # hashed from it, read from the raw dump before the mask.
+                    **(
+                        {"serial_anonymized_hashed": stand_in_serial}
+                        if (
+                            stand_in_serial := wallbox.serial_stand_in(
+                                raw["wallbox"]["register_dump"]
+                            )
+                        )
+                        else {}
+                    ),
                     # Decoded from the masked dump, not from the raw one, so
                     # a reading can never come from a register the document
                     # is refusing to publish -- the serial included.

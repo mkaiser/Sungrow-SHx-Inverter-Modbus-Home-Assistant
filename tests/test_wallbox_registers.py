@@ -35,8 +35,9 @@ from sungrow_modbus.wallbox_registers import (
 
 REPO = Path(__file__).resolve().parent.parent
 
-#: The one committed fingerprint that carries a wallbox.
-FINGERPRINT = next((REPO / "doc" / "device-fingerprints").glob("*wallbox*.json"))
+#: The completed session (status 6) the tests keep, since the published
+#: document was replaced by an idle reading.
+FINGERPRINT = REPO / "tests" / "data" / "wallbox_ac22e01_completed_session.json"
 
 
 def _words() -> dict[str, dict[int, int]]:
