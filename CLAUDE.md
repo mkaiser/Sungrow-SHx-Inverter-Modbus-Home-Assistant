@@ -18,9 +18,11 @@ are now done:
   on unit **200** direct or **2** through a WiNet-S.
 - ✅ the **wallbox** (AC011E-01 / AC22E-01) — its own device, 32 registers in
   four components, at unit **3** through a WiNet-S or **248** direct. Read
-  only; nothing writes to it. Unit 248 is the charger's own RS485 address,
-  reachable only through a serial gateway wired to the charger — never over
-  Modbus TCP.
+  only; nothing writes to it. "Direct" is the wallbox's **own LAN address**:
+  Modbus TCP inside TLS on port **516**, unit 248 (measured on gerd's
+  AC22E-01; RS485 at 248 is reported by others, never measured here). The
+  integration reaches it only through a dongle today; a direct endpoint is
+  open in `Todo.md`, "Wall box integration".
 - ⬜ the **iHomeManager** (port **502 *or* 503**, slave 247) — **never
   measured**; to do: survey one. `identify()` probes input 8000 on unit 247, so
   a contributor who owns one is told what they have, and `sungrow_survey.py`
@@ -32,7 +34,8 @@ are now done:
   53-register map, MIT-licensed.
 
 A wallbox does *not* require an iHomeManager, and cannot be found by sweeping
-for one: it answers only behind an endpoint that already answered.
+for one. It answers behind a WiNet-S at unit 3, or at its own address over
+TLS -- never through the inverter's own LAN port (every unit 0-255 swept).
 
 It also covers a **generator the Sungrow cannot see**. A non-Sungrow inverter
 behind the same grid meter makes `load_power` low by exactly its output --
@@ -111,7 +114,7 @@ implementation for this pattern — read its real source, not blog posts.
 | **`scripts/sungrow_read_only_survey/`** | **Part A, read only, runs on the published library** |
 | `scripts/sungrow_read_only_survey/read_only_survey.sh`, `read_only_survey.cmd` | **What a contributor runs.** Find `uv` (PATH, then `~/.local/bin`) and hand it `sungrow_survey.py`; else use a Python 3.13+ that has exactly the pinned library; else offer to install uv, asking first. Every argument and the survey's exit code pass through. `read_only_survey.cmd` only starts `read_only_survey.ps1`, which does the Windows half |
 | `scripts/sungrow_read_only_survey/sungrow_survey.py` | **The one entry point for a survey** (`make scan HOST=...`, or `make scan-sim` against the simulator): finds the devices, asks what no register can answer, runs the block read test, reads every register, writes the document and a transcript, and prints a maintainer-facing summary. Exit code says what happened (`0` fine, `3` the filename under-claims, `4` the transport is disputed, `1`/`2` nothing collected) |
-| `scripts/sungrow_read_only_survey/probe.py` | Probe for Sungrow devices: `mdns`, `sweep <cidr>` (502, 503 for a Logger or iHomeManager, 516 for an iHomeManager's TLS port — found, not readable), `units <host>`, `capabilities <host>`, `dump <host>` |
+| `scripts/sungrow_read_only_survey/probe.py` | Probe for Sungrow devices: `mdns`, `sweep <cidr>` (502, 503 for a Logger or iHomeManager, 516 for Modbus over TLS on a WiNet-S or a wallbox — found, not readable), `units <host>`, `capabilities <host>`, `dump <host>` |
 | `scripts/sungrow_read_only_survey/blocks.py` | The block read test: which read inside a component fails, and whether it is a fault or contention. `--client library` fails where the integration does; `--client raw` names the count a padded frame needs; `--narrow-budget` bounds the narrowing, which is unaffordable on a link where reads time out |
 | `scripts/sungrow_read_only_survey/raw_client.py` | The bare-socket client behind `blocks.py --client raw`: a measuring instrument that trusts `byte_count`, not a second copy of the library's client. Not runnable by itself |
 | **`scripts/helpers/`** | **One-off tools** |
@@ -487,10 +490,11 @@ Each of these is verified in a container or against hardware.
   its readback table.
 - **A WiNet-S serves Modbus over TLS on port 516**, not an iHomeManager. It is
   real Modbus behind TLS 1.2, refuses the same registers as 502, and exhausts
-  under rapid reconnects like 502. Its certificate may be identical on every
-  dongle, which would mean this TLS authenticates nothing; a hash from a third
-  site would settle it. `sungrow_survey.py` sweeps 516 and reports it without
-  reading it.
+  under rapid reconnects like 502. **A wallbox serves the same on its own LAN
+  address**, unit 248, with no port 502 at all. Both present a Sungrow-signed
+  certificate (issuer `OT.SUNGROW`, CN `sun`), byte-identical between the
+  dongle and the wallbox at one house -- so this TLS authenticates nothing.
+  `sungrow_survey.py` sweeps 516 and reports it without reading it.
 
 ### Finding devices
 
@@ -504,10 +508,14 @@ Each of these is verified in a container or against hardware.
   200 on the LAN port and unit **2** through a dongle; a wallbox answers unit
   3 through a dongle. One config entry is one endpoint, so a house may need
   two entries to see everything.
-- **A wallbox is only reachable through an endpoint that already answered**,
-  even with its own LAN cable. A config flow cannot find one by sweeping; it
-  has to ask the endpoints it already has. Its registers are undocumented by
-  Sungrow; `doc/wallbox_registers.md` is what three measurements agree on.
+- **A wallbox is reachable two ways**: unit 3 behind a WiNet-S, or unit 248
+  at its own LAN address over TLS on 516. Not through the inverter's own LAN
+  port. Over TLS a read must **start on a data point's first register** --
+  21295 x24 answers, 21296 x10 times out -- so a block that pools fields
+  must begin at one; the map is in `Todo.md`. A dongle forwards any start,
+  and answers 0 for several registers the direct path reads. Its registers
+  are undocumented by Sungrow; `doc/wallbox_registers.md` is what the
+  measurements agree on.
 
 ### Shipping it
 

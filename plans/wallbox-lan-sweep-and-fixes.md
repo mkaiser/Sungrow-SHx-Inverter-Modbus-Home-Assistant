@@ -1,6 +1,6 @@
 # Wallbox over the LAN, then the issues found on 2026-10-14
 
-**Status: 2026-10-14, 21:30. Part 1: the wallbox answers directly -- Modbus over TLS, port 516, unit 248, at its own LAN address. Unit sweep 0-255 still running, then the wide dumps. Part 2: fixes 1-7 done in the working tree, per-area tests green; next: full `make check`, commit. Nothing committed yet.** Updated every ten
+**Status: 2026-10-14, 22:45. Part 1 measured: the wallbox answers directly over TLS (516, unit 248 only); a read must start on a data point's first register (full map in `Todo.md`); the integration's five wallbox reads comply and answer through the real library over TLS. Next: design the wallbox endpoint (a decision), correct CLAUDE.md and `doc/wallbox_registers.md`. Part 2 done and pushed (`411fb4c`).** Updated every ten
 minutes, so another session can take over from here.
 
 Consent: gerd allows any test, inverter and wallbox (maintainer,
@@ -46,8 +46,37 @@ Results:
 - So CLAUDE.md is wrong twice: unit 248 is not "only through a serial
   gateway" -- it is the wallbox's own LAN port, behind TLS -- and a wallbox
   is not "only reachable through an endpoint that already answered".
-- Not yet known: whether the wallbox also takes plain Modbus TCP anywhere
-  (no 502 open), and what a TLS client in `modbus-connection` would need.
+- **Unit sweep, 0-255 over TLS:** only 248 answers.
+- **The stack can do it.** `modbus-connection` has `ModbusTlsParams` (`verify=False`
+  for a self-signed device certificate), and Home Assistant's
+  `modbus.async_get_unit` accepts it. So the integration could take the
+  wallbox's own address as an endpoint -- which would also give gerd the
+  wallbox and the cable's fuller inverter reading together, without a second
+  entry for the inverter. Next: read it through the real library over TLS,
+  once the dumps release the wallbox.
+- Not yet known: plain Modbus TCP anywhere on the wallbox (no 502 open).
+- **Wide dumps compared** (input and holding 20000-21999, blocks of 10;
+  scratchpad `wb-direct.json`, `wb-dongle.json`, not published -- the
+  serial is in them):
+  - holding: the same 50 addresses both ways (21200-21239, 21300-21309);
+    only 21228-21229 differ, the wallbox's clock between the two reads.
+  - input, direct answers **more than the dongle shows** where both answer:
+    21210-21213 an ASCII identity-like string (not published until
+    understood), 21240-21249 a version string (`V1.0...`), 21331-21335
+    0xFFFF, 21359 and 21362-21364 values -- all **0 through the dongle**.
+  - input, the dongle answers blocks the direct path times out on
+    (21220-21229, 21250-21269, 21290-21329). Re-read one by one on fresh
+    connections: reproducible, and **it is the start address, not the
+    content** -- 21295 x24 answers, 21296 x10 and 21300 x10 time out;
+    21225 answers, 21220 does not. Over TLS the wallbox answers only reads
+    that begin at certain addresses (so far 21200, 21210, 21225, 21240,
+    21261, 21270, 21295, 21330). The dongle evidently reads it its own way
+    and serves any start. The direct path is not a drop-in replacement:
+    the integration's component reads would have to start at those
+    addresses.
+- **Inverter's LAN port, every unit 0-255** at input 21215 x5: nothing
+  answers. The link was alive (unit 1 device type 0x0E0E); the inverter
+  is silent on those addresses rather than refusing.
 
 ## Part 2: fix the issues found
 

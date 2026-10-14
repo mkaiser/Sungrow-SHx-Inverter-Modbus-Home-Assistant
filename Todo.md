@@ -74,6 +74,91 @@ renames every cable document.
   once its entity has probed. It stores only the factor in entry data, not
   the write behind it.
 
+## Wall box integration
+
+Measured at gerd's AC22E-01 on 2026-10-14; the run log is
+`plans/wallbox-lan-sweep-and-fixes.md`. Addresses are in memory, not here.
+
+**What is now known**
+
+- **Two ways to the wallbox's registers, both measured:**
+
+  | Path | Protocol | Unit |
+  | --- | --- | --- |
+  | through the WiNet-S, at the dongle's address | plain Modbus TCP, port 502 | 3 |
+  | directly, at the wallbox's own LAN address | Modbus TCP inside TLS, port 516 | 248 |
+
+  Same wallbox: firmware string, lifetime energy and the live block agree
+  word for word. Only unit 248 answers over TLS (0-255 swept). The wallbox
+  has no port 502 and no web interface; its certificate is Sungrow-signed
+  (issuer `OT.SUNGROW`, CN `sun`), byte-identical to the WiNet-S's at the
+  same house -- so it authenticates nothing.
+- **Not through the inverter's own LAN port.** No unit from 0 to 255 answers
+  the wallbox's model name (input 21216) there; the link was alive -- unit
+  1 answered its device type, 0x0E0E -- and the inverter itself goes silent
+  on the wallbox's addresses rather than refusing them.
+- **The direct path shows more than the dongle.** Where both answer, the
+  dongle returns 0 for: input 21210-21213 (an ASCII identity-like string;
+  not to be published until it is understood), 21240-21249 (a second
+  version string, `V1.0...`), 21331-21335 (0xFFFF directly), 21359 and
+  21362-21364 (values directly). Input 21267 reads 12372 directly, 0
+  through the dongle. And the firmware string at 21226 reads whole.
+  Holding registers: the same 50 addresses either way.
+- **Over TLS a read must start on the first register of a data point.**
+  Reproducible on fresh connections (21295 x24 answers, 21296 and 21300
+  time out). The full map, one-register reads at every address (serial
+  skipped), protocol addresses:
+  - input: 21210, 21212, 21214, 21215, 21223, 21224, 21225, 21240, 21243,
+    21258, 21261-21272, 21274-21279, then every second address 21281-21299,
+    21301-21307, 21309, 21311-21317, 21319, 21321, 21322, 21326, 21330,
+    21331, 21336, 21337, 21339-21345, 21347, 21349-21355, 21357,
+    21359-21365, 21369, 21373, 21374;
+  - holding: 21200, 21202-21204, 21206, 21208, 21210-21212, 21214-21216,
+    21220, 21222-21233, 21249, 21281, 21297-21301, 21311-21317.
+
+  Every mapped field starts on one (model name 21215, type code 21223,
+  phases 21224, firmware 21225, nominal voltage 21261, phase mode 21269,
+  minimum power 21271; the 32-bit live values every second address), so
+  the map is also **the wallbox's own field layout**, undecoded registers
+  included. Through the dongle any start works -- it reads the wallbox its
+  own way.
+- **The integration's reads already comply, and work over TLS through the
+  real library**: `ModbusTlsParams(port=516, verify=False,
+  check_hostname=False)`, unit 248 -- identity (input 21215 x20), ratings
+  (21261 x12), live (21299 x23), settings (holding 21202 x10, 21231 x1) all
+  answered.
+- **The stack can reach it.** `modbus-connection` has `ModbusTlsParams`
+  (`verify=False` for a self-signed device certificate), and Home
+  Assistant's `modbus.async_get_unit` accepts it.
+
+**To do**
+
+- [x] Unit sweep on the inverter's LAN port: no wallbox on any unit.
+- [x] The start-address map (above).
+- [x] The integration's five wallbox reads, through the real library over
+      TLS: all answer.
+- [ ] A test holding every wallbox component read to a start in the map,
+      so a future field cannot pool into a read the direct path refuses.
+- [ ] A **wallbox endpoint** in the config flow: the wallbox's own address,
+      TLS on 516, unit 248, as a device of its own (or hung off the
+      inverter's entry). It solves gerd's choice -- today the wallbox is
+      reachable only through the dongle, while the cable gives the fuller
+      inverter and battery reading (138 vs 130 and 17 vs 7 entities) and one
+      inverter can have only one entry. Decide how it relates to the
+      inverter's entry (see "Integration" above).
+- [ ] Decode what only the direct path shows: 21240-21249 (version
+      string), 21331-21335, 21359, 21362-21364, 21267; find out what
+      21210-21213 is before anything publishes it, and add it to the mask
+      if it identifies the unit.
+- [ ] The survey: sweep port 516 hosts for a wallbox at unit 248 over TLS
+      (today it reports 516 "found, not readable"), and read it with the
+      start-address rule; the dump bands for the direct path need the same
+      rule.
+- [x] CLAUDE.md and `doc/wallbox_registers.md` corrected: two paths, the
+      start-address rule, the certificate.
+- [ ] Still only a charging car can settle 21313 and the signedness of
+      21308/21310 -- now readable both ways, which doubles the evidence.
+
 ## Maintainer, on your machines
 
 - `control_test.cmd <host> --dry-run` on Windows from a pull: the

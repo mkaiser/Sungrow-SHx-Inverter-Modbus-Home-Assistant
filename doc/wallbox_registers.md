@@ -270,18 +270,26 @@ that measured the same model:
   a wider margin.
 - **The 0.1 scales on inputs 21302–21307**, the six phase voltages and
   currents.
-- **Unit 248 for a direct connection**, which this project has never
-  measured and had only from one source. [evcc discussion
-  #20739](https://github.com/evcc-io/evcc/discussions/20739) adds that a
-  direct link is **Modbus RTU at 9600 8N1** over RS485, not Ethernet, and
-  that the wallbox must be switched to **EMS mode** — which is consistent
-  with `start_mode` reading 1, *start with EMS*, on the unit measured here.
+- **Unit 248 for a direct connection**, measured on gerd's AC22E-01 over
+  its own LAN address: **Modbus TCP inside TLS, port 516**, Sungrow-signed
+  certificate, no port 502. [evcc discussion
+  #20739](https://github.com/evcc-io/evcc/discussions/20739) describes the
+  same unit as **Modbus RTU at 9600 8N1** over RS485, which is not measured
+  here, and says the wallbox must be in **EMS mode**.
+- **Over TLS, a read must start on a data point's first register**; any
+  other start times out. The map of valid starts (`Todo.md`, "Wall box
+  integration") doubles as the wallbox's own field layout. Through a
+  WiNet-S any start answers.
+- **The direct path reads what the dongle zeroes**: input 21210-21213, a
+  second version string at 21240-21249, 21267, 21331-21335 (0xFFFF),
+  21359 and 21362-21364 all hold values directly and read 0 through the
+  dongle. None is decoded yet.
 
 ## What is still open
 
 - Register **21313**: measured behaviour, and no name in any of the three
   sources. Only a second charging session can say more.
-- The version string at 21226-21235 is a fragment, the same in both readings.
+- The version string at 21226-21235 reads whole (`LE-01.1E1.001.901.25`) when read in one request starting at 21226; split across two reads it comes back cut short, as two published readings show.
 - Holding 21263 did not answer in either reading.
 - Register 21263 *input* reads 320, where the AC011E project reads that
   address as a work mode. It held 320 while the phase mode and start mode both
