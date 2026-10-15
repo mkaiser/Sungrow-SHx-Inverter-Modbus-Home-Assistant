@@ -102,8 +102,9 @@ Derived from what the device said, and from nothing anybody typed except the
 contributor's name:
 
 ```
-sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter
-│           │            │  │    │                │              └ a directly-connected meter answered
+sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan
+│           │            │  │    │                │              │     └ the inverter's own LAN port
+│           │            │  │    │                │              └ the meter's phase registers (5741) answered
 │           │            │  │    │                └ see below
 │           │            │  │    └ the document's own serial_anonymized_hashed
 │           │            │  └ who sent it, from --reporter
@@ -142,10 +143,10 @@ prefix. With it last, the directory sorted by whatever happened to be wired
 up, which split each machine's pair to opposite ends:
 
 ```
-sh10rt-v112-b001v000p022-3p-fwitten-anon-94286447746-battery-sbr096-meter    read directly
-sh10rt-v112-b001v000p022-3p-fwitten-anon-94286447746-battery-unknown-winet   the same one, via its dongle
-sh10rt-v112-b001v000p022-3p-fwitten-anon-52318844021-battery-none            its slave, read directly
-sh10rt-v112-b001v000p022-3p-fwitten-anon-52318844021-battery-none-winet      the same slave, via its dongle
+sh10rt-v112-b001v000p022-3p-fwitten-anon-94286447746-battery-sbr096-meter-direct-lan  read directly
+sh10rt-v112-b001v000p022-3p-fwitten-anon-94286447746-battery-unknown-winet             the same one, via its dongle
+sh10rt-v112-b001v000p022-3p-fwitten-anon-52318844021-battery-none-direct-lan           its slave, read directly
+sh10rt-v112-b001v000p022-3p-fwitten-anon-52318844021-battery-none-winet                the same slave, via its dongle
 ```
 
 The contributor name is lowercased and anything outside `a-z0-9-` becomes a
@@ -193,8 +194,9 @@ value in its `output_type` field.
 
 ## The transport word
 
-A `winet` after the battery says the reading came **through a communication
-module** rather than the inverter's own LAN port. It is in the filename
+The last word says how the survey reached the inverter: `direct-lan` for
+the inverter's own LAN port, `winet` (or `winet-lan`, `winet-wlan`,
+`logger`) **through a communication module**. It is in the filename
 because it changes what answers: read directly, this project's reference
 master/slave pair reports a wired meter, answers register 6100 and hangs the
 connection up on the firmware block at 13250; read through the WiNet-S
@@ -224,7 +226,7 @@ would turn a guess into a record.
 
 | Value | Means | Filename word |
 | --- | --- | --- |
-| `direct_lan` | the inverter's own LAN port | — |
+| `direct_lan` | the inverter's own LAN port | `direct-lan` |
 | `winet_lan` | a WiNet-S dongle, wired | `winet-lan` |
 | `winet_wlan` | a WiNet-S dongle, over WiFi | `winet-wlan` |
 | `winet` | a WiNet-S dongle, medium unknown | `winet` |
@@ -232,7 +234,13 @@ would turn a guess into a record.
 | `unsure` | not sure — **the default** | falls back to the measurement |
 
 `unsure` overrides nothing: where it is given, the measured verdict decides,
-and register 6100 answering still proves a direct path.
+and register 6100 answering still proves a direct path -- `direct-lan`. Where
+the measurement cannot say either, the name carries no transport word.
+
+**`meter` is not the transport.** It says the meter's phase registers (input
+5741) answered. A WiNet-S does not forward them, so a dongle document never
+says `meter`, but a cable document without a wired meter does not say it
+either; only `direct-lan` says the path.
 
 The medium is in the filename only because leaving it out lost a file. What a
 reader should take from `winet-lan` against `winet-wlan` is which cable, not
@@ -422,7 +430,7 @@ Several files can come from one inverter, and the reason is always the path.
   claim to be taken on trust. They were filed as transport "not sure" until
   the owner moved the cable from the dongle into the inverter on 2026-10-08,
   which settled which was which.
-* **bar12 again on 2026-10-08**, over the inverter's own LAN port (`…-meter`)
+* **bar12 again on 2026-10-08**, over the inverter's own LAN port (`…-meter-direct-lan`)
   and the dongle's WiFi, both on firmware P023. These differ the way gerd's
   do — 6100, 2612/2628, MPPT3/4 as 0 against 0xFFFF, the meter phases, the SBR
   at unit 2 against 200 — so the pattern now holds on two models. The two WiFi

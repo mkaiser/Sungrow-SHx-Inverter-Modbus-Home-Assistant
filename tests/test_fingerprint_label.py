@@ -235,7 +235,7 @@ def _sbr_fingerprint() -> tuple[dict, dict]:
 def test_the_hash_sits_between_the_device_and_what_is_attached_to_it() -> None:
     fingerprint, raw = _sbr_fingerprint()
     label = _derive_label(fingerprint, DIRECT, STAND_IN, raw, "fwitten")
-    assert label == f"sh10rt-v112-3p-fwitten-{STAND_IN}-battery-sbr096-meter"
+    assert label == f"sh10rt-v112-3p-fwitten-{STAND_IN}-battery-sbr096-meter-direct-lan"
 
 
 def test_the_contributor_groups_their_own_files_together() -> None:
@@ -360,8 +360,8 @@ def test_a_reported_transport_outranks_the_measurement() -> None:
     )
 
     undetermined["reported_by_hand"] = "direct_lan"
-    assert not _derive_label(fingerprint, undetermined, "A123456789", raw).endswith(
-        "winet"
+    assert _derive_label(fingerprint, undetermined, "A123456789", raw).endswith(
+        "battery-sbr096-direct-lan"
     )
 
 
@@ -379,8 +379,8 @@ def test_one_installation_read_both_ways_gets_two_filenames() -> None:
     dongle = _derive_label(
         fingerprint, {"verdict": "x", "reported_by_hand": "winet"}, "A123456789", raw
     )
-    assert lan != dongle
-    assert dongle == f"{lan}-winet"
+    assert lan.endswith("-direct-lan")
+    assert dongle == lan.removesuffix("direct-lan") + "winet"
 
 
 def test_a_refused_6100_no_longer_claims_a_dongle() -> None:
@@ -449,8 +449,7 @@ def test_every_menu_option_is_a_valid_flag_value() -> None:
         if key == "unsure":
             assert verdict == "" and table_label == "" and word == ""
         elif key == "direct_lan":
-            # The inverter's own port is the unmarked case, so no word.
-            assert verdict and table_label and word == ""
+            assert verdict and table_label and word == "direct-lan"
         else:
             assert verdict and table_label and word, key
 

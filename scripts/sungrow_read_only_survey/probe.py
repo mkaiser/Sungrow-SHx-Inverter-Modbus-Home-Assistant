@@ -1317,7 +1317,7 @@ REPORTED_TRANSPORTS: dict[str, tuple[str, str, str, str]] = {
         "the inverter's own LAN port",
         "direct to the inverter's LAN port (reported by the contributor)",
         "direct LAN port",
-        "",
+        "direct-lan",
     ),
     "winet_lan": (
         "a WiNet-S dongle, wired",
@@ -1626,7 +1626,7 @@ def _derive_label(
     if answered("unit 3 wallbox serial", "unit 248 wallbox serial (direct)"):
         parts.append("wallbox")
 
-    # The way in, when it is not the inverter's own port. Transport belongs in
+    # The way in, the inverter's own port included. Transport belongs in
     # the label because it decides which registers answer at all: read
     # directly, the reference master/slave pair reports a wired meter, answers
     # 6100 and hangs up on the firmware block at 13250; read through the
@@ -1644,7 +1644,10 @@ def _derive_label(
     # that different registers answer -- they do not.
     reported = str(connection.get("reported_by_hand") or "")
     word = REPORTED_TRANSPORTS.get(reported, ("", "", "", ""))[3]
-    if not word and _claim_of(_effective_verdict(connection)) == "module":
+    claim = _claim_of(_effective_verdict(connection))
+    if not word and claim == "direct":
+        word = "direct-lan"
+    elif not word and claim == "module":
         # Falling back to the measurement, which cannot see the medium. This
         # is also the "not sure" path: saying so must not veto a reading, and
         # `_effective_verdict` already resolves that precedence.

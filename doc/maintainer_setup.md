@@ -127,7 +127,7 @@ python scripts/sungrow_read_only_survey/probe.py capabilities <host> \
 | Setup | Label to use | Why it matters |
 | --- | --- | --- |
 | LAN: SH10RT + Pylontech | `sh10rt-3p-mkaiser-0ea759-battery-thirdparty-meter` | Done — a third-party battery, direct LAN |
-| Remote (gerd): **SH8.0RT-V112** + SBR096, both paths | `sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter` and the same with `-wallbox-winet-wlan` | Measured 2026-09-08, not SH10RT as this row said: a variant device code, a real Sungrow battery, and the only site scanned over both its LAN port and its dongle |
+| Remote (gerd): **SH8.0RT-V112** + SBR096, both paths | `sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan` and `...-battery-sbr096-wallbox-winet-wlan` | Measured 2026-09-08, not SH10RT as this row said: a variant device code, a real Sungrow battery, and the only site scanned over both its LAN port and its dongle |
 | Remote: SH10RT-V122 + battery + wallbox | `sh10rt-v122-wallbox` | The only wallbox |
 | Remote: two SH10RT | `sh10rt-pair-a`, `-b` | The only multi-inverter site |
 

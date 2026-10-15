@@ -310,8 +310,8 @@ ABSENT_ON_FIRMWARE: dict[str, frozenset[Capability]] = {
     # 13265 and 13280, and the second meter channel at 13200, each closed the
     # connection 3 of 3 while their neighbours answered in the same session
     # (`src/sungrow_modbus/layout.py` has the transcript). Both machines identically.
-    #   sh10rt-v112-3p-fwitten-anon-33442450531-battery-none.json
-    #   sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-meter.json
+    #   sh10rt-v112-3p-fwitten-anon-33442450531-battery-none-direct-lan.json
+    #   sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan.json
     # The same model reads all four on 95.13 (gerd's SH8.0RT-V112), as do an
     # SH10RT on 95.12 and an SH10RT-20 on 95.14, so it is the firmware.
     #

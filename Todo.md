@@ -1,30 +1,26 @@
 Todo.md contains only next steps (forward looking).
 Anything done should be removed here.
 
-# Summary (2026-10-14, night)
+# Summary (2026-10-15)
 
-0.1.0a13 on PyPI. Every site re-fingerprinted; control tests merged at
+0.1.0a13 on PyPI; **0.1.0a14 being released** (the wallbox's own address, and
+`direct-lan` in every cable document's name). Every site re-fingerprinted; control tests merged at
 fwitten's master and gerd; the integration passed on gerd's hardware.
 **In progress: `plans/wallbox-direct-endpoint.md`** -- the wallbox as an
 endpoint of its own (TLS, 516, unit 248) in the integration and the survey.
 Still open besides:
 
-1. **Finish the history rewrite** (force-pushed 2026-10-14): GitHub Support
-   to purge the old SHAs (still served), the fork `BuggiTheBeat/...`, resume
-   the preview mirror, re-clone the Windows checkout, then delete the backup
-   in `/home/vscode/sungrow-rewrite/` (it holds the serial).
-   `plans/force-serial-number-push.md`, steps 6-7.
-2. **fwitten's slave control test, in daylight.** It sits in Standby without
+1. **fwitten's slave control test, in daylight.** It sits in Standby without
    PV (no battery), and the test refuses a stopped inverter. From a copy of
    `scripts/sungrow_control_test/` outside the checkout: `control_test.sh
    <slave> --unit 2 --allow-dark --enable-export-limit --restart
    --merge-into <its LAN document>`. Its carried 2026-09-25 block (exit 5,
    13074 written at x10, settings lost after the restart) is replaced by it.
-3. **A charging car at gerd's** for 21313 against 21308 over a session (does
+2. **A charging car at gerd's** for 21313 against 21308 over a session (does
    it go to 0 when charging stops?) and the signedness of 21308/21310. Two
    dongle runs about five minutes apart, 90 s of quiet before each, while the
    car charges.
-4. Small items below.
+3. Small items below.
 
 # Next steps
 
@@ -53,16 +49,6 @@ Still open besides:
   dark restart is slower.
 - Windows: a `ConnectionResetError [WinError 10054]` traceback during
   identification; harmless, but reads as a failure.
-
-## Naming footprint
-
-`...-battery-sbr096-meter.json`: `-meter` does **not** mean direct LAN. It
-means the meter's phase registers (input 5741) answered. Direct LAN adds no
-transport word at all (`TRANSPORT_WORDS["direct_lan"] == ""`); a dongle adds
-`-winet`, `-winet-lan` or `-winet-wlan`. The two coincide because a WiNet-S
-does not forward 5741, so a dongle document never says `-meter`.
-Decide whether direct LAN should get its own word (e.g. `-lan`) -- that
-renames every cable document.
 
 ## Integration
 

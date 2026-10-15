@@ -337,18 +337,19 @@ def transport_verdict(*, answered_6100: bool, module_named: bool) -> str:
     )
 
 
-#: The filename word for each reported transport, where it gets one.
+#: The filename word for each reported transport.
 #:
-#: Only the *unusual* route is named. A reading through the inverter's own LAN
-#: port is the plain case and adds nothing to a name; a reading through a
-#: dongle changes which registers answer, so it has to be in the filename --
-#: and not only for the reader. One dongle read wired and over WiFi produces
-#: two legitimate documents that are otherwise identical, so without this word
+#: Every route is named, the inverter's own LAN port included. A reading
+#: through a dongle changes which registers answer, so a reader comparing two
+#: documents needs the route in front of them -- and an unnamed route reads as
+#: "unknown", not as "cable". One dongle read wired and over WiFi produces two
+#: legitimate documents that are otherwise identical, so without this word
 #: they derive the same name and the second silently overwrites the first.
+#: Only "not sure" adds nothing, unless the measurement can say.
 #:
 #: Kept equal to the fourth element of each `probe.REPORTED_TRANSPORTS` row.
 TRANSPORT_WORDS: dict[str, str] = {
-    "direct_lan": "",
+    "direct_lan": "direct-lan",
     "winet_lan": "winet-lan",
     "winet_wlan": "winet-wlan",
     "winet": "winet",
@@ -538,7 +539,11 @@ def _transport_word(document: dict[str, Any], said: dict[str, Any]) -> list[str]
     word = TRANSPORT_WORDS.get(str(said.get("transport") or ""), "")
     if not word:
         verdict = str((document.get("connection") or {}).get("verdict") or "")
-        if verdict.startswith(("through a communication module", "through a WiNet-S")):
+        if verdict.startswith("direct"):
+            word = "direct-lan"
+        elif verdict.startswith(
+            ("through a communication module", "through a WiNet-S")
+        ):
             word = "winet"
         elif verdict.startswith("through a Logger"):
             word = "logger"

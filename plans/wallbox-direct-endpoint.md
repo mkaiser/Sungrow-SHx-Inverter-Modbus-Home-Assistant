@@ -1,6 +1,9 @@
 # The wallbox's own address: integration and survey
 
-**Status: 2026-10-14, 23:25. Steps 1-6 done: committed locally as the branch's one unpushed commit, `make check` green (2859), **not pushed**. Waiting on the maintainer: release 0.1.0a14 (push the commit with the tag), then publish gerd's wallbox document from a survey run on PyPI 0.1.0a14.** Updated at least every ten minutes while work runs, so another
+**Status: 2026-10-15, 07:18. Steps 1-6 done and pushed (851f2de). Releasing
+0.1.0a14 now, together with the `direct-lan` filename word (the survey names
+files through the library, so both ride one release). Then step 7: gerd's
+wallbox document from the launcher on PyPI 0.1.0a14.** Updated at least every ten minutes while work runs, so another
 session can take over from here.
 
 Approved by the maintainer on 2026-10-14: both halves, the integration and
@@ -125,3 +128,10 @@ not readable".
   `doc/wallbox_registers.md` (holding 21249-21312, the 21210-21213 mask),
   the survey README, probe.py's sweep help. `make check` 2859 passed.
   Committed locally, not pushed -- see the status line.
+- 07:18 (2026-10-15) Found 851f2de already on origin. Folded the naming
+  decision into the release: `TRANSPORT_WORDS["direct_lan"]` and probe.py's
+  `REPORTED_TRANSPORTS` say `direct-lan`, and a measured direct verdict does
+  too; the five cable documents renamed (`...-meter-direct-lan`,
+  `...-battery-none-direct-lan`), README and compatibility.md updated. The
+  wallbox document keeps `-wallbox-tls`: it names the wallbox's path, not an
+  inverter's.
