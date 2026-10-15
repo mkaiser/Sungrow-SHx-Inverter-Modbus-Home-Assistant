@@ -1,11 +1,31 @@
 Todo.md contains only next steps (forward looking).
 Anything done should be removed here.
 
+
+## Fingerprint Folder restructuring
+
+Fingerprint-related stuff is spread across the repo:
+- doc/device-fingerprints
+- scripts/sungrow_control_test
+- scripts/sungrow_read_only_survey
+
+move to top level:
+/device-fingerprints
+/device-fingerprints/README.md  -->  with instructions how to use the scripts   Move information from the separate README.txt files here
+/device-fingerprints/scripts    --> scripts here
+/device-fingerprints/inverter
+/device-fingerprints/wallbox
+
+
+scripts: What are blocks.py probe.py and raw_client.py used for? Does it make sense to move them to the pypi package?
+If required for the scripts, move them into a subfolder: /device-fingerprints/scripts/python and leave only the bat/sh/ps1 scripts in /device-fingerprints/scripts
+
 # Summary (2026-10-15)
 
 0.1.0a14 on PyPI: the wallbox at its own address (TLS 516, unit 248) in the
 integration and the survey, and `direct-lan` in every cable document's name.
-gerd's wallbox document is published under `doc/device-fingerprints/wallbox/`. Every site re-fingerprinted; control tests merged at
+gerd's wallbox document is published in `doc/device-fingerprints/`, beside the
+inverter documents. Every site re-fingerprinted; control tests merged at
 fwitten's master and gerd; the integration passed on gerd's hardware.
 Open:
 
@@ -117,50 +137,18 @@ Measured at gerd's AC22E-01 on 2026-10-14. Addresses are in memory, not here.
 
 **To do**
 
-- [x] Unit sweep on the inverter's LAN port: no wallbox on any unit.
-- [x] The start-address map (above).
-- [x] The integration's five wallbox reads, through the real library over
-      TLS: all answer.
-- [x] `test_every_wallbox_read_starts_where_the_direct_path_answers`
-      holds every wallbox component read to the map.
-- [x] **The wallbox's own address in the integration**: the `wallbox_host`
-      option on the inverter's entry (TLS 516, unit 248), checked when
-      saved; device and entity ids unchanged. On gerd's hardware: one entry
-      on the cable gives inverter 138, SBR096 17 and wallbox 21 entities.
-- [x] **The survey reads a wallbox on 516** (`wallbox_direct.py`), with the
-      TLS dump bands, into a wallbox document of its own.
 - [ ] Decode what only the direct path shows: 21240-21249 (version
       string), 21331-21335, 21359, 21362-21364, 21267, holding 21249-21312.
       21210-21213 is masked until a second wallbox shows whether it
       identifies the unit.
-- [x] CLAUDE.md and `doc/wallbox_registers.md` corrected: two paths, the
-      start-address rule, the certificate.
 - [ ] Still only a charging car can settle 21313 and the signedness of
       21308/21310 -- now readable both ways, which doubles the evidence.
 
-## Maintainer, on your machines
 
-- `control_test.cmd <host> --dry-run` on Windows from a pull: the
-  permission question, "Press Enter", Ctrl+C at that pause (expect exit 1,
-  nothing written), results beside the `.cmd`.
-- Clean-machine test of the launchers (Docker or Windows Sandbox), answering
-  N then y:
+# Future work
 
-      docker run --rm -it -v "${PWD}/scripts/sungrow_read_only_survey:/s" -w /s python:3.13-slim sh ./read_only_survey.sh <inverter-ip>
-      docker run --rm -it -v "${PWD}/scripts/sungrow_control_test:/c" -w /c python:3.13-slim sh ./control_test.sh <inverter-ip> --dry-run
+- investigate: Does it make sense to provide a modbusproxy from this integration? So evcc and other software can use the inverter and wallbox through this integration?
+reuse existing modbusproxies, don't reinvent
 
-- Delete `/home/vscode/testdata-archive-20261013/` (old `.testdata/`
-  output, moved rather than deleted) once checked.
+OR: proide some kind of mqtt interface for inverter and wallbox to evcc. Does evcc have a standard config for this?
 
-## Running the scripts from Windows
-
-Each folder has a launcher that fetches uv and the pinned library, and writes
-its results beside itself:
-
-    cd <repo>\scripts\sungrow_read_only_survey
-    read_only_survey.cmd                         # asks which network to sweep
-    read_only_survey.cmd <ip1> <ip2>             # skip the sweep once the hosts are known
-
-    cd <repo>\scripts\sungrow_control_test
-    control_test.cmd <ip> --dry-run              # writes nothing
-    control_test.cmd <ip> --unit 2 --export-scale

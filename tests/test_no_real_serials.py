@@ -200,7 +200,7 @@ def test_the_published_fingerprints_carry_stand_ins_and_nothing_else() -> None:
     look after a near-miss, and the two halves belong together: a stand-in in
     the document, and nothing serial-shaped in the source.
     """
-    documents = sorted((REPO / "doc" / "device-fingerprints").rglob("*.json"))
+    documents = sorted((REPO / "doc" / "device-fingerprints").glob("*.json"))
     assert documents, "there should be committed fingerprints to check"
     for path in documents:
         text = path.read_text(encoding="utf-8")

@@ -19,9 +19,9 @@ Two rules the direct path imposes, both measured:
 Read-only, like everything in this folder: function codes 3 and 4.
 
 The document is a **wallbox document**, not an inverter's: it has no
-`device` section, and its own filename. It is published under
-`doc/device-fingerprints/wallbox/`, beside the inverter corpus rather than
-in it, because every check of that corpus assumes an inverter.
+`device` section, and its own filename. It is published in
+`doc/device-fingerprints/` beside the inverter documents; the corpus checks
+tell the two apart by `"document": "wallbox"`, not by folder.
 """
 
 from __future__ import annotations

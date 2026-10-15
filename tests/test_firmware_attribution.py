@@ -23,7 +23,7 @@ sys.path.insert(0, str(REPO / "scripts" / "generate"))
 
 from generate_compatibility import _attribution, _capability_marks, _comparable
 
-FINGERPRINTS = sorted((REPO / "doc" / "device-fingerprints").glob("*.json"))
+from .corpus import INVERTER_DOCUMENTS as FINGERPRINTS
 
 
 def _document(**overrides) -> dict:

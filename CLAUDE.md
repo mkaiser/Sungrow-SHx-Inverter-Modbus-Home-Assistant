@@ -25,8 +25,8 @@ are now done:
   when the inverter's entry has the **`wallbox_host` option** set -- an
   option, not an entry, so the device and its entity ids are the same either
   way. `sungrow_survey.py` finds a wallbox on 516 and surveys it into a
-  **wallbox document** of its own, published under
-  `doc/device-fingerprints/wallbox/`, outside the inverter corpus.
+  **wallbox document** of its own, published in
+  `doc/device-fingerprints/` beside the inverter documents.
 - ⬜ the **iHomeManager** (port **502 *or* 503**, slave 247) — **never
   measured**; to do: survey one. `identify()` probes input 8000 on unit 247, so
   a contributor who owns one is told what they have, and `sungrow_survey.py`

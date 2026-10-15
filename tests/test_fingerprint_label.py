@@ -46,6 +46,8 @@ from probe import (
 from sungrow_modbus import fingerprint
 from sungrow_modbus.fingerprint import COLLECTED_BY_INTEGRATION
 
+from .corpus import INVERTER_DOCUMENTS
+
 REPO = Path(__file__).resolve().parent.parent
 
 
@@ -518,14 +520,14 @@ def test_no_document_carries_a_round_trip_time() -> None:
 
     assert "not determinable" in WIFI_OR_ETHERNET
     assert " ms" not in WIFI_OR_ETHERNET
-    for path in (REPO / "doc" / "device-fingerprints").glob("*.json"):
+    for path in INVERTER_DOCUMENTS:
         document = json.loads(path.read_text(encoding="utf-8"))
         assert "latency_ms" not in document["connection"], path.name
 
 
 # -- what a person typed stays where a reader can see that it was typed -----
 
-FINGERPRINTS = sorted((REPO / "doc" / "device-fingerprints").glob("*.json"))
+FINGERPRINTS = INVERTER_DOCUMENTS
 
 #: The stand-in serial these labels are built from, exactly as
 #: `stand_in("A123456789")` writes it. Spelled out rather than computed,
@@ -1608,7 +1610,7 @@ def test_every_probe_state_the_committed_documents_use_is_a_known_one() -> None:
     back, and only the first is evidence about a register.
     """
     seen = set()
-    for path in (REPO / "doc" / "device-fingerprints").glob("*.json"):
+    for path in INVERTER_DOCUMENTS:
         document = json.loads(path.read_text(encoding="utf-8"))
         for entry in (document.get("capability_probes") or {}).values():
             if isinstance(entry, dict) and entry.get("state"):

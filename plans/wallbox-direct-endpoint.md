@@ -66,7 +66,7 @@ not readable".
 6. [x] Docs (CLAUDE.md, `doc/wallbox_registers.md`, the survey README),
        `make check`, commit. Release 0.1.0a14: asked, not done.
 7. [x] After the release: survey gerd's wallbox with the launcher (PyPI
-       0.1.0a14) and publish it under `doc/device-fingerprints/wallbox/`,
+       0.1.0a14) and publish it in `doc/device-fingerprints/`,
        with the corpus checks that folder needs.
 
 ## Log
@@ -138,7 +138,7 @@ not readable".
   0.1.0a14 against gerd's wallbox: found on 516, exit 0, 32 readings, 289 raw
   addresses, stand-in `anon-41346964423` (the dongle document's), input
   21200-21205 and 21210-21213 null. Published as
-  `doc/device-fingerprints/wallbox/ac22e01-gerd-anon-41346964423-wallbox-tls.json`.
+  `doc/device-fingerprints/ac22e01-gerd-anon-41346964423-wallbox-tls.json`.
   Corpus checks: `tests/test_wallbox_documents.py` (filename, document kind,
   stand-in, masks, address); `test_no_real_serials` scans subfolders. A
   wallbox document is not in `doc/compatibility.md`: it has no `device`.

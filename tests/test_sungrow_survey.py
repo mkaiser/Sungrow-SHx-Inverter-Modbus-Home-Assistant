@@ -30,6 +30,8 @@ import blocks  # noqa: E402
 import probe  # noqa: E402
 import sungrow_survey  # noqa: E402
 
+from .corpus import INVERTER_DOCUMENTS  # noqa: E402
+
 
 def _function(path: Path, name: str) -> ast.FunctionDef | ast.AsyncFunctionDef:
     """Return one top-level function's syntax tree."""
@@ -676,7 +678,7 @@ def test_a_run_that_read_nothing_exits_1_not_3() -> None:
 
 @pytest.mark.parametrize(
     "path",
-    sorted(Path(__file__).parents[1].glob("doc/device-fingerprints/*.json")),
+    INVERTER_DOCUMENTS,
     ids=lambda path: path.stem,
 )
 def test_no_published_document_counts_as_collecting_nothing(path: Path) -> None:

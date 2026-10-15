@@ -24,11 +24,7 @@ import pytest
 
 from sungrow_modbus.fingerprint import label_for
 
-FINGERPRINTS = sorted(
-    (Path(__file__).resolve().parent.parent / "doc" / "device-fingerprints").glob(
-        "*.json"
-    )
-)
+from .corpus import INVERTER_DOCUMENTS as FINGERPRINTS
 
 
 def test_there_are_fingerprints_to_check_against() -> None:

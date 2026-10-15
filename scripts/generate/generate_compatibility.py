@@ -156,10 +156,12 @@ def _short_firmware(version: str) -> str:
 
 def _reports() -> list[tuple[str, dict]]:
     """Return (label, document) for every committed fingerprint."""
-    return [
+    documents = [
         (path.stem, json.loads(path.read_text(encoding="utf-8")))
         for path in sorted(FINGERPRINTS.glob("*.json"))
     ]
+    # A wallbox read at its own address has no `device` to put in a row.
+    return [(stem, d) for stem, d in documents if d.get("document") != "wallbox"]
 
 
 def _model(document: dict) -> tuple[str, str]:

@@ -1,10 +1,10 @@
 """The committed wallbox documents, held to what the survey promises of one.
 
-`doc/device-fingerprints/wallbox/` sits outside the inverter corpus: a
-wallbox document has no `device`, so neither `label_for` nor the
-compatibility table can read it. The checks the inverter corpus gets from
-`test_document_filenames.py` and `test_no_real_serials.py` are restated
-here for this folder, on the document's own terms.
+A wallbox read at its own address is published beside the inverter documents
+in `doc/device-fingerprints/`, but it has no `device`, so neither `label_for`
+nor the compatibility table can read it (`tests/corpus.py` splits the two).
+The checks the inverter corpus gets from `test_document_filenames.py` and
+`test_no_real_serials.py` are restated here, on the document's own terms.
 """
 
 from __future__ import annotations
@@ -23,8 +23,7 @@ sys.path.insert(0, str(SURVEY))
 
 import wallbox_direct  # noqa: E402
 
-FOLDER = Path(__file__).resolve().parents[1] / "doc" / "device-fingerprints" / "wallbox"
-DOCUMENTS = sorted(FOLDER.glob("*.json"))
+from .corpus import WALLBOX_DOCUMENTS as DOCUMENTS  # noqa: E402
 
 
 def _load(path: Path) -> dict:
