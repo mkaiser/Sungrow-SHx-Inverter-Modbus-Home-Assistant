@@ -2080,7 +2080,10 @@ async def capabilities(args: argparse.Namespace) -> Reading:
         # from: `raw` is written out as JSON, and an argparse Namespace is not
         # serialisable -- which would have failed at the last line of a run
         # that had already spent a minute reading the device.
-        "command_line": _invocation(args),
+        #
+        # `sungrow_survey.py` hands its own line, which repeats the whole
+        # survey -- block read test included -- without a question.
+        "command_line": getattr(args, "command_line", None) or _invocation(args),
         # What the block read test found, when the caller ran one and handed
         # it over. `sungrow_survey.py` does; the bare `capabilities` subcommand does
         # not, and a document without it says so by its absence rather than
@@ -2914,7 +2917,7 @@ PAUSE_ADVICE = """  A Sungrow accepts very few Modbus sessions at once, so
   gap in the recorder and nothing worse."""
 
 
-def _ask_about_pollers() -> None:
+def _ask_about_pollers() -> str:
     """Mention the other pollers, and say how to quiet them.
 
     Asked rather than assumed, because the answer changes what a thin report
@@ -2923,6 +2926,8 @@ def _ask_about_pollers() -> None:
     worth reporting. This does not gate anything -- a report from a busy
     inverter is still worth having, and refusing to take one would just mean
     no fingerprint at all.
+
+    Returns "yes" or "no", which `sungrow_survey.py --pollers` takes back.
     """
     print()
     if _ask_yes(
@@ -2933,8 +2938,9 @@ def _ask_about_pollers() -> None:
         if not _ask_yes("Carry on anyway?", default=True):
             print("Nothing read. Quiet the pollers and run this again.")
             raise SystemExit(1)
-    else:
-        print("  Good -- a quiet inverter gives the fullest report.")
+        return "yes"
+    print("  Good -- a quiet inverter gives the fullest report.")
+    return "no"
 
 
 async def _ask_battery(host: str, port: int, unit_id: int) -> str:

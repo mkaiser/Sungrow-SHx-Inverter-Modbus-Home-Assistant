@@ -166,7 +166,8 @@ async def async_survey(
     document: dict[str, Any] = {
         "schema": SCHEMA,
         "document": "wallbox",
-        "command_line": "sungrow_survey.py, a wallbox at its own address",
+        "command_line": getattr(answers, "command_line", None)
+        or "sungrow_survey.py <host>",
         "read_on": read_at[:10],
         "read_at_local": local_time(read_at),
         "user_inputs": {

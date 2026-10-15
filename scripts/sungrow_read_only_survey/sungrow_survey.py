@@ -61,6 +61,7 @@ from datetime import datetime
 import ipaddress
 import logging
 from pathlib import Path
+import shlex
 import sys
 import textwrap
 import time
@@ -351,7 +352,7 @@ async def _find(args, echo) -> list[Found]:
         # The unit that answered, not the flag's default. Where `--unit` was
         # given explicitly it still wins, because somebody passing it knows
         # something the probe does not.
-        found.append(Found(host, port, who.unit or args.unit, who))
+        found.append(Found(host, port, args.unit or who.unit or 1, who))
 
     if managers:
         echo("")
@@ -374,7 +375,9 @@ async def _find(args, echo) -> list[Found]:
             echo(f"    python {Path(__file__).name} 192.168.1.50")
 
     _report_shared_serials(found, echo)
-    if len(found) > 1:
+    # Addresses given on the command line are all surveyed: they are the
+    # choice, and asking again would stop a replay from running unattended.
+    if len(found) > 1 and not args.host:
         echo("")
         keys = [f"{entry.host}:{entry.port}" for entry in found] + ["all"]
         labels = {key: key for key in keys}
@@ -456,6 +459,77 @@ def _ask_host(echo) -> str:
             return typed
 
 
+#: What `--pollers` may say. `probe._ask_about_pollers` returns the same.
+POLLER_ANSWERS: tuple[str, ...] = ("no", "yes")
+
+#: The flags that answer a question, in the order the questions come. Each is
+#: written even when its value is empty -- `--comment ''` -- because an absent
+#: flag means "ask", and the point of the line is that nothing is asked.
+REPLAY_FLAGS: tuple[tuple[str, str], ...] = (
+    ("--unit", "unit"),
+    ("--pollers", "pollers"),
+    ("--transport", "transport"),
+    ("--proxy", "proxy"),
+    ("--other-inverter", "other_inverter"),
+    ("--other-inverter-detail", "other_inverter_detail"),
+    ("--address", "address"),
+    ("--reporter", "reporter"),
+    ("--comment", "comment"),
+    ("--battery", "battery"),
+)
+
+
+def _script_name() -> str:
+    """Return this script the way the person running it would type it.
+
+    The repository path inside a checkout, the bare name in a downloaded copy
+    of the folder, where there is no `scripts/` above it. The launchers pass
+    every argument through, so `read_only_survey.sh` takes the same line.
+    """
+    here = Path(__file__).resolve()
+    if here.parent.parent.name == "scripts":
+        return f"scripts/{here.parent.name}/{here.name}"
+    return here.name
+
+
+def replay_command(answers: argparse.Namespace, host: str = "<host>") -> str:
+    """Return the survey command that repeats a run without asking anything.
+
+    **The host is a placeholder** unless the caller hands the real one, which
+    only the screen does: the document is built around not carrying the
+    address. Values are shell-quoted, so a comment with an apostrophe pastes
+    back intact. `--port`, `--timeout` and `--passes` appear only where they
+    differ from the defaults, since they shape the reading but answer nothing.
+    """
+    # The placeholder bare, as every published line has it; a real host quoted.
+    parts = [_script_name(), host if host == "<host>" else shlex.quote(host)]
+    for flag, attribute, default in (
+        ("--port", "port", 502),
+        ("--timeout", "timeout", 10.0),
+        ("--passes", "passes", 8),
+    ):
+        value = getattr(answers, attribute, default)
+        if value != default:
+            parts += [flag, f"{value:g}" if isinstance(value, float) else str(value)]
+    for flag, attribute in REPLAY_FLAGS:
+        value = getattr(answers, attribute, None)
+        if value is None:
+            continue
+        if attribute == "other_inverter_detail" and not value:
+            continue
+        parts += [flag, shlex.quote(str(value))]
+    return " ".join(parts)
+
+
+def _echo_replay(echo, line: str) -> None:
+    """Print the replay line, and how to hand it to the launcher."""
+    _script, _, rest = line.partition(" ")
+    echo("  To repeat this survey without the questions:")
+    echo(f"    {line}")
+    echo("  or through the launcher, with the same arguments:")
+    echo(f"    ./read_only_survey.sh {rest}")
+
+
 async def _ask_all(entry: Found, args, echo) -> argparse.Namespace:
     """Ask the questions no register can answer, for one device.
 
@@ -476,44 +550,73 @@ async def _ask_all(entry: Found, args, echo) -> argparse.Namespace:
         label=None,
     )
     with contextlib.redirect_stdout(sys.stderr):
-        probe._ask_about_pollers()
-        print()
-        print("  Every Modbus device on an endpoint has a number, its unit id")
-        print("  or 'device address'. A Sungrow inverter is 1 unless somebody")
-        print("  changed it, and 1 is what its app and its manual assume. A")
-        print("  battery, a wallbox and a second inverter have their own, and")
-        print("  this scan finds those by itself -- so unless you have been")
-        print("  told otherwise, press Enter.")
-        if entry.unit != 1:
-            # Say why the default is not the number the paragraph above just
-            # called usual, or it reads as a mistake.
+        answers.pollers = args.pollers or probe._ask_about_pollers()
+        if args.unit is None:
             print()
-            print(f"  This device answered on unit {entry.unit}, so that is the")
-            print("  default below. A second inverter in a master/slave cluster")
-            print("  has its own device address, and 2 is what one measured.")
-        answers.unit = int(
-            probe._ask("Modbus unit id (device address)", str(entry.unit))
-        )
-        answers.transport = probe._ask_transport()
-        answers.proxy = probe._ask_proxy()
-        answers.other_inverter, answers.other_inverter_detail = (
-            probe._ask_other_inverter()
-        )
+            print("  Every Modbus device on an endpoint has a number, its unit id")
+            print("  or 'device address'. A Sungrow inverter is 1 unless somebody")
+            print("  changed it, and 1 is what its app and its manual assume. A")
+            print("  battery, a wallbox and a second inverter have their own, and")
+            print("  this scan finds those by itself -- so unless you have been")
+            print("  told otherwise, press Enter.")
+            if entry.unit != 1:
+                # Say why the default is not the number the paragraph above
+                # just called usual, or it reads as a mistake.
+                print()
+                print(f"  This device answered on unit {entry.unit}, so that is the")
+                print("  default below. A second inverter in a master/slave cluster")
+                print("  has its own device address, and 2 is what one measured.")
+            answers.unit = int(
+                probe._ask("Modbus unit id (device address)", str(entry.unit))
+            )
+        answers.transport_given = args.transport is not None
+        answers.transport = args.transport or probe._ask_transport()
+        answers.proxy = args.proxy or probe._ask_proxy()
+        if args.other_inverter:
+            answers.other_inverter = args.other_inverter
+            answers.other_inverter_detail = (
+                (args.other_inverter_detail or "")
+                if args.other_inverter == "yes"
+                else ""
+            )
+        else:
+            answers.other_inverter, answers.other_inverter_detail = (
+                probe._ask_other_inverter()
+            )
         # Always, and not asked: the raw bands are where registers nothing
         # maps were found -- the inverter's clock, 45 holding registers that
         # answer real values -- and a survey is the only thing that reads them.
         answers.dump = True
-        answers.address = probe._ask_address(entry.host)
-        answers.reporter = probe._ask(
-            "Who is reporting this, to credit and to ask (blank for anonymous)",
-            "anonymous",
+        answers.address = args.address or probe._ask_address(entry.host)
+        answers.reporter = (
+            args.reporter
+            if args.reporter is not None
+            else probe._ask(
+                "Who is reporting this, to credit and to ask (blank for anonymous)",
+                "anonymous",
+            )
         )
-        answers.comment = probe._ask("Anything else worth recording (blank to skip)")
-        print()
-        print("  One more, and the registers may settle it without asking:")
-        print("  reading what this device says about its battery. A few")
-        print("  seconds, or up to half a minute over a slow link.")
-    answers.battery = await probe._ask_battery(entry.host, answers.port, answers.unit)
+        answers.comment = (
+            args.comment
+            if args.comment is not None
+            else probe._ask("Anything else worth recording (blank to skip)")
+        )
+        if args.battery is None:
+            print()
+            print("  One more, and the registers may settle it without asking:")
+            print("  reading what this device says about its battery. A few")
+            print("  seconds, or up to half a minute over a slow link.")
+    answers.battery = (
+        args.battery
+        if args.battery is not None
+        else await probe._ask_battery(entry.host, answers.port, answers.unit)
+    )
+    # The command that repeats this survey without a single question: every
+    # answer as a flag, the host a placeholder. Published as `command_line`,
+    # where it used to be the equivalent `probe.py capabilities` line -- which
+    # repeated the reading but skipped the block read test, so it was not
+    # this run.
+    answers.command_line = replay_command(answers)
     echo("")
     echo("  Answered:")
     for label, value in (
@@ -534,28 +637,12 @@ async def _ask_all(entry: Found, args, echo) -> argparse.Namespace:
     ):
         echo(f"    {label:<22} {value}")
     echo("")
-    # The command that repeats this run without asking anything, printed
-    # **after** the last question so it carries every answer -- an earlier
-    # version printed it before the battery question and left `--battery` out,
-    # which is the one answer nobody can re-derive. Printed before the reading
-    # rather than only into the file, because the moment somebody wants it is
-    # the moment they realise they would have to answer eight questions again,
-    # and because a run that dies halfway leaves them nothing otherwise.
-    echo("  To repeat this reading without the questions:")
-    echo(f"    python3 {probe.SCRIPT} capabilities {entry.host} \\")
-    echo(
-        f"      --unit {answers.unit} --transport {answers.transport} "
-        f"--proxy {answers.proxy} --dump \\"
-    )
-    line = f"      --address {answers.address} --reporter {answers.reporter!r}"
-    if answers.battery:
-        line += f" --battery {answers.battery!r}"
-    if answers.other_inverter:
-        line += f" --other-inverter {answers.other_inverter}"
-    if answers.other_inverter_detail:
-        line += f" --other-inverter-detail {answers.other_inverter_detail!r}"
-    echo(line + " \\")
-    echo(f"      --save {_workspace()[0]}")
+    # Printed **after** the last question so it carries every answer, and
+    # before the reading rather than only into the file: the moment somebody
+    # wants it is the moment they realise they would have to answer the
+    # questions again, and a run that dies halfway leaves them nothing
+    # otherwise. With the real host, since this screen is theirs.
+    _echo_replay(echo, replay_command(answers, host=entry.host))
     echo("")
     echo("  Starting now, and this is the long part: two registers that say")
     echo("  how the reading reaches the device, then every block read the")
@@ -635,6 +722,11 @@ async def _check_transport(entry: Found, answers, echo) -> Transport:
         echo("  This contradicts the answer given above.")
         echo(f"    measured   {measured}")
         echo(f"    you said   {reported}")
+        if getattr(answers, "transport_given", False):
+            # Given as a flag, so kept: a replay must not stop to ask, and
+            # the document records the answer beside the measurement anyway.
+            echo("  kept as given by --transport; the document records both")
+            return Transport(state_6100, module, verdict, web_ui)
         with contextlib.redirect_stdout(sys.stderr):
             print("\n  The measurement is usually right: it is two registers and")
             print("  a port, and the same house can have both routes.")
@@ -695,6 +787,8 @@ async def _survey(entry: Found, args, echo) -> Outcome:
     """Take one device through every phase and return what it produced."""
     answers = await _ask_all(entry, args, echo)
     transport = await _check_transport(entry, answers, echo)
+    # Again, because the transport check may have changed an answer.
+    answers.command_line = replay_command(answers)
     tested = await asyncio.to_thread(_block_test, entry, answers, echo)
     outcome, client = tested or (None, None)
 
@@ -1145,18 +1239,26 @@ async def _survey_wallbox(found: wallbox_direct.Found, args, echo) -> int:
     Fewer than an inverter's: transport is measured (it is this address), and
     a wallbox has no battery, proxy or second inverter to ask about. The
     address and the reporter are consent, and asked as they are for an
-    inverter.
+    inverter -- unless `--address`, `--reporter` and `--comment` answer them.
     """
     echo("-" * 72)
     echo(f"Wallbox at {found.host}:{wallbox_direct.PORT}, a {found.model}")
     echo("-" * 72)
     with contextlib.redirect_stdout(sys.stderr):
-        consent = probe._ask_address(found.host)
-        reporter = probe._ask(
-            "Who is reporting this, to credit and to ask (blank for anonymous)",
-            "anonymous",
+        consent = args.address or probe._ask_address(found.host)
+        reporter = (
+            args.reporter
+            if args.reporter is not None
+            else probe._ask(
+                "Who is reporting this, to credit and to ask (blank for anonymous)",
+                "anonymous",
+            )
         )
-        comment = probe._ask("Anything else worth recording (blank to skip)")
+        comment = (
+            args.comment
+            if args.comment is not None
+            else probe._ask("Anything else worth recording (blank to skip)")
+        )
     tail = (
         probe._last_two_octets(found.host) or probe.ADDRESS_HIDDEN
         if consent == "two_octets"
@@ -1164,6 +1266,17 @@ async def _survey_wallbox(found: wallbox_direct.Found, args, echo) -> int:
     )
     answers = argparse.Namespace(
         timeout=args.timeout, reporter=reporter, comment=comment
+    )
+    # A wallbox is asked three of the questions, so its line carries three.
+    answers.command_line = replay_command(
+        argparse.Namespace(address=consent, reporter=reporter, comment=comment)
+    )
+    _echo_replay(
+        echo,
+        replay_command(
+            argparse.Namespace(address=consent, reporter=reporter, comment=comment),
+            host=found.host,
+        ),
     )
     directory, _private = _workspace()
     echo("  reading over TLS, unit 248, every read on a data point's start")
@@ -1308,8 +1421,8 @@ def _finish(code: int, echo) -> int:
     return code
 
 
-def main() -> int:
-    """Parse the few optional arguments and run."""
+def _parser() -> argparse.ArgumentParser:
+    """Return the command line: the addresses, and a flag for every answer."""
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -1320,12 +1433,54 @@ def main() -> int:
         help="address(es) to scan. Omit to sweep the network and choose.",
     )
     parser.add_argument("--port", type=int, default=502)
-    parser.add_argument(
-        "--unit", type=int, default=1, help="default unit id offered when asked"
-    )
     parser.add_argument("--timeout", type=float, default=10.0)
     parser.add_argument("--passes", type=int, default=8)
-    args = parser.parse_args()
+    answers = parser.add_argument_group(
+        "answers",
+        "Each answers one question, which is then not asked. A document's "
+        "command_line gives all of them, so it repeats a survey without "
+        "asking anything. They apply to every device this run surveys.",
+    )
+    answers.add_argument(
+        "--unit", type=int, help="the inverter's unit id (device address)"
+    )
+    answers.add_argument(
+        "--pollers",
+        choices=POLLER_ANSWERS,
+        help="whether anything else is polling the inverter right now; "
+        "'yes' carries on anyway",
+    )
+    answers.add_argument(
+        "--transport",
+        choices=tuple(probe.REPORTED_TRANSPORTS),
+        help="how this reading reaches the device. Kept as given when the "
+        "measurement disagrees; the document records both",
+    )
+    answers.add_argument("--proxy", choices=tuple(probe.PROXY_ANSWERS))
+    answers.add_argument(
+        "--other-inverter", choices=tuple(probe.OTHER_INVERTER_ANSWERS)
+    )
+    answers.add_argument(
+        "--other-inverter-detail",
+        help="make and size of that inverter; published, so no serials",
+    )
+    answers.add_argument(
+        "--address",
+        choices=probe.ADDRESS_ANSWERS,
+        help="whether the document may carry the last two octets of the address",
+    )
+    answers.add_argument("--reporter", help="who to credit; published")
+    answers.add_argument("--comment", help="free text; published, so no serials")
+    answers.add_argument(
+        "--battery",
+        help="the battery's brand, where no register reports it ('' for none)",
+    )
+    return parser
+
+
+def main() -> int:
+    """Parse the arguments and run."""
+    args = _parser().parse_args()
     _quiet_backend()
     try:
         return asyncio.run(run(args))

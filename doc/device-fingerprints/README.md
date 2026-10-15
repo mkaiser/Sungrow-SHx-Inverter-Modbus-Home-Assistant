@@ -468,16 +468,23 @@ until their transport was established; none in this directory does now.
 `command_line` is the whole invocation, so a reading can be repeated — by its
 owner, or by somebody asking "what did you actually run?".
 
-It names the `capabilities` phase even when the reading came from
-`sungrow_survey.py`, which is deliberate: that command repeats *this reading* with
-these answers, where `sungrow_survey.py <host>` would ask the questions again
-interactively. The field is what to run, not a record of what was typed.
+`sungrow_survey.py` takes a flag for every question it asks, and asks only
+those whose flag is missing. The line it publishes gives all of them, so it
+repeats the survey -- block read test included -- **without a single
+question**. An empty answer is still written (`--comment ''`), because an
+absent flag means "ask". The launchers pass every argument through, so
+`read_only_survey.sh` and `read_only_survey.cmd` take the same flags.
 
 ```
-scripts/sungrow_read_only_survey/probe.py capabilities <host> --port 502 --unit 1 --timeout 10
-  --passes 8 --transport direct_lan --proxy no --reporter mkaiser
-  --battery 'Pylontech Force H1, 14.4 kWh' --comment '...' --dump
+scripts/sungrow_read_only_survey/sungrow_survey.py <host> --unit 1 --pollers no
+  --transport direct_lan --proxy no --other-inverter no --address hidden
+  --reporter mkaiser --comment '' --battery 'Pylontech Force H1, 14.4 kWh'
 ```
+
+A wallbox at its own address is asked three questions, so its line carries
+`--address`, `--reporter` and `--comment`. Older documents carry the
+equivalent `probe.py capabilities <host> ...` line, which repeats the reading
+but not the block read test.
 
 Two deliberate things about it.
 
@@ -487,10 +494,11 @@ address, so quoting the real command would undo that in its first line;
 left out for the same reason — it is a local path, and it says nothing about
 the reading.
 
-**It is rebuilt from the parsed arguments, not copied from `sys.argv`.** Most
-of these are collected by answering prompts, where there is no command line at
-all — so reconstructing it is what lets an interactive session publish
-something runnable. Documents written before schema 8 recorded only the tool
+**It is rebuilt from the answers, not copied from `sys.argv`.** Most of these
+are collected by answering prompts, where there is no command line at all —
+so reconstructing it is what lets an interactive session publish something
+runnable. The survey prints the same line, with the real host, before it
+starts reading. Documents written before schema 8 recorded only the tool
 name; their lines are rebuilt from what each file itself preserves, which is
 why some are missing `--port` and friends. A flag nobody can show was used is
 left out rather than filled in at its default.

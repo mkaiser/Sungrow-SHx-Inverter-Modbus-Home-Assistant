@@ -45,11 +45,6 @@ Open:
 
 ## Fingerprinting
 
-- Write the actual used console command (for bypassing the CLI questions
-  and answers) to the fingerprint json file. Today `command_line` holds
-  the equivalent `probe.py capabilities ... --unit 2 --transport
-  direct_lan --proxy no --dump` line; `sungrow_survey.py` itself takes no
-  flags for the answers, so there is no command that replays a survey.
 - `tests/test_no_real_serials.py`: decode runs of 16-bit integers that
   are printable ASCII pairs to text before matching the serial shape, so a
   serial stored as register words fails the suite (how gerd's leaked).

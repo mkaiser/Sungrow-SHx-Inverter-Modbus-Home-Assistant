@@ -529,6 +529,9 @@ def test_no_document_carries_a_round_trip_time() -> None:
 
 FINGERPRINTS = INVERTER_DOCUMENTS
 
+#: Where the survey sits in a checkout; its published lines start with it.
+SURVEY_SCRIPT = "scripts/sungrow_read_only_survey/sungrow_survey.py"
+
 #: The stand-in serial these labels are built from, exactly as
 #: `stand_in("A123456789")` writes it. Spelled out rather than computed,
 #: so a change to that derivation fails a test instead of silently agreeing
@@ -836,10 +839,11 @@ def test_an_unset_option_is_absent_rather_than_guessed() -> None:
 
 @pytest.mark.parametrize("path", FINGERPRINTS, ids=lambda p: p.stem)
 def test_every_published_command_line_is_runnable_or_names_its_tool(path) -> None:
-    """One of two shapes, and nothing in between.
+    """One of three shapes, and nothing in between.
 
     A document collected from a terminal carries the invocation that repeats
-    the reading, with the host replaced by a placeholder. A document
+    the reading, with the host replaced by a placeholder: the survey's own
+    line, or for older documents the equivalent `probe.py capabilities`. A document
     collected through Home Assistant's diagnostics download carries the name
     of the tool instead, because **there is no command that would repeat
     it** -- and printing a plausible one would invite somebody to run it and
@@ -848,7 +852,7 @@ def test_every_published_command_line_is_runnable_or_names_its_tool(path) -> Non
     polling, which is why such a document also carries a `contention`
     section.
 
-    Two accepted shapes rather than a loosened check: anything that is
+    Accepted shapes rather than a loosened check: anything that is
     neither is a field somebody has started writing prose into, and the
     field is the one most likely to reintroduce an address.
     """
@@ -861,6 +865,10 @@ def test_every_published_command_line_is_runnable_or_names_its_tool(path) -> Non
             f"{path.stem} says the integration collected it, so it must say "
             "what was polling the inverter at the time"
         )
+    elif Path(words[0]).name == "sungrow_survey.py":
+        # The survey's own line, which repeats the whole survey unasked.
+        assert words[0] in (SURVEY_SCRIPT, "sungrow_survey.py")
+        assert words[1] == "<host>"
     else:
         # The repository path from a checkout, the bare name from a copy of
         # the folder: `_script_name` writes whichever repeats the reading.

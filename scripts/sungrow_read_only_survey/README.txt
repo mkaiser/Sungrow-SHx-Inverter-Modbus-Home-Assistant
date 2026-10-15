@@ -33,6 +33,15 @@ A Sungrow wallbox with a network cable or WiFi of its own is found and read
 too, and gets a file of its own. Its address can be given the same way, alone
 or beside the inverter's.
 
+Before it starts reading, the survey prints one line that repeats it with
+all your answers and asks nothing, e.g.
+
+    ./read_only_survey.sh 192.168.1.50 --unit 1 --pollers no --transport winet_wlan ...
+
+Run that line to read the same inverter again later. The same line is in the
+file it writes, as "command_line", with the address left out.
+`./read_only_survey.sh --help` lists the flags.
+
 
 It only reads
 -------------
