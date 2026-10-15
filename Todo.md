@@ -3,12 +3,11 @@ Anything done should be removed here.
 
 # Summary (2026-10-15)
 
-0.1.0a13 on PyPI; **0.1.0a14 being released** (the wallbox's own address, and
-`direct-lan` in every cable document's name). Every site re-fingerprinted; control tests merged at
+0.1.0a14 on PyPI: the wallbox at its own address (TLS 516, unit 248) in the
+integration and the survey, and `direct-lan` in every cable document's name.
+gerd's wallbox document is published under `doc/device-fingerprints/wallbox/`. Every site re-fingerprinted; control tests merged at
 fwitten's master and gerd; the integration passed on gerd's hardware.
-**In progress: `plans/wallbox-direct-endpoint.md`** -- the wallbox as an
-endpoint of its own (TLS, 516, unit 248) in the integration and the survey.
-Still open besides:
+Open:
 
 1. **fwitten's slave control test, in daylight.** It sits in Standby without
    PV (no battery), and the test refuses a stopped inverter. From a copy of
@@ -62,8 +61,7 @@ Still open besides:
 
 ## Wall box integration
 
-Measured at gerd's AC22E-01 on 2026-10-14. Implementation in progress:
-`plans/wallbox-direct-endpoint.md`. Addresses are in memory, not here.
+Measured at gerd's AC22E-01 on 2026-10-14. Addresses are in memory, not here.
 
 **What is now known**
 
@@ -131,12 +129,6 @@ Measured at gerd's AC22E-01 on 2026-10-14. Implementation in progress:
       on the cable gives inverter 138, SBR096 17 and wallbox 21 entities.
 - [x] **The survey reads a wallbox on 516** (`wallbox_direct.py`), with the
       TLS dump bands, into a wallbox document of its own.
-- [ ] **Release 0.1.0a14** -- the integration and the survey import
-      `dump.WALLBOX_TLS_BANDS`, so the commit is held back from the branch
-      until the release goes with it (`plans/wallbox-direct-endpoint.md`).
-- [ ] Publish gerd's first wallbox document under
-      `doc/device-fingerprints/wallbox/` once the survey runs on 0.1.0a14,
-      and add the corpus checks that folder needs.
 - [ ] Decode what only the direct path shows: 21240-21249 (version
       string), 21331-21335, 21359, 21362-21364, 21267, holding 21249-21312.
       21210-21213 is masked until a second wallbox shows whether it

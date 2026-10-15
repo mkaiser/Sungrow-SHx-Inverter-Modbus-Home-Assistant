@@ -1,9 +1,8 @@
 # The wallbox's own address: integration and survey
 
-**Status: 2026-10-15, 07:18. Steps 1-6 done and pushed (851f2de). Releasing
-0.1.0a14 now, together with the `direct-lan` filename word (the survey names
-files through the library, so both ride one release). Then step 7: gerd's
-wallbox document from the launcher on PyPI 0.1.0a14.** Updated at least every ten minutes while work runs, so another
+**Status: 2026-10-15, 07:40. Done: every step, 0.1.0a14 on PyPI, gerd's
+wallbox document published.** Nothing open in this plan; the wallbox items
+left (decoding the direct-only registers, a charging car) are in `Todo.md`. Updated at least every ten minutes while work runs, so another
 session can take over from here.
 
 Approved by the maintainer on 2026-10-14: both halves, the integration and
@@ -66,7 +65,7 @@ not readable".
        instance; the survey against the wallbox's address.
 6. [x] Docs (CLAUDE.md, `doc/wallbox_registers.md`, the survey README),
        `make check`, commit. Release 0.1.0a14: asked, not done.
-7. [ ] After the release: survey gerd's wallbox with the launcher (PyPI
+7. [x] After the release: survey gerd's wallbox with the launcher (PyPI
        0.1.0a14) and publish it under `doc/device-fingerprints/wallbox/`,
        with the corpus checks that folder needs.
 
@@ -135,3 +134,11 @@ not readable".
   `...-battery-none-direct-lan`), README and compatibility.md updated. The
   wallbox document keeps `-wallbox-tls`: it names the wallbox's path, not an
   inverter's.
+- 07:40 Released 0.1.0a14 (`v0.1.0a14`, on PyPI). The launcher on PyPI
+  0.1.0a14 against gerd's wallbox: found on 516, exit 0, 32 readings, 289 raw
+  addresses, stand-in `anon-41346964423` (the dongle document's), input
+  21200-21205 and 21210-21213 null. Published as
+  `doc/device-fingerprints/wallbox/ac22e01-gerd-anon-41346964423-wallbox-tls.json`.
+  Corpus checks: `tests/test_wallbox_documents.py` (filename, document kind,
+  stand-in, masks, address); `test_no_real_serials` scans subfolders. A
+  wallbox document is not in `doc/compatibility.md`: it has no `device`.

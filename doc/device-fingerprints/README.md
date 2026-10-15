@@ -83,6 +83,24 @@ through a WiNet-S too. Its absence means the question was not asked.
 A `control_test` block at schema 2 carries the same block in
 `conditions.export_write_scale`: the factor the run wrote 13074 at.
 
+## Wallbox documents
+
+`wallbox/` holds documents of a wallbox read **at its own LAN address**:
+Modbus TCP inside TLS on port 516, unit 248. `sungrow_survey.py` writes one
+when it finds a wallbox there. A wallbox read through a WiNet-S (unit 3)
+stays a section of the inverter's document, as in gerd's `...-wallbox-winet-wlan`.
+
+A wallbox document has no `device`: everything is under `wallbox` -- the
+unit, the path (`tls`), the stand-in, 32 decoded readings and a dump cut at
+the data-point starts the TLS path accepts. Its name is
+`<model>-<reporter>-<stand-in>-wallbox-tls`. The stand-in is the one the
+dongle document of the same house carries, so the two can be matched.
+
+Masked, as null: input 21200-21205 (the serial) and 21210-21213 (a short
+code only the direct path answers, treated like the serial until a second
+wallbox shows whether it identifies the unit). `tests/test_wallbox_documents.py`
+holds every file here to that, to its own filename and to the address rule.
+
 ## The serial numbers here are not real
 
 Every published file carries a **stand-in** serial, in a field whose name is
