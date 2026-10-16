@@ -6,7 +6,7 @@ register document for one. `doc/wallbox_registers.md` is the whole source,
 and it is what three independent measurements agree on -- one reading taken
 here plus the two community projects.
 
-So the guard is the reading itself. `doc/device-fingerprints/` holds a
+So the guard is the reading itself. `device-fingerprints/` holds a
 committed fingerprint carrying the raw words an AC22E-01 answered **and** the
 readings an independent decoder -- the survey's own, before it moved into the
 library -- made of them. This file holds the library to both: its document

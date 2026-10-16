@@ -56,10 +56,7 @@ MANIFEST = INTEGRATION / "manifest.json"
 #: the survey, fetched by its launchers through `uv`, and the control test.
 #: Both pin the same version the manifest does, so the same wheel has to serve
 #: their imports too.
-SCRIPT_DIRECTORIES = (
-    REPO / "scripts" / "sungrow_read_only_survey",
-    REPO / "scripts" / "sungrow_control_test",
-)
+SCRIPT_DIRECTORIES = (REPO / "device-fingerprints" / "scripts" / "python",)
 
 
 def sources() -> list[Path]:

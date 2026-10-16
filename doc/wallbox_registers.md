@@ -78,7 +78,7 @@ unit 1.
 ## Holding registers
 
 Every one is a **setting**. This project reads them; the survey writes nothing,
-and no file in `scripts/sungrow_read_only_survey/` implements a Modbus write function.
+and no file in `device-fingerprints/` implements a Modbus write function.
 
 | Register | Type | Scale | Meaning | Read here | Confidence |
 | --- | --- | --- | --- | --- | --- |
@@ -160,7 +160,7 @@ to:
 - **holding 21201-21248 answers**, then only scattered addresses up to 21328.
 
 `WALLBOX_BANDS` in `src/sungrow_modbus/dump.py` is those ranges, and
-`scripts/sungrow_read_only_survey/sungrow_survey.py` dumps them whenever a wallbox answers —
+`device-fingerprints/scripts/python/sungrow_survey.py` dumps them whenever a wallbox answers —
 independently of the inverter's own dump question, because 206 addresses is a
 tenth of that dump's cost and a wallbox is the rarest thing this project sees.
 The serial's words are masked by `WALLBOX_MASKED`, and the document

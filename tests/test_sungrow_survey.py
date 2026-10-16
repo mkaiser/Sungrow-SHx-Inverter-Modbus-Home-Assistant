@@ -1,4 +1,4 @@
-"""The one entry point: `scripts/sungrow_read_only_survey/sungrow_survey.py`.
+"""The one entry point: `device-fingerprints/scripts/python/sungrow_survey.py`.
 
 Its failure modes are not the interesting kind. It asks eight questions, runs
 four phases and writes three files, so what goes wrong is that one answer is
@@ -17,13 +17,15 @@ import ast
 import io
 import json
 from pathlib import Path
-import re
 import sys
 
 import pytest
 
+from sungrow_modbus import block_test
+from sungrow_modbus.fingerprint import SCHEMA, collected_nothing
+
 REPO = Path(__file__).resolve().parent.parent
-SCAN = REPO / "scripts" / "sungrow_read_only_survey"
+SCAN = REPO / "device-fingerprints" / "scripts" / "python"
 sys.path.insert(0, str(SCAN))
 
 import blocks  # noqa: E402
@@ -142,7 +144,7 @@ def test_several_devices_exit_the_worst_severity_not_the_highest_number(
 )
 def test_consecutive_registers_are_reported_as_a_range(numbers, expected) -> None:
     """Eight comma-separated numbers hide whether they are contiguous."""
-    assert sungrow_survey._ranges(numbers) == expected
+    assert block_test.register_ranges(numbers) == expected
 
 
 @pytest.mark.parametrize("start", ["root", "folder", "elsewhere"])
@@ -156,9 +158,13 @@ def test_a_run_writes_beside_the_script_from_any_directory(
     land beside the launcher, under visible names -- never in a hidden
     directory, which is how a private file gets forwarded by accident.
     """
-    here = Path(sungrow_survey.__file__).resolve().parent
+    here = Path(sungrow_survey.__file__).resolve().parents[2]
     monkeypatch.chdir(
-        {"root": here.parents[1], "folder": here, "elsewhere": tmp_path}[start]
+        {
+            "root": here.parent,
+            "folder": here / "scripts" / "python",
+            "elsewhere": tmp_path,
+        }[start]
     )
     assert sungrow_survey._workspace() == (here, here)
     assert here == probe.HERE
@@ -169,7 +175,7 @@ def test_a_run_writes_beside_the_script_from_any_directory(
 HOST = "192.168.178.114"
 SERIAL = "A123456789"
 DOCUMENT = {
-    "schema": probe.SCHEMA,
+    "schema": SCHEMA,
     "user_inputs": {
         "reporter": "someone",
         "transport": "direct_lan",
@@ -189,9 +195,9 @@ DOCUMENT = {
 }
 
 
-def _rendered() -> str:
+def _rendered(control_code: int | None = None) -> str:
     """Render the summary for one made-up device and return what it printed."""
-    written = [Path("doc/device-fingerprints/sh80rt-v112-3p-someone-aa2678.json")]
+    written = [Path("device-fingerprints/sh80rt-v112-3p-someone-aa2678.json")]
     result = sungrow_survey.Outcome(
         found=sungrow_survey.Found(
             HOST, 502, 1, probe.Identity(SERIAL, 0x0E0E, "SH8.0RT")
@@ -205,6 +211,7 @@ def _rendered() -> str:
         reported_transport="direct_lan",
         block_outcome=None,
         code=0,
+        control_code=control_code,
     )
     buffer = io.StringIO()
     sungrow_survey._summary(
@@ -213,20 +220,16 @@ def _rendered() -> str:
     return buffer.getvalue()
 
 
-def test_the_summary_carries_no_address_and_no_real_serial() -> None:
-    """Paste-safety as a property, not a hope.
+def test_the_summary_carries_the_control_address_but_no_real_serial() -> None:
+    """The local control command may include the address, but not the serial.
 
-    The summary is written to be pasted into an issue, so it has to be as
-    safe as the document it renders -- and it is rendered from that document
-    for exactly this reason. The `Found` it is given holds the real host and
-    the real serial, so a lapse would show up here.
+    The control command is intentionally executable against the device just
+    surveyed. The fingerprint document and the survey transcript retain their
+    separate privacy boundaries.
     """
     text = _rendered()
     assert SERIAL not in text
-    assert HOST not in text
-    assert not re.search(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b", text), (
-        "a dotted quad is somebody's network"
-    )
+    assert HOST in text
     # And the redacted forms it should carry instead.
     assert "178.114" in text
     assert "anon-00267885816" in text
@@ -243,11 +246,22 @@ def test_the_summary_separates_what_was_read_from_what_was_said() -> None:
     assert "said  reporter         someone" in text
 
 
-def test_a_summary_says_which_file_to_send_and_which_to_keep() -> None:
-    """The contributor's next action, and the one thing they must not do."""
+def test_a_summary_without_the_control_test_says_how_to_run_it_later() -> None:
+    """Declined, the contributor gets the one-launcher line, not a private path."""
     text = _rendered()
-    assert "send this" in text
-    assert "keep this" in text
+    assert "Survey has been written to" in text
+    assert "The control test did not run" in text
+    assert "./survey.sh control" in text
+    assert "--merge-into" in text
+    assert "sungrow-scan-" not in text
+
+
+def test_a_summary_after_the_control_test_says_what_it_found() -> None:
+    from sungrow_modbus.control_test import CODES
+
+    text = _rendered(control_code=4)
+    assert CODES[4] in text
+    assert "./survey.sh control" not in text
 
 
 @pytest.mark.parametrize(
@@ -286,9 +300,7 @@ def test_a_refusal_is_advised_on_differently_per_transport(verdict, expected) ->
         written=[Path("x.json")],
         transport=sungrow_survey.Transport(False, "WINET-SV200", verdict, True),
         reported_transport="winet_wlan",
-        block_outcome=sungrow_survey.blocks.BlockOutcome(
-            tally={}, intermittent=[], failing=[], culprits=[culprit], reconnects=0
-        ),
+        block_outcome=_outcome(culprit),
         code=0,
     )
     lines: list[str] = []
@@ -299,7 +311,7 @@ def test_a_refusal_is_advised_on_differently_per_transport(verdict, expected) ->
     assert "2629-2643" in text
 
 
-def _with_blocks(outcome: blocks.BlockOutcome) -> str:
+def _with_blocks(outcome: block_test.Outcome) -> str:
     """Render the summary for a device whose block read test found something.
 
     Whitespace is collapsed before returning. The advice is wrapped at 68
@@ -314,7 +326,7 @@ def _with_blocks(outcome: blocks.BlockOutcome) -> str:
         ),
         unit=1,
         document=DOCUMENT,
-        written=[Path("doc/device-fingerprints/sh80rt-v112-3p-someone-aa2678.json")],
+        written=[Path("device-fingerprints/sh80rt-v112-3p-someone-aa2678.json")],
         transport=sungrow_survey.Transport(
             True, None, "direct to the inverter's LAN port", False
         ),
@@ -329,18 +341,20 @@ def _with_blocks(outcome: blocks.BlockOutcome) -> str:
     return " ".join(buffer.getvalue().split())
 
 
-def _outcome(*culprits) -> blocks.BlockOutcome:
-    """Return a BlockOutcome holding just the findings a test cares about."""
-    failing = [
-        (name, space, address, count)
-        for name, space, address, count, _k, _d in culprits
+def _outcome(*culprits) -> block_test.Outcome:
+    """Return an Outcome holding just the findings a test cares about.
+
+    Each culprit is (component, space, address, count, outcome, detail).
+    """
+    rows = [
+        (block_test.Block(name, space, address, count), kind, detail)
+        for name, space, address, count, kind, detail in culprits
     ]
-    return blocks.BlockOutcome(
-        tally={key: {} for key in failing},
-        intermittent=[],
+    failing = [block for block, _kind, _detail in rows]
+    return block_test.Outcome(
+        tally={block: {} for block in failing},
         failing=failing,
-        culprits=list(culprits),
-        reconnects=0,
+        culprits=rows,
     )
 
 
@@ -361,7 +375,7 @@ def test_an_already_isolated_block_is_not_offered_to_layout_again() -> None:
                 "input",
                 13249,
                 1,
-                blocks.REFUSED,
+                block_test.REFUSED,
                 "3/3, Modbus Exception 0x02 for function code 0x04",
             )
         )
@@ -382,7 +396,7 @@ def test_a_block_that_is_not_yet_isolated_still_gets_the_recommendation() -> Non
                 "input",
                 5241,
                 1,
-                blocks.REFUSED,
+                block_test.REFUSED,
                 "3/3, Modbus Exception 0x02 for function code 0x04",
             )
         )
@@ -400,7 +414,7 @@ def test_a_range_the_budget_cut_short_is_not_offered_as_a_register() -> None:
                 "input",
                 13282,
                 13,
-                blocks.UNNARROWED,
+                block_test.UNNARROWED,
                 "narrowing ran out of time here",
             )
         )
@@ -429,7 +443,7 @@ def test_a_timeout_only_failure_is_not_evidence_about_the_register() -> None:
                 "input",
                 13200,
                 1,
-                blocks.REFUSED,
+                block_test.REFUSED,
                 "3/3, read_input_registers(13200, 1): Response timeout after "
                 "10.0 seconds for transaction with ID 0x01",
             )
@@ -537,26 +551,23 @@ def test_the_block_read_test_reaches_the_published_document() -> None:
     had no block evidence in it at all and a maintainer could not see which
     of the integration's reads that device would fail.
     """
-    failing = [("meter_channel_2", "input", 13199, 8)]
-    intermittent = [("fast_input", "input", 5010, 25)]
-    answered = [("realtime_input", "input", 12999, 10)]
-    outcome = blocks.BlockOutcome(
-        tally={k: {blocks.REFUSED: 3} for k in failing}
-        | {k: {blocks.OK: 2, blocks.INCONSISTENT: 1} for k in intermittent}
-        | {k: {blocks.OK: 3} for k in answered},
+    Block = block_test.Block
+    failing = [Block("meter_channel_2", "input", 13199, 8)]
+    intermittent = [Block("fast_input", "input", 5010, 25)]
+    answered = [Block("realtime_input", "input", 12999, 10)]
+    outcome = block_test.Outcome(
+        tally={k: {block_test.REFUSED: 3} for k in failing}
+        | {k: {block_test.OK: 2, block_test.INCONSISTENT: 1} for k in intermittent}
+        | {k: {block_test.OK: 3} for k in answered},
         intermittent=intermittent,
         failing=failing,
         culprits=[
             (
-                "meter_channel_2",
-                "input",
-                13200,
-                1,
-                blocks.REFUSED,
+                Block("meter_channel_2", "input", 13200, 1),
+                block_test.REFUSED,
                 "3/3, Modbus Exception 0x02 for function code 0x04",
             )
         ],
-        reconnects=0,
     )
     document = sungrow_survey._block_document(
         outcome, "modbus-connection (the one the integration uses)"
@@ -595,16 +606,11 @@ def test_the_block_document_carries_no_address_and_no_serial() -> None:
     """It is published, so it is held to the same rule as everything else."""
     import re
 
-    outcome = blocks.BlockOutcome(
-        tally={("fast_input", "input", 5010, 25): {blocks.OK: 3}},
-        intermittent=[],
-        failing=[],
-        culprits=[],
+    outcome = block_test.Outcome(
+        tally={block_test.Block("fast_input", "input", 5010, 25): {block_test.OK: 3}},
         reconnects=1,
     )
-    text = json.dumps(
-        sungrow_survey._block_document(outcome, blocks.LibraryClient.label)
-    )
+    text = json.dumps(sungrow_survey._block_document(outcome, blocks.LIBRARY_LABEL))
 
     assert SERIAL not in text
     assert HOST not in text
@@ -683,7 +689,7 @@ def test_a_run_that_read_nothing_exits_1_not_3() -> None:
 )
 def test_no_published_document_counts_as_collecting_nothing(path: Path) -> None:
     """The guard must never fire on a real reading, however thin."""
-    assert not sungrow_survey._collected_nothing(json.loads(path.read_text()))
+    assert not collected_nothing(json.loads(path.read_text()))
 
 
 @pytest.mark.parametrize(
@@ -706,7 +712,9 @@ def test_only_an_exception_response_is_published_as_refused(error, state) -> Non
 
     kind = getattr(modbus_connection, error)
     err = kind(2) if error == "IllegalDataAddressError" else kind("lost")
-    assert probe.failure_state(err) == state
+    from sungrow_modbus.survey import failure_state
+
+    assert failure_state(err) == state
 
 
 def test_a_6100_nobody_answered_decides_no_route() -> None:
@@ -716,8 +724,12 @@ def test_a_6100_nobody_answered_decides_no_route() -> None:
     dongle, and the survey offered the owner of a cable to change a correct
     answer to match it.
     """
-    verdict = probe.TRANSPORT_NOT_DETERMINED
-    assert probe._claim_of(verdict) is None
+    from sungrow_modbus.fingerprint import TRANSPORT_NOT_DETERMINED
+
+    verdict = TRANSPORT_NOT_DETERMINED
+    from sungrow_modbus.fingerprint import claim_of
+
+    assert claim_of(verdict) is None
     document = {
         "device": {"device_type_code": "0x0E0F"},
         "connection": {"verdict": verdict},
@@ -726,3 +738,196 @@ def test_a_6100_nobody_answered_decides_no_route() -> None:
     from sungrow_modbus.fingerprint import label_for
 
     assert not label_for(document).endswith(("winet", "logger"))
+
+
+@pytest.mark.parametrize(
+    ("direct_url", "says"),
+    [
+        (None, "1.2.3, the PyPI package"),
+        (
+            '{"url": "file:///src/tree", "dir_info": {"editable": true}}',
+            "1.2.3 from the source /src/tree -- NOT a release",
+        ),
+        (
+            '{"url": "file:///dist/x.whl", "archive_info": {}}',
+            "1.2.3 from the wheel /dist/x.whl -- NOT a release",
+        ),
+    ],
+)
+def test_the_preamble_says_whether_the_library_is_a_release(
+    monkeypatch, direct_url, says
+) -> None:
+    """Tell a local library from the published one by where it came from.
+
+    A tree carries the version of the release it is heading for, so the
+    version cannot; where the installer says it came from can.
+    """
+    import importlib.metadata
+
+    class Dist:
+        version = "1.2.3"
+
+        def read_text(self, name: str) -> str | None:
+            return direct_url if name == "direct_url.json" else None
+
+    monkeypatch.setattr(importlib.metadata, "distribution", lambda _name: Dist())
+    assert sungrow_survey._library() == says
+
+
+@pytest.mark.parametrize(
+    ("argv", "expected"),
+    [
+        # The replay line carries both; the host given outright is used.
+        (["192.168.178.35", "--address-tail", "178.035"], ["192.168.178.35"]),
+        # A tail that names another device is refused, not mixed in.
+        (["192.168.178.36", "--address-tail", "178.035"], None),
+        # A tail alone is rebuilt on the local prefix, and says so.
+        (["--address-tail", "178.035"], ["10.1.178.35"]),
+    ],
+)
+def test_a_host_given_outright_wins_over_the_address_tail(
+    monkeypatch, capsys, argv, expected
+) -> None:
+    """The local prefix is a guess, and in a container it is the bridge's.
+
+    `--address-tail 178.035` beside `192.168.178.35` once sent a whole survey
+    to `172.17.178.35`: the tail replaced the host, rebuilt on the Docker
+    bridge's prefix. The survey prints both in its own replay line.
+    """
+    seen: list[list[str]] = []
+
+    async def fake_run(args) -> int:
+        seen.append(args.host)
+        return 0
+
+    monkeypatch.setattr(sys, "argv", ["sungrow_survey.py", *argv])
+    monkeypatch.setattr(sungrow_survey, "run", fake_run)
+    monkeypatch.setattr(probe, "local_ipv4_for", lambda target: "10.1.2.3")
+
+    code = sungrow_survey.main()
+
+    if expected is None:
+        assert code == 2
+        assert not seen
+        assert "does not match" in capsys.readouterr().out
+    else:
+        assert code == 0
+        assert seen == [expected]
+
+
+class _Reading:
+    def __init__(self, written: list[Path]) -> None:
+        self.document = DOCUMENT
+        self.written = written
+        self.missing: list[str] = []
+
+
+@pytest.fixture
+def surveyed(monkeypatch, tmp_path):
+    """Run `_survey` with every phase before the control test stubbed out.
+
+    Returns the control test's calls, as the parsed arguments it was handed.
+    """
+    document = tmp_path / "doc.json"
+    document.write_text("{}")
+    calls: list = []
+    result = {"code": 0}
+
+    async def ask_all(entry, args, echo):
+        answers = sungrow_survey.argparse.Namespace(
+            host=entry.host,
+            port=entry.port,
+            unit=entry.unit,
+            timeout=10.0,
+            transport="direct_lan",
+            control_test=args.control_test,
+        )
+        return answers
+
+    async def check_transport(*_args):
+        return None
+
+    async def block_test(*_args):
+        return None
+
+    async def capabilities(_answers):
+        return _Reading([document])
+
+    async def control(args, _drops):
+        calls.append(args)
+        return result["code"]
+
+    async def no_sleep(_seconds):
+        pass
+
+    monkeypatch.setattr(sungrow_survey, "_ask_all", ask_all)
+    monkeypatch.setattr(sungrow_survey, "_check_transport", check_transport)
+    monkeypatch.setattr(sungrow_survey, "_block_test", block_test)
+    monkeypatch.setattr(sungrow_survey.probe, "capabilities", capabilities)
+    monkeypatch.setattr(sungrow_survey.sungrow_control_test, "async_main", control)
+    monkeypatch.setattr(sungrow_survey.asyncio, "sleep", no_sleep)
+    monkeypatch.setattr(sungrow_survey, "_workspace", lambda: (tmp_path, tmp_path))
+
+    async def run(*flags: str, code: int = 0):
+        result["code"] = code
+        args = sungrow_survey._parser().parse_args([HOST, *flags])
+        entry = sungrow_survey.Found(HOST, 502, 1, None)
+        return await sungrow_survey._survey(entry, args, lambda *_: None)
+
+    return run, calls, document
+
+
+async def test_a_declined_control_test_never_starts(surveyed) -> None:
+    run, calls, _document = surveyed
+    outcome = await run("--control-test", "no")
+
+    assert not calls
+    assert outcome.control_code is None
+
+
+async def test_leave_given_runs_everything_the_question_named(surveyed) -> None:
+    """One yes is the restart and the export-limit lift, and no second prompt."""
+    run, calls, document = surveyed
+    outcome = await run("--control-test", "yes", code=4)
+
+    (args,) = calls
+    assert args.host == HOST
+    assert args.restart is True
+    assert args.enable_export_limit is True
+    assert args.allow_dark is True
+    assert args.yes is True
+    assert args.dry_run is False
+    assert args.merge_into == str(document)
+    assert outcome.control_code == 4
+    # A decade finding is a result about the inverter, not about the scan.
+    assert outcome.code == 0
+
+
+async def test_a_house_left_changed_is_the_surveys_exit_code(surveyed) -> None:
+    run, _calls, _document = surveyed
+    outcome = await run("--control-test", "yes", code=5)
+
+    assert outcome.code == 5
+    assert sungrow_survey._worst([0, 4, 5, 1]) == 5
+
+
+async def test_a_simulator_gets_no_restart(surveyed) -> None:
+    run, calls, _document = surveyed
+    await run("--control-test", "yes", "--simulated")
+
+    (args,) = calls
+    assert args.simulated is True
+    assert args.restart is False
+
+
+def test_control_hands_the_rest_to_the_control_test(monkeypatch) -> None:
+    """The one launcher reaches the restore, the way out of exit 5."""
+    handed: list = []
+    monkeypatch.setattr(
+        sungrow_survey.sungrow_control_test,
+        "main",
+        lambda argv: handed.append(argv) or 0,
+    )
+
+    assert sungrow_survey.main(["control", HOST, "--restore", "x.json"]) == 0
+    assert handed == [[HOST, "--restore", "x.json"]]

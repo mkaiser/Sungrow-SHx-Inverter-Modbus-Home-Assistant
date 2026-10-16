@@ -109,7 +109,7 @@ PACK_UNITS: tuple[int, ...] = (200, 2)
 #: inverter answers its device type code; a battery does not. Without this
 #: check, a master/slave installation read through a dongle would have its
 #: slave filed as a battery -- which is not a hypothetical shape, it is the
-#: fourth site in `doc/device-fingerprints/`.
+#: fourth site in `device-fingerprints/`.
 INVERTER_TYPE = field_address("device_type_code")
 
 #: The pack's voltage, which is what a pack is recognised by: every SBR has

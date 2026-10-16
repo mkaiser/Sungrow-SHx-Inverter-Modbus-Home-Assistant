@@ -1,11 +1,11 @@
 """What a capability survey reads, and how to publish it.
 
 One definition of the document format, and two producers of it. The survey in
-`scripts/sungrow_read_only_survey/` imports these tables to read a device from a
+`device-fingerprints/` imports these tables to read a device from a
 terminal; the integration imports them to write the same document from Home
 Assistant's diagnostics download, because a user who has already set the
 integration up has a working connection and otherwise no way to turn it into
-evidence. Every document in `doc/device-fingerprints/` is read by one
+evidence. Every document in `device-fingerprints/` is read by one
 generator, whichever of the two wrote it.
 
 Nothing here talks to a device. `PROBES` says which addresses answer the
@@ -16,11 +16,16 @@ connection.
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
+from datetime import datetime
 from enum import StrEnum
 import hashlib
-from typing import Any
+import ipaddress
+import json
+from typing import Any, NamedTuple, Protocol, cast
 
-from .battery import model_for_capacity
+from .addresses import WALLBOX_SERIAL, field_address
+from .battery import PACK_UNITS, PACK_VOLTAGE, model_for_capacity
 from .const import model_for
 
 #: The document format both producers write. Bumped when the *shape* changes,
@@ -30,8 +35,8 @@ from .const import model_for
 #: download rather than by running the script. Everything else is identical;
 #: what changes is that `command_line` may name a *tool* instead of an
 #: invocation, because there is no command to repeat. The history of the
-#: earlier numbers is in `scripts/sungrow_read_only_survey/probe.py`, which is where the
-#: format grew up.
+#: earlier numbers is in `device-fingerprints/scripts/python/probe.py`, which
+#: is where the format grew up.
 #:
 #: 19 admits an optional **`control_test`** block, written by
 #: `sungrow_modbus.control_test` through either of its two drivers: the result
@@ -60,7 +65,23 @@ from .const import model_for
 #: treated as the inverter's is, a `stand_in` hashed from it, so one wallbox
 #: is recognisable across readings. Before 21 the serial was only masked, and
 #: a reader has to tell "no stand-in could be read" from "predates it".
-SCHEMA = 21
+#:
+#: 22 gives **`readings` one meaning whichever producer wrote it**, the
+#: terminal survey's: an unavailable field is a None *inside* `values`, and
+#: `fields_that_did_not_read` names only fields that failed a read of their
+#: own. A document from Home Assistant at 21 or below used that key for the
+#: None fields instead and left them out of `values`, so its readings are
+#: read by the producer (`command_line` says which) and its number. The same
+#: bump widens Home Assistant's `battery_pack` to the terminal survey's: the
+#: module block and the unpacked cell and module positions, which an older
+#: document from Home Assistant lacks because it never read them, not because
+#: the pack withheld them. And `connection.winet_restricted_block_6100` says
+#: `answered` for any answer, as the terminal survey always has: Home
+#: Assistant wrote the probe's state, and read a sentinel answer as "not
+#: reached" -- a cable-connected inverter reported behind a dongle. Its
+#: `ip_address_last_two_octets` is zero-filled now too (`107.005`, not
+#: `107.5`), as every terminal document's always was.
+SCHEMA = 22
 
 #: How a document says it was collected, when no command line could repeat it.
 #:
@@ -155,14 +176,84 @@ PROBES: tuple[tuple[str, str, int, int, str], ...] = (
 #: has no module and answers the specification's UTF-8 unavailable, which
 #: decodes to an empty string, while anything behind a WiNet-S names itself.
 #:
-#: (name, space, address, count)
-FIRMWARE_STRINGS: tuple[tuple[str, str, int, int], ...] = (
-    ("arm", "input", 4953, 15),
-    ("dsp", "input", 4968, 15),
-    ("inverter", "input", 13249, 15),
-    ("communication_module", "input", 13264, 15),
-    ("battery", "input", 13279, 15),
+#: Each published name, by the inverter field that holds it: the one table,
+#: so a survey reading raw words and one reading polled fields cannot drift.
+FIRMWARE_FIELDS: dict[str, str] = {
+    "arm": "sungrow_arm_software",
+    "dsp": "sungrow_dsp_software",
+    "inverter": "inverter_firmware_version",
+    "communication_module": "communication_module_firmware_version",
+    "battery": "battery_firmware_version",
+}
+
+#: The same, as raw reads for a producer that has no polled device:
+#: (name, space, address, count), from the register map.
+FIRMWARE_STRINGS: tuple[tuple[str, str, int, int], ...] = tuple(
+    (name, where.space, where.address, where.length)
+    for name, where in (
+        (name, field_address(field)) for name, field in FIRMWARE_FIELDS.items()
+    )
 )
+
+#: How many words a presence probe reads -- "does anything answer at this
+#: unit" -- whatever the register's own width. Enough to tell an answer from
+#: a refusal, and the count every published document was read with.
+PRESENCE_WORDS = 2
+
+#: Devices that live on unit ids of their own behind the inverter's endpoint,
+#: as (published label, unit, input address). Any answer is `present`, any
+#: failure `no answer`: the question is only whether something is there.
+#:
+#: A WiNet-S forwards the SBR at unit 2 instead of 200 -- measured on three
+#: dongles -- and unit 2 is also where a slave inverter lives, so the device
+#: type code is read there too: a slave answers it and a battery does not.
+SIBLING_PROBES: tuple[tuple[str, int, int], ...] = (
+    ("unit 200 SBR battery module block", 200, PACK_VOLTAGE.address),
+    ("unit 2 SBR battery module block", 2, PACK_VOLTAGE.address),
+    (
+        "unit 2 inverter device type code",
+        2,
+        field_address("device_type_code").address,
+    ),
+    ("unit 3 wallbox serial", 3, WALLBOX_SERIAL.address),
+    ("unit 248 wallbox serial (direct)", 248, WALLBOX_SERIAL.address),
+)
+
+#: The wallbox labels by unit, through a dongle and at its own address.
+WALLBOX_PROBES: dict[int, str] = {
+    3: "unit 3 wallbox serial",
+    248: "unit 248 wallbox serial (direct)",
+}
+
+
+def slave_inverter_at(states: Mapping[str, object], unit: int) -> bool:
+    """Whether an inverter, not a battery, answered at this sibling unit."""
+    return states.get(f"unit {unit} inverter device type code") == State.PRESENT
+
+
+def battery_pack_unit(states: Mapping[str, object]) -> int | None:
+    """Return the unit a Sungrow pack answered on, from the sibling probes.
+
+    `states` maps each probe label to its state. Unit 200 first, as the
+    specification places it; unit 2 only where no inverter answered there,
+    or a master/slave pair would report the slave as the master's pack.
+    """
+    for unit in PACK_UNITS:
+        if states.get(f"unit {unit} SBR battery module block") != State.PRESENT:
+            continue
+        if unit != 200 and slave_inverter_at(states, unit):
+            continue
+        return unit
+    return None
+
+
+def wallbox_unit(states: Mapping[str, object]) -> int | None:
+    """Return the unit a wallbox answered on, from the sibling probes."""
+    for unit, label in WALLBOX_PROBES.items():
+        if states.get(label) == State.PRESENT:
+            return unit
+    return None
+
 
 #: What a stand-in serial always begins with, and cannot occur in a real one.
 STAND_IN_PREFIX = "anon-"
@@ -262,27 +353,541 @@ def stand_in(serial: str) -> str:
     return f"{STAND_IN_PREFIX}{digits[: len(serial)]}"
 
 
+def device_block(
+    device_type_code: int | str | None,
+    output_type: object,
+    serial: str,
+) -> dict[str, object]:
+    """Build the privacy-safe device section shared by survey producers."""
+    if isinstance(device_type_code, str):
+        try:
+            numeric_code = int(device_type_code, 16)
+        except ValueError:
+            numeric_code = None
+    else:
+        numeric_code = device_type_code
+    mapped_output: object = (
+        OUTPUT_TYPES.get(output_type, output_type)
+        if isinstance(output_type, int)
+        else output_type
+    )
+    return {
+        "device_type_code": (
+            f"0x{numeric_code:04X}" if numeric_code is not None else None
+        ),
+        "device_type": model_for(numeric_code) if numeric_code is not None else None,
+        "output_type": mapped_output,
+        "serial_anonymized_hashed": stand_in(serial),
+    }
+
+
 def publishable(name: str) -> bool:
     """Whether a key or label may appear in a published document at all."""
     return not any(word in name.lower() for word in NEVER_PUBLISH)
 
 
-def address_tail(host: str, permitted: bool) -> str:
-    """Return the last two octets of an address, or a refusal to say.
+def capability_registers(
+    fingerprint_registers: dict[str, object],
+    raw_registers: dict[str, object],
+) -> dict[str, dict[str, object]]:
+    """Build the privacy-safe capability register section."""
+    registers: dict[str, dict[str, object]] = {}
+    for label, state in fingerprint_registers.items():
+        entry: dict[str, object] = {"state": state}
+        values = raw_registers.get(label)
+        if values is not None and publishable(label):
+            entry["values"] = values
+        registers[label] = entry
+    return registers
+
+
+class FieldSource(Protocol):
+    """A library device that can enumerate and return its decoded fields."""
+
+    @property
+    def field_names(self) -> frozenset[str]:
+        """Every field name `field()` accepts."""
+        ...
+
+    def field(self, name: str) -> object:
+        """Return one decoded value, or None when it did not read."""
+        ...
+
+
+def _published_fields(device: FieldSource) -> dict[str, object]:
+    """Return every publishable field of a device, None where it did not read."""
+    values: dict[str, object] = {}
+    for name in sorted(device.field_names):
+        if not publishable(name):
+            continue
+        try:
+            values[name] = device.field(name)
+        except (AttributeError, KeyError):
+            continue
+    return values
+
+
+def readings_section(
+    device: FieldSource,
+    failed_components: Iterable[str] = (),
+    *,
+    salvaged: Mapping[str, object] | None = None,
+    unreadable: Iterable[str] = (),
+) -> dict[str, object]:
+    """Every decoded value of a device, and what did not read.
+
+    `values` holds every publishable field, **None included**: None is the
+    specification's unavailable sentinel, or a field whose component failed,
+    and `components_that_did_not_answer` says which. Two lists appear only
+    when a producer read fields one at a time after a component failed:
+    `fields_read_individually` for what that recovered -- from a different
+    moment than its neighbours, which is why it is named -- and
+    `fields_that_did_not_read` for what did not answer even alone. Not
+    "refused": that is a claim about the device, and this is only what did
+    not read after several separated attempts.
+
+    `NEVER_PUBLISH` applies to the lists as well as the values: a field
+    *name* is not a serial, but the rule is kept absolute.
+    """
+    values = _published_fields(device)
+    recovered = dict(salvaged or {})
+    # The recovered values live in throwaway components, not the device's
+    # stores; overlay them only where the component read left nothing.
+    for name, value in recovered.items():
+        if publishable(name) and values.get(name) is None:
+            values[name] = value
+    report: dict[str, object] = {
+        "values": values,
+        # Sorted, so two readings of one machine differ only where it did.
+        "components_that_did_not_answer": sorted(failed_components),
+    }
+    named = sorted(name for name in recovered if publishable(name))
+    if named:
+        report["fields_read_individually"] = named
+    silent = sorted(name for name in unreadable if publishable(name))
+    if silent:
+        report["fields_that_did_not_read"] = silent
+    return report
+
+
+def firmware_section(device: FieldSource) -> dict[str, str | None]:
+    """Return the five published firmware strings, from a polled device."""
+    values: dict[str, str | None] = {}
+    for name, field in FIRMWARE_FIELDS.items():
+        try:
+            value = device.field(field)
+        except (AttributeError, KeyError):
+            value = None
+        values[name] = None if value is None else str(value)
+    return values
+
+
+def battery_readings(
+    device: FieldSource,
+    failed_components: Iterable[str] = (),
+    *,
+    unanswered_fields: Iterable[str] = (),
+) -> dict[str, object]:
+    """Return a pack's readings: every field that answered, and what failed.
+
+    The pack's components are read and reported separately because they fail
+    separately -- through a dongle the cell block refuses while the pack
+    block answers -- so one failing must not make the pack look unreadable.
+    `unanswered_fields` are the failed components' fields, left out rather
+    than published as None: None is the pack saying a point is unavailable,
+    which a block that never answered did not say.
+    """
+    omitted = set(unanswered_fields)
+    return {
+        "values": {
+            name: value
+            for name, value in _published_fields(device).items()
+            if name not in omitted
+        },
+        "components_that_did_not_answer": list(failed_components),
+    }
+
+
+def battery_pack_section(
+    device: FieldSource,
+    unit: int,
+    failed_components: Iterable[str] = (),
+    *,
+    unanswered_fields: Iterable[str] = (),
+) -> dict[str, object] | None:
+    """Return a battery pack's section, or None when nothing decoded.
+
+    `battery_pack` and never `battery`: that key holds what the owner *typed*
+    about their battery, and the first version of this overwrote their
+    testimony with a measurement. None rather than a section of Nones, which
+    would say the pack was read and reported nothing.
+    """
+    readings = battery_readings(
+        device, failed_components, unanswered_fields=unanswered_fields
+    )
+    values = cast(dict[str, object], readings["values"])
+    if all(value is None for value in values.values()):
+        return None
+    return {"unit": unit, "readings": readings}
+
+
+def wallbox_section(
+    unit: int,
+    *,
+    readings: Mapping[str, object],
+    serial_stand_in: str | None = None,
+    path: str | None = None,
+    register_dump: Mapping[str, object] | None = None,
+    connection: object = None,
+) -> dict[str, object]:
+    """Return a wallbox's section, from readings the caller has decoded.
+
+    The readings must come from **masked** words, so none can come from a
+    register the document refuses to publish: the serial sits two registers
+    below the model name, and it once reached a published document as the
+    words `[16690, 13633]`. `wallbox_from_dump` does that for a raw dump.
+    """
+    section: dict[str, object] = {"unit": unit}
+    if path is not None:
+        # Which way it was reached, because the two do not read alike: a
+        # dongle answers 0 for several registers the wallbox's own address
+        # answers with values.
+        section["path"] = path
+    if connection is not None:
+        section["connection"] = connection
+    if serial_stand_in:
+        section["serial_anonymized_hashed"] = serial_stand_in
+    section["readings"] = dict(readings)
+    if register_dump is not None:
+        section["register_dump"] = dict(register_dump)
+    return section
+
+
+def wallbox_from_dump(
+    unit: int,
+    raw_dump: Mapping[str, Any],
+    *,
+    path: str | None = None,
+    connection: object = None,
+) -> dict[str, object]:
+    """Return a wallbox's section from its unmasked register dump.
+
+    Masked with the wallbox's own mask rather than the inverter's -- the two
+    serials live at different addresses, and using the wrong one publishes a
+    serial while looking careful. The stand-in is hashed from the raw words
+    before the mask; the readings and the dump come from after it.
+    """
+    from . import dump as register_dump, wallbox
+
+    masked = register_dump.masked(dict(raw_dump), register_dump.WALLBOX_MASKED)
+    return wallbox_section(
+        unit,
+        readings=wallbox.readings(masked),
+        serial_stand_in=wallbox.serial_stand_in(raw_dump),
+        path=path,
+        register_dump=masked,
+        connection=connection,
+    )
+
+
+#: The `document` key of a wallbox read at its own address, which is a
+#: document of its own: no `device` section, and its own filename. Inverter
+#: documents carry no `document` key, so the corpus tells the two apart by
+#: this value rather than by folder.
+WALLBOX_DOCUMENT = "wallbox"
+
+
+def wallbox_document(
+    *,
+    command_line: str,
+    read_at: str,
+    user_inputs: Mapping[str, object],
+    address_tail: str,
+    connection: Mapping[str, object],
+    wallbox: Mapping[str, object],
+) -> dict[str, object]:
+    """Build the document for a wallbox read at its own address.
+
+    `wallbox` is a `wallbox_section`, already masked. `user_inputs` keeps only
+    what was answered: a wallbox survey asks two questions, not the inverter's
+    seven, and an empty key would claim a question was put.
+    """
+    return {
+        "schema": SCHEMA,
+        "document": WALLBOX_DOCUMENT,
+        "command_line": command_line,
+        "read_at": read_at,
+        "user_inputs": {key: value for key, value in user_inputs.items() if value},
+        "ip_address_last_two_octets": address_tail,
+        "connection": dict(connection),
+        "wallbox": dict(wallbox),
+    }
+
+
+def wallbox_label_for(document: Mapping[str, Any]) -> str:
+    """Name a wallbox document: model, reporter, stand-in, and the path.
+
+    The same order as an inverter's label, so the files sort the same way:
+    what it is, who read it, which unit it was.
+    """
+    section = document.get("wallbox") or {}
+    readings = section.get("readings") or {}
+    model = str((readings.get("model_name") or {}).get("value") or "wallbox")
+    parts = [model.lower().replace("-", "").replace(".", "")]
+    reporter = str((document.get("user_inputs") or {}).get("reporter") or "")
+    if reporter:
+        parts.append(
+            "".join(c if c.isalnum() else "-" for c in reporter.lower()).strip("-")
+        )
+    serial = str(section.get("serial_anonymized_hashed") or "")
+    if serial.startswith(STAND_IN_PREFIX):
+        parts.append(serial)
+    parts += ["wallbox", str(section.get("path") or "tls")]
+    return "-".join(part for part in parts if part)
+
+
+def assemble_document(
+    *,
+    command_line: str,
+    read_at: str,
+    user_inputs: Mapping[str, object],
+    host: str,
+    publish_address: bool,
+    device_type_code: int | str | None,
+    output_type: object,
+    serial: str,
+    firmware: object,
+    connection: object,
+    readings: object,
+    capability_probes: Mapping[str, object],
+    contention: Mapping[str, object] | None = None,
+    register_dump: Mapping[str, Any] | None = None,
+    wallbox: Mapping[str, object] | None = None,
+    block_read_test: object = None,
+    battery_pack: Mapping[str, Any] | None = None,
+    control_test: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Build the publishable document from sections already collected.
+
+    The one builder: the terminal survey reaches it through
+    `publish_document`, Home Assistant directly. Each caller owns how a
+    section was collected; this owns which sections exist, their order, and
+    what is removed before anything is published.
+
+    `user_inputs` is everything a person typed, in one section and first: the
+    only values in the file not read off a wire, kept apart so a claim is
+    never quoted back as a measurement. Each exists because Modbus cannot
+    answer it -- no register names a battery's make, a master reads exactly
+    like a lone inverter, and a WiNet-S answers the same wired as over WiFi.
+    An empty answer means the question was not put, which is a different
+    statement from `unknown`. For the same reason `connection` loses any
+    testimony a caller left in it.
+
+    `capability_probes` follows the measured sections because it is four
+    lines per register, and somebody opening a document wants to know *which
+    setup it is* first. `contention` is what the producer itself was doing to
+    the link, which only Home Assistant can measure.
+
+    `register_dump` is the raw bands and is masked here, never by a caller:
+    the serial's ten registers sit inside the identity band and would
+    otherwise be published as words. `wallbox` is a finished section, from
+    `wallbox_section` or `wallbox_from_dump`, which own its mask. A
+    `battery_pack` with no value read is left out: a pack that answered its
+    presence probe already says so under `capability_probes`.
+    """
+    from . import dump as dump_module
+
+    document: dict[str, object] = {
+        "schema": SCHEMA,
+        "command_line": command_line,
+        "read_at": read_at,
+        "user_inputs": dict(user_inputs),
+        "ip_address_last_two_octets": address_tail(host, publish_address),
+        "device": device_block(device_type_code, output_type, serial),
+        "firmware": firmware,
+        "connection": (
+            measured_connection(connection)
+            if isinstance(connection, Mapping)
+            else connection
+        ),
+        "readings": readings,
+        "capability_probes": capability_probes,
+    }
+    if contention is not None:
+        document["contention"] = dict(contention)
+    if register_dump:
+        document["register_dump"] = dump_module.masked(dict(register_dump))
+    if wallbox:
+        document["wallbox"] = dict(wallbox)
+    # What the block read test measured, when one ran. A maintainer reading a
+    # submitted document needs it to see which blocks the integration would
+    # fail on; the transcript, which also has it, is the file a contributor
+    # keeps because it holds their real address.
+    if block_read_test:
+        document["block_read_test"] = block_read_test
+    if battery_pack and (battery_pack.get("readings") or {}).get("values"):
+        document["battery_pack"] = dict(battery_pack)
+    if control_test:
+        attach_control_test(document, control_test, serial=serial)
+    return document
+
+
+def attach_control_test(
+    document: dict[str, Any] | dict[str, object],
+    block: Mapping[str, object],
+    *,
+    serial: str,
+) -> None:
+    """Put part B's result into a document, having checked it may be published.
+
+    Its own function because part B runs *after* part A -- part A is what
+    establishes that this device answers and what it is -- so a caller may
+    attach the block to a document that already exists. Attaching it
+    afterwards must not mean attaching it unchecked, and one guarded door is
+    the only way to be sure it does not.
+
+    The block is anonymous by construction -- register numbers, chosen values,
+    words that came back -- so the check should never fire. It is here
+    because "should never" is exactly what was true of the two capability
+    probes that published a wallbox serial as the words `[16690, 13633]`. A
+    refusal costs somebody a run they can repeat; publishing costs somebody
+    else their serial number in a public repository, permanently.
+    """
+    if serial and serial in json.dumps(block, default=str):
+        raise ValueError(
+            "refusing to publish the control test block: it carries the serial"
+        )
+    document["control_test"] = dict(block)
+
+
+def publish_document(
+    raw: Mapping[str, object],
+    fingerprint: Mapping[str, object],
+    *,
+    command_line: str,
+    host: str,
+    publish_address: bool,
+    user_inputs: Mapping[str, object],
+    serial: str,
+) -> dict[str, object]:
+    """Build the document from the terminal survey's collected dicts.
+
+    ``raw`` holds the measurements -- read words, decoded sections and the
+    optional dumps, block test, battery and control test -- and
+    ``fingerprint`` the identity and the probe states, as `probe.py`
+    collects them. This only unpacks them for `assemble_document`; the
+    wallbox arrives as a raw dump and is shaped by `wallbox_from_dump`.
+    """
+    raw_data = cast(dict[str, Any], raw)
+    fingerprint_data = cast(dict[str, Any], fingerprint)
+    wallbox_raw = raw_data.get("wallbox") or {}
+    return assemble_document(
+        command_line=command_line,
+        read_at=str(raw_data["read_at"]),
+        user_inputs=user_inputs,
+        host=host,
+        publish_address=publish_address,
+        device_type_code=fingerprint_data.get("device_type_code"),
+        output_type=fingerprint_data.get("output_type"),
+        serial=serial,
+        firmware=raw_data.get("firmware", {}),
+        connection=raw_data.get("connection", {}),
+        readings=raw_data.get("readings", {}),
+        capability_probes=capability_registers(
+            fingerprint_data.get("registers", {}),
+            raw_data.get("registers", {}),
+        ),
+        register_dump=raw_data.get("register_dump"),
+        wallbox=(
+            wallbox_from_dump(
+                wallbox_raw["unit"],
+                wallbox_raw["register_dump"],
+                path=wallbox_raw.get("path"),
+                connection=wallbox_raw.get("connection"),
+            )
+            if wallbox_raw.get("register_dump")
+            else None
+        ),
+        block_read_test=raw_data.get("block_read_test"),
+        battery_pack=raw_data.get("battery_pack"),
+        control_test=raw_data.get("control_test"),
+    )
+
+
+def collected_nothing(document: Mapping[str, Any]) -> bool:
+    """Whether a document holds no value read from the device at all.
+
+    No decoded reading and no answered address in the raw bands. Either one
+    is a reading worth keeping, however thin; neither is a document of
+    nothing, which is the link failing and not worth sending.
+    """
+    from . import dump as register_dump
+
+    values = (document.get("readings") or {}).get("values") or {}
+    if any(value is not None for value in values.values()):
+        return False
+    return not register_dump.answered(document.get("register_dump") or {})
+
+
+def measured_connection(
+    connection: Mapping[str, object],
+    claimed_key: str = "reported_by_hand",
+) -> dict[str, object]:
+    """Remove owner testimony from the measured connection section."""
+    return {key: value for key, value in connection.items() if key != claimed_key}
+
+
+def last_two_octets(host: str) -> str | None:
+    """Return the last two octets of an IPv4 address, each zero-filled.
+
+    Strings rather than numbers, because JSON cannot write a leading zero.
+    Three digits is the widest an octet gets, so every value is the same
+    width: "178.029" beside "178.114" lines up in a table and sorts as text
+    in the order an address sorts, where 4, 28 and 128 as numbers-in-text
+    would not.
 
     Two octets rather than one because the third is what separates one
-    contributor's network from another's -- three measured installations sit
-    on 192.168.178 and two on 192.168.176. That is also the more revealing
-    half, which is why it is asked for rather than taken: without permission
-    this reads `xxx.xxx`, and a document with `xxx.xxx` in it is complete
-    rather than damaged.
+    contributor's network from another's -- three of the installations on
+    record sit on 192.168.178 and two on 192.168.176, which one octet cannot
+    show. It is also the more revealing half, which is why it is asked for
+    rather than taken.
+
+    A hostname has no octets, and neither does an IPv6 address; both are
+    perfectly ordinary things to point this script at, so both give None
+    rather than a guess at the last things after a dot.
+    """
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        return None
+    if address.version != 4:
+        return None
+    third, fourth = str(address).split(".")[2:]
+    return f"{int(third):03d}.{int(fourth):03d}"
+
+
+def address_tail(host: str, permitted: bool) -> str:
+    """Return the published address tail, or a refusal to say.
+
+    Only ever with permission: the tail is asked for rather than taken, and
+    without it this reads `xxx.xxx` -- a document with that in it is complete
+    rather than damaged. A hostname or an IPv6 address has no octets and
+    reads the same.
     """
     if not permitted:
         return "xxx.xxx"
-    parts = str(host).split(".")
-    if len(parts) != 4:
-        return "xxx.xxx"
-    return ".".join(parts[2:])
+    return last_two_octets(host) or "xxx.xxx"
+
+
+def local_time(read_at: str, zone: str = "Europe/Berlin") -> str:
+    """Render an ISO timestamp in the survey's local zone when available."""
+    try:
+        from zoneinfo import ZoneInfo
+
+        moment = datetime.fromisoformat(read_at).astimezone(ZoneInfo(zone))
+    except (ValueError, KeyError, ModuleNotFoundError):
+        return read_at
+    return moment.isoformat(timespec="seconds")
 
 
 #: What a document says about WiFi versus Ethernet, which is that it cannot say.
@@ -337,25 +942,144 @@ def transport_verdict(*, answered_6100: bool, module_named: bool) -> str:
     )
 
 
-#: The filename word for each reported transport.
+#: What `winet_restricted_block_6100` says when the block answered at all.
+ANSWERED_6100 = "answered"
+
+#: The verdict when register 6100 got no answer at all: neither route is
+#: shown, so none is claimed, and no transport goes into a filename.
+TRANSPORT_NOT_DETERMINED = (
+    "not determined: register 6100 got no answer, so the route could not be told"
+)
+
+
+def connection_block(restricted_state: str, module: str | None) -> dict[str, object]:
+    """Build the measured connection section shared by survey producers.
+
+    `restricted_state` may be a probe's `State` or the word `answered`. Any
+    answer -- the sentinel included -- is published as `answered`, because
+    the question is whether the path forwards the block, not what it holds:
+    a dongle refuses 6100, it does not answer 0xFFFF for it.
+    """
+    if restricted_state in {str(State.PRESENT), str(State.UNAVAILABLE)}:
+        restricted_state = ANSWERED_6100
+    if restricted_state == str(State.NO_ANSWER):
+        verdict = TRANSPORT_NOT_DETERMINED
+    else:
+        verdict = transport_verdict(
+            answered_6100=restricted_state == ANSWERED_6100,
+            module_named=bool(module),
+        )
+    return {
+        "communication_module_firmware": module or "",
+        "verdict": verdict,
+        "wifi_or_ethernet": WIFI_OR_ETHERNET,
+        "winet_restricted_block_6100": restricted_state,
+    }
+
+
+class ReportedTransport(NamedTuple):
+    """What a reported transport means in a document, beside its key."""
+
+    verdict: str
+    """The sentence it becomes, phrased like a measured verdict so everything
+    reading a verdict keeps working. Empty for `unsure`, which outranks
+    nothing."""
+    table: str
+    """How `doc/compatibility.md` names it."""
+    word: str
+    """Its word in a filename."""
+
+
+#: What each `TRANSPORT_CLAIMS` key means once it is in a document.
 #:
-#: Every route is named, the inverter's own LAN port included. A reading
-#: through a dongle changes which registers answer, so a reader comparing two
-#: documents needs the route in front of them -- and an unnamed route reads as
-#: "unknown", not as "cable". One dongle read wired and over WiFi produces two
-#: legitimate documents that are otherwise identical, so without this word
-#: they derive the same name and the second silently overwrites the first.
-#: Only "not sure" adds nothing, unless the measurement can say.
+#: `winet_lan` and `winet_wlan` are worth separating even though Modbus cannot
+#: tell them apart -- that is exactly why. The protocol reports nothing about
+#: the medium, so a person has to be the one to say it.
 #:
-#: Kept equal to the fourth element of each `probe.REPORTED_TRANSPORTS` row.
-TRANSPORT_WORDS: dict[str, str] = {
-    "direct_lan": "direct-lan",
-    "winet_lan": "winet-lan",
-    "winet_wlan": "winet-wlan",
-    "winet": "winet",
-    "logger": "logger",
-    "unsure": "",
+#: The filename word names every route, the inverter's own LAN port included.
+#: A reading through a dongle changes which registers answer, so a reader
+#: comparing two documents needs the route in front of them, and one dongle
+#: read wired and over WiFi produces two documents that would otherwise
+#: derive the same name. Only "not sure" adds nothing.
+REPORTED_TRANSPORTS: dict[str, ReportedTransport] = {
+    "direct_lan": ReportedTransport(
+        "direct to the inverter's LAN port (reported by the contributor)",
+        "direct LAN port",
+        "direct-lan",
+    ),
+    "winet_lan": ReportedTransport(
+        "through a WiNet-S, wired (reported by the contributor)",
+        "WiNet-S, wired",
+        "winet-lan",
+    ),
+    "winet_wlan": ReportedTransport(
+        "through a WiNet-S, over WiFi (reported by the contributor)",
+        "WiNet-S, WiFi",
+        "winet-wlan",
+    ),
+    "winet": ReportedTransport(
+        "through a WiNet-S (reported by the contributor)",
+        "WiNet-S",
+        "winet",
+    ),
+    "logger": ReportedTransport(
+        "through a Logger (reported by the contributor)",
+        "Logger",
+        "logger",
+    ),
+    "unsure": ReportedTransport("", "", ""),
 }
+
+#: The filename word for each reported transport.
+TRANSPORT_WORDS: dict[str, str] = {
+    key: reported.word for key, reported in REPORTED_TRANSPORTS.items()
+}
+
+
+def claim_of(verdict: str) -> str | None:
+    """Return what a verdict actually claims: `direct`, `module`, or None.
+
+    Verdicts are sentences so that a reader gets the reasoning, which makes
+    them the wrong thing to compare. None for the "not determined" cases, so
+    a measurement that concluded nothing can contradict nobody.
+    """
+    if verdict.startswith("direct"):
+        return "direct"
+    if verdict.startswith(
+        ("through a communication module", "through a WiNet-S", "through a Logger")
+    ):
+        return "module"
+    return None
+
+
+def effective_verdict(connection: Mapping[str, object]) -> str:
+    """Return the transport to act on: what somebody said, else what was read.
+
+    Testimony outranks the measurement here, the opposite of the rule
+    everywhere else, because the measurement cannot reach the question in
+    one case that matters: a WiNet-S answers the same wired as over WiFi --
+    one dongle read on both of its addresses produced identical documents.
+    `unsure` maps to an empty verdict, so not knowing outranks nothing.
+    """
+    reported = str(connection.get("reported_by_hand") or "")
+    said = REPORTED_TRANSPORTS.get(reported)
+    return (said.verdict if said else "") or str(connection.get("verdict", ""))
+
+
+def transport_contradiction(verdict: str, reported: str) -> tuple[str, str] | None:
+    """Return (measured, said) claims when the owner's answer contradicts the wire.
+
+    None when they agree, or when either side claims nothing -- a verdict that
+    concluded nothing, or an owner who said they are not sure. Said at the
+    moment it can be acted on, never stored: a comparison of two values in
+    one file goes stale when the verdict logic changes.
+    """
+    said = REPORTED_TRANSPORTS.get(reported)
+    measured = claim_of(verdict)
+    claimed = claim_of(said.verdict) if said else None
+    if measured is None or claimed is None or measured == claimed:
+        return None
+    return measured, claimed
 
 
 def _slug(text: str) -> str:
@@ -407,14 +1131,12 @@ def _battery_word(document: dict[str, Any]) -> str:
     forwards the pack at an address of its own choosing. The two look
     identical over the wire and are not the same fact.
     """
-    module = _probe(document, "unit 200 SBR battery module block").get("state")
-    forwarded = (
-        _probe(document, "unit 2 SBR battery module block").get("state")
-        == State.PRESENT
-        and _probe(document, "unit 2 inverter device type code").get("state")
-        != State.PRESENT
-    )
-    if module == State.PRESENT or forwarded:
+    probe_states = {
+        label: entry.get("state")
+        for label, entry in (document.get("capability_probes") or {}).items()
+        if isinstance(entry, dict)
+    }
+    if battery_pack_unit(probe_states) is not None:
         values = _probe(document, "battery capacity (5639)").get("values")
         if values:
             model = model_for_capacity(values[0] * 0.01)
@@ -437,6 +1159,21 @@ def _battery_word(document: dict[str, Any]) -> str:
     if any(state == State.UNAVAILABLE for state in states):
         return "battery-none"
     return "battery-unreadable"
+
+
+def firmware_word(firmware: Mapping[str, object]) -> str:
+    """Return the inverter firmware as a filename word, or "" if it did not read.
+
+    `SAPPHIRE-H_B001.V000.P022` becomes `b001v000p022`. The family prefix goes
+    because the model word already says `sh80rt`, and the punctuation goes
+    because a filename reads better without it -- the document keeps the
+    string exactly as the device gave it. Everything after the first
+    underscore is the version; a string with no underscore is taken whole.
+    """
+    value = str(firmware.get("inverter") or "")
+    if not value:
+        return ""
+    return _slug(value.split("_", 1)[-1]).replace("-", "")
 
 
 def label_for(document: dict[str, Any]) -> str:
@@ -477,9 +1214,9 @@ def label_for(document: dict[str, Any]) -> str:
     # does. Omitted rather than filled in when it did not read -- a name
     # silent about firmware is honest, where `fw-unknown` would sort as
     # though it were a version.
-    firmware = str((document.get("firmware") or {}).get("inverter") or "")
+    firmware = firmware_word(document.get("firmware") or {})
     if firmware:
-        parts.append(_slug(firmware.split("_", 1)[-1]).replace("-", ""))
+        parts.append(firmware)
 
     parts += _phase_word(device)
 
@@ -496,7 +1233,7 @@ def label_for(document: dict[str, Any]) -> str:
     parts.append(_battery_word(document))
     if _answered(document, "meter phase A voltage (5741)"):
         parts.append("meter")
-    if _answered(document, "unit 3 wallbox serial", "unit 248 wallbox serial (direct)"):
+    if _answered(document, *WALLBOX_PROBES.values()):
         parts.append("wallbox")
 
     parts += _transport_word(document, said)

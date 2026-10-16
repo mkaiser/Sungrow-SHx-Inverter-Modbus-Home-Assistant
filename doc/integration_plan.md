@@ -2,7 +2,7 @@
 
 > Plan of record for the `proper-ha-integration` branch. What can be asserted
 > is asserted in `tests/`; this file holds what is decided, what is next, and
-> why. Measurements live in `doc/device-fingerprints/`, and the rules learned
+> why. Measurements live in `device-fingerprints/`, and the rules learned
 > on hardware in `CLAUDE.md`.
 
 ## Status
@@ -239,9 +239,10 @@ installs from it the way a user does.
 
 The YAML track lives under [legacy/](../legacy/) on this branch; on `main` it
 stays at the root until the integration replaces it. `scripts/` is grouped by
-job — `dev/`, `generate/`, `release/`, `helpers/`, and the two folders a
-contributor is handed, `sungrow_read_only_survey/` and `sungrow_control_test/`
-— and `CLAUDE.md` lists every script.
+job — `dev/`, `generate/`, `release/` and `helpers/`. What a contributor is
+handed is `device-fingerprints/scripts/`: one launcher, `survey.{sh,cmd}`,
+which reads and offers the control test at the end — and `CLAUDE.md` lists
+every script.
 
 ## Documentation
 

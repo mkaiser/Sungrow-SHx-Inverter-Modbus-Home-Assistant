@@ -25,7 +25,7 @@ The standalone survey imports these bands, and the wallbox's, from here.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Mapping
 import time
 
 from modbus_connection import ModbusError
@@ -132,6 +132,12 @@ Read = Callable[[str, int, int], Awaitable[list[int]]]
 #: single reads does not change how far through the bands we are.
 Progress = Callable[[int, int, str], None]
 
+#: Called before each single-address read of a failed block, with (the
+#: address, which of the block's addresses it is, the block's size). A
+#: fallback can wait out a timeout per address, so a caller drawing progress
+#: needs to say which register it is waiting on, or the run looks hung.
+Narrowing = Callable[[int, int, int], None]
+
 
 def block_count(
     bands: tuple[tuple[str, int, int, str], ...] = DUMP_BANDS, block: int = BLOCK
@@ -173,6 +179,7 @@ async def _async_narrow(
     address: int,
     size: int,
     into: dict[str, int | None],
+    on_narrow: Narrowing | None = None,
 ) -> None:
     """Read a failed block one address at a time, recording what each one says.
 
@@ -188,7 +195,9 @@ async def _async_narrow(
     recorded as `None`, which is a reading of "asked, and it would not say",
     not a gap.
     """
-    for single in range(address, address + size):
+    for number, single in enumerate(range(address, address + size), 1):
+        if on_narrow is not None:
+            on_narrow(single, number, size)
         try:
             value = await read(space, single, 1)
         except (ModbusError, TimeoutError, OSError):
@@ -201,6 +210,7 @@ async def async_dump(
     read: Read,
     *,
     on_progress: Progress | None = None,
+    on_narrow: Narrowing | None = None,
     budget: float = BUDGET,
     block: int = BLOCK,
     bands: tuple[tuple[str, int, int, str], ...] = DUMP_BANDS,
@@ -249,7 +259,7 @@ async def async_dump(
             try:
                 words = await _async_read_retrying(read, space, address, size)
             except (ModbusError, TimeoutError, OSError):
-                await _async_narrow(read, space, address, size, into)
+                await _async_narrow(read, space, address, size, into, on_narrow)
                 continue
             for index, word in enumerate(words):
                 into[str(address + index)] = word
@@ -281,6 +291,21 @@ def masked(
             if str(address) in values:
                 values[str(address)] = None
     return out
+
+
+def answered(dump: Mapping[str, object]) -> int:
+    """Count the addresses in a dump that answered with a word.
+
+    A masked address counts as unanswered, which is what a published dump
+    says about it; `bands_not_reached` is a list and holds no words.
+    """
+    return sum(
+        1
+        for band in dump.values()
+        if isinstance(band, dict)
+        for word in band.values()
+        if word is not None
+    )
 
 
 async def _async_read_retrying(

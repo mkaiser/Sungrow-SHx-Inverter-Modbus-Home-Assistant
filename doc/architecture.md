@@ -198,9 +198,20 @@ Home Assistant and without an inverter — which is most of the test suite, and
 runs in about a second. Core's `sofar` integration is the reference
 implementation for this shape.
 
-It also means the library is useful on its own: `scripts/sungrow_read_only_survey/probe.py`
+It also means the library is useful on its own: `device-fingerprints/scripts/python/probe.py`
 drives it directly to fingerprint an installation, with no Home Assistant
 anywhere in the process.
+
+The survey is cut the same way. The library holds everything a capability
+document is made of -- the probes, the decoded-readings algorithm, each
+section's shape and the privacy rules that apply to it (`fingerprint.py`,
+`survey.py`) -- and prints, prompts and writes nothing. The terminal scripts
+add questions, a progress bar, a transcript and the file;
+`custom_components/sungrow_modbus/fingerprint.py` adds what only Home
+Assistant knows: the owner's answers from the entry's options, what its own
+coordinators were doing, the progress entity, and the guard on part B. A
+change to what a document *says* therefore belongs in `src/`, where both
+producers pick it up.
 
 The one place time enters is `smoothing.py`, and it takes the clock as an
 argument rather than reading one — which is what lets a sixty-second delay be

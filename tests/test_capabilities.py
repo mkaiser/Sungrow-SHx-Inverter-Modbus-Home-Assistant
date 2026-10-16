@@ -297,7 +297,7 @@ def test_every_firmware_entry_names_a_committed_fingerprint() -> None:
     source = (
         Path(__file__).resolve().parent.parent / "src/sungrow_modbus/capabilities.py"
     ).read_text(encoding="utf-8")
-    fingerprints = Path(__file__).resolve().parent.parent / "doc/device-fingerprints"
+    fingerprints = Path(__file__).resolve().parent.parent / "device-fingerprints"
     block = source.split("ABSENT_ON_FIRMWARE: dict", 1)[1].split("\n}\n", 1)[0]
     for version in ABSENT_ON_FIRMWARE:
         cited = [
@@ -307,5 +307,13 @@ def test_every_firmware_entry_names_a_committed_fingerprint() -> None:
         ]
         assert cited, f"{version} cites no fingerprint"
         for name in cited:
-            assert (fingerprints / name).exists(), name
-            assert version in (fingerprints / name).read_text(encoding="utf-8"), name
+            assert any(
+                (fingerprints / directory / name).exists()
+                for directory in ("inverter", "wallbox")
+            ), name
+            path = next(
+                fingerprints / directory / name
+                for directory in ("inverter", "wallbox")
+                if (fingerprints / directory / name).exists()
+            )
+            assert version in path.read_text(encoding="utf-8"), name

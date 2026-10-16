@@ -18,13 +18,15 @@ import sys
 
 import pytest
 
-SURVEY = Path(__file__).resolve().parents[1] / "scripts" / "sungrow_read_only_survey"
+SURVEY = (
+    Path(__file__).resolve().parents[1] / "device-fingerprints" / "scripts" / "python"
+)
 sys.path.insert(0, str(SURVEY))
 
 import probe  # noqa: E402
 import sungrow_survey  # noqa: E402
 
-SCRIPT = "scripts/sungrow_read_only_survey/sungrow_survey.py"
+SCRIPT = "python/sungrow_survey.py"
 
 ANSWERED = [
     "<host>",
@@ -48,6 +50,8 @@ ANSWERED = [
     "the slave's reading",
     "--battery",
     "",
+    "--control-test",
+    "no",
 ]
 
 
@@ -68,6 +72,7 @@ def _answers(**overrides) -> argparse.Namespace:
         reporter="somebody",
         comment="the slave's reading",
         battery="",
+        control_test="no",
     )
     return argparse.Namespace(**{**values, **overrides})
 
@@ -96,6 +101,7 @@ def test_the_line_parses_back_to_every_answer() -> None:
         "reporter",
         "comment",
         "battery",
+        "control_test",
     ):
         assert getattr(parsed, name) == getattr(_answers(), name), name
 
@@ -131,7 +137,7 @@ def test_no_detail_is_written_for_no_other_inverter() -> None:
 
 
 def test_a_copied_folder_names_the_script_alone(monkeypatch, tmp_path) -> None:
-    copied = tmp_path / "sungrow_read_only_survey" / "sungrow_survey.py"
+    copied = tmp_path / "sungrow_survey" / "sungrow_survey.py"
     copied.parent.mkdir()
     copied.write_text("")
     monkeypatch.setattr(sungrow_survey, "__file__", str(copied))
@@ -183,6 +189,10 @@ def test_without_flags_every_question_is_asked(monkeypatch) -> None:
         return "Pylontech"
 
     monkeypatch.setattr(probe, "_ask_battery", battery)
+    # At a terminal, so the control-test question is asked rather than
+    # answered no for want of anybody to ask.
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
+    monkeypatch.setattr(probe, "_ask_yes", lambda *_a, **_k: True)
 
     args = sungrow_survey._parser().parse_args(["192.0.2.10"])
     entry = sungrow_survey.Found("192.0.2.10", 502, 1, None)
@@ -192,6 +202,8 @@ def test_without_flags_every_question_is_asked(monkeypatch) -> None:
     assert words == [
         SCRIPT,
         "<host>",
+        "--address-tail",
+        "002.010",
         "--unit",
         "1",
         "--pollers",
@@ -210,6 +222,8 @@ def test_without_flags_every_question_is_asked(monkeypatch) -> None:
         "",
         "--battery",
         "Pylontech",
+        "--control-test",
+        "yes",
     ]
     assert not answers.transport_given
 
@@ -241,15 +255,21 @@ def test_a_transport_given_as_a_flag_is_kept_against_the_measurement(
     async def refused(*_args, **_kwargs):
         raise probe.ModbusExceptionError(2)
 
-    monkeypatch.setattr(probe, "_async_read_retrying", refused)
-    monkeypatch.setattr(sungrow_survey, "read", refused)
+    async def refused_6100(*_args, **_kwargs):
+        return "refused"
+
+    monkeypatch.setattr(sungrow_survey, "async_read_6100", refused_6100)
 
     async def closed(*_args):
         return False
 
     monkeypatch.setattr(probe, "_tcp_open", closed)
+
     # A cable answer, against a refused 6100 and a named module: a dongle.
-    monkeypatch.setattr(sungrow_survey, "present", lambda _v: "WINET-SV200")
+    async def module(_unit):
+        return "WINET-SV200"
+
+    monkeypatch.setattr(sungrow_survey, "async_read_module", module)
 
     answers = _answers(transport="direct_lan", transport_given=given)
     entry = sungrow_survey.Found("192.0.2.10", 502, 1, None)
@@ -261,3 +281,21 @@ def test_a_transport_given_as_a_flag_is_kept_against_the_measurement(
     else:
         assert asked
         assert answers.transport == "winet"
+
+
+def test_nobody_at_a_terminal_is_a_no(monkeypatch) -> None:
+    """Leave to write is never assumed: a piped run does not run the test."""
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: False)
+    monkeypatch.setattr(probe, "_ask_yes", lambda *_a, **_k: pytest.fail("asked"))
+    args = sungrow_survey._parser().parse_args(["192.0.2.10"])
+
+    assert sungrow_survey._ask_control_test(args) == "no"
+
+
+def test_the_question_defaults_to_no(monkeypatch) -> None:
+    """Enter at the question must not give leave to restart somebody's inverter."""
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
+    monkeypatch.setattr(builtins, "input", lambda *_a: "")
+    args = sungrow_survey._parser().parse_args(["192.0.2.10"])
+
+    assert sungrow_survey._ask_control_test(args) == "no"

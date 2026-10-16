@@ -1,7 +1,7 @@
 """The block read test from the device page, held to the terminal tool's.
 
 `sungrow_modbus.block_test` is the second producer of a measurement that
-`scripts/sungrow_read_only_survey/blocks.py` and `sungrow_survey.py` already
+`device-fingerprints/scripts/python/blocks.py` and `sungrow_survey.py` already
 make, and its answers end up in the same place: a published document, read by
 a maintainer deciding what goes in `src/sungrow_modbus/layout.py`. So most of
 what is asserted here is *agreement* -- the same blocks, the same outcome
@@ -43,7 +43,7 @@ from sungrow_modbus.block_test import (
 )
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_read_only_survey"))
+sys.path.insert(0, str(REPO / "device-fingerprints" / "scripts" / "python"))
 
 import blocks as terminal  # noqa: E402
 import sungrow_survey  # noqa: E402
@@ -93,40 +93,35 @@ def test_the_outcome_words_and_the_budget_are_the_terminal_tools() -> None:
     )
 
 
-async def test_the_terminal_tools_measurement_renders_through_the_library() -> None:
-    """One renderer for both producers: the survey converts, it does not render.
+async def test_the_terminal_tool_measures_through_the_library() -> None:
+    """One measurement: the terminal tool prints around it and changes nothing.
 
-    The same measurement on both sides -- a block that refuses, one that
-    answers, and the narrowing that names the register -- must come out as
-    the same document.
+    The same reads -- a block that refuses, one that answers, and the
+    narrowing that names the register -- must give the same outcome whether
+    the library is asked directly or through `blocks.measure`.
     """
-    blocks = [
+    plan = [
         Block("fast_input", "input", 5010, 25),
         Block("sub_controller_firmware", "input", 2612, 15),
     ]
-    mine = await measure(reader(refuses(2613)), blocks, narrow_budget=0)
+    mine = await measure(reader(refuses(2613)), plan, narrow_budget=0)
 
-    key = ("sub_controller_firmware", "input", 2612, 15)
-    theirs = terminal.to_outcome(
-        terminal.BlockOutcome(
-            tally={
-                ("fast_input", "input", 5010, 25): {terminal.OK: 3},
-                key: {terminal.REFUSED: 3},
-            },
-            intermittent=[],
-            failing=[key],
-            culprits=[
-                (*key[:3], 1, terminal.REFUSED, "2/2, exception 0x02"),
-            ],
-            reconnects=0,
-        )
+    async def no_close() -> None:
+        return None
+
+    client = terminal.Client("stub", reader(refuses(2613)), None, no_close)
+    theirs = await terminal.measure(
+        client,
+        plan,
+        attempts=block_test.ATTEMPTS,
+        rounds=block_test.ROUNDS,
+        echo=lambda _line: None,
+        narrow_budget=0,
     )
 
-    assert theirs.failing == mine.failing
-    assert theirs.culprits == mine.culprits
-    assert block_test.document(theirs).keys() == block_test.document(mine).keys()
+    assert theirs == mine
     assert sungrow_survey._block_document(
-        terminal.BlockOutcome({}, [], [], [], 0), "raw"
+        block_test.Outcome(), "raw"
     ) == block_test.document(block_test.Outcome(), client="raw")
 
 

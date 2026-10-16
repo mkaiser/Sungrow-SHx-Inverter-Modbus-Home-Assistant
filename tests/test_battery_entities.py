@@ -298,3 +298,32 @@ async def test_a_pack_whose_size_the_inverter_does_not_report_is_still_a_device(
     assert device is not None
     assert device.model == "Battery"
     assert len(_pack_entities(hass, entry.entry_id)) == len(BATTERY_DESCRIPTIONS)
+
+
+async def test_a_survey_reads_the_module_block_the_poll_leaves_alone(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The document's pack section is the terminal survey's, modules included.
+
+    The per-module block makes no entity yet -- an absent module reads 0,
+    indistinguishable from a fault -- so polling it would spend the shared
+    link on nothing. A survey reads it once, and the section it publishes is
+    the one `sungrow_survey.py` writes.
+    """
+    from custom_components.sungrow_modbus.fingerprint import async_build
+
+    # Protocol addresses, one below the register numbers 10765 and 10766.
+    module_words = {10764: 33507, 10765: 33484}
+    entry = await _setup(
+        hass, sungrow_unit, _pack({**PACK_WORDS, **CELL_WORDS, **module_words})
+    )
+    battery = entry.runtime_data.battery.device
+    assert battery.field("max_cell_voltage_module_1") is None, "the poll read it"
+
+    section = (await async_build(hass, entry))["battery_pack"]
+
+    assert section["unit"] == 200
+    values = section["readings"]["values"]
+    assert values["max_cell_voltage_module_1"] == pytest.approx(3.3507)
+    assert values["max_cell_module"] == 1
+    assert section["readings"]["components_that_did_not_answer"] == []

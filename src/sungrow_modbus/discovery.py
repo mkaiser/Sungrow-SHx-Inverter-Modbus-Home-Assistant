@@ -26,6 +26,14 @@ from collections.abc import Callable
 import contextlib
 import ipaddress
 import socket
+from typing import Any, NamedTuple, cast
+
+from modbus_connection import ModbusError, ModbusTcpParams
+from modbus_connection.tmodbus import ModbusConnection
+
+from .addresses import IHOMEMANAGER_PROTOCOL, IHOMEMANAGER_TYPE, field_address
+from .const import model_for
+from .model import words_text
 
 #: Sweeping more than this many addresses at once is almost always a mistake —
 #: a mistyped prefix rather than an intent. A /24 is 254 hosts.
@@ -41,6 +49,82 @@ TIMEOUT = 1.0
 
 DEFAULT_PORT = 502
 
+
+async def async_mdns_services(seconds: float = 2.0) -> dict[str, dict[str, object]]:
+    """Browse available mDNS services when the optional extra is installed.
+
+    Importing ``zeroconf`` lazily keeps the base wheel suitable for headless
+    Modbus clients and Home Assistant. Callers can catch ``RuntimeError`` and
+    offer the package extra or a regular network sweep instead.
+    """
+    try:
+        from zeroconf import ServiceBrowser, ServiceStateChange
+        from zeroconf.asyncio import AsyncZeroconf
+    except ModuleNotFoundError as err:
+        raise RuntimeError(
+            "mDNS discovery requires the optional 'discovery' extra "
+            "(pip install sungrow-modbus[discovery])"
+        ) from err
+
+    found: dict[str, dict[str, object]] = {}
+    discovered_types: set[str] = set()
+    azc = AsyncZeroconf()
+    zc = azc.zeroconf
+
+    def on_type(
+        zeroconf: Any,
+        service_type: str,
+        name: str,
+        state_change: object,
+        **kwargs: object,
+    ) -> None:
+        if state_change is ServiceStateChange.Added:
+            discovered_types.add(name)
+
+    meta = ServiceBrowser(zc, "_services._dns-sd._udp.local.", handlers=[on_type])
+    await asyncio.sleep(seconds)
+    meta.cancel()
+
+    def on_change(
+        zeroconf: Any,
+        service_type: str,
+        name: str,
+        state_change: object,
+        **kwargs: object,
+    ) -> None:
+        if state_change is not ServiceStateChange.Added:
+            return
+        info = zeroconf.get_service_info(service_type, name, timeout=2000)
+        if info is None:
+            return
+        properties = {
+            (key.decode(errors="replace") if isinstance(key, bytes) else key): (
+                value.decode(errors="replace") if isinstance(value, bytes) else value
+            )
+            for key, value in (info.properties or {}).items()
+        }
+        found[name] = {
+            "type": service_type,
+            "addresses": [str(address) for address in info.parsed_addresses()],
+            "port": info.port,
+            "properties": properties,
+        }
+
+    types = sorted(discovered_types) or (
+        "_http._tcp.local.",
+        "_workstation._tcp.local.",
+        "_device-info._tcp.local.",
+    )
+    browsers = [
+        ServiceBrowser(zc, service_type, handlers=[on_change]) for service_type in types
+    ]
+    await asyncio.sleep(seconds)
+    for browser in browsers:
+        browser.cancel()
+    await azc.async_close()
+    return found
+
+
 #: Unit ids tried when looking for an inverter at an address, in order.
 #:
 #: 1 first, because it is what Sungrow's app and manual assume and what all
@@ -54,6 +138,18 @@ DEFAULT_PORT = 502
 #: behind an endpoint that has already answered. The config flow and the
 #: survey's `identify()` both sweep this list.
 IDENTIFY_UNITS: tuple[int, ...] = (1, 2, 3, 4, 5)
+IHOMEMANAGER_UNIT = 247
+
+
+class Identity(NamedTuple):
+    """Identity reported by a Sungrow endpoint."""
+
+    serial: str | None
+    device_type_code: int | None
+    model: str | None
+    error: str | None = None
+    unit: int | None = None
+    kind: str | None = None
 
 
 class NetworkTooLarge(ValueError):
@@ -163,6 +259,86 @@ async def async_hostname(host: str, timeout: float = TIMEOUT) -> str | None:
     except (TimeoutError, OSError, socket.gaierror):
         return None
     return None if name == host else name
+
+
+async def async_identify(
+    host: str,
+    port: int = DEFAULT_PORT,
+    *,
+    timeout: float = 5,
+    connection_factory: Callable[..., Any] = ModbusConnection,
+) -> Identity:
+    """Identify the first inverter-like unit answering at an endpoint."""
+    connection = connection_factory(
+        ModbusTcpParams(host=host, port=port), timeout=timeout
+    )
+    try:
+        first_error: str | None = None
+        serial_address = field_address("serial_number")
+        type_address = field_address("device_type_code")
+        for unit_id in IDENTIFY_UNITS:
+            unit = connection.for_unit(unit_id)
+            try:
+                values = await _read_words(unit, serial_address)
+            except (ModbusError, TimeoutError, OSError) as err:
+                if first_error is None:
+                    first_error = type(err).__name__
+                continue
+            serial = words_text(values).strip()
+            if not serial:
+                return Identity(
+                    None,
+                    None,
+                    None,
+                    "answered, but reported no serial",
+                    unit_id,
+                )
+            try:
+                device_type = await _read_words(unit, type_address)
+            except (ModbusError, TimeoutError, OSError):
+                return Identity(serial, None, None, None, unit_id)
+            code = int(device_type[0])
+            return Identity(serial, code, model_for(code), None, unit_id)
+
+        manager = await _identify_ihomemanager(connection)
+        if manager is not None:
+            return manager
+        tried = ", ".join(str(unit_id) for unit_id in IDENTIFY_UNITS)
+        return Identity(None, None, None, f"no serial at unit {tried} ({first_error})")
+    finally:
+        await connection.close()
+
+
+async def _read_words(unit: Any, address: tuple[str, int, int]) -> list[int]:
+    """Read one mapped field through the appropriate Modbus table."""
+    space, register, count = address
+    reader = (
+        unit.read_holding_registers if space == "holding" else unit.read_input_registers
+    )
+    return cast("list[int]", await reader(register, count))
+
+
+async def _identify_ihomemanager(connection: Any) -> Identity | None:
+    """Return an iHomeManager identity if its identifying input answers."""
+    unit = connection.for_unit(IHOMEMANAGER_UNIT)
+    try:
+        space, start, count = IHOMEMANAGER_TYPE
+        values = await _read_words(unit, (space, start, count))
+    except (ModbusError, TimeoutError, OSError):
+        return None
+    if not values or int(values[0]) in (0, 0xFFFF):
+        return None
+    code = int(values[0])
+    try:
+        space, start, count = IHOMEMANAGER_PROTOCOL
+        raw = await _read_words(unit, (space, start, count))
+    except (ModbusError, TimeoutError, OSError):
+        return Identity(
+            None, code, "iHomeManager", None, IHOMEMANAGER_UNIT, "ihomemanager"
+        )
+    protocol = words_text(raw, "utf-8").strip()
+    model = "iHomeManager" if not protocol else f"iHomeManager (protocol {protocol})"
+    return Identity(None, code, model, None, IHOMEMANAGER_UNIT, "ihomemanager")
 
 
 def network_of(address: str, prefix: int) -> str:

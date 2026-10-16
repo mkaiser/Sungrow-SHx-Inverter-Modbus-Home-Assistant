@@ -382,7 +382,7 @@ Four facts from this that change the design here, not just add registers:
    weaker evidence than they looked.
 3. **Nothing here can recognise one.** Both identification paths ask for the
    inverter serial at input 4990 — `identify()` in
-   [probe.py](../scripts/sungrow_read_only_survey/probe.py), across units 1-5, and
+   [probe.py](../device-fingerprints/scripts/python/probe.py), across units 1-5, and
    `_async_identify` in
    [config_flow.py](../custom_components/sungrow_modbus/config_flow.py),
    which fails with `no_serial_number`. An iHM has no such register and

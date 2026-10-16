@@ -119,41 +119,67 @@ version-check: ## Verify pyproject.toml and manifest.json agree
 
 ##@ Scan
 
-scan: ## Survey an installation and write a document (HOST=a.b.c.d optional)
-	$(PY) scripts/sungrow_read_only_survey/sungrow_survey.py $(HOST) $(ARGS)
+scan: ## Survey an installation and write a document; asks before the control test (HOST=a.b.c.d optional)
+	$(PY) device-fingerprints/scripts/python/sungrow_survey.py $(HOST) $(ARGS)
 .PHONY: scan
 
 probe: ## Probe for devices, e.g. make probe ARGS="sweep 192.168.178.0/24"
-	$(PY) scripts/sungrow_read_only_survey/probe.py $(ARGS)
+	$(PY) device-fingerprints/scripts/python/probe.py $(ARGS)
 .PHONY: probe
 
 blocks: ## The block read test -- which read inside a component fails, and why
-	$(PY) scripts/sungrow_read_only_survey/blocks.py $(ARGS)
+	$(PY) device-fingerprints/scripts/python/blocks.py $(ARGS)
 .PHONY: blocks
 
 scan-sim: ## Run the whole survey against the simulator -- needs `make sim-bg`
-	$(PY) scripts/sungrow_read_only_survey/sungrow_survey.py 127.0.0.1 --port 5020 $(ARGS)
+	$(PY) device-fingerprints/scripts/python/sungrow_survey.py 127.0.0.1 --port 5020 --simulated $(ARGS)
 .PHONY: scan-sim
+
+# The launcher a contributor runs, on a library that is not released yet.
+# uv builds the environment from the script's header, as for anybody, and
+# SUNGROW_MODBUS_LIBRARY lays this tree's library -- or a wheel of it -- over
+# the pinned one. `scan` above skips both the launcher and the header.
+scan-local: ## The launcher, as a contributor runs it, on this tree's library (HOST=a.b.c.d)
+	SUNGROW_MODBUS_LIBRARY=$(CURDIR) device-fingerprints/scripts/survey.sh $(HOST) $(ARGS)
+.PHONY: scan-local
+
+scan-wheel: wheel ## The same on a freshly built wheel -- what a release would publish
+	SUNGROW_MODBUS_LIBRARY=$(LIBRARY_WHEEL) device-fingerprints/scripts/survey.sh $(HOST) $(ARGS)
+.PHONY: scan-wheel
 
 ##@ Control test (writes to the inverter)
 
 controltest-dry: ## Show what the control test would write, and write nothing (HOST=a.b.c.d)
-	$(PY) scripts/sungrow_control_test/sungrow_control_test.py $(HOST) --dry-run $(ARGS)
+	$(PY) device-fingerprints/scripts/python/sungrow_control_test.py $(HOST) --dry-run $(ARGS)
 .PHONY: controltest-dry
 
 controltest: ## Write each control, read it back, and put it back (HOST=a.b.c.d)
-	$(PY) scripts/sungrow_control_test/sungrow_control_test.py $(HOST) $(ARGS)
+	$(PY) device-fingerprints/scripts/python/sungrow_control_test.py $(HOST) $(ARGS)
 .PHONY: controltest
 
 controltest-sim: ## Run it against the simulator -- needs `make sim-bg`
-	$(PY) scripts/sungrow_control_test/sungrow_control_test.py 127.0.0.1 --port 5020 --simulated --no-restart
+	$(PY) device-fingerprints/scripts/python/sungrow_control_test.py 127.0.0.1 --port 5020 --simulated --no-restart
 .PHONY: controltest-sim
 
-controltest-restore: ## Put a saved snapshot back (HOST=a.b.c.d FILE=scripts/sungrow_control_test/<stamp>-snapshot.json)
-	$(PY) scripts/sungrow_control_test/sungrow_control_test.py $(HOST) --restore $(FILE)
+controltest-local: ## The launcher on this tree's library; add ARGS=--dry-run first (HOST=a.b.c.d)
+	SUNGROW_MODBUS_LIBRARY=$(CURDIR) device-fingerprints/scripts/survey.sh control $(HOST) $(ARGS)
+.PHONY: controltest-local
+
+controltest-restore: ## Put a saved snapshot back (HOST=a.b.c.d FILE=device-fingerprints/<stamp>-snapshot.json)
+	$(PY) device-fingerprints/scripts/python/sungrow_control_test.py $(HOST) --restore $(FILE)
 .PHONY: controltest-restore
 
 ##@ Release
+
+# The one wheel `wheel` leaves in dist/. Named by the version, so a wheel left
+# behind by an older version is never picked up instead.
+LIBRARY_WHEEL = $(CURDIR)/dist/sungrow_modbus-$(shell sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)-py3-none-any.whl
+
+wheel: ## Build only the library's wheel into dist/, for SUNGROW_MODBUS_LIBRARY
+	rm -f $(LIBRARY_WHEEL)
+	$(PY) -m build --wheel
+	@echo "SUNGROW_MODBUS_LIBRARY=$(LIBRARY_WHEEL)"
+.PHONY: wheel
 
 build: ## Build the sdist and wheel, and check them
 	$(PY) -m build

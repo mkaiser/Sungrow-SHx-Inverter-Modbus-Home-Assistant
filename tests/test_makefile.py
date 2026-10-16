@@ -92,7 +92,12 @@ def test_every_script_the_makefile_runs_exists() -> None:
     # cover its loop variable instead.
     referenced = set(re.findall(r"scripts/[\w./]+\.(?:py|sh)", text))
     assert referenced, "no scripts referenced -- the regex stopped matching"
-    missing = sorted(path for path in referenced if not (REPO / path).exists())
+    missing = sorted(
+        path
+        for path in referenced
+        if not (REPO / path).exists()
+        and not (REPO / "device-fingerprints" / path).exists()
+    )
     assert not missing
 
 

@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+import itertools
 from pathlib import Path
 import sys
 from typing import Any
@@ -1474,6 +1475,52 @@ async def test_a_slowly_booting_inverter_is_waited_for_not_shouted_at(
     assert sends.count(0xCF) == 1
 
 
+async def test_a_long_boot_shows_a_heartbeat(full_unit: MockModbusUnit) -> None:
+    """Minutes of `Starting` print nothing else, so the run says it is alive.
+
+    One `on_wait` per `WAIT_TICK`: 90 polls two seconds apart is 180 s of
+    booting, eighteen ticks -- not one per poll, and not none.
+    """
+    from sungrow_modbus.control_test import RESTART_POLL, WAIT_TICK
+
+    ticks: list[float] = []
+    clock = FakeClock()
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    run = ControlTest(inverter, clock=clock, on_wait=lambda: ticks.append(clock.now))
+    polls = iter([0x0020] * 90 + [0x0040])
+
+    async def booting() -> int:
+        return next(polls, 0x0040)
+
+    run._running_word = booting  # type: ignore[method-assign]
+
+    assert await run.async_ensure_running() is True
+    assert len(ticks) == int(90 * RESTART_POLL / WAIT_TICK)
+    assert all(b - a >= WAIT_TICK for a, b in itertools.pairwise(ticks))
+
+
+def test_the_restart_waits_are_at_least_five_minutes() -> None:
+    """No restart wait expires on a healthy inverter.
+
+    A stop is seen in about 2 s and generation within 20, but a link that
+    drops while the inverter switches costs 10 s per request, and a wait that
+    expires on a healthy inverter reports a fault that is not there.
+    """
+    from sungrow_modbus.control_test import (
+        RESTART_GENERATING_DEADLINE,
+        RESTART_RUNNING_DEADLINE,
+        RESTART_STOP_DEADLINE,
+    )
+
+    assert (
+        min(
+            RESTART_STOP_DEADLINE, RESTART_RUNNING_DEADLINE, RESTART_GENERATING_DEADLINE
+        )
+        >= 300
+    )
+
+
 def test_the_running_deadline_outlasts_a_measured_boot() -> None:
     """The slowest measured restart, with room: 381 s, at night.
 
@@ -1531,6 +1578,46 @@ async def test_a_house_that_is_not_exporting_is_made_to(
     # House load plus enough to clear the threshold a cap must bind against.
     assert commanded > 400 + MIN_EXPORT_W
     assert run.snapshot.values["battery_forced_charge_discharge_cmd_raw"] is not None
+
+
+@pytest.mark.parametrize("exporting", [7400.0, 0.0])
+async def test_an_export_cap_the_inverter_will_not_set_low_enough_is_not_tried(
+    full_unit: MockModbusUnit, exporting: float
+) -> None:
+    """Measured on fwitten's master: 13074's minimum is 11880 W.
+
+    It exported 7.4 kW, so the clamped cap sat above the export, and a minute
+    went on a check that could only report "nothing measurable". Now said
+    before anything is written -- and before a battery is discharged to make
+    an export the cap would still sit above.
+    """
+    from sungrow_modbus.control_test import EXPORT_MODE, MODE_ON
+
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    run = _runner(full_unit, enable_export_limit=True)
+    await run._preflight()
+    assert any(row.field == "export_power_limit" for row in run.plan)
+    run.snapshot.bounds["export_power_limit"] = (11880.0, 24990.0)
+    run.snapshot.values[EXPORT_MODE.field] = MODE_ON
+
+    async def sample() -> Sample:
+        return Sample(0.0, 9000.0, 0.0, exporting, 1600.0, 80.0)
+
+    async def no_discharge(_sample: Sample) -> float | None:
+        raise AssertionError("discharged for a cap that cannot bind")
+
+    writes: list[int] = []
+    full_unit.on_write(lambda event: writes.append(event.address))
+    run._sample = sample  # type: ignore[method-assign]
+    run._force_export = no_discharge  # type: ignore[method-assign]
+
+    assert await run._export_effect() == []
+    assert not writes
+    assert any(
+        note.startswith("no export limit check") and "11880 W" in note
+        for note in run.unestablished
+    )
 
 
 async def test_it_refuses_to_spend_a_battery_that_has_nothing_to_spend(

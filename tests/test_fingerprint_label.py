@@ -27,24 +27,25 @@ import pytest
 sys.path.insert(
     0,
     str(
-        Path(__file__).resolve().parent.parent / "scripts" / "sungrow_read_only_survey"
+        Path(__file__).resolve().parent.parent
+        / "device-fingerprints"
+        / "scripts"
+        / "python"
     ),
 )
 
-from probe import (
-    NEVER_PUBLISH,
-    SCRIPT,
-    _all_zero,
-    _battery_token,
-    _derive_label,
-    _firmware_token,
-    _last_two_octets,
-    _slug,
-    transport_verdict,
-)
+from probe import NEVER_PUBLISH, SCRIPT, host_from_tail, transport_verdict
 
 from sungrow_modbus import fingerprint
-from sungrow_modbus.fingerprint import COLLECTED_BY_INTEGRATION
+from sungrow_modbus.fingerprint import (
+    COLLECTED_BY_INTEGRATION,
+    _battery_word,
+    _slug,
+    firmware_word,
+    label_for,
+    last_two_octets,
+    publish_document,
+)
 
 from .corpus import INVERTER_DOCUMENTS
 
@@ -65,6 +66,51 @@ def _answering(answers: list[str]):
         yield
     finally:
         builtins.input = original
+
+
+def _document_for(
+    fingerprint: dict,
+    connection: dict,
+    stand_in_serial: str,
+    raw: dict,
+    reporter: str = "anonymous",
+) -> dict:
+    """Publish what the survey collected, the way the survey does.
+
+    The filename is derived from the published document alone, so these
+    tests build one through `publish_document` and ask the package's
+    `label_for` -- the code a run calls -- rather than a second derivation
+    from the survey's private structures. The stand-in is set as given, so a
+    test can hand it a real serial and see that nothing reaches the name.
+    """
+    # A value in `raw` came from a probe that answered, which a run records
+    # as a state too; fixtures that give only the value mean that.
+    states = {
+        **{label: "present" for label in raw.get("registers", {})},
+        **fingerprint.get("registers", {}),
+    }
+    document = publish_document(
+        {"read_at": "2026-10-15T00:00:00Z", **raw, "connection": connection},
+        {**fingerprint, "registers": states},
+        command_line=f"{SCRIPT} capabilities <host>",
+        host="",
+        publish_address=False,
+        user_inputs={
+            "reporter": reporter,
+            "transport": connection.get("reported_by_hand", ""),
+        },
+        serial="",
+    )
+    document["device"]["serial_anonymized_hashed"] = stand_in_serial
+    return document
+
+
+def _derive_label(*args, **kwargs) -> str:
+    return label_for(_document_for(*args, **kwargs))
+
+
+def _battery_token(fingerprint: dict, connection: dict, raw: dict) -> str:
+    return _battery_word(_document_for(fingerprint, connection, "", raw))
 
 
 DIRECT = {"verdict": "direct to the inverter's LAN port"}
@@ -128,14 +174,18 @@ def test_the_sentinel_remains_the_ordinary_way_to_say_no_battery() -> None:
 def test_one_zero_among_readings_is_a_measurement_not_an_absence() -> None:
     # An idle pack reports 0 current at a real voltage. Requiring every named
     # register to be zero is what keeps that a reading.
+    fingerprint = _fingerprint("no answer", "present")
     raw = {"registers": {"battery voltage": [1992], "battery level": [0]}}
-    assert not _all_zero(raw, ("battery voltage", "battery level"))
+    assert _battery_token(fingerprint, DIRECT, raw) == "battery-thirdparty"
 
 
 def test_a_register_that_never_answered_is_not_a_zero() -> None:
-    # A missing key means the read failed, which is `battery-unreadable`
+    # A missing value means the read failed, which is `battery-unreadable`
     # territory and must not be smoothed into a confident "no battery".
-    assert not _all_zero({"registers": {}}, ("battery voltage",))
+    fingerprint = _fingerprint("no answer", "no answer")
+    assert _battery_token(fingerprint, DIRECT, {"registers": {}}) == (
+        "battery-unreadable"
+    )
 
 
 def test_a_capacity_matching_no_model_stays_at_the_family() -> None:
@@ -169,25 +219,36 @@ def test_the_host_octets_are_zero_filled_strings_of_three_digits() -> None:
     # Strings because JSON cannot write a leading zero on a number, and three
     # digits because that is the widest an octet gets -- so every value is the
     # same width and sorts as text in the order an address sorts.
-    assert _last_two_octets("192.168.176.34") == "176.034"
-    assert _last_two_octets("192.168.176.28") == "176.028"
-    assert _last_two_octets("10.0.0.4") == "000.004"
-    assert _last_two_octets("10.0.0.128") == "000.128"
+    assert last_two_octets("192.168.176.34") == "176.034"
+    assert last_two_octets("192.168.176.28") == "176.028"
+    assert last_two_octets("10.0.0.4") == "000.004"
+    assert last_two_octets("10.0.0.128") == "000.128"
 
 
 def test_something_that_is_not_an_ipv4_address_has_no_octets() -> None:
     # A hostname and an IPv6 address are both ordinary things to point the
     # script at, and neither has octets. None beats guessing at whatever
     # follows the final dots.
-    assert _last_two_octets("winet-s.local") is None
-    assert _last_two_octets("fe80::1") is None
-    assert _last_two_octets("") is None
+    assert last_two_octets("winet-s.local") is None
+    assert last_two_octets("fe80::1") is None
+    assert last_two_octets("") is None
 
 
 def test_the_octets_are_only_the_octets() -> None:
     # The document exists not to carry the host. Two octets of a subnet nobody
     # has named is not an address, and the front half must not come with it.
-    assert "192.168" not in (_last_two_octets("192.168.176.34") or "")
+    assert "192.168" not in (last_two_octets("192.168.176.34") or "")
+
+
+def test_a_previous_tail_uses_the_local_route_prefix(monkeypatch) -> None:
+    monkeypatch.setattr("probe.local_ipv4_for", lambda _host: "192.168.178.20")
+    assert host_from_tail("176.034") == "192.168.176.34"
+
+
+@pytest.mark.parametrize("tail", ["178", "178.1.2", "abc.def", "256.1"])
+def test_an_invalid_previous_tail_is_rejected(tail: str) -> None:
+    with pytest.raises(ValueError):
+        host_from_tail(tail)
 
 
 def test_the_address_tail_is_withheld_unless_its_owner_allowed_it() -> None:
@@ -530,7 +591,7 @@ def test_no_document_carries_a_round_trip_time() -> None:
 FINGERPRINTS = INVERTER_DOCUMENTS
 
 #: Where the survey sits in a checkout; its published lines start with it.
-SURVEY_SCRIPT = "scripts/sungrow_read_only_survey/sungrow_survey.py"
+SURVEY_SCRIPT = "device-fingerprints/scripts/python/sungrow_survey.py"
 
 #: The stand-in serial these labels are built from, exactly as
 #: `stand_in("A123456789")` writes it. Spelled out rather than computed,
@@ -568,9 +629,9 @@ def test_every_published_fingerprint_separates_claims_from_readings(path) -> Non
     assert keys[:5] == [
         "schema",
         "command_line",
-        "read_on",
-        "read_at_local",
+        "read_at",
         "user_inputs",
+        "ip_address_last_two_octets",
     ]
 
     measured = {k: v for k, v in document.items() if k != "user_inputs"}
@@ -590,7 +651,7 @@ def test_a_published_fingerprint_still_carries_no_serial_or_address(path) -> Non
     text = json.dumps(document)
 
     assert "host" not in document
-    assert "read_at" not in document, "the exact time says when somebody was in"
+    assert isinstance(document.get("read_at"), str)
     # An octet on its own is one of 254 on a subnet nobody has named; a dotted
     # quad is somebody's network.
     assert not re.search(r"\b\d{1,3}(\.\d{1,3}){3}\b", text), "an IP address"
@@ -740,18 +801,20 @@ def test_pressing_enter_on_the_transport_question_records_nothing() -> None:
 
     A WiNet-S is the commonest fitting, which made it tempting -- and this is
     the one field no measurement can correct, so pre-filling the likeliest
-    answer would turn a guess into a record. `_effective_verdict` already
+    answer would turn a guess into a record. `effective_verdict` already
     treats `unsure` as claiming nothing, so Enter costs the document nothing
     rather than costing it the truth.
     """
-    from probe import _ask_transport, _effective_verdict
+    from probe import _ask_transport
+
+    from sungrow_modbus.fingerprint import effective_verdict
 
     with _answering([""]):
         assert _ask_transport() == "unsure"
 
     measured = {"verdict": "direct to the inverter's LAN port"}
     assert (
-        _effective_verdict({**measured, "reported_by_hand": "unsure"})
+        effective_verdict({**measured, "reported_by_hand": "unsure"})
         == (measured["verdict"])
     )
 
@@ -759,10 +822,9 @@ def test_pressing_enter_on_the_transport_question_records_nothing() -> None:
 def test_the_command_line_reproduces_the_reading_without_the_address() -> None:
     """The one line that could undo the whole point of the document.
 
-    A fingerprint drops the host deliberately -- `ip_address_last_octet` is
-    the single, considered exception. Quoting the real command would put the
-    address back in the first line of the file, so the host is a placeholder
-    and `--save` is left out as a local path.
+    A fingerprint masks the first two address octets deliberately. The
+    published tail remains so the route can be identified without exposing
+    the full address, and `--save` is left out as a local path.
     """
     import argparse
 
@@ -787,13 +849,14 @@ def test_the_command_line_reproduces_the_reading_without_the_address() -> None:
     )
 
     assert "192.168.178.35" not in line
-    assert "<host>" in line
+    assert "***.***.178.035" in line
     assert "/home/somebody" not in line, "a local path leaked"
 
     # Every collection flag is there, and the values survive quoting -- a
     # comment with an apostrophe in it has to paste back intact.
     words = shlex.split(line)
-    assert words[:3] == [SCRIPT, "capabilities", "<host>"]
+    assert words[:2] == ["python/probe.py", "capabilities"]
+    assert words[2] == "***.***.178.035"
     assert "Pylontech Force H1, 14.4 kWh" in words
     assert "the master's reading" in words
     for flag in (
@@ -831,10 +894,7 @@ def test_an_unset_option_is_absent_rather_than_guessed() -> None:
     assert "--comment" not in line
     # The one place the path is written out rather than derived, so that
     # SCRIPT cannot quietly drift from where the file actually is.
-    assert (
-        _invocation(None)
-        == "scripts/sungrow_read_only_survey/probe.py capabilities <host>"
-    )
+    assert _invocation(None) == "python/probe.py capabilities <host>"
 
 
 @pytest.mark.parametrize("path", FINGERPRINTS, ids=lambda p: p.stem)
@@ -866,13 +926,19 @@ def test_every_published_command_line_is_runnable_or_names_its_tool(path) -> Non
             "what was polling the inverter at the time"
         )
     elif Path(words[0]).name == "sungrow_survey.py":
-        # The survey's own line, which repeats the whole survey unasked.
-        assert words[0] in (SURVEY_SCRIPT, "sungrow_survey.py")
+        # The survey's own line, which repeats the whole survey unasked:
+        # `_script_name` writes the path from `scripts/` in a checkout, where
+        # the launchers sit, and the bare name in a copy of the folder.
+        assert words[0] in (
+            SURVEY_SCRIPT,
+            "python/sungrow_survey.py",
+            "sungrow_survey.py",
+        )
         assert words[1] == "<host>"
     else:
         # The repository path from a checkout, the bare name from a copy of
         # the folder: `_script_name` writes whichever repeats the reading.
-        assert words[0] in (SCRIPT, Path(SCRIPT).name)
+        assert words[0] in ("python/probe.py", Path(SCRIPT).name, "probe.sh")
         assert words[1:3] == ["capabilities", "<host>"]
     # The stronger check lives in the no-serial-or-address test, but the
     # command line is the field most likely to reintroduce one.
@@ -952,7 +1018,7 @@ def test_the_recorded_command_names_the_path_that_works_where_it_ran(
 
     assert probe._script_name() == probe.SCRIPT
 
-    unpacked = tmp_path / "sungrow_read_only_survey" / "probe.py"
+    unpacked = tmp_path / "sungrow_survey" / "probe.py"
     unpacked.parent.mkdir()
     unpacked.write_text("")
     monkeypatch.setattr(probe, "__file__", str(unpacked))
@@ -983,7 +1049,7 @@ def test_a_published_filename_can_be_checked_against_its_own_document(path) -> N
     assert _slug(stand_in) in path.stem, (
         f"{path.name} does not carry its own stand-in serial {stand_in}"
     )
-    firmware = _firmware_token({"firmware": document["firmware"]})
+    firmware = firmware_word(document["firmware"])
     if firmware:
         assert firmware in path.stem, (
             f"{path.name} does not carry its firmware word {firmware}"
@@ -1035,7 +1101,7 @@ def test_the_firmware_word_is_the_version_without_its_family(
     recorded, expected
 ) -> None:
     """`sh80rt` already says the family; the word says only what varies."""
-    assert _firmware_token({"firmware": {"inverter": recorded}}) == expected
+    assert firmware_word({"inverter": recorded}) == expected
 
 
 def test_a_reading_with_no_firmware_still_gets_a_filename() -> None:

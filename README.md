@@ -63,7 +63,7 @@ long-term statistics and their dashboards when they switch.
 - One naming convention, enforced by a test.
 - **A one-command survey** you can run against your own installation, which is
   how the capability model gets its evidence — see
-  [contributing a fingerprint](doc/device-fingerprints/README.md#contributing-one).
+  [contributing a fingerprint](device-fingerprints/README.md#contributing-one).
   It reads and never writes.
 
 **Not there yet:**
@@ -72,7 +72,7 @@ long-term statistics and their dashboards when they switch.
   `main`, HACS installs it from the preview channel above.
 - The **iHomeManager** and the **Sungrow Logger**. Both are documented by
   Sungrow and neither has ever been measured by this project — if you have
-  one, [doc/device-fingerprints/devices-wanted.md](doc/device-fingerprints/devices-wanted.md)
+  one, [device-fingerprints/devices-wanted.md](device-fingerprints/devices-wanted.md)
   says what would help.
 - **SBH** batteries, which need a register document nobody has, and the SBR's
   per-module cell entities, which need one more pack size measured before the

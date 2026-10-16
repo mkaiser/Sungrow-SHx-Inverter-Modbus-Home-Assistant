@@ -1,7 +1,8 @@
 """Folding a write result into a published fingerprint, from the terminal.
 
-`scripts/sungrow_control_test/sungrow_control_test.py --merge-into` edits a document in
-`doc/device-fingerprints/`, which is public. So the merge is held to two
+`device-fingerprints/scripts/python/sungrow_control_test.py --merge-into` edits
+a document in
+`device-fingerprints/`, which is public. So the merge is held to two
 things: it never publishes what identifies a house, and the document's schema
 number keeps saying what the document can carry.
 """
@@ -22,8 +23,9 @@ from sungrow_modbus.fingerprint import SCHEMA
 
 SCRIPT = (
     Path(__file__).resolve().parents[1]
+    / "device-fingerprints"
     / "scripts"
-    / "sungrow_control_test"
+    / "python"
     / "sungrow_control_test.py"
 )
 
@@ -154,7 +156,7 @@ def test_nobody_at_a_terminal_is_not_waited_for(cli, monkeypatch) -> None:
 def test_a_run_writes_beside_itself(cli, tmp_path, monkeypatch) -> None:
     """Beside the launcher, whatever folder the run was started from."""
     monkeypatch.chdir(tmp_path)
-    assert cli._workspace() == SCRIPT.parent
+    assert cli._workspace() == SCRIPT.parents[2]
 
 
 # -- the snapshot: written before the first write, gone once all is back ------
@@ -194,6 +196,7 @@ def _args(**overrides) -> argparse.Namespace:
         "simulated": True,
         "restore": None,
         "merge_into": None,
+        "yes": False,
     }
     return argparse.Namespace(**{**values, **overrides})
 
@@ -289,3 +292,77 @@ async def test_a_dry_run_does_not_claim_its_checks_ran(cli, wired, tmp_path) -> 
     assert document["outcome_means"] == control_test.DRY_RUN_MEANS
     assert cli._means(0, True) == control_test.DRY_RUN_MEANS
     assert cli._means(0, False) == control_test.CODES[0]
+
+
+def test_a_relative_document_is_the_callers_and_a_missing_one_stops_the_run(
+    cli, tmp_path, monkeypatch, capsys
+) -> None:
+    """The launchers change into their own folder, so a relative path was theirs.
+
+    Measured on fwitten's slave: a whole run, restart included, then
+    `--merge-into device-fingerprints/...` failed to open and was reported as
+    "nothing ran -- could not connect". Now resolved against the caller's
+    directory, and a file that is not there ends the run before it connects.
+    """
+    document = tmp_path / "doc.json"
+    document.write_text("{}")
+    monkeypatch.setenv("SUNGROW_CALLER_DIR", str(tmp_path))
+    assert cli._caller_path("doc.json") == document
+    assert cli._caller_path(str(document)) == document
+
+    connected: list[str] = []
+
+    async def no_run(args) -> int:
+        connected.append(args.merge_into)
+        return 0
+
+    monkeypatch.setattr(cli, "_run", no_run)
+    monkeypatch.setattr(
+        cli.sys, "argv", ["x", "192.0.2.1", "--merge-into", "missing.json"]
+    )
+    assert cli.main() == 2
+    assert not connected
+    assert "no such file" in capsys.readouterr().err
+
+    monkeypatch.setattr(cli.sys, "argv", ["x", "192.0.2.1", "--merge-into", "doc.json"])
+    assert cli.main() == 0
+    assert connected == [str(document)]
+
+
+async def test_a_document_that_cannot_be_written_is_not_a_failed_link(
+    cli, wired, tmp_path, capsys
+) -> None:
+    """After a complete run, a failed merge says so and keeps the run's code.
+
+    It used to escape to the handler built for a link that never came up,
+    which printed "exit 1: nothing ran -- could not connect" beneath a whole
+    report. The measured result must survive it, beside the script.
+    """
+    gone = tmp_path / "removed-since-the-run-started.json"
+
+    code = await cli._run(_args(merge_into=str(gone)))
+
+    assert code not in (1, 5)
+    (result,) = tmp_path.glob("*-control_test.json")
+    err = capsys.readouterr().err
+    assert f"NOT WRITTEN: the merge into {gone}" in err
+    assert f"the result is in {result}" in err
+
+
+async def test_leave_given_beforehand_does_not_wait_for_enter(
+    cli, wired, monkeypatch
+) -> None:
+    """The survey asks among its questions; the run then needs nobody at the keys."""
+    monkeypatch.setattr(cli, "_ready", lambda _dry: pytest.fail("waited for Enter"))
+
+    code = await cli._run(_args(simulated=False, yes=True, allow_dark=True))
+
+    assert code != 5
+
+
+def test_the_parser_is_what_the_survey_builds_its_run_from(cli) -> None:
+    args = cli._parser().parse_args(["192.0.2.1", "--yes", "--restart"])
+
+    assert args.yes is True
+    assert args.restart is True
+    assert args.enable_export_limit is False

@@ -33,11 +33,12 @@ body:
         **Settings → Devices & Services → Sungrow Modbus → the three-dot menu →
         Download diagnostics**, then drag the file into this box.
 
-        Not installed it yet? Run `./read_only_survey.sh` (or double-click `read_only_survey.cmd`
-        on Windows) from the `scripts/sungrow_read_only_survey` folder. It fetches what
-        it needs through uv, asking first, then finds the device, asks a few
-        things no register can answer, tests the block reads and tells you
-        which file to send.
+        Not installed it yet? Run `./survey.sh` (or double-click `survey.cmd`
+        on Windows) from the `device-fingerprints/scripts` folder. It fetches
+        what it needs through uv, asking first, then finds the device, asks a
+        few things no register can answer, tests the block reads and tells you
+        which file to send. It writes to the inverter only if you say yes to
+        the control test it offers last.
       placeholder: Drag the .json file here, or paste its contents.
     validations:
       required: true

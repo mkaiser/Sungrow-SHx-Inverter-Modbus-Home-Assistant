@@ -3,42 +3,40 @@ Anything done should be removed here.
 
 
 ## Fingerprint Folder restructuring
+create a separate plan:
 
-Fingerprint-related stuff is spread across the repo:
-- doc/device-fingerprints
-- scripts/sungrow_control_test
-- scripts/sungrow_read_only_survey
+from fingerprint:
+A: Address
+    "ip_address_last_two_octets": "178.041",
+    for recreation we need the complete local ip address. Can we just read the computers network interface and find the local LAN address (the first two octets, are not ALWAYS 192.168).
+    Then we could just enter the last two octects in the command to recreate the fingerprint. This would be more user friendly and less error prone.
 
-move to top level:
-/device-fingerprints
-/device-fingerprints/README.md  -->  with instructions how to use the scripts   Move information from the separate README.txt files here
-/device-fingerprints/scripts    --> scripts here
-/device-fingerprints/inverter
-/device-fingerprints/wallbox
+B.
+  "read_on": "2026-09-08",
+  "read_at_local": "2026-09-08T19:51:22+02:00",
 
+  Why two values? one should be enough.
 
-scripts: What are blocks.py probe.py and raw_client.py used for? Does it make sense to move them to the pypi package?
-If required for the scripts, move them into a subfolder: /device-fingerprints/scripts/python and leave only the bat/sh/ps1 scripts in /device-fingerprints/scripts
+What is the difference between device-fingerprints/scripts/python/probe.py and src/sungrow_modbus/discovery.py?
 
 # Summary (2026-10-15)
 
 0.1.0a14 on PyPI: the wallbox at its own address (TLS 516, unit 248) in the
 integration and the survey, and `direct-lan` in every cable document's name.
-gerd's wallbox document is published in `doc/device-fingerprints/`, beside the
+gerd's wallbox document is published in `device-fingerprints/`, beside the
 inverter documents. Every site re-fingerprinted; control tests merged at
 fwitten's master and gerd; the integration passed on gerd's hardware.
 Open:
 
-1. **fwitten's slave control test, in daylight.** It sits in Standby without
-   PV (no battery), and the test refuses a stopped inverter. From a copy of
-   `scripts/sungrow_control_test/` outside the checkout: `control_test.sh
-   <slave> --unit 2 --allow-dark --enable-export-limit --restart
-   --merge-into <its LAN document>`. Its carried 2026-09-25 block (exit 5,
-   13074 written at x10, settings lost after the restart) is replaced by it.
-2. **A charging car at gerd's** for 21313 against 21308 over a session (does
+1. **A charging car at gerd's** for 21313 against 21308 over a session (does
    it go to 0 when charging stops?) and the signedness of 21308/21310. Two
    dongle runs about five minutes apart, 90 s of quiet before each, while the
    car charges.
+2. **Release the library.** The survey and control-test launchers run on
+   the PyPI wheel, which lacks the survey API moved into the package
+   (`raw_client`, `assemble_document`, ...), so `survey.sh` fails
+   with an ImportError for everyone until the next release. In the checkout
+   meanwhile: `make scan-local HOST=...` (or `scan-wheel`). Details in `plans/survey-to-pypi.md`.
 3. Small items below.
 
 # Next steps
@@ -48,19 +46,13 @@ Open:
 - `tests/test_no_real_serials.py`: decode runs of 16-bit integers that
   are printable ASCII pairs to text before matching the serial shape, so a
   serial stored as register words fails the suite (how gerd's leaked).
-- `control_test.sh --simulated` exits 4: the simulator stores 13074 as
+- `survey.sh control --simulated` exits 4: the simulator stores 13074 as
   handed and the run writes at the default x10 when the scale probe gives
   no answer, so leg B reports a wrong slope. Contradicts "a simulator
   cannot produce a finding".
-- A dry run of the control test prints "exit 0: every planned check ran
-  and every readback matched" although nothing ran.
 - The fwitten master's LAN port takes ~39 min per survey: 13199 and the
   three firmware strings time out (10 s each) instead of refusing, and
   the narrowing retries them register by register.
-- The control test's restart deadline (7 min) is tight at night: after a
-  Modbus stop with no PV, fwitten's master took 381 s and gerd's 369 s to
-  run again, where daylight runs took 197 s and 180 s. Raise it, or say in CLAUDE.md that a
-  dark restart is slower.
 - Windows: a `ConnectionResetError [WinError 10054]` traceback during
   identification; harmless, but reads as a failure.
 
@@ -141,9 +133,16 @@ Measured at gerd's AC22E-01 on 2026-10-14. Addresses are in memory, not here.
 
 
 # Future work
-
+## modbus proxy
 - investigate: Does it make sense to provide a modbusproxy from this integration? So evcc and other software can use the inverter and wallbox through this integration?
 reuse existing modbusproxies, don't reinvent
 
 OR: proide some kind of mqtt interface for inverter and wallbox to evcc. Does evcc have a standard config for this?
 
+## Ihome Manager
+https://github.com/TCzerny/ha-modbus-manager/blob/main/docs/Communication%20Protocol%20of%20iHomeManager_V1.0.2.pdf
+
+
+## code cleanup
+
+The wallbox device was created after the inverter device. Now in the pypi integration there is are specific wallbox_*.py files, but not inverter files, which is confusing.

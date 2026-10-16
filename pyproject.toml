@@ -16,6 +16,9 @@ authors = [{ name = "Martin Kaiser" }]
 keywords = ["modbus", "sungrow", "inverter", "solar"]
 dependencies = ["modbus-connection>=4.10.0"]
 
+[project.optional-dependencies]
+discovery = ["zeroconf>=0.39.0"]
+
 [project.urls]
 Homepage = "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant"
 

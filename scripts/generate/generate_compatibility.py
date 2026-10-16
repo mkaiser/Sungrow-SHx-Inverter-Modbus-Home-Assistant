@@ -6,7 +6,7 @@ wiring, transport and firmware. That cannot be derived from a document — the
 specification says what exists, not what a particular machine does with it —
 so the only honest source is a fingerprint from real hardware.
 
-This turns [doc/device-fingerprints/](../doc/device-fingerprints/) into a table. It is
+This turns [device-fingerprints/](../device-fingerprints/) into a table. It is
 generated rather than maintained by hand for the usual reason: a table typed
 twice disagrees with itself, and this one is meant to be somebody's answer to
 "will it work with mine?".
@@ -31,10 +31,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from sungrow_modbus import DEVICE_TYPES, family_for, known_absent
 
 REPO = Path(__file__).resolve().parents[2]
-FINGERPRINTS = REPO / "doc" / "device-fingerprints"
+FINGERPRINTS = REPO / "device-fingerprints" / "inverter"
 
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_read_only_survey"))
-from probe import REPORTED_TRANSPORTS  # noqa: E402
+from sungrow_modbus.fingerprint import REPORTED_TRANSPORTS  # noqa: E402
 
 
 def _connection_cell(connection: dict, user_inputs: dict) -> str:
@@ -58,8 +57,8 @@ def _connection_cell(connection: dict, user_inputs: dict) -> str:
     reported = str(
         user_inputs.get("transport") or connection.get("reported_by_hand") or ""
     )
-    if reported in REPORTED_TRANSPORTS and REPORTED_TRANSPORTS[reported][2]:
-        cell = f"{REPORTED_TRANSPORTS[reported][2]} (reported)"
+    if reported in REPORTED_TRANSPORTS and REPORTED_TRANSPORTS[reported].table:
+        cell = f"{REPORTED_TRANSPORTS[reported].table} (reported)"
     else:
         verdict = str(connection.get("verdict", "") or "")
         if verdict.startswith("direct"):
@@ -102,7 +101,7 @@ MARKS = {"present": "yes", "unavailable": "no", None: "—"}
 #: not have. Measured on gerd's SH8.0RT-V112 on 2026-09-08: over its own LAN
 #: port MPPT3, MPPT4 and all four meter-channel-2 powers are unavailable;
 #: through its dongle, four minutes later, the same eight fields come back as
-#: zero. Both readings are in `doc/device-fingerprints/`, and without this the
+#: zero. Both readings are in `device-fingerprints/`, and without this the
 #: table said the machine has MPPT3 and MPPT4 on one row and does not on the
 #: other, with nothing to say which to believe.
 ZERO_MEANS_ABSENT_COLUMNS = ("MPPT3", "MPPT4", "Meter direct")
@@ -119,7 +118,8 @@ ZERO_MEANS_ABSENT_COLUMNS = ("MPPT3", "MPPT4", "Meter direct")
 #: Found on 2026-09-09 with fwitten's second inverter, where this table said
 #: `Battery: yes` while the *filename* of the same document said
 #: `battery-none`. Both are generated from one reading, so one of them was
-#: wrong, and it was this one: `_battery_token` in `probe.py` has tested for
+#: wrong, and it was this one: the filename's battery word (now
+#: `fingerprint._battery_word`) has tested for
 #: all-zero since it was written, with the comment "a zero decodes as a value
 #: and would otherwise be read as evidence of a third-party pack".
 #:
@@ -504,8 +504,8 @@ def render() -> str:
         "1. **From the integration** — Settings → Devices & Services → Sungrow",
         "   Modbus → the three-dot menu → *Download diagnostics*.",
         "2. **Before installing anything** —",
-        "   [`scripts/sungrow_read_only_survey/sungrow_survey.py`]"
-        "(../scripts/sungrow_read_only_survey/sungrow_survey.py),",
+        "   [`device-fingerprints/scripts/python/sungrow_survey.py`]"
+        "(../device-fingerprints/scripts/python/sungrow_survey.py),",
         "   run from that folder, which needs nothing but Python.",
         "",
         "### Then send it, by whichever route you already have",

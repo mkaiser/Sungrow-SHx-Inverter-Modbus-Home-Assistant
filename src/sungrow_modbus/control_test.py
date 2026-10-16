@@ -24,7 +24,7 @@ tautological. So every value is checked on three legs:
 
 Nothing here talks to Home Assistant, opens a file, prints, or parses an
 argument. It takes a `SungrowInverter`, a clock it can be lied to about, and a
-progress callback; `scripts/sungrow_control_test/sungrow_control_test.py` and
+progress callback; `device-fingerprints/scripts/python/sungrow_control_test.py` and
 the integration's `control_test.py` are the two drivers that give it those.
 
 **The rule that outranks every other rule in this file:** a restore is never
@@ -114,7 +114,14 @@ that drops between any two steps rather than for one that works."""
 
 # -- restart -----------------------------------------------------------------
 
-RESTART_STOP_DEADLINE = 90.0
+#: How long to wait for a stopped state, and for generation after the start.
+#:
+#: Both measured at seconds (a stop in about 2, generation within 20), and
+#: both given five minutes anyway: a link that drops while the inverter
+#: switches can cost several 10 s request timeouts in a row, and a deadline
+#: that expires on a machine doing as it was told reports a fault that is not
+#: there.
+RESTART_STOP_DEADLINE = 300.0
 RESTART_DWELL = 10.0
 
 #: How long to allow between the start command and a running state.
@@ -132,8 +139,12 @@ RESTART_DWELL = 10.0
 #: a slow diagnostic where the cost of waiting too little is telling somebody
 #: their inverter is dead while it boots.
 RESTART_RUNNING_DEADLINE = 600.0
-RESTART_GENERATING_DEADLINE = 120.0
+RESTART_GENERATING_DEADLINE = 300.0
 RESTART_POLL = 2.0
+
+#: Seconds between `on_wait` calls while a restart is being waited out, so a
+#: terminal shows a run that is alive through minutes of nothing to report.
+WAIT_TICK = 10.0
 
 #: How long to let a *stopped* inverter sit before sending the start again.
 #:
@@ -1093,6 +1104,9 @@ CLAMP_TOLERANCE = 0.1
 #: moves while the windows are taken.
 MIN_EXPORT_W = 1.25 * (FORCED_EFFECT_W + EFFECT_FLOOR_W)
 
+#: How far above the house's load a manufactured export aims, in `MIN_EXPORT_W`.
+FORCE_EXPORT_MARGIN = 1.5
+
 
 def export_cap(exporting: float, step: float = EXPORT_STEP_W) -> float:
     """Return the cap to ask for, which is simply `FORCED_EFFECT_W`.
@@ -1169,12 +1183,20 @@ class ControlTest:
         on_progress: Progress | None = None,
         clock: Clock | None = None,
         on_snapshot: Callable[[Snapshot], Awaitable[None]] | None = None,
+        on_wait: Callable[[], None] | None = None,
     ) -> None:
-        """Prepare a run. Nothing is read and nothing is written until `async_run`."""
+        """Prepare a run. Nothing is read and nothing is written until `async_run`.
+
+        `on_wait` is called every `WAIT_TICK` seconds while the run waits for
+        the inverter to stop, start or generate -- a heartbeat, carrying no
+        progress, for a waiting time measured in minutes.
+        """
         self.inverter = inverter
         self.options = options or Options()
         self.clock = clock or RealClock()
         self._progress = on_progress
+        self._on_wait = on_wait
+        self._last_tick = 0.0
         self._on_snapshot = on_snapshot
         self.snapshot = Snapshot(taken_at=0.0)
         self.capabilities: frozenset[Capability] = frozenset()
@@ -1230,6 +1252,16 @@ class ControlTest:
         self._done += 1
         if self._progress is not None:
             self._progress(min(self._done / self._total, 1.0), label)
+
+    def _tick(self, *, start: bool = False) -> None:
+        """Call `on_wait` once per `WAIT_TICK` of a wait; `start` begins one."""
+        now = self.clock.monotonic()
+        if start:
+            self._last_tick = now
+        elif now - self._last_tick >= WAIT_TICK:
+            self._last_tick = now
+            if self._on_wait is not None:
+                self._on_wait()
 
     def _plan_budget(self) -> None:
         """Fix every phase deadline now, against one origin.
@@ -2559,7 +2591,7 @@ class ControlTest:
         # therefore lands one count low, fails its own verification, and the
         # discharge is abandoned with "off by something else". It went unnoticed
         # while this arithmetic happened to come out whole.
-        want = float(round(load + MIN_EXPORT_W * 1.5))
+        want = float(round(load + MIN_EXPORT_W * FORCE_EXPORT_MARGIN))
         ceiling = self.snapshot.battery_ceiling
         if ceiling is not None:
             # Aim below the ceiling rather than at it. The figure was read at
@@ -2587,6 +2619,29 @@ class ControlTest:
         # here, so the figure the report quotes has to be the real one.
         return self.accepted_forced_w if self.accepted_forced_w is not None else want
 
+    def _cap_can_bind(
+        self, target: float, exporting: float, *, made: bool = False
+    ) -> bool:
+        """Whether a cap of `target` lands measurably below `exporting`.
+
+        `EFFECT_FLOOR_W` below it, the same floor a verdict needs, or the check
+        could only ever report that nothing happened. Notes why not.
+        `made` says the export would be manufactured by discharging.
+        """
+        if exporting - target >= EFFECT_FLOOR_W:
+            return True
+        source = (
+            f"a discharge could make about {exporting:.0f} W of export"
+            if made
+            else f"the house was exporting {exporting:.0f} W"
+        )
+        self._note(
+            f"no export limit check: the lowest export limit this inverter "
+            f"accepts gives a cap of {target:.0f} W, and {source}, so the cap "
+            f"could not come {EFFECT_FLOOR_W:.0f} W below it"
+        )
+        return False
+
     async def _export_effect(self) -> list[EffectResult]:
         """Limit the export, if the house is exporting and limiting is allowed.
 
@@ -2609,8 +2664,21 @@ class ControlTest:
                 "inverter, and this run was not given leave to switch it on"
             )
             return []
+        # The cap is known before anything is commanded: the stated effect,
+        # clamped to the register's live bounds. Where the lowest limit the
+        # inverter accepts is above what the house exports, no cap it would
+        # take can bind -- measured on a master whose 13074 minimum is
+        # 11880 W, exporting 7.4 kW. Said up front, and before a battery is
+        # discharged to manufacture an export the cap would still sit above.
+        target = export_cap(0.0, probe.step or EXPORT_STEP_W)
+        low, high = self.snapshot.bounds[probe.field]
+        target = min(max(target, low), high)
         sample = await self._sample()
         exporting = self._exporting(sample) or 0.0
+        if exporting < MIN_EXPORT_W and not self._cap_can_bind(
+            target, MIN_EXPORT_W * FORCE_EXPORT_MARGIN, made=True
+        ):
+            return []
 
         # Not exporting on its own? Make it, rather than skipping. The discharge
         # is held across all three windows deliberately: released between them,
@@ -2632,13 +2700,10 @@ class ControlTest:
                 )
                 return []
 
-        if self._expired("effect"):
+        if self._expired("effect") or not self._cap_can_bind(target, exporting):
             if discharging is not None:
                 await self._unforce()
             return []
-        target = export_cap(exporting, probe.step or EXPORT_STEP_W)
-        low, high = self.snapshot.bounds[probe.field]
-        target = min(max(target, low), high)
         self._step(f"export limit at {target:g} W")
 
         async def apply() -> str | None:
@@ -2888,7 +2953,9 @@ class ControlTest:
         """Poll the running state until it satisfies `wanted`, or time runs out."""
         started = self.clock.monotonic()
         refused = 0
+        self._tick(start=True)
         while self.clock.monotonic() - started < deadline:
+            self._tick()
             word = await self._running_word()
             if word is None:
                 refused += 1
@@ -2922,8 +2989,10 @@ class ControlTest:
         started = self.clock.monotonic()
         last_sent = started
         seen_starting = False
+        self._tick(start=True)
 
         while self.clock.monotonic() - started < RESTART_RUNNING_DEADLINE:
+            self._tick()
             word = await self._running_word()
             if is_running(word):
                 self.snapshot.stopped_at = None
@@ -2966,7 +3035,9 @@ class ControlTest:
         """
         started = self.clock.monotonic()
         refused = 0
+        self._tick(start=True)
         while self.clock.monotonic() - started < RESTART_GENERATING_DEADLINE:
+            self._tick()
             try:
                 await self.inverter.component("fast_input").async_update()
             except (ModbusError, TimeoutError, OSError):
@@ -2992,7 +3063,7 @@ class ControlTest:
         if self._on_snapshot is not None:
             await self._on_snapshot(self.snapshot)
 
-        self._step("stopping the inverter")
+        self._step("stopping the inverter; the restart may take some minutes")
         if (failure := await self._write(START_WORD_PROBE, STOP_WORD)) is not None:
             self.snapshot.stopped_at = None
             return RestartResult(
@@ -3004,7 +3075,7 @@ class ControlTest:
         )
         await self.clock.sleep(RESTART_DWELL)
 
-        self._step("starting the inverter")
+        self._step("starting the inverter; this may take some minutes")
         running_from = self.clock.monotonic()
         started = await self.async_ensure_running()
         running = self.clock.monotonic() - running_from if started else None

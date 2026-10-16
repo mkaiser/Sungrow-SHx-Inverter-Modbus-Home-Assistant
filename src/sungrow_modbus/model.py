@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 
 from modbus_connection import ModbusError
@@ -37,6 +38,18 @@ class UpdateReport:
 #: `enum_type` or a `convert`, so these four are the whole set; an IntEnum
 #: would be covered by `int` anyway.
 RegisterValue = float | int | str | None
+
+
+def words_text(words: Iterable[int], encoding: str = "ascii") -> str:
+    """Decode raw register words as text, high byte first, without the padding.
+
+    Sungrow pads a string field with 0x00, so the NULs are stripped; anything
+    undecodable is replaced rather than raised, because a reading with one
+    odd byte is still a reading. Whitespace is the caller's to strip: a
+    serial's exact text is what its stand-in is hashed from.
+    """
+    raw = b"".join(int(word).to_bytes(2, "big") for word in words)
+    return raw.decode(encoding, "replace").strip("\x00")
 
 
 def present(value: RegisterValue) -> RegisterValue:

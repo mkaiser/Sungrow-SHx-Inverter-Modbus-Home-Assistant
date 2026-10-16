@@ -19,7 +19,7 @@ from modbus_connection.mock import MockModbusConnection
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_read_only_survey"))
+sys.path.insert(0, str(REPO / "device-fingerprints" / "scripts" / "python"))
 
 from probe import _async_decoded_readings  # noqa: E402
 
@@ -137,6 +137,35 @@ def test_a_device_that_answers_everything_reports_nothing_missed() -> None:
     assert report["components_that_did_not_answer"] == []
     assert "fields_read_individually" not in report
     assert "fields_that_did_not_read" not in report
+
+
+def test_the_library_reads_without_printing_and_reports_through_callbacks(
+    capsys,
+) -> None:
+    """The algorithm lives in the library, so it may say nothing itself.
+
+    Home Assistant has no terminal, and a library that printed would put a
+    survey's progress into a user's log. Everything a person sees comes back
+    through the callbacks, for the caller to draw.
+    """
+    from sungrow_modbus.registers import COMPONENTS
+    from sungrow_modbus.survey import async_decoded_readings
+
+    components: list[str] = []
+    done: list[tuple[int, int]] = []
+    report = asyncio.run(
+        async_decoded_readings(
+            _filled_unit(),
+            passes=1,
+            on_component=components.append,
+            on_passes_done=lambda answered, total: done.append((answered, total)),
+        )
+    )
+
+    assert capsys.readouterr().out == ""
+    assert components == list(COMPONENTS)
+    assert done == [(len(COMPONENTS), len(COMPONENTS))]
+    assert report["components_that_did_not_answer"] == []
 
 
 #: What one SBR096 actually said, read on 2026-09-09 at unit 200 over the

@@ -21,21 +21,40 @@ battery reported unreadable when half of it was fine.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 from modbus_connection.model import Component
 
 from .battery import model_for_capacity
-from .battery_registers import SbrBatteryCells, SbrBatteryPack
+from .battery_registers import SbrBatteryCells, SbrBatteryModules, SbrBatteryPack
 from .model import UpdateReport, present
 
 if TYPE_CHECKING:
     from modbus_connection import ModbusUnit
 
-#: The pack's components, by the name a description refers to them by.
+#: The pack's polled components, by the name a description refers to them by.
 COMPONENTS: dict[str, type] = {
     "pack": SbrBatteryPack,
     "cells": SbrBatteryCells,
+}
+
+#: Components a survey reads and a poll never does.
+#:
+#: The per-module block becomes no entity yet -- a module that is not fitted
+#: reads 0, indistinguishable from a fault -- so polling it would spend the
+#: shared link's session time on nothing. A survey reads it once, which is
+#: where the module count will be settled.
+SURVEY_COMPONENTS: dict[str, type] = {
+    "modules": SbrBatteryModules,
+}
+
+#: The name a published document gives each component, the one
+#: `addresses.device_components` uses.
+PUBLISHED_NAMES = {
+    "pack": "sbr_battery_pack",
+    "cells": "sbr_battery_cells",
+    "modules": "sbr_battery_modules",
 }
 
 #: Cell-level fields are granted only on a reading that is not zero.
@@ -66,6 +85,7 @@ class SungrowBattery:
     # doubles as the list of what a pack actually holds.
     pack: SbrBatteryPack
     cells: SbrBatteryCells
+    modules: SbrBatteryModules
 
     def __init__(self, unit: ModbusUnit, unit_id: int) -> None:
         """Bind both components to a unit handle, remembering which id it is."""
@@ -74,11 +94,11 @@ class SungrowBattery:
         #: same pack is 200 on a cable and 2 through a dongle, and somebody
         #: comparing two documents from one house needs to see that.
         self.unit_id = unit_id
-        for attribute, component in COMPONENTS.items():
+        for attribute, component in {**COMPONENTS, **SURVEY_COMPONENTS}.items():
             setattr(self, attribute, component(unit))
         self._fields = {
             name: attribute
-            for attribute, component in COMPONENTS.items()
+            for attribute, component in {**COMPONENTS, **SURVEY_COMPONENTS}.items()
             for name in vars(component)
             if not name.startswith("_")
             and name not in {"register_space", "declared_fields"}
@@ -103,6 +123,18 @@ class SungrowBattery:
         """
         return frozenset(self._fields)
 
+    def fields_of(self, attributes: Iterable[str]) -> frozenset[str]:
+        """Every field name that lives in the named components.
+
+        A survey leaves a failed component's fields out of its report rather
+        than publishing them as None: a None says the pack reported the point
+        unavailable, which a block that never answered did not.
+        """
+        wanted = set(attributes)
+        return frozenset(
+            name for name, attribute in self._fields.items() if attribute in wanted
+        )
+
     def field(self, name: str) -> object:
         """Return one value by name, wherever it lives.
 
@@ -113,7 +145,7 @@ class SungrowBattery:
         attribute = self._fields.get(name)
         if attribute is not None:
             return present(getattr(self.component(attribute), name))
-        for holder in COMPONENTS:
+        for holder in {**COMPONENTS, **SURVEY_COMPONENTS}:
             component = self.component(holder)
             if isinstance(getattr(type(component), name, None), property):
                 return getattr(component, name)
@@ -153,13 +185,17 @@ class SungrowBattery:
         ]
         return any(value for value in readings)
 
-    async def async_update(self) -> UpdateReport:
-        """Refresh both components, tolerating either one failing alone."""
+    async def async_update(self, *, survey: bool = False) -> UpdateReport:
+        """Refresh the components, tolerating any one failing alone.
+
+        `survey` adds `SURVEY_COMPONENTS`, which a poll leaves unread: their
+        fields read None until a survey has asked.
+        """
         from modbus_connection import ModbusError
 
         updated: set[str] = set()
         failed: dict[str, ModbusError] = {}
-        for attribute in COMPONENTS:
+        for attribute in {**COMPONENTS, **(SURVEY_COMPONENTS if survey else {})}:
             try:
                 await self.component(attribute).async_update()
             except ModbusError as err:

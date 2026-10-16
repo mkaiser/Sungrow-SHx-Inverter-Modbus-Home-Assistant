@@ -1,6 +1,6 @@
 """A capability survey produced by the integration, not by a terminal.
 
-The evidence in `doc/device-fingerprints/` is nine documents from four
+The evidence in `device-fingerprints/` is nine documents from four
 houses, all of them the maintainer's or a friend's, because contributing one
 meant running Python on a machine that can reach the inverter. This is the
 same document, built by an integration that already has the connection.
@@ -99,9 +99,9 @@ async def test_the_document_leads_with_what_it_is_and_who_said_what(
     assert list(document)[:5] == [
         "schema",
         "command_line",
-        "read_on",
-        "read_at_local",
+        "read_at",
         "user_inputs",
+        "ip_address_last_two_octets",
     ]
     assert document["schema"] == survey.SCHEMA
 
@@ -172,8 +172,47 @@ async def test_the_address_tail_appears_once_permission_is_given(
     entry = await _setup(hass, sungrow_unit, {CONF_PUBLISH_ADDRESS: True})
     document = await async_build(hass, entry)
 
-    assert document["ip_address_last_two_octets"] == "178.35"
+    # Zero-filled, as every terminal document is, so tails sort as text.
+    assert document["ip_address_last_two_octets"] == "178.035"
     assert HOST not in json.dumps(document)
+
+
+async def test_the_6100_signal_uses_the_terminal_surveys_words(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """`answered` or a failure, never a probe state such as `present`.
+
+    The corpus says `answered`, and `doc/compatibility.md` groups by the
+    verdict this decides -- so a sentinel answer read as "not reached" put a
+    cable-connected inverter behind a dongle.
+    """
+    entry = await _setup(hass, sungrow_unit)
+    connection = (await async_build(hass, entry))["connection"]
+
+    assert connection["winet_restricted_block_6100"] in {
+        "answered",
+        "refused",
+        "no answer",
+    }
+
+
+async def test_readings_mean_what_they_mean_in_a_terminal_survey(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """One key, one meaning, whichever producer wrote the document.
+
+    The committed corpus is the terminal survey's: an unavailable field is a
+    None *in* `values`, and `fields_that_did_not_read` is reserved for fields
+    that failed a read of their own -- which the integration never makes.
+    """
+    entry = await _setup(hass, sungrow_unit)
+    readings = (await async_build(hass, entry))["readings"]
+
+    assert set(readings) == {"values", "components_that_did_not_answer"}
+    device = next(iter(entry.runtime_data.coordinators.values())).device
+    assert set(readings["values"]) == {
+        name for name in device.field_names if survey.publishable(name)
+    }
 
 
 async def test_a_probe_that_names_a_serial_publishes_no_words(

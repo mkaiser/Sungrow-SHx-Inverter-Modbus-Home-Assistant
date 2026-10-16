@@ -123,7 +123,7 @@ async def test_an_asked_for_dump_covers_every_band(
     """1510 addresses, in the shape the published documents already use.
 
     Keyed by address as a string and split by register space, because that is
-    what `scripts/sungrow_read_only_survey/sungrow_survey.py` writes and one
+    what `device-fingerprints/scripts/python/sungrow_survey.py` writes and one
     generator reads both.
     """
     entry = await _setup(hass, sungrow_unit, {CONF_SURVEY_DUMP: True})

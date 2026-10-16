@@ -1,6 +1,6 @@
 """A capability survey, from a running integration rather than a terminal.
 
-The evidence this project reasons from lives in `doc/device-fingerprints/`:
+The evidence this project reasons from lives in `device-fingerprints/`:
 nine documents, four houses, **all of them the maintainer's or a friend's**.
 That is not because nobody else would help. It is because contributing meant
 cloning a repository and running Python on a machine that can reach the
@@ -8,7 +8,7 @@ inverter, and almost nobody who has a Sungrow has that.
 
 Somebody who has set this integration up has the hard part already — a working,
 identified connection to their inverter. This turns it into a document, in
-exactly the format `scripts/sungrow_read_only_survey/sungrow_survey.py` writes,
+exactly the format `device-fingerprints/scripts/python/sungrow_survey.py` writes,
 so one generator keeps building `doc/compatibility.md` from both and a reading
 from somebody who only ever clicked a button counts the same as one from a
 terminal.
@@ -50,15 +50,7 @@ drift apart on what a probe is called or what a serial becomes.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-import json
 from typing import Any
-
-from modbus_connection import (
-    ModbusConnectionError,
-    ModbusError,
-    ModbusExceptionError,
-    ModbusTimeoutError,
-)
 
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
@@ -67,10 +59,11 @@ from sungrow_modbus import (
     block_test,
     dump as register_dump,
     fingerprint as survey,
+    survey as survey_api,
     wallbox as wallbox_reader,
 )
-from sungrow_modbus.const import model_for
-from sungrow_modbus.fingerprint import State
+from sungrow_modbus.battery_device import PUBLISHED_NAMES as BATTERY_NAMES
+from sungrow_modbus.survey import summarise as _summarise
 
 from .const import (
     CONF_PUBLISH_ADDRESS,
@@ -89,19 +82,10 @@ from .const import (
 from .coordinator import SungrowConfigEntry
 from .survey import Progress
 
-#: Which register fields carry each published firmware string.
-#:
-#: Sourced from the ordinary readings rather than re-read: the library polls
-#: all five as part of its slowest tier, so a survey that read them again
-#: would spend five requests on an inverter that grants very few sessions and
-#: could disagree with the entities on the same page.
-FIRMWARE_FIELDS = {
-    "arm": "sungrow_arm_software",
-    "dsp": "sungrow_dsp_software",
-    "inverter": "inverter_firmware_version",
-    "communication_module": "communication_module_firmware_version",
-    "battery": "battery_firmware_version",
-}
+
+def summarise(document: dict[str, Any]) -> str:
+    """Keep the integration import surface while using package logic."""
+    return _summarise(document)
 
 
 def planned_steps(
@@ -174,56 +158,6 @@ def _testimony(options: Mapping[str, Any]) -> dict[str, str]:
         "other_pollers": options.get(CONF_SURVEY_POLLERS, ""),
         "other_inverter": options.get(CONF_SURVEY_OTHER_INVERTER, ""),
         "other_inverter_detail": options.get(CONF_SURVEY_OTHER_INVERTER_DETAIL, ""),
-    }
-
-
-def _device_block(device: Any) -> dict[str, Any]:
-    """Return what the inverter says it is, code and meaning side by side.
-
-    `0x0E03` is not something a person reads, and these documents are mostly
-    read by people -- in an issue, usually, where nobody has the lookup table
-    to hand. So the name is spelled out beside the code, and the **code stays
-    the authority** because it is what the inverter actually said. A name of
-    null means the project has never seen that code, which is itself the most
-    interesting kind of document to receive.
-
-    The serial is a stand-in, derived by hash, and that is the only form of it
-    that exists anywhere this repository tracks.
-    """
-    return {
-        "device_type_code": _hex(device.device_type_code),
-        "device_type": model_for(device.device_type_code),
-        "output_type": survey.OUTPUT_TYPES.get(device.output_type, device.output_type),
-        "serial_anonymized_hashed": survey.stand_in(device.serial_number or ""),
-    }
-
-
-def _connection_block(answered_6100: object, module: str | None) -> dict[str, Any]:
-    """Return how this document reached the inverter, as far as that is knowable.
-
-    Two registers answer different questions and are easy to confuse. Input
-    6100 is refused through a WiNet-S and answers on a cable, so it tells a
-    *path* from a dongle -- 9 sites out of 9. Register 13265 names the module
-    that is **fitted**, which is not the same thing: a house can have a dongle
-    plugged in and still be read over the inverter's own LAN port.
-
-    WiFi versus Ethernet is not determinable at all, which is why
-    `WIFI_OR_ETHERNET` is a fixed sentence rather than a guess. It was settled
-    against a controlled pair -- one dongle, read wired then over WiFi -- with a
-    nil structural diff.
-
-    No round-trip time is recorded. It was, until 2026-10-09, and it described
-    the path from whoever read -- usually a VPN -- rather than anything about
-    the inverter or how it is attached.
-    """
-    return {
-        "communication_module_firmware": module,
-        "verdict": survey.transport_verdict(
-            answered_6100=answered_6100 == survey.State.PRESENT,
-            module_named=bool(module),
-        ),
-        "wifi_or_ethernet": survey.WIFI_OR_ETHERNET,
-        "winet_restricted_block_6100": str(answered_6100),
     }
 
 
@@ -321,99 +255,50 @@ async def async_build(
     firmware = _firmware(device)
     module = firmware.get("communication_module")
 
-    document: dict[str, Any] = {
-        "schema": survey.SCHEMA,
-        # Not an invocation, because no command produced this and printing one
-        # would invite somebody to run it and wonder why the output differs.
-        "command_line": f"{survey.COLLECTED_BY_INTEGRATION} diagnostics",
-        "read_on": dt_util.utcnow().isoformat()[:10],
-        "read_at_local": dt_util.now().isoformat(timespec="seconds"),
-        "user_inputs": _testimony(options),
-        "ip_address_last_two_octets": survey.address_tail(
-            entry.data.get(CONF_HOST, ""),
-            bool(options.get(CONF_PUBLISH_ADDRESS, False)),
+    # Same keys and shapes as `sungrow_survey.py` writes, through the same
+    # builder, so `doc/compatibility.md` and anybody reading a document need
+    # not know which producer made it. The builder masks the dump and checks
+    # part B's block for the serial; a caller cannot hand it either unshaped.
+    return survey.assemble_document(
+        command_line=f"{survey.COLLECTED_BY_INTEGRATION} diagnostics",
+        read_at=dt_util.utcnow().isoformat(timespec="seconds").replace("+00:00", "Z"),
+        user_inputs=_testimony(options),
+        host=entry.data.get(CONF_HOST, ""),
+        publish_address=bool(options.get(CONF_PUBLISH_ADDRESS, False)),
+        device_type_code=device.device_type_code,
+        output_type=device.output_type,
+        serial=device.serial_number or "",
+        firmware=firmware,
+        connection=survey.connection_block(str(answered_6100), module),
+        readings=_readings(runtime, device),
+        capability_probes=probes,
+        contention=_contention(runtime, block_test_run=blocks_measured is not None),
+        register_dump=raw,
+        wallbox=wallbox,
+        block_read_test=(
+            block_test.document(blocks_measured)
+            if blocks_measured is not None
+            else None
         ),
-        "device": _device_block(device),
-        "firmware": firmware,
-        "connection": _connection_block(answered_6100, module),
-        # Not a claim, and not optional: a document produced by a running
-        # Home Assistant was taken while something was polling the inverter,
-        # and this project *discards* readings taken under contention because
-        # contention and a register fault are hard to tell apart. Four
-        # documents were thrown away for it. So the condition is stated as a
-        # measurement -- the integration knows exactly what it was doing --
-        # and a maintainer reading one knows what it is worth without having
-        # to infer it from the tool name.
-        "contention": _contention(runtime, block_test_run=blocks_measured is not None),
-        "readings": _readings(runtime, device),
-        "capability_probes": probes,
-    }
-
-    # Same key and same shape as a standalone survey writes, so one
-    # generator keeps reading both and a document from a button is not a
-    # second format. Masked before it goes in, never after: the serial's ten
-    # registers sit inside the identity band and would otherwise be published
-    # as words.
-    if raw is not None:
-        document["register_dump"] = register_dump.masked(raw)
-
-    # Same key and shape as `sungrow_survey.py` writes, so `doc/compatibility.md` and
-    # anybody reading a document need not know which producer made it.
-    if blocks_measured is not None:
-        document["block_read_test"] = block_test.document(blocks_measured)
-
-    pack = _battery_pack(runtime)
-    if pack is not None:
-        document["battery_pack"] = pack
-
-    if wallbox is not None:
-        document["wallbox"] = wallbox
-
-    # Part B, when a run did one. Absent from almost every document, and its
-    # absence means "this run only read" rather than "this inverter failed" --
-    # which is why the schema number moved rather than the key simply appearing.
-    #
-    # Attached only after `_carries_nothing_identifying` agrees. The block is
-    # anonymous by construction, so that check should never fire; it is here
-    # because "should never" is what was said about the two capability probes
-    # that published a wallbox serial as the words [16690, 13633].
-    if control_test is not None:
-        attach_control_test(document, control_test, device)
-
-    return document
+        battery_pack=await _async_battery_pack(runtime),
+        # Part B, when a run did one. Absent from almost every document, and
+        # its absence means "this run only read" rather than "this inverter
+        # failed" -- which is why the schema number moved rather than the key
+        # simply appearing.
+        control_test=control_test,
+    )
 
 
 def attach_control_test(
     document: dict[str, Any], block: dict[str, Any], device: Any
 ) -> None:
-    """Put part B's result into a document, having checked it may be published.
+    """Put part B's result into a document part A already built.
 
-    Its own function because the survey runs part B *after* part A -- it has to,
-    since part A is what establishes that this device answers and what it is --
-    so the block does not exist yet when `async_build` is called. Attaching it
-    afterwards must not mean attaching it unchecked, and one guarded door is
-    the only way to be sure it does not.
+    The survey runs part B *after* part A, so the block does not exist yet
+    when `async_build` is called. The package's door checks it for the
+    serial on the way in, exactly as `assemble_document` does.
     """
-    _refuse_if_identifying(block, device)
-    document["control_test"] = block
-
-
-def _refuse_if_identifying(block: dict[str, Any], device: Any) -> None:
-    """Raise rather than publish a block that turns out to name the device.
-
-    The block is anonymous by construction -- register numbers, chosen values,
-    words that came back -- so this should never fire. It is here because
-    "should never" is exactly what was true of the two capability probes that
-    published a wallbox serial as the words `[16690, 13633]`.
-
-    A refusal costs somebody a survey they can run again. Publishing costs
-    somebody else their serial number in a public repository, permanently.
-    """
-    serial = device.serial_number
-    if serial and serial in json.dumps(block, default=str):
-        raise ValueError(
-            "refusing to publish the control test block: it carries the serial"
-        )
+    survey.attach_control_test(document, block, serial=device.serial_number or "")
 
 
 async def _async_dump(device: Any, step: Progress) -> dict[str, Any]:
@@ -434,42 +319,16 @@ async def _async_dump(device: Any, step: Progress) -> dict[str, Any]:
 async def _async_probes(
     device: Any, step: Callable[[str], None] | None = None
 ) -> dict[str, dict[str, Any]]:
-    """Read every curated probe, recording what each answer establishes.
+    """Read every curated probe once, in the package's published shape.
 
-    A refusal and a timeout are recorded differently and deliberately: an
-    exception 0x02 is the device saying the register is not there, while
-    nothing coming back says only that nothing came back. Only the first
-    belongs in an argument about a register.
-
-    Values are published beside the state, because a state alone cannot
-    settle a scale factor -- except where the label mentions a serial, which
-    is how `[16690, 13633]` once reached a document and decoded to `A25A`.
+    One attempt each, unlike the terminal survey's three: this connection is
+    shared with the coordinators, and a probe that retries holds every one of
+    them off for as long as it waits.
     """
-    probes: dict[str, dict[str, Any]] = {}
-    for label, space, address, count, _axis in survey.PROBES:
-        # Announced before the read, not after: on the link where this
-        # matters a single read can take ten seconds, and a step that
-        # appears only once it has finished shows the wrong one throughout.
-        if step is not None:
-            step(label)
-        entry: dict[str, Any] = {}
-        try:
-            words = await device.async_read_words(space, address, count)
-        except ModbusExceptionError:
-            entry["state"] = str(survey.State.REFUSED)
-        except (ModbusTimeoutError, ModbusConnectionError, TimeoutError, OSError):
-            entry["state"] = str(survey.State.NO_ANSWER)
-        except ModbusError:
-            # Anything else the stack rejected -- a desynchronised or padded
-            # frame, which is a real answer this client cannot use. Not
-            # "refused": that would be a claim about the register.
-            entry["state"] = str(survey.State.NO_ANSWER)
-        else:
-            entry["state"] = str(survey.classify(words))
-            if survey.publishable(label):
-                entry["values"] = [int(word) for word in words]
-        probes[label] = entry
-    return probes
+    raw, states = await survey_api.async_probe_words(
+        device.async_read_words, attempts=lambda _label: 1, on_probe=step
+    )
+    return survey.capability_registers(states, raw)
 
 
 def _state_of(probes: dict[str, dict[str, Any]], label: str) -> str:
@@ -477,21 +336,14 @@ def _state_of(probes: dict[str, dict[str, Any]], label: str) -> str:
     return str((probes.get(label) or {}).get("state", survey.State.NO_ANSWER))
 
 
-def _hex(code: int | None) -> str | None:
-    """Format a device type code the way a register document prints it."""
-    return None if code is None else f"0x{code:04X}"
-
-
 def _firmware(device: Any) -> dict[str, str | None]:
-    """Return the five published firmware strings, from what was polled."""
-    values: dict[str, str | None] = {}
-    for name, field in FIRMWARE_FIELDS.items():
-        try:
-            value = device.field(field)
-        except (AttributeError, KeyError):
-            value = None
-        values[name] = None if value is None else str(value)
-    return values
+    """Return the five published firmware strings, from what was polled.
+
+    Not re-read: the library polls all five in its slowest tier, so reading
+    them again would spend five requests on an inverter that grants very few
+    sessions, and could disagree with the entities on the same page.
+    """
+    return survey.firmware_section(device)
 
 
 def _contention(runtime: Any, *, block_test_run: bool = False) -> dict[str, Any]:
@@ -532,67 +384,39 @@ def _contention(runtime: Any, *, block_test_run: bool = False) -> dict[str, Any]
 
 
 def _readings(runtime: Any, device: Any) -> dict[str, Any]:
-    """Every decoded value, and what did not read, in the survey's shape.
-
-    Three lists rather than one, because they mean different things: a value
-    that decoded, a field the device reported unavailable, and a component
-    whose whole block failed its last poll. The middle one is the
-    specification's 0xFFFF sentinel and the last is a Modbus failure, and
-    treating them alike is most of what makes "my sensor is missing" hard to
-    answer.
-    """
-    values: dict[str, Any] = {}
-    unread: list[str] = []
-    for name in sorted(device.field_names):
-        if not survey.publishable(name):
-            continue
-        try:
-            value = device.field(name)
-        except (AttributeError, KeyError):
-            continue
-        if value is None:
-            unread.append(name)
-        else:
-            values[name] = value
-
-    failed = sorted(
-        component
-        for component, coordinator in runtime.coordinators.items()
-        if coordinator.data is not None and component in coordinator.data.failed
+    """Every decoded value, and what did not read, in the survey's shape."""
+    return survey.readings_section(
+        device,
+        (
+            component
+            for component, coordinator in runtime.coordinators.items()
+            if coordinator.data is not None and component in coordinator.data.failed
+        ),
     )
-    return {
-        "values": values,
-        "fields_that_did_not_read": unread,
-        "components_that_did_not_answer": failed,
-    }
 
 
-def _battery_pack(runtime: Any) -> dict[str, Any] | None:
+async def _async_battery_pack(runtime: Any) -> dict[str, Any] | None:
     """Return the pack's own registers, when one answered on this endpoint.
 
-    `battery_pack` and never `battery`: that key holds what the owner *typed*
-    about their battery, and the first version of this in the standalone
-    survey overwrote their testimony with a measurement.
+    The poll leaves the per-module block unread, so the survey reads it here,
+    once, and with the poll's own components reports what failed -- the
+    terminal survey's section, whichever producer wrote it.
     """
     coordinator = runtime.battery
     if coordinator is None:
         return None
     device = coordinator.device
-    values = {}
-    for name in sorted(device.field_names):
-        if not survey.publishable(name):
-            continue
-        try:
-            value = device.field(name)
-        except (AttributeError, KeyError):
-            continue
-        if value is not None:
-            values[name] = value
-    if not values:
-        # An empty section is worse than none: it would say the pack was read
-        # and reported nothing.
-        return None
-    return {"unit": device.unit_id, "readings": {"values": values}}
+    report = await device.async_update(survey=True)
+    failed = [
+        f"{BATTERY_NAMES[attribute]} ({type(error).__name__})"
+        for attribute, error in report.failed.items()
+    ]
+    return survey.battery_pack_section(
+        device,
+        device.unit_id,
+        failed,
+        unanswered_fields=device.fields_of(report.failed),
+    )
 
 
 async def _async_wallbox(
@@ -606,34 +430,29 @@ async def _async_wallbox(
     when the owner's dump option is on. Without it, one read per component
     -- the spans the poll already covers, which no serial is in.
 
-    The readings are decoded from the **masked** words, so none can come from
-    a register the document refuses to publish. The serial sits two registers
-    below the model name, and it once reached a published document as the
-    words `[16690, 13633]`.
+    Masking and the stand-in are the package's, in `fingerprint.wallbox_section`
+    and `wallbox_from_dump`, so they cannot drift from the terminal survey's.
     """
     coordinator = runtime.wallbox
     if coordinator is None:
         return None
     device = coordinator.device
     direct = wallbox_is_direct(coordinator)
-    # Which way it was reached, because the two do not read alike: the
-    # dongle answers 0 for several registers the wallbox's own address
-    # answers with values.
-    path = {"path": "tls" if direct else "dongle"}
+    path = "tls" if direct else "dongle"
     if not dumping:
         found = wallbox_reader.readings(
             await wallbox_reader.async_mapped_words(device.async_read_words)
         )
         if not found:
             return None
-        return {
-            "unit": device.unit_id,
-            **path,
-            **_stand_in(
-                await wallbox_reader.async_serial_stand_in(device.async_read_words)
+        return survey.wallbox_section(
+            device.unit_id,
+            readings=found,
+            serial_stand_in=await wallbox_reader.async_serial_stand_in(
+                device.async_read_words
             ),
-            "readings": found,
-        }
+            path=path,
+        )
 
     def on_block(done: int, total: int, why: str) -> None:
         step(f"reading the wallbox's raw registers: {why} ({done} of {total})")
@@ -643,114 +462,4 @@ async def _async_wallbox(
         on_progress=on_block,
         bands=wallbox_bands(direct),
     )
-    masked = register_dump.masked(raw, register_dump.WALLBOX_MASKED)
-    return {
-        "unit": device.unit_id,
-        **path,
-        **_stand_in(wallbox_reader.serial_stand_in(raw)),
-        "readings": wallbox_reader.readings(masked),
-        "register_dump": masked,
-    }
-
-
-def _stand_in(value: str | None) -> dict[str, str]:
-    """Return the wallbox's stand-in serial as a key, or nothing when none was read."""
-    return {"serial_anonymized_hashed": value} if value else {}
-
-
-def summarise(document: dict[str, Any]) -> str:
-    """Describe what a document found, in a few lines a person can check.
-
-    Rendered from the **document** rather than from the readings it was built
-    from, deliberately: every claim here is then a value that was actually
-    published, so a summary cannot promise something the file does not
-    contain. The standalone survey's printed summary follows the same rule
-    for the same reason.
-    """
-    device = document.get("device") or {}
-    connection = document.get("connection") or {}
-    probes = document.get("capability_probes") or {}
-    firmware = document.get("firmware") or {}
-
-    answered = sum(
-        1 for entry in probes.values() if entry.get("state") == State.PRESENT
-    )
-    lines = [
-        f"- **{len(probes)} registers probed**, {answered} answered with a value.",
-        f"- Reached {connection.get('verdict', 'by an unknown route')}.",
-        f"- Published as `{device.get('serial_anonymized_hashed', 'anon-…')}` —"
-        " a stand-in, not your serial number.",
-    ]
-    version = firmware.get("inverter") or firmware.get("arm")
-    if version:
-        lines.append(f"- Firmware `{version}`.")
-    else:
-        lines.append(
-            "- No firmware version: this machine refuses the block that "
-            "reports it, which is itself worth knowing."
-        )
-    readings = (document.get("readings") or {}).get("values") or {}
-    lines.append(f"- {len(readings)} register values decoded.")
-    lines += _block_summary(document.get("block_read_test"))
-    said = document.get("user_inputs") or {}
-    if said.get("other_inverter") == survey.OTHER_INVERTER_YES:
-        named = said.get("other_inverter_detail")
-        lines.append(
-            "- Another, non-Sungrow inverter shares this installation"
-            f"{': ' + named if named else ''}. That is in the file, and it "
-            "explains load figures that would otherwise read as a fault."
-        )
-
-    dump = document.get("register_dump") or {}
-    bands = {
-        space: values for space, values in dump.items() if isinstance(values, dict)
-    }
-    if bands:
-        covered = sum(len(values) for values in bands.values())
-        answered = sum(
-            1
-            for values in bands.values()
-            for word in values.values()
-            if word is not None
-        )
-        # The serial's ten masked registers count as unanswered here, as they
-        # do in every document a standalone survey writes. Understating what
-        # answered is the safe direction for a number a maintainer reads as
-        # evidence about the device.
-        lines.append(f"- Raw band sweep: {answered} of {covered} addresses answered.")
-        missed = dump.get("bands_not_reached")
-        if missed:
-            lines.append(
-                f"- The sweep ran out of time before {len(missed)} of its bands. "
-                "Those addresses are absent from the file rather than refused."
-            )
-    if document.get("battery_pack"):
-        lines.append("- A Sungrow battery answered, and its own registers are in.")
-    if document.get("wallbox"):
-        lines.append("- A wallbox answered, and its registers are in.")
-    return "\n".join(lines)
-
-
-def _block_summary(measured: dict[str, Any] | None) -> list[str]:
-    """Say what the block read test found, in a line or two, or nothing.
-
-    The line a contributor most needs is the one naming a block that never
-    answered: that is a whole group of entities this inverter will leave
-    empty, and the reason is in the file they are about to send.
-    """
-    if not measured:
-        return []
-    never = measured.get("never_answered") or []
-    total = (
-        len(measured.get("answered") or [])
-        + len(never)
-        + len(measured.get("intermittent") or [])
-    )
-    if not never:
-        return [f"- Block read test: all {total} of the poll's reads answered."]
-    named = ", ".join(f"{block['component']} at {block['register']}" for block in never)
-    return [
-        f"- Block read test: {len(never)} of {total} reads never answered "
-        f"({named}). Entities read in those blocks stay empty on this "
-        "inverter; the file says which register is at fault."
-    ]
+    return survey.wallbox_from_dump(device.unit_id, raw, path=path)

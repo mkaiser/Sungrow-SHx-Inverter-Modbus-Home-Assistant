@@ -19,11 +19,13 @@ import sys
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts" / "sungrow_read_only_survey"))
+sys.path.insert(0, str(REPO / "device-fingerprints" / "scripts" / "python"))
 
 import sungrow_survey  # noqa: E402
 
-CONTROL_TEST = REPO / "scripts" / "sungrow_control_test" / "sungrow_control_test.py"
+CONTROL_TEST = (
+    REPO / "device-fingerprints" / "scripts" / "python" / "sungrow_control_test.py"
+)
 
 #: What `tmodbus.transport.async_tcp` actually logs, at the levels it uses.
 BACKEND_LINES = (

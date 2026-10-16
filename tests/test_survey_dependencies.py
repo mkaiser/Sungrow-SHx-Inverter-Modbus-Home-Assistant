@@ -1,6 +1,6 @@
 """The survey runs on the published library, and says so in its header.
 
-A contributor runs `read_only_survey.sh` or `read_only_survey.cmd`, which
+A contributor runs `survey.sh` or `survey.cmd`, which
 hand `sungrow_survey.py` to `uv run --script`; uv reads the script's PEP 723 header
 and fetches a Python and exactly the library version it pins. So the header
 is the survey's whole install, and two things can quietly break it:
@@ -12,9 +12,9 @@ is the survey's whole install, and two things can quietly break it:
 
 Both are asserted the way `test_library_is_standalone.py` asserts its own
 boundary: by reading the files rather than by trusting them. The control
-test in `scripts/sungrow_control_test/` runs on the published library the
-same way, through its own `control_test.{sh,ps1,cmd}`, and is held to the
-same rules.
+test beside it runs on the published library the same way -- the survey
+imports it, and `survey.sh control ...` starts it -- and is held to the same
+rules.
 """
 
 from __future__ import annotations
@@ -27,20 +27,18 @@ import sys
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-SCAN = REPO / "scripts" / "sungrow_read_only_survey"
-CONTROL = REPO / "scripts" / "sungrow_control_test"
+SCRIPT_ROOT = REPO / "device-fingerprints" / "scripts"
+SCAN = SCRIPT_ROOT / "python"
+CONTROL = SCRIPT_ROOT / "python"
 
-#: Each folder a contributor is handed: its launchers' name, and the script
-#: they start. The launchers are built alike, so they are checked alike.
-FOLDERS = {
-    SCAN: ("read_only_survey", "sungrow_survey.py"),
-    CONTROL: ("control_test", "sungrow_control_test.py"),
-}
+#: The folder a contributor is handed: its launchers' name, and the script
+#: they start.
+FOLDERS = ((SCRIPT_ROOT, "survey", "sungrow_survey.py"),)
 
 #: Every launcher, as (folder, filename).
 LAUNCHERS = [
     (folder, f"{stem}.{suffix}")
-    for folder, (stem, _script) in FOLDERS.items()
+    for folder, stem, _script in FOLDERS
     for suffix in ("sh", "ps1", "cmd")
 ]
 
@@ -55,8 +53,9 @@ THIRD_PARTY = {
     "modbus_connection": "modbus-connection",
 }
 
-#: Every script that runs on the published library rather than on a checkout.
-PINNED_SCRIPTS = tuple(folder / script for folder, (_stem, script) in FOLDERS.items())
+#: Every script that runs on the published library rather than on a checkout:
+#: the survey, and the control test it imports and starts.
+PINNED_SCRIPTS = (SCAN / "sungrow_survey.py", CONTROL / "sungrow_control_test.py")
 
 
 def _header(path: Path) -> dict:
@@ -246,10 +245,13 @@ def test_the_launchers_are_there(case: tuple[Path, str]) -> None:
     assert (folder / name).is_file()
 
 
-@pytest.mark.parametrize("folder", list(FOLDERS), ids=lambda f: f.name)
-def test_the_shell_launcher_can_be_run_the_way_it_is_documented(folder: Path) -> None:
+@pytest.mark.parametrize("case", FOLDERS, ids=lambda case: case[1])
+def test_the_shell_launcher_can_be_run_the_way_it_is_documented(
+    case: tuple[Path, str, str],
+) -> None:
     """A shebang, and the executable bit in git's index, as for the scripts."""
-    path = folder / f"{FOLDERS[folder][0]}.sh"
+    folder, stem, _script = case
+    path = folder / f"{stem}.sh"
     assert path.read_text(encoding="utf-8").startswith("#!/bin/sh\n")
     entry = subprocess.run(
         ["git", "ls-files", "--stage", str(path.relative_to(REPO))],
@@ -276,50 +278,26 @@ def test_the_launchers_read_the_pin_rather_than_carrying_one(
     assert version not in (folder / name).read_text(encoding="utf-8")
 
 
-@pytest.mark.parametrize("folder", list(FOLDERS), ids=lambda f: f.name)
-def test_each_launcher_starts_a_file_that_is_there(folder: Path) -> None:
+@pytest.mark.parametrize("case", FOLDERS, ids=lambda case: case[1])
+def test_each_launcher_starts_a_file_that_is_there(
+    case: tuple[Path, str, str],
+) -> None:
     """The `.cmd` names its `.ps1`, and both shells name the Python script.
 
     A rename that misses one of these leaves a launcher that starts and then
     fails to find the next file, which nothing but a run on that system shows.
     """
-    stem, script = FOLDERS[folder]
+    folder, stem, script = case
     cmd = (folder / f"{stem}.cmd").read_text(encoding="utf-8")
     assert f'"%~dp0{stem}.ps1"' in cmd
-    assert f"SCRIPT={script}\n" in (folder / f"{stem}.sh").read_text(encoding="utf-8")
-    assert f"$Script = '{script}'" in (folder / f"{stem}.ps1").read_text(
+    launcher_script = f"python/{script}"
+    assert f"SCRIPT={launcher_script}\n" in (folder / f"{stem}.sh").read_text(
         encoding="utf-8"
     )
-    assert (folder / script).is_file()
-
-
-def test_the_two_folders_launchers_differ_only_where_they_must() -> None:
-    """Built alike, so a fix to one is a fix to the other.
-
-    Compared with the comments and the user-facing sentences set aside: what
-    is left is the logic -- find uv, check a Python, ask before installing --
-    and that has to be the same in both.
-    """
-
-    def logic(path: Path, comment: str) -> list[str]:
-        lines = []
-        for line in path.read_text(encoding="utf-8").splitlines():
-            stripped = line.strip()
-            if not stripped or stripped.startswith(comment):
-                continue
-            lines.append(
-                stripped.replace("sungrow_survey.py", "SCRIPT")
-                .replace("sungrow_control_test.py", "SCRIPT")
-                .replace("control test", "NOUN")
-                .replace("survey", "NOUN")
-                .replace(" <host> --dry-run", "")
-            )
-        return lines
-
-    for suffix, comment in (("sh", "#"), ("ps1", "#")):
-        survey = logic(SCAN / f"read_only_survey.{suffix}", comment)
-        control = logic(CONTROL / f"control_test.{suffix}", comment)
-        assert survey == control, suffix
+    assert f"$Script = '{launcher_script}'" in (folder / f"{stem}.ps1").read_text(
+        encoding="utf-8"
+    )
+    assert (folder / "python" / script).is_file()
 
 
 def test_the_line_endings_are_fixed_for_the_launchers() -> None:
@@ -334,12 +312,12 @@ def test_the_line_endings_are_fixed_for_the_launchers() -> None:
 #: snapshot. Only the transcript carries the real serial, and this list is all
 #: that stands between it and a commit.
 WRITTEN = [
-    SCAN / "sh10rt-v112-3p-anon-abc123-battery-meter.json",
-    SCAN / "sh10rt-v112-3p-anon-abc123-2026-10-13T120000.json",
-    SCAN / "sh10rt.dump.json",
-    SCAN / "sungrow-scan-20261013-120000.log",
-    CONTROL / "20261013-120000-control_test.json",
-    CONTROL / "20261013-120000-snapshot.json",
+    REPO / "device-fingerprints" / "sh10rt-v112-3p-anon-abc123-battery-meter.json",
+    REPO / "device-fingerprints" / "sh10rt-v112-3p-anon-abc123-2026-10-13T120000.json",
+    REPO / "device-fingerprints" / "sh10rt.dump.json",
+    REPO / "device-fingerprints" / "sungrow-scan-20261013-120000.log",
+    REPO / "device-fingerprints" / "20261013-120000-control_test.json",
+    REPO / "device-fingerprints" / "20261013-120000-snapshot.json",
 ]
 
 
@@ -351,3 +329,81 @@ def test_everything_a_run_writes_is_ignored(path: Path) -> None:
         check=False,
     )
     assert result.returncode == 0, f"{path.relative_to(REPO)} is not gitignored"
+
+
+def _fake_uv(tmp_path: Path) -> dict[str, str]:
+    """Return an environment whose `uv` prints its arguments and does nothing else."""
+    import os
+
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    uv = bin_dir / "uv"
+    uv.write_text('#!/bin/sh\nprintf "%s\\n" "$@"\n', encoding="utf-8")
+    uv.chmod(0o755)
+    return {**os.environ, "PATH": f"{bin_dir}:{os.environ['PATH']}"}
+
+
+@pytest.mark.parametrize("case", FOLDERS, ids=lambda case: case[1])
+def test_a_local_library_is_laid_over_the_pin_only_when_asked(
+    case: tuple[Path, str, str], tmp_path: Path
+) -> None:
+    """`SUNGROW_MODBUS_LIBRARY` reaches uv as `--with` or `--with-editable`.
+
+    The way to try a library that is not released: `make scan-local` and
+    `make scan-wheel` go through it, so the launcher a contributor runs is the
+    one under test. A relative path is the caller's, not the launcher's
+    folder's -- the launcher changes directory before it looks.
+    """
+    folder, stem, script = case
+    launcher = folder / f"{stem}.sh"
+    env = _fake_uv(tmp_path)
+
+    def run(library: str | None, cwd: Path = tmp_path):
+        environment = dict(env)
+        if library is not None:
+            environment["SUNGROW_MODBUS_LIBRARY"] = library
+        return subprocess.run(
+            ["sh", str(launcher), "127.0.0.1"],
+            capture_output=True,
+            text=True,
+            env=environment,
+            cwd=cwd,
+            stdin=subprocess.DEVNULL,
+            check=False,
+        )
+
+    plain = run(None)
+    assert plain.stdout.split() == ["run", "--script", f"python/{script}", "127.0.0.1"]
+
+    source = run(str(REPO))
+    assert source.stdout.split() == [
+        "run",
+        "--with-editable",
+        str(REPO),
+        "--script",
+        f"python/{script}",
+        "127.0.0.1",
+    ]
+    assert "NOT the published" in source.stderr
+
+    wheel = tmp_path / "sungrow_modbus-0.0.0-py3-none-any.whl"
+    wheel.write_bytes(b"")
+    relative = run(wheel.name)
+    assert relative.stdout.split()[1:3] == ["--with", str(wheel)]
+
+    wrong = run(str(tmp_path / "nothing-here"))
+    assert wrong.returncode == 1
+    assert wrong.stdout == ""
+    assert "neither a .whl file nor a folder" in wrong.stderr
+
+
+@pytest.mark.parametrize("case", FOLDERS, ids=lambda case: case[1])
+def test_the_windows_launcher_knows_the_local_library_too(
+    case: tuple[Path, str, str],
+) -> None:
+    """No PowerShell here to run it, so at least the same two uv forms."""
+    folder, stem, _script = case
+    text = (folder / f"{stem}.ps1").read_text(encoding="utf-8")
+    assert "$env:SUNGROW_MODBUS_LIBRARY" in text
+    assert "'--with'" in text and "'--with-editable'" in text
+    assert "& $uv run $With $Library --script $Script @args" in text

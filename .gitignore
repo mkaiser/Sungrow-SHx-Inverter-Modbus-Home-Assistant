@@ -34,15 +34,15 @@ build/
 # Register dumps and production data from real installations. These carry
 # serial numbers and live household readings, and this repo is public.
 # Redacted capability fingerprints are committed instead; see
-# scripts/sungrow_read_only_survey/probe.py.
+# device-fingerprints/scripts/python/probe.py.
 .testdata/
 
 # What the two contributor tools write, beside themselves, checkout or not.
 # The transcript carries the real serial and address; the documents are
-# published only by being copied into doc/device-fingerprints/ deliberately.
+# published only by being copied into device-fingerprints/ deliberately.
 # Neither folder tracks a .json or .log of its own.
 # tests/test_survey_dependencies.py holds every name a run writes to this.
-scripts/sungrow_read_only_survey/*.json
-scripts/sungrow_read_only_survey/sungrow-scan-*.log
-scripts/sungrow_control_test/*-control_test.json
-scripts/sungrow_control_test/*-snapshot.json
+device-fingerprints/*.json
+device-fingerprints/sungrow-scan-*.log
+device-fingerprints/*-control_test.json
+device-fingerprints/*-snapshot.json

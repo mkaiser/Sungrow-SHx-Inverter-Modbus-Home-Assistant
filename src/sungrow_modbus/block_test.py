@@ -7,9 +7,9 @@ either updates or raises -- so one bad register can empty a whole tier of
 entities. That has happened twice, and both times only a block read test said
 which register it was.
 
-This is the same measurement `scripts/sungrow_read_only_survey/blocks.py` makes from a
-terminal, for the integration to run from the device page. Two producers, one
-measurement:
+The integration runs it from the device page and
+`device-fingerprints/scripts/python/blocks.py` from a terminal, both through
+this module. Two callers, one measurement:
 
 * **The outcome words are the tool's**, `OK` to `UNNARROWED`, because they are
   quoted in `src/sungrow_modbus/layout.py` and a measurement's phrasing is part of it.
@@ -20,19 +20,21 @@ measurement:
   terminal tool takes its plan from the same function. So both test exactly
   the reads the poll makes.
 
-What this cannot do that the terminal tool can: name the count that would
-reconcile a padded frame. That needs the raw reply, and `modbus-connection`
-rightly discards a frame it rejects. So a rejection is reported as `REJECTED`
-and the fix still comes from `blocks.py --client raw`. Everything else -- a
-refusal, a dropped link, contention -- reads the same here as there.
+Two clients, one measurement. `read` is any `read(space, address, count)`:
+the integration's own stack, which fails exactly where the integration fails
+and reports a padded frame as `REJECTED`; or `raw_client.RawClient.read`,
+the strict raw socket, which names the count that would reconcile the frame
+(`PADDED`, `WRONG_LENGTH`) and counts its reconnects -- a read that needed
+one is reported `DROPPED`, because the integration cannot retry mid-block.
 
 Reads only. Nothing in this module can write.
 """
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass, field
+from enum import StrEnum
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -43,6 +45,7 @@ from modbus_connection import (
     ModbusTimeoutError,
 )
 
+from . import raw_client
 from .components import InverterIdentity
 from .registers import COMPONENTS
 
@@ -54,6 +57,13 @@ OK = "ok"
 DROPPED = "dropped the connection"
 REFUSED = "refused with an exception"
 REJECTED = "the library rejected the frame"
+
+#: The raw client's two diagnoses, each naming its own fix: a device answering
+#: 15 registers to a request for 11 is saying the field is 15 long, and a
+#: padded frame says which count makes its two lengths agree. Both belong in
+#: `layout.COUNTS`.
+WRONG_LENGTH = "answered a different length"
+PADDED = "padded the frame"
 
 #: No answer within the timeout -- the link, not the device. Its own word so
 #: that neither "refused" nor "dropped the connection" is claimed for it.
@@ -77,10 +87,23 @@ ROUNDS = 3
 ATTEMPTS = 2
 
 #: Seconds for the **whole** narrowing phase, split evenly across the blocks
-#: that failed. Equal to `blocks.NARROW_BUDGET`, for the reason given there: a
-#: link whose refusals arrive as timeouts spends the timeout times the attempts
-#: on every node of the tree, and one unbounded block once outran a survey's
-#: own cap so the run was killed with no document at all.
+#: that failed. Not per block, deliberately.
+#:
+#: Narrowing walks every node of a binary tree over the block, so a
+#: 15-register block costs about 29 reads. Where a device refuses immediately
+#: -- exception 0x02, which is what two houses on a LAN did -- that is a
+#: couple of seconds. Where refusal arrives as a **timeout** instead, which is
+#: what a third house did over a VPN, each read costs the timeout times the
+#: attempts: 30 seconds, so one block is a quarter of an hour. Four such blocks
+#: outran the survey's own 25-minute cap and the run was killed with no
+#: document written at all.
+#:
+#: A *per-block* budget does not fix that: it bounds each block and leaves the
+#: phase unbounded, so a device that fails eight blocks costs eight times as
+#: much as one that fails one. Dividing a total is what makes the survey's
+#: length predictable -- one failing block gets the whole budget and is
+#: narrowed to a register, eight get a minute each and are narrowed to a half.
+#: 480 seconds is eight minutes, against a dump that is allowed 600.
 NARROW_BUDGET = 480.0
 
 #: Said in the document because it changes what the rest means. The terminal
@@ -96,6 +119,9 @@ Read = Callable[[str, int, int], Awaitable[list[int]]]
 
 Step = Callable[[str, bool], None]
 """Report progress: a label, and whether it is a step that can be counted."""
+
+Reconnects = Callable[[], int]
+"""How many times the client has reconnected so far."""
 
 
 @dataclass(frozen=True)
@@ -123,6 +149,8 @@ class Outcome:
     failing: list[Block] = field(default_factory=list)
     culprits: list[tuple[Block, str, str]] = field(default_factory=list)
     """Narrowed ranges: a block for the range, its outcome and the detail."""
+    reconnects: int = 0
+    """How often the client reconnected; only the raw client counts them."""
 
 
 class _Recorder:
@@ -170,6 +198,27 @@ async def inverter_blocks() -> list[Block]:
     return blocks
 
 
+def declared(space: str, address: int) -> str:
+    """Return the field at an address, or say that nothing reads it.
+
+    The distinction decides the fix. A bad **declared** register is isolated
+    into its own component; a bad address in a **gap** is one nothing asked
+    for in the first place, and the answer there is to stop bridging the gap
+    rather than to isolate anything.
+    """
+    from .addresses import device_components
+
+    for components in device_components().values():
+        for name, klass in components.items():
+            if klass.register_space != space:
+                continue
+            for field_name, declared_field in klass.declared_fields.items():
+                start = declared_field.address
+                if start <= address < start + declared_field.count:
+                    return f"{field_name} (in {name})"
+    return "nothing reads this -- pooling bridges a gap to reach it"
+
+
 def _describe(err: ModbusError) -> tuple[str, str]:
     """Classify a failed read, in the words the terminal tool uses.
 
@@ -189,26 +238,62 @@ def _describe(err: ModbusError) -> tuple[str, str]:
 
 
 async def attempt(
-    read: Read, space: str, address: int, count: int, attempts: int
+    read: Read,
+    space: str,
+    address: int,
+    count: int,
+    attempts: int,
+    reconnects: Reconnects | None = None,
 ) -> tuple[str, str]:
     """Read one block several times and say what happened, and how consistently.
 
     Repetition is the point. A Sungrow grants very few sessions, so a single
     failure is more likely another client than a bad register, and a fault
     that is real fails every attempt.
+
+    With `reconnects`, a read that answered only after the client reconnected
+    is a failure: the raw client reconnects and retries, which is right for
+    a fingerprint and once hid gerd's 5242 completely -- reported "ok (3/3)"
+    while the integration, which has no mid-block retry, could not read the
+    component at all.
     """
     outcomes: list[tuple[str, str]] = []
     for _ in range(attempts):
+        before = reconnects() if reconnects is not None else 0
         try:
             await read(space, address, count)
+        except raw_client.PaddedFrame as err:
+            outcomes.append(
+                (
+                    PADDED,
+                    f"declared {err.declared_registers} registers, frame sized "
+                    f"for {err.frame_registers}; ask for {err.consistent_count}",
+                )
+            )
+        except raw_client.WrongLength as err:
+            outcomes.append((WRONG_LENGTH, f"got {err.got} registers"))
+        except raw_client.Refused as err:
+            outcomes.append((REFUSED, str(err)))
         except ModbusError as err:
             outcomes.append(_describe(err))
         except TimeoutError as err:
             outcomes.append((TIMED_OUT, str(err) or type(err).__name__))
+        except raw_client.TimedOut as err:
+            outcomes.append((TIMED_OUT, str(err)))
         except OSError as err:
             outcomes.append((DROPPED, str(err) or type(err).__name__))
         else:
-            outcomes.append((OK, ""))
+            after = reconnects() if reconnects is not None else 0
+            if after > before:
+                outcomes.append(
+                    (
+                        DROPPED,
+                        f"answered only after {after - before} reconnect(s); "
+                        "the integration cannot retry mid-block",
+                    )
+                )
+            else:
+                outcomes.append((OK, ""))
 
     kinds = {kind for kind, _ in outcomes}
     every = f"{attempts}/{attempts}"
@@ -221,12 +306,23 @@ async def attempt(
     return kind, f"{every}, {detail}" if detail else every
 
 
+Narrowed = Callable[[Block, int, str, str], None]
+"""Report one narrowing read: the range, its depth, the outcome and detail."""
+
+Result = Callable[[Block, int, str, str], None]
+"""Report one block's read in a round: the block, the round, outcome, detail."""
+
+
 async def _bisect(
     read: Read,
     block: Block,
     attempts: int,
     deadline: float | None,
     step: Step | None,
+    *,
+    reconnects: Reconnects | None = None,
+    on_narrow: Narrowed | None = None,
+    depth: int = 0,
 ) -> list[tuple[Block, str, str]]:
     """Narrow a failing range to the smallest ranges that still fail.
 
@@ -237,6 +333,8 @@ async def _bisect(
     answer that says it is partial.
     """
     if deadline is not None and time.monotonic() > deadline:
+        if on_narrow is not None:
+            on_narrow(block, depth, UNNARROWED, "out of time")
         return [(block, UNNARROWED, "narrowing ran out of time here")]
     if step is not None:
         step(
@@ -245,8 +343,10 @@ async def _bisect(
             False,
         )
     kind, detail = await attempt(
-        read, block.space, block.address, block.count, attempts
+        read, block.space, block.address, block.count, attempts, reconnects
     )
+    if on_narrow is not None:
+        on_narrow(block, depth, kind, detail)
     if kind in {OK, INCONSISTENT}:
         return []
     if block.count == 1:
@@ -256,11 +356,140 @@ async def _bisect(
     right = Block(
         block.component, block.space, block.address + half, block.count - half
     )
-    found = await _bisect(read, left, attempts, deadline, step)
-    found += await _bisect(read, right, attempts, deadline, step)
+    found: list[tuple[Block, str, str]] = []
+    for half_block in (left, right):
+        found += await _bisect(
+            read,
+            half_block,
+            attempts,
+            deadline,
+            step,
+            reconnects=reconnects,
+            on_narrow=on_narrow,
+            depth=depth + 1,
+        )
     if found:
         return found
     return [(block, kind, f"{detail}; both halves read on their own")]
+
+
+#: The outcomes `layout.py` may be changed on: the device answering, in a way
+#: that names a fix. Every entry in `layout.ISOLATE` is an exception code, a
+#: deterministic hangup or a padded frame, and `layout.COUNTS` takes the
+#: length a padded or wrong-length frame names. A timeout is deliberately not
+#: among them -- from this end a silent inverter and an answer lost in a
+#: tunnel are the same event, and the same four blocks at one house closed
+#: the connection on a LAN two days before they timed out over a VPN.
+EVIDENCE = frozenset({REFUSED, DROPPED, PADDED, WRONG_LENGTH, REJECTED})
+
+
+def refused_outright(kind: str, detail: str = "") -> bool:
+    """Whether a narrowed failure is the kind `layout.py` may be changed on.
+
+    Decided by the outcome, and a detail that mentions a timeout overrides
+    it: a drop that the link reported as a timeout is still the link.
+    """
+    lowered = detail.lower()
+    if "timeout" in lowered or "timed out" in lowered:
+        return False
+    return kind in EVIDENCE
+
+
+class Advice(StrEnum):
+    """What a narrowed failure means for `layout.py`, before any wording."""
+
+    FORWARDING_LIMIT = "forwarding limit"
+    """Measured through a communication module: maybe a measuring point the
+    dongle does not forward, which is capability gating, not `layout.py`."""
+    NOT_NARROWED = "not narrowed"
+    """The budget stopped first, so the range names no single register."""
+    NOT_EVIDENCE = "not evidence"
+    """It timed out rather than refusing, which says nothing about it."""
+    ALREADY_ISOLATED = "already isolated"
+    """The device refuses it, and `layout.ISOLATE` already holds it."""
+    ISOLATE = "isolate"
+    """The device refuses it outright: this is the measurement to add."""
+
+
+@dataclass(frozen=True)
+class Finding:
+    """One component's narrowed failures of one kind, with what they mean."""
+
+    component: str
+    space: str
+    outcome: str
+    detail: str
+    addresses: tuple[int, ...]
+    """Protocol addresses, sorted; one below the register numbers."""
+    advice: Advice
+
+    @property
+    def registers(self) -> str:
+        """The register numbers as runs: "13200-13207", "5242"."""
+        return register_ranges(address + 1 for address in self.addresses)
+
+
+def register_ranges(numbers: Iterable[int]) -> str:
+    """Return "13200-13207" for eight consecutive numbers, "5242" for one.
+
+    Runs rather than a list, because consecutive addresses are the usual
+    shape -- one absent measuring point is a block of them -- and eight
+    numbers separated by commas hide whether they are contiguous.
+    """
+    runs: list[tuple[int, int]] = []
+    for number in sorted(numbers):
+        if runs and number == runs[-1][1] + 1:
+            runs[-1] = (runs[-1][0], number)
+        else:
+            runs.append((number, number))
+    return ", ".join(
+        str(start) if start == end else f"{start}-{end}" for start, end in runs
+    )
+
+
+def findings(outcome: Outcome, *, through_module: bool) -> list[Finding]:
+    """Say what each narrowed failure means for `layout.py`.
+
+    Grouped by component and by how it failed, because the fix is per
+    component and the narrowing is per register: eight refused addresses in
+    one meter block are one finding, not eight.
+
+    `through_module` comes first because it changes what a refusal is.
+    Measured on gerd's SH8.0RT-V112: input 2612 and 2628 refuse three times
+    out of three through its WiNet-S and read perfectly over the inverter's
+    own LAN port four minutes later. Isolating them would make every direct
+    user pay a per-field read for a dongle's behaviour.
+    """
+    from .layout import ISOLATE
+
+    grouped: dict[tuple[str, str, str], list[int]] = {}
+    details: dict[tuple[str, str, str], str] = {}
+    for block, kind, detail in outcome.culprits:
+        key = (block.component, block.space, kind)
+        grouped.setdefault(key, []).extend(
+            block.address + offset for offset in range(block.count)
+        )
+        details.setdefault(key, detail)
+    # The components that exist only because a field was moved out of its
+    # tier, which is what "already isolated" means.
+    isolated = set(ISOLATE.values())
+    found = []
+    for (component, space, kind), addresses in grouped.items():
+        detail = details[(component, space, kind)]
+        if through_module:
+            advice = Advice.FORWARDING_LIMIT
+        elif kind == UNNARROWED:
+            advice = Advice.NOT_NARROWED
+        elif not refused_outright(kind, detail):
+            advice = Advice.NOT_EVIDENCE
+        elif component in isolated:
+            advice = Advice.ALREADY_ISOLATED
+        else:
+            advice = Advice.ISOLATE
+        found.append(
+            Finding(component, space, kind, detail, tuple(sorted(addresses)), advice)
+        )
+    return found
 
 
 def planned_steps(blocks: list[Block], rounds: int = ROUNDS) -> int:
@@ -281,6 +510,10 @@ async def measure(
     rounds: int = ROUNDS,
     narrow_budget: float = NARROW_BUDGET,
     step: Step | None = None,
+    reconnects: Reconnects | None = None,
+    on_result: Result | None = None,
+    on_narrow: Narrowed | None = None,
+    on_narrowing: Callable[[Block, int, int, float], None] | None = None,
 ) -> Outcome:
     """Read every block over several rounds, and narrow what never answered.
 
@@ -288,6 +521,11 @@ async def measure(
     one, is not a fault and is not narrowed. Narrowing gets `narrow_budget`
     seconds in total, split evenly across the failing blocks so the last in
     the list gets the same chance as the first.
+
+    `on_result` follows each block's read in each round, `on_narrowing(block,
+    index, total, seconds)` precedes the narrowing of each failing block, and
+    `on_narrow` follows each narrowing read -- what a terminal prints. `reconnects` is
+    the raw client's counter; see `attempt`.
     """
     outcome = Outcome()
     for round_number in range(1, max(1, rounds) + 1):
@@ -298,11 +536,13 @@ async def measure(
                     f"{block.component}",
                     True,
                 )
-            kind, _detail = await attempt(
-                read, block.space, block.address, block.count, attempts
+            kind, detail = await attempt(
+                read, block.space, block.address, block.count, attempts, reconnects
             )
             counts = outcome.tally.setdefault(block, {})
             counts[kind] = counts.get(kind, 0) + 1
+            if on_result is not None:
+                on_result(block, round_number, kind, detail)
 
     answered = (OK, INCONSISTENT)
     outcome.failing = [
@@ -317,9 +557,21 @@ async def measure(
     ]
     if outcome.failing:
         each = narrow_budget / len(outcome.failing) if narrow_budget else 0
-        for block in outcome.failing:
+        for index, block in enumerate(outcome.failing, 1):
+            if on_narrowing is not None:
+                on_narrowing(block, index, len(outcome.failing), each)
             deadline = time.monotonic() + each if each else None
-            outcome.culprits += await _bisect(read, block, attempts, deadline, step)
+            outcome.culprits += await _bisect(
+                read,
+                block,
+                attempts,
+                deadline,
+                step,
+                reconnects=reconnects,
+                on_narrow=on_narrow,
+            )
+    if reconnects is not None:
+        outcome.reconnects = reconnects()
     return outcome
 
 

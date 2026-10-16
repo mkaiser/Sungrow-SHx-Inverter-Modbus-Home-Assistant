@@ -91,10 +91,10 @@ def _filename(document: dict) -> str:
     """Name the file the way this repository names a fingerprint.
 
     Not a naming scheme of its own, and that is the point: a document from this
-    button and one from `scripts/sungrow_read_only_survey/sungrow_survey.py`
+    button and one from `device-fingerprints/scripts/python/sungrow_survey.py`
     describe the same thing in the same format, so they should arrive under the
     same name. A maintainer receiving twenty of these sorts them together, and
-    `doc/device-fingerprints/` can take one without renaming it.
+    `device-fingerprints/` can take one without renaming it.
 
     `label_for` lives in the library so both producers derive it identically,
     and `tests/test_document_filenames.py` checks it against every

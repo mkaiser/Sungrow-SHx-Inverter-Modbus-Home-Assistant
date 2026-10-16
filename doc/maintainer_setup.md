@@ -72,7 +72,7 @@ the host is genuinely better:
 - **Any site the container cannot route to**, though in practice it follows the
   host's routing already.
 
-[scripts/sungrow_read_only_survey/read_only_survey.sh](../scripts/sungrow_read_only_survey/read_only_survey.sh) is built
+[device-fingerprints/scripts/survey.sh](../device-fingerprints/scripts/survey.sh) is built
 for exactly this: it runs the survey through `uv`, which fetches Python and the
 pinned library itself, so it runs on the host with nothing set up. Write its
 output into the repository folder and it appears on both sides.
@@ -83,7 +83,7 @@ Run this **on the host**, not in the container:
 
 ```bash
 pip install zeroconf          # the only dependency, and only for this check
-python scripts/sungrow_read_only_survey/probe.py mdns
+python device-fingerprints/scripts/python/probe.py mdns
 ```
 
 If the dongle advertises its serial and model, host discovery becomes free and
@@ -97,8 +97,8 @@ Two tools, two homes, and mixing them up produces confusing errors:
 
 | Command | Runs | Because |
 | --- | --- | --- |
-| `python scripts/sungrow_read_only_survey/probe.py mdns` | **host only** | Multicast does not cross the Docker bridge; needs `zeroconf` |
-| `python scripts/sungrow_read_only_survey/sungrow_survey.py`, `probe.py capabilities/units/dump` | either | They run on the device library: the editable install in the container, or the version `read_only_survey.sh` fetches through uv on the host |
+| `python device-fingerprints/scripts/python/probe.py mdns` | **host only** | Multicast does not cross the Docker bridge; needs `zeroconf` |
+| `python device-fingerprints/scripts/python/sungrow_survey.py`, `probe.py capabilities/units/dump` | either | They run on the device library: the editable install in the container, or the version `survey.sh` fetches through uv on the host |
 
 ## 3. Capture the test systems
 
@@ -114,14 +114,14 @@ the transport against the answer, runs the block read test on the still-idle
 link, reads every register and prints what it found:
 
 ```bash
-python scripts/sungrow_read_only_survey/sungrow_survey.py <host>
+python device-fingerprints/scripts/python/sungrow_survey.py <host>
 ```
 
 For the reading on its own, without the other phases:
 
 ```bash
-python scripts/sungrow_read_only_survey/probe.py capabilities <host> \
-    --save doc/device-fingerprints --label sh10rt-v112
+python3 device-fingerprints/scripts/python/probe.py capabilities <host> \
+    --save device-fingerprints --label sh10rt-v112
 ```
 
 | Setup | Label to use | Why it matters |
@@ -134,17 +134,18 @@ python scripts/sungrow_read_only_survey/probe.py capabilities <host> \
 On the wallbox system, also dump the undocumented gaps:
 
 ```bash
-python scripts/sungrow_read_only_survey/probe.py dump <host> --unit 3 --start 21230 --count 40 --save
-python scripts/sungrow_read_only_survey/probe.py dump <host> --unit 3 --start 21266 --count 40 --save
+python device-fingerprints/scripts/python/probe.py dump <host> --unit 3 --start 21230 --count 40 --save
+python device-fingerprints/scripts/python/probe.py dump <host> --unit 3 --start 21266 --count 40 --save
 ```
 
-Everything above is **read-only**. No command in `scripts/sungrow_read_only_survey/` writes a
-register.
+Everything above is **read-only**. The one file in `device-fingerprints/`
+that writes a register is `sungrow_control_test.py`, which the survey runs
+only when its last question is answered yes.
 
 For anyone outside this repo — the users whose models nobody here owns —
-[scripts/sungrow_read_only_survey/](../scripts/sungrow_read_only_survey/) does the
-same job: a folder they can download and run with `./read_only_survey.sh` or
-`read_only_survey.cmd`, which fetch what the survey needs through uv. See [doc/device-fingerprints/](fingerprints/).
+[device-fingerprints/](../device-fingerprints/) does the
+same job: a folder they can download and run with `./survey.sh` or
+`survey.cmd`, which fetch what the survey needs through uv. See [device-fingerprints/](fingerprints/).
 
 Then commit the `<label>.json` document. Leave the `sungrow-scan-*.log`
 transcript alone — it is gitignored, and it carries the real serial and the
@@ -211,7 +212,7 @@ The protections in place:
   anything else from a real installation. The survey and the control test
   write beside themselves instead, and `.gitignore` names each file they
   write.
-- `scripts/sungrow_read_only_survey/probe.py` splits every capture into a publishable part and
+- `device-fingerprints/scripts/python/probe.py` splits every capture into a publishable part and
   a private part rather than leaving the judgement to whoever runs it.
 - Connection details for the maintainer's own inverter are deliberately not in
   the repo; they live in his `secrets.yaml`.

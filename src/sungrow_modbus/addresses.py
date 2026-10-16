@@ -19,7 +19,7 @@ line or an error can say both.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, NamedTuple
+from typing import TYPE_CHECKING, Any, Literal, NamedTuple
 
 if TYPE_CHECKING:
     from modbus_connection import ModbusUnit
@@ -121,6 +121,20 @@ def device_components() -> dict[Device, dict[str, type[Component]]]:
         },
         "wallbox": dict(WALLBOX_COMPONENTS),
     }
+
+
+def declared_field(name: str, device: Device = "inverter") -> Any:
+    """Return the library's own field for a name, to decode a raw read with.
+
+    A reading is decoded by the field that declares it rather than by a scale
+    copied out of it, so a scale changed in `registers.py` is followed by
+    every caller.
+    """
+    for klass in device_components()[device].values():
+        field = klass.declared_fields.get(name)
+        if field is not None:
+            return field
+    raise KeyError(f"no field named {name!r} on the {device}")
 
 
 def field_address(name: str, device: Device = "inverter") -> Address:
