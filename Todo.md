@@ -19,9 +19,12 @@ B.
 
 What is the difference between device-fingerprints/scripts/python/probe.py and src/sungrow_modbus/discovery.py?
 
-# Summary (2026-10-15)
+# Summary (2026-10-16)
 
-0.1.0a14 on PyPI: the wallbox at its own address (TLS 516, unit 248) in the
+0.1.0a15 on PyPI: one launcher, `survey.{sh,cmd}`, which offers the control
+test as its last question and runs it into the survey's document; the
+survey's logic is in the package, so the published launchers run. Before it,
+0.1.0a14: the wallbox at its own address (TLS 516, unit 248) in the
 integration and the survey, and `direct-lan` in every cable document's name.
 gerd's wallbox document is published in `device-fingerprints/`, beside the
 inverter documents. Every site re-fingerprinted; control tests merged at
@@ -32,12 +35,7 @@ Open:
    it go to 0 when charging stops?) and the signedness of 21308/21310. Two
    dongle runs about five minutes apart, 90 s of quiet before each, while the
    car charges.
-2. **Release the library.** The survey and control-test launchers run on
-   the PyPI wheel, which lacks the survey API moved into the package
-   (`raw_client`, `assemble_document`, ...), so `survey.sh` fails
-   with an ImportError for everyone until the next release. In the checkout
-   meanwhile: `make scan-local HOST=...` (or `scan-wheel`). Details in `plans/survey-to-pypi.md`.
-3. Small items below.
+2. Small items below.
 
 # Next steps
 
