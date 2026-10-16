@@ -2,34 +2,7 @@ Todo.md contains only next steps (forward looking).
 Anything done should be removed here.
 
 
-## Fingerprint Folder restructuring
-create a separate plan:
-
-from fingerprint:
-A: Address
-    "ip_address_last_two_octets": "178.041",
-    for recreation we need the complete local ip address. Can we just read the computers network interface and find the local LAN address (the first two octets, are not ALWAYS 192.168).
-    Then we could just enter the last two octects in the command to recreate the fingerprint. This would be more user friendly and less error prone.
-
-B.
-  "read_on": "2026-09-08",
-  "read_at_local": "2026-09-08T19:51:22+02:00",
-
-  Why two values? one should be enough.
-
-What is the difference between device-fingerprints/scripts/python/probe.py and src/sungrow_modbus/discovery.py?
-
-# Summary (2026-10-16)
-
-0.1.0a15 on PyPI: one launcher, `survey.{sh,cmd}`, which offers the control
-test as its last question and runs it into the survey's document; the
-survey's logic is in the package, so the published launchers run. Before it,
-0.1.0a14: the wallbox at its own address (TLS 516, unit 248) in the
-integration and the survey, and `direct-lan` in every cable document's name.
-gerd's wallbox document is published in `device-fingerprints/`, beside the
-inverter documents. Every site re-fingerprinted; control tests merged at
-fwitten's master and gerd; the integration passed on gerd's hardware.
-Open:
+# Open
 
 1. **A charging car at gerd's** for 21313 against 21308 over a session (does
    it go to 0 when charging stops?) and the signedness of 21308/21310. Two
@@ -39,27 +12,8 @@ Open:
 
 # Next steps
 
-## Fingerprinting
-
-- `tests/test_no_real_serials.py`: decode runs of 16-bit integers that
-  are printable ASCII pairs to text before matching the serial shape, so a
-  serial stored as register words fails the suite (how gerd's leaked).
-- `survey.sh control --simulated` exits 4: the simulator stores 13074 as
-  handed and the run writes at the default x10 when the scale probe gives
-  no answer, so leg B reports a wrong slope. Contradicts "a simulator
-  cannot produce a finding".
-- The fwitten master's LAN port takes ~39 min per survey: 13199 and the
-  three firmware strings time out (10 s each) instead of refusing, and
-  the narrowing retries them register by register.
-- Windows: a `ConnectionResetError [WinError 10054]` traceback during
-  identification; harmless, but reads as a failure.
-
 ## Integration
 
-- A second entry for the same inverter on another endpoint aborts
-  `already_configured`, even with the first disabled (the unique id is the
-  serial). Decide whether one inverter may have a cable and a dongle entry
-  -- CLAUDE.md says one entry is one endpoint.
 - Optional: have the integration's own fingerprint carry `export_scale`
   once its entity has probed. It stores only the factor in entry data, not
   the write behind it.
@@ -131,16 +85,10 @@ Measured at gerd's AC22E-01 on 2026-10-14. Addresses are in memory, not here.
 
 
 # Future work
-## modbus proxy
-- investigate: Does it make sense to provide a modbusproxy from this integration? So evcc and other software can use the inverter and wallbox through this integration?
-reuse existing modbusproxies, don't reinvent
+
+## EVCC connection
 
 OR: proide some kind of mqtt interface for inverter and wallbox to evcc. Does evcc have a standard config for this?
 
 ## Ihome Manager
 https://github.com/TCzerny/ha-modbus-manager/blob/main/docs/Communication%20Protocol%20of%20iHomeManager_V1.0.2.pdf
-
-
-## code cleanup
-
-The wallbox device was created after the inverter device. Now in the pypi integration there is are specific wallbox_*.py files, but not inverter files, which is confusing.

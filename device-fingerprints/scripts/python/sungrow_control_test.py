@@ -55,8 +55,9 @@ from typing import Any
 
 from modbus_connection import ModbusError, ModbusTcpParams
 from modbus_connection.tmodbus import ModbusConnection
+import probe
 
-from sungrow_modbus import SungrowInverter, export_scale
+from sungrow_modbus import SungrowInverter
 from sungrow_modbus.control_test import (
     CODES,
     ControlTest,
@@ -66,6 +67,7 @@ from sungrow_modbus.control_test import (
     document,
 )
 from sungrow_modbus.fingerprint import SCHEMA, stand_in
+from sungrow_modbus.inverter import export_scale
 
 _LOGGER = logging.getLogger("control_test")
 
@@ -498,7 +500,7 @@ async def _export_scale_mode(
     """Ask how this firmware writes 13074, and nothing else.
 
     At most one write, chosen so that it changes nothing on either known
-    firmware -- `sungrow_modbus.export_scale` has the argument. With
+    firmware -- `sungrow_modbus.inverter.export_scale` has the argument. With
     `--enable-export-limit` it may switch feed-in limitation on for that one
     write, and only where the limit already held caps nothing. Exit 0 with an
     answer, 3 without one, 5 if anything was left changed.
@@ -933,7 +935,7 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stderr)
     drops = _quiet_backend()
     try:
-        return asyncio.run(async_main(args, drops))
+        return probe.run(async_main(args, drops))
     except KeyboardInterrupt:
         _say_drops(drops)
         print(

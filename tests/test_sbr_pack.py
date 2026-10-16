@@ -20,7 +20,7 @@ from modbus_connection.mock import MockModbusConnection
 import pytest
 
 from sungrow_modbus.battery import IMPLAUSIBLE, PACK_UNITS, probe_units
-from sungrow_modbus.battery_registers import (
+from sungrow_modbus.battery.registers import (
     SbrBatteryCells,
     SbrBatteryModules,
     SbrBatteryPack,
@@ -287,15 +287,15 @@ def test_the_pack_registers_live_outside_the_inverter_module() -> None:
     """The SBR's registers belong to the battery, not to the inverter's map.
 
     `registers.py` is held field by field to the inverter's entity map, and
-    the pack has no entry there. Its components live in `battery_registers.py`
+    the pack has no entry there. Its components live in `battery/registers.py`
     so that each module is checked against the source it was ported from.
     """
     from pathlib import Path as _Path
 
-    import sungrow_modbus.battery_registers as pack
-    import sungrow_modbus.registers as inverter
+    import sungrow_modbus.battery.registers as pack
+    import sungrow_modbus.inverter.registers as inverter
 
-    assert _Path(pack.__file__).name == "battery_registers.py"
+    assert _Path(pack.__file__).parts[-2:] == ("battery", "registers.py")
     text = _Path(inverter.__file__).read_text(encoding="utf-8")
     assert "SbrBattery" not in text, "the SBR is in the inverter's register module"
 
@@ -335,7 +335,7 @@ def test_every_position_word_known_unpacks_to_a_plausible_module_and_cell(
     because both halves agree. If a ninth sample ever contradicts it, this is
     where it goes.
     """
-    from sungrow_modbus.battery_registers import _index, _module
+    from sungrow_modbus.battery.registers import _index, _module
 
     assert _module(word) == module, f"{register} from {source}"
     assert _index(word) == index, f"{register} from {source}"
@@ -359,7 +359,7 @@ def test_a_cell_index_and_a_sensor_index_are_told_apart_by_their_range() -> None
     assert max(cells) > 2, f"cell indices {sorted(cells)} would fit two sensors"
     assert sensors <= {1, 2}, (
         f"a temperature index outside 1-2 appeared: {sorted(sensors)}. If it is "
-        "real, the 'sensor' naming in battery_registers.py is wrong."
+        "real, the 'sensor' naming in battery/registers.py is wrong."
     )
 
 
@@ -372,7 +372,7 @@ def test_a_zero_position_is_nothing_rather_than_module_zero() -> None:
     an entity reporting module 0 forever is exactly what
     `capabilities.ZERO_MEANS_ABSENT` exists to prevent.
     """
-    from sungrow_modbus.battery_registers import _index, _module
+    from sungrow_modbus.battery.registers import _index, _module
 
     for word in (0, None):
         assert _module(word) is None
@@ -388,7 +388,7 @@ async def test_the_unpacked_properties_read_from_the_registers() -> None:
     """End to end: the eight properties, off a unit answering the real words."""
     from modbus_connection.mock import MockModbusConnection
 
-    from sungrow_modbus.battery_registers import SbrBatteryCells
+    from sungrow_modbus.battery.registers import SbrBatteryCells
 
     unit = MockModbusConnection().for_unit(200)
     cells = SbrBatteryCells(unit)
@@ -478,7 +478,7 @@ def test_the_position_encoding_is_provable_from_one_reading() -> None:
     module the pack is quoting -- and the high byte of the position word has
     to be that module, or the encoding is wrong. Same for the minimum.
     """
-    from sungrow_modbus.battery_registers import _index, _module
+    from sungrow_modbus.battery.registers import _index, _module
 
     maxima = {module: WHOLE_PACK_READING[10763 + module] for module in (1, 2, 3)}
     minima = {module: WHOLE_PACK_READING[10771 + module] for module in (1, 2, 3)}

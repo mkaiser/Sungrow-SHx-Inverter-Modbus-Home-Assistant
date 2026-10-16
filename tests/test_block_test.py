@@ -3,7 +3,7 @@
 `sungrow_modbus.block_test` is the second producer of a measurement that
 `device-fingerprints/scripts/python/blocks.py` and `sungrow_survey.py` already
 make, and its answers end up in the same place: a published document, read by
-a maintainer deciding what goes in `src/sungrow_modbus/layout.py`. So most of
+a maintainer deciding what goes in `src/sungrow_modbus/inverter/layout.py`. So most of
 what is asserted here is *agreement* -- the same blocks, the same outcome
 words, the same budget and the same document shape -- and the rest is the
 classification that four bugs in this project got wrong: an exception response
@@ -82,7 +82,7 @@ def refuses(register: int) -> Callable[[str, int, int], BaseException | None]:
 
 
 def test_the_outcome_words_and_the_budget_are_the_terminal_tools() -> None:
-    """`sungrow_modbus.layout` quotes these words, so they are part of the result."""
+    """`inverter.layout` quotes these words, so they are part of the result."""
     for name in ("OK", "DROPPED", "REFUSED", "REJECTED", "INCONSISTENT"):
         assert getattr(block_test, name) == getattr(terminal, name), name
     assert block_test.UNNARROWED == terminal.UNNARROWED

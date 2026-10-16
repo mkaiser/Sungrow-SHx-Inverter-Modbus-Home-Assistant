@@ -103,10 +103,10 @@ def device_components() -> dict[Device, dict[str, type[Component]]]:
     and a name lookup that searched a different one would find a field the
     survey cannot, or the other way round.
     """
-    from .battery_registers import SbrBatteryCells, SbrBatteryModules, SbrBatteryPack
-    from .components import InverterControl, InverterIdentity
-    from .registers import COMPONENTS
-    from .wallbox_registers import COMPONENTS as WALLBOX_COMPONENTS
+    from .battery.registers import SbrBatteryCells, SbrBatteryModules, SbrBatteryPack
+    from .inverter.components import InverterControl, InverterIdentity
+    from .inverter.registers import COMPONENTS
+    from .wallbox.registers import COMPONENTS as WALLBOX_COMPONENTS
 
     return {
         "inverter": {

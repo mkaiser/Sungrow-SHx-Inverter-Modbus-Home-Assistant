@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from modbus_connection.model import Component, gauge, integer, string, uint32
 
-from .addresses import reg
+from ..addresses import reg
 
 
 class InverterControl(Component):

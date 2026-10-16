@@ -13,7 +13,7 @@ from modbus_connection.mock import MockModbusConnection
 import pytest
 
 from sungrow_modbus import TIER_COMPONENTS, SungrowInverter
-from sungrow_modbus.derived import RUNNING_STATES
+from sungrow_modbus.inverter.derived import RUNNING_STATES
 
 
 def _int32(value: int) -> tuple[int, int]:

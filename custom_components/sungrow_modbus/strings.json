@@ -2,7 +2,10 @@
   "config": {
     "abort": {
       "already_configured": "Device is already configured",
-      "devices_mode_not_offered": "Devices mode is not available in this preview. This build sets the integration up for diagnostics only -- it polls the inverter and can run the capability survey, but creates no sensors. Promotion will be offered in a later release, and the entry does not need to be removed and added again when it is."
+      "devices_mode_not_offered": "Devices mode is not available in this preview. This build sets the integration up for diagnostics only -- it polls the inverter and can run the capability survey, but creates no sensors. Promotion will be offered in a later release, and the entry does not need to be removed and added again when it is.",
+      "wrong_device": "That address answers as a different inverter ({model}), not the one behind “{title}”. Nothing was changed. Each inverter keeps its own entry; to add that one, use Add integration.",
+      "connection_unchanged": "That is the connection this entry already uses. Nothing was changed.",
+      "connection_moved": "“{title}” now uses the new connection. It has been reloaded; its entities, their history and its settings are unchanged."
     },
     "error": {
       "cannot_connect": "Failed to connect: {error}",
@@ -37,7 +40,7 @@
       },
       "manual": {
         "title": "The inverter's address",
-        "description": "The inverter's IP address, and the Modbus TCP port and device address it answers on. The defaults are right for almost every installation: port 502, device address 1.\n\nIf the inverter is behind a WiNet-S dongle, this is the dongle's address rather than the inverter's own. Give the address a reservation in your router first -- an inverter that moves has to be set up again.{error}",
+        "description": "The inverter's IP address, and the Modbus TCP port and device address it answers on. The defaults are right for almost every installation: port 502, device address 1.\n\nIf the inverter is behind a WiNet-S dongle, this is the dongle's address rather than the inverter's own. Give the address a reservation in your router first. If it moves anyway, **Reconfigure** on the entry points it at the new one.{error}",
         "data": {
           "host": "IP address or hostname",
           "port": "Port",
@@ -125,6 +128,24 @@
           "setup_devices": "Set up my inverter — sensors, controls, the lot",
           "setup_diagnostics": "Diagnostics only — help this project, create no entities"
         }
+      },
+      "reconfigure": {
+        "title": "Change the connection",
+        "description": "This entry reaches its inverter at **{current}**. Give the other way to reach the **same** inverter -- its own LAN port after a cable is laid, the WiNet-S dongle, or a new address.\n\nThe new connection is checked first: it has to answer with this inverter's serial number. Entity IDs, history and settings stay as they are.{error}",
+        "data": {
+          "host": "IP address or hostname",
+          "port": "Port",
+          "unit_id": "Device address"
+        },
+        "data_description": {
+          "host": "As your router lists it.",
+          "port": "502 unless somebody changed it. A Sungrow Logger uses 503.",
+          "unit_id": "1 for a single inverter. A second inverter in a master/slave cluster answers on 2, and its own address is the one to give here."
+        }
+      },
+      "move": {
+        "title": "Use the new connection?",
+        "description": "This inverter is already set up as **{title}**, reached at **{old}**. It also answers at **{new}**.\n\n**Submit** switches the entry to **{new}** and reloads it. Its entity IDs, their history and its settings stay as they are; the battery and wallbox are looked for again on the new connection. Your answer about how the survey reaches the inverter is cleared, because it described the old connection.{wallbox}\n\nTo keep the current connection, close this dialog."
       }
     },
     "progress": {

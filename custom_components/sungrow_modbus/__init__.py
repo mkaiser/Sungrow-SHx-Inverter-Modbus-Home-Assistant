@@ -39,12 +39,12 @@ from sungrow_modbus import (
     SungrowInverter,
 )
 from sungrow_modbus.battery import probe_units
-from sungrow_modbus.battery_device import SungrowBattery
+from sungrow_modbus.battery.device import SungrowBattery
 from sungrow_modbus.wallbox import (
     UNITS as WALLBOX_UNITS,
     probe_units as wallbox_probe_units,
 )
-from sungrow_modbus.wallbox_device import SungrowWallbox
+from sungrow_modbus.wallbox.device import SungrowWallbox
 
 from .const import (
     CONF_ENTITY_IDS,

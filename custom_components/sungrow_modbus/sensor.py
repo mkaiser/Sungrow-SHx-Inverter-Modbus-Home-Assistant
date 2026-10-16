@@ -5,7 +5,7 @@ from __future__ import annotations
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
-from sungrow_modbus.smoothing import TimeWeightedAverage
+from sungrow_modbus.inverter.smoothing import TimeWeightedAverage
 
 from .battery_descriptions import CELL_DESCRIPTIONS, PACK_DESCRIPTIONS
 from .const import CONF_MODE, MODE_DEVICES, MODE_DIAGNOSTICS

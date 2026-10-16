@@ -937,8 +937,8 @@ def _block_document(
 ) -> dict | None:
     """Render a block read test for the published document, or None.
 
-    The measurement `src/sungrow_modbus/layout.py` is ever changed from, and it used to
-    exist only in the transcript -- the file a contributor is told to *keep*,
+    The measurement `src/sungrow_modbus/inverter/layout.py` is ever changed from, and it
+    used to exist only in the transcript -- the file a contributor is told to *keep*,
     because it carries their real address. So a submitted document had no
     block evidence in it at all, and a maintainer reading one could not see
     which of the integration's reads that device would fail.
@@ -1181,9 +1181,9 @@ def _advice(finding: block_test.Finding) -> str:
             "This reading came through a communication module, which forwards "
             "fewer measuring points than the inverter's own LAN port -- so this "
             "may be a forwarding limit rather than a register fault. Read the "
-            "same registers directly before touching src/sungrow_modbus/layout.py; "
-            "if they answer there, it belongs in transport capability gating "
-            "instead."
+            "same registers directly before touching "
+            "src/sungrow_modbus/inverter/layout.py; if they answer there, it "
+            "belongs in transport capability gating instead."
         )
     if finding.advice is Advice.NOT_NARROWED:
         # layout.py takes an exact register; offering it a fifteen-register
@@ -1200,8 +1200,8 @@ def _advice(finding: block_test.Finding) -> str:
             "This failed by timing out rather than by refusing. A timeout cannot "
             "tell a silent inverter from an answer lost on the way, so it is not "
             "evidence about the register -- do not add it to "
-            "src/sungrow_modbus/layout.py. Re-read these registers from a link "
-            "that fails fast."
+            "src/sungrow_modbus/inverter/layout.py. Re-read these registers from "
+            "a link that fails fast."
         )
     if finding.advice is Advice.ALREADY_ISOLATED:
         # It once printed nine recommendations to add what was already there,
@@ -1210,16 +1210,16 @@ def _advice(finding: block_test.Finding) -> str:
         return (
             "Read directly from the inverter and refused outright, so this is "
             "the device. It is **already isolated** in "
-            "src/sungrow_modbus/layout.py, which is why it cost only its own "
-            "field(s) rather than its whole tier -- nothing to do, and worth "
+            "src/sungrow_modbus/inverter/layout.py, which is why it cost only "
+            "its own field(s) rather than its whole tier -- nothing to do, and worth "
             "adding to doc/compatibility.md as another machine that refuses it."
         )
     return (
         "Read directly from the inverter and refused outright, so this is the "
         "device refusing. Add the field(s) these belong to to "
-        "src/sungrow_modbus/layout.py and quote the block read test above -- "
-        "that module is only ever added to from a measurement, and this is the "
-        "measurement."
+        "src/sungrow_modbus/inverter/layout.py and quote the block read test "
+        "above -- that module is only ever added to from a measurement, and "
+        "this is the measurement."
     )
 
 
@@ -1580,7 +1580,7 @@ def main(argv: list[str] | None = None) -> int:
         )
     _quiet_backend()
     try:
-        return asyncio.run(run(args))
+        return probe.run(run(args))
     except KeyboardInterrupt:
         if args.control_test == "yes":
             # Leave was given, so the run may have reached the control test,

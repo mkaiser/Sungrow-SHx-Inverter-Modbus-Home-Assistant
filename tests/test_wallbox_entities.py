@@ -28,7 +28,7 @@ from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from sungrow_modbus.fingerprint import stand_in
-from sungrow_modbus.wallbox_registers import COMPONENTS
+from sungrow_modbus.wallbox.registers import COMPONENTS
 
 from .conftest import SERIAL
 

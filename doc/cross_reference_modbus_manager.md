@@ -316,7 +316,7 @@ showing the dongle polling the pack internally on RTU slave 200 (`FC04`,
 start 10665, count 120) and re-exposing a *filtered* subset on the forwarded
 TCP unit. Their conclusion — treat a WiNet-S as a summary battery view, and
 expect no cell detail at 10756+ or module detail at 10821+ — is the same
-conclusion `battery_device.py` reached from the outside by measuring the cell
+conclusion `battery/device.py` reached from the outside by measuring the cell
 block refuse through a dongle at one house and answer with zeros at another.
 Two independent routes to one finding, and theirs names the mechanism.
 

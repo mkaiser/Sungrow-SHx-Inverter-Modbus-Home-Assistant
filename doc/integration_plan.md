@@ -138,7 +138,16 @@ InfluxDB and Grafana get advice and a script (`scripts/helpers/influx_migration.
 - **Home Assistant 2026.9's Modbus architecture**: the integration asks core
   for a unit (`async_get_unit`), so everything on one host and port shares one
   serialized connection. Core's `sofar` is the reference.
-- **A config entry is one Modbus endpoint** and the devices discovered on it.
+- **A config entry is one inverter, reached through one endpoint at a
+  time**, plus the devices discovered on that endpoint. Its unique id is the
+  inverter's serial, so the same inverter is never set up twice; the
+  endpoint is the owner's choice. **Reconfigure** moves the entry to another
+  address once the same serial answers there, and **Add integration** that
+  finds a configured inverter elsewhere offers the same move. Entity ids,
+  history and settings stay; sub-devices are found again on the new
+  endpoint; the survey's transport testimony is cleared. Two live entries
+  for one inverter are deliberately not offered: both would poll a machine
+  that grants very few sessions.
 - **Register knowledge is a library without HA imports**, published to PyPI as
   `sungrow-modbus` (OIDC trusted publishing, no stored token).
 - **Python `Component` classes are the register description.** `registers.py`
@@ -164,7 +173,7 @@ InfluxDB and Grafana get advice and a script (`scripts/helpers/influx_migration.
 - **The integration offers a dashboard and asks first.**
 - **Localisation follows Home Assistant**: modern ids take the interface
   language where HA says they should; legacy ids stay English.
-- **13074's write scale is measured per device** (`sungrow_modbus.export_scale`)
+- **13074's write scale is measured per device** (`sungrow_modbus.inverter.export_scale`)
   and stored with the firmware it was measured on.
 - **Delivery is HACS first**, through the preview channel until the merge.
 - **The brand mark is original**, not Sungrow's.

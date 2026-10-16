@@ -25,7 +25,7 @@ import pytest
 
 from sungrow_modbus.dump import WALLBOX_MASKED, masked
 from sungrow_modbus.wallbox import readings
-from sungrow_modbus.wallbox_registers import (
+from sungrow_modbus.wallbox.registers import (
     CHARGING_STATUS,
     COMPONENTS,
     MODELS,
@@ -201,7 +201,7 @@ def test_no_dump_block_splits_a_wallbox_string() -> None:
     from modbus_connection.model import StringField
 
     from sungrow_modbus.dump import BLOCK, WALLBOX_BANDS
-    from sungrow_modbus.wallbox_registers import COMPONENTS
+    from sungrow_modbus.wallbox.registers import COMPONENTS
 
     reads = [
         (space, start + offset, min(BLOCK, count - offset))
@@ -296,7 +296,7 @@ async def test_every_wallbox_read_starts_where_the_direct_path_answers() -> None
     time out on the wallbox's own address.
     """
     from sungrow_modbus.block_test import component_blocks
-    from sungrow_modbus.wallbox_registers import COMPONENTS
+    from sungrow_modbus.wallbox.registers import COMPONENTS
 
     for name, klass in COMPONENTS.items():
         for block in await component_blocks(name, klass):
@@ -318,7 +318,7 @@ def test_every_tls_dump_read_starts_where_the_wallbox_answers() -> None:
 def test_the_tls_dump_covers_every_field_the_integration_reads() -> None:
     """Nothing the integration decodes is missing from a direct-path dump."""
     from sungrow_modbus.dump import WALLBOX_TLS_BANDS
-    from sungrow_modbus.wallbox_registers import COMPONENTS
+    from sungrow_modbus.wallbox.registers import COMPONENTS
 
     covered = {
         (space, address)

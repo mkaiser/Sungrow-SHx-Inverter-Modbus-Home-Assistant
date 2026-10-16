@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from sungrow_modbus.smoothing import DelayOn, TimeWeightedAverage
+from sungrow_modbus.inverter.smoothing import DelayOn, TimeWeightedAverage
 
 
 def test_a_delay_reports_false_until_the_input_has_held() -> None:

@@ -14,8 +14,8 @@ from pathlib import Path
 from modbus_connection.model import Component
 import pytest
 
-from sungrow_modbus import registers
-from sungrow_modbus.layout import COUNTS, ISOLATE
+from sungrow_modbus.inverter import registers
+from sungrow_modbus.inverter.layout import COUNTS, ISOLATE
 
 ENTITY_MAP = Path(__file__).resolve().parent.parent / "doc" / "legacy_entity_map.json"
 
@@ -34,7 +34,7 @@ def _expected() -> dict[str, dict]:
 
 #: Kept empty on purpose. Another device's components do not belong in this
 #: module at all -- `registers.py` is generated from the *inverter's* map, and
-#: the SBR's components now live in `battery_registers.py` for exactly that
+#: the SBR's components now live in `battery/registers.py` for exactly that
 #: reason. This set was how they were excluded while they were still in here,
 #: and it stays as the place to name any future exception rather than
 #: inventing the mechanism again under pressure.

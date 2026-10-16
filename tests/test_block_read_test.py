@@ -3,7 +3,7 @@
 `sungrow_modbus.block_test` answers one question -- which read inside a
 component fails, and whether that is a register fault or another client
 competing for the inverter -- and its answers get written into
-`src/sungrow_modbus/layout.py`, which is only ever added to from a
+`src/sungrow_modbus/inverter/layout.py`, which is only ever added to from a
 measurement. So a wrong answer here becomes a permanent wrong fix.
 
 The terminal tool, `device-fingerprints/scripts/python/blocks.py`, shipped
@@ -345,7 +345,7 @@ def test_the_block_test_reads_only_the_inverters_own_components() -> None:
     21215 answer 0xFFFF or refuse at the inverter's unit whatever the pack and
     the charge point are doing. All eight would have failed, all eight would
     then have been narrowed at the cost of the narrowing budget, and all
-    eight would have been offered to `src/sungrow_modbus/layout.py` as
+    eight would have been offered to `src/sungrow_modbus/inverter/layout.py` as
     register faults.
     """
     from sungrow_modbus.addresses import device_components
@@ -365,7 +365,7 @@ def test_the_block_test_reads_only_the_inverters_own_components() -> None:
     )
     # Every polled inverter component is still tested, or the guard has gone
     # too far.
-    from sungrow_modbus.registers import COMPONENTS
+    from sungrow_modbus.inverter.registers import COMPONENTS
 
     assert {*COMPONENTS, "identity"} <= tested
 

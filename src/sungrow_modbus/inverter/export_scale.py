@@ -58,7 +58,7 @@ from modbus_connection import (
     ServerDeviceFailureError,
 )
 
-from .addresses import Address, field_address
+from ..addresses import Address, field_address
 
 #: What a multiplying firmware does to a written word.
 MULTIPLIER = 10

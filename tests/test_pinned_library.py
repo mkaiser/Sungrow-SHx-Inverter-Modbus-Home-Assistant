@@ -99,7 +99,9 @@ def test_a_wheel_that_has_everything_passes(tmp_path, capsys):
     # listed here, so this cannot drift from the integration it describes.
     wanted = check.unresolved_attributes(_wheel(tmp_path / "bare", {}))
     body = "".join(f"    {attr}: object\n" for attr in sorted(wanted))
-    modules["sungrow_modbus.device"] = f"class SungrowInverter:\n{body or '    pass\n'}"
+    modules["sungrow_modbus.inverter.device"] = (
+        f"class SungrowInverter:\n{body or '    pass\n'}"
+    )
 
     wheel = _wheel(tmp_path, modules)
     assert check.report(wheel, "test") == check.OK

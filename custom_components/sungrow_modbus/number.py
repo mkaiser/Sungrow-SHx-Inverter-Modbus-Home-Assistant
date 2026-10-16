@@ -22,8 +22,9 @@ from homeassistant.components.number import NumberEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
-from sungrow_modbus import FALLBACK_W, Capability, export_scale
+from sungrow_modbus import FALLBACK_W, Capability
 from sungrow_modbus.battery import ceiling as battery_ceiling
+from sungrow_modbus.inverter import export_scale
 
 from .const import (
     CONF_BATTERY_MAX_POWER,

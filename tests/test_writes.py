@@ -21,7 +21,7 @@ sys.path.insert(0, "scripts/generate/tables")
 from writes import NUMBERS, WRITABLE_FIELDS
 
 from sungrow_modbus import Capability
-from sungrow_modbus.registers import InverterFastHolding
+from sungrow_modbus.inverter.registers import InverterFastHolding
 
 YAML_PACKAGE = Path(__file__).resolve().parent.parent / "legacy" / "modbus_sungrow.yaml"
 

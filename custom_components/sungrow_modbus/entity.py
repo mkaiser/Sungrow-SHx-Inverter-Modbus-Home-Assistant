@@ -98,7 +98,7 @@ class SungrowSensorDescription(SungrowEntityDescription, SensorEntityDescription
     Home Assistant's `time_simple_moving_average`, which is what the YAML
     package's one `filter` entity asks for. Weighted by how long each value
     held rather than by how many samples arrived, so an inverter answering
-    irregularly does not skew it -- see `sungrow_modbus.smoothing`.
+    irregularly does not skew it -- see `sungrow_modbus.inverter.smoothing`.
     """
 
 

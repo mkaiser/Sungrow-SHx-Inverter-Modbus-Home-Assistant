@@ -1,6 +1,6 @@
 """Asking an inverter how it writes 13074, without changing what it holds.
 
-The probe in `sungrow_modbus.export_scale` makes one write to a real house's
+The probe in `sungrow_modbus.inverter.export_scale` makes one write to a real house's
 export limit. The claim that makes that acceptable is that the write is a
 no-op on one firmware and refused on the other, so **nothing changes on
 either**. That claim is what is tested hardest here: against a fake inverter
@@ -27,7 +27,7 @@ from modbus_connection import ServerDeviceBusyError, ServerDeviceFailureError
 import pytest
 
 from sungrow_modbus.addresses import Address
-from sungrow_modbus.export_scale import (
+from sungrow_modbus.inverter.export_scale import (
     LIMIT,
     MAXIMUM,
     MINIMUM,

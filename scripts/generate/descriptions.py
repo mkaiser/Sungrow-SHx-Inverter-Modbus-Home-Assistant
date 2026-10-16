@@ -3,7 +3,7 @@
 
 Five artefacts, one command each, all from tables rather than typed by hand:
 
-* `derived` -- the computed values in `sungrow_modbus.derived`, as the
+* `derived` -- the computed values in `sungrow_modbus.inverter.derived`, as the
   entities that replace the YAML package's `template:` sensors;
 * `numbers`, `switches`, `selects` -- one entity per row of the write table in
   [tables/writes.py](tables/writes.py), because a bound typed twice is a bound
@@ -114,7 +114,7 @@ def _formatted(text: str, filename: str) -> str:
 # --------------------------------------------------------------------------
 # derived: the computed values
 #
-# The arithmetic lives in `sungrow_modbus.derived`; this says which Home
+# The arithmetic lives in `sungrow_modbus.inverter.derived`; this says which Home
 # Assistant entity each computed value becomes, carrying the same unit, state
 # class and legacy name as the `template:` sensor it replaces.
 #
@@ -230,7 +230,8 @@ SMOOTHED: dict[str, tuple[str, float]] = {
 DERIVED_HEADER = '''"""Entity descriptions for the derived values, generated.
 
 Do not edit by hand: `scripts/generate/descriptions.py derived` writes this
-file, and CI checks it. The arithmetic itself lives in `sungrow_modbus.derived`.
+file, and CI checks it. The arithmetic itself lives in
+`sungrow_modbus.inverter.derived`.
 
 Each entry names the registers its value reads, which decides both the
 coordinator that writes it — the fastest tier among them, so a derived value
@@ -732,7 +733,7 @@ TARGETS: dict[str, Target] = {
         (COMPONENT / "derived_descriptions.py",),
         render_derived,
         True,
-        "sungrow_modbus.derived",
+        "sungrow_modbus.inverter.derived",
     ),
     "numbers": Target(
         (COMPONENT / "number_descriptions.py",), render_numbers, True, "the write table"

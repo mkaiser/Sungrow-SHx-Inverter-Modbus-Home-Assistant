@@ -489,3 +489,116 @@ async def test_6100_is_answered_refused_or_unanswered(raises, state) -> None:
             return [0xFFFF] * count
 
     assert await async_read_6100(Unit(), attempts=1) == state
+
+
+class _Source:
+    """A survey source that records the order it is asked in."""
+
+    def __init__(self, fail: dict | None = None) -> None:
+        self.asked: list[str] = []
+        self.fail = fail or {}
+
+    async def _answer(self, step: str, value):
+        self.asked.append(step)
+        if step in self.fail:
+            raise self.fail[step]
+        return value
+
+    async def identity(self):
+        return await self._answer("identity", ("A123456789", {"inverter": "X"}))
+
+    async def readings(self):
+        return await self._answer("readings", {"values": {"a": 1}})
+
+    async def probes(self):
+        return await self._answer(
+            "probes",
+            (
+                {"device type code (5000)": [0x0E0E]},
+                {"device type code (5000)": "present"},
+            ),
+        )
+
+    async def connection(self, survey):
+        assert survey.probe_states, "the connection is decided from the probes"
+        return await self._answer("connection", {"verdict": "direct"})
+
+    async def register_dump(self):
+        return await self._answer("register dump", {"input": {}})
+
+    async def battery(self, survey):
+        return await self._answer("battery", None)
+
+    async def wallbox(self, survey):
+        return await self._answer("wallbox", None)
+
+
+async def test_one_order_for_both_producers() -> None:
+    from sungrow_modbus.survey import Step, async_capability_survey
+
+    source = _Source()
+    survey = await async_capability_survey(source)
+    assert source.asked == [str(step) for step in Step]
+    assert survey.serial == "A123456789"
+    assert survey.connection == {"verdict": "direct"}
+    assert survey.failed == {}
+
+
+async def test_a_step_the_link_loses_costs_only_its_own_section() -> None:
+    from sungrow_modbus.survey import Step, async_capability_survey
+
+    source = _Source(fail={"register dump": TimeoutError(), "readings": OSError()})
+    lost: list[Step] = []
+    survey = await async_capability_survey(
+        source, on_failure=lambda step, _error: lost.append(step)
+    )
+    assert lost == [Step.READINGS, Step.REGISTER_DUMP]
+    assert survey.failed == {
+        Step.READINGS: "OSError",
+        Step.REGISTER_DUMP: "TimeoutError",
+    }
+    assert survey.readings is None and survey.register_dump is None
+    # Everything after the lost steps was still taken.
+    assert source.asked[-2:] == ["battery", "wallbox"]
+    assert survey.thin() == ["output type (5002)", "the decoded readings"]
+
+
+async def test_a_bug_in_a_step_is_not_mistaken_for_the_link() -> None:
+    from sungrow_modbus.survey import async_capability_survey
+
+    with pytest.raises(KeyError):
+        await async_capability_survey(_Source(fail={"probes": KeyError("x")}))
+
+
+async def test_salvage_waits_on_a_quiet_field_once_and_tells_the_next_narrowing() -> (
+    None
+):
+    """Three sweeps used to ask a quiet firmware string three times, 10 s each."""
+    from modbus_connection.model import Component, integer, string
+
+    from sungrow_modbus.model import Silent
+    from sungrow_modbus.survey import async_read_field_by_field
+
+    class Block(Component):
+        register_space = "input"
+        firmware = string(13249, 15)
+        power = integer(13280, signed=False)
+
+    asked: list[int] = []
+
+    class Unit:
+        async def read_input_registers(self, address: int, count: int) -> list[int]:
+            asked.append(address)
+            if address == 13249:
+                raise TimeoutError
+            return [7] * count
+
+    silent = Silent()
+    values, refused = await async_read_field_by_field(
+        Unit(), Block, pause=0, silent=silent
+    )
+
+    assert refused == ["firmware"]
+    assert values == {"power": 7}
+    assert asked.count(13249) == 1
+    assert silent.covers("input", 13250, 1)

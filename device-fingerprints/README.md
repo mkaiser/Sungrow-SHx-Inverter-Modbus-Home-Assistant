@@ -9,6 +9,7 @@ reads the same whichever of the two wrote it.
 
 | The package owns | Where |
 | --- | --- |
+| The order a survey reads in, and what a lost step costs (only its own section) | `survey.async_capability_survey`, given a `SurveySource` per producer |
 | Document shape, schema number, privacy (stand-in serials, address tail, masked dumps, `NEVER_PUBLISH`) | `fingerprint.assemble_document` (both producers), `publish_document` (the terminal's collected dicts), `attach_control_test` |
 | Sections: readings, battery pack, wallbox, firmware, connection | `fingerprint.readings_section`, `battery_pack_section`, `wallbox_section` / `wallbox_from_dump`, `firmware_section`, `connection_block` |
 | A wallbox read at its own address, and its filename | `fingerprint.wallbox_document`, `wallbox_label_for` |
@@ -422,7 +423,7 @@ So the size is named when the capacity lands within
 `CAPACITY_TOLERANCE_FRACTION` of exactly one model, and `battery-sungrow` still
 covers the case where it matches none. The module arrays are corroboration
 rather than the source: their layout is not in any Sungrow document here, and
-`battery.py`'s table is.
+`battery/power.py`'s table is.
 
 **Unit 2 counts as well as unit 200.** A WiNet-S forwards the pack to unit 2
 — the specification says "the battery communication address will be the WiNet
@@ -610,7 +611,7 @@ device:
 - a proxy rebuilds every request and response, so a frame quirk can be
   normalised away — or introduced. The padded frames at registers 2613 and
   2629 are exactly that class of finding, and they are why
-  [`src/sungrow_modbus/layout.py`](../../src/sungrow_modbus/layout.py) exists.
+  [`src/sungrow_modbus/inverter/layout.py`](../../src/sungrow_modbus/inverter/layout.py) exists.
 
 `unknown` is a real answer and the default. Somebody who does not know what a
 Modbus proxy is almost certainly has not installed one — but "probably not" is

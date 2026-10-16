@@ -111,8 +111,8 @@ async def test_an_absent_register_does_not_empty_its_whole_tier(
     a protocol error. They hold two firmware strings, and while they were
     pooled into `slowest_input`'s one 58-register read, those two absent
     registers left all 36 other slowest-tier fields permanently empty -- on
-    the maintainer's own inverter. `src/sungrow_modbus/layout.py` now reads each on its
-    own, so the cost of an absent register is that register.
+    the maintainer's own inverter. `src/sungrow_modbus/inverter/layout.py` now reads
+    each on its own, so the cost of an absent register is that register.
     """
     for address in (2612, 2628):
         unit.fail_read(

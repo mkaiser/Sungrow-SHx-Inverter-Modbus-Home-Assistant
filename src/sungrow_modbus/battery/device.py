@@ -26,9 +26,9 @@ from typing import TYPE_CHECKING
 
 from modbus_connection.model import Component
 
-from .battery import model_for_capacity
-from .battery_registers import SbrBatteryCells, SbrBatteryModules, SbrBatteryPack
-from .model import UpdateReport, present
+from ..model import UpdateReport, present
+from .power import model_for_capacity
+from .registers import SbrBatteryCells, SbrBatteryModules, SbrBatteryPack
 
 if TYPE_CHECKING:
     from modbus_connection import ModbusUnit

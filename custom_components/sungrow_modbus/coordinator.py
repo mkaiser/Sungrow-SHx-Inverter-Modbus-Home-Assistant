@@ -404,7 +404,7 @@ class SungrowWallboxCoordinator(SungrowSubDeviceCoordinator):
 
     async def _async_update_data(self) -> UpdateReport:
         """Poll the live block, and the rest every `SLOW_EVERY` firings."""
-        from sungrow_modbus.wallbox_device import FAST, SLOW
+        from sungrow_modbus.wallbox.device import FAST, SLOW
 
         if (paused := self._skip_while_paused()) is not None:
             # Deliberately before the counter moves. A paused firing is not a

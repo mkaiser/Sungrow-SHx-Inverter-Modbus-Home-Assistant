@@ -97,11 +97,11 @@ def test_no_unrecognised_serial_shaped_string_is_tracked(path: Path) -> None:
     )
 
 
-#: An integer that could be a register word: four or five digits, not part of
-#: a longer number, and not a key -- `"21200": 16690` and `{21200: 16690}`
-#: carry the address as a key, and decoding it would split every value from
-#: the next one.
-WORD = re.compile(r"""(?<![\d."'])(\d{4,5})(?![\d."']|\s*:)""")
+#: An integer that could be a register word: four or five decimal digits, or
+#: four hex digits after `0x`, not part of a longer number, and not a key --
+#: `"21200": 16690` and `{21200: 16690}` carry the address as a key, and
+#: decoding it would split every value from the next one.
+WORD = re.compile(r"""(?<![\w."'])(0[xX][0-9A-Fa-f]{4}|\d{4,5})(?![\w."']|\s*:)""")
 
 
 #: What may stand between two words of one value: a comma, whitespace, and
@@ -125,7 +125,8 @@ def _words_as_text(text: str) -> str:
         if end is not None and not SEPARATOR.fullmatch(text, end, match.start()):
             out.append(" ")
         end = match.end()
-        word = int(match.group(1))
+        found = match.group(1)
+        word = int(found, 16) if found[:2] in {"0x", "0X"} else int(found)
         high, low = word >> 8, word & 0xFF
         if not 0x20 < high < 0x7F or word > 0xFFFF:
             out.append(" ")
@@ -163,7 +164,7 @@ def test_no_serial_is_tracked_as_register_words(path: Path) -> None:
 
 
 def test_the_word_decoder_reads_a_serial_the_way_a_device_sends_it() -> None:
-    """Eleven characters in words, as a list or keyed by address, decode back.
+    """Eleven characters in words, as a list, keyed by address or in hex, decode back.
 
     Built at run time, so this file carries no serial-shaped literal of its
     own for the string check to find.
@@ -173,7 +174,8 @@ def test_the_word_decoder_reads_a_serial_the_way_a_device_sends_it() -> None:
     words = [int.from_bytes(padded[i : i + 2], "big") for i in range(0, 12, 2)]
     as_list = repr(words)
     as_dict = repr({str(21200 + i): word for i, word in enumerate(words)})
-    for form in (as_list, as_dict):
+    as_hex = ", ".join(f"0x{word:04X}" for word in words)
+    for form in (as_list, as_dict, as_hex):
         assert SERIAL_SHAPE.findall(_words_as_text(form)) == [expected]
 
 

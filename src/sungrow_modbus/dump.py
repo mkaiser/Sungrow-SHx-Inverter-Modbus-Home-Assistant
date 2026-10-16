@@ -30,6 +30,8 @@ import time
 
 from modbus_connection import ModbusError
 
+from .model import Silent
+
 #: Address bands worth dumping raw, with why each is here. Protocol
 #: addresses, so one below the register number in Sungrow's document.
 DUMP_BANDS: tuple[tuple[str, int, int, str], ...] = (
@@ -180,6 +182,7 @@ async def _async_narrow(
     size: int,
     into: dict[str, int | None],
     on_narrow: Narrowing | None = None,
+    silent: Silent | None = None,
 ) -> None:
     """Read a failed block one address at a time, recording what each one says.
 
@@ -193,14 +196,22 @@ async def _async_narrow(
     does not have a register says so in milliseconds -- and retrying 32 of them
     on a slow link costs minutes to learn nothing. An address that fails is
     recorded as `None`, which is a reading of "asked, and it would not say",
-    not a gap.
+    not a gap. An address `silent` already knows timed out is recorded so
+    without asking again.
     """
     for number, single in enumerate(range(address, address + size), 1):
+        if silent is not None and silent.covers(space, single, 1):
+            into[str(single)] = None
+            continue
         if on_narrow is not None:
             on_narrow(single, number, size)
         try:
             value = await read(space, single, 1)
-        except (ModbusError, TimeoutError, OSError):
+        except TimeoutError:
+            into[str(single)] = None
+            if silent is not None:
+                silent.note(space, single, 1)
+        except (ModbusError, OSError):
             into[str(single)] = None
         else:
             into[str(single)] = value[0]
@@ -214,6 +225,7 @@ async def async_dump(
     budget: float = BUDGET,
     block: int = BLOCK,
     bands: tuple[tuple[str, int, int, str], ...] = DUMP_BANDS,
+    silent: Silent | None = None,
 ) -> dict[str, dict[str, int | None] | list[str]]:
     """Read every band raw, one small block at a time.
 
@@ -225,7 +237,9 @@ async def async_dump(
     most of these bands, and the first version of this retried each one with a
     pause between attempts, which turned a few hundred reserved addresses into
     a run long enough to be killed. A dropped *block* is still retried,
-    because that is the case where the address might have answered.
+    because that is the case where the address might have answered. With
+    `silent`, the single-address fallback waits on each quiet register once
+    across the whole run, not once per read that touches it.
     """
     dump: dict[str, dict[str, int | None] | list[str]] = {}
     skipped: list[str] = []
@@ -259,7 +273,7 @@ async def async_dump(
             try:
                 words = await _async_read_retrying(read, space, address, size)
             except (ModbusError, TimeoutError, OSError):
-                await _async_narrow(read, space, address, size, into, on_narrow)
+                await _async_narrow(read, space, address, size, into, on_narrow, silent)
                 continue
             for index, word in enumerate(words):
                 into[str(address + index)] = word

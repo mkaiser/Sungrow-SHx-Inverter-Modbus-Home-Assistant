@@ -1468,7 +1468,7 @@ async def test_a_modbus_device_that_is_not_a_sungrow_is_not_claimed_as_one(
     assert who.error is not None
     assert "no serial at unit 1, 2, 3, 4, 5" in who.error
     # The exception type is in the message, because "refused" and "timed out"
-    # lead to different next steps -- see src/sungrow_modbus/layout.py.
+    # lead to different next steps -- see src/sungrow_modbus/inverter/layout.py.
     assert "ModbusExceptionError" in who.error
     assert connection.asked == [1, 2, 3, 4, 5, 247], (
         "every inverter candidate, then one look for an iHomeManager"
@@ -1514,7 +1514,7 @@ async def test_an_ihomemanager_probe_costs_nothing_when_an_inverter_answers(
     Most addresses in a survey are an inverter or a dongle. Asking unit 247 on
     each of them would be one more timeout per address on a link where a
     failed read costs ten seconds -- the fourth house in
-    `src/sungrow_modbus/layout.py`'s notes.
+    `src/sungrow_modbus/inverter/layout.py`'s notes.
     """
     import probe as probe_module
 

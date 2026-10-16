@@ -18,13 +18,13 @@ Twice now that has cost real users most of a tier:
   against two direct-LAN readings of the same register map where all 27
   blocks answer. So the tool's own output has to be read against the
   transport: this is a dongle not forwarding a measuring point, and no
-  amount of isolating registers in `src/sungrow_modbus/layout.py` will fix it.
+  amount of isolating registers in `src/sungrow_modbus/inverter/layout.py` will fix it.
 
 Those two are why the tool reports *how* a block failed rather than just
 that it did: the first has a fix in `layout.COUNTS`, the second in
 `layout.ISOLATE`, and a link that merely drops has no fix here at all.
 
-`src/sungrow_modbus/layout.py` is where the fix goes, and it takes two things
+`src/sungrow_modbus/inverter/layout.py` is where the fix goes, and it takes two things
 this tool produces: the register to isolate, and the length that actually
 reads. Guessing either from a document is how the wrong fix gets committed,
 which is why that module says to add to it only from a measurement.
@@ -55,6 +55,7 @@ from typing import NamedTuple
 
 from modbus_connection import ModbusTcpParams
 from modbus_connection.tmodbus import ModbusConnection
+import probe
 
 from sungrow_modbus import block_test, raw_client
 from sungrow_modbus.addresses import device_components
@@ -142,16 +143,16 @@ def _blocks_of(component: str | None) -> list[Block]:
     input 10740 and 21215 answer 0xFFFF or refuse there whatever the pack and
     the charge point are doing. Recording them into every survey once added
     eight guaranteed failures, each narrowed at the cost of the budget and
-    offered to `src/sungrow_modbus/layout.py` as a register fault. Naming a
+    offered to `src/sungrow_modbus/inverter/layout.py` as a register fault. Naming a
     component still selects it, so `-c sbr_battery_cells` works against a
     pack when that is what somebody is testing.
     """
     if component is None:
-        return asyncio.run(inverter_blocks())
+        return probe.run(inverter_blocks())
     known = _components()
     if component not in known:
         raise SystemExit(f"No such component: {component}.\nKnown: {', '.join(known)}")
-    return asyncio.run(component_blocks(component, known[component]))
+    return probe.run(component_blocks(component, known[component]))
 
 
 async def measure(
@@ -289,8 +290,8 @@ def report(outcome: Outcome, echo: Callable[[str], None] = print) -> None:
 
     if len(stopped) < len(outcome.culprits):
         echo(
-            "Put the fields these belong to in src/sungrow_modbus/layout.py, and "
-            "quote this"
+            "Put the fields these belong to in "
+            "src/sungrow_modbus/inverter/layout.py, and quote this"
         )
         echo("output in the comment: that module is only ever added to from a")
         echo("measurement, and this is the measurement.")
@@ -404,7 +405,7 @@ def main() -> int:
     # less, which is how registers the integration cannot read at all were
     # once measured as fine.
     print("  plan   the library's own block reads, recorded from the poll")
-    report(asyncio.run(_run(args, blocks)))
+    report(probe.run(_run(args, blocks)))
     return 0
 
 

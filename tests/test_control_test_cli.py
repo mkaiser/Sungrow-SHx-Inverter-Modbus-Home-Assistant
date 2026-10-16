@@ -17,9 +17,9 @@ from pathlib import Path
 from modbus_connection.mock import MockModbusUnit
 import pytest
 
-from sungrow_modbus import export_scale
-from sungrow_modbus.export_scale import Result
 from sungrow_modbus.fingerprint import SCHEMA
+from sungrow_modbus.inverter import export_scale
+from sungrow_modbus.inverter.export_scale import Result
 
 SCRIPT = (
     Path(__file__).resolve().parents[1]

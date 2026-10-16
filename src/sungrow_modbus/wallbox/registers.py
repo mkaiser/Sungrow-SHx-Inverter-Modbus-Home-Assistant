@@ -41,8 +41,8 @@ from __future__ import annotations
 
 from modbus_connection.model import Component, gauge, integer, string, uint32
 
-from .addresses import reg
-from .model import RegisterValue
+from ..addresses import reg
+from ..model import RegisterValue
 
 #: What register 21317's charging status codes mean.
 #:

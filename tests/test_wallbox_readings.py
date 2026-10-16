@@ -22,7 +22,7 @@ import pytest
 from sungrow_modbus.dump import WALLBOX_MASKED, masked
 from sungrow_modbus.fingerprint import stand_in
 from sungrow_modbus.wallbox import readings as decode, serial_stand_in
-from sungrow_modbus.wallbox_registers import CODES, COMPONENTS, CONFIDENCE
+from sungrow_modbus.wallbox.registers import CODES, COMPONENTS, CONFIDENCE
 
 #: The five marks `doc/wallbox_registers.md` defines, and no others.
 MARKS = {"three sources", "two sources", "measured here", "named elsewhere", "open"}

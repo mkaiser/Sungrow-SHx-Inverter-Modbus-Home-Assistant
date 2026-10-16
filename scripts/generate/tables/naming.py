@@ -216,8 +216,9 @@ OVERRIDES: dict[str, str] = {
     # it comes from community feedback in issue #554 and nobody here has
     # tested what it does. It stays a diagnostic number rather than becoming a
     # binary sensor because all three surveyed inverters read the same single
-    # value, so its enum is assumed and not observed. `src/sungrow_modbus/layout.py`
-    # carries the same warning where the component is described.
+    # value, so its enum is assumed and not observed.
+    # `src/sungrow_modbus/inverter/layout.py` carries the same warning where the
+    # component is described.
     "apl_shutdown_at_zero_raw": "Active power limitation shutdown at zero",
     # The two mode registers, now that a binary sensor decodes each. The
     # entity says whether limiting is happening; the ratio above says how
@@ -232,7 +233,7 @@ OVERRIDES: dict[str, str] = {
     # "Filtered" is also ambiguous where "smoothed" is not -- a filter might
     # reject outliers, or cut high frequencies, or drop readings -- and this
     # one is a 300-second time-weighted moving average, which is what
-    # `sungrow_modbus.smoothing` has always called smoothing. The module, the
+    # `sungrow_modbus.inverter.smoothing` has always called smoothing. The module, the
     # docs and the entity finally agree.
     "daily_consumed_energy_filtered": "Daily consumed energy (smoothed)",
     # `(delayed)` for the same reason and in the same grammar: the seven

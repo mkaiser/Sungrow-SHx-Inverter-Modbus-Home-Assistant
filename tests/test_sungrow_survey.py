@@ -267,7 +267,7 @@ def test_a_summary_after_the_control_test_says_what_it_found() -> None:
 @pytest.mark.parametrize(
     ("verdict", "expected"),
     [
-        ("direct to the inverter's LAN port", "src/sungrow_modbus/layout.py"),
+        ("direct to the inverter's LAN port", "src/sungrow_modbus/inverter/layout.py"),
         (
             "through a communication module (WiNet-S, WiNet-S2 or Logger)",
             "forwarding limit",
@@ -424,7 +424,7 @@ def test_a_range_the_budget_cut_short_is_not_offered_as_a_register() -> None:
     # And the command that finishes it, which is the only useful next step.
     assert "-r input:13282:13" in text
     assert "--narrow-budget 0" in text
-    assert "src/sungrow_modbus/layout.py" not in text
+    assert "src/sungrow_modbus/inverter/layout.py" not in text
 
 
 def test_a_timeout_only_failure_is_not_evidence_about_the_register() -> None:
@@ -450,7 +450,7 @@ def test_a_timeout_only_failure_is_not_evidence_about_the_register() -> None:
         )
     )
     assert "timing out rather than by refusing" in text
-    assert "do not add it to src/sungrow_modbus/layout.py" in text
+    assert "do not add it to src/sungrow_modbus/inverter/layout.py" in text
     assert "fails fast" in text
     assert "this is the device refusing" not in text
 
@@ -931,3 +931,34 @@ def test_control_hands_the_rest_to_the_control_test(monkeypatch) -> None:
 
     assert sungrow_survey.main(["control", HOST, "--restore", "x.json"]) == 0
     assert handed == [[HOST, "--restore", "x.json"]]
+
+
+def test_a_reset_connection_is_not_printed_and_anything_else_still_is() -> None:
+    """Windows reports a peer's reset during close as a loop error.
+
+    `[WinError 10054]` printed a traceback in the middle of identification
+    that changed nothing and read as a failure. Only that is kept quiet: any
+    other error the loop reports still reaches the default handler.
+    """
+    seen: list[dict] = []
+
+    class Loop:
+        def default_exception_handler(self, context: dict) -> None:
+            seen.append(context)
+
+    loop = Loop()
+    reset = {"message": "_call_connection_lost", "exception": ConnectionResetError()}
+    other = {"message": "something else", "exception": RuntimeError()}
+    probe._ignore_resets(loop, reset)
+    probe._ignore_resets(loop, other)
+    assert seen == [other]
+
+
+def test_the_scripts_run_with_the_handler_installed() -> None:
+    """`probe.run` returns the coroutine's result, with the handler set."""
+    import asyncio
+
+    async def handler_in_place() -> object:
+        return asyncio.get_running_loop().get_exception_handler()
+
+    assert probe.run(handler_in_place()) is probe._ignore_resets

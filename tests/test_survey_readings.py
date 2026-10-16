@@ -148,7 +148,7 @@ def test_the_library_reads_without_printing_and_reports_through_callbacks(
     survey's progress into a user's log. Everything a person sees comes back
     through the callbacks, for the caller to draw.
     """
-    from sungrow_modbus.registers import COMPONENTS
+    from sungrow_modbus.inverter.registers import COMPONENTS
     from sungrow_modbus.survey import async_decoded_readings
 
     components: list[str] = []

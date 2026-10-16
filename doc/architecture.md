@@ -29,7 +29,7 @@ flowchart TD
         hand["battery_descriptions.py, wallbox_descriptions.py<br/>source: their registers are not<br/>in the entity map"]
     end
 
-    lib["sungrow_modbus &mdash; the library, installed from PyPI<br/>no Home Assistant imports anywhere<br/><br/>registers: the inverter's map<br/>components: block reads, per tier<br/>layout: registers that must be read alone<br/>capabilities: what this device actually has<br/>derived: MPPT power, power-flow bits<br/>smoothing: delay_on, moving average<br/>battery, battery_registers, battery_device: the SBR pack<br/>wallbox, wallbox_registers, wallbox_device: the charge point<br/>discovery: LAN sweep, reverse DNS"]
+    lib["sungrow_modbus &mdash; the library, installed from PyPI<br/>no Home Assistant imports anywhere<br/><br/>inverter/: registers, components (block reads, per tier),<br/>layout (registers read alone), capabilities,<br/>derived and smoothing, export_scale<br/>battery/: the SBR pack &mdash; device, registers, discovery, power<br/>wallbox/: the charge point &mdash; device, registers, discovery, document<br/>discovery: LAN sweep, reverse DNS"]
 
     subgraph modbus["homeassistant.components.modbus &mdash; owns the connection"]
         direction TB
@@ -137,8 +137,8 @@ flowchart LR
 
     subgraph source["source, edited by hand"]
         direction TB
-        regs["src/sungrow_modbus/registers.py"]
-        layout["src/sungrow_modbus/layout.py<br/>where hardware<br/>contradicts the YAML"]
+        regs["src/sungrow_modbus/inverter/registers.py"]
+        layout["src/sungrow_modbus/inverter/layout.py<br/>where hardware<br/>contradicts the YAML"]
         sensors["sensor_descriptions.py"]
     end
 
@@ -178,13 +178,13 @@ register's length or a block's readability.
 
 **The battery and wallbox maps have no entity-map record.** The SBR's
 registers are in an opt-in file a user copy-pastes, and the wallbox's are in
-no Sungrow document at all, so `battery_registers.py`, `wallbox_registers.py`
+no Sungrow document at all, so `battery/registers.py`, `wallbox/registers.py`
 and their description modules are checked like this:
 
 | Hand-written | Checked against |
 | --- | --- |
-| `battery_registers.py` | `legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml`, address and scale per field — all forty of its sensors |
-| `wallbox_registers.py` | the raw words in a committed fingerprint, decoded independently by `probe.py`, field by field |
+| `battery/registers.py` | `legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml`, address and scale per field — all forty of its sensors |
+| `wallbox/registers.py` | the raw words in a committed fingerprint, decoded independently by `probe.py`, field by field |
 | `battery_descriptions.py`, `wallbox_descriptions.py` | every `field` resolves to a real field or property; no key collides across devices |
 
 That is the same discipline as the inverter's map: where nothing generates a
@@ -198,6 +198,15 @@ Home Assistant and without an inverter — which is most of the test suite, and
 runs in about a second. Core's `sofar` integration is the reference
 implementation for this shape.
 
+Inside it, **one subpackage per kind of device** -- `inverter/`, `battery/`,
+`wallbox/` -- each holding that device's map (`registers`), the object that
+reads it (`device`) and whatever only that device needs: how it is found on a
+unit, its capabilities, its derived values. What spans devices sits at the
+top: `addresses`, `discovery`, `dump`, the survey (`fingerprint`, `survey`)
+and the two tests (`block_test`, `control_test`). A change that concerns one
+device belongs in its subpackage; a second device that needs it is the cue to
+move it up.
+
 It also means the library is useful on its own: `device-fingerprints/scripts/python/probe.py`
 drives it directly to fingerprint an installation, with no Home Assistant
 anywhere in the process.
@@ -205,7 +214,12 @@ anywhere in the process.
 The survey is cut the same way. The library holds everything a capability
 document is made of -- the probes, the decoded-readings algorithm, each
 section's shape and the privacy rules that apply to it (`fingerprint.py`,
-`survey.py`) -- and prints, prompts and writes nothing. The terminal scripts
+`survey.py`) -- and prints, prompts and writes nothing. It also holds the **order** a survey
+reads in, `survey.async_capability_survey`: each producer hands it a source
+that knows how to collect each step -- raw from a terminal, from what the
+coordinators already polled in Home Assistant -- and the library takes the
+steps in one order and catches a step the link loses, so a dropped dump
+costs the dump and not the document. The terminal scripts
 add questions, a progress bar, a transcript and the file;
 `custom_components/sungrow_modbus/fingerprint.py` adds what only Home
 Assistant knows: the owner's answers from the entry's options, what its own

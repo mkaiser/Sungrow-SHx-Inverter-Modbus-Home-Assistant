@@ -31,7 +31,7 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
-from sungrow_modbus.battery_registers import SbrBatteryCells, SbrBatteryPack
+from sungrow_modbus.battery.registers import SbrBatteryCells, SbrBatteryPack
 
 from .conftest import SERIAL
 

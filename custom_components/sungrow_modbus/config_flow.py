@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from contextlib import suppress
 import logging
 from typing import Any
@@ -21,6 +21,7 @@ from homeassistant.components.modbus import async_get_temporary_unit
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import (
     ConfigEntry,
+    ConfigEntryState,
     ConfigFlow,
     ConfigFlowResult,
     OptionsFlow,
@@ -97,6 +98,7 @@ from .const import (
     CONF_REGISTER_DUMP,
     CONF_SURVEY_OTHER_INVERTER,
     CONF_SURVEY_OTHER_INVERTER_DETAIL,
+    CONF_SURVEY_TRANSPORT,
     CONF_UNIT_ID,
     CONF_WALLBOX_HOST,
     DEFAULT_EXTERNAL_PLACEMENT,
@@ -240,6 +242,39 @@ async def _async_probe(
     return inverter, direct
 
 
+#: What a connection is, in an entry's data: the address, the port and the
+#: Modbus unit. Everything else in `data` belongs to the inverter.
+ENDPOINT = (CONF_HOST, CONF_PORT, CONF_UNIT_ID)
+
+
+def _endpoint(data: Mapping[str, Any]) -> dict[str, Any]:
+    """Return the connection part of an entry's data, or of a probe's."""
+    return {key: data.get(key) for key in ENDPOINT}
+
+
+def _where(data: Mapping[str, Any]) -> str:
+    """Say where an endpoint is, the way the user typed it."""
+    return f"{data.get(CONF_HOST)}:{data.get(CONF_PORT)}, unit {data.get(CONF_UNIT_ID)}"
+
+
+#: Said before a move to the inverter's own LAN port, when a wallbox was
+#: being read through the dongle and has no address of its own configured.
+_WALLBOX_LOST = (
+    "\n\n**The wallbox goes quiet.** It is read through the WiNet-S today, and "
+    "the inverter's own LAN port does not reach it. Its entities stay, "
+    "unavailable, until **Wallbox address** in this entry's options points at "
+    "the wallbox itself."
+)
+
+
+def _loses_wallbox(entry: ConfigEntry, direct: bool | None) -> bool:
+    """Whether moving to a direct path leaves a dongle-read wallbox behind."""
+    if direct is not True or entry.options.get(CONF_WALLBOX_HOST):
+        return False
+    runtime = getattr(entry, "runtime_data", None)
+    return getattr(runtime, "wallbox", None) is not None
+
+
 class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a Sungrow Modbus config flow."""
 
@@ -282,6 +317,126 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         #: What this entry is for. Decided in the first step, because it
         #: decides whether the migration question is asked at all.
         self._mode = MODE_DEVICES
+        #: The entry to move, the endpoint to move it to, and whether that
+        #: endpoint is the inverter's own LAN port -- set when this flow finds
+        #: an inverter that is already set up somewhere else.
+        self._move: tuple[ConfigEntry, dict[str, Any], bool | None] | None = None
+
+    async def _async_claim(
+        self, serial: str, endpoint: Mapping[str, Any], direct: bool | None
+    ) -> ConfigFlowResult | None:
+        """Take this inverter for the flow, or offer to move its entry here.
+
+        The serial is the unique id, so one inverter is never set up twice.
+        Found again at the **same** endpoint, that is the end of it. Found at
+        another -- its own LAN port after a dongle, a new address -- it is the
+        owner's choice which path to use, and moving the entry keeps every
+        entity id and all of their history: they belong to the inverter, not
+        to the address it was reached through.
+        """
+        await self.async_set_unique_id(serial)
+        existing = self.hass.config_entries.async_entry_for_domain_unique_id(
+            DOMAIN, serial
+        )
+        if existing is None:
+            return None
+        if _endpoint(existing.data) == _endpoint(endpoint):
+            return self.async_abort(reason="already_configured")
+        self._move = (existing, _endpoint(endpoint), direct)
+        return await self.async_step_move()
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Point this entry at another connection to the same inverter.
+
+        Somebody lays a cable to the inverter that was reached through its
+        WiNet-S, or the router hands it a new address. The probe is the
+        config flow's, and it has to find **this** inverter there: another
+        serial is another machine, and switching to it would hand one
+        inverter's entities, history and settings to a different one.
+        """
+        entry = self._get_reconfigure_entry()
+        errors: dict[str, str] = {}
+        placeholders: dict[str, str] = {"current": _where(entry.data), "error": ""}
+        if user_input is not None:
+            try:
+                inverter, direct = await _async_probe(
+                    self.hass,
+                    user_input[CONF_HOST],
+                    user_input[CONF_PORT],
+                    user_input[CONF_UNIT_ID],
+                )
+            except (ModbusError, HomeAssistantError) as err:
+                errors["base"] = "cannot_connect"
+                placeholders["error"] = str(err)
+            else:
+                if inverter.serial_number is None:
+                    errors["base"] = "no_serial_number"
+                elif inverter.serial_number != entry.unique_id:
+                    return self.async_abort(
+                        reason="wrong_device",
+                        description_placeholders={
+                            "title": entry.title,
+                            "model": inverter.model or DEFAULT_NAME,
+                        },
+                    )
+                elif _endpoint(user_input) == _endpoint(entry.data):
+                    return self.async_abort(reason="connection_unchanged")
+                else:
+                    self._move = (entry, _endpoint(user_input), direct)
+                    return await self.async_step_move()
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=self.add_suggested_values_to_schema(
+                STEP_USER_DATA_SCHEMA, user_input or _endpoint(entry.data)
+            ),
+            errors=errors,
+            description_placeholders=placeholders,
+        )
+
+    async def async_step_move(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Say what moving the entry changes, and move it when confirmed.
+
+        Sub-devices are found again on the new endpoint at the reload. The
+        SBR follows by itself -- unit 200 on a cable, 2 through a dongle --
+        but a wallbox the dongle was carrying is not reachable through the
+        inverter's own LAN port, so that is said before, not discovered
+        after. The owner's transport answer for the survey described the old
+        path, so it goes.
+        """
+        assert self._move is not None
+        entry, endpoint, direct = self._move
+        if user_input is not None:
+            options = {
+                key: value
+                for key, value in entry.options.items()
+                if key != CONF_SURVEY_TRANSPORT
+            }
+            loaded = entry.state is ConfigEntryState.LOADED
+            self.hass.config_entries.async_update_entry(
+                entry, data={**entry.data, **endpoint}, options=options
+            )
+            if not loaded:
+                # The update listener reloads a loaded entry. One whose old
+                # address had stopped answering never got that far, and is
+                # the usual reason somebody is here.
+                self.hass.config_entries.async_schedule_reload(entry.entry_id)
+            return self.async_abort(
+                reason="connection_moved",
+                description_placeholders={"title": entry.title},
+            )
+        return self.async_show_form(
+            step_id="move",
+            description_placeholders={
+                "title": entry.title,
+                "old": _where(entry.data),
+                "new": _where(endpoint),
+                "wallbox": _WALLBOX_LOST if _loses_wallbox(entry, direct) else "",
+            },
+        )
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -649,8 +804,12 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             if user_input[CONF_HOST] == NOT_LISTED:
                 return await self.async_step_manual()
             found = self._found[user_input[CONF_HOST]]
-            await self.async_set_unique_id(found["serial"])
-            self._abort_if_unique_id_configured()
+            if (
+                claimed := await self._async_claim(
+                    found["serial"], found, found.get("direct")
+                )
+            ) is not None:
+                return claimed
             self._data = {
                 CONF_HOST: found[CONF_HOST],
                 CONF_PORT: found[CONF_PORT],
@@ -832,9 +991,11 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                     placeholders["code"] = (
                         "unknown" if code is None else f"0x{code:04X}"
                     )
+                elif (
+                    claimed := await self._async_claim(serial, user_input, direct)
+                ) is not None:
+                    return claimed
                 else:
-                    await self.async_set_unique_id(serial)
-                    self._abort_if_unique_id_configured()
                     self._data = dict(user_input)
                     self._title = inverter.model or DEFAULT_NAME
                     # `_found` is what `_async_measured` reads to tell the

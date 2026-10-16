@@ -93,7 +93,7 @@ async def test_the_budget_says_which_bands_it_never_reached() -> None:
 
     A document whose dump quietly stops at band four is worse than one that
     says it stopped: the missing addresses read as refusals, and refusals are
-    what this project changes `src/sungrow_modbus/layout.py` from.
+    what this project changes `src/sungrow_modbus/inverter/layout.py` from.
     """
 
     async def read(space: str, address: int, count: int) -> list[int]:
@@ -128,3 +128,35 @@ def test_masking_blanks_rather_than_removes() -> None:
     assert out["input"] == {"4989": None, "4990": None, "5000": 7}
     # And the original is untouched, so a caller can still use what it read.
     assert dump["input"]["4989"] == 0x4131
+
+
+async def test_a_quiet_address_is_waited_on_once_in_a_run() -> None:
+    """A timeout is noted, and no later fallback read waits on it again.
+
+    fwitten's master goes quiet at four registers instead of refusing them, and
+    every read that touched one waited out the whole timeout: about 39 minutes
+    a survey. A refusal is still asked each time, because it costs nothing.
+    """
+    from sungrow_modbus.model import Silent
+
+    quiet, refused = 117, 120
+    asked: list[int] = []
+
+    async def read(space: str, address: int, count: int) -> list[int]:
+        if count == 1:
+            asked.append(address)
+        if address <= quiet < address + count:
+            raise TimeoutError
+        if address <= refused < address + count:
+            raise ModbusError("illegal data address")
+        return [address + offset for offset in range(count)]
+
+    silent = Silent()
+    first = await async_dump(read, bands=BANDS, silent=silent)
+    second = await async_dump(read, bands=BANDS, silent=silent)
+
+    assert first["input"][str(quiet)] is None
+    assert second["input"][str(quiet)] is None
+    assert second["input"]["118"] == 118
+    assert asked.count(quiet) == 1
+    assert asked.count(refused) == 2

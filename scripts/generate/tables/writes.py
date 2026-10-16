@@ -79,7 +79,7 @@ class Number(TypedDict, total=False):
     V1.1.11: "the charging and discharging power range is from 0 to BDC rated
     power (register 5628)". That is the *inverter's* ceiling; the pack has its
     own, and the lower of the two is the real one. Resolved at runtime — see
-    `battery.py` for where each candidate comes from.
+    `battery/power.py` for where each candidate comes from.
     """
 
 
@@ -395,7 +395,7 @@ SELECTS: tuple[Select, ...] = (
 #: Start/Stop. They are different address spaces, so the writable field is not
 #: `running_state_raw` -- that one is in the input space and the library
 #: rightly refuses to write it, which is how this was noticed. The holding-side
-#: field is hand-written in `sungrow_modbus.components.InverterControl`,
+#: field is hand-written in `sungrow_modbus.inverter.components.InverterControl`,
 #: because nothing reads it and it therefore has no entity and no tier.
 START_STOP = {
     "component": "control",

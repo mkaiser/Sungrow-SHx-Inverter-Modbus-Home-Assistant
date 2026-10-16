@@ -1074,6 +1074,37 @@ async def test_the_run_writes_the_export_limit_at_the_factor_the_device_states(
     assert unit.holding[EXPORT_LIMIT_ADDRESS] == 11880
 
 
+async def test_a_simulator_is_written_one_to_one_and_reports_no_finding() -> None:
+    """A simulator stores the word as handed, so it is written as one.
+
+    Its seed holds an export limit of 1 W in bounds 0-10000 W, where the scale
+    probe declines to ask. Divided by ten, the run read the simulator's own
+    arithmetic back as a wrong slope and exited 4 -- a finding from a device
+    that can produce none.
+    """
+    from modbus_connection.mock import MockModbusConnection
+
+    from .conftest import SH10RT_HOLDING_REGISTERS, SH10RT_INPUT_REGISTERS
+
+    unit = MockModbusConnection().for_unit(1)
+    unit.input = dict(SH10RT_INPUT_REGISTERS)
+    unit.holding = dict(SH10RT_HOLDING_REGISTERS)
+    unit.input[5621] = 0
+    unit.input[5622] = 1000
+    unit.holding[EXPORT_LIMIT_ADDRESS] = 1
+    unit.holding[EXPORT_MODE_ADDRESS] = 0xAA
+    inverter = SungrowInverter(unit)
+    await inverter.async_update()
+    run = ControlTest(inverter, options=Options(simulated=True), clock=FakeClock())
+    await run._preflight()
+
+    rows = await run._readback()
+
+    row = next(row for row in rows if row.field == "export_power_limit")
+    assert row.verdict == MATCH, row
+    assert run.export_write_scale == 1
+
+
 async def test_the_restore_still_puts_back_the_word_on_a_firmware_that_multiplies(
     full_unit: MockModbusUnit,
 ) -> None:

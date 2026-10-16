@@ -24,16 +24,18 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from collections.abc import Coroutine
 import contextlib
 from datetime import UTC, datetime
 import ipaddress
 import json
+import logging
 from pathlib import Path
 import shlex
 import socket
 import sys
 import time
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 from modbus_connection import (
     ModbusError,
@@ -66,7 +68,7 @@ from sungrow_modbus import (
 )
 from sungrow_modbus.addresses import declared_field, field_address
 from sungrow_modbus.battery import PACK_UNITS, PACK_VOLTAGE
-from sungrow_modbus.battery_device import (
+from sungrow_modbus.battery.device import (
     COMPONENTS as BATTERY_COMPONENTS,
     PUBLISHED_NAMES as BATTERY_NAMES,
     SURVEY_COMPONENTS as BATTERY_SURVEY_COMPONENTS,
@@ -91,7 +93,8 @@ from sungrow_modbus.fingerprint import (
     transport_contradiction,
     transport_verdict,  # noqa: F401
 )
-from sungrow_modbus.model import words_text
+from sungrow_modbus.model import Silent, words_text
+from sungrow_modbus.survey import CapabilitySurvey, Step, async_capability_survey
 
 #: Where every file this folder's tools write goes: beside the scripts,
 #: whichever directory they were started from. `.gitignore` covers the names
@@ -450,11 +453,11 @@ async def cmd_units(args: argparse.Namespace) -> int:
 #: section says what the wallbox *is* and what it is *doing* rather than only
 #: which addresses answered. 16 added `block_read_test`: which of the
 #: integration's block reads this device answered, which never did, and which
-#: answered only sometimes. That measurement is the one `src/sungrow_modbus/layout.py`
-#: is ever changed from, and until now it existed only in the transcript -- the
-#: file a contributor is told to keep, because it carries their real address.
-#: So a submitted document carried no block evidence at all. 15 added
-#: `battery_pack`, which closes the same
+#: answered only sometimes. That measurement is the one
+#: `src/sungrow_modbus/inverter/layout.py` is ever changed from, and until now it
+#: existed only in the transcript -- the file a contributor is told to keep, because it
+#: carries their real address. So a submitted document carried no block evidence at all.
+#: 15 added `battery_pack`, which closes the same
 #: gap for the SBR: the survey probed unit 200 and unit 2 with a
 #: two-register read, recorded "present", and stopped -- so no document
 #: anywhere carried a single battery reading, and whether a WiNet-S withholds
@@ -774,6 +777,7 @@ async def _async_dump_bands(
     budget: float = 600.0,
     bands: tuple = DUMP_BANDS,
     what: str = "register dump",
+    silent: Silent | None = None,
 ) -> dict:
     """Read every band raw through `sungrow_modbus.dump.async_dump`, with a bar.
 
@@ -816,6 +820,7 @@ async def _async_dump_bands(
             budget=budget,
             block=block,
             bands=bands,
+            silent=silent,
         )
     finally:
         bar.finish()
@@ -856,7 +861,9 @@ async def _async_battery_readings(connection, unit_id: int) -> dict[str, object]
     )
 
 
-async def _async_decoded_readings(unit, passes: int = 8) -> dict[str, object]:
+async def _async_decoded_readings(
+    unit, passes: int = 8, silent: Silent | None = None
+) -> dict[str, object]:
     """Return every register the integration reads, decoded, with a bar.
 
     `sungrow_modbus.survey.async_decoded_readings` reads; this draws it.
@@ -874,6 +881,7 @@ async def _async_decoded_readings(unit, passes: int = 8) -> dict[str, object]:
             f"{answered} of {total} components"
         ),
         on_note=note,
+        silent=silent,
     )
 
 
@@ -1143,12 +1151,229 @@ def _save(directory: Path, label: str, raw: dict, fingerprint: dict) -> list[Pat
     return [path]
 
 
+class _TerminalSource:
+    """How a terminal collects each step of a survey: raw, and out loud.
+
+    The order is the library's (`async_capability_survey`); what is here is
+    the reading and the lines a contributor watches go by. Nothing is polled
+    yet when a terminal survey runs, so the identity and the readings are
+    read, not looked up.
+    """
+
+    def __init__(self, conn, args: argparse.Namespace, fingerprint: dict) -> None:
+        self.conn = conn
+        self.unit = conn.for_unit(args.unit)
+        self.args = args
+        self.fingerprint = fingerprint
+        # One record for the whole run, so a register that went quiet while
+        # the readings were salvaged is not waited on again by the dump.
+        self.silent = Silent()
+
+    async def identity(self) -> tuple[str | None, dict]:
+        serial = None
+        try:
+            space, start, count = field_address("serial_number")
+            words = await _async_read_retrying(
+                _reader(self.unit, space), start, count, IDENTITY_ATTEMPTS
+            )
+            serial = words_text(words)
+            # Both, so that somebody about to send the file can see exactly
+            # what leaves the building in place of their serial.
+            print(f"  {'serial':<38}{serial}  (anonymized to {stand_in(serial)})")
+        except (ModbusError, TimeoutError, OSError) as err:
+            print(f"  {'serial':<38}unreadable ({type(err).__name__})")
+
+        # Firmware first, because it is what makes two fingerprints
+        # comparable: which registers a device answers moves between versions.
+        firmware = await async_read_firmware(
+            self.unit,
+            on_string=lambda name, value: print(f"  {'firmware ' + name:<38}{value!r}"),
+        )
+        return serial, firmware
+
+    async def readings(self) -> dict:
+        # Every register the integration reads, decoded. 23 block reads for
+        # 105 fields, so the wider net costs almost nothing.
+        readings = await _async_decoded_readings(
+            self.unit, self.args.passes, silent=self.silent
+        )
+        values = readings["values"]
+        answered = sum(1 for value in values.values() if value is not None)
+        missed = readings["components_that_did_not_answer"]
+        note = f", {len(missed)} component(s) missed" if missed else ""
+        print(f"  {'decoded readings':<38}{answered} of {len(values)} fields{note}")
+        return readings
+
+    async def probes(self) -> tuple[dict, dict]:
+        def probe_attempts(label: str) -> int:
+            return (
+                IDENTITY_ATTEMPTS
+                if label.startswith(("device type", "output type", "battery capacity"))
+                else 3
+            )
+
+        values_by_label, states = await async_probe_fields(
+            self.unit, attempts=probe_attempts
+        )
+        for label, state in states.items():
+            values = values_by_label.get(label)
+            if values is None:
+                print(f"  {label:<38}{state}")
+                continue
+            if all(v in UNAVAILABLE for v in values):
+                print(f"  {label:<38}unavailable (0x{values[0]:04X})")
+                continue
+            note = ""
+            if label.startswith("device type"):
+                note = f"  -> 0x{values[0]:04X}"
+                # The model and phase are capability facts, not private ones.
+                self.fingerprint["device_type_code"] = f"0x{values[0]:04X}"
+            elif label.startswith("output type"):
+                note = f"  -> {OUTPUT_TYPES.get(values[0], 'unknown')}"
+                self.fingerprint["output_type"] = OUTPUT_TYPES.get(values[0], "unknown")
+            print(f"  {label:<38}{values}{note}")
+
+        # Devices that live on their own unit ids behind the same endpoint.
+        def sibling(label: str, values: list[int] | None) -> None:
+            unit_word, other_unit, name = label.split(" ", 2)
+            if values is None:
+                print(f"  {unit_word} {other_unit:<4} {name:<32} no answer")
+                return
+            # A device type code is a hex code in Sungrow's document, in the
+            # model table, and in `device.device_type_code` -- so [3598] was
+            # the one place it had to be converted by hand to be looked up.
+            note = (
+                " -> " + ", ".join(f"0x{value:04X}" for value in values)
+                if "device type code" in name
+                else ""
+            )
+            print(f"  {unit_word} {other_unit:<4} {name:<32} {list(values)}{note}")
+
+        sibling_values, sibling_states = await async_probe_siblings(
+            self.conn.for_unit, attempts=IDENTITY_ATTEMPTS, on_probe=sibling
+        )
+        return {**values_by_label, **sibling_values}, {**states, **sibling_states}
+
+    async def connection(self, survey: CapabilitySurvey) -> dict:
+        # The connection type, from the two signals the specification gives
+        # rather than from asking the user -- who mostly does not know, and
+        # reasonably confuses a WiNet-S with the inverter's own LAN port.
+        connection = await _async_connection(
+            self.unit, self.args.host, survey.firmware, ModbusError
+        )
+        transport = self.args.transport
+        if transport:
+            connection["reported_by_hand"] = transport
+            # A disagreement between what the contributor reports and what the
+            # signals measured is evidence about the *signals* rather than
+            # about this house, and both have been caught out. It is said
+            # here, at the moment it can be acted on, rather than stored: a
+            # stored comparison of two values in the same file is neither
+            # what a person typed nor what a wire said, and goes stale when
+            # the verdict logic changes. Somebody who has just typed the wrong
+            # cable can retype it; somebody whose hardware really contradicts
+            # the specification has found the interesting case and can say so
+            # in --comment. A measurement that concluded nothing does not
+            # disagree.
+            contradiction = transport_contradiction(
+                str(connection.get("verdict", "")), transport
+            )
+            if contradiction is not None:
+                measured, _said = contradiction
+                print(
+                    f"\n  WARNING: you reported {transport!r}, but the "
+                    f"registers say {measured!r}.\n"
+                    "  Register 6100 has agreed with the reported transport on "
+                    "every reading so far,\n"
+                    "  so this is worth a second look -- and worth a --comment "
+                    "if the hardware really\n"
+                    "  does contradict it.\n"
+                )
+        print(f"  {'connection':<38}{effective_verdict(connection)}")
+        return connection
+
+    async def register_dump(self) -> dict | None:
+        if not self.args.dump:
+            return None
+        print(f"  {'register dump':<38}reading {len(DUMP_BANDS)} bands...")
+        dump = await _async_dump_bands(self.unit, silent=self.silent)
+        bands = [values for values in dump.values() if isinstance(values, dict)]
+        answered = sum(
+            1 for values in bands for value in values.values() if value is not None
+        )
+        total = sum(len(values) for values in bands)
+        if total:
+            print(f"  {'register dump':<38}{answered} of {total} addresses")
+        return dump
+
+    async def battery(self, survey: CapabilitySurvey) -> dict | None:
+        # The battery's own registers, on whichever unit answered for it.
+        # Seventeen registers, so it is not behind the dump question either.
+        states = survey.probe_states
+        for unit_id in PACK_UNITS:
+            if slave_inverter_at(states, unit_id) and (
+                states.get(f"unit {unit_id} SBR battery module block") == "present"
+            ):
+                print(
+                    f"  {'battery readings':<38}unit {unit_id} is an inverter, "
+                    "not a pack"
+                )
+        pack_unit = battery_pack_unit(states)
+        if pack_unit is None:
+            return None
+        print(f"  {'battery readings':<38}unit {pack_unit}, 17 registers...")
+        readings = await _async_battery_readings(self.conn, pack_unit)
+        got = len(readings.get("values") or {})
+        missed = readings.get("components_that_did_not_answer") or []
+        print(
+            f"  {'battery readings':<38}{got} values"
+            + (f", missed {', '.join(missed)}" if missed else "")
+        )
+        return {"unit": pack_unit, "readings": readings}
+
+    async def wallbox(self, survey: CapabilitySurvey) -> dict | None:
+        # The wallbox's own register space, whenever one answered. Read
+        # unconditionally rather than behind the dump question, because that
+        # question is about the inverter's 1510 addresses and this is 206:
+        # a wallbox is rare, its registers have no public document at all,
+        # and a fingerprint that recorded only "a wallbox answered" was
+        # throwing away the whole reason to have found it.
+        wallbox_at = wallbox_unit(survey.probe_states)
+        if wallbox_at is None:
+            return None
+        print(f"  {'wallbox dump':<38}unit {wallbox_at}, 206 addresses...")
+        dump = await _async_dump_bands(
+            self.conn.for_unit(wallbox_at), bands=WALLBOX_BANDS, what="wallbox dump"
+        )
+        print(
+            f"  {'wallbox dump':<38}{register_dump.answered(dump)} addresses answered"
+        )
+        return {"unit": wallbox_at, "register_dump": dump}
+
+
+#: What a terminal says when the link loses a step, on the step's own line.
+_LOST = {
+    Step.READINGS: ("decoded readings", "NONE READ ({error})"),
+    Step.REGISTER_DUMP: (
+        "register dump",
+        "stopped early ({error}); the document is written without it",
+    ),
+    Step.BATTERY: ("battery readings", "failed ({error})"),
+    Step.WALLBOX: ("wallbox dump", "stopped early ({error})"),
+}
+
+
+def _lost(step: Step, error: BaseException) -> None:
+    """Say which step the link lost; the survey carries on without it."""
+    label, text = _LOST.get(step, (str(step), "failed ({error})"))
+    print(f"  {label:<38}{text.format(error=type(error).__name__)}")
+
+
 async def capabilities(args: argparse.Namespace) -> Reading:
     """Print one device's capability fingerprint, for comparing setups."""
     conn = ModbusConnection(
         ModbusTcpParams(host=args.host, port=args.port), timeout=args.timeout
     )
-    unit = conn.for_unit(args.unit)
     raw: dict[str, object] = {
         "host": args.host,
         "port": args.port,
@@ -1185,237 +1410,30 @@ async def capabilities(args: argparse.Namespace) -> Reading:
     }
     print(f"{args.host}:{args.port} unit {args.unit}")
     try:
-        try:
-            space, start, count = field_address("serial_number")
-            serial = await _async_read_retrying(
-                _reader(unit, space), start, count, IDENTITY_ATTEMPTS
-            )
-            decoded = words_text(serial)
-            raw["serial"] = decoded
-            # Both, so that somebody about to send the file can see exactly
-            # what leaves the building in place of their serial.
-            print(f"  {'serial':<38}{decoded}  (anonymized to {stand_in(decoded)})")
-        except (ModbusError, TimeoutError, OSError) as err:
-            print(f"  {'serial':<38}unreadable ({type(err).__name__})")
-
-        # Firmware first, because it is what makes two fingerprints
-        # comparable: which registers a device answers moves between versions.
-        firmware = await async_read_firmware(
-            unit,
-            on_string=lambda name, value: print(f"  {'firmware ' + name:<38}{value!r}"),
+        survey = await async_capability_survey(
+            _TerminalSource(conn, args, fingerprint), on_failure=_lost
         )
-        raw["firmware"] = firmware
-
-        # Every register the integration reads, decoded. 23 block reads for
-        # 105 fields, so the wider net costs almost nothing.
-        try:
-            raw["readings"] = await _async_decoded_readings(unit, args.passes)
-            values = raw["readings"]["values"]
-            answered = sum(1 for value in values.values() if value is not None)
-            missed = raw["readings"]["components_that_did_not_answer"]
-            note = f", {len(missed)} component(s) missed" if missed else ""
-            print(f"  {'decoded readings':<38}{answered} of {len(values)} fields{note}")
-        except (ModbusError, TimeoutError, OSError) as err:
-            # Nothing, not "incomplete". The distinction matters: an empty
-            # readings block is the one part of the document a reader cannot
-            # tell is missing by looking at it.
-            print(f"  {'decoded readings':<38}NONE READ ({type(err).__name__})")
-
-        if args.dump:
-            print(f"  {'register dump':<38}reading {len(DUMP_BANDS)} bands...")
-            # Guarded, like the readings above it. `_async_dump_bands`
-            # tolerates a band and even a single address failing, so what
-            # escapes here is the link itself going away -- and the one
-            # `try` around this whole function has no `except`, only a
-            # `finally`, so an escape would sail past the save step and
-            # discard a minute of reading that had already succeeded. The
-            # dump is the optional extra; it must not cost the document.
-            try:
-                raw["register_dump"] = await _async_dump_bands(unit)
-            except (ModbusError, TimeoutError, OSError) as err:
-                print(
-                    f"  {'register dump':<38}stopped early "
-                    f"({type(err).__name__}); the document is written without it"
-                )
-            bands = [
-                values
-                for values in (raw.get("register_dump") or {}).values()
-                if isinstance(values, dict)
-            ]
-            answered = sum(
-                1 for values in bands for value in values.values() if value is not None
-            )
-            total = sum(len(values) for values in bands)
-            if total:
-                print(f"  {'register dump':<38}{answered} of {total} addresses")
-
-        # The connection type, from the two signals the specification gives
-        # rather than from asking the user -- who mostly does not know, and
-        # reasonably confuses a WiNet-S with the inverter's own LAN port.
-        raw["connection"] = await _async_connection(
-            unit, args.host, firmware, ModbusError
-        )
-        if args.transport:
-            raw["connection"]["reported_by_hand"] = args.transport
-            # A disagreement between what the contributor reports and what the
-            # signals measured is worth surfacing: it is evidence about the
-            # *signals* rather than about this house, and both have been
-            # caught out. But it was a stored field, and a stored comparison
-            # of two values in the same file is the thing the `user_inputs`
-            # split exists to stop -- it is neither what a person typed nor
-            # what a wire said, it goes stale if the verdict logic changes,
-            # and a reader can recompute it in a second.
-            #
-            # So it is said here, at the moment it can be acted on. Somebody
-            # who has just typed the wrong cable can retype it; somebody whose
-            # hardware really contradicts the specification has found the
-            # interesting case and can say so in --comment.
-            #
-            # A measurement that concluded nothing does not disagree.
-            contradiction = transport_contradiction(
-                str(raw["connection"].get("verdict", "")), args.transport
-            )
-            if contradiction is not None:
-                measured, _said = contradiction
-                print(
-                    f"\n  WARNING: you reported {args.transport!r}, but the "
-                    f"registers say {measured!r}.\n"
-                    "  Register 6100 has agreed with the reported transport on "
-                    "every reading so far,\n"
-                    "  so this is worth a second look -- and worth a --comment "
-                    "if the hardware really\n"
-                    "  does contradict it.\n"
-                )
-        verdict = effective_verdict(raw["connection"])
-        print(f"  {'connection':<38}{verdict}")
-
-        def probe_attempts(label: str) -> int:
-            return (
-                IDENTITY_ATTEMPTS
-                if label.startswith(("device type", "output type", "battery capacity"))
-                else 3
-            )
-
-        probe_values, probe_states = await async_probe_fields(
-            unit, attempts=probe_attempts
-        )
-        for label, state in probe_states.items():
-            values = probe_values.get(label)
-            fingerprint["registers"][label] = state
-            if values is None:
-                print(f"  {label:<38}{state}")
-                continue
-            raw["registers"][label] = values
-            if all(v in UNAVAILABLE for v in values):
-                print(f"  {label:<38}unavailable (0x{values[0]:04X})")
-                continue
-            note = ""
-            if label.startswith("device type"):
-                note = f"  -> 0x{values[0]:04X}"
-                # The model and phase are capability facts, not private ones.
-                fingerprint["device_type_code"] = f"0x{values[0]:04X}"
-            elif label.startswith("output type"):
-                note = f"  -> {OUTPUT_TYPES.get(values[0], 'unknown')}"
-                fingerprint["output_type"] = OUTPUT_TYPES.get(values[0], "unknown")
-            print(f"  {label:<38}{values}{note}")
-
-        # Devices that live on their own unit ids behind the same endpoint.
-        def sibling(label: str, values: list[int] | None) -> None:
-            unit_word, other_unit, name = label.split(" ", 2)
-            if values is None:
-                print(f"  {unit_word} {other_unit:<4} {name:<32} no answer")
-                return
-            # A device type code is a hex code in Sungrow's document, in the
-            # model table, and in `device.device_type_code` -- so [3598] was
-            # the one place it had to be converted by hand to be looked up.
-            note = (
-                " -> " + ", ".join(f"0x{value:04X}" for value in values)
-                if "device type code" in name
-                else ""
-            )
-            print(f"  {unit_word} {other_unit:<4} {name:<32} {list(values)}{note}")
-
-        sibling_values, sibling_states = await async_probe_siblings(
-            conn.for_unit, attempts=IDENTITY_ATTEMPTS, on_probe=sibling
-        )
-        raw["registers"].update(sibling_values)
-        fingerprint["registers"].update(sibling_states)
-
-        # The battery's own registers, on whichever unit answered for it.
-        # Seventeen registers, so it is not behind the dump question either.
-        pack_unit = battery_pack_unit(sibling_states)
-        for unit_id in PACK_UNITS:
-            if slave_inverter_at(sibling_states, unit_id) and (
-                sibling_states.get(f"unit {unit_id} SBR battery module block")
-                == "present"
-            ):
-                print(
-                    f"  {'battery readings':<38}unit {unit_id} is an inverter, "
-                    "not a pack"
-                )
-        if pack_unit is not None:
-            print(f"  {'battery readings':<38}unit {pack_unit}, 17 registers...")
-            try:
-                readings = await _async_battery_readings(conn, pack_unit)
-            except (ModbusError, TimeoutError, OSError) as err:
-                print(f"  {'battery readings':<38}failed ({type(err).__name__})")
-            else:
-                raw["battery_pack"] = {"unit": pack_unit, "readings": readings}
-                got = len(readings.get("values") or {})
-                missed = readings.get("components_that_did_not_answer") or []
-                print(
-                    f"  {'battery readings':<38}{got} values"
-                    + (f", missed {', '.join(missed)}" if missed else "")
-                )
-
-        # The wallbox's own register space, whenever one answered. Read
-        # unconditionally rather than behind the dump question, because that
-        # question is about the inverter's 1510 addresses and this is 206:
-        # a wallbox is rare, its registers have no public document at all,
-        # and a fingerprint that recorded only "a wallbox answered" was
-        # throwing away the whole reason to have found it.
-        wallbox_at = wallbox_unit(sibling_states)
-        if wallbox_at is not None:
-            print(f"  {'wallbox dump':<38}unit {wallbox_at}, 206 addresses...")
-            try:
-                raw["wallbox"] = {
-                    "unit": wallbox_at,
-                    "register_dump": await _async_dump_bands(
-                        conn.for_unit(wallbox_at),
-                        bands=WALLBOX_BANDS,
-                        what="wallbox dump",
-                    ),
-                }
-            except (ModbusError, TimeoutError, OSError) as err:
-                print(f"  {'wallbox dump':<38}stopped early ({type(err).__name__})")
-            else:
-                answered = register_dump.answered(raw["wallbox"]["register_dump"])
-                print(f"  {'wallbox dump':<38}{answered} addresses answered")
     finally:
         await conn.close()
 
-    # The filename is built from the identity registers, so a read that
-    # dropped changes what gets published: a transient refusal of 5002 cost
-    # one document its `3p` word, which is invisible unless you know every
-    # good filename has one. Cheap to re-run, expensive to notice.
-    #
+    if survey.serial is not None:
+        raw["serial"] = survey.serial
+    raw["firmware"] = survey.firmware
+    if survey.readings is not None:
+        raw["readings"] = survey.readings
+    if survey.register_dump is not None:
+        raw["register_dump"] = survey.register_dump
+    raw["connection"] = survey.connection
+    raw["registers"] = survey.probe_values
+    fingerprint["registers"] = survey.probe_states
+    if survey.battery_pack is not None:
+        raw["battery_pack"] = survey.battery_pack
+    if survey.wallbox is not None:
+        raw["wallbox"] = survey.wallbox
+
     # Computed whether or not anything is saved, because a caller wanting to
     # summarise the run needs to know the reading was thin.
-    missing = [
-        name
-        for name, value in (
-            ("device type code (5000)", fingerprint.get("device_type_code")),
-            ("output type (5002)", fingerprint.get("output_type")),
-            # Losing this one costs the filename its hash, which is the
-            # only thing keeping two setups of the same shape apart.
-            ("serial number (4990)", raw.get("serial")),
-            (
-                "the decoded readings",
-                (raw.get("readings") or {}).get("values"),
-            ),
-        )
-        if not value
-    ]
+    missing = survey.thin()
     if missing and args.save:
         print(
             f"\n  WARNING: {', '.join(missing)} did not read, so the "
@@ -1926,6 +1944,34 @@ async def _ask_battery(host: str, port: int, unit_id: int) -> str:
     return _ask("Brand of the battery, with its size if you know it (blank to skip)")
 
 
+def _ignore_resets(loop: asyncio.AbstractEventLoop, context: dict) -> None:
+    """Keep a device's connection reset off the terminal, and nothing else.
+
+    On Windows the Proactor loop reports a socket the peer reset while it was
+    being closed -- `ConnectionResetError [WinError 10054]` -- through the
+    loop's exception handler, as a traceback. A Sungrow resets sessions it
+    no longer wants, and identification opens several, so a run printed one
+    that changed nothing and read as a failure. The reset reached no code of
+    ours: every read that mattered had already answered or raised.
+    """
+    if isinstance(context.get("exception"), ConnectionResetError):
+        logging.getLogger(__name__).debug(
+            "connection reset by the device: %s", context.get("message")
+        )
+        return
+    loop.default_exception_handler(context)
+
+
+def run[T](main: Coroutine[Any, Any, T]) -> T:
+    """`asyncio.run`, with a device's connection resets kept quiet."""
+
+    async def quiet() -> T:
+        asyncio.get_running_loop().set_exception_handler(_ignore_resets)
+        return await main
+
+    return asyncio.run(quiet())
+
+
 def main() -> int:
     """Parse arguments and run the requested probe."""
     parser = argparse.ArgumentParser(
@@ -2132,7 +2178,7 @@ def main() -> int:
         print("the report. This script's subcommands are the pieces it uses:")
         print("  mdns, sweep, units, capabilities, dump -- see --help.")
         return 1
-    return asyncio.run(args.func(args))
+    return run(args.func(args))
 
 
 if __name__ == "__main__":

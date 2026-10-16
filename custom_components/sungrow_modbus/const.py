@@ -161,7 +161,7 @@ CONF_LEGACY_SLOT = "legacy_slot"
 #: How this inverter's firmware writes register 13074: 10 if it multiplies a
 #: written word by ten, 1 if it stores it as handed. Measured, not assumed --
 #: three houses multiply and fwitten's pair does not, and no register tells
-#: them apart -- by `sungrow_modbus.export_scale` on the first write to the
+#: them apart -- by `sungrow_modbus.inverter.export_scale` on the first write to the
 #: export limit, and kept here so the probe runs once per inverter.
 #:
 #: Entry **data**, because it is a fact about the firmware on the far end of

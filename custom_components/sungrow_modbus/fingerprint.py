@@ -30,8 +30,8 @@ reader to discover:
   what it was doing. Holding the coordinators off for the duration is the
   fix, and is not done here yet.
 * **The block read test runs from the button, never from the download.**
-  That measurement is what `src/sungrow_modbus/layout.py` is ever changed from, and it
-  costs 27 block reads times three rounds, twice each, plus narrowing — fine
+  That measurement is what `src/sungrow_modbus/inverter/layout.py` is ever changed from,
+  and it costs 27 block reads times three rounds, twice each, plus narrowing — fine
   for a background task with a progress bar, too long for a download somebody
   is waiting on. So a document from **Download diagnostics** carries none, and
   says so under `contention`.
@@ -50,6 +50,7 @@ drift apart on what a probe is called or what a serial becomes.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+import logging
 from typing import Any
 
 from homeassistant.const import CONF_HOST
@@ -62,7 +63,7 @@ from sungrow_modbus import (
     survey as survey_api,
     wallbox as wallbox_reader,
 )
-from sungrow_modbus.battery_device import PUBLISHED_NAMES as BATTERY_NAMES
+from sungrow_modbus.battery.device import PUBLISHED_NAMES as BATTERY_NAMES
 from sungrow_modbus.survey import summarise as _summarise
 
 from .const import (
@@ -81,6 +82,8 @@ from .const import (
 )
 from .coordinator import SungrowConfigEntry
 from .survey import Progress
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def summarise(document: dict[str, Any]) -> str:
@@ -246,14 +249,10 @@ async def async_build(
         if blocks
         else None
     )
-    probes = await _async_probes(device, step)
-    raw = await _async_dump(device, step) if dumping else None
-    wallbox = await _async_wallbox(runtime, dumping, step)
+    collected = await survey_api.async_capability_survey(
+        _EntrySource(runtime, device, dumping, step), on_failure=_lost
+    )
     step("assembling the document")
-
-    answered_6100 = _state_of(probes, "PV power of today (6100, direct-only)")
-    firmware = _firmware(device)
-    module = firmware.get("communication_module")
 
     # Same keys and shapes as `sungrow_survey.py` writes, through the same
     # builder, so `doc/compatibility.md` and anybody reading a document need
@@ -267,25 +266,77 @@ async def async_build(
         publish_address=bool(options.get(CONF_PUBLISH_ADDRESS, False)),
         device_type_code=device.device_type_code,
         output_type=device.output_type,
-        serial=device.serial_number or "",
-        firmware=firmware,
-        connection=survey.connection_block(str(answered_6100), module),
-        readings=_readings(runtime, device),
-        capability_probes=probes,
+        serial=collected.serial or "",
+        firmware=collected.firmware,
+        connection=collected.connection,
+        readings=collected.readings,
+        capability_probes=collected.capability_probes,
         contention=_contention(runtime, block_test_run=blocks_measured is not None),
-        register_dump=raw,
-        wallbox=wallbox,
+        register_dump=collected.register_dump,
+        wallbox=collected.wallbox,
         block_read_test=(
             block_test.document(blocks_measured)
             if blocks_measured is not None
             else None
         ),
-        battery_pack=await _async_battery_pack(runtime),
+        battery_pack=collected.battery_pack,
         # Part B, when a run did one. Absent from almost every document, and
         # its absence means "this run only read" rather than "this inverter
         # failed" -- which is why the schema number moved rather than the key
         # simply appearing.
         control_test=control_test,
+    )
+
+
+class _EntrySource:
+    """How a running entry collects each step of a survey.
+
+    The order is the library's (`async_capability_survey`). The identity, the
+    firmware and the decoded readings come from what the coordinators already
+    polled: reading them again would spend requests on an inverter that grants
+    very few sessions, and could disagree with the entities on the same page.
+    """
+
+    def __init__(
+        self, runtime: Any, device: Any, dumping: bool, step: Progress
+    ) -> None:
+        self.runtime = runtime
+        self.device = device
+        self.dumping = dumping
+        self.step = step
+
+    async def identity(self) -> tuple[str | None, dict[str, str | None]]:
+        return self.device.serial_number, survey.firmware_section(self.device)
+
+    async def readings(self) -> dict[str, Any]:
+        return _readings(self.runtime, self.device)
+
+    async def probes(self) -> tuple[dict[str, list[int]], dict[str, str]]:
+        return await _async_probe_words(self.device, self.step)
+
+    async def connection(self, collected: Any) -> dict[str, Any]:
+        answered_6100 = collected.probe_states.get(
+            survey.DIRECT_ONLY_LABEL, survey.State.NO_ANSWER
+        )
+        module = collected.firmware.get("communication_module")
+        return survey.connection_block(str(answered_6100), module)
+
+    async def register_dump(self) -> dict[str, Any] | None:
+        return await _async_dump(self.device, self.step) if self.dumping else None
+
+    async def battery(self, _collected: Any) -> dict[str, Any] | None:
+        return await _async_battery_pack(self.runtime)
+
+    async def wallbox(self, _collected: Any) -> dict[str, Any] | None:
+        return await _async_wallbox(self.runtime, self.dumping, self.step)
+
+
+def _lost(step: survey_api.Step, error: BaseException) -> None:
+    """Log a step the link lost; the document is published without it."""
+    _LOGGER.warning(
+        "Survey step %s lost to %s; the document is written without it",
+        step,
+        type(error).__name__,
     )
 
 
@@ -316,34 +367,26 @@ async def _async_dump(device: Any, step: Progress) -> dict[str, Any]:
     return await register_dump.async_dump(device.async_read_words, on_progress=on_block)
 
 
-async def _async_probes(
+async def _async_probe_words(
     device: Any, step: Callable[[str], None] | None = None
-) -> dict[str, dict[str, Any]]:
-    """Read every curated probe once, in the package's published shape.
+) -> tuple[dict[str, list[int]], dict[str, str]]:
+    """Read every curated probe once: raw words and states.
 
     One attempt each, unlike the terminal survey's three: this connection is
     shared with the coordinators, and a probe that retries holds every one of
     them off for as long as it waits.
     """
-    raw, states = await survey_api.async_probe_words(
+    return await survey_api.async_probe_words(
         device.async_read_words, attempts=lambda _label: 1, on_probe=step
     )
+
+
+async def _async_probes(
+    device: Any, step: Callable[[str], None] | None = None
+) -> dict[str, dict[str, Any]]:
+    """Read every curated probe once, in the package's published shape."""
+    raw, states = await _async_probe_words(device, step)
     return survey.capability_registers(states, raw)
-
-
-def _state_of(probes: dict[str, dict[str, Any]], label: str) -> str:
-    """Return one probe's recorded state."""
-    return str((probes.get(label) or {}).get("state", survey.State.NO_ANSWER))
-
-
-def _firmware(device: Any) -> dict[str, str | None]:
-    """Return the five published firmware strings, from what was polled.
-
-    Not re-read: the library polls all five in its slowest tier, so reading
-    them again would spend five requests on an inverter that grants very few
-    sessions, and could disagree with the entities on the same page.
-    """
-    return survey.firmware_section(device)
 
 
 def _contention(runtime: Any, *, block_test_run: bool = False) -> dict[str, Any]:

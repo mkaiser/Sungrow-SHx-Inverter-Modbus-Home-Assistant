@@ -43,12 +43,12 @@ from typing import Any, NamedTuple, Protocol
 
 from modbus_connection import ModbusError, ModbusExceptionError, ServerDeviceBusyError
 
-from . import export_scale
 from .addresses import DIRECT_ONLY_PROBE
 from .battery import ceiling as battery_ceiling
-from .capabilities import Capability
-from .derived import RUNNING_STATES
-from .device import SungrowInverter
+from .inverter import export_scale
+from .inverter.capabilities import Capability
+from .inverter.derived import RUNNING_STATES
+from .inverter.device import SungrowInverter
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -1959,7 +1959,21 @@ class ControlTest:
         Never lifts the mode itself: `_lift_export_mode` has already done that
         where it was allowed, and where it was not the register ignores every
         write anyway. The probe's one write changes nothing on either firmware.
+
+        A simulator is not asked. It stores every word as handed, so it is a
+        1:1 firmware by construction, and where the probe declines -- the
+        seed's held limit leaves no word that changes nothing -- the run
+        would otherwise divide by ten and report the simulator's arithmetic
+        as a wrong slope.
         """
+        if self.options.simulated:
+            self.export_write_scale = 1
+            self.conditions["export_write_scale"] = None
+            self._note(
+                "a simulator stores the export limit's word as handed, so it "
+                "was written 1:1 rather than asked"
+            )
+            return
         try:
             result = await export_scale.async_probe(
                 self.inverter, dry_run=self.options.dry_run

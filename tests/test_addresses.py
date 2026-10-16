@@ -34,8 +34,6 @@ CHECKED = (
 EXEMPT = {
     "addresses.py",
     "registers.py",
-    "battery_registers.py",
-    "wallbox_registers.py",
     "generate_simulator_registers.py",
     "simulator.py",
 }
@@ -88,10 +86,10 @@ def test_no_register_is_read_by_a_literal_address() -> None:
 #: The register maps, where every field is declared, and the calls that
 #: declare one.
 MAPS = (
-    REPO / "src" / "sungrow_modbus" / "registers.py",
-    REPO / "src" / "sungrow_modbus" / "components.py",
-    REPO / "src" / "sungrow_modbus" / "battery_registers.py",
-    REPO / "src" / "sungrow_modbus" / "wallbox_registers.py",
+    REPO / "src" / "sungrow_modbus" / "inverter" / "registers.py",
+    REPO / "src" / "sungrow_modbus" / "inverter" / "components.py",
+    REPO / "src" / "sungrow_modbus" / "battery" / "registers.py",
+    REPO / "src" / "sungrow_modbus" / "wallbox" / "registers.py",
 )
 FIELD_FACTORIES = {
     "integer",

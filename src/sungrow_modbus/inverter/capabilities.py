@@ -24,7 +24,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from enum import StrEnum
 
-from .const import model_for
+from ..const import model_for
 
 
 class Capability(StrEnum):
@@ -70,10 +70,11 @@ class Capability(StrEnum):
     direct-LAN readings of the same register map.
 
     This docstring used to say the reference SH10RT could not read register
-    2611 or beyond at all. That was measured before `src/sungrow_modbus/layout.py`
-    existed: those registers arrive in a frame the device pads, and asking
-    for the count in `layout.COUNTS` reads them. The same machine now reads
-    all 27 blocks, three attempts each. What cannot read them is a dongle.
+    2611 or beyond at all. That was measured before
+    `src/sungrow_modbus/inverter/layout.py` existed: those registers arrive in a frame
+    the device pads, and asking for the count in `layout.COUNTS` reads them. The same
+    machine now reads all 27 blocks, three attempts each. What cannot read them is a
+    dongle.
     """
 
     BATTERY_FIRMWARE = "battery_firmware"
@@ -309,7 +310,8 @@ ABSENT_ON_FIRMWARE: dict[str, frozenset[Capability]] = {
     # 2026-09-07 and again 2026-09-25: the three firmware strings at 13250,
     # 13265 and 13280, and the second meter channel at 13200, each closed the
     # connection 3 of 3 while their neighbours answered in the same session
-    # (`src/sungrow_modbus/layout.py` has the transcript). Both machines identically.
+    # (`src/sungrow_modbus/inverter/layout.py` has the transcript). Both
+    # machines identically.
     #   sh10rt-v112-3p-fwitten-anon-33442450531-battery-none-direct-lan.json
     #   sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan.json
     # The same model reads all four on 95.13 (gerd's SH8.0RT-V112), as do an

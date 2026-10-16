@@ -250,7 +250,7 @@ def test_legacy_mode_keeps_everything_and_modern_mode_does_not() -> None:
     # Without it `pv_power_limitation_raw` is refused for requiring a
     # capability the fixture never granted -- which would have passed the
     # "modern does not serve it" half of this test for the wrong reason.
-    from sungrow_modbus.capabilities import Capability
+    from sungrow_modbus.inverter.capabilities import Capability
 
     components = {description.component for description in dropped}
     everything = frozenset(Capability)

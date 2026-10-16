@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .const import model_for
+from ..const import model_for
 
 if TYPE_CHECKING:
     from .device import SungrowInverter

@@ -51,7 +51,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceEntry
 from sungrow_modbus import Capability
 from sungrow_modbus.addresses import field_address
-from sungrow_modbus.capabilities import OUTPUT_TYPES, known_absent
+from sungrow_modbus.inverter.capabilities import OUTPUT_TYPES, known_absent
 
 from .const import CONF_REGISTER_DUMP, CONF_UNIT_ID, DOMAIN
 from .coordinator import COMPONENT_TIERS, SungrowConfigEntry

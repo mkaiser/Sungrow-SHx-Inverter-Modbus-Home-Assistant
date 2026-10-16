@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from modbus_connection.model import Component, gauge, uint32
 
-from .addresses import reg
+from ..addresses import reg
 
 
 class SbrBatteryPack(Component):

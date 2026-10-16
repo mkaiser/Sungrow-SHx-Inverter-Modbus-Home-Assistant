@@ -5,7 +5,7 @@ which is derived from `legacy/modbus_sungrow.yaml` -- the inverter's map. The
 pack's registers are not in it, because they live in
 `legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml`, an opt-in file a
 user copies in by hand. So there is nothing to generate these from, exactly as
-there was nothing to generate `sungrow_modbus.battery_registers` from, and
+there was nothing to generate `sungrow_modbus.battery.registers` from, and
 they are hand-written for the same reason and guarded the same way:
 `tests/test_battery_entities.py` checks every `field` here against a real
 field or property on the components.

@@ -56,7 +56,7 @@ from .const import model_for
 #: read it, so its absence tells a reader nothing.
 #:
 #: 20 admits an optional **`export_scale`** block: how this firmware writes
-#: register 13074, as `sungrow_modbus.export_scale` asked it -- multiplied by
+#: register 13074, as `sungrow_modbus.inverter.export_scale` asked it -- multiplied by
 #: ten, or stored as handed -- with the one write that asked. A bump for the
 #: same reason as 19: almost no document will carry it, and "not asked" has to
 #: be told apart from "predates the question".
@@ -131,6 +131,10 @@ class State(StrEnum):
     """Nothing came back. Evidence about the link, not the register."""
 
 
+#: The probe whose answer decides the transport: register 6100 is not
+#: forwarded by a WiNet-S or a Logger, so it answers only on a direct path.
+DIRECT_ONLY_LABEL = "PV power of today (6100, direct-only)"
+
 #: What to read to establish each capability axis.
 #:
 #: Addresses are **protocol addresses**, one below the register number in
@@ -158,7 +162,7 @@ PROBES: tuple[tuple[str, str, int, int, str], ...] = (
     ("battery temperature", "input", 13024, 1, "battery"),
     ("battery capacity (5639)", "input", 5638, 1, "battery"),
     ("firmware block (13250, spec V1.1.7+)", "input", 13249, 1, "firmware"),
-    ("PV power of today (6100, direct-only)", "input", 6099, 2, "transport"),
+    (DIRECT_ONLY_LABEL, "input", 6099, 2, "transport"),
     ("PV power limitation (13018, V1.1.10+)", "holding", 13017, 1, "firmware"),
 )
 
@@ -387,8 +391,8 @@ def publishable(name: str) -> bool:
 
 
 def capability_registers(
-    fingerprint_registers: dict[str, object],
-    raw_registers: dict[str, object],
+    fingerprint_registers: Mapping[str, object],
+    raw_registers: Mapping[str, object],
 ) -> dict[str, dict[str, object]]:
     """Build the privacy-safe capability register section."""
     registers: dict[str, dict[str, object]] = {}

@@ -36,7 +36,7 @@ from modbus_connection.model import (
     uint32,
 )
 
-from .addresses import reg
+from ..addresses import reg
 
 
 class AsymmetricNumberField(NumberField[int]):

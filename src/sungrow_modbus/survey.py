@@ -10,18 +10,19 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable, Iterable
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, field
+from enum import StrEnum
+from typing import Any, Protocol
 
 from modbus_connection import ModbusError, ModbusExceptionError
 from modbus_connection.model import Component
 
 from . import fingerprint
 from .addresses import DIRECT_ONLY_PROBE, declared_field, field_address, read
-from .device import SungrowInverter
 from .fingerprint import OTHER_INVERTER_YES, State, classify
-from .model import present, words_text
-from .registers import COMPONENTS
+from .inverter.device import SungrowInverter
+from .inverter.registers import COMPONENTS
+from .model import Silent, present, words_text
 
 
 @dataclass(frozen=True)
@@ -239,12 +240,18 @@ def word_reader(unit: Any) -> Callable[[str, int, int], Awaitable[list[int]]]:
     return read_words
 
 
+def _span(space: str, descriptor: Any) -> tuple[str, int, int]:
+    """Return the registers one declared field reads: space, address, count."""
+    return space, int(descriptor.address), int(getattr(descriptor, "count", 1))
+
+
 async def async_read_field_by_field(
     unit: Any,
     component_class: type[Component],
     *,
     sweeps: int = 3,
     pause: float = 2.0,
+    silent: Silent | None = None,
 ) -> tuple[dict[str, object], list[str]]:
     """Read a component's fields one at a time, tolerating the ones that fail.
 
@@ -263,7 +270,10 @@ async def async_read_field_by_field(
     genuinely will not answer.
 
     Expensive by design: one read per field instead of a pooled handful, so it
-    runs only after the whole-component attempts have failed.
+    runs only after the whole-component attempts have failed. With `silent`, a
+    field whose read timed out is not asked again, in a later sweep or by any
+    later narrowing in the run: a refusal is quick to repeat, a quiet register
+    costs the whole timeout each time.
     """
     values: dict[str, object] = {}
     pending: dict[str, object] = dict(component_class.declared_fields)
@@ -276,6 +286,10 @@ async def async_read_field_by_field(
     for sweep in range(1, max(1, sweeps) + 1):
         missed_this_sweep: dict[str, object] = {}
         for name, descriptor in pending.items():
+            span = _span(component_class.register_space, descriptor)
+            if silent is not None and silent.covers(*span):
+                missed_this_sweep[name] = descriptor
+                continue
             solo_class = type(
                 f"Solo_{name}",
                 (Component,),
@@ -284,7 +298,11 @@ async def async_read_field_by_field(
             try:
                 solo = solo_class(unit)
                 await solo.async_update()
-            except (ModbusError, TimeoutError, OSError):
+            except TimeoutError:
+                missed_this_sweep[name] = descriptor
+                if silent is not None:
+                    silent.note(*span)
+            except (ModbusError, OSError):
                 missed_this_sweep[name] = descriptor
             else:
                 # `present`, because `Device.field` applies it and these
@@ -297,6 +315,13 @@ async def async_read_field_by_field(
         if not missed_this_sweep:
             return values, []
         pending = missed_this_sweep
+        if silent is not None and all(
+            silent.covers(*_span(component_class.register_space, descriptor))
+            for descriptor in pending.values()
+        ):
+            # Everything left is known to go quiet: another sweep would only
+            # skip it after the pause.
+            break
         if sweep < max(1, sweeps):
             await asyncio.sleep(pause)
     return values, sorted(pending)
@@ -310,6 +335,7 @@ async def async_decoded_readings(
     on_component: Callable[[str], None] | None = None,
     on_passes_done: Callable[[int, int], None] | None = None,
     on_note: Callable[[str], None] | None = None,
+    silent: Silent | None = None,
 ) -> dict[str, object]:
     """Return every register the integration reads, decoded.
 
@@ -416,7 +442,7 @@ async def async_decoded_readings(
         if on_note is not None:
             on_note(f"{attribute}: reading its fields one at a time")
         recovered, refused = await async_read_field_by_field(
-            unit, type(inverter.component(attribute)), pause=pause
+            unit, type(inverter.component(attribute)), pause=pause, silent=silent
         )
         salvaged.update(recovered)
         unreadable.extend(refused)
@@ -433,6 +459,154 @@ async def async_decoded_readings(
         # gating is working from nothing, so every field below is suspect.
         report["identity_did_not_read"] = identity_failed
     return report
+
+
+class Step(StrEnum):
+    """One step of a capability survey, in the order they are taken."""
+
+    IDENTITY = "identity"
+    READINGS = "readings"
+    PROBES = "probes"
+    CONNECTION = "connection"
+    REGISTER_DUMP = "register dump"
+    BATTERY = "battery"
+    WALLBOX = "wallbox"
+
+
+class SurveySource(Protocol):
+    """How one producer collects each step; the order is not its to choose.
+
+    The terminal survey reads everything raw, because it has no device yet.
+    Home Assistant answers the identity and the readings from what its
+    coordinators already polled, because reading them again would cost
+    requests on a link a Sungrow grants very few sessions on. Either way a
+    method returns the section in the shape `assemble_document` takes, and
+    None for a step this run does not take -- a dump nobody asked for, a pack
+    or a wallbox that is not there.
+    """
+
+    async def identity(self) -> tuple[str | None, dict[str, str | None]]:
+        """Return the serial (or None where it did not read) and the firmware."""
+
+    async def readings(self) -> dict[str, Any] | None:
+        """Return every decoded value, in `readings_section`'s shape."""
+
+    async def probes(self) -> tuple[dict[str, list[int]], dict[str, str]]:
+        """Return the capability probes' raw words and their states."""
+
+    async def connection(self, survey: CapabilitySurvey) -> dict[str, Any]:
+        """Return the measured connection, from the probes already taken."""
+
+    async def register_dump(self) -> dict[str, Any] | None:
+        """Return the raw address bands, or None when this run takes none."""
+
+    async def battery(self, survey: CapabilitySurvey) -> dict[str, Any] | None:
+        """Return the pack's `{"unit", "readings"}`, or None without one."""
+
+    async def wallbox(self, survey: CapabilitySurvey) -> dict[str, Any] | None:
+        """Return the wallbox's section, or None without one."""
+
+
+@dataclass
+class CapabilitySurvey:
+    """What a capability survey collected, section by section.
+
+    `failed` names each step the link lost, with the exception's type: the
+    step's section is then absent, and the rest of the document is still
+    worth publishing.
+    """
+
+    serial: str | None = None
+    firmware: dict[str, str | None] = field(default_factory=dict)
+    readings: dict[str, Any] | None = None
+    probe_values: dict[str, list[int]] = field(default_factory=dict)
+    probe_states: dict[str, str] = field(default_factory=dict)
+    connection: dict[str, Any] = field(default_factory=dict)
+    register_dump: dict[str, Any] | None = None
+    battery_pack: dict[str, Any] | None = None
+    wallbox: dict[str, Any] | None = None
+    failed: dict[Step, str] = field(default_factory=dict)
+
+    @property
+    def capability_probes(self) -> dict[str, dict[str, Any]]:
+        """The probes in the published shape, serial-bearing ones removed."""
+        return fingerprint.capability_registers(self.probe_states, self.probe_values)
+
+    def thin(self) -> list[str]:
+        """Name what a document's filename is built from and did not read.
+
+        A transient refusal of 5002 once cost a document its `3p` word, which
+        is invisible unless you know every good filename has one. Cheap to
+        re-run, expensive to notice -- so the producer says so.
+        """
+        values = (self.readings or {}).get("values")
+        return [
+            name
+            for name, value in (
+                ("device type code (5000)", self._probed("device type code")),
+                ("output type (5002)", self._probed("output type")),
+                # The only thing keeping two setups of one shape apart.
+                ("serial number (4990)", self.serial),
+                ("the decoded readings", values),
+            )
+            if not value
+        ]
+
+    def _probed(self, prefix: str) -> list[int] | None:
+        for label, words in self.probe_values.items():
+            unavailable = all(word in fingerprint.UNAVAILABLE for word in words)
+            if label.startswith(prefix) and words and not unavailable:
+                return words
+        return None
+
+
+async def async_capability_survey(
+    source: SurveySource,
+    *,
+    on_failure: Callable[[Step, BaseException], None] | None = None,
+) -> CapabilitySurvey:
+    """Take every step of a capability survey, in one order for both producers.
+
+    Identity first, because firmware is what makes two documents comparable;
+    then the decoded readings; then the probes, and the connection from them;
+    then the optional extras -- the raw bands, the pack, the wallbox -- which
+    are the slow part and the part a link is most likely to drop.
+
+    **A step the link loses costs its own section and nothing else.** A
+    `ModbusError`, a timeout or a lost socket is caught here, recorded in
+    `failed` and handed to `on_failure`; the next step still runs. A minute
+    of reading that already succeeded is never discarded because the dump at
+    the end of it stopped. Anything else is a bug and propagates.
+
+    The block read test is not a step. It is the one measurement that means
+    something only on an idle link, so a producer runs it *before* this, with
+    whatever client it measures through.
+    """
+    survey = CapabilitySurvey()
+
+    async def take(step: Step, collect: Callable[[], Awaitable[Any]]) -> Any:
+        try:
+            return await collect()
+        except (ModbusError, TimeoutError, OSError) as error:
+            survey.failed[step] = type(error).__name__
+            if on_failure is not None:
+                on_failure(step, error)
+            return None
+
+    identity = await take(Step.IDENTITY, source.identity)
+    if identity is not None:
+        survey.serial, survey.firmware = identity
+    survey.readings = await take(Step.READINGS, source.readings)
+    probes = await take(Step.PROBES, source.probes)
+    if probes is not None:
+        survey.probe_values, survey.probe_states = probes
+    survey.connection = (
+        await take(Step.CONNECTION, lambda: source.connection(survey)) or {}
+    )
+    survey.register_dump = await take(Step.REGISTER_DUMP, source.register_dump)
+    survey.battery_pack = await take(Step.BATTERY, lambda: source.battery(survey))
+    survey.wallbox = await take(Step.WALLBOX, lambda: source.wallbox(survey))
+    return survey
 
 
 def next_steps(document: dict[str, Any]) -> tuple[NextStep, ...]:

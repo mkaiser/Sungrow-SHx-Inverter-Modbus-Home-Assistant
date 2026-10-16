@@ -10,7 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from sungrow_modbus.capabilities import (
+from sungrow_modbus.const import DEVICE_TYPES
+from sungrow_modbus.inverter.capabilities import (
     ABSENT_ON_FIRMWARE,
     ZERO_MEANS_ABSENT,
     Capability,
@@ -20,7 +21,6 @@ from sungrow_modbus.capabilities import (
     probe,
     resolve,
 )
-from sungrow_modbus.const import DEVICE_TYPES
 
 SH10RT = 0x0E03
 SH10RS = 0x0D1B
@@ -295,7 +295,8 @@ def test_every_firmware_entry_names_a_committed_fingerprint() -> None:
     from pathlib import Path
 
     source = (
-        Path(__file__).resolve().parent.parent / "src/sungrow_modbus/capabilities.py"
+        Path(__file__).resolve().parent.parent
+        / "src/sungrow_modbus/inverter/capabilities.py"
     ).read_text(encoding="utf-8")
     fingerprints = Path(__file__).resolve().parent.parent / "device-fingerprints"
     block = source.split("ABSENT_ON_FIRMWARE: dict", 1)[1].split("\n}\n", 1)[0]

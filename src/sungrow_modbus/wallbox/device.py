@@ -25,8 +25,8 @@ from typing import TYPE_CHECKING
 
 from modbus_connection.model import Component
 
-from .model import UpdateReport, present
-from .wallbox_registers import (
+from ..model import UpdateReport, present
+from .registers import (
     COMPONENTS,
     WallboxIdentity,
     WallboxLive,

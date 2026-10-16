@@ -49,8 +49,11 @@ place a value here comes from Home Assistant rather than Modbus, which is why
 it is not in `src/`, and the one place an entity's existence is an **option**
 rather than a probed fact.
 
-One config entry is **one Modbus endpoint** (host + port) plus the devices
-discovered on it, which is exactly the set sharing one serialized connection.
+One config entry is **one inverter, reached through one Modbus endpoint**
+(host + port) at a time, plus the devices discovered on it -- exactly the set
+sharing one serialized connection. The unique id is the inverter's serial;
+the endpoint is the owner's choice and can be changed without losing
+anything (Reconfigure, or Add integration finding it elsewhere).
 The config flow probes and identifies devices by what answers, never by unit
 id. `doc/integration_plan.md` has the register sources, their licences, and
 what is next.
@@ -62,13 +65,13 @@ gen-check` (and CI) fails on a hand edit of any of them:
 
 - `custom_components/sungrow_modbus/{derived,number,switch,select}_descriptions.py`
   and `strings.json` / `translations/en.json` -- `scripts/generate/descriptions.py`,
-  from `sungrow_modbus.derived` and the tables in `scripts/generate/tables/`;
+  from `sungrow_modbus.inverter.derived` and the tables in `scripts/generate/tables/`;
 - `doc/compatibility.md` -- `generate_compatibility.py`, from the fingerprints;
 - `legacy/modbus_sungrow_multiple_inverters_{1,2,3}.yaml` --
   `generate_second_inverter_config.py`, from `legacy/modbus_sungrow.yaml`,
   committed by CI. Edit the source, not the output.
 
-**`src/sungrow_modbus/registers.py` and `sensor_descriptions.py` are source.**
+**`src/sungrow_modbus/inverter/registers.py` and `sensor_descriptions.py` are source.**
 `doc/legacy_entity_map.json` is the record of what the YAML package produces
 -- the entity ids, units and state classes users have -- and is not
 regenerated. `tests/test_registers.py` and `tests/test_sensor_descriptions.py` hold the
@@ -247,7 +250,7 @@ is on: with it off the register ignores writes -- no exception, no change.
   `write_units_per_count=10`, `scale` 1 because that is what the register
   contains. It cannot live in `modbus-connection`, whose `NumberField` shares
   one scale by design.
-- **`sungrow_modbus.export_scale` asks the inverter**, with one write that
+- **`sungrow_modbus.inverter.export_scale` asks the inverter**, with one write that
   changes nothing on either firmware: write the held word back when ten times
   it would be out of range, or a tenth of it when that tenth is below the
   minimum. The answer is the **refusal**, which survives a dongle's stale
@@ -276,6 +279,10 @@ because it decides where a change belongs:
   choose between them live in the first. `_alpha_placeholders` stays in
   `config_flow` and reads `DEVICES_MODE_OFFERED` at call time, so a test can
   patch the flag there.
+- **The library has one subpackage per device**: `inverter/`, `battery/`,
+  `wallbox/`, each with its `registers` and `device` modules. What spans
+  devices -- `addresses`, `discovery`, `dump`, `fingerprint`, `survey`,
+  `block_test`, `control_test` -- sits at the top.
 - **Anything that must work without Home Assistant lives in `src/`.** The
   control test's engine is there for that reason; what is here is a snapshot
   store, a shutdown hook, a progress callback and the options.
@@ -456,7 +463,7 @@ Each of these is verified in a container or against hardware.
   socket trusts `byte_count` and reads the padded frames perfectly while the
   shipping stack cannot. `device-fingerprints/scripts/python/blocks.py` is as strict as
   the shipping stack and reports both numbers plus the count that reconciles
-  them. Add to `src/sungrow_modbus/layout.py` only from *its* measurement.
+  them. Add to `src/sungrow_modbus/inverter/layout.py` only from *its* measurement.
 - **A Sungrow accepts very few simultaneous sessions, and the recovery is
   90 seconds of quiet.** Contention's signature is *progressive*: each retry
   dies a little further into the poll. A bad block fails at the same address
@@ -524,8 +531,9 @@ Each of these is verified in a container or against hardware.
   because a refusal and a timeout lead to different next steps.
 - **Which unit ids answer depends on the transport.** The SBR answers unit
   200 on the LAN port and unit **2** through a dongle; a wallbox answers unit
-  3 through a dongle. One config entry is one endpoint, so a house may need
-  two entries to see everything.
+  3 through a dongle. Sub-devices are found again whenever an entry's
+  endpoint changes, so moving to a cable keeps the pack and loses a wallbox
+  the dongle was carrying, unless `wallbox_host` points at it.
 - **A wallbox is reachable two ways**: unit 3 behind a WiNet-S, or unit 248
   at its own LAN address over TLS on 516. Not through the inverter's own LAN
   port. Over TLS a read must **start on a data point's first register** --

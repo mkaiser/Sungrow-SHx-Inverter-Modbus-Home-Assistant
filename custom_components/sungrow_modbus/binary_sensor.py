@@ -14,7 +14,7 @@ from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import async_call_later
-from sungrow_modbus.smoothing import DelayOn
+from sungrow_modbus.inverter.smoothing import DelayOn
 
 from .coordinator import SungrowConfigEntry, SungrowRuntimeData
 from .derived_descriptions import DERIVED_BINARY_SENSORS

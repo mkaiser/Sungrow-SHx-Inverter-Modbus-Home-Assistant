@@ -36,7 +36,7 @@ no fingerprint is listed as **untested** rather than assumed to work.
     minutes apart: its own LAN port called MPPT3, MPPT4 and the
     second meter channel unavailable, and its dongle reported
     them as zero. The integration guards this in
-    [`capabilities.py`](../src/sungrow_modbus/capabilities.py);
+    [`capabilities.py`](../src/sungrow_modbus/inverter/capabilities.py);
     the table cannot, so it says so.
 
 **Battery (as reported)** is free text, because no register
@@ -204,7 +204,8 @@ public without any private channel needing to exist.
   it is the shortest path from your hardware to working code.
 
 The capability model in
-[`capabilities.py`](../src/sungrow_modbus/capabilities.py) is built from
-these, so a fingerprint from an untested model is the single most useful
-thing anybody can contribute — including one that says everything works.
+[`capabilities.py`](../src/sungrow_modbus/inverter/capabilities.py)
+is built from these, so a fingerprint from an untested model is the
+single most useful thing anybody can contribute — including one that
+says everything works.
 

@@ -70,3 +70,39 @@ def present(value: RegisterValue) -> RegisterValue:
     if isinstance(value, str) and not value.strip("\x00").strip():
         return None
     return value
+
+
+class Silent:
+    """Registers that timed out once in a run, so narrowing waits on each once.
+
+    Narrowing exists to find which register a failed read was refusing, and a
+    refusal costs milliseconds. A register that goes **quiet** instead costs
+    the whole timeout on every read that touches it. fwitten's master, on its
+    own LAN port, has four: 13199 and the three firmware strings at 13249,
+    13264 and 13279. The readings' field-by-field salvage then asked each of
+    them three sweeps over, and the dump's single-address fallback asked them
+    again -- a survey of about 39 minutes, most of it spent waiting on four
+    registers whose answer was already known.
+
+    So a narrowing read that times out is noted here, and a later narrowing
+    read that overlaps it is not sent: it is recorded as unread, the same
+    `None` a timeout would have produced. Block reads are not capped. Their
+    repetition is how contention is told from a fault, and the block read test
+    is that measurement.
+    """
+
+    def __init__(self) -> None:
+        """Start with nothing known to be silent."""
+        self._ranges: set[tuple[str, int, int]] = set()
+
+    def note(self, space: str, address: int, count: int) -> None:
+        """Record that a read of these registers timed out."""
+        self._ranges.add((space, address, address + count))
+
+    def covers(self, space: str, address: int, count: int) -> bool:
+        """Whether a read of these registers overlaps one that timed out."""
+        end = address + count
+        return any(
+            known == space and start < end and address < stop
+            for known, start, stop in self._ranges
+        )

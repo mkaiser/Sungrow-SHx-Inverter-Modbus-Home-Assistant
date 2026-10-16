@@ -199,11 +199,11 @@ the user is often not allowed to change it (#768).
 
 - `BATTERY_START_POWER` is gated off for RS and T (`capabilities.py`,
   citing #743).
-- The max-power number is bounded by the pack and by 5628 (`battery.py`,
+- The max-power number is bounded by the pack and by 5628 (`battery/power.py`,
   `number.py`), using the lower of the two, with the conservative voltage
   #679 asks for.
 - SBH on unit 2 through a dongle is supported, and a dongle's missing cell
-  block is documented in `battery_registers.py`.
+  block is documented in `battery/registers.py`.
 
 **Open:**
 
@@ -212,7 +212,7 @@ the user is often not allowed to change it (#768).
    otherwise to the pack limit alone.
 2. On a write refused with **0x04**, tell the user "above what this inverter
    accepts" in the error, rather than a generic Modbus failure.
-3. Compare #751's SBH table with `battery_registers.py`. Does the SBH path
+3. Compare #751's SBH table with `battery/registers.py`. Does the SBH path
    skip 10756+ on a cable too, not only through a dongle? Is 19938 worth a
    diagnostic sensor?
 4. Docs: "another controller (wallbox, EMS, evcc) can overwrite these
