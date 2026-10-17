@@ -18,6 +18,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..const import model_for
+from .faults import FAULT_WORDS, Kind, reported
 
 if TYPE_CHECKING:
     from .device import SungrowInverter
@@ -194,6 +195,25 @@ class Derived:
     def phase_c_power(self) -> int | None:
         """Phase C voltage times its current, absent on a single-phase unit."""
         return self._product("phase_c_voltage", "phase_c_current")
+
+    # -- the fault and alarm words ----------------------------------------
+
+    def _reported(self, kind: Kind) -> bool | None:
+        values: dict[str, int | None] = {}
+        for word in FAULT_WORDS:
+            value = self._value(word.field)
+            values[word.field] = int(value) if isinstance(value, (int, float)) else None
+        return reported(kind, values)
+
+    @property
+    def fault_reported(self) -> bool | None:
+        """Whether any fault or protection word has a named flag set."""
+        return self._reported("fault")
+
+    @property
+    def alarm_reported(self) -> bool | None:
+        """Whether any alarm word has a named flag set."""
+        return self._reported("alarm")
 
     # -- power flow flags -------------------------------------------------
 

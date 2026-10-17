@@ -80,7 +80,7 @@
       },
       "pick": {
         "title": "Inverters found",
-        "description": "{count} device(s) answered and identified themselves. Names come from your router's DNS where it provides them, otherwise the address is shown.\n\nIf none of these is the inverter you meant, choose the last option and you can enter its address yourself.{note}",
+        "description": "{count} device(s) answered and identified themselves. Names come from your router's DNS where it provides them, otherwise the address is shown.\n\nWhere there is more than one inverter, each says its part in the cluster and how that is known: **measured** is read from the inverter itself, **inferred** is worked out from what the others answered. An inferred role is a good guess, not a reading.\n\nIf none of these is the inverter you meant, choose the last option and you can enter its address yourself.{note}",
         "data": {
           "host": "Inverter"
         }
@@ -160,6 +160,9 @@
       "active_power_limitation_enabled": {
         "name": "Active power limitation"
       },
+      "alarm_reported": {
+        "name": "Alarm reported"
+      },
       "battery_charging": {
         "name": "Battery charging"
       },
@@ -177,6 +180,9 @@
       },
       "exporting_power_delay": {
         "name": "Exporting power (delayed)"
+      },
+      "fault_reported": {
+        "name": "Fault reported"
       },
       "importing_power": {
         "name": "Importing power"
@@ -320,6 +326,9 @@
       "backup_phase_c_voltage": {
         "name": "Backup phase C voltage"
       },
+      "battery_alarm": {
+        "name": "Battery alarm"
+      },
       "battery_capacity_high_precision": {
         "name": "Battery capacity high precision"
       },
@@ -352,6 +361,9 @@
       },
       "battery_discharging_start_power": {
         "name": "Battery discharging start power"
+      },
+      "battery_fault": {
+        "name": "Battery fault"
       },
       "battery_firmware_version": {
         "name": "Battery firmware version"
@@ -449,11 +461,32 @@
       "bdc_rated_power": {
         "name": "BDC rated power"
       },
+      "bdc_side_fault": {
+        "name": "BDC-side fault"
+      },
+      "bdc_side_permanent_fault": {
+        "name": "BDC-side permanent fault"
+      },
+      "bms_alarm": {
+        "name": "BMS alarm"
+      },
+      "bms_alarm_2": {
+        "name": "BMS alarm 2"
+      },
+      "bms_fault_1": {
+        "name": "BMS fault 1"
+      },
+      "bms_fault_2": {
+        "name": "BMS fault 2"
+      },
       "bms_max_charging_current": {
         "name": "BMS max charging current"
       },
       "bms_max_discharging_current": {
         "name": "BMS max discharging current"
+      },
+      "bms_protection": {
+        "name": "BMS protection"
       },
       "communication_module_firmware_version": {
         "name": "Communication module firmware version"
@@ -494,6 +527,9 @@
       "daily_pv_generation_battery_discharge": {
         "name": "Daily PV generation & battery discharge"
       },
+      "dc_side_fault": {
+        "name": "DC-side fault"
+      },
       "ems_mode_selection_raw": {
         "name": "EMS mode selection raw"
       },
@@ -524,8 +560,14 @@
       "grid_frequency": {
         "name": "Grid frequency"
       },
+      "grid_side_fault": {
+        "name": "Grid-side fault"
+      },
       "import_power": {
         "name": "Import power"
+      },
+      "inverter_alarm": {
+        "name": "Alarm"
       },
       "inverter_firmware_version": {
         "name": "Firmware version"
@@ -623,6 +665,9 @@
       "mppt4_voltage": {
         "name": "MPPT4 voltage"
       },
+      "permanent_fault": {
+        "name": "Permanent fault"
+      },
       "phase_a_current": {
         "name": "Phase A current"
       },
@@ -709,6 +754,12 @@
       },
       "survey_step": {
         "name": "Survey step"
+      },
+      "system_fault_1": {
+        "name": "System fault 1"
+      },
+      "system_fault_2": {
+        "name": "System fault 2"
       },
       "total_active_power": {
         "name": "Total active power"
@@ -863,6 +914,12 @@
         "yes": "Yes — there is another inverter that is not a Sungrow",
         "no": "No — the Sungrow is the only inverter here"
       }
+    },
+    "entity_id_style": {
+      "options": {
+        "migrate": "The YAML package's IDs, such as sensor.total_dc_power",
+        "new": "Device-scoped IDs, such as sensor.sh10rt_total_dc_power"
+      }
     }
   },
   "issues": {
@@ -905,10 +962,12 @@
         "title": "Sungrow Modbus options",
         "description": "Everything this integration lets you change, in one place. Open a section to see it; what you do not open stays as it is.\n\nConnection details are not here — changing the host or the unit id means talking to a different device, which is **Reconfigure** rather than an option.",
         "data": {
-          "add_devices": "Add this endpoint's devices now"
+          "add_devices": "Add this endpoint's devices now",
+          "entity_ids": "Entity IDs"
         },
         "data_description": {
-          "add_devices": "This entry was set up for diagnostics only, so it has no entities. Ticking this asks the one question that was skipped — whether to take over the YAML package's entity ids — and then creates them.{devices_mode}"
+          "add_devices": "This entry was set up for diagnostics only, so it has no entities. Ticking this asks the one question that was skipped — whether to take over the YAML package's entity ids — and then creates them.{devices_mode}",
+          "entity_ids": "Which IDs this inverter's entities have. Changing it moves them, with their history and statistics; the next page says exactly what moves before anything does."
         },
         "sections": {
           "polling": {
@@ -1021,11 +1080,20 @@
         "data": {
           "survey_other_inverter_detail": "The other inverter"
         }
+      },
+      "entity_ids_legacy": {
+        "title": "Move to the YAML package's entity IDs",
+        "description": "The entities take the IDs `modbus_sungrow.yaml` gave them, such as `sensor.total_dc_power` — the IDs existing dashboards and years of history are stored against.\n\n{changes}{status}\n\nNothing is copied and nothing is deleted. Names, areas and other settings you gave the entities stay with them. Dashboards, automations and scripts that use the old IDs are not rewritten, so check them afterwards."
+      },
+      "entity_ids_modern": {
+        "title": "Move to device-scoped entity IDs",
+        "description": "The entities take IDs named after this device, such as `sensor.sh10rt_total_dc_power`. Their history and statistics move with them.\n\n{changes}{status}\n\nNothing is copied and nothing is deleted. Names, areas and other settings you gave the entities stay with them. Dashboards, automations and scripts that use the old IDs are not rewritten, so check them afterwards.\n\nYou can move back here at any time."
       }
     },
     "error": {
       "nothing_left_to_poll": "Every group is set to never, which would leave the integration with nothing to read and no entities at all. Leave at least one group with an interval.",
-      "wallbox_not_found": "No Sungrow wallbox answered at that address. It has to be the wallbox's own address (not the inverter's or the WiNet-S's), reachable from Home Assistant, and not busy with another client."
+      "wallbox_not_found": "No Sungrow wallbox answered at that address. It has to be the wallbox's own address (not the inverter's or the WiNet-S's), reachable from Home Assistant, and not busy with another client.",
+      "legacy_package_still_loaded": "The YAML package is still running, so its entities still hold their IDs. Remove `modbus_sungrow.yaml` from your configuration, restart Home Assistant and try again."
     },
     "progress": {
       "running_survey": "Reading your inverter: 19 capability probes. Through a WiNet-S this can take a minute."

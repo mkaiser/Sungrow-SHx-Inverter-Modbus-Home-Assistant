@@ -60,6 +60,7 @@ from .const import (
     DEFAULT_UNIT_ID,
     ENTITY_IDS_MIGRATE,
     ENTITY_IDS_NEW,
+    ROLE_MASTER,
     ROLE_SLAVE,
 )
 
@@ -273,6 +274,22 @@ def _entity_ids_schema(default: str) -> vol.Schema:
     )
 
 
+def _entity_id_style_selector() -> SelectSelector:
+    """Return the options page's legacy-or-modern choice.
+
+    The same two values the setup flow stores, under labels of their own:
+    setup asks whether to *take over* a package, and this asks which ids the
+    entities have, which is the question once they exist.
+    """
+    return SelectSelector(
+        SelectSelectorConfig(
+            options=[ENTITY_IDS_MIGRATE, ENTITY_IDS_NEW],
+            mode=SelectSelectorMode.LIST,
+            translation_key="entity_id_style",
+        )
+    )
+
+
 def _other_inverter_schema(default: str) -> vol.Schema:
     """Return the "what is it" box, asked only when the answer was yes.
 
@@ -394,6 +411,85 @@ def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> vol.Schema
     )
 
 
+def _roles(
+    found: dict[str, dict[str, Any]], by_serial: dict[str, list[str]]
+) -> dict[str, tuple[str | None, str]]:
+    """Work out each inverter's role in the house, and say how it is known.
+
+    `{serial: (role, note)}`, for the inverters there is something to say
+    about. The note names its evidence, because the evidence differs in kind:
+
+    * **Measured**: a device address other than 1. That is what a cluster
+      slave is configured as, and the only role signal the protocol carries.
+      Read wherever it was read -- a dongle presents every inverter as unit
+      1, so an address of 2 can only have come from the machine itself.
+    * **Inferred** from a measurement about the house: address 1 beside a
+      measured slave is that slave's master.
+    * **Inferred** from battery ownership, the one signal a dongle forwards:
+      at a measured cluster the master reads its pack's capacity and the
+      slave reads 0. It says what a machine has, not what it is, and a
+      cluster with the pack on the slave would defeat it -- so it is offered
+      as a probability, never stated.
+
+    One inverter on its own gets no note: "the only inverter found" is all
+    there is to say, and the search may have missed another.
+    """
+
+    def address(serial: str) -> int:
+        return max(found[host][CONF_UNIT_ID] for host in by_serial[serial])
+
+    def battery(serial: str) -> bool | None:
+        answers = [found[host].get("battery") for host in by_serial[serial]]
+        return True if True in answers else False if False in answers else None
+
+    roles: dict[str, tuple[str | None, str]] = {}
+    slaves = {serial for serial in by_serial if address(serial) != DEFAULT_UNIT_ID}
+    for serial in slaves:
+        roles[serial] = (
+            ROLE_SLAVE,
+            f"cluster slave, measured: device address {address(serial)}",
+        )
+    if len(by_serial) < 2:
+        return roles
+
+    rest = [serial for serial in by_serial if serial not in slaves]
+    on_cable = {
+        serial
+        for serial in rest
+        if any(found[host].get("direct") is True for host in by_serial[serial])
+    }
+    if slaves and len(rest) == 1:
+        (master,) = rest
+        roles[master] = (
+            ROLE_MASTER,
+            "cluster master, inferred: device address 1 beside a slave",
+        )
+        return roles
+
+    with_pack = [serial for serial in rest if battery(serial) is True]
+    without = [serial for serial in rest if battery(serial) is False]
+    if len(with_pack) == 1 and len(with_pack) + len(without) == len(rest):
+        roles[with_pack[0]] = (
+            ROLE_MASTER,
+            "probably the cluster master, inferred: it has the battery",
+        )
+        for serial in without:
+            roles[serial] = (
+                ROLE_SLAVE,
+                "probably a cluster slave, inferred: no battery of its own",
+            )
+        return roles
+
+    for serial in rest:
+        roles[serial] = (
+            None,
+            "device address 1, so a master or an inverter on its own"
+            if serial in on_cable
+            else "role not readable: a dongle hides the device address",
+        )
+    return roles
+
+
 def _described(found: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
     """Work out what the set of answers means, and say it in the labels.
 
@@ -425,6 +521,7 @@ def _described(found: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
     by_serial: dict[str, list[str]] = {}
     for host, entry in found.items():
         by_serial.setdefault(entry["serial"], []).append(host)
+    roles = _roles(found, by_serial)
 
     for serial, hosts in by_serial.items():
         for host in hosts:
@@ -441,13 +538,9 @@ def _described(found: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
                 if direct is False
                 else "route not measured -- 6100 neither answered nor refused"
             )
-            # The role, where a direct path makes it readable.
-            if entry[CONF_UNIT_ID] != DEFAULT_UNIT_ID:
-                entry["role"] = ROLE_SLAVE
-                notes.append(
-                    f"device address {entry[CONF_UNIT_ID]}, so a second"
-                    " inverter in a cluster"
-                )
+            if serial in roles:
+                entry["role"], note = roles[serial]
+                notes.append(note)
             if len(hosts) > 1:
                 others = ", ".join(other for other in sorted(hosts) if other != host)
                 notes.append(f"the same inverter as {others}")

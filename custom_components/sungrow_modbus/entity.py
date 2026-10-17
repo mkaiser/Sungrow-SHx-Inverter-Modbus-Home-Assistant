@@ -92,6 +92,14 @@ class SungrowSensorDescription(SungrowEntityDescription, SensorEntityDescription
     reasoning.
     """
 
+    flags: bool = False
+    """The field is one of Appendix 4's fault or alarm words.
+
+    Reported as the number of named flags set, with the flags themselves in
+    an `active` attribute: two hundred bits as entities would bury the list,
+    and the raw U32 means nothing to anybody reading it.
+    """
+
     smoothed_over: float | None = None
     """Report a moving average over this many seconds, not the raw reading.
 

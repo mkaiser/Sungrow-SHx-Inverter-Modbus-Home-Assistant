@@ -36,8 +36,11 @@ error, and each asserted in `tests/test_migration.py`:
 
 from __future__ import annotations
 
+from collections.abc import Collection
+from dataclasses import dataclass, field
 import logging
 
+import attr
 from sqlalchemy.exc import SQLAlchemyError
 
 from homeassistant.components.recorder import DOMAIN as RECORDER_DOMAIN
@@ -272,7 +275,19 @@ async def async_legacy_ids_with_history(
     Returns nothing when the recorder is not set up, which is legitimate: no
     recorder means no history to preserve.
     """
-    if RECORDER_DOMAIN not in hass.config.components:
+    return await async_ids_with_history(hass, legacy_entity_ids(suffix))
+
+
+async def async_ids_with_history(
+    hass: HomeAssistant, wanted: Collection[str]
+) -> set[str]:
+    """Return which of `wanted` the recorder holds rows for.
+
+    Nothing when the recorder is not set up or will not answer: no recorder
+    means no history to preserve, and an unanswered question is not a reason
+    to fail whatever asked it.
+    """
+    if RECORDER_DOMAIN not in hass.config.components or not wanted:
         return set()
 
     from sqlalchemy import select
@@ -281,12 +296,12 @@ async def async_legacy_ids_with_history(
     from homeassistant.components.recorder.db_schema import StatesMeta
     from homeassistant.components.recorder.util import session_scope
 
-    wanted = legacy_entity_ids(suffix)
-
     def _query() -> set[str]:
         with session_scope(hass=hass, read_only=True) as session:
             rows = session.execute(
-                select(StatesMeta.entity_id).where(StatesMeta.entity_id.in_(wanted))
+                select(StatesMeta.entity_id).where(
+                    StatesMeta.entity_id.in_(list(wanted))
+                )
             )
             return {row[0] for row in rows}
 
@@ -295,7 +310,7 @@ async def async_legacy_ids_with_history(
     except (SQLAlchemyError, RuntimeError) as err:
         # A database that will not answer is not a reason to fail setup; it
         # only means this piece of evidence is unavailable.
-        _LOGGER.debug("Could not ask the recorder about legacy entities: %s", err)
+        _LOGGER.debug("Could not ask the recorder about entity ids: %s", err)
         return set()
 
 
@@ -432,3 +447,254 @@ def _async_release(
     )
     registry.async_remove(legacy_id)
     return True
+
+
+#: Appended to an id whose recorded rows have to make way. Rows are renamed,
+#: never copied or deleted, so the old series stays queryable under this name
+#: until its owner decides what to do with it.
+ARCHIVE_SUFFIX = "_archive"
+
+
+@dataclass
+class IdSwitch:
+    """What switching an entry between legacy and modern ids will do.
+
+    Planned before anything is touched, so the dialog that asks can say what
+    happens to each kind of entity, and the switch itself only carries out
+    what was shown.
+    """
+
+    to_legacy: bool
+    #: `{current id: target}` where the current series moves with the entity:
+    #: a registry rename, which the recorder follows.
+    renames: dict[str, str] = field(default_factory=dict)
+    #: `{current id: target}` where the target already holds a series and
+    #: that one continues -- the setup flow's "migrate", reached later. The
+    #: current series stays under its current id.
+    joins: dict[str, str] = field(default_factory=dict)
+    #: `{occupant: archive id}`, rows that are moved aside first so that a
+    #: rename into their id is not refused.
+    archives: dict[str, str] = field(default_factory=dict)
+    #: Entities that exist with legacy ids only, removed on the way to modern
+    #: ones. Their history stays under the id it was recorded on.
+    dropped: list[str] = field(default_factory=list)
+
+    @property
+    def moved(self) -> int:
+        """Return how many entities change id."""
+        return len(self.renames) + len(self.joins)
+
+
+async def async_plan_id_switch(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    *,
+    to_legacy: bool,
+    suffix: str | None = None,
+) -> IdSwitch:
+    """Work out what switching this entry's entity ids would do.
+
+    Only entities still on the id the integration gave them are moved. One
+    somebody renamed by hand stays where they put it, in either direction,
+    because that id is a decision of theirs and not a style of ours.
+
+    **Towards legacy ids** it is the setup flow's "migrate" made later. Where
+    the legacy id still has the YAML package's rows, those continue -- that
+    is what a person choosing legacy ids is after -- and the weeks recorded
+    under the modern id stay there. Where it has none, the modern series is
+    renamed across, so nothing is left behind.
+
+    **Towards modern ids** the series moves with the entity, by rename. A
+    modern id that already holds rows -- left there by an earlier switch the
+    other way -- is archived first, because the recorder refuses a rename
+    into an id it knows and says so only in the log.
+
+    `suffix` is the YAML slot, when the caller has just settled it; otherwise
+    the one stored with the entry.
+    """
+    plan = IdSwitch(to_legacy=to_legacy)
+    registry = er.async_get(hass)
+    serial = entry.unique_id
+    if suffix is None:
+        suffix = entry.data.get(CONF_LEGACY_SLOT) or ""
+    legacy = async_legacy_entities(hass, suffix)
+    reserved: set[str] = set()
+    targets: dict[str, str] = {}
+
+    for platform, description in DESCRIPTIONS:
+        entity_id = registry.async_get_entity_id(
+            platform, DOMAIN, f"{serial}_{description.key}"
+        )
+        if entity_id is None:
+            continue
+        registry_entry = registry.async_get(entity_id)
+        if registry_entry is None:
+            continue
+        legacy_id = legacy.get((platform, description.key)) or legacy_entity_id(
+            platform, description, suffix
+        )
+        claimed = f"{platform}.{registry_entry.suggested_object_id}"
+        on_legacy = entity_id in (legacy_id, claimed)
+
+        if to_legacy:
+            if on_legacy or legacy_id is None:
+                continue
+            if entity_id != _automatic_id(registry, registry_entry):
+                continue
+            occupant = registry.async_get(legacy_id)
+            if occupant is not None and occupant.platform == DOMAIN:
+                continue
+            targets[entity_id] = legacy_id
+        else:
+            if getattr(description, "legacy_only", False):
+                plan.dropped.append(entity_id)
+                continue
+            if not on_legacy:
+                continue
+            modern = _automatic_id(registry, registry_entry, reserved)
+            reserved.add(modern)
+            targets[entity_id] = modern
+
+    occupied = await async_ids_with_history(hass, targets.values())
+    for entity_id, target in targets.items():
+        if target not in occupied:
+            plan.renames[entity_id] = target
+        elif to_legacy:
+            plan.joins[entity_id] = target
+        else:
+            plan.renames[entity_id] = target
+            plan.archives[target] = await _async_archive_id(hass, target)
+    return plan
+
+
+def _automatic_id(
+    registry: er.EntityRegistry,
+    registry_entry: er.RegistryEntry,
+    reserved: set[str] | None = None,
+) -> str:
+    """Return the id Home Assistant gives this entity when nobody chose one.
+
+    Without the claim's suggested object id, which pins it to the legacy id,
+    and without a display name the owner set, which Home Assistant would
+    otherwise fold into the id -- renaming an entity's name leaves its id
+    where it was, so a name is not an id somebody chose.
+    """
+    return registry.async_regenerate_entity_id(
+        attr.evolve(registry_entry, suggested_object_id=None, name=None),
+        reserved_entity_ids=reserved,
+    )
+
+
+async def _async_archive_id(hass: HomeAssistant, entity_id: str) -> str:
+    """Return the first archive id for `entity_id` the recorder does not know."""
+    candidates = [
+        f"{entity_id}{ARCHIVE_SUFFIX}",
+        *(f"{entity_id}{ARCHIVE_SUFFIX}_{n}" for n in range(2, 100)),
+    ]
+    taken = await async_ids_with_history(hass, candidates)
+    return next(c for c in candidates if c not in taken)
+
+
+@callback
+def async_switch_entity_ids(
+    hass: HomeAssistant, entry: ConfigEntry, plan: IdSwitch
+) -> None:
+    """Carry out a planned switch. Nothing is copied and nothing is deleted.
+
+    Run while the entry is loaded: a registry rename of a live entity is the
+    same thing the entity settings dialog does, and the platform re-adds the
+    entity under its new id. The entry's reload afterwards builds the rest.
+    """
+    registry = er.async_get(hass)
+
+    if plan.archives and RECORDER_DOMAIN in hass.config.components:
+        from homeassistant.components.recorder import get_instance
+        from homeassistant.components.recorder.statistics import (
+            async_update_statistics_metadata,
+        )
+
+        # Queued on the recorder ahead of the renames below, so each target is
+        # free by the time the recorder is asked to move a series into it.
+        for occupant, archive in plan.archives.items():
+            _LOGGER.info("Archiving the history of %s as %s", occupant, archive)
+            get_instance(hass).async_update_states_metadata(
+                occupant, new_entity_id=archive
+            )
+            async_update_statistics_metadata(hass, occupant, new_statistic_id=archive)
+
+    for entity_id in plan.dropped:
+        registry.async_remove(entity_id)
+
+    for entity_id, target in plan.renames.items():
+        if not _async_release(hass, registry, target):
+            continue
+        registry.async_update_entity(entity_id, new_entity_id=target)
+
+    for entity_id, target in plan.joins.items():
+        if not _async_release(hass, registry, target):
+            continue
+        _async_rejoin(hass, registry, entry, entity_id, target)
+
+    _LOGGER.info(
+        "%s moved %d entities to %s ids",
+        entry.title,
+        plan.moved,
+        "legacy" if plan.to_legacy else "modern",
+    )
+
+
+@callback
+def _async_rejoin(
+    hass: HomeAssistant,
+    registry: er.EntityRegistry,
+    entry: ConfigEntry,
+    entity_id: str,
+    target: str,
+) -> None:
+    """Put an entity on an id that has a history of its own, and continue it.
+
+    A rename cannot do this: the recorder refuses to move a series into an id
+    it already knows. So this is the setup flow's mechanism, claiming the id
+    at creation: the registry entry is removed and created again on the
+    target. The registry keeps a removed entry's settings -- name, area,
+    labels, display options, disabled and hidden -- and hands them back when
+    the same unique id is created again, so nothing the owner set is lost.
+
+    It would also hand back the old **id**, if that is free in the state
+    machine, which it is whenever the entity is disabled. The reservation
+    keeps it taken for the moment the new entry is created. And a display
+    name the owner set outranks the target when the id is generated, so it
+    is set aside for that moment and put back after.
+    """
+    old = registry.async_get(entity_id)
+    if old is None:
+        return
+    if old.name is not None:
+        registry.async_update_entity(entity_id, name=None)
+    registry.async_remove(entity_id)
+    reserved = hass.states.async_available(entity_id)
+    if reserved:
+        hass.states.async_reserve(entity_id)
+    try:
+        created = registry.async_get_or_create(
+            old.domain,
+            DOMAIN,
+            old.unique_id,
+            suggested_object_id=target.split(".", 1)[1],
+            config_entry=entry,
+            device_id=old.device_id,
+        )
+    finally:
+        if reserved:
+            # Removing a state that was only reserved drops the reservation
+            # and fires nothing.
+            hass.states.async_remove(entity_id)
+    if old.name is not None:
+        registry.async_update_entity(created.entity_id, name=old.name)
+    if created.entity_id != target:
+        _LOGGER.warning(
+            "Could not move %s to %s, which is in use; it is %s now",
+            entity_id,
+            target,
+            created.entity_id,
+        )

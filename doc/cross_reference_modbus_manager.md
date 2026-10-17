@@ -62,21 +62,18 @@ Four groups, all input registers unless noted, all **spec**:
   per phase and 5726 total — and stops there, so an off-grid house can see
   what the backup port delivers but not at what voltage. Same block, same
   capability gate.
-- **The fault and alarm bitfields — and the block is far bigger than their
+- **The fault and alarm bitfields — and the block is bigger than their
   template shows.** They expose five: 13066 battery fault, 13068 battery
-  alarm, 13070 BMS alarm, 13072 BMS protection, 13074 BMS fault 1. V1.1.16
-  has **fourteen** consecutive U32s at 13052-13079: grid-side fault, system
-  fault 1 and 2, DC-side fault, permanent fault, BDC-side fault, BDC-side
-  permanent fault, then those five, then BMS fault 2 (13076) and BMS alarm 2
-  (13078). Twenty-eight registers, and **Appendix 4 defines every bit** — six
-  pages of it, so the flag names are **spec** rather than the
-  **template**-provenance they looked like.
-
-  That makes this a bigger piece than "add five registers", and its own
-  decision: ~450 named bits do not map onto Home Assistant entities without a
-  choice about representation, and taking five of fourteen because that is
-  what a derived template happened to carry would be the wrong cut. Left out
-  deliberately — see the open item at the end.
+  alarm, 13070 BMS alarm, 13072 BMS protection, 13074 BMS fault 1. The
+  specification has **fifteen** consecutive U32s at 13050-13079: inverter
+  alarm, grid-side fault, system fault 1 and 2, DC-side fault, permanent
+  fault, BDC-side fault, BDC-side permanent fault, then those five, then BMS
+  fault 2 (13076) and BMS alarm 2 (13078). **Appendix 4 defines every bit**,
+  so the flag names are **spec** rather than the **template**-provenance they
+  looked like. This repository reads all fifteen (`inverter/faults.py`, 207
+  named flags once the reserved bits are left out) and reports them as one
+  counting sensor per word plus two problem binary sensors -- not five words
+  because a template happened to carry five.
 
   (Note the space trap again: **input** 13052 is grid-side fault, **holding**
   13052 is the battery's forced charge/discharge power, which this repository
@@ -493,9 +490,6 @@ Landed with this document:
 
 Deliberately not done:
 
-- **The fault block.** Fourteen U32s and roughly 450 spec-defined bits, which
-  needs a representation decision before any of it is worth reading. Taking
-  the five another project happens to expose would be the wrong cut.
 - **31204/31205**, for the reason above: the spec settles it the other way.
 - **The 46 monthly and yearly energy registers**, and the wallbox write path
   at holding 33541-33550 — unverified, and frozen when an iHomeManager is

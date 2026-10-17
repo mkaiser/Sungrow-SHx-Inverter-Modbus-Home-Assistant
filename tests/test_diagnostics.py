@@ -9,6 +9,7 @@ be pasted into a public issue.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 from modbus_connection.mock import MockModbusUnit
@@ -22,6 +23,7 @@ from custom_components.sungrow_modbus.const import (
     ENTITY_IDS_NEW,
 )
 from custom_components.sungrow_modbus.diagnostics import (
+    NO_BLOCK_READ_TEST,
     async_get_config_entry_diagnostics,
 )
 from homeassistant.const import CONF_HOST, CONF_PORT
@@ -164,3 +166,28 @@ async def test_the_register_dump_is_included_when_enabled(
         if isinstance(space, dict)
         for address in range(4989, 4999)
     )
+
+
+async def test_the_block_read_test_is_carried_from_the_last_survey(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The download hands on the survey's measurement rather than running one.
+
+    The test reads every block several times -- minutes through a dongle --
+    and a download is something somebody waits on.
+    """
+    entry = await _setup(hass, sungrow_unit)
+    report = await async_get_config_entry_diagnostics(hass, entry)
+    assert report["block_read_test"] == NO_BLOCK_READ_TEST
+
+    measured = {"rounds": 3, "blocks": []}
+    entry.runtime_data.survey._set(
+        document={"block_read_test": measured},
+        finished=datetime(2026, 10, 17, 12, 0, tzinfo=UTC),
+    )
+    report = await async_get_config_entry_diagnostics(hass, entry)
+
+    assert report["block_read_test"] == {
+        "measured_at": "2026-10-17T12:00:00+00:00",
+        **measured,
+    }

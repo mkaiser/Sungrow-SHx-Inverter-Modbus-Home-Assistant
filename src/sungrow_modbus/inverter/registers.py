@@ -308,6 +308,48 @@ class InverterMeterChannel2(Component):
     """Meter channel 2 phase C active power."""
 
 
+class InverterFaults(Component):
+    """30 input registers, polled every 10s: the fault and alarm words.
+
+    Fifteen U32 bit fields from Appendix 4. Read as numbers here and decoded
+    by `faults.active`, which knows which bits are named. Answered on every
+    inverter surveyed, over a cable and through a dongle alike.
+    """
+
+    register_space = "input"
+
+    inverter_alarm = uint32(reg(13050), word_order="little", nan=0xFFFFFFFF)
+    """Inverter alarm: alarm flags, named in `faults.FAULT_WORDS`."""
+    grid_side_fault = uint32(reg(13052), word_order="little", nan=0xFFFFFFFF)
+    """Grid-side fault: fault flags, named in `faults.FAULT_WORDS`."""
+    system_fault_1 = uint32(reg(13054), word_order="little", nan=0xFFFFFFFF)
+    """System fault 1: fault flags, named in `faults.FAULT_WORDS`."""
+    system_fault_2 = uint32(reg(13056), word_order="little", nan=0xFFFFFFFF)
+    """System fault 2: fault flags, named in `faults.FAULT_WORDS`."""
+    dc_side_fault = uint32(reg(13058), word_order="little", nan=0xFFFFFFFF)
+    """DC-side fault: fault flags, named in `faults.FAULT_WORDS`."""
+    permanent_fault = uint32(reg(13060), word_order="little", nan=0xFFFFFFFF)
+    """Permanent fault: fault flags, named in `faults.FAULT_WORDS`."""
+    bdc_side_fault = uint32(reg(13062), word_order="little", nan=0xFFFFFFFF)
+    """BDC-side fault: fault flags, named in `faults.FAULT_WORDS`."""
+    bdc_side_permanent_fault = uint32(reg(13064), word_order="little", nan=0xFFFFFFFF)
+    """BDC-side permanent fault: fault flags, named in `faults.FAULT_WORDS`."""
+    battery_fault = uint32(reg(13066), word_order="little", nan=0xFFFFFFFF)
+    """Battery fault: fault flags, named in `faults.FAULT_WORDS`."""
+    battery_alarm = uint32(reg(13068), word_order="little", nan=0xFFFFFFFF)
+    """Battery alarm: alarm flags, named in `faults.FAULT_WORDS`."""
+    bms_alarm = uint32(reg(13070), word_order="little", nan=0xFFFFFFFF)
+    """BMS alarm: alarm flags, named in `faults.FAULT_WORDS`."""
+    bms_protection = uint32(reg(13072), word_order="little", nan=0xFFFFFFFF)
+    """BMS protection: fault flags, named in `faults.FAULT_WORDS`."""
+    bms_fault_1 = uint32(reg(13074), word_order="little", nan=0xFFFFFFFF)
+    """BMS fault 1: fault flags, named in `faults.FAULT_WORDS`."""
+    bms_fault_2 = uint32(reg(13076), word_order="little", nan=0xFFFFFFFF)
+    """BMS fault 2: fault flags, named in `faults.FAULT_WORDS`."""
+    bms_alarm_2 = uint32(reg(13078), word_order="little", nan=0xFFFFFFFF)
+    """BMS alarm 2: alarm flags, named in `faults.FAULT_WORDS`."""
+
+
 class InverterFastHolding(Component):
     """20 holding registers, polled every 10s."""
 
@@ -643,6 +685,7 @@ COMPONENTS: dict[str, type[Component]] = {
     "fast_input": InverterFastInput,
     "battery_power": InverterBatteryPower,
     "meter_channel_2": InverterMeterChannel2,
+    "faults": InverterFaults,
     "fast_holding": InverterFastHolding,
     "apl_shutdown_at_zero": InverterAplShutdownAtZero,
     "medium_input": InverterMediumInput,
@@ -661,6 +704,7 @@ TIER_COMPONENTS: dict[str, tuple[str, ...]] = {
         "fast_input",
         "battery_power",
         "meter_channel_2",
+        "faults",
         "fast_holding",
         "apl_shutdown_at_zero",
     ),

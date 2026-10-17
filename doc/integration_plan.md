@@ -46,59 +46,48 @@ pre-release and the library to PyPI over OIDC. Run hassfest locally first
 4. **13074 at fwitten.** Run `sungrow_control_test.py --export-scale` against
    the 1:1 firmware it was built for, and confirm a fresh install there sets
    up and probes correctly. Needs the VPN route into the devcontainer.
-5. **Firmware-dependent register semantics** ([#763]). Built on the pattern
-   `capabilities.ABSENT_ON_FIRMWARE` already uses: a small table of
-   deviations keyed on the **whole** `sungrow_version_1` string (platform
-   prefix included -- `PEARL-H_01011.01.45` is not older than
-   `SAPPHIRE-H_01011.95.03`), each citing the fingerprint it came from. No
-   forks of the map, no runtime `if`s in properties.
-6. **Transport as three values in the scan scripts.** `probe._async_connection`
-   and `sungrow_survey._check_transport` still publish a timed-out read of 6100
-   as `"refused"`, i.e. a dongle. Add `"undetermined"`; it changes the
-   document and `transport_verdict`'s truth table. The library's exception
-   taxonomy already separates the two: `ModbusExceptionError` is a refusal,
-   `ModbusTimeoutError` is not.
-7. **Switching an entry between legacy and modern ids** in the options flow.
-   Until then the answer is to remove and re-add the entry, which keeps
-   history (`doc/integration_migration.md` says so).
-8. **The topology step** in the config flow: present the derived role and say
-   which claims are measured and which inferred.
-9. **The block read test in the diagnostics download.** It runs from the
-   survey button; the download leaves it out. The count that reconciles a
-   padded frame still needs `blocks.py --client raw`.
-10. **The fault and alarm block** (input 13052-13079, fourteen U32s,
-    Appendix 4, ~450 flags). Needs a decision on representation before any
-    entity; the largest piece of the specification not yet read.
 
 ### Blocked on evidence
 
-11. **iHomeManager (milestone 5).** Port 502 *or* 503, unit 247. Not a gateway:
-    one endpoint, one device. `identify()` recognises it and the survey
-    reports it; the map is in
-    [cross_reference_modbus_manager.md](cross_reference_modbus_manager.md)
-    (MIT). Needs a survey from an owner.
-12. **Sungrow Logger (milestone 8).** Documented (*Logger Communication
-    Protocol AW0 1.0.2.9*); fronts a whole installation, which is what the
-    one-entry-per-endpoint model was built for. It does **not** forward
-    battery data ("Logger is not supported" in the hybrid protocol's Note 2).
-13. **SBR per-module entities.** All 24 registers are read; an unfitted module
-    answers 0 V, so the module count has to be established first. The
-    encoding is a decision, not a migration. An SBR128 survey settles it.
-14. **SBH.** Answers the SBR's common block at unit 2 with the SBR's scales;
+5. **Firmware-dependent register semantics** ([#763]). The pattern is
+   `capabilities.ABSENT_ON_FIRMWARE`: a small table of deviations keyed on
+   the **whole** `sungrow_version_1` string (platform prefix included --
+   `PEARL-H_01011.01.45` is not older than `SAPPHIRE-H_01011.95.03`), each
+   citing the fingerprint it came from. #763's deviation is 13074's write
+   scale, which the per-device probe measures and stores with the firmware;
+   no committed fingerprint shows another, so the table has no entry to hold.
+6. **A fault seen on hardware.** The fifteen words are read and decoded from
+   V1.1.11's Appendix 4; one survey has a flag set (bit 30 of the inverter
+   alarm, a slave with no meter), which confirms the word order. Still
+   wanted: a reading during a real grid or battery fault, the battery words
+   through a dongle, and V1.1.16's appendix compared bit for bit.
+7. **iHomeManager (milestone 5).** Port 502 *or* 503, unit 247. Not a gateway:
+   one endpoint, one device. `identify()` recognises it and the survey
+   reports it; the map is in
+   [cross_reference_modbus_manager.md](cross_reference_modbus_manager.md)
+   (MIT). Needs a survey from an owner.
+8. **Sungrow Logger (milestone 8).** Documented (*Logger Communication
+   Protocol AW0 1.0.2.9*); fronts a whole installation, which is what the
+   one-entry-per-endpoint model was built for. It does **not** forward
+   battery data ("Logger is not supported" in the hybrid protocol's Note 2).
+9. **SBR per-module entities.** All 24 registers are read; an unfitted module
+   answers 0 V, so the module count has to be established first. The
+   encoding is a decision, not a migration. An SBR128 survey settles it.
+10. **SBH.** Answers the SBR's common block at unit 2 with the SBR's scales;
     per-module arrays unread. Needs the register document.
-15. **Meter phase voltage/current (5741-5746) on dongle houses.** Read zero
+11. **Meter phase voltage/current (5741-5746) on dongle houses.** Read zero
     through every WiNet-S measured and are gated on a non-zero voltage. Whether
     they need reading on their own (#756) needs a survey from an affected
     owner; `layout.py` changes only on measurement.
-16. **T-series energy counters.** One SH20T reads 13045 (daily export) as 0
+12. **T-series energy counters.** One SH20T reads 13045 (daily export) as 0
     while exporting, and 5003/5004-5005 duplicating the export counters. A
     second T survey, ideally on a cable, before `registers.py` changes.
-17. **Modbus over TLS on 516.** The path exists (`ModbusTlsParams` through
+13. **Modbus over TLS on 516.** The path exists (`ModbusTlsParams` through
     `async_get_unit`). Worth building only if 516 is a *separate* session pool
     from 502 -- hold 502 until it refuses, then try 516. Also wanted: a
     certificate hash from a third site, to show whether every dongle ships the
     same key.
-18. **Does a WiNet-S advertise over mDNS?** Needs a house with a dongle and
+14. **Does a WiNet-S advertise over mDNS?** Needs a house with a dongle and
     a run on the host, not in the container.
 
 The most useful contribution is in
@@ -157,6 +146,23 @@ InfluxDB and Grafana get advice and a script (`scripts/helpers/influx_migration.
 - **Entity ids are a choice at setup**: legacy ids for existing users, modern
   device-scoped ones for new users. Modern ids take the prefix from the device
   type register; a second device of the same model is told apart by unit id.
+  **The options page switches an entry either way** (`migration.async_plan_id_switch`):
+  towards modern ids each series moves by rename; towards legacy ids an id
+  that still holds the YAML package's history continues it, and the modern
+  series stays under its own id. Rows already on a target id are renamed to
+  `<id>_archive` first. An id the owner chose is left alone.
+- **The config flow says each inverter's role and how it is known.** A
+  device address other than 1 is a measured slave; its partner at address 1
+  is the inferred master; through dongles only battery ownership survives,
+  so a role built on it is "probably" and says so.
+- **The fault and alarm words are counted, not split** (`inverter.faults`,
+  from V1.1.11's Appendix 4). One diagnostic sensor per word reports how
+  many named flags are set and names them in an `active` attribute; `Fault
+  reported` and `Alarm reported` are the problem binary sensors to automate
+  on. Reserved bits are never reported.
+- **The diagnostics download carries the block read test, never runs it.**
+  The survey button's last measurement goes in with its time; running one
+  costs minutes through a dongle, and a download is waited on.
 - **The `_raw` sensors exist in legacy mode only.** Modern mode exposes the
   decoded value (a binary sensor for an `0xAA`/`0x55` mode, a ratio with its
   unit); `Derived._mode_flag` returns None for anything else.

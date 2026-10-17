@@ -37,6 +37,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from naming import DIAGNOSTIC, modern_name
 from writes import NUMBERS, SELECTS, SWITCHES
 
+from sungrow_modbus.inverter.faults import FAULT_WORDS
+
 REPO = Path(__file__).resolve().parents[2]
 ENTITY_MAP = REPO / "doc" / "legacy_entity_map.json"
 COMPONENT = REPO / "custom_components" / "sungrow_modbus"
@@ -210,6 +212,18 @@ MODE_FLAGS: dict[str, tuple[str, str]] = {
     ),
 }
 
+#: Whether the inverter reports a problem, from Appendix 4's words.
+#:
+#: The two entities an owner automates on; the fifteen word sensors beside
+#: them say what the problem is. Problem binary sensors rather than
+#: diagnostic ones, because a fault is the one thing on this device page that
+#: somebody should notice without looking for it.
+PROBLEMS: dict[str, str] = {
+    # key: the boolean on `Derived`
+    "fault_reported": "fault_reported",
+    "alarm_reported": "alarm_reported",
+}
+
 #: Seconds a power-flow bit must hold before its `(delay)` twin reports it.
 #: One value for all seven, which is what the YAML uses.
 DELAY_ON = 60
@@ -240,6 +254,7 @@ never lags the sensors it is computed from — and when it is unavailable.
 
 from __future__ import annotations
 
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import EntityCategory
 
@@ -411,6 +426,18 @@ def render_derived() -> str:
         lines.append(f'        translation_key="{key}",')
         lines.append(f"        depends_on={(register,)!r},")
         lines.append("        entity_category=EntityCategory.DIAGNOSTIC,")
+        lines.append("    ),")
+
+    for key, field in PROBLEMS.items():
+        kind = field.removesuffix("_reported")
+        depends = tuple(word.field for word in FAULT_WORDS if word.kind == kind)
+        lines.append("    SungrowBinarySensorDescription(")
+        lines.append(f'        key="{key}",')
+        lines.append('        component="derived",')
+        lines.append(f'        field="{field}",')
+        lines.append(f'        translation_key="{key}",')
+        lines.append(f"        depends_on={depends!r},")
+        lines.append("        device_class=BinarySensorDeviceClass.PROBLEM,")
         lines.append("    ),")
     lines.append(")")
     return "\n".join(lines) + "\n"

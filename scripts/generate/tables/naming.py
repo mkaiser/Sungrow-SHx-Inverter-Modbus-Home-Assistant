@@ -386,6 +386,24 @@ DIAGNOSTIC: frozenset[str] = frozenset(
         "wallbox_enabled",
         # A bitmask, whose seven bits are the binary sensors.
         "power_flow_status",
+        # Appendix 4's fault and alarm words, counted. What you open when the
+        # `Fault reported` or `Alarm reported` binary sensor goes on, which
+        # is the entity a dashboard shows.
+        "inverter_alarm",
+        "grid_side_fault",
+        "system_fault_1",
+        "system_fault_2",
+        "dc_side_fault",
+        "permanent_fault",
+        "bdc_side_fault",
+        "bdc_side_permanent_fault",
+        "battery_fault",
+        "battery_alarm",
+        "bms_alarm",
+        "bms_protection",
+        "bms_fault_1",
+        "bms_fault_2",
+        "bms_alarm_2",
         # A configured limit rather than a measurement, like the ones above it.
         "feed_in_limitation_ratio",
         # Identity and firmware.

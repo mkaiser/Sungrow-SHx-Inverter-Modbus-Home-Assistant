@@ -91,11 +91,14 @@ def test_the_derived_layer_covers_the_yaml_template_sensors() -> None:
     scripts = _Path(__file__).resolve().parent.parent / "scripts" / "generate"
     sys.path.insert(0, str(scripts))
     sys.path.insert(0, str(scripts / "tables"))
-    from descriptions import MODE_FLAGS
+    from descriptions import MODE_FLAGS, PROBLEMS
     from naming import LEGACY_ONLY_SENSORS
 
     declared = {f"binary_sensor.{key}" for key in MODE_FLAGS}
-    assert not ported - expected - declared, (
+    # Read from the specification's fault words, which the YAML never read,
+    # so they replace nothing and need no replacement declared.
+    problems = {f"binary_sensor.{key}" for key in PROBLEMS}
+    assert not ported - expected - declared - problems, (
         "derived entities with no YAML counterpart and no declaration"
     )
     for entity_id in declared:

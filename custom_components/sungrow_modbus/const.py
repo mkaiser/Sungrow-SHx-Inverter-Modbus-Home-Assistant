@@ -19,6 +19,7 @@ DEFAULT_UNIT_ID = 1
 #: read both ways. So an absent role means "not determinable here", never
 #: "standalone".
 ROLE_SLAVE = "slave"
+ROLE_MASTER = "master"
 
 CONF_UNIT_ID = "unit_id"
 
@@ -284,9 +285,9 @@ DEFAULT_SURVEY_DUMP = True
 #: What an entry is for, chosen at setup and changeable afterwards.
 #:
 #: A contributor who wants to send a reading should not have to answer the
-#: migration question at all: it is the only irreversible decision in this
-#: flow, it decides which entity ids years of recorder history attach to, and
-#: it has nothing whatever to do with producing a document. So there are two
+#: migration question at all: it decides which entity ids years of recorder
+#: history attach to, and it has nothing whatever to do with producing a
+#: document. So there are two
 #: kinds of entry.
 CONF_MODE = "mode"
 
@@ -309,7 +310,7 @@ entity-ids question gets asked.
 #: create such an entry -- the question the config flow opens with, and the
 #: promotion toggle on a diagnostics entry's options page.
 #:
-#: Off because that path contains the one **irreversible** decision this
+#: Off because that path contains the **weightiest** decision this
 #: integration makes. Choosing to take over `modbus_sungrow.yaml`'s entity ids
 #: decides which ids years of recorder history and every dashboard card attach
 #: to, and getting it wrong breaks both silently. That is not a thing to put

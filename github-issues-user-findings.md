@@ -44,7 +44,7 @@ support answer.
 | D | Battery power limits and start power on RS / T / SBH | #654 #679 #705 #743 #751 | partly |
 | E | Sessions, contention, "Not connected" | #656 #685 #702 #726 #731 #769 | partly |
 | F | Bogus values: 0x7FFFFFFF, NUL padding, energy spikes | #692 #708 #736 | covered, one test missing |
-| G | Fault and alarm codes | #745 | open |
+| G | Fault and alarm codes | #745 | partly |
 | H | EMS mode, scenes, control API | #677 #680 #684 #701 #721 #739 | partly |
 | I | Wallbox and other devices | #686 #712 | partly |
 | J | Models and surveys | #662 #772 #775 | partly |
@@ -304,16 +304,14 @@ registers and the bit map in Appendix 4 of the protocol.
 
 ### What it means for the integration
 
-**Open.** Only running-state labels exist (`derived.RUNNING_STATES`).
-Proposal:
+**Partly covered.** The fifteen fault and alarm words (input 13050-13079)
+are read and decoded from Appendix 4: one diagnostic sensor per word counts
+the named flags set and lists them in `active`, and `Fault reported` and
+`Alarm reported` are problem binary sensors for automations.
 
-- A `sensor` (enum) **active fault code** with a lookup table from the
-  protocol appendix, and a `binary_sensor` (device class `problem`) on top
-  of it for automations.
-- Survey first whether 5453 answers on a cable **and** through a dongle,
-  before gating it.
-- The documented fault bitfields: decode them into an attribute listing the
-  active faults.
+**Open:** register 5453, the single fault code #745 found (714 during a BMS
+communication fault). Survey first whether it answers on a cable **and**
+through a dongle, before reading it.
 
 ---
 

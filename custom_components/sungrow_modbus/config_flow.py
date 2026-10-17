@@ -61,7 +61,7 @@ from sungrow_modbus import (
     network_of,
     power_from_bms,
 )
-from sungrow_modbus.addresses import DIRECT_ONLY_PROBE, read
+from sungrow_modbus.addresses import DIRECT_ONLY_PROBE, field_address, read
 from sungrow_modbus.discovery import CONCURRENCY, TIMEOUT
 from sungrow_modbus.fingerprint import OTHER_INVERTER_YES
 from sungrow_modbus.wallbox import probe_units as wallbox_probe_units
@@ -74,6 +74,7 @@ from .config_flow_schemas import (
     NOT_LISTED,
     STEP_USER_DATA_SCHEMA,
     _described,
+    _entity_id_style_selector,
     _entity_ids_schema,
     _is_container_bridge,
     _other_inverter_schema,
@@ -115,6 +116,7 @@ from .const import (
     MODE_DIAGNOSTICS,
     PLACEMENT_BEHIND_METER,
     PLACEMENT_SEPARATE,
+    ROLE_MASTER,
     ROLE_SLAVE,
     SCAN_PORTS,
     SECTION_ADVANCED,
@@ -127,10 +129,13 @@ from .const import (
 )
 from .links import wallbox_tls_params
 from .migration import (
+    IdSwitch,
     async_legacy_ids_known,
     async_legacy_ids_live,
     async_legacy_ids_with_history,
     async_legacy_suffix,
+    async_plan_id_switch,
+    async_switch_entity_ids,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -141,9 +146,9 @@ _DEVICES_MODE_COMING = (
     "early alpha, and it exists to gather readings: it connects to your "
     "inverter, works out what it is and which registers it answers, and "
     "creates no entities for the values. Setting up the inverter properly -- "
-    "including taking over the entity IDs of the YAML package, which is the "
-    "one decision here that cannot be undone -- comes in a later release, and "
-    "an entry made now can be upgraded to it then without being deleted."
+    "including taking over the entity IDs of the YAML package, which decides "
+    "where years of history continue -- comes in a later release, and an "
+    "entry made now can be upgraded to it then without being deleted."
 )
 
 #: And what the same sentence has to say when the gate is open, because then
@@ -151,7 +156,7 @@ _DEVICES_MODE_COMING = (
 #: rather than the restriction.
 _DEVICES_MODE_OPEN = (
     "\n\nBoth answers are fine, and you can change your mind later: picking "
-    "**Diagnostics only** skips the one irreversible question in this dialog, "
+    "**Diagnostics only** skips the weightiest question in this dialog, "
     "about which entity IDs to take over, because a reading does not need it."
 )
 
@@ -199,18 +204,28 @@ _PACKAGE_NOT_LOADED = (
 )
 
 
+#: The one reason a move to legacy ids is refused, said on the page itself.
+_SWITCH_BLOCKED = (
+    "\n\n\u26a0\ufe0f **The YAML package is still running.** {live} of its "
+    "entities are live and hold the ids these would move to. Remove "
+    "`modbus_sungrow.yaml` from your configuration, restart Home Assistant, "
+    "and come back here."
+)
+
+
 async def _async_probe(
     hass: HomeAssistant, host: str, port: int, unit_id: int
-) -> tuple[SungrowInverter, bool | None]:
-    """Read the identity and the route, or raise.
+) -> tuple[SungrowInverter, bool | None, bool | None]:
+    """Read the identity, the route and whether a battery is attached, or raise.
 
-    Returns the inverter and whether it answered the direct-only register, so
-    the picker can say how each address reaches the machine. One extra read
-    per candidate, which is worth it: a house with a cable *and* a dongle
-    offers two addresses for one inverter, and they do not answer the same
-    registers -- a dongle forwards 1020 of 1510 dumped addresses where a
-    cable forwards 1461, and answers 0 where the inverter answers
-    "unavailable".
+    Returns the inverter, whether it answered the direct-only register, and
+    whether it reports a battery capacity, so the picker can say how each
+    address reaches the machine and, in a house of two, which one is which.
+    Two extra reads per inverter found, which is worth it: a house with a
+    cable *and* a dongle offers two addresses for one inverter, and they do
+    not answer the same registers -- a dongle forwards 1020 of 1510 dumped
+    addresses where a cable forwards 1461, and answers 0 where the inverter
+    answers "unavailable".
 
     A config flow has no config entry yet to hang a connection hold on, which
     is what async_get_temporary_unit exists for: it shares a connection that
@@ -239,7 +254,26 @@ async def _async_probe(
             direct = None
         else:
             direct = True
-    return inverter, direct
+        battery = await _async_has_battery(unit) if inverter.serial_number else None
+    return inverter, direct, battery
+
+
+async def _async_has_battery(unit: Any) -> bool | None:
+    """Return whether the inverter reports a battery capacity, if it answers.
+
+    The one role signal a WiNet-S forwards. At a measured cluster the master
+    reads 960 at 5639 and the slave 0, on the cable and through the dongle
+    alike, where the device address -- the real signal -- is hidden by the
+    dongle. It says what a machine *has*, not what it *is*, so the picker
+    calls anything built on it an inference. 0 and 0xFFFF are both "none":
+    a slave answers zeros for hardware it lacks, a lone inverter answers
+    unavailable.
+    """
+    try:
+        (word,) = await read(unit, field_address("battery_capacity_high_precision"))
+    except (ModbusError, HomeAssistantError):
+        return None
+    return word not in (0, 0xFFFF)
 
 
 #: What a connection is, in an entry's data: the address, the port and the
@@ -361,7 +395,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         placeholders: dict[str, str] = {"current": _where(entry.data), "error": ""}
         if user_input is not None:
             try:
-                inverter, direct = await _async_probe(
+                inverter, direct, _battery = await _async_probe(
                     self.hass,
                     user_input[CONF_HOST],
                     user_input[CONF_PORT],
@@ -447,7 +481,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         their inverter in Home Assistant. Some want to help this project find
         out what their model answers -- and for them the flow's central
         question, whether to take over the YAML package's entity ids, is both
-        irreversible and beside the point.
+        weighty and beside the point.
 
         So it is asked first, and cheaply: a diagnostics entry connects,
         identifies the hardware, creates no entities, and never mentions
@@ -930,7 +964,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 continue
             for unit_id in IDENTIFY_UNITS:
                 try:
-                    inverter, direct = await _async_probe(
+                    inverter, direct, battery = await _async_probe(
                         self.hass, host, port, unit_id
                     )
                 except (ModbusError, HomeAssistantError):
@@ -956,6 +990,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                     "model": inverter.model,
                     "hostname": hostname,
                     "direct": direct,
+                    "battery": battery,
                     # Rebuilt by `_described`, which is the only place that
                     # knows whether this address shares a serial with another.
                     "label": f"{model} at {hostname or host}",
@@ -972,7 +1007,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             try:
-                inverter, direct = await _async_probe(
+                inverter, direct, _battery = await _async_probe(
                     self.hass,
                     user_input[CONF_HOST],
                     user_input[CONF_PORT],
@@ -1038,9 +1073,9 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         """
         # A diagnostics entry creates no entities, so there is nothing for an
         # id to attach to and nothing to migrate. Asking would be worse than
-        # pointless: it is the one decision here that cannot be undone
-        # casually, and answering it wrongly to get past a dialog is exactly
-        # how somebody loses years of history.
+        # pointless: it decides where years of history continue, and
+        # answering it wrongly to get past a dialog is how somebody loses
+        # track of that history.
         if self._mode == MODE_DIAGNOSTICS:
             return await self.async_step_testimony()
 
@@ -1168,6 +1203,8 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         """
         if self._role == ROLE_SLAVE:
             return f"{self._title} slave"
+        if self._role == ROLE_MASTER:
+            return f"{self._title} master"
         return self._title
 
     @callback
@@ -1312,6 +1349,48 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
 
+def _switch_placeholders(plan: IdSwitch, live: set[str]) -> dict[str, str]:
+    """Say what a planned id switch does, one line per kind of change."""
+
+    def examples(moves: dict[str, str]) -> str:
+        return "".join(
+            f"\n  - `{current}` → `{target}`"
+            for current, target in sorted(moves.items())[:3]
+        )
+
+    lines: list[str] = []
+    if plan.renames:
+        lines.append(
+            f"- **{len(plan.renames)}** move, history and statistics with them:"
+            + examples(plan.renames)
+        )
+    if plan.joins:
+        lines.append(
+            f"- **{len(plan.joins)}** continue the YAML package's history under "
+            "its ids; what was recorded under the current ids stays there:"
+            + examples(plan.joins)
+        )
+    if plan.archives:
+        lines.append(
+            f"- **{len(plan.archives)}** ids already hold older history, which "
+            "is renamed aside first, not deleted:" + examples(plan.archives)
+        )
+    if plan.dropped:
+        lines.append(
+            f"- **{len(plan.dropped)}** raw sensors exist with legacy ids only "
+            "and are removed; their history stays where it is."
+        )
+    if not lines:
+        lines.append(
+            "- Nothing to move: every entity is already there, or has an id "
+            "you chose yourself, which is left alone."
+        )
+    return {
+        "changes": "\n".join(lines),
+        "status": _SWITCH_BLOCKED.format(live=len(live)) if live else "",
+    }
+
+
 async def _async_wallbox_answers(hass: HomeAssistant, host: str) -> bool:
     """Whether a Sungrow wallbox answers at this address, over TLS at unit 248.
 
@@ -1348,6 +1427,9 @@ class SungrowOptionsFlow(OptionsFlow):
         #: promoted on the way out would otherwise lose everything typed
         #: beside the checkbox that promoted it.
         self._pending_options: dict[str, Any] | None = None
+        #: The entity id style asked for, and what moving to it will do.
+        self._switch_to = ENTITY_IDS_NEW
+        self._switch: IdSwitch | None = None
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -1405,6 +1487,16 @@ class SungrowOptionsFlow(OptionsFlow):
                     # an address that answers nothing would otherwise leave
                     # the wallbox's entities unavailable with only a log line.
                     errors["base"] = "wallbox_not_found"
+                elif (
+                    CONF_ENTITY_IDS in user_input
+                    and user_input[CONF_ENTITY_IDS] != self._entity_id_style()
+                ):
+                    # Its own page, like promotion: it moves history, and the
+                    # page says how much before anything moves.
+                    self._pending_options = options
+                    return await self.async_step_entity_ids(
+                        {"to": user_input[CONF_ENTITY_IDS]}
+                    )
                 # The flag is checked as well as the value: a disabled
                 # control is a frontend courtesy, and the payload arrives over
                 # a websocket anybody with a token can write by hand.
@@ -1422,9 +1514,9 @@ class SungrowOptionsFlow(OptionsFlow):
                     return await self.async_step_other_inverter()
                 elif DEVICES_MODE_OFFERED and user_input.get(CONF_ADD_DEVICES):
                     # The promotion question is asked on its own page, and
-                    # that is deliberate: it is the only irreversible choice
-                    # this integration offers, and it does not belong folded
-                    # into a section beside a poll interval.
+                    # that is deliberate: it decides where years of history
+                    # continue, and it does not belong folded into a section
+                    # beside a poll interval.
                     self._pending_options = options
                     return await self.async_step_promote()
                 else:
@@ -1480,6 +1572,13 @@ class SungrowOptionsFlow(OptionsFlow):
                 BooleanSelectorConfig(read_only=True)
                 if not DEVICES_MODE_OFFERED
                 else BooleanSelectorConfig()
+            )
+
+        else:
+            # Changing it renames the entities, which `async_step_entity_ids`
+            # spells out before doing.
+            schema[vol.Required(CONF_ENTITY_IDS, default=self._entity_id_style())] = (
+                _entity_id_style_selector()
             )
 
         schema[vol.Required(SECTION_POLLING)] = section(
@@ -1650,6 +1749,84 @@ class SungrowOptionsFlow(OptionsFlow):
             {"collapsed": True},
         )
 
+    def _entity_id_style(self) -> str:
+        """Return which ids this entry's entities are on now."""
+        return self.config_entry.data.get(CONF_ENTITY_IDS, ENTITY_IDS_NEW)
+
+    async def async_step_entity_ids(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Move this entry's entities between legacy and modern ids.
+
+        The setup flow's question, answerable again. Until this existed the
+        only way to change the answer was to remove the entry and add it
+        again, which kept history but lost every setting on the page.
+
+        Reached from the options page with `{"to": ...}`; the confirmation
+        comes back empty. What will happen is planned before the page is
+        shown, so the counts on it are the ones the switch then carries out.
+        """
+        if user_input is not None and "to" in user_input:
+            self._switch_to = user_input["to"]
+            self._switch = None
+            user_input = None
+        to_legacy = self._switch_to == ENTITY_IDS_MIGRATE
+
+        slot = self.config_entry.data.get(CONF_LEGACY_SLOT)
+        if slot is None:
+            # The same fallback promotion uses: an entry made before slots
+            # were stored, asked of the YAML package if it is still here.
+            slot = async_legacy_suffix(self.hass, self.config_entry.unique_id) or ""
+        live = async_legacy_ids_live(self.hass, slot) if to_legacy else set()
+
+        errors: dict[str, str] = {}
+        if user_input is not None and self._switch is not None:
+            if live:
+                errors["base"] = "legacy_package_still_loaded"
+            else:
+                async_switch_entity_ids(self.hass, self.config_entry, self._switch)
+                # `data`, as setup and promotion store it. The update reloads
+                # the entry, which is what claims anything left unclaimed
+                # (the raw sensors that exist with legacy ids only) and stops
+                # creating them on the way back.
+                self.hass.config_entries.async_update_entry(
+                    self.config_entry,
+                    data={
+                        **self.config_entry.data,
+                        CONF_ENTITY_IDS: self._switch_to,
+                        CONF_LEGACY_SLOT: slot,
+                    },
+                )
+                options = self._pending_options
+                self._pending_options = None
+                return self.async_create_entry(
+                    data=options
+                    if options is not None
+                    else dict(self.config_entry.options)
+                )
+
+        self._switch = await async_plan_id_switch(
+            self.hass, self.config_entry, to_legacy=to_legacy, suffix=slot
+        )
+        return self.async_show_form(
+            step_id="entity_ids_legacy" if to_legacy else "entity_ids_modern",
+            data_schema=vol.Schema({}),
+            errors=errors,
+            description_placeholders=_switch_placeholders(self._switch, live),
+        )
+
+    async def async_step_entity_ids_legacy(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Confirm a move to legacy ids; the page has its own text."""
+        return await self.async_step_entity_ids(user_input or {})
+
+    async def async_step_entity_ids_modern(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Confirm a move to modern ids; the page has its own text."""
+        return await self.async_step_entity_ids(user_input or {})
+
     async def async_step_other_inverter(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -1679,9 +1856,8 @@ class SungrowOptionsFlow(OptionsFlow):
         """Turn a diagnostics-only entry into a full one.
 
         This is where the question the diagnostics path skipped finally gets
-        put, and it is put here rather than at setup for a reason: it is the
-        only irreversible decision in this integration -- it decides which
-        entity ids years of recorder history attach to -- and somebody who
+        put, and it is put here rather than at setup for a reason: it decides
+        which entity ids years of recorder history attach to, and somebody who
         came to send a reading should never have had to answer it to get
         past a dialog.
 

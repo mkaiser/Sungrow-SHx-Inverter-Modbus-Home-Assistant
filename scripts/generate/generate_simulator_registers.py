@@ -53,6 +53,14 @@ OVERRIDES: dict[int, int | list[int]] = {
     5627: 50,  # BDC rated power, 100 W per count -> 5 kW
 }
 
+#: The fault and alarm words, input 13050-13079: no flag set, which is what
+#: every surveyed inverter read. The default's 1 would be bit 0 -- a fan alarm
+#: on the simulator for ever. Input only: the same addresses on the holding
+#: side are the EMS mode and the battery limits.
+FAULT_WORDS: dict[int, list[int]] = {
+    address: [0, 0] for address in range(13049, 13079, 2)
+}
+
 #: Registers that exist only in the holding space and that no sensor reads, so
 #: nothing above would ever create them.
 #:
@@ -124,6 +132,9 @@ def _apply_fixtures(spaces: dict[str, dict[int, list[int]]]) -> None:
 
     for address, words in HOLDING_ONLY.items():
         spaces["holding"][address] = list(words)
+
+    for address, words in FAULT_WORDS.items():
+        spaces["input"][address] = list(words)
 
 
 def collect() -> dict[str, dict[str, list[int]]]:

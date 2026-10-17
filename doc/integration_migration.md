@@ -147,12 +147,23 @@ the Permissions option above.
 
 ## Changing your mind
 
-Both directions work, because a rename moves the recorder's row rather than
-copying it. Migrating back returns the history to where it came from, and
-nothing is lost on the way.
+Open the integration's options and change **Entity IDs**. The next page says
+how many entities move and where, before anything does; nothing is copied and
+nothing is deleted, and the names, areas and settings you gave the entities
+go with them.
 
-> **Not built yet.** The options-flow control that switches an already-created
-> entry between the two styles is still open work — see
-> [integration_plan.md](integration_plan.md). Until it lands, changing your
-> mind means removing the config entry and adding it again, which is safe:
-> removing an entry does not remove recorded history.
+- **To device-scoped IDs**, each entity is renamed and its history and
+  statistics move with it.
+- **To the YAML package's IDs**, an ID that still holds the package's old
+  history continues that history, which is what choosing these IDs is for.
+  What was recorded under the device-scoped ID stays under that ID. An ID
+  with no old history simply takes the device-scoped history across.
+- **Older history already sitting on a target ID** -- from an earlier move the
+  other way -- is renamed aside to `<id>_archive` first, never merged and
+  never deleted.
+
+The YAML package must not be running when you move to its IDs: its live
+entities hold them, and the options page says so rather than handing out
+`_2` IDs. An entity whose ID you changed yourself is left where you put it.
+Dashboards, automations and scripts are not rewritten, so check them after a
+move.

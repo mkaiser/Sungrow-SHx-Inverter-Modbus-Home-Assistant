@@ -11,6 +11,7 @@ never lags the sensors it is computed from — and when it is unavailable.
 
 from __future__ import annotations
 
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import EntityCategory
 from sungrow_modbus import Capability
@@ -504,5 +505,33 @@ DERIVED_BINARY_SENSORS: tuple[SungrowBinarySensorDescription, ...] = (
         translation_key="pv_power_limitation_enabled",
         depends_on=("pv_power_limitation_raw",),
         entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SungrowBinarySensorDescription(
+        key="fault_reported",
+        component="derived",
+        field="fault_reported",
+        translation_key="fault_reported",
+        depends_on=(
+            "grid_side_fault",
+            "system_fault_1",
+            "system_fault_2",
+            "dc_side_fault",
+            "permanent_fault",
+            "bdc_side_fault",
+            "bdc_side_permanent_fault",
+            "battery_fault",
+            "bms_protection",
+            "bms_fault_1",
+            "bms_fault_2",
+        ),
+        device_class=BinarySensorDeviceClass.PROBLEM,
+    ),
+    SungrowBinarySensorDescription(
+        key="alarm_reported",
+        component="derived",
+        field="alarm_reported",
+        translation_key="alarm_reported",
+        depends_on=("inverter_alarm", "battery_alarm", "bms_alarm", "bms_alarm_2"),
+        device_class=BinarySensorDeviceClass.PROBLEM,
     ),
 )

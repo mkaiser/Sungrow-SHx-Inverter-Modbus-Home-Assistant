@@ -1,6 +1,6 @@
 # The entity names, for review
 
-**186 entities**, which is everything modern mode creates. The **entity id**
+**203 entities**, which is everything modern mode creates. The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
 it -- but only at creation. Rename later and anybody who already has the entity
 keeps the id they were born with; only the label changes. So the cost of a late
@@ -56,27 +56,34 @@ better.
 | Total consumed energy | `sensor.sh10rt_total_consumed_energy` | kWh | Total consumed energy |
 | Total direct energy consumption | `sensor.sh10rt_total_direct_energy_consumption` | kWh | Total direct energy consumption |
 
-## Everything else (26)
+## Everything else (35)
 
 | Name | Entity id | Unit | Legacy name |
 | --- | --- | --- | --- |
 | ARM software version | `sensor.sh10rt_arm_software_version` |  | Sungrow Arm Software **←** |
 | Active power limitation shutdown at zero | `sensor.sh10rt_active_power_limitation_shutdown_at_zero` |  | APL shutdown at zero raw **←** |
+| Alarm | `sensor.sh10rt_alarm` |  |  |
+| Alarm reported | `binary_sensor.sh10rt_alarm_reported` |  |  |
 | Available current | `sensor.sh10rt_available_current` | A |  |
 | BDC rated power | `sensor.sh10rt_bdc_rated_power` | W | BDC rated power |
+| BDC-side fault | `sensor.sh10rt_bdc_side_fault` |  |  |
+| BDC-side permanent fault | `sensor.sh10rt_bdc_side_permanent_fault` |  |  |
 | Charging | `binary_sensor.sh10rt_charging` |  |  |
 | Charging power | `sensor.sh10rt_charging_power` | W |  |
 | Charging status | `sensor.sh10rt_charging_status` |  |  |
 | Configured output current | `sensor.sh10rt_configured_output_current` | A |  |
 | Control pilot voltage | `sensor.sh10rt_control_pilot_voltage` | V |  |
+| DC-side fault | `sensor.sh10rt_dc_side_fault` |  |  |
 | DSP software version | `sensor.sh10rt_dsp_software_version` |  | Sungrow DSP Software **←** |
 | Enabled | `binary_sensor.sh10rt_enabled` |  |  |
+| Fault reported | `binary_sensor.sh10rt_fault_reported` |  |  |
 | Firmware version part 1 | `sensor.sh10rt_firmware_version_part_1` |  | Sungrow Version 1 **←** |
 | Firmware version part 2 | `sensor.sh10rt_firmware_version_part_2` |  | Sungrow Version 2 **←** |
 | Firmware version part 3 | `sensor.sh10rt_firmware_version_part_3` |  | Sungrow Version 3 **←** |
 | Forced startup under low SoC raw | `sensor.sh10rt_forced_startup_under_low_soc_raw` |  |  |
 | Maximum charging power | `sensor.sh10rt_maximum_charging_power` | W |  |
 | Minimum charging power | `sensor.sh10rt_minimum_charging_power` | W |  |
+| Permanent fault | `sensor.sh10rt_permanent_fault` |  |  |
 | Power factor | `sensor.sh10rt_power_factor` |  | Power factor |
 | Power flow status | `sensor.sh10rt_power_flow_status` |  | Power Flow Status **←** |
 | Protocol version | `sensor.sh10rt_protocol_version` |  | Sungrow Protocol Version **←** |
@@ -86,6 +93,8 @@ better.
 | Running state | `sensor.sh10rt_running_state` |  | Sungrow inverter state **←** |
 | Self-consumption of today | `sensor.sh10rt_self_consumption_of_today` | % |  |
 | Start mode | `sensor.sh10rt_start_mode` |  |  |
+| System fault 1 | `sensor.sh10rt_system_fault_1` |  |  |
+| System fault 2 | `sensor.sh10rt_system_fault_2` |  |  |
 
 ## Identity and firmware (6)
 
@@ -149,12 +158,18 @@ better.
 | Total PV generation | `sensor.sh10rt_total_pv_generation` | kWh | Total PV generation |
 | Total exported energy from PV | `sensor.sh10rt_total_exported_energy_from_pv` | kWh | Total exported energy from PV |
 
-## The battery (57)
+## The battery (64)
 
 | Name | Entity id | Unit | Legacy name |
 | --- | --- | --- | --- |
+| BMS alarm | `sensor.sh10rt_bms_alarm` |  |  |
+| BMS alarm 2 | `sensor.sh10rt_bms_alarm_2` |  |  |
+| BMS fault 1 | `sensor.sh10rt_bms_fault_1` |  |  |
+| BMS fault 2 | `sensor.sh10rt_bms_fault_2` |  |  |
 | BMS max charging current | `sensor.sh10rt_bms_max_charging_current` | A | BMS max. charging current **←** |
 | BMS max discharging current | `sensor.sh10rt_bms_max_discharging_current` | A | BMS max. discharging current **←** |
+| BMS protection | `sensor.sh10rt_bms_protection` |  |  |
+| Battery alarm | `sensor.sh10rt_battery_alarm` |  |  |
 | Battery capacity high precision | `sensor.sh10rt_battery_capacity_high_precision` | kWh | Battery capacity high precision |
 | Battery charge | `sensor.sh10rt_battery_charge` | kWh | Battery charge |
 | Battery charge (health-rated) | `sensor.sh10rt_battery_charge_health_rated` | kWh | Battery charge (health-rated) |
@@ -170,6 +185,7 @@ better.
 | Battery discharging power | `sensor.sh10rt_battery_discharging_power` | W | Battery discharging power |
 | Battery discharging power signed | `sensor.sh10rt_battery_discharging_power_signed` | W | Battery discharging power signed |
 | Battery discharging start power | `number.sh10rt_battery_discharging_start_power` | W | Battery discharging start power |
+| Battery fault | `sensor.sh10rt_battery_fault` |  |  |
 | Battery firmware version | `sensor.sh10rt_battery_firmware_version` |  | Battery Firmware Version **←** |
 | Battery forced charge discharge | `select.sh10rt_battery_forced_charge_discharge` |  | Battery forced charge discharge |
 | Battery forced charge/discharge power | `number.sh10rt_battery_forced_charge_discharge_power` | W | Battery forced charge discharge power **←** |
@@ -211,7 +227,7 @@ better.
 | Warmest module | `sensor.sh10rt_warmest_module` |  |  |
 | Warmest module temperature | `sensor.sh10rt_warmest_module_temperature` | °C |  |
 
-## The grid (15)
+## The grid (16)
 
 | Name | Entity id | Unit | Legacy name |
 | --- | --- | --- | --- |
@@ -225,6 +241,7 @@ better.
 | Exporting power | `binary_sensor.sh10rt_exporting_power` |  | Exporting Power **←** |
 | Exporting power (delayed) | `binary_sensor.sh10rt_exporting_power_delayed` |  | Exporting Power (delay) **←** |
 | Grid frequency | `sensor.sh10rt_grid_frequency` | Hz | Grid frequency |
+| Grid-side fault | `sensor.sh10rt_grid_side_fault` |  |  |
 | Import power | `sensor.sh10rt_import_power` | W | Import power |
 | Importing power | `binary_sensor.sh10rt_importing_power` |  | Importing Power **←** |
 | Importing power (delayed) | `binary_sensor.sh10rt_importing_power_delayed` |  | Importing Power (delay) **←** |

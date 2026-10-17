@@ -18,7 +18,9 @@ need:
   the specification's 0xFFFF sentinel. That is now stated rather than inferred;
 * **per-component poll health**, because a poll losing one block is normal
   operation here and the interesting part is *which* block and for how long;
-* **which entity ids are in use**, so a migration that half-worked is visible.
+* **which entity ids are in use**, so a migration that half-worked is visible;
+* the **block read test** the survey button last ran, with its time. Not run
+  here: it takes minutes through a dongle, and a download is waited on.
 
 Serial number and host are redacted: a diagnostics file is written to be
 pasted into a public issue.
@@ -124,10 +126,42 @@ async def async_get_config_entry_diagnostics(
         _LOGGER.exception("Could not build the fingerprint for %s", entry.title)
         report["fingerprint"] = {"error": f"{type(err).__name__}: {err}"}
 
+    report["block_read_test"] = _last_block_read_test(runtime)
+
     if entry.options.get(CONF_REGISTER_DUMP, False):
         report["register_dump"] = await _async_register_dump(device)
 
     return report
+
+
+#: What the download says when no survey has measured the blocks since start.
+NO_BLOCK_READ_TEST = (
+    "not run since Home Assistant started. Press Run capability survey on the "
+    "device page; it measures the blocks and this download then carries the "
+    "result"
+)
+
+
+def _last_block_read_test(runtime: Any) -> dict[str, Any] | str:
+    """Return the block read test the survey button last ran, and when.
+
+    Carried rather than run: the test reads every block several times, which
+    is minutes through a dongle, and a download is something somebody waits
+    on. The survey runs it behind a progress bar, so the download hands on
+    that measurement with its time -- a padded frame or a refusing block
+    does not move between one afternoon and the next, and when it might
+    have, the time says so.
+    """
+    survey = getattr(runtime, "survey", None)
+    document = survey.state.document if survey is not None else None
+    measured = (document or {}).get("block_read_test")
+    if not measured:
+        return NO_BLOCK_READ_TEST
+    finished = survey.state.finished
+    return {
+        "measured_at": finished.isoformat() if finished else None,
+        **measured,
+    }
 
 
 async def async_get_device_diagnostics(

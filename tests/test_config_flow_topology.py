@@ -235,15 +235,70 @@ async def test_a_dongle_only_house_gets_no_role_guessed_for_it(
         "192.168.176.28": {1: SERIAL_A},
         "192.168.176.32": {1: SERIAL_B},
     }
-    options = await _pick_options(hass, dongles)
-    labels = {option["value"]: option["label"] for option in options}
+    result = await _pick_with_routes(hass, dongles, direct=set())
+    labels = _labels(result)
 
     for host in dongles:
         assert "cluster" not in labels[host], host
-        assert "device address" not in labels[host], host
         assert ROLE_SLAVE not in labels[host], host
+        assert "master" not in labels[host], host
+        # Said rather than left out, so nobody reads silence as "standalone".
+        assert "role not readable" in labels[host], host
         # Two separate inverters, so neither is called the other.
         assert "same inverter" not in labels[host], host
+
+
+def _labels(result) -> dict[str, str]:
+    return {
+        option["value"]: option["label"]
+        for option in result["data_schema"].schema[CONF_HOST].config["options"]
+    }
+
+
+async def test_a_cabled_cluster_names_both_roles_and_says_how_each_is_known(
+    hass: HomeAssistant,
+) -> None:
+    """The slave's address is measured; that the other is its master is not.
+
+    Address 1 means "a master or an inverter on its own". Beside a measured
+    slave it is the master, which is a conclusion about the house rather
+    than a reading -- so it says inferred.
+    """
+    options = await _pick_options(hass, TOPOLOGY)
+    labels = {option["value"]: option["label"] for option in options}
+
+    assert "cluster slave, measured: device address 2" in labels["192.168.176.29"]
+    for host in ("192.168.176.34", "192.168.176.28"):
+        assert "cluster master, inferred" in labels[host], host
+
+
+async def test_through_dongles_the_battery_suggests_the_roles(
+    hass: HomeAssistant,
+) -> None:
+    """The one signal a dongle forwards, offered as a probability.
+
+    Measured at a cluster: the master reads its pack's capacity at 5639 and
+    the slave 0, on either route. It says what a machine has rather than
+    what it is, so neither label states a role.
+    """
+    dongles = {
+        "192.168.176.28": {1: SERIAL_A},
+        "192.168.176.32": {1: SERIAL_B},
+    }
+    result = await _pick_with_routes(
+        hass, dongles, direct=set(), capacity={SERIAL_A: 960, SERIAL_B: 0}
+    )
+    labels = _labels(result)
+
+    assert "probably the cluster master, inferred" in labels["192.168.176.28"]
+    assert "probably a cluster slave, inferred" in labels["192.168.176.32"]
+
+    # And the name offered for the slave says so, for the owner to correct.
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_HOST: "192.168.176.32"}
+    )
+    assert result["step_id"] == "name"
+    assert result["description_placeholders"]["suggestion"] == "SH10RT slave"
 
 
 async def test_a_device_that_answers_without_naming_itself_stops_the_sweep(
@@ -461,7 +516,7 @@ async def test_a_dongle_only_pair_is_asked_but_offered_no_role(
     assert "slave" not in result["description_placeholders"]["suggestion"]
 
 
-def _house_with_routes(topology, direct: set[str]):
+def _house_with_routes(topology, direct: set[str], capacity: dict | None = None):
     """Patch the probe so `direct` hosts answer the direct-only register.
 
     Register 6100 is the signal: Sungrow documents 6100-6195 as not forwarded
@@ -501,7 +556,11 @@ def _house_with_routes(topology, direct: set[str]):
         serial = topology.get(params.host, {}).get(unit_id)
         if serial is None:
             raise ModbusError("no answer")
-        return _Unit(_unit_for(serial), params.host in direct)
+        unit = _unit_for(serial)
+        if capacity is not None:
+            # Input 5639, battery capacity: the master's pack, the slave's 0.
+            unit.input[5638] = capacity[serial]
+        return _Unit(unit, params.host in direct)
 
     return patch(
         "custom_components.sungrow_modbus.config_flow.async_get_temporary_unit",
@@ -509,7 +568,7 @@ def _house_with_routes(topology, direct: set[str]):
     )
 
 
-async def _pick_with_routes(hass, topology, direct):
+async def _pick_with_routes(hass, topology, direct, capacity=None):
     """Search, and return the picker's result."""
     with (
         patch(
@@ -520,7 +579,7 @@ async def _pick_with_routes(hass, topology, direct):
             "custom_components.sungrow_modbus.config_flow.async_hostname",
             return_value=None,
         ),
-        _house_with_routes(topology, direct),
+        _house_with_routes(topology, direct, capacity),
     ):
         result = await hass.config_entries.flow.async_init(
             DOMAIN, context={"source": SOURCE_USER}

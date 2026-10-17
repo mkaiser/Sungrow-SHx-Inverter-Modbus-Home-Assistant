@@ -5,6 +5,7 @@ from __future__ import annotations
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from sungrow_modbus.inverter.faults import active
 from sungrow_modbus.inverter.smoothing import TimeWeightedAverage
 
 from .battery_descriptions import CELL_DESCRIPTIONS, PACK_DESCRIPTIONS
@@ -56,7 +57,9 @@ async def async_setup_entry(
         return
 
     async_add_entities(
-        SungrowSensor(runtime_data, description)
+        (SungrowFlagsSensor if description.flags else SungrowSensor)(
+            runtime_data, description
+        )
         for description in (*SENSOR_DESCRIPTIONS, *DERIVED_SENSORS)
         if runtime_data.serves(description)
     )
@@ -183,6 +186,37 @@ class SungrowSensor(SungrowEntity, SensorEntity):
             self.hass.loop.time(),
             float(value) if isinstance(value, (int, float)) else None,
         )
+
+
+class SungrowFlagsSensor(SungrowEntity, SensorEntity):
+    """One fault or alarm word: how many named flags are set, and which.
+
+    A count rather than the flags as text, so `> 0` is the automation and a
+    history graph shows when something was set. The names go in `active`,
+    which is always present -- an empty list on a good day -- so the recorder
+    sees one shape.
+    """
+
+    entity_description: SungrowSensorDescription
+
+    @property
+    def _active(self) -> tuple[str, ...] | None:
+        value = self.native_value_source
+        return active(
+            self.entity_description.field,
+            int(value) if isinstance(value, (int, float)) else None,
+        )
+
+    @property
+    def native_value(self) -> int | None:
+        """Return how many named flags are set, or None where unread."""
+        flags = self._active
+        return None if flags is None else len(flags)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, list[str]]:
+        """Name the flags that are set."""
+        return {"active": list(self._active or ())}
 
 
 class SungrowExternalSensor(SungrowEntity, SensorEntity):
