@@ -7,8 +7,8 @@ the history graph really is continuous afterwards, whether the Energy
 dashboard keeps its numbers — those are things you have to look at.
 
 So this fabricates the starting state: the entity registry entries
-`modbus_sungrow.yaml` leaves behind, and months of recorded readings and
-long-term statistics under the entity ids it used. Home Assistant must be
+`legacy/modbus_sungrow.yaml` leaves behind, and a month of recorded readings
+and hourly statistics under the entity ids it used. Home Assistant must be
 **stopped** while it runs, because it writes the registry and the recorder
 database directly.
 
@@ -17,6 +17,10 @@ database directly.
     python scripts/dev/seed_migration_testbed.py  # seed
     scripts/dev/simulate.sh &                     # an inverter to talk to
     scripts/dev/develop.sh                        # and now migrate in the UI
+
+The entity id question is asked only in devices mode, which this release
+does not offer (`DEVICES_MODE_OFFERED` in the integration's `const.py`). Set
+it to True locally to review the migration, and do not commit it.
 
 By default the entities come from `doc/legacy_entity_map.json`, the
 record of what the YAML package produces, which carries no personal data.

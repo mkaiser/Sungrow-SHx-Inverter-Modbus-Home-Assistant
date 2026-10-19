@@ -1,8 +1,8 @@
-"""Register maps for the Sungrow inverter.
+"""The inverter's identity and start/stop blocks, outside the polled tiers.
 
-Addresses are protocol addresses, i.e. one below the register number printed
-in Sungrow's communication protocol document and in the comments of
-modbus_sungrow.yaml (`address: 4989 # reg 4990`).
+Declared by the register number printed in Sungrow's communication protocol
+document and in the comments of modbus_sungrow.yaml; `reg()` turns it into the
+protocol address, one below (`address: 4989 # reg 4990`).
 
 Sungrow reports 32-bit values low word first, which the YAML package spells
 `swap: word` and this library spells ``word_order="little"``.
@@ -28,8 +28,8 @@ class InverterControl(Component):
       where 13000 is "Start/Stop", `0xCF` to boot and `0xCE` to shut down.
 
     So the YAML package reads one space and writes the other, correctly, and
-    the library refuses to write the input field -- which is how this was
-    noticed. Hence a separate component, in the right space.
+    the library refuses to write the input field. Hence a separate component,
+    in the right space.
 
     Never polled. There is nothing here worth a poll: the running state comes
     from the input side, and a write is followed by a refresh of *that*.
@@ -44,7 +44,7 @@ class InverterControl(Component):
 class InverterIdentity(Component):
     """Who this inverter is: read once at setup, never polled.
 
-    Every field sits between protocol address 4951 and 5000, so the whole
+    Every field sits between protocol address 4951 and 5001, so the whole
     component resolves to a single block read.
     """
 

@@ -1,4 +1,4 @@
-"""The device page's survey controls: a button, and three things to watch.
+"""The device page's survey controls: two buttons, and three things to watch.
 
 These are the entities that replace the options flow's spinner. They are
 deliberately ordinary Home Assistant entities rather than anything clever,
@@ -9,15 +9,17 @@ because that is what buys the things a modal dialog could not do:
 - `survey_progress` is a number, so it draws a bar on a dashboard, and can
   be watched by an automation on a link where a survey takes a quarter of an
   hour;
-- the button can be pressed by a script, so a maintainer walking somebody
+- a button can be pressed by a script, so a maintainer walking somebody
   through a problem can say "run this" rather than "click through there".
 
-All four are `EntityCategory.DIAGNOSTIC`: they describe the integration
+All five are `EntityCategory.DIAGNOSTIC`: they describe the integration
 rather than the inverter, and they belong under the diagnostic heading of
 the device page rather than among the readings.
 
-They exist in **both** modes. A diagnostics-only entry has no other entities
-at all, and these are the reason it was set up.
+They exist in a diagnostics-only entry, and only there: it has no other
+entities at all, and these are the reason it was set up. An ordinary entry
+reaches the same runs through the `run_survey` and `run_control_test`
+actions, which leave no entities behind.
 """
 
 from __future__ import annotations

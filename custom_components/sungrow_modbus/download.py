@@ -1,7 +1,7 @@
 """Handing the finished survey document to the person who ran it.
 
-A config flow has no download button, which is most of why the survey moved
-to the device page. Home Assistant's own answer to "let the user save this
+A config flow has no download button, which is most of why the survey runs
+from the device page. Home Assistant's own answer to "let the user save this
 file" is an authenticated HTTP view plus a **signed path**: a URL carrying a
 short-lived signature, so a plain link in a notification works without the
 browser holding a token.
@@ -33,7 +33,7 @@ from homeassistant.core import HomeAssistant, callback
 from sungrow_modbus.fingerprint import label_for
 
 if TYPE_CHECKING:
-    from . import SungrowConfigEntry
+    from .coordinator import SungrowConfigEntry
 
 from .const import DOMAIN, LINK_VALID
 
@@ -121,12 +121,10 @@ def async_download_url(hass: HomeAssistant, entry: SungrowConfigEntry) -> str:
 def async_register(hass: HomeAssistant) -> None:
     """Register the view. Called from `async_setup`, which runs once.
 
-    It used to be called per entry and guarded by a flag in `hass.data`,
-    because Home Assistant keeps views in a list and would happily hold
-    several identical ones. Registering from `async_setup` removes the
-    question rather than answering it: that runs once per Home Assistant,
-    before any entry exists, so there is no second caller to defend against
-    and no state to keep.
+    Home Assistant keeps views in a list and would happily hold several
+    identical ones. `async_setup` runs once per Home Assistant, before any
+    entry exists, so there is no second caller to defend against and no state
+    to keep.
     """
     if getattr(hass, "http", None) is None:
         # `http` is a manifest dependency, so a real Home Assistant has set

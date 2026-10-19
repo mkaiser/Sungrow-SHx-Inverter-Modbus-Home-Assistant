@@ -2,8 +2,7 @@
 
 This is about the **new custom integration** (`custom_components/sungrow_modbus`)
 and its device library (`src/sungrow_modbus`), not the YAML package. The
-YAML package in `modbus_sungrow.yaml` is unaffected and keeps working as it
-always has.
+YAML package in `legacy/modbus_sungrow.yaml` is unaffected by anything here.
 
 ## Why an integration at all
 
@@ -27,19 +26,20 @@ so it can be tested without Home Assistant and without an inverter.
 Open the repo in the devcontainer (VS Code: *Dev Containers: Reopen in
 Container*). It pins Python 3.14 - Home Assistant 2026.9 requires 3.14.2 or
 newer - installs Home Assistant and the tooling via
-`scripts/dev/setup.sh`, and forwards ports 8123 and 5020.
+`scripts/dev/setup.sh`, and forwards ports 8123 (Home Assistant), 5020 (the
+simulator) and 8124 (the HACS testbed).
 
 On Windows, clone into a **named container volume** (*Dev Containers: Clone
 Repository in Container Volume*) rather than bind-mounting the Windows
 filesystem. A bind mount works but makes Home Assistant startup and pytest
 noticeably slower.
 
-No devcontainer CLI? The devcontainer is a stock image plus three apt
-packages, so the same environment is one command:
+No devcontainer CLI? The devcontainer is Microsoft's Python image plus three
+apt packages, so the same environment is one command:
 
 ```bash
 docker run --rm -it -p 8123:8123 -p 5020:5020 -v "$PWD:/workspace" -w /workspace \
-  python:3.14-bookworm bash -lc \
+  mcr.microsoft.com/devcontainers/python:3.14-bookworm bash -lc \
   'apt-get update -qq && apt-get install -y -qq ffmpeg libturbojpeg0 libpcap-dev && scripts/dev/setup.sh && bash'
 ```
 
@@ -57,28 +57,39 @@ Windows and on Linux/macOS.
 One thing does *not* follow automatically: Claude Code keys project memory by
 workspace path, and the workspace is `C:\...` on the host but
 `/workspaces/...` in the container, so the two resolve to different project
-directories. That is why the durable repo context lives in `CLAUDE.md` and
-`doc/integration_plan.md` instead - both are committed, path-independent, and
-`CLAUDE.md` is loaded automatically wherever the repo is opened.
+directories. That is why the durable repo context lives in `AGENTS.md` and
+`doc/integration_plan.md` instead - both are committed and path-independent,
+and `CLAUDE.md`, which includes `AGENTS.md`, is loaded automatically wherever
+the repo is opened.
 
 ## Day-to-day
 
 | Command | What it does |
 | --- | --- |
 | `make help` | The shortcuts for everything below; `make check` is the CI gate |
-| `scripts/dev/setup.sh` | Install Home Assistant, the device library (editable) and tooling |
-| `scripts/dev/develop.sh` | Boot Home Assistant on <http://localhost:8123> against `config/` |
-| `scripts/dev/simulate.sh` | Regenerate the register seed and serve it on port 5020 |
-| `scripts/dev/fetch_references.sh` | Clone upstream sources into `.reference/` for reading |
-| `pytest` | Run the device library tests (no network needed) |
+| `scripts/dev/setup.sh` (`make setup`) | Install Home Assistant, the device library (editable) and tooling |
+| `scripts/dev/develop.sh` (`make dev`) | Boot Home Assistant on <http://localhost:8123> against `config/`, onboarded as `dev` / `dev` |
+| `scripts/dev/simulate.sh` (`make sim`) | Regenerate the register seed and serve it on port 5020 |
+| `make dev-bg`, `make sim-bg`, `make stop` | The same two in the background, logging to `/tmp/ha.log` and `/tmp/sim.log`, and stopping them |
+| `make forget` | Drop the stored Sungrow config entry, so the next boot starts at *Add integration* |
+| `scripts/dev/fetch_references.sh` (`make refs`) | Clone upstream sources into `.reference/` for reading, hassfest included |
+| `pytest` | Library and integration tests (no network needed) |
 | `ruff check . && ruff format .` | Lint and format |
+| `mypy` | `--strict` over the library only |
 
 Add the integration from *Settings → Devices & Services → Add Integration →
-Sungrow Modbus*, then point it at either:
+Sungrow Modbus*. It offers a network search or an address typed by hand; for
+the second, point it at either:
 
-- the simulator: host `localhost`, port `5020`, unit id `1`
-- a real inverter: its IP, port `502`, and the unit id from `secrets.yaml`
-  (`sungrow_modbus_device_address`, normally `1`)
+- the simulator: host `localhost`, port `5020`, device address `1`
+- a real inverter: its IP, port `502`, and the device address from
+  `secrets.yaml` (`sungrow_modbus_device_address`, normally `1`)
+
+The flow identifies what answers rather than trusting the address: it sweeps
+units 1-5 for the inverter and finds a battery or wallbox behind it. This
+release sets every new entry up as **diagnostics only** -- the entity id
+question that devices mode asks is gated behind `DEVICES_MODE_OFFERED` in
+`const.py` (see [Reviewing the migration by hand](#reviewing-the-migration-by-hand)).
 
 **A real inverter on your LAN is reachable from the container without any
 setup.** The Docker bridge NATs outbound, so the container follows the host's
@@ -90,55 +101,73 @@ contention warning, and the network-search caveat.
 
 ## The simulator
 
-`scripts/generate/generate_simulator_registers.py` reads `modbus_sungrow.yaml`
-— still the most complete description of the SHx register map we have — and
-writes a
-register seed to `scripts/dev/simulator_registers.json`. `scripts/dev/simulator.py`
-serves that seed over Modbus TCP. Seeding from the YAML package means the
-simulator cannot drift away from the register map the integration is being
-ported from.
+`scripts/generate/generate_simulator_registers.py` reads every Modbus sensor
+and switch in `legacy/modbus_sungrow.yaml`, plus the specification registers
+in `doc/legacy_entity_map.json` the YAML never read, and writes a register
+seed to `scripts/dev/simulator_registers.json`. `scripts/dev/simulator.py`
+serves that seed over Modbus TCP, unit 1, input and holding spaces apart.
+Seeding from committed records means the simulator cannot drift away from the
+register map; the seed is committed because tests decode it, and `make
+gen-check` fails when it is stale.
 
-A few registers carry hand-picked values (in `OVERRIDES` and `STRINGS`) so an
-inverter that looks like an SH10RT on a sunny afternoon comes back rather than
-zeroes everywhere.
+A few registers carry hand-picked values so the simulator looks like an
+SH10RT on a sunny afternoon rather than zeroes everywhere: `STRINGS` for the
+text fields, `OVERRIDES` for identity, power and bounds, `HOLDING_ONLY` for
+the Start/Stop word the control test's restart needs, and `FAULT_WORDS` with
+no fault set.
+
+A simulator stores raw words with no scale, so it can exercise the survey
+(`make scan-sim`) and the control test (`make controltest-sim`) end to end
+but never produce a finding about a real register.
 
 ## Layout
 
 ```
-custom_components/sungrow_modbus/   Home Assistant integration (thin)
-src/sungrow_modbus/          device library (no Home Assistant imports)
-  components.py                  register maps as typed Component classes
-  device.py                      SungrowInverter, composed of components
-tests/                           device library tests, against the mock backend
-scripts/                         dev environment, simulator, reference sources
+custom_components/sungrow_modbus/   Home Assistant integration
+src/sungrow_modbus/                 device library (no Home Assistant imports)
+  inverter/, battery/, wallbox/       one subpackage per device: registers, device
+  addresses, discovery, fingerprint,  what spans devices
+  survey, block_test, control_test, dump
+tests/                              library and integration tests
+scripts/dev/                        dev loop: setup, boot, simulator, HACS testbed
+scripts/generate/                   everything that writes a committed file
+scripts/release/                    version lockstep and the pinned-library gate
+scripts/helpers/                    one-off tools
+device-fingerprints/                published survey documents, and the survey itself
 ```
 
 The split follows what Home Assistant's Modbus documentation recommends and
-what core's `sofar` integration does. The library is kept in this repo for now
-and can be broken out into its own PyPI package once its shape settles; the
-version in `pyproject.toml` must stay identical to the `requirements` entry in
-`custom_components/sungrow_modbus/manifest.json`, because Home Assistant checks
-the installed version on every start.
+what core's `sofar` integration does; [architecture.md](architecture.md) has
+the reasoning. The library is published to PyPI as `sungrow-modbus` from this
+repository, and the version in `pyproject.toml` must stay identical to the
+`requirements` entry in `custom_components/sungrow_modbus/manifest.json`,
+because Home Assistant checks the installed version on every start. `make
+version VERSION=X.Y.Z` moves both.
 
 ## Porting registers
 
-`modbus_sungrow.yaml` translates to `Component` fields almost one for one:
+`legacy/modbus_sungrow.yaml` translates to `Component` fields almost one for
+one:
 
 | YAML | Library field |
 | --- | --- |
 | `input_type: input` | `register_space = "input"` on the component |
-| `data_type: uint16`, `scale: 0.1` | `gauge(addr, 0.1, signed=False, unit=...)` |
-| `data_type: int16` unscaled | `integer(addr)` |
-| `data_type: uint32`, `swap: word` | `uint32(addr, word_order="little")` |
-| `data_type: string`, `count: 10` | `string(addr, 10)` |
+| `data_type: uint16`, `scale: 0.1` | `gauge(reg(n), 0.1, signed=False, unit=...)` |
+| `data_type: int16` unscaled | `integer(reg(n))` |
+| `data_type: uint32`, `swap: word` | `uint32(reg(n), word_order="little")` |
+| `data_type: string`, `count: 10` | `string(reg(n), 10)` |
 | `nan_value: 0xFFFF` | `nan=0xFFFF` |
-| state code decoded in a template | `enum(addr, SomeIntEnum)` |
-| register written by a template | `writable=True` |
+| state code decoded in a template | `integer(reg(n))`, decoded in `inverter/derived.py` |
+| register written by a template | `writable=True`, plus a row in `scripts/generate/tables/writes.py` |
 
-Addresses are protocol addresses, i.e. one below the register number in
-Sungrow's document (`address: 4989 # reg 4990`). Neighbouring fields are
-pooled into block reads automatically, so grouping fields by how often they
-should be polled matters more than grouping them by address.
+Fields are declared by the register number in Sungrow's document, through
+`addresses.reg()`, which subtracts one for the protocol address the YAML
+writes (`address: 4989 # reg 4990`); `tests/test_addresses.py` fails on any
+other spelling. Each component is one poll interval in one register space,
+and neighbouring fields inside it are pooled into block reads, so grouping
+fields by how often they should be polled matters more than grouping them by
+address. `tests/test_registers.py` holds every field to
+`doc/legacy_entity_map.json`.
 
 ## Reviewing the migration by hand
 
@@ -146,19 +175,24 @@ The migration is the one feature a unit test cannot fully judge. Whether the
 setup dialog explains the choice well enough to make it, and whether the
 history graph really is continuous afterwards, are things you have to look at.
 `scripts/dev/seed_migration_testbed.py` fabricates the starting state — the
-registry entries `modbus_sungrow.yaml` leaves behind, plus a month of recorded
-readings and hourly statistics under the ids it used:
+registry entries `legacy/modbus_sungrow.yaml` leaves behind, plus a month of
+recorded readings and hourly statistics under the ids it used:
 
 ```console
 $ scripts/dev/develop.sh                            # once, to create config/
 # stop it
 $ python scripts/dev/seed_migration_testbed.py
-Registry:   153 entities added
+Registry:   183 entities added (183 in the source)
 History:    2880 states over 30 days
 Statistics: 2880 hourly rows
 $ scripts/dev/simulate.sh &                         # an inverter to talk to
 $ scripts/dev/develop.sh
 ```
+
+The entity id question is asked only in devices mode, which this release
+does not offer: set `DEVICES_MODE_OFFERED` in
+`custom_components/sungrow_modbus/const.py` to `True` locally first, and do
+not commit it.
 
 Home Assistant must be **stopped** while it runs: it writes the entity
 registry and the recorder database directly. `--reset` undoes it, so the same
@@ -171,9 +205,8 @@ more faithful, but such a file belongs in `.testdata/`, never in the repo.
 Everything above runs the working tree: `scripts/dev/develop.sh` symlinks
 `config/custom_components` to this repository, so the instance on :8123 is
 your editor with a UI attached. That is the wrong instrument for one class of
-question — *does this install?* — and the two failures that cost most time on
-this project were both of that class. A manifest pinning a library version
-whose wheel lacks a module the integration imports passes every test, ruff,
+question — *does this install?* A manifest pinning a library version whose
+wheel lacks a module the integration imports passes every test, ruff,
 hassfest and the release, and fails only in a real install. HACS refusing a
 repository whose default branch has no `custom_components/` is invisible
 from here entirely.
@@ -231,16 +264,17 @@ rather than an upgrade.
 
 ## The survey on the device page
 
-A capability survey is what this project learns from, and it used to cost a
-contributor a Python run on a machine that can reach the inverter. It is now
-a pair of buttons on the device page, with three diagnostic sensors beside them:
+A capability survey is what this project learns from. A tester with the
+integration runs it from a pair of buttons on the device page, with three
+diagnostic sensors beside them; a contributor without it runs
+`device-fingerprints/scripts/survey.sh` instead:
 
 | Entity | What it is for |
 | --- | --- |
 | `button.<name>_run_capability_survey` | Starts one. Unavailable while a run is in flight; the runner refuses a second anyway |
 | `button.<name>_run_control_write_test` | Part B: the same survey, and then it **writes** to every control and puts each one back. See below |
 | `sensor.<name>_survey_progress` | Percent complete. Counted reads, not elapsed time — the same survey is under a second on a cable and minutes over a VPN |
-| `sensor.<name>_survey_step` | What is being read right now. **Its recorded history is the point**: 19 probes and 5 timing reads in order — plus 52 band sweeps when a dump was asked for — which is what says *where* a slow link stalls rather than that it did |
+| `sensor.<name>_survey_step` | What is being read right now. **Its recorded history is the point**: 19 probes, the block read test's reads and one assembly step in order — plus 52 band sweeps when a dump was asked for — which is what says *where* a slow link stalls rather than that it did |
 | `sensor.<name>_survey_finished` | When the last run ended, with `fields_read` and `has_document` as attributes |
 
 They exist in both setup modes. A *Diagnostics only* entry has no readings at
@@ -313,19 +347,20 @@ the convenience and that button as the guarantee.
 
 The raw band sweep is gated **twice, on purpose**. `survey_register_dump` in
 the options says the owner is willing to spend the time; `allow_dump=True` on
-`async_build` says the caller can afford to wait for it. Only the button and
-the `run_survey` action pass the second, because only they are background
-tasks with a progress bar. `diagnostics.py` builds the same document and
+`async_build` says the caller can afford to wait for it. Only the survey
+runner behind the two buttons passes the second, because only it is a
+background task with a progress bar. `diagnostics.py` builds the same document and
 leaves it off — five minutes of reading behind a download button reads as a
 hang, and an owner who enabled the option was answering a question about
 surveys. Reading the option directly inside `async_build` would be the
 obvious simplification and would break exactly that.
 
 Two switches in the options are called a register dump and they do different
-things. Advanced → *Include a raw register dump in diagnostics*
-(`CONF_REGISTER_DUMP`) re-reads the addresses the library already maps, into
-the diagnostics file, in seconds. Help this project → *Also sweep the raw
-register bands* (`CONF_SURVEY_DUMP`) sweeps `sungrow_modbus.dump.DUMP_BANDS`
+things. *Battery, wallbox and diagnostics* → *Include a raw register dump in
+diagnostics* (`CONF_REGISTER_DUMP`) re-reads the addresses the library already
+maps, into the diagnostics file, in seconds. *Contribute a capability survey*
+→ *Also sweep the raw register bands* (`CONF_SURVEY_DUMP`) sweeps
+`sungrow_modbus.dump.DUMP_BANDS`
 — 1510 addresses, mostly unmapped — into the survey document, in about five
 minutes. Only the second can discover a register. The survey's `--dump` reads
 the same bands.
@@ -340,8 +375,8 @@ $ sqlite3 config/home-assistant_v2.db \
      where m.entity_id like '%survey%' order by s.last_updated_ts"
 ```
 
-Persistent notifications are **not** states and never have been since 2022.10
-— they live in memory behind the websocket command
+Persistent notifications are **not** states — they live in memory behind the
+websocket command
 `persistent_notification/get`, so a survey that "produced no notification" is
 worth checking there before believing it.
 
@@ -360,7 +395,6 @@ and `_raw` entities under `EntityCategory.DIAGNOSTIC`. Do not write a name into
 
 ```console
 $ python scripts/generate/descriptions.py strings
-Wrote 127 entity names
 ```
 
 `tests/test_naming_convention.py` checks the committed `strings.json` against
@@ -383,32 +417,26 @@ conversation and video handling that a Modbus integration never touches.
 Even so, the very first boot installs a handful of packages (the frontend
 above all) and takes a few minutes before <http://localhost:8123> answers with
 something other than a 404. That is once per container, not once per run:
-measured in a clean container, the first boot logs ~20 setup errors while its
-dependencies are still downloading, and the next boot comes up in 2.2 seconds
-with no errors at all. If the UI 404s on your very first run, give it a minute
+the first boot logs ~20 setup errors while its dependencies are still
+downloading, and the next boot comes up in about two seconds with no errors
+at all. If the UI 404s on your very first run, give it a minute
 and reload rather than going looking for a bug.
 
-## Open question: superseding the YAML package
+## Superseding the YAML package
 
-The intent is for this integration to replace `modbus_sungrow.yaml`, not to
-live alongside it forever, and a clean migration is a hard requirement:
-existing users must keep their recorder history and their dashboards.
+The integration replaces `legacy/modbus_sungrow.yaml`, and existing users
+must keep their recorder history and their dashboards. Both are keyed by
+`entity_id`: the YAML package produces `sensor.total_dc_power`, an
+integration entity with `_attr_has_entity_name = True` produces
+`sensor.<device name>_total_dc_power`, and getting that wrong breaks years of
+data and every dashboard card silently.
 
-The crux is `entity_id`. The YAML package produces `sensor.total_dc_power`;
-an integration entity with `_attr_has_entity_name = True` produces
-`sensor.<device name>_total_dc_power`. Dashboards reference entity ids
-directly, and recorder history is keyed by them, so the naming decision
-decides whether years of data and every dashboard card survive the switch.
-
-The shape being considered is to let the user choose during setup:
-
-- **keep the legacy ids**, so history and dashboards carry on untouched -
-  which requires the YAML entities to be removed first, or the ids collide;
-- **take modern, device-scoped ids** and migrate the existing data across.
-
-Both were open questions; both are now settled and asserted against Home
-Assistant itself in [tests/test_recorder_migration.py](../tests/test_recorder_migration.py).
-A registry rename carries raw states *and* long-term statistics, and it is
-reversible, so neither direction is a one-way door. The mechanism and its traps
-are in [doc/integration_plan.md](integration_plan.md); read that before
+So setup offers the choice: **keep the legacy ids**, which claims each one at
+entity creation so history simply continues, or **take modern, device-scoped
+ids**, which is that plus one registry rename. A rename carries raw states
+*and* long-term statistics and is reversible, so neither direction is a
+one-way door. Both are asserted against Home Assistant itself in
+[tests/test_recorder_migration.py](../tests/test_recorder_migration.py); the
+user's guide is [integration_migration.md](integration_migration.md), and
+[integration_plan.md](integration_plan.md) has the traps. Read those before
 touching entity ids.

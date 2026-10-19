@@ -12,11 +12,11 @@ The integration is intended to **supersede** the YAML package, not sit beside
 it forever. Until it reaches parity, the YAML package stays untouched.
 
 Its scope is wider than the YAML package's. Two of the three extra devices
-are now done:
+are done:
 
-- ✅ the **SBR battery** — its own device, 40 registers in three components,
+- ✅ the **SBR battery** — its own device, 40 fields in three components,
   on unit **200** direct or **2** through a WiNet-S.
-- ✅ the **wallbox** (AC011E-01 / AC22E-01) — its own device, 32 registers in
+- ✅ the **wallbox** (AC011E-01 / AC22E-01) — its own device, 32 fields in
   four components, at unit **3** through a WiNet-S or **248** direct. Read
   only; nothing writes to it. "Direct" is the wallbox's **own LAN address**:
   Modbus TCP inside TLS on port **516**, unit 248 (measured on gerd's
@@ -26,7 +26,7 @@ are now done:
   option, not an entry, so the device and its entity ids are the same either
   way. `sungrow_survey.py` finds a wallbox on 516 and surveys it into a
   **wallbox document** of its own, published in
-  `device-fingerprints/` beside the inverter documents.
+  `device-fingerprints/wallbox/` beside `inverter/`.
 - ⬜ the **iHomeManager** (port **502 *or* 503**, slave 247) — **never
   measured**; to do: survey one. `identify()` probes input 8000 on unit 247, so
   a contributor who owns one is told what they have, and `sungrow_survey.py`
@@ -60,16 +60,22 @@ what is next.
 
 ## Do not hand-edit
 
-Everything under `scripts/generate/` writes a committed file, and `make
-gen-check` (and CI) fails on a hand edit of any of them:
+Everything under `scripts/generate/` writes a committed file, and so does
+`scripts/helpers/review_names.py`. Edit the source, not the output:
 
 - `custom_components/sungrow_modbus/{derived,number,switch,select}_descriptions.py`
   and `strings.json` / `translations/en.json` -- `scripts/generate/descriptions.py`,
   from `sungrow_modbus.inverter.derived` and the tables in `scripts/generate/tables/`;
 - `doc/compatibility.md` -- `generate_compatibility.py`, from the fingerprints;
+- `scripts/dev/simulator_registers.json` -- `generate_simulator_registers.py`,
+  from the YAML package and the entity map;
+- `doc/entity_name_review.md` -- `review_names.py --markdown`;
 - `legacy/modbus_sungrow_multiple_inverters_{1,2,3}.yaml` --
-  `generate_second_inverter_config.py`, from `legacy/modbus_sungrow.yaml`,
-  committed by CI. Edit the source, not the output.
+  `generate_second_inverter_config.py`, from `legacy/modbus_sungrow.yaml`.
+
+`make gen-check` (and CI) fails on a hand edit of the first four. The last has
+no `--check`: CI regenerates and commits it on a change to the YAML package,
+overwriting any hand edit.
 
 **`src/sungrow_modbus/inverter/registers.py` and `sensor_descriptions.py` are source.**
 `doc/legacy_entity_map.json` is the record of what the YAML package produces
@@ -102,10 +108,11 @@ implementation for this pattern — read its real source, not blog posts.
 | `scripts/dev/develop.sh` | Boot HA on <http://localhost:8123> against `config/` |
 | `scripts/dev/ha_onboard.py` | Walk a fresh instance through onboarding over the API, so nobody types `dev`/`dev` into a wizard. Both boot scripts run it in the background; idempotent, and it refuses a non-loopback URL |
 | `scripts/dev/hacs_testbed.sh` | Boot a **second** HA on :8124 against `config-hacs/`, with HACS installed, to test the install a user gets. Nothing is symlinked there: HACS downloads the integration from the preview channel, so what runs is what was published, not the working tree |
+| `scripts/dev/ha_http_port.py` | Write a scripted instance's HTTP port where Home Assistant 2026.9 reads it, the `stable` config in `.storage/http`. `http:` in `configuration.yaml` only becomes a pending config that reverts after five minutes unless somebody promotes it. `hacs_testbed.sh` calls it |
 | `scripts/dev/simulate.sh` | Regenerate the register seed and serve it on :5020 (`simulator.py`, seed in `simulator_registers.json`) |
 | `scripts/dev/fetch_references.sh` | Clone HA core + libs into `.reference/` (gitignored) |
 | `scripts/dev/seed_migration_testbed.py` | Make the dev instance look like a house that ran the YAML package for years, so the migration can be reviewed in the GUI |
-| **`scripts/generate/`** | **Everything that writes a committed file; each has `--check`, all are in CI** |
+| **`scripts/generate/`** | **Everything that writes a committed file; each has `--check` but the multi-inverter YAML, which CI regenerates and commits instead** |
 | `scripts/generate/descriptions.py` | The entity descriptions and names: `derived`, `numbers`, `switches`, `selects`, `strings`, or all five with no argument (`strings` last, since it reads the others) |
 | `scripts/generate/tables/writes.py` | **Input table**: which registers the integration may write and within what bounds. Feeds the number/switch/select descriptions; `tests/test_writes.py` holds `registers.py`'s writable set to it |
 | `scripts/generate/tables/naming.py` | **Input table**: the entity-name convention. Feeds `strings.json`, `review_names.py` and the Influx helper |
@@ -123,7 +130,7 @@ implementation for this pattern — read its real source, not blog posts.
 | `device-fingerprints/scripts/python/blocks.py` | The block read test from a terminal, around the library's `block_test`: which read inside a component fails, and whether it is a fault or contention. `--client library` fails where the integration does; `--client raw` (the library's `raw_client`, a strict socket) names the count a padded frame needs; `--narrow-budget` bounds the narrowing, which is unaffordable on a link where reads time out |
 | **`scripts/helpers/`** | **One-off tools** |
 | `scripts/helpers/influx_migration.py` | Print Grafana regexes and rewrite recipes for InfluxDB users; connects to nothing |
-| `scripts/helpers/review_names.py` | Lay the entity names out for the open naming decision — grouped by subject, each with the entity id it produces and its legacy name. `--markdown` prints the sheet (redirect it into `doc/entity_name_review.md`); `--check` fails when that file has drifted, which it silently had by 47 entities |
+| `scripts/helpers/review_names.py` | Lay the entity names out for the open naming decision — grouped by subject, each with the entity id it produces and its legacy name. `--markdown` prints the sheet (redirect it into `doc/entity_name_review.md`); `--check` fails when that file has drifted from the names |
 | `scripts/helpers/make_brand_icon.py` | Regenerate the integration's `brand/` icons (`--preview` renders a check sheet) |
 | `pytest` | Device library + integration tests, no network needed |
 | `ruff check . && ruff format .` | Lint and format |
@@ -159,11 +166,11 @@ somebody's roof.
 
 The engine is in the library so both drivers share it: `device-fingerprints/scripts/python/sungrow_control_test.py`
 and the `Run control write test` button on the device page. Both run part A
-then part B and publish both in one fingerprint document (`control_test`,
-schema 19): the button by itself, the terminal through the survey, which asks
+then part B and publish both in one fingerprint document (the `control_test`
+block): the button by itself, the terminal through the survey, which asks
 for leave among its questions and runs the control test into the document it
-just wrote. `--export-scale --merge-into` adds the `export_scale` block
-(schema 20), and a full run writes 13074 at the factor that probe answers.
+just wrote. `--export-scale --merge-into` adds the `export_scale` block,
+and a full run writes 13074 at the factor that probe answers.
 
 ### Rules the procedure turns on
 
@@ -233,8 +240,9 @@ just wrote. `--export-scale --merge-into` adds the `export_scale` block
   `0x0020 Starting`, which `is_starting` recognises; the deadline is ten
   minutes, and five each for the stop and for generation. The terminal
   prints a dot every `WAIT_TICK` (10 s) while it waits. A start can take
-  several `0xCF` commands before the state moves, so it is retried from the
-  `finally` rather than sent once.
+  several `0xCF` commands before the state moves, so `async_ensure_running`
+  re-sends it while the state still reads stopped rather than sending once,
+  and every driver calls it on the way out.
 
 ### Register 13074's write scale is per device
 
@@ -293,8 +301,10 @@ because it decides where a change belongs:
   how often each block is worth reading.
 - **`async_setup_entry` is a list of named steps**, each a function that can
   be read on its own.
-- **The generated `*_descriptions.py` are not hand-edited** -- all but
-  `sensor_descriptions.py`, which is source. `make gen-check` fails on it.
+- **The generated `*_descriptions.py` are not hand-edited**: `derived`,
+  `number`, `switch` and `select`. `sensor_`, `battery_`, `wallbox_` and
+  `external_descriptions.py` are source. `make gen-check` fails on a hand
+  edit of a generated one.
 
 ## The survey runs on the published library
 
@@ -339,10 +349,12 @@ Each of these is verified in a container or against hardware.
 
 ### Environment, versions and the install
 
-- **Home Assistant 2026.9 requires Python ≥ 3.14.2.** The
-  `mcr.microsoft.com/devcontainers/python` images only go to 3.13, which is
-  why the devcontainer uses `python:3.14-bookworm`.
---> recheck this after 14th October 2026
+- **Home Assistant requires Python ≥ 3.14.2** (2026.9 and 2026.10 alike).
+  The devcontainer is `mcr.microsoft.com/devcontainers/python:3.14-bookworm`,
+  where Python lives in `/usr/local/python/current` rather than
+  `/usr/local/bin`; its `bin/` comes first on the image's `PATH`, ahead of
+  the image's own pipx tools, so `requirements_dev.txt`'s pytest, mypy and
+  ruff are the ones that run.
 
 - **Core's `modbus` drives `modbus-connection` with the _tmodbus_ backend,
   not pymodbus.** `import homeassistant.components.modbus` fails outright
@@ -538,7 +550,7 @@ Each of these is verified in a container or against hardware.
   at its own LAN address over TLS on 516. Not through the inverter's own LAN
   port. Over TLS a read must **start on a data point's first register** --
   21295 x24 answers, 21296 x10 times out -- so a block that pools fields
-  must begin at one; the map is in `Todo.md`. A dongle forwards any start,
+  must begin at one; the map is in `doc/wallbox_registers.md`. A dongle forwards any start,
   and answers 0 for several registers the direct path reads. Its registers
   are undocumented by Sungrow; `doc/wallbox_registers.md` is what the
   measurements agree on.
@@ -595,16 +607,23 @@ and `_inv_<n>` to every unique_id, and which physical inverter was `inv 2` is
 something only the house knows -- so the integration **measures it rather than
 asking**: that file's `sensor.sungrow_inverter_serial_inv_<n>` holds its
 inverter's serial as its *state*, and an entry already knows the serial it is
-talking to. `migration.async_legacy_suffix` matches them.
+talking to. `migration.async_resolve_legacy_slot` matches them: the live
+state first, then the states the recorder kept, and `""` only when no
+numbered slot (`_inv_<n>`) ever existed in the registry or the recorder.
 
 Three rules, each of which can lose somebody's history if broken:
 
 - **`None` is not `""`.** No match means the question could not be answered.
   Reading it as the unsuffixed slot hands a second inverter the first one's
-  years of readings, silently, and no later guess undoes it.
+  years of readings, silently, and no later guess undoes it. So `None` is
+  stored as `None`, `stored_legacy_slot` returns it, and a `None` entry claims
+  no legacy ids; an absent key is the unsuffixed slot of an entry that
+  predates the slot.
 - **The slot is stored in `data` under `CONF_LEGACY_SLOT`**, because detection
-  needs the YAML package installed and the migration's next instruction is to
-  remove it. Re-deriving at a later start answers `None`.
+  needs the YAML package installed, or its serial still in the recorder, and
+  the migration's next instruction is to remove it. The claim at setup reads
+  the stored slot and never re-derives it; only the options flow measures
+  again, for a slot stored as `None`.
 - **The suffix goes on the name, not the id.** The YAML names the entity
   `Total DC power inv 2` and Home Assistant slugifies that. Appending `_inv_2`
   to the finished id agrees today and stops agreeing the first time a name
@@ -640,7 +659,7 @@ be careful:
   device-fingerprints` cannot put a real serial there whatever it is asked;
 - `NEVER_PUBLISH = ("serial",)` filters anything whose *name* mentions a
   serial, values and key lists alike;
-- a wallbox's serial sits two registers below the model name, so
+- a wallbox's serial (input 21201-21206) sits just below the model name, so
   `wallbox.probe_units` reads the **name**; at the publishing boundary its
   words are masked and the document carries a stand-in in their place,
   `wallbox.serial_anonymized_hashed`, from the same `stand_in` as the

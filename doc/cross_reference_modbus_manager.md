@@ -25,7 +25,7 @@ It matters for three reasons, in ascending order:
    since.
 
 Everything below cites register **numbers**, one above the protocol address,
-per the convention in [CLAUDE.md](../CLAUDE.md). Findings are tagged by
+per the convention in [AGENTS.md](../AGENTS.md). Findings are tagged by
 provenance:
 
 | Tag | Means |
@@ -109,7 +109,7 @@ These are the interesting ones, because a template is not a document.
 
 - **Holding 33500 master/slave mode, 33501 master/slave role, 33502 slave
   count.** Role decodes 160 master, 161-164 slave 1-4. This bears directly on
-  the finding in CLAUDE.md that one endpoint at one house answers on unit
+  the finding in AGENTS.md that one endpoint at one house answers on unit
   **2** because a cluster slave's own device address is 2 and unit 1 times
   out. If 33501 reads on that endpoint, `identify()` could *report* that it
   is talking to a slave rather than only discovering it by sweeping
@@ -150,7 +150,7 @@ Their **31222** feed-in limitation value wide-range (U16, 0.01 kW) *is*
 Eight addresses, and the interesting four are the version strings at
 **2582, 2597, 2613 and 2629**. Their template does not read any of them —
 which is also why nothing in that project has met the padded-frame defect
-documented in CLAUDE.md, where registers 2612 and 2628 return an
+documented in AGENTS.md, where registers 2612 and 2628 return an
 `mbap_len` of 33 against a `byte_count` of 22 and a strict client rejects the
 whole block. They read the firmware strings at 13250/13265/13280 instead,
 count 15, exactly as this repository does.
@@ -237,9 +237,8 @@ The remark under the battery fault block:
 Three things this repository did not have in writing:
 
 1. **The unit id through a dongle is a WiNet-internal forwarding address.**
-   CLAUDE.md records this as measured — 200 on a cable, 2 through the dongle,
-   at two houses — and notes the earlier "not reachable via WiNet-S at all"
-   claim was wrong. Sungrow documents the mechanism, and it is the same
+   AGENTS.md records this as measured — 200 on a cable, 2 through the dongle,
+   at two houses. Sungrow documents the mechanism, and it is the same
    mechanism the other project's COM1 logger exports show from the inside.
    The design consequence already holds: identify by what answers, never by
    unit id.
@@ -253,7 +252,7 @@ Three things this repository did not have in writing:
 
 ## The wallbox
 
-Ours is the fuller map — 32 registers against 25 — which is what a
+Ours is the fuller map — 32 fields against 25 — which is what a
 measurement through a charging session that ended buys over a template.
 Theirs adds nothing we lack except one register, and it is a genuine
 question:
@@ -264,28 +263,31 @@ writes it as a **holding** select, `Working Mode`, options 0 network / 2 plug
 and play / 6 EMS. Different address spaces, so both can be true and probably
 are — Sungrow mirrors settings across spaces routinely, and
 `integration_plan.md` already records one false collision of exactly this
-kind at 13018. But it is one read to confirm, and if holding 21263 is the
-working mode then EMS mode is a **precondition** for Modbus control of the
-charger, which is worth telling a user in the config flow rather than
-letting them discover.
+kind at 13018. Through a WiNet-S holding 21263 does not answer; at the
+wallbox's own address it reads 0 inside a block read, and no read may start
+there (see the map of valid starts in
+[wallbox_registers.md](wallbox_registers.md)), so on this firmware it is not
+a data point of its own. If it is the working mode on another firmware, then
+EMS mode is a **precondition** for Modbus control of the charger, which is
+worth telling a user in the config flow rather than letting them discover.
 
 **Register 21313 is still nameable by nobody.** They do not have it.
 
-Their wiring documentation also **explains a measurement here that had no
-explanation**. CLAUDE.md records that the wallbox answers as unit 3 behind
-the dongle and "never at 248", at a site where the wallbox has its own LAN
-cable. Their topology table gives the reason: **248 is the charger's own
-RS485 slave id**, reachable only through a serial or RTU-over-TCP gateway
-wired to the charger's own RS485 port — never over Modbus TCP, on any
-address. And on the charger's own IP, field reports have port 502 closed and
-**516 open with TLS**. So the wallbox's LAN jack is for an EMS, not for us;
-the two observations that looked like a puzzle are two different transports.
+Their topology table gives **248 as the charger's own RS485 slave id**,
+reachable through a serial or RTU-over-TCP gateway, and on the charger's own
+IP their field reports have port 502 closed and **516 open with TLS**. The
+second half is measured here, and goes further than their table: on gerd's
+AC22E-01, the charger's own address serves **Modbus TCP inside TLS on 516,
+at unit 248**, and the integration reads it there when the entry's
+`wallbox_host` option names it (`wallbox_direct.py` surveys it). So 248 is
+reachable over TCP after all, inside TLS; RS485 at 248 remains theirs and
+unmeasured here.
 
 ## The battery
 
 Ten registers theirs-only, and **nine of them are serial numbers**: 10711 the
 pack serial and 10822-10894 the eight module serials, each a UTF-8 string
-entity. Under the hard constraint in CLAUDE.md those do not get read here at
+entity. Under the hard constraint in AGENTS.md those do not get read here at
 all, let alone published, and `NEVER_PUBLISH` would filter them by name if
 they were. Their template creates them as entities on the user's own
 instance, which is a different and defensible choice — but it is why the
@@ -298,7 +300,7 @@ itself and this repository can settle it.
 
 Their SBR template header states `requires_connection_type: ["LAN",
 "RS485"]` with `config_flow_note: "Requires LAN or RS485 connection. WiNet-S
-is not supported."` — the same claim CLAUDE.md records as measured wrong.
+is not supported."` — the claim AGENTS.md's measurements contradict.
 Their own `README_sungrow_sbr_battery.md` then contradicts the template:
 "internal address **200** is often forwarded as **2**", with instructions to
 read the forwarded id out of the WiNet-S device list, and a note that unit
@@ -319,7 +321,7 @@ Two independent routes to one finding, and theirs names the mechanism.
 
 The design still differs, in our favour: they gate the cell block on a
 `connection_type` the **user declares** at setup, so a user who picks wrong
-gets either poll errors or missing entities. `has_cell_data()` probes it
+gets either poll errors or missing entities. `SungrowBattery.has_cell_data` probes it
 instead, which handles both dongle behaviours and needs nothing from the
 user.
 
@@ -372,23 +374,21 @@ Four facts from this that change the design here, not just add registers:
    inverters, WiNet-S/S2)". So it is one endpoint with one device on it, and
    it cannot be found by probing units behind an inverter's endpoint. The
    one-entry-per-endpoint model handles that correctly and for free.
-2. **Port 502 *or* 503.** CLAUDE.md records the iHM as port 503. Their
-   documentation says 502 on some units, 503 "if 502 is busy", SSL off, and
-   the installer has to enable Modbus TCP at all. So sweeping 503 was never
-   going to be sufficient, and the sweeps that found nothing on 503 are
-   weaker evidence than they looked.
-3. **Nothing here can recognise one.** Both identification paths ask for the
-   inverter serial at input 4990 — `identify()` in
-   [probe.py](../device-fingerprints/scripts/python/probe.py), across units 1-5, and
+2. **Port 502 *or* 503.** Their documentation says 502 on some units, 503
+   "if 502 is busy", SSL off, and the installer has to enable Modbus TCP at
+   all; AGENTS.md records the iHM that way. So sweeping 503 alone is not
+   sufficient, and the sweeps that found nothing on 503 are weaker evidence
+   than they look.
+3. **An inverter probe cannot recognise one.** Identification asks for the
+   inverter serial at input 4990 across units 1-5, and an iHM has no such
+   register: it would refuse with exception 0x02, indistinguishable from a
+   non-Sungrow endpoint on 502. So it has its own probe: **input 8000,
+   device type code, on unit 247**, which `async_identify` in
+   [discovery.py](../src/sungrow_modbus/discovery.py) falls back to where no
+   inverter unit answers, on whichever port it was given. The config flow's
    `_async_identify` in
-   [config_flow.py](../custom_components/sungrow_modbus/config_flow.py),
-   which fails with `no_serial_number`. An iHM has no such register and
-   would refuse with exception 0x02, indistinguishable to either from the
-   not-a-Sungrow endpoint recorded in CLAUDE.md that answers only registers
-   0-19. Recognising one needs its own probe: **input 8000, device type
-   code, on unit 247**, on 502 as well as 503. That is a small change, and
-   it is the one that makes the milestone reachable before anybody has the
-   hardware in hand.
+   [config_flow.py](../custom_components/sungrow_modbus/config_flow.py)
+   still fails such an endpoint with `no_serial_number`.
 4. **No energy counter on the charger block.** Their issue #86 scanned
    8574-8773 during a ~4 kW session and found nothing accumulating, so
    session and lifetime kWh have to be integrated from `charger_active_power`
@@ -424,16 +424,16 @@ Independent confirmation of things measured here, from other people's houses:
 
 - The SBR forwarded as unit **2** through a WiNet-S rather than 200, and unit
   200 timing out on that path.
-- The wallbox at unit **3** behind the inverter's or the dongle's endpoint.
+- The wallbox at unit **3** behind the dongle's endpoint (never through the
+  inverter's own LAN port).
 - A WiNet-S being a **filtering, non-transparent** Modbus proxy rather than a
   bridge — which is the mechanism behind three separate findings in
-  CLAUDE.md: the blocks a dongle refuses, the empty strings it invents, and
+  AGENTS.md: the blocks a dongle refuses, the empty strings it invents, and
   the zeros it answers where the inverter says 0xFFFF.
 - Sungrow Modbus endpoints allowing roughly **one client per port**, and
   rapid reconnects being refused. Their reason for not implementing TLS on
   516 is that the iHM already holds that session on the charger — the same
-  session exhaustion that produced the `SSLEOFError` rows in the TLS
-  comparison here.
+  exhaustion under rapid reconnects that AGENTS.md records for 516.
 
 ## Worth reporting back
 
@@ -503,5 +503,5 @@ that already exists: **whether an MG\*RL is three-phase**, from register 5002
 on any MG at all; master/slave role at holding 33500-33502 against the
 master/slave pair; the SBR's BCU firmware string at 10721 and the other
 project's three unnamed candidates (10735-10739, 10749-10750, 19938); and
-whether holding 21263 on the wallbox is a working-mode setting mirroring the
-rated current this repository reads in the input space.
+whether holding 21263 is a working-mode setting on any wallbox firmware
+other than the one measured.

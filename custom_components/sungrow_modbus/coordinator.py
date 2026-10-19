@@ -50,12 +50,11 @@ COMPONENT_TIERS: dict[str, str] = {
 class PausableCoordinator:
     """Lets a survey or control test have the link to itself for a while.
 
-    A mixin rather than a base class because the three coordinators here are
-    siblings, not a hierarchy: the inverter's tiers, the battery pack and the
-    wallbox each subclass Home Assistant's `DataUpdateCoordinator` directly.
-    What they do share is the endpoint -- one host, one port, one serialized
-    connection -- so a pause that covered only one of them would not be a
-    pause at all.
+    A mixin rather than a base class because the inverter's tier coordinator
+    and `SungrowSubDeviceCoordinator` share nothing else: each subclasses Home
+    Assistant's `DataUpdateCoordinator` on its own. What they do share is the
+    entry's link -- one serialized connection -- so a pause that covered only
+    one of them would not be a pause at all.
     """
 
     data: Any
@@ -139,8 +138,7 @@ class SungrowDataUpdateCoordinator(
             # connection is a second client -- the YAML package still running,
             # another Home Assistant, EVCC, a logger -- rather than a fault.
             # The bare message ("Connection lost before response was
-            # received") sends people looking at their network instead, which
-            # is exactly what happened to the maintainer.
+            # received") sends people looking at their network instead.
             raise UpdateFailed(
                 f"Lost the connection to the inverter: {err}. A Sungrow "
                 "inverter accepts very few Modbus connections at once, so "
@@ -225,13 +223,9 @@ class SungrowSubDeviceCoordinator(
     suffix because neither reports a usable one of its own, and both turn a
     `ModbusError` into an `UpdateFailed` that names which device failed.
 
-    That was written twice, and the copies had drifted into storing the device
-    under different attribute names -- `self.battery` and `self.wallbox` --
-    behind a `device` property that existed only to paper over the difference.
-    The inverter's own coordinator stores `self.device` directly, so this now
-    does what that already did, and the two subclasses are left holding only
-    what genuinely differs: how a model name is found, and how often each
-    block is worth reading.
+    The device is `self.device`, as on the inverter's coordinator, and the two
+    subclasses hold only what genuinely differs: how a model name is found,
+    and how often each block is worth reading.
     """
 
     config_entry: SungrowConfigEntry
@@ -265,8 +259,8 @@ class SungrowSubDeviceCoordinator(
         """Return the serial that identifies this device's entities.
 
         The **inverter's**, not this device's, and public because the entities
-        need it: an SBR reports no serial anywhere in its seventeen registers,
-        and a wallbox reports one two registers below the model name that this
+        need it: an SBR reports no serial anywhere in its register band, and a
+        wallbox reports one, at input registers 21201-21206, that this
         project deliberately never reads. So the only stable identity either
         device has is the inverter it is reached through.
         """
@@ -289,11 +283,9 @@ class SungrowSubDeviceCoordinator(
         interface, which is also where it sits physically.
 
         Identified by the **inverter's** serial with a suffix. An SBR reports
-        no serial anywhere in its seventeen registers, which the survey checked
-        by reading the whole 10740-10789 band. A wallbox does report one, at
-        input 21200 -- and one reached a published fingerprint as
-        `[16690, 13633]`, which decodes to `A25A`, before anybody thought about
-        the second device in the house. Nothing here reads it.
+        no serial anywhere in the 10740-10789 band, which the survey reads
+        whole. A wallbox does report one, at input registers 21201-21206,
+        and nothing here reads it.
         """
         serial = self.inverter_serial
         model = self._model()
@@ -327,17 +319,17 @@ class SungrowSubDeviceCoordinator(
 class SungrowBatteryCoordinator(SungrowSubDeviceCoordinator):
     """Poll an SBR pack's own registers, on its own unit.
 
-    One coordinator, not four. The pack has no tiers: seventeen registers in
-    two reads, all of them things that move slowly -- a state of charge, a
-    temperature, two lifetime counters. It follows the inverter's *medium*
-    interval so that a house which has turned everything down does not get a
-    battery polled faster than its inverter.
+    One coordinator, not four. The pack has no tiers: fifteen fields in
+    seventeen registers, two reads, all of them things that move slowly -- a
+    state of charge, a temperature, two lifetime counters. It follows the
+    inverter's *medium* interval so that a house which has turned everything
+    down does not get a battery polled faster than its inverter.
 
-    It shares the inverter's connection, because one config entry is one
-    endpoint and everything pointed at that host and port is serialized behind
-    a single link. That is not a limitation to work around: a Sungrow accepts
-    very few simultaneous sessions, and a second connection for the battery
-    would compete with the inverter for one.
+    It shares the inverter's connection, because everything one config entry
+    points at that host and port is serialized behind a single link. That is
+    not a limitation to work around: a Sungrow accepts very few simultaneous
+    sessions, and a second connection for the battery would compete with the
+    inverter for one.
     """
 
     kind = "battery"
@@ -370,16 +362,16 @@ class SungrowWallboxCoordinator(SungrowSubDeviceCoordinator):
 
     **Two intervals, not one**, which is the difference from the battery and
     the reason this class exists at all rather than being a `kind` string. A
-    pack's seventeen registers all move slowly; a wallbox has twenty-three
-    that change while a car is charging and nine that change when somebody
+    pack's registers all move slowly; a wallbox has eighteen fields that
+    change while a car is charging and fourteen that change when somebody
     reconfigures it. So this coordinator fires on the inverter's *fast* tier
     and reads only `wallbox_live`, refreshing the rest every `SLOW_EVERY`
     firings -- reading the ratings every ten seconds would spend a Sungrow's
     scarce session time on a rated current that cannot change.
 
-    It is reachable only as a unit behind the inverter's endpoint, never on an
-    address of its own: measured at a site whose wallbox has its own LAN cable
-    and still answered nowhere else.
+    Its unit is either behind the inverter's endpoint (unit 3 through a
+    WiNet-S) or at the wallbox's own address over TLS (unit 248, the
+    `wallbox_host` option). This class does not care which.
     """
 
     kind = "wallbox"
@@ -432,8 +424,8 @@ class SungrowWallboxCoordinator(SungrowSubDeviceCoordinator):
 class SungrowRuntimeData:
     """Everything a platform needs to build its entities.
 
-    One coordinator per poll interval, so a 5-second reading is not dragged
-    along by 38 slow-moving totals. Entities look theirs up by the component
+    One coordinator per poll tier, so a 5-second reading is not dragged
+    along by slow-moving totals. Entities look theirs up by the component
     they read, which is the only thing an entity description knows.
     """
 
@@ -465,8 +457,9 @@ class SungrowRuntimeData:
     """The wallbox's coordinator, when this endpoint has one.
 
     `None` is the common case: most installations have no Sungrow wallbox,
-    and one that exists is reachable only through the endpoint the inverter
-    is on -- never by sweeping for it.
+    and one that exists answers only behind a WiNet-S on this endpoint or at
+    its own address when `wallbox_host` names it -- never on the inverter's
+    own LAN port.
     """
 
     battery_has_cells: bool = False
@@ -494,19 +487,18 @@ class SungrowRuntimeData:
     """Whether this entry took over the YAML package's entity ids.
 
     Read by `serves`, because the answer decides which entities exist and not
-    only what they are called: the seventeen `legacy_only` sensors are
+    only what they are called: the `legacy_only` sensors are
     created for an entry carrying that history and for nothing else.
     """
 
     survey: Any = None
     """The `SurveyRunner` for this entry, or None before setup finishes.
 
-    **Last, and it has to be.** Every caller in the tests builds this
-    positionally -- `SungrowRuntimeData(coordinators, capabilities,
-    intervals, ...)` -- so a field inserted anywhere above shifts all of
-    them silently: `intervals` lands in `capabilities`, and ninety tests
-    fail with a `KeyError` naming a component, a long way from the cause.
-    Measured, by doing exactly that.
+    **After every field callers pass, and it has to be.** Setup and the tests
+    build this positionally -- `SungrowRuntimeData(coordinators,
+    capabilities, intervals, ...)` -- so a field inserted among the first
+    three shifts them silently: `intervals` lands in `capabilities`, and the
+    failure is a `KeyError` naming a component, a long way from the cause.
 
     Typed loosely on purpose: `survey.py` imports this module for the entry
     type, so naming the class here would close the circle. The platforms
@@ -533,21 +525,15 @@ class SungrowRuntimeData:
     polling_paused: bool = False
     """True while a survey or control test wants the link to itself.
 
-    **Declared last on purpose.** The first three fields of this dataclass are
-    passed positionally where the entry is set up, so a field inserted among
-    them shifts every argument after it -- which is exactly what happened on
-    the first attempt at this, and surfaced as `KeyError: 'realtime'` from a
-    lookup three files away.
+    **Declared last on purpose**, for the reason `survey` gives.
 
     Read by every coordinator on this entry before it polls. Everything here
-    shares one serialized connection to one endpoint, so a survey taken while
-    the tiers keep firing is a survey taken under contention -- which is why
-    every document published from a device page before 2026-09-18 carried
-    `coordinators_paused: false`, honestly, and why it was worth fixing rather
-    than explaining.
+    shares one serialized connection, so a survey taken while the tiers keep
+    firing is a survey taken under contention, and the document says whether
+    the coordinators were paused.
 
-    Paused at the *poll* rather than by clearing `update_interval`, which would
-    have needed a private Home Assistant call to cancel the timer already
+    Paused at the *poll* rather than by clearing `update_interval`, which
+    would need a private Home Assistant call to cancel the timer already
     scheduled. A coordinator that wakes while this is set returns what it last
     had and touches no register, so entities hold their values instead of going
     unavailable for the length of a run.

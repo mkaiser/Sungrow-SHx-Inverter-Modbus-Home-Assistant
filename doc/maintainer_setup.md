@@ -2,57 +2,51 @@
 
 Things only the maintainer can do, because they need an account, a credential,
 or physical access to hardware. Everything else in
-[the plan](integration_plan.md) can proceed without them — but the first item
-blocks anyone from installing the integration at all.
+[the plan](integration_plan.md) can proceed without them.
 
 Applies to the **integration** track only. The YAML package needs none of it.
 
-## 1. Claim the PyPI name — blocking
+## 1. Releasing
 
 `custom_components/sungrow_modbus/manifest.json` pins
 `sungrow-modbus==<version>`, and Home Assistant pip-installs a custom
-integration's requirements exactly as it does a built-in one. That package does
-not exist yet, so **a HACS install fails at start-up**. It works in the
-devcontainer only because `scripts/dev/setup.sh` installs the library editable, which
-no user has.
+integration's requirements exactly as it does a built-in one. So every
+release of the integration is also a release of the library to PyPI, and an
+install works only once that upload exists. In the devcontainer the library
+is installed editable from `src/`, which no user has.
 
-There is no way to reserve a name on PyPI. A name is claimed by uploading, and
-a Trusted Publishing "pending publisher" explicitly does not hold it.
-**`0.0.1` is the version that claims it**, deliberately: uploads are immutable,
-so whatever goes first is permanent, and `0.1.0` is worth keeping for the first
-release that deserves the number. So:
+A release is a tag:
 
-1. Create a PyPI account and enable 2FA (mandatory).
-2. On PyPI → *Your projects* → *Publishing*, add a **pending publisher**:
-   - Owner `mkaiser`
-   - Repository `Sungrow-SHx-Inverter-Modbus-Home-Assistant`
-   - Workflow `release.yml`
-   - Environment `pypi`
-   - Project name `sungrow-modbus`
-3. Rehearse against TestPyPI first — worth the ten minutes, because an upload
-   is immutable and OIDC misconfiguration only shows at upload time. It needs
-   its own account and its own pending publisher on **test.pypi.org**, with
-   workflow `testpypi.yml` and environment `testpypi`; create a GitHub
-   environment of that name too, then run *Rehearse the PyPI publish* from the
-   Actions tab. Every run picks a fresh `.devN` version, so it can be repeated
-   until it works. The run prints the exact `pip install` line to verify with.
-4. Tag a release. The first publish creates the project and claims the name:
+```bash
+make version VERSION=0.1.0a18      # pyproject, manifest, the scripts' PEP 723 pins
+git commit -am "Release 0.1.0a18"
+git tag -a v0.1.0a18               # the tag message is the published release note
+git push --follow-tags
+```
 
-   ```bash
-   python scripts/release/sync_version.py --set 0.0.1   # already true
-   git commit -am "Release 0.0.1"
-   git tag v0.0.1
-   git push --follow-tags
-   ```
+`.github/workflows/release.yml` then checks the tag against the files, runs
+ruff, pytest, hassfest and the HACS check, publishes the GitHub release
+(marked pre-release by PEP 440's rule) and uploads the library to PyPI through
+Trusted Publishing -- the `pypi` environment and a publisher configured on
+PyPI for this repository and workflow, so **no API token is stored in
+secrets**. Write the tag message for users: it is the release note, and
+GitHub's own generator would list every commit since 2022.
 
-Before any of that, `python -m build && twine check dist/*` in the container
-catches metadata problems with no account involved — the package builds clean
-and passes as of 2026-09-06.
+Before tagging:
 
-`.github/workflows/release.yml` already carries the `pypi` job, using OIDC, so
-**no API token is stored in secrets**. Note that uploads are immutable — a
-version number can never be reused — and that PyPI treats `sungrow-modbus` and
-`sungrow_modbus` as the same project.
+- `make ci` runs what CI runs, including the build and the gate that the
+  built wheel provides every import the integration and the survey make.
+- Run hassfest locally (AGENTS.md has the command; `make refs` fetches what
+  it needs).
+- After the upload, `make pin-check` asks PyPI the same question of the
+  published wheel. It is legitimately red between releases, and it must be
+  green before anyone is told to install something.
+
+Uploads are immutable -- a version number can never be reused -- and PyPI
+treats `sungrow-modbus` and `sungrow_modbus` as the same project. The manual
+*Rehearse the PyPI publish* workflow (`testpypi.yml`) uploads a `.devN`
+version to TestPyPI over its own publisher and `testpypi` environment, for
+when the publishing setup changes.
 
 ## 2. Running things from the host instead of the container
 
@@ -62,102 +56,90 @@ or newer and a specific set of pinned dependencies, none of which exist on the
 host. Reopening the folder natively would mean rebuilding all of that, which is
 what the container exists to avoid.
 
-But **the workspace is a bind mount from the Windows filesystem**, so anything
-run on the host that writes into the repository folder is visible from inside
-the container immediately, and the other way round. That covers the cases where
-the host is genuinely better:
+The host is genuinely better for two things:
 
 - **Multicast**, which a Docker bridge does not carry — so mDNS discovery can
   only be answered from the host.
 - **Any site the container cannot route to**, though in practice it follows the
   host's routing already.
 
-[device-fingerprints/scripts/survey.sh](../device-fingerprints/scripts/survey.sh) is built
-for exactly this: it runs the survey through `uv`, which fetches Python and the
-pinned library itself, so it runs on the host with nothing set up. Write its
-output into the repository folder and it appears on both sides.
+[device-fingerprints/scripts/survey.sh](../device-fingerprints/scripts/survey.sh)
+(`survey.cmd` on Windows) is built for this: it runs the survey through `uv`,
+which fetches Python and the pinned library itself, so it runs on the host
+with nothing set up. It writes its document and transcript beside itself, in
+`device-fingerprints/`; when the workspace is a bind mount from the host
+folder, that is visible on both sides.
 
-### The mDNS question — five minutes, high value
+### The mDNS question
 
-Run this **on the host**, not in the container:
+Does a WiNet-S advertise itself over mDNS? It needs a house with a dongle,
+and a run **on the host**, not in the container:
 
 ```bash
-pip install zeroconf          # the only dependency, and only for this check
+pip install "sungrow-modbus[discovery]"     # zeroconf, for this check only
 python device-fingerprints/scripts/python/probe.py mdns
 ```
 
 If the dongle advertises its serial and model, host discovery becomes free and
-exact, and the address-sweep subsystem stops being needed at all. A negative
-answer is just as useful — it settles the question. If you would rather not
-install anything, say so and a standard-library-only version can be written.
+exact. A negative answer is just as useful — it settles the question. An
+inverter's own LAN port announces nothing, so a house without a dongle cannot
+answer it.
 
 ### Which command runs where
 
-Two tools, two homes, and mixing them up produces confusing errors:
-
 | Command | Runs | Because |
 | --- | --- | --- |
-| `python device-fingerprints/scripts/python/probe.py mdns` | **host only** | Multicast does not cross the Docker bridge; needs `zeroconf` |
-| `python device-fingerprints/scripts/python/sungrow_survey.py`, `probe.py capabilities/units/dump` | either | They run on the device library: the editable install in the container, or the version `survey.sh` fetches through uv on the host |
+| `python device-fingerprints/scripts/python/probe.py mdns` | **host only** | Multicast does not cross the Docker bridge; needs the `discovery` extra |
+| `make scan HOST=…`, `probe.py sweep/units/capabilities/dump`, `blocks.py` | either | They run on the device library: the editable install in the container, or the version `survey.sh` fetches through uv on the host |
 
-## 3. Capture the test systems
+## 3. Capturing a system
 
-Four are available. One read-only session over all four is worth more than
-visiting each at its own milestone, because three decisions have been made on
-paper and can be checked cheaply now — above all the naming ladder, designed
-without ever having seen two inverters of the same model.
+The published documents are in
+[device-fingerprints/inverter/](../device-fingerprints/inverter/) and
+[device-fingerprints/wallbox/](../device-fingerprints/wallbox/), and
+[devices-wanted.md](../device-fingerprints/devices-wanted.md) says what is
+missing, in the order it would help.
 
-Run the one entry point. It identifies every device on the endpoint before
-asking anything — which is what tells one inverter reached two ways from two
-inverters, the condition that invalidated two documents — then asks, checks
-the transport against the answer, runs the block read test on the still-idle
-link, reads every register and prints what it found:
+Run the one entry point:
 
 ```bash
-python device-fingerprints/scripts/python/sungrow_survey.py <host>
+make scan HOST=<host>          # or device-fingerprints/scripts/survey.sh <host>
 ```
 
-For the reading on its own, without the other phases:
+It identifies every device on the endpoint before asking anything — which is
+what tells one inverter reached two ways from two inverters — then asks what
+no register can answer, checks the transport against the answer, runs the
+block read test on the still-idle link, reads every register, finds a wallbox
+on its own address (TLS on 516) and surveys it into a document of its own,
+and prints what it found. Its last question offers the control test, and
+defaults to no.
 
-```bash
-python3 device-fingerprints/scripts/python/probe.py capabilities <host> \
-    --save device-fingerprints --label sh10rt-v112
-```
+`make scan-local HOST=<host>` runs the same through the launcher on this
+tree's library, which is what to use when the survey needs something the
+published wheel does not have yet.
 
-| Setup | Label to use | Why it matters |
-| --- | --- | --- |
-| LAN: SH10RT + Pylontech | `sh10rt-3p-mkaiser-0ea759-battery-thirdparty-meter` | Done — a third-party battery, direct LAN |
-| Remote (gerd): **SH8.0RT-V112** + SBR096, both paths | `sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan` and `...-battery-sbr096-wallbox-winet-wlan` | Measured 2026-09-08, not SH10RT as this row said: a variant device code, a real Sungrow battery, and the only site scanned over both its LAN port and its dongle |
-| Remote: SH10RT-V122 + battery + wallbox | `sh10rt-v122-wallbox` | The only wallbox |
-| Remote: two SH10RT | `sh10rt-pair-a`, `-b` | The only multi-inverter site |
+Everything is **read-only** unless that last question is answered yes. The
+one file in `device-fingerprints/` that writes a register is
+`sungrow_control_test.py`, which the survey runs only then.
 
-On the wallbox system, also dump the undocumented gaps:
-
-```bash
-python device-fingerprints/scripts/python/probe.py dump <host> --unit 3 --start 21230 --count 40 --save
-python device-fingerprints/scripts/python/probe.py dump <host> --unit 3 --start 21266 --count 40 --save
-```
-
-Everything above is **read-only**. The one file in `device-fingerprints/`
-that writes a register is `sungrow_control_test.py`, which the survey runs
-only when its last question is answered yes.
+The document and its transcript land in `device-fingerprints/`, where both
+are gitignored. Publish a document by moving it into `inverter/` (or
+`wallbox/`) and committing it with `doc/compatibility.md`, which
+`scripts/generate/generate_compatibility.py` rebuilds from them. Leave the `sungrow-scan-*.log` transcript alone — it
+carries the real serial and the addresses. And if a system belongs to
+somebody else, **ask them before publishing its readings**; a stand-in
+serial is not consent.
 
 For anyone outside this repo — the users whose models nobody here owns —
-[device-fingerprints/](../device-fingerprints/) does the
-same job: a folder they can download and run with `./survey.sh` or
-`survey.cmd`, which fetch what the survey needs through uv. See [device-fingerprints/](fingerprints/).
-
-Then commit the `<label>.json` document. Leave the `sungrow-scan-*.log`
-transcript alone — it is gitignored, and it carries the real serial and the
-addresses. And if a system belongs to somebody else, **ask them before
-publishing its readings**; a stand-in serial is not consent.
+[device-fingerprints/](../device-fingerprints/) is a folder they can download
+and run with `./survey.sh` or `survey.cmd`; its README is written for them.
 
 ## 4. Reaching the remote systems
 
-The devcontainer reaches the LAN through the Docker bridge, which is how the
-reference inverter was read. Remote sites work the same way once they are
-routable from the host — the container follows the host's routing without
-needing to know anything about it, so the only thing it needs is an address.
+The devcontainer reaches the LAN through the Docker bridge. Remote sites work
+the same way once they are routable from the host — the container follows the
+host's routing without needing to know anything about it, so the only thing it
+needs is an address.
 
 Two things to check:
 
@@ -168,22 +150,29 @@ Two things to check:
 - **The Docker bridge is `172.17.0.0/16`**, so a site on that range would
   collide with the container itself.
 
-### The HACS brands check
+Over a VPN, slow a sweep down (`probe.py sweep` with a longer `--timeout` and
+a lower `--concurrency`): its defaults are tuned for a LAN and rule live hosts
+out before a tunnel answers.
 
-HACS validates nine things about a repository, and the one that fails for a
-new integration is **brands**: it wants the domain listed in the Home Assistant
-[brands repository](https://github.com/home-assistant/brands), and falls back
-to looking for assets at `custom_components/<domain>/brand/icon.png` inside
-the repository itself. The icons were at the repository root, which is neither
-place, so the check failed with "does not provide brand assets and is not
-listed in the Home Assistant brands repository".
+## 5. HACS and brands
 
-They now live at `custom_components/sungrow_modbus/brand/`, which satisfies
-the fallback. Submitting `sungrow_modbus` to the brands repository is still
-worth doing before applying to the HACS default store — it is what puts a real
-icon on the integration in Home Assistant's own UI rather than only in HACS.
+HACS validates a repository's brand: it wants the domain listed in the Home
+Assistant [brands repository](https://github.com/home-assistant/brands), and
+falls back to `custom_components/<domain>/brand/icon.png` inside the
+repository. The icons are at `custom_components/sungrow_modbus/brand/`
+(`scripts/helpers/make_brand_icon.py` draws them), which satisfies the
+fallback.
 
-## 5. Keeping data out of the cloud
+To do: submit `sungrow_modbus` to the brands repository before applying to
+the HACS default store — it is what puts a real icon on the integration in
+Home Assistant's own UI rather than only in HACS.
+
+HACS reads this repository's default branch, which is the YAML package, so
+while the integration is pre-release it reaches HACS users through the
+preview channel; see `doc/preview-mirror/` and
+[installing_a_preview.md](installing_a_preview.md).
+
+## 6. Keeping data out of the cloud
 
 Worth being precise, because "cloud" means two different things here and the
 answers differ.
@@ -212,8 +201,10 @@ The protections in place:
   anything else from a real installation. The survey and the control test
   write beside themselves instead, and `.gitignore` names each file they
   write.
-- `device-fingerprints/scripts/python/probe.py` splits every capture into a publishable part and
-  a private part rather than leaving the judgement to whoever runs it.
+- Every published document carries a hashed stand-in for the serial, and the
+  real one reaches only the transcript; `tests/test_no_real_serials.py`
+  fails on anything serial-shaped in a tracked file that is not on its list
+  of invented ones.
 - Connection details for the maintainer's own inverter are deliberately not in
   the repo; they live in his `secrets.yaml`.
 
@@ -221,27 +212,27 @@ The protections in place:
 Where one must be inside, keep it outside the repo, `chmod 600`, and never
 print it.
 
-## 6. Repository settings, for the HACS default store later
+## 7. Repository settings, for the HACS default store later
 
 Needed before submitting to `hacs/default`, and free to do now: a repository
-**description**, **topics**, and **issues enabled**. A `custom_components/sungrow_modbus/brand/icon.png` already
-exists. Submission also needs at least one full GitHub release, which item 1
-produces. Expect the review to take months.
+**description**, **topics**, and **issues enabled**. The brand icon exists.
+Submission also needs at least one full, non-pre-release GitHub release.
+Expect the review to take months.
 
-## 7. Still open, and yours to decide
+## 8. Still open, and yours to decide
 
 - **Generate a Lovelace dashboard, or rely on entity metadata** and document
   the auto-generated view? This decides how much dashboard code the
   integration carries.
 - Credit for the wallbox project author in the docs — permission is already
   granted, so this is courtesy.
-- Obtain Sungrow's *Logger Communication Protocol AW0 1.0.2.9* if milestone 8
-  is pursued; the copy found online 404s.
+- Obtain Sungrow's *Logger Communication Protocol AW0 1.0.2.9* if the Logger
+  milestone is pursued; the copy found online 404s.
 
-## 8. The production database, when there is time
+## 9. The production database, when there is time
 
 The migration cannot be verified at real scale without it. See
 [the plan](integration_plan.md#the-production-testbed) for what to collect and
-how to take it safely. A long-lived token as in item 5 answers a useful part of
+how to take it safely. A long-lived token as in item 6 answers a useful part of
 it read-only in the meantime, but only a copy lets a migration actually be run
 and rolled back.

@@ -20,13 +20,11 @@ Nothing else to remember: no flags, no order, no second command. It finds the
 devices, asks the handful of things no register can answer, measures, and
 prints what it found along with the path of the file to send back.
 
-This exists because collecting one contributor's data took four commands in a
-particular order with a dozen flags between them, most of which are
-*testimony* -- which cable, is there a proxy, may the address be published --
-rather than settings. That cost real mistakes in two days: a transport
-recorded from a comment later withdrawn, a block test that reported "ok" for
-reads the integration could not make, and nine documents deleted because
-their transport could not be trusted.
+One entry point, because most of what a survey needs is *testimony* --
+which cable, is there a proxy, may the address be published -- rather than
+settings, and testimony typed as flags into several commands in the right
+order is where a transport gets recorded wrong or a block test runs against
+the wrong client.
 
 **The survey reads, and writes only when it is told it may.** Its last
 question asks whether the control test may run after the reading: a short
@@ -40,14 +38,13 @@ The phases run in an order that each earns:
 
 1. **Find and identify every device**, before any question. Two addresses
    with the same serial are one inverter reached two ways, which changes
-   every answer that follows -- and is exactly what produced the withdrawn
-   documents.
+   every answer that follows.
 2. **Ask.** The questions Modbus cannot answer, and the consent questions.
 3. **Check the transport**, so a claim that contradicts the measurement can
    be re-asked rather than warned about afterwards.
 4. **The block read test**, before the long poll: it is the measurement that
-   only works on an idle inverter, and the poll is itself 27 block reads of
-   contention. Its result also explains the poll's misses.
+   only works on an idle inverter, and the poll is itself a few dozen block
+   reads of contention. Its result also explains the poll's misses.
 5. **Read the registers and save**, which is `probe.py capabilities --save`.
 6. **The control test**, only with leave given in step 2, folded into the
    document step 5 wrote -- after the reading, so a refusal or a restart
@@ -109,8 +106,10 @@ from sungrow_modbus.survey import async_read_6100, async_read_module, next_steps
 #: `wallbox_direct.py` finds it by its model name and surveys it into a
 #: document of its own.
 #:
-#: 503 is the port an iHomeManager is *documented* on, at unit 247, and it is
-#: also the Logger's. Neither has ever answered on any network surveyed.
+#: 503 is the Logger's port, and one an iHomeManager may answer on at unit
+#: 247 -- it takes 502 where that is free and 503 where it is not, so
+#: whatever answers on either is asked for it. Neither has answered on any
+#: network surveyed.
 SWEEP_PORTS: tuple[tuple[int, str, bool], ...] = (
     (
         502,
@@ -246,13 +245,14 @@ class Tee:
 
 
 def _workspace() -> tuple[Path, Path]:
-    """Return where the document and the transcript go: this script's folder.
+    """Return where the document and the transcript go: `device-fingerprints/`.
 
     Anchored on the script, not the working directory, so the launcher, `make
     scan` and a plain `python` from anywhere all land in the same place --
-    beside the launcher a person double-clicked, under visible names, with the
-    summary saying which file is which. Inside a checkout `.gitignore` covers
-    both names, which matters because the transcript carries the real serial.
+    the folder above the launcher a person double-clicked, under visible
+    names, with the summary saying which file is which. Inside a checkout
+    `.gitignore` covers both names, which matters because the transcript
+    carries the real serial.
     """
     return probe.HERE, probe.HERE
 
@@ -457,9 +457,9 @@ async def _find(args, echo) -> list[Found]:
 def _report_shared_serials(found: list[Found], echo) -> None:
     """Say out loud when one inverter answers at two addresses.
 
-    The condition that invalidated two documents: an inverter with a cable in
-    its own LAN port *and* a WiNet-S dongle answers at both addresses with
-    the same serial, and every reading differs between them -- which measuring
+    An inverter with a cable in its own LAN port *and* a WiNet-S dongle
+    answers at both addresses with the same serial, and every reading differs
+    between them -- which measuring
     points are forwarded, which unit ids exist, whether 0xFFFF arrives as 0.
     Two documents from one machine are useful, and only if the file says so.
     """
@@ -483,10 +483,10 @@ def _report_shared_serials(found: list[Found], echo) -> None:
 def _ask_network(echo) -> str:
     """Ask which network to sweep, until the answer is one that can be swept.
 
-    Checked here rather than left to the sweep, because the sweep's refusal
-    came three times -- once per port -- and was then followed by "Nothing
-    answered", which reads as a fact about the network rather than about the
-    typing. `192.168.3` for `192.168.178.3/24` is the mistake that found it.
+    Checked here rather than left to the sweep, because the sweep refuses
+    once per port and is then followed by "Nothing answered", which reads as
+    a fact about the network rather than about the typing -- `192.168.3`
+    typed for `192.168.178.3/24`, say.
     """
     default = probe._default_network()
     while True:
@@ -686,10 +686,9 @@ async def _ask_all(entry: Found, args, echo) -> argparse.Namespace:
     )
     answers.control_test = _ask_control_test(args)
     # The command that repeats this survey without a single question: every
-    # answer as a flag, the host a placeholder. Published as `command_line`,
-    # where it used to be the equivalent `probe.py capabilities` line -- which
-    # repeated the reading but skipped the block read test, so it was not
-    # this run.
+    # answer as a flag, the host a placeholder. Published as `command_line`;
+    # a `probe.py capabilities` line would repeat the reading but skip the
+    # block read test, so it would not be this run.
     answers.command_line = replay_command(answers)
     echo("")
     echo("  Answered:")
@@ -813,8 +812,8 @@ async def _block_test(
 
     Every block the integration issues, read the way the integration reads
     it. This is where a register that takes a whole tier down shows up, and
-    it has to run before the register poll: the poll is 27 block reads of
-    contention, and this measurement only means anything on an idle link.
+    it has to run before the register poll: the poll is itself block reads,
+    and this measurement only means anything on an idle link.
     """
     echo("-" * 72)
     echo("4  Block read test")
@@ -937,11 +936,11 @@ def _block_document(
 ) -> dict | None:
     """Render a block read test for the published document, or None.
 
-    The measurement `src/sungrow_modbus/inverter/layout.py` is ever changed from, and it
-    used to exist only in the transcript -- the file a contributor is told to *keep*,
-    because it carries their real address. So a submitted document had no
-    block evidence in it at all, and a maintainer reading one could not see
-    which of the integration's reads that device would fail.
+    The measurement `src/sungrow_modbus/inverter/layout.py` is ever changed
+    from. Published, not left in the transcript -- the file a contributor is
+    told to *keep*, because it carries their real address -- so a maintainer
+    reading a submitted document can see which of the integration's reads
+    that device would fail.
 
     Three lists rather than one, because the distinction is the whole point of
     the tool and a reader must not have to reconstruct it:
@@ -956,8 +955,8 @@ def _block_document(
 
     Carries no host and no serial: block numbers and outcome words only.
     `client` is the label of the client that measured, which decides what
-    the rest means: a lenient raw socket reports a padded frame as a clean
-    read, which is how the first diagnosis of 2612 was wrong for a day.
+    the rest means: the library rejects a padded frame, the strict raw socket
+    names the count that would read it.
     """
     if outcome is None:
         return None
@@ -980,16 +979,14 @@ def _code_for(reading: probe.Reading, transport: Transport, answers) -> int:
     """
     # Before anything else: a document of nothing is not a degraded document.
     # A link that went away before the first read leaves every field missing,
-    # and that used to come out as 3 -- "the filename under-claims" -- for a
-    # run that had collected nothing at all, with the empty file announced
-    # as the one to send.
+    # which is 1, not 3 -- "the filename under-claims" would announce an
+    # empty file as the one to send.
     if collected_nothing(reading.document):
         return 1
     # `capabilities` computes this for exactly this purpose: the fields whose
     # absence the *filename* hides. A document carries no model name -- only
     # the device type code, because naming it is the reader's job -- so
-    # checking for one here reported every healthy scan as degraded, which is
-    # how this function's first version rated the simulator run a 3.
+    # checking for one here would report every healthy scan as degraded.
     if reading.missing:
         return 3
     if transport and transport_contradiction(transport.verdict, answers.transport):
@@ -1076,9 +1073,8 @@ def _summary(results: list[Outcome], transcript: Path, echo) -> None:
             # An empty answer is not silence. The battery question is only
             # *asked* when the registers cannot settle it -- a Sungrow pack
             # answers its own module block, so the run reads the model and
-            # says nothing -- and "(not answered)" read as though somebody
-            # had shrugged at it, on a document whose own filename carried
-            # `battery-sbr096`.
+            # says nothing -- and "(not answered)" would read as though
+            # somebody had shrugged at it.
             echo(f"  said  {key:<16} {inputs[key] or '(not asked -- read instead)'}")
         echo("")
         _summary_unreadable(echo)
@@ -1146,14 +1142,13 @@ def _summary_unreadable(echo) -> None:
     """Say what answered a port this tool cannot speak, or say nothing.
 
     One case today: a **WiNet-S serving Modbus over TLS on 516**. Measured on
-    two dongles -- TLS 1.2, a Sungrow self-signed certificate, and real
-    registers through the tunnel -- and refused on the inverters' own LAN
-    ports, so it is the dongle's port and not, as reported elsewhere, an
-    iHomeManager's.
+    two dongles -- TLS 1.2, a Sungrow-signed certificate, and real registers
+    through the tunnel -- and refused on the inverters' own LAN ports, so it
+    is the dongle's port and not, as reported elsewhere, an iHomeManager's.
 
-    Sweeping finds it; reading it needs a TLS client this survey does not
-    have, which is why a plain socket sees the connection accepted and then
-    closed. Printed as a finding rather than a warning, because a user told
+    A wallbox on 516 is read (`wallbox_direct.py`) and never lands here; a
+    dongle's TLS port is only reported, because it serves what its 502
+    serves. Printed as a finding rather than a warning, because a user told
     there is nothing on 516 would be told something false -- there is a
     working Modbus interface there.
 
@@ -1165,7 +1160,7 @@ def _summary_unreadable(echo) -> None:
     echo("  Answered a port this tool cannot read")
     for host, port in _UNREADABLE:
         echo(f"  read  {host}:{port}")
-    echo("        Modbus over TLS, which this survey does not speak. On a")
+    echo("        Modbus over TLS, which this survey reads only from a wallbox. On a")
     echo("        WiNet-S this is normal and not a fault: the port works and")
     echo("        serves the same registers as 502, refusing the same ones.")
     echo("        Worth mentioning in an issue only if 502 found nothing --")
@@ -1204,9 +1199,8 @@ def _advice(finding: block_test.Finding) -> str:
             "a link that fails fast."
         )
     if finding.advice is Advice.ALREADY_ISOLATED:
-        # It once printed nine recommendations to add what was already there,
-        # at a house whose four failing blocks are the four entries layout.py
-        # already has. The isolation was working.
+        # A refusal `layout.py` already isolates is the isolation working,
+        # not a recommendation to add it again.
         return (
             "Read directly from the inverter and refused outright, so this is "
             "the device. It is **already isolated** in "
@@ -1373,7 +1367,7 @@ async def run(args) -> int:
     try:
         _preamble(echo, transcript)
         echo("  A report is written to send. A private session log is also kept")
-        echo("  beside the launcher and holds the real serial number and address.")
+        echo("  beside it, and holds the real serial number and address.")
         echo("")
 
         try:

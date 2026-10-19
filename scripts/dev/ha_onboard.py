@@ -4,9 +4,8 @@
 A new instance opens on `onboarding.html` and asks for an account before it
 will show anything. That is correct for a real installation and pure friction
 for a dev one: the account is local to a gitignored directory, it guards
-fabricated data, and it is the same `dev` / `dev` this project has always
-used -- written down in `doc/development.yaml` on purpose so anybody can pick
-the instance up.
+fabricated data, and it is the same `dev` / `dev` written down in
+`doc/development.yaml` on purpose so anybody can pick the instance up.
 
 So this does it over the API instead, in the order the frontend does:
 
@@ -30,7 +29,8 @@ installing component requirements before it serves anything.
 **It refuses a non-loopback URL.** These credentials are deliberately public,
 which is exactly why they must never reach a machine somebody else can
 reach: `dev` / `dev` on a real instance is an open door. Point it at
-127.0.0.1 or localhost, or pass `--username`/`--password` of your own.
+127.0.0.1 or localhost; `--username`/`--password` change the account, not
+that rule.
 """
 
 from __future__ import annotations

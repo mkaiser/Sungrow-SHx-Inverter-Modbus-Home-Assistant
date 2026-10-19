@@ -133,14 +133,19 @@ from .migration import (
     async_legacy_ids_known,
     async_legacy_ids_live,
     async_legacy_ids_with_history,
-    async_legacy_suffix,
     async_plan_id_switch,
+    async_resolve_legacy_slot,
     async_switch_entity_ids,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 
+#: What the gated controls say while `DEVICES_MODE_OFFERED` is off, written
+#: once and rendered in two places: the opening step and the options page's
+#: promotion toggle explain the same gate, and a gate explained in two
+#: wordings is a gate somebody will misread. Markdown, because both slots
+#: render through `ha-markdown`.
 _DEVICES_MODE_COMING = (
     "\n\n⚠️ **Sensors and controls are not in this release.** This is an "
     "early alpha, and it exists to gather readings: it connects to your "
@@ -245,9 +250,9 @@ async def _async_probe(
             direct = None if isinstance(err, ServerDeviceBusyError) else False
         except (ModbusError, HomeAssistantError):
             # The link did not carry the question. That is not evidence about
-            # the register, and reading it as one told a house with no
-            # communication module fitted that it had a dongle -- measured
-            # 2026-09-20. No retry here, deliberately: this runs once per
+            # the register: reading it as a refusal would tell a house with no
+            # communication module fitted that it has a dongle. No retry here,
+            # deliberately: this runs once per
             # candidate address in a /24 sweep, so a retry multiplies the
             # search rather than the certainty. `None` is the honest answer
             # and the prose says so.
@@ -484,24 +489,21 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         weighty and beside the point.
 
         So it is asked first, and cheaply: a diagnostics entry connects,
-        identifies the hardware, creates no entities, and never mentions
-        migration. It can be promoted to a full entry afterwards, which is
-        when the id question is put.
+        identifies the hardware, creates only the survey's buttons and
+        sensors, and never mentions migration. It can be promoted to a full
+        entry afterwards, which is when the id question is put.
 
         While `DEVICES_MODE_OFFERED` is off the first answer is not available,
         and the menu still offers it -- the step it leads to explains why and
-        carries on as diagnostics. Greying it is what a first version tried
-        and it cannot be done: a menu option has no disabled state at all,
-        and the form that replaced the menu could only grey the whole
-        control, which left the *working* answer greyed out too and read as
-        a dialog where nothing worked.
+        carries on as diagnostics. A menu option has no disabled state, and a
+        form could only grey the whole control, the working answer with it.
         """
         return self.async_show_menu(
             step_id="user",
             menu_options=["setup_devices", "setup_diagnostics"],
-            # The step description is shared with the form above, so the menu
-            # has to substitute too -- an unfilled placeholder is rendered
-            # literally rather than dropped.
+            # The step description carries placeholders, so the menu has to
+            # substitute them -- an unfilled placeholder is rendered literally
+            # rather than dropped.
             description_placeholders=_alpha_placeholders(),
         )
 
@@ -632,8 +634,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
 
         Every address with nothing listening costs the full connect timeout,
         so the sweep of a /24 spends most of its time proving absences. That
-        is exactly when somebody wonders whether it has hung -- and the old
-        form simply sat there, greyed out, for as long as it took.
+        is exactly when somebody wonders whether it has hung.
 
         The bar is driven by addresses settled rather than by time: how long
         a sweep takes depends on how many addresses are quiet, which is the
@@ -673,13 +674,11 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         addresses = len(hosts_in(self._searched))
         settled = 0
 
-        # **Two phases, one bar**, and the split is the whole point of this
-        # rewrite. The first version counted only the sweep, so the bar hit
-        # 100% and the dialog then sat silent for 45 seconds -- measured on
-        # a real /24 -- while identification ran. That phase is the slow one
-        # and it is the one nobody could see: every candidate that is not a
-        # Sungrow costs one Modbus read per unit id in `IDENTIFY_UNITS`,
-        # each with its own timeout, before it can be ruled out.
+        # **Two phases, one bar.** Counting only the sweep would leave the
+        # bar at 100% while identification runs, which on a real /24 is
+        # about 45 silent seconds: every candidate that is not a Sungrow
+        # costs one Modbus read per unit id in `IDENTIFY_UNITS`, each with
+        # its own timeout, before it can be ruled out.
         #
         # Weighted rather than counted, because the two phases are not the
         # same size and the number of candidates is unknown until the first
@@ -694,14 +693,10 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             found = await async_sweep(
                 self._searched, port=port, on_progress=_sweep_progress
             )
-            # The one line that makes a failed search diagnosable afterwards.
-            # A search that finds nothing leaves the user at "nothing found"
-            # and left the log completely silent -- not even which network was
-            # swept, which is the first thing anybody would ask and the one
-            # thing that cannot be recovered from the dialog. Measured the
-            # hard way: a real search failed twice on this project's own dev
-            # instance and the log held nothing but two asyncio slow-task
-            # warnings.
+            # The one line that makes a failed search diagnosable afterwards:
+            # which network was swept, on which port, and what answered --
+            # the first thing anybody would ask, and the one thing that
+            # cannot be recovered from the dialog.
             _LOGGER.debug(
                 "Swept %s on port %s: %s answered",
                 self._searched,
@@ -787,8 +782,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         change -- but only when the step is entered again, which nothing does
         on its own while a task runs. So the flow is reconfigured from inside
         the task, which is what HACS's own device-code step does. Without it
-        the first text stays on screen for the whole sweep, which is how
-        "found 0 so far" was still showing after an inverter had been found.
+        the first text stays on screen for the whole sweep.
         """
         if stage == self._stage:
             return
@@ -859,8 +853,8 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             return await self.async_step_name()
 
         # In the order `_described` put them, not re-sorted by address: it
-        # ranks a direct path above a dongle, and a plain `sorted()` here
-        # threw that away and defaulted to whichever address sorted lower.
+        # ranks a direct path above a dongle, which a plain `sorted()` here
+        # would throw away.
         options = [
             SelectOptionDict(value=host, label=found["label"])
             for host, found in self._found.items()
@@ -902,10 +896,10 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         address instead, because prefilling a form with 65534 addresses
         invites a very long wait.
 
-        **A container bridge is skipped**, and that is the case this method
-        got wrong. Home Assistant in Docker with bridge networking sits on
-        `172.17.0.2/16` and reports exactly that; a /24 around it is
-        `172.17.0.0/24`, which is the bridge and never the inverter. The
+        **A container bridge is skipped.** Home Assistant in Docker with
+        bridge networking sits on `172.17.0.2/16` and reports exactly that; a
+        /24 around it is `172.17.0.0/24`, which is the bridge and never the
+        inverter. The
         container can still *reach* the inverter -- the bridge NATs, so it
         follows the host's routing -- so a search looks like it should work
         and sweeps 254 addresses of nothing. Measured in this project's own
@@ -940,7 +934,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         """Ask each candidate what it is, keeping only the ones that answer.
 
         Takes address **and port** together, and every candidate in one call.
-        Both matter: a sweep tries more than one port now, and `_described`
+        Both matter: a sweep tries more than one port, and `_described`
         at the end is the only thing that can see that two addresses carry
         one serial -- so identifying them one at a time would describe a
         two-path inverter as two strangers.
@@ -948,10 +942,9 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         Every candidate unit, not just unit 1. Measured at a two-inverter
         house: the second answers on unit **2** at its own LAN port and times
         out on 1, because a cluster slave's own device address is 2 -- so
-        asking only unit 1 reported that inverter absent, and a user would
-        have been told their second inverter is not there. Only the rare case
-        pays for it: an address with an inverter on unit 1 makes exactly the
-        reads it always did.
+        asking only unit 1 would report that inverter absent. Only the rare
+        case pays for it: an address with an inverter on unit 1 stops at the
+        first unit.
         """
         found: dict[str, dict[str, Any]] = {}
         for index, (host, port) in enumerate(candidates, start=1):
@@ -1034,14 +1027,10 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                     self._data = dict(user_input)
                     self._title = inverter.model or DEFAULT_NAME
                     # `_found` is what `_async_measured` reads to tell the
-                    # testimony step what has already been measured, and this
-                    # path used to leave it empty -- so every user who typed
-                    # an address was told "an unidentified model, reached
-                    # through a communication module" whatever the probe had
-                    # just found. Measured 2026-09-20 at a house with no
-                    # communication module fitted at all, whose entry was
-                    # titled SH10RT on the very next screen. It steers
-                    # `survey_transport`, which is published.
+                    # testimony step what has already been measured, so a
+                    # typed address gets the probe's findings as a searched
+                    # one does. It steers `survey_transport`, which is
+                    # published.
                     self._found = {
                         user_input[CONF_HOST]: {
                             CONF_HOST: user_input[CONF_HOST],
@@ -1080,17 +1069,15 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             return await self.async_step_testimony()
 
         # Which of the YAML package's inverter slots this device was, decided
-        # here because this is the only moment the evidence exists: the package
-        # must still be installed for its serial sensors to be in the registry,
-        # and the very next thing the migration asks is that it be removed.
-        #
-        # `None` means the question could not be answered, and it is stored as
-        # `""` -- the single-inverter slot -- only because that is what every
-        # house had before multi-inverter migration existed. A second inverter
-        # in a house whose package is already gone therefore keeps the old
-        # behaviour rather than guessing at somebody else's history.
-        slot = async_legacy_suffix(self.hass, self.unique_id) or ""
+        # here because this is when the evidence is best: the package may
+        # still be running, and the migration's next instruction is to remove
+        # it. Stored as it comes back, `None` included, because `None` is a
+        # statement -- a numbered slot existed and nothing ties this inverter
+        # to one -- and the claim at setup reads it as "claim nothing".
+        slot = await async_resolve_legacy_slot(self.hass, self.unique_id)
         self._data[CONF_LEGACY_SLOT] = slot
+        if slot is None:
+            return await self.async_step_slot_unknown()
 
         known = async_legacy_ids_known(self.hass, slot)
         if not known:
@@ -1104,11 +1091,9 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         if not known:
             return self._async_create(ENTITY_IDS_NEW)
 
-        # Checked before the question is asked, not after it is answered. The
-        # requirement -- remove the YAML package first -- was written in the
-        # dialog and still surprised people, because a sentence about what you
-        # ought to have done reads very differently from a line telling you
-        # what is true right now on this instance.
+        # Checked before the question is asked, not after it is answered: a
+        # line telling somebody what is true right now on this instance reads
+        # very differently from a sentence about what they ought to have done.
         live = async_legacy_ids_live(self.hass, slot)
 
         errors: dict[str, str] = {}
@@ -1141,6 +1126,20 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 ),
             },
         )
+
+    async def async_step_slot_unknown(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Say why the YAML package's ids are not offered, then go on without.
+
+        Not a question: the only other answer would be a guess about whose
+        history this inverter gets. The page says how to make it answerable
+        -- the package running again for one setup -- and submitting sets the
+        entry up with device-scoped ids.
+        """
+        if user_input is not None:
+            return self._async_create(ENTITY_IDS_NEW)
+        return self.async_show_form(step_id="slot_unknown", data_schema=vol.Schema({}))
 
     async def async_step_name(
         self, user_input: dict[str, Any] | None = None
@@ -1220,9 +1219,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         device = self._found.get(self._data.get(CONF_HOST, ""), {})
         if not device:
             # Nothing was probed for this address, so there is nothing to
-            # report. Saying so beats inventing it: this used to fall through
-            # to the "communication module" branch and assert a dongle at
-            # every house reached by typing an address.
+            # report. Saying so beats inventing a route.
             return (
                 "Nothing has been measured for this address yet, so please "
                 "answer from what you know."
@@ -1266,10 +1263,6 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         somebody who chose this mode has already said they want to help, and
         finding the questions afterwards meant finding a section of an
         options page they had no reason to open.
-
-        Measured on a real installation: the button produced a document in
-        under ten seconds with every one of these fields empty, and the
-        contributor's reasonable reaction was "why was I not asked?".
 
         Every answer is optional, and blank is a real answer: the document
         format distinguishes an empty field -- the question was not put --
@@ -1320,9 +1313,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         """Create the entry with the id style already decided."""
         data = {**self._data, CONF_ENTITY_IDS: entity_ids, CONF_MODE: self._mode}
         # Stored only where the name question was actually asked and answered.
-        # An entry without it keeps a `DeviceInfo` carrying no name, which is
-        # what every entry created before this step has -- so nothing already
-        # set up sees its device renamed by this feature arriving, and a
+        # An entry without it keeps a `DeviceInfo` carrying no name, so a
         # single-inverter house is not given an id derived from a name it was
         # never shown.
         if self._named:
@@ -1339,9 +1330,8 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             # what happens next. A diagnostics entry has just been created
             # and has done nothing yet -- the survey is a button somebody has
             # to find and press, and the document arrives in a notification
-            # they have no reason to be watching. Both were reported by a
-            # contributor who ran the survey and then asked where the file
-            # was. `async_create_entry` renders this as markdown on the
+            # they have no reason to be watching. `async_create_entry`
+            # renders this as markdown on the
             # success dialog; the key is `config.create_entry.<description>`.
             description=(
                 "diagnostics" if self._mode == MODE_DIAGNOSTICS else "default"
@@ -1427,6 +1417,7 @@ class SungrowOptionsFlow(OptionsFlow):
         #: promoted on the way out would otherwise lose everything typed
         #: beside the checkbox that promoted it.
         self._pending_options: dict[str, Any] | None = None
+        self._slot: str | None = None
         #: The entity id style asked for, and what moving to it will do.
         self._switch_to = ENTITY_IDS_NEW
         self._switch: IdSwitch | None = None
@@ -1436,11 +1427,9 @@ class SungrowOptionsFlow(OptionsFlow):
     ) -> ConfigFlowResult:
         """Everything worth changing after setup, on one page.
 
-        This was a menu of five items, each opening a form of its own. The
-        menu was the problem: it made somebody guess which of five words
-        held the setting they wanted, and it turned "change the interval and
-        the battery maximum" into two trips through a dialog that closes
-        between them.
+        One page rather than a menu of forms, so nobody has to guess which
+        word holds the setting they want, and changing two settings is one
+        trip through a dialog that closes when it is done.
 
         A config flow cannot show tabs -- the frontend has exactly seven step
         types and none of them is one -- but it can show **collapsible
@@ -1488,6 +1477,15 @@ class SungrowOptionsFlow(OptionsFlow):
                     # the wallbox's entities unavailable with only a log line.
                     errors["base"] = "wallbox_not_found"
                 elif (
+                    user_input.get(CONF_ENTITY_IDS) == ENTITY_IDS_MIGRATE
+                    and user_input[CONF_ENTITY_IDS] != self._entity_id_style()
+                    and await self._async_slot() is None
+                ):
+                    # Refused on this page, where the explanation can sit
+                    # beside the setting: legacy ids for an inverter whose
+                    # YAML slot is unknown could be another inverter's.
+                    errors["base"] = "legacy_slot_unknown"
+                elif (
                     CONF_ENTITY_IDS in user_input
                     and user_input[CONF_ENTITY_IDS] != self._entity_id_style()
                 ):
@@ -1497,9 +1495,6 @@ class SungrowOptionsFlow(OptionsFlow):
                     return await self.async_step_entity_ids(
                         {"to": user_input[CONF_ENTITY_IDS]}
                     )
-                # The flag is checked as well as the value: a disabled
-                # control is a frontend courtesy, and the payload arrives over
-                # a websocket anybody with a token can write by hand.
                 elif options.get(
                     CONF_SURVEY_OTHER_INVERTER
                 ) == OTHER_INVERTER_YES and not options.get(
@@ -1512,6 +1507,9 @@ class SungrowOptionsFlow(OptionsFlow):
                     # reveal after the first time.
                     self._pending_options = options
                     return await self.async_step_other_inverter()
+                # The flag is checked as well as the value: a disabled
+                # control is a frontend courtesy, and the payload arrives over
+                # a websocket anybody with a token can write by hand.
                 elif DEVICES_MODE_OFFERED and user_input.get(CONF_ADD_DEVICES):
                     # The promotion question is asked on its own page, and
                     # that is deliberate: it decides where years of history
@@ -1560,9 +1558,8 @@ class SungrowOptionsFlow(OptionsFlow):
 
         schema: dict[Any, Any] = {}
 
-        # Only where it means something. An entry that already has devices
-        # would be offered a box that does nothing, which is the menu item
-        # this page replaced.
+        # Only where it means something: an entry that already has devices
+        # would be offered a box that does nothing.
         if self.config_entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
             # Greyed rather than dropped while the gate is closed, so an
             # owner can see that promotion exists and is coming. `read_only`
@@ -1753,14 +1750,28 @@ class SungrowOptionsFlow(OptionsFlow):
         """Return which ids this entry's entities are on now."""
         return self.config_entry.data.get(CONF_ENTITY_IDS, ENTITY_IDS_NEW)
 
+    async def _async_slot(self) -> str | None:
+        """Return the entry's YAML slot, measuring again where none is known.
+
+        Stored and known wins. Absent -- a diagnostics entry, whose setup
+        never asked -- or stored as undetermined is measured again, since the
+        package may be running now; the page that told the owner it could
+        not be determined said that is how to fix it.
+        """
+        slot: str | None = self.config_entry.data.get(CONF_LEGACY_SLOT)
+        if slot is None:
+            slot = await async_resolve_legacy_slot(
+                self.hass, self.config_entry.unique_id
+            )
+        return slot
+
     async def async_step_entity_ids(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Move this entry's entities between legacy and modern ids.
 
-        The setup flow's question, answerable again. Until this existed the
-        only way to change the answer was to remove the entry and add it
-        again, which kept history but lost every setting on the page.
+        The setup flow's question, answerable again without removing the
+        entry and losing every setting on the page.
 
         Reached from the options page with `{"to": ...}`; the confirmation
         comes back empty. What will happen is planned before the page is
@@ -1772,12 +1783,15 @@ class SungrowOptionsFlow(OptionsFlow):
             user_input = None
         to_legacy = self._switch_to == ENTITY_IDS_MIGRATE
 
-        slot = self.config_entry.data.get(CONF_LEGACY_SLOT)
-        if slot is None:
-            # The same fallback promotion uses: an entry made before slots
-            # were stored, asked of the YAML package if it is still here.
-            slot = async_legacy_suffix(self.hass, self.config_entry.unique_id) or ""
-        live = async_legacy_ids_live(self.hass, slot) if to_legacy else set()
+        # The init page refused legacy ids for an undetermined slot, so
+        # `None` reaches here only towards modern ids, where it claims nothing
+        # and is stored as it is.
+        slot = await self._async_slot()
+        live = (
+            async_legacy_ids_live(self.hass, slot)
+            if to_legacy and slot is not None
+            else set()
+        )
 
         errors: dict[str, str] = {}
         if user_input is not None and self._switch is not None:
@@ -1868,14 +1882,14 @@ class SungrowOptionsFlow(OptionsFlow):
         if not DEVICES_MODE_OFFERED:
             return self.async_abort(reason="devices_mode_not_offered")
 
-        # Prefer what the entry already settled. A diagnostics entry made
-        # before multi-inverter migration existed has nothing stored, so fall
-        # back to asking the YAML package -- which may well still be installed
-        # here, since a diagnostics entry never asked anybody to remove it.
-        slot = self.config_entry.data.get(CONF_LEGACY_SLOT)
-        if slot is None:
-            slot = async_legacy_suffix(self.hass, self.config_entry.unique_id) or ""
+        # Prefer what the entry already settled. A diagnostics entry has
+        # nothing stored -- its setup skips the id question -- so measure,
+        # while the YAML package may well still be installed here, since a
+        # diagnostics entry never asked anybody to remove it.
+        slot = await self._async_slot()
         self._slot = slot
+        if slot is None:
+            return await self.async_step_slot_unknown()
 
         known = async_legacy_ids_known(self.hass, slot)
         if not known:
@@ -1913,6 +1927,14 @@ class SungrowOptionsFlow(OptionsFlow):
             },
         )
 
+    async def async_step_slot_unknown(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Say why the YAML package's ids are not offered, then promote without."""
+        if user_input is not None:
+            return await self._async_promote(ENTITY_IDS_NEW)
+        return self.async_show_form(step_id="slot_unknown", data_schema=vol.Schema({}))
+
     async def _async_promote(self, entity_ids: str) -> ConfigFlowResult:
         """Rewrite the entry's data and let the reload build the entities.
 
@@ -1928,10 +1950,9 @@ class SungrowOptionsFlow(OptionsFlow):
                 CONF_ENTITY_IDS: entity_ids,
                 # Written here as well as by the setup flow, because a
                 # promoted entry's claim happens after this and reads it from
-                # `data`. Left unresolved it would default to the
-                # single-inverter slot, which for a second inverter is another
-                # device's history.
-                CONF_LEGACY_SLOT: getattr(self, "_slot", "") or "",
+                # `data`. `None` is stored as `None`: it claims nothing, where
+                # the single-inverter slot could be another device's history.
+                CONF_LEGACY_SLOT: self._slot,
             },
         )
         # Updating `data` already schedules a reload, so this only has to end
@@ -2041,15 +2062,10 @@ class SungrowOptionsFlow(OptionsFlow):
         answer rather than a detail. 13265 names the communication module
         that is *fitted*; 6100 says which path this endpoint actually is,
         because Sungrow does not forward the 6100 block through a dongle. A
-        house can have both -- and gerd's does. Its own fingerprint records
-        `transport: direct_lan`, `6100: answered`, and
-        `WINET-SV200.001.00.P043` in the same document, with the owner's note
-        saying it outright: "Register 13265 names a WiNet-S on this path too:
-        it reports the module that is fitted, not the module in use."
-
-        Keyed on 13265, this told every such house it was behind a dongle,
-        which is exactly the answer that steers `survey_transport` -- and
-        that field is published and feeds `doc/compatibility.md`.
+        house can have both: a cable in the inverter's LAN port and a WiNet-S
+        fitted. Keyed on 13265, such a house would be told it is behind a
+        dongle, and this steers `survey_transport`, which is published and
+        feeds `doc/compatibility.md`.
 
         Three answers, not two, on the same reasoning as
         `control_test._detect_transport`: a refusal is the transport

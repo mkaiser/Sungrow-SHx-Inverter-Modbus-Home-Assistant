@@ -23,8 +23,8 @@ PACK_UNITS: tuple[int, ...] = (200, 2)
 #: The register that tells a slave inverter from a battery at unit 2. An
 #: inverter answers its device type code; a battery does not. Without this
 #: check, a master/slave installation read through a dongle would have its
-#: slave filed as a battery -- which is not a hypothetical shape, it is the
-#: fourth site in `device-fingerprints/`.
+#: slave filed as a battery -- not a hypothetical shape: `device-fingerprints/`
+#: holds one.
 INVERTER_TYPE = field_address("device_type_code")
 
 #: The pack's voltage, which is what a pack is recognised by: every SBR has
@@ -54,10 +54,9 @@ async def probe_units(
     contributor does not know their battery's unit id, and the answer moves
     with the transport rather than with the hardware.
 
-    An answer is not enough -- it has to be a plausible one. The first
-    version of this took any successful read as a pack, which a device
-    answering zeros satisfies, and that is precisely what sits between us and
-    a battery in most installations.
+    An answer is not enough -- it has to be a plausible one. Any successful
+    read is satisfied by a device answering zeros, and that is precisely what
+    sits between us and a battery in most installations.
     """
     from modbus_connection import ModbusError
 

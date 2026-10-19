@@ -29,6 +29,7 @@ from sqlalchemy import select
 
 from custom_components.sungrow_modbus.const import (
     CONF_ENTITY_IDS,
+    CONF_LEGACY_SLOT,
     CONF_UNIT_ID,
     DOMAIN,
     ENTITY_IDS_MIGRATE,
@@ -406,3 +407,39 @@ async def test_a_disabled_entity_lands_on_the_target_too(
     assert entity_registry.async_get(LEGACY_ID).disabled_by is (
         er.RegistryEntryDisabler.USER
     )
+
+
+async def test_an_undetermined_slot_refuses_the_move_to_legacy(
+    hass: HomeAssistant,
+    sungrow_unit: MockModbusUnit,
+    entity_registry: er.EntityRegistry,
+) -> None:
+    """Refused on the options page itself, before anything is planned.
+
+    A numbered YAML slot existed and this inverter's serial matches none, so
+    the legacy ids could be another inverter's history.
+    """
+    for suffix in ("", "_inv_2"):
+        entity_registry.async_get_or_create(
+            "sensor",
+            "modbus",
+            f"sg_total_pv_generation{suffix}",
+            suggested_object_id=f"total_pv_generation{suffix}",
+        )
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={**ENTRY_DATA, CONF_ENTITY_IDS: ENTITY_IDS_NEW, CONF_LEGACY_SLOT: None},
+        unique_id=SERIAL,
+        title="SH10RT",
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    result = await _ask(hass, entry, ENTITY_IDS_MIGRATE)
+
+    assert result["step_id"] == "init"
+    assert result["errors"] == {"base": "legacy_slot_unknown"}
+    assert entry.data[CONF_ENTITY_IDS] == ENTITY_IDS_NEW
+    assert entry.data[CONF_LEGACY_SLOT] is None
+    assert _where(entity_registry) == MODERN_ID

@@ -1,12 +1,12 @@
 """Entity descriptions for an SBR pack, hand-written for a stated reason.
 
-`sensor_descriptions.py` is **generated** from `doc/legacy_entity_map.json`,
-which is derived from `legacy/modbus_sungrow.yaml` -- the inverter's map. The
-pack's registers are not in it, because they live in
+`sensor_descriptions.py` is held field by field to
+`doc/legacy_entity_map.json`, the record of what `legacy/modbus_sungrow.yaml`
+produces -- the inverter's map. The pack's registers are not in it, because they live in
 `legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml`, an opt-in file a
-user copies in by hand. So there is nothing to generate these from, exactly as
-there was nothing to generate `sungrow_modbus.battery.registers` from, and
-they are hand-written for the same reason and guarded the same way:
+user copies in by hand. So there is no record to hold these to, exactly as
+there was none for `sungrow_modbus.battery.registers`, and they are guarded
+the same way instead:
 `tests/test_battery_entities.py` checks every `field` here against a real
 field or property on the components.
 
@@ -125,7 +125,7 @@ PACK_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
 #: Created only where the block gave a non-zero reading. Both ways a dongle
 #: loses it were measured: fwitten's refuses with exception 0x02, bar12's
 #: answers zeros. The second is why a reading is required rather than a
-#: successful read -- eight entities reporting 0 V and module 0 forever, with
+#: successful read -- ten entities reporting 0 V and module 0 forever, with
 #: nothing that ever removes an entity, is the failure `ZERO_MEANS_ABSENT`
 #: exists to prevent.
 CELL_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
@@ -171,8 +171,8 @@ CELL_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
     ),
     # The unpacked halves. Diagnostic, because "which cell is highest" is a
     # thing you look at when investigating a pack rather than something a
-    # dashboard shows -- and eight more entities in the main list would bury
-    # the four voltages above that people actually watch.
+    # dashboard shows -- and six more entities in the main list would bury
+    # the four readings above that people actually watch.
     SungrowSensorDescription(
         key="battery_max_cell_module",
         component="cells",

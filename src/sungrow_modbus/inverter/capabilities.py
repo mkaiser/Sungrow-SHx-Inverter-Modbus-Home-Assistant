@@ -11,9 +11,9 @@ resolved from four different sources rather than guessed from one:
   identifies, so it is probed;
 * the **firmware**, which nothing predicts at all.
 
-The knowledge encoded here was, until now, prose in `modbus_sungrow.yaml`:
-comments like "only for SH*T inverters with 3 MPPTs" and "not available on
-SHxRS". Prose cannot gate an entity. Note the shape of what those comments
+The knowledge encoded here is prose in `modbus_sungrow.yaml`: comments like
+"only for SH*T inverters with 3 MPPTs" and "not available on SHxRS". Prose
+cannot gate an entity. Note the shape of what those comments
 say — they record where a feature is **absent**, on which model, learned from
 somebody's bug report. So absence is what this module models, and presence is
 what probing establishes.
@@ -55,6 +55,9 @@ class Capability(StrEnum):
 
     The per-module registers at 10740-10788 are a Sungrow battery's own Modbus
     unit. A Pylontech answers the generic block and nothing there.
+
+    To do: nothing grants this yet. It has no entry in `PROBES`, so `resolve`
+    never returns it and every check for it is false.
     """
 
     FIRMWARE_VERSIONS = "firmware_versions"
@@ -69,12 +72,8 @@ class Capability(StrEnum):
     dongle firmwares, two inverter models -- and reads normally on both
     direct-LAN readings of the same register map.
 
-    This docstring used to say the reference SH10RT could not read register
-    2611 or beyond at all. That was measured before
-    `src/sungrow_modbus/inverter/layout.py` existed: those registers arrive in a frame
-    the device pads, and asking for the count in `layout.COUNTS` reads them. The same
-    machine now reads all 27 blocks, three attempts each. What cannot read them is a
-    dongle.
+    Over a cable the register arrives in a frame the device pads, and only the
+    count in `layout.COUNTS` reads it; what cannot read it at all is a dongle.
     """
 
     BATTERY_FIRMWARE = "battery_firmware"
@@ -131,9 +130,7 @@ class Capability(StrEnum):
     FORCED_STARTUP = "forced_startup"
     """Forced startup from a low-SoC standby (register 13017).
 
-    Added to the specification in V1.1.7 and missed by this project's audit of
-    V1.1.11, which resolved seven register additions and counted past this
-    one. V1.1.16 excludes only SH50~125CX.
+    Added to the specification in V1.1.7. V1.1.16 excludes only SH50~125CX.
     """
 
     PV_POWER_LIMITATION = "pv_power_limitation"
@@ -189,14 +186,12 @@ class Family(StrEnum):
 
 #: Ordered rules mapping a model name to its family, first match winning.
 #:
-#: **Name-based, not code-based, and deliberately so.** This was a table of
-#: code ranges, on the assumption -- written down in the comment above it --
-#: that Sungrow allocates codes in one block per family and new models land
-#: inside those blocks. Protocol V1.1.12 to V1.1.16 falsified that: MG5RL to
-#: MG10RL occupy 0x0D27-0x0D2A, SH5RL to SH10RL follow at 0x0D2B-0x0D2E, and
-#: then MG12RL and MG7.5RL appear *above* them at 0x0D2F and 0x0D31. Widening
-#: the MG range to cover MG12RL would have classified four single-phase
-#: inverters as three-phase MG.
+#: **Name-based, not code-based, and deliberately so.** Sungrow does not
+#: allocate codes in one block per family: in protocol V1.1.12 to V1.1.16
+#: MG5RL to MG10RL occupy 0x0D27-0x0D2A, SH5RL to SH10RL follow at
+#: 0x0D2B-0x0D2E, and then MG12RL and MG7.5RL appear *above* them at 0x0D2F
+#: and 0x0D31. A code range wide enough to cover MG12RL would classify four
+#: single-phase inverters as three-phase MG.
 #:
 #: A name cannot interleave. `DEVICE_TYPES` is checked against Appendix 1 by
 #: [tests/test_device_types.py](../../tests/test_device_types.py), so the
@@ -267,10 +262,8 @@ ABSENT_IN: dict[Capability, frozenset[Family]] = {
     Capability.FORCED_STARTUP: frozenset({Family.CX}),
     # Single-phase families have no phase B or C.
     #
-    # **MG was removed from this set, and that is a deliberate retraction.**
-    # It was here with no source cited -- unlike every other line above, which
-    # quotes the YAML comment or the specification remark it came from -- and
-    # this table is documented as recording absence *learned from* something.
+    # **MG is deliberately not in this set.** No source says it is
+    # single-phase, and this table records absence *learned from* something.
     # The only external evidence anyone has produced says the opposite: the
     # datasheet-derived model table in
     # [ha-modbus-manager](https://github.com/TCzerny/ha-modbus-manager) gives
@@ -303,8 +296,8 @@ ABSENT_IN: dict[Capability, frozenset[Family]] = {
 #: Unlike the family table this also stops the **read**, through
 #: `device.FIRMWARE_GATED_COMPONENTS`. That is the point of it: these
 #: registers are not refused with an exception but answered by **closing the
-#: connection**, so polling them costs a timeout and a reconnect every time.
-#: That is how 0.1.0a5 failed to set up at all on the firmware below.
+#: connection**, so polling them costs a timeout and a reconnect every time --
+#: enough, on the firmware below, to keep an entry from setting up at all.
 ABSENT_ON_FIRMWARE: dict[str, frozenset[Capability]] = {
     # fwitten's SH10RT-V112 master and slave, both over their own LAN port,
     # 2026-09-07 and again 2026-09-25: the three firmware strings at 13250,
@@ -471,8 +464,8 @@ ZERO_MEANS_ABSENT: frozenset[Capability] = frozenset(
         Capability.MPPT3,
         Capability.MPPT4,
         Capability.METER_CHANNEL_2,
-        # A third source of the same zero, and the safest of the four to read
-        # as absence: the grid's own voltage is not zero while it is there.
+        # A third source of the same zero, and the safest of them to read as
+        # absence: the grid's own voltage is not zero while it is there.
         # See the capability's docstring for the five dongle paths.
         Capability.METER_PHASE_MEASUREMENTS,
     }

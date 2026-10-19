@@ -2,7 +2,8 @@
 # buttons: Home Assistant has no confirmation dialog for a button press, and
 # an entity that stops an inverter would appear in every dashboard picker.
 #
-# Both are admin-only, which a button cannot be.
+# Who may call them is set per entry, administrators only by default, which
+# a button could not be.
 #
 # Not `target:`, although that is the usual shape for something acting on a
 # device. Two reasons, and the second is the one that matters: hassfest
@@ -41,7 +42,8 @@ run_survey:
 
 # Part A and then part B. Unlike every action above it, this one **writes**:
 # it sets each control the integration can set, reads the register back, and
-# puts it back. Behind the same audience setting as start and stop.
+# puts it back. Behind an audience setting of its own, administrators only by
+# default, checked the way start and stop are.
 run_control_test:
   fields:
     device_id:

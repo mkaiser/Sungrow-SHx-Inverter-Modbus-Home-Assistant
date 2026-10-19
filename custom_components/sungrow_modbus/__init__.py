@@ -53,7 +53,6 @@ from .const import (
     CONF_EXTERNAL_PLACEMENT,
     CONF_EXTERNAL_SOURCES,
     CONF_INTERVALS,
-    CONF_LEGACY_SLOT,
     CONF_MODE,
     CONF_UNIT_ID,
     CONF_WALLBOX_HOST,
@@ -76,7 +75,12 @@ from .coordinator import (
 from .download import async_register as async_register_download
 from .external_descriptions import EXTERNAL_SENSORS
 from .links import wallbox_tls_params
-from .migration import async_claim_legacy_ids, async_legacy_ids_with_history, keys_for
+from .migration import (
+    async_claim_legacy_ids,
+    async_legacy_ids_with_history,
+    keys_for,
+    stored_legacy_slot,
+)
 from .services import async_setup_services
 from .survey import SurveyRunner
 
@@ -90,15 +94,14 @@ PLATFORMS: list[Platform] = [
     Platform.SWITCH,
 ]
 
-#: What a diagnostics-only entry sets up: the survey button and the three
-#: sensors that watch it, and nothing else.
+#: What a diagnostics-only entry sets up: the survey and control test buttons
+#: and the three sensors that watch a run, and nothing else.
 #:
-#: It used to be nothing at all. That was defensible while the survey lived
-#: in the options flow, and stopped being so when it moved to the device
-#: page: a device reaches the registry only when an entity carrying its
-#: `device_info` is added, so an entry with no entities has no page to put a
-#: button on. The platforms themselves decide what to build in this mode --
-#: `sensor.py` adds the survey's three and returns.
+#: Not nothing, because the survey lives on the device page, and a device
+#: reaches the registry only when an entity carrying its `device_info` is
+#: added -- an entry with no entities has no page to put a button on. The
+#: platforms themselves decide what to build in this mode -- `sensor.py` adds
+#: the survey's three and returns.
 #:
 #: And **only** this mode. An ordinary entry gets no survey entities: its
 #: owner installed this for solar readings and should not carry diagnostic
@@ -112,7 +115,7 @@ DIAGNOSTIC_PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SENSOR]
 
 #: This integration is not configurable from YAML, and says so.
 #:
-#: Required because `async_setup` exists -- it registers the two actions --
+#: Required because `async_setup` exists -- it registers the four actions --
 #: and hassfest asks any integration with one to declare what it accepts from
 #: `configuration.yaml`. The honest declaration is nothing: a Sungrow endpoint
 #: is set up through the config flow, which is the only path that can probe
@@ -151,8 +154,9 @@ def _unit_factory(
     tried yet.
 
     Every unit it hands back is on the same host and port, which is the point:
-    one config entry is one endpoint, and everything pointed at it shares one
-    serialized connection rather than competing for a Sungrow's few sessions.
+    one config entry is one inverter reached through one endpoint, and
+    everything pointed at it shares one serialized connection rather than
+    competing for a Sungrow's few sessions.
     """
     params = ModbusTcpParams(host=entry.data[CONF_HOST], port=entry.data[CONF_PORT])
     return lambda unit_id: async_get_unit(hass, entry, params, unit_id)
@@ -279,7 +283,16 @@ async def _async_take_over_legacy_ids(
     # would let a second inverter take its own ids on the strength of the first
     # one's recorder rows -- a claim that looks justified and is supported by
     # nothing.
-    slot = entry.data.get(CONF_LEGACY_SLOT) or ""
+    slot = stored_legacy_slot(entry)
+    if slot is None:
+        # A numbered YAML slot existed and nothing tied this inverter to one,
+        # so any legacy id here may be another inverter's history.
+        _LOGGER.info(
+            "%s claims no YAML package ids: which of its inverter slots this "
+            "device was could not be determined",
+            entry.title,
+        )
+        return
     with_history = keys_for(await async_legacy_ids_with_history(hass, slot), slot)
     claimed = async_claim_legacy_ids(
         hass, entry, inverter.serial_number, capabilities, with_history
@@ -293,7 +306,7 @@ async def _async_take_over_legacy_ids(
 
 async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> bool:
     """Set up a Sungrow SHx inverter from a config entry."""
-    unit, inverter = await _async_connect(hass, entry)
+    _unit, inverter = await _async_connect(hass, entry)
 
     intervals, coordinators = await _async_tier_coordinators(hass, entry, inverter)
 
@@ -305,9 +318,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
         entry.title,
         ", ".join(sorted(c.value for c in capabilities)) or "none",
     )
-    battery, battery_has_cells = await _async_battery(
-        hass, entry, unit, inverter, intervals
-    )
+    battery, battery_has_cells = await _async_battery(hass, entry, inverter, intervals)
     wallbox = await _async_wallbox(hass, entry, inverter, intervals)
     inverter_device_id = _async_register_inverter(hass, entry, coordinators)
 
@@ -350,18 +361,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
     entry.async_on_unload(entry.add_update_listener(_async_options_changed))
     entry.runtime_data.built_from = _built_from(entry)
 
-    # A diagnostics entry stops here: connected, identified, polling, and
-    # with no entities anywhere. Everything above it is what a survey needs
-    # -- the readings, the capability resolution, the device in the registry
-    # so the diagnostics download has somewhere to hang -- and the platforms
-    # are the part a contributor did not ask for. It is promoted from the
-    # options flow, which is where the entity-ids question finally gets put.
     # Did a control test stop halfway through putting things back? Checked
     # here rather than fixed here: writing a register during setup is exactly
     # what this integration does not do, so this raises a repair and the owner
     # confirming it is the explicit action that does the writing.
     await _async_check_control_test(hass, entry)
 
+    # A diagnostics entry gets the survey's buttons and sensors and no
+    # readings. Everything above is what a survey needs; the value platforms
+    # are the part a contributor did not ask for. It is promoted from the
+    # options flow, which is where the entity-ids question gets put.
     if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
         _LOGGER.info(
             "%s set up for diagnostics only: %d components polling, "
@@ -437,7 +446,6 @@ async def _async_check_control_test(
 async def _async_battery(
     hass: HomeAssistant,
     entry: SungrowConfigEntry,
-    unit: object,
     inverter: SungrowInverter,
     intervals: dict[str, int],
 ) -> tuple[SungrowBatteryCoordinator | None, bool]:
@@ -468,15 +476,7 @@ async def _async_battery(
         _LOGGER.debug("%s: no Sungrow battery pack on this endpoint", entry.title)
         return None, False
 
-    battery = SungrowBattery(
-        async_get_unit(
-            hass,
-            entry,
-            ModbusTcpParams(host=entry.data[CONF_HOST], port=entry.data[CONF_PORT]),
-            pack_unit,
-        ),
-        pack_unit,
-    )
+    battery = SungrowBattery(_unit_factory(hass, entry)(pack_unit), pack_unit)
     coordinator = SungrowBatteryCoordinator(
         hass,
         entry,
@@ -525,10 +525,10 @@ async def _async_wallbox(
     they are built from the inverter's serial, so a wallbox moved from the
     dongle to its own address keeps its history.
 
-    The probe reads the model *name*, not the serial two registers below it,
-    and not the device type code: a name is self-validating where a code has
-    to be matched against a three-entry table, and reading the name keeps a
-    serial out of the probe entirely.
+    The probe reads the model *name*, not the serial below it (input
+    registers 21201-21206) and not the device type code: a name is
+    self-validating where a code has to be matched against a three-entry
+    table, and reading the name keeps a serial out of the probe entirely.
 
     Finding nothing is the common case and never fails the entry.
     """

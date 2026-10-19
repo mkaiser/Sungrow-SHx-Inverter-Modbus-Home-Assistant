@@ -65,13 +65,10 @@ like:
 - `sungrow_protocol_version` moved too, from `0x01001100` to `0x01010700` —
   it had been identical on all nine previous documents.
 
-**The firmware rows, read correctly.** A first draft of this file said every
-document reports the same firmware and that nothing here demonstrates the
-variation fingerprinting exists for. That was wrong, and wrong in an
-instructive way: it was written from `firmware.arm` alone, which is one of
-**five** firmware fields a document carries. Three of the five do vary, and
-the inverter's version is in every filename — `b001v000p020` beside
-`b001v000p022` — where it had been sitting in plain sight.
+**The firmware rows, read correctly.** A document carries **five** firmware
+fields, and `firmware.arm` alone suggests nothing varies. Three of the five
+do vary, and the inverter's version is in every filename that read it —
+`b001v000p020` beside `b001v000p022`.
 
 So the variation is measured, and it has already paid for itself. The
 2612/2628 refusal through a WiNet-S is what it looks like when a rule
@@ -88,20 +85,16 @@ V200 — in front of a **PEARL-H** inverter rather than a SAPPHIRE-H one. Both
 blocks refuse there too. So this is not a WiNet-S quirk that a successor
 fixed, and not something about one inverter platform.
 
-**And one of these rows was asking for the wrong thing.** An earlier draft
-called an ARM or DSP string other than `ARM_SAPPHIRE-H_V11_V01_B` "the most
-interesting of the lot, being the two fields nothing has ever varied". The
-discussion on
+**ARM and DSP are not worth asking for.** The discussion on
 [#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)
-gives the likely reason nothing has: those two identify **hardware**, and do
-not change when the inverter is updated. Which makes them the *least* likely
-field to vary rather than the most interesting, and means nine identical
-readings are evidence of nothing.
+gives the likely reason they hold still: those two identify **hardware**, and
+do not change when the inverter is updated. Which makes them the *least*
+likely field to vary, and identical readings evidence of nothing.
 
 **The SH20T is the test of that reading, and it passes.** Those two strings
 have now varied exactly once, and they varied when the *hardware* did:
 `ARM_PEARL-H_V11_V01_A` and `MDSP_PEARL-H_V11_V01_A` on the T, against
-`ARM_SAPPHIRE-H_V11_V01_B` on all nine RT readings across four houses and
+`ARM_SAPPHIRE-H_V11_V01_B` on every RT reading, across four houses and
 three inverter firmwares. A field that holds still through three firmware
 versions and moves the moment the platform changes is a platform identifier.
 So the row above is *covered* rather than satisfied: a second PEARL-H reading
@@ -135,9 +128,9 @@ compare the numeric tail across platforms. Sorting these four as versions
 puts the T in the middle of the RT range, where nothing it says applies.
 
 One gap worth naming: **fwitten's inverter firmware is unknown**, not absent.
-That house refuses input 13249, which is the block reporting it, so four of
-the ten documents carry no inverter version at all and their filenames have
-no firmware word. A reading of those registers from a machine in that family
+That house refuses input 13249, which is the block reporting it, so its four
+documents carry no inverter version at all and their filenames have no
+firmware word. A reading of those registers from a machine in that family
 would fill in a third of the table.
 
 ## Wanted, in the order it would help
@@ -157,26 +150,24 @@ finds the first exception.
 Worth having even if the integration then reports fewer entities than the
 YAML package did on the same machine — that difference *is* the finding.
 
-### 2. A machine on Version 1 `95.14` or later
+### 2. A machine between Version 1 `.95.03` and `.95.12`, or a `.95.14` that is not 10 kW
 
 Specifically, and for a reason: issue
 [#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)
 reports that after a firmware update, writing the **export power limit**
 (register 13074) behaves as though the value were a percentage in units of
 0.1% rather than watts — write 700, get 7000 W. The reporter is on Version 1
-`01011.95.14`. The highest measured here is gerd's `.95.13`, where the
-register reads **8000 on an 8 kW machine** and matches its own maximum at
-5622, so it is plainly watts there. That brackets any change to *after*
-`.95.13`, which is as close as this project can currently get.
+`01011.95.14`. On gerd's `.95.13` the register reads **8000 on an 8 kW
+machine** and matches its own maximum at 5622, so it is plainly watts there.
 
-**Since 2026-10-08 there is a `.95.14` machine here, and it changes how the
-issue reads.** bar12's SH10RT-20 updated itself to `.95.14` (inverter
-`B001.V000.P023`) between two surveys. On `.95.14`, 13074 still *reads* in
-watts: 10000 against a maximum of 10000 at 5622. It still *writes* in tens of
-watts, as it did on `.95.12` in September. So "write 700, get 7000 W" is the
-write asymmetry described in `CLAUDE.md` under *Register 13074 reads in watts
-and writes in tens of watts*. The reference house has it on `.95.12` and gerd
-on `.95.13`, so `.95.14` is not where it starts. And the issue's two
+**There is a `.95.14` machine here, and it changes how the issue reads.**
+bar12's SH10RT-20 updated itself to `.95.14` (inverter `B001.V000.P023`)
+between two surveys. On `.95.14`, 13074 still *reads* in watts: 10000 against
+a maximum of 10000 at 5622. It still *writes* in tens of watts, as it did on
+`.95.12`. So "write 700, get 7000 W" is the write asymmetry described in
+`AGENTS.md` under *Register 13074's write scale is per device*. The reference
+house has it on `.95.12` and gerd on `.95.13`, so `.95.14` is not where it
+starts. And the issue's two
 explanations are already told apart on a machine that is not 10 kW: gerd's
 8 kW inverter held word 60 as **600 W**, where "0.1 % of rated power" would
 have given 480. The unit is 10 W.
@@ -187,13 +178,15 @@ machine on `.95.12` or later multiplies. That fits "after a firmware update",
 but it is one cluster against three houses, and a cluster is also the obvious
 other difference. A hypothesis, not a finding.
 
-Two things would settle it, and neither needs a write:
+Two things would settle it, and neither needs a write that changes
+anything:
 
-- ~~**A survey from a machine on `.95.14` or later.**~~ bar12, 2026-10-08:
-  watts on read, tens of watts on write, as above.
-- **A machine between `.95.03` and `.95.12`, with its 13074 write measured**,
-  which is what would place the change. A survey cannot: the read side is
-  watts on every firmware seen. It needs part B, with feed-in limitation on.
+- **A machine between `.95.03` and `.95.12`, with its 13074 write scale
+  asked**, which is what would place the change. A reading cannot: the read
+  side is watts on every firmware seen. `survey.sh control <host>
+  --export-scale` asks with one write that changes nothing on either
+  firmware, and the integration asks the same on its first export-limit
+  write.
 - **A `.95.14` machine that is not 10 kW.** The two explanations in that
   thread — "the register is 0.1% of rated power" and "the register is in
   units of 10 W" — predict *identical* numbers on a 10 kW inverter, where
@@ -201,9 +194,8 @@ Two things would settle it, and neither needs a write:
   one. On an 8 kW machine they diverge: writing 700 would mean 5600 W under
   the percentage reading and 7000 W under the other.
 
-Beyond that, a third value on any firmware field is still worth having —
-there are two of the inverter's, two of the WiNet-S's and two of the SBR
-BCU's. Not ARM or DSP, for the reason above.
+Beyond that, a new value on any firmware field in the table above is still
+worth having. Not ARM or DSP, for the reason above.
 
 A reading from a machine of an already-recorded model is worth as much as a
 new model here — more, in fact, because the model is then held constant and
@@ -212,12 +204,11 @@ whether a capability belongs to the hardware or to the version.
 
 ### 3. An iHomeManager — port **502 or 503**, unit **247**
 
-The only one of these devices with an **official Sungrow register document**,
-and the only one with **no measurement whatsoever**. A sweep of one house's
-whole /24 on port 503 found nothing at all.
+A device with a documented register map and **no measurement
+whatsoever**. A sweep of one house's whole /24 on port 503 found nothing at
+all.
 
-**There is now a lead, which there never was before.** The contributor of the
-SH20T in
+**There is a lead.** The contributor of the SH20T in
 [#772](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/772)
 wrote in the survey's own comment field that *"iHomeManager and AC22E-01 is
 installed too"*. Their document does not measure either, and could not: it is
@@ -225,9 +216,8 @@ a Home Assistant diagnostics download, so it describes the **one endpoint**
 the integration is configured against and nothing else on the network. An
 iHomeManager is a separate endpoint and is not reachable through an inverter.
 
-So what is wanted from that house specifically is a `sungrow_survey.py` run, or just
-a sweep — and it is the first time this list has had somebody to ask. It
-would settle both item 3 and item 6 at once.
+So what is wanted from that house specifically is a `sungrow_survey.py` run,
+or just a sweep. It would settle both item 3 and item 6 at once.
 
 **Not port 503 alone.** Sungrow's setting is "Modbus TCP on the iHM", which
 lands on 502 on some units and on 503 only where 502 is already busy. Four
@@ -240,52 +230,43 @@ and [#651](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 report registers 5741-5746 going silent when one is installed. Nobody has
 confirmed that against a machine.
 
-If you have one, the survey needs pointing at port 503:
+If you have one, the survey finds it: its sweep looks on 502 and 503 and asks
+whatever answers for unit 247. It says what it found and does not survey it
+— nothing reads an iHomeManager's blocks yet — so the transcript is the
+reading to send.
 
-```bash
-python device-fingerprints/scripts/python/probe.py sweep 192.168.1.0/24 --port 503
-```
-
-**Port 516 turned out to be something else.** Reported in [discussion
+**Port 516 is not an iHomeManager's.** Reported in [discussion
 #571](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions/571)
-as an iHomeManager port, so it was added to the sweep — and then measured on
-2026-09-09 at a house with **no iHomeManager at all**, where it was open on
-**both WiNet-S dongles and neither inverter's own LAN port**. It is a dongle
-port.
+as one, it is open at a house with **no iHomeManager at all**, on **both
+WiNet-S dongles and neither inverter's own LAN port** — and on a wallbox with
+a network connection of its own.
 
-It is real Modbus over real TLS: TLS 1.2, a Sungrow self-signed certificate
-(`CN=sun`, issuer `CN=OT.SUNGROW`), and a read of input 4989 through the
-tunnel returned the inverter's serial. It is also **not a way round the
-dongle's forwarding limits** — 2612 and 2628 refuse with exception 0x02 over
-TLS exactly as on 502. So it is not a lead for milestone 5 after all, and not
-a workaround for anything; it is one more thing a WiNet-S does. The survey
-sweeps it and says so, because a user told their dongle has nothing on 516
-would be told something false.
+It is real Modbus over real TLS: TLS 1.2, a Sungrow-signed certificate
+(`CN=sun`, issuer `CN=OT.SUNGROW`), and real registers through the tunnel.
+On a dongle it is **not a way round the forwarding limits** — 2612 and 2628
+refuse with exception 0x02 over TLS exactly as on 502. The survey sweeps it,
+reads a wallbox there, and reports a dongle's without reading it, because a
+user told their dongle has nothing on 516 would be told something false.
 
-So an iHomeManager is still **entirely unmeasured**, and 503 remains the
-only port it is documented on.
-
-An **official protocol document exists** and is named
-`iHM.Communication.Protocol` — referenced by
-[Jam3s97/sungrow_ihomemanager](https://github.com/Jam3s97/sungrow_ihomemanager),
-which is **GPL-3.0** and therefore cannot be copied into this MIT repo. The
-document itself is the licence-clean route to the same registers, and finding
-a copy of it would unblock milestone 5 more than any single fingerprint.
+So an iHomeManager is still **entirely unmeasured**. Its register map is in
+[cross_reference_modbus_manager.md](../doc/cross_reference_modbus_manager.md),
+53 registers, MIT-licensed; what is missing is a device to check them
+against.
 
 ### 3b. A WiNet-S certificate hash, from anywhere
 
 Five seconds, no scan, and it settles a question this project cannot answer
-from two houses. A WiNet-S serves Modbus over TLS on **port 516**, and its
-certificate looks like one baked into the firmware rather than generated per
-unit: subject `CN=sun`, issuer `CN=OT.SUNGROW`, valid 2024-10-24 to
-2054-10-17 — the same to the second at two unrelated sites.
+from one house. A WiNet-S serves Modbus over TLS on **port 516**, and so does
+a wallbox at its own address, and the certificate looks like one baked into
+the firmware rather than generated per unit: subject `CN=sun`, issuer
+`CN=OT.SUNGROW`, valid 2024-10-24 to 2054-10-17 — byte-identical between the
+dongle and the wallbox at one house.
 
-If it *is* one certificate for every dongle then its private key ships with
-every dongle, and the TLS there encrypts the link while proving nothing about
-what is on the other end. Worth knowing before anybody builds on it.
+If it *is* one certificate for every device then its private key ships with
+every one, and the TLS there encrypts the link while proving nothing about
+what is on the other end. The integration already treats it that way.
 
-What is missing is a hash from a third site. The two compared so far are two
-interfaces of one dongle, which is the same device:
+What is missing is a hash from another site:
 
 ```bash
 python - <<'EOF'
@@ -327,7 +308,7 @@ WiNet-S forwards only 10740-10751 and refuses the per-module arrays from
 protocol document — is still unread. An SBH on an inverter's own LAN port is
 what would finish this.
 
-**A second SBH, read the same way.** jm493's SH15T, 2026-10-07, with an
+**A second SBH, read the same way.** jm493's SH15T, with an
 SBH200 behind a *wired* WiNet-S2. It agrees on everything above: the pack
 answers at unit 2 with the SBR's scales (299.6 V, 97 % health, 12.5 °C
 against the inverter's 12.0 °C, −15.1 A while the inverter reports 3758 W into
@@ -335,22 +316,19 @@ the battery), and the cell and module blocks are refused. One thing does
 **not** agree: the pack says **85.5 %** and the inverter 80.0 %. bar12's SBR
 disagrees too, by less and the other way (pack 65-66 %, inverter 67-68 %), so
 the two are separate measurements rather than one value copied.
-The pack's current also settled a sign: it follows the inverter's
-`battery_power`, positive while discharging, and the library's docstring had
-it backwards. Same BCU firmware as the SBH400,
+The pack's current also settles a sign: it follows the inverter's
+`battery_power`, positive while discharging. Same BCU firmware as the SBH400,
 `SBHBCU-S_22011.04.11`. It also reads **over** its rating, as the SBH400
 did: 20.27 kWh on a 20.0 kWh pack, +1.35 %, inside the 2 % window, so it is
 named. Two of two SBHs reading high is now a pattern, not one reading. Still
 behind a dongle, so the cell layout is still unread.
 
-It also corrected a rule about naming a pack, which is worth recording
-because it was wrong in an unobvious direction. That SBH400 reports
-**40.55 kWh** against its 40.0 rating, and `model_for_capacity` used a flat
-0.4 kWh window written on the assumption that packs read a little *under*
-their rating as they degrade. So the first SBH measured was declined a name,
-fell through to what its BMS reported — 0 A, because it was full — and would
-have been offered the 5000 W fallback for a pack its datasheet rates at
-23760 W. The window is a fraction of the rating now.
+Packs read **over** their rating as well as under it — that SBH400 reports
+**40.55 kWh** against its 40.0 — which is why `model_for_capacity` matches
+within a fraction of the rating either way, rather than assuming a pack only
+reads a little under as it degrades. Declined a name, a full pack falls
+through to what its BMS reports — 0 A — and would be offered the 5000 W
+fallback for a pack its datasheet rates at 23760 W.
 
 Any **SBR other than an SBR096** would close a question left open on purpose.
 The pack's four position registers pack a module and a cell into one word,
@@ -374,9 +352,9 @@ argument is about *this* model, and the other source's map is largely
 AC011E-based, so 0.01 may be right there and the register may simply differ
 between models.
 
-A wallbox is found only through an endpoint that already answered, never by
-sweeping for it, so the survey picks one up automatically when it is behind
-an inverter you scan.
+The survey picks one up by itself: behind a WiNet-S it answers at unit 3 on
+the dongle's endpoint, and at its own address the sweep finds it on port 516
+and writes a wallbox document of its own.
 
 ### 7. A second inverter in a master/slave cluster
 
@@ -420,8 +398,8 @@ in two cases that have both already paid for themselves:
   reporter.
 - **A document taken while something else was polling.** Contention is not a
   register fault, and the two are hard to tell apart from the result — a
-  regular poller does not even look intermittent. Four documents were
-  discarded for this, and their testimony said the opposite.
+  regular poller does not even look intermittent, and testimony saying
+  nothing else was polling can be wrong.
 - **A reading whose `bands_not_reached` is non-empty, used as evidence about
   coverage.** The dump has a time budget, and a slow link exhausts it: one
   document reached 816 addresses where a faster path on the *same house*

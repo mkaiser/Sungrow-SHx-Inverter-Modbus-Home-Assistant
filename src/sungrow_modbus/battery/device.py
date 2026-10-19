@@ -10,13 +10,13 @@ inverter's own LAN port, 2 through a WiNet-S, measured at three houses -- and
 `battery.probe_units` is what finds it. A contributor does not know their
 battery's unit id and should never be asked.
 
-**The two components fail separately, and that is the whole reason they are
-two.** Measured on one SBR096 read both ways within seconds: the cell block
-refuses with exception 0x02 through a dongle while the pack block answers
-identical values, and at a second house a different dongle firmware answered
-the cell block with zeros instead. Pooled into one component a refusal would
-take the state of charge with it, and a house on a dongle would see its
-battery reported unreadable when half of it was fine.
+**The components fail separately, and that is the whole reason there are
+three.** Measured on one SBR096 read both ways within seconds: the cell and
+module blocks refuse with exception 0x02 through a dongle while the pack block
+answers identical values, and at a second house a different dongle firmware
+answered the cell block with zeros instead. Pooled into one component a
+refusal would take the state of charge with it, and a house on a dongle would
+see its battery reported unreadable when half of it was fine.
 """
 
 from __future__ import annotations
@@ -57,26 +57,12 @@ PUBLISHED_NAMES = {
     "modules": "sbr_battery_modules",
 }
 
-#: Cell-level fields are granted only on a reading that is not zero.
-#:
-#: One dongle firmware answers this whole block with zeros rather than
-#: refusing it, and a zero decodes to a value. Granting on that would create
-#: eight entities reporting 0 V and module 0 forever, with no recovery --
-#: nothing ever removes an entity. So the same rule the inverter's optional
-#: trackers get applies here: an answer of zero is not evidence of hardware.
-#:
-#: The pack-level fields need no such guard. A pack that answers 199 V for
-#: its voltage is a pack; the sentinel and the refusal are both handled by
-#: the component raising or the field decoding to None.
-CELLS_NEED_A_NONZERO_READING = True
-
 
 class SungrowBattery:
     """An SBR/SBH pack on its own Modbus unit.
 
-    Deliberately small. The pack has no tiers -- seventeen registers in two
-    reads -- so there is one interval and one coordinator, unlike the
-    inverter's four.
+    Deliberately small. The pack has no tiers -- seventeen polled registers
+    in two reads -- so there is one interval and one coordinator.
     """
 
     # Declared, not assigned: `__init__` sets one attribute per entry in
@@ -88,7 +74,7 @@ class SungrowBattery:
     modules: SbrBatteryModules
 
     def __init__(self, unit: ModbusUnit, unit_id: int) -> None:
-        """Bind both components to a unit handle, remembering which id it is."""
+        """Bind every component to a unit handle, remembering which id it is."""
         self._unit = unit
         #: Which unit id answered, kept because it is worth reporting: the
         #: same pack is 200 on a cable and 2 through a dongle, and somebody
@@ -114,12 +100,10 @@ class SungrowBattery:
 
         Public because callers outside the library need to enumerate what a
         device offers -- the survey publishes one value per field, and the
-        diagnostics download does the same. They used to read `_fields`
-        directly, which is worse here than it usually is: this library is
-        pinned by version in the integration's manifest, so renaming a private
-        attribute would ship as a perfectly good release and break the
-        integration at runtime. `check_pinned_library.py` compares *imports*
-        against the wheel and cannot see an attribute.
+        diagnostics download does the same. Reading `_fields` instead would
+        be worse here than it usually is: this library is pinned by version in
+        the integration's manifest, so renaming a private attribute would ship
+        as a perfectly good release and break the integration at runtime.
         """
         return frozenset(self._fields)
 
@@ -173,7 +157,11 @@ class SungrowBattery:
         """Whether the cell block gave a reading worth building entities on.
 
         False for both ways a dongle loses it: a refusal leaves every field
-        None, and the zeros firmware leaves them all 0. Checked on the two
+        None, and the zeros firmware leaves them all 0. Cell entities are
+        granted only when this is true, because nothing ever removes an
+        entity: granting on zeros would leave them reporting 0 V and module 0
+        forever. The pack-level fields need no such guard -- a pack
+        that answers 199 V is a pack. Checked on the two
         voltages rather than on the positions, because a position of zero is
         already mapped to None and would hide a real reading of cell 0 --
         which cannot happen, the registers being one-based, but the voltage

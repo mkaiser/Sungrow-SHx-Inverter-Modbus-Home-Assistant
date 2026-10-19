@@ -24,8 +24,10 @@ if TYPE_CHECKING:
     from .device import SungrowInverter
 
 #: Register 13000's value to the state the YAML package showed for it. Some
-#: codes repeat a label — 0x0000 and 0x0040 are both simply running — which is
-#: the inverter's doing, not a mistake here.
+#: codes repeat a label, and that is a dongle's doing, not a mistake here: a
+#: WiNet-S re-encodes this register, so the cable's 0x0040 arrives as 0x0000
+#: and its 0x0080 as 0x8100. A code seen only through a dongle says nothing
+#: about what the inverter sends.
 RUNNING_STATES: dict[int, str] = {
     0x0000: "Running",
     0x0001: "Stop",

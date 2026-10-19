@@ -16,6 +16,7 @@ import pytest
 
 from custom_components.sungrow_modbus.const import (
     CONF_ENTITY_IDS,
+    CONF_LEGACY_SLOT,
     CONF_UNIT_ID,
     DOMAIN,
     ENTITY_IDS_MIGRATE,
@@ -211,3 +212,45 @@ async def test_migrating_is_refused_while_the_yaml_package_is_loaded(
         result["flow_id"], {CONF_ENTITY_IDS: ENTITY_IDS_NEW}
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
+
+
+async def test_an_undetermined_slot_is_explained_and_takes_no_legacy_ids(
+    hass: HomeAssistant, probe: None, entity_registry: er.EntityRegistry
+) -> None:
+    """A numbered YAML slot existed, and nothing ties this inverter to one.
+
+    The question is not put, because either answer to it could hand this
+    inverter another one's history. The page says why and how to fix it, and
+    the entry stores the slot as undetermined, which claims nothing.
+    """
+    for suffix in ("", "_inv_2"):
+        entity_registry.async_get_or_create(
+            "sensor",
+            "modbus",
+            f"sg_total_pv_generation{suffix}",
+            suggested_object_id=f"total_pv_generation{suffix}",
+        )
+
+    result = await _connect(hass)
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "slot_unknown"
+
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"][CONF_ENTITY_IDS] == ENTITY_IDS_NEW
+    assert result["data"][CONF_LEGACY_SLOT] is None
+
+
+async def test_a_single_inverter_package_is_still_offered(
+    hass: HomeAssistant, probe: None, entity_registry: er.EntityRegistry
+) -> None:
+    """No numbered slot, so the unsuffixed one is proven and stored as such."""
+    _register_yaml_package(entity_registry)
+
+    result = await _connect(hass)
+    assert result["step_id"] == "entity_ids"
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_ENTITY_IDS: ENTITY_IDS_MIGRATE}
+    )
+    assert result["data"][CONF_LEGACY_SLOT] == ""

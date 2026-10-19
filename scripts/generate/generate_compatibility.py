@@ -98,12 +98,12 @@ MARKS = {"present": "yes", "unavailable": "no", None: "—"}
 #: Columns whose "yes" is not to be trusted from a reading taken through a
 #: communication module. A WiNet-S answers **0** where the inverter answers
 #: the specification's 0xFFFF, which reads as a capability the machine does
-#: not have. Measured on gerd's SH8.0RT-V112 on 2026-09-08: over its own LAN
-#: port MPPT3, MPPT4 and all four meter-channel-2 powers are unavailable;
-#: through its dongle, four minutes later, the same eight fields come back as
-#: zero. Both readings are in `device-fingerprints/`, and without this the
-#: table said the machine has MPPT3 and MPPT4 on one row and does not on the
-#: other, with nothing to say which to believe.
+#: not have. On gerd's SH8.0RT-V112, over its own LAN port, MPPT3, MPPT4 and
+#: all four meter-channel-2 powers are unavailable; through its dongle,
+#: minutes later, the same eight fields come back as zero. Both readings are
+#: in `device-fingerprints/`, and without this the table would say the machine
+#: has MPPT3 and MPPT4 on one row and does not on the other, with nothing to
+#: say which to believe.
 ZERO_MEANS_ABSENT_COLUMNS = ("MPPT3", "MPPT4", "Meter direct")
 
 #: Columns whose "yes" is a zero, and therefore a no, whatever the transport.
@@ -115,13 +115,11 @@ ZERO_MEANS_ABSENT_COLUMNS = ("MPPT3", "MPPT4", "Meter direct")
 #: block with 0x0000 because the battery belongs to the master -- and it does
 #: so on its own LAN port, so the through-a-module test does not catch it.
 #:
-#: Found on 2026-09-09 with fwitten's second inverter, where this table said
-#: `Battery: yes` while the *filename* of the same document said
-#: `battery-none`. Both are generated from one reading, so one of them was
-#: wrong, and it was this one: the filename's battery word (now
-#: `fingerprint._battery_word`) has tested for
-#: all-zero since it was written, with the comment "a zero decodes as a value
-#: and would otherwise be read as evidence of a third-party pack".
+#: fwitten's second inverter is the case: without this the table says
+#: `Battery: yes` while the *filename* of the same document says
+#: `battery-none`. The filename's battery word (`fingerprint._battery_word`)
+#: tests for all-zero, because "a zero decodes as a value and would otherwise
+#: be read as evidence of a third-party pack"; this table has to agree.
 #:
 #: Unlike the dongle case there is no ambiguity to footnote. A battery reading
 #: 0 V *and* 0% *and* 0 degrees is not a battery at nightfall; it is a device

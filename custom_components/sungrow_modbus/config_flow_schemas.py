@@ -1,11 +1,9 @@
 """The forms the config flow shows, separated from the flow that shows them.
 
-`config_flow.py` was 2000 lines, and three quarters of what came before its
-first class was **not flow logic**: `voluptuous` schemas, the option lists they
-offer, and the paragraphs of prose Home Assistant renders above them. Reading
-the flow meant scrolling past all of it.
-
-So the data lives here and the decisions live there. The split is along that
+`voluptuous` schemas, the option lists they offer, and the paragraphs of prose
+Home Assistant renders above them are not flow logic, and reading the flow
+should not mean scrolling past them. So the data lives here and the decisions
+live in `config_flow.py`. The split is along that
 line rather than along size -- anything that asks *what happens next* stayed
 behind. `_alpha_placeholders` is the case worth naming: it reads
 `DEVICES_MODE_OFFERED` at call time precisely so a test can patch the flag on
@@ -83,20 +81,18 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 )
 
 
-#: Sweeping is a network event -- an ARP entry and a SYN per address -- so the
-#: range is asked for rather than guessed at, prefilled with the one Home
-#: Assistant is actually on.
 #: Ranges to offer when there is nothing to detect, or when what was detected
 #: found nothing.
 #:
-#: Guesses, and labelled as such in the form -- but not arbitrary ones. These
-#: are the factory defaults of the routers this project's users actually have,
-#: and `192.168.178.0/24` is first among them because it is the Fritz!Box
-#: default and this integration's audience is heavily German. A pick list of
-#: five is a different proposition from a blank CIDR field: somebody who does
-#: not know what their range is can usually recognise it.
-
-
+#: Sweeping is a network event -- an ARP entry and a SYN per address -- so the
+#: range is asked for rather than guessed at, prefilled with the one Home
+#: Assistant is actually on where that can be known. These are guesses, and
+#: labelled as such in the form -- but not arbitrary ones. They are the factory
+#: defaults of the routers this project's users actually have, and
+#: `192.168.178.0/24` is first among them because it is the Fritz!Box default
+#: and this integration's audience is heavily German. A pick list of five is a
+#: different proposition from a blank CIDR field: somebody who does not know
+#: what their range is can usually recognise it.
 COMMON_NETWORKS = (
     "192.168.178.0/24",
     "192.168.1.0/24",
@@ -133,9 +129,9 @@ def _network_options(detected: str, tried: list[str]) -> list[SelectOptionDict]:
 def _scan_schema(default_network: str, tried: list[str] | None = None) -> vol.Schema:
     """Return the search form: a range to pick or type.
 
-    **No port.** It asked for one, defaulted to 502, and the honest question
-    behind the field -- "which number?" -- has a two-item answer this project
-    already knows: `SCAN_PORTS`. A sweep tries both. Somebody whose setup
+    **No port.** The honest question behind such a field -- "which number?" --
+    has a two-item answer this project already knows: `SCAN_PORTS`. A sweep
+    tries both. Somebody whose setup
     really is elsewhere, behind a proxy or a forwarded port, has the manual
     step, which is where a specific address and a specific port belong.
 
@@ -165,8 +161,6 @@ def _scan_schema(default_network: str, tried: list[str] | None = None) -> vol.Sc
 
 
 #: Shown when the range could be worked out from a network adapter.
-
-
 _PREFILLED = (
     "The range below is the network Home Assistant is on, which on a home "
     "network is almost always the right one."
@@ -179,8 +173,6 @@ _PREFILLED = (
 #: inverter stays perfectly reachable, because the bridge forwards outbound
 #: traffic. So the honest thing is an empty field and this sentence, rather
 #: than a default that looks right and leads nowhere.
-
-
 _NOT_DETECTED = (
     "**Home Assistant could not work out which network to search.** It is "
     "running in a container that can see only its own virtual network, so "
@@ -203,8 +195,6 @@ _NOT_DETECTED = (
 #: and it is measured: the same dongle is on both, and both addresses
 #: returned identical documents -- every probe, every field, even the TLS
 #: certificate.
-
-
 _SAME_DONGLE = (
     "\n\n**Two of these are one inverter behind one WiNet-S** — its network "
     "socket and its WiFi, which have separate addresses. Modbus cannot say "
@@ -218,8 +208,6 @@ _SAME_DONGLE = (
 )
 
 #: Shown on a second attempt, so a user can see what has been covered.
-
-
 _ALREADY_TRIED = (
     "Already searched, and nothing answered as an inverter: **{tried}**. "
     "Pick another range below, or type one. If you do not know it, the "
@@ -238,8 +226,6 @@ _ALREADY_TRIED = (
 #: `192.168.x.x` and plenty are `10.x.x.x`, and excluding those would break
 #: detection for the installations where it works. What is excluded is the
 #: narrow band that is a container bridge and essentially never a house.
-
-
 CONTAINER_BRIDGES = ("172.16.0.0/12", "10.88.0.0/16")
 
 
@@ -254,8 +240,6 @@ def _is_container_bridge(address: str) -> bool:
 
 #: Sentinel value for the picker's escape hatch, which cannot collide with a
 #: host address.
-
-
 NOT_LISTED = "__not_listed__"
 
 
@@ -307,13 +291,6 @@ def _other_inverter_schema(default: str) -> vol.Schema:
     )
 
 
-#: What the greyed controls say, written once and rendered in two places.
-#:
-#: Both the opening step and the options page's promotion toggle explain the
-#: same gate, and a gate explained twice in two wordings is a gate somebody
-#: will misread. Markdown, because both slots render through `ha-markdown`.
-
-
 def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> vol.Schema:
     """Return the questions a survey needs and no register can answer.
 
@@ -322,9 +299,9 @@ def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> vol.Schema
     of the same document and a contributor who answers one should not find
     the other asking something else.
 
-    `suggested_value` rather than `default` on the two dropdowns -- a default
-    of "" is injected when the field is left alone and "" is not one of the
-    choices, which failed validation for anybody who had never answered.
+    `suggested_value` rather than `default` on the dropdowns -- a default of
+    "" is injected when the field is left alone and "" is not one of the
+    choices, which would fail validation for anybody who had never answered.
     """
     return vol.Schema(
         {
@@ -494,7 +471,7 @@ def _described(found: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
     """Work out what the set of answers means, and say it in the labels.
 
     Three things a user cannot answer and the wire can, all measured at a
-    two-inverter house on 2026-09-09:
+    two-inverter house:
 
     **Two addresses reporting one serial are one inverter.** A machine with a
     cable in its own LAN port and a WiNet-S dongle answers at both, and every
@@ -575,11 +552,8 @@ def _described(found: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
     # reads, where a dongle forwards 1020, refuses inputs 2612 and 2628, and
     # answers 0 where the inverter answers "unavailable", which fabricates
     # capabilities. Picking the dongle where a cable exists costs entities.
-    #
-    # This used to sort on the unit id alone, which decided nothing between
-    # two addresses both on unit 1 and fell through to the address string --
-    # so a house with a cable and a dongle defaulted to whichever happened to
-    # sort lower. The route is now read, so it can be used.
+    # Then unit 1 before a slave's address, then the address, so the order is
+    # stable.
     return dict(
         sorted(
             found.items(),

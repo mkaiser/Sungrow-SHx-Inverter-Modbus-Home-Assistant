@@ -4,17 +4,13 @@
 `manifest.json` pins `sungrow-modbus==X.Y.Z`, and Home Assistant pip-installs
 that exact version on the first start after somebody copies the integration
 in. So the integration's `from sungrow_modbus... import ...` lines are a
-promise about a **published artefact**, and nothing in this repository tested
-that promise: every test, and the whole dev container, runs against the
+promise about a **published artefact**, and nothing else in this repository
+tests that promise: every test, and the whole dev container, runs against the
 editable install from `src/`, which satisfies any import the source tree can
-satisfy.
-
-That gap shipped. Between `v0.1.0a1` and `v0.1.0a2` the integration began
-importing `sungrow_modbus.fingerprint`, a module added after the a1 wheel was
-built, while the manifest still pinned a1. Every test passed, `ruff` passed,
-hassfest passed, the release was green -- and a copy of the branch could not
-start, with an `ImportError` at the moment a user clicked *Add integration*.
-It was found by unzipping the wheel by hand. This is that, as a command.
+satisfy. An integration that imports a module the pinned wheel lacks passes
+every test, ruff and hassfest, and fails with an `ImportError` at the moment a
+user clicks *Add integration*. This is unzipping the wheel to look, as a
+command.
 
     python scripts/release/check_pinned_library.py --wheel dist/*.whl  # local build
     python scripts/release/check_pinned_library.py                     # PyPI
@@ -23,7 +19,7 @@ It was found by unzipping the wheel by hand. This is that, as a command.
 
 - `--wheel` asks whether the wheel built from *this tree* serves *this*
   integration. That is answerable offline, and true whenever the tree is
-  consistent, so `make check` can gate on it. It catches a module the build
+  consistent, so CI and `make build` gate on it. It catches a module the build
   configuration does not pick up -- invisible to every other check, because an
   editable install has no build configuration.
 - Without `--wheel` it downloads the version the manifest pins and asks the

@@ -3,13 +3,14 @@
 **Source, edited by hand.** `doc/legacy_entity_map.json` is the record of what
 the YAML package produces, and `tests/test_sensor_descriptions.py` holds this
 file to it: every YAML sensor must have a description here, with the same
-legacy name, unit, state class, category and component.
+legacy identity, unit, state class, category and component.
 
-Every entry carries the unit and state class of the YAML entry it replaces,
+Every entry that replaces a YAML sensor carries its unit and state class,
 because a replacement in a different unit class silently freezes long-term
-statistics, and `legacy_name`, which is what legacy mode sets so the
-entity_id comes out identical to the one a user already has. The modern name
-is not here: it lives in `strings.json` under `translation_key`, so it can be
+statistics, and its `legacy_name`, which `migration.legacy_entity_id`
+slugifies into the entity_id a user already has. The registers added from
+the specification have no legacy identity at all. The modern name is not
+here: it lives in `strings.json` under `translation_key`, so it can be
 translated.
 """
 

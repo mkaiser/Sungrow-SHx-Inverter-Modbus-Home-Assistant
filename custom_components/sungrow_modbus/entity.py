@@ -55,17 +55,18 @@ class SungrowEntityDescription(EntityDescription):
     legacy_name: str | None = None
     """The name the YAML package used for this entity.
 
-    Legacy mode sets it as the entity's name, which is what makes the
-    entity_id come out byte for byte the same — Home Assistant derives the
-    object id from the name, and `_attr_name` short-circuits translation, so
-    it holds in every interface language.
+    `migration.legacy_entity_id` slugifies it, with the inverter slot's
+    suffix, into the entity_id the YAML package produced -- the way Home
+    Assistant derived that id in the first place -- and the migration claims
+    that id in the registry before the platforms run. The entity's own name
+    stays its translation either way.
     """
 
     legacy_unique_id: str | None = None
     """The `unique_id` the YAML package registered this entity under.
 
     This, with `legacy_platform`, is what actually identifies a YAML entity.
-    The entity_id cannot: 69 of the 127 carry nothing Sungrow-specific —
+    The entity_id cannot: most carry nothing Sungrow-specific —
     `sensor.battery_level`, `sensor.grid_frequency`, `binary_sensor.
     battery_charging` — and matching on those would mistake another
     integration's entity for one of ours, then delete its registry entry to
@@ -83,9 +84,9 @@ class SungrowSensorDescription(SungrowEntityDescription, SensorEntityDescription
     legacy_only: bool = False
     """Create this only when the entry keeps the YAML package's entity ids.
 
-    Seventeen sensors are a second copy of something the user already has --
-    nine duplicating a `number` of the same name, eight raw codes whose
-    decoded counterpart exists -- and they are here because the YAML package
+    These sensors are a second copy of something the user already has -- a
+    `number` of the same name, or a raw code whose decoded counterpart
+    exists -- and they are here because the YAML package
     had them, not because anybody wants them. Legacy mode has to create them
     or history keyed to `sensor.battery_max_soc` stops; modern mode is the
     clean cut, and does not. `scripts/generate/tables/naming.py` holds the list and the
@@ -289,15 +290,13 @@ class SungrowDeviceEntity(CoordinatorEntity):
     The unique id is `{inverter serial}_{key}`, the shape the inverter's own
     entities use. Neither device's serial is used: an SBR reports none at all
     -- the whole 10740-10789 band was read and there is none in it -- and a
-    wallbox reports one this project deliberately never reads, two registers
-    below the model name it probes instead.
+    wallbox reports one this project deliberately never reads, at input
+    registers 21201-21206, below the model name it probes instead.
 
-    No extra prefix on top of the key, although both first had one. Every key
-    already begins with `battery_` or `wallbox_`, so a prefix produced
-    `..._battery_battery_pack_voltage`; worse, it made these ids
-    indistinguishable by prefix from the inverter's own `battery_charging`.
-    What keeps them apart is that the keys are unique across the whole
-    integration, asserted per device where a device page is what a user sees.
+    No extra prefix on top of the key: every key already begins with
+    `battery_` or `wallbox_`, so a prefix would only double it. What keeps
+    these ids apart from the inverter's own `battery_charging` is that the
+    keys are unique across the whole integration, asserted per device.
     """
 
     _attr_has_entity_name = True

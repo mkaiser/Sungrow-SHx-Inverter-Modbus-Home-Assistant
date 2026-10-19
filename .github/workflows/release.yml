@@ -50,21 +50,17 @@ jobs:
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           # Whether this is a pre-release, decided by PEP 440's own rule
-          # rather than by looking for a hyphen.
+          # rather than by looking for a hyphen. pip normalises
+          # `0.1.0-alpha.1` to `0.1.0a1`, and `scripts/release/sync_version.py`
+          # requires the normalised spelling, so every pre-release this
+          # project can cut has **no hyphen**. A hyphen test would publish
+          # each one as a stable GitHub release -- which is what HACS offers
+          # users as the latest version.
           #
-          # `contains(version, '-')` was the test, and it was wrong in the
-          # one direction that matters: pip normalises `0.1.0-alpha.1` to
-          # `0.1.0a1`, so `scripts/release/sync_version.py` requires the normalised
-          # spelling and rejects the hyphenated one. Every pre-release this
-          # project can actually cut therefore has **no hyphen**, and would
-          # have been published as a stable GitHub release -- which is what
-          # HACS offers users as the latest version. The preview labelling
-          # exists precisely to stop that, and this would have undone it
-          # silently.
-          # Both spellings count. The normalised one is the only one that
-          # can reach here -- sync_version.py --check runs next and rejects
-          # the other -- but a rule that is right either way costs nothing
-          # and removes a "what if" from a step that publishes.
+          # Both spellings count. Only the normalised one can reach here --
+          # sync_version.py --check runs next and rejects the other -- but a
+          # rule that is right either way costs nothing in a step that
+          # publishes.
           if printf '%s' "$VERSION" | grep -Eiq '^[0-9]+\.[0-9]+\.[0-9]+([-._]?(a|b|c|rc|alpha|beta|pre|preview)[-._]?[0-9]*)$'; then
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
           else
@@ -97,18 +93,14 @@ jobs:
       # GitHub's generator.
       #
       # `generate_release_notes: true` writes "everything since the previous
-      # release", and for the *first* release of a repository there is no
-      # previous one -- so v0.1.0a1, an alpha of the integration, was
-      # published with every commit and pull request in this repository since
-      # 2022 in its body: the YAML package's entire history, mailed to every
-      # watcher, under a tag that changes nothing about the YAML package. The
-      # same trap waits for the first stable release, which GitHub would
-      # compare against nothing, pre-releases not counting.
+      # release", and where GitHub finds no previous one -- the first stable
+      # release, pre-releases not counting -- that is every commit and pull
+      # request in this repository, the YAML package's entire history, mailed
+      # to every watcher.
       #
-      # The tag message is written per release anyway, and `git push
-      # --follow-tags` requires the tag to be annotated, so the text is
-      # always there -- so write it for users, not for the maintainer: from
-      # here on the tag message *is* the published release note. Re-fetched
+      # `git push --follow-tags` requires the tag to be annotated, so the text
+      # is always there -- write it for users, not for the maintainer: the
+      # tag message *is* the published release note. Re-fetched
       # with `--force` because actions/checkout can leave the triggering ref
       # as a lightweight tag, whose `%(contents)` is the commit message
       # instead.

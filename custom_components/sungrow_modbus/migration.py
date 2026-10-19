@@ -45,7 +45,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from homeassistant.components.recorder import DOMAIN as RECORDER_DOMAIN
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
+from homeassistant.const import ATTR_RESTORED, Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import slugify
@@ -91,6 +91,15 @@ LEGACY_SERIAL_UNIQUE_ID = "sg_inverter_serial"
 #: multi-inverter house silently migrates as though it had one inverter.
 LEGACY_SERIAL_PLATFORM = "modbus"
 LEGACY_SERIAL_DOMAIN = "sensor"
+
+#: The integration's description of that sensor, which gives its legacy id in
+#: each slot -- where the recorder keeps the serial once the package is gone.
+_SERIAL_DESCRIPTION = next(
+    description
+    for platform, description in DESCRIPTIONS
+    if platform == LEGACY_SERIAL_DOMAIN
+    and description.legacy_unique_id == LEGACY_SERIAL_UNIQUE_ID
+)
 
 #: The suffixes a YAML install can have used, in the order they are tried.
 #:
@@ -147,6 +156,126 @@ def async_legacy_suffix(hass: HomeAssistant, serial: str | None) -> str | None:
     return None
 
 
+#: The slots only `modbus_sungrow_multiple_inverters_<n>.yaml` creates. One of
+#: them ever existing here is what makes the unsuffixed slot a guess.
+NUMBERED_SUFFIXES: tuple[str, ...] = tuple(s for s in LEGACY_SUFFIXES if s)
+
+
+async def async_resolve_legacy_slot(
+    hass: HomeAssistant, serial: str | None
+) -> str | None:
+    """Return this device's YAML slot from every piece of evidence there is.
+
+    In order, and each a measurement rather than a guess:
+
+    1. the serial sensor's **live** state, `async_legacy_suffix`;
+    2. the serial sensor's **recorded** states, which outlive the package by
+       the recorder's retention -- ten days unless the owner changed it;
+    3. `""` when no numbered slot has ever existed on this instance, in the
+       registry or in the recorder. A house that only ever ran the plain
+       file had one inverter, so the unsuffixed slot is proven, not assumed.
+
+    Anything else is `None`: a numbered slot existed and nothing ties this
+    serial to one. The caller must then claim nothing, because the only
+    alternative is handing this device another inverter's history.
+    """
+    if not serial:
+        return None
+    if (suffix := async_legacy_suffix(hass, serial)) is not None:
+        return suffix
+    if (suffix := await _async_recorded_suffix(hass, serial)) is not None:
+        return suffix
+    if await _async_numbered_slots_seen(hass):
+        return None
+    return ""
+
+
+@callback
+def stored_legacy_slot(entry: ConfigEntry) -> str | None:
+    """Return the slot an entry claims legacy ids from, `None` for none.
+
+    A key that is absent is the unsuffixed slot: an entry that predates the
+    slot keeps claiming what it always claimed. A key that is present and
+    `None` is a slot that could not be determined, and claims nothing.
+    """
+    if CONF_LEGACY_SLOT not in entry.data:
+        return ""
+    slot: str | None = entry.data[CONF_LEGACY_SLOT]
+    return slot
+
+
+def _serial_ids(hass: HomeAssistant, suffix: str) -> set[str]:
+    """Return the ids one slot's serial sensor has, or had, in the recorder.
+
+    The registry's id follows a rename; the slugified YAML name covers an
+    orphan somebody deleted, whose rows the recorder kept.
+    """
+    ids = {legacy_entity_id(Platform.SENSOR.value, _SERIAL_DESCRIPTION, suffix)}
+    current = er.async_get(hass).async_get_entity_id(
+        LEGACY_SERIAL_DOMAIN,
+        LEGACY_SERIAL_PLATFORM,
+        f"{LEGACY_SERIAL_UNIQUE_ID}{suffix}",
+    )
+    ids.add(current)
+    return {entity_id for entity_id in ids if entity_id is not None}
+
+
+async def _async_recorded_suffix(hass: HomeAssistant, serial: str) -> str | None:
+    """Return the one slot whose serial sensor ever recorded this serial.
+
+    `None` when none did, when the recorder is not there to ask, and when
+    two slots did: a serial recorded under both is no evidence for either.
+    """
+    if RECORDER_DOMAIN not in hass.config.components:
+        return None
+    by_id = {
+        entity_id: suffix
+        for suffix in LEGACY_SUFFIXES
+        for entity_id in _serial_ids(hass, suffix)
+    }
+
+    from sqlalchemy import select
+
+    from homeassistant.components.recorder import get_instance
+    from homeassistant.components.recorder.db_schema import States, StatesMeta
+    from homeassistant.components.recorder.util import session_scope
+
+    def _query() -> set[str]:
+        with session_scope(hass=hass, read_only=True) as session:
+            rows = session.execute(
+                select(StatesMeta.entity_id)
+                .join(States, States.metadata_id == StatesMeta.metadata_id)
+                .where(StatesMeta.entity_id.in_(list(by_id)))
+                .where(States.state == serial)
+                .distinct()
+            )
+            return {row[0] for row in rows}
+
+    try:
+        found = await get_instance(hass).async_add_executor_job(_query)
+    except (SQLAlchemyError, RuntimeError) as err:
+        _LOGGER.debug("Could not ask the recorder for the YAML serial: %s", err)
+        return None
+    suffixes = {by_id[entity_id] for entity_id in found}
+    if len(suffixes) != 1:
+        return None
+    suffix = suffixes.pop()
+    _LOGGER.debug(
+        "Serial %s was recorded in the YAML package's %s slot",
+        serial,
+        suffix or "single-inverter",
+    )
+    return suffix
+
+
+async def _async_numbered_slots_seen(hass: HomeAssistant) -> bool:
+    """Return whether a multi-inverter YAML file ever ran here."""
+    if any(async_legacy_entities(hass, suffix) for suffix in NUMBERED_SUFFIXES):
+        return True
+    wanted = set().union(*(legacy_entity_ids(s) for s in NUMBERED_SUFFIXES))
+    return bool(await async_ids_with_history(hass, wanted))
+
+
 def legacy_entity_id(
     platform: str, description: SungrowEntityDescription, suffix: str = ""
 ) -> str | None:
@@ -196,14 +325,14 @@ def async_legacy_entities(
 
     Keyed by platform *and* key, because a setting has two descriptions with
     the same key: `sensor.battery_min_soc` read the register and
-    `number.battery_min_soc` wrote it. Keying by the key alone let the second
-    overwrite the first, and the sensor then lost its id to a `_2` suffix
-    while the number took the one it wanted.
+    `number.battery_min_soc` wrote it. Keyed by the key alone the second
+    would overwrite the first, and the sensor would lose its id to a `_2`
+    suffix while the number took the one it wanted.
 
     Looked up by `unique_id` and platform, never by entity_id. That matters
     twice.
 
-    It is the only **correct** identification. 69 of the 127 legacy ids carry
+    It is the only **correct** identification. Most legacy ids carry
     nothing Sungrow-specific — `sensor.battery_level`, `sensor.grid_frequency`,
     `binary_sensor.battery_charging` — so matching on the id alone would
     mistake a battery integration's entity for one of ours, and then delete
@@ -258,7 +387,7 @@ async def async_legacy_ids_with_history(
     """Return legacy ids the recorder still holds rows for.
 
     The registry lookup is the good path, but it is not the only evidence that
-    a YAML package was here. `doc/cleanup_entities.md` has told users for years
+    a YAML package was here. `legacy/doc/cleanup_entities.md` has told users for years
     to delete the orphaned entries a removed YAML platform leaves behind, and
     plenty have. Their registry is then clean while the recorder still holds
     years of rows under those ids — history that is perfectly migratable and
@@ -326,8 +455,21 @@ def async_legacy_ids_live(hass: HomeAssistant, suffix: str = "") -> set[str]:
     return {
         entity_id
         for entity_id in async_legacy_ids_known(hass, suffix)
-        if hass.states.get(entity_id) is not None
+        if _async_provided(hass, entity_id)
     }
+
+
+@callback
+def _async_provided(hass: HomeAssistant, entity_id: str) -> bool:
+    """Return whether a running entity holds this id.
+
+    Not merely whether it has a state: at every start Home Assistant writes
+    an `unavailable` state flagged `restored` for each registry entry nothing
+    provides, the YAML package's orphans included. That state is a
+    placeholder, and removing the registry entry removes it with it.
+    """
+    state = hass.states.get(entity_id)
+    return state is not None and not state.attributes.get(ATTR_RESTORED)
 
 
 @callback
@@ -354,9 +496,12 @@ def async_claim_legacy_ids(
     the second setup it usually is not -- the user removed it, which is what
     the migration told them to do. Re-deriving would answer `None` then, and a
     `None` read as "no suffix" would point the second inverter at the first
-    one's ids.
+    one's ids. So a slot stored as `None` -- one that could not be determined
+    -- claims nothing at all.
     """
-    suffix = entry.data.get(CONF_LEGACY_SLOT) or ""
+    suffix = stored_legacy_slot(entry)
+    if suffix is None:
+        return []
     registry = er.async_get(hass)
     claimed: list[str] = []
     legacy = async_legacy_entities(hass, suffix)
@@ -422,8 +567,9 @@ def _async_release(
     so the row is exactly what the new entity then writes into. That is also
     why the reverse migration works: nothing was deleted, only re-pointed.
 
-    Removal is refused while the entity is still live, because then the YAML
-    package is still loaded and the user should be removing it properly rather
+    Removal is refused while an entity still provides the id -- a restored
+    placeholder state does not count -- because then the YAML package is
+    still loaded and the user should be removing it properly rather
     than having it pulled out from under a running instance.
     """
     existing = registry.async_get(legacy_id)
@@ -432,7 +578,7 @@ def _async_release(
     if existing.platform == DOMAIN:
         # Ours already, from a previous setup of this entry.
         return True
-    if hass.states.get(legacy_id) is not None:
+    if _async_provided(hass, legacy_id):
         _LOGGER.warning(
             "%s is still provided by the %s integration; remove the YAML "
             "package and restart before migrating",
@@ -516,7 +662,11 @@ async def async_plan_id_switch(
     registry = er.async_get(hass)
     serial = entry.unique_id
     if suffix is None:
-        suffix = entry.data.get(CONF_LEGACY_SLOT) or ""
+        # Towards legacy ids the caller has refused an undetermined slot
+        # already; towards modern ids the unsuffixed set only decides which
+        # entities count as on a legacy id, and an undetermined entry claimed
+        # none.
+        suffix = stored_legacy_slot(entry) or ""
     legacy = async_legacy_entities(hass, suffix)
     reserved: set[str] = set()
     targets: dict[str, str] = {}

@@ -1,16 +1,15 @@
 """Running a capability survey from the device page, and saying where it is.
 
-The survey used to run inside the options flow, behind a spinner. That was
-wrong in three ways a contributor feels: a modal dialog cannot be left while
-it works, an indeterminate spinner says nothing about how long a slow link
-will take, and when it finished there was nowhere to put a *download* button
-because a config flow has no such thing.
+Not in a config flow, because a flow is wrong in three ways a contributor
+feels: a modal dialog cannot be left while it works, an indeterminate spinner
+says nothing about how long a slow link will take, and a flow has nowhere to
+put a *download* button.
 
-So it lives here instead, as state a device page can render. One runner per
-config entry, holding what the last run did and what the current one is
-doing, and telling the entities when either changes.
+So it lives here, as state a device page can render. One runner per config
+entry, holding what the last run did and what the current one is doing, and
+telling the entities when either changes.
 
-Three things this buys that the flow could not:
+Three things this buys that a flow could not:
 
 - **It survives navigation.** Press the button, go and look at something
   else, come back. The run is a task on the event loop, not a dialog.
@@ -317,8 +316,7 @@ class SurveyRunner:
                     # because nothing there survives a wait like that.
                     allow_dump=True,
                     # Likewise only here, and not an option: the measurement
-                    # `src/sungrow_modbus/inverter/layout.py` is changed from, which
-                    # until now only somebody with a terminal could take.
+                    # `src/sungrow_modbus/inverter/layout.py` is changed from.
                     allow_block_test=True,
                 )
                 if control_test:
@@ -362,9 +360,8 @@ class SurveyRunner:
             self._async_offer_the_document(document)
         # Deliberately broad, and logged rather than raised: the survey
         # succeeded and its state already says so. Losing the announcement
-        # is bad, but losing it *silently* is what it used to do -- this
-        # ran outside the try above, so anything it raised ended the task
-        # with a bare asyncio traceback and a device page claiming success.
+        # is bad; losing it *silently* -- a bare asyncio traceback and a
+        # device page claiming success -- is worse.
         except Exception:
             _LOGGER.exception(
                 "The survey for %s finished but could not be announced. "
@@ -382,8 +379,7 @@ class SurveyRunner:
         sensor's attributes are not a place you can click. The link is signed
         and short-lived; `download.py` says why.
 
-        Three things are said that the first version left out, each because
-        a contributor hit it:
+        Three things are said, each because a contributor needs it:
 
         - **where the notification is.** A persistent notification is a badge
           in the sidebar, and somebody watching the device page for a progress

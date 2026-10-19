@@ -3,7 +3,7 @@
 > Plan of record for the `proper-ha-integration` branch. What can be asserted
 > is asserted in `tests/`; this file holds what is decided, what is next, and
 > why. Measurements live in `device-fingerprints/`, and the rules learned
-> on hardware in `CLAUDE.md`.
+> on hardware in `AGENTS.md`.
 
 ## Status
 
@@ -19,18 +19,25 @@
 | 8 — Sungrow Logger | ⬜ not started |
 
 Released as PEP 440 pre-releases (`0.1.0aN`), named "(preview)" in both
-manifests. A release is `scripts/release/sync_version.py --set X`, a commit, an
+manifests. The releases are **diagnostics-only**: `DEVICES_MODE_OFFERED` in
+`const.py` is off, so Add integration makes an entry that runs the survey and
+creates no readings, promotion is greyed out, and the entity-id question is
+never put. An existing devices entry still loads. Turning the flag on is the
+whole re-enablement (`tests/test_alpha_gate.py`).
+
+A release is `scripts/release/sync_version.py --set X`, a commit, an
 **annotated** tag and `git push --follow-tags`; `release.yml` verifies the tag,
 runs ruff, pytest, hassfest and the HACS action, publishes a GitHub
 pre-release and the library to PyPI over OIDC. Run hassfest locally first
-(command in `CLAUDE.md`).
+(command in `AGENTS.md`).
 
 ## What is next
 
 ### Decisions for the maintainer
 
-1. **When to merge into `main`.** That retires the preview channel and opens
-   the HACS default store, which also needs the brand in
+1. **When to offer the ordinary setup** (`DEVICES_MODE_OFFERED`), and
+   **when to merge into `main`.** The merge retires the preview channel and
+   opens the HACS default store, which also needs the brand in
    `home-assistant/brands` (`scripts/helpers/make_brand_icon.py` draws it).
 2. **Are the entity names final?** They are reviewed
    (`doc/entity_name_review.md`, `scripts/helpers/review_names.py`). A rename
@@ -41,57 +48,51 @@ pre-release and the library to PyPI over OIDC. Run hassfest locally first
    outside the package and are **not** adopted. Doing it would mean taking
    over entities this project never generated; the default stays "no".
 
-### Work with no blocker
-
-4. **13074 at fwitten.** Run `sungrow_control_test.py --export-scale` against
-   the 1:1 firmware it was built for, and confirm a fresh install there sets
-   up and probes correctly. Needs the VPN route into the devcontainer.
-
 ### Blocked on evidence
 
-5. **Firmware-dependent register semantics** ([#763]). The pattern is
+4. **Firmware-dependent register semantics** ([#763]). The pattern is
    `capabilities.ABSENT_ON_FIRMWARE`: a small table of deviations keyed on
    the **whole** `sungrow_version_1` string (platform prefix included --
    `PEARL-H_01011.01.45` is not older than `SAPPHIRE-H_01011.95.03`), each
    citing the fingerprint it came from. #763's deviation is 13074's write
-   scale, which the per-device probe measures and stores with the firmware;
-   no committed fingerprint shows another, so the table has no entry to hold.
-6. **A fault seen on hardware.** The fifteen words are read and decoded from
+   scale, which the per-device probe measures and stores with the firmware,
+   so it needs no table entry; no committed fingerprint shows another.
+5. **A fault seen on hardware.** The fifteen words are read and decoded from
    V1.1.11's Appendix 4; one survey has a flag set (bit 30 of the inverter
    alarm, a slave with no meter), which confirms the word order. Still
    wanted: a reading during a real grid or battery fault, the battery words
    through a dongle, and V1.1.16's appendix compared bit for bit.
-7. **iHomeManager (milestone 5).** Port 502 *or* 503, unit 247. Not a gateway:
+6. **iHomeManager (milestone 5).** Port 502 *or* 503, unit 247. Not a gateway:
    one endpoint, one device. `identify()` recognises it and the survey
    reports it; the map is in
    [cross_reference_modbus_manager.md](cross_reference_modbus_manager.md)
    (MIT). Needs a survey from an owner.
-8. **Sungrow Logger (milestone 8).** Documented (*Logger Communication
+7. **Sungrow Logger (milestone 8).** Documented (*Logger Communication
    Protocol AW0 1.0.2.9*); fronts a whole installation, which is what the
    one-entry-per-endpoint model was built for. It does **not** forward
    battery data ("Logger is not supported" in the hybrid protocol's Note 2).
-9. **SBR per-module entities.** All 24 registers are read; an unfitted module
+8. **SBR per-module entities.** All 24 registers are read; an unfitted module
    answers 0 V, so the module count has to be established first. The
    encoding is a decision, not a migration. An SBR128 survey settles it.
-10. **SBH.** Answers the SBR's common block at unit 2 with the SBR's scales;
+9. **SBH.** Answers the SBR's common block at unit 2 with the SBR's scales;
     per-module arrays unread. Needs the register document.
-11. **Meter phase voltage/current (5741-5746) on dongle houses.** Read zero
+10. **Meter phase voltage/current (5741-5746) on dongle houses.** Read zero
     through every WiNet-S measured and are gated on a non-zero voltage. Whether
     they need reading on their own (#756) needs a survey from an affected
     owner; `layout.py` changes only on measurement.
-12. **T-series energy counters.** One SH20T reads 13045 (daily export) as 0
+11. **T-series energy counters.** One SH20T reads 13045 (daily export) as 0
     while exporting, and 5003/5004-5005 duplicating the export counters. A
     second T survey, ideally on a cable, before `registers.py` changes.
-13. **Modbus over TLS on 516.** The path exists (`ModbusTlsParams` through
-    `async_get_unit`). Worth building only if 516 is a *separate* session pool
-    from 502 -- hold 502 until it refuses, then try 516. Also wanted: a
-    certificate hash from a third site, to show whether every dongle ships the
-    same key.
-14. **Does a WiNet-S advertise over mDNS?** Needs a house with a dongle and
+12. **Modbus over TLS on a WiNet-S's 516.** Built for a wallbox's own
+    address (`wallbox_host`, `links.wallbox_tls_params`). For the dongle it is
+    worth building only if 516 is a *separate* session pool from 502 -- hold
+    502 until it refuses, then try 516. Also wanted: a certificate hash from a
+    third site, to show whether every dongle ships the same key.
+13. **Does a WiNet-S advertise over mDNS?** Needs a house with a dongle and
     a run on the host, not in the container.
 
 The most useful contribution is in
-[devices-wanted.md](device-fingerprints/devices-wanted.md): a **second firmware
+[devices-wanted.md](../device-fingerprints/devices-wanted.md): a **second firmware
 on a model already recorded**, the only comparison that separates firmware
 from model.
 
@@ -145,12 +146,16 @@ InfluxDB and Grafana get advice and a script (`scripts/helpers/influx_migration.
   integration).
 - **Entity ids are a choice at setup**: legacy ids for existing users, modern
   device-scoped ones for new users. Modern ids take the prefix from the device
-  type register; a second device of the same model is told apart by unit id.
+  name: the model from the device type register, or, where the search found
+  more than one inverter, a name the owner gives in setup (offered: the model
+  plus the role, where a direct connection could read it).
   **The options page switches an entry either way** (`migration.async_plan_id_switch`):
   towards modern ids each series moves by rename; towards legacy ids an id
   that still holds the YAML package's history continues it, and the modern
   series stays under its own id. Rows already on a target id are renamed to
-  `<id>_archive` first. An id the owner chose is left alone.
+  `<id>_archive` first. An id the owner chose is left alone. A YAML orphan's
+  restored `unavailable` state does not count as the package running; a live
+  entity on the id refuses the move.
 - **The config flow says each inverter's role and how it is known.** A
   device address other than 1 is a measured slave; its partner at address 1
   is the inferred master; through dongles only battery ownership survives,
@@ -171,14 +176,16 @@ InfluxDB and Grafana get advice and a script (`scripts/helpers/influx_migration.
 - **The naming rule is per device**, and one convention is enforced by test
   (`scripts/generate/tables/naming.py`).
 - **Start and stop are actions, not buttons**, with an audience set per entry
-  (admins only by default). The YAML's danger-mode toggle and automations are
-  not ported.
+  (admins only by default); the control test has an audience of its own.
+  The YAML's danger-mode toggle and automations are not ported.
 - **The wallbox is read-only.** No manufacturer document covers its map.
 - **The opt-in SBR sensors keep no history**: partial adoption looks like a
   migration and is not one.
-- **The integration offers a dashboard and asks first.**
+- **The integration offers a dashboard and asks first.** To do: nothing
+  generates one yet.
 - **Localisation follows Home Assistant**: modern ids take the interface
-  language where HA says they should; legacy ids stay English.
+  language where HA says they should; legacy ids stay English. Only English
+  ships.
 - **13074's write scale is measured per device** (`sungrow_modbus.inverter.export_scale`)
   and stored with the firmware it was measured on.
 - **Delivery is HACS first**, through the preview channel until the merge.
@@ -186,19 +193,27 @@ InfluxDB and Grafana get advice and a script (`scripts/helpers/influx_migration.
 
 ## The migration
 
-The mechanism is settled and asserted in `tests/test_recorder_migration.py`;
-`CLAUDE.md` has the rules. In short: claim the legacy `entity_id` at entity
-creation, so history continues with no recorder API involved; modern ids are
-that plus one registry rename, which carries raw history and long-term
+The mechanism is settled and asserted in `tests/test_recorder_migration.py`,
+`tests/test_migration.py`, `tests/test_legacy_slot.py` and
+`tests/test_entity_id_switch.py`; `AGENTS.md` has the rules. In short: claim
+the legacy `entity_id` at entity creation, so history continues with no
+recorder API involved; modern ids are that plus one registry rename, which carries raw history and long-term
 statistics. Every ported entity keeps the YAML entry's unit class and
 `state_class`. A second inverter's `_inv_<n>` slot is detected from its serial
-sensor and stored in entry data.
+sensor -- live, else in the recorder's history -- and stored in entry data
+(`CONF_LEGACY_SLOT`). Where neither matches, the slot is `""` only if no
+numbered slot ever existed; otherwise it is stored as `None`, the entry
+claims no legacy ids, and switching to them is refused until the serial can
+be matched (`migration.async_resolve_legacy_slot`).
 
 The user-facing order is fixed in
 [integration_migration.md](integration_migration.md): back up and check the
-backup covers the recorder; remove the YAML package and restart; add the
-integration; clear the leftovers when the repair offers; verify a known sensor
-is continuous; then dashboards and Energy.
+backup covers the recorder; copy out the package's scenes and automations
+that are wanted; remove the YAML package and restart; add the integration,
+which releases the package's orphaned registry entries as it claims their
+ids; verify a known sensor is continuous; then dashboards and Energy. A house
+with several inverters adds each entry while the package still runs, so the
+slot can be measured, and switches to legacy ids after removing it.
 
 ## Register sources
 
@@ -256,7 +271,7 @@ The YAML track lives under [legacy/](../legacy/) on this branch; on `main` it
 stays at the root until the integration replaces it. `scripts/` is grouped by
 job — `dev/`, `generate/`, `release/` and `helpers/`. What a contributor is
 handed is `device-fingerprints/scripts/`: one launcher, `survey.{sh,cmd}`,
-which reads and offers the control test at the end — and `CLAUDE.md` lists
+which reads and offers the control test at the end — and `AGENTS.md` lists
 every script.
 
 ## Documentation

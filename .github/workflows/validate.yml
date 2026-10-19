@@ -73,6 +73,8 @@ jobs:
         run: python scripts/generate/descriptions.py strings --check
       - name: The compatibility page matches the fingerprints
         run: python scripts/generate/generate_compatibility.py --check
+      - name: The simulator seed matches the YAML package and the entity map
+        run: python scripts/generate/generate_simulator_registers.py --check
       - name: The entity name review sheet matches the descriptions
         run: python scripts/helpers/review_names.py --check
       - name: Ruff
@@ -88,25 +90,24 @@ jobs:
       - name: Pytest
         run: pytest -q
 
-      # The release workflow is the only thing that packages the library, and
-      # it runs once, on a tag, against an index where uploads are immutable.
-      # That makes the first real publish the worst possible moment to find
-      # out the package does not build. This is the same two steps, ten
-      # seconds, and touches no external service.
+      # The release workflow is the only thing that publishes the library,
+      # once per tag, to an index where uploads are immutable -- the worst
+      # possible moment to find out the package does not build. This is the
+      # same two steps, ten seconds, and touches no external service. `build`
+      # and `twine` come from requirements_dev.txt, like every other tool here.
       #
       # It does NOT prove trusted publishing works -- only an upload does
       # that. Rehearse the handshake with the manual "Rehearse the PyPI
       # publish" workflow before tagging.
       - name: The library still packages
         run: |
-          python -m pip install --upgrade build twine
           python -m build
           twine check --strict dist/*
 
       # Every other check in this file runs against the editable install from
-      # `src/`, which satisfies any import the source tree can satisfy. So
-      # nothing here has ever tested the thing a user actually gets: the
-      # integration's imports against a *built* library.
+      # `src/`, which satisfies any import the source tree can satisfy. None
+      # of them tests what a user gets: the integration's imports against a
+      # *built* library.
       #
       # This asks that of the wheel built one step above, which is answerable
       # offline and true whenever the tree is consistent. It deliberately does
@@ -121,9 +122,8 @@ jobs:
       # `doc/preview-mirror/sync.yml` is the source of record for the preview
       # channel: the copy that runs lives in a separate repository which gets
       # archived once the integration reaches `main`, so the documented one is
-      # what survives. Two files, and nothing made them agree -- unlike every
-      # other duplication in this project, which has a generator or an
-      # equality test.
+      # what survives. Two files in two repositories, so no generator or
+      # equality test can hold them together; this comparison does.
       #
       # Skips rather than fails when the file cannot be fetched: the preview
       # repository is temporary by design, and its removal must not turn this

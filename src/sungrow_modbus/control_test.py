@@ -65,9 +65,9 @@ BLOCK_SCHEMA = 2
 # -- budgets -----------------------------------------------------------------
 #
 # Ten minutes, spent deliberately. The phases below add to 480 rather than to
-# 600, and the 120 seconds of slack is not an oversight: `blocks.NARROW_BUDGET`
-# learned this the expensive way, that a phase budgeted to the cap is a phase
-# that kills the run on a slow link and loses the findings it already had.
+# 600, and the 120 seconds of slack is not an oversight: a phase budgeted to
+# the cap is a phase that kills the run on a slow link and loses the findings
+# it already had, which is the same reasoning as `blocks.NARROW_BUDGET`.
 #
 # Every deadline is absolute and computed once at the start, never
 # cumulatively, so a preflight that overruns eats its own slack and never the
@@ -104,13 +104,14 @@ SIGNIFICANCE = 3.0
 SNAPSHOT_PAUSE = 1.0
 """Seconds between attempts at reading a control's before-state. Three
 attempts, because on a link somebody else is polling the first one can simply
-miss -- and missing it once used to cost that control the entire run."""
+miss -- and a control whose before-state is not read is struck off the plan
+for the whole run."""
 
 RESTORE_ATTEMPTS = 5
 RESTORE_PAUSE = 2.0
-"""Five attempts, two seconds apart. The 2026-09-07 hardware run lost the link
-*during a restore* and left a register at 210 W, so this is sized for a link
-that drops between any two steps rather than for one that works."""
+"""Five attempts, two seconds apart, sized for a link that drops between any
+two steps rather than for one that works: a link lost *during a restore* is
+measured, and it left a register at a probe value."""
 
 # -- restart -----------------------------------------------------------------
 
@@ -126,11 +127,9 @@ RESTART_DWELL = 10.0
 
 #: How long to allow between the start command and a running state.
 #:
-#: **Measured, not guessed, and the first guess was less than half of it.** The
-#: reference SH10RT reported a stopped state 2 seconds after the stop command
-#: and took about four minutes to come back -- roughly two of those sitting in
-#: `0x0020 Starting`. The original 180 seconds, divided into ten attempts of
-#: eighteen, expired while the inverter was booting perfectly normally.
+#: **Measured, not guessed.** The reference SH10RT reported a stopped state 2
+#: seconds after the stop command and took about four minutes to come back --
+#: roughly two of those sitting in `0x0020 Starting`.
 #:
 #: **Twice as long in the dark.** With no PV, fwitten's SH10RT-V112 took 381
 #: seconds and gerd's SH8.0RT-V112 369, against 197 and 180 in daylight --
@@ -163,21 +162,20 @@ state, which is why the writable field is `control.start_stop` and not
 #:
 #: Derived from `derived.RUNNING_STATES` rather than typed out, and that is not
 #: tidiness. **0x0000 means "Running"** -- the obvious guess, that zero means
-#: off, is wrong and would have had this procedure refuse to run on every
-#: healthy inverter, then mistake a working one for a stopped one during a
-#: restart. A list derived from the labels cannot drift from them, and a new
-#: code added to the map is classified the moment it is named.
+#: off, is wrong and would have this procedure refuse to run on a healthy
+#: inverter behind a dongle, then mistake a working one for a stopped one
+#: during a restart. A list derived from the labels cannot drift from them,
+#: and a new code added to the map is classified the moment it is named.
 STOPPED_WORDS = ("stop", "standby", "shutdown", "uninitialized")
 RUNNING_WORDS = ("running", "off-grid charge")
 
-#: A state that is neither, and pretending it does not exist was expensive.
+#: A state that is neither, and the wait has to recognise it.
 #:
-#: `0x0020 Starting` contains neither "stop" nor "running", so it fell between
-#: both sets and the wait could not tell a booting inverter from a silent one.
-#: Measured 2026-09-19: the reference SH10RT sat in it for minutes after a start
-#: command, while the procedure re-sent that command ten times and then told its
-#: owner the inverter had not come back and to start it by hand. It had come
-#: back; it was booting.
+#: `0x0020 Starting` contains neither "stop" nor "running", so without its own
+#: set it falls between both and a wait cannot tell a booting inverter from a
+#: silent one. The reference SH10RT sits in it for minutes after a start
+#: command; a wait that does not know it re-sends the command into a machine
+#: already booting and then reports that it never came back.
 STARTING_WORDS = ("starting",)
 
 RUNNING_STATES_STOPPED = frozenset(
@@ -366,8 +364,8 @@ PROBES: tuple[Probe, ...] = (
         requires=Capability.BATTERY,
         preferred=7,
     ),
-    # Spec reg 33047, U16, **0.01 kW = 10 W per count**. The YAML's comment at
-    # `legacy/modbus_sungrow.yaml:1328` says "scale=100" and its code says
+    # Spec reg 33047, U16, **0.01 kW = 10 W per count**. The YAML's NOTE above
+    # "Battery max charge power" says "scale=100" and its code says
     # `scale: 10`; the code is right and the parenthetical is an arithmetic
     # slip. Confirmed on hardware, which read `[20, 10]` as 200 W and 100 W.
     Probe(
@@ -396,16 +394,16 @@ PROBES: tuple[Probe, ...] = (
     # Spec reg 13074, U16, **1 W per count**, bounds read from registers 5622
     # and 5623 because the inverter states them and a table would not.
     #
-    # This stays 1 even though the register is written in tens of watts, and
-    # the distinction is the whole point of leg B. `spec_units_per_count`
-    # describes what the register **contains**, which is watts: 10000 back
-    # against a 10000 W maximum. The decade lives on the write side alone,
-    # where the firmware multiplies the word before storing it, and
-    # `registers.AsymmetricNumberField` is what absorbs it. So after that fix a
-    # 900 W write leaves the raw word at 900 and this row reads `matched`;
-    # before it, the word was 9000 and this row read `SCALED`. Setting this to
-    # 10 to "agree with the write scale" would make the run green against a
-    # library that had gone wrong again -- the exact tautology the column
+    # This stays 1 even though most firmware writes the register in tens of
+    # watts, and the distinction is the whole point of leg B.
+    # `spec_units_per_count` describes what the register **contains**, which
+    # is watts: 10000 back against a 10000 W maximum. The decade lives on the
+    # write side alone, where a multiplying firmware scales the word before
+    # storing it; the run writes at the factor `export_scale` measured, so a
+    # right 900 W write leaves the raw word at 900 and this row reads
+    # `matched`, and a wrong one leaves 9000 or 90 and reads `SCALED`. Setting
+    # this to 10 to "agree with the write scale" would make the run green
+    # against a library that had gone wrong -- the exact tautology the column
     # exists to avoid.
     Probe(
         field="export_power_limit",
@@ -420,10 +418,10 @@ PROBES: tuple[Probe, ...] = (
     ),
     # Spec reg 13052, U16, **1 W per count**, "0-100% of BDC rated power".
     #
-    # One register below 33047's neighbourhood in purpose and a decade away
-    # from it in units. `scripts/generate/tables/writes.py:149-155` names this as the
-    # single most likely future 10x error in the map, which is why it gets both a
-    # two-point slope and a behavioural check.
+    # The same quantity as 33047/33048 and a decade away from them in units.
+    # The note above this field in `scripts/generate/tables/writes.py` names
+    # that as exactly what a hand-typed table gets wrong, which is why it gets
+    # both a two-point slope and a behavioural check.
     Probe(
         field="battery_forced_charge_discharge_power",
         component="fast_holding",
@@ -778,10 +776,10 @@ class RestoreResult(NamedTuple):
 class RestartResult(NamedTuple):
     """What a stop and start cost, in seconds, on this machine.
 
-    Every field here is a number this project has never had. The recovery time
-    after a Modbus stop is undocumented upstream and unmeasured in this repo;
-    the only timing anywhere in it is the five minutes the FAQ gives for a
-    physical cold boot, which is a different thing entirely.
+    The recovery time after a Modbus stop is undocumented upstream, and the
+    five minutes the FAQ gives is for a physical cold boot, a different thing.
+    Each run adds one more model, firmware and time of day to the measurements
+    the restart deadlines above are sized from.
     """
 
     stopped_after: float | None
@@ -876,11 +874,11 @@ class Options:
     restart_only: bool = False
     """Measure the stop and start, and nothing else.
 
-    The readback and behavioural phases write nine registers between them, and
-    none of that is needed to time a reboot. A house lending its inverter for
-    the one measurement this project still lacks should not have to accept the
-    other twenty as the price -- and fewer writes before deliberately stopping
-    somebody's inverter is the safer order in any case.
+    The readback and behavioural phases write a dozen registers between them,
+    and none of that is needed to time a reboot. A house lending its inverter
+    for that one measurement should not have to accept the rest as the price
+    -- and fewer writes before deliberately stopping somebody's inverter is the
+    safer order in any case.
 
     Preflight still runs, because the snapshot is what answers whether the
     settings survived the restart.
@@ -1043,21 +1041,6 @@ SOC_CEILING_FLOOR = 55.0
 #: heading for zero, and a percentage of zero is not a tolerance.
 STOPPED_W = 200.0
 
-#: The least export that makes a limit check worth running, derived rather than
-#: chosen. The check caps export at `EXPORT_FRACTION` of what it measures, so
-#: the drop it has to see is `1 - EXPORT_FRACTION` of that -- and a drop is only
-#: a reading when it clears `EFFECT_FLOOR_W` and the house's own noise.
-#:
-#: `200 / 0.6` is 333 W, and the factor of three on top is headroom for a MAD
-#: the floor does not cover.
-#:
-#: **It was a flat 2000 W until 2026-09-19**, which was a round number with no
-#: derivation behind it, and it turned out to be the thing standing between the
-#: check and its first measurement: a house with 2332 W of PV and 451 W of load
-#: can export 1881 W and no more. Worth being plain that this was loosened
-#: after a measurement failed to clear it -- the defence is that the new value
-#: is computed from the tolerances the verdict already uses, and that at 1881 W
-#: the drop under test is 1130 W against a 200 W floor.
 #: The step `scripts/generate/tables/writes.py` gives the export limit, and the smallest
 #: cap that can therefore be asked for.
 EXPORT_STEP_W = 100.0
@@ -1065,12 +1048,11 @@ EXPORT_STEP_W = 100.0
 #: What the behavioural checks command, in watts, for the forced charge, the
 #: forced discharge and the export cap alike.
 #:
-#: **Chosen, not derived**, and the history is the argument for choosing. The
-#: derivation asked each house's own hardware what a safe fraction was, which
-#: is a good instinct and produced a forced charge of 5800 W against a 5883 W
-#: pack the first time a battery was small enough for its decade window to run
-#: out. A number that has to be read against three other functions to know what
-#: it will be is a number nobody checks; this one is legible from here.
+#: **Chosen, not derived.** A figure derived from each house's own hardware
+#: walks up to the pack's ceiling once earlier probes have spent the decade
+#: window's values -- a 5800 W forced charge against a 5883 W pack. A number
+#: that has to be read against three other functions to know what it will be
+#: is a number nobody checks; this one is legible from here.
 #:
 #: 1250 W is large enough to clear `EFFECT_FLOOR_W` several times over, so a
 #: window can tell it from the house breathing, and small enough to be
@@ -1085,8 +1067,9 @@ FORCED_EFFECT_W = 1250.0
 #: hardware: a BMS throttles as the pack fills and as it warms, and the same
 #: house read 10000 W in the afternoon and 3200 W at 99.8 % that night. A
 #: setpoint written against a ceiling read minutes earlier is therefore clamped
-#: to whatever the limit has become, which is what happened at bar12 -- 3158 W
-#: asked, 3150 W accepted, and the whole export check abandoned over 8 W.
+#: to whatever the limit has become: measured at bar12, 3158 W asked and
+#: 3150 W accepted, which without headroom and `CLAMP_TOLERANCE` abandons the
+#: whole export check over 8 W.
 FORCE_EXPORT_HEADROOM = 0.05
 
 #: The largest shortfall that counts as a clamp rather than a finding.
@@ -1111,42 +1094,22 @@ FORCE_EXPORT_MARGIN = 1.5
 def export_cap(exporting: float, step: float = EXPORT_STEP_W) -> float:
     """Return the cap to ask for, which is simply `FORCED_EFFECT_W`.
 
-    It was a tenth of the room, and that had a real reason: register 13074
-    applied **ten times** what it was given, so a cap set to a sensible fraction
-    of current export became a multiple of it, bound on nothing, and the check
-    reported that nothing happened -- the same answer a device ignoring the
-    write would give. Asking for a tenth meant the decade case still curtailed,
-    which made this an independent second detector of the bug.
+    Not a fraction of the current export. The write scale of 13074 is measured
+    per device by `export_scale` and written at that factor, so the cap on the
+    wire is the cap in reality, and a fraction small enough to stay binding
+    under a decade error would curtail every honest house that much harder on
+    every run.
 
-    That reason has expired, and saying why matters more than the change. The
-    decade is **compensated in the library now**, by
-    `registers.AsymmetricNumberField`, and confirmed on three houses. So a tenth
-    of the room no longer produces a tenth-sized cap on the wire: it produces a
-    tenth-sized cap in reality, curtailing the house ten times harder than
-    anyone asked for, to detect something that is already fixed and already
-    guarded by leg B at commit time.
+    What leg C can still show: a write that lands a decade *small* -- 125 W
+    where 1250 was asked -- binds harder and reads `EFFECT_SCALED`. A write
+    that lands a decade *large* binds on nothing and reads `NO_EFFECT`,
+    indistinguishable from an ignored write; leg B sees that from the raw word,
+    and `tests/test_writes.py` fails on the library's half of it at commit time.
 
-    What is lost is narrower than "leg C stops catching the decade", and the
-    precision matters. A firmware that decuples is the *expected* one and is
-    compensated, so it lands on 1250 W and confirms. A firmware that does **not**
-    decuple gets 125 W where 1250 was asked, which binds harder rather than
-    less, and still reads as `EFFECT_SCALED` -- and that is the error mode that
-    matters now, because it is what an unexpected firmware would do to a build
-    that compensates.
-
-    The case genuinely given up is a build where the compensation is **broken or
-    removed** and the firmware decuples anyway: the cap then lands at 12500 W,
-    binds on nothing, and reads `NO_EFFECT`, indistinguishable from an ignored
-    write. The old tenth-of-the-room cap would still have bound and shown the
-    decade. That is accepted because leg B sees exactly that regression from the
-    raw word, and `tests/test_writes.py` fails on it at commit time rather than
-    on somebody's roof -- and because the price of keeping the detector is
-    curtailing every honest house tenfold on every run.
-
-    `exporting` and `step` are kept in the signature because the caller clamps
-    to the register's live bounds and the report quotes both.
+    `exporting` and `step` are unused and kept for callers and tests that pass
+    them.
     """
-    del exporting, step  # kept for the caller's contract; the cap is stated now
+    del exporting, step
     return FORCED_EFFECT_W
 
 
@@ -1221,6 +1184,11 @@ class ControlTest:
         facts, and only one of them is about the register.
         """
         self._taken: list[float] = []
+        """Every value this run has written anywhere, so no two controls get the
+        same one. Held on the run rather than in the readback walk, because the
+        behavioural phase picks a value too -- and a forced charge at the value
+        the charge limit already holds is exactly the collision that makes a
+        write to the wrong address invisible."""
         self.export_write_scale: int | None = None
         """How this firmware writes 13074, as `export_scale` measured it, or
         `None` before it is asked or where it could not answer. `None` writes
@@ -1234,12 +1202,6 @@ class ControlTest:
         measured power against what was *accepted*, because comparing against a
         figure the device already declined would report the clamp as a finding.
         """
-        """Every value this run has written anywhere, so no two controls get the
-        same one. Held on the run rather than in the readback walk, because the
-        behavioural phase picks a value too -- and the first hardware dry run
-        had it choose 700 W for a forced charge when 700 W had already gone to
-        the charge limit, which is exactly the collision that makes a write to
-        the wrong address invisible."""
         self._deadlines: dict[str, float] = {}
         self._done = 0
         self._total = 1
@@ -1432,17 +1394,14 @@ class ControlTest:
         settling time the tool could sit out to earn legs A and B back on a
         dongle, and offering one would only make a stale answer look ripe.
 
-        **Three answers, not two**, and the third is the point. This used to
-        read the register once and treat *any* failure as a dongle, which is
-        wrong in the one direction that costs something: a lost read is not a
-        refusal. Measured 2026-09-20 on the reference SH10RT -- a cable, no
-        communication module fitted at all -- where a run made
-        while Home Assistant was polling produced a document whose survey half
-        said "direct to the inverter's LAN port" and whose control test said
-        dongle, and which therefore stamped its own readback table "not
-        evidence". Over a VPN, where this project has measured 10-second
-        timeouts against milliseconds elsewhere, that would be the common case
-        rather than the unlucky one.
+        **Three answers, not two**, and the third is the point. Treating *any*
+        failure as a dongle is wrong in the one direction that costs
+        something: a lost read is not a refusal. On a cable with Home Assistant
+        polling alongside, a lost read would stamp the readback table "not
+        evidence" while the survey half of the same document said "direct to
+        the inverter's LAN port" -- and over a VPN, where 10-second timeouts
+        are measured, that would be the common case rather than the unlucky
+        one.
 
         So a *refusal* -- the device answering with an exception code -- is
         evidence and means a dongle, while a connection lost, a timeout or a
@@ -1512,15 +1471,10 @@ class ControlTest:
     ) -> tuple[float | int | None, int | None]:
         """Read one control's current value and raw word, retrying the read.
 
-        Retried because the first hardware run showed why it has to be. On an
-        inverter that something else was already polling, one read of the export
-        power limit dropped -- and a single attempt meant that control was
-        struck off the plan for the *whole run*, reported as "could not be
-        read", while a read by hand a minute later answered perfectly.
-
-        A dropped read on a contended link is a moment, not a state. That is the
-        same thing `probe.py` learned when it started re-rounding the components
-        a survey had missed rather than taking the first answer as final.
+        Retried because a control that cannot be read here is struck off the
+        plan for the *whole run*, and on an inverter something else is polling
+        one read can simply drop while the next answers perfectly. A dropped
+        read on a contended link is a moment, not a state.
         """
         for attempt in (1, 2, 3):
             await self._refresh(probe.component)
@@ -1679,11 +1633,9 @@ class ControlTest:
         `self.refusals`, because "refused" on its own is not a finding. An
         exception 0x04 is the device saying the value is out of range, which is
         a fact about the register; 0x06 is the device saying it is busy, which
-        on a link something else is polling is a fact about the afternoon. The
-        survey has named exception types since an open port 502 turned out not
-        to be an inverter, and the control test lacked it until a refusal of
-        `battery_min_soc` on 2026-09-15 could not be explained, then failed to
-        reproduce on 2026-09-19.
+        on a link something else is polling is a fact about the afternoon. A
+        refusal without its exception type cannot be explained afterwards, nor
+        told apart from one that fails to reproduce.
         """
         if self.options.dry_run:
             return None
@@ -1931,11 +1883,10 @@ class ControlTest:
         Leg C cannot cover for it: a cap ten times too big leaves the export
         where it was, which is indistinguishable from the write doing nothing.
 
-        So the register with the only firmware quirk this project has found was
-        also the one whose readback was routinely unavailable. That is the gap
-        this closes, and it is closed only where the owner granted
-        `--enable-export-limit`, because switching this on curtails a real
-        house.
+        So without it the register with the only firmware quirk this project
+        has found is also the one whose readback is routinely unavailable. It
+        is lifted only where the owner granted `--enable-export-limit`, because
+        switching this on curtails a real house.
 
         Returns whether it was lifted, so the caller can put it straight back.
         """
@@ -2115,13 +2066,11 @@ class ControlTest:
             # only safe reading of a failure here is that something may have
             # been changed. The end-of-run restore would catch it anyway; this
             # keeps the window between them from existing.
-            # Read **before** the undo, and that ordering is the whole point.
-            # `undo` writes too, and on this register it fails as readily as
-            # `apply` does -- so reading afterwards reported the exception from
-            # putting the old value back, while claiming to describe the write
-            # that failed. Measured: the export limit's refusal came back
-            # naming `write_register(13073, 10000)`, which is the original, not
-            # the cap the check had just tried to set.
+            #
+            # The refusal is read **before** the undo. `undo` writes too, and
+            # fails as readily as `apply` does, so reading afterwards would
+            # report the exception from putting the original back while
+            # claiming to describe the write that failed.
             because = self.refusals.get(self._last_refused or "", "")
             await undo()
             self._worst(3)
@@ -2183,8 +2132,7 @@ class ControlTest:
 
         Separated from `_bracket` because it is the part with no `await` in it:
         `_bracket` opens windows, writes, waits and puts things back, and this
-        reads the numbers that came out. They were one 188-line method, and the
-        decisions were the half nobody could find.
+        reads the numbers that came out.
 
         The order of the questions is the design, not an accident:
 
@@ -2382,14 +2330,11 @@ class ControlTest:
     def _forced_power(self) -> float | None:
         """Return the power the forced checks command: `FORCED_EFFECT_W`, clamped.
 
-        It used to be derived from the battery's own ceiling, so that ten times
-        the commanded power was still inside what the pack was rated for. The
-        instinct was right and the implementation had a hole: it borrowed
-        `choose_probe`, which falls back from the decade window to the whole
-        range once earlier probes have spent the window's values. That is
-        correct for a readback, where the number is only written and read, and
-        wrong here, where it is *commanded*. At a house with a 5883 W ceiling it
-        resolved a 5800 W forced charge -- at night, 5.8 kW off the grid.
+        Not `choose_probe`, which falls back from the decade window to the
+        whole range once earlier probes have spent the window's values. That is
+        right for a readback, where the number is only written and read, and
+        wrong here, where it is *commanded*: against a 5883 W ceiling it picks
+        a 5800 W forced charge, at night 5.8 kW off the grid.
 
         A stated constant cannot do that. It is clamped to the register's live
         bounds, so a pack too small for 1250 W gets what it can take rather than
@@ -2551,10 +2496,9 @@ class ControlTest:
                 target,
                 apply,
                 undo,
-                # The one check whose commanded value is not a power. Reported
-                # as "62.4 W" on its first hardware run, which is a state of
-                # charge wearing the wrong unit -- and the table it appears in
-                # is full of real watts, so nothing about it looked wrong.
+                # The one check whose commanded value is not a power. Without
+                # this a state of charge prints as "62.4 W" in a table full of
+                # real watts, where nothing about it looks wrong.
                 commanded_unit="%",
                 setpoint=False,
                 expect_stop=True,
@@ -2566,8 +2510,9 @@ class ControlTest:
 
         The export limit check needs power actually leaving, and most houses
         never offer it: a battery soaks up the surplus while the sun is up, and
-        at night there is no surplus. That left a register carrying a real
-        factor-10 error measurable only on a lucky afternoon.
+        at night there is no surplus. Without this, the register with the one
+        firmware quirk this project has found is measurable only on a lucky
+        afternoon.
 
         Discharging is the lever that works whenever the battery has charge,
         including after dark. Commanding more than the house is using sends the
@@ -2602,9 +2547,8 @@ class ControlTest:
         # Rounded to a whole watt, and not for tidiness. These registers hold
         # integers, and `NumberField.encode` takes a fast path on a factor-1
         # field -- `raw = int(value)`, which **truncates**. A fractional command
-        # therefore lands one count low, fails its own verification, and the
-        # discharge is abandoned with "off by something else". It went unnoticed
-        # while this arithmetic happened to come out whole.
+        # would land one count low, fail its own verification, and abandon the
+        # discharge with "off by something else".
         want = float(round(load + MIN_EXPORT_W * FORCE_EXPORT_MARGIN))
         ceiling = self.snapshot.battery_ceiling
         if ceiling is not None:
@@ -2775,10 +2719,9 @@ class ControlTest:
         restore that could be cut short by a clock would turn a run that ran out
         of time into a house left changed.
 
-        A field that will not go back does not stop the others. The 2026-09-07
-        run lost its link *during* a restore and left one register at 210 W;
-        the answer is not to try harder on that field but to make sure its
-        failure cannot take the rest with it.
+        A field that will not go back does not stop the others. A link can be
+        lost *during* a restore; the answer is not to try harder on that field
+        but to make sure its failure cannot take the rest with it.
         """
         snapshot = snapshot or self.snapshot
         names = [name for name in snapshot.values if self._probe_for(name) is not None]
@@ -2811,13 +2754,11 @@ class ControlTest:
     ) -> RestoreResult:
         """Put one control back, and prove it: read first, write only if needed.
 
-        Reading first is not an optimisation. The first hardware run reported
-        `export_power_limit` as **not restored** -- the run's most serious
-        verdict, the one that means a house is left changed -- when the register
-        was holding its original value the whole time. The inverter had silently
-        ignored the write of the probe value, so there was nothing to undo, and
-        then refused the write of the original, so the restore called itself
-        failed.
+        Reading first is not an optimisation. An inverter can silently ignore
+        the write of a probe value, leaving nothing to undo, and then refuse
+        the write of the original -- so a restore judged by its write reports
+        **not restored**, the run's most serious verdict, for a register that
+        held its original value the whole time.
 
         A restore is a statement about where the register *is*, not about
         whether a write succeeded. Asking the register settles it, and it also
@@ -2887,10 +2828,9 @@ class ControlTest:
 
         The raw word, because writing the *value* back goes through the write
         scale, and a restore that depends on the scale is only as right as the
-        scale. It was wrong at fwitten's SH10RT-V112 on 2026-09-25: 13074 there
-        stores the word it is handed, where three other houses multiply it by
-        ten, so the scaled restore wrote 1188 for 11880 W, read back 1180, and
-        left the slave capped at 1.2 kW until the word was put back by hand.
+        scale. At fwitten's SH10RT-V112, 13074 stores the word it is handed
+        where other houses multiply it by ten, so a scaled restore of 11880 W
+        writes 1188 and leaves the inverter capped at 1.2 kW.
 
         The scaled write stays as the fallback, and the multiplying firmware is
         why: there the raw word is itself multiplied -- 10000 goes in as 100000
@@ -2985,14 +2925,11 @@ class ControlTest:
         is what a shutdown hook and a repair flow both need: the inverter is
         never left stopped, whatever happened to the run that stopped it.
 
-        **Waits on one deadline rather than re-sending on a short one.** The
-        first version divided the whole allowance into ten attempts and wrote
-        the start command at the top of each -- so against an inverter that
-        takes minutes to boot it re-sent nine times into a machine already
-        doing what it had been asked, ran out of its 180 seconds while the
-        state still read `Starting`, and reported that the inverter had not
-        come back. It had. Measured 2026-09-19 on the reference SH10RT, which
-        needed about four minutes.
+        **Waits on one deadline rather than re-sending on a short one.** An
+        inverter takes minutes to boot -- about four for the reference SH10RT
+        in daylight, over six in the dark -- and re-sending on a short cycle
+        writes into a machine already doing what it was asked, then gives up
+        while the state still reads `Starting`.
 
         So: send once, then watch. `Starting` is progress and resets nothing;
         only a state that is still *stopped* after `RESTART_RESEND_AFTER`
@@ -3066,11 +3003,7 @@ class ControlTest:
     async def _restart(self) -> RestartResult:
         """Stop the inverter, start it again, and time all three transitions.
 
-        Every number this returns is one the project has never had. The recovery
-        time after a Modbus stop is undocumented upstream and unmeasured here;
-        the only figure anywhere in the repository is the five minutes the FAQ
-        gives for a physical cold boot, which is a different thing done a
-        different way.
+        See `RestartResult` for why these timings are worth publishing.
         """
         before = dict(self.snapshot.values)
         self.snapshot.stopped_at = self.clock.monotonic()
@@ -3183,6 +3116,14 @@ class ControlTest:
 
         if (
             self.options.restart
+            and self.options.dry_run
+            and "refused" not in self.conditions
+        ):
+            # A dry run sends no stop, so a restart would wait out the whole
+            # stop deadline for a state that never comes and then report it.
+            self._note("no restart: a dry run sends no stop command")
+        elif (
+            self.options.restart
             and self.snapshot.values
             and "refused" not in self.conditions
         ):
@@ -3229,8 +3170,7 @@ def planned_steps(options: Options) -> int:
     """Count the progress units a run will report, before any are spent.
 
     Counted up front because a bar whose total grows halfway through is worse
-    than no bar at all -- which `fingerprint.async_build` already learned when
-    the register dump turned out to be two thirds of a survey.
+    than no bar at all.
 
     Part of it is necessarily an estimate: how many controls a device turns out
     to have is not known until the preflight has read it. So the count is
@@ -3281,7 +3221,7 @@ def document(outcome: Outcome) -> dict[str, Any]:
 
 
 #: The start/stop register, wearing a `Probe` so the same write helper covers it.
-#: Not in `PROBES` and not in `WRITABLE_FIELDS`: it is hand-written in
+#: Not in `PROBES` and not in `writes.WRITABLE_FIELDS`: it is hand-written in
 #: `components.InverterControl` because nothing reads it, and it is the one
 #: register in the map that turns the inverter off.
 START_WORD_PROBE = Probe(

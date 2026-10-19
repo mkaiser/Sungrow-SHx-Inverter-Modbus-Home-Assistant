@@ -49,7 +49,13 @@ from homeassistant.components.recorder.db_schema import StatesMeta
 from homeassistant.components.recorder.util import session_scope
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import CONF_HOST, CONF_PORT, UnitOfEnergy
+from homeassistant.const import (
+    ATTR_RESTORED,
+    CONF_HOST,
+    CONF_PORT,
+    EVENT_HOMEASSISTANT_START,
+    UnitOfEnergy,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.setup import async_setup_component
@@ -176,6 +182,29 @@ async def test_a_live_legacy_entity_is_detected_rather_than_suffixed(
     await hass.async_block_till_done()
 
     assert LEGACY_ID in async_legacy_ids_live(hass)
+
+
+async def test_a_removed_packages_placeholder_state_is_not_live(
+    hass: HomeAssistant,
+    sungrow_unit: MockModbusUnit,
+    entity_registry: er.EntityRegistry,
+) -> None:
+    """An orphan's `restored` state is not the YAML package running.
+
+    At every start Home Assistant writes an `unavailable` state flagged
+    `restored` for each registry entry nothing provides. Read as live, it
+    would refuse the migration of every house that removed the package as
+    told and kept the orphans, and the id would never be claimed.
+    """
+    _register_yaml_package(entity_registry)
+    hass.bus.async_fire(EVENT_HOMEASSISTANT_START)
+    await hass.async_block_till_done()
+    assert hass.states.get(LEGACY_ID).attributes.get(ATTR_RESTORED)
+
+    assert async_legacy_ids_live(hass) == set()
+
+    await _setup(hass, sungrow_unit, ENTITY_IDS_MIGRATE)
+    assert _entity_id(entity_registry, "total_pv_generation") == LEGACY_ID
 
 
 async def test_our_own_entities_do_not_read_as_a_yaml_package(

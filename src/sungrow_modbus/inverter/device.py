@@ -42,7 +42,7 @@ class SungrowInverter:
 
     The register map is split across components by poll interval, so a caller
     refreshes a tier at a time rather than the whole map at once — which is
-    what lets a 5-second reading stay 5 seconds old without dragging 38
+    what lets a 5-second reading stay 5 seconds old without dragging the
     slow-moving totals along with it.
     """
 
@@ -75,12 +75,10 @@ class SungrowInverter:
 
         Public because callers outside the library need to enumerate what a
         device offers -- the survey publishes one value per field, and the
-        diagnostics download does the same. They used to read `_fields`
-        directly, which is worse here than it usually is: this library is
-        pinned by version in the integration's manifest, so renaming a private
-        attribute would ship as a perfectly good release and break the
-        integration at runtime. `check_pinned_library.py` compares *imports*
-        against the wheel and cannot see an attribute.
+        diagnostics download does the same. Reading `_fields` instead would be
+        worse here than it usually is: this library is pinned by version in
+        the integration's manifest, so renaming a private attribute would ship
+        as a perfectly good release and break the integration at runtime.
         """
         return frozenset(self._fields)
 
@@ -224,10 +222,10 @@ class SungrowInverter:
         A lost connection gets one retry per component first, because it is
         not always a dead link. fwitten's SH10RT-V112 times out on its three
         firmware strings over its own LAN port and then **closes the session**,
-        so the next read in the tier reported a lost connection and the whole
-        tier was abandoned -- which kept the entry from ever setting up
-        (0.1.0a5, 2026-09-25). The retry reconnects; a link that is really dead
-        fails it too, and the poll ends as before.
+        so without a retry the next read in the tier reports a lost connection
+        and the whole tier is abandoned -- enough to keep an entry from ever
+        setting up. The retry reconnects; a link that is really dead fails it
+        too, and the poll ends.
         """
         updated: set[str] = set()
         failed: dict[str, ModbusError] = {}

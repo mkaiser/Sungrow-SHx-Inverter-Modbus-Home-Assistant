@@ -1,10 +1,9 @@
 """A capability survey, from a running integration rather than a terminal.
 
-The evidence this project reasons from lives in `device-fingerprints/`:
-nine documents, four houses, **all of them the maintainer's or a friend's**.
-That is not because nobody else would help. It is because contributing meant
-cloning a repository and running Python on a machine that can reach the
-inverter, and almost nobody who has a Sungrow has that.
+The evidence this project reasons from lives in `device-fingerprints/`, and
+it comes from a handful of houses. Not because nobody else would help: a
+terminal survey needs a machine that can reach the inverter and a command
+line, and most people who have a Sungrow have neither to hand.
 
 Somebody who has set this integration up has the hard part already — a working,
 identified connection to their inverter. This turns it into a document, in
@@ -13,28 +12,29 @@ so one generator keeps building `doc/compatibility.md` from both and a reading
 from somebody who only ever clicked a button counts the same as one from a
 terminal.
 
-**It rides in the diagnostics download** rather than inventing a delivery
-mechanism. Home Assistant already has a button that produces a JSON file a
-user attaches to an issue, it works on an entry with no entities, and nothing
-here has to write to disk or ask for a path.
+Two callers build it. The **Run capability survey** button (`survey.py`)
+builds the full document in the background and offers it as a signed
+download. The **diagnostics download** builds a cheaper one in its
+`fingerprint` section: Home Assistant already has a button that produces a
+JSON file a user attaches to an issue, it works on an entry with no entities,
+and nothing here has to write to disk or ask for a path.
 
 Three honest limits, each recorded *in* the document rather than left for a
 reader to discover:
 
-* **It is taken under contention.** Home Assistant is polling this inverter;
-  that is what it is for. This project discards documents taken while
-  something else was polling, because contention and a register fault are
-  hard to tell apart from the result — four documents were thrown away for
-  exactly that. So the document says so in a `contention` section of its own,
-  as a measurement rather than as testimony: the integration knows precisely
-  what it was doing. Holding the coordinators off for the duration is the
-  fix, and is not done here yet.
+* **It may be taken under contention.** Home Assistant polls this inverter;
+  that is what it is for, and contention and a register fault are hard to
+  tell apart from the result. The button holds this entry's coordinators off
+  for the run (`SungrowRuntimeData.async_paused`); the diagnostics download
+  does not. Either way the document says which in a `contention` section of
+  its own, as a measurement rather than as testimony: the integration knows
+  precisely what it was doing.
 * **The block read test runs from the button, never from the download.**
-  That measurement is what `src/sungrow_modbus/inverter/layout.py` is ever changed from,
-  and it costs 27 block reads times three rounds, twice each, plus narrowing — fine
-  for a background task with a progress bar, too long for a download somebody
-  is waiting on. So a document from **Download diagnostics** carries none, and
-  says so under `contention`.
+  That measurement is what `src/sungrow_modbus/inverter/layout.py` is ever
+  changed from, and it costs every block of the poll times three rounds plus
+  narrowing -- fine for a background task with a progress bar, too long for a
+  download somebody is waiting on. So a document from **Download diagnostics**
+  carries none, and says so under `contention`.
 * **Nothing is asked that the owner has not been asked.** The testimony no
   register can answer — which cable, whether a proxy is in the path, whether
   the address may be published — comes from the options flow and defaults to
@@ -87,7 +87,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def summarise(document: dict[str, Any]) -> str:
-    """Keep the integration import surface while using package logic."""
+    """Return the library's one-paragraph summary of a document."""
     return _summarise(document)
 
 
@@ -109,7 +109,7 @@ def planned_steps(
 
     The dump's share is counted here rather than discovered as it goes, because
     a bar whose total grows halfway through is worse than no bar: with the dump
-    on it is 52 of the 76 steps, so getting it wrong would not be a rounding
+    on it is most of the bar, so getting it wrong would not be a rounding
     error. A caller sharing one bar between this and the control test needs the
     number without starting a survey, which is why it is a function.
     """
@@ -176,10 +176,9 @@ async def async_build(
 ) -> dict[str, Any]:
     """Return one publishable survey document for this entry.
 
-    `options` overrides the entry's own, which the options flow needs: it
-    runs the survey to show the contributor what was found *before* it
-    commits their answers, so the document has to be built from testimony
-    that is not saved yet.
+    `options` overrides the entry's own, for building a document from
+    testimony that is not saved yet. No caller passes it today; both use the
+    entry's saved options.
 
     `on_progress(fraction, step)` is called after each read that can be
     counted, so a device page can show how far along a survey is and what it
@@ -202,12 +201,11 @@ async def async_build(
     measurement that only means anything on an idle link -- the probes and the
     dump are themselves reads.
 
-    `control_test` is part B's result, already measured, and it is passed in
-    rather than run from here for the same reason `allow_dump` is a parameter:
-    **the caller decides.** Only one caller may write to an inverter -- the
-    control test button -- and the diagnostics download, which builds this same
-    document from this same code, must never acquire that power by inheriting
-    a default.
+    `control_test` is part B's result, already measured. Nothing here writes:
+    part B runs elsewhere, and the survey runner attaches its result after
+    part A with `attach_control_test` rather than through this argument. So
+    the diagnostics download, which builds this same document from this same
+    code, cannot acquire the power to write by inheriting a default.
     """
     runtime = entry.runtime_data
     device = next(iter(runtime.coordinators.values())).device
@@ -217,16 +215,8 @@ async def async_build(
     # Asked for and affordable are two different things; see the docstring.
     dumping = allow_dump and bool(options.get(CONF_SURVEY_DUMP, DEFAULT_SURVEY_DUMP))
 
-    # The denominator, so a fraction means something: every probe, one step
-    # for assembling what the coordinators already
-    # hold, and every block of the dump when there is one. Assembly is a
-    # single step because it does no reading -- it is the only part that
-    # cannot stall.
-    #
-    # The dump's share is counted here rather than discovered as it goes,
-    # because a bar whose total grows halfway through is worse than no bar --
-    # and with the dump on it is 52 of the 76 steps, so getting it wrong
-    # would not be a rounding error.
+    # The denominator, so a fraction means something; `planned_steps` says
+    # what it counts and why it is counted up front.
     blocks = await block_test.inverter_blocks() if allow_block_test else []
     total = planned_steps(
         dumping,
@@ -392,15 +382,21 @@ async def _async_probes(
 def _contention(runtime: Any, *, block_test_run: bool = False) -> dict[str, Any]:
     """State what this Home Assistant was doing while the document was made.
 
-    The standalone survey asks an owner to confirm nothing else was polling,
-    and refuses to trust a reading taken otherwise. Here the answer is known
-    and it is *yes*: the coordinators kept their intervals throughout. Saying
-    which components and how often lets a reader judge a dropped block --
-    a component on a five-second tier is a very different neighbour to one
-    on ten minutes.
+    The standalone survey asks an owner whether anything else was polling.
+    Here the answer is known: this entry's coordinators poll the same
+    connection, and `coordinators_paused` says whether the run held them off
+    -- the survey button does, the diagnostics download does not. Saying
+    which components and how often lets a reader judge a dropped block when
+    they were not held off: a component on a five-second tier is a very
+    different neighbour to one on ten minutes.
     """
+    paused = bool(getattr(runtime, "polling_paused", False))
     return {
-        "polled_by": "this Home Assistant, throughout",
+        "polled_by": (
+            "this Home Assistant, held off for the run"
+            if paused
+            else "this Home Assistant, throughout"
+        ),
         "components": len(runtime.coordinators),
         "intervals_seconds": sorted(
             {
@@ -409,17 +405,14 @@ def _contention(runtime: Any, *, block_test_run: bool = False) -> dict[str, Any]
                 if (interval := runtime.interval_of(component)) is not None
             }
         ),
-        # Truthful rather than constant. It was hardcoded False until
-        # 2026-09-18 and that was honest -- every document from a device page
-        # really was collected while this entry's own tiers kept polling the
-        # same serialized connection. Now the survey holds them off and says
-        # so, and an older document saying False means what it always said.
-        "coordinators_paused": bool(getattr(runtime, "polling_paused", False)),
+        # Read at the time of the run, not assumed: the survey button holds
+        # the tiers off, a diagnostics download does not.
+        "coordinators_paused": paused,
         "block_read_test": (
             "run, before the probes, with this entry's polling held off; see "
             "block_read_test"
             if block_test_run
-            else "not run: it costs 27 block reads times three rounds plus "
+            else "not run: it reads every block of the poll three times plus "
             "narrowing, which the survey button affords and a diagnostics "
             "download does not"
         ),

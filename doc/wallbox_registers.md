@@ -2,9 +2,9 @@
 
 Sungrow publishes no register document for its AC wallboxes. What follows was
 read off one — an **AC22E-01**, through the WiNet-S of an SH8.0RT-V112 at
-unit 3, on 2026-09-08 while a car charged and on 2026-10-13 with none
-connected — and then compared against every other source that
-could be found: two community projects that measured their own, a discussion
+unit 3 (on 2026-09-08 while a car charged, on 2026-10-13 with none
+connected) and at its own LAN address over TLS at unit 248 (2026-10-14) —
+and then compared against every other source that could be found: two community projects that measured their own, a discussion
 on this repo covering the same model, and a GPL-licensed project read for
 what exists rather than copied. Every row says how strongly it is held and by
 whom, and [where they disagree](#where-the-sources-disagree-and-what-settles-it)
@@ -20,10 +20,10 @@ session boundary tells them apart.
 
 | Source | Device | Licence | Notes |
 | --- | --- | --- | --- |
-| **Here** | AC22E-01, one firmware, two readings via a WiNet-S: a session ending (single phase), and idle with no car (three phase) | MIT, this repo | `probe.py dump --save` writes the raw readings beside the script; they carry the real serial and stay local |
+| **Here** | AC22E-01, one firmware: two readings via a WiNet-S, a session ending (single phase) and idle with no car (three phase); one at its own address over TLS, idle | MIT, this repo | Published as a dongle section in an inverter document and as a wallbox document in `device-fingerprints/wallbox/`, serial masked. `probe.py dump --save` writes unmasked raw readings beside the script, which stay local |
 | [Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant](https://github.com/Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant) | Not stated | **No licence file** — used with the author's permission, and only for *which register means what* | Its charging-status enum is the single most useful thing any of the three has |
 | [KevinD987/sungrow-ac011e](https://github.com/KevinD987/sungrow-ac011e) | AC011E-01, by measurement | **MIT** | Carries its own confidence marks — VERIFIED, LIKELY, UNVERIFIED — and says plainly that the allocation is not manufacturer-confirmed and may move between firmwares |
-| [Discussion #571](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions/571) on this repo | AC22E-01 | this repo's own tracker | Found 2026-09-09. The **same model measured here**, which none of the other sources is. Gives names in the manufacturer's own idiom — `SetOutI`, `PhaseSwitch`, `Availability`, `RemoteControl`, `State` — and one scale that this project's reading contradicts, below |
+| [Discussion #571](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions/571) on this repo | AC22E-01 | this repo's own tracker | The **same model measured here**, which none of the other sources is. Gives names in the manufacturer's own idiom — `SetOutI`, `PhaseSwitch`, `Availability`, `RemoteControl`, `State` — and one scale that this project's reading contradicts, below |
 | [Jam3s97/sungrow_ihomemanager](https://github.com/Jam3s97/sungrow_ihomemanager) | iHomeManager, tested with AC22E-01 | **GPL-3.0** | Read for *what exists*, never copied. GPL-3.0 is incompatible with this repo's MIT, so no definition here comes from it — what it contributed is the name of an **official Sungrow document**, `iHM.Communication.Protocol`, which is the licence-clean route to the same registers |
 
 Descriptions here are written from this project's own readings. Where a source
@@ -41,9 +41,61 @@ wording is still ours.
 | **open** | Nobody, including this measurement, can name it |
 
 Addresses are protocol addresses, one below the register number, as everywhere
-in this project. **The tables below give register numbers.** Everything is at
-the unit the wallbox answered on — 3 through a WiNet-S, 248 direct — never at
-unit 1.
+in this project. **The tables below give register numbers**, and so does the
+prose unless it says "protocol". Everything is at the unit the wallbox
+answered on — 3 through a WiNet-S, 248 at its own address — never at unit 1.
+
+## Two ways in
+
+| Path | Protocol | Unit | In the integration |
+| --- | --- | --- | --- |
+| through the WiNet-S, at the dongle's address | plain Modbus TCP, port 502 | 3 | found behind the inverter's entry by itself |
+| at the wallbox's own LAN address | Modbus TCP inside TLS, port 516 | 248 | when the entry's `wallbox_host` option names it |
+
+Same wallbox both ways: firmware string, lifetime energy and the live block
+agree word for word. Over TLS only unit 248 answers (0-255 swept); the
+wallbox has no port 502 and no web interface. Its certificate is
+Sungrow-signed (issuer `OT.SUNGROW`, CN `sun`) and byte-identical to the
+WiNet-S's at the same house, so it authenticates nothing and is not
+verified (`ModbusTlsParams(verify=False, check_hostname=False)`).
+
+**Not through the inverter's own LAN port.** No unit from 0 to 255 answers
+the model name there, while unit 1 answers its device type on the same link:
+the inverter goes silent on the wallbox's addresses rather than refusing
+them. RS485 at unit 248 (9600 8N1, per [evcc discussion
+#20739](https://github.com/evcc-io/evcc/discussions/20739)) is reported, not
+measured; `wallbox.UNITS` tries 248 behind a plain endpoint for it.
+
+**Over TLS a read must start on a data point's first register**; any other
+start times out, reproducibly on fresh connections (protocol 21295 x24
+answers, 21296 and 21300 time out). Through a WiNet-S any start answers.
+The valid starts, from one-register reads at every address (serial
+skipped), in **protocol** addresses:
+
+- input: 21210, 21212, 21214, 21215, 21223, 21224, 21225, 21240, 21243,
+  21258, 21261-21272, 21274-21279, then every second address 21281-21299,
+  21301-21307, 21309, 21311-21317, 21319, 21321, 21322, 21326, 21330,
+  21331, 21336, 21337, 21339-21345, 21347, 21349-21355, 21357,
+  21359-21365, 21369, 21373, 21374;
+- holding: 21200, 21202-21204, 21206, 21208, 21210-21212, 21214-21216,
+  21220, 21222-21233, 21249, 21281, 21297-21301, 21311-21317.
+
+Every mapped field starts on one, so the list is also **the wallbox's own
+field layout**, undecoded registers included. The integration polls in
+reads that each begin on a field, so the same components serve both paths
+(protocol addresses): identity input 21215 x20, ratings input 21261 x12,
+live input 21299 x23, settings holding 21202 x10 and 21231 x1. The live read
+runs on every fast poll; the other three every 30th, five minutes on the
+default ten-second interval. Nothing writes to the wallbox.
+
+**The direct path reads what the dongle zeroes.** Where both answer, the
+dongle returns 0 for input registers 21211-21214 (a short code, masked like
+the serial until a second wallbox shows whether it identifies the unit),
+21241-21250 (a second version string, `V1.0...`), 21267, and 21332-21336
+(0xFFFF directly). Input 21360 and 21363-21365 hold values directly and lie
+beyond what the dongle bands read. The firmware string at 21226 reads whole
+directly. Holding: the same 50 addresses either way below 21249, and
+21250-21313 only directly. None of these is decoded yet.
 
 ## Input registers
 
@@ -53,7 +105,7 @@ unit 1.
 | 21216-21220 | ASCII | — | Model string, spelled out | `AC22E-01` | two sources |
 | 21224 | u16 | — | Device type code: `0x3F80` AC22E-01, `0x20DA` AC011E-01, `0x20ED` AC007-00 | `0x3F80` | two sources |
 | 21225 | u16 | — | Phase count in use. **Follows the phase mode**, not the wiring: 1 in single-phase mode, 3 in three-phase mode, on the same three-phase installation | 1 / 3 | two sources |
-| 21226-21235 | ASCII | — | A version string, and a fragment: the field is longer than the ten registers read | `LE-01.1E1.001.` | measured here |
+| 21226-21235 | ASCII | — | Firmware version string. Whole only when read in one request starting at 21226; a read that starts inside it gets zeros for the rest | `LE-01.1E1.001.901.25` | measured here |
 | 21262 | u16 | 1 V | Nominal voltage | 230 | three sources |
 | 21263 | u16 | 0.1 A | Rated current — 32.0 A, which is what a 22 kW three-phase unit draws. The AC011E project reads this address as a work mode and marks it UNVERIFIED; an enum would not be 320, so either the models differ or that mark is optimistic. It held 320 across a change of both phase mode and start mode, which a work mode would not | 320 | measured here |
 | 21268 | u16 | — | Remote control status | 1 | named elsewhere |
@@ -85,12 +137,12 @@ and no file in `device-fingerprints/` implements a Modbus write function.
 | 21203 | u16 | 0.1 A | Output current setting. The AC011E project gives its range as 60-160, i.e. 6-16 A — that is an 11 kW unit's range, and a 22 kW unit should go to 320 | 160 → 16.0 A | two sources |
 | 21204 | u16 | — | Phase mode setpoint: 0 three phase, 1 single phase | 1 | three sources |
 | 21211 | u16 | — | Availability / charger enable: 0 disabled, 1 enabled | 1 | two sources |
-| 21212 | u16 | — | Start/stop: 0 start, 1 stop | 0 | two sources |
-| 21231 | u16 | — | Configured unit id, read-only | — | named elsewhere |
-| 21232 | u16 | 0.1 km/kWh | Mileage per kWh, for the app's range estimate | 50 → 5.0 | named elsewhere |
-| 21233 | u16 | — | Configured minimum current | — | named elsewhere |
+| 21212 | u16 | — | Start/stop: 0 start, 1 stop | 0 / 1 | two sources |
 | 21225-21230 | u16 × 6 | — | **The wallbox's clock**, local time: year (two digits), month, day, hour, minute, second. Read 26, 10, 13, 21, 12, 23 at 21:12 local on 2026-10-13, and 26, 9, 8, 17, 57, 44 during the run of 2026-09-08 | 26-10-13 21:12:23 | measured here |
-| 21263 | u16 | — | Working mode: 0 network, 2 plug and play, 6 EMS. **Did not answer here**, though one project names it | no answer | named elsewhere |
+| 21231 | u16 | — | Configured unit id, read-only | 248 | named elsewhere |
+| 21232 | u16 | 0.1 km/kWh | Mileage per kWh, for the app's range estimate | 50 → 5.0 | named elsewhere |
+| 21233 | u16 | — | Configured minimum current | 6 | named elsewhere |
+| 21263 | u16 | — | Working mode: 0 network, 2 plug and play, 6 EMS, says one project. **No answer through the dongle**; 0 inside a block read at its own address, where no read may start on it | no answer / 0 | named elsewhere |
 
 ## The charging status codes
 
@@ -135,9 +187,9 @@ documents.
 
 **The end time is a timestamp, not energy.** Register 21320 climbed by 251
 over ten minutes while the session counter climbed by 148, and "a second
-energy counter" was a reasonable-looking wrong answer — it was in this
-repository for an afternoon. Decoding it as a word-swapped epoch gives today's
-date and a plausible minute, and it freezes the moment charging stops.
+energy counter" is a reasonable-looking wrong answer. Decoding it as a
+word-swapped epoch gives the day's date and a plausible minute, and it
+freezes the moment charging stops.
 
 ## The clock is local, not UTC
 
@@ -153,27 +205,34 @@ UTC. Nothing decodes them yet; they are in the dump.
 
 ## What answers at all
 
-Measured across the whole span, so a reader knows where to look and where not
-to:
+Measured across the whole span through the WiNet-S, so a reader knows where
+to look and where not to:
 
 - **input 21201-21280 and 21297-21340 answer; 21281-21296 refuse.**
 - **holding 21201-21248 answers**, then only scattered addresses up to 21328.
 
-`WALLBOX_BANDS` in `src/sungrow_modbus/dump.py` is those ranges, and
-`device-fingerprints/scripts/python/sungrow_survey.py` dumps them whenever a wallbox answers —
-independently of the inverter's own dump question, because 206 addresses is a
-tenth of that dump's cost and a wallbox is the rarest thing this project sees.
-The serial's words are masked by `WALLBOX_MASKED`, and the document
-carries a hashed stand-in in their place, as it does for the inverter.
+`WALLBOX_BANDS` in `src/sungrow_modbus/dump.py` is those ranges, 206
+addresses, with the firmware string in a band of its own so it is read
+whole. `WALLBOX_TLS_BANDS` is the direct path's: twelve reads, each starting
+on a valid start, 299 addresses. The survey dumps a wallbox whenever one
+answers — independently of the inverter's own dump question, because the
+dump is a fraction of the inverter's cost and a wallbox is the rarest thing
+this project sees. `WALLBOX_MASKED` masks the serial (input 21201-21206) and
+the short code at 21211-21214, and the document carries a hashed stand-in
+for the serial, as it does for the inverter's.
 
-## What a fingerprint now carries
+## What a fingerprint carries
 
-Schema 21. The `wallbox` section of a document holds both halves, and the
-serial's stand-in:
+Through a dongle, the `wallbox` section of the inverter's document. At its
+own address, a **wallbox document** of its own (`"document": "wallbox"`, no
+`device` section, `connection` naming TLS on 516), written by
+`wallbox_direct.py` and published in `device-fingerprints/wallbox/`. The
+section is the same either way:
 
 ```json
 "wallbox": {
   "unit": 3,
+  "path": "dongle",
   "serial_anonymized_hashed": "anon-5155200572",
   "readings": {
     "charging_status": {"register": 21317, "value": 3, "means": "charging",
@@ -200,30 +259,21 @@ easier to get right once than to notice later:
   never come from a register the document is refusing to publish. The field
   table not listing the serial is then a second line of defence rather than
   the only one.
-- A register that did not answer is **absent**, not zero. Holding 21263 did
-  not answer here, and publishing it as `0` would have said this wallbox is
-  in "network" working mode — a claim about somebody's configuration, made up
-  out of a failed read.
+- A field with a word missing is **absent**, not zero. Publishing a failed
+  read as `0` would make a claim about somebody's configuration out of
+  nothing.
+- `path` says which way the wallbox was reached, `dongle` or `tls`, because
+  the two do not read alike. The terminal survey's dongle section omits it.
 
-## Corrections to earlier claims in this repository
-
-- **The model string is not truncated.** An earlier note here said register
-  21216 reads `AC` and stops, and wondered whether the field was
-  model-specific. It reads `AC22E-01`; the hand-decode behind that note had
-  sliced the wrong window. The survey's own decode, which takes its offsets
-  from one table, got it right the first time -- which is the argument for
-  the table over decoding by eye.
-
-- **21320/21321 is the charging end time, not a second energy counter.**
-- **This wallbox is an AC22E-01, not an AC011E-01.** Register 21224 reads
-  `0x3F80`, and the 22080 W maximum and 32.0 A rating agree. Anywhere this
-  documentation said AC011E about gerd's site, it was wrong.
+The model string is `AC22E-01`, not truncated: the survey decodes it from
+the field table, never by eye. The type code `0x3F80`, the 22080 W maximum
+and the 32.0 A rating all agree it is an AC22E-01, not an AC011E-01.
 
 ## Where the sources disagree, and what settles it
 
-Found 2026-09-09 by searching for other people's work, which is worth doing
-periodically: a fourth source turned up naming the **same model** measured
-here, and it disagrees in two places.
+Discussion #571 names the **same model** measured here, and it disagrees in
+two places. Searching for other people's work is worth repeating
+periodically.
 
 ### Holding 21203, the output current setting: 0.1 A, not 0.01
 
@@ -270,27 +320,17 @@ that measured the same model:
   a wider margin.
 - **The 0.1 scales on inputs 21302–21307**, the six phase voltages and
   currents.
-- **Unit 248 for a direct connection**, measured on gerd's AC22E-01 over
-  its own LAN address: **Modbus TCP inside TLS, port 516**, Sungrow-signed
-  certificate, no port 502. [evcc discussion
+- **Unit 248 for a direct connection**, measured here at the wallbox's own
+  LAN address over TLS ([Two ways in](#two-ways-in)). [evcc discussion
   #20739](https://github.com/evcc-io/evcc/discussions/20739) describes the
   same unit as **Modbus RTU at 9600 8N1** over RS485, which is not measured
   here, and says the wallbox must be in **EMS mode**.
-- **Over TLS, a read must start on a data point's first register**; any
-  other start times out. The map of valid starts (`Todo.md`, "Wall box
-  integration") doubles as the wallbox's own field layout. Through a
-  WiNet-S any start answers.
-- **The direct path reads what the dongle zeroes**: input 21210-21213, a
-  second version string at 21240-21249, 21267, 21331-21335 (0xFFFF),
-  21359 and 21362-21364 all hold values directly and read 0 through the
-  dongle. None is decoded yet.
 
 ## What is still open
 
 - Register **21313**: measured behaviour, and no name in any of the three
-  sources. Only a second charging session can say more.
-- The version string at 21226-21235 reads whole (`LE-01.1E1.001.901.25`) when read in one request starting at 21226; split across two reads it comes back cut short, as two published readings show.
-- Holding 21263 did not answer in either reading.
+  sources. Only a charging session can say more, and the signedness of
+  21308/21310 with it -- now readable both ways.
 - Register 21263 *input* reads 320, where the AC011E project reads that
   address as a work mode. It held 320 while the phase mode and start mode both
   changed, so the work-mode reading looks wrong for this model; a manufacturer
@@ -300,13 +340,16 @@ that measured the same model:
 - Holding 21316-21329, in the scattered region above 21248, reads the same
   words in both readings but **shifted by one address**. A record that moves
   is not a set of registers, and nothing here should be decoded from it.
-- Holding **21249-21312 answers at the wallbox's own address**, where no
+- Holding **21250-21313 answers at the wallbox's own address**, where no
   read through the dongle reached it; nothing decodes it yet. The holding
   21316-21329 shift above may be the dongle's own block reads landing off a
   data point's start -- the direct path's map of starts is the place to
   check it.
-- Input **21210-21213** holds a short code only the direct path answers.
+- Input **21211-21214** holds a short code only the direct path answers.
   Whether it differs between units is unknown, so the dump masks it like the
   serial until a second wallbox is read.
+- What only the direct path shows -- the second version string, 21267,
+  21332-21336, 21360, 21363-21365 and the upper holding registers -- is
+  undecoded.
 - Everything here is one unit, one firmware, read through a dongle and at
   its own address. A second AC22E would settle most of the remaining marks.

@@ -144,8 +144,8 @@ if [[ ! -f "${CONFIG}/configuration.yaml" ]] || ! grep -q "hacs_testbed v3" "${C
 # No \`http:\` block, deliberately. Home Assistant 2026.9 keeps the HTTP
 # config in .storage/http and ignores this file once it has migrated it --
 # raising a repair issue to say so. A port set here becomes a *pending*
-# config that reverts itself after five minutes, which is how this instance
-# once came up on :8123 and collided with the dev one.
+# config that reverts itself after five minutes, onto :8123 and into the dev
+# instance's port.
 # scripts/dev/ha_http_port.py writes the port where it is actually read.
 #
 # No \`default_config:\` either: it depends on go2rtc, whose binary exists
@@ -189,7 +189,7 @@ fi
 # The port, written where 2026.9 reads it. Not in configuration.yaml: see
 # scripts/dev/ha_http_port.py, which has the whole mechanism. Harmless before the
 # first boot, when the store does not exist yet -- it says so and moves on.
-python3 "${PWD}/scripts/ha_http_port.py" "${CONFIG}" "${PORT}"
+python3 "${PWD}/scripts/dev/ha_http_port.py" "${CONFIG}" "${PORT}"
 
 # Nothing is symlinked here. Said out loud because every other script in this
 # repository does the opposite, and because a symlink at this path would let

@@ -5,10 +5,10 @@ Lets the integration be developed and tested without an inverter. Run
 scripts/dev/simulate.sh to regenerate the seed and start this, or point it at an
 existing seed file.
 
-The seed only names the registers the YAML package reads. Those are served
-inside a dense block spanning the whole address range, because the client
-pools neighbouring registers into one request and would otherwise ask for
-addresses between two sensors that the server considers invalid.
+The seed names only the registers something reads. Each run of them is
+served as one dense block, gaps filled with zeros up to `MAX_GAP`, because
+the client pools neighbouring registers into one request and would otherwise
+ask for addresses between two sensors that the server considers invalid.
 """
 
 from __future__ import annotations

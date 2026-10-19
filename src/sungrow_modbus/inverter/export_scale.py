@@ -42,8 +42,8 @@ where the limit already held is at least the inverter's maximum -- a cap that
 high caps nothing, so switching it on curtails nobody.
 
 The register is read once more afterwards, and if it moved -- which the
-construction says it cannot -- it is put back by the raw word and the result
-says so. A probe that a wrong model could leave a house changed by is the
+construction says it cannot -- it is put back, checked by reading, and the
+result says so. A probe that a wrong model could leave a house changed by is the
 thing the control test's restore rules exist to prevent.
 """
 
@@ -224,9 +224,11 @@ async def async_probe(
     docstring. It is put back to the word it held immediately afterwards.
     `dry_run` reads everything, chooses, and writes nothing.
 
-    Raises only when the reads that decide whether to write fail: then nothing
+    Raises when the reads that decide whether to write fail: then nothing
     has been written, and the caller is owed the real error rather than a
-    `None` that looks like a considered answer.
+    `None` that looks like a considered answer. Also raises when the read
+    *after* the write fails, which is the one case where the register's state
+    is not known; putting feed-in limitation back has been tried by then.
     """
     held = await _word(device, LIMIT)
     mode = await _word(device, MODE)
@@ -306,12 +308,7 @@ async def async_probe(
     elif answer is None:
         reason = f"the write was answered with {response}, which settles nothing"
     else:
-        kind = (
-            "multiplies a written word by ten"
-            if answer == MULTIPLIER
-            else ("stores a written word as handed")
-        )
-        reason = f"this firmware {kind}: {response}, because {plan.why}"
+        reason = f"this firmware {ANSWERS[answer]}: {response}, because {plan.why}"
 
     return Result(
         answer,

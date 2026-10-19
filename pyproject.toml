@@ -27,13 +27,12 @@ packages = ["src/sungrow_modbus"]
 
 # Without this the sdist sweeps in everything not gitignored — the YAML
 # package, the dashboards and doc/images take it past 6 MB, for a library
-# whose wheel is 9 KB. The sdist should be the library and what it needs to
+# whose wheel is a fraction of that. The sdist should be the library and what it needs to
 # be built and understood, nothing else.
 [tool.hatch.build.targets.sdist]
 # Anchored with a leading slash. Hatchling treats these as gitignore-style
-# patterns, so a bare "README.md" matches at every depth -- after the YAML
-# package moved to legacy/ that quietly swept six dashboard READMEs into the
-# library's sdist.
+# patterns, so a bare "README.md" matches at every depth and sweeps the
+# dashboard READMEs under legacy/ into the library's sdist.
 include = [
     "/src/sungrow_modbus",
     "/tests/test_device.py",
@@ -45,8 +44,9 @@ include = [
 
 [tool.ruff]
 target-version = "py313"
-# The YAML package and its helper scripts predate this tooling; linting them
-# is a separate job from bootstrapping the integration.
+# The YAML package's helper scripts -- legacy/debug and the multi-inverter
+# generator -- predate this tooling; linting them is a separate job from the
+# integration's.
 extend-exclude = [".reference", "debug", "scripts/generate/generate_second_inverter_config.py"]
 
 [tool.ruff.lint]

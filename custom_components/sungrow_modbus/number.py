@@ -168,7 +168,7 @@ class SungrowNumber(SungrowEntity, NumberEntity):
         # the register and never read back, and the interface shows the
         # previous value for up to ten seconds. That is precisely the bug the
         # YAML package's `homeassistant.update_entity` calls existed to work
-        # around, and it would have shipped as a regression.
+        # around, and debouncing here would bring it back.
         #
         # The debouncer is there to coalesce storms of *automatic* refresh
         # requests. An explicit user action is not a storm.
@@ -207,11 +207,11 @@ class SungrowExportLimitNumber(SungrowNumber):
     async def _async_write_scale(self) -> int:
         """Return this inverter's write factor, measuring it if it is not known.
 
-        A probe that cannot answer falls back to ten, the factor every entry
-        used before this existed and the one measured at three houses of four,
-        and is **not** stored, so the next write asks again. It cannot answer
-        while feed-in limitation is off and the held limit caps something --
-        and then the register ignores the write anyway, so nothing is lost.
+        A probe that cannot answer falls back to ten, the factor measured at
+        three houses of four, and is **not** stored, so the next write asks
+        again. It cannot answer while feed-in limitation is off and the held
+        limit caps something -- and then the register ignores the write
+        anyway, so nothing is lost.
         """
         entry = self.coordinator.config_entry
         stored = self._stored_write_scale()

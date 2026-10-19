@@ -2,10 +2,9 @@
 
 Measured on an AC22E-01: a wallbox with a network connection of its own
 serves Modbus TCP **inside TLS on port 516**, answers only as **unit 248**,
-and has no port 502 at all -- so a sweep for 502 never sees it, and before
-this module the survey reported its 516 as "found, not readable". Through a
-WiNet-S the same wallbox answers as unit 3, and that path stays what
-`probe.py` reads behind an inverter's dongle.
+and has no port 502 at all -- so a sweep for 502 never sees it. Through a
+WiNet-S the same wallbox answers as unit 3, and that path is what `probe.py`
+reads behind an inverter's dongle.
 
 Two rules the direct path imposes, both measured:
 
@@ -72,7 +71,7 @@ def params(host: str) -> ModbusTlsParams:
 async def async_identify(host: str, timeout: float = 6.0) -> Found | None:
     """Return the wallbox answering at this address over TLS, or None.
 
-    The model *name*, never the serial two registers below it -- the same
+    The model *name*, never the serial just below it -- the same
     probe the integration and `probe.py` use. A host whose 516 is a WiNet-S
     answers nothing at unit 248, and comes back None.
     """

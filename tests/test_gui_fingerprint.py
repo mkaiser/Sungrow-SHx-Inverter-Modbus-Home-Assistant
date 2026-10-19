@@ -26,6 +26,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.sungrow_modbus.const import (
     CONF_ADD_DEVICES,
+    CONF_LEGACY_SLOT,
     CONF_MODE,
     CONF_PUBLISH_ADDRESS,
     CONF_REPORTER,
@@ -759,6 +760,46 @@ async def test_a_diagnostics_entry_is_offered_a_way_to_become_a_full_one(
     assert entry.data[CONF_MODE] == MODE_DEVICES
     # And now the entities exist.
     assert hass.states.get("sensor.sh10rt_total_dc_power") is not None
+
+
+async def test_promotion_with_an_undetermined_slot_explains_and_claims_nothing(
+    hass: HomeAssistant,
+    sungrow_unit: MockModbusUnit,
+    devices_mode_offered: None,
+) -> None:
+    """A numbered YAML slot existed and this serial matches none.
+
+    Promotion goes ahead with device-scoped ids, after a page saying why the
+    YAML package's ids are not offered, and the entry stores the slot as
+    undetermined rather than as the first inverter's.
+    """
+    from homeassistant.helpers import entity_registry as er
+
+    registry = er.async_get(hass)
+    for suffix in ("", "_inv_2"):
+        registry.async_get_or_create(
+            "sensor",
+            "modbus",
+            f"sg_total_pv_generation{suffix}",
+            suggested_object_id=f"total_pv_generation{suffix}",
+        )
+    entry = await _setup(hass, sungrow_unit, mode=MODE_DIAGNOSTICS)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    with patch(
+        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
+    ):
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"], _options(**{CONF_ADD_DEVICES: True})
+        )
+        assert result["step_id"] == "slot_unknown"
+        await hass.config_entries.options.async_configure(result["flow_id"], {})
+        await hass.async_block_till_done()
+
+    assert entry.data[CONF_MODE] == MODE_DEVICES
+    assert entry.data[CONF_LEGACY_SLOT] is None
+    assert hass.states.get("sensor.total_pv_generation") is None
+    assert hass.states.get("sensor.sh10rt_total_pv_generation") is not None
 
 
 async def test_promotion_keeps_what_was_typed_beside_the_checkbox(

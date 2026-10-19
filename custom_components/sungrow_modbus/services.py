@@ -117,16 +117,15 @@ def async_setup_services(hass: HomeAssistant) -> None:
     hass.services.async_register(
         DOMAIN, SERVICE_STOP_INVERTER, _async_stop, schema=SCHEMA
     )
-    # Not authorised the way start and stop are: this reads and writes
-    # nothing, and the worst a stray call can do is spend one connection for
-    # a few seconds.
+    # Not authorised the way start and stop are: this writes nothing, and the
+    # worst a stray call can do is occupy the connection for one survey.
     hass.services.async_register(
         DOMAIN, SERVICE_RUN_SURVEY, _async_run_survey, schema=SCHEMA
     )
-    # Authorised the way start and stop are, and for the same reason: it
-    # writes. The button beside it is what most people will use; this exists so
-    # the run can be scripted, and so that an owner who has narrowed the
-    # audience has narrowed both routes to it at once.
+    # Authorised the way start and stop are, under its own permission, and for
+    # the same reason: it writes. A diagnostics-only entry also has a button
+    # for it; this is the route an ordinary entry has, and the one a script
+    # can take.
     hass.services.async_register(
         DOMAIN, SERVICE_RUN_CONTROL_TEST, _async_run_control_test, schema=SCHEMA
     )

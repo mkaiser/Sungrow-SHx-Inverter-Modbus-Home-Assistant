@@ -1,21 +1,27 @@
 #!/usr/bin/env python3
-"""Derive a Modbus register seed for the simulator from modbus_sungrow.yaml.
+"""Derive a Modbus register seed for the simulator from the register records.
 
-The YAML package is the most complete description of the SHx register map we
-have, so the simulator is seeded from it rather than from a second hand-kept
-list that would drift. Every modbus sensor in the package contributes its
-address, width and a plausible value, which is enough for the integration to
-read something sensible back during development.
+Seeded from what is already committed rather than from a second hand-kept
+list that would drift: every modbus sensor and switch in
+`legacy/modbus_sungrow.yaml`, plus every specification-layer register in
+`doc/legacy_entity_map.json` the YAML never read, contributes its address,
+width and a plausible value. That is enough for the integration to read
+something sensible back during development.
 
 Writes scripts/dev/simulator_registers.json, which is committed: the tests read
 it to prove every ported register decodes, so it is a fixture rather than a
 scratch file.
+
+    python scripts/generate/generate_simulator_registers.py          # write it
+    python scripts/generate/generate_simulator_registers.py --check  # is it stale?
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
+import sys
 from typing import Any
 
 import yaml
@@ -38,12 +44,11 @@ OVERRIDES: dict[int, int | list[int]] = {
     13033: [4200, 0],  # total active power, W
     # Running, on both sides of register 13000. The address is in two of
     # Sungrow's tables -- read-only over 0x04 where it is the running state,
-    # read/write over 0x03/0x06/0x10 where it is Start/Stop -- and the seed used
-    # to say "Stop" on the input side, which is a faithful reading of nothing in
-    # particular and enough to make the control test refuse to run at all.
+    # read/write over 0x03/0x06/0x10 where it is Start/Stop. A stopped input
+    # side makes the control test refuse to run at all.
     #
     # Note the value: **0x0000 means Running**, not stopped, per the map in
-    # `derived.RUNNING_STATES`. The obvious guess is wrong.
+    # `inverter.derived.RUNNING_STATES`. The obvious guess is wrong.
     12999: 0x0000,
     # Bounds the inverter is supposed to state about itself. Without them the
     # control test correctly declines to guess, which is worth seeing once but
@@ -67,9 +72,8 @@ FAULT_WORDS: dict[int, list[int]] = {
 #: Register 13000 is the case that matters. It is in **two** of Sungrow's
 #: tables: read-only over function code 0x04, where reading it gives the running
 #: state, and read/write over 0x03/0x06/0x10, where it is Start/Stop. Only the
-#: first is a sensor, so only the first was ever seeded -- which left the one
-#: piece of this project that can turn an inverter off with no way to be
-#: exercised except against somebody's house.
+#: first is a sensor, so without this the one piece of this project that can
+#: turn an inverter off could be exercised only against somebody's house.
 HOLDING_ONLY: dict[int, list[int]] = {
     12999: [0xCF],  # Start/Stop, currently "started"
 }
@@ -113,11 +117,12 @@ def _default_value(entry: dict[str, Any], width: int) -> list[int]:
 def _apply_fixtures(spaces: dict[str, dict[int, list[int]]]) -> None:
     """Overwrite the defaults where a plausible value matters more than a zero.
 
-    Three passes, in this order, because each is narrower than the last:
+    Four passes, in this order, because each is narrower than the last:
     `STRINGS` gives the text fields something readable, `OVERRIDES` pins
-    individual registers a probe would otherwise misread, and `HOLDING_ONLY`
+    individual registers a probe would otherwise misread, `HOLDING_ONLY`
     adds words that exist on the holding side alone -- 12999 among them, which
-    is what makes the control test's restart phase exercisable offline.
+    is what makes the control test's restart phase exercisable offline -- and
+    `FAULT_WORDS` clears the input-side fault and alarm words.
     """
     for address, text in STRINGS.items():
         for space in spaces.values():
@@ -173,13 +178,29 @@ def collect() -> dict[str, dict[str, list[int]]]:
     }
 
 
-def main() -> None:
-    """Write the seed."""
+def main() -> int:
+    """Write the seed, or check the committed one is current."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true")
+    args = parser.parse_args()
+
     seed = collect()
-    TARGET.write_text(json.dumps(seed, indent=2) + "\n", encoding="utf-8")
+    rendered = json.dumps(seed, indent=2) + "\n"
+    if args.check:
+        if not TARGET.exists() or TARGET.read_text(encoding="utf-8") != rendered:
+            print(
+                f"{TARGET.relative_to(REPO)} is stale.\n"
+                "Run scripts/generate/generate_simulator_registers.py and commit "
+                "the result.",
+                file=sys.stderr,
+            )
+            return 1
+        return 0
+    TARGET.write_text(rendered, encoding="utf-8")
     counts = ", ".join(f"{len(v)} {k}" for k, v in seed.items())
     print(f"Wrote {TARGET.relative_to(REPO)} ({counts} registers)")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

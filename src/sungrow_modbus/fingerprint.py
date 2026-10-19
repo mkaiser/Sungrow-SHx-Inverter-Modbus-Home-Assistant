@@ -35,8 +35,7 @@ from .const import model_for
 #: download rather than by running the script. Everything else is identical;
 #: what changes is that `command_line` may name a *tool* instead of an
 #: invocation, because there is no command to repeat. The history of the
-#: earlier numbers is in `device-fingerprints/scripts/python/probe.py`, which
-#: is where the format grew up.
+#: earlier numbers is in `device-fingerprints/scripts/python/probe.py`.
 #:
 #: 19 admits an optional **`control_test`** block, written by
 #: `sungrow_modbus.control_test` through either of its two drivers: the result
@@ -52,8 +51,8 @@ from .const import model_for
 #: to be able to tell "this run did not do that" from "this document predates
 #: the possibility".
 #:
-#: `connection.latency_ms` was removed on 2026-10-09 **without** a bump: nothing
-#: read it, so its absence tells a reader nothing.
+#: `connection.latency_ms` went **without** a bump: nothing read it, so its
+#: absence tells a reader nothing.
 #:
 #: 20 admits an optional **`export_scale`** block: how this firmware writes
 #: register 13074, as `sungrow_modbus.inverter.export_scale` asked it -- multiplied by
@@ -94,10 +93,10 @@ COLLECTED_BY_INTEGRATION = "home assistant"
 
 #: Words that may never appear in a published key or label. Values *or* names.
 #:
-#: One entry, and it earned its own constant: `sungrow_inverter_serial` once
-#: reached a published document's `fields_read_individually`, and two capability
-#: probes named "wallbox serial" published their raw words -- `[16690, 13633]`,
-#: which decodes to `A25A`.
+#: One entry, and it earns its own constant: a serial travels under names --
+#: a field called `sungrow_inverter_serial`, a probe labelled "wallbox
+#: serial" -- and as raw words a string check cannot see, so the name is what
+#: is filtered.
 NEVER_PUBLISH = ("serial",)
 
 #: Values the specification uses for "this measuring point is not here".
@@ -172,13 +171,14 @@ PROBES: tuple[tuple[str, str, int, int, str], ...] = (
 #: without them cannot be compared with one taken a year later. Two of these
 #: are worth knowing the character of: **arm** and **dsp** have been identical
 #: on every document ever collected, because they identify *hardware* rather
-#: than updatable firmware -- so nine matching readings are evidence of
-#: nothing. `sungrow_version_1`, in the ordinary readings, is the field that
-#: actually tracks an update.
+#: than updatable firmware -- so matching readings are evidence of nothing.
+#: `sungrow_version_1`, in the ordinary readings, is the field that actually
+#: tracks an update.
 #:
-#: `communication_module` is also a connection signal: a direct-LAN inverter
-#: has no module and answers the specification's UTF-8 unavailable, which
-#: decodes to an empty string, while anything behind a WiNet-S names itself.
+#: `communication_module` is **not** a connection signal. It names the module
+#: that is *fitted*, not the one in the path, and through a dongle it can
+#: answer empty -- wrong in both directions. It is reported beside register
+#: 6100, which decides transport, as a separate fact.
 #:
 #: Each published name, by the inverter field that holds it: the one table,
 #: so a survey reading raw words and one reading polled fields cannot drift.
@@ -336,17 +336,15 @@ def stand_in(serial: str) -> str:
     one stand-in: published files stay diffable across reads and two setups
     stay distinguishable, without the real serials leaving the building.
 
-    The `anon-` prefix is the point. This used to keep the real serial's
-    leading letters on the reasoning that a same-shaped value keeps the
-    string decoder under test, and that was a bad trade -- `A123456789`
-    became `A5155200572`, which is not a serial and looks exactly like one.
-    Somebody quoting it into an issue, searching for it, or comparing it
-    against the label on a wall gets a plausible wrong answer, and the field
-    being called `serial_anonymized_hashed` does not help once the value has
-    been copied out of it.
+    The `anon-` prefix is the point. A stand-in that kept a serial's shape
+    would look exactly like a serial: somebody quoting it into an issue,
+    searching for it, or comparing it against the label on a wall gets a
+    plausible wrong answer, and the field being called
+    `serial_anonymized_hashed` does not help once the value has been copied
+    out of it.
 
     Both producers call this, so one device gets one stand-in whichever tool
-    read it -- which is exactly the thing the hash exists to prevent.
+    read it -- which is exactly what the hash exists to provide.
     """
     if not serial:
         return serial
@@ -522,8 +520,8 @@ def battery_pack_section(
     """Return a battery pack's section, or None when nothing decoded.
 
     `battery_pack` and never `battery`: that key holds what the owner *typed*
-    about their battery, and the first version of this overwrote their
-    testimony with a measurement. None rather than a section of Nones, which
+    about their battery, and a measurement must not overwrite testimony.
+    None rather than a section of Nones, which
     would say the pack was read and reported nothing.
     """
     readings = battery_readings(
@@ -548,8 +546,8 @@ def wallbox_section(
 
     The readings must come from **masked** words, so none can come from a
     register the document refuses to publish: the serial sits two registers
-    below the model name, and it once reached a published document as the
-    words `[16690, 13633]`. `wallbox_from_dump` does that for a raw dump.
+    below the model name, and raw words carry it past any string check.
+    `wallbox_from_dump` does that for a raw dump.
     """
     section: dict[str, object] = {"unit": unit}
     if path is not None:
@@ -752,8 +750,7 @@ def attach_control_test(
 
     The block is anonymous by construction -- register numbers, chosen values,
     words that came back -- so the check should never fire. It is here
-    because "should never" is exactly what was true of the two capability
-    probes that published a wallbox serial as the words `[16690, 13633]`. A
+    because "should never" is what a serial in raw words slips past. A
     refusal costs somebody a run they can repeat; publishing costs somebody
     else their serial number in a public repository, permanently.
     """
@@ -806,7 +803,9 @@ def publish_document(
             wallbox_from_dump(
                 wallbox_raw["unit"],
                 wallbox_raw["register_dump"],
-                path=wallbox_raw.get("path"),
+                # Found behind the inverter's endpoint, so not at its own
+                # address over TLS: "dongle", as the integration writes it.
+                path=wallbox_raw.get("path") or "dongle",
                 connection=wallbox_raw.get("connection"),
             )
             if wallbox_raw.get("register_dump")
@@ -919,10 +918,9 @@ def transport_verdict(*, answered_6100: bool, module_named: bool) -> str:
     communication module if there is one, and a direct-LAN inverter has no
     module and answers the specification's UTF-8 unavailable.
 
-    The first decides, and the second is why: it was written as its equal on
-    the reasoning that anything behind a WiNet-S names itself, and a module
-    can be *fitted* while not being in the path -- which is a real
-    installation rather than a hypothetical, and the top row below.
+    The first decides. The second is not its equal: a module can be *fitted*
+    while not being in the path -- a real installation, and the top row
+    below -- and through a dongle it can answer empty.
 
     Both producers call this, because `doc/compatibility.md` groups readings
     by this string and two spellings of one route would split a comparison.
@@ -1190,11 +1188,11 @@ def label_for(document: dict[str, Any]) -> str:
     fingerprint this repository has committed, which is a stronger check than
     any pair of unit tests -- the corpus is the specification.
 
-    Order is `model-firmware-phases-contributor-standin`, then everything
-    attached. The stand-in sits third so that every document from one machine
-    shares a prefix and they group when a directory is sorted: one inverter
-    read directly and through its dongle differs only in the words *after*
-    it, and with the hash last the pair ended up at opposite ends.
+    Order is `model-firmware-phases-contributor-standin`, then the battery,
+    meter, wallbox and transport words. The stand-in comes before everything
+    attached so that every document from one machine shares a prefix and they
+    group when a directory is sorted: one inverter read directly and through
+    its dongle differs only in the words *after* it.
 
     Nothing here can leak: the model, the firmware and the phases are
     properties of a product line, the stand-in is the document's own and is
@@ -1246,13 +1244,13 @@ def label_for(document: dict[str, Any]) -> str:
 
 
 def _phase_word(device: dict[str, Any]) -> list[str]:
-    """Name the supply, but only where it is unusual.
+    """Name the supply: the phase count always, the wiring only where unusual.
 
-    3P4L is an ordinary domestic three-phase supply, and spelling it out
-    lengthened every filename to say "normal". **3P3L has to be named**: it has
-    no neutral, and the same registers then report line voltages rather than
-    phase voltages -- about 1.73x higher -- so a reader comparing two documents
-    needs the warning before they compare the numbers.
+    3P4L is an ordinary domestic three-phase supply and is just `3p`. **3P3L
+    has to be named** (`3p3w`): it has no neutral, and the same registers then
+    report line voltages rather than phase voltages -- about 1.73x higher --
+    so a reader comparing two documents needs the warning before they compare
+    the numbers.
 
     A list rather than a string so the caller stays a sequence of parts, and so
     "say nothing" is the empty list rather than a falsy value to test for.
@@ -1273,7 +1271,7 @@ def _transport_word(document: dict[str, Any], said: dict[str, Any]) -> list[str]
     Testimony first, because the owner knows what is plugged in and no register
     reports it. Where they did not say, the connection verdict is the
     measurement -- input 6100 answers on a cable and is refused through a
-    WiNet-S, 9 sites out of 9 -- and that is worth a word in the filename
+    WiNet-S, at every site measured -- and that is worth a word in the filename
     because a dongle forwards less than a cable does, so two documents from one
     machine can legitimately disagree about which registers exist.
     """

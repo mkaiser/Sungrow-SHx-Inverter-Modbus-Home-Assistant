@@ -13,13 +13,13 @@ if [[ ! -f "${PWD}/config/.HA_VERSION" ]]; then
 fi
 
 # Home Assistant looks for custom integrations in <config>/custom_components,
-# so that is a symlink back to the repo. It used to be PYTHONPATH instead,
-# which broke the moment the domain was renamed to `sungrow_modbus`: that is
-# also the library's import name, so putting custom_components/ on the path
-# exposes the *integration* as top-level `sungrow_modbus` and it shadows the
-# library. `from sungrow_modbus import TIERS` inside the integration then
-# imports the integration from inside itself, and Home Assistant reports a
-# circular import while loading the config flow.
+# so that is a symlink back to the repo. Never PYTHONPATH: the domain
+# `sungrow_modbus` is also the library's import name, so putting
+# custom_components/ on the path exposes the *integration* as top-level
+# `sungrow_modbus` and it shadows the library. `from sungrow_modbus import
+# TIERS` inside the integration then imports the integration from inside
+# itself, and Home Assistant reports a circular import while loading the
+# config flow.
 #
 # A real installation has config/custom_components/ as a directory and the
 # library in site-packages, which is exactly what this reproduces. config/ is
@@ -79,10 +79,8 @@ fi
 # enough to break this integration's own network search: `async_sweep` opens
 # 64 sockets at a time and rules an address out on a one-second wall-clock
 # timeout, so loop overhead comes straight out of the budget for a connect
-# that takes six milliseconds. Measured on this machine against a /24 holding
-# two live inverters -- three runs out of three found **nothing** with
-# `--debug`, and three out of three found both without it. It cost a real
-# debugging session, on a search the maintainer ran against his own house.
+# that takes six milliseconds. Against a /24 holding two live inverters, a
+# search with `--debug` finds nothing and one without it finds both.
 #
 # Nothing is lost. Log verbosity comes from the `logger:` block in
 # config/configuration.yaml, which already sets this integration and the

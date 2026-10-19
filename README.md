@@ -38,7 +38,7 @@ long-term statistics and their dashboards when they switch.
 
 **Works:**
 
-- All 127 read entities of the YAML package, tested against it so they cannot
+- All 135 read entities of the YAML package, tested against it so they cannot
   drift, with the unit and state class of every entry they replace.
 - **Writes.** The state-of-charge limits, the charge and discharge maxima, the
   export power limit, the three mode flags and the three selects. Starting and
@@ -48,8 +48,9 @@ long-term statistics and their dashboards when they switch.
   entities. Which Modbus unit it answers on is worked out rather than asked,
   because it moves with the transport.
 - **The wallbox as its own device** — AC011E-01 / AC22E-01, twenty-one
-  entities, read-only. Found by asking the inverter's endpoint, since a
-  wallbox has no Modbus endpoint of its own even with its own LAN cable.
+  entities, read-only. Found behind a WiNet-S on the inverter's endpoint, or
+  read at its own LAN address (Modbus inside TLS, port 516) when you give
+  the inverter's entry that address.
 - Setup through the UI: search the network for inverters, or type an address.
   The model, the Modbus unit id and a cluster slave's role are detected from
   the devices themselves; where two inverters need telling apart you are asked
@@ -60,11 +61,18 @@ long-term statistics and their dashboards when they switch.
   You are asked at setup; either answer works. See
   [doc/integration_migration.md](doc/integration_migration.md).
 - Diagnostics you can download and attach to a bug report.
+- **A generator the Sungrow cannot see.** A second, non-Sungrow inverter
+  behind the same meter makes the reported house load low by exactly its
+  output. Name the entities another integration has for it, and a corrected
+  load is added beside the reported one.
 - One naming convention, enforced by a test.
 - **A one-command survey** you can run against your own installation, which is
   how the capability model gets its evidence — see
   [contributing a fingerprint](device-fingerprints/README.md#contributing-one).
-  It reads and never writes.
+  The survey itself only reads. At the end it asks whether it may also run
+  the **control write test**: it writes each control, checks the inverter
+  acted on the value it was given, and puts everything back. The answer
+  defaults to no. The same test is a button on the device page.
 
 **Not there yet:**
 

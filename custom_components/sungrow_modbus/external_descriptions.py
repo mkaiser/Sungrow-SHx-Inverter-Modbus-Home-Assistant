@@ -34,7 +34,7 @@ from homeassistant.const import UnitOfPower
 from .entity import SungrowExternalSensorDescription
 
 EXTERNAL_SENSORS: tuple[SungrowExternalSensorDescription, ...] = (
-    # The reason this milestone exists. `load_power` is computed by the
+    # The reason this module exists. `load_power` is computed by the
     # inverter from its own output and its grid meter, so a generator behind
     # the same meter makes it low by exactly that generator's output -- and
     # negative once the generator outproduces the house. Not clamped at

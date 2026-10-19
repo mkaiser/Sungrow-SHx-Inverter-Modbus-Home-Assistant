@@ -30,6 +30,10 @@
           "entity_ids": "This can be changed later without losing anything."
         }
       },
+      "slot_unknown": {
+        "title": "Existing entities found",
+        "description": "This house ran the YAML package for more than one inverter, and Home Assistant cannot tell which of them this one was. The package's serial sensors are what say so, and neither the running package nor the recorded history has this inverter's serial.\n\nSo the YAML package's entity IDs are not offered: taking the wrong set would give this inverter another inverter's history. **Submit** sets it up with its own IDs, such as `sensor.sh10rt_total_dc_power`.\n\nTo keep its old IDs, put the YAML package back for one restart, so this inverter's serial is recorded, then remove it and restart again. **Configure** can then switch this inverter to its old IDs; the serial stays on record for the recorder's retention, ten days unless you changed it."
+      },
       "find": {
         "title": "Where is the inverter?",
         "description": "Searching is usually easier: many people cannot say what their inverter's IP address is without going to look at the router. The search only probes addresses on the range you confirm.",
@@ -1074,6 +1078,10 @@
           "entity_ids": "This can be changed later without losing anything."
         }
       },
+      "slot_unknown": {
+        "title": "Set up the devices",
+        "description": "This house ran the YAML package for more than one inverter, and Home Assistant cannot tell which of them this one was. The package's serial sensors are what say so, and neither the running package nor the recorded history has this inverter's serial.\n\nSo the YAML package's entity IDs are not offered: taking the wrong set would give this inverter another inverter's history. **Submit** sets it up with its own IDs, such as `sensor.sh10rt_total_dc_power`.\n\nTo keep its old IDs, put the YAML package back for one restart, so this inverter's serial is recorded, then remove it and restart again. **Configure** can then switch this inverter to its old IDs; the serial stays on record for the recorder's retention, ten days unless you changed it."
+      },
       "other_inverter": {
         "title": "What is the other inverter?",
         "description": "The make, and its size if you know it — *Fronius Symo 8.2*, or *5 kW string inverter on the south roof*. The size is the useful part: it says how large the gap in the load figures is.\n\nThis goes into the document, so leave out serial numbers, addresses and names. You can leave it blank.",
@@ -1093,7 +1101,8 @@
     "error": {
       "nothing_left_to_poll": "Every group is set to never, which would leave the integration with nothing to read and no entities at all. Leave at least one group with an interval.",
       "wallbox_not_found": "No Sungrow wallbox answered at that address. It has to be the wallbox's own address (not the inverter's or the WiNet-S's), reachable from Home Assistant, and not busy with another client.",
-      "legacy_package_still_loaded": "The YAML package is still running, so its entities still hold their IDs. Remove `modbus_sungrow.yaml` from your configuration, restart Home Assistant and try again."
+      "legacy_package_still_loaded": "The YAML package is still running, so its entities still hold their IDs. Remove `modbus_sungrow.yaml` from your configuration, restart Home Assistant and try again.",
+      "legacy_slot_unknown": "This house ran the YAML package for more than one inverter, and Home Assistant cannot tell which of them this one was, so the old IDs could be another inverter's. Put the YAML package back for one restart, so this inverter's serial is recorded, then remove it, restart again and come back here."
     },
     "progress": {
       "running_survey": "Reading your inverter: 19 capability probes. Through a WiNet-S this can take a minute."

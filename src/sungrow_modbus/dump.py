@@ -28,7 +28,7 @@ import asyncio
 from collections.abc import Awaitable, Callable, Mapping
 import time
 
-from modbus_connection import ModbusError
+from modbus_connection import ModbusError, ModbusExceptionError, ServerDeviceBusyError
 
 from .model import Silent
 
@@ -102,9 +102,8 @@ WALLBOX_TLS_BANDS: tuple[tuple[str, int, int, str], ...] = (
 )
 
 #: The wallbox's serial, input 21201-21206, first -- `wallbox.SERIAL_*` reads
-#: its position from that entry. A serial like any other: one was published
-#: as the words `[16690, 13633]` before anybody thought about the second
-#: device in the house.
+#: its position from that entry. A serial like any other, and as easily
+#: published by accident as raw words.
 #:
 #: Then input 21211-21214: a short code the wallbox answers only at its own
 #: address (a WiNet-S answers 0 there). One unit has been read, so whether it
@@ -167,8 +166,8 @@ def _note_skipped(
     nothing about the firmware; a band that was *part* read has real addresses
     in the dump and a boundary that is an artefact of the clock rather than of
     the device. Publishing the second as though it were complete is how an
-    absent register gets inferred from a timeout -- which this project has
-    already had to unlearn once, and which `bands_not_reached` exists to stop.
+    absent register gets inferred from a timeout, which `bands_not_reached`
+    exists to stop.
     """
     label = f"{space} {start}+{count} ({why})"
     if label not in skipped:
@@ -234,10 +233,11 @@ async def async_dump(
     uses, plus `bands_not_reached` when the budget ran out.
 
     **A refused address is not retried.** Refusal is the expected answer over
-    most of these bands, and the first version of this retried each one with a
-    pause between attempts, which turned a few hundred reserved addresses into
-    a run long enough to be killed. A dropped *block* is still retried,
-    because that is the case where the address might have answered. With
+    most of these bands, and retrying each one with a pause between attempts
+    turns a few hundred reserved addresses into a run long enough to be
+    killed. A dropped *block* is retried, because that is the case where the
+    address might have answered; a refused one goes straight to the
+    single-address fallback. With
     `silent`, the single-address fallback waits on each quiet register once
     across the whole run, not once per read that touches it.
     """
@@ -330,10 +330,16 @@ async def _async_read_retrying(
     A dropped block is not evidence about the registers in it: on a device
     that accepts very few Modbus sessions, another client polling at the same
     moment produces exactly the same failure as a register that is not there.
+    An exception *response* is the device answering, so it is raised at once
+    -- except 0x06, busy, which settles nothing.
     """
     for attempt in range(1, max(1, attempts) + 1):
         try:
             return list(await read(space, address, count))
+        except ModbusExceptionError as err:
+            if not isinstance(err, ServerDeviceBusyError) or attempt >= attempts:
+                raise
+            await asyncio.sleep(1.5)
         except (ModbusError, TimeoutError, OSError):
             if attempt >= attempts:
                 raise

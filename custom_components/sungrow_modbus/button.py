@@ -1,16 +1,17 @@
 """The two buttons this integration has: survey, and control test.
 
-Set up in both modes, and that is the point of the platform existing at all.
-A diagnostics-only entry has no sensors, no controls and no numbers -- it was
-set up by somebody who offered to send a reading and did not want their house
-filled with entities -- so these buttons and the three sensors beside them are
-the entirety of its device page, and the reason it has one.
+Set up only for a diagnostics-only entry, and that is the point of the
+platform existing at all. Such an entry has no readings, no controls and no
+numbers -- it was set up by somebody who offered to send a reading and did not
+want their house filled with entities -- so these buttons and the three
+sensors beside them are the entirety of its device page, and the reason it
+has one. An ordinary entry reaches the same runs through the `run_survey` and
+`run_control_test` actions, which leave no entity behind.
 
-Both are set up in both modes, the control test included. That entry mode
-exists for the contributor who has hardware and offered to help, which is
-exactly who this project needs a write measurement from; what carries the
-warning is the button's own description and the guards behind it, not a
-missing entity.
+The control test button is there too. That entry mode exists for the
+contributor who has hardware and offered to help, which is exactly who this
+project needs a write measurement from; what carries the warning is the
+button's own description and the guards behind it, not a missing entity.
 """
 
 from __future__ import annotations

@@ -18,6 +18,8 @@ Usage:
     python device-fingerprints/scripts/python/probe.py mdns
     python device-fingerprints/scripts/python/probe.py sweep 192.168.1.0/24 [--port 502]
     python device-fingerprints/scripts/python/probe.py units <host> [--port 502]
+    python device-fingerprints/scripts/python/probe.py capabilities <host>
+    python device-fingerprints/scripts/python/probe.py dump <host>
 """
 
 from __future__ import annotations
@@ -117,16 +119,18 @@ CANDIDATE_UNITS: dict[int, str] = {
     4: "inverter (slave)",
     5: "inverter (slave)",
     200: "SBR battery",
-    247: "iHomeManager (usually port 503)",
-    248: "wallbox (direct RS485-to-TCP)",
+    247: "iHomeManager (port 502 or 503)",
+    248: "wallbox on RS485 (reported, not measured)",
 }
 
 #: Register to read per device kind, chosen so only that kind answers it.
-#: (space, address, count, label)
+#: (space, address, count, label). The wallbox is asked its model *name*,
+#: never the serial two registers below it, because this command prints what
+#: it reads and a transcript is pasted where anyone can see it.
 IDENTITY_PROBES = [
-    ("input", 4999, 1, "inverter device type code"),
-    ("input", 21200, 4, "wallbox serial"),
-    ("input", 10740, 2, "SBR battery block"),
+    (*field_address("device_type_code"), "inverter device type code"),
+    (*field_address("model_name", "wallbox"), "wallbox model name"),
+    (*PACK_VOLTAGE, "SBR battery voltage"),
 ]
 
 
@@ -443,8 +447,7 @@ async def cmd_units(args: argparse.Namespace) -> int:
 #: four characters by chance -- and a firmware word follows it, because which
 #: registers a device answers moves between versions and the version was in
 #: the file but not in the name anybody sorts by. 12 also stopped publishing
-#: the *values* of a probe named for a serial: `unit 3 wallbox serial` was
-#: carrying `[16690, 13633]`, which decodes to `A25A`. 13 added the `wallbox`
+#: the *values* of a probe named for a serial. 13 added the `wallbox`
 #: section: the whole register space of a wallbox that answered, masked at its
 #: own serial, because Sungrow publishes no register document for these at all
 #: and a document saying only "a wallbox answered" recorded none of what it
@@ -827,25 +830,21 @@ async def _async_dump_bands(
 
 
 async def _async_battery_readings(connection, unit_id: int) -> dict[str, object]:
-    """Read the SBR's own two blocks, on the unit that answered for it.
+    """Read the SBR's own three components, on the unit that answered for it.
 
-    The gap this closes: the survey probed unit 200 and unit 2 with a
-    two-register read to see *whether* a pack answered, recorded "present",
-    and stopped. So no fingerprint anywhere carried a single SBR reading, and
-    the question of whether a WiNet-S withholds the per-module cell data
-    stayed open for two days on one path's evidence -- while a nine-register
-    read would have answered it.
+    A probe says *whether* a pack answered; only a reading says what it
+    holds and which blocks a dongle withholds.
 
     Forty-two registers in three reads, against an inverter dump of 1510. The
     wallbox had the same gap and was given its own dump for the same reason:
     a rare device whose registers nobody else has measured is exactly the one
     worth carrying.
 
-    The two blocks are read **separately and reported separately**, because
+    The components are read **separately and reported separately**, because
     they fail separately -- measured on one SBR096 read both ways within
-    seconds, the cell block refuses through a dongle while the pack block
-    answers. Pooled into one read, a document would say the pack was
-    unreadable when it was not.
+    seconds, the cell and module blocks refuse through a dongle while the
+    pack block answers. Pooled into one read, a document would say the pack
+    was unreadable when it was not.
     """
     battery = SungrowBattery(connection.for_unit(unit_id), unit_id)
     missed: list[str] = []
@@ -1480,8 +1479,8 @@ async def cmd_dump(args: argparse.Namespace) -> int:
     """Read a raw register range, block by block, and record what answered.
 
     The fingerprint checks registers we already know about. This is for the
-    ones we do not: the documented gaps in the wallbox map at 21231-21261 and
-    21267-21299, or any range a new model might answer. A block that fails is
+    ones we do not: the wallbox's undecoded addresses between its mapped
+    fields, or any range a new model might answer. A block that fails is
     retried one register at a time, so one bad address does not hide the
     fifteen good ones beside it.
     """
@@ -2167,11 +2166,11 @@ def main() -> int:
     args = parser.parse_args()
     if args.command is None:
         # No subcommand: point at `sungrow_survey.py`, rather than printing usage at
-        # somebody who was told "run this and send me the file". This used to
-        # run the wizard itself; `sungrow_survey.py` is that wizard plus the phases
-        # a survey needs -- identifying every device before asking anything,
-        # the block read test, the transcript and a summary -- so having two
-        # ways in would mean two answers to "how is this collected".
+        # somebody who was told "run this and send me the file".
+        # `sungrow_survey.py` is the wizard, with the phases a survey needs --
+        # identifying every device before asking anything, the block read
+        # test, the transcript and a summary -- and two ways in would mean two
+        # answers to "how is this collected".
         print("For a full survey, run the one entry point:\n")
         print(f"    {_run_command('sungrow_survey.py')}\n")
         print("It finds the devices, asks what it cannot measure, and writes")

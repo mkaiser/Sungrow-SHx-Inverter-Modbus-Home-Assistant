@@ -10,13 +10,13 @@ there for as long as the version is a preview.
 > only part of this project that is finished. A preview is for people who
 > want to help find what is broken.
 
-**This first release sets up diagnostics only.** It connects to your inverter,
+**A preview sets up diagnostics only.** It connects to your inverter,
 works out which model and firmware it is and which registers it answers, and
 gives you a survey you can send back. It creates **no sensors for the
 readings** — if you came here to see your solar production on a dashboard, the
 YAML package above is what does that today.
 
-The full setup is built and tested; it is switched off in this release on
+The full setup is built and tested; it is switched off in the preview on
 purpose, because it contains the one decision in this integration that cannot
 be undone. Choosing to take over `modbus_sungrow.yaml`'s entity IDs decides
 which IDs years of recorder history and every dashboard card attach to, and
@@ -56,7 +56,8 @@ about it is tied to this integration.
 
 Open the repository HACS now lists and press **Download**.
 
-The version HACS shows is a **commit hash**, not `0.1.0a2`. That is correct
+The version HACS shows is a **commit hash**, not a version such as
+`0.1.0a17`. That is correct
 and it matters later: the preview channel follows this project's development
 branch and publishes no releases of its own, so a hash is what identifies the
 code you are running. Quote it in bug reports.
@@ -86,21 +87,29 @@ Consequences worth knowing:
 **Settings → Devices & services → Add integration →** search for
 **Sungrow Modbus (preview)**.
 
-From there the integration finds the inverter itself: it sweeps the network
-you confirm, identifies what answers by asking it rather than by assuming a
-unit id, and offers each way it can reach the machine — a direct cable in
-preference to a WiNet-S dongle, because a cable forwards more registers.
+The first screen asks what the entry is for. **Set up my inverter** is
+shown but not in the preview: choosing it says so, and carries on as
+**Diagnostics only**, which is the other choice. Either way you get the same
+entry: no entities for the readings, just the survey's buttons and sensors on
+the device page.
 
-You will be asked one question that matters and cannot be undone casually:
-**whether to keep the YAML package's entity ids**. Read
-[integration_migration.md](integration_migration.md) before answering it.
-Keeping them means years of recorder history and every dashboard card carry
-on working; taking modern ids means the integration migrates the history
-across. Either answer works, but they are not the same answer.
+Then it finds the inverter: **Search my network** probes the range you
+confirm on the Modbus port and identifies what answers by asking it, rather
+than by an open port or an assumed unit id; or you type the address. Behind a
+WiNet-S that is the dongle's address. Where more than one device answers, it
+lists them, with each inverter's part in a cluster.
 
-If you would rather not add any devices yet, the first screen also offers
-**diagnostics only**: no entities, nothing polled on a schedule, just the
-tools for producing a reading of your installation.
+Last come a few questions no register can answer — how the inverter is
+connected, whether a Modbus proxy is in the path, whether anything else polls
+it, whether a non-Sungrow inverter shares the meter, and whether the last two
+octets of the address may be published. All optional, and editable later.
+
+The question that matters for the full setup — **whether to keep the YAML
+package's entity ids** — is not asked here, because a diagnostics entry has no
+entities for an id to attach to. It is asked when the entry is upgraded to a
+full one (**Configure** → *Add this endpoint's devices now*), once that is
+offered. Read [integration_migration.md](integration_migration.md) before
+answering it.
 
 ## Updating
 
@@ -147,7 +156,7 @@ branch **is** the integration.
 [doc/preview-mirror/sync.yml](preview-mirror/sync.yml) is the whole
 mechanism: one workflow, living in that repository, which polls a few times
 an hour and copies the development branch from here — `custom_components/`,
-`hacs.json` and a README of its own, and nothing else. It **pulls rather than
+`hacs.json`, the licence and a README of its own, and nothing else. It **pulls rather than
 being pushed to**, which is why it needs no credential in either repository:
 reading this one takes no token because it is public, and writing to itself
 uses its own.
@@ -178,11 +187,12 @@ Two things make a report actionable, and both are read-only.
 decided about your hardware, and what failed, with the serial and address
 removed.
 
-**A capability survey**, which is now a button rather than a command.
-Settings → Devices & services → Sungrow Modbus → the device → **Run
-capability survey**. It reads and never writes, and on a cable it is over in
-a second; over a VPN it can take minutes, which is why the three sensors
-beside the button say how far along it is and what it is reading.
+**A capability survey**, a button on the device page. Settings → Devices &
+services → Sungrow Modbus → the device → **Run capability survey**. It reads
+and never writes, and holds the integration's own polling off while it runs.
+On a cable it takes seconds; over a VPN it can take many minutes, which is
+why the three sensors beside the button say how far along it is and what it
+is reading.
 
 When it finishes, a notification carries a summary and a download link. That
 link is signed and stops working after an hour — press the button again for
@@ -198,7 +208,7 @@ If you set the integration up as *Diagnostics only*, it asked you a few
 questions on the way in — which cable, whether a Modbus proxy is in the path,
 whether anything else was polling. Those answers go into the document and no
 register can answer them. They are editable afterwards under the
-integration's **Configure** → *Help this project*.
+integration's **Configure** → *Contribute a capability survey*.
 
 Two things in that section change what the survey *reads* rather than what it
 says. **Also sweep the raw register bands** is off, and is the expensive one:
@@ -211,8 +221,8 @@ refusing and each one costs a full timeout. Turn it on if you were asked for a
 dump or you are curious what your model answers; the progress sensors name the
 band being swept while it runs.
 
-(The **Advanced** section has a switch with a similar name, *Include a raw
-register dump in diagnostics*. That one is a different, much cheaper thing: it
+(The *Battery, wallbox and diagnostics* section has a switch with a similar
+name, *Include a raw register dump in diagnostics*. That one is a different, much cheaper thing: it
 re-reads only the addresses already mapped, into the diagnostics file. It
 cannot find a register nobody knows about.)
 
@@ -221,9 +231,21 @@ integration's poll makes, three rounds, and any block that never answers
 narrowed down to the register at fault. If some of your entities stay empty,
 that section of the document is what says why.
 
-There is still a standalone scanner for anyone who would rather not install
+**The control write test** is the second button, **Run control write
+test**, and the one thing on the device page that **writes**. It runs the
+survey, then writes each setting the integration controls, reads the
+register straight back against Sungrow's specification, and puts your value
+back — the only way to catch a setting written at ten times the value asked
+for. Everything it changes is saved first and read back after; anything
+that could not be put back becomes a repair under **Settings → Repairs**
+that restores it. It is for administrators by default, and stopping and
+restarting the inverter or lifting feed-in limitation each need a switch
+under **Configure** → *What the control write test may do*, both off. Its
+result goes into the same document.
+
+There is also a standalone survey for anyone who would rather not install
 anything. See
-[contributing a fingerprint](device-fingerprints/README.md#contributing-one).
+[contributing a fingerprint](../device-fingerprints/README.md#contributing-one).
 
 Then open an issue quoting **the commit hash HACS shows you**. The channel
 publishes no releases of its own, so a hash rather than a version is what

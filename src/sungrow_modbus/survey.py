@@ -122,8 +122,8 @@ async def async_read_6100(unit: Any, *, attempts: int = 6) -> str:
     Logger, so an answer means the inverter's own port. Three-valued and
     never collapsed: `answered`, `refused` (an exception response, which is
     the dongle saying so) or `no answer` (the link, which says nothing). A
-    lost link once read as `refused`, the verdict became a dongle, and the
-    owner of a cable was offered to change a correct answer to match it.
+    lost link read as `refused` would make the verdict a dongle, and offer
+    the owner of a cable to change a correct answer to match it.
 
     Retried with the long budget, because one read lost to contention is not
     an answer and this one decides a word in the filename.
@@ -198,8 +198,8 @@ async def async_probe_siblings(
     `unit_for(unit_id)` returns a modbus-connection unit on the same link.
     Retried with the long budget, because whether unit 200 or unit 2 answers
     is what separates `battery-sbr096` from `battery-unknown` in a filename:
-    a miss here is a published claim about somebody's hardware. Single-shot,
-    it once reported no pack for an SBR found at 200 a minute earlier.
+    a miss here is a published claim about somebody's hardware, and a single
+    shot can miss an SBR that answered at 200 a minute earlier.
 
     `on_probe(label, words)` follows each read, with None for no answer.
     """
@@ -277,11 +277,9 @@ async def async_read_field_by_field(
     """
     values: dict[str, object] = {}
     pending: dict[str, object] = dict(component_class.declared_fields)
-    # Swept repeatedly, and the reason is a mistake this made on its first
-    # run: a single failed read is not a refusal. One sweep of ~90 individual
-    # reads on a contended port reported `phase_a_voltage`, `mppt2_voltage`
-    # and `inverter_rated_output` as refused, when the curated probes had read
-    # all three minutes earlier. Only a field that misses every separated
+    # Swept repeatedly, because a single failed read is not a refusal: on a
+    # contended port one sweep of individual reads misses fields the curated
+    # probes read minutes earlier. Only a field that misses every separated
     # sweep is evidence about the device rather than about the traffic.
     for sweep in range(1, max(1, sweeps) + 1):
         missed_this_sweep: dict[str, object] = {}
@@ -339,19 +337,17 @@ async def async_decoded_readings(
 ) -> dict[str, object]:
     """Return every register the integration reads, decoded.
 
-    A fingerprint used to carry 22 curated probes, chosen to answer capability
-    questions. That is the right set for *capabilities* and the wrong set for
-    everything else -- both of the day's findings came from registers outside
-    it: a Pylontech reporting capacity 0 where a Sungrow pack reports its
-    size, and registers 33149/33150 reading 200 W and 100 W when the
-    specification does not document them at all.
+    The curated probes are the right set for *capabilities* and the wrong set
+    for everything else: a Pylontech reporting capacity 0 where a Sungrow pack
+    reports its size, and registers 33149/33150 reading 200 W and 100 W where
+    the specification documents nothing, are both outside them.
 
-    So it now carries all of them. The cost is bounded and small because the
-    library pools neighbouring registers: 105 fields in **23 reads**. A blind
-    sweep of the whole address span, by contrast, is 30,569 addresses in 245
-    reads, mostly "Reserved" per the specification and each one a chance to
-    drop the link -- which is why the wider net is cast over the *map* and not
-    over the address space.
+    So a fingerprint carries the whole map. The cost is bounded and small
+    because the library pools neighbouring registers into a few dozen reads.
+    A blind sweep of the whole address span is tens of thousands of
+    addresses, mostly "Reserved" per the specification and each one a chance
+    to drop the link -- which is why the wider net is cast over the *map* and
+    not over the address space.
 
     Decoded rather than raw, deliberately. A raw word says the read worked; a
     decoded value says the scale and word order are right, which is the
@@ -364,11 +360,10 @@ async def async_decoded_readings(
     finish.
     """
     inverter = SungrowInverter(unit)
-    # Retried and then tolerated. This one call was the only un-guarded read
-    # in the function, so a single drop here raised past all the per-component
-    # tolerance below and published a document with **no decoded readings at
-    # all** -- an empty block that no reader would notice, when catching a
-    # wrong scale or word order is the whole reason the block exists.
+    # Retried and then tolerated. Unguarded, a single drop here would raise
+    # past all the per-component tolerance below and lose every decoded
+    # reading -- an empty block no reader would notice, when catching a wrong
+    # scale or word order is the whole reason the block exists.
     identity_failed: str | None = None
     for attempt in (1, 2, 3):
         try:
@@ -385,10 +380,9 @@ async def async_decoded_readings(
     # missing, until everything has answered once or the budget runs out.
     #
     # This is what makes a report usable on an inverter somebody is already
-    # polling, which is nearly all of them. Three attempts per component,
-    # taken back to back, competed with the other client at exactly the wrong
-    # moment and left 10 of 104 fields on a busy machine. Spreading the
-    # attempts out and only re-reading what is still missing gets the lot,
+    # polling, which is nearly all of them. Attempts taken back to back
+    # collide with the other client at exactly the wrong moment; spreading
+    # them out and only re-reading what is still missing gets the lot,
     # because the collision is a moment rather than a state.
     #
     # The cost is that fields come from different moments, so arithmetic
@@ -413,13 +407,10 @@ async def async_decoded_readings(
         # `pending` is assigned *before* the emptiness test, not after. The
         # other way round -- `if not still_missing: break` and then
         # `pending = still_missing` -- leaves `pending` holding whatever the
-        # pass began with, so a device that answered everything on pass 1 was
-        # reported as **13 components missed** and then had all 104 of its
-        # fields re-read one at a time. It produced a plausible document with
-        # plausible values, which is why it survived: gerd's direct-LAN
-        # fingerprint claims no component answered as a whole, while the
-        # run's own transcript shows every one of them answering on the first
-        # pass. Guarded by
+        # pass began with, so a device that answered everything on pass 1
+        # would be reported as every component missed and have all its fields
+        # re-read one at a time: a plausible document with plausible values.
+        # Guarded by
         # `test_a_device_that_answers_everything_reports_nothing_missed`.
         pending = still_missing
         if not pending:
@@ -535,8 +526,8 @@ class CapabilitySurvey:
     def thin(self) -> list[str]:
         """Name what a document's filename is built from and did not read.
 
-        A transient refusal of 5002 once cost a document its `3p` word, which
-        is invisible unless you know every good filename has one. Cheap to
+        A transient miss of 5002 costs a document its `3p` word, which is
+        invisible unless you know every good filename has one. Cheap to
         re-run, expensive to notice -- so the producer says so.
         """
         values = (self.readings or {}).get("values")
@@ -722,16 +713,16 @@ def summarise(document: dict[str, Any]) -> str:
     measured = document.get("block_read_test") or {}
     if measured:
         never = measured.get("never_answered") or []
-        total = (
-            len(measured.get("answered") or [])
-            + len(never)
-            + len(measured.get("intermittent") or [])
-        )
-        lines.append(
-            f"- Block read test: all {total} of the poll's reads answered."
-            if not never
-            else f"- Block read test: {len(never)} of {total} reads never answered."
-        )
+        intermittent = measured.get("intermittent") or []
+        total = len(measured.get("answered") or []) + len(never) + len(intermittent)
+        if never:
+            line = f"- Block read test: {len(never)} of {total} reads never answered"
+        else:
+            line = f"- Block read test: all {total} of the poll's reads answered"
+        if intermittent:
+            # Contention, not a fault -- but not "all answered" either.
+            line += f", {len(intermittent)} only some of the time"
+        lines.append(line + ".")
     if document.get("battery_pack"):
         lines.append("- A Sungrow battery answered, and its own registers are in.")
     if document.get("wallbox"):

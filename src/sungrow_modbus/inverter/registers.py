@@ -7,9 +7,10 @@ field here to it -- address, type, scale, word order and poll interval -- so a
 scale off by ten fails on the commit that introduces it. A field that must
 differ from the YAML says so where a test can see it -- `layout.COUNTS` for a
 string length, `write_units_per_count` for a write scale -- never silently.
-Other register knowledge -- the identity block, decoded enumerations, derived
-values -- lives in `components.py`; why some fields sit in components of their
-own is recorded in `layout.py`.
+Other register knowledge lives beside it: the identity and start/stop blocks
+in `components.py`, decoded enumerations and derived values in `derived.py`,
+the fault bits in `faults.py`; why some fields sit in components of their own
+is recorded in `layout.py`.
 
 Registers are declared by the number Sungrow's documentation and the YAML's
 comments give them; `reg()` turns that into the protocol address, one below,
@@ -46,25 +47,28 @@ class AsymmetricNumberField(NumberField[int]):
     is what `NumberField` is built for: `encode` and `decode` share `scale`.
     Register 13074 does not. It **reads** in watts -- 10000 back against a
     10000 W maximum from register 5623, so the read side agrees with its own
-    bounds -- and **writes** in tens of watts, multiplying the word it is
-    handed by ten before storing it.
+    bounds -- and on most measured firmware **writes** in tens of watts,
+    multiplying the word it is handed by ten before storing it.
 
-    Measured 2026-09-19 on the reference SH10RT with feed-in limitation on, six
-    times, including values no rounding could produce (123 -> 1230, 47 -> 470),
-    and replicated the same day at a second house on an SH10RT-20 through a
-    dongle. Two houses, two models, two transports.
+    Measured on the reference SH10RT with feed-in limitation on, six times,
+    including values no rounding could produce (123 -> 1230, 47 -> 470), and
+    at a second house on an SH10RT-20 through a dongle: two models, two
+    transports.
 
-    It also explains the refusals: the multiply happens **before** the range
-    check, so writing 3400 becomes 34000, fails against the 10000 W maximum and
-    returns exception 0x04 -- which is why restoring 10000 was refused while the
-    register sat on 10000, and why writing 1000 is how you actually put 10000
-    back.
+    The multiply happens **before** the range check, so writing 3400 becomes
+    34000, fails against the 10000 W maximum and returns exception 0x04 -- a
+    register holding 10000 refuses a plain write of 10000, and writing 1000
+    is how 10000 is put back.
 
     So this is a device quirk rather than a second scale: `scale` stays 1
     because that is what the register *contains*, and only the write side is
     divided. `control_test.py`'s `spec_units_per_count` stays 1 for the same
-    reason, and its leg B is what proves this on hardware -- before the fix a
-    900 W write left the raw word at 9000 and the verdict was `SCALED`.
+    reason, and its leg B is what checks this on hardware.
+
+    **Not every firmware multiplies**: fwitten's SH10RT-V112 pair stores the
+    word as handed. This field carries the common case; `export_scale` asks a
+    device which one it is, and the integration and the control test write the
+    raw word at the factor it answers.
     """
 
     def __init__(
@@ -99,7 +103,7 @@ class AsymmetricNumberField(NumberField[int]):
 
 
 class InverterRealtimeInput(Component):
-    """3 input registers, polled every 5s."""
+    """3 input fields, polled every 5s."""
 
     register_space = "input"
 
@@ -116,7 +120,7 @@ class InverterRealtimeInput(Component):
 
 
 class InverterFastInput(Component):
-    """43 input registers, polled every 10s."""
+    """43 input fields, polled every 10s."""
 
     register_space = "input"
 
@@ -265,7 +269,7 @@ class InverterFastInput(Component):
 
 
 class InverterBatteryPower(Component):
-    """1 input register, polled every 10s.
+    """1 input field, polled every 10s.
 
     Battery power at register 5214, which one measured firmware refuses on
     the inverter's own LAN port while serving it through a WiNet-S.
@@ -282,7 +286,7 @@ class InverterBatteryPower(Component):
 
 
 class InverterMeterChannel2(Component):
-    """4 input registers, polled every 10s.
+    """4 input fields, polled every 10s.
 
     A second metering channel, which most installations do not have and
     some firmware answers by closing the connection.
@@ -309,7 +313,7 @@ class InverterMeterChannel2(Component):
 
 
 class InverterFaults(Component):
-    """30 input registers, polled every 10s: the fault and alarm words.
+    """15 input fields, polled every 10s: the fault and alarm words.
 
     Fifteen U32 bit fields from Appendix 4. Read as numbers here and decoded
     by `faults.active`, which knows which bits are named. Answered on every
@@ -351,7 +355,7 @@ class InverterFaults(Component):
 
 
 class InverterFastHolding(Component):
-    """20 holding registers, polled every 10s."""
+    """20 holding fields, polled every 10s."""
 
     register_space = "holding"
 
@@ -453,7 +457,7 @@ class InverterFastHolding(Component):
 
 
 class InverterAplShutdownAtZero(Component):
-    """1 holding register, polled every 10s.
+    """1 holding field, polled every 10s.
 
     The active-power-limit shutdown flag at register 31213, refused by one
     measured firmware on the inverter's own LAN port. **Experimental and
@@ -476,7 +480,7 @@ class InverterAplShutdownAtZero(Component):
 
 
 class InverterMediumInput(Component):
-    """3 input registers, polled every 60s."""
+    """3 input fields, polled every 60s."""
 
     register_space = "input"
 
@@ -489,7 +493,7 @@ class InverterMediumInput(Component):
 
 
 class InverterSlowestInput(Component):
-    """34 input registers, polled every 600s."""
+    """34 input fields, polled every 600s."""
 
     register_space = "input"
 
@@ -588,7 +592,7 @@ class InverterSlowestInput(Component):
 
 
 class InverterBatteryFirmware(Component):
-    """1 input register, polled every 600s.
+    """1 input field, polled every 600s.
 
     The battery firmware string, which the YAML package documents as being
     for Sungrow batteries only.
@@ -605,7 +609,7 @@ class InverterBatteryFirmware(Component):
 
 
 class InverterFirmwareBlockBattery(Component):
-    """1 input register, polled every 600s.
+    """1 input field, polled every 600s.
 
     The battery firmware string at register 13280, which some firmware
     answers by closing the connection.
@@ -624,11 +628,12 @@ class InverterFirmwareBlockBattery(Component):
 
 
 class InverterFirmwareBlockCommunicationModule(Component):
-    """1 input register, polled every 600s.
+    """1 input field, polled every 600s.
 
-    The communication module's firmware string at register 13265, absent on
-    a direct LAN connection and read on its own because some firmware
-    answers it by closing the connection.
+    The communication module's firmware string at register 13265, read on
+    its own because some firmware answers it by closing the connection. It
+    names the module *fitted*, not the one in the path, so it says nothing
+    about the transport.
     """
 
     register_space = "input"
@@ -644,7 +649,7 @@ class InverterFirmwareBlockCommunicationModule(Component):
 
 
 class InverterFirmwareBlockInverter(Component):
-    """1 input register, polled every 600s.
+    """1 input field, polled every 600s.
 
     The inverter firmware string at register 13250, which some firmware
     answers by closing the connection.
@@ -663,7 +668,7 @@ class InverterFirmwareBlockInverter(Component):
 
 
 class InverterSubControllerFirmware(Component):
-    """1 input register, polled every 600s.
+    """1 input field, polled every 600s.
 
     The sub-controller firmware string, which some firmware versions do not
     publish at all.

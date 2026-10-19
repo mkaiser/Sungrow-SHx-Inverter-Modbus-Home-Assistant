@@ -91,11 +91,11 @@ def _stamp() -> str:
 
 
 def _workspace() -> Path:
-    """Return the directory this run's files belong in: this script's own.
+    """Return the directory this run's files belong in: `device-fingerprints/`.
 
     Anchored on the script, not the working directory, so a launcher, `make`
-    and a plain `python` all land in the same place -- beside the launcher a
-    person double-clicked. Nothing written there carries the serial or the
+    and a plain `python` all land in the same place -- the folder above the
+    launcher a person double-clicked. Nothing written there carries the serial or the
     address: the result block is anonymous by construction, and the snapshot
     holds register values. `.gitignore` covers both by name inside a checkout.
     """
@@ -862,9 +862,9 @@ def _parser() -> argparse.ArgumentParser:
 def _resolve_paths(args: argparse.Namespace) -> bool:
     """Resolve the path arguments, and say whether every one is there.
 
-    Checked before anything connects: a document that is not there used to
-    surface after a whole run, restart included, and be reported as a link
-    that never came up.
+    Checked before anything connects: a document that is not there would
+    otherwise surface after a whole run, restart included, and be reported as
+    a link that never came up.
     """
     for name in ("merge_into", "restore"):
         if (value := getattr(args, name)) is None:

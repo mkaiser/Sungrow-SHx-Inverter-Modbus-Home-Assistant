@@ -17,7 +17,8 @@ VERSION ?=
 # The generators CI checks, under scripts/. `descriptions.py` with no target
 # runs all five of its own, strings last. Adding a generator means adding it
 # here and in .github/workflows/validate.yml -- the two lists must agree.
-GENERATORS := generate/descriptions.py generate/generate_compatibility.py
+GENERATORS := generate/descriptions.py generate/generate_compatibility.py \
+              generate/generate_simulator_registers.py
 
 .DEFAULT_GOAL := help
 
@@ -59,7 +60,7 @@ sim-bg: ## Same as `sim`, in the background, logging to /tmp/sim.log
 # shell, whose command line contains the pattern itself.
 stop: ## Stop a backgrounded Home Assistant and simulator
 	-pkill -f '[b]in/hass'
-	-pkill -f '[s]cripts/simulator.py'
+	-pkill -f '[s]cripts/dev/simulator.py'
 .PHONY: stop
 
 setup: ## Install Home Assistant, the library (editable) and the tooling
@@ -108,8 +109,7 @@ gen-check: ## Verify every generated file is current
 	    $(PY) scripts/$$g --check || exit 1; \
 	done
 	@# Not a generator, so it is not in GENERATORS -- but it writes a
-	@# document that states a number, and the number went stale by 47 entities
-	@# before anything compared it to the code.
+	@# committed document, and only this compares that document to the code.
 	@$(PY) scripts/helpers/review_names.py --check
 .PHONY: gen-check
 

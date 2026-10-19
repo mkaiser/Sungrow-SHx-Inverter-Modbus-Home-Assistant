@@ -1,15 +1,15 @@
 """The AC011E/AC22E wallbox registers, which Sungrow does not document.
 
-Hand-written, and in its own module for the same reason
-`battery_registers.py` is: `registers.py` is **generated** from
-`doc/legacy_entity_map.json`, which is the inverter's map, and the wallbox is
-not in it. The YAML package never covered a wallbox at all, so unlike the SBR
-there is not even an opt-in file to port -- there is only measurement.
+In its own module for the same reason the battery's map is:
+`inverter/registers.py` is held field by field to
+`doc/legacy_entity_map.json`, the inverter's record, and the wallbox is not in
+it. The YAML package never covered a wallbox at all, so unlike the SBR there
+is not even an opt-in file to port -- there is only measurement.
 
 **Every address here comes from `doc/wallbox_registers.md`**, which is what
-three independent sources agree on: one reading taken off an AC22E-01 through
-a WiNet-S on 2026-09-08, and the two community projects that made their own
-maps. That document carries a confidence mark per register, and this module
+three independent sources agree on: readings taken off one AC22E-01, through
+a WiNet-S and at its own address, and the two community projects that made
+their own maps. That document carries a confidence mark per register, and this module
 repeats it per field, because a name is worth exactly what its evidence is:
 
 * **three sources** -- measured here and named the same way by both projects.
@@ -26,11 +26,15 @@ here anyway: the survey then carries it for whoever recognises it, and it
 gets no entity, because inventing a meaning is worse than admitting there
 isn't one.
 
-**Not at unit 1.** A wallbox answers at unit 3 through a WiNet-S and 248
-direct, and a full sweep of one /24 found it on *neither* an address of its
-own -- only behind the endpoint that already answered. So it cannot be found
-by looking for it; it has to be asked for on a connection that exists. See
+**Not at unit 1.** A wallbox answers at unit 3 through a WiNet-S, and at
+unit 248 at its own LAN address over TLS on port 516; never through the
+inverter's own LAN port. A sweep for port 502 does not find it, so it is
+asked for on a connection that exists, or at an address its owner gives. See
 `sungrow_modbus.wallbox.probe_units`.
+
+**Over TLS a read must start on a data point's first register**, or it times
+out. Every component here starts on one, so the same components poll either
+path; `doc/wallbox_registers.md` has the map of valid starts.
 
 **Codes stay integers.** The raw code is the field and the meaning is a
 property, the same shape the SBR's packed position words take, so a document
@@ -105,8 +109,8 @@ def _meaning(table: dict[int, str], code: RegisterValue) -> str | None:
 class WallboxIdentity(Component):
     """What the wallbox is: model, type code, phase count, firmware.
 
-    Read once at setup rather than polled -- none of it changes while the
-    integration is loaded, and it is what the device and its entities are
+    On the slow tier with the ratings and settings -- none of it changes in
+    the course of a session, and it is what the device and its entities are
     named from.
     """
 
@@ -129,11 +133,11 @@ class WallboxIdentity(Component):
     """
 
     version_string = string(reg(21226), 10)
-    """Firmware as text. Read `LE-01.1E1.001.`.
+    """Firmware as text. Read `LE-01.1E1.001.901.25`. Measured here.
 
-    Measured here, and known to be a **fragment**: the string is cut off at
-    ten registers and the document records that rather than guessing the
-    length.
+    Whole only when read in one request starting at 21226: the wallbox
+    answers a read that starts inside a string with zeros for the rest of it,
+    which is why `dump.WALLBOX_BANDS` gives it a band of its own.
     """
 
     @property
@@ -151,8 +155,8 @@ class WallboxRatings(Component):
 
     Its own component because it moves on the scale of a configuration
     change, not a charging session -- and because it sits in its own address
-    band, 21262-21273, so pooling it with the live block would read thirty
-    registers nobody is watching every ten seconds.
+    band, 21262-21273, so pooling it with the live block would read nearly
+    forty registers nobody is watching on every fast poll.
     """
 
     register_space = "input"

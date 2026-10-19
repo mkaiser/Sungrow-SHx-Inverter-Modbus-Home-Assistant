@@ -4,91 +4,77 @@ Anything done should be removed here.
 
 # Open
 
-1. **A charging car at gerd's** for 21313 against 21308 over a session (does
-   it go to 0 when charging stops?) and the signedness of 21308/21310. Two
-   dongle runs about five minutes apart, 90 s of quiet before each, while the
-   car charges.
-2. Small items below.
+1. **A charging car at gerd's.** Settles what input 21313 does over a session
+   (does it go to 0 when charging stops?) and whether 21308/21310 are signed.
+   Two dongle runs about five minutes apart, 90 s of quiet before each, while
+   the car charges. `doc/wallbox_registers.md` has both questions.
 
 # Next steps
 
 ## Integration
 
-- Optional: have the integration's own fingerprint carry `export_scale`
-  once its entity has probed. It stores only the factor in entry data, not
-  the write behind it.
+- [ ] Have the integration's own fingerprint carry `export_scale` once its
+      entity has probed. Entry data holds only the factor, not the write
+      that measured it.
+- [ ] Grant `Capability.SUNGROW_BATTERY` when an SBR pack is found. No probe
+      grants it, so the datasheet rung of `battery_ceiling` never fires
+      (`number.py`, `control_test._battery_ceiling`, `config_flow.py`) and
+      the bounds fall back to BMS current x voltage. Granting it changes
+      write bounds.
+- [ ] `ControlTestButton.async_press` (`survey_entities.py`) does not check
+      `PERMISSION_CONTROL_TEST`; the `run_control_test` action does.
+- [ ] `strings.json`: `config.step.user.description` and the options
+      survey section say "four houses" / "nine readings"; there are more.
+      Only the `entity` block is generated, so this text is edited by hand.
+- [ ] `doc/preview-mirror/sync.yml` (change it here and in the mirror
+      together): its README says "Options -> Help this project", now
+      "Contribute a capability survey", and links `installing_a_preview.md`
+      as "Installing without HACS", which it is not.
+- [ ] `release.yml` runs ruff and pytest only; add mypy, `make gen-check`
+      and `check_pinned_library.py --wheel`.
+- [ ] Confirm the wallbox serial prefix `A25A` (words `[16690, 13633]`) in
+      `test_fingerprint_label.py`, `test_gui_fingerprint.py` and
+      `test_survey_api.py` does not identify a unit; it is allowlisted in
+      `test_no_real_serials.py` as the model prefix.
 
-## Wall box integration
+### Smaller
 
-Measured at gerd's AC22E-01 on 2026-10-14. Addresses are in memory, not here.
+- [ ] `survey.async_read_retrying` retries refusals, so a refusal followed
+      by a timeout ends as "no answer" in published probe states.
+- [ ] `_measure_export_scale` leaves `left_changed` unset when
+      `export_scale.async_probe`'s read-after-write fails.
+- [ ] Unused: `fingerprint.async_build`'s `options` and `control_test`
+      parameters, the `export_cap` arguments, `components.InverterReadings`,
+      `FIRMWARE_BLOCK_IS_TEXT`, `probe.py`'s `_cmd_mdns_legacy`.
+- [ ] `FaultWord.register` holds a protocol address; rename it `address`.
+- [ ] Wrong folder named in `probe.py`'s `--save` help and in
+      `sungrow_control_test.py`'s `_workspace()` docstring.
+- [ ] `probe.py`'s schema-history comment stops at 20; `SCHEMA` is 22.
+- [ ] `raw_client.py` does not check the transaction id.
+- [ ] `tests/test_dump_reads.py` fakes refusals with a bare `ModbusError`;
+      raise the real exception type.
 
-**What is now known**
+## Wallbox
 
-- **Two ways to the wallbox's registers, both measured:**
+What is known -- both paths, the map of valid starts over TLS, what only the
+direct path shows -- is in `doc/wallbox_registers.md`.
 
-  | Path | Protocol | Unit |
-  | --- | --- | --- |
-  | through the WiNet-S, at the dongle's address | plain Modbus TCP, port 502 | 3 |
-  | directly, at the wallbox's own LAN address | Modbus TCP inside TLS, port 516 | 248 |
-
-  Same wallbox: firmware string, lifetime energy and the live block agree
-  word for word. Only unit 248 answers over TLS (0-255 swept). The wallbox
-  has no port 502 and no web interface; its certificate is Sungrow-signed
-  (issuer `OT.SUNGROW`, CN `sun`), byte-identical to the WiNet-S's at the
-  same house -- so it authenticates nothing.
-- **Not through the inverter's own LAN port.** No unit from 0 to 255 answers
-  the wallbox's model name (input 21216) there; the link was alive -- unit
-  1 answered its device type, 0x0E0E -- and the inverter itself goes silent
-  on the wallbox's addresses rather than refusing them.
-- **The direct path shows more than the dongle.** Where both answer, the
-  dongle returns 0 for: input 21210-21213 (an ASCII identity-like string;
-  not to be published until it is understood), 21240-21249 (a second
-  version string, `V1.0...`), 21331-21335 (0xFFFF directly), 21359 and
-  21362-21364 (values directly). Input 21267 reads 12372 directly, 0
-  through the dongle. And the firmware string at 21226 reads whole.
-  Holding registers: the same 50 addresses either way.
-- **Over TLS a read must start on the first register of a data point.**
-  Reproducible on fresh connections (21295 x24 answers, 21296 and 21300
-  time out). The full map, one-register reads at every address (serial
-  skipped), protocol addresses:
-  - input: 21210, 21212, 21214, 21215, 21223, 21224, 21225, 21240, 21243,
-    21258, 21261-21272, 21274-21279, then every second address 21281-21299,
-    21301-21307, 21309, 21311-21317, 21319, 21321, 21322, 21326, 21330,
-    21331, 21336, 21337, 21339-21345, 21347, 21349-21355, 21357,
-    21359-21365, 21369, 21373, 21374;
-  - holding: 21200, 21202-21204, 21206, 21208, 21210-21212, 21214-21216,
-    21220, 21222-21233, 21249, 21281, 21297-21301, 21311-21317.
-
-  Every mapped field starts on one (model name 21215, type code 21223,
-  phases 21224, firmware 21225, nominal voltage 21261, phase mode 21269,
-  minimum power 21271; the 32-bit live values every second address), so
-  the map is also **the wallbox's own field layout**, undecoded registers
-  included. Through the dongle any start works -- it reads the wallbox its
-  own way.
-- **The integration's reads already comply, and work over TLS through the
-  real library**: `ModbusTlsParams(port=516, verify=False,
-  check_hostname=False)`, unit 248 -- identity (input 21215 x20), ratings
-  (21261 x12), live (21299 x23), settings (holding 21202 x10, 21231 x1) all
-  answered.
-- **The stack can reach it.** `modbus-connection` has `ModbusTlsParams`
-  (`verify=False` for a self-signed device certificate), and Home
-  Assistant's `modbus.async_get_unit` accepts it.
-
-**To do**
-
-- [ ] Decode what only the direct path shows: 21240-21249 (version
-      string), 21331-21335, 21359, 21362-21364, 21267, holding 21249-21312.
-      21210-21213 is masked until a second wallbox shows whether it
-      identifies the unit.
-- [ ] Still only a charging car can settle 21313 and the signedness of
-      21308/21310 -- now readable both ways, which doubles the evidence.
+- [ ] Decode what only the direct path shows: input 21241-21250 (a second
+      version string), 21267, 21332-21336, 21360, 21363-21365, and holding
+      21250-21313 (register numbers). 21211-21214 stays masked until a
+      second wallbox shows whether it identifies the unit.
 
 
 # Future work
 
 ## EVCC connection
 
-OR: proide some kind of mqtt interface for inverter and wallbox to evcc. Does evcc have a standard config for this?
+- [ ] Hand inverter and wallbox readings to evcc, e.g. over MQTT, so evcc
+      need not open a Modbus session of its own. To find out: does evcc have
+      a standard configuration for that?
 
-## Ihome Manager
+## iHomeManager
+
+Never measured; survey one (port 502 or 503, unit 247). The register map is
+in `doc/cross_reference_modbus_manager.md`; Sungrow's protocol PDF:
 https://github.com/TCzerny/ha-modbus-manager/blob/main/docs/Communication%20Protocol%20of%20iHomeManager_V1.0.2.pdf

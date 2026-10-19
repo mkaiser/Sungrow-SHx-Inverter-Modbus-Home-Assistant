@@ -19,17 +19,18 @@ flowchart TD
     subgraph integration["custom_components/sungrow_modbus &mdash; the integration, delivered by HACS"]
         direction TB
         flow["config_flow<br/>probe, identify, scan the LAN,<br/>ask about entity ids<br/><br/>config_flow_schemas: the forms it shows,<br/>separated from the decisions about showing them"]
-        survey["survey &mdash; both parts, one progress bar<br/><br/>part A fingerprint: probe every capability,<br/>time the link, publish a document that<br/>carries a stand-in serial and no address<br/><br/>part B control_test (in the library): write each<br/>control, check the raw word against a hand-typed<br/>scale, watch what the inverter does, put it back<br/><br/>repairs: a run that did not finish restoring<br/>becomes a fix flow somebody can click<br/>download: a signed, short-lived link"]
+        survey["survey &mdash; both parts, one progress bar<br/><br/>part A fingerprint: probe every capability,<br/>publish a document that carries a<br/>stand-in serial and at most two octets<br/><br/>part B control_test (in the library): write each<br/>control, check the raw word against a hand-typed<br/>scale, watch what the inverter does, put it back<br/><br/>repairs: a run that did not finish restoring<br/>becomes a fix flow somebody can click<br/>download: a signed, short-lived link"]
         coord["coordinator<br/>four for the inverter, one per tier:<br/>realtime 5s, fast 10s, medium 60s, slowest 600s<br/><br/>one more per extra device that answered:<br/>the SBR pack on medium, the wallbox on fast<br/>with its slow blocks every 30th poll"]
-        ent["entity<br/>sensor, binary_sensor,<br/>number, switch, select"]
+        ent["entity<br/>sensor, binary_sensor,<br/>number, switch, select<br/><br/>a diagnostics-only entry: the survey and<br/>control test buttons and three sensors"]
         mig["migration<br/>claim the YAML entity_id,<br/>or take a modern id then rename"]
-        svc["services<br/>start_inverter, stop_inverter<br/>audience set per entry,<br/>admins only by default"]
+        svc["services<br/>start_inverter, stop_inverter,<br/>run_control_test: audience set per entry,<br/>admins only by default<br/>run_survey: anyone"]
         diag["diagnostics<br/>the downloadable report"]
-        gen["sensor_descriptions.py: source, tested against the entity map<br/>derived/number/switch/select: generated from<br/>scripts/generate/tables"]
-        hand["battery_descriptions.py, wallbox_descriptions.py<br/>source: their registers are not<br/>in the entity map"]
+        gen["sensor_descriptions.py: source, tested against the entity map<br/>derived/number/switch/select: generated from<br/>the library's derived module and scripts/generate/tables"]
+        hand["battery_descriptions.py, wallbox_descriptions.py,<br/>external_descriptions.py<br/>source: none of them is in the entity map"]
+        ext["external<br/>add back a generator the Sungrow cannot see,<br/>from entities another integration owns"]
     end
 
-    lib["sungrow_modbus &mdash; the library, installed from PyPI<br/>no Home Assistant imports anywhere<br/><br/>inverter/: registers, components (block reads, per tier),<br/>layout (registers read alone), capabilities,<br/>derived and smoothing, export_scale<br/>battery/: the SBR pack &mdash; device, registers, discovery, power<br/>wallbox/: the charge point &mdash; device, registers, discovery, document<br/>discovery: LAN sweep, reverse DNS"]
+    lib["sungrow_modbus &mdash; the library, installed from PyPI<br/>no Home Assistant imports anywhere<br/><br/>inverter/: device, registers, components (block reads, per tier),<br/>layout (registers read alone), capabilities, faults,<br/>derived and smoothing, export_scale<br/>battery/: the SBR pack &mdash; device, registers, discovery, power<br/>wallbox/: the charge point &mdash; device, registers, discovery, document<br/>top level: addresses, discovery (identify, LAN sweep, reverse DNS),<br/>dump, fingerprint, survey, block_test, control_test"]
 
     subgraph modbus["homeassistant.components.modbus &mdash; owns the connection"]
         direction TB
@@ -37,7 +38,8 @@ flowchart TD
         oldpath["modbus.py<br/>pymodbus<br/><br/>the legacy YAML platform's path,<br/>which modbus_sungrow.yaml still uses"]
     end
 
-    device["the inverter's Modbus TCP port<br/>port 502: unit 1 or 2 inverter, 200 or 2 SBR, 3 or 248 wallbox<br/>port 503: unit 247 iHomeManager &mdash; documented, never measured<br/>port 516: a WiNet-S serving Modbus over TLS<br/><br/>direct LAN about 2 ms; WiNet-S slower, and forwards less"]
+    device["the inverter's endpoint, port 502<br/>inverter on unit 1, or 2 for a cluster slave<br/>SBR on 200 direct, 2 through a WiNet-S<br/>wallbox on 3, through a WiNet-S only<br/><br/>a WiNet-S forwards less than a cable"]
+    wbdev["the wallbox's own address, port 516<br/>Modbus inside TLS, unit 248<br/>read only when the wallbox_host option is set"]
 
     user <--> core
     core <--> integration
@@ -45,6 +47,7 @@ flowchart TD
     integration -- "SungrowInverter takes that unit" --> lib
     lib -- "reads and writes registers through it" --> newpath
     newpath -- "TCP" --> device
+    newpath -- "TLS" --> wbdev
     oldpath -- "TCP, a second connection to the same inverter" --> device
 ```
 
@@ -62,10 +65,11 @@ lines are worth knowing before moving anything across them.
 **Decisions and data are separated where the data got big.**
 `config_flow_schemas.py` holds the `voluptuous` schemas, the option lists and
 the prose Home Assistant renders above them; `config_flow.py` holds the steps
-that decide which of those to show. The split exists because three quarters of
-what came before the flow's first class was not flow logic, and reading the
-flow meant scrolling past all of it. The same instinct puts the generated
-`*_descriptions.py` files beside the platforms that consume them.
+that decide which of those to show. The split keeps the flow readable as flow
+logic. `_alpha_placeholders` stays in `config_flow.py` although it only
+produces text: it reads `DEVICES_MODE_OFFERED` at call time so a test can
+patch the flag there. The same instinct puts the `*_descriptions.py` files
+beside the platforms that consume them.
 
 **Anything reachable without Home Assistant lives in the library.** That is why
 the control test's engine is `sungrow_modbus.control_test` and not here: it has
@@ -82,40 +86,74 @@ names which device failed. The two subclasses are left holding only what
 genuinely differs: how a model name is found, and how often each block is worth
 reading.
 
-**And `async_setup_entry` reads as a list of steps.** Connect and identify,
-build the tier coordinators, probe for a pack and a wallbox, assemble the
-runtime data, claim the legacy ids, forward the platforms. Each step is a named
-function that can be read on its own, which is the only way a setup path stays
-reviewable as it grows.
+**And `async_setup_entry` reads as a list of steps.** Connect and identify
+(`_async_connect`); build and first-refresh the tier coordinators
+(`_async_tier_coordinators`); resolve capabilities from that first poll; probe
+for a pack (`_async_battery`) and a wallbox (`_async_wallbox`); register the
+inverter's device so a sub-device can hang off it
+(`_async_register_inverter`); assemble the runtime data and the survey runner;
+drop correction entities the options no longer ask for; claim the legacy ids
+(`_async_take_over_legacy_ids`); raise a repair if a control test left
+registers changed (`_async_check_control_test`); and forward the platforms --
+all five for an ordinary entry, button and sensor for a diagnostics-only one.
+Each step is a named function that can be read on its own, which is the only
+way a setup path stays reviewable as it grows.
+
+Every option is read during setup, so the update listener reloads the entry on
+any change -- except one setup never reads: the export limit's measured write
+scale, which the entity stores in `data` mid-write. `_built_from` is what tells
+the two apart.
 
 ## Three devices, and why the unit ids are not settings
 
-One endpoint can hold three kinds of device, and **which unit id each answers
+One entry can hold three kinds of device, and **which unit id each answers
 on moves with the transport**, so none of them is asked for:
 
 | Device | Unit | Found by |
 | --- | --- | --- |
 | Inverter | **1**, or **2** for a cluster slave on its own LAN port | `identify()` sweeping 1 to 5. A dongle presents whatever is behind it as unit 1 regardless, so the address is only the role on a direct path |
 | SBR pack | **200** direct, **2** through a WiNet-S | `battery.probe_units`, discriminating against a slave inverter — which also sits at 2 and answers a device type code where a pack does not |
-| Wallbox | **3** through a WiNet-S, **248** direct | `wallbox.probe_units`, reading the model *name* rather than the code or the serial |
+| Wallbox | **3** through a WiNet-S, **248** at its own address over TLS on port 516 | `wallbox.probe_units`, reading the model *name* rather than the code or the serial. Its own address is the `wallbox_host` option, checked by the options flow before it is saved; with it set, the endpoint is not asked as well |
 
 Each extra device gets its **own device registry entry**, hung off the
 inverter with `via_device`, identified by the *inverter's* serial plus a
 suffix. Neither reports a usable serial of its own: an SBR has none anywhere
 in its registers, and a wallbox has one this project deliberately never reads.
+So the wallbox's device and entity ids are the same whichever path reaches it,
+and moving it from the dongle to its own address keeps its history.
 
-A wallbox cannot be found by sweeping for it at all. Measured at the one site
-with one: a full /24 found Modbus TCP on two addresses, the inverter and its
-dongle, and the wallbox answered only behind the dongle despite having its own
-LAN cable.
+A wallbox never answers through the inverter's own LAN port, and its own
+address speaks Modbus only inside TLS on 516, with no port 502 -- so the
+config flow's sweep of 502 and 503 does not find it. Sub-devices are probed
+again whenever the entry's endpoint changes, so a move from a dongle to a
+cable keeps the pack and loses a dongle-carried wallbox unless `wallbox_host`
+points at it; the move step says so before it happens.
+
+The pack is polled on the inverter's *medium* interval. The wallbox fires on
+the *fast* one and reads only its live block, refreshing identity, ratings and
+settings every 30th firing (`SLOW_EVERY`).
 
 ## What one config entry is
 
-**One endpoint** — a host and a port — plus whatever answered on it. Not one
-inverter. That is exactly the set of devices sharing one serialized
-connection, which is the only grouping that makes the contention manageable,
-and it is why the config flow probes and identifies devices by what answers
-rather than by unit id.
+**One inverter, reached through one endpoint** — a host and a port — plus
+the devices discovered on it. That is exactly the set of devices sharing one
+serialized connection, which is the only grouping that makes the contention
+manageable, and it is why the config flow probes and identifies devices by
+what answers rather than by unit id.
+
+The unique id is the inverter's serial; the endpoint is the owner's choice.
+Reconfigure, or Add integration finding the same serial at another address,
+moves the entry there (`async_step_move`) with every entity id and its history
+intact, and refuses an endpoint that answers with a different serial.
+
+An entry is one of two modes (`CONF_MODE`). **Devices** is the integration:
+entities, migration, controls. **Diagnostics only** connects, identifies and
+polls, but creates only the survey and control test buttons and three survey
+sensors -- enough for a device page -- and never asks the entity-id question.
+It can be promoted from the options flow. While `DEVICES_MODE_OFFERED` is
+`False`, new entries can only be diagnostics: the menu still offers devices
+mode and its step explains why it is not yet available, and the promotion
+toggle is greyed.
 
 ## At build time
 
@@ -184,7 +222,7 @@ and their description modules are checked like this:
 | Hand-written | Checked against |
 | --- | --- |
 | `battery/registers.py` | `legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml`, address and scale per field — all forty of its sensors |
-| `wallbox/registers.py` | the raw words in a committed fingerprint, decoded independently by `probe.py`, field by field |
+| `wallbox/registers.py` | the raw words and the readings in a committed fingerprint: the document decoder must reproduce the readings, and the components must read the same values from the same words |
 | `battery_descriptions.py`, `wallbox_descriptions.py` | every `field` resolves to a real field or property; no key collides across devices |
 
 That is the same discipline as the inverter's map: where nothing generates a
@@ -227,6 +265,6 @@ coordinators were doing, the progress entity, and the guard on part B. A
 change to what a document *says* therefore belongs in `src/`, where both
 producers pick it up.
 
-The one place time enters is `smoothing.py`, and it takes the clock as an
-argument rather than reading one — which is what lets a sixty-second delay be
-tested without waiting sixty seconds.
+Where time enters a polled value, in `inverter/smoothing.py`, it takes the
+clock as an argument rather than reading one — which is what lets a
+sixty-second delay be tested without waiting sixty seconds.

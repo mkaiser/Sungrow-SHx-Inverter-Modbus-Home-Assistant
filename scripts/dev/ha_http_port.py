@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Pin a Home Assistant instance's port where 2026.9 actually keeps it.
 
-`http:` in `configuration.yaml` no longer decides the port, and finding that
-out the slow way costs an afternoon. Home Assistant 2026.9 stores the HTTP
+`http:` in `configuration.yaml` no longer decides the port. Home Assistant
+2026.9 stores the HTTP
 config in `<config>/.storage/http` as two configs -- `stable` and `pending`
 -- and:
 
@@ -16,11 +16,10 @@ config in `<config>/.storage/http` as two configs -- `stable` and `pending`
 - When nobody promotes it, `http/config.py` writes
   `error: "not_promoted"` and restarts onto stable.
 
-Measured here, and it is not a corner case: the HACS testbed served :8124
-for five minutes, reverted itself to the default :8123, collided with the dev
-instance already on that port, and came up with `http` dead -- so no API, no
-frontend, and an onboarding script waiting forever for a port nothing was
-listening on.
+Not a corner case: left to the YAML, the HACS testbed serves :8124 for five
+minutes, reverts itself to the default :8123, collides with the dev instance
+already on that port, and comes up with `http` dead -- no API, no frontend,
+and an onboarding script waiting for a port nothing is listening on.
 
 A scripted instance has nobody to promote anything, so this writes `stable`
 directly and clears `pending`. That is the state a promotion would have left

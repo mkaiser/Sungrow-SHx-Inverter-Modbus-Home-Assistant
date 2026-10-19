@@ -1,11 +1,11 @@
 """The block read test: which of the poll's block reads this device fails.
 
 The library pools neighbouring registers into single block reads, which is
-what makes a full poll 27 requests instead of 105. The cost is that one
-register a device cannot answer takes its whole block with it -- a `Component`
-either updates or raises -- so one bad register can empty a whole tier of
-entities. That has happened twice, and both times only a block read test said
-which register it was.
+what makes a full poll a few dozen requests instead of one per field. The
+cost is that one register a device cannot answer takes its whole block with
+it -- a `Component` either updates or raises -- so one bad register can empty
+a whole tier of entities, and only a block read test says which register it
+is.
 
 The integration runs it from the device page and
 `device-fingerprints/scripts/python/blocks.py` from a terminal, both through
@@ -92,12 +92,11 @@ ATTEMPTS = 2
 #:
 #: Narrowing walks every node of a binary tree over the block, so a
 #: 15-register block costs about 29 reads. Where a device refuses immediately
-#: -- exception 0x02, which is what two houses on a LAN did -- that is a
-#: couple of seconds. Where refusal arrives as a **timeout** instead, which is
-#: what a third house did over a VPN, each read costs the timeout times the
-#: attempts: 30 seconds, so one block is a quarter of an hour. Four such blocks
-#: outran the survey's own 25-minute cap and the run was killed with no
-#: document written at all.
+#: -- exception 0x02, as on a LAN -- that is a couple of seconds. Where
+#: refusal arrives as a **timeout** instead, as it can over a VPN, each read
+#: costs the timeout times the attempts: 30 seconds, so one block is a quarter
+#: of an hour, and a handful of such blocks is a run somebody kills before it
+#: writes a document.
 #:
 #: A *per-block* budget does not fix that: it bounds each block and leaves the
 #: phase unbounded, so a device that fails eight blocks costs eight times as
@@ -108,8 +107,9 @@ ATTEMPTS = 2
 NARROW_BUDGET = 480.0
 
 #: Said in the document because it changes what the rest means. The terminal
-#: tool may use a deliberately lenient raw socket; this is the integration's
-#: own stack, so whatever it cannot read the integration cannot read either.
+#: tool may use the strict raw socket, which names the count a padded frame
+#: needs and retries by reconnecting; this is the integration's own stack, so
+#: whatever it cannot read the integration cannot read either.
 CLIENT = (
     "modbus-connection through Home Assistant's modbus integration -- the "
     "integration's own reads, so it fails exactly where the integration fails"
@@ -191,7 +191,7 @@ async def inverter_blocks() -> list[Block]:
     at setup, and a device that refuses it never gets that far. Components on
     another unit -- the SBR pack, the wallbox -- are not: read at the
     inverter's unit they answer 0xFFFF or refuse whatever the pack is doing,
-    and once filled eight guaranteed failures into every survey.
+    which would put guaranteed failures into every survey.
     """
     blocks: list[Block] = []
     for name, klass in {**COMPONENTS, "identity": InverterIdentity}.items():
@@ -225,8 +225,8 @@ def _describe(err: ModbusError) -> tuple[str, str]:
 
     The library's taxonomy decides, never the message: an exception
     *response* is the device answering, while a lost connection, a timeout or
-    a desync is the link failing to carry the question. `CLAUDE.md` lists four
-    bugs that came from confusing the two.
+    a desync is the link failing to carry the question. `AGENTS.md` says what
+    confusing the two costs.
     """
     if isinstance(err, ModbusExceptionError):
         code = err.exception_code
@@ -254,9 +254,8 @@ async def attempt(
 
     With `reconnects`, a read that answered only after the client reconnected
     is a failure: the raw client reconnects and retries, which is right for
-    a fingerprint and once hid gerd's 5242 completely -- reported "ok (3/3)"
-    while the integration, which has no mid-block retry, could not read the
-    component at all.
+    a fingerprint and would report "ok (3/3)" for a block the integration,
+    which has no mid-block retry, cannot read at all.
     """
     outcomes: list[tuple[str, str]] = []
     for _ in range(attempts):
@@ -605,8 +604,8 @@ def document(
     return {
         "rounds": rounds,
         "attempts": attempts,
-        # Said because it changes what the rest means: a lenient client reports
-        # a padded frame as a clean read.
+        # Said because it changes what the rest means: the library reports a
+        # padded frame as rejected, the raw socket names the count it needs.
         "client": client,
         "answered": [
             where(block)

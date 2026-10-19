@@ -79,10 +79,10 @@ class Silent:
     refusal costs milliseconds. A register that goes **quiet** instead costs
     the whole timeout on every read that touches it. fwitten's master, on its
     own LAN port, has four: 13199 and the three firmware strings at 13249,
-    13264 and 13279. The readings' field-by-field salvage then asked each of
-    them three sweeps over, and the dump's single-address fallback asked them
-    again -- a survey of about 39 minutes, most of it spent waiting on four
-    registers whose answer was already known.
+    13264 and 13279. Without a memory of them, the readings' field-by-field
+    salvage and the dump's single-address fallback would each wait on them
+    again, and a survey would spend most of its time on four registers whose
+    answer is already known.
 
     So a narrowing read that times out is noted here, and a later narrowing
     read that overlaps it is not sent: it is recorded as unread, the same

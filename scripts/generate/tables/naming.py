@@ -271,16 +271,16 @@ BANNED_WORDS: dict[str, str] = {
 }
 
 #: Sensors that exist **only to carry the YAML package's history**, and are
-#: not created in modern mode. Settled 2026-09-09: "I prefer a clean cut more
-#: over 100% backwards compatibility. Also those values are not very valuable,
-#: so having them erased wouldn't be a big deal for the users."
+#: not created in modern mode. The maintainer's decision: "I prefer a clean
+#: cut more over 100% backwards compatibility. Also those values are not very
+#: valuable, so having them erased wouldn't be a big deal for the users."
 #:
 #: Each one **names what replaces it**, and that is the whole discipline
 #: here: a clean cut removes duplication, not capability, and the only way to
 #: know which is being removed is to say where the reading went instead.
 #: `tests/test_sensor_descriptions.py` checks every replacement exists among
-#: the entities modern mode does create -- written as a heuristic first, which
-#: passed for fifteen of the seventeen and quietly guessed at the other two.
+#: the entities modern mode does create, by name rather than by a heuristic
+#: that would guess.
 #:
 #: Two kinds, both a second copy of something the user already has:
 #:
@@ -288,14 +288,14 @@ BANNED_WORDS: dict[str, str] = {
 #:   number shows its value *and* sets it, so `sensor.battery_max_soc` beside
 #:   `number.battery_max_soc` is one reading listed twice under one name. The
 #:   YAML package needed both because a YAML `sensor` cannot be written.
-#: * **Eight `_raw` codes whose decoded counterpart exists.**
+#: * **Ten `_raw` codes whose decoded counterpart exists.**
 #:   `backup_mode_raw` reads 170 or 85 where `switch.backup_mode` says on or
 #:   off. Nobody should have to know that 170 means enabled.
 #:
-#: The four `_raw` codes **not** here -- `active_power_limitation_raw`, its
-#: ratio, `apl_shutdown_at_zero_raw` and `pv_power_limitation_raw` -- are the
-#: only exposure of their register, so dropping them would remove the
-#: capability. They join this list when their friendly forms land.
+#: The two `_raw` codes **not** here -- `active_power_limitation_ratio_raw`
+#: and `apl_shutdown_at_zero_raw` -- are the only exposure of their register,
+#: so dropping them would remove the capability. To do: add them when their
+#: friendly forms land.
 #:
 #: A field named here loses its *sensor* and keeps its switch, select or
 #: number: its description in `sensor_descriptions.py` carries

@@ -1,21 +1,14 @@
 {
   "name": "Sungrow Modbus Home Assistant integration",
 
-  // Home Assistant 2026.9 requires Python >= 3.14.2. The Microsoft
-  // devcontainers/python images only go up to 3.13, so this uses the official
-  // Python image instead. Pinning the interpreter in the image (rather than
-  // installing it through a feature) means the exact same environment can be
-  // reproduced with a plain `docker run`, without the devcontainer CLI.
-  "image": "python:3.14-bookworm",
+  // Home Assistant requires Python >= 3.14.2. Microsoft's Python devcontainer
+  // image ships the interpreter, git and the non-root `vscode` user, so no
+  // feature has to add them. Python lives in /usr/local/python/current, whose
+  // bin/ is first on PATH -- ahead of the image's own pipx tools in
+  // /usr/local/py-utils, so requirements_dev.txt's pytest, mypy and ruff win.
+  "image": "mcr.microsoft.com/devcontainers/python:3.14-bookworm",
 
   "features": {
-    // Adds the non-root `vscode` user, git and a usable shell, which the
-    // official Python image does not ship.
-    "ghcr.io/devcontainers/features/common-utils:2": {
-      "username": "vscode",
-      "installZsh": false,
-      "upgradePackages": false
-    },
     // Home Assistant installs each component's requirements on first boot;
     // a few of them build against these.
     "ghcr.io/devcontainers-extra/features/apt-packages:1": {

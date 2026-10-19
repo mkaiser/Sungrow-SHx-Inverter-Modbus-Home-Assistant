@@ -1,11 +1,14 @@
-"""Binary sensor platform: the power flow status bits.
+"""Binary sensor platform: power flow bits, mode flags, fault flags, wallbox.
 
-The inverter reports what is flowing where as bits of one register, which the
-YAML package split into seven binary sensors. They are all computed from the
-same reading, so they share a coordinator and go unavailable together.
+Most of these are the power flow status. The inverter reports what is flowing
+where as bits of one register, which the YAML package split into seven binary
+sensors. They are all computed from the same reading, so they share a
+coordinator and go unavailable together. Each has a `(delay)` twin that
+repeats it only once the bit has held for a minute -- fourteen entities from
+one register.
 
-Each has a `(delay)` twin that repeats it only once the bit has held for a
-minute -- fourteen entities from one register.
+Beside them: the decoded `0xAA`/`0x55` limitation modes, `Fault reported` and
+`Alarm reported` from the fault and alarm words, and the wallbox's two.
 """
 
 from __future__ import annotations
@@ -68,7 +71,7 @@ class SungrowWallboxBinarySensor(SungrowDeviceEntity, BinarySensorEntity):
 
 
 class SungrowBinarySensor(SungrowEntity, BinarySensorEntity):
-    """One bit of the inverter's power flow status, optionally delayed."""
+    """One derived on/off state of the inverter, optionally delayed."""
 
     entity_description: SungrowBinarySensorDescription
 

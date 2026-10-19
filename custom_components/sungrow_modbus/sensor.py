@@ -39,7 +39,7 @@ async def async_setup_entry(
     runtime_data = entry.runtime_data
 
     # A diagnostics-only entry is made of the survey and nothing else: three
-    # sensors here and a button beside them, which between them give the
+    # sensors here and two buttons beside them, which between them give the
     # entry a device page -- a device reaches the registry only when an
     # entity carrying its `device_info` is added.
     #
@@ -80,7 +80,7 @@ async def async_setup_entry(
     # another house a different dongle firmware answered the cell block with
     # **zeros** -- which decode to values, so a successful read is not
     # evidence and a non-zero reading is what is required. Nothing ever
-    # removes an entity, so eight of them reporting 0 V and module 0 forever
+    # removes an entity, so ten of them reporting 0 V and module 0 forever
     # would have no recovery at all.
     battery = runtime_data.battery
     if battery is not None:
@@ -229,7 +229,7 @@ class SungrowExternalSensor(SungrowEntity, SensorEntity):
     than unchanged.
 
     **Updated on the poll, not on the sources.** Home Assistant could push a
-    new state the moment a foreign inverter reports, and that was rejected:
+    new state the moment a foreign inverter reports, and does not, because
     the sum would then advance on the strength of its foreign half while the
     Sungrow half sat at whatever the last poll returned, advertising a
     freshness the number does not have. Written on the coordinator update

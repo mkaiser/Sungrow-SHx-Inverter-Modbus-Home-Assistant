@@ -15,7 +15,7 @@ need:
   a disagreement between the two is a bug in the table;
 * **why an entity does not exist.** "MPPT3 is missing" is the single most
   common report, and the answer is almost always that the inverter reported
-  the specification's 0xFFFF sentinel. That is now stated rather than inferred;
+  the specification's 0xFFFF sentinel. That is stated rather than inferred;
 * **per-component poll health**, because a poll losing one block is normal
   operation here and the interesting part is *which* block and for how long;
 * **which entity ids are in use**, so a migration that half-worked is visible;
@@ -34,9 +34,8 @@ the same format `device-fingerprints/scripts/python/sungrow_survey.py` writes, s
 a user who has the integration running can contribute one by clicking a button
 instead of running Python. Everything else in this file answers "what is wrong
 with mine"; that section answers "what does this model and this firmware
-actually do", which is the question `doc/compatibility.md` exists for and which
-nine documents from four houses cannot answer. See `fingerprint.py`, including
-what it deliberately does not do.
+actually do", which is the question `doc/compatibility.md` exists for. See
+`fingerprint.py`, including what it deliberately does not do.
 """
 
 from __future__ import annotations
@@ -55,7 +54,7 @@ from sungrow_modbus import Capability
 from sungrow_modbus.addresses import field_address
 from sungrow_modbus.inverter.capabilities import OUTPUT_TYPES, known_absent
 
-from .const import CONF_REGISTER_DUMP, CONF_UNIT_ID, DOMAIN
+from .const import CONF_REGISTER_DUMP, CONF_UNIT_ID, CONF_WALLBOX_HOST, DOMAIN
 from .coordinator import COMPONENT_TIERS, SungrowConfigEntry
 from .fingerprint import async_build
 from .migration import DESCRIPTIONS, legacy_entity_id
@@ -66,8 +65,9 @@ _LOGGER = logging.getLogger(__name__)
 #: `sungrow_inverter_serial` is here as well as `serial_number` because the
 #: serial is *also* a register reading — key-based redaction of the identity
 #: block alone leaves it sitting in the readings, which is what
-#: `test_the_serial_and_host_are_redacted` exists to catch.
-TO_REDACT = {CONF_HOST, "serial_number", "sungrow_inverter_serial"}
+#: `test_the_serial_and_host_are_redacted` exists to catch. `wallbox_host` is
+#: an option, and the options are reported whole.
+TO_REDACT = {CONF_HOST, CONF_WALLBOX_HOST, "serial_number", "sungrow_inverter_serial"}
 
 #: Register addresses holding the serial number, excluded from the raw dump.
 #: A dump is words, not strings, so no amount of key redaction reaches it —
@@ -105,8 +105,7 @@ async def async_get_config_entry_diagnostics(
     # scanner writes. This is the part worth sending on: everything above
     # answers "what is wrong with mine", and this answers "what does this
     # model and firmware actually do", which is the question
-    # `doc/compatibility.md` is built from and which nine documents from four
-    # houses is not enough to answer.
+    # `doc/compatibility.md` is built from.
     #
     # Wrapped, and that is not caution for its own sake: diagnostics is what
     # somebody downloads when the integration is *already* misbehaving, so a
@@ -119,10 +118,9 @@ async def async_get_config_entry_diagnostics(
     # section of it.
     except Exception as err:  # and deliberately logged, see below
         # The report carries the short form because somebody reads it; the log
-        # carries the traceback because somebody has to fix it. Without this
-        # the only trace of a failure was one line inside a downloaded JSON
-        # file, and the person holding that file is rarely the person who can
-        # act on it.
+        # carries the traceback because somebody has to fix it. The person
+        # holding a downloaded JSON file is rarely the person who can act on
+        # it.
         _LOGGER.exception("Could not build the fingerprint for %s", entry.title)
         report["fingerprint"] = {"error": f"{type(err).__name__}: {err}"}
 
@@ -169,9 +167,9 @@ async def async_get_device_diagnostics(
 ) -> dict[str, Any]:
     """Return the same report from the device page.
 
-    One config entry is one inverter today, so there is nothing to narrow
-    down; when a wallbox or a battery becomes its own device this is where
-    that split belongs.
+    The battery and the wallbox are devices of their own under the same
+    entry, and they get the entry's whole report too: it already carries
+    their sections in `fingerprint`. A per-device split would belong here.
     """
     return await async_get_config_entry_diagnostics(hass, entry)
 

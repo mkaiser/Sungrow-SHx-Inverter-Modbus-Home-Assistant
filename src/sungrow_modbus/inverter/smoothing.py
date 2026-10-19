@@ -135,9 +135,9 @@ class TimeWeightedAverage:
         # it computes the average at the instant a new state arrives, so its
         # `now` *is* the newest timestamp and this term is always zero. Here
         # it is not -- a poll can be missed, and the entity is asked for its
-        # value whenever Home Assistant feels like it -- and leaving it out
-        # made a single reading of 10 average to 8 sixty seconds later, drifting
-        # towards zero while the source sat perfectly still.
+        # value whenever Home Assistant feels like it -- and without it a
+        # single reading of 10 averages to 8 sixty seconds later, drifting
+        # towards zero while the source sits perfectly still.
         total += (now - start) * previous[1]
         return total / self.window
 

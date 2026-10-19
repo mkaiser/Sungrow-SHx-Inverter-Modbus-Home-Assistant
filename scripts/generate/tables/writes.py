@@ -64,13 +64,12 @@ class Number(TypedDict, total=False):
     """The `Capability` this control needs, or absent where it needs none.
 
     Declared here for the same reason writability is: one table, and the
-    entities derived from it cannot disagree with it. It was a conditional in
-    `generate_numbers.py` until 2026-09-18 -- `BATTERY` for everything except
-    the export limit -- which quietly overrode what the comment on the
-    start-power pair below already said. The consequence was not cosmetic: on
-    an SH*RS, where those two registers are reported absent (issue #743),
-    `BATTERY` is present whenever a battery is, so both entities were created
-    **writable** against registers that are not there.
+    entities derived from it cannot disagree with it. A blanket rule --
+    `BATTERY` for everything except the export limit -- is wrong in a way that
+    is not cosmetic: on an SH*RS, where the start-power pair below is reported
+    absent (issue #743), `BATTERY` is present whenever a battery is, so both
+    entities would be created **writable** against registers that are not
+    there.
     """
 
     maximum_from_battery: bool
@@ -199,9 +198,9 @@ NUMBERS += (
 #: and reports them absent on SHxRS (issue #743), which is why
 #: `Capability.BATTERY_START_POWER` gates them.
 #:
-#: Held back until 2026-09-07, on the grounds that writing a register whose
-#: identity cannot be confirmed is the class of mistake this table exists to
-#: prevent. Released by the maintainer on the evidence that now exists:
+#: Writing a register whose identity cannot be confirmed is the class of
+#: mistake this table exists to prevent. These two are writable on the
+#: maintainer's decision, on this evidence:
 #:
 #: * the reference SH10RT reads 200 W and 100 W, stable across six reads,
 #:   which is a plausible pair of thresholds and not a coincidence;

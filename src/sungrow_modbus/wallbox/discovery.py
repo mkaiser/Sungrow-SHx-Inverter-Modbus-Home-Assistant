@@ -1,19 +1,14 @@
 """Finding a wallbox, on whichever unit it answers.
 
-**A wallbox cannot be found by looking for it.** Measured at a site whose
-owner confirms a LAN cable running into the wallbox: a full sweep of the /24
-found Modbus TCP on exactly two addresses, the inverter and its dongle.
-Nothing answered on 503 either. The wallbox was reachable **only** as unit 3
-behind the dongle's endpoint, and never at 248.
+**A sweep for port 502 does not find a wallbox.** It answers in two places,
+both measured on one AC22E-01: as unit **3** behind a WiNet-S, and as unit
+**248** at its own LAN address, inside TLS on port 516 with no port 502 at
+all. Never through the inverter's own LAN port.
 
-So discovery has to ask the endpoints it already has, rather than sweep for
-another one -- which is the same shape the SBR takes, and the reason one
-config entry is one endpoint plus whatever answers behind it.
-
-Two unit ids, and neither has a safe default: **3** through a WiNet-S, and
-**248** where an RS485-to-TCP adapter puts the wallbox on the network
-directly. The direct case is documented by the community projects rather than
-measured here, so 248 is tried and nothing is assumed about it.
+So discovery asks the endpoints it already has, rather than sweeping for
+another one -- the same shape the SBR takes, and the reason one config entry
+is one endpoint plus whatever answers behind it. The wallbox's own address is
+an option on that entry (`wallbox_host`), probed at unit 248 over TLS alone.
 """
 
 from __future__ import annotations
@@ -25,10 +20,10 @@ from ..addresses import field_address, read
 
 #: Unit ids a wallbox may answer on, in the order to try them.
 #:
-#: 3 first, because that is the one measured: a WiNet-S forwards the wallbox
-#: at unit 3, and it was the only path that worked at the one site with a
-#: wallbox. 248 second, from the community projects, for an RS485-to-TCP
-#: adapter wired straight to the wallbox.
+#: Behind a plain Modbus TCP endpoint. 3 first: a WiNet-S forwards the
+#: wallbox there. 248 second, for an RS485-to-TCP adapter wired straight to
+#: the wallbox -- reported by others, not measured here. The wallbox's own
+#: address over TLS is probed at 248 alone, by its caller.
 UNITS: tuple[int, ...] = (3, 248)
 
 #: The register read to decide whether a wallbox is there, and its length.
@@ -38,10 +33,9 @@ UNITS: tuple[int, ...] = (3, 248)
 #: self-validating -- `AC22E-01` is a wallbox and no amount of coincidence
 #: makes an inverter answer that -- where a bare code has to be looked up
 #: against a table with three entries in it, and a device answering a code
-#: outside the table would be dismissed. And the serial sits immediately
-#: before this at 21200, so probing the name rather than the serial keeps a
-#: serial out of a capability probe entirely, which is a rule this project
-#: has already broken once.
+#: outside the table would be dismissed. And the serial sits just below
+#: it, at protocol address 21200, so probing the name rather than the serial keeps a
+#: serial out of a capability probe entirely.
 MODEL_NAME = field_address("model_name", "wallbox")
 
 #: Words that mean "nothing here", whatever they decode to.
@@ -62,12 +56,10 @@ async def probe_units(
     `read_input_registers`, which is how this stays testable without a device
     and without Home Assistant -- the same seam `battery.probe_units` uses.
 
-    An answer is not enough; it has to be a **name**. The first version of
-    the battery's equivalent took any successful read as evidence and a
-    device answering zeros satisfied that, which is precisely what sits
-    between us and the hardware in most installations. Here the test is
-    stricter still: the words have to decode to printable text, because that
-    is what a model name is.
+    An answer is not enough; it has to be a **name**. Any successful read is
+    satisfied by a device answering zeros, which is precisely what a dongle
+    in the path does for a unit it does not forward. So the words have to
+    decode to printable text, because that is what a model name is.
     """
     from modbus_connection import ModbusError
 

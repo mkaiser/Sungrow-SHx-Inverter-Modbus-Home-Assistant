@@ -45,12 +45,6 @@ _LOGGER = logging.getLogger(__name__)
 STORE_VERSION = 1
 STORE_KEY = f"{DOMAIN}.control_test"
 
-#: The component that reports whether the inverter is running, refreshed after
-#: a start or stop because the *written* register is in the holding space and
-#: the state is read from the input side of the same address. Refreshing what
-#: was written would show the old state.
-STATE_COMPONENT = "realtime_input"
-
 
 def _store(hass: HomeAssistant, entry: SungrowConfigEntry) -> Store[dict[str, Any]]:
     """Return this entry's snapshot store."""
@@ -81,10 +75,10 @@ async def async_forget(hass: HomeAssistant, entry: SungrowConfigEntry) -> None:
 class ControlTestRunner:
     """Drives one entry's control test, and guarantees the inverter comes back.
 
-    Held by the survey runner rather than standing alone, because the two share
-    a connection and a Sungrow grants very few sessions: two of these at once on
-    one endpoint would interleave their reads and their writes, and the writes
-    are the half where that matters.
+    Built by the survey runner for each run rather than standing alone, because
+    the two share a connection and a Sungrow grants very few sessions: two of
+    these at once on one endpoint would interleave their reads and their
+    writes, and the writes are the half where that matters.
     """
 
     def __init__(self, hass: HomeAssistant, entry: SungrowConfigEntry) -> None:

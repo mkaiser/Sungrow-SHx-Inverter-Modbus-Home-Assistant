@@ -45,9 +45,8 @@ class SbrBatteryPack(Component):
     """Pack current, signed: **positive while discharging**, negative while
     charging -- the same sign as the inverter's `battery_power`.
 
-    This said the opposite until 2026-10-09, when two houses settled it: bar12's
-    SBR096 read +1.8 A while discharging about 330 W, and jm493's SBH200 read
-    -15.1 A while the inverter reported 3758 W into it."""
+    Two houses agree: one SBR096 read +1.8 A while discharging about 330 W,
+    and an SBH200 read -15.1 A while the inverter reported 3758 W into it."""
 
     temperature = gauge(reg(10743), 0.1, nan=0xFFFF, unit="°C")
     """Pack temperature. Read 23.0 °C."""
@@ -80,11 +79,11 @@ class SbrBatteryCells(Component):
       identical values.
 
     So the pack does populate these registers and the dongle is what loses
-    them. That settles a question that had been open with one path's evidence:
-    at another house a dongle answered this block with **zeros** rather than
-    refusing, which is the same loss wearing the more dangerous face -- and
-    the reason `capabilities.ZERO_MEANS_ABSENT` has to cover this block. Two
-    dongle firmwares, two ways of not forwarding it.
+    them. At another house a dongle answered this block with **zeros** rather
+    than refusing, which is the same loss wearing the more dangerous face --
+    and the reason cell entities wait for `SungrowBattery.has_cell_data`, the
+    rule `capabilities.ZERO_MEANS_ABSENT` applies to the inverter. Two dongle
+    firmwares, two ways of not forwarding it.
 
     Splitting them also means the pack summary still updates when this block
     does not -- pooled into one component, a refusal would take the state of
@@ -94,9 +93,9 @@ class SbrBatteryCells(Component):
     a cell into one word, `(module << 8) | cell`, which is why one reads 780
     rather than 12.
 
-    That started as an inference from eight samples. It is now **proved from
-    a single reading**, by reading the per-module registers alongside and
-    checking the pack agrees with them. On this SBR096 at unit 200:
+    That is **proved from a single reading**, by reading the per-module
+    registers alongside and checking the pack agrees with them. On this
+    SBR096 at unit 200:
 
     | Module | Highest cell | Lowest cell |
     | --- | --- | --- |
@@ -123,10 +122,10 @@ class SbrBatteryCells(Component):
     rather than explained. An SBR128 would add the last brick by showing a
     high byte of 4.
 
-    Nothing here is an entity yet, so the encoding is a decision rather than a
-    migration -- see `doc/integration_plan.md`. What must not happen is the
-    legacy package's treatment, which publishes the raw word and leaves the
-    reader to wonder what cell 780 is.
+    The integration's entities show the unpacked module and cell, never the
+    raw word the legacy package publishes, which leaves the reader to wonder
+    what cell 780 is. The temperature positions' sensor halves get no entity:
+    what that byte counts is an inference (see below).
     """
 
     register_space = "input"
@@ -158,10 +157,9 @@ class SbrBatteryCells(Component):
     # -- the position words, unpacked -------------------------------------
     #
     # The four fields above are the registers as the device sends them, kept
-    # because they are what is read and what legacy mode reproduces. These
+    # because they are what is read and what the survey publishes. These
     # eight are what a person can use. See the class docstring for the
-    # evidence; in short, `(module << 8) | index`, and the high byte is the
-    # module in all eight samples known.
+    # evidence; in short, `(module << 8) | index`.
 
     @property
     def max_cell_module(self) -> int | None:
@@ -216,8 +214,8 @@ class SbrBatteryCells(Component):
 #: within that module in the low byte.
 #:
 #: Both halves are one-based, which is why nothing here subtracts. Sungrow
-#: documents none of it -- see `SbrBatteryCells` for the eight samples this
-#: rests on.
+#: documents none of it -- see `SbrBatteryCells` for the reading this rests
+#: on.
 MODULE_SHIFT = 8
 INDEX_MASK = 0xFF
 

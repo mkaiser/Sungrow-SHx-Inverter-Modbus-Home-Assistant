@@ -18,6 +18,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from pytest_homeassistant_custom_component.components.recorder.common import (
+    async_recorder_block_till_done,
+    async_wait_recording_done,
+)
+from pytest_homeassistant_custom_component.typing import RecorderInstanceContextManager
 
 from custom_components.sungrow_modbus.migration import (
     LEGACY_SERIAL_DOMAIN,
@@ -25,9 +30,13 @@ from custom_components.sungrow_modbus.migration import (
     LEGACY_SERIAL_UNIQUE_ID,
     LEGACY_SUFFIXES,
     async_legacy_suffix,
+    async_resolve_legacy_slot,
+    stored_legacy_slot,
 )
+from homeassistant.components.recorder import Recorder
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
+from homeassistant.setup import async_setup_component
 
 FIRST = "A123456789"
 SECOND = "A987654321"
@@ -343,4 +352,164 @@ async def test_the_history_query_and_the_claim_use_the_same_slot(
     assert "keys_for(" in source
     # The slot reaches both, and comes from the entry rather than being
     # re-derived at a point where the YAML package is usually gone.
-    assert "entry.data.get(CONF_LEGACY_SLOT)" in source
+    assert "stored_legacy_slot(entry)" in source
+    assert "async_resolve_legacy_slot" not in source
+
+
+# -- resolving the slot from every piece of evidence ---------------------------
+
+
+@pytest.fixture
+async def mock_recorder_before_hass(
+    async_test_recorder: RecorderInstanceContextManager,
+) -> None:
+    """Start the recorder before hass, for the tests that ask it."""
+
+
+@pytest.fixture
+async def recorder(hass: HomeAssistant, recorder_mock: Recorder) -> None:
+    await async_setup_component(hass, "sensor", {})
+    await async_recorder_block_till_done(hass)
+
+
+def _orphan(hass: HomeAssistant, unique_id: str, object_id: str) -> None:
+    """Leave a YAML registry row behind with no state, as removing it does."""
+    er.async_get(hass).async_get_or_create(
+        LEGACY_SERIAL_DOMAIN,
+        LEGACY_SERIAL_PLATFORM,
+        unique_id,
+        suggested_object_id=object_id,
+    )
+
+
+async def test_resolving_takes_a_live_match_first(hass: HomeAssistant) -> None:
+    _yaml_serial_sensor(hass, "", FIRST)
+    _yaml_serial_sensor(hass, "_inv_2", SECOND)
+
+    assert await async_resolve_legacy_slot(hass, SECOND) == "_inv_2"
+
+
+async def test_a_house_that_never_ran_the_package_is_the_unsuffixed_slot(
+    hass: HomeAssistant,
+) -> None:
+    """Nothing to take over, and nothing it could be confused with."""
+    assert await async_resolve_legacy_slot(hass, FIRST) == ""
+
+
+async def test_a_removed_single_inverter_package_is_still_the_unsuffixed_slot(
+    hass: HomeAssistant,
+) -> None:
+    """The common migration: the package is gone, its orphans are not.
+
+    No serial can be matched, but no numbered slot ever existed either, so
+    the unsuffixed slot is measured rather than assumed.
+    """
+    _orphan(hass, LEGACY_SERIAL_UNIQUE_ID, "sungrow_inverter_serial")
+    _orphan(hass, "sg_total_pv_generation", "total_pv_generation")
+
+    assert await async_resolve_legacy_slot(hass, FIRST) == ""
+
+
+async def test_a_numbered_slot_without_a_match_is_undetermined(
+    hass: HomeAssistant,
+) -> None:
+    """The case this exists for: a second inverter set up after removal.
+
+    Answering `""` here would hand it the first inverter's history.
+    """
+    _orphan(hass, LEGACY_SERIAL_UNIQUE_ID, "sungrow_inverter_serial")
+    _orphan(hass, f"{LEGACY_SERIAL_UNIQUE_ID}_inv_2", "sungrow_inverter_serial_inv_2")
+
+    assert await async_resolve_legacy_slot(hass, SECOND) is None
+
+
+async def test_a_running_numbered_package_that_does_not_know_this_serial(
+    hass: HomeAssistant,
+) -> None:
+    """Live slots that are all somebody else's say nothing about this one."""
+    _yaml_serial_sensor(hass, "_inv_1", FIRST)
+
+    assert await async_resolve_legacy_slot(hass, SECOND) is None
+
+
+async def test_resolving_without_a_serial_is_undetermined(
+    hass: HomeAssistant,
+) -> None:
+    assert await async_resolve_legacy_slot(hass, None) is None
+
+
+async def test_a_serial_recorded_before_removal_still_finds_its_slot(
+    hass: HomeAssistant, recorder: None
+) -> None:
+    """The recorder outlives the package, and keeps the serial it recorded."""
+    entity_id = _yaml_serial_sensor(hass, "_inv_2", SECOND)
+    _yaml_serial_sensor(hass, "", FIRST)
+    await async_wait_recording_done(hass)
+
+    # The package is removed and its orphans tidied away.
+    registry = er.async_get(hass)
+    for removed in (entity_id, "sensor.sungrow_inverter_serial"):
+        hass.states.async_remove(removed)
+        registry.async_remove(removed)
+    await async_wait_recording_done(hass)
+
+    assert async_legacy_suffix(hass, SECOND) is None
+    assert await async_resolve_legacy_slot(hass, SECOND) == "_inv_2"
+    assert await async_resolve_legacy_slot(hass, FIRST) == ""
+
+
+async def test_a_serial_recorded_in_two_slots_is_evidence_for_neither(
+    hass: HomeAssistant, recorder: None
+) -> None:
+    """A file renumbered at some point leaves the same serial in two slots."""
+    registry = er.async_get(hass)
+    for suffix in ("_inv_1", "_inv_2"):
+        entity_id = _yaml_serial_sensor(hass, suffix, SECOND)
+        await async_wait_recording_done(hass)
+        hass.states.async_remove(entity_id)
+        registry.async_remove(entity_id)
+    await async_wait_recording_done(hass)
+
+    assert await async_resolve_legacy_slot(hass, SECOND) is None
+
+
+# -- what the entry stores, and what the claim makes of it ----------------------
+
+
+def test_a_stored_slot_is_read_as_stored() -> None:
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.sungrow_modbus.const import CONF_LEGACY_SLOT, DOMAIN
+
+    def slot(data: dict) -> str | None:
+        return stored_legacy_slot(MockConfigEntry(domain=DOMAIN, data=data))
+
+    assert slot({}) == ""
+    assert slot({CONF_LEGACY_SLOT: ""}) == ""
+    assert slot({CONF_LEGACY_SLOT: "_inv_2"}) == "_inv_2"
+    assert slot({CONF_LEGACY_SLOT: None}) is None
+
+
+async def test_an_undetermined_slot_claims_nothing(hass: HomeAssistant) -> None:
+    """Not the unsuffixed ids, which may be another inverter's history."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.sungrow_modbus.const import CONF_LEGACY_SLOT, DOMAIN
+    from custom_components.sungrow_modbus.migration import async_claim_legacy_ids
+    from sungrow_modbus import Capability
+
+    er.async_get(hass).async_get_or_create(
+        "sensor",
+        "modbus",
+        "sg_total_pv_generation",
+        suggested_object_id="total_pv_generation",
+    )
+    entry = MockConfigEntry(
+        domain=DOMAIN, data={CONF_LEGACY_SLOT: None}, unique_id=SECOND
+    )
+    entry.add_to_hass(hass)
+
+    assert (
+        async_claim_legacy_ids(hass, entry, SECOND, frozenset(Capability), frozenset())
+        == []
+    )

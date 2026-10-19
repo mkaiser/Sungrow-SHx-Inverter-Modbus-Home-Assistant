@@ -64,8 +64,9 @@ INTERVAL_MINIMUM = 5
 CONF_REGISTER_DUMP = "register_dump"
 
 #: An option: the wallbox's own LAN address, when it is reached there rather
-#: than through a WiNet-S. Empty or absent: the endpoint is probed for one as
-#: before.
+#: than through a WiNet-S. Empty or absent: the endpoint is probed for one at
+#: unit 3. Set: only that address is asked, so a dongle cannot find the same
+#: wallbox a second time.
 #:
 #: Measured on an AC22E-01: the wallbox serves Modbus TCP inside TLS on its
 #: own address, with no port 502, and answers only as unit 248. So the port
@@ -154,9 +155,9 @@ CONF_CONTROL_TEST_EXPORT = "control_test_export_limit"
 #:
 #: Written at setup because that is the only moment it can be: working it out
 #: means reading the YAML package's own serial sensors, and the migration tells
-#: people to remove the package afterwards. Absent on entries created before
-#: this existed, which reads as `""` -- correct for the single-inverter houses
-#: that is all of them.
+#: people to remove the package afterwards. A diagnostics entry stores none,
+#: because its setup never asks the id question; promotion and the options
+#: page's id switch then ask the YAML package, and fall back to `""`.
 CONF_LEGACY_SLOT = "legacy_slot"
 
 #: How this inverter's firmware writes register 13074: 10 if it multiplies a
@@ -167,8 +168,8 @@ CONF_LEGACY_SLOT = "legacy_slot"
 #:
 #: Entry **data**, because it is a fact about the firmware on the far end of
 #: this endpoint and not a preference. Absent until the probe has answered;
-#: the entity then falls back to dividing by ten, which is what every entry
-#: did before this existed.
+#: a probe that cannot answer writes at ten, the common case, and stores
+#: nothing, so the next write asks again.
 CONF_EXPORT_WRITE_SCALE = "export_write_scale"
 
 #: The firmware `CONF_EXPORT_WRITE_SCALE` was measured on, as the device's
@@ -278,8 +279,8 @@ CONF_PUBLISH_ADDRESS = "publish_address"
 CONF_SURVEY_DUMP = "survey_register_dump"
 
 #: On unless the user turned it off. One value for the form and for every
-#: reader of the option: the form used to show it ticked while the survey,
-#: reading an entry whose options were never saved, ran without it.
+#: reader of the option, so the form cannot show it ticked while a survey
+#: reading an entry whose options were never saved runs without it.
 DEFAULT_SURVEY_DUMP = True
 
 #: What an entry is for, chosen at setup and changeable afterwards.
@@ -295,7 +296,10 @@ MODE_DEVICES = "devices"
 """The ordinary integration: entities, migration, the whole thing."""
 
 MODE_DIAGNOSTICS = "diagnostics"
-"""Connect, identify, and create no entities at all.
+"""Connect, identify, poll, and create only the survey's entities.
+
+Two buttons and three sensors, which give the entry a device page; no
+readings, no controls, no migration.
 
 Still opens a Modbus connection -- so it still spends one of the very few
 sessions a Sungrow grants, which is cheaper than a full entry and not free.
@@ -303,7 +307,7 @@ Promoted to a full entry later from the options flow, which is when the
 entity-ids question gets asked.
 """
 
-#: Whether the UI lets anybody *choose* devices mode. Off for the first alpha.
+#: Whether the UI lets anybody *choose* devices mode. Off during the alpha.
 #:
 #: This gates the door, not the room. Every line of devices mode stays built
 #: and stays tested; what is switched off is the two places a person can
@@ -317,17 +321,19 @@ entity-ids question gets asked.
 #: in front of a stranger running an alpha, and an alpha's job here is to
 #: gather readings anyway.
 #:
-#: Neither place hides anything. Both render the choice greyed out and say
-#: when it is coming, because somebody evaluating this integration should be
-#: able to see that the ordinary setup exists.
+#: Neither place hides anything, because somebody evaluating this integration
+#: should be able to see that the ordinary setup exists. The menu still offers
+#: devices mode and its step (`devices_later`) says it is coming and carries
+#: on as diagnostics; the promotion toggle is greyed. `promote` refuses too,
+#: so a hand-written request cannot get round the screen.
 #:
-#: **Flipping this to True is the whole re-enablement.** The menu and the
-#: toggle come back exactly as they were; `tests/test_alpha_gate.py` asserts
-#: both halves of that, and nothing else in the codebase branches on it.
+#: **Flipping this to True is the whole re-enablement.**
+#: `tests/test_alpha_gate.py` asserts both halves of that, and nothing outside
+#: the config flow branches on it.
 #:
-#: It does not touch an entry that already exists. An installation carrying a
-#: devices entry -- from a previous build, or a backup -- loads, polls and
-#: configures as it always did.
+#: It does not touch an entry that already exists. A devices entry -- from a
+#: backup, or made while the gate was open -- loads, polls and configures
+#: normally.
 DEVICES_MODE_OFFERED = False
 
 #: Where a contributed reading goes. The compatibility report template asks
@@ -379,15 +385,13 @@ CONF_ADD_DEVICES = "add_devices"
 #: 502 is Modbus TCP: an inverter's own LAN port and a WiNet-S dongle both
 #: answer there. 503 is where a Logger1000 puts it, and where an iHomeManager
 #: lands when something already holds 502 -- Sungrow's setting is "Modbus TCP
-#: on the iHM" rather than a port, which is why four sweeps of 503 finding
-#: nothing was weaker evidence than it looked.
+#: on the iHM" rather than a port.
 #:
-#: 516 is deliberately absent. A WiNet-S does serve Modbus over TLS there --
-#: measured at two houses, with a certificate that appears to ship with the
-#: firmware -- but this integration has no TLS client, so finding it would
-#: mean offering the user an endpoint nothing here can read.
+#: 516 is deliberately absent. A WiNet-S serves the same Modbus over TLS
+#: there, which offers nothing 502 does not; a wallbox serves it on its own
+#: address, and that is `CONF_WALLBOX_HOST`, entered on the options page,
+#: rather than an inverter endpoint a search should offer.
 #:
-#: Asking for a port instead was the first version of this. It put a number
-#: in front of somebody whose next question is "which number?", when the set
-#: of answers worth trying is two long and known.
+#: Not a question in the form: somebody whose next question would be "which
+#: number?" is better served by trying the two that are known.
 SCAN_PORTS: tuple[int, ...] = (502, 503)

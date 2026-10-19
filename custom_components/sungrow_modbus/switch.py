@@ -103,7 +103,7 @@ class SungrowSwitch(SungrowEntity, SwitchEntity):
         # the register and never read back, and the interface shows the
         # previous value for up to ten seconds. That is precisely the bug the
         # YAML package's `homeassistant.update_entity` calls existed to work
-        # around, and it would have shipped as a regression.
+        # around, and debouncing here would bring it back.
         #
         # The debouncer is there to coalesce storms of *automatic* refresh
         # requests. An explicit user action is not a storm.

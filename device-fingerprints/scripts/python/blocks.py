@@ -2,23 +2,21 @@
 """The block read test: find the register that takes a whole block down.
 
 The library pools neighbouring registers into single block reads, which is
-what makes a full poll 23 requests instead of 105. The cost is that one
-register a device cannot answer takes its whole block with it -- and a
-`Component` either updates or raises, so a bad block loses every field in it.
-Twice now that has cost real users most of a tier:
+what makes a full poll a few dozen requests instead of one per field. The
+cost is that one register a device cannot answer takes its whole block with
+it -- and a `Component` either updates or raises, so a bad block loses every
+field in it, often most of a tier. Two cases show the shapes:
 
-* the two firmware strings at 2612 and 2628 come back in a frame the device
-  **pads to fifteen registers while declaring the correct byte count**, which
-  `modbus-connection` rightly rejects -- and that failed the 58-register
-  `slowest_input` request, leaving 36 unrelated entities permanently empty;
-* input 2612 and input 2628 -- the sub-controller and battery firmware
-  strings -- **refuse with exception 0x02, three attempts out of three,
-  through a WiNet-S**, while every other block answers in the same session.
-  Replicated on two houses, two inverter models and two dongle firmwares,
-  against two direct-LAN readings of the same register map where all 27
-  blocks answer. So the tool's own output has to be read against the
-  transport: this is a dongle not forwarding a measuring point, and no
-  amount of isolating registers in `src/sungrow_modbus/inverter/layout.py` will fix it.
+* the two firmware strings at 2612 and 2628 come back on a cable in a frame
+  the device **pads to fifteen registers while declaring the correct byte
+  count**, which `modbus-connection` rightly rejects -- and a pooled block
+  holding one loses every unrelated field beside it;
+* the same two registers **refuse with exception 0x02, three attempts out of
+  three, through a WiNet-S**, while every other block answers in the same
+  session, and read on a direct-LAN connection to the same inverter. So the
+  tool's own output has to be read against the transport: this is a dongle
+  not forwarding a measuring point, and no amount of isolating registers in
+  `src/sungrow_modbus/inverter/layout.py` will fix it.
 
 Those two are why the tool reports *how* a block failed rather than just
 that it did: the first has a fix in `layout.COUNTS`, the second in
@@ -141,9 +139,9 @@ def _blocks_of(component: str | None) -> list[Block]:
     The SBR pack at 200 or 2 and the wallbox at 3 or 248 live on other unit
     ids, and reading their addresses at the inverter's unit tests nothing:
     input 10740 and 21215 answer 0xFFFF or refuse there whatever the pack and
-    the charge point are doing. Recording them into every survey once added
-    eight guaranteed failures, each narrowed at the cost of the budget and
-    offered to `src/sungrow_modbus/inverter/layout.py` as a register fault. Naming a
+    the charge point are doing. Recording them into every survey would add
+    guaranteed failures, each narrowed at the cost of the budget and offered
+    to `src/sungrow_modbus/inverter/layout.py` as a register fault. Naming a
     component still selects it, so `-c sbr_battery_cells` works against a
     pack when that is what somebody is testing.
     """
@@ -401,9 +399,8 @@ def main() -> int:
     blocks = _ranges(args.range) if args.range else _blocks_of(args.component)
     print(f"Reading {args.host}:{args.port}, unit {args.unit}. This only reads.")
     # Both axes, because they are independent: which reads to make, and which
-    # client makes them. A clean result from a lenient client is worth much
-    # less, which is how registers the integration cannot read at all were
-    # once measured as fine.
+    # client makes them. A clean result from a client that reconnects and
+    # retries mid-block is worth less: the integration cannot do either.
     print("  plan   the library's own block reads, recorded from the poll")
     report(probe.run(_run(args, blocks)))
     return 0

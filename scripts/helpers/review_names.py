@@ -5,7 +5,7 @@
     python scripts/helpers/review_names.py --markdown # the same, for a document
 
 `doc/integration_plan.md` carries this as an open decision: *are the entity
-names right?* With `has_entity_name` a name supplies the entity id, and it
+names final?* With `has_entity_name` a name supplies the entity id, and it
 does so **at creation** -- so a rename later leaves an existing install's id
 alone and only diverges it from a fresh one, which is a support problem rather
 than a data one (`tests/test_entity_naming.py` pins that). Cheap now,
@@ -15,8 +15,8 @@ the question. The question is whether
 each name is the right words for the thing, and nothing but a person reading
 them can answer that.
 
-Reading `strings.json` is the wrong way to do it: 160 names in alphabetical
-order, with no units, no domains and no sight of what a migrating user
+Reading `strings.json` is the wrong way to do it: some two hundred names in
+alphabetical order, with no units, no domains and no sight of what a migrating user
 currently calls the same reading. So this prints what the judgement needs --
 the modern name, the entity id it produces, the unit, and the legacy name
 beside it -- grouped by what the entity is *about* rather than by domain,

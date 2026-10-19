@@ -18,10 +18,10 @@ exactly like being dropped by a competing Modbus session. Telling them apart
 takes repetition -- a register fault fails every attempt while its neighbours
 succeed in the same session -- and the entries below say which was measured.
 
-**Measured on the reference SH10RT (2026-09-07, cause corrected 2026-09-08),
-firmware ARM SAPPHIRE-H_V11_V01_B.** The two firmware strings at 2612 and
-2628 come back in a frame the device **pads to fifteen registers while
-declaring the correct byte count**. Captured off the wire, asking for 11:
+**Measured on the reference SH10RT, firmware ARM SAPPHIRE-H_V11_V01_B.** The
+two firmware strings at 2612 and 2628 come back in a frame the device **pads
+to fifteen registers while declaring the correct byte count**. Captured off
+the wire, asking for 11:
 
     -> 00 01 00 00 00 06 01 04 0a 34 00 0b      address 2612, count 11
     <- 00 01 00 00 00 21 01 04 16 53 55 42 ...  39 bytes
@@ -35,18 +35,17 @@ MBAP length, and the whole answer is rejected.
 Asking for exactly 15 is what makes the frame self-consistent, which is why
 `COUNTS` works and why it is a workaround rather than a correction: the data
 was never wrong and the count was never wrong either. A lenient client that
-trusts the byte count reads these registers perfectly well, which is exactly
-how the first diagnosis went astray -- a raw-socket probe called them fine
-while the shipping stack could not read them at all.
+trusts the byte count reads these registers perfectly well -- a raw-socket
+probe calls them fine while the shipping stack cannot read them at all.
 `device-fingerprints/scripts/python/blocks.py` is deliberately as strict as the shipping
 stack for that reason, and reports both numbers plus the count that
 reconciles them.
 
 Two consequences, and this module fixes both.
 
-`COUNTS` corrects the length. Pooled into `slowest_input`, these two fields
-made its one 58-register read fail every time, so **all 36 other slowest-tier
-entities were permanently empty** — on the maintainer's own inverter.
+`COUNTS` corrects the length. Pooled into `slowest_input` at the YAML's
+count, these two fields fail its one block read every time, and **every
+other slowest-tier entity stays empty** -- on the maintainer's own inverter.
 
 `ISOLATE` keeps them out of that pool. The corrected length is only correct
 for a request that covers exactly one of these fields, so they can never
@@ -84,8 +83,8 @@ from __future__ import annotations
 #:   narrowing budget ran out rather than that the range is minimal — the
 #:   register named would be a guess out of up to fifteen;
 #: * a read that only ever *timed out*, with no exception code and no closed
-#:   connection. Every entry below is one of those two: an exception 0x02, a
-#:   deterministic hangup, or a padded frame. A bare timeout cannot tell a
+#:   connection. Every entry below rests on something firmer: an exception
+#:   0x02, a deterministic hangup, or a padded frame. A bare timeout cannot tell a
 #:   silent inverter from a lost answer, and the same four blocks that timed
 #:   out over a VPN on 2026-09-09 had closed the connection deterministically
 #:   on a LAN two days earlier — same machines, different sentence. Re-measure
@@ -123,8 +122,8 @@ ISOLATE: dict[str, str] = {
     "meter_channel_2_phase_b_active_power": "meter_channel_2",
     "meter_channel_2_phase_c_active_power": "meter_channel_2",
     # Measured on gerd's SH8.0RT-V112 (0x0E0E, ARM SAPPHIRE-H_V11_V01_B,
-    # 2026-09-07) with the block read test -- then `discover_probe.py
-    # components`, now `device-fingerprints/scripts/python/blocks.py`: each of these
+    # 2026-09-07) with the block read test
+    # (`device-fingerprints/scripts/python/blocks.py`): each of these
     # refused on **every** round while its neighbours answered, and each was
     # the only unanswerable read in a component that then lost every field it
     # had. One field apiece, so isolating them costs one extra read and saves
