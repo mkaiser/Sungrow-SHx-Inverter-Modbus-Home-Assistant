@@ -975,6 +975,30 @@ modbus:
         scale: 0.1
         scan_interval: *scan_interval_slowest
 
+      - name: Battery max charging current
+        unique_id: sg_battery_max_charging_current
+        device_address: !secret sungrow_modbus_device_address
+        address: 13100 # reg 13101
+        input_type: input
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: A
+        device_class: current
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+
+      - name: Battery max discharging current
+        unique_id: sg_battery_max_discharging_current
+        device_address: !secret sungrow_modbus_device_address
+        address: 13101 # reg 13102
+        input_type: input
+        data_type: uint16
+        precision: 0
+        unit_of_measurement: A
+        device_class: current
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+
       - name: Phase A current
         unique_id: sg_phase_a_current
         device_address: !secret sungrow_modbus_device_address
