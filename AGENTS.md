@@ -275,8 +275,8 @@ is on: with it off the register ignores writes -- no exception, no change.
 - Measured by the probe on both sides: bar12 answers times ten, fwitten's
   master and slave answer 1:1, each over the inverter's own LAN port. An
   SH10RT-V112 on P023 (Korsberg's) answers times ten, so fwitten's 1:1 is
-  not the model's; their pair reports no inverter firmware string to
-  compare.
+  not the model's. fwitten's slave runs `SAPPHIRE-H_01011.95.03`, the
+  older numbering, which the fingerprints do not carry (13249 refused).
 
 The readings behind this are in `device-fingerprints/`.
 
