@@ -1132,13 +1132,20 @@ def _battery_word(document: dict[str, Any]) -> str:
     block at unit 200 -- and means nothing at all behind a dongle, which
     forwards the pack at an address of its own choosing. The two look
     identical over the wire and are not the same fact.
+
+    A `battery_pack` section is the same evidence: a pack decoded at a unit
+    of its own. Home Assistant's document carries that section and not the
+    sibling probes, because the integration found the pack when it was set
+    up rather than by probing for it during the survey.
     """
     probe_states = {
         label: entry.get("state")
         for label, entry in (document.get("capability_probes") or {}).items()
         if isinstance(entry, dict)
     }
-    if battery_pack_unit(probe_states) is not None:
+    pack = document.get("battery_pack")
+    pack_decoded = isinstance(pack, dict) and pack.get("unit") is not None
+    if pack_decoded or battery_pack_unit(probe_states) is not None:
         values = _probe(document, "battery capacity (5639)").get("values")
         if values:
             model = model_for_capacity(values[0] * 0.01)

@@ -1,0 +1,736 @@
+{
+  "schema": 22,
+  "command_line": "home assistant diagnostics",
+  "read_at": "2026-10-25T16:59:57Z",
+  "user_inputs": {
+    "reporter": "sisu70",
+    "comment": "",
+    "battery": "Sungrow SBR128",
+    "transport": "winet_lan",
+    "modbus_proxy": "no",
+    "other_pollers": "YAML package",
+    "other_inverter": "no",
+    "other_inverter_detail": ""
+  },
+  "ip_address_last_two_octets": "001.098",
+  "device": {
+    "device_type_code": "0x0E13",
+    "device_type": "SH10RT-20",
+    "output_type": "three phase 3P4L",
+    "serial_anonymized_hashed": "anon-20101498141"
+  },
+  "firmware": {
+    "arm": "ARM_SAPPHIRE-H_V11_V01_B",
+    "dsp": "MDSP_SAPPHIRE-H_V11_V01_B",
+    "inverter": "SAPPHIRE-H_B001.V000.P023",
+    "communication_module": "WINET-SV200.001.00.P045",
+    "battery": "SBRBCU-S_22011.01.30"
+  },
+  "connection": {
+    "communication_module_firmware": "WINET-SV200.001.00.P045",
+    "verdict": "through a communication module (WiNet-S, WiNet-S2 or Logger)",
+    "wifi_or_ethernet": "not determinable over Modbus. Nothing in the protocol reports it, and a WiNet-S answers identically wired and over WiFi. Use user_inputs.transport, which is what the contributor said.",
+    "winet_restricted_block_6100": "refused"
+  },
+  "readings": {
+    "values": {
+      "active_power_limitation_ratio_raw": 100.0,
+      "active_power_limitation_raw": 85,
+      "apl_shutdown_at_zero_raw": 85,
+      "backup_frequency": 50.01,
+      "backup_mode_raw": 170,
+      "backup_phase_a_current": 0.9,
+      "backup_phase_a_power": 139,
+      "backup_phase_a_voltage": 237.1,
+      "backup_phase_b_current": 0.5,
+      "backup_phase_b_power": 72,
+      "backup_phase_b_voltage": 239.1,
+      "backup_phase_c_current": 0.2,
+      "backup_phase_c_power": 15,
+      "backup_phase_c_voltage": 238.6,
+      "battery_alarm": 0,
+      "battery_capacity_high_precision": 12.8,
+      "battery_charging_start_power": 0,
+      "battery_current": 1.3,
+      "battery_discharging_start_power": 0,
+      "battery_fault": 0,
+      "battery_firmware_version": "SBRBCU-S_22011.01.30",
+      "battery_forced_charge_discharge_cmd_raw": 204,
+      "battery_forced_charge_discharge_power": 5000,
+      "battery_level": 14.9,
+      "battery_max_charge_power": 5000,
+      "battery_max_discharge_power": 8500,
+      "battery_max_soc": 100.0,
+      "battery_min_soc": 15.0,
+      "battery_power": 366,
+      "battery_reserved_soc_for_backup": 10,
+      "battery_state_of_health": 97.0,
+      "battery_temperature": 22.0,
+      "battery_voltage": 259.8,
+      "bdc_rated_power": 10000,
+      "bdc_side_fault": 0,
+      "bdc_side_permanent_fault": 0,
+      "bms_alarm": 0,
+      "bms_alarm_2": 0,
+      "bms_fault_1": 0,
+      "bms_fault_2": 0,
+      "bms_max_charging_current": 30,
+      "bms_max_discharging_current": 30,
+      "bms_protection": 0,
+      "communication_module_firmware_version": "WINET-SV200.001.00.P045",
+      "daily_battery_charge": 2.4,
+      "daily_battery_charge_from_pv": 2.4,
+      "daily_battery_discharge": 6.2,
+      "daily_direct_energy_consumption": 6.2,
+      "daily_exported_energy": 0.6,
+      "daily_exported_energy_from_pv": 0.0,
+      "daily_imported_energy": 0.1,
+      "daily_pv_generation": 8.6,
+      "daily_pv_generation_battery_discharge": 10.7,
+      "dc_side_fault": 0,
+      "ems_mode_selection_raw": 0,
+      "export_power_limit": 8400,
+      "export_power_limit_max": 8400,
+      "export_power_limit_min": 0,
+      "export_power_limit_mode_raw": 85,
+      "export_power_raw": 0,
+      "feed_in_limitation_ratio": 100.0,
+      "forced_startup_under_low_soc_raw": 0,
+      "grid_frequency": 50.01,
+      "grid_side_fault": 0,
+      "inverter_alarm": 0,
+      "inverter_firmware_version": "SAPPHIRE-H_B001.V000.P023",
+      "inverter_rated_output": 10000,
+      "inverter_temperature": 40.3,
+      "load_adjustment_mode_enable_raw": 85,
+      "load_adjustment_mode_selection_raw": 3,
+      "load_power": 301,
+      "meter_active_power": -17,
+      "meter_channel_2_phase_a_active_power": 0,
+      "meter_channel_2_phase_b_active_power": 0,
+      "meter_channel_2_phase_c_active_power": 0,
+      "meter_channel_2_total_active_power": 0,
+      "meter_phase_a_active_power": 93,
+      "meter_phase_a_current": 0.0,
+      "meter_phase_a_voltage": 0.0,
+      "meter_phase_b_active_power": 0,
+      "meter_phase_b_current": 0.0,
+      "meter_phase_b_voltage": 0.0,
+      "meter_phase_c_active_power": -89,
+      "meter_phase_c_current": 0.0,
+      "meter_phase_c_voltage": 0.0,
+      "mppt1_current": 0.0,
+      "mppt1_voltage": 0.0,
+      "mppt2_current": 0.0,
+      "mppt2_voltage": 0.0,
+      "mppt3_current": 0.0,
+      "mppt3_voltage": 0.0,
+      "mppt4_current": 0.0,
+      "mppt4_voltage": 0.0,
+      "permanent_fault": 0,
+      "phase_a_current": 0.6,
+      "phase_a_voltage": 236.5,
+      "phase_b_current": 0.6,
+      "phase_b_voltage": 237.5,
+      "phase_c_current": 0.6,
+      "phase_c_voltage": 239.3,
+      "power_factor": 1.0,
+      "power_flow_status": 28,
+      "pv_power_limitation_raw": null,
+      "reactive_power": -2,
+      "running_state_raw": 0,
+      "self_consumption_of_today": 72.0,
+      "sungrow_arm_software": "ARM_SAPPHIRE-H_V11_V01_B",
+      "sungrow_device_type_code": 3603,
+      "sungrow_dsp_software": "MDSP_SAPPHIRE-H_V11_V01_B",
+      "sungrow_protocol_version": 16781568,
+      "sungrow_version_1": "SAPPHIRE-H_01011.95.14",
+      "sungrow_version_2": "SAPPHIRE-H_03011.95.14",
+      "sungrow_version_3": null,
+      "sungrow_version_4_sungrow_battery": null,
+      "system_fault_1": 0,
+      "system_fault_2": 0,
+      "total_active_power": 298,
+      "total_backup_power": 215,
+      "total_battery_charge": 7269.7,
+      "total_battery_charge_from_pv": 7320.8,
+      "total_battery_discharge": 7269.4,
+      "total_dc_power": 0,
+      "total_direct_energy_consumption": 6712.4,
+      "total_exported_energy": 14497.5,
+      "total_exported_energy_from_pv": 13681.8,
+      "total_imported_energy": 1751.6,
+      "total_pv_generation": 27715.0,
+      "total_pv_generation_battery_discharge": 25592.4
+    },
+    "components_that_did_not_answer": [
+      "battery_firmware",
+      "sub_controller_firmware"
+    ]
+  },
+  "capability_probes": {
+    "device type code (5000)": {
+      "state": "present",
+      "values": [
+        3603
+      ]
+    },
+    "nominal output power (5001)": {
+      "state": "present",
+      "values": [
+        100
+      ]
+    },
+    "output type (5002)": {
+      "state": "present",
+      "values": [
+        1
+      ]
+    },
+    "MPPT1 voltage": {
+      "state": "present",
+      "values": [
+        112
+      ]
+    },
+    "MPPT2 voltage": {
+      "state": "present",
+      "values": [
+        0
+      ]
+    },
+    "MPPT3 voltage": {
+      "state": "present",
+      "values": [
+        0
+      ]
+    },
+    "MPPT4 voltage": {
+      "state": "present",
+      "values": [
+        0
+      ]
+    },
+    "phase A voltage": {
+      "state": "present",
+      "values": [
+        2375
+      ]
+    },
+    "phase B voltage": {
+      "state": "present",
+      "values": [
+        2375
+      ]
+    },
+    "phase C voltage": {
+      "state": "present",
+      "values": [
+        2393
+      ]
+    },
+    "meter phase A voltage (5741)": {
+      "state": "refused"
+    },
+    "meter phase A current (5744)": {
+      "state": "refused"
+    },
+    "battery voltage": {
+      "state": "present",
+      "values": [
+        2598
+      ]
+    },
+    "battery level": {
+      "state": "present",
+      "values": [
+        148
+      ]
+    },
+    "battery temperature": {
+      "state": "present",
+      "values": [
+        220
+      ]
+    },
+    "battery capacity (5639)": {
+      "state": "present",
+      "values": [
+        1280
+      ]
+    },
+    "firmware block (13250, spec V1.1.7+)": {
+      "state": "present",
+      "values": [
+        21313
+      ]
+    },
+    "PV power of today (6100, direct-only)": {
+      "state": "refused"
+    },
+    "PV power limitation (13018, V1.1.10+)": {
+      "state": "unavailable",
+      "values": [
+        65535
+      ]
+    }
+  },
+  "contention": {
+    "polled_by": "this Home Assistant, throughout",
+    "components": 14,
+    "intervals_seconds": [
+      5,
+      10,
+      60,
+      600
+    ],
+    "coordinators_paused": false,
+    "block_read_test": "not run: it reads every block of the poll three times plus narrowing, which the survey button affords and a diagnostics download does not"
+  },
+  "battery_pack": {
+    "unit": 2,
+    "readings": {
+      "values": {
+        "current": 1.4,
+        "state_of_charge": 27.6,
+        "state_of_health": 97,
+        "temperature": 21.9,
+        "total_charge": 7269.7,
+        "total_discharge": 7269.4,
+        "voltage": 259.2
+      },
+      "components_that_did_not_answer": [
+        "sbr_battery_cells (IllegalDataAddressError)",
+        "sbr_battery_modules (IllegalDataAddressError)"
+      ]
+    }
+  },
+  "block_read_test": {
+    "measured_at": "2026-10-25T17:59:29.231455+01:00",
+    "rounds": 3,
+    "attempts": 2,
+    "client": "modbus-connection through Home Assistant's modbus integration -- the integration's own reads, so it fails exactly where the integration fails",
+    "answered": [
+      {
+        "component": "realtime_input",
+        "space": "input",
+        "register": 13000,
+        "count": 10
+      },
+      {
+        "component": "fast_input",
+        "space": "input",
+        "register": 5011,
+        "count": 25
+      },
+      {
+        "component": "fast_input",
+        "space": "input",
+        "register": 5115,
+        "count": 2
+      },
+      {
+        "component": "fast_input",
+        "space": "input",
+        "register": 5242,
+        "count": 1
+      },
+      {
+        "component": "fast_input",
+        "space": "input",
+        "register": 5601,
+        "count": 8
+      },
+      {
+        "component": "fast_input",
+        "space": "input",
+        "register": 5631,
+        "count": 1
+      },
+      {
+        "component": "fast_input",
+        "space": "input",
+        "register": 5720,
+        "count": 27
+      },
+      {
+        "component": "fast_input",
+        "space": "input",
+        "register": 13010,
+        "count": 26
+      },
+      {
+        "component": "battery_power",
+        "space": "input",
+        "register": 5214,
+        "count": 2
+      },
+      {
+        "component": "meter_channel_2",
+        "space": "input",
+        "register": 13200,
+        "count": 8
+      },
+      {
+        "component": "faults",
+        "space": "input",
+        "register": 13050,
+        "count": 30
+      },
+      {
+        "component": "fast_holding",
+        "space": "holding",
+        "register": 13002,
+        "count": 17
+      },
+      {
+        "component": "fast_holding",
+        "space": "holding",
+        "register": 13050,
+        "count": 51
+      },
+      {
+        "component": "fast_holding",
+        "space": "holding",
+        "register": 33047,
+        "count": 2
+      },
+      {
+        "component": "fast_holding",
+        "space": "holding",
+        "register": 33149,
+        "count": 2
+      },
+      {
+        "component": "apl_shutdown_at_zero",
+        "space": "holding",
+        "register": 31213,
+        "count": 1
+      },
+      {
+        "component": "medium_input",
+        "space": "input",
+        "register": 5008,
+        "count": 1
+      },
+      {
+        "component": "medium_input",
+        "space": "input",
+        "register": 13023,
+        "count": 3
+      },
+      {
+        "component": "slowest_input",
+        "space": "input",
+        "register": 2582,
+        "count": 26
+      },
+      {
+        "component": "slowest_input",
+        "space": "input",
+        "register": 4952,
+        "count": 54
+      },
+      {
+        "component": "slowest_input",
+        "space": "input",
+        "register": 5622,
+        "count": 18
+      },
+      {
+        "component": "slowest_input",
+        "space": "input",
+        "register": 13002,
+        "count": 46
+      },
+      {
+        "component": "firmware_block_battery",
+        "space": "input",
+        "register": 13280,
+        "count": 15
+      },
+      {
+        "component": "firmware_block_communication_module",
+        "space": "input",
+        "register": 13265,
+        "count": 15
+      },
+      {
+        "component": "firmware_block_inverter",
+        "space": "input",
+        "register": 13250,
+        "count": 15
+      },
+      {
+        "component": "identity",
+        "space": "input",
+        "register": 4952,
+        "count": 51
+      }
+    ],
+    "never_answered": [
+      {
+        "component": "battery_firmware",
+        "space": "input",
+        "register": 2629,
+        "count": 15,
+        "outcomes": [
+          "refused with an exception"
+        ]
+      },
+      {
+        "component": "sub_controller_firmware",
+        "space": "input",
+        "register": 2613,
+        "count": 15,
+        "outcomes": [
+          "refused with an exception"
+        ]
+      }
+    ],
+    "intermittent": [],
+    "narrowed": [
+      {
+        "component": "battery_firmware",
+        "space": "input",
+        "register": 2629,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "battery_firmware",
+        "space": "input",
+        "register": 2630,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "battery_firmware",
+        "space": "input",
+        "register": 2631,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "battery_firmware",
+        "space": "input",
+        "register": 2632,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "battery_firmware",
+        "space": "input",
+        "register": 2633,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "battery_firmware",
+        "space": "input",
+        "register": 2634,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "battery_firmware",
+        "space": "input",
+        "register": 2635,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "battery_firmware",
+        "space": "input",
+        "register": 2636,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "battery_firmware",
+        "space": "input",
+        "register": 2637,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "battery_firmware",
+        "space": "input",
+        "register": 2638,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "battery_firmware",
+        "space": "input",
+        "register": 2639,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "battery_firmware",
+        "space": "input",
+        "register": 2640,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "battery_firmware",
+        "space": "input",
+        "register": 2641,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "battery_firmware",
+        "space": "input",
+        "register": 2642,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "battery_firmware",
+        "space": "input",
+        "register": 2643,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "space": "input",
+        "register": 2613,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "space": "input",
+        "register": 2614,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "space": "input",
+        "register": 2615,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "space": "input",
+        "register": 2616,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "space": "input",
+        "register": 2617,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "space": "input",
+        "register": 2618,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "space": "input",
+        "register": 2619,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "space": "input",
+        "register": 2620,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "space": "input",
+        "register": 2621,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "space": "input",
+        "register": 2622,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "space": "input",
+        "register": 2623,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "space": "input",
+        "register": 2624,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "space": "input",
+        "register": 2625,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "space": "input",
+        "register": 2626,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      },
+      {
+        "component": "sub_controller_firmware",
+        "space": "input",
+        "register": 2627,
+        "count": 1,
+        "outcome": "refused with an exception",
+        "detail": "2/2, exception 0x02"
+      }
+    ],
+    "reconnects": 0
+  }
+}

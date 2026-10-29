@@ -165,6 +165,26 @@ def test_a_sungrow_pack_that_answers_unit_200_names_its_family() -> None:
     assert _battery_token(fingerprint, DIRECT, raw) == "battery-sbr096"
 
 
+def test_a_decoded_pack_names_its_model_without_the_sibling_probes() -> None:
+    # Home Assistant's document: no unit 200 / unit 2 probes, a `battery_pack`
+    # section instead, as sisu70's SBR128 reported it. Without the section the
+    # same readings claim nothing about who made the pack.
+    fingerprint = {
+        "registers": {"battery voltage": "present", "battery level": "present"}
+    }
+    raw = {
+        "registers": {
+            "battery voltage": [2593],
+            "battery level": [154],
+            "battery capacity (5639)": [1280],
+        }
+    }
+    document = _document_for(fingerprint, DONGLE, "", raw)
+    assert _battery_word(document) == "battery-unknown"
+    document["battery_pack"] = {"unit": 2, "readings": {"values": {"voltage": 259.8}}}
+    assert _battery_word(document) == "battery-sbr128"
+
+
 def test_the_sentinel_remains_the_ordinary_way_to_say_no_battery() -> None:
     fingerprint = _fingerprint("no answer", "unavailable")
     raw = {"registers": {"battery voltage": [0xFFFF], "battery level": [0xFFFF]}}
