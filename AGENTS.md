@@ -273,7 +273,10 @@ is on: with it off the register ignores writes -- no exception, no change.
   itself. An unanswered probe falls back to ten and is not stored. The update
   listener skips the reload when that key is all that changed (`_built_from`).
 - Measured by the probe on both sides: bar12 answers times ten, fwitten's
-  master and slave answer 1:1, each over the inverter's own LAN port.
+  master and slave answer 1:1, each over the inverter's own LAN port. An
+  SH10RT-V112 on P023 (Korsberg's) answers times ten, so fwitten's 1:1 is
+  not the model's; their pair reports no inverter firmware string to
+  compare.
 
 The readings behind this are in `device-fingerprints/`.
 
