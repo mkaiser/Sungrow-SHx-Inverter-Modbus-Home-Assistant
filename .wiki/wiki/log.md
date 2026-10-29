@@ -30,3 +30,22 @@ device's capabilities and configuration, and identifies nothing.
 `device-fingerprints/` is now `device-survey/`, and the library and
 integration modules are `survey_document`. Source pages, tags and links
 follow.
+
+## [2026-10-29] ingested | firetribe's SH6.0RT-V112 on P023, cable and WiNet-S (#784)
+
+Two readings from Home Assistant, each with a control test: on the cable it
+refused because the inverter was starting; through a WiNet-S two other clients
+poll, the leg-B writes were refused with 0x04 while the forced charge was
+obeyed. Opened the query on 0x04 through a busy dongle.
+
+## [2026-10-29] ingested | gerd's wallbox read directly again
+
+Second direct reading of the registers only the TLS path shows, a fortnight
+after the wallbox document. Holding 21250-21259, twenty constant ASCII digits,
+is now masked like the serial, in the library and in the committed document.
+
+## [2026-10-29] answered | a busy WiNet-S refuses with 0x04
+
+Reproduced firetribe's 0x04 on gerd's WiNet-S with three concurrent readers,
+twice; one reader alone got every answer. 0x04 joins 0x06 in
+`model.SETTLES_NOTHING`.

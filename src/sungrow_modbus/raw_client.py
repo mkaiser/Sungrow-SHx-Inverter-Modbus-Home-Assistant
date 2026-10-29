@@ -191,8 +191,16 @@ class RawClient:
         )
         await self._writer.drain()
         header = await self._recv(8)
-        length = struct.unpack(">H", header[4:6])[0]
+        transaction, length = struct.unpack(">H2xH", header[:6])
         body = await self._recv(max(0, length - 2))
+        # Another request's answer: one that timed out earlier and arrived
+        # late. The link is out of step, which says nothing about this
+        # register, so it is dropped and the next attempt starts clean.
+        if transaction != self._transaction:
+            raise Dropped(
+                f"desync: answer to transaction {transaction}, "
+                f"asked {self._transaction}"
+            )
         if header[7] != function:
             raise Refused(body[0] if body else 0)
         if len(body) < 1:

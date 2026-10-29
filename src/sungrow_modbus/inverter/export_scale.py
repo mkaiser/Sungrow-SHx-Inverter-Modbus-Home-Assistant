@@ -49,6 +49,7 @@ thing the control test's restore rules exist to prevent.
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -72,6 +73,15 @@ MODE_ON = 0xAA
 #: are accepted. Any other exception -- 0x06 busy, above all -- settles
 #: nothing.
 OUT_OF_RANGE = (IllegalDataValueError, ServerDeviceFailureError)
+
+#: How many times a refusal is asked before it is believed, and the pause
+#: between asks. A WiNet-S other clients poll answers 0x04 to about half of
+#: what it answers alone (`model.SETTLES_NOTHING`), and a false refusal stores
+#: the wrong factor: on a 1:1 firmware, a tenth of every limit asked for. An
+#: acceptance cannot be faked, and the word changes nothing on either
+#: firmware, so asking again is free.
+ASKS = 3
+ASK_PAUSE = 1.5
 
 LIMIT = field_address("export_power_limit")
 MODE = field_address("export_power_limit_mode_raw")
@@ -117,8 +127,9 @@ class Result:
     response: str | None = None
     mode_lifted: bool = False
     left_changed: bool = False
-    """True only if the register moved and could not be put back. The one
-    outcome that leaves a house different from how it was found."""
+    """True if the register moved and could not be put back, or could not be
+    read after the write. The one outcome that may leave a house different
+    from how it was found."""
 
 
 #: The version of the block `document` returns.
@@ -226,9 +237,10 @@ async def async_probe(
 
     Raises when the reads that decide whether to write fail: then nothing
     has been written, and the caller is owed the real error rather than a
-    `None` that looks like a considered answer. Also raises when the read
-    *after* the write fails, which is the one case where the register's state
-    is not known; putting feed-in limitation back has been tried by then.
+    `None` that looks like a considered answer. Once it has written, it
+    returns: a read *after* the write that fails leaves the register's state
+    unknown, which is reported as `left_changed`, because a house that may be
+    different from how it was found has to be treated as one that is.
     """
     held = await _word(device, LIMIT)
     mode = await _word(device, MODE)
@@ -273,26 +285,31 @@ async def async_probe(
     if lift:
         await device.async_write_word(MODE.address, MODE_ON)
     try:
-        response: str
-        answer: int | None
-        try:
-            await device.async_write_word(LIMIT.address, plan.word)
-        except OUT_OF_RANGE as err:
-            response = f"refused, exception 0x{err.exception_code or 0:02X}"
-            answer = plan.if_refused
-        except ModbusError as err:
-            response = f"{type(err).__name__}: {err}"
-            answer = None
-        else:
-            response = "accepted"
-            answer = plan.if_accepted
+        response, answer = await _ask(device, plan)
     finally:
         mode_back = not lift or await _restore_mode(device, mode)
 
-    after = await _word(device, LIMIT)
+    try:
+        after = await _word(device, LIMIT)
+    except ModbusError as err:
+        return Result(
+            None,
+            f"the write was answered with {response}, and the read after it "
+            f"failed ({type(err).__name__}: {err}), so what the register "
+            f"holds now is not known; it held {held} W",
+            held=held,
+            wrote=plan.word,
+            response=response,
+            mode_lifted=lift,
+            left_changed=True,
+        )
     left_changed = not mode_back
     if after != held:
-        left_changed = not await _put_back(device, held, after, plan.word)
+        try:
+            put_back = await _put_back(device, held, after, plan.word)
+        except ModbusError:
+            put_back = False
+        left_changed = not put_back
         answer = None
         reason = (
             f"the register moved from {held} to {after}, which the construction "
@@ -319,6 +336,35 @@ async def async_probe(
         mode_lifted=lift,
         left_changed=left_changed,
     )
+
+
+async def _ask(device: Device, plan: Plan) -> tuple[str, int | None]:
+    """Write the plan's word until it is accepted, or refused `ASKS` times.
+
+    A refusal is believed only when every ask was refused and the device
+    answered a read straight after each: a busy dongle refuses that read too.
+    """
+    refusals: list[str] = []
+    for attempt in range(ASKS):
+        if attempt:
+            await asyncio.sleep(ASK_PAUSE)
+        try:
+            await device.async_write_word(LIMIT.address, plan.word)
+        except OUT_OF_RANGE as err:
+            refusals.append(f"0x{err.exception_code or 0:02X}")
+        except ModbusError as err:
+            return f"{type(err).__name__}: {err}", None
+        else:
+            after = f" after {len(refusals)} refusal(s)" if refusals else ""
+            return f"accepted{after}", plan.if_accepted
+        try:
+            await _word(device, LIMIT)
+        except ModbusError as err:
+            return (
+                f"refused with {refusals[-1]}, and the read after it failed "
+                f"({type(err).__name__}), so the refusal may be a busy link's"
+            ), None
+    return f"refused, exception {', '.join(refusals)}", plan.if_refused
 
 
 async def _restore_mode(device: Device, mode: int) -> bool:

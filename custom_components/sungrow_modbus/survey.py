@@ -168,9 +168,7 @@ class SurveyRunner:
         async_dispatcher_send(self.hass, self.signal)
 
     @callback
-    def async_start(
-        self, options: dict[str, Any] | None = None, *, control_test: bool = False
-    ) -> bool:
+    def async_start(self, *, control_test: bool = False) -> bool:
         """Begin a run. Returns False when one is already running.
 
         `control_test` adds part B, which **writes** to every control the
@@ -208,7 +206,7 @@ class SurveyRunner:
         )
         self._task = self.entry.async_create_background_task(
             self.hass,
-            self._async_run(options, control_test),
+            self._async_run(control_test),
             name=f"sungrow survey {self.entry.entry_id}",
         )
         return True
@@ -272,9 +270,7 @@ class SurveyRunner:
             cut_pv=bool(self.entry.options.get(CONF_CONTROL_TEST_PV_CUT, False)),
         )
 
-    async def _async_run(
-        self, options: dict[str, Any] | None, control_test: bool = False
-    ) -> None:
+    async def _async_run(self, control_test: bool = False) -> None:
         """Build the document, and end in a state either way.
 
         A failure is kept and shown rather than raised. Somebody who pressed
@@ -293,7 +289,7 @@ class SurveyRunner:
         from .survey_document import async_build, attach_control_test
 
         share, _a_steps = self._shares(
-            options or dict(self.entry.options),
+            dict(self.entry.options),
             control_test,
             block_test.planned_steps(await block_test.inverter_blocks()),
         )
@@ -307,7 +303,6 @@ class SurveyRunner:
                 document = await async_build(
                     self.hass,
                     self.entry,
-                    options,
                     on_progress=lambda fraction, label: self._on_progress(
                         fraction * share, label
                     ),

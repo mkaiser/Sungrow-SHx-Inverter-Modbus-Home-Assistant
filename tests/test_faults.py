@@ -36,11 +36,11 @@ from .conftest import SERIAL
 def test_fifteen_adjacent_words_from_13050() -> None:
     """One read of thirty registers, and every word where the table says."""
     assert len(FAULT_WORDS) == 15
-    addresses = [word.register for word in FAULT_WORDS]
+    addresses = [word.address for word in FAULT_WORDS]
     assert addresses == list(range(13049, 13079, 2))
     for word in FAULT_WORDS:
         field = getattr(InverterFaults, word.field)
-        assert field.address == word.register, word.field
+        assert field.address == word.address, word.field
         assert field.word_order == "little", word.field
         assert all(0 <= bit < 32 for bit in word.bits), word.field
 

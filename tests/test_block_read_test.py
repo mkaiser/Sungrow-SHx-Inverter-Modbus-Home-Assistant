@@ -484,6 +484,19 @@ async def test_the_raw_client_reports_an_exception_response_as_refused(
     assert raised.value.exception_code == 2
 
 
+async def test_the_raw_client_drops_an_answer_to_another_request(
+    socket_enabled: None,
+) -> None:
+    """A late answer to an earlier request is the link out of step.
+
+    Read as this request's answer it would put another block's words, or
+    another block's refusal, under this address.
+    """
+    reply = bytes.fromhex("000500000003018402")
+    with pytest.raises(raw_client.Dropped, match="desync"):
+        await _read_through(reply, 2)
+
+
 def _finding(kind: str, detail: str, component="fast_input", through=False):
     outcome = Outcome(
         culprits=[(Block(component, "input", 2612, 15), kind, detail)],

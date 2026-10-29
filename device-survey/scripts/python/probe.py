@@ -134,104 +134,6 @@ IDENTITY_PROBES = [
 ]
 
 
-async def _cmd_mdns_legacy(args: argparse.Namespace) -> int:
-    """Browse every mDNS service type and report anything Sungrow-shaped.
-
-    The one command in this file that needs a package the survey does not
-    declare: `zeroconf` implements multicast DNS-SD, and a survey has no use
-    for it. So a missing one gets a sentence naming the alternative, which is
-    the sweep, rather than a traceback that reads as "the directory is
-    broken".
-    """
-    try:
-        from zeroconf import ServiceBrowser, ServiceStateChange, Zeroconf
-        from zeroconf.asyncio import AsyncZeroconf
-    except ModuleNotFoundError:
-        print(
-            "mDNS discovery needs the zeroconf package, which is not installed.\n\n"
-            "  Sweep the network instead:  "
-            f"python {_script_name()} sweep 192.168.1.0/24\n\n"
-            "A sweep finds an inverter that mDNS would have found and several\n"
-            "it would not: a WiNet-S announces itself, an inverter's own LAN\n"
-            "port does not announce anything at all."
-        )
-        return 1
-
-    found: dict[str, dict] = {}
-
-    def on_change(zeroconf, service_type, name, state_change, **kwargs):
-        if state_change is not ServiceStateChange.Added:
-            return
-        info = zeroconf.get_service_info(service_type, name, timeout=2000)
-        if info is None:
-            return
-        props = {
-            k.decode(errors="replace") if isinstance(k, bytes) else k: v.decode(
-                errors="replace"
-            )
-            if isinstance(v, bytes)
-            else v
-            for k, v in (info.properties or {}).items()
-        }
-        found[name] = {
-            "type": service_type,
-            "addresses": [str(a) for a in info.parsed_addresses()],
-            "port": info.port,
-            "properties": props,
-        }
-
-    azc = AsyncZeroconf()
-    zc: Zeroconf = azc.zeroconf
-
-    # Ask the network which service types exist before browsing any, rather
-    # than guessing at a list. A guessed list can only ever produce a
-    # provisional negative: a device advertising under a type nobody thought
-    # of looks identical to a device advertising nothing.
-    discovered_types: set[str] = set()
-
-    def on_type(zeroconf, service_type, name, state_change, **kwargs):
-        if state_change is ServiceStateChange.Added:
-            discovered_types.add(name)
-
-    meta = ServiceBrowser(zc, "_services._dns-sd._udp.local.", handlers=[on_type])
-    print(f"Asking the network which service types exist ({args.seconds:.0f}s)...")
-    await asyncio.sleep(args.seconds)
-    meta.cancel()
-
-    types = sorted(discovered_types) or [
-        # Nothing answered the meta-query; fall back to common types so the
-        # run still says something.
-        "_http._tcp.local.",
-        "_workstation._tcp.local.",
-        "_device-info._tcp.local.",
-    ]
-    print(f"Browsing {len(types)} service type(s) for {args.seconds:.0f}s:")
-    for service_type in types:
-        print(f"    {service_type}")
-    browsers = [ServiceBrowser(zc, t, handlers=[on_change]) for t in types]
-    await asyncio.sleep(args.seconds)
-    for b in browsers:
-        b.cancel()
-    await azc.async_close()
-
-    if not found:
-        print(
-            "Nothing advertised. Either nothing is on this segment, or "
-            "multicast is not reaching this host (a Docker bridge will do "
-            "that). Run this on the LAN itself."
-        )
-        return 1
-    for name, entry in sorted(found.items()):
-        interesting = "sungrow" in (name + str(entry)).lower()
-        mark = "  <-- SUNGROW" if interesting else ""
-        print(f"\n{name}{mark}")
-        print(f"  type      {entry['type']}")
-        print(f"  addresses {', '.join(entry['addresses'])}:{entry['port']}")
-        for k, v in entry["properties"].items():
-            print(f"  {k:<12}{v}")
-    return 0
-
-
 async def cmd_mdns(args: argparse.Namespace) -> int:
     """Render the package's optional mDNS discovery result for a user."""
     try:
@@ -492,6 +394,11 @@ async def cmd_units(args: argparse.Namespace) -> int:
 #: document at the same time. 20 admits an optional **`export_scale`** block,
 #: how the firmware writes register 13074; like `control_test` it is written by
 #: `device-survey/scripts/python/sungrow_control_test.py`, never from here.
+#: 21 admits `wallbox.serial_anonymized_hashed`, a stand-in for the wallbox's
+#: serial. 22 gives `readings` one meaning whichever producer wrote it, and
+#: widens Home Assistant's `battery_pack` to this survey's. The number is the
+#: library's (`sungrow_modbus.survey_document.SCHEMA`), and the full reason
+#: for each bump is beside it there.
 
 #: Keys of the connection block that carry a claim rather than a measurement.
 #: They are moved into `user_inputs`, so the published `connection` holds only
@@ -2045,7 +1952,7 @@ def main() -> int:
         nargs="?",
         const=str(HERE),
         help="write <label>.json here, the publishable document "
-        "(default: this script's folder)",
+        "(default: device-survey/)",
     )
     p_caps.add_argument(
         "--label",
@@ -2158,7 +2065,7 @@ def main() -> int:
         "--save",
         nargs="?",
         const=str(HERE),
-        help="write <label>.dump.json here (default: this script's folder)",
+        help="write <label>.dump.json here (default: device-survey/)",
     )
     p_dump.add_argument("--label")
     p_dump.set_defaults(func=cmd_dump)

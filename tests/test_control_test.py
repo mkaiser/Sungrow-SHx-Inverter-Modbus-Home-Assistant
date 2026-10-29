@@ -1760,7 +1760,7 @@ def test_the_cap_is_stated_rather_than_derived(exporting: float) -> None:
     """
     from sungrow_modbus.control_test import FORCED_EFFECT_W, export_cap
 
-    cap = export_cap(exporting)
+    cap = export_cap()
 
     assert cap == FORCED_EFFECT_W
     # It still has to bind, or the window measures nothing.
@@ -1784,7 +1784,7 @@ def test_what_the_stated_cap_gives_up_is_named_precisely() -> None:
     from sungrow_modbus.control_test import FORCED_EFFECT_W, export_cap
 
     exporting = 6000.0
-    cap = export_cap(exporting)
+    cap = export_cap()
 
     # Compensation working, firmware decuples: lands on the asked-for figure.
     assert cap == FORCED_EFFECT_W
@@ -1804,7 +1804,7 @@ def test_the_threshold_leaves_room_for_the_cap_to_bind() -> None:
 
     assert MIN_EXPORT_W > FORCED_EFFECT_W + EFFECT_FLOOR_W
     # At exactly the threshold the cap still bites by more than the floor.
-    cap = export_cap(MIN_EXPORT_W)
+    cap = export_cap()
     assert cap + EFFECT_FLOOR_W <= MIN_EXPORT_W
 
 

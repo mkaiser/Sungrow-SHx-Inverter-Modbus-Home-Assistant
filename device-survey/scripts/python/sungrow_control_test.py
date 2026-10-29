@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "sungrow-modbus==0.1.0a17",
+#     "sungrow-modbus==0.1.0a18",
 #     "modbus-connection[tmodbus]>=4.10.0",
 # ]
 # ///
@@ -94,8 +94,8 @@ def _workspace() -> Path:
     """Return the directory this run's files belong in: `device-survey/`.
 
     Anchored on the script, not the working directory, so a launcher, `make`
-    and a plain `python` all land in the same place -- the folder above the
-    launcher a person double-clicked. Nothing written there carries the serial or the
+    and a plain `python` all land in the same place -- the folder that holds
+    `scripts/`, two above this file. Nothing written there carries the serial or the
     address: the result block is anonymous by construction, and the snapshot
     holds register values. `.gitignore` covers both by name inside a checkout.
     """

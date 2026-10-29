@@ -38,7 +38,11 @@ ignores writes: no exception, no change. That is most houses.
   write that changes nothing on either firmware. It writes the held word back
   when ten times that word would be out of range, or a tenth of it when that
   tenth is below the minimum. The answer is the **refusal**, which survives a
-  dongle's stale readback. Where no such word exists, it declines. With
+  dongle's stale readback -- but a WiNet-S other clients poll also answers
+  0x04 when busy ([measured](../queries/does-a-busy-winet-s-refuse-with-0x04.md)),
+  so a refusal is believed only after three asks, each followed by a read
+  that answers; an acceptance is believed at once. Where no such word
+  exists, it declines. With
   feed-in limitation off, it needs leave to lift the mode.
   `tests/test_export_scale.py` sweeps both firmwares and asserts that the
   register never moves. From a terminal,
@@ -49,7 +53,10 @@ ignores writes: no exception, no change. That is most houses.
 - `number.SungrowExportLimitNumber` probes on the first write. It stores the
   factor in entry data (`CONF_EXPORT_WRITE_SCALE`) together with the firmware
   it was measured on, re-measures after a firmware change, and writes the raw
-  word itself. An unanswered probe falls back to ten and is not stored. The
+  word itself, and keeps the probe's publishable record beside them
+  (`CONF_EXPORT_WRITE_SCALE_PROBE`), which the integration's survey document
+  carries as its `export_scale` block. An unanswered probe falls back to ten
+  and is not stored. The
   update listener skips the reload when that key is all that changed
   (`_built_from`).
 - In the [control test](../concepts/control-test.md), leg B on 13074 needs

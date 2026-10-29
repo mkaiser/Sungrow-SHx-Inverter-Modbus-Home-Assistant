@@ -23,7 +23,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import itertools
 
-from modbus_connection import ServerDeviceBusyError, ServerDeviceFailureError
+from modbus_connection import (
+    ModbusConnectionError,
+    ServerDeviceBusyError,
+    ServerDeviceFailureError,
+)
 import pytest
 
 from sungrow_modbus.addresses import Address
@@ -223,3 +227,86 @@ def test_it_asks_at_the_settings_most_houses_have() -> None:
     """A limit at the maximum -- "no limit" -- is the common case, and askable."""
     for maximum in (5000, 8000, 10000, 15000, 24990):
         assert isinstance(choose(maximum, 0, maximum), Plan), maximum
+
+
+async def test_an_unreadable_register_after_the_write_counts_as_changed() -> None:
+    """Once it has written, a failed read means the state is not known.
+
+    Raised, the caller saw an error and no `left_changed`, and a control test
+    carried on as if the house were as it found it.
+    """
+
+    class LosesTheLink(Inverter):
+        async def async_read(self, where: Address) -> list[int]:
+            if self.writes and where == LIMIT:
+                raise ModbusConnectionError("lost")
+            return await super().async_read(where)
+
+    inverter = LosesTheLink(False, 11880, 11880, 24990)
+
+    result = await async_probe(inverter)
+
+    assert inverter.writes, "the probe wrote before the read failed"
+    assert result.write_units_per_count is None
+    assert result.left_changed
+    assert result.wrote is not None
+    assert "not known" in result.reason
+
+
+class BusyDongle(Inverter):
+    """A WiNet-S other clients poll: 0x04 to some requests, whatever they are."""
+
+    def __init__(self, *args, refuse: list[bool], **kwargs) -> None:
+        """Take the firmware's arguments, and which writes to refuse."""
+        super().__init__(*args, **kwargs)
+        self.refuse = refuse
+
+    async def async_write_word(self, address: int, word: int) -> None:
+        """Refuse a limit write when the list says so, else be the firmware."""
+        if address == LIMIT.address and self.refuse and self.refuse.pop(0):
+            self.writes.append((address, word))
+            raise ServerDeviceFailureError(0x04)
+        await super().async_write_word(address, word)
+
+
+async def test_a_busy_dongle_s_0x04_does_not_pass_for_out_of_range() -> None:
+    """Fwitten's 1:1 slave behind a busy dongle: refused once, then accepted.
+
+    Believed, the first refusal would store ten, and every limit after it
+    would be written a tenth of what was asked.
+    """
+    inverter = BusyDongle(False, 11880, 11880, 24990, refuse=[True, False])
+
+    result = await async_probe(inverter)
+
+    assert result.write_units_per_count == 1, result.reason
+    assert "after 1 refusal" in result.response
+    assert inverter.unchanged
+
+
+async def test_a_refusal_with_an_unanswered_read_after_it_settles_nothing() -> None:
+    """A busy link refuses the read after the write as well."""
+
+    class AlsoRefusesReads(BusyDongle):
+        async def async_read(self, where: Address) -> list[int]:
+            if self.writes and where == LIMIT:
+                raise ServerDeviceFailureError(0x04)
+            return await super().async_read(where)
+
+    inverter = AlsoRefusesReads(False, 11880, 11880, 24990, refuse=[True])
+
+    result = await async_probe(inverter)
+
+    assert result.write_units_per_count is None
+    assert "busy" in result.response
+
+
+async def test_a_real_out_of_range_refusal_is_asked_three_times() -> None:
+    """A multiplying firmware refuses every ask, and that is the answer."""
+    inverter = Inverter(True, 10000, 0, 10000)
+
+    result = await async_probe(inverter)
+
+    assert result.write_units_per_count == 10
+    assert sum(1 for address, _ in inverter.writes if address == LIMIT.address) == 3
+    assert inverter.unchanged

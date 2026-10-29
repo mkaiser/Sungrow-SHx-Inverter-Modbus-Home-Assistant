@@ -186,6 +186,14 @@ CONF_EXPORT_WRITE_SCALE = "export_write_scale"
 #: of Export Power Limit"). Kept beside the factor, in `data`, for its reasons.
 CONF_EXPORT_WRITE_SCALE_FIRMWARE = "export_write_scale_firmware"
 
+#: The publishable record of the write that measured `CONF_EXPORT_WRITE_SCALE`:
+#: `export_scale.document` plus the day it was asked. The factor alone is what
+#: writing needs; a survey document carries this, as the terminal's
+#: `--export-scale --merge-into` does, so a reading from Home Assistant says
+#: how its firmware writes 13074 and shows the one write behind the answer.
+#: Stored and discarded together with the factor.
+CONF_EXPORT_WRITE_SCALE_PROBE = "export_write_scale_probe"
+
 #: Entities reporting generation the Sungrow cannot see, as a list of ids.
 #:
 #: An option rather than entry data: it is a statement about the house, not

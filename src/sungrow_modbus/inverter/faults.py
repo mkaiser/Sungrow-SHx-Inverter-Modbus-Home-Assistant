@@ -42,7 +42,7 @@ class FaultWord(NamedTuple):
 
     field: str
     name: str
-    register: int
+    address: int
     """The protocol address, from `reg()` -- one below Sungrow's number."""
     kind: Kind
     bits: Mapping[int, str]

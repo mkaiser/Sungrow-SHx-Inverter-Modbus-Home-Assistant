@@ -21,7 +21,7 @@ from . import survey_document
 from .addresses import DIRECT_ONLY_PROBE, declared_field, field_address, read
 from .inverter.device import SungrowInverter
 from .inverter.registers import COMPONENTS
-from .model import Silent, present, words_text
+from .model import SETTLES_NOTHING, Silent, present, words_text
 from .survey_document import OTHER_INVERTER_YES, State, classify
 
 
@@ -42,10 +42,19 @@ async def async_read_retrying(
     *,
     delay: float = 1.5,
 ) -> list[int]:
-    """Read one block, retrying transient Modbus failures."""
+    """Read one block, retrying what the link failed to carry.
+
+    An exception *response* is the device answering, so it is raised at once:
+    retried, a refusal followed by a timeout would end as "no answer" in a
+    published probe state. Except what `SETTLES_NOTHING` names.
+    """
     for attempt in range(1, max(1, attempts) + 1):
         try:
             return list(await read(address, count))
+        except ModbusExceptionError as err:
+            if not isinstance(err, SETTLES_NOTHING) or attempt >= attempts:
+                raise
+            await asyncio.sleep(delay)
         except (ModbusError, TimeoutError, OSError):
             if attempt >= attempts:
                 raise
@@ -54,8 +63,13 @@ async def async_read_retrying(
 
 
 def failure_state(error: BaseException) -> str:
-    """Classify a failed read without treating a lost link as a refusal."""
-    if isinstance(error, ModbusExceptionError):
+    """Classify a failed read without treating a lost link as a refusal.
+
+    An exception response that settles nothing is not a refusal either.
+    """
+    if isinstance(error, ModbusExceptionError) and not isinstance(
+        error, SETTLES_NOTHING
+    ):
         return str(State.REFUSED)
     return str(State.NO_ANSWER)
 

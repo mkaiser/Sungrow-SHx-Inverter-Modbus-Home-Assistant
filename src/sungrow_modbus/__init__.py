@@ -26,7 +26,7 @@ from .discovery import (
     network_of,
 )
 from .inverter.capabilities import Capability, Family, family_for, known_absent, resolve
-from .inverter.components import InverterControl, InverterIdentity, InverterReadings
+from .inverter.components import InverterControl, InverterIdentity
 from .inverter.derived import RUNNING_STATES, Derived
 from .inverter.device import SungrowInverter
 from .inverter.registers import COMPONENTS, DEFAULT_INTERVALS, TIER_COMPONENTS
@@ -92,7 +92,6 @@ __all__ = [
     "Identity",
     "InverterControl",
     "InverterIdentity",
-    "InverterReadings",
     "NetworkTooLarge",
     "NextStep",
     "RegisterValue",

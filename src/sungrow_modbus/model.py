@@ -5,7 +5,23 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 
-from modbus_connection import ModbusError
+from modbus_connection import (
+    ModbusError,
+    ServerDeviceBusyError,
+    ServerDeviceFailureError,
+)
+
+#: Exception responses that are answers but settle nothing about a register.
+#: 0x06 says "ask me later". 0x04 does too through a busy WiNet-S: gerd's
+#: answered three holding blocks 18 times of 18 to one client and refused
+#: about half of the same reads with 0x04 while three clients asked at once,
+#: twice over (2026-10-29), and firetribe's did the same with two other
+#: pollers on it. So a probe retries these and never records them as "not
+#: there"; a write refused with one is still a refusal of that write.
+SETTLES_NOTHING: tuple[type[ModbusError], ...] = (
+    ServerDeviceBusyError,
+    ServerDeviceFailureError,
+)
 
 
 @dataclass(frozen=True)

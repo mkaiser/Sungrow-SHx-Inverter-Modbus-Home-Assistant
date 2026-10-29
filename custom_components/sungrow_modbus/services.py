@@ -42,7 +42,7 @@ import voluptuous as vol
 
 from homeassistant.auth.permissions.const import POLICY_CONTROL
 from homeassistant.const import ATTR_DEVICE_ID
-from homeassistant.core import HomeAssistant, ServiceCall, callback
+from homeassistant.core import Context, HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import (
     HomeAssistantError,
     ServiceValidationError,
@@ -184,7 +184,21 @@ async def _async_authorize(
     entry: SungrowConfigEntry,
     permission: str = PERMISSION_START_STOP,
 ) -> None:
-    """Raise unless the caller may do this to *this* inverter.
+    """Raise unless the caller may do this to *this* inverter."""
+    await async_authorize(call.hass, call.context, entry, permission)
+
+
+async def async_authorize(
+    hass: HomeAssistant,
+    context: Context | None,
+    entry: SungrowConfigEntry,
+    permission: str,
+) -> None:
+    """Raise unless whoever is behind `context` may do this to *this* inverter.
+
+    Public because an action is not the only door: the control test's button
+    reaches the same writes, and a button press carries the presser's context
+    the way a service call does.
 
     Follows `homeassistant.helpers.service._async_admin_handler` where the
     cases overlap, deliberately: no user on the context means an automation,
@@ -192,24 +206,24 @@ async def _async_authorize(
     this -- the audience setting is about who may click, and an automation is
     the household's own decision expressed in advance.
     """
-    if not call.context.user_id:
+    if context is None or not context.user_id:
         return
 
-    user = await call.hass.auth.async_get_user(call.context.user_id)
+    user = await hass.auth.async_get_user(context.user_id)
     if user is None:
-        raise UnknownUser(context=call.context)
+        raise UnknownUser(context=context)
     if user.is_admin:
         return
 
     permissions = {**DEFAULT_PERMISSIONS, **entry.options.get(CONF_PERMISSIONS, {})}
     if permissions.get(permission) != AUDIENCE_USERS:
-        raise Unauthorized(context=call.context)
+        raise Unauthorized(context=context)
 
     # Opened to users means users who can already change this device, not
     # everyone with a login. A read-only account can read every sensor and
     # change nothing, and stopping the inverter is not the exception to that.
     if not user.permissions.access_all_entities(POLICY_CONTROL):
-        raise Unauthorized(context=call.context)
+        raise Unauthorized(context=context)
 
 
 async def _async_write(call: ServiceCall, value: int, what: str) -> None:

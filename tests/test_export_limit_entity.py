@@ -23,9 +23,11 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.sungrow_modbus.const import (
     CONF_EXPORT_WRITE_SCALE,
     CONF_EXPORT_WRITE_SCALE_FIRMWARE,
+    CONF_EXPORT_WRITE_SCALE_PROBE,
     CONF_UNIT_ID,
     DOMAIN,
 )
+from custom_components.sungrow_modbus.survey_document import async_build
 from homeassistant.components.number import (
     ATTR_VALUE,
     DOMAIN as NUMBER_DOMAIN,
@@ -186,10 +188,18 @@ async def test_the_probe_lifts_the_mode_only_for_its_write_and_puts_it_back(
 
     assert entry.data[CONF_EXPORT_WRITE_SCALE] == 10
     assert sungrow_unit.holding[MODE] == OFF
-    # Lift, the probe's held word (refused), put the mode back, then the
-    # user's own write -- which the inverter ignores, because the user has
-    # left limitation off. The entity does not switch it on for them.
-    assert writes == [(MODE, ON), (LIMIT, 10000), (MODE, OFF), (LIMIT, 1000)]
+    # Lift, the probe's held word (refused, and asked three times before
+    # that is believed), put the mode back, then the user's own write --
+    # which the inverter ignores, because the user has left limitation off.
+    # The entity does not switch it on for them.
+    assert writes == [
+        (MODE, ON),
+        (LIMIT, 10000),
+        (LIMIT, 10000),
+        (LIMIT, 10000),
+        (MODE, OFF),
+        (LIMIT, 1000),
+    ]
     assert sungrow_unit.holding[LIMIT] == 10000
 
 
@@ -340,3 +350,84 @@ async def test_a_factor_stored_before_firmware_was_recorded_is_adopted(
     assert writes == [(LIMIT, 20000)]
     assert entry.data[CONF_EXPORT_WRITE_SCALE_FIRMWARE] == "SAPPHIRE-H_01011.95.03"
     reload.assert_not_called()
+
+
+async def test_a_survey_document_carries_the_write_that_measured_the_scale(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The block the terminal merges with `--export-scale`, from the entry."""
+    entry = await _setup(
+        hass, sungrow_unit, held=11880, minimum=11880, maximum=24990, mode=ON
+    )
+    with (
+        patch.object(
+            type(sungrow_unit),
+            "write_register",
+            side_effect=_firmware(sungrow_unit, multiplies=False),
+        ),
+        patch.object(hass.config_entries, "async_reload"),
+    ):
+        await _set(hass, 12000)
+        await hass.async_block_till_done()
+
+    block = (await async_build(hass, entry))["export_scale"]
+
+    assert block == entry.data[CONF_EXPORT_WRITE_SCALE_PROBE]
+    assert block["write_units_per_count"] == 1
+    assert block["held_w"] == 11880
+    assert block["left_changed"] is False
+    assert "read_on" in block
+
+
+async def test_a_survey_document_leaves_out_a_scale_measured_on_other_firmware(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """A firmware update is what changes the answer; the block would mislead."""
+    entry = await _setup(
+        hass,
+        sungrow_unit,
+        held=10000,
+        minimum=0,
+        maximum=10000,
+        mode=ON,
+        data={
+            CONF_EXPORT_WRITE_SCALE: 1,
+            CONF_EXPORT_WRITE_SCALE_FIRMWARE: "SAPPHIRE-H_01011.95.03",
+            CONF_EXPORT_WRITE_SCALE_PROBE: {"write_units_per_count": 1},
+        },
+        firmware="SAPPHIRE-H_01011.95.14",
+    )
+
+    assert "export_scale" not in await async_build(hass, entry)
+
+
+async def test_a_new_firmware_discards_the_record_with_the_factor(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The record describes the write that measured the factor, so it goes too."""
+    entry = await _setup(
+        hass,
+        sungrow_unit,
+        held=10000,
+        minimum=0,
+        maximum=10000,
+        mode=ON,
+        data={
+            CONF_EXPORT_WRITE_SCALE: 1,
+            CONF_EXPORT_WRITE_SCALE_FIRMWARE: "SAPPHIRE-H_01011.95.03",
+            CONF_EXPORT_WRITE_SCALE_PROBE: {"write_units_per_count": 1},
+        },
+        firmware="SAPPHIRE-H_01011.95.14",
+    )
+    with (
+        patch.object(
+            type(sungrow_unit),
+            "write_register",
+            side_effect=_firmware(sungrow_unit, multiplies=True),
+        ),
+        patch.object(hass.config_entries, "async_reload"),
+    ):
+        await _set(hass, 600)
+        await hass.async_block_till_done()
+
+    assert entry.data[CONF_EXPORT_WRITE_SCALE_PROBE]["write_units_per_count"] == 10

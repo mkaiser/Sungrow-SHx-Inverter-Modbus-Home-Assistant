@@ -48,5 +48,10 @@ One AC22E-01 at [gerd](installation-gerd.md): through the dongle in the
 [WiNet-S survey](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-summary.md),
 and at its own address in the
 [wallbox document](../sources/ac22e01-gerd-anon-41346964423-wallbox-tls-summary.md).
+Read directly again on 2026-10-29: holding 21250-21259 is a constant
+20-digit ASCII number, shaped like an identifier, and is masked like the serial;
+input 21267 counts up every few seconds; the start mode read 3, outside the
+documented 0-2. What is fixed and what moves is in
+[wallbox registers](../sources/wallbox-registers-summary.md).
 RS485 at unit 248 is reported by others and never measured here; see
 [the open query](../queries/does-a-wallbox-answer-unit-248-on-rs485.md).

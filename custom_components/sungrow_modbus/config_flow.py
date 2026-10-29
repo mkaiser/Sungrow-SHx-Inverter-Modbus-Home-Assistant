@@ -13,6 +13,7 @@ from modbus_connection import (
     ModbusExceptionError,
     ModbusTcpParams,
     ServerDeviceBusyError,
+    ServerDeviceFailureError,
 )
 import voluptuous as vol
 
@@ -244,11 +245,13 @@ async def _async_probe(
         direct: bool | None
         try:
             await read(unit, DIRECT_ONLY_PROBE)
-        except (ServerDeviceBusyError, ModbusExceptionError) as err:
+        except ModbusExceptionError as err:
             # A refusal is the transport answering, and only a refusal is.
-            # 0x06 is the exception that says "ask me later" rather than
-            # "no such register", so it settles nothing either.
-            direct = None if isinstance(err, ServerDeviceBusyError) else False
+            # 0x06 says "ask me later" rather than "no such register", and so
+            # does 0x04 from a WiNet-S other clients are polling; neither
+            # settles anything.
+            settles_nothing = (ServerDeviceBusyError, ServerDeviceFailureError)
+            direct = None if isinstance(err, settles_nothing) else False
         except (ModbusError, HomeAssistantError):
             # The link did not carry the question. That is not evidence about
             # the register: reading it as a refusal would tell a house with no
@@ -2087,7 +2090,7 @@ class SungrowOptionsFlow(OptionsFlow):
         direct: bool | None
         try:
             await device.async_read(DIRECT_ONLY_PROBE)
-        except ServerDeviceBusyError:
+        except (ServerDeviceBusyError, ServerDeviceFailureError):
             direct = None
         except ModbusExceptionError:
             direct = False

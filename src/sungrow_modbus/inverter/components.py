@@ -74,19 +74,3 @@ class InverterIdentity(Component):
     Sungrow states the phase count outright here, so it is never inferred from
     the model — see `capabilities.resolve`.
     """
-
-
-#: The firmware block added in protocol V1.1.7 at register 13250 is **ASCII
-#: text**, not numbers: read from the reference SH10RT it comes back as
-#: 21313, 20560, 18505, 21061, which is "SAPPHIRE" — the same family name the
-#: ARM and DSP version strings carry. Port it with `string()`, not `integer()`.
-FIRMWARE_BLOCK_IS_TEXT = True
-
-
-class InverterReadings(Component):
-    """Live measurements polled on the fast interval."""
-
-    register_space = "input"
-
-    total_dc_power = uint32(reg(5017), word_order="little", unit="W")
-    """Combined DC input power over all MPP trackers."""

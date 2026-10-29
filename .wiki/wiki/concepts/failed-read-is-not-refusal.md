@@ -17,6 +17,7 @@ In `modbus_connection`:
 | --- | --- |
 | `ModbusExceptionError` and subclasses | an answer |
 | `ServerDeviceBusyError` (0x06) | an answer that settles nothing |
+| `ServerDeviceFailureError` (0x04) | the same, through a busy WiNet-S ([measured](../queries/does-a-busy-winet-s-refuse-with-0x04.md)); `model.SETTLES_NOTHING` holds both |
 | `ModbusConnectionError`, `ModbusTimeoutError`, `ModbusProtocolError` | not an answer |
 
 Consequences:

@@ -75,11 +75,12 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install --requirement requirements_dev.txt
 
-      - name: Lint and test
-        run: |
-          ruff check .
-          ruff format --check .
-          pytest -q
+      # The whole CI gate, not a shorter list kept beside it: generated files
+      # current, ruff, mypy, pytest, and the built wheel providing what the
+      # integration imports. A tag can point at a commit CI never saw pass,
+      # and this is the last check before an upload PyPI will not take back.
+      - name: Everything CI gates on
+        run: make ci
 
       - name: hassfest
         uses: home-assistant/actions/hassfest@master

@@ -7,8 +7,8 @@ created: '2026-10-29'
 
 # SH-RT hybrid inverters
 
-Sungrow's three-phase residential hybrids: SH10RT, SH10RT-20, SH10RT-V112 and
-SH8.0RT-V112 in this corpus. The firmware family is `SAPPHIRE-H`. Most of what
+Sungrow's three-phase residential hybrids: SH10RT, SH10RT-20, SH10RT-V112,
+SH8.0RT-V112 and SH6.0RT-V112 (`0x0E0D`) in this corpus. The firmware family is `SAPPHIRE-H`. Most of what
 the integration knows was measured on these.
 
 ## What is established
@@ -45,5 +45,5 @@ the integration knows was measured on these.
 Every SH-RT survey is listed in the [index](../index.md) under Sources.
 The ones with a control test:
 [mkaiser](installation-mkaiser.md), [gerd](installation-gerd.md),
-[bar12](installation-bar12.md), [fwitten](installation-fwitten.md) and
-[anonymous](installation-anonymous.md).
+[bar12](installation-bar12.md), [fwitten](installation-fwitten.md),
+[anonymous](installation-anonymous.md) and [firetribe](installation-firetribe.md).

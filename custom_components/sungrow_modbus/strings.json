@@ -127,7 +127,7 @@
       },
       "user": {
         "title": "What is this for?",
-        "description": "**Set up my inverter** is what you want if you came here to see your solar production in Home Assistant.\n\n**Diagnostics only** connects to the inverter, works out what it is and what it answers, and creates **no entities at all**. It exists because this project has to *measure* which registers each model and firmware supports — Sungrow's own specification has been wrong in both directions — and today that evidence comes from four houses.{mode_choice}",
+        "description": "**Set up my inverter** is what you want if you came here to see your solar production in Home Assistant.\n\n**Diagnostics only** connects to the inverter, works out what it is and what it answers, and creates **no entities at all**. It exists because this project has to *measure* which registers each model and firmware supports — Sungrow's own specification has been wrong in both directions — and today that evidence comes from the few houses that have sent a reading.{mode_choice}",
         "menu_options": {
           "setup_devices": "Set up my inverter — sensors, controls, the lot",
           "setup_diagnostics": "Diagnostics only — help this project, create no entities"
@@ -1039,7 +1039,7 @@
           },
           "survey": {
             "name": "Contribute a capability survey",
-            "description": "Sungrow publishes no release notes, and its register specification has been wrong in both directions — so which registers your inverter answers is **measured** rather than looked up. Today that evidence comes from nine readings at four houses, all of them the maintainer's or a friend's, which is why some inverters are supported better than others.\n\n{measured}\n\nEverything below is optional and answers something **no register can**. Leaving a field empty is honest — it records that the question was not answered, which is different from answering \"I don't know\".\n\nSaving this page keeps your answers. To **run** the survey, press **Run capability survey** on the device page — it shows how far along it is and what it is reading, and offers the finished document as a download when it is done. It reads and never writes, and the serial number is replaced by a stand-in before anything reaches the file.",
+            "description": "Sungrow publishes no release notes, and its register specification has been wrong in both directions — so which registers your inverter answers is **measured** rather than looked up. Today that evidence comes from the few houses that have sent a reading, which is why some inverters are supported better than others — and why yours is worth one.\n\n{measured}\n\nEverything below is optional and answers something **no register can**. Leaving a field empty is honest — it records that the question was not answered, which is different from answering \"I don't know\".\n\nSaving this page keeps your answers. To **run** the survey, press **Run capability survey** on the device page — it shows how far along it is and what it is reading, and offers the finished document as a download when it is done. It reads and never writes, and the serial number is replaced by a stand-in before anything reaches the file.",
             "data": {
               "reporter": "Your name or handle",
               "survey_transport": "How this inverter is connected",

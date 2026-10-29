@@ -38,9 +38,12 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry, MockUs
 
 from custom_components.sungrow_modbus.const import (
     AUDIENCE_USERS,
+    CONF_MODE,
     CONF_PERMISSIONS,
     CONF_UNIT_ID,
     DOMAIN,
+    MODE_DIAGNOSTICS,
+    PERMISSION_CONTROL_TEST,
     PERMISSION_START_STOP,
 )
 from homeassistant.auth.const import GROUP_ID_READ_ONLY, GROUP_ID_USER
@@ -363,3 +366,74 @@ def _second_device_id(hass: HomeAssistant, entry: MockConfigEntry) -> str:
     )
     assert device is not None
     return device.id
+
+
+CONTROL_BUTTON = "button.sh10rt_run_control_write_test"
+
+
+async def _diagnostics_entry(
+    hass: HomeAssistant, unit: MockModbusUnit, audience: str | None = None
+) -> MockConfigEntry:
+    """Set up a diagnostics-only entry, the one that has the control test's button."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={**ENTRY_DATA, CONF_MODE: MODE_DIAGNOSTICS},
+        unique_id=SERIAL,
+        title="SH10RT",
+        options=(
+            {CONF_PERMISSIONS: {PERMISSION_CONTROL_TEST: audience}} if audience else {}
+        ),
+    )
+    entry.add_to_hass(hass)
+    with patch("custom_components.sungrow_modbus.async_get_unit", return_value=unit):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+    return entry
+
+
+async def _press_control_test(hass: HomeAssistant, entry, user) -> bool:
+    """Press the control test's button as `user`; return whether a run started."""
+    with patch.object(
+        type(entry.runtime_data.survey), "async_start", return_value=True
+    ) as start:
+        await hass.services.async_call(
+            "button",
+            "press",
+            {ATTR_ENTITY_ID: CONTROL_BUTTON},
+            blocking=True,
+            context=Context(user_id=user.id),
+        )
+    return start.called
+
+
+async def test_a_normal_user_cannot_press_the_control_test_button(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The button reaches the action's writes, so it answers to its permission.
+
+    Home Assistant asks of a button press only that the presser may control
+    the entity, which every normal user may.
+    """
+    entry = await _diagnostics_entry(hass, sungrow_unit)
+    user = await _user(hass, GROUP_ID_USER)
+
+    with pytest.raises(Unauthorized):
+        await _press_control_test(hass, entry, user)
+
+
+async def test_the_control_test_button_follows_the_owners_choice(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """Opened to users, a normal user's press starts the run."""
+    entry = await _diagnostics_entry(hass, sungrow_unit, AUDIENCE_USERS)
+    user = await _user(hass, GROUP_ID_USER)
+
+    assert await _press_control_test(hass, entry, user)
+
+
+async def test_an_admin_may_press_the_control_test_button(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit, hass_admin_user
+) -> None:
+    entry = await _diagnostics_entry(hass, sungrow_unit)
+
+    assert await _press_control_test(hass, entry, hass_admin_user)

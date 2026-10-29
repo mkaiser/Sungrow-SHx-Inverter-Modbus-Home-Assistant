@@ -50,6 +50,7 @@ drift apart on what a probe is called or what a serial becomes.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+import json
 import logging
 from typing import Any
 
@@ -67,6 +68,8 @@ from sungrow_modbus.battery.device import PUBLISHED_NAMES as BATTERY_NAMES
 from sungrow_modbus.survey import summarise as _summarise
 
 from .const import (
+    CONF_EXPORT_WRITE_SCALE_FIRMWARE,
+    CONF_EXPORT_WRITE_SCALE_PROBE,
     CONF_PUBLISH_ADDRESS,
     CONF_REPORTER,
     CONF_SURVEY_BATTERY,
@@ -172,13 +175,12 @@ async def async_build(
     *,
     allow_dump: bool = False,
     allow_block_test: bool = False,
-    control_test: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Return one publishable survey document for this entry.
 
     `options` overrides the entry's own, for building a document from
-    testimony that is not saved yet. No caller passes it today; both use the
-    entry's saved options.
+    testimony that is not saved yet. Both callers use the entry's saved
+    options; tests pass it, since changing an entry's options reloads it.
 
     `on_progress(fraction, step)` is called after each read that can be
     counted, so a device page can show how far along a survey is and what it
@@ -201,10 +203,9 @@ async def async_build(
     measurement that only means anything on an idle link -- the probes and the
     dump are themselves reads.
 
-    `control_test` is part B's result, already measured. Nothing here writes:
-    part B runs elsewhere, and the survey runner attaches its result after
-    part A with `attach_control_test` rather than through this argument. So
-    the diagnostics download, which builds this same document from this same
+    Nothing here writes, and part B's result is not an argument: the survey
+    runner attaches it after part A with `attach_control_test`. So the
+    diagnostics download, which builds this same document from this same
     code, cannot acquire the power to write by inheriting a default.
     """
     runtime = entry.runtime_data
@@ -248,7 +249,7 @@ async def async_build(
     # builder, so `doc/compatibility.md` and anybody reading a document need
     # not know which producer made it. The builder masks the dump and checks
     # part B's block for the serial; a caller cannot hand it either unshaped.
-    return survey.assemble_document(
+    document = survey.assemble_document(
         command_line=f"{survey.COLLECTED_BY_INTEGRATION} diagnostics",
         read_at=dt_util.utcnow().isoformat(timespec="seconds").replace("+00:00", "Z"),
         user_inputs=_testimony(options),
@@ -270,12 +271,34 @@ async def async_build(
             else None
         ),
         battery_pack=collected.battery_pack,
-        # Part B, when a run did one. Absent from almost every document, and
-        # its absence means "this run only read" rather than "this inverter
-        # failed" -- which is why the schema number moved rather than the key
-        # simply appearing.
-        control_test=control_test,
     )
+    attach_export_scale(document, entry, device)
+    return document
+
+
+def attach_export_scale(document: dict[str, Any], entry: Any, device: Any) -> None:
+    """Put the export limit's measured write scale into a document, if known.
+
+    The export limit entity measures it on its first write and keeps the
+    record in the entry's data; nothing here writes to ask. A record measured
+    on other firmware than the one this document names is left out, because
+    a firmware update is what changes the answer (#763) -- the block would
+    otherwise describe a firmware the document does not. Absent, it says "not
+    asked", as it does in a terminal survey run without `--export-scale`.
+    """
+    block = entry.data.get(CONF_EXPORT_WRITE_SCALE_PROBE)
+    if not block:
+        return
+    measured_on = entry.data.get(CONF_EXPORT_WRITE_SCALE_FIRMWARE)
+    if measured_on is not None and measured_on != device.firmware:
+        return
+    serial = device.serial_number or ""
+    # Anonymous by construction -- watts, a word, the reply -- and checked
+    # anyway, as part B's block is at its door.
+    if serial and serial in json.dumps(block, default=str):
+        _LOGGER.error("Not publishing the export scale block: it carries the serial")
+        return
+    document["export_scale"] = dict(block)
 
 
 class _EntrySource:

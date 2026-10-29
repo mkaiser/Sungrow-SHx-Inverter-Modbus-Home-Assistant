@@ -135,3 +135,11 @@ def devices_mode_offered() -> Generator[None]:
         "custom_components.sungrow_modbus.config_flow.DEVICES_MODE_OFFERED", True
     ):
         yield
+
+
+@pytest.fixture(autouse=True)
+def _no_export_scale_pause(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Drop the write-scale probe's pause between asks, which is for hardware."""
+    from sungrow_modbus.inverter import export_scale
+
+    monkeypatch.setattr(export_scale, "ASK_PAUSE", 0.0)

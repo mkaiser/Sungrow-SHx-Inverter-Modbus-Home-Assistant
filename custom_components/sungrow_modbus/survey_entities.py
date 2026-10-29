@@ -34,6 +34,9 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import Entity
 
+from .const import PERMISSION_CONTROL_TEST
+from .services import async_authorize
+
 if TYPE_CHECKING:
     from .coordinator import SungrowRuntimeData
     from .survey import SurveyRunner
@@ -164,7 +167,15 @@ class ControlTestButton(SurveyEntity, ButtonEntity):
         return not self._runner.state.running
 
     async def async_press(self) -> None:
-        """Run part A and then part B."""
+        """Run part A and then part B, if the presser may write to this inverter.
+
+        Held to `PERMISSION_CONTROL_TEST` exactly as the `run_control_test`
+        action is: the button reaches the same writes, and Home Assistant only
+        asks of a button that its presser may control *some* entity.
+        """
+        await async_authorize(
+            self.hass, self._context, self._runner.entry, PERMISSION_CONTROL_TEST
+        )
         self._runner.async_start(control_test=True)
 
 

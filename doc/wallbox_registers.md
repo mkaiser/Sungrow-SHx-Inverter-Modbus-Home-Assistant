@@ -95,7 +95,28 @@ the serial until a second wallbox shows whether it identifies the unit),
 (0xFFFF directly). Input 21360 and 21363-21365 hold values directly and lie
 beyond what the dongle bands read. The firmware string at 21226 reads whole
 directly. Holding: the same 50 addresses either way below 21249, and
-21250-21313 only directly. None of these is decoded yet.
+21250-21313 only directly.
+
+Read again directly on 2026-10-29, a fortnight after the wallbox document
+and with no car connected, which says what is fixed and what moves:
+
+- **Fixed:** input 21241-21250 (`V1.01.1.000.0.0.000` and padding),
+  21332-21336 (0xFFFF), 21360 (2), 21363 (60), 21364 (1); holding 21260-21281
+  and 21286-21311 except as below; holding 21282-21285, ASCII `20240115`, a
+  date; holding 21298 (1) and 21299 (60), the same pair as input 21364 and
+  21363, so most likely a setting and its echo; holding 21313 (220).
+- **Holding 21250-21259: twenty ASCII digits, constant.** Shaped like an
+  identifier -- a charge point or card number -- so `WALLBOX_MASKED` masks it
+  as it does the serial, and the committed wallbox document carries it masked.
+- **Moves:** input 21267 counts up, about one every 8 to 10 s across three
+  reads four minutes apart, yet read 1754 on 2026-10-15 and 21154 now, so it
+  wraps or restarts. Input 21365 is signed and wanders, -66 then -59 to -61:
+  the shape of a signal strength in dBm, not confirmed. Holding 21312 went
+  from 0 to 2.
+- **Input 21314, the start mode, read 3**, outside the 0-2 the table names.
+
+Still undecoded: what 21267 counts, 21365, the setting at holding 21298/21299
+and its echo, holding 21312, and what start mode 3 means.
 
 ## Input registers
 

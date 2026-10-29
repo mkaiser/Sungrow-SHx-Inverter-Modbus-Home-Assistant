@@ -10,7 +10,7 @@ falls back to reading singly, and what the budget does when it runs out.
 from collections.abc import Generator
 from unittest.mock import patch
 
-from modbus_connection import ModbusError
+from modbus_connection import IllegalDataAddressError
 import pytest
 
 from sungrow_modbus.dump import async_dump, block_count, masked
@@ -52,7 +52,7 @@ async def test_one_bad_address_does_not_lose_the_block_around_it() -> None:
 
     async def read(space: str, address: int, count: int) -> list[int]:
         if address <= refused < address + count:
-            raise ModbusError("illegal data address")
+            raise IllegalDataAddressError(0x02)
         return [address + offset for offset in range(count)]
 
     dump = await async_dump(read, bands=BANDS)
@@ -148,7 +148,7 @@ async def test_a_quiet_address_is_waited_on_once_in_a_run() -> None:
         if address <= quiet < address + count:
             raise TimeoutError
         if address <= refused < address + count:
-            raise ModbusError("illegal data address")
+            raise IllegalDataAddressError(0x02)
         return [address + offset for offset in range(count)]
 
     silent = Silent()

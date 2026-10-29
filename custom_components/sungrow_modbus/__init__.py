@@ -50,6 +50,7 @@ from .const import (
     CONF_ENTITY_IDS,
     CONF_EXPORT_WRITE_SCALE,
     CONF_EXPORT_WRITE_SCALE_FIRMWARE,
+    CONF_EXPORT_WRITE_SCALE_PROBE,
     CONF_EXTERNAL_PLACEMENT,
     CONF_EXTERNAL_SOURCES,
     CONF_INTERVALS,
@@ -706,7 +707,11 @@ async def _async_options_changed(
 
 def _built_from(entry: SungrowConfigEntry) -> tuple[dict[str, Any], dict[str, Any]]:
     """Return what setup builds an entry from: everything but what it never reads."""
-    measured = {CONF_EXPORT_WRITE_SCALE, CONF_EXPORT_WRITE_SCALE_FIRMWARE}
+    measured = {
+        CONF_EXPORT_WRITE_SCALE,
+        CONF_EXPORT_WRITE_SCALE_FIRMWARE,
+        CONF_EXPORT_WRITE_SCALE_PROBE,
+    }
     data = {k: v for k, v in entry.data.items() if k not in measured}
     return data, dict(entry.options)
 

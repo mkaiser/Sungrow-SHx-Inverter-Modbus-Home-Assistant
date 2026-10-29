@@ -28,9 +28,9 @@ import asyncio
 from collections.abc import Awaitable, Callable, Mapping
 import time
 
-from modbus_connection import ModbusError, ModbusExceptionError, ServerDeviceBusyError
+from modbus_connection import ModbusError, ModbusExceptionError
 
-from .model import Silent
+from .model import SETTLES_NOTHING, Silent
 
 #: Address bands worth dumping raw, with why each is here. Protocol
 #: addresses, so one below the register number in Sungrow's document.
@@ -109,9 +109,15 @@ WALLBOX_TLS_BANDS: tuple[tuple[str, int, int, str], ...] = (
 #: address (a WiNet-S answers 0 there). One unit has been read, so whether it
 #: is the same on every AC22E-01 or tells one apart is unknown -- and until a
 #: second wallbox says which, it is treated as the serial is.
+#:
+#: Then holding 21250-21259: twenty ASCII digits, constant across readings a
+#: fortnight apart, only at the wallbox's own address. Undecoded, and shaped
+#: like an identifier -- a charge point or card number -- so it is treated
+#: as one until something says otherwise.
 WALLBOX_MASKED: tuple[tuple[str, int, int], ...] = (
     ("input", 21200, 6),
     ("input", 21210, 4),
+    ("holding", 21249, 10),
 )
 
 #: Reads per request. Small, because the point is coverage: a band that fails
@@ -331,13 +337,13 @@ async def _async_read_retrying(
     that accepts very few Modbus sessions, another client polling at the same
     moment produces exactly the same failure as a register that is not there.
     An exception *response* is the device answering, so it is raised at once
-    -- except 0x06, busy, which settles nothing.
+    -- except what `model.SETTLES_NOTHING` names, which settles nothing.
     """
     for attempt in range(1, max(1, attempts) + 1):
         try:
             return list(await read(space, address, count))
         except ModbusExceptionError as err:
-            if not isinstance(err, ServerDeviceBusyError) or attempt >= attempts:
+            if not isinstance(err, SETTLES_NOTHING) or attempt >= attempts:
                 raise
             await asyncio.sleep(1.5)
         except (ModbusError, TimeoutError, OSError):

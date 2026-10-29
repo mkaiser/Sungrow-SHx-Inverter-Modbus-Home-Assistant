@@ -325,7 +325,8 @@ Each of these is verified in a container or against hardware.
   says nothing about the register. In `modbus_connection`,
   **`ModbusExceptionError`** and its subclasses are answers;
   `ModbusConnectionError` / `ModbusTimeoutError` / `ModbusProtocolError` are
-  not. `ServerDeviceBusyError` (0x06) is an answer that settles nothing. So
+  not. `ServerDeviceBusyError` (0x06) is an answer that settles nothing, and
+  so is 0x04 from a WiNet-S other clients poll (`model.SETTLES_NOTHING`). So
   probes are **three-valued** -- yes, no, undetermined -- and `None` must never
   read as `False`; a probe that decides something published gets retries; the
   CLI exits **1** on a link failure and prints the exit codes last, because a

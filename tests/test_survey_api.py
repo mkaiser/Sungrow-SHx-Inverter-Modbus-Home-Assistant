@@ -1,6 +1,11 @@
 """Tests for the backend-neutral survey consumer API."""
 
-from modbus_connection import ModbusExceptionError
+from modbus_connection import (
+    IllegalDataAddressError,
+    ModbusExceptionError,
+    ServerDeviceBusyError,
+    ServerDeviceFailureError,
+)
 import pytest
 
 from sungrow_modbus import (
@@ -81,6 +86,59 @@ async def test_async_read_retrying_is_configurable_and_retries_failures() -> Non
 
     assert await async_read_retrying(read, 10, 2, delay=0) == [10, 2]
     assert attempts == 3
+
+
+@pytest.mark.asyncio
+async def test_async_read_retrying_raises_a_refusal_at_once() -> None:
+    """A refusal is the device answering; retried, a timeout could bury it."""
+    errors = [IllegalDataAddressError(0x02), TimeoutError()]
+    attempts = 0
+
+    async def read(address: int, count: int) -> list[int]:
+        nonlocal attempts
+        attempts += 1
+        raise errors[attempts - 1]
+
+    with pytest.raises(IllegalDataAddressError):
+        await async_read_retrying(read, 10, 2, delay=0)
+    assert attempts == 1
+
+
+@pytest.mark.asyncio
+async def test_async_read_retrying_retries_busy() -> None:
+    """0x06 is an answer that settles nothing, so it is asked again."""
+    attempts = 0
+
+    async def read(address: int, count: int) -> list[int]:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise ServerDeviceBusyError(0x06)
+        return [address, count]
+
+    assert await async_read_retrying(read, 10, 2, delay=0) == [10, 2]
+    assert attempts == 2
+
+
+@pytest.mark.asyncio
+async def test_async_read_retrying_retries_a_busy_dongle_s_0x04() -> None:
+    """Through a WiNet-S other clients poll, 0x04 comes and goes."""
+    attempts = 0
+
+    async def read(address: int, count: int) -> list[int]:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise ServerDeviceFailureError(0x04)
+        return [address, count]
+
+    assert await async_read_retrying(read, 10, 2, delay=0) == [10, 2]
+    assert attempts == 2
+
+
+def test_an_answer_that_settles_nothing_is_not_a_refusal() -> None:
+    assert failure_state(ServerDeviceBusyError(0x06)) == "no answer"
+    assert failure_state(ServerDeviceFailureError(0x04)) == "no answer"
 
 
 def test_failure_state_distinguishes_refusal_from_no_answer() -> None:

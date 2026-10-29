@@ -16,6 +16,7 @@
 - [SAPPHIRE-H_B001.V000.P023](entities/firmware-sapphire-h-b001-v000-p023.md) — SH-RT, most measured; 13074 writes x10, PV cut confirmed #firmware #sapphire-h-b001-v000-p023
 - [Installation anonymous](entities/installation-anonymous.md) — SH10RT-V112 on P023 with an SBR160 and a control test #installation #anonymous
 - [Installation bar12](entities/installation-bar12.md) — SH10RT-20 with SBR096, cable and WiNet-S, P020 then P023 #installation #bar12
+- [Installation firetribe](entities/installation-firetribe.md) — SH6.0RT-V112 on P023 with SBR096, cable and a busy WiNet-S #installation #firetribe
 - [Installation fullhd23](entities/installation-fullhd23.md) — SH15T on P071 through a WiNet-S #installation #fullhd23
 - [Installation fwitten](entities/installation-fwitten.md) — SH10RT-V112 master/slave cluster, read before and after the P023 upgrade #installation #fwitten
 - [Installation gerd](entities/installation-gerd.md) — SH8.0RT-V112 on P022 with SBR096 and the only measured wallbox #installation #gerd
@@ -71,6 +72,8 @@
 - [sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan.json](sources/sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan-summary.md) — SH15T, B000.V000.P071, FullHD23, a WiNet-S on Ethernet #survey #sh15t #pearl-h-b000-v000-p071 #fullhd23 #winet_lan
 - [sh15t-b000v000p071-3p-jm493-anon-00578206904-battery-sbh200-winet-lan.json](sources/sh15t-b000v000p071-3p-jm493-anon-00578206904-battery-sbh200-winet-lan-summary.md) — SH15T, B000.V000.P071, jm493, a WiNet-S on Ethernet #survey #sh15t #pearl-h-b000-v000-p071 #jm493 #winet_lan
 - [sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan.json](sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-summary.md) — SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi #survey #sh20t #pearl-h-b000-v000-p071 #ra1k-0 #winet_wlan
+- [sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan.json](sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-summary.md) — SH6.0RT-V112, B001.V000.P023, firetribe, the inverter's own LAN port #survey #sh6.0rt-v112 #sapphire-h-b001-v000-p023 #firetribe #direct_lan #control-test
+- [sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan.json](sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan-summary.md) — SH6.0RT-V112, B001.V000.P023, firetribe, a WiNet-S on Ethernet #survey #sh6.0rt-v112 #sapphire-h-b001-v000-p023 #firetribe #winet_lan #control-test
 - [sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan.json](sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-summary.md) — SH8.0RT-V112, B001.V000.P022, gerd, the inverter's own LAN port #survey #sh8-0rt-v112 #sapphire-h-b001-v000-p022 #gerd #direct_lan #control-test #export-scale
 - [sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan.json](sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-summary.md) — SH8.0RT-V112, B001.V000.P022, gerd, a WiNet-S on WiFi #survey #sh8-0rt-v112 #sapphire-h-b001-v000-p022 #gerd #winet_wlan #export-scale #wallbox
 - [wallbox_registers.md](sources/wallbox-registers-summary.md) — The AC wallbox map, with how strongly each row is held #wallbox #registers #ac22e-01
@@ -78,5 +81,6 @@
 ## Queries
 
 - [Does a wallbox answer unit 248 on RS485?](queries/does-a-wallbox-answer-unit-248-on-rs485.md) — Open: reported by others, never measured #wallbox #rs485 #open
+- [Does a busy WiNet-S refuse with 0x04?](queries/does-a-busy-winet-s-refuse-with-0x04.md) — Answered: yes, reproduced at gerd with three clients #winet-s #contention #answered
 - [Does the PV cut work on P022 and P071?](queries/does-the-pv-cut-work-on-p022-and-p071.md) — Open: 31211 answers there, but no watched write #pv-cut #register-31211 #open
 - [What does an iHomeManager answer?](queries/what-does-an-ihomemanager-answer.md) — Open: never surveyed #ihomemanager #open #survey-wanted

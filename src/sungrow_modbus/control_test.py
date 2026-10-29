@@ -41,7 +41,7 @@ import math
 import time
 from typing import Any, NamedTuple, Protocol
 
-from modbus_connection import ModbusError, ModbusExceptionError, ServerDeviceBusyError
+from modbus_connection import ModbusError, ModbusExceptionError
 
 from .addresses import DIRECT_ONLY_PROBE
 from .battery import ceiling as battery_ceiling
@@ -49,6 +49,7 @@ from .inverter import export_scale
 from .inverter.capabilities import Capability
 from .inverter.derived import RUNNING_STATES
 from .inverter.device import SungrowInverter
+from .model import SETTLES_NOTHING
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -1089,10 +1090,6 @@ SOC_CEILING_FLOOR = 55.0
 #: heading for zero, and a percentage of zero is not a tolerance.
 STOPPED_W = 200.0
 
-#: The step `scripts/generate/tables/writes.py` gives the export limit, and the smallest
-#: cap that can therefore be asked for.
-EXPORT_STEP_W = 100.0
-
 #: What the behavioural checks command, in watts, for the forced charge, the
 #: forced discharge and the export cap alike.
 #:
@@ -1139,7 +1136,7 @@ MIN_EXPORT_W = 1.25 * (FORCED_EFFECT_W + EFFECT_FLOOR_W)
 FORCE_EXPORT_MARGIN = 1.5
 
 
-def export_cap(exporting: float, step: float = EXPORT_STEP_W) -> float:
+def export_cap() -> float:
     """Return the cap to ask for, which is simply `FORCED_EFFECT_W`.
 
     Not a fraction of the current export. The write scale of 13074 is measured
@@ -1153,11 +1150,7 @@ def export_cap(exporting: float, step: float = EXPORT_STEP_W) -> float:
     that lands a decade *large* binds on nothing and reads `NO_EFFECT`,
     indistinguishable from an ignored write; leg B sees that from the raw word,
     and `tests/test_writes.py` fails on the library's half of it at commit time.
-
-    `exporting` and `step` are unused and kept for callers and tests that pass
-    them.
     """
-    del exporting, step
     return FORCED_EFFECT_W
 
 
@@ -1463,15 +1456,15 @@ class ControlTest:
         So a *refusal* -- the device answering with an exception code -- is
         evidence and means a dongle, while a connection lost, a timeout or a
         desync is the link failing to carry the question and is evidence of
-        nothing. `ServerDeviceBusyError` sits with the latter: it means ask me
-        later, not there is no such register. Undetermined returns `None`,
+        nothing. `model.SETTLES_NOTHING` sits with the latter: it means ask
+        me later, not there is no such register. Undetermined returns `None`,
         which the report renders as an unknown rather than as a dongle,
         because asserting a dongle discards legs A and B.
         """
         for attempt in range(self.TRANSPORT_ATTEMPTS):
             try:
                 await self.inverter.async_read(self.DIRECT_ONLY)
-            except ServerDeviceBusyError:
+            except SETTLES_NOTHING:
                 pass
             except ModbusExceptionError:
                 return False
@@ -2759,7 +2752,7 @@ class ControlTest:
         # take can bind -- measured on a master whose 13074 minimum is
         # 11880 W, exporting 7.4 kW. Said up front, and before a battery is
         # discharged to manufacture an export the cap would still sit above.
-        target = export_cap(0.0, probe.step or EXPORT_STEP_W)
+        target = export_cap()
         low, high = self.snapshot.bounds[probe.field]
         target = min(max(target, low), high)
         sample = await self._sample()

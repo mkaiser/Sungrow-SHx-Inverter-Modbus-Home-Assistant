@@ -22,6 +22,7 @@ from homeassistant.components.number import NumberEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.util import dt as dt_util
 from sungrow_modbus import FALLBACK_W, Capability
 from sungrow_modbus.battery import ceiling as battery_ceiling
 from sungrow_modbus.inverter import export_scale
@@ -30,6 +31,7 @@ from .const import (
     CONF_BATTERY_MAX_POWER,
     CONF_EXPORT_WRITE_SCALE,
     CONF_EXPORT_WRITE_SCALE_FIRMWARE,
+    CONF_EXPORT_WRITE_SCALE_PROBE,
 )
 from .coordinator import SungrowConfigEntry
 from .entity import SungrowEntity, SungrowNumberDescription
@@ -258,6 +260,10 @@ class SungrowExportLimitNumber(SungrowNumber):
                 **entry.data,
                 CONF_EXPORT_WRITE_SCALE: result.write_units_per_count,
                 CONF_EXPORT_WRITE_SCALE_FIRMWARE: self.coordinator.device.firmware,
+                CONF_EXPORT_WRITE_SCALE_PROBE: {
+                    **export_scale.document(result),
+                    "read_on": dt_util.now().date().isoformat(),
+                },
             },
         )
         return result.write_units_per_count
@@ -297,7 +303,12 @@ class SungrowExportLimitNumber(SungrowNumber):
         data = {
             k: v
             for k, v in entry.data.items()
-            if k not in (CONF_EXPORT_WRITE_SCALE, CONF_EXPORT_WRITE_SCALE_FIRMWARE)
+            if k
+            not in (
+                CONF_EXPORT_WRITE_SCALE,
+                CONF_EXPORT_WRITE_SCALE_FIRMWARE,
+                CONF_EXPORT_WRITE_SCALE_PROBE,
+            )
         }
         self.hass.config_entries.async_update_entry(entry, data=data)
         return None
