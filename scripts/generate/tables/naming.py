@@ -330,6 +330,7 @@ LEGACY_ONLY_SENSORS: dict[str, str] = {
     # their 0xAA/0x55 rather than publishing 170 and 85.
     "active_power_limitation_raw": "binary_sensor.active_power_limitation_enabled",
     "pv_power_limitation_raw": "binary_sensor.pv_power_limitation_enabled",
+    "pv_generation_cut_raw": "binary_sensor.pv_generation_cut",
 }
 
 #: Entities that belong under the device page's Diagnostic heading rather than
@@ -350,6 +351,7 @@ DIAGNOSTIC: frozenset[str] = frozenset(
         "load_adjustment_mode_selection_raw",
         "running_state_raw",
         "pv_power_limitation_raw",
+        "pv_generation_cut_raw",
         "forced_startup_under_low_soc_raw",
         # The two mode flags that replaced a raw number. They mirror a
         # setting rather than measure the house, which is what Diagnostic
@@ -357,6 +359,7 @@ DIAGNOSTIC: frozenset[str] = frozenset(
         # are CONFIG instead.
         "active_power_limitation_enabled",
         "pv_power_limitation_enabled",
+        "pv_generation_cut",
         # The battery pack's state of health, and the six halves of its
         # position words. Diagnostic because they are what you look at when
         # investigating a pack rather than what a dashboard shows: state of

@@ -36,6 +36,10 @@ FIRMWARE_GATED_COMPONENTS: dict[Capability, tuple[str, ...]] = {
     Capability.METER_CHANNEL_2: ("meter_channel_2",),
 }
 
+#: What `async_update_firmware` reads, in order: the component carrying 2582,
+#: then the one carrying 13250, which 2582 may rule out.
+FIRMWARE_COMPONENTS: tuple[str, ...] = ("slowest_input", "firmware_block_inverter")
+
 
 class SungrowInverter:
     """A Sungrow inverter on one Modbus unit.
@@ -108,20 +112,41 @@ class SungrowInverter:
     def firmware(self) -> str | None:
         """The ARM firmware version (register 2582), or None until it is read.
 
-        What `capabilities.ABSENT_ON_FIRMWARE` is keyed by, and what changes
-        when the inverter is updated -- `sungrow_version_1` reads
+        One of the two strings the firmware tables are keyed by, and what
+        changes when the inverter is updated -- `sungrow_version_1` reads
         `SAPPHIRE-H_01011.95.14`, where the hardware strings beside it do not
-        move. Read by the slowest tier, so it is None until that first poll:
-        a gate keyed on it costs one round of the reads it exists to skip.
+        move. `async_update_firmware` reads it before the first poll, so a
+        gate keyed on it never costs a round of the reads it exists to skip.
         """
-        value = self._read_or_none("sungrow_version_1")
+        return self._text("sungrow_version_1")
+
+    @property
+    def inverter_firmware(self) -> str | None:
+        """The inverter firmware string (register 13250), or None.
+
+        `SAPPHIRE-H_B001.V000.P023`: the other string the firmware tables are
+        keyed by, and the one that decides register 31211 -- two inverters on
+        95.12 differ there, and their 13250 strings say why. None where it
+        has not been read, where it answered empty, and on firmware that
+        hangs up on it, which is never asked.
+        """
+        return self._text("inverter_firmware_version")
+
+    @property
+    def firmware_strings(self) -> tuple[str | None, str | None]:
+        """Both firmware strings, as the capability tables match them."""
+        return (self.firmware, self.inverter_firmware)
+
+    def _text(self, name: str) -> str | None:
+        """Return a string field trimmed, or None where it says nothing."""
+        value = self._read_or_none(name)
         return value.strip() if isinstance(value, str) and value.strip() else None
 
     def skipped_components(self) -> frozenset[str]:
         """Components this firmware is measured not to answer, so never read."""
         return frozenset(
             name
-            for capability in absent_on_firmware(self.firmware)
+            for capability in absent_on_firmware(self.firmware_strings)
             for name in FIRMWARE_GATED_COMPONENTS.get(capability, ())
         )
 
@@ -141,7 +166,9 @@ class SungrowInverter:
         """
         if probed is None:
             probed = probe(self._read_or_none)
-        return resolve(self.device_type_code, self.output_type, probed, self.firmware)
+        return resolve(
+            self.device_type_code, self.output_type, probed, self.firmware_strings
+        )
 
     def probed_capabilities(self) -> frozenset[Capability]:
         """Return the capabilities whose registers actually answered.
@@ -165,7 +192,7 @@ class SungrowInverter:
         """Read raw words at one address, for a survey probe.
 
         The seam a capability survey needs and the components cannot give it:
-        `fingerprint.PROBES` asks about addresses chosen to answer a
+        `survey_document.PROBES` asks about addresses chosen to answer a
         *question* -- is there a third tracker, does this path forward the
         6100 block -- and several of them are not in any component this
         library maps. Raises, because only the caller can tell a refusal from
@@ -191,6 +218,17 @@ class SungrowInverter:
     async def async_update_identity(self) -> None:
         """Read the identity block. Raises on failure; the caller decides."""
         await self.identity.async_update()
+
+    async def async_update_firmware(self) -> UpdateReport:
+        """Read both firmware strings, before anything decides on them.
+
+        Firmware first, then everything it gates: what is read, and what the
+        device is judged to have. 2582 arrives with `slowest_input`, and 13250
+        is asked only once 2582 is known, because one measured firmware closes
+        the connection on it. A block that refuses is a None like any other;
+        a lost link raises, as a poll does.
+        """
+        return await self._async_update_components(FIRMWARE_COMPONENTS)
 
     async def async_update_tier(self, tier: str) -> UpdateReport:
         """Poll every component belonging to one tier.
@@ -230,9 +268,9 @@ class SungrowInverter:
         updated: set[str] = set()
         failed: dict[str, ModbusError] = {}
         for name in names:
-            # Asked per component rather than once per tier: the firmware
-            # string arrives with `slowest_input`, which is read before the
-            # firmware blocks in the same tier, so the very first poll gates.
+            # Asked per component rather than once per tier, so a string read
+            # by an earlier component gates a later one -- which is how
+            # `async_update_firmware` learns 2582 before deciding on 13250.
             if name in self.skipped_components():
                 # Neither updated nor failed: never asked. Its entities do not
                 # exist, because the same table took their capability away.

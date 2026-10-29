@@ -67,6 +67,9 @@ SH10RT_INPUT_REGISTERS: dict[int, int | list[int]] = {
 #: by hardware -- which is a real signal, and must not be raised by a fixture.
 SH10RT_HOLDING_REGISTERS: dict[int, int | list[int]] = {
     13017: 0xFFFF,  # reg 13018: PV power limitation, SHT only
+    # reg 31211: PV generation cut. The reference machine runs P020, which
+    # answers the sentinel; P022 and later answer 0x55.
+    31210: 0xFFFF,
 }
 
 

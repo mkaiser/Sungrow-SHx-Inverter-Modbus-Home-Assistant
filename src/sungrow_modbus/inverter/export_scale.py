@@ -136,7 +136,7 @@ def document(result: Result) -> dict[str, Any]:
     """Return the publishable block: the answer, and the one write behind it.
 
     Anonymous by construction, like the control test's block: the held limit
-    in watts, the word written, the inverter's reply. The fingerprint it is
+    in watts, the word written, the inverter's reply. The survey it is
     merged into already says which transport carried it, which matters less
     here than anywhere: the answer is the refusal, and a WiNet-S forwards that.
     """

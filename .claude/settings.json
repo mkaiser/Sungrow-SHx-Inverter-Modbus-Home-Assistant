@@ -1,8 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python device-fingerprints/scripts/python/sungrow_control_test.py:*)",
-      "Bash(timeout * python device-fingerprints/scripts/python/sungrow_control_test.py:*)"
+      "Bash(python device-survey/scripts/python/sungrow_control_test.py:*)",
+      "Bash(timeout * python device-survey/scripts/python/sungrow_control_test.py:*)"
     ]
   }
 }

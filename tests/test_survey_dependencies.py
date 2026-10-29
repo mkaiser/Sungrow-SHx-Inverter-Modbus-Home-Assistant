@@ -27,7 +27,7 @@ import sys
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-SCRIPT_ROOT = REPO / "device-fingerprints" / "scripts"
+SCRIPT_ROOT = REPO / "device-survey" / "scripts"
 SCAN = SCRIPT_ROOT / "python"
 CONTROL = SCRIPT_ROOT / "python"
 
@@ -312,12 +312,12 @@ def test_the_line_endings_are_fixed_for_the_launchers() -> None:
 #: snapshot. Only the transcript carries the real serial, and this list is all
 #: that stands between it and a commit.
 WRITTEN = [
-    REPO / "device-fingerprints" / "sh10rt-v112-3p-anon-abc123-battery-meter.json",
-    REPO / "device-fingerprints" / "sh10rt-v112-3p-anon-abc123-2026-10-13T120000.json",
-    REPO / "device-fingerprints" / "sh10rt.dump.json",
-    REPO / "device-fingerprints" / "sungrow-scan-20261013-120000.log",
-    REPO / "device-fingerprints" / "20261013-120000-control_test.json",
-    REPO / "device-fingerprints" / "20261013-120000-snapshot.json",
+    REPO / "device-survey" / "sh10rt-v112-3p-anon-abc123-battery-meter.json",
+    REPO / "device-survey" / "sh10rt-v112-3p-anon-abc123-2026-10-13T120000.json",
+    REPO / "device-survey" / "sh10rt.dump.json",
+    REPO / "device-survey" / "sungrow-scan-20261013-120000.log",
+    REPO / "device-survey" / "20261013-120000-control_test.json",
+    REPO / "device-survey" / "20261013-120000-snapshot.json",
 ]
 
 

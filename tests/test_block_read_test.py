@@ -6,7 +6,7 @@ competing for the inverter -- and its answers get written into
 `src/sungrow_modbus/inverter/layout.py`, which is only ever added to from a
 measurement. So a wrong answer here becomes a permanent wrong fix.
 
-The terminal tool, `device-fingerprints/scripts/python/blocks.py`, shipped
+The terminal tool, `device-survey/scripts/python/blocks.py`, shipped
 with no test once, and the cost was exactly what that predicts: with the
 library client a refused register raised a class nothing caught, and the
 tool crashed on the first refusal rather than recording it.
@@ -45,7 +45,7 @@ from sungrow_modbus.block_test import (
 )
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "device-fingerprints" / "scripts" / "python"))
+sys.path.insert(0, str(REPO / "device-survey" / "scripts" / "python"))
 
 import blocks  # noqa: E402
 
@@ -135,7 +135,7 @@ def test_a_read_that_only_worked_after_a_reconnect_is_a_failure() -> None:
     """The hazard this tool once hid completely.
 
     The raw client reconnects and tries again, which is right for a
-    fingerprint. It reported "ok (3/3)" for a one-register read of gerd's
+    survey. It reported "ok (3/3)" for a one-register read of gerd's
     5242 -- a read the integration cannot make, because a `Component` has no
     mid-block retry, so one drop loses every field in the block.
     """

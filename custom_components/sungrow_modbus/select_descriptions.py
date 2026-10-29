@@ -11,6 +11,7 @@ in `strings.json`, so a label cannot drift from the value behind it.
 from __future__ import annotations
 
 from homeassistant.const import EntityCategory
+from sungrow_modbus import Capability
 
 from .entity import SungrowSelectDescription
 
@@ -35,6 +36,7 @@ SELECT_DESCRIPTIONS: tuple[SungrowSelectDescription, ...] = (
         legacy_name="Battery forced charge discharge",
         legacy_unique_id="uid_battery_forced_charge_discharge",
         legacy_platform="template",
+        requires=Capability.BATTERY,
         options=["stop", "charge", "discharge"],
         values={"stop": 204, "charge": 170, "discharge": 187},
         entity_category=EntityCategory.CONFIG,

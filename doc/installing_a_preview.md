@@ -245,7 +245,7 @@ result goes into the same document.
 
 There is also a standalone survey for anyone who would rather not install
 anything. See
-[contributing a fingerprint](../device-fingerprints/README.md#contributing-one).
+[contributing a survey](../device-survey/README.md#contributing-one).
 
 Then open an issue quoting **the commit hash HACS shows you**. The channel
 publishes no releases of its own, so a hash rather than a version is what

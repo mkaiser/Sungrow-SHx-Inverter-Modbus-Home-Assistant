@@ -1,6 +1,6 @@
 """What a device exposes, resolved from model, register and probe.
 
-The reference fingerprint is the anchor: an SH10RT that reports three phases,
+The reference survey is the anchor: an SH10RT that reports three phases,
 answers MPPT1 and MPPT2, returns 0xFFFF for MPPT3 and MPPT4, has a meter
 directly wired and a third-party battery. If the model says one thing and that
 machine says another, the machine wins.
@@ -11,6 +11,7 @@ from __future__ import annotations
 import pytest
 
 from sungrow_modbus.const import DEVICE_TYPES
+from sungrow_modbus.inverter import registers
 from sungrow_modbus.inverter.capabilities import (
     ABSENT_ON_FIRMWARE,
     ZERO_MEANS_ABSENT,
@@ -203,6 +204,17 @@ def test_the_unavailable_sentinel_is_still_how_a_lone_inverter_says_no() -> None
     assert Capability.BATTERY not in probed
 
 
+def test_a_slave_answering_zero_volts_beside_the_sentinel_has_no_battery() -> None:
+    # fwitten's battery-less slave on SAPPHIRE-H_B001.V000.P023: voltage 0,
+    # level 0xFFFF. Decoded through the real field, because the bug was the
+    # field: without its sentinel 0xFFFF read 6553.5 % and granted BATTERY.
+    level = registers.InverterMediumInput.battery_level
+    assert level.decode([0xFFFF]) is None
+    assert level.decode([1000]) == 100.0
+    values = {"battery_voltage": 0.0, "battery_level": level.decode([0xFFFF])}
+    assert Capability.BATTERY not in probe(_reads(values))
+
+
 def test_zero_is_read_as_absence_only_where_it_was_measured_to_mean_that() -> None:
     # The rule is still confined to ZERO_MEANS_ABSENT rather than applied to
     # every probe -- three-phase output, the firmware strings and the power
@@ -260,7 +272,7 @@ def test_a_tracker_at_zero_volts_is_denied_and_then_granted_at_sunrise() -> None
 
 
 def test_the_meter_phase_registers_read_zero_through_a_dongle() -> None:
-    """Every WiNet-S path in the committed fingerprints, five houses.
+    """Every WiNet-S path in the committed surveys, five houses.
 
     Read alone, 5741 and 5744 are refused; inside the pooled block the library
     actually reads, they answer zero -- six entities at 0 V and 0 A forever.
@@ -290,7 +302,7 @@ def test_firmware_absence_is_an_exact_measured_version() -> None:
     }
 
 
-def test_every_firmware_entry_names_a_committed_fingerprint() -> None:
+def test_every_firmware_entry_names_a_committed_document() -> None:
     """The rule for getting into the table, enforced: evidence, not a report."""
     from pathlib import Path
 
@@ -298,7 +310,7 @@ def test_every_firmware_entry_names_a_committed_fingerprint() -> None:
         Path(__file__).resolve().parent.parent
         / "src/sungrow_modbus/inverter/capabilities.py"
     ).read_text(encoding="utf-8")
-    fingerprints = Path(__file__).resolve().parent.parent / "device-fingerprints"
+    surveys = Path(__file__).resolve().parent.parent / "device-survey"
     block = source.split("ABSENT_ON_FIRMWARE: dict", 1)[1].split("\n}\n", 1)[0]
     for version in ABSENT_ON_FIRMWARE:
         cited = [
@@ -306,15 +318,15 @@ def test_every_firmware_entry_names_a_committed_fingerprint() -> None:
             for line in block.splitlines()
             if line.strip().startswith("#") and line.strip().endswith(".json")
         ]
-        assert cited, f"{version} cites no fingerprint"
+        assert cited, f"{version} cites no survey"
         for name in cited:
             assert any(
-                (fingerprints / directory / name).exists()
+                (surveys / directory / name).exists()
                 for directory in ("inverter", "wallbox")
             ), name
             path = next(
-                fingerprints / directory / name
+                surveys / directory / name
                 for directory in ("inverter", "wallbox")
-                if (fingerprints / directory / name).exists()
+                if (surveys / directory / name).exists()
             )
             assert version in path.read_text(encoding="utf-8"), name

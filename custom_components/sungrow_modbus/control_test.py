@@ -10,7 +10,7 @@ that being true.
 **Nothing here decides anything.** The procedure, the probe values, the
 verdicts, the restore order and the refusals all live in
 `sungrow_modbus.control_test`, which has no Home Assistant in it and is driven
-identically by `device-fingerprints/scripts/python/sungrow_control_test.py`. What
+identically by `device-survey/scripts/python/sungrow_control_test.py`. What
 lives here is the four things that need Home Assistant: a snapshot that
 survives a restart, a shutdown hook so a stopped inverter is started again, the
 progress callback the device page draws, and the options that say what this run
@@ -32,7 +32,12 @@ from homeassistant.core import HassJob, HomeAssistant, callback
 from homeassistant.helpers.storage import Store
 from sungrow_modbus.control_test import ControlTest, Options, Snapshot, document
 
-from .const import CONF_CONTROL_TEST_EXPORT, CONF_CONTROL_TEST_RESTART, DOMAIN
+from .const import (
+    CONF_CONTROL_TEST_EXPORT,
+    CONF_CONTROL_TEST_PV_CUT,
+    CONF_CONTROL_TEST_RESTART,
+    DOMAIN,
+)
 
 if TYPE_CHECKING:
     from . import SungrowConfigEntry
@@ -113,6 +118,7 @@ class ControlTestRunner:
             allow_dark=True,
             restart=bool(options.get(CONF_CONTROL_TEST_RESTART, False)),
             enable_export_limit=bool(options.get(CONF_CONTROL_TEST_EXPORT, False)),
+            cut_pv=bool(options.get(CONF_CONTROL_TEST_PV_CUT, False)),
         )
 
     @callback

@@ -1,18 +1,18 @@
 """A document from the button is named the way this repository names one.
 
 Two tools write this format:
-`device-fingerprints/scripts/python/sungrow_survey.py` from a
+`device-survey/scripts/python/sungrow_survey.py` from a
 terminal, and the survey button inside Home Assistant. They already agree on
 the schema, the probe table, the stand-in and the vocabulary. The filename was
 the last thing they did not agree on, and it is the one a maintainer sees
 first — twenty documents in a downloads folder sort by name or they do not
-sort at all, and `device-fingerprints/` should be able to take one without
+sort at all, and `device-survey/` should be able to take one without
 renaming it.
 
-`fingerprint.label_for` derives that name from the **published document
+`survey_document.label_for` derives that name from the **published document
 alone**, where the scanner derives it from the structures it holds before
 publishing. The proof that the two arrive at the same answer is not a pair of
-unit tests: it is the corpus. Every fingerprint this repository has committed
+unit tests: it is the corpus. Every survey this repository has committed
 was named by the scanner, so re-deriving each name from its own file is a
 check against nine real readings from four houses, including the awkward ones
 — a slave with no battery of its own, a third-party pack, a dongle read twice.
@@ -23,18 +23,18 @@ from pathlib import Path
 
 import pytest
 
-from sungrow_modbus.fingerprint import label_for
+from sungrow_modbus.survey_document import label_for
 
-from .corpus import INVERTER_DOCUMENTS as FINGERPRINTS
+from .corpus import INVERTER_DOCUMENTS
 
 
-def test_there_are_fingerprints_to_check_against() -> None:
+def test_there_are_documents_to_check_against() -> None:
     """Otherwise the parametrised test below passes by having nothing to do."""
-    assert len(FINGERPRINTS) >= 5
+    assert len(INVERTER_DOCUMENTS) >= 5
 
 
-@pytest.mark.parametrize("path", FINGERPRINTS, ids=lambda p: p.stem[:40])
-def test_a_committed_fingerprint_derives_its_own_filename(path: Path) -> None:
+@pytest.mark.parametrize("path", INVERTER_DOCUMENTS, ids=lambda p: p.stem[:40])
+def test_a_committed_document_derives_its_own_filename(path: Path) -> None:
     """The name on disk, rebuilt from what is inside the file.
 
     A committed name may carry one extra part that the label never does: when

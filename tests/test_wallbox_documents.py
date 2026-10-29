@@ -1,7 +1,7 @@
 """The committed wallbox documents, held to what the survey promises of one.
 
 A wallbox read at its own address is published beside the inverter documents
-in `device-fingerprints/`, but it has no `device`, so neither `label_for`
+in `device-survey/`, but it has no `device`, so neither `label_for`
 nor the compatibility table can read it (`tests/corpus.py` splits the two).
 The checks the inverter corpus gets from `test_document_filenames.py` and
 `test_no_real_serials.py` are restated here, on the document's own terms.
@@ -16,11 +16,9 @@ import sys
 import pytest
 
 from sungrow_modbus.dump import WALLBOX_MASKED
-from sungrow_modbus.fingerprint import STAND_IN_PREFIX
+from sungrow_modbus.survey_document import STAND_IN_PREFIX
 
-SURVEY = (
-    Path(__file__).resolve().parents[1] / "device-fingerprints" / "scripts" / "python"
-)
+SURVEY = Path(__file__).resolve().parents[1] / "device-survey" / "scripts" / "python"
 sys.path.insert(0, str(SURVEY))
 
 import wallbox_direct  # noqa: E402

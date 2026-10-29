@@ -154,6 +154,17 @@ class Derived:
         """
         return self._mode_flag("pv_power_limitation_raw")
 
+    @property
+    def pv_generation_cut(self) -> bool | None:
+        """Whether PV generation is cut (reg 31211), or None.
+
+        Outside Sungrow's protocol document; the owner of an SH10RT observed
+        both codes by their effect (#738), `0xAA` with DC power at 0 W and
+        `0x55` with it back. Read wherever it answers; written only where
+        `Capability.PV_GENERATION_CUT_CONTROL` is granted.
+        """
+        return self._mode_flag("pv_generation_cut_raw")
+
     def _floats(self, *fields: str) -> tuple[float, ...] | None:
         """Return several readings as floats, or None if any is missing."""
         values = [self._value(f) for f in fields]

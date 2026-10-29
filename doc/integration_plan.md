@@ -2,8 +2,8 @@
 
 > Plan of record for the `proper-ha-integration` branch. What can be asserted
 > is asserted in `tests/`; this file holds what is decided, what is next, and
-> why. Measurements live in `device-fingerprints/`, and the rules learned
-> on hardware in `AGENTS.md`.
+> why. Measurements live in `device-survey/`, and what was learned on
+> hardware in the wiki, `.wiki/wiki/index.md`.
 
 ## Status
 
@@ -54,9 +54,9 @@ pre-release and the library to PyPI over OIDC. Run hassfest locally first
    `capabilities.ABSENT_ON_FIRMWARE`: a small table of deviations keyed on
    the **whole** `sungrow_version_1` string (platform prefix included --
    `PEARL-H_01011.01.45` is not older than `SAPPHIRE-H_01011.95.03`), each
-   citing the fingerprint it came from. #763's deviation is 13074's write
+   citing the survey it came from. #763's deviation is 13074's write
    scale, which the per-device probe measures and stores with the firmware,
-   so it needs no table entry; no committed fingerprint shows another.
+   so it needs no table entry; no committed survey shows another.
 5. **A fault seen on hardware.** The fifteen words are read and decoded from
    V1.1.11's Appendix 4; one survey has a flag set (bit 30 of the inverter
    alarm, a slave with no meter), which confirms the word order. Still
@@ -92,7 +92,7 @@ pre-release and the library to PyPI over OIDC. Run hassfest locally first
     a run on the host, not in the container.
 
 The most useful contribution is in
-[devices-wanted.md](../device-fingerprints/devices-wanted.md): a **second firmware
+[devices-wanted.md](../device-survey/devices-wanted.md): a **second firmware
 on a model already recorded**, the only comparison that separates firmware
 from model.
 
@@ -270,7 +270,7 @@ installs from it the way a user does.
 The YAML track lives under [legacy/](../legacy/) on this branch; on `main` it
 stays at the root until the integration replaces it. `scripts/` is grouped by
 job — `dev/`, `generate/`, `release/` and `helpers/`. What a contributor is
-handed is `device-fingerprints/scripts/`: one launcher, `survey.{sh,cmd}`,
+handed is `device-survey/scripts/`: one launcher, `survey.{sh,cmd}`,
 which reads and offers the control test at the end — and `AGENTS.md` lists
 every script.
 

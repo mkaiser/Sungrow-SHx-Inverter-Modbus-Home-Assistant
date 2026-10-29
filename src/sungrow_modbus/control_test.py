@@ -24,7 +24,7 @@ tautological. So every value is checked on three legs:
 
 Nothing here talks to Home Assistant, opens a file, prints, or parses an
 argument. It takes a `SungrowInverter`, a clock it can be lied to about, and a
-progress callback; `device-fingerprints/scripts/python/sungrow_control_test.py` and
+progress callback; `device-survey/scripts/python/sungrow_control_test.py` and
 the integration's `control_test.py` are the two drivers that give it those.
 
 **The rule that outranks every other rule in this file:** a restore is never
@@ -79,6 +79,10 @@ READBACK_BUDGET = 180.0
 EFFECT_BUDGET = 210.0
 VERIFY_BUDGET = 45.0
 RESTART_BUDGET = 300.0
+PV_CUT_BUDGET = 180.0
+"""Added to the behavioural phase only when the run may cut PV: a window
+before, one during and one after, the ramp down before the second
+(`PV_CUT_SETTLE`) and the MPPT search before the third (`PV_RECOVERY`)."""
 
 # -- effect statistics -------------------------------------------------------
 #
@@ -92,6 +96,22 @@ WINDOW = 20.0
 
 SETTLE = 8.0
 """Seconds discarded after a write, before the window that measures it."""
+
+PV_CUT_SETTLE = 35.0
+"""Seconds discarded after `0xAA`, before the window that measures the cut.
+
+The cut is a ramp, not a step. On fwitten's SH10RT-V112 (B001.V000.P023,
+2026-10-29) DC power held for 6 s after the write and reached 0 W 20 s after
+it. `SETTLE` put the window on the ramp: a median of 259 W against a 700 W
+house, reported as nothing measurable. Twenty seconds plus margin for a
+slower ramp at higher power."""
+
+PV_RECOVERY = 75.0
+"""Seconds discarded after PV is allowed again, before the window after.
+
+The owner who found register 31211 measured PV back 30 to 60 s after `0x55`:
+the inverter searches for the maximum power point again from scratch. A
+`SETTLE` there would measure the search and call it drift."""
 
 DRIFT_ABS_W = 150.0
 DRIFT_FRACTION = 0.15
@@ -491,6 +511,21 @@ EXPORT_MODE = Probe(
     unit="",
     exact=(0x55, 0xAA),
 )
+#: Register 31211, outside the specification (#554, #738): `0xAA` cuts PV,
+#: `0x55` lets it run. An enumeration like the three above, written only by the
+#: PV cut check and judged by what PV does, never by the readback walk.
+PV_CUT = Probe(
+    field="pv_generation_cut_raw",
+    component="pv_generation_cut",
+    spec_register=31211,
+    spec_units_per_count=1,
+    unit="",
+    exact=(0x55, 0xAA),
+    requires=Capability.PV_GENERATION_CUT,
+)
+
+#: Every enumeration the run snapshots, restores and never walks.
+ENUMERATIONS: tuple[Probe, ...] = (EMS_MODE, FORCED_CMD, EXPORT_MODE, PV_CUT)
 
 EMS_FORCED = 2
 FORCE_CHARGE = 0xAA
@@ -529,6 +564,10 @@ NOT_PROBED: dict[str, str] = {
     ),
     "battery_forced_charge_discharge_cmd_raw": (
         "written by the forced charge check, not by the readback walk"
+    ),
+    "pv_generation_cut_raw": (
+        "a mode flag with no scale to get wrong, written only by the PV cut "
+        "check, which judges it by what PV does"
     ),
 }
 
@@ -864,6 +903,14 @@ class Options:
     restart: bool = False
     """Stop and start the inverter, and time it."""
 
+    cut_pv: bool = False
+    """Cut PV generation through register 31211 for about a minute.
+
+    Off by default because it is the one check that takes generation away on
+    purpose -- briefly, and where the register answers at all. It is what
+    `capabilities.CONFIRMED_ON_FIRMWARE` is filled from: a write judged by
+    what PV does, which no readback can stand in for."""
+
     simulated: bool = False
     """Stamp the result as evidence about nothing. A simulator stores raw words
     with no scale semantics, so legs A and B agree there by construction."""
@@ -964,8 +1011,9 @@ class Snapshot:
 #: goes back to Stop **first**, before anything else, because it is the only
 #: register in the set that makes the inverter do something rather than merely
 #: describe a limit. Putting a power back while the inverter is still forcing a
-#: charge at the old one is a worse intermediate state than any other.
-RESTORE_FIRST = (FORCED_CMD.field, EMS_MODE.field)
+#: charge at the old one is a worse intermediate state than any other. PV cut
+#: comes straight after: it acts too, but by stopping, which costs only energy.
+RESTORE_FIRST = (FORCED_CMD.field, EMS_MODE.field, PV_CUT.field)
 RESTORE_LAST = (EXPORT_MODE.field,)
 
 
@@ -1114,6 +1162,14 @@ def export_cap(exporting: float, step: float = EXPORT_STEP_W) -> float:
 
 
 MIN_PV_W = 200.0
+
+#: What the PV cut check needs to start from, and what it writes.
+#:
+#: Higher than `MIN_PV_W` because the answer is a stop: from 500 W a fall to
+#: under `STOPPED_W` is two and a half times the steadiest window allowed, so
+#: a cloud cannot fake it.
+PV_CUT_MIN_W = 500.0
+PV_CUT_ON = 0xAA
 """Below this there is nothing to limit and nothing to divert, so the effect
 phase is measuring noise. The readback phase does not care and still runs."""
 
@@ -1236,10 +1292,11 @@ class ControlTest:
         start = self.clock.monotonic()
         share = self.options.run_budget / RUN_BUDGET
         running = start
+        effect = EFFECT_BUDGET + (PV_CUT_BUDGET if self.options.cut_pv else 0.0)
         for name, budget in (
             ("preflight", PREFLIGHT_BUDGET),
             ("readback", READBACK_BUDGET),
-            ("effect", EFFECT_BUDGET),
+            ("effect", effect),
             ("verify", VERIFY_BUDGET),
         ):
             running += budget * share
@@ -1366,7 +1423,7 @@ class ControlTest:
         return low, high
 
     #: What tells a cable from a dongle: see `addresses.DIRECT_ONLY_PROBE`.
-    #: `fingerprint.PROBES` reads the same register for the survey.
+    #: `survey_document.PROBES` reads the same register for the survey.
     DIRECT_ONLY = DIRECT_ONLY_PROBE
 
     #: Three attempts, a second apart, for the same reason `SNAPSHOT_PAUSE`
@@ -1545,7 +1602,7 @@ class ControlTest:
         self.conditions["battery_ceiling_w"] = snapshot.battery_ceiling
 
         plan: list[Probe] = []
-        for probe in (*PROBES, EMS_MODE, FORCED_CMD, EXPORT_MODE):
+        for probe in (*PROBES, *ENUMERATIONS):
             if probe.requires is not None and probe.requires not in self.capabilities:
                 self._note(
                     f"{probe.field}: {NOT_CAPABLE} "
@@ -1560,7 +1617,7 @@ class ControlTest:
                 continue
             snapshot.values[probe.field] = value
             snapshot.raw[probe.field] = raw
-            if probe in (EMS_MODE, FORCED_CMD, EXPORT_MODE):
+            if probe in ENUMERATIONS:
                 continue
             bounds = self._bounds(probe)
             if bounds is None:
@@ -2007,6 +2064,8 @@ class ControlTest:
         setpoint: bool,
         expect_stop: bool = False,
         commanded_unit: str = "W",
+        settle: float | None = None,
+        recovery: float = SETTLE,
     ) -> EffectResult:
         """Measure one setting's effect, bracketed by two readings of the same state.
 
@@ -2081,11 +2140,11 @@ class ControlTest:
                 before=before_mid, before_mad=before_mad, detail=detail
             )
         try:
-            await self.clock.sleep(SETTLE)
+            await self.clock.sleep(SETTLE if settle is None else settle)
             during = await self._window(observable)
         finally:
             await undo()
-        await self.clock.sleep(SETTLE)
+        await self.clock.sleep(recovery)
         after = await self._window(observable)
 
         if not during or not after:
@@ -2428,6 +2487,7 @@ class ControlTest:
 
         results.extend(await self._soc_ceiling_effect())
         results.extend(await self._export_effect())
+        results.extend(await self._pv_cut_effect())
         if self._expired("effect"):
             self._worst(3)
             self._note("the behavioural phase ran out of time before every check ran")
@@ -2504,6 +2564,77 @@ class ControlTest:
                 expect_stop=True,
             )
         ]
+
+    async def _pv_cut_effect(self) -> list[EffectResult]:
+        """Cut PV through register 31211 and watch DC power go to zero.
+
+        The check `capabilities.CONFIRMED_ON_FIRMWARE` is seeded from. Leg C
+        alone, and nothing weaker would do: the register is outside the
+        specification, so there is no scale for leg B to check, and a readback
+        proves only that a word was stored -- through a dongle not even that.
+        What matters is whether the inverter stops generating.
+
+        Like the charge ceiling it stops something rather than starting it,
+        and it is undone by the snapshot's own word, not by an assumed
+        "allowed". Needs leave (`Options.cut_pv`), the register, and enough
+        PV for a stop to be told from a cloud.
+        """
+        original = self.snapshot.values.get(PV_CUT.field)
+        if original is None:
+            # Not capable, or not readable: preflight has already said which.
+            return []
+        if not self.options.cut_pv:
+            self._note(
+                "no PV cut check: this run was not given leave to cut PV "
+                "generation, so register 31211 was read and never written"
+            )
+            return []
+        sample = await self._sample()
+        pv = sample.pv or 0.0
+        if pv < PV_CUT_MIN_W:
+            self._note(
+                f"no PV cut check: PV was {pv:.0f} W, under the {PV_CUT_MIN_W:.0f} W "
+                "a stop needs to be told from the sky"
+            )
+            return []
+        if self._expired("effect"):
+            return []
+        self._step("PV generation cut")
+
+        async def apply() -> str | None:
+            return await self._write(PV_CUT, PV_CUT_ON)
+
+        async def undo() -> None:
+            await self._write(PV_CUT, float(original))
+
+        result = await self._bracket(
+            "PV generation cut",
+            self._pv,
+            "total DC power",
+            None,
+            apply,
+            undo,
+            setpoint=False,
+            expect_stop=True,
+            settle=PV_CUT_SETTLE,
+            recovery=PV_RECOVERY,
+        )
+        if (
+            result.after is not None
+            and result.before is not None
+            and result.before >= PV_CUT_MIN_W
+            and result.after < STOPPED_W
+        ):
+            self._worst(3)
+            self._note(
+                f"PV generation cut: PV was still at {result.after:.0f} W "
+                f"{PV_RECOVERY:.0f} s after register 31211 was put back, so the "
+                "recovery is slower than measured elsewhere or did not happen"
+            )
+        return [result]
+
+    def _pv(self, sample: Sample) -> float | None:
+        return sample.pv
 
     async def _force_export(self, sample: Sample) -> float | None:
         """Make the house export by discharging the battery, or say why not.
@@ -2703,7 +2834,7 @@ class ControlTest:
 
     def _probe_for(self, name: str) -> Probe | None:
         """Find a probe row by field name, enumerations included."""
-        for probe in (*PROBES, EMS_MODE, FORCED_CMD, EXPORT_MODE):
+        for probe in (*PROBES, *ENUMERATIONS):
             if probe.field == name:
                 return probe
         return None
@@ -3200,7 +3331,7 @@ def document(outcome: Outcome) -> dict[str, Any]:
 
     The conditions are the exception worth naming: they carry a state of charge
     and a PV reading, which is a household's afternoon. They are already what a
-    fingerprint publishes in its readings block, knowingly and with the address
+    survey publishes in its readings block, knowingly and with the address
     already gone, and a behavioural verdict cannot be read without them.
     """
     return {

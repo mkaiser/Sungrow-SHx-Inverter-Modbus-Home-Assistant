@@ -183,6 +183,16 @@ class SungrowDataUpdateCoordinator(
             # Still inside the first refresh; capabilities are resolved just
             # after it, from exactly this data.
             return
+        if changed := self._firmware_changed(runtime.firmware):
+            self._reload_scheduled = True
+            _LOGGER.info(
+                "%s now runs firmware %s; reloading, since what is read and "
+                "which entities exist were decided from the firmware",
+                self.name,
+                changed,
+            )
+            self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
+            return
         gained = self.device.capabilities() - runtime.capabilities
         if not gained:
             return
@@ -194,6 +204,19 @@ class SungrowDataUpdateCoordinator(
             ", ".join(sorted(c.value for c in gained)),
         )
         self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
+
+    def _firmware_changed(self, at_setup: tuple[str | None, str | None]) -> str | None:
+        """Name the firmware string that differs from setup's, or None.
+
+        Only a string read both times is compared. One missing now is a missed
+        read, not a downgrade to nothing; one missing at setup and present now
+        is a dongle answering empty one time and text the next, and reloading
+        on it would let a flaky path reload the entry every slowest poll.
+        """
+        for before, now in zip(at_setup, self.device.firmware_strings, strict=True):
+            if before is not None and now is not None and now != before:
+                return now
+        return None
 
     def _log_transitions(self, report: UpdateReport) -> None:
         """Log a component going quiet, and coming back, exactly once."""
@@ -437,6 +460,13 @@ class SungrowRuntimeData:
 
     intervals: dict[str, int] = field(default_factory=dict)
     """Seconds per tier, as configured. A tier missing here is not polled."""
+
+    firmware: tuple[str | None, str | None] = (None, None)
+    """The two firmware strings setup read, 2582 and 13250.
+
+    What every firmware-keyed decision of this entry was made from, so a
+    poll that reads different ones knows the entry is out of date.
+    """
 
     inverter_device_id: str | None = None
     """The inverter's device-registry id, which a sub-device hangs off.

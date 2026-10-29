@@ -1,4 +1,4 @@
-"""Backend-neutral helpers for fingerprint survey consumers.
+"""Backend-neutral helpers for survey consumers.
 
 This module deliberately returns data rather than printing, prompting, writing
 files, or submitting reports. The terminal survey and Home Assistant render
@@ -17,17 +17,17 @@ from typing import Any, Protocol
 from modbus_connection import ModbusError, ModbusExceptionError
 from modbus_connection.model import Component
 
-from . import fingerprint
+from . import survey_document
 from .addresses import DIRECT_ONLY_PROBE, declared_field, field_address, read
-from .fingerprint import OTHER_INVERTER_YES, State, classify
 from .inverter.device import SungrowInverter
 from .inverter.registers import COMPONENTS
 from .model import Silent, present, words_text
+from .survey_document import OTHER_INVERTER_YES, State, classify
 
 
 @dataclass(frozen=True)
 class NextStep:
-    """A follow-up action justified by evidence in a fingerprint document."""
+    """A follow-up action justified by evidence in a survey document."""
 
     key: str
     title: str
@@ -80,13 +80,13 @@ async def async_probe_words(
     announced only once it has finished shows the wrong one throughout.
 
     Raw values are returned for every probe that answered, serial labels
-    included; `fingerprint.capability_registers` drops those at publication.
-    `probes` defaults to `fingerprint.PROBES`, looked up at the call.
+    included; `survey_document.capability_registers` drops those at publication.
+    `probes` defaults to `survey_document.PROBES`, looked up at the call.
     """
     raw: dict[str, list[int]] = {}
     states: dict[str, str] = {}
     for label, space, address, count, _axis in (
-        fingerprint.PROBES if probes is None else probes
+        survey_document.PROBES if probes is None else probes
     ):
         if on_probe is not None:
             on_probe(label)
@@ -137,7 +137,7 @@ async def async_read_6100(unit: Any, *, attempts: int = 6) -> str:
         await async_read_retrying(read, start, count, attempts)
     except (ModbusError, TimeoutError, OSError) as error:
         return failure_state(error)
-    return fingerprint.ANSWERED_6100
+    return survey_document.ANSWERED_6100
 
 
 async def async_read_module(unit: Any) -> str | None:
@@ -172,7 +172,7 @@ async def async_read_firmware(
     """
     read_words = word_reader(unit)
     firmware: dict[str, str | None] = {}
-    for name, space, address, count in fingerprint.FIRMWARE_STRINGS:
+    for name, space, address, count in survey_document.FIRMWARE_STRINGS:
 
         async def read(start: int, size: int, space: str = space) -> list[int]:
             return await read_words(space, start, size)
@@ -193,7 +193,7 @@ async def async_probe_siblings(
     attempts: int = 6,
     on_probe: Callable[[str, list[int] | None], None] | None = None,
 ) -> tuple[dict[str, list[int]], dict[str, str]]:
-    """Ask each unit in `fingerprint.SIBLING_PROBES` whether anything answers.
+    """Ask each unit in `survey_document.SIBLING_PROBES` whether anything answers.
 
     `unit_for(unit_id)` returns a modbus-connection unit on the same link.
     Retried with the long budget, because whether unit 200 or unit 2 answers
@@ -205,12 +205,12 @@ async def async_probe_siblings(
     """
     raw: dict[str, list[int]] = {}
     states: dict[str, str] = {}
-    for label, unit_id, address in fingerprint.SIBLING_PROBES:
+    for label, unit_id, address in survey_document.SIBLING_PROBES:
         try:
             values = await async_read_retrying(
                 unit_for(unit_id).read_input_registers,
                 address,
-                fingerprint.PRESENCE_WORDS,
+                survey_document.PRESENCE_WORDS,
                 attempts,
             )
         except (ModbusError, TimeoutError, OSError):
@@ -342,7 +342,7 @@ async def async_decoded_readings(
     reports its size, and registers 33149/33150 reading 200 W and 100 W where
     the specification documents nothing, are both outside them.
 
-    So a fingerprint carries the whole map. The cost is bounded and small
+    So a survey carries the whole map. The cost is bounded and small
     because the library pools neighbouring registers into a few dozen reads.
     A blind sweep of the whole address span is tens of thousands of
     addresses, mostly "Reserved" per the specification and each one a chance
@@ -442,7 +442,7 @@ async def async_decoded_readings(
                 f"{attribute}: {len(recovered)} recovered, {len(refused)} still missing"
             )
 
-    report = fingerprint.readings_section(
+    report = survey_document.readings_section(
         inverter, missed, salvaged=salvaged, unreadable=unreadable
     )
     if identity_failed:
@@ -521,7 +521,9 @@ class CapabilitySurvey:
     @property
     def capability_probes(self) -> dict[str, dict[str, Any]]:
         """The probes in the published shape, serial-bearing ones removed."""
-        return fingerprint.capability_registers(self.probe_states, self.probe_values)
+        return survey_document.capability_registers(
+            self.probe_states, self.probe_values
+        )
 
     def thin(self) -> list[str]:
         """Name what a document's filename is built from and did not read.
@@ -545,7 +547,7 @@ class CapabilitySurvey:
 
     def _probed(self, prefix: str) -> list[int] | None:
         for label, words in self.probe_values.items():
-            unavailable = all(word in fingerprint.UNAVAILABLE for word in words)
+            unavailable = all(word in survey_document.UNAVAILABLE for word in words)
             if label.startswith(prefix) and words and not unavailable:
                 return words
         return None

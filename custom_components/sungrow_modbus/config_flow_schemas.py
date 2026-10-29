@@ -32,7 +32,7 @@ from homeassistant.helpers.selector import (
     TextSelector,
     TextSelectorConfig,
 )
-from sungrow_modbus.fingerprint import (
+from sungrow_modbus.survey_document import (
     OTHER_INVERTER_CLAIMS,
     PROXY_CLAIMS,
     TRANSPORT_CLAIMS,

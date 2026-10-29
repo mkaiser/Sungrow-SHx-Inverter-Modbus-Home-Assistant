@@ -57,10 +57,11 @@ Windows and on Linux/macOS.
 One thing does *not* follow automatically: Claude Code keys project memory by
 workspace path, and the workspace is `C:\...` on the host but
 `/workspaces/...` in the container, so the two resolve to different project
-directories. That is why the durable repo context lives in `AGENTS.md` and
-`doc/integration_plan.md` instead - both are committed and path-independent,
-and `CLAUDE.md`, which includes `AGENTS.md`, is loaded automatically wherever
-the repo is opened.
+directories. That is why the durable repo context lives in `AGENTS.md`, the
+wiki in `.wiki/` and `doc/integration_plan.md` instead - all committed and
+path-independent. `CLAUDE.md`, which includes `AGENTS.md`, is loaded
+automatically wherever the repo is opened, and `AGENTS.md` points into the
+wiki.
 
 ## Day-to-day
 
@@ -126,14 +127,14 @@ but never produce a finding about a real register.
 custom_components/sungrow_modbus/   Home Assistant integration
 src/sungrow_modbus/                 device library (no Home Assistant imports)
   inverter/, battery/, wallbox/       one subpackage per device: registers, device
-  addresses, discovery, fingerprint,  what spans devices
+  addresses, discovery, survey_document,  what spans devices
   survey, block_test, control_test, dump
 tests/                              library and integration tests
 scripts/dev/                        dev loop: setup, boot, simulator, HACS testbed
 scripts/generate/                   everything that writes a committed file
 scripts/release/                    version lockstep and the pinned-library gate
 scripts/helpers/                    one-off tools
-device-fingerprints/                published survey documents, and the survey itself
+device-survey/                      published survey documents, and the survey itself
 ```
 
 The split follows what Home Assistant's Modbus documentation recommends and
@@ -267,7 +268,7 @@ rather than an upgrade.
 A capability survey is what this project learns from. A tester with the
 integration runs it from a pair of buttons on the device page, with three
 diagnostic sensors beside them; a contributor without it runs
-`device-fingerprints/scripts/survey.sh` instead:
+`device-survey/scripts/survey.sh` instead:
 
 | Entity | What it is for |
 | --- | --- |
@@ -315,7 +316,7 @@ the runbook. What matters if you touch it:
   and it says which. In Home Assistant that guard list is the only protection a
   button press has, since a button gets no confirmation dialog.
 
-`survey.py` owns both parts and holds the state; `fingerprint.py` does the
+`survey.py` owns both parts and holds the state; `survey_document.py` does the
 reading and calls back with a fraction and a label; `control_test.py` does the
 writing and reports into the tail of the same progress bar; `survey_entities.py`
 turns that into states over one dispatcher signal per entry. Nothing in

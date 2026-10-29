@@ -23,7 +23,7 @@ PACK_UNITS: tuple[int, ...] = (200, 2)
 #: The register that tells a slave inverter from a battery at unit 2. An
 #: inverter answers its device type code; a battery does not. Without this
 #: check, a master/slave installation read through a dongle would have its
-#: slave filed as a battery -- not a hypothetical shape: `device-fingerprints/`
+#: slave filed as a battery -- not a hypothetical shape: `device-survey/`
 #: holds one.
 INVERTER_TYPE = field_address("device_type_code")
 

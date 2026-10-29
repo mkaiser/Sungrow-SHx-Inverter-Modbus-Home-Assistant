@@ -35,11 +35,11 @@ from custom_components.sungrow_modbus.const import (
     SECTION_POLLING,
     SECTION_SURVEY,
 )
-from custom_components.sungrow_modbus.fingerprint import async_build, summarise
+from custom_components.sungrow_modbus.survey_document import async_build, summarise
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
-from sungrow_modbus.fingerprint import OTHER_INVERTER_CLAIMS, OTHER_INVERTER_YES
+from sungrow_modbus.survey_document import OTHER_INVERTER_CLAIMS, OTHER_INVERTER_YES
 
 from .conftest import SERIAL
 

@@ -1,4 +1,4 @@
-"""The committed documents in `device-fingerprints/`, split by kind.
+"""The committed documents in `device-survey/`, split by kind.
 
 Inverter and wallbox documents sit side by side. A wallbox read at its own
 address is a document of its own (`"document": "wallbox"`, no `device`), so
@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-FOLDER = Path(__file__).resolve().parents[1] / "device-fingerprints"
+FOLDER = Path(__file__).resolve().parents[1] / "device-survey"
 
 
 def _is_wallbox(path: Path) -> bool:

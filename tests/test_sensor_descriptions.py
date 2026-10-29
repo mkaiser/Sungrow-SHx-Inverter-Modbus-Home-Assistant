@@ -111,11 +111,12 @@ def test_energy_totals_are_not_measurement() -> None:
 
 #: Registers the specification defines that the YAML never read. They have no
 #: YAML entry to be compared against, so they are checked against the entity
-#: map, which is where their definition was written down from V1.1.11.
+#: map, which is where their definition was written down from V1.1.11 --
+#: or, for an `observed` one, from the hardware that answered it.
 ADDED = {
     e["entity_id"].split(".", 1)[1]: e
     for e in json.loads(ENTITY_MAP.read_text(encoding="utf-8"))["entities"]
-    if e["layer"] == "specification" and e["domain"] == "sensor"
+    if e["layer"] in {"specification", "observed"} and e["domain"] == "sensor"
 }
 
 
@@ -236,7 +237,7 @@ def test_the_two_registers_with_nothing_better_are_kept() -> None:
 def test_legacy_mode_keeps_everything_and_modern_mode_does_not() -> None:
     """`serves` answers the mode question, so no platform has to.
 
-    The seventeen exist for an entry that took over the YAML package's ids and
+    The legacy-only sensors exist for an entry that took over the YAML package's ids and
     for nothing else. Asserted through `serves` rather than by reading the
     flag, because the flag is only correct if something consults it -- and
     for a while nothing did.
@@ -244,7 +245,7 @@ def test_legacy_mode_keeps_everything_and_modern_mode_does_not() -> None:
     from custom_components.sungrow_modbus.coordinator import SungrowRuntimeData
 
     dropped = [d for d in SENSOR_DESCRIPTIONS if d.legacy_only]
-    assert len(dropped) == 19
+    assert len(dropped) == 20
 
     # Every capability granted, so the *only* thing under test is the mode.
     # Without it `pv_power_limitation_raw` is refused for requiring a

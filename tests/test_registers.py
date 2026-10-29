@@ -26,7 +26,7 @@ def _expected() -> dict[str, dict]:
     return {
         e["entity_id"].split(".", 1)[1]: e
         for e in entities
-        if e["layer"] in {"modbus", "specification"}
+        if e["layer"] in {"modbus", "specification", "observed"}
         and e.get("address") is not None
         and e["domain"] != "switch"
     }
@@ -88,7 +88,9 @@ def test_each_field_matches_the_yaml(name: str) -> None:
     # A wrong scale is the dangerous one: it yields a plausible number.
     assert field.scale == float(entity.get("scale") or 1), "scale"
     # The library normalises a single sentinel into a frozenset.
-    expected_nan = entity.get("nan_value")
+    # A sentinel the YAML lacks is asserted against the table rather than
+    # skipped, so it still has to be declared to exist.
+    expected_nan = registers.NAN_BEYOND_YAML.get(name, entity.get("nan_value"))
     if expected_nan is None:
         assert not field.nan, "unavailable sentinel"
     else:

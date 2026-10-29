@@ -20,7 +20,7 @@ session boundary tells them apart.
 
 | Source | Device | Licence | Notes |
 | --- | --- | --- | --- |
-| **Here** | AC22E-01, one firmware: two readings via a WiNet-S, a session ending (single phase) and idle with no car (three phase); one at its own address over TLS, idle | MIT, this repo | Published as a dongle section in an inverter document and as a wallbox document in `device-fingerprints/wallbox/`, serial masked. `probe.py dump --save` writes unmasked raw readings beside the script, which stay local |
+| **Here** | AC22E-01, one firmware: two readings via a WiNet-S, a session ending (single phase) and idle with no car (three phase); one at its own address over TLS, idle | MIT, this repo | Published as a dongle section in an inverter document and as a wallbox document in `device-survey/wallbox/`, serial masked. `probe.py dump --save` writes unmasked raw readings beside the script, which stay local |
 | [Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant](https://github.com/Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant) | Not stated | **No licence file** — used with the author's permission, and only for *which register means what* | Its charging-status enum is the single most useful thing any of the three has |
 | [KevinD987/sungrow-ac011e](https://github.com/KevinD987/sungrow-ac011e) | AC011E-01, by measurement | **MIT** | Carries its own confidence marks — VERIFIED, LIKELY, UNVERIFIED — and says plainly that the allocation is not manufacturer-confirmed and may move between firmwares |
 | [Discussion #571](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions/571) on this repo | AC22E-01 | this repo's own tracker | The **same model measured here**, which none of the other sources is. Gives names in the manufacturer's own idiom — `SetOutI`, `PhaseSwitch`, `Availability`, `RemoteControl`, `State` — and one scale that this project's reading contradicts, below |
@@ -101,7 +101,7 @@ directly. Holding: the same 50 addresses either way below 21249, and
 
 | Register | Type | Scale | Meaning | Read here | Confidence |
 | --- | --- | --- | --- | --- | --- |
-| 21201-21206 | ASCII | — | Serial number. **Never published**; masked out of every fingerprint | 11 characters | three sources |
+| 21201-21206 | ASCII | — | Serial number. **Never published**; masked out of every survey | 11 characters | three sources |
 | 21216-21220 | ASCII | — | Model string, spelled out | `AC22E-01` | two sources |
 | 21224 | u16 | — | Device type code: `0x3F80` AC22E-01, `0x20DA` AC011E-01, `0x20ED` AC007-00 | `0x3F80` | two sources |
 | 21225 | u16 | — | Phase count in use. **Follows the phase mode**, not the wiring: 1 in single-phase mode, 3 in three-phase mode, on the same three-phase installation | 1 / 3 | two sources |
@@ -130,7 +130,7 @@ directly. Holding: the same 50 addresses either way below 21249, and
 ## Holding registers
 
 Every one is a **setting**. This project reads them; the survey writes nothing,
-and no file in `device-fingerprints/` implements a Modbus write function.
+and no file in `device-survey/` implements a Modbus write function.
 
 | Register | Type | Scale | Meaning | Read here | Confidence |
 | --- | --- | --- | --- | --- | --- |
@@ -221,12 +221,12 @@ this project sees. `WALLBOX_MASKED` masks the serial (input 21201-21206) and
 the short code at 21211-21214, and the document carries a hashed stand-in
 for the serial, as it does for the inverter's.
 
-## What a fingerprint carries
+## What a survey carries
 
 Through a dongle, the `wallbox` section of the inverter's document. At its
 own address, a **wallbox document** of its own (`"document": "wallbox"`, no
 `device` section, `connection` naming TLS on 516), written by
-`wallbox_direct.py` and published in `device-fingerprints/wallbox/`. The
+`wallbox_direct.py` and published in `device-survey/wallbox/`. The
 section is the same either way:
 
 ```json
@@ -248,7 +248,7 @@ section is the same either way:
 ```
 
 Thirty-two named readings, each carrying **the register it came from** and
-**how many independent sources hold it** — so a reader of one fingerprint does
+**how many independent sources hold it** — so a reader of one survey does
 not have to come and find this document to know how much to trust a line. The
 words stay beside them, for anybody who disagrees with an interpretation here.
 

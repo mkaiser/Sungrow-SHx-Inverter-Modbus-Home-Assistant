@@ -150,7 +150,7 @@ async def test_the_document_says_whether_it_was_paused(
     The field existed before the pause did, saying `false`, which was true.
     A reader of an old document must still be able to trust it.
     """
-    from custom_components.sungrow_modbus.fingerprint import async_build
+    from custom_components.sungrow_modbus.survey_document import async_build
 
     runtime = entry.runtime_data
 

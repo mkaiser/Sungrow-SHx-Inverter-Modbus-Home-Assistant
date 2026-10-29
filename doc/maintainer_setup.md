@@ -63,11 +63,11 @@ The host is genuinely better for two things:
 - **Any site the container cannot route to**, though in practice it follows the
   host's routing already.
 
-[device-fingerprints/scripts/survey.sh](../device-fingerprints/scripts/survey.sh)
+[device-survey/scripts/survey.sh](../device-survey/scripts/survey.sh)
 (`survey.cmd` on Windows) is built for this: it runs the survey through `uv`,
 which fetches Python and the pinned library itself, so it runs on the host
 with nothing set up. It writes its document and transcript beside itself, in
-`device-fingerprints/`; when the workspace is a bind mount from the host
+`device-survey/`; when the workspace is a bind mount from the host
 folder, that is visible on both sides.
 
 ### The mDNS question
@@ -77,7 +77,7 @@ and a run **on the host**, not in the container:
 
 ```bash
 pip install "sungrow-modbus[discovery]"     # zeroconf, for this check only
-python device-fingerprints/scripts/python/probe.py mdns
+python device-survey/scripts/python/probe.py mdns
 ```
 
 If the dongle advertises its serial and model, host discovery becomes free and
@@ -89,21 +89,21 @@ answer it.
 
 | Command | Runs | Because |
 | --- | --- | --- |
-| `python device-fingerprints/scripts/python/probe.py mdns` | **host only** | Multicast does not cross the Docker bridge; needs the `discovery` extra |
+| `python device-survey/scripts/python/probe.py mdns` | **host only** | Multicast does not cross the Docker bridge; needs the `discovery` extra |
 | `make scan HOST=…`, `probe.py sweep/units/capabilities/dump`, `blocks.py` | either | They run on the device library: the editable install in the container, or the version `survey.sh` fetches through uv on the host |
 
 ## 3. Capturing a system
 
 The published documents are in
-[device-fingerprints/inverter/](../device-fingerprints/inverter/) and
-[device-fingerprints/wallbox/](../device-fingerprints/wallbox/), and
-[devices-wanted.md](../device-fingerprints/devices-wanted.md) says what is
+[device-survey/inverter/](../device-survey/inverter/) and
+[device-survey/wallbox/](../device-survey/wallbox/), and
+[devices-wanted.md](../device-survey/devices-wanted.md) says what is
 missing, in the order it would help.
 
 Run the one entry point:
 
 ```bash
-make scan HOST=<host>          # or device-fingerprints/scripts/survey.sh <host>
+make scan HOST=<host>          # or device-survey/scripts/survey.sh <host>
 ```
 
 It identifies every device on the endpoint before asking anything — which is
@@ -119,10 +119,10 @@ tree's library, which is what to use when the survey needs something the
 published wheel does not have yet.
 
 Everything is **read-only** unless that last question is answered yes. The
-one file in `device-fingerprints/` that writes a register is
+one file in `device-survey/` that writes a register is
 `sungrow_control_test.py`, which the survey runs only then.
 
-The document and its transcript land in `device-fingerprints/`, where both
+The document and its transcript land in `device-survey/`, where both
 are gitignored. Publish a document by moving it into `inverter/` (or
 `wallbox/`) and committing it with `doc/compatibility.md`, which
 `scripts/generate/generate_compatibility.py` rebuilds from them. Leave the `sungrow-scan-*.log` transcript alone — it
@@ -131,7 +131,7 @@ somebody else, **ask them before publishing its readings**; a stand-in
 serial is not consent.
 
 For anyone outside this repo — the users whose models nobody here owns —
-[device-fingerprints/](../device-fingerprints/) is a folder they can download
+[device-survey/](../device-survey/) is a folder they can download
 and run with `./survey.sh` or `survey.cmd`; its README is written for them.
 
 ## 4. Reaching the remote systems

@@ -1,7 +1,7 @@
 """Which capabilities can be pinned on a firmware version, and which cannot.
 
-The question the fingerprint collection exists to answer, asked by the
-maintainer in the plan: *collect as many device fingerprints as possible to
+The question the survey collection exists to answer, asked by the
+maintainer in the plan: *collect as many device surveys as possible to
 be able to identify firmware-related capabilities.* Sungrow publishes no
 release notes and its register specification has been proven unreliable in
 both directions, so the only way to know is to compare readings.
@@ -23,11 +23,11 @@ sys.path.insert(0, str(REPO / "scripts" / "generate"))
 
 from generate_compatibility import _attribution, _capability_marks, _comparable
 
-from .corpus import INVERTER_DOCUMENTS as FINGERPRINTS
+from .corpus import INVERTER_DOCUMENTS
 
 
 def _document(**overrides) -> dict:
-    """Return a minimal fingerprint, with the fields this analysis reads."""
+    """Return a minimal survey, with the fields this analysis reads."""
     document = {
         "device": {"device_type_code": "0x0E03"},
         "user_inputs": {"transport": "direct_lan"},
@@ -170,7 +170,7 @@ def test_the_committed_documents_are_analysed_without_error() -> None:
     """The generator runs over the real corpus, whatever shape it is in."""
     reports = [
         (path.stem, json.loads(path.read_text(encoding="utf-8")))
-        for path in FINGERPRINTS
+        for path in INVERTER_DOCUMENTS
     ]
     text = "\n".join(_attribution(reports))
     assert "What can be attributed to firmware" in text
@@ -182,4 +182,4 @@ def test_the_committed_documents_are_analysed_without_error() -> None:
     # And the marks helper reads real documents.
     for _label, document in reports:
         marks = _capability_marks(document)
-        assert marks, "a committed fingerprint carries curated probes"
+        assert marks, "a committed survey carries curated probes"

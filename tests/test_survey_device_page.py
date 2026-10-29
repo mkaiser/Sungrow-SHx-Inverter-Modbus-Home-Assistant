@@ -46,7 +46,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.util import dt as dt_util
-from sungrow_modbus import block_test, fingerprint as survey
+from sungrow_modbus import block_test, survey_document as survey
 
 from .conftest import SERIAL
 
@@ -324,7 +324,7 @@ async def test_a_second_press_while_one_runs_is_refused(
         await holding.wait()
         return {"readings": {"values": {}}}
 
-    with patch("custom_components.sungrow_modbus.fingerprint.async_build", _slow):
+    with patch("custom_components.sungrow_modbus.survey_document.async_build", _slow):
         assert runner.async_start() is True
         await hass.async_block_till_done()
 
@@ -351,7 +351,7 @@ async def test_a_failed_survey_is_reported_rather_than_swallowed(
     entry = await _setup(hass, sungrow_unit, mode=MODE_DIAGNOSTICS)
 
     with patch(
-        "custom_components.sungrow_modbus.fingerprint.async_build",
+        "custom_components.sungrow_modbus.survey_document.async_build",
         side_effect=RuntimeError("Response timeout after 10.0 seconds"),
     ):
         entry.runtime_data.survey.async_start()

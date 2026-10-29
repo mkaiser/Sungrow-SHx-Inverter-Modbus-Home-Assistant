@@ -1,15 +1,15 @@
 # Compatibility
 
 **Generated — do not edit.** `scripts/generate/generate_compatibility.py` builds
-this from the fingerprints in
-[device-fingerprints/](device-fingerprints/), and CI checks that it
+this from the surveys in
+[device-survey/](device-survey/), and CI checks that it
 matches.
 
 Which parts of the register map a device answers varies by model, phase
 count, wiring, transport and firmware. The specification says what
 *exists*, not what a particular machine does with it — so every row
-below comes from a fingerprint taken off real hardware, and a model with
-no fingerprint is listed as **untested** rather than assumed to work.
+below comes from a survey taken off real hardware, and a model with
+no survey is listed as **untested** rather than assumed to work.
 
 ## Reported setups
 
@@ -28,6 +28,10 @@ no fingerprint is listed as **untested** rather than assumed to work.
 | `sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan` | fwitten | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | yes | yes | — | no |
 | `sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-winet` | fwitten | SH10RT-V112 (`0x0E0F`) | WiNet-S (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
 | `sh10rt-v112-b001v000p023-3p-anonymous-anon-91477823483-battery-sbr160-meter-direct-lan` | anonymous | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh10rt-v112-b001v000p023-3p-fwitten-anon-33442450531-battery-none-direct-lan` | fwitten | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | no | — | no | yes | no |
+| `sh10rt-v112-b001v000p023-3p-fwitten-anon-33442450531-battery-none-winet` | fwitten | SH10RT-V112 (`0x0E0F`) | WiNet-S (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | no | — | — | yes | no |
+| `sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan` | fwitten | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | yes | yes | yes | no |
+| `sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-winet` | fwitten | SH10RT-V112 (`0x0E0F`) | WiNet-S (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
 | `sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan` | FullHD23 | SH15T (`0x0E25`) | WiNet-S, wired (reported), **via a Modbus proxy** | Sungrow SBR128 | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh15t-b000v000p071-3p-jm493-anon-00578206904-battery-sbh200-winet-lan` | jm493 | SH15T (`0x0E25`) | WiNet-S, wired (reported) | — | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan` | ra1k_0 | SH20T (`0x0E26`) | WiNet-S, WiFi (reported) | SBH400-V11 | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
@@ -50,15 +54,15 @@ the pack is a Sungrow one — the SBR/SBH per-module block at unit
 200 answers or it does not — and, when it is, *which* model: the
 capacity it reports matches one entry in the datasheet table, and
 the filename carries that model. For a third-party pack the make
-is whatever the person who sent the fingerprint wrote down.
+is whatever the person who sent the survey wrote down.
 
 **By** is whoever provided it, and defaults to anonymous: a
-fingerprint is worth having either way, and nobody should have to
+survey is worth having either way, and nobody should have to
 attach their name to contribute one.
 
 Firmware is in the table because it decides more than the model
 does: which registers a device answers moves between versions, so
-two fingerprints are only comparable if both say which firmware
+two surveys are only comparable if both say which firmware
 they were taken on.
 
 **Connection** is marked _(reported)_ where the contributor told
@@ -73,12 +77,12 @@ field, even the TLS certificate — so only the person who plugged
 the cable in can say which was which, and that is what _(reported)_
 carries.
 **WiFi versus Ethernet on a WiNet-S is not determinable over
-Modbus** — nothing in the protocol reports it — so the fingerprint
+Modbus** — nothing in the protocol reports it — so the survey
 records what the contributor said and draws no conclusion.
 
 ## What can be attributed to firmware
 
-The question these fingerprints exist to answer: **which**
+The question these surveys exist to answer: **which**
 capabilities move between firmware versions, as opposed to between
 models or between transports? Sungrow publishes no release notes, so
 the only way to know is to compare two readings that agree on model
@@ -119,8 +123,9 @@ that has only one would make the next pair.
 | SH10RT-20 | winet_lan | B001.V000.P023 (1 reading) |
 | SH10RT-20 | winet_wlan | B001.V000.P020 (1 reading) |
 | SH10RT-20 | winet_wlan | B001.V000.P023 (2 readings) |
-| SH10RT-V112 | direct_lan | B001.V000.P023 (1 reading) |
+| SH10RT-V112 | direct_lan | B001.V000.P023 (3 readings) |
 | SH10RT-V112 | direct_lan | unknown (2 readings) |
+| SH10RT-V112 | winet | B001.V000.P023 (2 readings) |
 | SH10RT-V112 | winet | unknown (2 readings) |
 | SH15T | winet_lan | B000.V000.P071 (2 readings) |
 | SH20T | winet_wlan | B000.V000.P071 (1 reading) |
@@ -130,7 +135,7 @@ that has only one would make the next pair.
 ## Models this library knows, and whether anybody has tested one
 
 Every model in Appendix 1 of the protocol document. **Untested** means
-nobody has sent a fingerprint — not that it does not work. What the
+nobody has sent a survey — not that it does not work. What the
 library will do on an untested model is decided by its family, and the
 last column says what that rules out before anything is even read.
 
@@ -204,7 +209,7 @@ public without any private channel needing to exist.
 1. **From the integration** — Settings → Devices & Services → Sungrow
    Modbus → the three-dot menu → *Download diagnostics*.
 2. **Before installing anything** —
-   [`device-fingerprints/scripts/python/sungrow_survey.py`](../device-fingerprints/scripts/python/sungrow_survey.py),
+   [`device-survey/scripts/python/sungrow_survey.py`](../device-survey/scripts/python/sungrow_survey.py),
    run from that folder, which needs nothing but Python.
 
 ### Then send it, by whichever route you already have
@@ -219,13 +224,13 @@ public without any private channel needing to exist.
   out to matter — model, how many inverters, how it is connected,
   battery, meter, wallbox — so nothing has to be asked afterwards.
 - **A pull request** adding your file to
-  [device-fingerprints/](device-fingerprints/), if you are comfortable
+  [device-survey/](device-survey/), if you are comfortable
   with git. This is the format the capability model already reads, so
   it is the shortest path from your hardware to working code.
 
 The capability model in
 [`capabilities.py`](../src/sungrow_modbus/inverter/capabilities.py)
-is built from these, so a fingerprint from an untested model is the
+is built from these, so a survey from an untested model is the
 single most useful thing anybody can contribute — including one that
 says everything works.
 

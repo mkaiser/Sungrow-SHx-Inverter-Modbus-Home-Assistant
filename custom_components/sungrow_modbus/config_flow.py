@@ -63,7 +63,7 @@ from sungrow_modbus import (
 )
 from sungrow_modbus.addresses import DIRECT_ONLY_PROBE, field_address, read
 from sungrow_modbus.discovery import CONCURRENCY, TIMEOUT
-from sungrow_modbus.fingerprint import OTHER_INVERTER_YES
+from sungrow_modbus.survey_document import OTHER_INVERTER_YES
 from sungrow_modbus.wallbox import probe_units as wallbox_probe_units
 
 from .config_flow_schemas import (
@@ -87,6 +87,7 @@ from .const import (
     CONF_ADD_DEVICES,
     CONF_BATTERY_MAX_POWER,
     CONF_CONTROL_TEST_EXPORT,
+    CONF_CONTROL_TEST_PV_CUT,
     CONF_CONTROL_TEST_RESTART,
     CONF_ENTITY_IDS,
     CONF_EXTERNAL_PLACEMENT,
@@ -1723,11 +1724,11 @@ class SungrowOptionsFlow(OptionsFlow):
     # place either is explained.
 
     def _control_test_section(self) -> Any:
-        """Return the two permissions part B needs, both off by default.
+        """Return the permissions part B needs, each off by default.
 
         They are separate flags rather than one level because they are not
         ordered: somebody who will allow a restart is not thereby somebody who
-        will allow their export to be limited.
+        will allow their export to be limited, or their PV cut.
         """
         options = self.config_entry.options
         return section(
@@ -1740,6 +1741,10 @@ class SungrowOptionsFlow(OptionsFlow):
                     vol.Required(
                         CONF_CONTROL_TEST_EXPORT,
                         default=options.get(CONF_CONTROL_TEST_EXPORT, False),
+                    ): BooleanSelector(),
+                    vol.Required(
+                        CONF_CONTROL_TEST_PV_CUT,
+                        default=options.get(CONF_CONTROL_TEST_PV_CUT, False),
                     ): BooleanSelector(),
                 }
             ),

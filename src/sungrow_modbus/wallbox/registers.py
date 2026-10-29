@@ -392,7 +392,7 @@ COMPONENTS: dict[str, type[Component]] = {
 #: How strongly each field is held, as `doc/wallbox_registers.md`'s
 #: Confidence column marks it, by the name a document publishes it under --
 #: a coded field without its `_raw`. Travels with every published value, so a
-#: reader of one fingerprint need not find that document to know how much to
+#: reader of one survey need not find that document to know how much to
 #: trust a line. The marks are the five the module docstring defines.
 CONFIDENCE: dict[str, str] = {
     "model_name": "two sources",

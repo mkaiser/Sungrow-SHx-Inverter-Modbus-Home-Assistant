@@ -68,7 +68,7 @@ long-term statistics and their dashboards when they switch.
 - One naming convention, enforced by a test.
 - **A one-command survey** you can run against your own installation, which is
   how the capability model gets its evidence — see
-  [contributing a fingerprint](device-fingerprints/README.md#contributing-one).
+  [contributing a survey](device-survey/README.md#contributing-one).
   The survey itself only reads. At the end it asks whether it may also run
   the **control write test**: it writes each control, checks the inverter
   acted on the value it was given, and puts everything back. The answer
@@ -80,7 +80,7 @@ long-term statistics and their dashboards when they switch.
   `main`, HACS installs it from the preview channel above.
 - The **iHomeManager** and the **Sungrow Logger**. Both are documented by
   Sungrow and neither has ever been measured by this project — if you have
-  one, [device-fingerprints/devices-wanted.md](device-fingerprints/devices-wanted.md)
+  one, [device-survey/devices-wanted.md](device-survey/devices-wanted.md)
   says what would help.
 - **SBH** batteries, which need a register document nobody has, and the SBR's
   per-module cell entities, which need one more pack size measured before the
@@ -182,7 +182,7 @@ timestamp, which is why it can go straight into a public issue.
 not.** Which parts of the register map a device answers varies by model, phase
 count, wiring, transport and firmware, and Sungrow's specification says what
 *exists*, not what your machine does with it — so the capability model is
-built from fingerprints off real hardware. If your model is listed as
+built from surveys off real hardware. If your model is listed as
 untested in [doc/compatibility.md](doc/compatibility.md), a compatibility
 report is the single most useful thing you can contribute — including one that
 says everything works.

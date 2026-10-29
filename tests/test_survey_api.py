@@ -15,7 +15,6 @@ from sungrow_modbus import (
     readings_section,
     wallbox_section,
 )
-from sungrow_modbus.fingerprint import publishable
 from sungrow_modbus.survey import (
     NextStep,
     async_probe_fields,
@@ -25,6 +24,7 @@ from sungrow_modbus.survey import (
     next_steps,
     summarise,
 )
+from sungrow_modbus.survey_document import publishable
 
 
 def test_next_steps_are_structured_and_document_derived() -> None:
@@ -444,8 +444,8 @@ def test_a_wallbox_is_found_through_a_dongle_or_at_its_own_address() -> None:
 
 @pytest.mark.asyncio
 async def test_unread_firmware_is_absent_and_empty_firmware_is_none() -> None:
-    from sungrow_modbus.fingerprint import FIRMWARE_STRINGS
     from sungrow_modbus.survey import async_read_firmware
+    from sungrow_modbus.survey_document import FIRMWARE_STRINGS
 
     addresses = {name: address for name, _space, address, _count in FIRMWARE_STRINGS}
     text = [int.from_bytes(b"SA", "big"), int.from_bytes(b"P_", "big")]

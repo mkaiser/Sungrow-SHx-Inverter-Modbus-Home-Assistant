@@ -28,7 +28,7 @@ from custom_components.sungrow_modbus.const import (
 from custom_components.sungrow_modbus.diagnostics import (
     async_get_config_entry_diagnostics,
 )
-from custom_components.sungrow_modbus.fingerprint import async_build, summarise
+from custom_components.sungrow_modbus.survey_document import async_build, summarise
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from sungrow_modbus.dump import DUMP_BANDS, DUMP_MASKED
@@ -114,7 +114,7 @@ async def test_the_diagnostics_download_never_dumps_however_the_option_is_set(
 
     report = await async_get_config_entry_diagnostics(hass, entry)
 
-    assert "register_dump" not in report["fingerprint"]
+    assert "register_dump" not in report["survey"]
 
 
 async def test_an_asked_for_dump_covers_every_band(
@@ -123,7 +123,7 @@ async def test_an_asked_for_dump_covers_every_band(
     """1510 addresses, in the shape the published documents already use.
 
     Keyed by address as a string and split by register space, because that is
-    what `device-fingerprints/scripts/python/sungrow_survey.py` writes and one
+    what `device-survey/scripts/python/sungrow_survey.py` writes and one
     generator reads both.
     """
     entry = await _setup(hass, sungrow_unit, {CONF_SURVEY_DUMP: True})

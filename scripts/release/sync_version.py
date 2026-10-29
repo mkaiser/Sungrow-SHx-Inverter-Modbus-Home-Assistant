@@ -44,8 +44,8 @@ REQUIREMENT_NAME = "sungrow-modbus"
 #: --script` and the survey's launchers can fetch the library for somebody who
 #: has no checkout. Each pins the library exactly, as the manifest does.
 SCRIPTS = (
-    REPO / "device-fingerprints" / "scripts" / "python" / "sungrow_survey.py",
-    REPO / "device-fingerprints" / "scripts" / "python" / "sungrow_control_test.py",
+    REPO / "device-survey" / "scripts" / "python" / "sungrow_survey.py",
+    REPO / "device-survey" / "scripts" / "python" / "sungrow_control_test.py",
 )
 
 #: The pin inside a script's `# /// script` block, where the dependency list

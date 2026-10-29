@@ -2,18 +2,26 @@ Todo.md contains only next steps (forward looking).
 Anything done should be removed here.
 
 
-# Open
-
-1. **A charging car at gerd's.** Settles what input 21313 does over a session
-   (does it go to 0 when charging stops?) and whether 21308/21310 are signed.
-   Two dongle runs about five minutes apart, 90 s of quiet before each, while
-   the car charges. `doc/wallbox_registers.md` has both questions.
-
 # Next steps
+
+## new device surveys
+
+- Ingest https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/784
+
+## Naming decisions
+
+- defered up to now. Create a table (YAML | HACS) with sensor names, automation etc.
+Is there a good way for localization support for e.g. english / german?
+
 
 ## Integration
 
-- [ ] Have the integration's own fingerprint carry `export_scale` once its
+- [ ] **Confirm the PV cut (holding 31211, #738) on hardware**, so the
+      `Cut PV generation` switch can ship: a control test with `--cut-pv` in
+      daylight on a P022/P023 inverter, then its firmware into
+      `CONFIRMED_ON_FIRMWARE`.
+      [plans/cut-pv-generation.md](plans/cut-pv-generation.md).
+- [ ] Have the integration's own survey document carry `export_scale` once its
       entity has probed. Entry data holds only the factor, not the write
       that measured it.
 - [ ] Grant `Capability.SUNGROW_BATTERY` when an SBR pack is found. No probe
@@ -33,7 +41,7 @@ Anything done should be removed here.
 - [ ] `release.yml` runs ruff and pytest only; add mypy, `make gen-check`
       and `check_pinned_library.py --wheel`.
 - [ ] Confirm the wallbox serial prefix `A25A` (words `[16690, 13633]`) in
-      `test_fingerprint_label.py`, `test_gui_fingerprint.py` and
+      `test_survey_document_label.py`, `test_gui_survey_document.py` and
       `test_survey_api.py` does not identify a unit; it is allowlisted in
       `test_no_real_serials.py` as the model prefix.
 
@@ -43,7 +51,7 @@ Anything done should be removed here.
       by a timeout ends as "no answer" in published probe states.
 - [ ] `_measure_export_scale` leaves `left_changed` unset when
       `export_scale.async_probe`'s read-after-write fails.
-- [ ] Unused: `fingerprint.async_build`'s `options` and `control_test`
+- [ ] Unused: `survey_document.async_build`'s `options` and `control_test`
       parameters, the `export_cap` arguments, `components.InverterReadings`,
       `FIRMWARE_BLOCK_IS_TEXT`, `probe.py`'s `_cmd_mdns_legacy`.
 - [ ] `FaultWord.register` holds a protocol address; rename it `address`.
@@ -65,6 +73,17 @@ direct path shows -- is in `doc/wallbox_registers.md`.
       second wallbox shows whether it identifies the unit.
 
 
+# Recurrent work
+
+## llmwiki upstream check (every 6 weeks, next: 2026-12-10)
+
+The wiki follows `@llmwiki/core` **0.1.2** (microsoft/llmwiki at `e09126f`).
+Check upstream for changes to the index, log or frontmatter format
+(`packages/core/src/init.ts`, `lint.ts`, `index-ops.ts`, `log.ts`) and to its
+lint rules. If something changed, update `tests/test_wiki.py` and
+`.wiki/AGENTS.md` together, and bump the version named in both and in
+`.wiki/wiki/log.md`. Then move the date above six weeks on.
+
 # Future work
 
 ## EVCC connection
@@ -78,3 +97,10 @@ direct path shows -- is in `doc/wallbox_registers.md`.
 Never measured; survey one (port 502 or 503, unit 247). The register map is
 in `doc/cross_reference_modbus_manager.md`; Sungrow's protocol PDF:
 https://github.com/TCzerny/ha-modbus-manager/blob/main/docs/Communication%20Protocol%20of%20iHomeManager_V1.0.2.pdf
+
+# Blockers
+
+1. **A charging car at gerd's.** Settles what input 21313 does over a session
+   (does it go to 0 when charging stops?) and whether 21308/21310 are signed.
+   Two dongle runs about five minutes apart, 90 s of quiet before each, while
+   the car charges. `doc/wallbox_registers.md` has both questions.

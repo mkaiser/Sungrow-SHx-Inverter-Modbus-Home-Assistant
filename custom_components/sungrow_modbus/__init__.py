@@ -208,6 +208,36 @@ async def _async_connect(
     return unit, inverter
 
 
+async def _async_read_firmware(
+    entry: SungrowConfigEntry, inverter: SungrowInverter
+) -> tuple[str | None, str | None]:
+    """Read both firmware strings, before the first poll and before capabilities.
+
+    Firmware decides what is read at all -- one measured version closes the
+    connection on blocks the first poll would otherwise ask for -- and what
+    some entities may do. Knowing it after the first poll is too late for the
+    first and a guess for the second.
+
+    A string that does not answer is None, and setup carries on: an inverter
+    that withholds its firmware is gated by nothing in either direction. A
+    lost link is `ConfigEntryNotReady`, as for the identity just before.
+    """
+    try:
+        report = await inverter.async_update_firmware()
+    except ModbusConnectionError as err:
+        raise ConfigEntryNotReady(
+            f"Could not read the firmware of {entry.title}: {err}"
+        ) from err
+    for name, err in report.failed.items():
+        _LOGGER.debug("%s: %s did not answer at setup: %s", entry.title, name, err)
+    _LOGGER.debug(
+        "%s runs firmware %s",
+        entry.title,
+        " / ".join(v or "unknown" for v in inverter.firmware_strings),
+    )
+    return inverter.firmware_strings
+
+
 async def _async_tier_coordinators(
     hass: HomeAssistant, entry: SungrowConfigEntry, inverter: SungrowInverter
 ) -> tuple[dict[str, int], dict[str, SungrowDataUpdateCoordinator]]:
@@ -307,6 +337,7 @@ async def _async_take_over_legacy_ids(
 async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> bool:
     """Set up a Sungrow SHx inverter from a config entry."""
     _unit, inverter = await _async_connect(hass, entry)
+    firmware = await _async_read_firmware(entry, inverter)
 
     intervals, coordinators = await _async_tier_coordinators(hass, entry, inverter)
 
@@ -327,6 +358,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
         coordinators,
         capabilities,
         intervals,
+        firmware=firmware,
         inverter_device_id=inverter_device_id,
         battery=battery,
         wallbox=wallbox,

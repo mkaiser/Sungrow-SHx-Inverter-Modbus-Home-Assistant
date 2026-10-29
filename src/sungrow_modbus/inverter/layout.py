@@ -37,7 +37,7 @@ Asking for exactly 15 is what makes the frame self-consistent, which is why
 was never wrong and the count was never wrong either. A lenient client that
 trusts the byte count reads these registers perfectly well -- a raw-socket
 probe calls them fine while the shipping stack cannot read them at all.
-`device-fingerprints/scripts/python/blocks.py` is deliberately as strict as the shipping
+`device-survey/scripts/python/blocks.py` is deliberately as strict as the shipping
 stack for that reason, and reports both numbers plus the count that
 reconciles them.
 
@@ -73,7 +73,7 @@ from __future__ import annotations
 #:
 #: Add to this when hardware proves a register unreadable — not when a
 #: document hints it might be, and not when a lenient client says it is fine.
-#: `device-fingerprints/scripts/python/blocks.py` is the measurement, because it fails
+#: `device-survey/scripts/python/blocks.py` is the measurement, because it fails
 #: wherever the shipping stack fails. Every entry should name the machine that
 #: proved it.
 #:
@@ -123,7 +123,7 @@ ISOLATE: dict[str, str] = {
     "meter_channel_2_phase_c_active_power": "meter_channel_2",
     # Measured on gerd's SH8.0RT-V112 (0x0E0E, ARM SAPPHIRE-H_V11_V01_B,
     # 2026-09-07) with the block read test
-    # (`device-fingerprints/scripts/python/blocks.py`): each of these
+    # (`device-survey/scripts/python/blocks.py`): each of these
     # refused on **every** round while its neighbours answered, and each was
     # the only unanswerable read in a component that then lost every field it
     # had. One field apiece, so isolating them costs one extra read and saves

@@ -3,7 +3,7 @@
 The package never covered a wallbox, so there is no entity map entry to test
 these descriptions against. This file is their guard instead.
 
-The fixture is the raw dump in the committed fingerprint, which is the only
+The fixture is the raw dump in the committed survey, which is the only
 wallbox reading this project has. Nothing here is invented: every number came
 off an AC22E-01 through a WiNet-S at unit 3.
 """
@@ -27,7 +27,7 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
-from sungrow_modbus.fingerprint import stand_in
+from sungrow_modbus.survey_document import stand_in
 from sungrow_modbus.wallbox.registers import COMPONENTS
 
 from .conftest import SERIAL
@@ -38,12 +38,12 @@ REPO = Path(__file__).resolve().parent.parent
 #: A session that had just completed (status 6), which the published document
 #: no longer is: it was replaced by an idle reading. Completed is the state
 #: that tells the status table apart from a guess, so the tests keep it.
-FINGERPRINT = REPO / "tests" / "data" / "wallbox_ac22e01_completed_session.json"
+SESSION_DOCUMENT = REPO / "tests" / "data" / "wallbox_ac22e01_completed_session.json"
 
 
 def _words() -> dict[str, dict[int, int]]:
     """Return what the AC22E-01 answered, by register space."""
-    dump = json.loads(FINGERPRINT.read_text(encoding="utf-8"))["wallbox"][
+    dump = json.loads(SESSION_DOCUMENT.read_text(encoding="utf-8"))["wallbox"][
         "register_dump"
     ]
     return {
@@ -309,7 +309,7 @@ async def test_the_device_page_publishes_the_surveys_wallbox_section(
     neither half.
     """
     from custom_components.sungrow_modbus.const import CONF_SURVEY_DUMP
-    from custom_components.sungrow_modbus.fingerprint import async_build
+    from custom_components.sungrow_modbus.survey_document import async_build
 
     serial_words = [0x4139, 0x3837, 0x3635, 0x3433, 0x3231, 0x0000]
     words = {
@@ -320,7 +320,7 @@ async def test_the_device_page_publishes_the_surveys_wallbox_section(
         "holding": WORDS["holding"],
     }
     entry = await _setup(hass, sungrow_unit, words=words)
-    committed = json.loads(FINGERPRINT.read_text(encoding="utf-8"))["wallbox"]
+    committed = json.loads(SESSION_DOCUMENT.read_text(encoding="utf-8"))["wallbox"]
 
     document = await async_build(
         hass, entry, options={CONF_SURVEY_DUMP: dumping}, allow_dump=True
@@ -432,7 +432,7 @@ async def test_a_survey_of_the_direct_path_dumps_where_tls_answers(
     differ in more than speed.
     """
     from custom_components.sungrow_modbus.const import CONF_SURVEY_DUMP
-    from custom_components.sungrow_modbus.fingerprint import async_build
+    from custom_components.sungrow_modbus.survey_document import async_build
     from sungrow_modbus.dump import WALLBOX_TLS_BANDS
 
     entry, _asked = await _setup_direct(hass, sungrow_unit)

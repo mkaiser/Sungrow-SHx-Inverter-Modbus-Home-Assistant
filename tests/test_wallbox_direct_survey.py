@@ -17,9 +17,7 @@ from unittest.mock import patch
 from modbus_connection import ModbusTimeoutError
 from modbus_connection.mock import MockModbusConnection
 
-SURVEY = (
-    Path(__file__).resolve().parents[1] / "device-fingerprints" / "scripts" / "python"
-)
+SURVEY = Path(__file__).resolve().parents[1] / "device-survey" / "scripts" / "python"
 sys.path.insert(0, str(SURVEY))
 
 import probe  # noqa: E402

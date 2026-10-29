@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Build the compatibility table from the fingerprints users have sent in.
+"""Build the compatibility table from the surveys users have sent in.
 
 Which parts of the register map a device answers varies by model, phase count,
 wiring, transport and firmware. That cannot be derived from a document — the
 specification says what exists, not what a particular machine does with it —
-so the only honest source is a fingerprint from real hardware.
+so the only honest source is a survey from real hardware.
 
-This turns [device-fingerprints/](../device-fingerprints/) into a table. It is
+This turns [device-survey/](../device-survey/) into a table. It is
 generated rather than maintained by hand for the usual reason: a table typed
 twice disagrees with itself, and this one is meant to be somebody's answer to
 "will it work with mine?".
 
-**It only ever reports what a fingerprint actually contains.** A model with no
-fingerprint is listed as untested rather than assumed to work, because
+**It only ever reports what a survey actually contains.** A model with no
+survey is listed as untested rather than assumed to work, because
 "probably fine" is exactly the claim that wastes a user's evening.
 
     python scripts/generate/generate_compatibility.py            # write the page
@@ -31,9 +31,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from sungrow_modbus import DEVICE_TYPES, family_for, known_absent
 
 REPO = Path(__file__).resolve().parents[2]
-FINGERPRINTS = REPO / "device-fingerprints" / "inverter"
+DOCUMENTS = REPO / "device-survey" / "inverter"
 
-from sungrow_modbus.fingerprint import REPORTED_TRANSPORTS  # noqa: E402
+from sungrow_modbus.survey_document import REPORTED_TRANSPORTS  # noqa: E402
 
 
 def _connection_cell(connection: dict, user_inputs: dict) -> str:
@@ -79,8 +79,8 @@ def _connection_cell(connection: dict, user_inputs: dict) -> str:
 
 OUTPUT = REPO / "doc" / "compatibility.md"
 
-#: Fingerprint register labels that answer a question a user actually asks,
-#: and the column each becomes. Anything else in a fingerprint is detail for
+#: Survey register labels that answer a question a user actually asks,
+#: and the column each becomes. Anything else in a survey is detail for
 #: the capability model rather than for this table.
 COLUMNS: tuple[tuple[str, str], ...] = (
     ("Phases", "output type (5002)"),
@@ -101,7 +101,7 @@ MARKS = {"present": "yes", "unavailable": "no", None: "—"}
 #: not have. On gerd's SH8.0RT-V112, over its own LAN port, MPPT3, MPPT4 and
 #: all four meter-channel-2 powers are unavailable; through its dongle,
 #: minutes later, the same eight fields come back as zero. Both readings are
-#: in `device-fingerprints/`, and without this the table would say the machine
+#: in `device-survey/`, and without this the table would say the machine
 #: has MPPT3 and MPPT4 on one row and does not on the other, with nothing to
 #: say which to believe.
 ZERO_MEANS_ABSENT_COLUMNS = ("MPPT3", "MPPT4", "Meter direct")
@@ -117,7 +117,7 @@ ZERO_MEANS_ABSENT_COLUMNS = ("MPPT3", "MPPT4", "Meter direct")
 #:
 #: fwitten's second inverter is the case: without this the table says
 #: `Battery: yes` while the *filename* of the same document says
-#: `battery-none`. The filename's battery word (`fingerprint._battery_word`)
+#: `battery-none`. The filename's battery word (`survey_document._battery_word`)
 #: tests for all-zero, because "a zero decodes as a value and would otherwise
 #: be read as evidence of a third-party pack"; this table has to agree.
 #:
@@ -142,7 +142,7 @@ def _short_firmware(version: str) -> str:
     cell wide enough to wrap.
 
     **Any platform, not a named one.** This matched one platform literally
-    until the first non-RT fingerprint arrived: the SH20T of
+    until the first non-RT survey arrived: the SH20T of
     [#772](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/772)
     is a `PEARL-H` machine, and its version sailed through unshortened while
     every other row was trimmed -- which reads as a difference in the data
@@ -153,17 +153,17 @@ def _short_firmware(version: str) -> str:
 
 
 def _reports() -> list[tuple[str, dict]]:
-    """Return (label, document) for every committed fingerprint."""
+    """Return (label, document) for every committed survey."""
     documents = [
         (path.stem, json.loads(path.read_text(encoding="utf-8")))
-        for path in sorted(FINGERPRINTS.glob("*.json"))
+        for path in sorted(DOCUMENTS.glob("*.json"))
     ]
     # A wallbox read at its own address has no `device` to put in a row.
     return [(stem, d) for stem, d in documents if d.get("document") != "wallbox"]
 
 
 def _model(document: dict) -> tuple[str, str]:
-    """Return (model name, device type code) for one fingerprint."""
+    """Return (model name, device type code) for one survey."""
     raw = str(document.get("device", {}).get("device_type_code", ""))
     code = int(raw, 16) if raw.startswith("0x") else None
     return DEVICE_TYPES.get(code, "unknown"), raw or "—"
@@ -204,7 +204,7 @@ def _attribution(reports: list[tuple[str, dict]]) -> list[str]:
     """Say which capabilities can be pinned on firmware, and which cannot.
 
     This is the question the whole exercise exists to answer -- *"collect as
-    many fingerprints as possible to be able to identify firmware-related
+    many surveys as possible to be able to identify firmware-related
     capabilities"* -- and answering it needs a **pair**: two readings that
     agree on model and transport and differ only in firmware. Anything less
     and a difference cannot be separated from the model.
@@ -229,7 +229,7 @@ def _attribution(reports: list[tuple[str, dict]]) -> list[str]:
     lines = [
         "## What can be attributed to firmware",
         "",
-        "The question these fingerprints exist to answer: **which**",
+        "The question these surveys exist to answer: **which**",
         "capabilities move between firmware versions, as opposed to between",
         "models or between transports? Sungrow publishes no release notes, so",
         "the only way to know is to compare two readings that agree on model",
@@ -343,22 +343,22 @@ def render() -> str:
         "",
         "**Generated — do not edit.** `scripts/generate/generate_compatibility.py` "
         "builds",
-        "this from the fingerprints in",
-        "[device-fingerprints/](device-fingerprints/), and CI checks that it",
+        "this from the surveys in",
+        "[device-survey/](device-survey/), and CI checks that it",
         "matches.",
         "",
         "Which parts of the register map a device answers varies by model, phase",
         "count, wiring, transport and firmware. The specification says what",
         "*exists*, not what a particular machine does with it — so every row",
-        "below comes from a fingerprint taken off real hardware, and a model with",
-        "no fingerprint is listed as **untested** rather than assumed to work.",
+        "below comes from a survey taken off real hardware, and a model with",
+        "no survey is listed as **untested** rather than assumed to work.",
         "",
         "## Reported setups",
         "",
     ]
 
     if not reports:
-        lines += ["_No fingerprints yet._", ""]
+        lines += ["_No surveys yet._", ""]
     else:
         header = [
             "Setup",
@@ -433,15 +433,15 @@ def render() -> str:
             "200 answers or it does not — and, when it is, *which* model: the",
             "capacity it reports matches one entry in the datasheet table, and",
             "the filename carries that model. For a third-party pack the make",
-            "is whatever the person who sent the fingerprint wrote down.",
+            "is whatever the person who sent the survey wrote down.",
             "",
             "**By** is whoever provided it, and defaults to anonymous: a",
-            "fingerprint is worth having either way, and nobody should have to",
+            "survey is worth having either way, and nobody should have to",
             "attach their name to contribute one.",
             "",
             "Firmware is in the table because it decides more than the model",
             "does: which registers a device answers moves between versions, so",
-            "two fingerprints are only comparable if both say which firmware",
+            "two surveys are only comparable if both say which firmware",
             "they were taken on.",
             "",
             "**Connection** is marked _(reported)_ where the contributor told",
@@ -456,7 +456,7 @@ def render() -> str:
             "the cable in can say which was which, and that is what _(reported)_",
             "carries.",
             "**WiFi versus Ethernet on a WiNet-S is not determinable over",
-            "Modbus** — nothing in the protocol reports it — so the fingerprint",
+            "Modbus** — nothing in the protocol reports it — so the survey",
             "records what the contributor said and draws no conclusion.",
             "",
         ]
@@ -467,7 +467,7 @@ def render() -> str:
         "## Models this library knows, and whether anybody has tested one",
         "",
         "Every model in Appendix 1 of the protocol document. **Untested** means",
-        "nobody has sent a fingerprint — not that it does not work. What the",
+        "nobody has sent a survey — not that it does not work. What the",
         "library will do on an untested model is decided by its family, and the",
         "last column says what that rules out before anything is even read.",
         "",
@@ -502,8 +502,8 @@ def render() -> str:
         "1. **From the integration** — Settings → Devices & Services → Sungrow",
         "   Modbus → the three-dot menu → *Download diagnostics*.",
         "2. **Before installing anything** —",
-        "   [`device-fingerprints/scripts/python/sungrow_survey.py`]"
-        "(../device-fingerprints/scripts/python/sungrow_survey.py),",
+        "   [`device-survey/scripts/python/sungrow_survey.py`]"
+        "(../device-survey/scripts/python/sungrow_survey.py),",
         "   run from that folder, which needs nothing but Python.",
         "",
         "### Then send it, by whichever route you already have",
@@ -518,13 +518,13 @@ def render() -> str:
         "  out to matter — model, how many inverters, how it is connected,",
         "  battery, meter, wallbox — so nothing has to be asked afterwards.",
         "- **A pull request** adding your file to",
-        "  [device-fingerprints/](device-fingerprints/), if you are comfortable",
+        "  [device-survey/](device-survey/), if you are comfortable",
         "  with git. This is the format the capability model already reads, so",
         "  it is the shortest path from your hardware to working code.",
         "",
         "The capability model in",
         "[`capabilities.py`](../src/sungrow_modbus/inverter/capabilities.py)",
-        "is built from these, so a fingerprint from an untested model is the",
+        "is built from these, so a survey from an untested model is the",
         "single most useful thing anybody can contribute — including one that",
         "says everything works.",
         "",
@@ -547,11 +547,11 @@ def main() -> int:
                 file=sys.stderr,
             )
             return 1
-        print(f"{OUTPUT.relative_to(REPO)} matches the fingerprints")
+        print(f"{OUTPUT.relative_to(REPO)} matches the surveys")
         return 0
 
     OUTPUT.write_text(rendered, encoding="utf-8")
-    print(f"Wrote {OUTPUT.relative_to(REPO)}: {len(_reports())} fingerprint(s)")
+    print(f"Wrote {OUTPUT.relative_to(REPO)}: {len(_reports())} survey(s)")
     return 0
 
 

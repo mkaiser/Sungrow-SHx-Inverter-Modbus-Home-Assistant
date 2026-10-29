@@ -156,7 +156,7 @@ real_hardware:
   what_does_not_work:
     - >-
       Multicast, so mDNS discovery finds nothing from in here -- a Docker
-      bridge does not carry it. Run `device-fingerprints/scripts/python/probe.py mdns` on the
+      bridge does not carry it. Run `device-survey/scripts/python/probe.py mdns` on the
       host instead (it needs `pip install sungrow-modbus[discovery]`).
     - >-
       Inbound. Reaching the container's Home Assistant from another machine is
@@ -249,7 +249,7 @@ control_test:
     contributor runs it; this section is the same test on its own.
 
   if_it_dies_halfway: >-
-    make controltest-restore HOST=192.168.x.y FILE=device-fingerprints/<stamp>-snapshot.json
+    make controltest-restore HOST=192.168.x.y FILE=device-survey/<stamp>-snapshot.json
     The snapshot is flushed to disk before the first write and removed only
     once every register is back AND has been read back. So a snapshot left on
     disk is the list of what may still be changed, and this puts it back. It

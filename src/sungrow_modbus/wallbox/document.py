@@ -34,9 +34,9 @@ def serial_stand_in(dump: Mapping[str, Any]) -> str | None:
     if len(words) != SERIAL_COUNT:
         return None
     serial = _printable(words)
-    # Imported here: `fingerprint` reads the battery package, whose
+    # Imported here: `survey_document` reads the battery package, whose
     # addresses load every device's registers, this package's among them.
-    from ..fingerprint import stand_in
+    from ..survey_document import stand_in
 
     return stand_in(serial) if serial else None
 

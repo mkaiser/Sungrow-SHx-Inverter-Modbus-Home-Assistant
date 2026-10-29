@@ -21,7 +21,7 @@ from custom_components.sungrow_modbus.derived_descriptions import (
     DERIVED_SENSORS,
 )
 from custom_components.sungrow_modbus.sensor_descriptions import SENSOR_DESCRIPTIONS
-from sungrow_modbus import DEFAULT_INTERVALS
+from sungrow_modbus import DEFAULT_INTERVALS, Capability
 
 ENTITY_MAP = Path(__file__).resolve().parent.parent / "doc" / "legacy_entity_map.json"
 
@@ -127,11 +127,15 @@ def test_optional_hardware_is_gated_by_capability() -> None:
         assert key in gated, f"{key} would be created on hardware without it"
     for key in ("phase_b_voltage", "phase_c_voltage", "phase_b_power"):
         assert key in gated, f"{key} would be created on a single-phase inverter"
+    # A cluster slave answers 0 or 0xFFFF for its whole battery block; a pack
+    # fitted later grows the capability and the entry reloads with them.
+    for key in ("battery_level", "battery_power", "battery_charging_power"):
+        assert gated.get(key) == Capability.BATTERY, f"{key} on an inverter without one"
 
 
 def test_nothing_universal_is_gated() -> None:
     # The opposite mistake: gating something every inverter has would hide it.
-    always = {"total_dc_power", "mppt1_voltage", "phase_a_voltage", "battery_level"}
+    always = {"total_dc_power", "mppt1_voltage", "phase_a_voltage", "load_power"}
     for description in ALL:
         if description.key in always:
             assert description.requires is None, description.key

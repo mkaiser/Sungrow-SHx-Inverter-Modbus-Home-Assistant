@@ -1,4 +1,4 @@
-"""The one entry point: `device-fingerprints/scripts/python/sungrow_survey.py`.
+"""The one entry point: `device-survey/scripts/python/sungrow_survey.py`.
 
 Its failure modes are not the interesting kind. It asks eight questions, runs
 four phases and writes three files, so what goes wrong is that one answer is
@@ -22,10 +22,10 @@ import sys
 import pytest
 
 from sungrow_modbus import block_test
-from sungrow_modbus.fingerprint import SCHEMA, collected_nothing
+from sungrow_modbus.survey_document import SCHEMA, collected_nothing
 
 REPO = Path(__file__).resolve().parent.parent
-SCAN = REPO / "device-fingerprints" / "scripts" / "python"
+SCAN = REPO / "device-survey" / "scripts" / "python"
 sys.path.insert(0, str(SCAN))
 
 import blocks  # noqa: E402
@@ -197,7 +197,7 @@ DOCUMENT = {
 
 def _rendered(control_code: int | None = None) -> str:
     """Render the summary for one made-up device and return what it printed."""
-    written = [Path("device-fingerprints/sh80rt-v112-3p-someone-aa2678.json")]
+    written = [Path("device-survey/sh80rt-v112-3p-someone-aa2678.json")]
     result = sungrow_survey.Outcome(
         found=sungrow_survey.Found(
             HOST, 502, 1, probe.Identity(SERIAL, 0x0E0E, "SH8.0RT")
@@ -224,7 +224,7 @@ def test_the_summary_carries_the_control_address_but_no_real_serial() -> None:
     """The local control command may include the address, but not the serial.
 
     The control command is intentionally executable against the device just
-    surveyed. The fingerprint document and the survey transcript retain their
+    surveyed. The survey document and the survey transcript retain their
     separate privacy boundaries.
     """
     text = _rendered()
@@ -326,7 +326,7 @@ def _with_blocks(outcome: block_test.Outcome) -> str:
         ),
         unit=1,
         document=DOCUMENT,
-        written=[Path("device-fingerprints/sh80rt-v112-3p-someone-aa2678.json")],
+        written=[Path("device-survey/sh80rt-v112-3p-someone-aa2678.json")],
         transport=sungrow_survey.Transport(
             True, None, "direct to the inverter's LAN port", False
         ),
@@ -724,10 +724,10 @@ def test_a_6100_nobody_answered_decides_no_route() -> None:
     dongle, and the survey offered the owner of a cable to change a correct
     answer to match it.
     """
-    from sungrow_modbus.fingerprint import TRANSPORT_NOT_DETERMINED
+    from sungrow_modbus.survey_document import TRANSPORT_NOT_DETERMINED
 
     verdict = TRANSPORT_NOT_DETERMINED
-    from sungrow_modbus.fingerprint import claim_of
+    from sungrow_modbus.survey_document import claim_of
 
     assert claim_of(verdict) is None
     document = {
@@ -735,7 +735,7 @@ def test_a_6100_nobody_answered_decides_no_route() -> None:
         "connection": {"verdict": verdict},
         "user_inputs": {},
     }
-    from sungrow_modbus.fingerprint import label_for
+    from sungrow_modbus.survey_document import label_for
 
     assert not label_for(document).endswith(("winet", "logger"))
 
@@ -894,6 +894,7 @@ async def test_leave_given_runs_everything_the_question_named(surveyed) -> None:
     assert args.host == HOST
     assert args.restart is True
     assert args.enable_export_limit is True
+    assert args.cut_pv is True
     assert args.allow_dark is True
     assert args.yes is True
     assert args.dry_run is False

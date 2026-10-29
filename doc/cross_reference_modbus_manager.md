@@ -477,7 +477,7 @@ Landed with this document:
   and strings but not phases, so the specification does not settle it.
   Register 5002 governs a real device either way; what changed is the claim
   `compatibility.md` publishes about a model nobody has read. **One MG
-  fingerprint settles it** — added to the queue below.
+  survey settles it** — added to the queue below.
 - **Nine registers into `SPECIFICATION_ADDITIONS`**: forced startup under low
   SoC (holding 13017), self-consumption of today (13029), and the backup
   port's three currents, three voltages and frequency.

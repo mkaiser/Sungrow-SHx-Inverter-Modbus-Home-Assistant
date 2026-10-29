@@ -1,6 +1,6 @@
 # The entity names, for review
 
-**203 entities**, which is everything modern mode creates. The **entity id**
+**205 entities**, which is everything modern mode creates. The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
 it -- but only at creation. Rename later and anybody who already has the entity
 keeps the id they were born with; only the label changes. So the cost of a late
@@ -10,7 +10,7 @@ history, and where that matters a registry rename moves the early one across.
 The **legacy name** is what a migrating user calls the same reading today, and
 a **←** marks the ones that differ.
 
-A further 19 sensors exist **only in legacy mode** and are listed at the
+A further 20 sensors exist **only in legacy mode** and are listed at the
 end. Their names need no judgement: they are the YAML package's, kept so that
 history keyed to them carries on, and modern mode replaces each with something
 better.
@@ -134,10 +134,11 @@ better.
 | --- | --- | --- | --- |
 | Temperature | `sensor.sh10rt_temperature` | °C | Inverter temperature **←** |
 
-## The PV trackers (19)
+## The PV trackers (21)
 
 | Name | Entity id | Unit | Legacy name |
 | --- | --- | --- | --- |
+| Cut PV generation | `switch.sh10rt_cut_pv_generation` |  |  |
 | Daily PV generation | `sensor.sh10rt_daily_pv_generation` | kWh | Daily PV generation |
 | Daily exported energy from PV | `sensor.sh10rt_daily_exported_energy_from_pv` | kWh | Daily exported energy from PV |
 | MPPT1 current | `sensor.sh10rt_mppt1_current` | A | MPPT1 current |
@@ -154,6 +155,7 @@ better.
 | MPPT4 voltage | `sensor.sh10rt_mppt4_voltage` | V | MPPT4 voltage |
 | PV generating | `binary_sensor.sh10rt_pv_generating` |  | PV generating |
 | PV generating (delayed) | `binary_sensor.sh10rt_pv_generating_delayed` |  | PV generating (delay) **←** |
+| PV generation cut | `binary_sensor.sh10rt_pv_generation_cut` |  |  |
 | PV power limitation | `binary_sensor.sh10rt_pv_power_limitation` |  |  |
 | Total PV generation | `sensor.sh10rt_total_pv_generation` | kWh | Total PV generation |
 | Total exported energy from PV | `sensor.sh10rt_total_exported_energy_from_pv` | kWh | Total exported energy from PV |
@@ -279,7 +281,7 @@ better.
 | Meter phase C current | `sensor.sh10rt_meter_phase_c_current` | A | Meter phase C current |
 | Meter phase C voltage | `sensor.sh10rt_meter_phase_c_voltage` | V | Meter phase C voltage |
 
-## Legacy mode only (19)
+## Legacy mode only (20)
 
 Not created in modern mode. Each is a second copy of something a user
 already has, so the column on the right is where the reading went instead.
@@ -303,5 +305,6 @@ already has, so the column on the right is where the reading went instead.
 | Export power raw | `sensor.sh10rt_export_power_raw` | `sensor.export_power` |
 | Load adjustment mode enable raw | `sensor.sh10rt_load_adjustment_mode_enable_raw` | `switch.load_adjustment_mode_enable` |
 | Load adjustment mode selection raw | `sensor.sh10rt_load_adjustment_mode_selection_raw` | `select.load_adjustment_mode` |
+| PV generation cut raw | `sensor.sh10rt_pv_generation_cut_raw` | `binary_sensor.pv_generation_cut` |
 | PV power limitation raw | `sensor.sh10rt_pv_power_limitation_raw` | `binary_sensor.pv_power_limitation_enabled` |
 | Running state raw | `sensor.sh10rt_running_state_raw` | `sensor.sungrow_inverter_state` |

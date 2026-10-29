@@ -8,7 +8,7 @@ a whole tier of entities, and only a block read test says which register it
 is.
 
 The integration runs it from the device page and
-`device-fingerprints/scripts/python/blocks.py` from a terminal, both through
+`device-survey/scripts/python/blocks.py` from a terminal, both through
 this module. Two callers, one measurement:
 
 * **The outcome words are the tool's**, `OK` to `UNNARROWED`, because they are
@@ -254,7 +254,7 @@ async def attempt(
 
     With `reconnects`, a read that answered only after the client reconnected
     is a failure: the raw client reconnects and retries, which is right for
-    a fingerprint and would report "ok (3/3)" for a block the integration,
+    a survey and would report "ok (3/3)" for a block the integration,
     which has no mid-block retry, cannot read at all.
     """
     outcomes: list[tuple[str, str]] = []
@@ -583,14 +583,14 @@ def document(
     client: str | None = CLIENT,
     reconnects: int = 0,
 ) -> dict[str, Any]:
-    """Render a block read test as a fingerprint publishes it.
+    """Render a block read test as a survey publishes it.
 
     The one renderer: the integration and `sungrow_survey.py` both publish
     through it, the survey saying which of its clients measured and how often
     its raw socket reconnected. Register numbers as Sungrow's document prints
     them, one above the protocol address. Carries no host and no serial: block
     numbers and outcome words only, so it publishes the way the rest of a
-    fingerprint does.
+    survey does.
     """
 
     def where(block: Block) -> dict[str, Any]:

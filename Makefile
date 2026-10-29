@@ -120,19 +120,19 @@ version-check: ## Verify pyproject.toml and manifest.json agree
 ##@ Scan
 
 scan: ## Survey an installation and write a document; asks before the control test (HOST=a.b.c.d optional)
-	$(PY) device-fingerprints/scripts/python/sungrow_survey.py $(HOST) $(ARGS)
+	$(PY) device-survey/scripts/python/sungrow_survey.py $(HOST) $(ARGS)
 .PHONY: scan
 
 probe: ## Probe for devices, e.g. make probe ARGS="sweep 192.168.178.0/24"
-	$(PY) device-fingerprints/scripts/python/probe.py $(ARGS)
+	$(PY) device-survey/scripts/python/probe.py $(ARGS)
 .PHONY: probe
 
 blocks: ## The block read test -- which read inside a component fails, and why
-	$(PY) device-fingerprints/scripts/python/blocks.py $(ARGS)
+	$(PY) device-survey/scripts/python/blocks.py $(ARGS)
 .PHONY: blocks
 
 scan-sim: ## Run the whole survey against the simulator -- needs `make sim-bg`
-	$(PY) device-fingerprints/scripts/python/sungrow_survey.py 127.0.0.1 --port 5020 --simulated $(ARGS)
+	$(PY) device-survey/scripts/python/sungrow_survey.py 127.0.0.1 --port 5020 --simulated $(ARGS)
 .PHONY: scan-sim
 
 # The launcher a contributor runs, on a library that is not released yet.
@@ -140,33 +140,33 @@ scan-sim: ## Run the whole survey against the simulator -- needs `make sim-bg`
 # SUNGROW_MODBUS_LIBRARY lays this tree's library -- or a wheel of it -- over
 # the pinned one. `scan` above skips both the launcher and the header.
 scan-local: ## The launcher, as a contributor runs it, on this tree's library (HOST=a.b.c.d)
-	SUNGROW_MODBUS_LIBRARY=$(CURDIR) device-fingerprints/scripts/survey.sh $(HOST) $(ARGS)
+	SUNGROW_MODBUS_LIBRARY=$(CURDIR) device-survey/scripts/survey.sh $(HOST) $(ARGS)
 .PHONY: scan-local
 
 scan-wheel: wheel ## The same on a freshly built wheel -- what a release would publish
-	SUNGROW_MODBUS_LIBRARY=$(LIBRARY_WHEEL) device-fingerprints/scripts/survey.sh $(HOST) $(ARGS)
+	SUNGROW_MODBUS_LIBRARY=$(LIBRARY_WHEEL) device-survey/scripts/survey.sh $(HOST) $(ARGS)
 .PHONY: scan-wheel
 
 ##@ Control test (writes to the inverter)
 
 controltest-dry: ## Show what the control test would write, and write nothing (HOST=a.b.c.d)
-	$(PY) device-fingerprints/scripts/python/sungrow_control_test.py $(HOST) --dry-run $(ARGS)
+	$(PY) device-survey/scripts/python/sungrow_control_test.py $(HOST) --dry-run $(ARGS)
 .PHONY: controltest-dry
 
 controltest: ## Write each control, read it back, and put it back (HOST=a.b.c.d)
-	$(PY) device-fingerprints/scripts/python/sungrow_control_test.py $(HOST) $(ARGS)
+	$(PY) device-survey/scripts/python/sungrow_control_test.py $(HOST) $(ARGS)
 .PHONY: controltest
 
 controltest-sim: ## Run it against the simulator -- needs `make sim-bg`
-	$(PY) device-fingerprints/scripts/python/sungrow_control_test.py 127.0.0.1 --port 5020 --simulated --no-restart
+	$(PY) device-survey/scripts/python/sungrow_control_test.py 127.0.0.1 --port 5020 --simulated --no-restart
 .PHONY: controltest-sim
 
 controltest-local: ## The launcher on this tree's library; add ARGS=--dry-run first (HOST=a.b.c.d)
-	SUNGROW_MODBUS_LIBRARY=$(CURDIR) device-fingerprints/scripts/survey.sh control $(HOST) $(ARGS)
+	SUNGROW_MODBUS_LIBRARY=$(CURDIR) device-survey/scripts/survey.sh control $(HOST) $(ARGS)
 .PHONY: controltest-local
 
-controltest-restore: ## Put a saved snapshot back (HOST=a.b.c.d FILE=device-fingerprints/<stamp>-snapshot.json)
-	$(PY) device-fingerprints/scripts/python/sungrow_control_test.py $(HOST) --restore $(FILE)
+controltest-restore: ## Put a saved snapshot back (HOST=a.b.c.d FILE=device-survey/<stamp>-snapshot.json)
+	$(PY) device-survey/scripts/python/sungrow_control_test.py $(HOST) --restore $(FILE)
 .PHONY: controltest-restore
 
 ##@ Release

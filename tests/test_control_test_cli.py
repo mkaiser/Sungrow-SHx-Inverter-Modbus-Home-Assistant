@@ -1,8 +1,8 @@
-"""Folding a write result into a published fingerprint, from the terminal.
+"""Folding a write result into a published survey, from the terminal.
 
-`device-fingerprints/scripts/python/sungrow_control_test.py --merge-into` edits
+`device-survey/scripts/python/sungrow_control_test.py --merge-into` edits
 a document in
-`device-fingerprints/`, which is public. So the merge is held to two
+`device-survey/`, which is public. So the merge is held to two
 things: it never publishes what identifies a house, and the document's schema
 number keeps saying what the document can carry.
 """
@@ -17,13 +17,13 @@ from pathlib import Path
 from modbus_connection.mock import MockModbusUnit
 import pytest
 
-from sungrow_modbus.fingerprint import SCHEMA
 from sungrow_modbus.inverter import export_scale
 from sungrow_modbus.inverter.export_scale import Result
+from sungrow_modbus.survey_document import SCHEMA
 
 SCRIPT = (
     Path(__file__).resolve().parents[1]
-    / "device-fingerprints"
+    / "device-survey"
     / "scripts"
     / "python"
     / "sungrow_control_test.py"
@@ -53,7 +53,7 @@ def _block() -> dict:
 
 
 def _document(tmp_path: Path, schema: int) -> Path:
-    path = tmp_path / "fingerprint.json"
+    path = tmp_path / "survey_document.json"
     path.write_text(json.dumps({"schema": schema, "device": {}}))
     return path
 
@@ -189,6 +189,7 @@ def _args(**overrides) -> argparse.Namespace:
         "dry_run": False,
         "allow_dark": False,
         "enable_export_limit": False,
+        "cut_pv": False,
         "restart": False,
         "start_only": False,
         "restart_only": False,
@@ -300,7 +301,7 @@ def test_a_relative_document_is_the_callers_and_a_missing_one_stops_the_run(
     """The launchers change into their own folder, so a relative path was theirs.
 
     Measured on fwitten's slave: a whole run, restart included, then
-    `--merge-into device-fingerprints/...` failed to open and was reported as
+    `--merge-into device-survey/...` failed to open and was reported as
     "nothing ran -- could not connect". Now resolved against the caller's
     directory, and a file that is not there ends the run before it connects.
     """

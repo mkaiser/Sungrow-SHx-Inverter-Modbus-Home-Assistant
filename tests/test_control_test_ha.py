@@ -169,7 +169,7 @@ async def test_the_diagnostics_download_never_runs_part_b(
     report = await async_get_config_entry_diagnostics(hass, entry)
 
     assert ready_unit.holding == before
-    assert "control_test" not in report["fingerprint"]
+    assert "control_test" not in report["survey"]
 
 
 async def test_the_action_refuses_a_second_run(
@@ -199,7 +199,7 @@ async def test_one_bar_covers_both_parts_and_never_goes_backwards(
 
     That is what makes a single honest bar possible. A bar that reset between
     the parts, or a total that grew halfway through, would be worse than no bar
-    -- the lesson `fingerprint.async_build` already carries in a comment.
+    -- the lesson `survey_document.async_build` already carries in a comment.
     """
     entry = await _setup(hass, ready_unit)
     seen: list[float] = []

@@ -38,6 +38,7 @@ from naming import DIAGNOSTIC, modern_name
 from writes import NUMBERS, SELECTS, SWITCHES
 
 from sungrow_modbus.inverter.faults import FAULT_WORDS
+from sungrow_modbus.inverter.registers import COMPONENTS
 
 REPO = Path(__file__).resolve().parents[2]
 ENTITY_MAP = REPO / "doc" / "legacy_entity_map.json"
@@ -85,6 +86,18 @@ def _by_unique_id(domain: str) -> dict[str, dict]:
 def _component(register: dict) -> str:
     """Return the component a register row is read by."""
     return f"{TIER_NAMES[register['scan_interval']]}_{register['input_type']}"
+
+
+def _component_declaring(field: str) -> str:
+    """Return the component that declares a field, from the register map itself.
+
+    For a register the YAML never read, which has no scan interval to derive a
+    component name from: it sits in a component of its own, named for it.
+    """
+    for attribute, component in COMPONENTS.items():
+        if field in component.declared_fields:
+            return attribute
+    raise KeyError(field)
 
 
 def _formatted(text: str, filename: str) -> str:
@@ -210,6 +223,9 @@ MODE_FLAGS: dict[str, tuple[str, str]] = {
         "pv_power_limitation_enabled",
         "pv_power_limitation_raw",
     ),
+    # Outside the specification, but both codes were observed by their effect
+    # (#738), which is the bar the comment above sets.
+    "pv_generation_cut": ("pv_generation_cut", "pv_generation_cut_raw"),
 }
 
 #: Whether the inverter reports a problem, from Appendix 4's words.
@@ -286,6 +302,10 @@ CAPABILITY_BY_PREFIX: tuple[tuple[str, str], ...] = (
     ("mppt4_", "MPPT4"),
     ("phase_b_", "THREE_PHASE"),
     ("phase_c_", "THREE_PHASE"),
+    ("pv_generation_cut", "PV_GENERATION_CUT"),
+    # Battery power, charge and the charging/discharging flags: an inverter
+    # without a pack answers zeros or sentinels for every one of them.
+    ("battery_", "BATTERY"),
 )
 
 
@@ -410,6 +430,8 @@ def render_derived() -> str:
                 lines.append(f'        legacy_unique_id="{entry["unique_id"]}",')
                 lines.append('        legacy_platform="template",')
             lines.append('        depends_on=("power_flow_status",),')
+            if capability := _requires(field):
+                lines.append(f"        requires=Capability.{capability},")
             if delay is not None:
                 lines.append(f"        delay_on={delay},")
             lines.append("    ),")
@@ -425,6 +447,8 @@ def render_derived() -> str:
         lines.append(f'        field="{field}",')
         lines.append(f'        translation_key="{key}",')
         lines.append(f"        depends_on={(register,)!r},")
+        if capability := _requires(field):
+            lines.append(f"        requires=Capability.{capability},")
         lines.append("        entity_category=EntityCategory.DIAGNOSTIC,")
         lines.append("    ),")
 
@@ -529,13 +553,15 @@ Do not edit by hand: `scripts/generate/descriptions.py switches` writes this
 file from `scripts/generate/tables/writes.py`, and CI checks that it matches.
 
 Each is one holding register carrying 0xAA or 0x55. The specification states
-both values for all three, so there is nothing to infer -- the `on` and `off`
-codes travel with the description rather than being assumed.
+both values for the first three, and the owner of an SH10RT observed both by
+their effect for the fourth -- the `on` and `off` codes travel with the
+description rather than being assumed.
 """
 
 from __future__ import annotations
 
 from homeassistant.const import EntityCategory
+from sungrow_modbus import Capability
 
 from .entity import SungrowSwitchDescription
 
@@ -550,18 +576,25 @@ def render_switches() -> str:
     lines = [SWITCHES_HEADER]
 
     for row in SWITCHES:
-        register = registers[row["field"]]
-        entry = legacy[row["legacy_unique_id"]]
-        key = row["field"].removesuffix("_raw")
+        key = row.get("key") or row["field"].removesuffix("_raw")
+        if row["field"] in registers:
+            component = _component(registers[row["field"]])
+        else:
+            component = _component_declaring(row["field"])
 
         lines.append("    SungrowSwitchDescription(")
         lines.append(f'        key="{key}",')
-        lines.append(f'        component="{_component(register)}",')
+        lines.append(f'        component="{component}",')
         lines.append(f'        field="{row["field"]}",')
         lines.append(f'        translation_key="{key}",')
-        lines.append(f'        legacy_name="{entry["name"]}",')
-        lines.append(f'        legacy_unique_id="{row["legacy_unique_id"]}",')
-        lines.append('        legacy_platform="modbus",')
+        # A switch the YAML never had claims no id: there is no history to
+        # continue, and inventing a legacy name would adopt somebody else's.
+        if unique_id := row.get("legacy_unique_id"):
+            lines.append(f'        legacy_name="{legacy[unique_id]["name"]}",')
+            lines.append(f'        legacy_unique_id="{unique_id}",')
+            lines.append('        legacy_platform="modbus",')
+        if capability := row.get("requires"):
+            lines.append(f"        requires=Capability.{capability},")
         lines.append(f"        on_value={row['on']:#04x},")
         lines.append(f"        off_value={row['off']:#04x},")
         lines.append("        entity_category=EntityCategory.CONFIG,")
@@ -586,6 +619,8 @@ in `strings.json`, so a label cannot drift from the value behind it.
 from __future__ import annotations
 
 from homeassistant.const import EntityCategory
+
+from sungrow_modbus import Capability
 
 from .entity import SungrowSelectDescription
 
@@ -614,6 +649,8 @@ def render_selects() -> str:
         lines.append(f'        legacy_name="{entry["name"]}",')
         lines.append(f'        legacy_unique_id="{row["legacy_unique_id"]}",')
         lines.append('        legacy_platform="template",')
+        if capability := row.get("requires"):
+            lines.append(f"        requires=Capability.{capability},")
         lines.append(f"        options={slugs!r},")
         lines.append(f"        values={values!r},")
         lines.append("        entity_category=EntityCategory.CONFIG,")
@@ -659,7 +696,7 @@ def descriptions() -> list[tuple[str, str, str]]:
     added = {
         entity["entity_id"].split(".", 1)[1]: entity["name"]
         for entity in _entities()
-        if entity["layer"] == "specification"
+        if entity["layer"] in {"specification", "observed"}
     }
 
     # The battery's entities go through the same convention as everything

@@ -1,7 +1,7 @@
 """The block read test from the device page, held to the terminal tool's.
 
 `sungrow_modbus.block_test` is the second producer of a measurement that
-`device-fingerprints/scripts/python/blocks.py` and `sungrow_survey.py` already
+`device-survey/scripts/python/blocks.py` and `sungrow_survey.py` already
 make, and its answers end up in the same place: a published document, read by
 a maintainer deciding what goes in `src/sungrow_modbus/inverter/layout.py`. So most of
 what is asserted here is *agreement* -- the same blocks, the same outcome
@@ -43,7 +43,7 @@ from sungrow_modbus.block_test import (
 )
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "device-fingerprints" / "scripts" / "python"))
+sys.path.insert(0, str(REPO / "device-survey" / "scripts" / "python"))
 
 import blocks as terminal  # noqa: E402
 import sungrow_survey  # noqa: E402

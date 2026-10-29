@@ -30,7 +30,7 @@ from aiohttp import web
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.components.http.auth import async_sign_path
 from homeassistant.core import HomeAssistant, callback
-from sungrow_modbus.fingerprint import label_for
+from sungrow_modbus.survey_document import label_for
 
 if TYPE_CHECKING:
     from .coordinator import SungrowConfigEntry
@@ -88,17 +88,17 @@ class SurveyDownloadView(HomeAssistantView):
 
 
 def _filename(document: dict) -> str:
-    """Name the file the way this repository names a fingerprint.
+    """Name the file the way this repository names a survey.
 
     Not a naming scheme of its own, and that is the point: a document from this
-    button and one from `device-fingerprints/scripts/python/sungrow_survey.py`
+    button and one from `device-survey/scripts/python/sungrow_survey.py`
     describe the same thing in the same format, so they should arrive under the
     same name. A maintainer receiving twenty of these sorts them together, and
-    `device-fingerprints/` can take one without renaming it.
+    `device-survey/` can take one without renaming it.
 
     `label_for` lives in the library so both producers derive it identically,
     and `tests/test_document_filenames.py` checks it against every
-    fingerprint this repository has committed.
+    survey this repository has committed.
 
     The standalone survey appends the address tail when a name is already
     taken by a different reading; nothing here does, because a download is

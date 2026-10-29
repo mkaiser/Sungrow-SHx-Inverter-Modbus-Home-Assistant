@@ -39,6 +39,26 @@ from modbus_connection.model import (
 
 from ..addresses import reg
 
+#: Unavailable sentinels the YAML package does not declare, by field name.
+#:
+#: `tests/test_registers.py` holds every field's `nan` to the YAML's, so a
+#: sentinel added here is a declared difference rather than a silent one.
+#: Each is a value no real reading can take.
+#:
+#: `battery_level`: a cluster slave without a battery, on SAPPHIRE-H
+#: B001.V000.P023, answers 0xFFFF at 13023 beside battery voltage 0 (fwitten's,
+#: 2026-10-29). Without the sentinel that decodes to 6553.5 %, which counts as
+#: a value, so the probe granted BATTERY and the slave got a battery block.
+#: A pack reads at most 1000 (100.0 %).
+#:
+#: `battery_capacity_high_precision`: the same slave answers 0xFFFF at 5639,
+#: which decoded to 655.35 kWh and fed `battery_charge`. The largest pack in
+#: the surveys reads 4055 (40.55 kWh).
+NAN_BEYOND_YAML: dict[str, int] = {
+    "battery_level": 65535,
+    "battery_capacity_high_precision": 65535,
+}
+
 
 class AsymmetricNumberField(NumberField[int]):
     """A register that reads in one unit and writes in another.
@@ -479,6 +499,26 @@ class InverterAplShutdownAtZero(Component):
     """APL shutdown at zero raw."""
 
 
+class InverterPvGenerationCut(Component):
+    """1 holding field, polled every 60s.
+
+    Register 31211, which stops PV generation: `0xAA` cut, `0x55` allowed.
+    **Not in Sungrow's protocol document.** theunknown86 found it in #554 by
+    watching what iSolarCloud writes, and the owner of an SH10RT confirmed
+    both values by their effect (#738). Whether it exists depends on the
+    firmware, not the model: every committed survey on
+    `SAPPHIRE-H_B001.V000.P020` or `01011.95.03` reads 0xFFFF, every one on
+    P022, P023 and `PEARL-H_B000.V000.P071` reads 0x55. Its own component
+    because nothing else is near it, and so that an inverter without it costs
+    one refused read rather than a pooled block.
+    """
+
+    register_space = "holding"
+
+    pv_generation_cut_raw = integer(reg(31211), signed=False, nan=65535, writable=True)
+    """PV generation cut raw."""
+
+
 class InverterMediumInput(Component):
     """3 input fields, polled every 60s."""
 
@@ -486,7 +526,9 @@ class InverterMediumInput(Component):
 
     inverter_temperature = gauge(reg(5008), 0.1, signed=True, unit="°C")
     """Inverter temperature."""
-    battery_level = gauge(reg(13023), 0.1, signed=False, unit="%")
+    battery_level = gauge(
+        reg(13023), 0.1, signed=False, nan=NAN_BEYOND_YAML["battery_level"], unit="%"
+    )
     """Battery level."""
     battery_temperature = gauge(reg(13025), 0.1, signed=True, unit="°C")
     """Battery temperature."""
@@ -503,7 +545,7 @@ class InverterSlowestInput(Component):
     """Sungrow Version 2.
 
     YAML package: refused on SHxRS and through some WiNet-S (#654, #674, #678).
-    Reported, not measured: every fingerprint so far reads it.
+    Reported, not measured: every survey so far reads it.
     """
     sungrow_protocol_version = uint32(reg(4952), word_order="little")
     """Sungrow Protocol Version."""
@@ -535,7 +577,13 @@ class InverterSlowestInput(Component):
     """BMS max. charging current."""
     bms_max_discharging_current = integer(reg(5636), signed=False, unit="A")
     """BMS max. discharging current."""
-    battery_capacity_high_precision = gauge(reg(5639), 0.01, signed=False, unit="kWh")
+    battery_capacity_high_precision = gauge(
+        reg(5639),
+        0.01,
+        signed=False,
+        nan=NAN_BEYOND_YAML["battery_capacity_high_precision"],
+        unit="kWh",
+    )
     """Battery capacity high precision."""
     daily_pv_generation = gauge(reg(13002), 0.1, signed=False, unit="kWh")
     """Daily PV generation."""
@@ -694,6 +742,7 @@ COMPONENTS: dict[str, type[Component]] = {
     "fast_holding": InverterFastHolding,
     "apl_shutdown_at_zero": InverterAplShutdownAtZero,
     "medium_input": InverterMediumInput,
+    "pv_generation_cut": InverterPvGenerationCut,
     "slowest_input": InverterSlowestInput,
     "battery_firmware": InverterBatteryFirmware,
     "firmware_block_battery": InverterFirmwareBlockBattery,
@@ -713,7 +762,7 @@ TIER_COMPONENTS: dict[str, tuple[str, ...]] = {
         "fast_holding",
         "apl_shutdown_at_zero",
     ),
-    "medium": ("medium_input",),
+    "medium": ("medium_input", "pv_generation_cut"),
     "slowest": (
         "slowest_input",
         "battery_firmware",

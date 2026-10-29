@@ -82,7 +82,7 @@
 # what matters is not only that the version exists on PyPI but that its wheel
 # **provides every module the integration imports**. Between 0.1.0a1 and
 # 0.1.0a2 it did not: the integration began importing
-# `sungrow_modbus.fingerprint` while the pinned wheel had no such module, and
+# `sungrow_modbus.survey_document` while the pinned wheel had no such module, and
 # a checkout cannot see that because there the library is installed editable
 # from `src/`. Installable is not the same as sufficient, which is why this
 # runs upstream's own `scripts/release/check_pinned_library.py` — taken from the same

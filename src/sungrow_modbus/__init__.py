@@ -25,27 +25,6 @@ from .discovery import (
     hosts_in,
     network_of,
 )
-from .fingerprint import (
-    assemble_document,
-    attach_control_test,
-    battery_pack_section,
-    battery_pack_unit,
-    battery_readings,
-    capability_registers,
-    connection_block,
-    device_block,
-    firmware_section,
-    label_for,
-    local_time,
-    measured_connection,
-    publish_document,
-    readings_section,
-    wallbox_document,
-    wallbox_from_dump,
-    wallbox_label_for,
-    wallbox_section,
-    wallbox_unit,
-)
 from .inverter.capabilities import Capability, Family, family_for, known_absent, resolve
 from .inverter.components import InverterControl, InverterIdentity, InverterReadings
 from .inverter.derived import RUNNING_STATES, Derived
@@ -70,6 +49,27 @@ from .survey import (
     next_steps,
     summarise,
     word_reader,
+)
+from .survey_document import (
+    assemble_document,
+    attach_control_test,
+    battery_pack_section,
+    battery_pack_unit,
+    battery_readings,
+    capability_registers,
+    connection_block,
+    device_block,
+    firmware_section,
+    label_for,
+    local_time,
+    measured_connection,
+    publish_document,
+    readings_section,
+    wallbox_document,
+    wallbox_from_dump,
+    wallbox_label_for,
+    wallbox_section,
+    wallbox_unit,
 )
 
 __all__ = [

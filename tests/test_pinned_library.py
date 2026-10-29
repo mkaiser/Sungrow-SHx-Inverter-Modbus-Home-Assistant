@@ -64,7 +64,7 @@ def test_every_library_import_in_the_integration_is_collected():
     wanted = check.required()
     # Not an exhaustive list -- the point is that both import shapes land.
     assert "sungrow_modbus" in wanted
-    assert "sungrow_modbus.fingerprint" in wanted
+    assert "sungrow_modbus.survey_document" in wanted
     assert "COMPONENTS" in wanted["sungrow_modbus"]
 
 
@@ -109,7 +109,7 @@ def test_a_wheel_that_has_everything_passes(tmp_path, capsys):
 
 
 def test_a_submodule_import_is_not_a_missing_symbol(tmp_path, capsys):
-    """`from sungrow_modbus import fingerprint` resolves without `__init__` help.
+    """`from sungrow_modbus import survey_document` resolves without `__init__` help.
 
     The first version of the script called this a missing symbol and failed on
     a correct tree, which is the one way a guard like this does harm: it gets
@@ -117,12 +117,12 @@ def test_a_submodule_import_is_not_a_missing_symbol(tmp_path, capsys):
     """
     wheel = _wheel(
         tmp_path,
-        {"sungrow_modbus": "\n", "sungrow_modbus.fingerprint": "SCHEMA = 17\n"},
+        {"sungrow_modbus": "\n", "sungrow_modbus.survey_document": "SCHEMA = 17\n"},
     )
     gaps = check.provided(wheel)[0]
-    assert "sungrow_modbus.fingerprint" in gaps
+    assert "sungrow_modbus.survey_document" in gaps
     assert check.report(wheel, "test") == check.BROKEN  # other modules are absent
-    assert "does not provide fingerprint" not in capsys.readouterr().out
+    assert "does not provide survey_document" not in capsys.readouterr().out
 
 
 def test_a_wheel_that_is_not_there_is_undetermined_not_broken(tmp_path):

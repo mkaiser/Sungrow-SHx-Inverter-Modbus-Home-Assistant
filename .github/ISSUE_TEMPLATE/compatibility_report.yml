@@ -11,7 +11,7 @@ body:
         Which parts of the register map a device answers varies by model, phase
         count, wiring, transport and firmware, and Sungrow's specification says
         what *exists*, not what your machine does with it. So the capability
-        model is built from fingerprints off real hardware, and a report from a
+        model is built from surveys off real hardware, and a report from a
         model nobody has tested is worth more than any amount of reasoning.
 
         **No GitHub account?** [Discord](https://discord.gg/ZvYBejFkm2) works
@@ -34,7 +34,7 @@ body:
         Download diagnostics**, then drag the file into this box.
 
         Not installed it yet? Run `./survey.sh` (or double-click `survey.cmd`
-        on Windows) from the `device-fingerprints/scripts` folder. It fetches
+        on Windows) from the `device-survey/scripts` folder. It fetches
         what it needs through uv, asking first, then finds the device, asks a
         few things no register can answer, tests the block reads and tells you
         which file to send. It writes to the inverter only if you say yes to

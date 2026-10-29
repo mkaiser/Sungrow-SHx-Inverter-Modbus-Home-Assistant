@@ -9,7 +9,7 @@ sailed through locally and failed on push.
 
 The obvious fix is to have CI call `make ci` and keep one list. That is
 rejected on purpose: each CI step carries a name that says what broke ("The
-compatibility page matches the fingerprints"), and collapsing thirteen of them into one
+compatibility page matches the surveys"), and collapsing thirteen of them into one
 opaque `make ci` trades a readable failure for a log to go and read. So the
 two lists stay, and this asserts they agree.
 
@@ -95,8 +95,7 @@ def test_every_script_the_makefile_runs_exists() -> None:
     missing = sorted(
         path
         for path in referenced
-        if not (REPO / path).exists()
-        and not (REPO / "device-fingerprints" / path).exists()
+        if not (REPO / path).exists() and not (REPO / "device-survey" / path).exists()
     )
     assert not missing
 

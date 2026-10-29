@@ -145,6 +145,13 @@ CONF_CONTROL_TEST_RESTART = "control_test_restart"
 #: nothing.
 CONF_CONTROL_TEST_EXPORT = "control_test_export_limit"
 
+#: Let the control test cut PV generation for about a minute (register 31211).
+#:
+#: Off by default: it is the one check that takes generation away on purpose.
+#: It is also the only evidence that writing 31211 does what it should, which
+#: is what the `Cut PV generation` switch waits for on each firmware.
+CONF_CONTROL_TEST_PV_CUT = "control_test_pv_cut"
+
 #: Which slot of a multi-inverter YAML install this entry's device was.
 #:
 #: `""` for a single-inverter package, `"_inv_2"` for the second inverter of a

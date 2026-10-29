@@ -21,7 +21,7 @@ what probing establishes.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from enum import StrEnum
 
 from ..const import model_for
@@ -138,6 +138,24 @@ class Capability(StrEnum):
 
     "Only SHT are supported", so every other family answers 0xFFFF — which is
     what the reference SH10RT does.
+    """
+
+    PV_GENERATION_CUT = "pv_generation_cut"
+    """Register 31211 answers: PV generation can be cut, and its state read.
+
+    Undocumented by Sungrow (#554, #738), and present by firmware rather than
+    by model -- see `InverterPvGenerationCut`. Granted only by one of its two
+    codes, 0xAA or 0x55 (`MODE_CODES_ONLY`), never by 0xFFFF or a dongle's 0.
+    This is the *read*; writing it is `PV_GENERATION_CUT_CONTROL`.
+    """
+
+    PV_GENERATION_CUT_CONTROL = "pv_generation_cut_control"
+    """Register 31211 may be written, because a write was confirmed here.
+
+    Never probed: that a register answers says nothing about what writing it
+    does, and this one is outside the specification. Granted by `resolve`
+    only where the read capability answered **and** the firmware is in
+    `CONFIRMED_ON_FIRMWARE`.
     """
 
 
@@ -275,7 +293,7 @@ ABSENT_IN: dict[Capability, frozenset[Family]] = {
     # a real MG gets the right answer from the device. What changes is the
     # claim `doc/compatibility.md` publishes for a model nobody has read, and
     # asserting single-phase there on no evidence was the weaker of the two
-    # options. One MG fingerprint settles it.
+    # options. One MG survey settles it.
     #
     # SH*RL stays, and is why RL is a separate family from MG.
     Capability.THREE_PHASE: frozenset({Family.RS, Family.RL, Family.K}),
@@ -286,11 +304,11 @@ ABSENT_IN: dict[Capability, frozenset[Family]] = {
 #: firmware update changes, as opposed to the hardware strings beside it.
 #:
 #: The firmware twin of `ABSENT_IN`, with a stricter rule for getting in:
-#: **a committed fingerprint, not a bug report.** Issue reports name firmware
+#: **a committed survey, not a bug report.** Issue reports name firmware
 #: that is wrong as often as right -- #756 blames 95.14 for refusing the meter
 #: phase registers, and bar12 reads them on 95.14 -- and a gate keyed on a
 #: version string hides entities from everyone on that version. So an entry
-#: names the fingerprints it rests on, and a version is matched **exactly**:
+#: names the surveys it rests on, and a version is matched **exactly**:
 #: the neighbouring versions are unmeasured, not implied.
 #:
 #: Unlike the family table this also stops the **read**, through
@@ -337,7 +355,7 @@ OUTPUT_TYPES: dict[int, str] = {0: "single phase", 1: "3P4L", 2: "3P3L"}
 #: `Phase A voltage` for everybody. On a 3P3L inverter that name, and the
 #: derived `phase_a_power` computed from it, are wrong -- they are line
 #: quantities. Nobody has 3P3L hardware to test against, so it is recorded
-#: here rather than guessed at; a fingerprint from such a system is what would
+#: here rather than guessed at; a survey from such a system is what would
 #: unblock it.
 LINE_VOLTAGE_OUTPUT_TYPE = 2
 
@@ -369,7 +387,8 @@ def family_for(device_type_code: int | None) -> Family | None:
 
 
 def known_absent(
-    device_type_code: int | None, firmware: str | None = None
+    device_type_code: int | None,
+    firmware: str | Iterable[str | None] | None = None,
 ) -> frozenset[Capability]:
     """Return the capabilities this model, on this firmware, is known not to have.
 
@@ -386,14 +405,71 @@ def known_absent(
     )
 
 
-def absent_on_firmware(firmware: str | None) -> frozenset[Capability]:
+#: Firmware on which a write is **confirmed by its effect**, per capability.
+#:
+#: The positive twin of `ABSENT_ON_FIRMWARE`, and it has to be a separate
+#: table. Absence is something the device says by answering 0xFFFF; permission
+#: to write a register Sungrow never documented is not something any read can
+#: establish. So a capability here is granted from evidence about the write --
+#: the control test's behavioural check, on that exact firmware -- and not from
+#: the register merely answering.
+#:
+#: The same rules as the absence table: a version is matched **exactly**,
+#: against either firmware string (`firmware_strings`), and every entry names
+#: the survey whose `control_test` block carries the passing check. An
+#: empty set means the entity waits; the read-only state still ships.
+CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
+    # fwitten's SH10RT-V112 master over its own LAN port, 2026-10-29: DC power
+    # 1213 W before, 0 W during, 1199 W after. A trace showed the ramp: 0 W
+    # 20 s after 0xAA, back 8 s after 0x55.
+    #   sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan.json  # noqa: E501
+    Capability.PV_GENERATION_CUT_CONTROL: frozenset({"SAPPHIRE-H_B001.V000.P023"}),
+}
+
+#: The read a confirmed write also needs, so a firmware entry can never grant
+#: control over a register this particular device does not answer.
+CONTROL_REQUIRES: dict[Capability, Capability] = {
+    Capability.PV_GENERATION_CUT_CONTROL: Capability.PV_GENERATION_CUT,
+}
+
+
+def firmware_strings(firmware: str | Iterable[str | None] | None) -> tuple[str, ...]:
+    """Return the firmware strings worth matching, trimmed and non-empty.
+
+    A device reports two that move independently: 2582
+    (`SAPPHIRE-H_01011.95.14`) and 13250 (`SAPPHIRE-H_B001.V000.P023`). Their
+    formats never coincide, so a table keyed by exact strings can mix both.
+    """
+    if firmware is None:
+        return ()
+    values = (firmware,) if isinstance(firmware, str) else tuple(firmware)
+    return tuple(v.strip() for v in values if v and v.strip())
+
+
+def absent_on_firmware(
+    firmware: str | Iterable[str | None] | None,
+) -> frozenset[Capability]:
     """Return what this firmware was measured not to have; see `ABSENT_ON_FIRMWARE`.
 
     Matched exactly after trimming, because the next version up is unmeasured.
+    Either firmware string may match.
     """
-    if not firmware:
-        return frozenset()
-    return ABSENT_ON_FIRMWARE.get(firmware.strip(), frozenset())
+    found: set[Capability] = set()
+    for value in firmware_strings(firmware):
+        found |= ABSENT_ON_FIRMWARE.get(value, frozenset())
+    return frozenset(found)
+
+
+def confirmed_on_firmware(
+    firmware: str | Iterable[str | None] | None,
+) -> frozenset[Capability]:
+    """Return the writes confirmed on this firmware; see `CONFIRMED_ON_FIRMWARE`."""
+    values = set(firmware_strings(firmware))
+    return frozenset(
+        capability
+        for capability, versions in CONFIRMED_ON_FIRMWARE.items()
+        if values & versions
+    )
 
 
 #: A capability to a register that is present only when it is. The
@@ -417,7 +493,19 @@ PROBES: dict[Capability, tuple[str, ...]] = {
     Capability.FEED_IN_LIMITATION_RATIO: ("feed_in_limitation_ratio",),
     Capability.PV_POWER_LIMITATION: ("pv_power_limitation_raw",),
     Capability.FORCED_STARTUP: ("forced_startup_under_low_soc_raw",),
+    Capability.PV_GENERATION_CUT: ("pv_generation_cut_raw",),
 }
+
+#: Capabilities granted only by a Sungrow mode code, 0xAA or 0x55.
+#:
+#: Stricter than `ZERO_MEANS_ABSENT`, for a register outside the
+#: specification: the specification's sentinel is not promised there, and a
+#: dongle answers 0 where the inverter answers 0xFFFF. A mode register that
+#: holds neither code is not one this integration knows how to drive.
+MODE_CODES_ONLY: frozenset[Capability] = frozenset({Capability.PV_GENERATION_CUT})
+
+#: The two codes every Sungrow mode register uses.
+MODE_CODES: frozenset[int] = frozenset({0xAA, 0x55})
 
 
 #: Capabilities that an all-zero answer must **not** grant.
@@ -495,6 +583,8 @@ def probe(read: Callable[[str], object]) -> frozenset[Capability]:
             continue
         if capability in ZERO_MEANS_ABSENT and all(v == 0 for v in values):
             continue
+        if capability in MODE_CODES_ONLY and not all(v in MODE_CODES for v in values):
+            continue
         found.add(capability)
     return frozenset(found)
 
@@ -503,7 +593,7 @@ def resolve(
     device_type_code: int | None,
     output_type: int | None = None,
     probed: frozenset[Capability] | None = None,
-    firmware: str | None = None,
+    firmware: str | Iterable[str | None] | None = None,
 ) -> frozenset[Capability]:
     """Work out what a device has, from what it said and what answered.
 
@@ -512,6 +602,10 @@ def resolve(
     outranks both. Anything a probe found is kept even where the family table
     said it should not be there — the table is a record of bug reports, not a
     specification, and a device that answers is the better authority.
+
+    A write in `CONFIRMED_ON_FIRMWARE` is added last, and only where the read
+    it acts on is among the result: a firmware entry says the write does what
+    it should, and only the device can say the register is there.
     """
     absent = known_absent(device_type_code, firmware)
     resolved = set(probed or frozenset())
@@ -526,4 +620,8 @@ def resolve(
             resolved.discard(Capability.THREE_PHASE)
             absent = absent | {Capability.THREE_PHASE}
 
-    return frozenset(resolved - (absent - set(probed or frozenset())))
+    resolved -= absent - set(probed or frozenset())
+    for capability in confirmed_on_firmware(firmware):
+        if CONTROL_REQUIRES.get(capability) in resolved:
+            resolved.add(capability)
+    return frozenset(resolved)

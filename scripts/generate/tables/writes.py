@@ -30,7 +30,7 @@ Not here yet, deliberately:
 
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 
 class Number(TypedDict, total=False):
@@ -255,7 +255,11 @@ class Switch(TypedDict):
     """One writable register exposed as a `switch`."""
 
     field: str
-    legacy_unique_id: str
+    #: The entity key, where the field's own would collide with another
+    #: platform's entity reading the same register.
+    key: NotRequired[str]
+    legacy_unique_id: NotRequired[str]
+    requires: NotRequired[str]
     on: int
     off: int
 
@@ -292,6 +296,23 @@ SWITCHES: tuple[Switch, ...] = (
         "on": 0xAA,
         "off": 0x55,
     },
+    # Register 31211, outside the specification (#554, #738): on cuts PV
+    # generation, off lets it run. No YAML entity, so no legacy id. Gated by
+    # a capability no probe grants: `resolve` adds it only on firmware in
+    # `capabilities.CONFIRMED_ON_FIRMWARE`, where the control test saw a
+    # write take DC power to zero -- a register answering 0x55 says it is
+    # there, not what writing it does.
+    #
+    # Keyed `cut_pv_generation`, "Cut PV generation": the action the switch
+    # performs, beside the binary sensor "PV generation cut" that reports the
+    # state wherever the register answers.
+    {
+        "field": "pv_generation_cut_raw",
+        "key": "cut_pv_generation",
+        "requires": "PV_GENERATION_CUT_CONTROL",
+        "on": 0xAA,
+        "off": 0x55,
+    },
 )
 
 
@@ -314,6 +335,7 @@ class Select(TypedDict):
     key: str
     field: str
     legacy_unique_id: str
+    requires: NotRequired[str]
     options: tuple[Option, ...]
 
 
@@ -348,6 +370,7 @@ SELECTS: tuple[Select, ...] = (
         "key": "battery_forced_charge_discharge",
         "field": "battery_forced_charge_discharge_cmd_raw",
         "legacy_unique_id": "uid_battery_forced_charge_discharge",
+        "requires": "BATTERY",
         "options": (
             {"slug": "stop", "value": 0xCC, "label": "Stop"},
             {"slug": "charge", "value": 0xAA, "label": "Forced charge"},

@@ -52,7 +52,7 @@ MANIFEST = INTEGRATION / "manifest.json"
 #: the survey, fetched by its launchers through `uv`, and the control test.
 #: Both pin the same version the manifest does, so the same wheel has to serve
 #: their imports too.
-SCRIPT_DIRECTORIES = (REPO / "device-fingerprints" / "scripts" / "python",)
+SCRIPT_DIRECTORIES = (REPO / "device-survey" / "scripts" / "python",)
 
 
 def sources() -> list[Path]:
@@ -307,7 +307,7 @@ def report(wheel: Path, label: str) -> int:
             gaps.append(f"module {module} is not in the wheel")
             continue
         for name in sorted(wanted[module] - modules[module]):
-            # `from sungrow_modbus import fingerprint` names a *submodule*,
+            # `from sungrow_modbus import survey_document` names a *submodule*,
             # which resolves at runtime without appearing anywhere in the
             # package's `__init__.py`. Checking only module-level names calls
             # that a missing symbol -- and it is how this integration reaches

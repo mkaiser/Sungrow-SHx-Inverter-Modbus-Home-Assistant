@@ -17,7 +17,7 @@ copy-paste rather than by including a file. A user who did copy it in has ids
 like `sensor.sg_battery_1_max_voltage_of_cell`, and those are **not**
 adopted here. Recorded in `doc/integration_plan.md` as an open question with
 its cost: this integration would be taking over entities it never generated,
-whose names it does not control, on evidence no fingerprint carries. Doing
+whose names it does not control, on evidence no survey carries. Doing
 that silently is worse than not doing it.
 
 Seventeen entities from seventeen registers, which is a coincidence rather

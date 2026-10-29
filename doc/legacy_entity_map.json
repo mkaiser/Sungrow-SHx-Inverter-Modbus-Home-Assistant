@@ -2,10 +2,11 @@
   "generated_from": "modbus_sungrow.yaml",
   "generated_by": "scripts/generate_entity_map.py",
   "summary": {
-    "entities": 183,
+    "entities": 184,
     "by_layer": {
       "filter": 1,
       "modbus": 102,
+      "observed": 1,
       "specification": 30,
       "template": 50
     },
@@ -14,7 +15,7 @@
       "button": 2,
       "number": 9,
       "select": 3,
-      "sensor": 151,
+      "sensor": 152,
       "switch": 4
     },
     "with_state_class": 118,
@@ -2455,6 +2456,18 @@
       "swap": "word",
       "nan_value": 4294967295,
       "scan_interval": 10
+    },
+    {
+      "entity_id": "sensor.pv_generation_cut_raw",
+      "unique_id": null,
+      "name": "PV generation cut raw",
+      "domain": "sensor",
+      "layer": "observed",
+      "input_type": "holding",
+      "address": 31210,
+      "data_type": "uint16",
+      "nan_value": 65535,
+      "scan_interval": 60
     }
   ]
 }

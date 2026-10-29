@@ -2,8 +2,8 @@
 
 `probe._async_decoded_readings` is every register the integration reads,
 decoded through the library, and `probe._async_battery_readings` the SBR's
-own blocks. A fingerprint's value is read by comparing it against other
-fingerprints, so what these report -- and what they leave out -- is part of
+own blocks. A survey's value is read by comparing it against other
+surveys, so what these report -- and what they leave out -- is part of
 the format: a component missed has to be said, a serial never.
 """
 
@@ -19,12 +19,12 @@ from modbus_connection.mock import MockModbusConnection
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "device-fingerprints" / "scripts" / "python"))
+sys.path.insert(0, str(REPO / "device-survey" / "scripts" / "python"))
 
 from probe import _async_decoded_readings  # noqa: E402
 
 from sungrow_modbus.block_test import inverter_blocks  # noqa: E402
-from sungrow_modbus.fingerprint import NEVER_PUBLISH  # noqa: E402
+from sungrow_modbus.survey_document import NEVER_PUBLISH  # noqa: E402
 
 #: Every read the poll makes, recorded once: `_filled_unit` is also called
 #: from inside a running loop, where recording again could not start one.
@@ -130,7 +130,7 @@ def test_a_device_that_answers_everything_reports_nothing_missed() -> None:
     were right and only the two lists lied.
 
     That is the shape of bug this file exists for: it published a claim about
-    somebody's inverter (gerd's direct-LAN fingerprint said no component
+    somebody's inverter (gerd's direct-LAN survey said no component
     answered as a whole) that came from this code and not from the wire.
     """
     report = asyncio.run(_async_decoded_readings(_filled_unit(), 1))

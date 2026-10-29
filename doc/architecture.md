@@ -19,7 +19,7 @@ flowchart TD
     subgraph integration["custom_components/sungrow_modbus &mdash; the integration, delivered by HACS"]
         direction TB
         flow["config_flow<br/>probe, identify, scan the LAN,<br/>ask about entity ids<br/><br/>config_flow_schemas: the forms it shows,<br/>separated from the decisions about showing them"]
-        survey["survey &mdash; both parts, one progress bar<br/><br/>part A fingerprint: probe every capability,<br/>publish a document that carries a<br/>stand-in serial and at most two octets<br/><br/>part B control_test (in the library): write each<br/>control, check the raw word against a hand-typed<br/>scale, watch what the inverter does, put it back<br/><br/>repairs: a run that did not finish restoring<br/>becomes a fix flow somebody can click<br/>download: a signed, short-lived link"]
+        survey["survey &mdash; both parts, one progress bar<br/><br/>part A: probe every capability,<br/>publish a document that carries a<br/>stand-in serial and at most two octets<br/><br/>part B control_test (in the library): write each<br/>control, check the raw word against a hand-typed<br/>scale, watch what the inverter does, put it back<br/><br/>repairs: a run that did not finish restoring<br/>becomes a fix flow somebody can click<br/>download: a signed, short-lived link"]
         coord["coordinator<br/>four for the inverter, one per tier:<br/>realtime 5s, fast 10s, medium 60s, slowest 600s<br/><br/>one more per extra device that answered:<br/>the SBR pack on medium, the wallbox on fast<br/>with its slow blocks every 30th poll"]
         ent["entity<br/>sensor, binary_sensor,<br/>number, switch, select<br/><br/>a diagnostics-only entry: the survey and<br/>control test buttons and three sensors"]
         mig["migration<br/>claim the YAML entity_id,<br/>or take a modern id then rename"]
@@ -30,7 +30,7 @@ flowchart TD
         ext["external<br/>add back a generator the Sungrow cannot see,<br/>from entities another integration owns"]
     end
 
-    lib["sungrow_modbus &mdash; the library, installed from PyPI<br/>no Home Assistant imports anywhere<br/><br/>inverter/: device, registers, components (block reads, per tier),<br/>layout (registers read alone), capabilities, faults,<br/>derived and smoothing, export_scale<br/>battery/: the SBR pack &mdash; device, registers, discovery, power<br/>wallbox/: the charge point &mdash; device, registers, discovery, document<br/>top level: addresses, discovery (identify, LAN sweep, reverse DNS),<br/>dump, fingerprint, survey, block_test, control_test"]
+    lib["sungrow_modbus &mdash; the library, installed from PyPI<br/>no Home Assistant imports anywhere<br/><br/>inverter/: device, registers, components (block reads, per tier),<br/>layout (registers read alone), capabilities, faults,<br/>derived and smoothing, export_scale<br/>battery/: the SBR pack &mdash; device, registers, discovery, power<br/>wallbox/: the charge point &mdash; device, registers, discovery, document<br/>top level: addresses, discovery (identify, LAN sweep, reverse DNS),<br/>dump, survey_document, survey, block_test, control_test"]
 
     subgraph modbus["homeassistant.components.modbus &mdash; owns the connection"]
         direction TB
@@ -222,7 +222,7 @@ and their description modules are checked like this:
 | Hand-written | Checked against |
 | --- | --- |
 | `battery/registers.py` | `legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml`, address and scale per field — all forty of its sensors |
-| `wallbox/registers.py` | the raw words and the readings in a committed fingerprint: the document decoder must reproduce the readings, and the components must read the same values from the same words |
+| `wallbox/registers.py` | the raw words and the readings in a committed survey: the document decoder must reproduce the readings, and the components must read the same values from the same words |
 | `battery_descriptions.py`, `wallbox_descriptions.py` | every `field` resolves to a real field or property; no key collides across devices |
 
 That is the same discipline as the inverter's map: where nothing generates a
@@ -240,18 +240,18 @@ Inside it, **one subpackage per kind of device** -- `inverter/`, `battery/`,
 `wallbox/` -- each holding that device's map (`registers`), the object that
 reads it (`device`) and whatever only that device needs: how it is found on a
 unit, its capabilities, its derived values. What spans devices sits at the
-top: `addresses`, `discovery`, `dump`, the survey (`fingerprint`, `survey`)
+top: `addresses`, `discovery`, `dump`, the survey (`survey_document`, `survey`)
 and the two tests (`block_test`, `control_test`). A change that concerns one
 device belongs in its subpackage; a second device that needs it is the cue to
 move it up.
 
-It also means the library is useful on its own: `device-fingerprints/scripts/python/probe.py`
-drives it directly to fingerprint an installation, with no Home Assistant
+It also means the library is useful on its own: `device-survey/scripts/python/probe.py`
+drives it directly to survey an installation, with no Home Assistant
 anywhere in the process.
 
 The survey is cut the same way. The library holds everything a capability
 document is made of -- the probes, the decoded-readings algorithm, each
-section's shape and the privacy rules that apply to it (`fingerprint.py`,
+section's shape and the privacy rules that apply to it (`survey_document.py`,
 `survey.py`) -- and prints, prompts and writes nothing. It also holds the **order** a survey
 reads in, `survey.async_capability_survey`: each producer hands it a source
 that knows how to collect each step -- raw from a terminal, from what the
@@ -259,7 +259,7 @@ coordinators already polled in Home Assistant -- and the library takes the
 steps in one order and catches a step the link loses, so a dropped dump
 costs the dump and not the document. The terminal scripts
 add questions, a progress bar, a transcript and the file;
-`custom_components/sungrow_modbus/fingerprint.py` adds what only Home
+`custom_components/sungrow_modbus/survey_document.py` adds what only Home
 Assistant knows: the owner's answers from the entry's options, what its own
 coordinators were doing, the progress entity, and the guard on part B. A
 change to what a document *says* therefore belongs in `src/`, where both

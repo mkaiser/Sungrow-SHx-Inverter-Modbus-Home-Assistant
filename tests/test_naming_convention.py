@@ -199,7 +199,8 @@ def test_legacy_names_are_untouched() -> None:
         for entity in json.loads(ENTITY_MAP.read_text(encoding="utf-8"))["entities"]
         # A specification addition has no YAML entity behind it, so it has no
         # legacy name to preserve -- and must not claim one.
-        if entity["layer"] != "specification" and entity.get("unique_id")
+        if entity["layer"] not in {"specification", "observed"}
+        and entity.get("unique_id")
     }
     checked = 0
     for entity_id, description in BY_ID.items():

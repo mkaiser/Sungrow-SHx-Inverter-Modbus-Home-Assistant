@@ -6,8 +6,8 @@ register document for one. `doc/wallbox_registers.md` is the whole source,
 and it is what three independent measurements agree on -- one reading taken
 here plus the two community projects.
 
-So the guard is the reading itself. `device-fingerprints/` holds a
-committed fingerprint carrying the raw words an AC22E-01 answered **and** the
+So the guard is the reading itself. `device-survey/` holds a
+committed survey carrying the raw words an AC22E-01 answered **and** the
 readings an independent decoder -- the survey's own, before it moved into the
 library -- made of them. This file holds the library to both: its document
 decoder must reproduce the committed readings exactly, and its components must
@@ -37,12 +37,12 @@ REPO = Path(__file__).resolve().parent.parent
 
 #: The completed session (status 6) the tests keep, since the published
 #: document was replaced by an idle reading.
-FINGERPRINT = REPO / "tests" / "data" / "wallbox_ac22e01_completed_session.json"
+SESSION_DOCUMENT = REPO / "tests" / "data" / "wallbox_ac22e01_completed_session.json"
 
 
 def _words() -> dict[str, dict[int, int]]:
     """Return the raw words the AC22E-01 answered, by register space."""
-    document = json.loads(FINGERPRINT.read_text(encoding="utf-8"))
+    document = json.loads(SESSION_DOCUMENT.read_text(encoding="utf-8"))
     dump = document["wallbox"]["register_dump"]
     return {
         space: {int(a): v for a, v in values.items() if v is not None}
@@ -64,7 +64,7 @@ def _component(klass):
 
 
 #: The document's section, as committed.
-SECTION = json.loads(FINGERPRINT.read_text(encoding="utf-8"))["wallbox"]
+SECTION = json.loads(SESSION_DOCUMENT.read_text(encoding="utf-8"))["wallbox"]
 
 #: What the independent decoder published from those words, by field name.
 SURVEY = {name: entry["value"] for name, entry in SECTION["readings"].items()}
