@@ -2,6 +2,10 @@ An *easy-to-use YAML-based integration* for several Sungrow inverters for Home A
 
 [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2)
 
+# 2026-10-30 "A proper Home Assistant integration is coming: help with a device survey"
+
+A HACS-based integration that will supersede this YAML package, with a migration path that keeps your entity IDs and history, is in development on the [proper-ha-integration](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/tree/proper-ha-integration) branch. Sungrow publishes no firmware changelogs, so it is built from surveys of real devices. **If you can, run one and attach it to [the survey issue #786](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786)**, which explains how. Nothing changes for this YAML package.
+
 # 2026-01-10 "small breaking change: new parameter in secrets.yaml"
 
 With the newest version you need to add ```sungrow_modbus_wait_milliseconds``` to your secrets.yaml. Choose 5 ms for LAN, 20 or higher for WiNet-S. This hopefully fixes some stability issues with WiNet-S connections. 
