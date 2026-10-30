@@ -60,7 +60,6 @@ from .const import (
     CONF_CONTROL_TEST_RESTART,
     CONF_SURVEY_DUMP,
     DEFAULT_SURVEY_DUMP,
-    DISCORD_URL,
     DOMAIN,
     LINK_VALID,
     SURVEY_ISSUE_URL,
@@ -430,8 +429,7 @@ class SurveyRunner:
                 "the same document and never expires.\n\n"
                 "It carries a stand-in serial rather than the real one, and "
                 "your address only if you allowed it. Send it to "
-                f"[the issue tracker]({SURVEY_ISSUE_URL}) or "
-                f"[Discord]({DISCORD_URL}) — what varies between "
+                f"[the survey issue]({SURVEY_ISSUE_URL}) — what varies between "
                 "installations is the thing no specification has told this "
                 "project reliably."
             ),
@@ -488,8 +486,7 @@ class SurveyRunner:
                 "the same document and never expires.\n\n"
                 "It carries a stand-in serial rather than the real one, and "
                 "your address only if you allowed it. Send it to "
-                f"[the issue tracker]({SURVEY_ISSUE_URL}) or "
-                f"[Discord]({DISCORD_URL})."
+                f"[the survey issue]({SURVEY_ISSUE_URL})."
             ),
             title=f"Survey finished: {self.entry.title}",
             notification_id=self._notification_id,

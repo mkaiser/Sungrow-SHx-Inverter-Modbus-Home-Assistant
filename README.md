@@ -187,12 +187,8 @@ untested in [doc/compatibility.md](doc/compatibility.md), a compatibility
 report is the single most useful thing you can contribute — including one that
 says everything works.
 
-**No GitHub account needed.** [Discord](https://discord.gg/ZvYBejFkm2) is the
-shortest route: drop the diagnostics file in and say what your setup is. If you
-do have an account, the
-[compatibility report form](../../issues/new?template=compatibility_report.yml)
-asks the questions that turn out to matter, so nothing has to be asked
-afterwards.
+Attach the diagnostics file to [the survey issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786), where every
+survey is collected.
 
 ## Related work
 

@@ -350,15 +350,11 @@ entity-ids question gets asked.
 #: normally.
 ONLY_SURVEY_MODE = True
 
-#: Where a contributed reading goes. The compatibility report template asks
-#: for exactly what a survey produces, so the form arrives pre-shaped.
+#: Where a contributed reading goes: the one pinned survey issue, so every
+#: survey is a comment in one place rather than an issue of its own.
 SURVEY_ISSUE_URL = (
-    "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant"
-    "/issues/new?template=compatibility_report.yml"
+    "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786"
 )
-
-#: And the route for somebody without a GitHub account, which is most people.
-DISCORD_URL = "https://discord.gg/ZvYBejFkm2"
 
 #: How long a signed survey download link stays valid. Long enough to
 #: notice the notification and press it, short enough that a copied URL in

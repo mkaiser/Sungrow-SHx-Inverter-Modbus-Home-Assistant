@@ -8,15 +8,15 @@ body:
       value: |
         Thank you — this is the single most useful thing anybody can contribute.
 
+        **Sending a survey file?** Attach it to [the survey issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786)
+        instead — every survey is collected there. This form is for telling us
+        that the integration reads your setup wrongly.
+
         Which parts of the register map a device answers varies by model, phase
         count, wiring, transport and firmware, and Sungrow's specification says
         what *exists*, not what your machine does with it. So the capability
         model is built from surveys off real hardware, and a report from a
         model nobody has tested is worth more than any amount of reasoning.
-
-        **No GitHub account?** [Discord](https://discord.gg/ZvYBejFkm2) works
-        just as well — drop the file there and say what your setup is. This
-        form only exists because it asks the right questions up front.
 
         **On privacy.** The diagnostics file below carries **no serial number,
         no host address and no timestamp** — those are removed before it is

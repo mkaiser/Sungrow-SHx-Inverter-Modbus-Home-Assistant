@@ -130,7 +130,8 @@ fourth, `<time>-snapshot.json`, which `--restore` takes and removes.
 
 No un-redacted copy of the document is written, so `--save
 device-survey` cannot put a real serial here whatever it is asked.
-Look at the file, then attach it to an issue if you are happy to.
+Look at the file, then attach it to [the survey issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786) if you are
+happy to.
 
 ### What the last line means
 

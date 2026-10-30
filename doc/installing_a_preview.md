@@ -207,8 +207,8 @@ a fresh one, or use **Download diagnostics** on the same page, which carries
 the same document and never expires.
 
 The document names your inverter by a **stand-in** rather than its serial
-number, and carries your address only if you said it may. Send it to the
-issue tracker or Discord; it is how this project learns what varies between
+number, and carries your address only if you said it may. Send it to
+[the survey issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786); it is how this project learns what varies between
 installations, which is the thing no specification has told it reliably.
 
 If you set the integration up for the device survey, it asked you a few

@@ -19,14 +19,14 @@ Structure:
    run the published wheel, so it reaches them with the next release. One
    run at that house could read the iHomeManager, the SH20T's own LAN port
    (blocker 2) and their AC22E-01 (blocker 3, a second wallbox).
-2. **Open the one survey issue.** The curated list is the top of
-   `device-survey/devices-wanted.md` (*Most wanted*, *Not needed any more*).
-   An issue cannot embed a file, so `.github/workflows/survey-issue.yml`
-   writes it into one: create the issue (any body), pin it, set the
-   repository variable `SURVEY_ISSUE` to its number, and run the workflow
-   once. From then on every change to the list updates the issue. The
-   default branch's README (the YAML package, `main`) is where a link to it
-   would be most visible; that is a change to `main`, so it is yours.
+2. **Finish the survey issue, #786.** It is open and the integration's
+   notification, the docs and the issue form point there. Left: pin it, and
+   link it from the default branch's README (the YAML package, `main`; that
+   change is yours). `.github/workflows/survey-issue.yml` writes
+   `devices-wanted.md` into the issue *body* once the repository variable
+   `SURVEY_ISSUE` is set, which would replace the hand-written body: move that
+   text into `scripts/helpers/survey_issue_body.py` first, or leave the
+   variable unset.
 
 
 # Open decisions

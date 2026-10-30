@@ -37,6 +37,7 @@ from custom_components.sungrow_modbus.const import (
     LINK_VALID,
     MODE_DEVICES,
     MODE_DIAGNOSTICS,
+    SURVEY_ISSUE_URL,
 )
 from custom_components.sungrow_modbus.survey import SurveyRunner, SurveyState
 from custom_components.sungrow_modbus.survey_entities import SURVEY_ENTITIES
@@ -382,8 +383,8 @@ async def test_the_finished_survey_offers_the_document(
     assert notify.called
     message = notify.call_args.args[1]
     assert f"/api/sungrow_modbus/survey/{entry.entry_id}" in message
-    assert "compatibility_report.yml" in message
-    assert "discord.gg" in message
+    assert SURVEY_ISSUE_URL in message
+    assert "discord.gg" not in message
     assert "stand-in" in message
 
 
