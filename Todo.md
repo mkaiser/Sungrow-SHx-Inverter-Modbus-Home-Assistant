@@ -72,6 +72,42 @@ Structure:
    readbacks and its 13074 write scale. Their WiNet-S 0x04s are contention,
    reproduced at gerd's.
 
+5. **A first iHomeManager survey** (#786). Unblocks building its entities
+   (milestone 5). The survey reads one (unit 247, port 502, 503 or 504, one
+   connection each); the integration does not, and its config flow fails such
+   an endpoint with `no_serial_number`. Wait for a measured reading before
+   building entities on `sungrow_modbus.ihomemanager`. Sungrow's protocol PDF:
+   https://github.com/TCzerny/ha-modbus-manager/blob/main/docs/Communication%20Protocol%20of%20iHomeManager_V1.0.2.pdf
+
+6. **A first Sungrow Logger survey** (#786). Unblocks a Logger map
+   (milestone 8). Logger1000/3000/4000. The survey names one by its type code at
+   unit 247, decodes its identity block and publishes the rest of its 8000
+   block raw (`sungrow_modbus.logger`); behind an inverter it asks unit 247
+   only when the owner answers `logger` for the transport. Missing for a map:
+
+   1. **Sungrow's *Logger Communication Protocol*.** Not on GitHub (searched
+      2026-10-30); copies of 1.0.2.5, 1.0.2.7 (`TI_20211201`) and 1.0.2.9 are
+      on Scribd, behind a login, and Sungrow's support portal does not list
+      it. A firmware archive on GitHub that collected Sungrow documents
+      (sungrow-firmware/firmware) answers HTTP 451, so do not commit the PDF
+      here: keep it local and cite it, as with the inverter's. What is known
+      without it: type codes at input 8000 are 0x0705 Logger3000, 0x0710
+      Logger1000, 0x0718 Logger4000 (as Voyanti/ha-sungrow, GPL-3.0, cites the
+      document); and register numbers in the document are one above the
+      protocol address, as everywhere here (Homey community thread 126405).
+      Existing maps, read for what exists and never copied:
+      RafAustralia/Sungrow-Logger1000a-Modbus (no licence, read only) and
+      Voyanti/ha-sungrow's `src/sungrow_logger.py` (GPL-3.0, Logger1000 only,
+      read only; writes reported failing at Homey).
+   2. **What sits behind it.** A Logger gives each connected inverter and meter
+      a unit id of its own on its endpoint (a DTSU666-20 at unit 5 in #262),
+      and wants a port per client (502, 503, 504...). `identify` looks at units
+      1-5 only, so an inverter at a higher unit is not reached yet; a DTSU666
+      is a device nothing maps.
+   3. **A contributor with one.** Nobody has offered; the #262 participants
+      (RafAustralia, purcell-lab, NBS23) are the leads. RafAustralia notes the
+      Logger1000A targets the T and commercial lines rather than RS/RT.
+
 
 # Future work
 
@@ -80,44 +116,6 @@ Structure:
 - Hand inverter and wallbox readings to evcc, e.g. over MQTT, so evcc
   need not open a Modbus session of its own. To find out: does evcc have
   a standard configuration for that?
-
-## iHomeManager in the integration
-
-Milestone 5. The survey reads one (unit 247, port 502, 503 or 504, one
-connection each); the integration does not, and its config flow fails such
-an endpoint with `no_serial_number`. Wait for a measured reading before
-building entities on `sungrow_modbus.ihomemanager`. Sungrow's protocol PDF:
-https://github.com/TCzerny/ha-modbus-manager/blob/main/docs/Communication%20Protocol%20of%20iHomeManager_V1.0.2.pdf
-
-## Sungrow Logger
-
-Milestone 8, Logger1000/3000/4000. The survey names one by its type code at
-unit 247, decodes its identity block and publishes the rest of its 8000
-block raw (`sungrow_modbus.logger`); behind an inverter it asks unit 247
-only when the owner answers `logger` for the transport. Missing for a map:
-
-1. **Sungrow's *Logger Communication Protocol*.** Not on GitHub (searched
-   2026-10-30); copies of 1.0.2.5, 1.0.2.7 (`TI_20211201`) and 1.0.2.9 are
-   on Scribd, behind a login, and Sungrow's support portal does not list
-   it. A firmware archive on GitHub that collected Sungrow documents
-   (sungrow-firmware/firmware) answers HTTP 451, so do not commit the PDF
-   here: keep it local and cite it, as with the inverter's. What is known
-   without it: type codes at input 8000 are 0x0705 Logger3000, 0x0710
-   Logger1000, 0x0718 Logger4000 (as Voyanti/ha-sungrow, GPL-3.0, cites the
-   document); and register numbers in the document are one above the
-   protocol address, as everywhere here (Homey community thread 126405).
-   Existing maps, read for what exists and never copied:
-   RafAustralia/Sungrow-Logger1000a-Modbus (no licence, read only) and
-   Voyanti/ha-sungrow's `src/sungrow_logger.py` (GPL-3.0, Logger1000 only,
-   read only; writes reported failing at Homey).
-2. **What sits behind it.** A Logger gives each connected inverter and meter
-   a unit id of its own on its endpoint (a DTSU666-20 at unit 5 in #262),
-   and wants a port per client (502, 503, 504...). `identify` looks at units
-   1-5 only, so an inverter at a higher unit is not reached yet; a DTSU666
-   is a device nothing maps.
-3. **A contributor with one.** Nobody has offered; the #262 participants
-   (RafAustralia, purcell-lab, NBS23) are the leads. RafAustralia notes the
-   Logger1000A targets the T and commercial lines rather than RS/RT.
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 

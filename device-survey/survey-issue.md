@@ -6,7 +6,7 @@ As well as the Sungrow inverters supported today, the integration will cover **S
 
 Sungrow does not publish firmware changelogs, and we found that some registers behave differently on different firmware. For example, the export power limit is written ×10 on some firmware and 1:1 on others. So I am running a survey to collect complete register sets from real Sungrow devices. The results are kept in this repository and will help to identify firmware changes.
 
-**How to run it:** [device-survey/README.md](README.md#contributing-your-device-survey), with screenshots. Either in Home Assistant with the HACS preview integration (choose *Perform the device survey*, then press *Run read only diagnosis*), or from a terminal. It takes 5–15 minutes per device. Stop anything else polling the inverter while it runs.
+**How to run it:** [device-survey/README.md](README.md#contributing-your-device-survey), with screenshots. Either in Home Assistant with the HACS preview integration (choose *Perform the device survey*, then press *Run read only diagnosis*), or from a terminal. It takes 5–40 minutes per device, depending on the link. Stop anything else polling the inverter while it runs.
 
 **It only reads**, unless you also run the *control test*, which writes settings and puts them all back. That is a separate button, and the terminal survey asks first; the default is no.
 
