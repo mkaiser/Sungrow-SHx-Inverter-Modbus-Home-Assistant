@@ -36,8 +36,19 @@ Before tagging:
 
 - `make ci` runs what CI runs, including the build and the gate that the
   built wheel provides every import the integration and the survey make.
-- Run hassfest locally (AGENTS.md has the command; `make refs` fetches what
-  it needs).
+- Run hassfest locally (`make refs` fetches what it needs):
+
+      python -c "import sys; sys.path.append('.reference/core'); \
+        sys.argv=['hassfest','--integration-path','custom_components/sungrow_modbus',\
+        '--action','validate']; \
+        from script.hassfest.__main__ import main; raise SystemExit(main())"
+
+  Appended to `sys.path`, not prepended, so the **installed** Home Assistant
+  wins: `.reference/core` is a partial clone with no `homeassistant.generated`.
+  The finding it most often makes: a repair issue is `title` + `description`
+  *or* `title` + `fix_flow`, never both (*"two or more values in the same
+  group of exclusion 'fixable'"*). For a fixable issue the text belongs in
+  the fix flow's step.
 - After the upload, `make pin-check` asks PyPI the same question of the
   published wheel. It is legitimately red between releases, and it must be
   green before anyone is told to install something.
@@ -167,10 +178,15 @@ To do: submit `sungrow_modbus` to the brands repository before applying to
 the HACS default store — it is what puts a real icon on the integration in
 Home Assistant's own UI rather than only in HACS.
 
-HACS reads this repository's default branch, which is the YAML package, so
-while the integration is pre-release it reaches HACS users through the
-preview channel; see `doc/preview-mirror/` and
-[installing_a_preview.md](installing_a_preview.md).
+HACS reads a repository's *default branch* unless there is a stable release
+(`version_to_download()` in HACS's `repositories/base.py`), and this
+repository's default branch is the YAML package. So while the integration is
+pre-release it reaches HACS users through the preview channel: a second
+repository whose default branch *is* the integration, synced by
+`doc/preview-mirror/sync.yml`, which must stay byte-identical to the copy
+running there. See [installing_a_preview.md](installing_a_preview.md);
+`scripts/dev/hacs_testbed.sh` installs from it the way a user does. HACS
+itself requires a GitHub account.
 
 ## 6. Keeping data out of the cloud
 

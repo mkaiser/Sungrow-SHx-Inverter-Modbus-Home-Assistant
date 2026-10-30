@@ -2032,8 +2032,8 @@
   },
   "control_test": {
     "schema": 2,
-    "outcome": 3,
-    "outcome_means": "ran, but checks were skipped or inconclusive",
+    "outcome": 0,
+    "outcome_means": "every planned check ran and every readback matched",
     "conditions": {
       "direct_connection": true,
       "capabilities": [
@@ -2046,23 +2046,24 @@
         "forced_startup",
         "meter_direct",
         "meter_phase_measurements",
+        "pv_generation_cut",
         "sub_controller_firmware",
         "three_phase"
       ],
       "model": "SH8.0RT-V112",
-      "pv_w": 0,
-      "soc_percent": 92.7,
-      "battery_ceiling_w": 5940,
+      "pv_w": 3006,
+      "soc_percent": 52.1,
+      "battery_ceiling_w": 5769,
       "export_write_scale": {
         "schema": 1,
         "write_units_per_count": 10,
         "answer": "multiplies a written word by ten",
         "held_w": 8000,
         "wrote": 8000,
-        "response": "refused, exception 0x04",
+        "response": "refused, exception 0x04, 0x04, 0x04",
         "mode_lifted": false,
         "left_changed": false,
-        "reason": "this firmware multiplies a written word by ten: refused, exception 0x04, because writing the held 8000 back is a no-op if stored as handed, and 80000 W -- above the 8000 W maximum -- if multiplied, which is refused"
+        "reason": "this firmware multiplies a written word by ten: refused, exception 0x04, 0x04, 0x04, because writing the held 8000 back is a no-op if stored as handed, and 80000 W -- above the 8000 W maximum -- if multiplied, which is refused"
       },
       "simulated": false,
       "dry_run": false
@@ -2233,21 +2234,55 @@
     ],
     "effects": [
       {
+        "check": "forced charge",
+        "observable": "battery charge power",
+        "commanded": 1250.0,
+        "commanded_unit": "W",
+        "before": -3799.0,
+        "during": 1250.0,
+        "after": -3800.0,
+        "before_mad": 0.0,
+        "during_mad": 0.0,
+        "after_mad": 0.0,
+        "drift": 1.0,
+        "delta": 5049.0,
+        "ratio": 1.0,
+        "verdict": "the inverter did as it was told",
+        "detail": null
+      },
+      {
         "check": "forced discharge",
         "observable": "battery discharge power",
         "commanded": 1250.0,
         "commanded_unit": "W",
-        "before": 391.5,
-        "during": 915.0,
-        "after": 301.5,
-        "before_mad": 109.0,
-        "during_mad": 293.0,
-        "after_mad": 10.0,
-        "drift": 90.0,
-        "delta": 523.5,
+        "before": 3800.0,
+        "during": 1249.0,
+        "after": 3800.0,
+        "before_mad": 0.0,
+        "during_mad": 0.0,
+        "after_mad": 0.0,
+        "drift": 0.0,
+        "delta": -2551.0,
+        "ratio": 0.9992,
+        "verdict": "the inverter did as it was told",
+        "detail": null
+      },
+      {
+        "check": "PV generation cut",
+        "observable": "total DC power",
+        "commanded": null,
+        "commanded_unit": "W",
+        "before": 2938.0,
+        "during": 0.0,
+        "after": 1913.0,
+        "before_mad": 4.0,
+        "during_mad": 0.0,
+        "after_mad": 9.0,
+        "drift": 1025.0,
+        "delta": -2938.0,
         "ratio": null,
-        "verdict": "could not tell",
-        "detail": "something changed, but not to the value that was commanded"
+        "verdict": "the inverter did as it was told",
+        "detail": null
       }
     ],
     "restored": [
@@ -2263,6 +2298,14 @@
         "field": "ems_mode_selection_raw",
         "original": 0.0,
         "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "pv_generation_cut_raw",
+        "original": 85.0,
+        "readback": 85,
         "restored": true,
         "attempts": 0,
         "detail": "already holding its original value"
@@ -2349,9 +2392,9 @@
       }
     ],
     "restart": {
-      "stopped_after": 2.1001313539991315,
-      "running_after": 368.69609899399984,
-      "generating_after": null,
+      "stopped_after": 2.1161857550032437,
+      "running_after": 180.76175482099643,
+      "generating_after": 2.3798209890082944,
       "stop_word_seen": 2,
       "polls_refused_connection": 0,
       "settings_survived": true,
@@ -2360,10 +2403,8 @@
     },
     "not_established": [
       "battery_max_soc: its bounds have no room for a value ten times larger or smaller, so a scale error here could only ever show as a refusal",
-      "no forced charge check: the battery is too full for a charge to measure the setting rather than the pack's own taper",
-      "no charge-ceiling check: the battery was not charging (-295 W), so there was no charge to stop",
-      "the battery clamped the manufactured discharge: asked for 2942 W, the pack accepted 2940 W -- its own limit moves with charge and temperature, and the check went ahead against what it accepted",
-      "no export limit check: discharging 2940 W still only produced 1662 W of export, under the 1812 W a cap needs to bind against"
+      "no charge-ceiling check: the battery is too low for the ceiling to be put under it, since battery_max_soc cannot go below 50 %",
+      "could not make the house export: 5480 W is the most this battery will give against a 10944 W house, which leaves -5464 W of export where a cap needs 1812 W to bind"
     ]
   },
   "export_scale": {

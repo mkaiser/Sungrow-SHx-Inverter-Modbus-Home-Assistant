@@ -29,7 +29,7 @@ A release is `scripts/release/sync_version.py --set X`, a commit, an
 **annotated** tag and `git push --follow-tags`; `release.yml` verifies the tag,
 runs ruff, pytest, hassfest and the HACS action, publishes a GitHub
 pre-release and the library to PyPI over OIDC. Run hassfest locally first
-(command in `AGENTS.md`).
+(command in `doc/maintainer_setup.md`).
 
 ## What is next
 
@@ -64,13 +64,16 @@ pre-release and the library to PyPI over OIDC. Run hassfest locally first
    through a dongle, and V1.1.16's appendix compared bit for bit.
 6. **iHomeManager (milestone 5).** Port 502 *or* 503, unit 247. Not a gateway:
    one endpoint, one device. `identify()` recognises it and the survey
-   reports it; the map is in
-   [cross_reference_modbus_manager.md](cross_reference_modbus_manager.md)
-   (MIT). Needs a survey from an owner.
+   reads it (`sungrow_modbus.ihomemanager`, from Sungrow's V1.0.2 document,
+   compared in
+   [cross_reference_modbus_manager.md](cross_reference_modbus_manager.md)).
+   Needs a survey from an owner, on a release that has the reader.
 7. **Sungrow Logger (milestone 8).** Documented (*Logger Communication
-   Protocol AW0 1.0.2.9*); fronts a whole installation, which is what the
-   one-entry-per-endpoint model was built for. It does **not** forward
-   battery data ("Logger is not supported" in the hybrid protocol's Note 2).
+   Protocol AW0 1.0.2.9*, not read here); fronts a whole installation, which
+   is what the one-entry-per-endpoint model was built for. It does **not**
+   forward battery data ("Logger is not supported" in the hybrid protocol's
+   Note 2). The survey identifies one by its type code and reads it raw
+   (`sungrow_modbus.logger`); a map needs the document and a reading.
 8. **SBR per-module entities.** All 24 registers are read; an unfitted module
    answers 0 V, so the module count has to be established first. The
    encoding is a decision, not a migration. An SBR128 survey settles it.
@@ -271,7 +274,7 @@ The YAML track lives under [legacy/](../legacy/) on this branch; on `main` it
 stays at the root until the integration replaces it. `scripts/` is grouped by
 job — `dev/`, `generate/`, `release/` and `helpers/`. What a contributor is
 handed is `device-survey/scripts/`: one launcher, `survey.{sh,cmd}`,
-which reads and offers the control test at the end — and `AGENTS.md` lists
+which reads and offers the control test at the end — and `doc/development.md` lists
 every script.
 
 ## Documentation

@@ -30,7 +30,9 @@ and sweeping for one cannot find it.
 - **A dongle forwards any start**, and answers 0 for several registers the
   direct path reads.
 - **The serial (input 21201-21206) sits just below the model name.**
-  `wallbox.probe_units` reads the name. The serial words are masked when
+  `wallbox.probe_units` reads the name. The integration reads the serial
+  once, for the device page's `serial_number`, and identifies the device by
+  the inverter's serial plus `-wallbox`. The serial words are masked when
   the document is published, and replaced by `wallbox.serial_anonymized_hashed`;
   see [serial anonymization](../concepts/serial-anonymization.md).
 
@@ -50,8 +52,13 @@ and at its own address in the
 [wallbox document](../sources/ac22e01-gerd-anon-41346964423-wallbox-tls-summary.md).
 Read directly again on 2026-10-29: holding 21250-21259 is a constant
 20-digit ASCII number, shaped like an identifier, and is masked like the serial;
-input 21267 counts up every few seconds; the start mode read 3, outside the
-documented 0-2. What is fixed and what moves is in
+input 21267 ticks about once per 10 s whatever a client reads or writes,
+the shape of an uptime counter; the start mode read 3, outside the
+documented 0-2. Checked against Sungrow's own portal on 2026-10-30: input
+21201-21206 is the serial it shows, and 21300 and 21310 count lifetime and
+session energy in Wh; see
+[the portal cross-check](../sources/gerd-wallbox-isolarcloud-2026-10-30-summary.md).
+What is fixed and what moves is in
 [wallbox registers](../sources/wallbox-registers-summary.md).
 RS485 at unit 248 is reported by others and never measured here; see
 [the open query](../queries/does-a-wallbox-answer-unit-248-on-rs485.md).

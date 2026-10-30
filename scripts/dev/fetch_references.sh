@@ -6,7 +6,7 @@
 # Home Assistant core is cloned blobless + sparse, which keeps it to a few
 # MB: the components this integration mirrors, core's recorder and sensor
 # tests, and `script/` -- which holds hassfest, run from here before tagging
-# (AGENTS.md has the command). The sparse set is applied on every run, so an
+# (doc/maintainer_setup.md has the command). The sparse set is applied on every run, so an
 # older clone gains what was added to it.
 set -e
 

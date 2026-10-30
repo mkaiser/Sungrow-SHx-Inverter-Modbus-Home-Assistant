@@ -120,6 +120,41 @@ WALLBOX_MASKED: tuple[tuple[str, int, int], ...] = (
     ("holding", 21249, 10),
 )
 
+#: An iHomeManager's register space, unit 247. Never measured, so the first
+#: seven bands are what Sungrow's V1.0.2 document defines (plus the charger
+#: power a scan elsewhere found), each read whole; the rest are the gaps
+#: between them, read **last** so that a budget running out costs
+#: exploration and never a documented field. A gap is where an undocumented
+#: register would be, a serial included, so `ihomemanager.document` masks
+#: any text found there.
+IHOMEMANAGER_BANDS: tuple[tuple[str, int, int, str], ...] = (
+    ("input", 7999, 7, "identity: type code, protocol, devices"),
+    ("input", 8144, 19, "system totals, battery limits, power flows, level"),
+    ("input", 8175, 4, "grid import and export energy"),
+    ("input", 8317, 15, "the application software version, read whole"),
+    ("input", 8551, 23, "charger status and the two CT channels"),
+    ("input", 8593, 8, "charger power, from a scan elsewhere"),
+    ("holding", 8023, 30, "the settings: EMS mode, battery, limits, charger"),
+    ("input", 8006, 138, "undocumented, between identity and the totals"),
+    ("input", 8163, 12, "undocumented, between level and energy"),
+    ("input", 8179, 138, "undocumented, above the energy counters"),
+    ("input", 8332, 219, "undocumented, above the software version"),
+    ("input", 8601, 173, "undocumented, as far as the scan elsewhere went"),
+    ("holding", 7999, 24, "undocumented, below the settings"),
+    ("holding", 8053, 75, "undocumented, above the settings"),
+)
+
+#: A Sungrow Logger's own register space, unit 247. Only its identity block
+#: (8000-8006) is mapped, from two community maps; Sungrow's document has not
+#: been read here. So the rest of the 8000 block both maps use is read raw,
+#: holding included (read with function code 3, never written), and the
+#: survey's text guard masks anything shaped like a serial.
+LOGGER_BANDS: tuple[tuple[str, int, int, str], ...] = (
+    ("input", 7999, 7, "identity: type code, protocol, devices"),
+    ("input", 8006, 194, "undocumented here: the rest of the 8000 block"),
+    ("holding", 7999, 200, "undocumented here: its settings, read only"),
+)
+
 #: Reads per request. Small, because the point is coverage: a band that fails
 #: as a whole tells nobody anything, where a band with eight addresses missing
 #: from the middle is a map of what this firmware answers.

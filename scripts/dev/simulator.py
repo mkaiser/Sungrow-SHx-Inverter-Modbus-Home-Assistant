@@ -45,7 +45,10 @@ def _block(values: dict[str, list[int]]) -> list[SimData]:
     registers: dict[int, int] = {}
     for address, words in values.items():
         for offset, word in enumerate(words):
-            registers[int(address) + offset] = word
+            # pymodbus packs a register as a *signed* 16-bit value, so a word
+            # from 0x8000 up -- a negative power, a 0xFFFF "unavailable" --
+            # is handed over as its two's complement: the same bits on the wire.
+            registers[int(address) + offset] = word - 0x10000 if word > 0x7FFF else word
 
     blocks: list[SimData] = []
     start = previous = min(registers)

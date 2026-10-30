@@ -55,8 +55,6 @@ FABRICATED = {
     "A123456789": "the placeholder serial, everywhere one is needed",
     # A second one, because several tests assert that two devices differ.
     "A987654321": "a distinct second serial, for the 'not equal' assertions",
-    # Wallbox serials begin `A25A`, and one test decodes that prefix.
-    "A25A123456": "a wallbox, whose serials start A25A",
     # Not a device serial at all: what the abandoned letter-preserving
     # anonymiser produced from a serial, kept as the illustration of why it
     # was abandoned. Recomputed when the input became the placeholder above,
@@ -99,7 +97,7 @@ def test_no_unrecognised_serial_shaped_string_is_tracked(path: Path) -> None:
 
 #: An integer that could be a register word: four or five decimal digits, or
 #: four hex digits after `0x`, not part of a longer number, and not a key --
-#: `"21200": 16690` and `{21200: 16690}` carry the address as a key, and
+#: `"21200": 16689` and `{21200: 16689}` carry the address as a key, and
 #: decoding it would split every value from the next one.
 WORD = re.compile(r"""(?<![\w."'])(0[xX][0-9A-Fa-f]{4}|\d{4,5})(?![\w."']|\s*:)""")
 
@@ -143,7 +141,7 @@ def _words_as_text(text: str) -> str:
 def test_no_serial_is_tracked_as_register_words(path: Path) -> None:
     """The same rule for a serial written as the words a device answered.
 
-    The string check cannot see `[16690, 13633, ...]`, and that is the form
+    The string check cannot see `[16689, 12851, ...]`, and that is the form
     a real wallbox serial took in two test fixtures, published for a month:
     "the words this wallbox actually answered". Decoded, those words are the
     serial, so they are decoded here and held to the same list.

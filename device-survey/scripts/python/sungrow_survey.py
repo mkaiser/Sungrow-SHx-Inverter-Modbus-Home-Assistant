@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "sungrow-modbus==0.1.0a18",
+#     "sungrow-modbus==0.1.0a19",
 #     "modbus-connection[tmodbus]>=4.10.0",
 #     "tzdata",
 # ]
@@ -76,6 +76,7 @@ from typing import NamedTuple
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import blocks
+import ihomemanager_direct
 import probe
 import sungrow_control_test
 import wallbox_direct
@@ -83,7 +84,7 @@ import wallbox_direct
 from sungrow_modbus import block_test, dump as register_dump, model_for
 from sungrow_modbus.block_test import ATTEMPTS, ROUNDS
 from sungrow_modbus.control_test import FORCED_EFFECT_W
-from sungrow_modbus.discovery import NetworkTooLarge, hosts_in
+from sungrow_modbus.discovery import NetworkTooLarge, async_identify_unit_247, hosts_in
 from sungrow_modbus.survey import async_read_6100, async_read_module, next_steps
 from sungrow_modbus.survey_document import (
     address_tail,
@@ -108,9 +109,11 @@ from sungrow_modbus.survey_document import (
 #: document of its own.
 #:
 #: 503 is the Logger's port, and one an iHomeManager may answer on at unit
-#: 247 -- it takes 502 where that is free and 503 where it is not, so
-#: whatever answers on either is asked for it. Neither has answered on any
-#: network surveyed.
+#: 247. Sungrow's V1.0.2 document gives it 502, 503 and 504, **one TCP
+#: connection each**, so a port somebody else holds looks closed; whatever
+#: answers on 502 or 503 is asked for it, and `--port 504` reaches the third.
+#: An iHomeManager is read (`ihomemanager_direct.py`) into a document of its
+#: own. Neither it nor a Logger has answered on any network surveyed.
 SWEEP_PORTS: tuple[tuple[int, str, bool], ...] = (
     (
         502,
@@ -329,6 +332,9 @@ _UNREADABLE: list[tuple[str, int]] = []
 #: reason: `_find` returns the inverters, which is what every caller expects.
 _WALLBOXES: list[wallbox_direct.Found] = []
 
+#: iHomeManagers found by `_find`, surveyed by `run` after the wallboxes.
+_MANAGERS: list[ihomemanager_direct.Found] = []
+
 
 async def _find(args, echo) -> list[Found]:
     """Find every device worth surveying, and ask each who it is.
@@ -341,6 +347,8 @@ async def _find(args, echo) -> list[Found]:
     unreadable.clear()
     wallboxes = _WALLBOXES
     wallboxes.clear()
+    managers = _MANAGERS
+    managers.clear()
     echo("-" * 72)
     echo("1  Finding devices")
     echo("-" * 72)
@@ -406,41 +414,62 @@ async def _find(args, echo) -> list[Found]:
             addresses = [(typed, args.port)]
 
     found = []
-    managers = []
+    unknown_247 = []
     echo("")
     for host, port in addresses:
         who = await probe.identify(host, port)
         echo(f"  {host}:{port}  {probe.described(who)}")
         if who.kind == "ihomemanager":
-            # Found, and deliberately **not** surveyed. Every block this tool
-            # reads is an inverter's; run them against unit 247 and each one
-            # refuses, producing a document that claims a reading of nothing.
-            # Saying so is worth more than an empty file.
-            managers.append((host, port))
+            # Read by its own map, not the inverter's: every inverter block
+            # refuses at unit 247. One device answering on 502 and 503 is
+            # read once, on the first port it answered.
+            if not any(manager.host == host for manager in managers):
+                managers.append(
+                    ihomemanager_direct.Found(host, port, who.model or "iHomeManager")
+                )
+            continue
+        if who.kind == "logger":
+            # A Logger with no inverter on units 1-5 of its endpoint. Read
+            # like an iHomeManager, by its own package.
+            if not any(manager.host == host for manager in managers):
+                managers.append(
+                    ihomemanager_direct.Found(host, port, who.model, "logger")
+                )
+            continue
+        if who.kind == "unit247":
+            # Something at unit 247 that is neither: its type code is the
+            # finding, and nothing here knows how to read it.
+            unknown_247.append(who.device_type_code)
             continue
         # The unit that answered, not the flag's default. Where `--unit` was
         # given explicitly it still wins, because somebody passing it knows
         # something the probe does not.
         found.append(Found(host, port, args.unit or who.unit or 1, who))
 
+    for code in sorted(set(unknown_247)):
+        echo("")
+        echo(f"  A device answered at unit 247 with type code 0x{code:04X}, which is")
+        echo("  neither an iHomeManager's (0x072A) nor a known Logger's. This")
+        echo("  survey cannot read it; its type code is worth reporting on the")
+        echo("  tracker as it is.")
     if managers:
         echo("")
-        echo("  An iHomeManager answered, and this survey cannot read it yet.")
-        echo("  It is the one Sungrow device in scope with an official register")
-        echo("  document and no measurement at any house, so a reading would be")
-        echo("  the first. Nothing here reads its blocks, and pointing the")
-        echo("  inverter survey at it would write a document full of refusals.")
-        echo("")
-        echo("  What would help, if you own this: say so on the tracker. The")
-        echo("  registers are known -- unit 247, input 8000 upward -- and what")
-        echo("  is missing is somebody's device to check them against.")
-        if not found:
+        echo("  An iHomeManager or Logger answered. Neither has been read at any")
+        echo("  house before, so its reading is the first: it is read after")
+        echo("  the inverters, into a document of its own.")
+        if not found and any(manager.kind == "logger" for manager in managers):
             echo("")
-            echo("  No inverter was found at these addresses, so there is")
-            echo("  nothing to survey. An iHomeManager does not forward its")
-            echo("  inverters: Sungrow's own note says it carries only system")
-            echo("  energy dispatch data, not the devices behind it. So the")
-            echo("  inverter is a separate address -- sweep for it, or pass it:")
+            echo("  No inverter answered on units 1-5. A Logger gives the inverters")
+            echo("  behind it unit ids of its own, listed on its web page, and this")
+            echo("  survey only looks at 1-5. Say on the tracker which unit ids your")
+            echo("  Logger lists, beside this document.")
+        elif not found:
+            echo("")
+            echo("  No inverter was found at these addresses. An iHomeManager")
+            echo("  does not forward its inverters: Sungrow's own note says it")
+            echo("  carries only system energy dispatch data, not the devices")
+            echo("  behind it. So the inverter is a separate address -- sweep")
+            echo("  for it, or pass it as well:")
             echo(f"    python {Path(__file__).name} 192.168.1.50")
 
     _report_shared_serials(found, echo)
@@ -1360,6 +1389,101 @@ async def _survey_wallbox(found: wallbox_direct.Found, args, echo) -> int:
     return reading.code
 
 
+async def _find_loggers_behind(results: list[Outcome], echo) -> None:
+    """Ask unit 247 behind every inverter its owner said a Logger fronts.
+
+    A Logger gives its inverters units of their own on its endpoint, so
+    `identify` stops at the inverter and never sees it. One read each, and
+    only where the owner answered `logger` for the transport.
+    """
+    for result in results:
+        if result.reported_transport != "logger":
+            continue
+        host, port = result.found.host, result.found.port
+        if any(manager.host == host for manager in _MANAGERS):
+            continue
+        who = await async_identify_unit_247(host, port)
+        if who is None or who.kind != "logger":
+            echo(f"  {host}:{port}  no Logger answered at unit 247")
+            continue
+        echo(f"  {host}:{port}  {probe.described(who)}, read after the inverter")
+        _MANAGERS.append(ihomemanager_direct.Found(host, port, who.model, "logger"))
+
+
+async def _survey_ihomemanager(found: ihomemanager_direct.Found, args, echo) -> int:
+    """Ask a wallbox's three questions, read the iHomeManager or Logger.
+
+    Address, reporter and comment, asked as for a wallbox -- or answered by
+    `--address`, `--reporter` and `--comment`. It has no battery, proxy or
+    second inverter of its own to ask about.
+    """
+    echo("-" * 72)
+    title = "Logger" if found.kind == "logger" else "iHomeManager"
+    echo(f"{title} at {found.host}:{found.port}, unit 247, {found.model}")
+    echo("-" * 72)
+    with contextlib.redirect_stdout(sys.stderr):
+        consent = args.address or probe._ask_address(found.host)
+        reporter = (
+            args.reporter
+            if args.reporter is not None
+            else probe._ask(
+                "Who is reporting this, to credit and to ask (blank for anonymous)",
+                "anonymous",
+            )
+        )
+        comment = (
+            args.comment
+            if args.comment is not None
+            else probe._ask("Anything else worth recording (blank to skip)")
+        )
+    tail = address_tail(found.host, consent == "two_octets")
+    # The port goes in: an iHomeManager answers on 502, 503 or 504, and a
+    # replay on the default would ask the wrong one.
+    asked = argparse.Namespace(
+        port=found.port,
+        timeout=args.timeout,
+        address=consent,
+        reporter=reporter,
+        comment=comment,
+    )
+    answers = argparse.Namespace(
+        timeout=args.timeout,
+        reporter=reporter,
+        comment=comment,
+        command_line=replay_command(asked),
+    )
+    _echo_replay(echo, replay_command(asked, host=found.host))
+    directory, _private = _workspace()
+    if found.kind == "logger":
+        echo("  reading its identity, then the rest of its 8000 block raw;")
+    else:
+        echo("  reading every documented register, then the gaps between them;")
+    echo("  this port takes one connection, so nothing else can use it meanwhile")
+    try:
+        reading = await ihomemanager_direct.async_survey(
+            found, answers, directory, echo, address_tail=tail
+        )
+    except (OSError, RuntimeError, probe.ModbusError) as error:
+        echo(f"  {found.host}:{found.port} failed: {error}")
+        return 1
+    section = reading.document[ihomemanager_direct.PACKAGES[found.kind].DOCUMENT]
+    echo("")
+    echo(f"  read  readings         {len(section['readings'])}")
+    answered = register_dump.answered(section["register_dump"])
+    echo(f"  read  raw addresses    {answered} answered")
+    if section["masked_text"]:
+        echo(
+            f"  masked {len(section['masked_text'])} run(s) of text outside the"
+            " documented strings, published only as stand-ins"
+        )
+    if reading.written is None:
+        echo(f"  Nothing was read from the {title} -- the link, not the device.")
+    else:
+        echo(f"  Wrote\n        {reading.written}\n          send this")
+    echo("")
+    return reading.code
+
+
 async def run(args) -> int:
     """Run the whole scan, and return the exit code."""
     _documents, private = _workspace()
@@ -1385,7 +1509,7 @@ async def run(args) -> int:
         except ValueError as error:
             echo(f"  {error}")
             return _finish(2, echo)
-        if not found and not _WALLBOXES:
+        if not found and not _WALLBOXES and not _MANAGERS:
             echo("  Nothing to scan.")
             return _finish(1, echo)
 
@@ -1401,20 +1525,24 @@ async def run(args) -> int:
                 raise
             except (OSError, RuntimeError) as error:
                 echo(f"  {entry.host}:{entry.port} failed: {error}")
-        wallbox_codes = []
+        device_codes = []
         for found_wallbox in _WALLBOXES:
-            if results or wallbox_codes:
+            if results or device_codes:
                 echo("  Pausing 10s before the next device.")
                 time.sleep(10)
-            wallbox_codes.append(await _survey_wallbox(found_wallbox, args, echo))
-        if not results and not wallbox_codes:
+            device_codes.append(await _survey_wallbox(found_wallbox, args, echo))
+        await _find_loggers_behind(results, echo)
+        for found_manager in _MANAGERS:
+            if results or device_codes:
+                echo("  Pausing 10s before the next device.")
+                time.sleep(10)
+            device_codes.append(await _survey_ihomemanager(found_manager, args, echo))
+        if not results and not device_codes:
             return _finish(1, echo)
 
         if results:
             _summary(results, transcript, echo)
-        return _finish(
-            _worst([result.code for result in results] + wallbox_codes), echo
-        )
+        return _finish(_worst([result.code for result in results] + device_codes), echo)
     finally:
         sys.stdout, sys.stderr = out._stream, errors._stream
         out.close()

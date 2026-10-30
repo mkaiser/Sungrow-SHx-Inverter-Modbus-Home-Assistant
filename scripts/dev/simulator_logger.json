@@ -1,0 +1,51 @@
+{
+ "_comment": "A hand-written Logger1000 for the dev loop, protocol addresses. Only 8000-8006 rest on two community maps; every other word is invented filler. 8021 carries the placeholder serial, so the masking runs end to end. Not generated, and not a measurement.",
+ "input": {
+  "7999": [
+   1808,
+   16727,
+   12288,
+   512,
+   256,
+   4,
+   1
+  ],
+  "8020": [
+   16689,
+   12851,
+   13365,
+   13879,
+   14393
+  ],
+  "8028": [
+   2310,
+   512,
+   2295,
+   498
+  ],
+  "8057": [
+   1000,
+   0,
+   500,
+   0
+  ],
+  "8069": [
+   8650,
+   0,
+   0,
+   0,
+   312,
+   0,
+   0,
+   0,
+   9812,
+   1
+  ]
+ },
+ "holding": {
+  "8000": [
+   207,
+   1000
+  ]
+ }
+}

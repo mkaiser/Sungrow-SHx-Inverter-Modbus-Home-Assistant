@@ -50,6 +50,14 @@ dongle says so above its readback table.
   `FORCED_EFFECT_W` (1250 W), clamped to the register's live bounds. It is
   never derived from other probes, which could walk it up to the pack's
   ceiling.
+- **The house's own battery limits bind before a forced command.** Where
+  `battery_max_charge_power` or `battery_max_discharge_power` (33047/33048)
+  holds less than the command, the forced check and the manufactured export
+  are commanded under it; below `EFFECT_FLOOR_W` the check is skipped with
+  the limit named (`ControlTest._under_cap`). At
+  [peter-sm](../entities/installation-peter-sm.md) both were 10 W, and the
+  run reported "nothing measurable happened" for an inverter obeying its
+  owner. A 0 is not a limit: a dongle answers 0 for what it does not forward.
 - **A pack's ceiling moves, so a clamp is normal near a full battery.** A
   manufactured discharge aims `FORCE_EXPORT_HEADROOM` below the ceiling and
   accepts a clamp within `CLAMP_TOLERANCE`. Decade verdicts are classified
@@ -66,6 +74,13 @@ dongle says so above its readback table.
   before and after readings disagree, the run reports `INCONCLUSIVE`, never a
   failure. It uses medians, not means: a cloud edge is a step, and an MPPT
   search is a spike.
+- **A stop is judged by its bracket, ahead of drift.** A check whose outcome
+  is that something ceases (the PV cut, the charge ceiling) is `CONFIRMED`
+  when the window during is under 200 W and both neighbours are at least
+  500 W (`STOP_BRACKET_W`), however far apart those neighbours are. At
+  [gerd](../entities/installation-gerd.md) the drift gate called two cuts to
+  0 W inconclusive (2066 -> 0 -> 2516 W, 3063 -> 0 -> 2201 W); a cloud dims
+  PV, it does not take it to 0 W and give it back.
 - **The charge-ceiling check is the only safe behavioural test of a
   state-of-charge limit.** Lowering `max_soc` under a charging battery
   **stops** a charge. Raising `min_soc` above the battery would buy

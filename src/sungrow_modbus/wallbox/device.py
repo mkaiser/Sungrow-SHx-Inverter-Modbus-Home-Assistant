@@ -132,18 +132,27 @@ class SungrowWallbox:
 
     @property
     def serial_hint(self) -> None:
-        """Nothing. A wallbox's serial is deliberately never read.
+        """Nothing: discovery identifies a wallbox by its model name.
 
-        It sits at input registers 21201-21206, just below the model name
-        this library probes, and it is a serial like any other, words
-        included. So the identity probe reads the *name* at 21216, the serial
-        is masked at the survey's publishing boundary, and nothing here reads
-        it at all.
-
-        The device is identified by the inverter's serial plus a suffix,
-        exactly as the battery is.
+        The serial sits at input registers 21201-21206, just below the name
+        the identity probe reads at 21216. `async_read_serial` reads it for
+        the device registry; a survey publishes only its stand-in.
         """
         return None
+
+    async def async_read_serial(self) -> str | None:
+        """Read the wallbox's own serial, or None where it does not read as text.
+
+        For the device registry, which shows it to the owner. Never for a
+        document: a survey masks these words and carries
+        `wallbox.serial_stand_in` instead. Raises on a failed read, because
+        only the caller can tell a refusal from a timeout.
+        """
+        from .discovery import _printable
+        from .document import SERIAL_COUNT, SERIAL_SPACE, SERIAL_START
+
+        words = await self.async_read_words(SERIAL_SPACE, SERIAL_START, SERIAL_COUNT)
+        return _printable(words)
 
     async def async_read_words(self, space: str, address: int, count: int) -> list[int]:
         """Read raw words at one address, for a survey's dump of this unit.

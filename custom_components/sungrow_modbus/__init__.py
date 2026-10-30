@@ -40,6 +40,7 @@ from sungrow_modbus import (
 )
 from sungrow_modbus.battery import probe_units
 from sungrow_modbus.battery.device import SungrowBattery
+from sungrow_modbus.inverter.capabilities import with_sungrow_battery
 from sungrow_modbus.wallbox import (
     UNITS as WALLBOX_UNITS,
     probe_units as wallbox_probe_units,
@@ -351,6 +352,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
         ", ".join(sorted(c.value for c in capabilities)) or "none",
     )
     battery, battery_has_cells = await _async_battery(hass, entry, inverter, intervals)
+    # Only now: the pack is on a unit of its own, which the inverter's
+    # registers cannot see, and an SBR is what lets a battery's write bounds
+    # come from its datasheet rather than from BMS current times voltage.
+    capabilities = with_sungrow_battery(
+        capabilities,
+        pack_found=battery is not None,
+        capacity_kwh=_capacity(inverter),
+    )
     wallbox = await _async_wallbox(hass, entry, inverter, intervals)
     inverter_device_id = _async_register_inverter(hass, entry, coordinators)
 
@@ -474,6 +483,15 @@ async def _async_check_control_test(
         else "",
     )
     async_raise(hass, entry, snapshot)
+
+
+def _capacity(inverter: SungrowInverter) -> float | None:
+    """Return register 5639's capacity in kWh, or None where it did not read."""
+    try:
+        value = inverter.field("battery_capacity_high_precision")
+    except (AttributeError, KeyError):
+        return None
+    return None if value is None else float(value)
 
 
 async def _async_battery(

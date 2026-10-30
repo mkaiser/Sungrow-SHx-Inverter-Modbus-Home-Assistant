@@ -176,6 +176,7 @@ class ControlTestRunner:
             options=self._options(),
             on_progress=on_progress,
             on_snapshot=keep,
+            sungrow_pack=self.entry.runtime_data.battery is not None,
         )
         _LOGGER.warning(
             "%s: running the control test. It writes to every control this "

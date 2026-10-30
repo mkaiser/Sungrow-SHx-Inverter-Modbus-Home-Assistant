@@ -33,6 +33,8 @@ from modbus_connection.tmodbus import ModbusConnection
 
 from .addresses import IHOMEMANAGER_PROTOCOL, IHOMEMANAGER_TYPE, field_address
 from .const import model_for
+from .ihomemanager.registers import TYPE_CODE as IHOMEMANAGER_TYPE_CODE
+from .logger.registers import MODELS as LOGGER_MODELS
 from .model import words_text
 
 #: Sweeping more than this many addresses at once is almost always a mistake —
@@ -139,6 +141,16 @@ async def async_mdns_services(seconds: float = 2.0) -> dict[str, dict[str, objec
 #: survey's `identify()` both sweep this list.
 IDENTIFY_UNITS: tuple[int, ...] = (1, 2, 3, 4, 5)
 IHOMEMANAGER_UNIT = 247
+
+#: The kind of an endpoint that answers a type code at input 8000 on unit
+#: 247 that is **not** the iHomeManager's 0x072A. A Sungrow Logger answers
+#: there too -- a type code at 8000, its device counts at 8005-8006, by a
+#: map posted in discussion #262 -- so this is most likely a Logger, and
+#: nothing here can yet say which one.
+UNIT_247_DEVICE = "unit247"
+
+#: The kind of a Logger at unit 247, named by its type code (`LOGGER_MODELS`).
+LOGGER = "logger"
 
 
 class Identity(NamedTuple):
@@ -309,6 +321,29 @@ async def async_identify(
         await connection.close()
 
 
+async def async_identify_unit_247(
+    host: str,
+    port: int = DEFAULT_PORT,
+    *,
+    timeout: float = 5,
+    connection_factory: Callable[..., Any] = ModbusConnection,
+) -> Identity | None:
+    """Ask unit 247 alone what it is: an iHomeManager, a Logger, or nothing.
+
+    For an endpoint already known to front an inverter, where `async_identify`
+    stops at the inverter. A Logger gives its inverters units of their own on
+    its endpoint and answers at 247 itself, so this is how it is found there.
+    One read where nothing answers.
+    """
+    connection = connection_factory(
+        ModbusTcpParams(host=host, port=port), timeout=timeout
+    )
+    try:
+        return await _identify_ihomemanager(connection)
+    finally:
+        await connection.close()
+
+
 async def _read_words(unit: Any, address: tuple[str, int, int]) -> list[int]:
     """Read one mapped field through the appropriate Modbus table."""
     space, register, count = address
@@ -319,7 +354,11 @@ async def _read_words(unit: Any, address: tuple[str, int, int]) -> list[int]:
 
 
 async def _identify_ihomemanager(connection: Any) -> Identity | None:
-    """Return an iHomeManager identity if its identifying input answers."""
+    """Return what answers a type code at input 8000 on unit 247, or None.
+
+    An iHomeManager only when the code is its documented 0x072A; any other
+    code is `UNIT_247_DEVICE`, so a Logger is never read as one.
+    """
     unit = connection.for_unit(IHOMEMANAGER_UNIT)
     try:
         space, start, count = IHOMEMANAGER_TYPE
@@ -329,6 +368,17 @@ async def _identify_ihomemanager(connection: Any) -> Identity | None:
     if not values or int(values[0]) in (0, 0xFFFF):
         return None
     code = int(values[0])
+    if (named := LOGGER_MODELS.get(code)) is not None:
+        return Identity(None, code, f"a {named}", None, IHOMEMANAGER_UNIT, LOGGER)
+    if code != IHOMEMANAGER_TYPE_CODE:
+        return Identity(
+            None,
+            code,
+            f"a device at unit {IHOMEMANAGER_UNIT}, type code 0x{code:04X}",
+            None,
+            IHOMEMANAGER_UNIT,
+            UNIT_247_DEVICE,
+        )
     try:
         space, start, count = IHOMEMANAGER_PROTOCOL
         raw = await _read_words(unit, (space, start, count))

@@ -46,7 +46,7 @@ from modbus_connection import ModbusError, ModbusExceptionError
 from .addresses import DIRECT_ONLY_PROBE
 from .battery import ceiling as battery_ceiling
 from .inverter import export_scale
-from .inverter.capabilities import Capability
+from .inverter.capabilities import Capability, with_sungrow_battery
 from .inverter.derived import RUNNING_STATES
 from .inverter.device import SungrowInverter
 from .model import SETTLES_NOTHING
@@ -1090,6 +1090,16 @@ SOC_CEILING_FLOOR = 55.0
 #: heading for zero, and a percentage of zero is not a tolerance.
 STOPPED_W = 200.0
 
+#: What both neighbours of a stop must clear for the stop to stand on its own.
+#:
+#: A stop is judged by its bracket, not by drift: a window at zero between two
+#: windows of real power is the setting's doing however far the sky moved the
+#: two apart. A cloud dims PV; it does not take 2 kW to 0 W ±0 and give it back
+#: on cue. At gerd's SH8.0RT-V112 (B001.V000.P022, 2026-10-30) two cuts read
+#: 2066 -> 0 -> 2516 W and 3063 -> 0 -> 2201 W, and the drift gate called both
+#: inconclusive. The same 500 W as `PV_CUT_MIN_W`, for the same reason.
+STOP_BRACKET_W = 500.0
+
 #: What the behavioural checks command, in watts, for the forced charge, the
 #: forced discharge and the export cap alike.
 #:
@@ -1196,8 +1206,13 @@ class ControlTest:
         clock: Clock | None = None,
         on_snapshot: Callable[[Snapshot], Awaitable[None]] | None = None,
         on_wait: Callable[[], None] | None = None,
+        sungrow_pack: bool = False,
     ) -> None:
         """Prepare a run. Nothing is read and nothing is written until `async_run`.
+
+        `sungrow_pack` says a Sungrow pack answered on its own unit, which the
+        inverter alone cannot see; with an SBR's capacity it grants
+        `Capability.SUNGROW_BATTERY`, as the integration's setup does.
 
         `on_wait` is called every `WAIT_TICK` seconds while the run waits for
         the inverter to stop, start or generate -- a heartbeat, carrying no
@@ -1210,6 +1225,7 @@ class ControlTest:
         self._on_wait = on_wait
         self._last_tick = 0.0
         self._on_snapshot = on_snapshot
+        self._sungrow_pack = sungrow_pack
         self.snapshot = Snapshot(taken_at=0.0)
         self.capabilities: frozenset[Capability] = frozenset()
         self.plan: tuple[Probe, ...] = ()
@@ -1557,7 +1573,11 @@ class ControlTest:
         """Read everything, resolve the plan, and persist the before-state."""
         self._step("reading the inverter")
         await self._refresh(*STATE_COMPONENTS, *SAMPLE_COMPONENTS)
-        self.capabilities = self.inverter.capabilities()
+        self.capabilities = with_sungrow_battery(
+            self.inverter.capabilities(),
+            pack_found=self._sungrow_pack,
+            capacity_kwh=self._value("battery_capacity_high_precision"),
+        )
         self.direct = await self._detect_transport()
         self.conditions["direct_connection"] = self.direct
         if self.direct is False:
@@ -2188,7 +2208,10 @@ class ControlTest:
 
         The order of the questions is the design, not an accident:
 
-        1. **Drift first.** Before and after are two readings of the same
+        0. **A bracketed stop**, ahead of drift: zero between two windows of
+           real power (`STOP_BRACKET_W`) is attributable whatever the sky did
+           between them.
+        1. **Then drift.** Before and after are two readings of the same
            undisturbed house, and when they disagree nothing else is worth
            asking -- the change cannot be attributed to the setting. The answer
            is `INCONCLUSIVE`, never a failure.
@@ -2214,7 +2237,14 @@ class ControlTest:
         assert before_mid is not None and during_mid is not None
         assert before_mad is not None and after_mad_ is not None
         assert drift is not None and delta is not None
-        del after_mid_
+
+        if (
+            expect_stop
+            and after_mid_ is not None
+            and min(abs(before_mid), abs(after_mid_)) >= STOP_BRACKET_W
+            and abs(during_mid) <= STOPPED_W
+        ):
+            return measured._replace(verdict=CONFIRMED)
 
         if drift > max(DRIFT_ABS_W, DRIFT_FRACTION * abs(before_mid)):
             self._worst(3)
@@ -2438,16 +2468,19 @@ class ControlTest:
                 "not be resolved, so nothing could be commanded"
             )
         else:
-            if soc is not None and float(soc) < SOC_CHARGE_CEILING:
+            charge = self._under_cap("battery_max_charge_power", power, "charge")
+            if charge is None:
+                pass
+            elif soc is not None and float(soc) < SOC_CHARGE_CEILING:
                 if not self._expired("effect"):
-                    self._step(f"forced charge at {power:g} W")
+                    self._step(f"forced charge at {charge:g} W")
                     results.append(
                         await self._bracket(
                             "forced charge",
                             self._charging,
                             "battery charge power",
-                            power,
-                            lambda: self._forced(FORCE_CHARGE, power),
+                            charge,
+                            lambda: self._forced(FORCE_CHARGE, charge),
                             self._unforce,
                             setpoint=True,
                         )
@@ -2458,16 +2491,21 @@ class ControlTest:
                     "to measure the setting rather than the pack's own taper"
                 )
             floor = float(minimum) if minimum is not None else 0.0
-            if soc is not None and float(soc) > floor + SOC_MARGIN:
+            discharge = self._under_cap(
+                "battery_max_discharge_power", power, "discharge"
+            )
+            if discharge is None:
+                pass
+            elif soc is not None and float(soc) > floor + SOC_MARGIN:
                 if not self._expired("effect"):
-                    self._step(f"forced discharge at {power:g} W")
+                    self._step(f"forced discharge at {discharge:g} W")
                     results.append(
                         await self._bracket(
                             "forced discharge",
                             self._discharging,
                             "battery discharge power",
-                            power,
-                            lambda: self._forced(FORCE_DISCHARGE, power),
+                            discharge,
+                            lambda: self._forced(FORCE_DISCHARGE, discharge),
                             self._unforce,
                             setpoint=True,
                         )
@@ -2485,6 +2523,40 @@ class ControlTest:
             self._worst(3)
             self._note("the behavioural phase ran out of time before every check ran")
         return results
+
+    def _under_cap(self, field: str, power: float, direction: str) -> float | None:
+        """Return the power a forced `direction` may command under the house's cap.
+
+        `battery_max_charge_power` and `battery_max_discharge_power` are the
+        house's own limits, and the inverter obeys them over a forced command:
+        a house that holds them at 10 W -- one does, to keep its battery idle
+        -- turns a 1250 W command into nothing, and "nothing measurable
+        happened" would then blame the inverter for obeying its owner. So the
+        command goes under the cap where that is still measurable, and the
+        check is skipped, with the cap named, where it is not. The cap is the
+        snapshot's value: leg B restored it before this phase. **A 0 is not a
+        cap**: a dongle answers 0 for what it does not forward (see
+        `capabilities.ZERO_MEANS_ABSENT`), so only a positive limit counts.
+        """
+        cap = self.snapshot.values.get(field)
+        if cap is None or float(cap) <= 0 or float(cap) >= power:
+            return power
+        cap = float(cap)
+        low, _high = self.snapshot.bounds.get(
+            "battery_forced_charge_discharge_power", [0.0, power]
+        )
+        if cap < max(EFFECT_FLOOR_W, float(low)):
+            self._note(
+                f"no forced {direction} check: the house holds {field} at "
+                f"{cap:g} W, so a forced {direction} could only show that limit"
+            )
+            self._worst(3)
+            return None
+        self._note(
+            f"forced {direction} commanded at {cap:g} W rather than {power:g} W, "
+            f"under the house's own {field}"
+        )
+        return cap
 
     async def _soc_ceiling_effect(self) -> list[EffectResult]:
         """Lower the charge ceiling under the battery and watch the charge stop.
@@ -2681,6 +2753,17 @@ class ControlTest:
             # asking for the last few per cent is asking to be clamped.
             usable = float(round(ceiling * (1.0 - FORCE_EXPORT_HEADROOM) / 10.0)) * 10
             want = min(want, usable)
+        cap = self.snapshot.values.get("battery_max_discharge_power")
+        if cap is not None and 0 < float(cap) < want:
+            # The house's own discharge limit binds before the pack's does.
+            want = float(cap)
+            if want - load < MIN_EXPORT_W:
+                self._note(
+                    "could not make the house export: the house holds "
+                    f"battery_max_discharge_power at {want:g} W against a "
+                    f"{load:.0f} W house"
+                )
+                return None
         if want - load < MIN_EXPORT_W:
             self._note(
                 f"could not make the house export: {want:.0f} W is the most this "

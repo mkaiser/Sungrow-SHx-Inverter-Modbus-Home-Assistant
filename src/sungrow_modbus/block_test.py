@@ -225,7 +225,8 @@ def _describe(err: ModbusError) -> tuple[str, str]:
 
     The library's taxonomy decides, never the message: an exception
     *response* is the device answering, while a lost connection, a timeout or
-    a desync is the link failing to carry the question. `AGENTS.md` says what
+    a desync is the link failing to carry the question.
+    `.wiki/wiki/concepts/failed-read-is-not-refusal.md` says what
     confusing the two costs.
     """
     if isinstance(err, ModbusExceptionError):

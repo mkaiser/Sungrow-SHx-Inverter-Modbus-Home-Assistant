@@ -46,4 +46,4 @@ Every SH-RT survey is listed in the [index](../index.md) under Sources.
 The ones with a control test:
 [mkaiser](installation-mkaiser.md), [gerd](installation-gerd.md),
 [bar12](installation-bar12.md), [fwitten](installation-fwitten.md),
-[anonymous](installation-anonymous.md) and [firetribe](installation-firetribe.md).
+[peter-sm](installation-peter-sm.md) and [firetribe](installation-firetribe.md).

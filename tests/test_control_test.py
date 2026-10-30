@@ -1999,3 +1999,102 @@ async def test_the_export_probe_lifts_the_mode_only_when_it_is_allowed(
     # And never for a field that is not the export limit.
     other = next(row for row in PROBES if row.field == "battery_min_soc")
     assert await allowed._lift_export_mode(other) is False
+
+
+async def _preflighted(unit: MockModbusUnit) -> ControlTest:
+    inverter = SungrowInverter(unit)
+    await inverter.async_update()
+    run = ControlTest(inverter, clock=FakeClock())
+    await run._preflight()
+    return run
+
+
+async def test_a_house_cap_below_the_command_is_commanded_under(
+    full_unit: MockModbusUnit,
+) -> None:
+    """800 W of allowed discharge: the check runs at 800 W, and says why."""
+    run = await _preflighted(full_unit)
+    run.snapshot.values["battery_max_discharge_power"] = 800.0
+
+    power = run._under_cap("battery_max_discharge_power", FORCED_EFFECT_W, "discharge")
+
+    assert power == 800.0
+    assert any("under the house's own" in note for note in run.unestablished)
+
+
+async def test_a_house_cap_too_low_to_measure_skips_the_check_and_names_it(
+    full_unit: MockModbusUnit,
+) -> None:
+    """Korsberg's 10 W: the inverter obeys its owner, and that is not a finding."""
+    run = await _preflighted(full_unit)
+    run.snapshot.values["battery_max_charge_power"] = 10.0
+
+    power = run._under_cap("battery_max_charge_power", FORCED_EFFECT_W, "charge")
+
+    assert power is None
+    assert any("battery_max_charge_power at 10 W" in note for note in run.unestablished)
+
+
+async def test_no_house_cap_leaves_the_command_alone(
+    full_unit: MockModbusUnit,
+) -> None:
+    run = await _preflighted(full_unit)
+    run.snapshot.values.pop("battery_max_charge_power", None)
+
+    assert (
+        run._under_cap("battery_max_charge_power", FORCED_EFFECT_W, "charge")
+        == FORCED_EFFECT_W
+    )
+
+
+async def test_capped_houses_get_no_forced_check_that_could_only_say_nothing(
+    full_unit: MockModbusUnit,
+) -> None:
+    """With both caps at 10 W, neither forced check is bracketed at all."""
+    run = await _preflighted(full_unit)
+    run.snapshot.values["battery_max_charge_power"] = 10.0
+    run.snapshot.values["battery_max_discharge_power"] = 10.0
+    run.conditions["soc_percent"] = 50.0
+    bracketed: list[str] = []
+
+    async def bracket(check, *_args, **_kwargs):
+        bracketed.append(check)
+
+    async def nothing():
+        return []
+
+    run._bracket = bracket  # type: ignore[method-assign]
+    run._soc_ceiling_effect = nothing  # type: ignore[method-assign]
+    run._export_effect = nothing  # type: ignore[method-assign]
+    run._pv_cut_effect = nothing  # type: ignore[method-assign]
+
+    await run._effects()
+
+    assert bracketed == []
+    assert run.code == 3
+
+
+async def test_a_zero_cap_is_not_a_cap(full_unit: MockModbusUnit) -> None:
+    """A dongle answers 0 for what it does not forward; that limits nothing."""
+    run = await _preflighted(full_unit)
+    run.snapshot.values["battery_max_charge_power"] = 0.0
+
+    assert (
+        run._under_cap("battery_max_charge_power", FORCED_EFFECT_W, "charge")
+        == FORCED_EFFECT_W
+    )
+
+
+async def test_a_house_discharge_cap_limits_the_manufactured_export(
+    full_unit: MockModbusUnit,
+) -> None:
+    """The export check discharges to make an export; the house's cap binds it."""
+    full_unit.input[13022] = 800
+    run = await _preflighted(full_unit)
+    run.snapshot.values["battery_max_discharge_power"] = 10.0
+    sample = Sample(at=0.0, pv=0.0, battery=0.0, export=0.0, load=400.0, soc=80.0)
+
+    assert await run._force_export(sample) is None
+    assert any(
+        "battery_max_discharge_power at 10 W" in note for note in run.unestablished
+    )

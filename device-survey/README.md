@@ -7,13 +7,15 @@ real machine is worth more than an inference from the YAML's comments, and
 these documents are the evidence the capability model is built from.
 
 Inverter documents are in [`inverter/`](inverter/), wallbox documents in
-[`wallbox/`](wallbox/). `doc/compatibility.md` is generated from them.
+[`wallbox/`](wallbox/), and iHomeManager and Logger documents go in
+`ihomemanager/` and `logger/` once there is one. `doc/compatibility.md` is generated from the inverter
+documents.
 
 **[devices-wanted.md](devices-wanted.md) says which devices are missing**
 and what each one would settle, in the order it would help. If you have
 hardware, start there.
 
-## Contributing one
+## Contributing your device survey
 
 If you have a model that is not here — especially an RS, an MG, a T-series, or
 anything with a wallbox, an SBR battery or a Logger — a report from it is the
@@ -31,7 +33,7 @@ scripts/survey.sh            # Linux, macOS
 scripts\survey.cmd           # Windows, or double-click it
 ```
 
-or `scripts/survey.sh 192.168.1.50` if you know the address. The launcher
+or `scripts/survey.sh 192.168.1.50` if you know the device address. The launcher
 fetches Python and the `sungrow-modbus` library through
 [uv](https://docs.astral.sh/uv/), which keeps them in a cache of its own and
 changes nothing else; if uv is not there it asks before installing it, and
@@ -170,6 +172,7 @@ the reading but not the block read test.
 | `python/probe.py` | the individual steps — `mdns`, `sweep`, `units`, `capabilities`, `dump` |
 | `python/blocks.py` | the block read test from a terminal: which grouped read a device fails. `--client raw` uses the library's strict raw socket, which names the count a padded frame needs |
 | `python/wallbox_direct.py` | finds and reads a wallbox at its own address, over TLS on port 516 |
+| `python/ihomemanager_direct.py` | reads an iHomeManager or a Logger at unit 247: the iHomeManager's documented registers and the gaps between them, or a Logger's identity and the rest of its 8000 block raw; any text outside a documented string is published only as a stand-in |
 
 `probe.py capabilities <host>` is the reading on its own, for a maintainer
 who wants only that. It writes the document to the current directory, or to
@@ -205,6 +208,22 @@ The base package discovers devices over Modbus. mDNS needs an optional extra,
 `pip install sungrow-modbus[discovery]`; without it `probe.py mdns` gives the
 install command and the network sweep still works.
 
+### The header is the whole install
+
+Module-level imports in `scripts/` are the standard library, the sibling
+modules, `sungrow_modbus` and `modbus_connection`, and the PEP 723 header must
+declare every one -- `[tmodbus]` included, since the library depends on bare
+`modbus-connection`. `tests/test_survey_dependencies.py` reads the imports and
+the header and holds them to each other.
+
+The survey can use only what the pinned wheel has. The pin is the version
+`pyproject.toml` declares, moved by `scripts/release/sync_version.py`, so
+between releases the PyPI wheel lags the tree.
+`scripts/release/check_pinned_library.py` reads the survey's and the control
+test's imports beside the integration's, so `--wheel` gates a release and the
+no-argument form says what PyPI lacks. The control test has no launcher of
+its own: the survey imports it, and `survey.sh control ...` starts it.
+
 ### Trying a library that is not released
 
 The launchers run on the version pinned in the survey's header, fetched from
@@ -222,8 +241,10 @@ SUNGROW_MODBUS_LIBRARY=/path/to/sungrow_modbus-X-py3-none-any.whl scripts/survey
 
 On Windows, `set SUNGROW_MODBUS_LIBRARY=C:\path\to\the.whl` before
 `survey.cmd`, so a tester can be sent a wheel (`make wheel` prints its path).
-It needs uv. The launcher and the survey's preamble both say the library is
-`NOT a release`, and the transcript keeps that line.
+It needs uv. The tree and PyPI share a version number, so the survey's
+preamble tells them apart by `direct_url.json`: the launcher and the preamble
+both say the library is `NOT a release`, and the transcript keeps that line.
+Unset, the launchers behave exactly as a contributor's.
 
 ## The document
 

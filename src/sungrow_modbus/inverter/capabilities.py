@@ -24,6 +24,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from enum import StrEnum
 
+from ..battery.power import model_for_capacity
 from ..const import model_for
 
 
@@ -56,8 +57,12 @@ class Capability(StrEnum):
     The per-module registers at 10740-10788 are a Sungrow battery's own Modbus
     unit. A Pylontech answers the generic block and nothing there.
 
-    To do: nothing grants this yet. It has no entry in `PROBES`, so `resolve`
-    never returns it and every check for it is false.
+    Not probed by `resolve`: it needs a second unit. `with_sungrow_battery`
+    grants it once a pack has answered on its own unit **and** register 5639's
+    capacity names an **SBR**. An SBH is not granted yet: every SBH surveyed
+    was read through a WiNet-S, so its own-unit reading on a direct link is
+    unmeasured. Granting it moves write bounds, from BMS current times voltage
+    to the datasheet's conservative power (`battery.ceiling`).
     """
 
     FIRMWARE_VERSIONS = "firmware_versions"
@@ -423,7 +428,12 @@ CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
     # 1213 W before, 0 W during, 1199 W after. A trace showed the ramp: 0 W
     # 20 s after 0xAA, back 8 s after 0x55.
     #   sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan.json  # noqa: E501
-    Capability.PV_GENERATION_CUT_CONTROL: frozenset({"SAPPHIRE-H_B001.V000.P023"}),
+    # gerd's SH8.0RT-V112 over its own LAN port, 2026-10-30: 2938 W before,
+    # 0 W during, 1913 W after, judged by its bracket (`STOP_BRACKET_W`).
+    #   sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan.json  # noqa: E501
+    Capability.PV_GENERATION_CUT_CONTROL: frozenset(
+        {"SAPPHIRE-H_B001.V000.P022", "SAPPHIRE-H_B001.V000.P023"}
+    ),
 }
 
 #: The read a confirmed write also needs, so a firmware entry can never grant
@@ -625,3 +635,25 @@ def resolve(
         if CONTROL_REQUIRES.get(capability) in resolved:
             resolved.add(capability)
     return frozenset(resolved)
+
+
+def with_sungrow_battery(
+    capabilities: frozenset[Capability],
+    *,
+    pack_found: bool,
+    capacity_kwh: float | None,
+) -> frozenset[Capability]:
+    """Return `capabilities`, with `SUNGROW_BATTERY` where an SBR is proven.
+
+    Two signals, both required: a pack answered on its own unit
+    (`battery.probe_units`), and the inverter's capacity register names an
+    SBR model. Either alone is not enough -- a capacity alone fits a
+    third-party pack of the same size, and a pack alone may be an SBH, which
+    is not granted until one is measured on a direct link.
+    """
+    if not pack_found:
+        return capabilities
+    model = model_for_capacity(capacity_kwh)
+    if model is None or not model.name.startswith("SBR"):
+        return capabilities
+    return capabilities | {Capability.SUNGROW_BATTERY}

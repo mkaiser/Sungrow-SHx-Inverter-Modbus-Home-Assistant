@@ -1,139 +1,77 @@
 # Devices wanted
 
-**Hand-written, unlike [compatibility.md](../compatibility.md).** That file is
-generated and answers *"what has been measured?"* — every model the library
-knows, with a row saying tested or untested. This one answers the different
-question: **which measurements are missing, and what would each one settle?**
+**Hand-written, unlike [compatibility.md](../doc/compatibility.md)**, which
+is generated and says what has been measured. This list says **which
+measurements are still missing, and what each one would settle**. Sungrow
+publishes no release notes and its register specification is wrong in both
+directions, so what a device can do is measured, not read.
 
-The reason there is a wanted list at all is that Sungrow publishes no release
-notes and the register specification has been proven unreliable in both
-directions. It says register 13018 exists from V1.1.10; one measured house
-answers it and another does not. It says nothing about inputs 2612 and 2628
-refusing through a WiNet-S, which they do at every house measured so far. And
-it does not mention that a dongle answers **0** where the inverter answers the
-specification's "unavailable" — which invented ten entities at one house
-before `ZERO_MEANS_ABSENT` caught it.
-
-So capability is measured rather than read. One command does it:
+**How to send one:** run the survey and attach the document it writes to the
+survey issue on GitHub.
 
 ```bash
 device-survey/scripts/survey.sh    # Windows: device-survey\scripts\survey.cmd
 ```
 
-It reads, takes 5–40 minutes depending on the link, and produces two files:
-one to send, and one to keep because it holds the real serial and address.
-Its last question offers the control test, which writes; the default is no. See [Contributing one](README.md#contributing-one).
+It reads, takes 5–40 minutes, and writes two files: one to send, and one to
+keep because it holds the real serial and address. Its last question offers
+the control test, which writes; the default is no. See
+[Contributing one](README.md#contributing-one).
+
+## Most wanted
+
+In the order it would help. Each line names what one survey settles;
+details are under [Why each one](#why-each-one).
+
+| # | Device or situation | What one survey settles |
+| --- | --- | --- |
+| 1 | **Any single-phase inverter** (RS, K or MG family) | Nothing single-phase has ever been read; 18 of the 42 models are. Every capability the RS family is given today is an inference |
+| 2 | **An iHomeManager** (unit 247, port 502, 503 or 504) | The first reading of the device at all. Its Modbus TCP must be opened in the app first, see [item 3](#3-an-ihomemanager--port-502-503-or-504-unit-247) |
+| 3 | **An SH-T (SH15T, SH20T…) on its own LAN port**, with the control test, in daylight | Every T so far was read through a WiNet-S. Settles the export limit's write scale (register 13074) on P071, the PV cut on P071, and an SBH pack on a direct link |
+| 4 | **A Sungrow Logger1000, 3000 or 4000** | The first reading. Answer *a Logger* to the transport question so the survey also reads the Logger itself |
+| 5 | **A wallbox other than the one already read**, an AC011E-01 above all | Which of its registers identify a unit and which are a model constant, and a scale another source reads differently |
+| 6 | **A charging car**, at any house with a Sungrow wallbox | What input 21313 does over a session, and whether 21308/21310 are signed. Two runs a few minutes apart while charging |
+| 7 | **Version 1 between `.95.03` and `.95.12`, or a `.95.14` that is not 10 kW** | Where the export limit's write scale changes ([#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)) |
+| 8 | **An SBR other than SBR096, SBR128 or SBR160** | Battery sizes nobody has read, and the module-position encoding beyond three modules |
+| 9 | **A second master/slave cluster** | Whether a slave's address 2 is a rule or one house's convention |
+| 10 | **Any inverter behind a Modbus proxy** | What a proxy does to the readings; no document has one |
+| — | **A WiNet-S certificate hash**, five seconds, no survey | Whether every WiNet-S shares one TLS certificate, see [item 3b](#3b-a-winet-s-certificate-hash-from-anywhere) |
+
+## Not needed any more
+
+Already read several times over. Please send one of these **only** if it
+differs from what is in [`inverter/`](inverter/) in one of the ways below:
+
+- an **SH10RT, SH10RT-20 or SH10RT-V112 on P023**, on either path (five
+  houses);
+- an **SH8.0RT-V112 on P022** or an **SH6.0RT-V112 on P023**;
+- an **SBR096** behind any of those.
+
+It is still worth sending when it brings **a firmware update** since your
+last survey (that is how a silent change is noticed), **the first control
+test** for its model and firmware, **both paths** of one machine minutes
+apart, or a **battery size** nobody has read.
 
 ## Where the coverage is today
 
-Thirteen documents, six houses, and the honest summary is that **one axis is
-almost entirely unmeasured**:
+26 documents from 10 houses: 11 inverters, 12 of them with a control test,
+and one wallbox read at its own address.
 
 | Axis | Covered | Missing |
 | --- | --- | --- |
-| Inverter model | **6 of 42** — SH10RT, SH10RT-20, SH10RT-V112, SH8.0RT-V112, SH15T, SH20T | every model outside RT and T, and 12 of the 16 RTs |
-| Product family | **two** — RT and T | RS, MG, RL, K, CX |
+| Inverter model | **7 of 42**: SH10RT, SH10RT-20, SH6.0RT-V112, SH8.0RT-V112, SH10RT-V112, SH15T, SH20T | every model outside RT and T |
+| Product family | RT and T | RS, MG, RL, K, CX |
 | Phase / output type | three phase 3P4L only | **single phase**, and three phase 3P3L |
-| ARM and DSP | **two strings each**, and both track the *platform* — `ARM_SAPPHIRE-H_V11_V01_B` on every RT, `ARM_PEARL-H_V11_V01_A` on the T | probably nothing: see below, these look like *hardware* identifiers, and the SH20T is what that now rests on |
-| **Version 1 / 2** (the updatable firmware) | **five** — `SAPPHIRE-H_01011.95.03`, `.95.12`, `.95.13`, `.95.14` and `PEARL-H_01011.01.45`, and reads on **13 of 13** | a `.95.14` machine that is not 10 kW — see [#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763) and item 2. The PEARL value is not one more point on that series: see below |
-| Inverter firmware | **four** — `B001.V000.P020`, `P022`, `P023` and `B000.V000.P071`; reads on **9 of 13**, fwitten's four refuse the block | a fifth |
-| Communication module firmware | **three** — WiNet-S `P040` and `P043`, and WiNet-S2 `V300.001.03.P032` (two houses) | a second WiNet-S2 *firmware*, and a Logger |
-| Battery BCU firmware | **three** — SBR `22011.01.27` and `.30`, SBH `SBHBCU-S_22011.04.11` (two packs) | a second SBH firmware |
-| Transport | direct LAN, WiNet-S wired, WiNet-S WiFi, WiNet-S2 wired, WiNet-S2 WiFi | a Logger, a Modbus proxy in the path, a **T on its own LAN port** |
-| Battery | **3 of 14** — SBR096, SBH200 and SBH400 | every other SBR and SBH size, third-party packs other than one Pylontech |
-| Wallbox | 1 — AC22E-01 | AC011E-01, AC007-00 |
-| iHomeManager | **none**, but there is now a **lead** — see item 3 | any |
-| Sungrow Logger | **none** | any |
+| Inverter firmware | `B001.V000.P020`, `P022`, `P023`, `B000.V000.P071` | a fifth |
+| Version 1 | `SAPPHIRE-H_01011.95.03`, `.95.12`, `.95.13`, `.95.14`, `PEARL-H_01011.01.45` | see item 7 above |
+| Communication module | WiNet-S `P040`, `P043`, `P044`, `P045`; WiNet-S2 `P032`, `P033` | a Logger |
+| Battery | SBR096, SBR128, SBR160, SBH200, SBH400, one Pylontech | the other SBR and SBH sizes, other third-party packs |
+| Transport | direct LAN, WiNet-S and WiNet-S2, wired and WiFi | a Logger, a Modbus proxy, **a T on its own LAN port** |
+| Wallbox | AC22E-01 | AC011E-01, AC007-00 |
+| iHomeManager | none | any |
+| Sungrow Logger | none | any |
 
-**What the SH20T of
-[#772](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/772)
-bought, in one line each.** It is the first reading outside the RT family and
-it moved five of those rows at once, which is what a genuinely new axis looks
-like:
-
-- the **T family is measured**, and register 13018 answers there — the first
-  device anywhere in this directory to confirm the specification's *"only SHT
-  are supported"* rather than refuse it;
-- **holding 33148 and 33149 answer 0xFFFF**, so `battery_start_power` is
-  absent on a T where both RT houses have it. That is now in `ABSENT_IN`;
-- an **SBH answers the SBR's registers**, which item 5 below had listed as
-  assumed and never checked. Voltage, state of charge, health and temperature
-  all agree with what the inverter reports about the same pack;
-- the ARM and DSP strings moved for the first time, and they moved with the
-  **hardware platform** (`PEARL-H` against `SAPPHIRE-H`), which is the
-  clearest evidence yet for the reading below that they identify hardware;
-- `sungrow_protocol_version` moved too, from `0x01001100` to `0x01010700` —
-  it had been identical on all nine previous documents.
-
-**The firmware rows, read correctly.** A document carries **five** firmware
-fields, and `firmware.arm` alone suggests nothing varies. Three of the five
-do vary, and the inverter's version is in every filename that read it —
-`b001v000p020` beside `b001v000p022`.
-
-So the variation is measured, and it has already paid for itself. The
-2612/2628 refusal through a WiNet-S is what it looks like when a rule
-survives a firmware change: it holds across **three module firmwares** and
-**three inverter firmwares**, which is why it is written down as what a
-dongle does rather than what one machine does. A finding that appeared on
-only one firmware would deserve much less confidence, and there would be no
-way to know without this.
-
-The SH20T strengthened it in the way that counts, by failing to break it
-somewhere new. That machine is behind a **WiNet-S2** — module firmware
-`WINET-SV300.001.03.P032`, a V300 string where every previous reading is
-V200 — in front of a **PEARL-H** inverter rather than a SAPPHIRE-H one. Both
-blocks refuse there too. So this is not a WiNet-S quirk that a successor
-fixed, and not something about one inverter platform.
-
-**ARM and DSP are not worth asking for.** The discussion on
-[#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)
-gives the likely reason they hold still: those two identify **hardware**, and
-do not change when the inverter is updated. Which makes them the *least*
-likely field to vary, and identical readings evidence of nothing.
-
-**The SH20T is the test of that reading, and it passes.** Those two strings
-have now varied exactly once, and they varied when the *hardware* did:
-`ARM_PEARL-H_V11_V01_A` and `MDSP_PEARL-H_V11_V01_A` on the T, against
-`ARM_SAPPHIRE-H_V11_V01_B` on every RT reading, across four houses and
-three inverter firmwares. A field that holds still through three firmware
-versions and moves the moment the platform changes is a platform identifier.
-So the row above is *covered* rather than satisfied: a second PEARL-H reading
-on a different firmware would still be worth having, because it is what would
-show the string staying put where the theory says it must.
-
-The field that does track updatable firmware is **Version 1** (and Version 2
-beside it), and it was in the readings all along:
-
-| House | Version 1 |
-| --- | --- |
-| fwitten SH10RT-V112 | `SAPPHIRE-H_01011.95.03` |
-| bar12 SH10RT-20 (P020), mkaiser SH10RT | `SAPPHIRE-H_01011.95.12` |
-| bar12 SH10RT-20 after its update to P023 | `SAPPHIRE-H_01011.95.14` |
-| gerd SH8.0RT-V112 | `SAPPHIRE-H_01011.95.13` |
-| ra1k_0 SH20T, jm493 SH15T | `PEARL-H_01011.01.45` |
-
-Five values across six houses, on 13 of 13 documents — better coverage than
-`inverter_firmware_version`, which four houses' worth of readings refuse.
-That is the field to compare two machines by, and the one worth naming in a
-report.
-
-**The PEARL-H row is not one more point on the same scale, and treating it as
-one would be a real mistake.** `PEARL-H_01011.01.45` carries its platform in
-the string, and its numbering restarts with it: `.01.45` is not "older than"
-`.95.03`, because the two series are not the same series. Anything that ever
-gates behaviour on this field — which is the shape
-[#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)
-would need — has to match the **whole** string, platform included, and never
-compare the numeric tail across platforms. Sorting these four as versions
-puts the T in the middle of the RT range, where nothing it says applies.
-
-One gap worth naming: **fwitten's inverter firmware is unknown**, not absent.
-That house refuses input 13249, which is the block reporting it, so its four
-documents carry no inverter version at all and their filenames have no
-firmware word. A reading of those registers from a machine in that family
-would fill in a third of the table.
-
-## Wanted, in the order it would help
+## Why each one
 
 ### 1. Any single-phase inverter — RS, K or MG family
 
@@ -202,7 +140,7 @@ new model here — more, in fact, because the model is then held constant and
 the firmware is the only thing that moved. That is the comparison that says
 whether a capability belongs to the hardware or to the version.
 
-### 3. An iHomeManager — port **502 or 503**, unit **247**
+### 3. An iHomeManager — port **502, 503 or 504**, unit **247**
 
 A device with a documented register map and **no measurement
 whatsoever**. A sweep of one house's whole /24 on port 503 found nothing at
@@ -216,13 +154,18 @@ a Home Assistant diagnostics download, so it describes the **one endpoint**
 the integration is configured against and nothing else on the network. An
 iHomeManager is a separate endpoint and is not reachable through an inverter.
 
-So what is wanted from that house specifically is a `sungrow_survey.py` run,
-or just a sweep. It would settle both item 3 and item 6 at once.
+So what is wanted from that house specifically is a `sungrow_survey.py` run
+that reaches both the iHomeManager and the inverter's **own LAN port**. The
+first is item 3; the second settles the 5741-5746 question below, which a
+WiNet-S cannot, since every WiNet-S refuses those registers anyway. Their
+AC22E-01 is a second wallbox, which item 6 asks for.
 
-**Not port 503 alone.** Sungrow's setting is "Modbus TCP on the iHM", which
-lands on 502 on some units and on 503 only where 502 is already busy. Four
-sweeps have found nothing on 503; that is weaker evidence than it looks,
-because none of them would have recognised one sitting on 502.
+**Not port 503 alone.** Sungrow's V1.0.2 document gives it 502, 503 and
+504, and **each port takes one TCP connection**: a port another client holds
+looks closed. Four sweeps have found nothing on 503; that is weaker evidence
+than it looks, because none of them would have recognised one sitting on
+502. The survey sweeps 502 and 503; pass `--port 504` with the address for
+the third.
 
 It also changes what the *inverter* answers, which makes it two findings in
 one: issues [#647](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/647)
@@ -230,10 +173,16 @@ and [#651](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant
 report registers 5741-5746 going silent when one is installed. Nobody has
 confirmed that against a machine.
 
-If you have one, the survey finds it: its sweep looks on 502 and 503 and asks
-whatever answers for unit 247. It says what it found and does not survey it
-— nothing reads an iHomeManager's blocks yet — so the transcript is the
-reading to send.
+**Its Modbus TCP is off until you open it**, in the iSolarCloud app:
+*iHomeManager settings → Forwarding channel settings*, open port 502, 503 or
+504 (Sungrow's *iHomeManager Modbus Transfer User Guide*, 2025). Leave the
+optional SSL off: the survey speaks plain Modbus TCP to it.
+
+If you have one, the survey finds it and reads it: every register Sungrow
+documents, then the gaps between them, into a document of its own. The
+iHomeManager documents **no serial number**, so any text the survey finds in
+a gap is treated as one: masked, and published only as a stand-in. Send the
+document; the transcript stays with you.
 
 **Port 516 is not an iHomeManager's.** Reported in [discussion
 #571](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions/571)
@@ -248,10 +197,11 @@ refuse with exception 0x02 over TLS exactly as on 502. The survey sweeps it,
 reads a wallbox there, and reports a dongle's without reading it, because a
 user told their dongle has nothing on 516 would be told something false.
 
-So an iHomeManager is still **entirely unmeasured**. Its register map is in
-[cross_reference_modbus_manager.md](../doc/cross_reference_modbus_manager.md),
-53 registers, MIT-licensed; what is missing is a device to check them
-against.
+So an iHomeManager is still **entirely unmeasured**. The survey reads it from
+Sungrow's V1.0.2 document (`sungrow_modbus.ihomemanager`), compared with an
+MIT template in
+[cross_reference_modbus_manager.md](../doc/cross_reference_modbus_manager.md);
+what is missing is a device to check it against.
 
 ### 3b. A WiNet-S certificate hash, from anywhere
 
@@ -285,10 +235,18 @@ question.
 
 ### 4. A Sungrow Logger1000 / 3000 / 4000
 
-Also on port 503, also documented — *Logger Communication Protocol AW0
+Also at unit 247, also documented — *Logger Communication Protocol AW0
 1.0.2.9* — and also entirely unmeasured. It fronts a whole installation,
 which is the shape the one-config-entry-per-endpoint model was designed for,
 so a survey would test that design rather than only add a device.
+
+The survey reads one: it names the model by its type code (0x0705
+Logger3000, 0x0710 Logger1000, 0x0718 Logger4000), decodes the identity
+block and publishes the rest of the 8000 block raw, with any text masked.
+A Logger gives the inverters behind it unit ids of their own on its
+endpoint, so the survey stops at the first inverter; **answer "a
+Logger1000/3000" to the transport question** and it then reads the Logger at
+unit 247 too. Say on the tracker which unit ids your Logger lists.
 
 ### 5. An SBH pack **on a direct connection**, or any SBR that is not 9.6 kWh
 
@@ -339,7 +297,7 @@ Until one does, the encoding is proved for one pack size.
 ### 6. A wallbox that is not an AC22E-01
 
 Sungrow publishes **no register document** for these; everything in
-[wallbox_registers.md](../wallbox_registers.md) is what four independent
+[wallbox_registers.md](../doc/wallbox_registers.md) is what four independent
 sources agree on, and one register, 21313, is nameable by nobody. The library
 knows two other device type codes — `0x20DA` for the AC011E-01 and `0x20ED`
 for the AC007-00 — from other projects rather than from a reading.

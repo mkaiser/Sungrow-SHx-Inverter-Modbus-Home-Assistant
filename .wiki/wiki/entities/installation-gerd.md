@@ -15,6 +15,8 @@ The only wallbox measured.
 
 ## Surveys
 
+- [The wallbox beside Sungrow's portal](../sources/gerd-wallbox-isolarcloud-2026-10-30-summary.md), 2026-10-30
+
 - [SH8.0RT-V112, B001.V000.P022, gerd, the inverter's own LAN port](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-summary.md)
 - [SH8.0RT-V112, B001.V000.P022, gerd, a WiNet-S on WiFi](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-summary.md)
 - [AC22E-01 wallbox, gerd, TLS](../sources/ac22e01-gerd-anon-41346964423-wallbox-tls-summary.md)

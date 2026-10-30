@@ -1,0 +1,37 @@
+# Writes the survey wanted list into the one pinned survey issue.
+# A GitHub issue cannot embed a repository file, so the file is copied in
+# whenever it changes. Set the repository variable SURVEY_ISSUE to the
+# issue's number; until then this does nothing.
+name: Survey issue
+
+on:
+  push:
+    branches: [proper-ha-integration]
+    paths:
+      - "device-survey/devices-wanted.md"
+      - "scripts/helpers/survey_issue_body.py"
+      - ".github/workflows/survey-issue.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  update:
+    if: vars.SURVEY_ISSUE != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Build the body
+        run: >
+          python scripts/helpers/survey_issue_body.py
+          --repo "${{ github.repository }}" --ref "${{ github.ref_name }}"
+          > body.md
+      - name: Write it into the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue edit "${{ vars.SURVEY_ISSUE }}" --body-file body.md

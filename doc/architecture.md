@@ -82,9 +82,19 @@ a noun share a base.** `SungrowSubDeviceCoordinator` holds what the SBR pack
 and the wallbox have in common -- reached through the inverter's connection,
 hung off it with `via_device`, identified by *its* serial because neither
 reports a usable one, and turning a `ModbusError` into an `UpdateFailed` that
-names which device failed. The two subclasses are left holding only what
-genuinely differs: how a model name is found, and how often each block is worth
-reading.
+names which device failed. An SBR reports no serial at all; a wallbox's own
+(input 21201-21206) is shown as its `serial_number` but never used as the
+identifier, and published only as a stand-in. The two subclasses are left
+holding only what genuinely differs: how a model name is found, and how often
+each block is worth reading.
+
+**`PARALLEL_UPDATES` is 1 on the write platforms, and 0 everywhere else.**
+Everything on one endpoint is serialized behind one connection, so two writes
+issued at once queue, and the second one's timeout starts while it is still
+waiting. And these registers **interlock**: `battery_min_soc` and
+`battery_max_soc` are refused if they cross, so their order matters. `sensor`
+and `binary_sensor` are 0 because the coordinator polls; `button` is 0
+because a press schedules the run and the runner refuses a second.
 
 **And `async_setup_entry` reads as a list of steps.** Connect and identify
 (`_async_connect`); build and first-refresh the tier coordinators

@@ -45,7 +45,7 @@ Register 13074 multiplies a written word by ten: `write_units_per_count` = **10*
 
 ## Control test
 
-Outcome **3**: ran, but checks were skipped or inconclusive. See [the control test](../concepts/control-test.md).
+Run 2026-10-30 in daylight, over the cable, with the PV cut, feed-in limitation and the restart allowed. Outcome **0**: every planned check ran and every readback matched. See [the control test](../concepts/control-test.md).
 
 | Field | Register | Verdict |
 | --- | --- | --- |
@@ -59,6 +59,9 @@ Outcome **3**: ran, but checks were skipped or inconclusive. See [the control te
 | `battery_charging_start_power` | 33149 | matched |
 | `battery_discharging_start_power` | 33150 | matched |
 
-- Behaviour, forced discharge: **could not tell** -- something changed, but not to the value that was commanded.
-- Restart: stopped after 2 s, running after 369 s; the inverter did as it was told.
+- Behaviour, forced charge: **the inverter did as it was told** (1250 W commanded, 1250 W measured).
+- Behaviour, forced discharge: **the inverter did as it was told** (1250 W commanded, 1249 W measured).
+- Behaviour, PV generation cut: **the inverter did as it was told** -- DC power 2938 W, 0 W, 1913 W, judged by its bracket. See [register 31211](../entities/register-31211.md).
+- Not established: the charge ceiling (the battery, at 52 %, was too low to put a ceiling under it, since `battery_max_soc` cannot go below 50 %) and the export limit (the battery could not make the house export).
+- Restart: stopped after 2 s, running after 181 s; the inverter did as it was told.
 - Restore: every register back and read back.

@@ -327,3 +327,29 @@ async def test_a_survey_reads_the_module_block_the_poll_leaves_alone(
     assert values["max_cell_voltage_module_1"] == pytest.approx(3.3507)
     assert values["max_cell_module"] == 1
     assert section["readings"]["components_that_did_not_answer"] == []
+
+
+async def test_an_sbr_on_its_own_unit_grants_the_sungrow_battery_capability(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The pack answers and 5639 names an SBR.
+
+    Its write bounds now come from the datasheet rather than from BMS current
+    times voltage.
+    """
+    from sungrow_modbus import Capability
+
+    entry = await _setup(hass, sungrow_unit, _pack({**PACK_WORDS, **CELL_WORDS}))
+
+    assert Capability.SUNGROW_BATTERY in entry.runtime_data.capabilities
+
+
+async def test_no_pack_grants_no_sungrow_battery_capability(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """An SBR's capacity alone could be a third-party pack of the same size."""
+    from sungrow_modbus import Capability
+
+    entry = await _setup(hass, sungrow_unit, None)
+
+    assert Capability.SUNGROW_BATTERY not in entry.runtime_data.capabilities

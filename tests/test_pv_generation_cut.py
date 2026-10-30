@@ -35,6 +35,7 @@ from homeassistant.util import dt as dt_util
 from sungrow_modbus import SungrowInverter
 from sungrow_modbus.control_test import (
     CONFIRMED,
+    INCONCLUSIVE,
     PV_CUT,
     PV_CUT_SETTLE,
     PV_RECOVERY,
@@ -98,9 +99,9 @@ def test_the_control_is_never_probed() -> None:
     found = probe(_reads({"pv_generation_cut_raw": 0x55}))
     assert Capability.PV_GENERATION_CUT_CONTROL not in found
     # On a firmware no control test has confirmed, the answer alone grants
-    # nothing. P022 reads 0x55 as P023 does, and nobody has watched it cut.
+    # nothing. P071 reads 0x55 as P023 does, and nobody has watched it cut.
     assert Capability.PV_GENERATION_CUT_CONTROL not in resolve(
-        SH10RT, 1, found, ("SAPPHIRE-H_01011.95.13", "SAPPHIRE-H_B001.V000.P022")
+        SH10RT, 1, found, ("PEARL-H_B000.V000.P071",)
     )
 
 
@@ -464,6 +465,41 @@ async def test_a_cut_that_stops_pv_is_confirmed_and_put_back(
     # search before the window after.
     assert PV_CUT_SETTLE in run.clock.slept
     assert PV_RECOVERY in run.clock.slept
+
+
+@pytest.mark.parametrize(
+    ("before", "after"),
+    [(2066.0, 2516.0), (3063.0, 2201.0)],
+    ids=["sun-rising", "sun-falling"],
+)
+async def test_a_cut_under_a_moving_sky_is_judged_by_its_bracket(
+    sungrow_unit: MockModbusUnit, before: float, after: float
+) -> None:
+    """Two P022 runs at gerd's: 0 W between two windows of real power.
+
+    Before and after differ by far more than the drift gate allows, and it
+    does not matter: a cloud does not take PV to 0 W and give it back.
+    """
+    run = await _prepared(sungrow_unit, cut_pv=True)
+    _pv_script(run, [before] * 11, [0.0] * 10, [after] * 10)
+
+    results = await run._pv_cut_effect()
+
+    assert [row.verdict for row in results] == [CONFIRMED]
+    assert not any("PV generation cut" in note for note in run.unestablished)
+
+
+async def test_a_stop_with_a_weak_neighbour_still_answers_to_drift(
+    sungrow_unit: MockModbusUnit,
+) -> None:
+    """Under `STOP_BRACKET_W` on one side, the bracket proves nothing."""
+    run = await _prepared(sungrow_unit, cut_pv=True)
+    _pv_script(run, [3000.0] * 11, [0.0] * 10, [400.0] * 10)
+
+    results = await run._pv_cut_effect()
+
+    assert [row.verdict for row in results] == [INCONCLUSIVE]
+    assert any("W different afterwards" in note for note in run.unestablished)
 
 
 async def test_without_leave_the_register_is_read_and_never_written(

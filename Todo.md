@@ -14,7 +14,19 @@ Structure:
 
 # Next steps
 
-Nothing that can start now; everything open is a decision or blocked.
+1. **Release, then ask ra1k_0 (#772) to run `survey.sh`.** The survey now
+   reads an iHomeManager (`sungrow_modbus.ihomemanager`), but contributors
+   run the published wheel, so it reaches them with the next release. One
+   run at that house could read the iHomeManager, the SH20T's own LAN port
+   (blocker 2) and their AC22E-01 (blocker 3, a second wallbox).
+2. **Open the one survey issue.** The curated list is the top of
+   `device-survey/devices-wanted.md` (*Most wanted*, *Not needed any more*).
+   An issue cannot embed a file, so `.github/workflows/survey-issue.yml`
+   writes it into one: create the issue (any body), pin it, set the
+   repository variable `SURVEY_ISSUE` to its number, and run the workflow
+   once. From then on every change to the list updates the issue. The
+   default branch's README (the YAML package, `main`) is where a link to it
+   would be most visible; that is a change to `main`, so it is yours.
 
 
 # Open decisions
@@ -25,32 +37,6 @@ Nothing that can start now; everything open is a decision or blocked.
   automations etc. Is there a good way for localization support, e.g.
   English / German?
 
-## One survey issue
-
-- Update the "wanted device surveys" list. I want to publish it on the GitHub
-  page somewhere prominent and create ONE issue for all surveys. Therefore it
-  would be good to have a curated overview which devices would be beneficial
-  for the project (and omit duplicates). Is it possible to create an issue
-  that references / embeds a .md file of this repository?
-
-## SBR battery capability
-
-- Grant `Capability.SUNGROW_BATTERY` when an SBR pack is found? No probe
-  grants it, so the datasheet rung of `battery_ceiling` never fires
-  (`number.py`, `control_test._battery_ceiling`, `config_flow.py`) and the
-  bounds fall back to BMS current x voltage. Granting it **changes write
-  bounds** on real houses, so it waits for a yes.
-
-
-## Wallbox identifier in git history
-
-- Holding 21250-21259 on gerd's wallbox is twenty constant ASCII digits,
-  shaped like an identifier. It is now masked (`WALLBOX_MASKED`, and the
-  committed wallbox document), but earlier commits of
-  `device-survey/wallbox/ac22e01-gerd-anon-41346964423-wallbox-tls.json`
-  carry it and are public. Rewrite history, ask gerd, or accept it?
-
-
 # Blockers
 
 1. **A charging car at gerd's.** Settles what input 21313 does over a session
@@ -59,21 +45,37 @@ Nothing that can start now; everything open is a decision or blocked.
    the car charges. `doc/wallbox_registers.md` has both questions. The
    same session would show what input 21267, input 21365, holding 21312 and
    start mode 3 at input 21314 do, which a reading with no car cannot.
-2. **Daylight on a P022/P023 inverter.** Confirms the PV cut (holding 31211,
-   #738) so the `Cut PV generation` switch can ship: a control test with
-   `--cut-pv` in daylight, then its firmware into `CONFIRMED_ON_FIRMWARE`.
-   [plans/cut-pv-generation.md](plans/cut-pv-generation.md).
-3. **A push to the preview mirror.** `doc/preview-mirror/sync.yml` was
-   changed here (the README's option name and its install link); the copy
-   running in the mirror must be made byte-identical, which is a push to
-   another repository and the maintainer's to make.
-4. **A second wallbox's survey.** Settles whether `A25A` (words
-   `[16690, 13633]`, in `test_survey_document_label.py`,
-   `test_gui_survey_document.py` and `test_survey_api.py`, allowlisted in
-   `test_no_real_serials.py` as the model prefix) is a prefix every wallbox
-   shares or part of gerd's unit's serial; nothing in the repository says
-   which. The same survey settles whether 21211-21214 identify the unit.
-5. **firetribe, once more (#784).** A cable control test while the
+   Input 21267 is not a write counter (measured 2026-10-29); it looks like
+   uptime in tens of seconds. A wallbox restart would confirm it: the count
+   should fall to near zero.
+2. **An SH-T on its own LAN port, in daylight** (ra1k_0, #772, is the
+   lead; any SH15T/SH20T owner will do). Every T so far was read through a
+   WiNet-S, and one run with the control test (`--cut-pv`,
+   `--enable-export-limit`) settles four things:
+   - **13074 on P071.** The dongle reported a word written with feed-in
+     limitation off as handed, where B001 ignores it. If P071 really stores
+     1:1, the integration's unanswered-probe fallback of ten sets a tenth of
+     the asked export limit on an SH-T.
+   - **The PV cut on P071** (holding 31211, #738): P022 and P023 are
+     confirmed; a watched cut puts P071 into `CONFIRMED_ON_FIRMWARE`.
+     [plans/cut-pv-generation.md](plans/cut-pv-generation.md).
+   - **An SBH on a direct link.** `Capability.SUNGROW_BATTERY` is granted
+     for an SBR found on its own unit (`with_sungrow_battery`); an SBH is
+     not until its own-unit reading is seen without a dongle.
+   - **Whether an iHomeManager silences 5741-5746** (#647, #651), which
+     every WiNet-S refuses anyway; ra1k_0 has one.
+3. **A second wallbox's survey.** Settles whether 21211-21214 identify the
+   unit. The wallbox reports its own serial (input 21201-21206, 11 ASCII
+   characters, confirmed against Sungrow's portal 2026-10-30); the
+   integration shows it on the device page, identifies the device by the
+   inverter's serial plus `-wallbox`, and publishes it only as a stand-in.
+   Three registers wait on a second unit:
+   input 21201-21206 (the serial: use it as the device identity?), input
+   21211-21214 (a short code, masked), and holding 21250-21259 (twenty
+   constant ASCII digits, masked since 2026-10-29). Whichever differ between
+   two wallboxes identify a unit and stay masked; whichever match are a model
+   constant and can be unmasked. ra1k_0's AC22E-01 would be one.
+4. **firetribe, once more (#784).** A cable control test while the
    inverter is running (it was `Starting`) gives the first SH6.0RT-V112
    readbacks and its 13074 write scale. Their WiNet-S 0x04s are contention,
    reproduced at gerd's.
@@ -87,11 +89,43 @@ Nothing that can start now; everything open is a decision or blocked.
   need not open a Modbus session of its own. To find out: does evcc have
   a standard configuration for that?
 
-## iHomeManager
+## iHomeManager in the integration
 
-Never measured; survey one (port 502 or 503, unit 247). The register map is
-in `doc/cross_reference_modbus_manager.md`; Sungrow's protocol PDF:
+Milestone 5. The survey reads one (unit 247, port 502, 503 or 504, one
+connection each); the integration does not, and its config flow fails such
+an endpoint with `no_serial_number`. Wait for a measured reading before
+building entities on `sungrow_modbus.ihomemanager`. Sungrow's protocol PDF:
 https://github.com/TCzerny/ha-modbus-manager/blob/main/docs/Communication%20Protocol%20of%20iHomeManager_V1.0.2.pdf
+
+## Sungrow Logger
+
+Milestone 8, Logger1000/3000/4000. The survey names one by its type code at
+unit 247, decodes its identity block and publishes the rest of its 8000
+block raw (`sungrow_modbus.logger`); behind an inverter it asks unit 247
+only when the owner answers `logger` for the transport. Missing for a map:
+
+1. **Sungrow's *Logger Communication Protocol*.** Not on GitHub (searched
+   2026-10-30); copies of 1.0.2.5, 1.0.2.7 (`TI_20211201`) and 1.0.2.9 are
+   on Scribd, behind a login, and Sungrow's support portal does not list
+   it. A firmware archive on GitHub that collected Sungrow documents
+   (sungrow-firmware/firmware) answers HTTP 451, so do not commit the PDF
+   here: keep it local and cite it, as with the inverter's. What is known
+   without it: type codes at input 8000 are 0x0705 Logger3000, 0x0710
+   Logger1000, 0x0718 Logger4000 (as Voyanti/ha-sungrow, GPL-3.0, cites the
+   document); and register numbers in the document are one above the
+   protocol address, as everywhere here (Homey community thread 126405).
+   Existing maps, read for what exists and never copied:
+   RafAustralia/Sungrow-Logger1000a-Modbus (no licence, read only) and
+   Voyanti/ha-sungrow's `src/sungrow_logger.py` (GPL-3.0, Logger1000 only,
+   read only; writes reported failing at Homey).
+2. **What sits behind it.** A Logger gives each connected inverter and meter
+   a unit id of its own on its endpoint (a DTSU666-20 at unit 5 in #262),
+   and wants a port per client (502, 503, 504...). `identify` looks at units
+   1-5 only, so an inverter at a higher unit is not reached yet; a DTSU666
+   is a device nothing maps.
+3. **A contributor with one.** Nobody has offered; the #262 participants
+   (RafAustralia, purcell-lab, NBS23) are the leads. RafAustralia notes the
+   Logger1000A targets the T and commercial lines rather than RS/RT.
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 

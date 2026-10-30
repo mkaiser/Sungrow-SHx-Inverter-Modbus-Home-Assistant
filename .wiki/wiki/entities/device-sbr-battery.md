@@ -24,6 +24,16 @@ Sub-devices are found again whenever an entry's endpoint changes, so moving
 between cable and dongle keeps the pack. See
 [identify by what answers](../concepts/identify-by-what-answers.md).
 
+## Its write bounds
+
+Once a pack answers on its own unit and register 5639's capacity names an
+SBR model, the inverter is granted `Capability.SUNGROW_BATTERY`
+(`inverter.capabilities.with_sungrow_battery`, held by
+`tests/test_capabilities.py`). The battery's power controls then take the
+datasheet's conservative power for that model (`battery/power.py`) instead of
+BMS current times voltage. The integration and the control test grant it the
+same way. An [SBH](device-sbh-battery.md) is not granted yet.
+
 ## What a dongle does not forward
 
 Through a WiNet-S, the **cells** and **modules** components

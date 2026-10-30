@@ -56,6 +56,18 @@ sim-bg: ## Same as `sim`, in the background, logging to /tmp/sim.log
 	@echo "Simulator starting on :5020 -- tail -f /tmp/sim.log"
 .PHONY: sim-bg
 
+sim-ihm-bg: ## A hand-written iHomeManager (unit 247) on :5021, in the background
+	nohup $(PY) scripts/dev/simulator.py --port 5021 --unit-id 247 \
+		--seed scripts/dev/simulator_ihomemanager.json > /tmp/sim-ihm.log 2>&1 &
+	@echo "iHomeManager simulator starting on :5021 -- tail -f /tmp/sim-ihm.log"
+.PHONY: sim-ihm-bg
+
+sim-logger-bg: ## A hand-written Logger1000 (unit 247) on :5022, in the background
+	nohup $(PY) scripts/dev/simulator.py --port 5022 --unit-id 247 \
+		--seed scripts/dev/simulator_logger.json > /tmp/sim-logger.log 2>&1 &
+	@echo "Logger simulator starting on :5022 -- tail -f /tmp/sim-logger.log"
+.PHONY: sim-logger-bg
+
 # The [b] is not a typo: it stops the pattern matching this recipe's own
 # shell, whose command line contains the pattern itself.
 stop: ## Stop a backgrounded Home Assistant and simulator
@@ -134,6 +146,16 @@ blocks: ## The block read test -- which read inside a component fails, and why
 scan-sim: ## Run the whole survey against the simulator -- needs `make sim-bg`
 	$(PY) device-survey/scripts/python/sungrow_survey.py 127.0.0.1 --port 5020 --simulated $(ARGS)
 .PHONY: scan-sim
+
+scan-sim-ihm: ## The survey against the iHomeManager simulator -- needs `make sim-ihm-bg`
+	$(PY) device-survey/scripts/python/sungrow_survey.py 127.0.0.1 --port 5021 \
+		--address hidden --reporter simulator --comment '' --timeout 2 $(ARGS)
+.PHONY: scan-sim-ihm
+
+scan-sim-logger: ## The survey against the Logger simulator -- needs `make sim-logger-bg`
+	$(PY) device-survey/scripts/python/sungrow_survey.py 127.0.0.1 --port 5022 \
+		--address hidden --reporter simulator --comment '' --timeout 2 $(ARGS)
+.PHONY: scan-sim-logger
 
 # The launcher a contributor runs, on a library that is not released yet.
 # uv builds the environment from the script's header, as for anybody, and

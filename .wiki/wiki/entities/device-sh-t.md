@@ -19,8 +19,19 @@ They pair with the [SBH](device-sbh-battery.md) high-voltage battery.
 - **31211 answers 0x55** on P071, as on SH-RT P022/P023; see
   [register 31211](register-31211.md). The T also has 13018, and whether both
   registers act is unmeasured.
-- **No control test** has run on a T. Everything about writes on this family
-  is carried over from SH-RT, not measured.
+- **One control test**, at [ra1k-0](installation-ra1k-0.md), through a WiNet-S, so only
+  its behavioural leg is evidence: the forced discharge did as it was told (1252 W for
+  1250 W). Its readbacks matched the specification except [13074](register-13074.md), whose
+  write scale is not determined on P071. Everything else about writes on this family is
+  carried over from SH-RT, not measured.
+
+## Version strings are their own series
+
+Version 1 on the T reads `PEARL-H_01011.01.45` (ra1k-0 and jm493), where every
+SH-RT reads `SAPPHIRE-H_01011.95.xx`. The platform is part of the string and
+the numbering restarts with it, so `.01.45` is not older than `.95.03`.
+Anything gated on Version 1 matches the whole string, platform included, and
+never compares the numeric tail across platforms.
 
 ## Surveys
 

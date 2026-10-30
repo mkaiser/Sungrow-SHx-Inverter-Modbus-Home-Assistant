@@ -121,12 +121,22 @@ A simulator stores raw words with no scale, so it can exercise the survey
 (`make scan-sim`) and the control test (`make controltest-sim`) end to end
 but never produce a finding about a real register.
 
+**An iHomeManager** has its own seed, `scripts/dev/simulator_ihomemanager.json`,
+hand-written from Sungrow's V1.0.2 document because no reading of one exists
+to generate it from. `make sim-ihm-bg` serves it as unit 247 on :5021, and
+`make scan-sim-ihm` runs the survey against it. It plants the placeholder
+serial in an undocumented gap, so the masking runs end to end;
+`tests/test_ihomemanager.py` holds the seed to the map. **A Logger1000**
+likewise: `scripts/dev/simulator_logger.json`, `make sim-logger-bg` on :5022
+and `make scan-sim-logger`, held by `tests/test_logger.py`.
+
 ## Layout
 
 ```
 custom_components/sungrow_modbus/   Home Assistant integration
 src/sungrow_modbus/                 device library (no Home Assistant imports)
   inverter/, battery/, wallbox/       one subpackage per device: registers, device
+  ihomemanager/, logger/              registers and document only: read by the survey
   addresses, discovery, survey_document,  what spans devices
   survey, block_test, control_test, dump
 tests/                              library and integration tests
@@ -144,6 +154,88 @@ repository, and the version in `pyproject.toml` must stay identical to the
 `requirements` entry in `custom_components/sungrow_modbus/manifest.json`,
 because Home Assistant checks the installed version on every start. `make
 version VERSION=X.Y.Z` moves both.
+
+## Every script
+
+`make help` lists the shortcuts; this is what each script behind them does.
+
+| Script | What it does |
+| --- | --- |
+| **`scripts/dev/`** | **The dev loop** |
+| `setup.sh` | Install HA, the device library (editable) and tooling |
+| `develop.sh` | Boot HA on <http://localhost:8123> against `config/` |
+| `ha_onboard.py` | Walk a fresh instance through onboarding over the API, so nobody types `dev`/`dev` into a wizard. Both boot scripts run it in the background; idempotent, and it refuses a non-loopback URL |
+| `hacs_testbed.sh` | Boot a **second** HA on :8124 against `config-hacs/`, with HACS installed; see [Testing the install a user actually gets](#testing-the-install-a-user-actually-gets) |
+| `ha_http_port.py` | Write a scripted instance's HTTP port where Home Assistant 2026.9 reads it, the `stable` config in `.storage/http`. `http:` in `configuration.yaml` only becomes a pending config that reverts after five minutes unless somebody promotes it. `hacs_testbed.sh` calls it |
+| `simulate.sh` | Regenerate the register seed and serve it on :5020 (`simulator.py`, seed in `simulator_registers.json`) |
+| `fetch_references.sh` | Clone HA core + libs into `.reference/` (gitignored) |
+| `seed_migration_testbed.py` | Make the dev instance look like a house that ran the YAML package for years; see [Reviewing the migration by hand](#reviewing-the-migration-by-hand) |
+| **`scripts/generate/`** | **Everything that writes a committed file; each has `--check` but the multi-inverter YAML, which CI regenerates and commits instead** |
+| `descriptions.py` | The entity descriptions and names: `derived`, `numbers`, `switches`, `selects`, `strings`, or all five with no argument (`strings` last, since it reads the others) |
+| `tables/writes.py` | **Input table**: which registers the integration may write and within what bounds. Feeds the number/switch/select descriptions; `tests/test_writes.py` holds `registers.py`'s writable set to it |
+| `tables/naming.py` | **Input table**: the entity-name convention. Feeds `strings.json`, `review_names.py` and the Influx helper |
+| `generate_compatibility.py` | Build `doc/compatibility.md` from the committed surveys |
+| `generate_simulator_registers.py` | The simulator's seed, from the entity map |
+| `generate_second_inverter_config.py` | The `legacy/` multi-inverter YAML files; run by CI on a change to the YAML package |
+| **`scripts/release/`** | **Release gates** |
+| `sync_version.py` | Single source of truth for the version: moves it into `manifest.json` and into the PEP 723 header of the survey and the control test; `--check` in CI, `--set X.Y.Z` to release |
+| `check_pinned_library.py` | Do the integration's `sungrow_modbus` imports resolve against the library version `manifest.json` pins? `--wheel dist/*.whl` asks it of a local build and gates CI; with no argument it asks it of **PyPI**, which is legitimately red between releases |
+| **`scripts/helpers/`** | **One-off tools** |
+| `influx_migration.py` | Print Grafana regexes and rewrite recipes for InfluxDB users; connects to nothing |
+| `review_names.py` | Lay the entity names out for the open naming decision -- grouped by subject, each with the entity id it produces and its legacy name. `--markdown` prints the sheet (redirect it into `doc/entity_name_review.md`); `--check` fails when that file has drifted from the names |
+| `make_brand_icon.py` | Regenerate the integration's `brand/` icons (`--preview` renders a check sheet) |
+
+What a contributor is handed, `device-survey/scripts/`, is described in
+[device-survey/README.md](../device-survey/README.md#what-is-in-scripts).
+`make scan HOST=...`, `make scan-sim`, `make scan-local`, `make scan-wheel`,
+`make controltest-dry HOST=...` and `make controltest-local` drive it from this
+tree.
+
+## Pitfalls
+
+Each of these is verified in a container or against hardware.
+
+- **Python lives in `/usr/local/python/current`**, not `/usr/local/bin`, in
+  the devcontainer image (`mcr.microsoft.com/devcontainers/python:3.14-bookworm`).
+  Its `bin/` comes first on the image's `PATH`, ahead of the image's own pipx
+  tools, so `requirements_dev.txt`'s pytest, mypy and ruff are the ones that run.
+- **Core's `modbus` drives `modbus-connection` with the _tmodbus_ backend,
+  not pymodbus.** `import homeassistant.components.modbus` fails outright
+  without `modbus-connection[tmodbus]`. `requirements_dev.txt` mirrors the
+  exact pins from `homeassistant/components/modbus/manifest.json`; bump them
+  together.
+- **The version in `pyproject.toml` must equal the `requirements` entry in
+  `manifest.json`.** HA checks the installed version on every start and will
+  try to pip-install the package if they differ. `sync_version.py --set`
+  moves both, and the scripts' PEP 723 pins, **and re-installs the editable
+  library** -- HA compares the pin against what is *installed*, and a stale
+  install sends pip after a version not on PyPI (`RequirementsNotFound` on
+  Add integration).
+- **The integration's domain is also the library's import name.** Both are
+  `sungrow_modbus`, so `config/custom_components` is a **symlink** to the
+  repo's `custom_components/`, the way a real install looks. Putting
+  `custom_components/` on `PYTHONPATH` exposes the *integration* as top-level
+  `sungrow_modbus`, shadowing the library, and HA reports a circular import
+  while loading the config flow, a long way from the cause.
+- **The pin is a promise about a published wheel, and an editable install
+  cannot test it.** `check_pinned_library.py` checks that every
+  `sungrow_modbus` import *and* every device attribute the integration uses
+  exists in the pinned version. It only inspects variables it can **prove**
+  hold a device -- constructed from `SungrowInverter` and friends, annotated
+  as one, or assigned from a `.device` -- because `device` also names
+  registry entries and probe dicts, and a gate that cries wolf gets switched
+  off. It knows what a device gains from `self.x =` in `__init__` and from
+  the keys of a `COMPONENTS` map.
+- **A workflow that installs its own tools hides its dependencies.** Anything
+  CI needs -- `build` and `twine` included -- is declared in
+  `requirements_dev.txt`, so `make ci` runs to the end in a fresh devcontainer.
+- **A check nobody runs and a check that cannot run look identical.** The
+  library ships a `py.typed` marker, without which mypy refuses the package
+  and every consumer silently gets no checking; `mypy` is in `make check` and
+  in CI rather than in a target somebody has to remember. It is `--strict`
+  over the library only: the integration is typed against Home Assistant,
+  whose annotations are not strict-clean, and a wall of ignores would hide
+  the findings worth having.
 
 ## Porting registers
 

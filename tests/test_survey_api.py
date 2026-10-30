@@ -170,7 +170,7 @@ def test_local_time_preserves_fallback_and_applies_zone() -> None:
 def test_capability_registers_never_publish_serial_values() -> None:
     result = capability_registers(
         {"battery voltage": "present", "wallbox serial": "present"},
-        {"battery voltage": [123], "wallbox serial": [16690, 13633]},
+        {"battery voltage": [123], "wallbox serial": [16689, 12851]},
     )
     assert result["battery voltage"]["values"] == [123]
     assert "values" not in result["wallbox serial"]
@@ -208,8 +208,8 @@ def test_publish_document_adds_optional_privacy_safe_sections() -> None:
             "connection": {"reported_by_hand": "direct_lan", "verdict": "direct"},
             "firmware": {"inverter": "V1"},
             "readings": {"values": {"power": 123}},
-            "registers": {"wallbox serial": [16690, 13633]},
-            "register_dump": {"21200": [16690, 13633]},
+            "registers": {"wallbox serial": [16689, 12851]},
+            "register_dump": {"21200": [16689, 12851]},
             "block_read_test": {"status": "pass"},
         },
         {

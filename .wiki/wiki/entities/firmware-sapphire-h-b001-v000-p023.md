@@ -28,6 +28,7 @@ The most-measured firmware in the corpus.
 - [SH10RT-20, B001.V000.P023, sisu70, a WiNet-S on Ethernet](../sources/sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-lan-summary.md)
 - [SH10RT-20, B001.V000.P023, sisu70, a WiNet-S on WiFi](../sources/sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-wlan-summary.md)
 - [SH10RT-V112, B001.V000.P023, anonymous, the inverter's own LAN port](../sources/sh10rt-v112-b001v000p023-3p-anonymous-anon-91477823483-battery-sbr160-meter-direct-lan-summary.md)
+- [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-summary.md)
 - [SH10RT-V112, B001.V000.P023, fwitten slave, the inverter's own LAN port](../sources/sh10rt-v112-b001v000p023-3p-fwitten-anon-33442450531-battery-none-direct-lan-summary.md)
 - [SH10RT-V112, B001.V000.P023, fwitten slave, a WiNet-S (medium not reported)](../sources/sh10rt-v112-b001v000p023-3p-fwitten-anon-33442450531-battery-none-winet-summary.md)
 - [SH10RT-V112, B001.V000.P023, fwitten master, the inverter's own LAN port](../sources/sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan-summary.md)

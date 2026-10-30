@@ -305,10 +305,11 @@ class SungrowSubDeviceCoordinator(
         everything. `via_device_id` is what puts it under the inverter in the
         interface, which is also where it sits physically.
 
-        Identified by the **inverter's** serial with a suffix. An SBR reports
-        no serial anywhere in the 10740-10789 band, which the survey reads
-        whole. A wallbox does report one, at input registers 21201-21206,
-        and nothing here reads it.
+        Identified by the **inverter's** serial with a suffix, for both. An
+        SBR reports no serial anywhere in the 10740-10789 band, which the
+        survey reads whole. A wallbox does report one, at input registers
+        21201-21206, and shows it as its `serial_number` -- but the identifier
+        stays the inverter's, so the devices users already have keep theirs.
         """
         serial = self.inverter_serial
         model = self._model()
@@ -318,8 +319,12 @@ class SungrowSubDeviceCoordinator(
             manufacturer=MANUFACTURER,
             model=model or label,
             name=model or label,
+            serial_number=self.own_serial,
             via_device_id=self.config_entry.runtime_data.inverter_device_id,
         )
+
+    #: The device's own serial, where it reports one. Read once at setup.
+    own_serial: str | None = None
 
     @asynccontextmanager
     async def _reading(self) -> AsyncIterator[None]:
@@ -411,6 +416,19 @@ class SungrowWallboxCoordinator(SungrowSubDeviceCoordinator):
         """Initialize the coordinator, and the counter the rhythm turns on."""
         super().__init__(*args, **kwargs)
         self._polls = 0
+
+    async def _async_setup(self) -> None:
+        """Read the wallbox's serial once, for the device registry.
+
+        Once, because it cannot change. A failed read leaves the device
+        without one rather than failing the wallbox: it is shown, never used
+        to identify anything. Kept off every published document -- a survey
+        carries only its stand-in, and diagnostics redact `serial_number`.
+        """
+        try:
+            self.own_serial = await self.device.async_read_serial()
+        except (ModbusError, TimeoutError, OSError):
+            _LOGGER.debug("%s: the wallbox serial did not read", self.name)
 
     def _model(self) -> str | None:
         """Name the wallbox from the model register it does answer."""

@@ -14,6 +14,7 @@ import importlib.util
 import json
 from pathlib import Path
 
+from modbus_connection import ModbusTimeoutError
 from modbus_connection.mock import MockModbusUnit
 import pytest
 
@@ -175,7 +176,17 @@ class _Clock:
         self.now += seconds
 
 
+class _NoPack:
+    """A unit nothing answers on: the house has no Sungrow pack."""
+
+    async def read_input_registers(self, *_args):
+        raise ModbusTimeoutError("Response timeout")
+
+
 class _Connection:
+    def for_unit(self, _unit_id: int) -> _NoPack:
+        return _NoPack()
+
     async def close(self) -> None:
         pass
 

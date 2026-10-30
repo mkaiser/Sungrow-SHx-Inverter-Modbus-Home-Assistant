@@ -73,7 +73,8 @@ async def read(unit: ModbusUnit, where: Address) -> list[int]:
 #: Input register 6100, "PV power of today". Sungrow documents 6100-6195 as
 #: **not forwarded by a WiNet-S, WiNet-S2 or Logger**, so an answer means
 #: nothing of the kind is in the path. Counted over ten surveys it agrees
-#: with the owner's own account every time; see `AGENTS.md` on why register
+#: with the owner's own account every time; see the wiki's transport detection
+#: page (`.wiki/wiki/concepts/transport-detection.md`) on why register
 #: 13265 cannot stand in for it.
 DIRECT_ONLY_PROBE = Address("input", reg(6100), 2)
 

@@ -24,6 +24,7 @@ session boundary tells them apart.
 | [Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant](https://github.com/Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant) | Not stated | **No licence file** — used with the author's permission, and only for *which register means what* | Its charging-status enum is the single most useful thing any of the three has |
 | [KevinD987/sungrow-ac011e](https://github.com/KevinD987/sungrow-ac011e) | AC011E-01, by measurement | **MIT** | Carries its own confidence marks — VERIFIED, LIKELY, UNVERIFIED — and says plainly that the allocation is not manufacturer-confirmed and may move between firmwares |
 | [Discussion #571](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions/571) on this repo | AC22E-01 | this repo's own tracker | The **same model measured here**, which none of the other sources is. Gives names in the manufacturer's own idiom — `SetOutI`, `PhaseSwitch`, `Availability`, `RemoteControl`, `State` — and one scale that this project's reading contradicts, below |
+| [Eisbaeeer/sungrow](https://github.com/Eisbaeeer/sungrow) | AC011E-01 | **No licence file**, and no permission asked -- so a lead to measure, never a definition | The only source that names input 21267 (protocol 21266), below |
 | [Jam3s97/sungrow_ihomemanager](https://github.com/Jam3s97/sungrow_ihomemanager) | iHomeManager, tested with AC22E-01 | **GPL-3.0** | Read for *what exists*, never copied. GPL-3.0 is incompatible with this repo's MIT, so no definition here comes from it — what it contributed is the name of an **official Sungrow document**, `iHM.Communication.Protocol`, which is the licence-clean route to the same registers |
 
 Descriptions here are written from this project's own readings. Where a source
@@ -110,12 +111,29 @@ and with no car connected, which says what is fixed and what moves:
   as it does the serial, and the committed wallbox document carries it masked.
 - **Moves:** input 21267 counts up, about one every 8 to 10 s across three
   reads four minutes apart, yet read 1754 on 2026-10-15 and 21154 now, so it
-  wraps or restarts. Input 21365 is signed and wanders, -66 then -59 to -61:
+  wraps or restarts. Eisbaeeer/sungrow names it "holding register changed";
+  KevinD987 lists its meaning as open. **It counts neither writes nor
+  reads** (2026-10-29, one TLS session, no other client on the wallbox): +12
+  across two quiet minutes with one read every 20 s, +1 across twenty reads
+  in under two seconds, and no step at a write of holding 21203 to the value
+  it held. It ticks on its own at about one per 10 s -- 21690 tens of
+  seconds is 60 hours, which would make it an uptime counter wrapping after
+  7.6 days, and fits the low value of 2026-10-15. Not yet confirmed by a
+  restart.
+- **A holding read straight after a write, in the same TLS session,
+  answered with input 21267's value** instead of holding 21203's; on fresh
+  connections 21203 read 0, as in the wallbox document. One observation, so
+  a reader should open a new connection after a write before trusting a
+  readback. Input 21365 is signed and wanders, -66 then -59 to -61:
   the shape of a signal strength in dBm, not confirmed. Holding 21312 went
   from 0 to 2.
 - **Input 21314, the start mode, read 3**, outside the 0-2 the table names.
 
-Still undecoded: what 21267 counts, 21365, the setting at holding 21298/21299
+Checked against every other project this document cites, evcc's driver and
+Eisbaeeer/sungrow on 2026-10-29: none names input 21211-21214, 21360-21365,
+holding 21250-21259, 21282-21285, 21298/21299 or 21312, nor a start mode 3.
+
+Still undecoded: whether 21267 is uptime, 21365, the setting at holding 21298/21299
 and its echo, holding 21312, and what start mode 3 means.
 
 ## Input registers

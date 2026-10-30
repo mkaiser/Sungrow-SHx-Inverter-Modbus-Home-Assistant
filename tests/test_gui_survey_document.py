@@ -221,9 +221,9 @@ async def test_a_probe_that_names_a_serial_publishes_no_words(
 ) -> None:
     """The failure that actually happened, kept from happening again.
 
-    A wallbox's serial reached a published document as the raw words
-    `[16690, 13633]`, which decode to `A25A`. The state of a probe is what a
-    capability needs; the value never was.
+    A wallbox's serial reached a published document as raw words, the first
+    four characters of it. The state of a probe is what a capability needs;
+    the value never was.
     """
     entry = await _setup(hass, sungrow_unit)
     device = next(iter(entry.runtime_data.coordinators.values())).device

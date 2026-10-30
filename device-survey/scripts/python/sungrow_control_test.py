@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "sungrow-modbus==0.1.0a18",
+#     "sungrow-modbus==0.1.0a19",
 #     "modbus-connection[tmodbus]>=4.10.0",
 # ]
 # ///
@@ -57,7 +57,7 @@ from modbus_connection import ModbusError, ModbusTcpParams
 from modbus_connection.tmodbus import ModbusConnection
 import probe
 
-from sungrow_modbus import SungrowInverter
+from sungrow_modbus import SungrowInverter, battery
 from sungrow_modbus.control_test import (
     CODES,
     ControlTest,
@@ -613,6 +613,10 @@ async def _run(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         terminal = _Terminal()
+        # A pack on its own unit is what the inverter's registers cannot show,
+        # and with an SBR's capacity it sets the battery's write bounds from
+        # the datasheet, as the integration does.
+        pack_unit = await battery.probe_units(connection.for_unit)
         run = ControlTest(
             inverter,
             options=options,
@@ -621,6 +625,7 @@ async def _run(args: argparse.Namespace) -> int:
             # A dry run writes nothing, so there is nothing to put back and no
             # before-state worth keeping.
             on_snapshot=None if args.dry_run else keep,
+            sungrow_pack=pack_unit is not None,
         )
         outcome = await run.async_run()
     finally:
@@ -903,7 +908,8 @@ async def async_main(args: argparse.Namespace, drops: _LinkDrops) -> int:
         # Measured 2026-09-20 against a house over a VPN whose Home Assistant
         # was polling: `read_input_registers(5114, 2): Connection lost before
         # response was received` -- 5114 being one of the three addresses
-        # CLAUDE.md names as the progressive signature of session exhaustion.
+        # where such a run dies: the progressive signature of session
+        # exhaustion in `.wiki/wiki/concepts/contention.md`.
         print(f"\n{err}", file=sys.stderr)
         print(
             "\nA Sungrow grants few Modbus sessions and wants about 90 seconds "

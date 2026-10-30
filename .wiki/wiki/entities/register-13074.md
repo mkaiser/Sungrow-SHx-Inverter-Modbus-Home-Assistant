@@ -16,7 +16,7 @@ entry.
 
 | Firmware | A written word is | Measured at |
 | --- | --- | --- |
-| every B001 measured: [P020](firmware-sapphire-h-b001-v000-p020.md), [P022](firmware-sapphire-h-b001-v000-p022.md), [P023](firmware-sapphire-h-b001-v000-p023.md) | **multiplied by ten** before the range check | [mkaiser](installation-mkaiser.md), [bar12](installation-bar12.md), [gerd](installation-gerd.md), [anonymous](installation-anonymous.md), [fwitten](installation-fwitten.md) since P023 |
+| every B001 measured: [P020](firmware-sapphire-h-b001-v000-p020.md), [P022](firmware-sapphire-h-b001-v000-p022.md), [P023](firmware-sapphire-h-b001-v000-p023.md) | **multiplied by ten** before the range check | [mkaiser](installation-mkaiser.md), [bar12](installation-bar12.md), [gerd](installation-gerd.md), [peter-sm](installation-peter-sm.md), [fwitten](installation-fwitten.md) since P023 |
 | [01011.95.03](firmware-sapphire-h-01011-95-03.md) | stored as handed | [fwitten](installation-fwitten.md) before P023 |
 
 On the times-ten firmware, a plain write sets ten times what was asked, or
@@ -25,7 +25,19 @@ SH10RT-V112 pair answered 1:1 on 01011.95.03, and times ten on P023, cable
 and dongle alike. So it is the firmware, not the model.
 
 **Only while feed-in limitation (13087) is on.** With it off, the register
-ignores writes: no exception, no change. That is most houses.
+ignores writes on B001: no exception, no change. That is most houses.
+
+**SH-T on [P071](firmware-pearl-h-b000-v000-p071.md): not determined.** At
+[ra1k-0](installation-ra1k-0.md) the register held 20000 W, its maximum, and
+ten times that wraps to 3392 W in sixteen bits, inside the bounds, so the
+probe had no word that changes nothing on both firmwares. The control test then
+wrote word 60 for 600 W with feed-in limitation off, and the WiNet-S reported
+60 back, where B001 would have kept its old value. **This contradicts "ignores
+writes" for P071 if the register really took it**, and would mean P071 stores
+the word as handed, so the integration's fallback of ten would set a tenth of
+the asked limit. Through a dongle it may equally be the dongle reporting the
+word it forwarded, so it stays a lead until a cable reading or a watched export
+limit settles it.
 
 ## How the code carries it
 

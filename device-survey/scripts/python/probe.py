@@ -1612,6 +1612,11 @@ def described(who: Identity) -> str:
         # device, because 247 is the whole reason it was found.
         model = who.model or "iHomeManager"
         return f"{model} -- on unit {who.unit}, port answered as an energy manager"
+    if who.kind == "logger":
+        return f"{who.model} -- on unit {who.unit}, a Sungrow Logger"
+    if who.kind == "unit247":
+        # Neither the iHomeManager's type code nor a known Logger's.
+        return f"{who.model} -- neither an iHomeManager nor a known Logger"
     described = f"serial {who.serial}, anonymized to {stand_in(who.serial)}"
     if who.device_type_code is not None:
         model = who.model or f"0x{who.device_type_code:04X}"

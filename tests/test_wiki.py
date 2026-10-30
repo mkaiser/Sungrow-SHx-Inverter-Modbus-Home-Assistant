@@ -62,7 +62,12 @@ REPO_PATH = re.compile(
 )
 
 #: Where surveys are committed, each of which must have a source page.
-DOCUMENT_DIRS = ("device-survey/inverter", "device-survey/wallbox")
+DOCUMENT_DIRS = (
+    "device-survey/inverter",
+    "device-survey/wallbox",
+    "device-survey/ihomemanager",
+    "device-survey/logger",
+)
 
 
 def _tracked() -> set[str]:

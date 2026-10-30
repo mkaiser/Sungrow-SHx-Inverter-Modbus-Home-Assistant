@@ -1079,10 +1079,10 @@ def test_no_published_probe_carries_the_values_of_a_serial(path) -> None:
 
     `NEVER_PUBLISH` kept serials out of the readings block and out of the
     register dump. It did not cover the curated probes -- two of which are
-    named "wallbox serial" -- so gerd's document published `[16690, 13633]`,
-    which decodes to `A25A`: the first four characters of the wallbox's real
-    serial. The inverter's own identity was masked in three places and the
-    device attached to it in none.
+    named "wallbox serial" -- so gerd's document published two words that
+    decode to the first four characters of the wallbox's real serial. The
+    inverter's own identity was masked in three places and the device
+    attached to it in none.
 
     What a capability needs is that the register answered. The value never
     was the point.
@@ -1149,8 +1149,8 @@ def test_a_wallbox_dump_is_masked_at_the_wallbox_serial() -> None:
 
     The inverter's serial lives at input 4990 and the wallbox's at input
     21201, so masking a wallbox dump with the inverter's mask would look
-    careful and publish a serial. `A25A123456` was already published once,
-    as the words of a capability probe.
+    careful and publish a serial. A wallbox's serial was already published
+    once, as the words of a capability probe.
     """
     from sungrow_modbus.dump import DUMP_MASKED, WALLBOX_MASKED, masked as _masked_dump
 
@@ -1508,14 +1508,14 @@ async def test_an_ihomemanager_is_found_where_no_inverter_answers(
     """
     import probe as probe_module
 
-    connection = _fake_stack({247: {7999: [0x0130], 8000: [0x5631, 0x2E30]}})
+    connection = _fake_stack({247: {7999: [0x072A], 8000: [0x5631, 0x2E30]}})
 
     who = await probe_module.identify("192.0.2.50", 502)
 
     assert who.kind == "ihomemanager"
     assert who.unit == 247
     assert who.error is None
-    assert who.device_type_code == 0x0130
+    assert who.device_type_code == 0x072A
     # No serial is asked for and none is reported: the iHM identity block has
     # none, and this repository does not go hunting for one.
     assert who.serial is None

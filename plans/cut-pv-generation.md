@@ -12,9 +12,14 @@ firmware:
 | 31211 reads 0x55 or 0xAA | binary sensor **PV generation cut** |
 | ...and its firmware is in `CONFIRMED_ON_FIRMWARE` | switch **Cut PV generation** |
 
-`CONFIRMED_ON_FIRMWARE` holds **`SAPPHIRE-H_B001.V000.P023`**, confirmed on
-fwitten's SH10RT-V112 master (1213 W, 0 W, 1199 W), so a P023 inverter gets
-the switch. Every other firmware waits for a run of its own.
+`CONFIRMED_ON_FIRMWARE` holds **`SAPPHIRE-H_B001.V000.P022`** and
+**`SAPPHIRE-H_B001.V000.P023`**: P023 confirmed on fwitten's SH10RT-V112 master
+(1213 W, 0 W, 1199 W), P022 on gerd's SH8.0RT-V112 (2938 W, 0 W, 1913 W), both
+over the inverter's own LAN port. A P022 or P023 inverter gets the switch.
+Every other firmware waits for a run of its own.
+
+A stop is judged by its bracket: 0 W between two windows of at least 500 W
+(`STOP_BRACKET_W`) is `CONFIRMED` however far the sky moved them apart.
 
 The cut is a ramp: DC power holds about 6 s after `0xAA` and reaches 0 W about
 20 s after the write; after `0x55` it returns about 8 s later and is full
@@ -48,19 +53,20 @@ two inverters, so the firmware decides it.
 
 ## Next
 
-1. **Run the control test with the cut allowed**, in daylight with at least
-   500 W of PV, on a P022 or P023 inverter over its own LAN port: bar12, gerd,
-   Korsberg or fwitten. `survey.sh control <host> --cut-pv` (with
-   `SUNGROW_MODBUS_LIBRARY` until it is released), or the device page's button
-   with **May it cut PV generation** on. The check writes 0xAA, needs DC power
-   under 200 W, restores the snapshot's word and waits `PV_RECOVERY` (75 s)
-   before the window after. P023 is done; P022 and P071 are left.
+1. **Run the control test with the cut allowed** on a P071 SH-T over its own
+   LAN port, in daylight with at least 500 W of PV: `survey.sh control <host>
+   --cut-pv --enable-export-limit --restart` (with `SUNGROW_MODBUS_LIBRARY`
+   until it is released), or the device page's button with **May it cut PV
+   generation** on. The check writes 0xAA, needs DC power under 200 W,
+   restores the snapshot's word and waits `PV_RECOVERY` (75 s) before the
+   window after. The P071 SH-Ts in the corpus are surveyed only through a
+   WiNet-S; 13018 already exists there, so the run also shows whether both
+   registers act.
 2. On a `CONFIRMED`, commit that survey and add its 13250 string to
    `CONFIRMED_ON_FIRMWARE[PV_GENERATION_CUT_CONTROL]`.
    `test_nothing_is_confirmed_without_a_document_that_shows_it` refuses an
-   entry without such a document. One run per firmware: P022, P023, and a T on
-   P071 (13018 already exists there; the T is worth one run to see whether
-   both registers act).
+   entry without such a document. A `--merge-into` replaces the document's
+   whole `control_test` block, so run with the flags of the run it replaces.
 3. Ask the PR author on #738 for their 13250 string, or a survey.
 4. One evening's watch on a confirmed device: does a cut survive a night, or
    a restart, or does iSolarCloud rewrite it? The switch reports the register,

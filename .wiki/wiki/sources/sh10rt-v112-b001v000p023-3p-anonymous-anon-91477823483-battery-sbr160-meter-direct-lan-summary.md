@@ -19,7 +19,7 @@ Capability survey of one inverter, read 2026-10-16. Source: `device-survey/inver
 
 | | |
 | --- | --- |
-| Installation | [anonymous](../entities/installation-anonymous.md) |
+| Installation | [peter-sm](../entities/installation-peter-sm.md) |
 | Model | [SH10RT-V112](../entities/device-sh-rt.md), type code `0x0E0F` |
 | Stand-in serial | `anon-91477823483` |
 | Inverter firmware | [`SAPPHIRE-H_B001.V000.P023`](../entities/firmware-sapphire-h-b001-v000-p023.md) |

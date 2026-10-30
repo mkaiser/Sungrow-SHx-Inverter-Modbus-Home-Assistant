@@ -2,19 +2,20 @@
 
 ## Entities
 
-- [iHomeManager](entities/device-ihomemanager.md) — Slave 247 on 502 or 503, never measured, not a gateway #ihomemanager #unmeasured
+- [iHomeManager](entities/device-ihomemanager.md) — Slave 247 on 502, 503 or 504, no documented serial, read by the survey, never measured #ihomemanager #unmeasured
+- [Sungrow Logger](entities/device-logger.md) — Logger1000/3000/4000 at unit 247, named by type code, read raw, never measured #logger #unmeasured
 - [SBH battery](entities/device-sbh-battery.md) — High-voltage pack for the SH-T, unit 2 through a dongle #battery #sbh #sub-device
 - [SBR battery](entities/device-sbr-battery.md) — Unit 200 direct, 2 through a WiNet-S; cells and modules not forwarded by a dongle #battery #sbr #sub-device
 - [SH-RT hybrid inverters](entities/device-sh-rt.md) — Three-phase SAPPHIRE-H hybrids: what is established and which surveys show it #inverter #sh-rt #sapphire-h #three-phase
 - [SH-T hybrid inverters](entities/device-sh-t.md) — SH15T and SH20T on PEARL-H, only read through a dongle #inverter #sh-t #pearl-h #three-phase
 - [Sungrow AC wallbox](entities/device-wallbox.md) — Unit 3 through a WiNet-S or 248 over TLS at its own address; read only #wallbox #ac22e-01 #ac011e-01 #sub-device #tls
 - [WiNet-S communication module](entities/device-winet-s.md) — Everything the dongle changes: refusals, zeros, stale readbacks, TLS on 516 #dongle #winet-s #transport
-- [PEARL-H_B000.V000.P071](entities/firmware-pearl-h-b000-v000-p071.md) — SH-T firmware; 31211 answers, 13074's write scale unmeasured #firmware #pearl-h-b000-v000-p071
+- [PEARL-H_B000.V000.P071](entities/firmware-pearl-h-b000-v000-p071.md) — SH-T firmware; 31211 answers, forced discharge acts, 13074's write scale not determined #firmware #pearl-h-b000-v000-p071
 - [SAPPHIRE-H_01011.95.03](entities/firmware-sapphire-h-01011-95-03.md) — Older SH-RT numbering; the only firmware where 13074 writes 1:1 #firmware #sapphire-h-01011-95-03
 - [SAPPHIRE-H_B001.V000.P020](entities/firmware-sapphire-h-b001-v000-p020.md) — SH-RT; 13074 writes x10, no PV cut #firmware #sapphire-h-b001-v000-p020
-- [SAPPHIRE-H_B001.V000.P022](entities/firmware-sapphire-h-b001-v000-p022.md) — SH-RT; 13074 writes x10, 31211 answers but is unconfirmed #firmware #sapphire-h-b001-v000-p022
+- [SAPPHIRE-H_B001.V000.P022](entities/firmware-sapphire-h-b001-v000-p022.md) — SH-RT; 13074 writes x10, the PV cut (31211) is confirmed #firmware #sapphire-h-b001-v000-p022
 - [SAPPHIRE-H_B001.V000.P023](entities/firmware-sapphire-h-b001-v000-p023.md) — SH-RT, most measured; 13074 writes x10, PV cut confirmed #firmware #sapphire-h-b001-v000-p023
-- [Installation anonymous](entities/installation-anonymous.md) — SH10RT-V112 on P023 with an SBR160 and a control test #installation #anonymous
+- [Installation peter-sm](entities/installation-peter-sm.md) — SH10RT-V112 on P023 with an SBR160, two control tests; 13074 writes x10 #installation #peter-sm
 - [Installation bar12](entities/installation-bar12.md) — SH10RT-20 with SBR096, cable and WiNet-S, P020 then P023 #installation #bar12
 - [Installation firetribe](entities/installation-firetribe.md) — SH6.0RT-V112 on P023 with SBR096, cable and a busy WiNet-S #installation #firetribe
 - [Installation fullhd23](entities/installation-fullhd23.md) — SH15T on P071 through a WiNet-S #installation #fullhd23
@@ -22,7 +23,7 @@
 - [Installation gerd](entities/installation-gerd.md) — SH8.0RT-V112 on P022 with SBR096 and the only measured wallbox #installation #gerd
 - [Installation jm493](entities/installation-jm493.md) — SH15T on P071 with SBH200 through a WiNet-S #installation #jm493
 - [Installation mkaiser](entities/installation-mkaiser.md) — The maintainer's SH10RT on P020, control test matched every readback #installation #mkaiser
-- [Installation ra1k-0](entities/installation-ra1k-0.md) — SH20T on P071 with SBH400; iHomeManager and wallbox present, unread #installation #ra1k-0
+- [Installation ra1k-0](entities/installation-ra1k-0.md) — SH20T on P071 with SBH400, the first SH-T control test; iHomeManager and wallbox present, unread #installation #ra1k-0
 - [Installation sisu70](entities/installation-sisu70.md) — SH10RT-20 on P023 with SBR128, cable and dongle, read while polling #installation #sisu70
 - [Register 13000 \(running state\)](entities/register-13000.md) — Running state; 0x0000 is Running, and a dongle re-encodes it #register #input #running-state
 - [Register 13074 \(export power limit\)](entities/register-13074.md) — Export power limit; writes x10 on B001 firmware, 1:1 on 01011.95.03 #register #holding #export-limit #write-scale
@@ -50,6 +51,7 @@
 
 - [ac22e01-gerd-anon-41346964423-wallbox-tls.json](sources/ac22e01-gerd-anon-41346964423-wallbox-tls-summary.md) — AC22E-01 wallbox, gerd, at its own address over TLS #survey #wallbox #ac22e-01 #gerd #tls
 - [cross_reference_modbus_manager.md](sources/cross-reference-modbus-manager-summary.md) — TCzerny/ha-modbus-manager compared register by register; the MIT iHomeManager map #ihomemanager #cross-reference #licences
+- [gerd-wallbox-isolarcloud-2026-10-30.md](sources/gerd-wallbox-isolarcloud-2026-10-30-summary.md) — gerd's AC22E-01 beside Sungrow's portal: 21201-21206 is the serial, 21300 and 21310 in Wh #wallbox #ac22e-01 #gerd #isolarcloud
 - [github-issues-user-findings.md](sources/github-issues-user-findings-summary.md) — Issues #654-#775 read in full; a YAML package cannot decide anything #users #issues #yaml-package
 - [legacy_entity_map.json](sources/legacy-entity-map-summary.md) — What the YAML package produces; the tests hold the integration to it #yaml-package #migration #entity-id
 - [sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-lan.json](sources/sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-lan-summary.md) — SH10RT-20, B001.V000.P020, bar12, a WiNet-S on Ethernet #survey #sh10rt-20 #sapphire-h-b001-v000-p020 #bar12 #winet_lan
@@ -65,6 +67,7 @@
 - [sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan.json](sources/sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan-summary.md) — SH10RT-V112, pre-B001 firmware, fwitten master, the inverter's own LAN port #survey #sh10rt-v112 #sapphire-h-01011-95-03 #fwitten #direct_lan #control-test
 - [sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-winet.json](sources/sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-winet-summary.md) — SH10RT-V112, pre-B001 firmware, fwitten master, a WiNet-S (medium not reported) #survey #sh10rt-v112 #sapphire-h-01011-95-03 #fwitten #winet #export-scale
 - [sh10rt-v112-b001v000p023-3p-anonymous-anon-91477823483-battery-sbr160-meter-direct-lan.json](sources/sh10rt-v112-b001v000p023-3p-anonymous-anon-91477823483-battery-sbr160-meter-direct-lan-summary.md) — SH10RT-V112, B001.V000.P023, anonymous, the inverter's own LAN port #survey #sh10rt-v112 #sapphire-h-b001-v000-p023 #anonymous #direct_lan #control-test
+- [sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan.json](sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-summary.md) — SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port; 13074 times ten, battery capped at 10 W #survey #sh10rt-v112 #sapphire-h-b001-v000-p023 #peter-sm #direct_lan #control-test
 - [sh10rt-v112-b001v000p023-3p-fwitten-anon-33442450531-battery-none-direct-lan.json](sources/sh10rt-v112-b001v000p023-3p-fwitten-anon-33442450531-battery-none-direct-lan-summary.md) — SH10RT-V112, B001.V000.P023, fwitten slave, the inverter's own LAN port #survey #sh10rt-v112 #sapphire-h-b001-v000-p023 #fwitten #direct_lan #control-test
 - [sh10rt-v112-b001v000p023-3p-fwitten-anon-33442450531-battery-none-winet.json](sources/sh10rt-v112-b001v000p023-3p-fwitten-anon-33442450531-battery-none-winet-summary.md) — SH10RT-V112, B001.V000.P023, fwitten slave, a WiNet-S (medium not reported) #survey #sh10rt-v112 #sapphire-h-b001-v000-p023 #fwitten #winet #export-scale
 - [sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan.json](sources/sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan-summary.md) — SH10RT-V112, B001.V000.P023, fwitten master, the inverter's own LAN port #survey #sh10rt-v112 #sapphire-h-b001-v000-p023 #fwitten #direct_lan #control-test
@@ -72,6 +75,7 @@
 - [sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan.json](sources/sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan-summary.md) — SH15T, B000.V000.P071, FullHD23, a WiNet-S on Ethernet #survey #sh15t #pearl-h-b000-v000-p071 #fullhd23 #winet_lan
 - [sh15t-b000v000p071-3p-jm493-anon-00578206904-battery-sbh200-winet-lan.json](sources/sh15t-b000v000p071-3p-jm493-anon-00578206904-battery-sbh200-winet-lan-summary.md) — SH15T, B000.V000.P071, jm493, a WiNet-S on Ethernet #survey #sh15t #pearl-h-b000-v000-p071 #jm493 #winet_lan
 - [sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan.json](sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-summary.md) — SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi #survey #sh20t #pearl-h-b000-v000-p071 #ra1k-0 #winet_wlan
+- [sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005.json](sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005-summary.md) — SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi, the first SH-T control test #survey #sh20t #pearl-h-b000-v000-p071 #ra1k-0 #winet_wlan #control-test
 - [sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan.json](sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-summary.md) — SH6.0RT-V112, B001.V000.P023, firetribe, the inverter's own LAN port #survey #sh6.0rt-v112 #sapphire-h-b001-v000-p023 #firetribe #direct_lan #control-test
 - [sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan.json](sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan-summary.md) — SH6.0RT-V112, B001.V000.P023, firetribe, a WiNet-S on Ethernet #survey #sh6.0rt-v112 #sapphire-h-b001-v000-p023 #firetribe #winet_lan #control-test
 - [sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan.json](sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-summary.md) — SH8.0RT-V112, B001.V000.P022, gerd, the inverter's own LAN port #survey #sh8-0rt-v112 #sapphire-h-b001-v000-p022 #gerd #direct_lan #control-test #export-scale
@@ -82,5 +86,6 @@
 
 - [Does a wallbox answer unit 248 on RS485?](queries/does-a-wallbox-answer-unit-248-on-rs485.md) — Open: reported by others, never measured #wallbox #rs485 #open
 - [Does a busy WiNet-S refuse with 0x04?](queries/does-a-busy-winet-s-refuse-with-0x04.md) — Answered: yes, reproduced at gerd with three clients #winet-s #contention #answered
-- [Does the PV cut work on P022 and P071?](queries/does-the-pv-cut-work-on-p022-and-p071.md) — Open: 31211 answers there, but no watched write #pv-cut #register-31211 #open
+- [Does the PV cut work on P022 and P071?](queries/does-the-pv-cut-work-on-p022-and-p071.md) — P022 confirmed at gerd; P071 open, no watched write #pv-cut #register-31211 #open
 - [What does an iHomeManager answer?](queries/what-does-an-ihomemanager-answer.md) — Open: never surveyed #ihomemanager #open #survey-wanted
+- [What does a Sungrow Logger answer?](queries/what-does-a-logger-answer.md) — Open: never surveyed #logger #open #survey-wanted

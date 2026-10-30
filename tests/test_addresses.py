@@ -90,6 +90,7 @@ MAPS = (
     REPO / "src" / "sungrow_modbus" / "inverter" / "components.py",
     REPO / "src" / "sungrow_modbus" / "battery" / "registers.py",
     REPO / "src" / "sungrow_modbus" / "wallbox" / "registers.py",
+    REPO / "src" / "sungrow_modbus" / "ihomemanager" / "registers.py",
 )
 FIELD_FACTORIES = {
     "integer",

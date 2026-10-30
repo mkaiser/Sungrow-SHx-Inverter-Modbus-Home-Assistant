@@ -29,12 +29,23 @@ The rule is in `AGENTS.md`; this page is how it is carried out.
 - **A wallbox's serial** (input 21201-21206) sits just below the model name, so
   `wallbox.probe_units` reads the name. At the publishing boundary the serial
   words are masked, and `wallbox.serial_anonymized_hashed`, from the same
-  `stand_in` as the inverter's, is published in their place.
+  `stand_in` as the inverter's, is published in their place. Sungrow's
+  portal shows the same serial for gerd's unit
+  ([cross-check](../sources/gerd-wallbox-isolarcloud-2026-10-30-summary.md)).
+- **An SBR's serials** (10711 for the pack, 10822-10894 for the modules, as
+  the [cross-reference](../sources/cross-reference-modbus-manager-summary.md)
+  lists them) are never read: no band and no field covers them.
+- **An iHomeManager documents no serial**, so it has no fixed mask. The
+  survey reads the gaps between its documented registers, and any text found
+  there is masked and published only as a stand-in, with its register and
+  length (`ihomemanager.masked_text`, held by `tests/test_ihomemanager.py`).
 - **The tree is checked.** `tests/test_no_real_serials.py` matches the
   *shape* of a serial over every tracked file, `.wiki/` included. Each hit
   must be on a list of strings known to be invented.
-- **Register words can hide a serial** where the shape test does not look:
-  a fixture that carries one as Modbus words.
+- **Register words can hide a serial**: a fixture that carries one as Modbus
+  words. `tests/test_no_real_serials.py` decodes runs of word-shaped integers
+  in every tracked file and holds what they spell to the same list, so the
+  placeholder serial's words are the ones to use.
 
 In tests, use an obviously fake serial: `A123456789`, or `A987654321` where
 two must differ. **Addresses** are handled the same way. A document carries

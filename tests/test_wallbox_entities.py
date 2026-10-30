@@ -456,3 +456,42 @@ async def test_a_survey_of_the_direct_path_dumps_where_tls_answers(
         for address in range(start, start + count)
     }
     assert dumped == expected
+
+
+async def test_the_wallbox_shows_its_own_serial_and_publishes_only_its_hash(
+    hass: HomeAssistant, hass_client, sungrow_unit: MockModbusUnit
+) -> None:
+    """Read for the owner's device page; a stand-in wherever it is published.
+
+    The identifier stays the inverter's serial plus `-wallbox`, so a device
+    an owner already has keeps its entities and history.
+    """
+    from pytest_homeassistant_custom_component.components.diagnostics import (
+        get_diagnostics_for_config_entry,
+    )
+
+    from custom_components.sungrow_modbus.survey_document import async_build
+    from sungrow_modbus.survey_document import stand_in
+
+    serial_words = [0x4139, 0x3837, 0x3635, 0x3433, 0x3231, 0x0000]
+    words = {
+        "input": {
+            **WORDS["input"],
+            **dict(zip(range(21200, 21206), serial_words, strict=True)),
+        },
+        "holding": WORDS["holding"],
+    }
+    entry = await _setup(hass, sungrow_unit, words=words)
+
+    wallbox = dr.async_get(hass).async_get_device_by_identifier(
+        (DOMAIN, f"{SERIAL}-wallbox"), entry.entry_id
+    )
+    assert wallbox is not None
+    assert wallbox.serial_number == "A987654321"
+
+    document = await async_build(hass, entry)
+    assert "A987654321" not in json.dumps(document)
+    assert document["wallbox"]["serial_anonymized_hashed"] == stand_in("A987654321")
+
+    diagnostics = await get_diagnostics_for_config_entry(hass, hass_client, entry)
+    assert "A987654321" not in json.dumps(diagnostics, default=str)

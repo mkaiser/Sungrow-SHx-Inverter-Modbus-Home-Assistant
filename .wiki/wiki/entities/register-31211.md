@@ -35,8 +35,10 @@ decides is 13250, not 2582.
 | 0x55 or 0xAA | binary sensor **PV generation cut** |
 | ...and its firmware is in `CONFIRMED_ON_FIRMWARE` | switch **Cut PV generation** |
 
-`CONFIRMED_ON_FIRMWARE` holds P023, confirmed by a control test on fwitten's
-master (1213 W, 0 W, 1199 W). See [firmware gating](../concepts/firmware-gating.md).
+`CONFIRMED_ON_FIRMWARE` holds P022 and P023, each confirmed by a control test
+over the inverter's own LAN port: P023 on fwitten's master (1213 W, 0 W,
+1199 W), P022 on [gerd's](installation-gerd.md) SH8.0RT-V112 (2938 W, 0 W,
+1913 W; [the survey](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-summary.md)). See [firmware gating](../concepts/firmware-gating.md).
 
 **The cut is a ramp.** After `0xAA`, DC power holds for about 6 s and reaches
 0 W about 20 s after the write. After `0x55` it returns about 8 s later and is

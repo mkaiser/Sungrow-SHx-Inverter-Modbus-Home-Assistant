@@ -330,3 +330,26 @@ def test_every_firmware_entry_names_a_committed_document() -> None:
                 if (surveys / directory / name).exists()
             )
             assert version in path.read_text(encoding="utf-8"), name
+
+
+@pytest.mark.parametrize(
+    ("pack_found", "capacity", "granted"),
+    [
+        (True, 9.6, True),  # SBR096 on its own unit
+        (True, 16.0, True),  # SBR160
+        (True, 40.55, False),  # SBH400: not until one is read on a direct link
+        (False, 9.6, False),  # an SBR's size, but no pack answered: third party
+        (True, None, False),  # a pack, but 5639 did not read
+        (True, 7.1, False),  # a pack whose capacity names no model
+    ],
+)
+def test_sungrow_battery_is_granted_for_an_sbr_on_its_own_unit(
+    pack_found, capacity, granted
+) -> None:
+    from sungrow_modbus.inverter.capabilities import with_sungrow_battery
+
+    base = frozenset({Capability.BATTERY})
+    result = with_sungrow_battery(base, pack_found=pack_found, capacity_kwh=capacity)
+
+    assert (Capability.SUNGROW_BATTERY in result) is granted
+    assert base <= result
