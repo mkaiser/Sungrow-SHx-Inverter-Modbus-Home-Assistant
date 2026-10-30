@@ -310,7 +310,7 @@ def test_every_firmware_entry_names_a_committed_document() -> None:
         Path(__file__).resolve().parent.parent
         / "src/sungrow_modbus/inverter/capabilities.py"
     ).read_text(encoding="utf-8")
-    surveys = Path(__file__).resolve().parent.parent / "device-survey"
+    surveys = Path(__file__).resolve().parent.parent / "device-survey" / "results"
     block = source.split("ABSENT_ON_FIRMWARE: dict", 1)[1].split("\n}\n", 1)[0]
     for version in ABSENT_ON_FIRMWARE:
         cited = [

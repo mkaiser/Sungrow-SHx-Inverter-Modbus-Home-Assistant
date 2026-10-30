@@ -1,7 +1,7 @@
 ---
 type: source
 title: sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005.json
-source_path: ../device-survey/inverter/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005.json
+source_path: ../device-survey/results/inverter/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005.json
 ingested: '2026-10-30'
 created: '2026-10-30'
 tags:
@@ -19,7 +19,7 @@ Capability survey of one inverter, read 2026-10-30 from Home Assistant, issue #7
 control test: the first on any [SH-T](../entities/device-sh-t.md). The issue carried two files
 a minute apart; this is the second, which holds the first's reading plus the control test. The
 filename carries the address tail because this installation's September reading, under the same
-label, came from a different one. Source: `device-survey/inverter/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005.json`.
+label, came from a different one. Source: `device-survey/results/inverter/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005.json`.
 
 | | |
 | --- | --- |

@@ -63,10 +63,10 @@ REPO_PATH = re.compile(
 
 #: Where surveys are committed, each of which must have a source page.
 DOCUMENT_DIRS = (
-    "device-survey/inverter",
-    "device-survey/wallbox",
-    "device-survey/ihomemanager",
-    "device-survey/logger",
+    "device-survey/results/inverter",
+    "device-survey/results/wallbox",
+    "device-survey/results/ihomemanager",
+    "device-survey/results/logger",
 )
 
 

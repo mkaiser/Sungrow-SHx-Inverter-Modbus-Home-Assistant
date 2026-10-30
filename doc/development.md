@@ -89,7 +89,7 @@ the second, point it at either:
 The flow identifies what answers rather than trusting the address: it sweeps
 units 1-5 for the inverter and finds a battery or wallbox behind it. This
 release sets every new entry up as **diagnostics only** -- the entity id
-question that devices mode asks is gated behind `DEVICES_MODE_OFFERED` in
+question that devices mode asks is gated behind `ONLY_SURVEY_MODE` in
 `const.py` (see [Reviewing the migration by hand](#reviewing-the-migration-by-hand)).
 
 **A real inverter on your LAN is reachable from the container without any
@@ -283,8 +283,8 @@ $ scripts/dev/develop.sh
 ```
 
 The entity id question is asked only in devices mode, which this release
-does not offer: set `DEVICES_MODE_OFFERED` in
-`custom_components/sungrow_modbus/const.py` to `True` locally first, and do
+does not offer: set `ONLY_SURVEY_MODE` in
+`custom_components/sungrow_modbus/const.py` to `False` locally first, and do
 not commit it.
 
 Home Assistant must be **stopped** while it runs: it writes the entity
@@ -364,8 +364,8 @@ diagnostic sensors beside them; a contributor without it runs
 
 | Entity | What it is for |
 | --- | --- |
-| `button.<name>_run_capability_survey` | Starts one. Unavailable while a run is in flight; the runner refuses a second anyway |
-| `button.<name>_run_control_write_test` | Part B: the same survey, and then it **writes** to every control and puts each one back. See below |
+| `button.<name>_run_read_only_diagnosis` | Starts one. Unavailable while a run is in flight; the runner refuses a second anyway |
+| `button.<name>_run_complete_diagnosis_and_tests` | Part B: the same survey, and then it **writes** to every control and puts each one back. See below |
 | `sensor.<name>_survey_progress` | Percent complete. Counted reads, not elapsed time — the same survey is under a second on a cable and minutes over a VPN |
 | `sensor.<name>_survey_step` | What is being read right now. **Its recorded history is the point**: 19 probes, the block read test's reads and one assembly step in order — plus 52 band sweeps when a dump was asked for — which is what says *where* a slow link stalls rather than that it did |
 | `sensor.<name>_survey_finished` | When the last run ended, with `fields_read` and `has_document` as attributes |

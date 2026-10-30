@@ -1,7 +1,7 @@
 ---
 type: source
 title: sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan.json
-source_path: ../device-survey/inverter/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan.json
+source_path: ../device-survey/results/inverter/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
@@ -15,7 +15,7 @@ tags:
 
 # SH6.0RT-V112, B001.V000.P023, firetribe, a WiNet-S on Ethernet
 
-Capability survey of one inverter, read 2026-10-29 from Home Assistant, issue #784. Source: `device-survey/inverter/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan.json`.
+Capability survey of one inverter, read 2026-10-29 from Home Assistant, issue #784. Source: `device-survey/results/inverter/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan.json`.
 
 | | |
 | --- | --- |

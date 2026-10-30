@@ -12,7 +12,7 @@ so one generator keeps building `doc/compatibility.md` from both and a reading
 from somebody who only ever clicked a button counts the same as one from a
 terminal.
 
-Two callers build it. The **Run capability survey** button (`survey.py`)
+Two callers build it. The **Run read only diagnosis** button (`survey.py`)
 builds the full document in the background and offers it as a signed
 download. The **diagnostics download** builds a cheaper one in its
 `survey` section: Home Assistant already has a button that produces a

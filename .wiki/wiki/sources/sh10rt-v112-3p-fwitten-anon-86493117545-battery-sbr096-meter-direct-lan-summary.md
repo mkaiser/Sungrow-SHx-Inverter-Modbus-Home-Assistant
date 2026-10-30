@@ -1,7 +1,7 @@
 ---
 type: source
 title: sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan.json
-source_path: ../device-survey/inverter/sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan.json
+source_path: ../device-survey/results/inverter/sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
@@ -15,7 +15,7 @@ tags:
 
 # SH10RT-V112, pre-B001 firmware, fwitten master, the inverter's own LAN port
 
-Capability survey of one inverter, read 2026-10-16. Source: `device-survey/inverter/sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan.json`.
+Capability survey of one inverter, read 2026-10-16. Source: `device-survey/results/inverter/sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan.json`.
 
 | | |
 | --- | --- |

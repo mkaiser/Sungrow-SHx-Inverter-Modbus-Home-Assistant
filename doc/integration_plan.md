@@ -19,10 +19,10 @@
 | 8 — Sungrow Logger | ⬜ not started |
 
 Released as PEP 440 pre-releases (`0.1.0aN`), named "(preview)" in both
-manifests. The releases are **diagnostics-only**: `DEVICES_MODE_OFFERED` in
-`const.py` is off, so Add integration makes an entry that runs the survey and
+manifests. The releases are **diagnostics-only**: `ONLY_SURVEY_MODE` in
+`const.py` is on, so Add integration makes an entry that runs the survey and
 creates no readings, promotion is greyed out, and the entity-id question is
-never put. An existing devices entry still loads. Turning the flag on is the
+never put. An existing devices entry still loads. Turning the flag off is the
 whole re-enablement (`tests/test_alpha_gate.py`).
 
 A release is `scripts/release/sync_version.py --set X`, a commit, an
@@ -35,7 +35,7 @@ pre-release and the library to PyPI over OIDC. Run hassfest locally first
 
 ### Decisions for the maintainer
 
-1. **When to offer the ordinary setup** (`DEVICES_MODE_OFFERED`), and
+1. **When to offer the ordinary setup** (`ONLY_SURVEY_MODE`), and
    **when to merge into `main`.** The merge retires the preview channel and
    opens the HACS default store, which also needs the brand in
    `home-assistant/brands` (`scripts/helpers/make_brand_icon.py` draws it).

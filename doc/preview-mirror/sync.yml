@@ -390,10 +390,10 @@ jobs:
           of people.
 
           The most useful thing you can do with it is send a reading. The
-          integration can produce one for you: add it in **Diagnostics only**
-          mode if you do not want any entities, fill in
-          **Options → Contribute a capability survey**, press **Run capability
-          survey** on the device page, and download the document it offers.
+          integration can produce one for you: add it with **Perform the device
+          survey**, fill in
+          **Options → Contribute a capability survey**, press **Run read only
+          diagnosis** on the device page, and download the document it offers.
 
           ## When this repository goes away
 

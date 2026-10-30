@@ -1,4 +1,5 @@
 .venv
+tmp/
 
 # Home Assistant dev instance (scripts/dev/develop.sh) - only the template is tracked.
 config/*

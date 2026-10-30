@@ -1,7 +1,7 @@
 ---
 type: source
 title: sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan.json
-source_path: ../device-survey/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan.json
+source_path: ../device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan.json
 ingested: '2026-10-30'
 created: '2026-10-30'
 tags:
@@ -17,7 +17,7 @@ tags:
 
 Capability survey of one inverter, read 2026-10-29 from Home Assistant, issue #785, with a
 control test. The issue carried two files a minute apart; this is the second, which holds the
-first's reading plus the control test. Source: `device-survey/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan.json`.
+first's reading plus the control test. Source: `device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan.json`.
 
 | | |
 | --- | --- |

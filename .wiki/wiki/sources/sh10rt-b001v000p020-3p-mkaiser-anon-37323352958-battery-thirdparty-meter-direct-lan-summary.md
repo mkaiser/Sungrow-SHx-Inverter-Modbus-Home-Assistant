@@ -1,7 +1,7 @@
 ---
 type: source
 title: sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan.json
-source_path: ../device-survey/inverter/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan.json
+source_path: ../device-survey/results/inverter/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
@@ -15,7 +15,7 @@ tags:
 
 # SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port
 
-Capability survey of one inverter, read 2026-10-16. Source: `device-survey/inverter/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan.json`.
+Capability survey of one inverter, read 2026-10-16. Source: `device-survey/results/inverter/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan.json`.
 
 | | |
 | --- | --- |

@@ -40,7 +40,7 @@ details are under [Why each one](#why-each-one).
 ## Not needed any more
 
 Already read several times over. Please send one of these **only** if it
-differs from what is in [`inverter/`](inverter/) in one of the ways below:
+differs from what is in [`results/inverter/`](results/inverter/) in one of the ways below:
 
 - an **SH10RT, SH10RT-20 or SH10RT-V112 on P023**, on either path (five
   houses);

@@ -1,7 +1,7 @@
 ---
 type: source
 title: sh10rt-v112-3p-fwitten-anon-33442450531-battery-none-direct-lan.json
-source_path: ../device-survey/inverter/sh10rt-v112-3p-fwitten-anon-33442450531-battery-none-direct-lan.json
+source_path: ../device-survey/results/inverter/sh10rt-v112-3p-fwitten-anon-33442450531-battery-none-direct-lan.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
@@ -15,7 +15,7 @@ tags:
 
 # SH10RT-V112, pre-B001 firmware, fwitten slave, the inverter's own LAN port
 
-Capability survey of one inverter, read 2026-10-16. Source: `device-survey/inverter/sh10rt-v112-3p-fwitten-anon-33442450531-battery-none-direct-lan.json`.
+Capability survey of one inverter, read 2026-10-16. Source: `device-survey/results/inverter/sh10rt-v112-3p-fwitten-anon-33442450531-battery-none-direct-lan.json`.
 
 | | |
 | --- | --- |

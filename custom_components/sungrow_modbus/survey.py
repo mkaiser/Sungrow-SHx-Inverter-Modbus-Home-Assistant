@@ -425,7 +425,7 @@ class SurveyRunner:
                 f'<a href="{url}" target="_blank">Download the document</a>'
                 " — this link stops working at "
                 f"{lapses.strftime('%H:%M')}. After that, press "
-                "**Run capability survey** again for a fresh one, or use "
+                "**Run read only diagnosis** again for a fresh one, or use "
                 "**Download diagnostics** on the device page, which carries "
                 "the same document and never expires.\n\n"
                 "It carries a stand-in serial rather than the real one, and "
@@ -483,7 +483,7 @@ class SurveyRunner:
             (
                 f"{summarise(document)}\n\n"
                 "The download link in this notification has expired. Press "
-                "**Run capability survey** again for a fresh one, or use "
+                "**Run read only diagnosis** again for a fresh one, or use "
                 "**Download diagnostics** on the device page — that carries "
                 "the same document and never expires.\n\n"
                 "It carries a stand-in serial rather than the real one, and "

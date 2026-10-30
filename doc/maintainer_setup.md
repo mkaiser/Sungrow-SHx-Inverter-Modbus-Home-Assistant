@@ -106,8 +106,8 @@ answer it.
 ## 3. Capturing a system
 
 The published documents are in
-[device-survey/inverter/](../device-survey/inverter/) and
-[device-survey/wallbox/](../device-survey/wallbox/), and
+[device-survey/results/inverter/](../device-survey/results/inverter/) and
+[device-survey/results/wallbox/](../device-survey/results/wallbox/), and
 [devices-wanted.md](../device-survey/devices-wanted.md) says what is
 missing, in the order it would help.
 
@@ -134,8 +134,8 @@ one file in `device-survey/` that writes a register is
 `sungrow_control_test.py`, which the survey runs only then.
 
 The document and its transcript land in `device-survey/`, where both
-are gitignored. Publish a document by moving it into `inverter/` (or
-`wallbox/`) and committing it with `doc/compatibility.md`, which
+are gitignored. Publish a document by moving it into `results/inverter/` (or
+`results/wallbox/`) and committing it with `doc/compatibility.md`, which
 `scripts/generate/generate_compatibility.py` rebuilds from them. Leave the `sungrow-scan-*.log` transcript alone — it
 carries the real serial and the addresses. And if a system belongs to
 somebody else, **ask them before publishing its readings**; a stand-in

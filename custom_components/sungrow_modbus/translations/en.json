@@ -16,10 +16,6 @@
       "invalid_network": "Not a network range: {error}"
     },
     "step": {
-      "devices_later": {
-        "title": "Not in this release",
-        "description": "⚠️ **Sensors and controls are not in this release.** This is an early alpha, and it exists to gather readings.\n\nSetting up the inverter properly — including taking over the entity IDs of the YAML package, which is the one decision here that cannot be undone — comes in a later release.\n\nPressing **Submit** sets this entry up for **diagnostics only**: it connects to your inverter, works out what it is and which registers it answers, and creates no entities for the values. You can upgrade it to a full entry later without deleting it."
-      },
       "entity_ids": {
         "title": "Existing entities found",
         "description": "Home Assistant found **{count} entities** from the `modbus_sungrow.yaml` package, such as `{example}`. Your recorder history, your statistics and every dashboard card are stored against those entity IDs.\n\n{status}\n\n**Migrate my existing entities** takes those IDs over. History and statistics carry on uninterrupted and your dashboards keep working unchanged. Nothing is copied and nothing is deleted.\n\n**Start fresh** gives this inverter its own IDs, such as `sensor.sh10rt_total_dc_power`. Your old history stays where it is, under the old IDs, and your dashboards keep pointing at it.\n\nEither way the entities are identical in every other respect.",
@@ -101,7 +97,7 @@
       },
       "testimony": {
         "title": "What do you want to tell us?",
-        "description": "You chose diagnostics only, which means this entry exists to produce a reading — so these are the questions that reading needs and no register can answer.\n\n{measured}\n\nEverything here is optional, and leaving a field empty is honest: it records that the question was not answered, which is different from answering \"I don't know\". You can change any of it later under the integration's options.\n\nAfterwards, press **Run capability survey** on the device page.",
+        "description": "You chose diagnostics only, which means this entry exists to produce a reading — so these are the questions that reading needs and no register can answer.\n\n{measured}\n\nEverything here is optional, and leaving a field empty is honest: it records that the question was not answered, which is different from answering \"I don't know\". You can change any of it later under the integration's options.\n\nAfterwards, press **Run read only diagnosis** on the device page.",
         "data": {
           "reporter": "Your name or handle",
           "survey_transport": "How this inverter is connected",
@@ -127,10 +123,10 @@
       },
       "user": {
         "title": "What is this for?",
-        "description": "**Set up my inverter** is what you want if you came here to see your solar production in Home Assistant.\n\n**Diagnostics only** connects to the inverter, works out what it is and what it answers, and creates **no entities at all**. It exists because this project has to *measure* which registers each model and firmware supports — Sungrow's own specification has been wrong in both directions — and today that evidence comes from the few houses that have sent a reading.{mode_choice}",
+        "description": "{mode_intro}**The device survey** connects to the inverter, works out what it is and what it answers, and creates **no entities at all**. It exists because this project has to *measure* which registers each model and firmware supports — Sungrow's own specification has been wrong in both directions — and today that evidence comes from the few houses that have sent a reading.{mode_choice}",
         "menu_options": {
           "setup_devices": "Set up my inverter — sensors, controls, the lot",
-          "setup_diagnostics": "Diagnostics only — help this project, create no entities"
+          "setup_diagnostics": "Perform the device survey — help this project, create no entities"
         }
       },
       "reconfigure": {
@@ -156,7 +152,7 @@
       "searching": "Searching {network}.\n\n{stage}\n\nPorts 502 and 503 are both tried, so you do not have to know which one your equipment uses."
     },
     "create_entry": {
-      "diagnostics": "**You are set up, and nothing has been read yet.** Two more steps, both on the device page this dialog is about to show you:\n\n1. Press **Run capability survey**, under *Diagnostic*. It reads and never writes. On a cable it is over in a couple of minutes with the register sweep on; over a VPN it can take considerably longer, and the three sensors beside the button say how far along it is and what it is reading.\n2. When it finishes, open **Notifications** in the sidebar — the badge at the bottom left. The notification there carries a summary and a **Download the document** link. That link is the JSON file to send us, and it stops working after an hour.\n\nMissed it, or came back the next day? **Download diagnostics** on the same device page carries the same document and never expires. Send either to the issue tracker or to Discord.\n\nThe file names your inverter by a stand-in rather than its serial number, and carries the last two octets of its address only while that box is ticked."
+      "diagnostics": "**You are set up, and nothing has been read yet.** Two more steps, both on the device page this dialog is about to show you:\n\n1. Press **Run read only diagnosis**, under *Diagnostic*. It reads and never writes. On a cable it is over in a couple of minutes with the register sweep on; over a VPN it can take considerably longer, and the three sensors beside the button say how far along it is and what it is reading.\n2. When it finishes, open **Notifications** in the sidebar — the badge at the bottom left. The notification there carries a summary and a **Download the document** link. That link is the JSON file to send us, and it stops working after an hour.\n\nMissed it, or came back the next day? **Download diagnostics** on the same device page carries the same document and never expires. Send either to the issue tracker or to Discord.\n\nThe file names your inverter by a stand-in rather than its serial number, and carries the last two octets of its address only while that box is ticked."
     }
   },
   "entity": {
@@ -227,10 +223,10 @@
     },
     "button": {
       "run_control_test": {
-        "name": "Run control write test"
+        "name": "Run complete diagnosis and tests"
       },
       "run_survey": {
-        "name": "Run capability survey"
+        "name": "Run read only diagnosis"
       }
     },
     "number": {
@@ -1039,7 +1035,7 @@
           },
           "survey": {
             "name": "Contribute a capability survey",
-            "description": "Sungrow publishes no release notes, and its register specification has been wrong in both directions — so which registers your inverter answers is **measured** rather than looked up. Today that evidence comes from the few houses that have sent a reading, which is why some inverters are supported better than others — and why yours is worth one.\n\n{measured}\n\nEverything below is optional and answers something **no register can**. Leaving a field empty is honest — it records that the question was not answered, which is different from answering \"I don't know\".\n\nSaving this page keeps your answers. To **run** the survey, press **Run capability survey** on the device page — it shows how far along it is and what it is reading, and offers the finished document as a download when it is done. It reads and never writes, and the serial number is replaced by a stand-in before anything reaches the file.",
+            "description": "Sungrow publishes no release notes, and its register specification has been wrong in both directions — so which registers your inverter answers is **measured** rather than looked up. Today that evidence comes from the few houses that have sent a reading, which is why some inverters are supported better than others — and why yours is worth one.\n\n{measured}\n\nEverything below is optional and answers something **no register can**. Leaving a field empty is honest — it records that the question was not answered, which is different from answering \"I don't know\".\n\nSaving this page keeps your answers. To **run** the survey, press **Run read only diagnosis** on the device page — it shows how far along it is and what it is reading, and offers the finished document as a download when it is done. It reads and never writes, and the serial number is replaced by a stand-in before anything reaches the file.",
             "data": {
               "reporter": "Your name or handle",
               "survey_transport": "How this inverter is connected",
@@ -1065,7 +1061,7 @@
           },
           "control_test": {
             "name": "What the control write test may do",
-            "description": "The **Run control write test** button on the device page does something no other part of this integration does on its own: it **writes** to each setting it can, reads the register straight back, compares what came back against what Sungrow's specification says should be there, and puts your value back.\n\nIt exists because a whole class of bug is otherwise invisible. The registers mix units — one battery power setting counts in watts and the one beside it in hundredths of a kilowatt — so a value can be written, read back looking perfectly correct, and still be ten times what you asked for. Reading alone cannot find that. Writing and checking the raw register can.\n\nEverything it changes is changed back and read back before it reports success, and if anything could not be put back you get a repair here telling you exactly what and offering to fix it. The settings below are the parts that go further than that, and each is off unless you say otherwise.",
+            "description": "The **Run complete diagnosis and tests** button on the device page does something no other part of this integration does on its own: it **writes** to each setting it can, reads the register straight back, compares what came back against what Sungrow's specification says should be there, and puts your value back.\n\nIt exists because a whole class of bug is otherwise invisible. The registers mix units — one battery power setting counts in watts and the one beside it in hundredths of a kilowatt — so a value can be written, read back looking perfectly correct, and still be ten times what you asked for. Reading alone cannot find that. Writing and checking the raw register can.\n\nEverything it changes is changed back and read back before it reports success, and if anything could not be put back you get a repair here telling you exactly what and offering to fix it. The settings below are the parts that go further than that, and each is off unless you say otherwise.",
             "data": {
               "control_test_restart": "May it stop and restart the inverter?",
               "control_test_export_limit": "May it switch feed-in limitation on?",
@@ -1119,12 +1115,12 @@
       "running_survey": "Reading your inverter: 19 capability probes. Through a WiNet-S this can take a minute."
     },
     "abort": {
-      "devices_mode_not_offered": "Setting up sensors and controls is not in this release. This alpha creates diagnostics-only entries; start again and choose **Diagnostics only**."
+      "devices_mode_not_offered": "Setting up sensors and controls is not in this release. This alpha creates diagnostics-only entries; start again and choose **Perform the device survey**."
     }
   },
   "services": {
     "run_control_test": {
-      "name": "Run control write test",
+      "name": "Run complete diagnosis and tests",
       "description": "Writes to every control this integration can write to, checks each one three ways and puts it back. Unlike the capability survey, this CHANGES SETTINGS on the inverter: it limits the battery and the export, and it briefly forces a charge and a discharge. Everything is recorded before the first write and restored afterwards, and the run reports anything it could not put back. It exists because a wrong scale is invisible to a readback -- write 700 W, get 700 W back -- and only writing can find it. The restart and export-limit permissions are set in the integration's options and are off by default.",
       "fields": {
         "device_id": {
@@ -1134,7 +1130,7 @@
       }
     },
     "run_survey": {
-      "name": "Run capability survey",
+      "name": "Run read only diagnosis",
       "description": "Reads this installation's registers and produces a document describing what answered, so support for it can be measured rather than guessed. Reads only; nothing is written to the inverter, and the serial number is replaced by a stand-in. The finished document arrives as a notification with a download link.",
       "fields": {
         "device_id": {

@@ -1,7 +1,7 @@
 ---
 type: source
 title: sh10rt-20-b001v000p023-3p-bar12-anon-81257679535-battery-sbr096-meter-direct-lan.json
-source_path: ../device-survey/inverter/sh10rt-20-b001v000p023-3p-bar12-anon-81257679535-battery-sbr096-meter-direct-lan.json
+source_path: ../device-survey/results/inverter/sh10rt-20-b001v000p023-3p-bar12-anon-81257679535-battery-sbr096-meter-direct-lan.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
@@ -14,7 +14,7 @@ tags:
 
 # SH10RT-20, B001.V000.P023, bar12, the inverter's own LAN port
 
-Capability survey of one inverter, read 2026-10-13. Source: `device-survey/inverter/sh10rt-20-b001v000p023-3p-bar12-anon-81257679535-battery-sbr096-meter-direct-lan.json`.
+Capability survey of one inverter, read 2026-10-13. Source: `device-survey/results/inverter/sh10rt-20-b001v000p023-3p-bar12-anon-81257679535-battery-sbr096-meter-direct-lan.json`.
 
 | | |
 | --- | --- |

@@ -143,7 +143,7 @@ async def _pick_options(
 def _open_the_alpha_gate(devices_mode_offered: None) -> None:
     """Every test in this file walks the devices path, which the alpha shuts.
 
-    `DEVICES_MODE_OFFERED` is off for the first release, so the config flow
+    `ONLY_SURVEY_MODE` is on for the first release, so the config flow
     will not create a devices entry. What it gates is the door; this file
     tests the room behind it, and the room has not changed. Opening the gate
     for the whole module keeps that coverage exactly as it was rather than

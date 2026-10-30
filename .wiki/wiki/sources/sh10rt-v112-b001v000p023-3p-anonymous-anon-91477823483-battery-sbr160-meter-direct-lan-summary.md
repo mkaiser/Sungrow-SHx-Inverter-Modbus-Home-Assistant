@@ -1,7 +1,7 @@
 ---
 type: source
 title: sh10rt-v112-b001v000p023-3p-anonymous-anon-91477823483-battery-sbr160-meter-direct-lan.json
-source_path: ../device-survey/inverter/sh10rt-v112-b001v000p023-3p-anonymous-anon-91477823483-battery-sbr160-meter-direct-lan.json
+source_path: ../device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-anonymous-anon-91477823483-battery-sbr160-meter-direct-lan.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
@@ -15,7 +15,7 @@ tags:
 
 # SH10RT-V112, B001.V000.P023, anonymous, the inverter's own LAN port
 
-Capability survey of one inverter, read 2026-10-16. Source: `device-survey/inverter/sh10rt-v112-b001v000p023-3p-anonymous-anon-91477823483-battery-sbr160-meter-direct-lan.json`.
+Capability survey of one inverter, read 2026-10-16. Source: `device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-anonymous-anon-91477823483-battery-sbr160-meter-direct-lan.json`.
 
 | | |
 | --- | --- |

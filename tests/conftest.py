@@ -120,7 +120,7 @@ def auto_enable_custom_integrations(
 def devices_mode_offered() -> Generator[None]:
     """Open the alpha gate, so a test can reach devices mode at all.
 
-    `DEVICES_MODE_OFFERED` is off for the first release: the config flow's
+    `ONLY_SURVEY_MODE` is on for the first release: the config flow's
     opening step and the options page's promotion toggle both refuse to
     create a devices entry. That is a decision about the **door**, and every
     test that walks through it into migration, entity ids, polling or
@@ -131,9 +131,7 @@ def devices_mode_offered() -> Generator[None]:
     `tests/test_alpha_gate.py` is the one place that tests the door itself,
     from both sides.
     """
-    with patch(
-        "custom_components.sungrow_modbus.config_flow.DEVICES_MODE_OFFERED", True
-    ):
+    with patch("custom_components.sungrow_modbus.config_flow.ONLY_SURVEY_MODE", False):
         yield
 
 

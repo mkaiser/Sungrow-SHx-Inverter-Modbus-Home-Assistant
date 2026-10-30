@@ -38,8 +38,8 @@ and sweeping for one cannot find it.
 
 `sungrow_survey.py` sweeps port 516. A wallbox found there is read by
 `device-survey/scripts/python/wallbox_direct.py` into a **wallbox
-document** of its own, published in `device-survey/wallbox/` beside
-`inverter/`.
+document** of its own, published in `device-survey/results/wallbox/` beside
+`results/inverter/`.
 
 The register map, with how strongly each row is held:
 [wallbox registers](../sources/wallbox-registers-summary.md).

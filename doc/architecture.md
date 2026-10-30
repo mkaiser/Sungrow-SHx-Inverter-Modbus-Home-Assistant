@@ -67,7 +67,7 @@ lines are worth knowing before moving anything across them.
 the prose Home Assistant renders above them; `config_flow.py` holds the steps
 that decide which of those to show. The split keeps the flow readable as flow
 logic. `_alpha_placeholders` stays in `config_flow.py` although it only
-produces text: it reads `DEVICES_MODE_OFFERED` at call time so a test can
+produces text: it reads `ONLY_SURVEY_MODE` at call time so a test can
 patch the flag there. The same instinct puts the `*_descriptions.py` files
 beside the platforms that consume them.
 
@@ -160,10 +160,9 @@ An entry is one of two modes (`CONF_MODE`). **Devices** is the integration:
 entities, migration, controls. **Diagnostics only** connects, identifies and
 polls, but creates only the survey and control test buttons and three survey
 sensors -- enough for a device page -- and never asks the entity-id question.
-It can be promoted from the options flow. While `DEVICES_MODE_OFFERED` is
-`False`, new entries can only be diagnostics: the menu still offers devices
-mode and its step explains why it is not yet available, and the promotion
-toggle is greyed.
+It can be promoted from the options flow. While `ONLY_SURVEY_MODE` is
+`True`, new entries can only be diagnostics: the menu offers only the survey
+and says why, and the promotion toggle is greyed.
 
 ## At build time
 

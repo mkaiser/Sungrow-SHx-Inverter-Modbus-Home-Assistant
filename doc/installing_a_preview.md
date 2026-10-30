@@ -45,6 +45,8 @@ Four steps. The third one is the one people forget.
 | Repository | `https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview` |
 | Type | **Integration** |
 
+![HACS custom repositories dialog with the preview repository added as an Integration](../device-survey/images/HACS-add-custom-repository.png)
+
 **HACS itself needs a GitHub account**, if you have not set it up before. Its
 own configuration asks you to type a device code at
 <https://github.com/login/device>, and there is no way past it — that is HACS
@@ -87,11 +89,14 @@ Consequences worth knowing:
 **Settings → Devices & services → Add integration →** search for
 **Sungrow Modbus (preview)**.
 
-The first screen asks what the entry is for. **Set up my inverter** is
-shown but not in the preview: choosing it says so, and carries on as
-**Diagnostics only**, which is the other choice. Either way you get the same
-entry: no entities for the readings, just the survey's buttons and sensors on
-the device page.
+![Add integration searching for Sungrow modbus, showing Sungrow Modbus (preview)](../device-survey/images/HACS-add-integration-sungrow-modbus.png)
+
+The first screen offers one choice in the preview, **Perform the device
+survey**: no entities for the readings, just the survey's buttons and sensors
+on the device page. Setting up the inverter with sensors and controls comes in
+a later release.
+
+![The first screen, offering Perform the device survey](../device-survey/images/HA-settings-configure-integration.png)
 
 Then it finds the inverter: **Search my network** probes the range you
 confirm on the Modbus port and identifies what answers by asking it, rather
@@ -188,11 +193,13 @@ decided about your hardware, and what failed, with the serial and address
 removed.
 
 **A capability survey**, a button on the device page. Settings → Devices &
-services → Sungrow Modbus → the device → **Run capability survey**. It reads
+services → Sungrow Modbus → the device → **Run read only diagnosis**. It reads
 and never writes, and holds the integration's own polling off while it runs.
 On a cable it takes seconds; over a VPN it can take many minutes, which is
 why the three sensors beside the button say how far along it is and what it
 is reading.
+
+![Device page with the two diagnosis buttons](../device-survey/images/HA-settings-device-start-survey.png)
 
 When it finishes, a notification carries a summary and a download link. That
 link is signed and stops working after an hour — press the button again for
@@ -204,7 +211,7 @@ number, and carries your address only if you said it may. Send it to the
 issue tracker or Discord; it is how this project learns what varies between
 installations, which is the thing no specification has told it reliably.
 
-If you set the integration up as *Diagnostics only*, it asked you a few
+If you set the integration up for the device survey, it asked you a few
 questions on the way in — which cable, whether a Modbus proxy is in the path,
 whether anything else was polling. Those answers go into the document and no
 register can answer them. They are editable afterwards under the

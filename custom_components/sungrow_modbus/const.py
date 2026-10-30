@@ -322,34 +322,33 @@ Promoted to a full entry later from the options flow, which is when the
 entity-ids question gets asked.
 """
 
-#: Whether the UI lets anybody *choose* devices mode. Off during the alpha.
+#: Whether the UI offers only the survey, so nobody can *choose* devices
+#: mode. On during the alpha.
 #:
 #: This gates the door, not the room. Every line of devices mode stays built
-#: and stays tested; what is switched off is the two places a person can
+#: and stays tested; what is shut is the two places a person can
 #: create such an entry -- the question the config flow opens with, and the
 #: promotion toggle on a diagnostics entry's options page.
 #:
-#: Off because that path contains the **weightiest** decision this
+#: On because that path contains the **weightiest** decision this
 #: integration makes. Choosing to take over `modbus_sungrow.yaml`'s entity ids
 #: decides which ids years of recorder history and every dashboard card attach
 #: to, and getting it wrong breaks both silently. That is not a thing to put
 #: in front of a stranger running an alpha, and an alpha's job here is to
 #: gather readings anyway.
 #:
-#: Neither place hides anything, because somebody evaluating this integration
-#: should be able to see that the ordinary setup exists. The menu still offers
-#: devices mode and its step (`devices_later`) says it is coming and carries
-#: on as diagnostics; the promotion toggle is greyed. `promote` refuses too,
-#: so a hand-written request cannot get round the screen.
+#: The opening menu offers only the survey and says the ordinary setup comes
+#: later; the promotion toggle is greyed. `setup_devices` and `promote`
+#: refuse too, so a hand-written request cannot get round the screen.
 #:
-#: **Flipping this to True is the whole re-enablement.**
+#: **Flipping this to False is the whole re-enablement.**
 #: `tests/test_alpha_gate.py` asserts both halves of that, and nothing outside
 #: the config flow branches on it.
 #:
 #: It does not touch an entry that already exists. A devices entry -- from a
 #: backup, or made while the gate was open -- loads, polls and configures
 #: normally.
-DEVICES_MODE_OFFERED = False
+ONLY_SURVEY_MODE = True
 
 #: Where a contributed reading goes. The compatibility report template asks
 #: for exactly what a survey produces, so the form arrives pre-shaped.

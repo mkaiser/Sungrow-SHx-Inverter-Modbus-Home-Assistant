@@ -87,12 +87,11 @@ OVERRIDES: dict[str, str] = {
     # doing, not what the inverter reports. "Survey" leads every one of them
     # so they sort together on a device page among entities that are
     # otherwise all readings.
-    "run_survey": "Run capability survey",
-    # Named for what it does to the inverter rather than for what it measures.
-    # "Control test" alone reads like a diagnostic that looks at the controls;
-    # this one writes to them, and the one place a person is guaranteed to see
-    # that word is the button they are about to press.
-    "run_control_test": "Run control write test",
+    # The two buttons are named as a pair a contributor chooses between:
+    # "read only" on the one that never writes, so that the other one, which
+    # adds the control test's writes, is the one without that promise.
+    "run_survey": "Run read only diagnosis",
+    "run_control_test": "Run complete diagnosis and tests",
     "survey_progress": "Survey progress",
     "survey_step": "Survey step",
     "survey_finished": "Survey finished",

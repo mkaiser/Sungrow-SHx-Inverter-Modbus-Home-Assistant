@@ -31,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from sungrow_modbus import DEVICE_TYPES, family_for, known_absent
 
 REPO = Path(__file__).resolve().parents[2]
-DOCUMENTS = REPO / "device-survey" / "inverter"
+DOCUMENTS = REPO / "device-survey" / "results" / "inverter"
 
 from sungrow_modbus.survey_document import REPORTED_TRANSPORTS  # noqa: E402
 

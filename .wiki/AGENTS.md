@@ -38,13 +38,13 @@ them**, and they are never moved:
 
 | Source | Where | Written by |
 | --- | --- | --- |
-| inverter surveys | `device-survey/inverter/*.json` | `sungrow_survey.py --save`, a contributor's upload |
-| wallbox documents | `device-survey/wallbox/*.json` | the same |
+| inverter surveys | `device-survey/results/inverter/*.json` | `sungrow_survey.py --save`, a contributor's upload |
+| wallbox documents | `device-survey/results/wallbox/*.json` | the same |
 | the YAML package's entity record | `doc/legacy_entity_map.json` | by hand; tests read it |
 | register documents | `doc/wallbox_registers.md`, `doc/cross_reference_modbus_manager.md` | by hand |
 
 A source page's `source_path` is relative to `.wiki/`, as llmwiki's ingest
-writes it, for example `../device-survey/inverter/<file>.json`.
+writes it, for example `../device-survey/results/inverter/<file>.json`.
 
 **Never a source:** a survey transcript (`sungrow-scan-*.log`), a snapshot,
 or any gitignored file. These carry real serials and addresses.

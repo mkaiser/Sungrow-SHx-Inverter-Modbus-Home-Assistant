@@ -20,7 +20,7 @@ session boundary tells them apart.
 
 | Source | Device | Licence | Notes |
 | --- | --- | --- | --- |
-| **Here** | AC22E-01, one firmware: two readings via a WiNet-S, a session ending (single phase) and idle with no car (three phase); one at its own address over TLS, idle | MIT, this repo | Published as a dongle section in an inverter document and as a wallbox document in `device-survey/wallbox/`, serial masked. `probe.py dump --save` writes unmasked raw readings beside the script, which stay local |
+| **Here** | AC22E-01, one firmware: two readings via a WiNet-S, a session ending (single phase) and idle with no car (three phase); one at its own address over TLS, idle | MIT, this repo | Published as a dongle section in an inverter document and as a wallbox document in `device-survey/results/wallbox/`, serial masked. `probe.py dump --save` writes unmasked raw readings beside the script, which stay local |
 | [Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant](https://github.com/Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant) | Not stated | **No licence file** — used with the author's permission, and only for *which register means what* | Its charging-status enum is the single most useful thing any of the three has |
 | [KevinD987/sungrow-ac011e](https://github.com/KevinD987/sungrow-ac011e) | AC011E-01, by measurement | **MIT** | Carries its own confidence marks — VERIFIED, LIKELY, UNVERIFIED — and says plainly that the allocation is not manufacturer-confirmed and may move between firmwares |
 | [Discussion #571](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions/571) on this repo | AC22E-01 | this repo's own tracker | The **same model measured here**, which none of the other sources is. Gives names in the manufacturer's own idiom — `SetOutI`, `PhaseSwitch`, `Availability`, `RemoteControl`, `State` — and one scale that this project's reading contradicts, below |
@@ -265,7 +265,7 @@ for the serial, as it does for the inverter's.
 Through a dongle, the `wallbox` section of the inverter's document. At its
 own address, a **wallbox document** of its own (`"document": "wallbox"`, no
 `device` section, `connection` naming TLS on 516), written by
-`wallbox_direct.py` and published in `device-survey/wallbox/`. The
+`wallbox_direct.py` and published in `device-survey/results/wallbox/`. The
 section is the same either way:
 
 ```json

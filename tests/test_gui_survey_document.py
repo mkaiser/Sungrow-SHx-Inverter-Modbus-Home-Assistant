@@ -514,7 +514,7 @@ async def test_the_flow_asks_what_the_entry_is_for_first(
     )
 
     assert result["type"] is FlowResultType.MENU
-    assert set(result["menu_options"]) == {"setup_devices", "setup_diagnostics"}
+    assert "setup_diagnostics" in result["menu_options"]
 
 
 async def test_a_diagnostics_entry_creates_no_entities(

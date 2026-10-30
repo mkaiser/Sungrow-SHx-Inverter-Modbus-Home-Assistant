@@ -421,7 +421,7 @@ reviewing_the_migration:
   # continuous afterwards.
   gate: >-
     The entity id question is asked only in devices mode, which this release
-    does not offer. Set DEVICES_MODE_OFFERED = True in
+    does not offer. Set ONLY_SURVEY_MODE = False in
     custom_components/sungrow_modbus/const.py locally first, and do not
     commit it.
   steps:

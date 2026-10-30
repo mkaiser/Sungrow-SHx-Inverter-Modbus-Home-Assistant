@@ -191,3 +191,23 @@ async def test_the_block_read_test_is_carried_from_the_last_survey(
         "measured_at": "2026-10-17T12:00:00+00:00",
         **measured,
     }
+
+
+async def test_the_control_test_is_carried_into_the_survey(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The download is the link that never lapses, so it holds part B too.
+
+    The notification says Download diagnostics carries the same document. A
+    download only reads, so the last run's control test has to be carried,
+    or that promise fails for the run that is hardest to repeat.
+    """
+    entry = await _setup(hass, sungrow_unit)
+    report = await async_get_config_entry_diagnostics(hass, entry)
+    assert "control_test" not in report["survey"]
+
+    block = {"verdict": "pass", "controls": []}
+    entry.runtime_data.survey._set(control_test=block)
+    report = await async_get_config_entry_diagnostics(hass, entry)
+
+    assert report["survey"]["control_test"] == block

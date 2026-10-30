@@ -1,7 +1,7 @@
 ---
 type: source
 title: sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-winet.json
-source_path: ../device-survey/inverter/sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-winet.json
+source_path: ../device-survey/results/inverter/sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-winet.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
@@ -15,7 +15,7 @@ tags:
 
 # SH10RT-V112, pre-B001 firmware, fwitten master, a WiNet-S (medium not reported)
 
-Capability survey of one inverter, read 2026-10-13. Source: `device-survey/inverter/sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-winet.json`.
+Capability survey of one inverter, read 2026-10-13. Source: `device-survey/results/inverter/sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-winet.json`.
 
 | | |
 | --- | --- |

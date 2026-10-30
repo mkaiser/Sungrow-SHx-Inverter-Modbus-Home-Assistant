@@ -200,7 +200,7 @@ def test_the_published_documents_carry_stand_ins_and_nothing_else() -> None:
     look after a near-miss, and the two halves belong together: a stand-in in
     the document, and nothing serial-shaped in the source.
     """
-    root = REPO / "device-survey"
+    root = REPO / "device-survey" / "results"
     documents = sorted(
         [
             *root.joinpath("inverter").glob("*.json"),

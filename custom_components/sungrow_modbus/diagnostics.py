@@ -21,6 +21,9 @@ need:
 * **which entity ids are in use**, so a migration that half-worked is visible;
 * the **block read test** the survey button last ran, with its time. Not run
   here: it takes minutes through a dongle, and a download is waited on.
+  The **control test** the last run carried goes into the `survey` section
+  for the same reason, and because this download is the link that does not
+  expire.
 
 Serial number and host are redacted: a diagnostics file is written to be
 pasted into a public issue.
@@ -57,7 +60,7 @@ from sungrow_modbus.inverter.capabilities import OUTPUT_TYPES, known_absent
 from .const import CONF_REGISTER_DUMP, CONF_UNIT_ID, CONF_WALLBOX_HOST, DOMAIN
 from .coordinator import COMPONENT_TIERS, SungrowConfigEntry
 from .migration import DESCRIPTIONS, legacy_entity_id
-from .survey_document import async_build
+from .survey_document import async_build, attach_control_test
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -114,6 +117,7 @@ async def async_get_config_entry_diagnostics(
     # register dump and not free -- an inverter grants very few sessions.
     try:
         report["survey"] = await async_build(hass, entry)
+        _carry_control_test(report["survey"], runtime, device)
     # Deliberately broad: the report a user came for matters more than any one
     # section of it.
     except Exception as err:  # and deliberately logged, see below
@@ -134,7 +138,7 @@ async def async_get_config_entry_diagnostics(
 
 #: What the download says when no survey has measured the blocks since start.
 NO_BLOCK_READ_TEST = (
-    "not run since Home Assistant started. Press Run capability survey on the "
+    "not run since Home Assistant started. Press Run read only diagnosis on the "
     "device page; it measures the blocks and this download then carries the "
     "result"
 )
@@ -160,6 +164,21 @@ def _last_block_read_test(runtime: Any) -> dict[str, Any] | str:
         "measured_at": finished.isoformat() if finished else None,
         **measured,
     }
+
+
+def _carry_control_test(document: dict[str, Any], runtime: Any, device: Any) -> None:
+    """Put the last run's control test into a freshly built survey document.
+
+    The download builds part A again but never writes, so part B can only be
+    carried. Without it the notification's promise -- that Download
+    diagnostics holds the same document -- fails for exactly the run that is
+    hardest to repeat. Through the same door as the runner, so the serial
+    check applies here too.
+    """
+    survey = getattr(runtime, "survey", None)
+    block = survey.state.control_test if survey is not None else None
+    if block:
+        attach_control_test(document, block, device)
 
 
 async def async_get_device_diagnostics(

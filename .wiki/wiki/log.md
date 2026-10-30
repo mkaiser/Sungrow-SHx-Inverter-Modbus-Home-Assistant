@@ -114,3 +114,10 @@ A forced charge or discharge, and the discharge that manufactures an export,
 are commanded under `battery_max_charge_power` / `battery_max_discharge_power`
 where those are lower, and skipped with the limit named where too low to
 measure: peter-sm's 10 W caps made both forced checks report nothing.
+
+## [2026-10-30] moved | survey documents into device-survey/results/
+
+`device-survey/inverter/` and `device-survey/wallbox/` are now
+`device-survey/results/inverter/` and `device-survey/results/wallbox/`;
+iHomeManager and Logger documents go in `results/ihomemanager/` and
+`results/logger/`. The documents themselves are unchanged.

@@ -1,7 +1,7 @@
 ---
 type: source
 title: sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan.json
-source_path: ../device-survey/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan.json
+source_path: ../device-survey/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
@@ -16,7 +16,7 @@ tags:
 
 # SH8.0RT-V112, B001.V000.P022, gerd, a WiNet-S on WiFi
 
-Capability survey of one inverter, read 2026-10-14. Source: `device-survey/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan.json`.
+Capability survey of one inverter, read 2026-10-14. Source: `device-survey/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan.json`.
 
 | | |
 | --- | --- |

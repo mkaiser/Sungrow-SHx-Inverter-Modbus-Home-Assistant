@@ -6,7 +6,7 @@ should not mean scrolling past them. So the data lives here and the decisions
 live in `config_flow.py`. The split is along that
 line rather than along size -- anything that asks *what happens next* stayed
 behind. `_alpha_placeholders` is the case worth naming: it reads
-`DEVICES_MODE_OFFERED` at call time precisely so a test can patch the flag on
+`ONLY_SURVEY_MODE` at call time precisely so a test can patch the flag on
 `config_flow`, and moving it here would quietly put it beyond that patch's
 reach while every test still passed.
 """

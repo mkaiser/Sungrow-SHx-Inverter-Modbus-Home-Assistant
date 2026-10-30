@@ -54,11 +54,11 @@ ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
 #: What a diagnostics-only entry creates, and the whole of it.
 DIAGNOSTIC_ENTITIES = {
-    "button.sh10rt_run_capability_survey",
+    "button.sh10rt_run_read_only_diagnosis",
     # Part B, which writes. Present in this mode too: the contributor who set
     # an entry up to send a reading is exactly the person whose hardware this
     # project needs a write measurement from.
-    "button.sh10rt_run_control_write_test",
+    "button.sh10rt_run_complete_diagnosis_and_tests",
     "sensor.sh10rt_survey_progress",
     "sensor.sh10rt_survey_step",
     "sensor.sh10rt_survey_finished",
@@ -218,7 +218,7 @@ async def test_the_button_runs_a_survey_and_the_sensors_follow(
     await hass.services.async_call(
         "button",
         "press",
-        {"entity_id": "button.sh10rt_run_capability_survey"},
+        {"entity_id": "button.sh10rt_run_read_only_diagnosis"},
         blocking=True,
     )
     await hass.async_block_till_done()
@@ -254,7 +254,7 @@ async def test_the_button_runs_the_block_read_test_first(
     await hass.services.async_call(
         "button",
         "press",
-        {"entity_id": "button.sh10rt_run_capability_survey"},
+        {"entity_id": "button.sh10rt_run_read_only_diagnosis"},
         blocking=True,
     )
     await hass.async_block_till_done()
@@ -331,7 +331,7 @@ async def test_a_second_press_while_one_runs_is_refused(
         assert runner.state.running is True
         assert runner.async_start() is False
         # And the button says so, rather than looking pressable.
-        assert hass.states.get("button.sh10rt_run_capability_survey").state == (
+        assert hass.states.get("button.sh10rt_run_read_only_diagnosis").state == (
             STATE_UNAVAILABLE
         )
 

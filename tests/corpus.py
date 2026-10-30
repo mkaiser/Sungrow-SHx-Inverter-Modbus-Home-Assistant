@@ -1,4 +1,4 @@
-"""The committed documents in `device-survey/`, split by kind.
+"""The committed documents in `device-survey/results/`, split by kind.
 
 Inverter, wallbox and iHomeManager documents sit side by side. A wallbox
 read at its own address is a document of its own (`"document": "wallbox"`,
@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-FOLDER = Path(__file__).resolve().parents[1] / "device-survey"
+FOLDER = Path(__file__).resolve().parents[1] / "device-survey" / "results"
 
 
 def _kind(path: Path) -> str | None:

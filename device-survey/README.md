@@ -6,9 +6,10 @@ model, phase count, wiring, transport and firmware — so a survey from a
 real machine is worth more than an inference from the YAML's comments, and
 these documents are the evidence the capability model is built from.
 
-Inverter documents are in [`inverter/`](inverter/), wallbox documents in
-[`wallbox/`](wallbox/), and iHomeManager and Logger documents go in
-`ihomemanager/` and `logger/` once there is one. `doc/compatibility.md` is generated from the inverter
+The documents are in [`results/`](results/): inverter documents in
+[`results/inverter/`](results/inverter/), wallbox documents in
+[`results/wallbox/`](results/wallbox/), and iHomeManager and Logger documents
+go in `results/ihomemanager/` and `results/logger/` once there is one. `doc/compatibility.md` is generated from the inverter
 documents.
 
 **[devices-wanted.md](devices-wanted.md) says which devices are missing**
@@ -22,8 +23,28 @@ anything with a wallbox, an SBR battery or a Logger — a report from it is the
 single most useful thing you can send.
 
 **If you have the integration installed**, the device page does it: **Run
-capability survey**, then download the document from the notification or
+read only diagnosis**, then download the document from the notification or
 with **Download diagnostics**. Nothing else is needed.
+
+**To install it for this**, add the preview channel to HACS as a custom
+repository of type *Integration*, download it and restart Home Assistant
+([the whole guide](../doc/installing_a_preview.md)):
+
+![HACS custom repositories dialog with the preview repository added as an Integration](images/HACS-add-custom-repository.png)
+
+Then **Settings → Devices & services → Add integration**, search for
+*Sungrow Modbus (preview)*:
+
+![Add integration searching for Sungrow modbus, showing Sungrow Modbus (preview)](images/HACS-add-integration-sungrow-modbus.png)
+
+and choose **Perform the device survey**:
+
+![The first screen, offering Perform the device survey](images/HA-settings-configure-integration.png)
+
+and on its device page press **Run read only diagnosis**, or **Run complete
+diagnosis and tests** to add the [control test](#it-reads-and-writes-only-if-you-say-yes):
+
+![Device page with the two diagnosis buttons](images/HA-settings-device-start-survey.png)
 
 **Otherwise**, get the [device-survey/](./) folder (GitHub's *Code →
 Download ZIP* on this branch has it) and run, from inside it:
@@ -415,7 +436,7 @@ section, saying whether that entry's own polling was held off during the run.
 
 Almost none do, and that is not a gap in the evidence — it is the difference
 between reading an inverter and writing to one. The block is produced by
-**Run control write test** on the device page, or by the survey with leave
+**Run complete diagnosis and tests** on the device page, or by the survey with leave
 (or `sungrow_control_test.py --merge-into`), and both change settings on a
 real installation and change them back.
 
