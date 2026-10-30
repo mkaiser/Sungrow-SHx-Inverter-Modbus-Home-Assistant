@@ -18,6 +18,7 @@ from __future__ import annotations
 import ast
 import json
 from pathlib import Path
+import re
 
 import yaml
 
@@ -127,3 +128,24 @@ def test_every_repair_issue_has_a_message():
 
     missing = sorted(k for k in used if k not in described)
     assert not missing, f"repair issues with no strings: {missing}"
+
+
+def test_no_translation_string_carries_a_url() -> None:
+    """Hassfest refuses one, and `make check` does not run it.
+
+    A URL goes in through `description_placeholders` instead.
+    """
+
+    def urls(node: object, path: str) -> list[str]:
+        if isinstance(node, dict):
+            return [
+                found
+                for key, value in node.items()
+                for found in urls(value, f"{path}.{key}")
+            ]
+        if isinstance(node, str) and re.search(r"https?://", node):
+            return [path]
+        return []
+
+    assert urls(_strings(), "") == []
+    assert urls(_english(), "") == []

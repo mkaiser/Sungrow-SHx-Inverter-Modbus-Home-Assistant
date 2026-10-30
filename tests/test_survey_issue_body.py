@@ -1,4 +1,4 @@
-"""The survey issue's body: the list's top, with links that work in an issue."""
+"""The survey issue's body: the call for surveys and the list's top, linked."""
 
 from __future__ import annotations
 
@@ -16,7 +16,8 @@ REF = "branch"
 
 def _body() -> str:
     text = survey_issue_body.SOURCE.read_text(encoding="utf-8")
-    return survey_issue_body.body(text, REPO, REF)
+    intro = survey_issue_body.INTRO.read_text(encoding="utf-8")
+    return survey_issue_body.body(text, REPO, REF, intro)
 
 
 def test_the_body_stops_before_the_reasons() -> None:
@@ -46,3 +47,16 @@ def test_every_absolute_link_names_a_file_that_exists() -> None:
         if target.startswith(prefix):
             path = target[len(prefix) :].split("#")[0]
             assert (repo_root / path).exists(), path
+
+
+def test_the_call_for_surveys_comes_first() -> None:
+    body = _body()
+    assert body.index("Hi everyone!") < body.index("## Most wanted")
+
+
+def test_an_image_becomes_a_raw_file_url() -> None:
+    body = survey_issue_body.body(
+        "", REPO, REF, '<img src="images/a.png" width="400">\n'
+    )
+    raw = f"https://raw.githubusercontent.com/{REPO}/{REF}"
+    assert f'src="{raw}/device-survey/images/a.png"' in body

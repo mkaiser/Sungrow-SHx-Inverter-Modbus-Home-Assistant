@@ -127,6 +127,7 @@ from .const import (
     SECTION_PERMISSIONS,
     SECTION_POLLING,
     SECTION_SURVEY,
+    SURVEY_ISSUE_URL,
     WALLBOX_TLS_UNIT,
 )
 from .links import wallbox_tls_params
@@ -1331,6 +1332,8 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             description=(
                 "diagnostics" if self._mode == MODE_DIAGNOSTICS else "default"
             ),
+            # hassfest refuses a URL inside a translation string.
+            description_placeholders={"survey_issue_url": SURVEY_ISSUE_URL},
         )
 
 

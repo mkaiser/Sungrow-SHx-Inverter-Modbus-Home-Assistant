@@ -14,19 +14,11 @@ Structure:
 
 # Next steps
 
-1. **Release, then ask ra1k_0 (#772) to run `survey.sh`.** The survey now
-   reads an iHomeManager (`sungrow_modbus.ihomemanager`), but contributors
-   run the published wheel, so it reaches them with the next release. One
-   run at that house could read the iHomeManager, the SH20T's own LAN port
-   (blocker 2) and their AC22E-01 (blocker 3, a second wallbox).
-2. **Finish the survey issue, #786.** It is open and the integration's
-   notification, the docs and the issue form point there. Left: pin it, and
-   link it from the default branch's README (the YAML package, `main`; that
-   change is yours). `.github/workflows/survey-issue.yml` writes
-   `devices-wanted.md` into the issue *body* once the repository variable
-   `SURVEY_ISSUE` is set, which would replace the hand-written body: move that
-   text into `scripts/helpers/survey_issue_body.py` first, or leave the
-   variable unset.
+1. **Finish the survey issue, #786.** Pin it, and set the repository
+   variable `SURVEY_ISSUE` to `786`: from then on
+   `.github/workflows/survey-issue.yml` writes `device-survey/survey-issue.md`
+   and the top of `device-survey/devices-wanted.md` into its body whenever
+   either changes, so the issue is edited through those files.
 
 
 # Open decisions

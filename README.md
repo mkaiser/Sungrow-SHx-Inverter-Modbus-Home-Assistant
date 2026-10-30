@@ -68,7 +68,7 @@ long-term statistics and their dashboards when they switch.
 - One naming convention, enforced by a test.
 - **A one-command survey** you can run against your own installation, which is
   how the capability model gets its evidence — see
-  [contributing a survey](device-survey/README.md#contributing-one).
+  [contributing a survey](device-survey/README.md#contributing-your-device-survey).
   The survey itself only reads. At the end it asks whether it may also run
   the **control write test**: it writes each control, checks the inverter
   acted on the value it was given, and puts everything back. The answer

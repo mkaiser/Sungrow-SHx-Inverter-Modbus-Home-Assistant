@@ -16,7 +16,7 @@ device-survey/scripts/survey.sh    # Windows: device-survey\scripts\survey.cmd
 It reads, takes 5–40 minutes, and writes two files: one to send, and one to
 keep because it holds the real serial and address. Its last question offers
 the control test, which writes; the default is no. See
-[Contributing one](README.md#contributing-one).
+[Contributing your device survey](README.md#contributing-your-device-survey).
 
 ## Most wanted
 

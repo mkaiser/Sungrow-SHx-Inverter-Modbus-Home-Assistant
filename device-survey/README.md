@@ -22,39 +22,55 @@ If you have a model that is not here — especially an RS, an MG, a T-series, or
 anything with a wallbox, an SBR battery or a Logger — a report from it is the
 single most useful thing you can send.
 
-**If you have the integration installed**, the device page does it: **Run
-read only diagnosis**, then download the document from the notification or
-with **Download diagnostics**. Nothing else is needed.
+There are two ways to run it.
 
-**To install it for this**, add the preview channel to HACS as a custom
-repository of type *Integration*, download it and restart Home Assistant
-([the whole guide](../doc/installing_a_preview.md)):
+### 1. In Home Assistant, with the preview integration
 
-![HACS custom repositories dialog with the preview repository added as an Integration](images/HACS-add-custom-repository.png)
+1. In HACS → ⋮ → *Custom repositories*, add
+   `https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview`
+   as type *Integration*, download it and restart Home Assistant
+   ([the whole guide](../doc/installing_a_preview.md)).
 
-Then **Settings → Devices & services → Add integration**, search for
-*Sungrow Modbus (preview)*:
+   <img src="images/HACS-add-custom-repository.png" width="400" alt="HACS custom repositories dialog with the preview repository added as an Integration">
 
-![Add integration searching for Sungrow modbus, showing Sungrow Modbus (preview)](images/HACS-add-integration-sungrow-modbus.png)
+2. *Settings → Devices & services → Add integration*, search for
+   *Sungrow Modbus (preview)*.
 
-and choose **Perform the device survey**:
+   <img src="images/HACS-add-integration-sungrow-modbus.png" width="400" alt="Add integration searching for Sungrow modbus, showing Sungrow Modbus (preview)">
 
-![The first screen, offering Perform the device survey](images/HA-settings-configure-integration.png)
+3. Choose **Perform the device survey**.
 
-and on its device page press **Run read only diagnosis**, or **Run complete
-diagnosis and tests** to add the [control test](#it-reads-and-writes-only-if-you-say-yes):
+   <img src="images/HA-settings-configure-integration.png" width="400" alt="The first screen, offering Perform the device survey">
 
-![Device page with the two diagnosis buttons](images/HA-settings-device-start-survey.png)
+4. On the device page, press **Run read only diagnosis**, or **Run complete
+   diagnosis and tests** to add the
+   [control test](#it-reads-and-writes-only-if-you-say-yes). Then download
+   the document from the notification or with **Download diagnostics**.
 
-**Otherwise**, get the [device-survey/](./) folder (GitHub's *Code →
-Download ZIP* on this branch has it) and run, from inside it:
+   <img src="images/HA-settings-device-start-survey.png" width="300" alt="Device page with the two diagnosis buttons">
 
-```bash
-scripts/survey.sh            # Linux, macOS
-scripts\survey.cmd           # Windows, or double-click it
-```
+### 2. From a terminal
 
-or `scripts/survey.sh 192.168.1.50` if you know the device address. The launcher
+1. Get this folder, either with git, which fetches only `device-survey/`:
+
+   ```bash
+   git clone --depth 1 --filter=blob:none --sparse --branch proper-ha-integration https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant.git
+   cd Sungrow-SHx-Inverter-Modbus-Home-Assistant
+   git sparse-checkout set device-survey
+   cd device-survey
+   ```
+
+   or without git: *Code → Download ZIP* on the `proper-ha-integration`
+   branch, unpack it and open the `device-survey/` folder inside.
+
+2. Run, from inside it, and follow the questions:
+
+   ```bash
+   scripts/survey.sh            # Linux, macOS
+   scripts\survey.cmd           # Windows, or double-click it
+   ```
+
+Add the device address, `scripts/survey.sh 192.168.1.50`, if you know it. The launcher
 fetches Python and the `sungrow-modbus` library through
 [uv](https://docs.astral.sh/uv/), which keeps them in a cache of its own and
 changes nothing else; if uv is not there it asks before installing it, and

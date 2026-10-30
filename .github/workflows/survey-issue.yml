@@ -1,4 +1,5 @@
-# Writes the survey wanted list into the one pinned survey issue.
+# Writes the call for surveys and the wanted list into the one pinned
+# survey issue (#786).
 # A GitHub issue cannot embed a repository file, so the file is copied in
 # whenever it changes. Set the repository variable SURVEY_ISSUE to the
 # issue's number; until then this does nothing.
@@ -9,6 +10,7 @@ on:
     branches: [proper-ha-integration]
     paths:
       - "device-survey/devices-wanted.md"
+      - "device-survey/survey-issue.md"
       - "scripts/helpers/survey_issue_body.py"
       - ".github/workflows/survey-issue.yml"
   workflow_dispatch:
