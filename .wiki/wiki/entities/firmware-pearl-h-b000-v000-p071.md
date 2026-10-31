@@ -14,8 +14,16 @@ created: '2026-10-29'
   At [ra1k-0](installation-ra1k-0.md) the probe declined to ask (20000 W held, and ten times
   that wraps into range), and with feed-in limitation off the dongle reported a written word
   back as handed, where B001 ignores the write. A lead, through a WiNet-S.
-- The forced discharge acts: 1252 W for 1250 W commanded, at [ra1k-0](installation-ra1k-0.md).
-- 33149/33150 (battery start power) do not answer.
+- The forced discharge acts: 1252 W for 1250 W commanded, at [ra1k-0](installation-ra1k-0.md); the
+  forced charge acts: 1248 W for 1250 W, at [GalKar](installation-galkar.md).
+- A restart, at [GalKar](installation-galkar.md): stopped in 2 s, running again 145 s after the start
+  command.
+- **33149/33150 (battery start power): contradicted, not settled.** The capability table marks
+  them absent on the SH-T and [ra1k-0](installation-ra1k-0.md)'s control test found 33149 not
+  answering, but at [GalKar](installation-galkar.md) a read of 33149-33150 answered in one round of
+  the block read test and was refused in others, the pattern of a busy dongle. Both readings are
+  through a WiNet-S, which refuses registers that exist when busy and answers some that do not;
+  a cable reading decides.
 
 ## Surveys
 
@@ -23,3 +31,4 @@ created: '2026-10-29'
 - [SH15T, B000.V000.P071, jm493, a WiNet-S on Ethernet](../sources/sh15t-b000v000p071-3p-jm493-anon-00578206904-battery-sbh200-winet-lan-summary.md)
 - [SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-summary.md)
 - [SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi, with a control test](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005-summary.md)
+- [SH15T, B000.V000.P071, GalKar, a WiNet-S on Ethernet, with a control test](../sources/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan-summary.md)

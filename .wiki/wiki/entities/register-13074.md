@@ -37,7 +37,9 @@ writes" for P071 if the register really took it**, and would mean P071 stores
 the word as handed, so the integration's fallback of ten would set a tenth of
 the asked limit. Through a dongle it may equally be the dongle reporting the
 word it forwarded, so it stays a lead until a cable reading or a watched export
-limit settles it.
+limit settles it. [GalKar](installation-galkar.md)'s SH15T could not settle it either:
+through a busy WiNet-S the read of 13074 was refused with 0x04, so the probe was
+never asked, and the export check's write was refused too.
 
 ## How the code carries it
 

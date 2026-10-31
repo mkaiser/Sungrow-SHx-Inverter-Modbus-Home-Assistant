@@ -21,14 +21,24 @@ Structure:
    YAML users read through a WiNet-S, which refuses the block: inputs
    6196-6198 answer on every cable survey and are refused on every dongle
    one (wiki: WiNet-S, the history registers), and V1.1.16 marks the whole
-   block 6100-6826 "WiNet-S/S2 and Logger is not supported". The survey
-   dump reads all of it from 0.1.0a23. Gate them on a capability
+   block 6100-6826 "WiNet-S/S2 and Logger is not supported". Over the
+   cable the whole block answers, with monthly values up to the current
+   month (peter-sm, 0.1.0a23; one house so far). Gate them on a capability
    probed at 6227, so a dongle house gets none of them. Every other sensor
    the YAML ever dropped was renamed and is still read, or moved (grid
    frequency to 5242, battery power to 5214, battery capacity to 5639), or
    went for cause: grid state's 13030 is reserved in V1.1.16, and the manual
    MPP scan at holding 30230 is in no Sungrow document. What needs deciding
    first is open decision 4.
+2. **Read-only entities for the discharge schedules** (#785). Registers
+   33151-33158 (weekday: two windows, hour and minute each) and 33179
+   (weekend discharge, 0x55 off / 0xAA on) with 33180-33187 (weekend: two
+   windows). In no Sungrow document; Korsberg has used them for years. Two
+   houses agree on the layout over the cable: peter-sm (weekday window 1
+   00:00-24:00, weekend on, window 1 00:00-24:00) and an anonymous
+   SH10RT-V112 (both windows 00:00-24:00 on both days), both P023. Read-only
+   until a watched write (wiki: firmware gating), gated on a probe of 33151,
+   never on the model alone.
 
 
 # Open decisions
@@ -168,17 +178,12 @@ Structure:
     only against the maintainer's years-old YAML install; what to collect and
     how is in `doc/maintainer_setup.md`, section 8.
 
-15. **Discharge schedules and the import limit, not in any Sungrow document**
-    (#785). Korsberg has used them for years, as protocol addresses:
-    weekday discharge 33150-33157 (registers 33151-33158: two windows,
-    hour and minute), weekend discharge enable 33178 (0x55/0xAA) and two
-    windows 33179-33186 (registers 33179-33187), and a site import power
-    limit at 32997 (register 32998). His survey's dump agrees on the
-    schedules (weekday 00:00-24:00, weekend enabled, 00:00-24:00), on one
-    house. Read-only entities need the same values from a second house;
-    writes need a watched write, as 31211 did (wiki: firmware gating).
-    The survey's dump reads 32997 and the forced-charging block from
-    0.1.0a22.
+15. **Writing the discharge schedules, and the import limit** (#785), in
+    no Sungrow document. The schedules' writes need a watched write, as
+    31211 did (wiki: firmware gating); reading them is next step 2. The
+    site import power limit Korsberg uses at register 32998 reads 950 at
+    peter-sm, with no unit or scale on record: it needs a second house and a
+    known value (what the owner set it to) before it can be an entity.
 
 
 # Future work

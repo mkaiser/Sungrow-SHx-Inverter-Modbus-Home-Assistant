@@ -4,7 +4,7 @@ title: "Does a busy WiNet-S refuse with 0x04?"
 tags: [winet-s, contention, answered]
 created: '2026-10-29'
 query: "Are the 0x04 refusals through firetribe's WiNet-S contention, or the dongle refusing?"
-results_count: 2
+results_count: 3
 ---
 
 # Does a busy WiNet-S refuse with 0x04?
@@ -30,3 +30,9 @@ rest answered, twice over with a quiet minute between. So through a busy WiNet-S
 (`model.SETTLES_NOTHING`, with 0x06). A 0x04 to a **write** cannot be told apart
 from an out-of-range refusal there, which matters to the
 [13074](../entities/register-13074.md) write-scale probe.
+
+The same four registers came and went at [GalKar](../entities/installation-galkar.md)'s SH15T on
+2026-10-31: holding 13002, 13050, 33047 and 33149 answered in some rounds of the block read test
+and were refused in others, the four power controls' writes and a read of 13074 were refused
+with 0x04, and the forced charge was written and obeyed.
+[Source](../sources/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan-summary.md).

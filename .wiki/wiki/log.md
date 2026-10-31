@@ -143,3 +143,17 @@ are ordinary docs, and `doc/cross_reference_modbus_manager.md` is retired.
 Inputs 6196-6198 (daily PV yields) answer on every cable survey and are
 refused through every WiNet-S. The YAML package's dropped monthly and yearly
 sensors (6227 on) are in the same V1.1.16 block, unread so far.
+
+## [2026-10-31] ingested | peter_sm's fourth reading (#785), an SBR224 and GalKar's SH15T (#786)
+
+peter_sm on 0.1.0a23, committed as `-3`: the first cable dump of the whole
+history block (6101-6826, every address answered, monthly values up to
+October), the forced-charging schedule off, register 32998 at 950; control
+test outcome 3 with the battery at 8.7 % in the evening, 13074 x10 by refusal
+a fourth time, forced charge as commanded. An anonymous SH10RT-V112 on P023
+with a seven-module SBR224, read only: the position words hold up to module 7,
+and the discharge schedules have the same layout at a second house. GalKar's
+SH15T on P071 through a WiNet-S, from a diagnostics download whose `survey`
+section is committed: the first SH-T forced charge (as commanded) and restart
+(stopped 2 s, running 145 s), writes and the 13074 read refused by a busy
+dongle, and 33149-33150 answering in one round against the capability table.

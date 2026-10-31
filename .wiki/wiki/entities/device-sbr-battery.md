@@ -51,6 +51,7 @@ The battery firmware string (input 2628) is not forwarded either; see
 The four position fields pack a module and a cell into one word,
 `(module << 8) | cell` (`src/sungrow_modbus/battery/registers.py`): high bytes
 1 to 3 on gerd's three-module SBR096, and up to 4 (`0x401`) on
-[sisu70's four-module SBR128](../sources/sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-meter-direct-lan-summary.md), both over the cable. `cell_type_module_n`
-is non-zero for each fitted module (four at sisu70, five on peter-sm's
-SBR160).
+[sisu70's four-module SBR128](../sources/sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-meter-direct-lan-summary.md), and up to 7 (`0x703`) on
+[a seven-module SBR224](../sources/sh10rt-v112-b001v000p023-3p-anonymous-anon-40315531061-battery-sbr224-meter-direct-lan-summary.md),
+all over the cable. `cell_type_module_n` is non-zero for each fitted module (four at sisu70, five
+on peter-sm's SBR160, seven on the SBR224).

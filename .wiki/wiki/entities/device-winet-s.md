@@ -47,8 +47,7 @@ wallbox's at the same house, so this TLS authenticates nothing.
 ## The history registers
 
 V1.1.16's inputs from 6196 hold PV, direct-consumption and export history:
-daily, monthly and yearly yields. The survey's dump reaches only 6196-6198.
-Those three answer on every cable reading in the corpus, on P020, P022, P023
+daily, monthly and yearly yields. Inputs 6196-6198 answer on every cable reading in the corpus, on P020, P022, P023
 and firmware the document did not report, and are refused on every dongle
 reading, SH-RT and SH-T alike, for example
 [gerd on the cable](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-summary.md)
@@ -57,5 +56,9 @@ V1.1.16 says the same of the whole block, registers 6100-6826: "WiNet-S/S2
 and Logger is not supported", "Applicable types: SH5.0-10.0RT". That is why
 the YAML package dropped its monthly and yearly sensors: most of its users
 read through a dongle. From 0.1.0a23 the survey's dump reads the whole block
-(`src/sungrow_modbus/dump.py`), so the next cable surveys show the rest.
+(`src/sungrow_modbus/dump.py`). Over the cable at
+[peter-sm](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-3-summary.md)
+every address of it answered, and the monthly PV generation (6227-6238), direct consumption
+(6417-6428) and export (6596-6607) hold values up to October and 0 for the months to come.
+One house; the yearly registers' word order and scale are not yet read against anything.
 

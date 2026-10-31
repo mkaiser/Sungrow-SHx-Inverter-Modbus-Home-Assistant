@@ -19,9 +19,10 @@ They pair with the [SBH](device-sbh-battery.md) high-voltage battery.
 - **31211 answers 0x55** on P071, as on SH-RT P022/P023; see
   [register 31211](register-31211.md). The T also has 13018, and whether both
   registers act is unmeasured.
-- **One control test**, at [ra1k-0](installation-ra1k-0.md), through a WiNet-S, so only
-  its behavioural leg is evidence: the forced discharge did as it was told (1252 W for
-  1250 W). Its readbacks matched the specification except [13074](register-13074.md), whose
+- **Two control tests**, at [ra1k-0](installation-ra1k-0.md) and [GalKar](installation-galkar.md),
+  both through a WiNet-S, so only their behavioural legs are evidence: the forced discharge did
+  as it was told (1252 W for 1250 W), and so did the forced charge (1248 W for 1250 W). GalKar's
+  run also restarted the inverter: stopped in 2 s, running 145 s after the start command. Its readbacks matched the specification except [13074](register-13074.md), whose
   write scale is not determined on P071. Everything else about writes on this family is
   carried over from SH-RT, not measured.
 
@@ -35,5 +36,5 @@ never compares the numeric tail across platforms.
 
 ## Surveys
 
-[fullhd23](installation-fullhd23.md), [jm493](installation-jm493.md) and
-[ra1k-0](installation-ra1k-0.md), all through a WiNet-S.
+[fullhd23](installation-fullhd23.md), [GalKar](installation-galkar.md),
+[jm493](installation-jm493.md) and [ra1k-0](installation-ra1k-0.md), all through a WiNet-S.
