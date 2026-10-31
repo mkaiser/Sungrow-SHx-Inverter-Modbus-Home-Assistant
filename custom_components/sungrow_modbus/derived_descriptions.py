@@ -348,6 +348,62 @@ DERIVED_SENSORS: tuple[SungrowSensorDescription, ...] = (
         native_unit_of_measurement="kWh",
         suggested_display_precision=2,
     ),
+    SungrowSensorDescription(
+        key="weekday_discharge_window_1",
+        component="derived",
+        field="weekday_discharge_window_1",
+        translation_key="weekday_discharge_window_1",
+        depends_on=(
+            "weekday_discharge_start_1_hour",
+            "weekday_discharge_start_1_minute",
+            "weekday_discharge_end_1_hour",
+            "weekday_discharge_end_1_minute",
+        ),
+        requires=Capability.DISCHARGE_SCHEDULE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SungrowSensorDescription(
+        key="weekday_discharge_window_2",
+        component="derived",
+        field="weekday_discharge_window_2",
+        translation_key="weekday_discharge_window_2",
+        depends_on=(
+            "weekday_discharge_start_2_hour",
+            "weekday_discharge_start_2_minute",
+            "weekday_discharge_end_2_hour",
+            "weekday_discharge_end_2_minute",
+        ),
+        requires=Capability.DISCHARGE_SCHEDULE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SungrowSensorDescription(
+        key="weekend_discharge_window_1",
+        component="derived",
+        field="weekend_discharge_window_1",
+        translation_key="weekend_discharge_window_1",
+        depends_on=(
+            "weekend_discharge_start_1_hour",
+            "weekend_discharge_start_1_minute",
+            "weekend_discharge_end_1_hour",
+            "weekend_discharge_end_1_minute",
+        ),
+        requires=Capability.DISCHARGE_SCHEDULE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SungrowSensorDescription(
+        key="weekend_discharge_window_2",
+        component="derived",
+        field="weekend_discharge_window_2",
+        translation_key="weekend_discharge_window_2",
+        depends_on=(
+            "weekend_discharge_start_2_hour",
+            "weekend_discharge_start_2_minute",
+            "weekend_discharge_end_2_hour",
+            "weekend_discharge_end_2_minute",
+        ),
+        requires=Capability.DISCHARGE_SCHEDULE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
 )
 
 DERIVED_BINARY_SENSORS: tuple[SungrowBinarySensorDescription, ...] = (
@@ -525,6 +581,15 @@ DERIVED_BINARY_SENSORS: tuple[SungrowBinarySensorDescription, ...] = (
         translation_key="pv_generation_cut",
         depends_on=("pv_generation_cut_raw",),
         requires=Capability.PV_GENERATION_CUT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SungrowBinarySensorDescription(
+        key="weekend_discharge",
+        component="derived",
+        field="weekend_discharge",
+        translation_key="weekend_discharge",
+        depends_on=("weekend_discharge_raw",),
+        requires=Capability.DISCHARGE_SCHEDULE,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SungrowBinarySensorDescription(

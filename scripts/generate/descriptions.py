@@ -247,6 +247,25 @@ PROBLEMS: dict[str, str] = {
     "alarm_reported": "alarm_reported",
 }
 
+#: The discharge schedules (#785), read only: registers outside Sungrow's
+#: document that two houses answer with the same layout. Each window is one
+#: text sensor, `HH:MM-HH:MM`, because its end can be 24:00, which a `time`
+#: entity cannot show; the weekend enable is one flag. The YAML never read
+#: them, so they replace nothing and need no replacement declared.
+DISCHARGE_SCHEDULE: dict[str, tuple[str, ...]] = {
+    # key: the registers it reads, which is also its value on `Derived`
+    **{
+        f"{day}_discharge_window_{n}": tuple(
+            f"{day}_discharge_{part}_{n}_{unit}"
+            for part in ("start", "end")
+            for unit in ("hour", "minute")
+        )
+        for day in ("weekday", "weekend")
+        for n in (1, 2)
+    },
+    "weekend_discharge": ("weekend_discharge_raw",),
+}
+
 #: Seconds a power-flow bit must hold before its `(delay)` twin reports it.
 #: One value for all seven, which is what the YAML uses.
 DELAY_ON = 60
@@ -310,6 +329,8 @@ CAPABILITY_BY_PREFIX: tuple[tuple[str, str], ...] = (
     ("phase_b_", "THREE_PHASE"),
     ("phase_c_", "THREE_PHASE"),
     ("pv_generation_cut", "PV_GENERATION_CUT"),
+    ("weekday_discharge", "DISCHARGE_SCHEDULE"),
+    ("weekend_discharge", "DISCHARGE_SCHEDULE"),
     # Battery power, charge and the charging/discharging flags: an inverter
     # without a pack answers zeros or sentinels for every one of them.
     ("battery_", "BATTERY"),
@@ -416,6 +437,20 @@ def render_derived() -> str:
 
     for key, (source_key, window) in SMOOTHED.items():
         lines += _smoothed_description(key, source_key, window, legacy)
+
+    for key, depends in DISCHARGE_SCHEDULE.items():
+        if key.endswith("_discharge"):
+            continue
+        lines.append("    SungrowSensorDescription(")
+        lines.append(f'        key="{key}",')
+        lines.append('        component="derived",')
+        lines.append(f'        field="{key}",')
+        lines.append(f'        translation_key="{key}",')
+        lines.append(f"        depends_on={depends!r},")
+        lines.append(f"        requires=Capability.{_requires(key)},")
+        if key in DIAGNOSTIC:
+            lines.append("        entity_category=EntityCategory.DIAGNOSTIC,")
+        lines.append("    ),")
     lines.append(")")
 
     lines.append(
@@ -457,6 +492,20 @@ def render_derived() -> str:
         if capability := _requires(field):
             lines.append(f"        requires=Capability.{capability},")
         lines.append("        entity_category=EntityCategory.DIAGNOSTIC,")
+        lines.append("    ),")
+
+    for key, depends in DISCHARGE_SCHEDULE.items():
+        if not key.endswith("_discharge"):
+            continue
+        lines.append("    SungrowBinarySensorDescription(")
+        lines.append(f'        key="{key}",')
+        lines.append('        component="derived",')
+        lines.append(f'        field="{key}",')
+        lines.append(f'        translation_key="{key}",')
+        lines.append(f"        depends_on={depends!r},")
+        lines.append(f"        requires=Capability.{_requires(key)},")
+        if key in DIAGNOSTIC:
+            lines.append("        entity_category=EntityCategory.DIAGNOSTIC,")
         lines.append("    ),")
 
     for key, field in PROBLEMS.items():

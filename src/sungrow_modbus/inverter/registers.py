@@ -584,6 +584,67 @@ class InverterForcedCharging(Component):
     """Forced charging target SoC 2."""
 
 
+class InverterDischargeWeekday(Component):
+    """8 holding fields, polled every 60s, read only.
+
+    The weekday discharge schedule, registers 33151-33158: two windows of a
+    start and an end time, each time an hour and a minute. **Not in Sungrow's
+    protocol document.** Korsberg has used them for years (#785), and two
+    houses on P023 answer the same layout over the cable, with hours 0-24 --
+    24:00 is the end of the day. Its own component, apart from the weekend
+    block, so the twenty unknown registers between them are never read.
+    """
+
+    register_space = "holding"
+
+    weekday_discharge_start_1_hour = integer(reg(33151), signed=False, nan=65535)
+    """Weekday discharge start time 1, hour."""
+    weekday_discharge_start_1_minute = integer(reg(33152), signed=False, nan=65535)
+    """Weekday discharge start time 1, minute."""
+    weekday_discharge_end_1_hour = integer(reg(33153), signed=False, nan=65535)
+    """Weekday discharge end time 1, hour."""
+    weekday_discharge_end_1_minute = integer(reg(33154), signed=False, nan=65535)
+    """Weekday discharge end time 1, minute."""
+    weekday_discharge_start_2_hour = integer(reg(33155), signed=False, nan=65535)
+    """Weekday discharge start time 2, hour."""
+    weekday_discharge_start_2_minute = integer(reg(33156), signed=False, nan=65535)
+    """Weekday discharge start time 2, minute."""
+    weekday_discharge_end_2_hour = integer(reg(33157), signed=False, nan=65535)
+    """Weekday discharge end time 2, hour."""
+    weekday_discharge_end_2_minute = integer(reg(33158), signed=False, nan=65535)
+    """Weekday discharge end time 2, minute."""
+
+
+class InverterDischargeWeekend(Component):
+    """9 holding fields, polled every 60s, read only.
+
+    The weekend discharge schedule, registers 33179-33187: an enable flag
+    (`0xAA` on, `0x55` off) and two windows laid out as on weekdays. Not in
+    Sungrow's protocol document either; see `InverterDischargeWeekday`.
+    """
+
+    register_space = "holding"
+
+    weekend_discharge_raw = integer(reg(33179), signed=False, nan=65535)
+    """Weekend discharge raw: 0xAA enabled, 0x55 disabled."""
+    weekend_discharge_start_1_hour = integer(reg(33180), signed=False, nan=65535)
+    """Weekend discharge start time 1, hour."""
+    weekend_discharge_start_1_minute = integer(reg(33181), signed=False, nan=65535)
+    """Weekend discharge start time 1, minute."""
+    weekend_discharge_end_1_hour = integer(reg(33182), signed=False, nan=65535)
+    """Weekend discharge end time 1, hour."""
+    weekend_discharge_end_1_minute = integer(reg(33183), signed=False, nan=65535)
+    """Weekend discharge end time 1, minute."""
+    weekend_discharge_start_2_hour = integer(reg(33184), signed=False, nan=65535)
+    """Weekend discharge start time 2, hour."""
+    weekend_discharge_start_2_minute = integer(reg(33185), signed=False, nan=65535)
+    """Weekend discharge start time 2, minute."""
+    weekend_discharge_end_2_hour = integer(reg(33186), signed=False, nan=65535)
+    """Weekend discharge end time 2, hour."""
+    weekend_discharge_end_2_minute = integer(reg(33187), signed=False, nan=65535)
+    """Weekend discharge end time 2, minute."""
+
+
 class InverterMediumInput(Component):
     """3 input fields, polled every 60s."""
 
@@ -809,6 +870,8 @@ COMPONENTS: dict[str, type[Component]] = {
     "medium_input": InverterMediumInput,
     "pv_generation_cut": InverterPvGenerationCut,
     "forced_charging": InverterForcedCharging,
+    "discharge_weekday": InverterDischargeWeekday,
+    "discharge_weekend": InverterDischargeWeekend,
     "slowest_input": InverterSlowestInput,
     "battery_firmware": InverterBatteryFirmware,
     "firmware_block_battery": InverterFirmwareBlockBattery,
@@ -828,7 +891,13 @@ TIER_COMPONENTS: dict[str, tuple[str, ...]] = {
         "fast_holding",
         "apl_shutdown_at_zero",
     ),
-    "medium": ("medium_input", "pv_generation_cut", "forced_charging"),
+    "medium": (
+        "medium_input",
+        "pv_generation_cut",
+        "forced_charging",
+        "discharge_weekday",
+        "discharge_weekend",
+    ),
     "slowest": (
         "slowest_input",
         "battery_firmware",

@@ -153,6 +153,15 @@ class Capability(StrEnum):
     create eleven writable entities against nothing.
     """
 
+    DISCHARGE_SCHEDULE = "discharge_schedule"
+    """The weekday and weekend discharge schedules, registers 33151-33187.
+
+    Outside Sungrow's protocol document (#785), so probed on the weekend
+    enable register and granted only by 0xAA or 0x55 (`MODE_CODES_ONLY`): the
+    hours beside it read 0 on a house that never set them, which says nothing.
+    Read only until a watched write confirms what writing does.
+    """
+
     PV_GENERATION_CUT = "pv_generation_cut"
     """Register 31211 answers: PV generation can be cut, and its state read.
 
@@ -516,6 +525,7 @@ PROBES: dict[Capability, tuple[str, ...]] = {
     Capability.FORCED_STARTUP: ("forced_startup_under_low_soc_raw",),
     Capability.PV_GENERATION_CUT: ("pv_generation_cut_raw",),
     Capability.FORCED_CHARGING: ("forced_charging_raw",),
+    Capability.DISCHARGE_SCHEDULE: ("weekend_discharge_raw",),
 }
 
 #: Capabilities granted only by a Sungrow mode code, 0xAA or 0x55.
@@ -525,7 +535,11 @@ PROBES: dict[Capability, tuple[str, ...]] = {
 #: dongle answers 0 where the inverter answers 0xFFFF. A mode register that
 #: holds neither code is not one this integration knows how to drive.
 MODE_CODES_ONLY: frozenset[Capability] = frozenset(
-    {Capability.PV_GENERATION_CUT, Capability.FORCED_CHARGING}
+    {
+        Capability.PV_GENERATION_CUT,
+        Capability.FORCED_CHARGING,
+        Capability.DISCHARGE_SCHEDULE,
+    }
 )
 
 #: The two codes every Sungrow mode register uses.

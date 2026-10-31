@@ -71,6 +71,13 @@ OVERRIDES: dict[int, int | list[int]] = {
     33216: 0,
     33217: 0,
     33218: 0,
+    # The discharge schedules, holding 33151-33158 and 33179-33187 (#785), as
+    # peter-sm reads them: the first window 00:00-24:00 on both days, the
+    # second unused, the weekend on.
+    **dict.fromkeys((*range(33150, 33158), *range(33179, 33187)), 0),
+    33152: 24,
+    33178: 0xAA,
+    33181: 24,
 }
 
 #: The fault and alarm words, input 13050-13079: no flag set, which is what

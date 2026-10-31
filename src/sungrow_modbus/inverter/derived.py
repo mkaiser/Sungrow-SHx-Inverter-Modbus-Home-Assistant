@@ -165,6 +165,57 @@ class Derived:
         """
         return self._mode_flag("pv_generation_cut_raw")
 
+    # -- the discharge schedules (#785) -----------------------------------
+
+    def _clock(self, prefix: str) -> str | None:
+        """Return one hour/minute register pair as `HH:MM`, or None.
+
+        Hours run 0-24 because 24:00 is how these registers end a window at
+        midnight, which a `datetime.time` cannot hold -- so this is text, not
+        a time. Anything outside that, 24 with minutes included, is None
+        rather than a time made up from a word nobody has seen.
+        """
+        hour, minute = self._value(f"{prefix}_hour"), self._value(f"{prefix}_minute")
+        if hour is None or minute is None:
+            return None
+        h, m = int(hour), int(minute)
+        if not (0 <= h <= 24 and 0 <= m <= 59) or (h == 24 and m):
+            return None
+        return f"{h:02d}:{m:02d}"
+
+    def _window(self, day: str, number: int) -> str | None:
+        """Return one discharge window as `HH:MM-HH:MM`, or None."""
+        start = self._clock(f"{day}_discharge_start_{number}")
+        end = self._clock(f"{day}_discharge_end_{number}")
+        if start is None or end is None:
+            return None
+        return f"{start}-{end}"
+
+    @property
+    def weekday_discharge_window_1(self) -> str | None:
+        """The first weekday discharge window (regs 33151-33154)."""
+        return self._window("weekday", 1)
+
+    @property
+    def weekday_discharge_window_2(self) -> str | None:
+        """The second weekday discharge window (regs 33155-33158)."""
+        return self._window("weekday", 2)
+
+    @property
+    def weekend_discharge(self) -> bool | None:
+        """Whether the weekend discharge schedule is on (reg 33179), or None."""
+        return self._mode_flag("weekend_discharge_raw")
+
+    @property
+    def weekend_discharge_window_1(self) -> str | None:
+        """The first weekend discharge window (regs 33180-33183)."""
+        return self._window("weekend", 1)
+
+    @property
+    def weekend_discharge_window_2(self) -> str | None:
+        """The second weekend discharge window (regs 33184-33187)."""
+        return self._window("weekend", 2)
+
     def _floats(self, *fields: str) -> tuple[float, ...] | None:
         """Return several readings as floats, or None if any is missing."""
         values = [self._value(f) for f in fields]

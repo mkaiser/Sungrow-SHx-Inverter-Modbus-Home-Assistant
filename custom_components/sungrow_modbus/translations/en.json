@@ -219,6 +219,9 @@
       },
       "wallbox_enabled": {
         "name": "Enabled"
+      },
+      "weekend_discharge": {
+        "name": "Weekend discharge"
       }
     },
     "button": {
@@ -878,6 +881,18 @@
       },
       "wallbox_start_mode": {
         "name": "Start mode"
+      },
+      "weekday_discharge_window_1": {
+        "name": "Weekday discharge window 1"
+      },
+      "weekday_discharge_window_2": {
+        "name": "Weekday discharge window 2"
+      },
+      "weekend_discharge_window_1": {
+        "name": "Weekend discharge window 1"
+      },
+      "weekend_discharge_window_2": {
+        "name": "Weekend discharge window 2"
       }
     },
     "switch": {

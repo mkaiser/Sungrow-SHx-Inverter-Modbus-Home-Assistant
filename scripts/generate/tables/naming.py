@@ -359,6 +359,14 @@ DIAGNOSTIC: frozenset[str] = frozenset(
         "active_power_limitation_enabled",
         "pv_power_limitation_enabled",
         "pv_generation_cut",
+        # The discharge schedules (#785): settings mirrored read only, like
+        # the flags above, so Diagnostic until a watched write makes them
+        # writable and CONFIG.
+        "weekday_discharge_window_1",
+        "weekday_discharge_window_2",
+        "weekend_discharge",
+        "weekend_discharge_window_1",
+        "weekend_discharge_window_2",
         # The battery pack's state of health, and the six halves of its
         # position words. Diagnostic because they are what you look at when
         # investigating a pack rather than what a dashboard shows: state of

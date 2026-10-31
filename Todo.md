@@ -30,16 +30,6 @@ Structure:
    went for cause: grid state's 13030 is reserved in V1.1.16, and the manual
    MPP scan at holding 30230 is in no Sungrow document. What needs deciding
    first is open decision 4.
-2. **Read-only entities for the discharge schedules** (#785). Registers
-   33151-33158 (weekday: two windows, hour and minute each) and 33179
-   (weekend discharge, 0x55 off / 0xAA on) with 33180-33187 (weekend: two
-   windows). In no Sungrow document; Korsberg has used them for years. Two
-   houses agree on the layout over the cable: peter-sm (weekday window 1
-   00:00-24:00, weekend on, window 1 00:00-24:00) and an anonymous
-   SH10RT-V112 (both windows 00:00-24:00 on both days), both P023. Read-only
-   until a watched write (wiki: firmware gating), gated on a probe of 33151,
-   never on the model alone.
-
 
 # Open decisions
 
@@ -179,8 +169,9 @@ Structure:
     how is in `doc/maintainer_setup.md`, section 8.
 
 15. **Writing the discharge schedules, and the import limit** (#785), in
-    no Sungrow document. The schedules' writes need a watched write, as
-    31211 did (wiki: firmware gating); reading them is next step 2. The
+    no Sungrow document. The schedules read as diagnostic entities
+    (`Capability.DISCHARGE_SCHEDULE`); writing them needs a watched write, as
+    31211 did (wiki: firmware gating), from a control test run with leave. The
     site import power limit Korsberg uses at register 32998 reads 950 at
     peter-sm, with no unit or scale on record: it needs a second house and a
     known value (what the owner set it to) before it can be an entity.

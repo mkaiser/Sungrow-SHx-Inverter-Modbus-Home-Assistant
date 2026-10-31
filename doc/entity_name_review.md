@@ -1,6 +1,6 @@
 # The entity names, for review
 
-**209 entities**, which is everything modern mode creates. The **entity id**
+**214 entities**, which is everything modern mode creates. The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
 it -- but only at creation. Rename later and anybody who already has the entity
 keeps the id they were born with; only the label changes. So the cost of a late
@@ -56,7 +56,7 @@ better.
 | Total consumed energy | `sensor.sh10rt_total_consumed_energy` | kWh | Total consumed energy |
 | Total direct energy consumption | `sensor.sh10rt_total_direct_energy_consumption` | kWh | Total direct energy consumption |
 
-## Everything else (39)
+## Everything else (44)
 
 | Name | Entity id | Unit | Legacy name |
 | --- | --- | --- | --- |
@@ -99,6 +99,11 @@ better.
 | Start mode | `sensor.sh10rt_start_mode` |  |  |
 | System fault 1 | `sensor.sh10rt_system_fault_1` |  |  |
 | System fault 2 | `sensor.sh10rt_system_fault_2` |  |  |
+| Weekday discharge window 1 | `sensor.sh10rt_weekday_discharge_window_1` |  |  |
+| Weekday discharge window 2 | `sensor.sh10rt_weekday_discharge_window_2` |  |  |
+| Weekend discharge | `binary_sensor.sh10rt_weekend_discharge` |  |  |
+| Weekend discharge window 1 | `sensor.sh10rt_weekend_discharge_window_1` |  |  |
+| Weekend discharge window 2 | `sensor.sh10rt_weekend_discharge_window_2` |  |  |
 
 ## Identity and firmware (6)
 
