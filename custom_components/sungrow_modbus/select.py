@@ -16,14 +16,12 @@ user a mode their inverter is not in.
 
 from __future__ import annotations
 
-from modbus_connection import ModbusError
-
 from homeassistant.components.select import SelectEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .coordinator import SungrowConfigEntry
-from .entity import SungrowEntity, SungrowSelectDescription, write_failed
+from .entity import SungrowEntity, SungrowSelectDescription
 from .select_descriptions import SELECT_DESCRIPTIONS
 
 # One at a time, and not for the usual reason. A Sungrow accepts very few
@@ -79,13 +77,4 @@ class SungrowSelect(SungrowEntity, SelectEntity):
     async def async_select_option(self, option: str) -> None:
         """Write the value this option maps to, then read the register back."""
         description = self.entity_description
-        value = description.values[option]
-        component = self.coordinator.device.component(description.component)
-        try:
-            await component.write(description.field, value)
-        except ModbusError as err:
-            raise write_failed(self.entity_id, err) from err
-        # Immediate, not debounced: see the note in number.py. A ten-second
-        # cooldown between an explicit change and its confirmation is the
-        # readback problem this integration exists to have fixed.
-        await self.coordinator.async_refresh()
+        await self._async_write((description.field, description.values[option]))

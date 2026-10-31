@@ -81,7 +81,6 @@ async def _survey(tmp_path, words=None):
             tmp_path,
             lambda _text: None,
             address_tail="000.023",
-            local_time=probe._local_time,
         )
 
 

@@ -60,8 +60,6 @@ from sungrow_modbus import (
     dump as register_dump,
     hosts_in,
     label_for as package_label_for,
-    local_time,
-    model_for,
     model_for_capacity,
     network_of,
     publish_document,
@@ -89,7 +87,6 @@ from sungrow_modbus.survey_document import (
     UNAVAILABLE,
     WIFI_OR_ETHERNET,  # noqa: F401
     State,  # noqa: F401
-    address_tail,
     effective_verdict,
     last_two_octets,
     slave_inverter_at,
@@ -104,8 +101,6 @@ from sungrow_modbus.survey_document import (
 # Published documents are chosen explicitly; private run artifacts belong
 # beside the launchers, not beside the Python implementation.
 HERE = Path(__file__).resolve().parents[2]
-
-MODBUS_PORTS = (502, 503)
 
 #: Unit ids worth trying before any wider scan, with what convention says they
 #: are. A device is still identified by what answers, never by its address.
@@ -233,24 +228,6 @@ async def cmd_sweep(args: argparse.Namespace) -> int:
     for ip in live:
         print(f"  {ip}:{args.port}")
     return 0 if live else 1
-
-
-def _model_for_code(code: object) -> str | None:
-    """Return the model name for a `0x….` device type code string, or None.
-
-    Takes the published hex string rather than an int because that is what
-    both producers hold at the point they need it, and because a code that is
-    missing or malformed has to come back as None rather than raise: a
-    document describing an unknown inverter is exactly the document this
-    project most wants to receive.
-    """
-    text = str(code or "")
-    if not text.startswith("0x"):
-        return None
-    try:
-        return model_for(int(text, 16))
-    except ValueError:
-        return None
 
 
 async def cmd_units(args: argparse.Namespace) -> int:
@@ -434,11 +411,6 @@ OTHER_INVERTER_ANSWERS: dict[str, str] = dict(
     )
 )
 
-#: Where the contributors are. Used only to render a local time beside the UTC
-#: one, so that two readings taken minutes apart can be told apart and ordered
-#: without a reader doing timezone arithmetic in their head.
-LOCAL_ZONE = "Europe/Berlin"
-
 
 class Reading(NamedTuple):
     """Everything one pass over a device produced, for a caller to summarise.
@@ -550,32 +522,6 @@ def _invocation(args: object | None) -> str:
     if getattr(args, "dump", False):
         parts.append("--dump")
     return " ".join(parts)
-
-
-def _address_tail(raw: dict) -> str:
-    """Return the address tail if its owner allowed it, else `xxx.xxx`.
-
-    Observed rather than claimed -- this is the address that answered -- so it
-    stays out of `user_inputs`. What *is* a user input is the permission, and
-    without it the value is withheld rather than guessed at.
-    """
-    return address_tail(
-        str(raw.get("host", "")), raw.get("address_detail") == "two_octets"
-    )
-
-
-def _local_time(read_at: str) -> str:
-    """Render a UTC timestamp in the contributors' own timezone, with offset.
-
-    Falls back to the UTC string unchanged if the zone database is missing,
-    which it can be on a slim container -- a wrong local time would be worse
-    than an honest UTC one, and the offset in the value says which it is.
-
-    Windows ships no zone database at all, so `zoneinfo` there reads the
-    `tzdata` package, which the survey's PEP 723 header declares for that
-    reason. Without it every Windows reading published in UTC.
-    """
-    return local_time(read_at, LOCAL_ZONE)
 
 
 #: Attempts for a read whose loss changes the *filename*: the serial, the
@@ -791,7 +737,7 @@ async def _async_decoded_readings(
     )
 
 
-async def _async_connection(unit, host: str, firmware: dict, ModbusError) -> dict:
+async def _async_connection(unit, firmware: dict) -> dict:
     """Work out how we got in, from evidence rather than from asking.
 
     Two signals, both from the specification rather than inferred:
@@ -1164,9 +1110,7 @@ class _TerminalSource:
         # The connection type, from the two signals the specification gives
         # rather than from asking the user -- who mostly does not know, and
         # reasonably confuses a WiNet-S with the inverter's own LAN port.
-        connection = await _async_connection(
-            self.unit, self.args.host, survey.firmware, ModbusError
-        )
+        connection = await _async_connection(self.unit, survey.firmware)
         transport = self.args.transport
         if transport:
             connection["reported_by_hand"] = transport

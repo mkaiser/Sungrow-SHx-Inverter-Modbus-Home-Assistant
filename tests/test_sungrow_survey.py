@@ -214,9 +214,7 @@ def _rendered(control_code: int | None = None) -> str:
         control_code=control_code,
     )
     buffer = io.StringIO()
-    sungrow_survey._summary(
-        [result], Path(".testdata/sungrow-scan-x.log"), buffer.write
-    )
+    sungrow_survey._summary([result], buffer.write)
     return buffer.getvalue()
 
 
@@ -335,9 +333,7 @@ def _with_blocks(outcome: block_test.Outcome) -> str:
         code=0,
     )
     buffer = io.StringIO()
-    sungrow_survey._summary(
-        [result], Path(".testdata/sungrow-scan-x.log"), buffer.write
-    )
+    sungrow_survey._summary([result], buffer.write)
     return " ".join(buffer.getvalue().split())
 
 

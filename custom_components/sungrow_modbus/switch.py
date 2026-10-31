@@ -17,14 +17,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from modbus_connection import ModbusError
-
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .coordinator import SungrowConfigEntry
-from .entity import SungrowEntity, SungrowSwitchDescription, write_failed
+from .entity import SungrowEntity, SungrowSwitchDescription
 from .switch_descriptions import SWITCH_DESCRIPTIONS
 
 # One at a time, and not for the usual reason. A Sungrow accepts very few
@@ -81,27 +79,12 @@ class SungrowSwitch(SungrowEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Set the flag."""
-        await self._async_write(self.entity_description.on_value)
+        await self._async_write(
+            (self.entity_description.field, self.entity_description.on_value)
+        )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Clear the flag."""
-        await self._async_write(self.entity_description.off_value)
-
-    async def _async_write(self, value: int) -> None:
-        """Write one of the two codes, then read the register back at once."""
-        component = self.coordinator.device.component(self.entity_description.component)
-        try:
-            await component.write(self.entity_description.field, value)
-        except ModbusError as err:
-            raise write_failed(self.entity_id, err) from err
-        # `async_refresh`, not `async_request_refresh`. The latter goes
-        # through the coordinator's debouncer, which has a **10 second
-        # cooldown** -- so a second change inside that window is written to
-        # the register and never read back, and the interface shows the
-        # previous value for up to ten seconds. That is precisely the bug the
-        # YAML package's `homeassistant.update_entity` calls existed to work
-        # around, and debouncing here would bring it back.
-        #
-        # The debouncer is there to coalesce storms of *automatic* refresh
-        # requests. An explicit user action is not a storm.
-        await self.coordinator.async_refresh()
+        await self._async_write(
+            (self.entity_description.field, self.entity_description.off_value)
+        )

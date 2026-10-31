@@ -60,7 +60,6 @@ from sungrow_modbus.control_test import (
     Probe,
     Sample,
     Snapshot,
-    _admissible,
     choose_probe,
     classify_ratio,
     mad,
@@ -69,6 +68,7 @@ from sungrow_modbus.control_test import (
     soc_pair_order,
     visibility,
 )
+from sungrow_modbus.control_test.procedure import _admissible
 
 sys.path.insert(
     0, str(Path(__file__).resolve().parents[1] / "scripts" / "generate" / "tables")

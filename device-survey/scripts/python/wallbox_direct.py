@@ -96,13 +96,11 @@ async def async_survey(
     echo,
     *,
     address_tail: str,
-    local_time,
 ) -> Reading:
     """Read the wallbox whole, and write its document beside the script.
 
     `answers` carries what was asked -- reporter, comment, and the timeout;
-    `address_tail` is the published address, already decided by consent;
-    `local_time` renders the UTC stamp the way inverter documents do.
+    `address_tail` is the published address, already decided by consent.
     """
     read_at = datetime.now(UTC).isoformat(timespec="seconds")
     connection = ModbusConnection(params(found.host), timeout=answers.timeout)

@@ -82,7 +82,7 @@ class AsymmetricNumberField(NumberField[int]):
 
     So this is a device quirk rather than a second scale: `scale` stays 1
     because that is what the register *contains*, and only the write side is
-    divided. `control_test.py`'s `spec_units_per_count` stays 1 for the same
+    divided. The control test's `spec_units_per_count` stays 1 for the same
     reason, and its leg B is what checks this on hardware.
 
     **Not every firmware multiplies**: fwitten's SH10RT-V112 pair stores the

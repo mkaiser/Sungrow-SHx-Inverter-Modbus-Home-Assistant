@@ -106,7 +106,9 @@ terminal prints a dot every `WAIT_TICK` (10 s) while it waits.
 
 ## Drivers
 
-The engine is `src/sungrow_modbus/control_test.py`, so both drivers share it:
+The engine is the package `src/sungrow_modbus/control_test/`, one module per
+phase (`preflight`, `readback`, `effects`, `restore`) put together in
+`engine.py`, so both drivers share it:
 
 - `device-survey/scripts/python/sungrow_control_test.py`, through the
   survey;

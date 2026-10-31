@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import re
+from typing import Any
 from unittest.mock import patch
 
 from modbus_connection import IllegalDataAddressError, ModbusTimeoutError
@@ -49,7 +50,10 @@ from custom_components.sungrow_modbus.const import (
 from custom_components.sungrow_modbus.diagnostics import (
     async_get_config_entry_diagnostics,
 )
-from custom_components.sungrow_modbus.survey_document import _async_probes, async_build
+from custom_components.sungrow_modbus.survey_document import (
+    _async_probe_words,
+    async_build,
+)
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
@@ -60,6 +64,12 @@ from .conftest import SERIAL
 
 HOST = "192.168.178.35"
 ENTRY_DATA = {CONF_HOST: HOST, CONF_PORT: 502, CONF_UNIT_ID: 1}
+
+
+async def _async_probes(device: Any) -> dict[str, dict[str, Any]]:
+    """Read every curated probe once, in the published shape."""
+    raw, states = await _async_probe_words(device)
+    return survey.capability_registers(states, raw)
 
 
 async def _setup(

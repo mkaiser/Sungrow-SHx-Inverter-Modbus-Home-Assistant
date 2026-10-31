@@ -266,12 +266,6 @@ NUMBERS += (
     },
 )
 
-#: Nothing is held back any more. Kept as an empty table rather than deleted,
-#: because it is the mechanism by which shrinking the list is a deliberate
-#: commit and not a side effect -- and the next undocumented register that
-#: turns up needs somewhere to wait.
-UNCONFIRMED: tuple[str, ...] = ()
-
 
 class Switch(TypedDict):
     """One writable register exposed as a `switch`."""

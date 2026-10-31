@@ -282,18 +282,10 @@ def test_the_address_tail_is_withheld_unless_its_owner_allowed_it() -> None:
     `xxx.xxx` is a truthful answer where a real value would be a guess about
     what somebody is willing to publish.
     """
-    from probe import _address_tail
-
-    assert _address_tail({"host": "192.168.178.105"}) == "xxx.xxx"
-    assert _address_tail({"host": "192.168.178.105", "address_detail": "hidden"}) == (
-        "xxx.xxx"
-    )
-    allowed = {"host": "192.168.178.105", "address_detail": "two_octets"}
-    assert _address_tail(allowed) == "178.105"
+    assert survey_document.address_tail("192.168.178.105", False) == "xxx.xxx"
+    assert survey_document.address_tail("192.168.178.105", True) == "178.105"
     # Permission cannot conjure octets a hostname does not have.
-    assert _address_tail({"host": "winet.local", "address_detail": "two_octets"}) == (
-        "xxx.xxx"
-    )
+    assert survey_document.address_tail("winet.local", True) == "xxx.xxx"
 
 
 def _sbr_probed() -> tuple[dict, dict]:
@@ -749,18 +741,15 @@ def test_the_local_time_carries_its_offset_across_the_dst_boundary() -> None:
     read minutes apart on purpose -- one machine on its LAN port and then
     through its dongle.
     """
-    from probe import _local_time
-
-    assert _local_time("2026-09-07T22:00:33+00:00") == "2026-09-08T00:00:33+02:00"
-    assert _local_time("2026-01-15T08:30:00+00:00") == "2026-01-15T09:30:00+01:00"
+    local_time = survey_document.local_time
+    assert local_time("2026-09-07T22:00:33+00:00") == "2026-09-08T00:00:33+02:00"
+    assert local_time("2026-01-15T08:30:00+00:00") == "2026-01-15T09:30:00+01:00"
 
 
 def test_an_unreadable_timestamp_is_passed_through_rather_than_invented() -> None:
     """A wrong local time would be worse than an honest UTC one."""
-    from probe import _local_time
-
-    assert _local_time("nonsense") == "nonsense"
-    assert _local_time("") == ""
+    assert survey_document.local_time("nonsense") == "nonsense"
+    assert survey_document.local_time("") == ""
 
 
 def test_the_menus_are_numbered_and_accept_the_value_itself() -> None:

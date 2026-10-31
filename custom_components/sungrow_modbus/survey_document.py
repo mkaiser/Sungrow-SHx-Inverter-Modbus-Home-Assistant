@@ -395,14 +395,6 @@ async def _async_probe_words(
     )
 
 
-async def _async_probes(
-    device: Any, step: Step | None = None
-) -> dict[str, dict[str, Any]]:
-    """Read every curated probe once, in the package's published shape."""
-    raw, states = await _async_probe_words(device, step)
-    return survey.capability_registers(states, raw)
-
-
 def _contention(runtime: Any, *, block_test_run: bool = False) -> dict[str, Any]:
     """State what this Home Assistant was doing while the document was made.
 

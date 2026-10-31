@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from modbus_connection import ModbusError
+
 from homeassistant.components.binary_sensor import BinarySensorEntityDescription
 from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
@@ -277,6 +279,39 @@ class SungrowEntity(CoordinatorEntity[SungrowDataUpdateCoordinator]):
             else device.component(self.entity_description.component)
         )
         return present(getattr(component, self.entity_description.field))
+
+    async def _async_write(self, *writes: tuple[str, float]) -> None:
+        """Write fields of this entity's component in order, then read back.
+
+        The refresh is not optimism about the write having worked — it is how
+        the user finds out that it did. An inverter can clamp a value to
+        something it prefers, and showing what was asked for rather than what
+        was accepted is how the YAML package's own readback automations came
+        to exist.
+        """
+        component = self.coordinator.device.component(self.entity_description.component)
+        try:
+            for field, value in writes:
+                await component.write(field, value)
+        except ModbusError as err:
+            raise write_failed(self.entity_id, err) from err
+        await self.async_refresh_after_write()
+
+    async def async_refresh_after_write(self) -> None:
+        """Read the coordinator's registers back at once, past the debouncer.
+
+        `async_refresh`, not `async_request_refresh`. The latter goes through
+        the coordinator's debouncer, which has a **10 second cooldown** -- so
+        a second change inside that window is written to the register and
+        never read back, and the interface shows the previous value for up to
+        ten seconds. That is precisely the bug the YAML package's
+        `homeassistant.update_entity` calls existed to work around, and
+        debouncing here would bring it back.
+
+        The debouncer is there to coalesce storms of *automatic* refresh
+        requests. An explicit user action is not a storm.
+        """
+        await self.coordinator.async_refresh()
 
     @property
     def available(self) -> bool:

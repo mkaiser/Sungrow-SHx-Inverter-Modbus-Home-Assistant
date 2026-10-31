@@ -1032,7 +1032,7 @@ def _code_for(reading: probe.Reading, transport: Transport, answers) -> int:
     return 0
 
 
-def _summary(results: list[Outcome], transcript: Path, echo) -> None:
+def _summary(results: list[Outcome], echo) -> None:
     """Say what was found, in the order the questions arrived.
 
     Three markers, in plain words so they survive being pasted anywhere:
@@ -1266,9 +1266,9 @@ def _summary_actions(result: Outcome, echo) -> None:
 
     actions = []
     outcome = result.block_outcome
-    through_module = result.transport is not None and claim_of(
-        result.transport.verdict
-    ) not in ("direct",)
+    through_module = (
+        result.transport is not None and claim_of(result.transport.verdict) != "direct"
+    )
     for finding in (
         block_test.findings(outcome, through_module=through_module)
         if outcome is not None
@@ -1370,7 +1370,6 @@ async def _survey_wallbox(found: wallbox_direct.Found, args, echo) -> int:
             directory,
             echo,
             address_tail=tail,
-            local_time=probe._local_time,
         )
     except (OSError, RuntimeError, probe.ModbusError) as error:
         echo(f"  {found.host}:{wallbox_direct.PORT} failed: {error}")
@@ -1540,7 +1539,7 @@ async def run(args) -> int:
             return _finish(1, echo)
 
         if results:
-            _summary(results, transcript, echo)
+            _summary(results, echo)
         return _finish(_worst([result.code for result in results] + device_codes), echo)
     finally:
         sys.stdout, sys.stderr = out._stream, errors._stream

@@ -231,6 +231,32 @@ _SWITCH_BLOCKED = (
 )
 
 
+async def _async_legacy_ids(hass: HomeAssistant, slot: str) -> set[str]:
+    """Return the YAML package's ids in `slot`, from the registry or the recorder.
+
+    The registry is the good evidence, but not the only evidence.
+    cleanup_entities.md has told users for years to delete the orphaned
+    entries a removed YAML platform leaves behind, and the recorder keeps
+    their rows regardless. Asking it as well is what stops those users being
+    handed new ids and a stranded history without ever being offered the
+    choice.
+    """
+    return async_legacy_ids_known(hass, slot) or await async_legacy_ids_with_history(
+        hass, slot
+    )
+
+
+def _entity_ids_placeholders(known: set[str], live: set[str]) -> dict[str, str]:
+    """Fill the id question's description: how many, one example, and why."""
+    return {
+        "count": str(len(known)),
+        "example": min(known),
+        "status": (
+            _PACKAGE_LOADED.format(live=len(live)) if live else _PACKAGE_NOT_LOADED
+        ),
+    }
+
+
 async def _async_probe(
     hass: HomeAssistant, host: str, port: int, unit_id: int
 ) -> tuple[SungrowInverter, bool | None, bool | None]:
@@ -1083,15 +1109,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         if slot is None:
             return await self.async_step_slot_unknown()
 
-        known = async_legacy_ids_known(self.hass, slot)
-        if not known:
-            # The registry is the good evidence, but not the only evidence.
-            # cleanup_entities.md has told users for years to delete the
-            # orphaned entries a removed YAML platform leaves behind, and the
-            # recorder keeps their rows regardless. Asking it as well is what
-            # stops those users being handed new ids and a stranded history
-            # without ever being offered the choice.
-            known = await async_legacy_ids_with_history(self.hass, slot)
+        known = await _async_legacy_ids(self.hass, slot)
         if not known:
             return self._async_create(ENTITY_IDS_NEW)
 
@@ -1120,15 +1138,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 ENTITY_IDS_NEW if live else ENTITY_IDS_MIGRATE
             ),
             errors=errors,
-            description_placeholders={
-                "count": str(len(known)),
-                "example": sorted(known)[0],
-                "status": (
-                    _PACKAGE_LOADED.format(live=len(live))
-                    if live
-                    else _PACKAGE_NOT_LOADED
-                ),
-            },
+            description_placeholders=_entity_ids_placeholders(known, live),
         )
 
     async def async_step_slot_unknown(
@@ -1911,9 +1921,7 @@ class SungrowOptionsFlow(OptionsFlow):
         if slot is None:
             return await self.async_step_slot_unknown()
 
-        known = async_legacy_ids_known(self.hass, slot)
-        if not known:
-            known = await async_legacy_ids_with_history(self.hass, slot)
+        known = await _async_legacy_ids(self.hass, slot)
         if not known:
             return await self._async_promote(ENTITY_IDS_NEW)
 
@@ -1936,15 +1944,7 @@ class SungrowOptionsFlow(OptionsFlow):
                 ENTITY_IDS_NEW if live else ENTITY_IDS_MIGRATE
             ),
             errors=errors,
-            description_placeholders={
-                "count": str(len(known)),
-                "example": sorted(known)[0],
-                "status": (
-                    _PACKAGE_LOADED.format(live=len(live))
-                    if live
-                    else _PACKAGE_NOT_LOADED
-                ),
-            },
+            description_placeholders=_entity_ids_placeholders(known, live),
         )
 
     async def async_step_slot_unknown(

@@ -100,7 +100,7 @@ async def async_get_config_entry_diagnostics(
         "device": async_redact_data(_device(device), TO_REDACT),
         "capabilities": _capabilities(device, runtime.capabilities),
         "polling": _polling(runtime),
-        "entities": _entities(hass, entry, runtime),
+        "entities": _entities(hass, runtime),
         "readings": async_redact_data(_readings(device), TO_REDACT),
     }
 
@@ -249,9 +249,7 @@ def _polling(runtime: Any) -> list[dict[str, Any]]:
     return rows
 
 
-def _entities(
-    hass: HomeAssistant, entry: SungrowConfigEntry, runtime: Any
-) -> dict[str, Any]:
+def _entities(hass: HomeAssistant, runtime: Any) -> dict[str, Any]:
     """Say what exists, what does not, and why not.
 
     "Sensor X is missing" is the most common report this project gets, and the

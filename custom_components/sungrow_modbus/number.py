@@ -148,32 +148,11 @@ class SungrowNumber(SungrowEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Write the register, then read it back.
 
-        The refresh is not optimism about the write having worked — it is how
-        the user finds out that it did. An inverter can clamp a value to
-        something it prefers, and showing what was asked for rather than what
-        was accepted is how the YAML package's own readback automations came
-        to exist.
-
         The engineering value goes to the library, which applies the register's
         scale: 20.5 % becomes the raw 205 that a 0.1 %-per-count register
         expects. Doing that arithmetic here is how a template gets it wrong.
         """
-        component = self.coordinator.device.component(self.entity_description.component)
-        try:
-            await component.write(self.entity_description.field, value)
-        except ModbusError as err:
-            raise write_failed(self.entity_id, err) from err
-        # `async_refresh`, not `async_request_refresh`. The latter goes
-        # through the coordinator's debouncer, which has a **10 second
-        # cooldown** -- so a second change inside that window is written to
-        # the register and never read back, and the interface shows the
-        # previous value for up to ten seconds. That is precisely the bug the
-        # YAML package's `homeassistant.update_entity` calls existed to work
-        # around, and debouncing here would bring it back.
-        #
-        # The debouncer is there to coalesce storms of *automatic* refresh
-        # requests. An explicit user action is not a storm.
-        await self.coordinator.async_refresh()
+        await self._async_write((self.entity_description.field, value))
 
 
 class SungrowExportLimitNumber(SungrowNumber):
@@ -200,8 +179,7 @@ class SungrowExportLimitNumber(SungrowNumber):
             )
         except ModbusError as err:
             raise write_failed(self.entity_id, err) from err
-        # A direct refresh, for the reason `SungrowNumber` gives.
-        await self.coordinator.async_refresh()
+        await self.async_refresh_after_write()
 
     async def _async_write_scale(self) -> int:
         """Return this inverter's write factor, measuring it if it is not known.

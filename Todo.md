@@ -220,6 +220,21 @@ the integration is `strings.json`.
 | `legacy/doc/dashboard.md` | Generated dashboard and Energy dashboard |
 | `legacy/doc/faq.md` | The iHomeManager answer, once its entities ship |
 
+## Deprecating and retiring the YAML package
+
+Once the integration is complete (parity with the YAML package, merged into
+`main`, in the HACS default store), deprecate `legacy/modbus_sungrow.yaml`
+and the generated multi-inverter files, then retire them: announce it, point
+every `legacy/doc/` page at the integration and `doc/integration_migration.md`,
+and set a date after which the YAML package gets no further changes.
+
+What retiring does not end: anyone may still migrate later, so the legacy-id
+adoption and its guards stay as long as migration is offered.
+`tests/test_sensor_descriptions.py` (ids, unit class, `state_class` against
+`doc/legacy_entity_map.json`) keeps history continuous and stays.
+`tests/test_registers.py`'s comparison with the YAML can then be anchored to
+the specification instead; its scan-interval check goes first.
+
 ## EVCC connection
 
 - Hand inverter and wallbox readings to evcc, e.g. over MQTT, so evcc

@@ -144,9 +144,9 @@ def provided(wheel: Path) -> tuple[dict[str, set[str]], list[str]]:
             if not parts or parts[0] != LIBRARY:
                 continue
             source = archive.read(member).decode("utf-8")
-            stem = member[: -len(".py")].replace("/", ".")
-            if stem.endswith(".__init__"):
-                stem = stem[: -len(".__init__")]
+            stem = (
+                member.removesuffix(".py").replace("/", ".").removesuffix(".__init__")
+            )
             modules[stem] = public_names(source, member)
     return modules, sorted(m for m in members if m.endswith(".py"))
 
