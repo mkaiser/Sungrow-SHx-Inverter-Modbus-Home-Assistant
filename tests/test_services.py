@@ -78,7 +78,7 @@ async def test_neither_start_nor_stop_is_an_entity(
     all, so the original assertion holds unchanged -- and that is the point
     of the split rather than a coincidence of it.
     """
-    assert [state for state in hass.states.async_all("button")] == []
+    assert list(hass.states.async_all("button")) == []
 
 
 async def test_the_actions_exist(hass: HomeAssistant, entry: MockConfigEntry) -> None:

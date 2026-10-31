@@ -91,6 +91,13 @@ check: version-check gen-check lint typecheck test ## Everything CI gates on, fa
 ci: check build ## check, plus the package -- the full CI job
 .PHONY: ci
 
+quick: version-check gen-check lint typecheck ## `check` without the test suite, in seconds; the pre-commit hook
+.PHONY: quick
+
+hooks: ## Run `make quick` before every commit, through a git pre-commit hook
+	ln -sf "$(CURDIR)/scripts/dev/pre-commit.sh" "$$(git rev-parse --git-path hooks)/pre-commit"
+.PHONY: hooks
+
 test: ## Run the test suite
 	pytest -q $(ARGS)
 .PHONY: test
@@ -105,7 +112,7 @@ fmt: ## Reformat and autofix in place
 	ruff check --fix .
 .PHONY: fmt
 
-typecheck: ## mypy --strict over the library. Part of `check` and of CI
+typecheck: ## mypy --strict over the library and the integration. Part of `check` and of CI
 	mypy
 .PHONY: typecheck
 

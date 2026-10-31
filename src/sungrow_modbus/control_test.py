@@ -1047,7 +1047,7 @@ def restore_order(fields: Iterable[str]) -> tuple[str, ...]:
     order and the device refuses one of the two writes, leaving the house with
     exactly one of the run's values still in place.
     """
-    remaining = [name for name in fields]
+    remaining = list(fields)
     first = [name for name in RESTORE_FIRST if name in remaining]
     last = [name for name in RESTORE_LAST if name in remaining]
     middle = [name for name in remaining if name not in first and name not in last]

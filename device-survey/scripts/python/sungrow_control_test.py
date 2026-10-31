@@ -528,7 +528,7 @@ async def _export_scale_mode(
             # usually merged into a reading taken on another day.
             {
                 **export_scale.document(result),
-                "read_on": datetime.now().date().isoformat(),
+                "read_on": datetime.now().astimezone().date().isoformat(),
             },
             serial,
             args.host,

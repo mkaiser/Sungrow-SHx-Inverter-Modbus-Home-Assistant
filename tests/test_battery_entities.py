@@ -353,3 +353,38 @@ async def test_no_pack_grants_no_sungrow_battery_capability(
     entry = await _setup(hass, sungrow_unit, None)
 
     assert Capability.SUNGROW_BATTERY not in entry.runtime_data.capabilities
+
+
+async def test_a_pack_that_is_gone_can_be_deleted_and_one_that_answers_cannot(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The `stale-devices` rule, for the owner to act on.
+
+    A pack that misses one setup may answer at the next, so nothing removes
+    its device on its own; deleting it is the owner's call, and only once
+    this entry no longer finds it. The inverter is never deletable.
+    """
+    from custom_components.sungrow_modbus import async_remove_config_entry_device
+
+    entry = await _setup(hass, sungrow_unit, _pack({**PACK_WORDS, **CELL_WORDS}))
+    registry = dr.async_get(hass)
+    pack = registry.async_get_device_by_identifier(
+        (DOMAIN, f"{SERIAL}-battery"), entry.entry_id
+    )
+    inverter = registry.async_get_device_by_identifier((DOMAIN, SERIAL), entry.entry_id)
+    assert pack is not None and inverter is not None
+    assert not await async_remove_config_entry_device(hass, entry, pack)
+    assert not await async_remove_config_entry_device(hass, entry, inverter)
+
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    with patch(
+        "custom_components.sungrow_modbus.async_get_unit",
+        side_effect=lambda _h, _e, _p, unit_id: (
+            sungrow_unit if unit_id == 1 else _pack({})
+        ),
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+    assert entry.runtime_data.battery is None
+    assert await async_remove_config_entry_device(hass, entry, pack)
+    assert not await async_remove_config_entry_device(hass, entry, inverter)

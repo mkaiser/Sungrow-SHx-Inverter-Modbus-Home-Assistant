@@ -20,11 +20,10 @@ from modbus_connection import ModbusError
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .coordinator import SungrowConfigEntry
-from .entity import SungrowEntity, SungrowSelectDescription
+from .entity import SungrowEntity, SungrowSelectDescription, write_failed
 from .select_descriptions import SELECT_DESCRIPTIONS
 
 # One at a time, and not for the usual reason. A Sungrow accepts very few
@@ -85,9 +84,7 @@ class SungrowSelect(SungrowEntity, SelectEntity):
         try:
             await component.write(description.field, value)
         except ModbusError as err:
-            raise HomeAssistantError(
-                f"Could not write {self.entity_id}: {err}"
-            ) from err
+            raise write_failed(self.entity_id, err) from err
         # Immediate, not debounced: see the note in number.py. A ten-second
         # cooldown between an explicit change and its confirmation is the
         # readback problem this integration exists to have fixed.

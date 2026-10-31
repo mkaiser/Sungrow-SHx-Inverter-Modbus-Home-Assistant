@@ -70,7 +70,6 @@ from pathlib import Path
 import shlex
 import sys
 import textwrap
-import time
 from typing import NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -1488,7 +1487,7 @@ async def run(args) -> int:
     """Run the whole scan, and return the exit code."""
     _documents, private = _workspace()
     private.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    stamp = datetime.now().astimezone().strftime("%Y%m%d-%H%M%S")
     transcript = private / f"sungrow-scan-{stamp}.log"
 
     out = Tee(sys.stdout, transcript)
@@ -1518,7 +1517,7 @@ async def run(args) -> int:
             if number > 1:
                 echo("  Pausing 10s so the previous session is closed before the")
                 echo("  next one opens; a Sungrow grants very few.")
-                time.sleep(10)
+                await asyncio.sleep(10)
             try:
                 results.append(await _survey(entry, args, echo))
             except SystemExit:
@@ -1529,13 +1528,13 @@ async def run(args) -> int:
         for found_wallbox in _WALLBOXES:
             if results or device_codes:
                 echo("  Pausing 10s before the next device.")
-                time.sleep(10)
+                await asyncio.sleep(10)
             device_codes.append(await _survey_wallbox(found_wallbox, args, echo))
         await _find_loggers_behind(results, echo)
         for found_manager in _MANAGERS:
             if results or device_codes:
                 echo("  Pausing 10s before the next device.")
-                time.sleep(10)
+                await asyncio.sleep(10)
             device_codes.append(await _survey_ihomemanager(found_manager, args, echo))
         if not results and not device_codes:
             return _finish(1, echo)

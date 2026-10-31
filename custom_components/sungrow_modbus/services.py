@@ -38,7 +38,7 @@ from __future__ import annotations
 import logging
 
 from modbus_connection import ModbusError
-import voluptuous as vol
+import probatio
 
 from homeassistant.auth.permissions.const import POLICY_CONTROL
 from homeassistant.const import ATTR_DEVICE_ID
@@ -99,7 +99,7 @@ FIELD = "start_stop"
 #: that was written would show the old state.
 STATE_COMPONENT = "realtime_input"
 
-SCHEMA = vol.Schema({vol.Required(ATTR_DEVICE_ID): cv.string})
+SCHEMA = probatio.Schema({probatio.Required(ATTR_DEVICE_ID): cv.string})
 
 
 @callback
@@ -245,7 +245,11 @@ async def _async_write(call: ServiceCall, value: int, what: str) -> None:
     try:
         await coordinator.device.component(COMPONENT).write(FIELD, value)
     except ModbusError as err:
-        raise HomeAssistantError(f"Could not {what} {entry.title}: {err}") from err
+        raise HomeAssistantError(
+            translation_domain=DOMAIN,
+            translation_key="start_failed" if what == "start" else "stop_failed",
+            translation_placeholders={"device": entry.title, "error": str(err)},
+        ) from err
     await coordinator.async_refresh()
 
 

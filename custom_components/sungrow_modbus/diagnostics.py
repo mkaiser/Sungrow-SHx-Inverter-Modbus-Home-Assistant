@@ -155,8 +155,9 @@ def _last_block_read_test(runtime: Any) -> dict[str, Any] | str:
     have, the time says so.
     """
     survey = getattr(runtime, "survey", None)
-    document = survey.state.document if survey is not None else None
-    measured = (document or {}).get("block_read_test")
+    if survey is None:
+        return NO_BLOCK_READ_TEST
+    measured = (survey.state.document or {}).get("block_read_test")
     if not measured:
         return NO_BLOCK_READ_TEST
     finished = survey.state.finished

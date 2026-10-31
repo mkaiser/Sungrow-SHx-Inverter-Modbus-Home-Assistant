@@ -63,7 +63,7 @@ The integration is cut along **what a piece decides**, not along size. Three
 lines are worth knowing before moving anything across them.
 
 **Decisions and data are separated where the data got big.**
-`config_flow_schemas.py` holds the `voluptuous` schemas, the option lists and
+`config_flow_schemas.py` holds the `probatio` schemas, the option lists and
 the prose Home Assistant renders above them; `config_flow.py` holds the steps
 that decide which of those to show. The split keeps the flow readable as flow
 logic. `_alpha_placeholders` stays in `config_flow.py` although it only

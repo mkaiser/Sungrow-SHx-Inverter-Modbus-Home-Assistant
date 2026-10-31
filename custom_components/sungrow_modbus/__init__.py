@@ -167,7 +167,7 @@ def _unit_factory(
 
 async def _async_connect(
     hass: HomeAssistant, entry: SungrowConfigEntry
-) -> tuple[ModbusUnit, SungrowInverter]:
+) -> tuple[ModbusUnit, SungrowInverter, str]:
     """Open the shared unit and read the identity, or say why setup cannot go on.
 
     The two failures are deliberately different kinds. A link that will not
@@ -190,25 +190,27 @@ async def _async_connect(
         await inverter.async_update_identity()
     except ModbusConnectionError as err:
         raise ConfigEntryNotReady(
-            f"Could not reach {entry.title}: {err}. A Sungrow inverter accepts "
-            "very few Modbus connections at once, so check whether something "
-            "else is polling it -- the modbus_sungrow.yaml package, another "
-            "Home Assistant, or another tool."
+            translation_domain=DOMAIN,
+            translation_key="setup_unreachable",
+            translation_placeholders={"title": entry.title, "error": str(err)},
         ) from err
     except ModbusError as err:
         raise ConfigEntryNotReady(
-            f"Could not read the identity of {entry.title}: {err}"
+            translation_domain=DOMAIN,
+            translation_key="identity_unread",
+            translation_placeholders={"title": entry.title, "error": str(err)},
         ) from err
 
     # The config flow refuses the same case at setup; this covers a device
     # that changed its mind, or an entry restored from a backup.
-    if inverter.serial_number is None:
+    serial = inverter.serial_number
+    if serial is None:
         raise ConfigEntryError(
-            f"{entry.title} answered but reported no serial number, so its "
-            "entities cannot be identified. Please open an issue with the "
-            "model and firmware version."
+            translation_domain=DOMAIN,
+            translation_key="no_serial",
+            translation_placeholders={"title": entry.title},
         )
-    return unit, inverter
+    return unit, inverter, serial
 
 
 async def _async_read_firmware(
@@ -229,10 +231,12 @@ async def _async_read_firmware(
         report = await inverter.async_update_firmware()
     except ModbusConnectionError as err:
         raise ConfigEntryNotReady(
-            f"Could not read the firmware of {entry.title}: {err}"
+            translation_domain=DOMAIN,
+            translation_key="firmware_unread",
+            translation_placeholders={"title": entry.title, "error": str(err)},
         ) from err
-    for name, err in report.failed.items():
-        _LOGGER.debug("%s: %s did not answer at setup: %s", entry.title, name, err)
+    for name, failure in report.failed.items():
+        _LOGGER.debug("%s: %s did not answer at setup: %s", entry.title, name, failure)
     _LOGGER.debug(
         "%s runs firmware %s",
         entry.title,
@@ -279,9 +283,9 @@ async def _async_tier_coordinators(
 
     if not coordinators:
         raise ConfigEntryError(
-            f"Every poll tier of {entry.title} is set to never, so there is "
-            "nothing to read. Set at least one interval in the integration's "
-            "options."
+            translation_domain=DOMAIN,
+            translation_key="nothing_to_poll",
+            translation_placeholders={"title": entry.title},
         )
     return intervals, coordinators
 
@@ -289,7 +293,7 @@ async def _async_tier_coordinators(
 async def _async_take_over_legacy_ids(
     hass: HomeAssistant,
     entry: SungrowConfigEntry,
-    inverter: SungrowInverter,
+    serial: str,
     capabilities: frozenset[Capability],
     legacy_ids: bool,
 ) -> None:
@@ -327,9 +331,7 @@ async def _async_take_over_legacy_ids(
         )
         return
     with_history = keys_for(await async_legacy_ids_with_history(hass, slot), slot)
-    claimed = async_claim_legacy_ids(
-        hass, entry, inverter.serial_number, capabilities, with_history
-    )
+    claimed = async_claim_legacy_ids(hass, entry, serial, capabilities, with_history)
     _LOGGER.info(
         "%s took over %d entity ids from the YAML package",
         entry.title,
@@ -339,7 +341,7 @@ async def _async_take_over_legacy_ids(
 
 async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> bool:
     """Set up a Sungrow SHx inverter from a config entry."""
-    _unit, inverter = await _async_connect(hass, entry)
+    _unit, inverter, serial = await _async_connect(hass, entry)
     firmware = await _async_read_firmware(entry, inverter)
 
     intervals, coordinators = await _async_tier_coordinators(hass, entry, inverter)
@@ -392,9 +394,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
     entry.runtime_data.survey = SurveyRunner(hass, entry)
     entry.async_on_unload(entry.runtime_data.survey.async_shutdown)
 
-    _async_drop_unused_corrections(hass, entry, inverter.serial_number)
+    _async_drop_unused_corrections(hass, entry, serial)
 
-    await _async_take_over_legacy_ids(hass, entry, inverter, capabilities, legacy_ids)
+    await _async_take_over_legacy_ids(hass, entry, serial, capabilities, legacy_ids)
 
     _async_preview_notice(hass)
 
@@ -584,6 +586,7 @@ async def _async_wallbox(
 
     Finding nothing is the common case and never fails the entry.
     """
+    unit_for: Callable[[int], ModbusUnit]
     if host := entry.options.get(CONF_WALLBOX_HOST):
         # Its own address, over TLS. The endpoint is not probed as well: a
         # dongle would find the same wallbox at unit 3 and make it twice.
@@ -675,7 +678,7 @@ def _async_preview_notice(hass: HomeAssistant) -> None:
 
 @callback
 def _async_drop_unused_corrections(
-    hass: HomeAssistant, entry: SungrowConfigEntry, serial: str | None
+    hass: HomeAssistant, entry: SungrowConfigEntry, serial: str
 ) -> None:
     """Delete the registry entries of corrections this house no longer wants.
 
@@ -692,8 +695,6 @@ def _async_drop_unused_corrections(
     dashboard card it reached. That is worse than untidy: `restored` entities
     look like a broken integration rather than a setting somebody changed.
     """
-    if serial is None:
-        return
     registry = er.async_get(hass)
     runtime = entry.runtime_data
     for description in EXTERNAL_SENSORS:
@@ -733,6 +734,25 @@ def _built_from(entry: SungrowConfigEntry) -> tuple[dict[str, Any], dict[str, An
     }
     data = {k: v for k, v in entry.data.items() if k not in measured}
     return data, dict(entry.options)
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, entry: SungrowConfigEntry, device_entry: dr.DeviceEntry
+) -> bool:
+    """Let an owner delete a battery or wallbox this entry no longer finds.
+
+    Never removed automatically: a pack or wallbox that did not answer at this
+    setup may answer at the next, and its device carries the history. Only
+    the owner knows it is gone for good. The inverter and every device this
+    setup found refuse, because the next poll would recreate them.
+    """
+    runtime = entry.runtime_data
+    infos = [next(iter(runtime.coordinators.values())).device_info]
+    infos += [
+        c.device_info for c in (runtime.battery, runtime.wallbox) if c is not None
+    ]
+    in_use = set().union(*(info["identifiers"] for info in infos))
+    return not device_entry.identifiers & in_use
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> None:

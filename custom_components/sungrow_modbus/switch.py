@@ -21,11 +21,10 @@ from modbus_connection import ModbusError
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .coordinator import SungrowConfigEntry
-from .entity import SungrowEntity, SungrowSwitchDescription
+from .entity import SungrowEntity, SungrowSwitchDescription, write_failed
 from .switch_descriptions import SWITCH_DESCRIPTIONS
 
 # One at a time, and not for the usual reason. A Sungrow accepts very few
@@ -94,9 +93,7 @@ class SungrowSwitch(SungrowEntity, SwitchEntity):
         try:
             await component.write(self.entity_description.field, value)
         except ModbusError as err:
-            raise HomeAssistantError(
-                f"Could not write {self.entity_id}: {err}"
-            ) from err
+            raise write_failed(self.entity_id, err) from err
         # `async_refresh`, not `async_request_refresh`. The latter goes
         # through the coordinator's debouncer, which has a **10 second
         # cooldown** -- so a second change inside that window is written to

@@ -30,6 +30,11 @@ on:
       - ".github/workflows/validate.yml"
   pull_request:
   workflow_dispatch:
+  # Weekly, because `requirements_dev.txt` takes the newest Home Assistant: a
+  # release that adds a quality-scale rule or changes its typing turns this
+  # red within a week rather than at the next unrelated push.
+  schedule:
+    - cron: "17 4 * * 1"
 
 jobs:
   hassfest:
@@ -82,14 +87,11 @@ jobs:
         run: |
           ruff check .
           ruff format --check .
-      # The library only -- `packages = ["sungrow_modbus"]` in pyproject.toml.
-      # The integration is deliberately out of scope: it is typed against Home
-      # Assistant, whose own annotations are not strict-clean, so checking it
-      # would mean a wall of ignores that hides the findings worth having.
+      # The library and the integration -- `files` in pyproject.toml.
       - name: Mypy
         run: mypy
       - name: Pytest
-        run: pytest -q
+        run: pytest -q --cov --cov-report=term:skip-covered
 
       # The release workflow is the only thing that publishes the library,
       # once per tag, to an index where uploads are immutable -- the worst

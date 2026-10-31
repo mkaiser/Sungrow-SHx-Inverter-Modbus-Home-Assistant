@@ -55,23 +55,23 @@ ANSWERED = [
 
 def _answers(**overrides) -> argparse.Namespace:
     """Return the namespace `_ask_all` fills, as a run that answered everything."""
-    values = dict(
-        host="192.0.2.10",
-        port=502,
-        unit=2,
-        timeout=10.0,
-        passes=8,
-        pollers="no",
-        transport="direct_lan",
-        proxy="no",
-        other_inverter="yes",
-        other_inverter_detail="Fronius Symo 8.2",
-        address="hidden",
-        reporter="somebody",
-        comment="the slave's reading",
-        battery="",
-        control_test="no",
-    )
+    values = {
+        "host": "192.0.2.10",
+        "port": 502,
+        "unit": 2,
+        "timeout": 10.0,
+        "passes": 8,
+        "pollers": "no",
+        "transport": "direct_lan",
+        "proxy": "no",
+        "other_inverter": "yes",
+        "other_inverter_detail": "Fronius Symo 8.2",
+        "address": "hidden",
+        "reporter": "somebody",
+        "comment": "the slave's reading",
+        "battery": "",
+        "control_test": "no",
+    }
     return argparse.Namespace(**{**values, **overrides})
 
 

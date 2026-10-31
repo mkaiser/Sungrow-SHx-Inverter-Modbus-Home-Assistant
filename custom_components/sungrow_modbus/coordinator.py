@@ -140,21 +140,26 @@ class SungrowDataUpdateCoordinator(
             # The bare message ("Connection lost before response was
             # received") sends people looking at their network instead.
             raise UpdateFailed(
-                f"Lost the connection to the inverter: {err}. A Sungrow "
-                "inverter accepts very few Modbus connections at once, so "
-                "check whether something else is polling it -- the "
-                "modbus_sungrow.yaml package, another Home Assistant, or "
-                "another tool."
+                translation_domain=DOMAIN,
+                translation_key="connection_lost",
+                translation_placeholders={"error": str(err)},
             ) from err
         except ModbusError as err:
             # A timeout on the whole device lands here; a single block that
             # failed while the device is alive is reported per component
             # instead.
-            raise UpdateFailed(f"Error communicating with the inverter: {err}") from err
+            raise UpdateFailed(
+                translation_domain=DOMAIN,
+                translation_key="communication_error",
+                translation_placeholders={"error": str(err)},
+            ) from err
 
         self._log_transitions(report)
         if not report.updated:
-            raise UpdateFailed("No register block answered")
+            raise UpdateFailed(
+                translation_domain=DOMAIN,
+                translation_key="no_block_answered",
+            )
         self._async_recheck_capabilities()
         return report
 
@@ -314,14 +319,16 @@ class SungrowSubDeviceCoordinator(
         serial = self.inverter_serial
         model = self._model()
         label = self.kind.capitalize()
-        return dr.DeviceInfo(
+        info = dr.DeviceInfo(
             identifiers={(DOMAIN, f"{serial}-{self.kind}")},
             manufacturer=MANUFACTURER,
             model=model or label,
             name=model or label,
             serial_number=self.own_serial,
-            via_device_id=self.config_entry.runtime_data.inverter_device_id,
         )
+        if (via := self.config_entry.runtime_data.inverter_device_id) is not None:
+            info["via_device_id"] = via
+        return info
 
     #: The device's own serial, where it reports one. Read once at setup.
     own_serial: str | None = None
@@ -338,10 +345,16 @@ class SungrowSubDeviceCoordinator(
             yield
         except ModbusConnectionError as err:
             raise UpdateFailed(
-                f"Lost the connection while reading the {self.kind}: {err}"
+                translation_domain=DOMAIN,
+                translation_key="device_connection_lost",
+                translation_placeholders={"device": self.kind, "error": str(err)},
             ) from err
         except ModbusError as err:
-            raise UpdateFailed(f"Error reading the {self.kind}: {err}") from err
+            raise UpdateFailed(
+                translation_domain=DOMAIN,
+                translation_key="device_read_error",
+                translation_placeholders={"device": self.kind, "error": str(err)},
+            ) from err
 
 
 class SungrowBatteryCoordinator(SungrowSubDeviceCoordinator):
@@ -447,7 +460,7 @@ class SungrowWallboxCoordinator(SungrowSubDeviceCoordinator):
         due = self._polls % self.SLOW_EVERY == 0
         self._polls += 1
         async with self._reading():
-            report = await self.device.async_update(only=FAST)
+            report: UpdateReport = await self.device.async_update(only=FAST)
             if due:
                 report = report | await self.device.async_update(only=SLOW)
         # A slow component that was not read this time keeps the values it

@@ -1,0 +1,131 @@
+# Home Assistant's Integration Quality Scale, rule by rule.
+# https://developers.home-assistant.io/docs/core/integration-quality-scale/rules
+# tests/test_quality_scale.py holds this file to the rule list of the installed
+# Home Assistant and checks every `done` that a test can check.
+rules:
+  # Bronze
+  action-setup:
+    status: done
+    comment: Registered once in async_setup (services.async_setup_services), not per entry.
+  appropriate-polling:
+    status: done
+    comment: Poll tiers with per-tier intervals the owner sets in the options.
+  brands: done
+  common-modules:
+    status: done
+    comment: coordinator.py and entity.py.
+  config-flow-test-coverage:
+    status: todo
+    comment: config_flow.py is covered 91 %; every flow path is the rule.
+  config-flow: done
+  dependency-transparency:
+    status: done
+    comment: sungrow-modbus is built and published to PyPI by .github/workflows/release.yml from this repository.
+  docs-actions:
+    status: todo
+    comment: The actions are described in doc/architecture.md and doc/integration_migration.md, not in a user page.
+  docs-conditions:
+    status: exempt
+    comment: The integration provides no conditions.
+  docs-high-level-description: done
+  docs-installation-instructions:
+    status: done
+    comment: doc/installing_a_preview.md.
+  docs-removal-instructions:
+    status: done
+    comment: doc/installing_a_preview.md.
+  docs-triggers:
+    status: exempt
+    comment: The integration provides no triggers.
+  entity-event-setup:
+    status: done
+    comment: The survey entities subscribe in async_added_to_hass through async_on_remove.
+  entity-unique-id: done
+  has-entity-name: done
+  runtime-data: done
+  test-before-configure: done
+  test-before-setup:
+    status: done
+    comment: ConfigEntryNotReady when the identity or firmware does not read; ConfigEntryError without a serial.
+  unique-config-entry:
+    status: done
+    comment: The inverter's serial is the unique id.
+
+  # Silver
+  action-exceptions: done
+  config-entry-unloading: done
+  docs-configuration-parameters:
+    status: done
+    comment: doc/integration_options.md.
+  docs-installation-parameters:
+    status: todo
+    comment: Host, port and unit id are asked by the flow but not explained in doc/installing_a_preview.md.
+  entity-unavailable:
+    status: done
+    comment: Per component, so one refused block does not take a device's other entities with it.
+  integration-owner: done
+  log-when-unavailable:
+    status: done
+    comment: The coordinator warns once when a component stops answering and logs at info when it answers again.
+  parallel-updates: done
+  reauthentication-flow:
+    status: exempt
+    comment: Modbus TCP has no credentials that can expire.
+  test-coverage:
+    status: todo
+    comment: 92 % across library and integration, held as a floor in CI (pyproject.toml); download.py 64 %, __init__.py 90 %.
+
+  # Gold
+  devices: done
+  diagnostics: done
+  discovery-update-info:
+    status: todo
+    comment: Follows discovery.
+  discovery:
+    status: todo
+    comment: A WiNet-S announces itself over mDNS and the config flow's search uses it, but the manifest declares no zeroconf matcher, so Home Assistant does not offer the device on its own.
+  docs-data-update:
+    status: done
+    comment: Poll tiers in doc/integration_options.md.
+  docs-examples:
+    status: todo
+  docs-known-limitations:
+    status: todo
+    comment: What a WiNet-S refuses is known (the wiki) but not on a user page.
+  docs-supported-devices:
+    status: done
+    comment: doc/compatibility.md.
+  docs-supported-functions:
+    status: todo
+  docs-troubleshooting:
+    status: todo
+    comment: The README links the YAML package's help page only.
+  docs-use-cases:
+    status: todo
+  dynamic-devices:
+    status: todo
+    comment: A battery or wallbox is looked for at setup; one added later appears after a reload.
+  entity-category: done
+  entity-device-class: done
+  entity-disabled-by-default:
+    status: todo
+    comment: Only for entities the YAML package never had. A ported entity stays enabled, or its history and dashboards break (AGENTS.md, migration).
+  entity-translations: done
+  exception-translations: done
+  icon-translations:
+    status: done
+    comment: icons.json for the actions and the survey entities; the register entities show their device class's icon.
+  reconfiguration-flow: done
+  repair-issues: done
+  stale-devices:
+    status: done
+    comment: A battery or wallbox that no longer answers can be deleted from its device page; never automatically, since one that missed a setup may answer at the next.
+
+  # Platinum
+  async-dependency: done
+  inject-websession:
+    status: exempt
+    comment: Modbus TCP, not HTTP.
+  strict-typing:
+    status: done
+    comment: mypy --strict over the library and the integration (pyproject.toml).

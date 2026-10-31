@@ -1,6 +1,6 @@
 """The forms the config flow shows, separated from the flow that shows them.
 
-`voluptuous` schemas, the option lists they offer, and the paragraphs of prose
+`probatio` schemas, the option lists they offer, and the paragraphs of prose
 Home Assistant renders above them are not flow logic, and reading the flow
 should not mean scrolling past them. So the data lives here and the decisions
 live in `config_flow.py`. The split is along that
@@ -17,7 +17,7 @@ from collections.abc import Mapping
 from ipaddress import ip_address, ip_network
 from typing import Any
 
-import voluptuous as vol
+import probatio
 
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.helpers.selector import (
@@ -62,20 +62,20 @@ from .const import (
     ROLE_SLAVE,
 )
 
-STEP_USER_DATA_SCHEMA = vol.Schema(
+STEP_USER_DATA_SCHEMA = probatio.Schema(
     {
-        vol.Required(CONF_HOST): TextSelector(),
-        vol.Required(CONF_PORT, default=DEFAULT_PORT): vol.All(
+        probatio.Required(CONF_HOST): TextSelector(),
+        probatio.Required(CONF_PORT, default=DEFAULT_PORT): probatio.All(
             NumberSelector(
                 NumberSelectorConfig(mode=NumberSelectorMode.BOX, min=1, max=65535)
             ),
-            vol.Coerce(int),
+            probatio.Coerce(int),
         ),
-        vol.Required(CONF_UNIT_ID, default=DEFAULT_UNIT_ID): vol.All(
+        probatio.Required(CONF_UNIT_ID, default=DEFAULT_UNIT_ID): probatio.All(
             NumberSelector(
                 NumberSelectorConfig(mode=NumberSelectorMode.BOX, min=1, max=247)
             ),
-            vol.Coerce(int),
+            probatio.Coerce(int),
         ),
     }
 )
@@ -126,7 +126,9 @@ def _network_options(detected: str, tried: list[str]) -> list[SelectOptionDict]:
     ]
 
 
-def _scan_schema(default_network: str, tried: list[str] | None = None) -> vol.Schema:
+def _scan_schema(
+    default_network: str, tried: list[str] | None = None
+) -> probatio.Schema:
     """Return the search form: a range to pick or type.
 
     **No port.** The honest question behind such a field -- "which number?" --
@@ -144,9 +146,9 @@ def _scan_schema(default_network: str, tried: list[str] | None = None) -> vol.Sc
     Assistant in a container looks like.
     """
     options = _network_options(default_network, tried or [])
-    return vol.Schema(
+    return probatio.Schema(
         {
-            vol.Required(
+            probatio.Required(
                 CONF_NETWORK,
                 default=default_network or (options[0]["value"] if options else ""),
             ): SelectSelector(
@@ -243,11 +245,11 @@ def _is_container_bridge(address: str) -> bool:
 NOT_LISTED = "__not_listed__"
 
 
-def _entity_ids_schema(default: str) -> vol.Schema:
+def _entity_ids_schema(default: str) -> probatio.Schema:
     """Return the migrate-or-start-fresh choice, pre-selecting what can work."""
-    return vol.Schema(
+    return probatio.Schema(
         {
-            vol.Required(CONF_ENTITY_IDS, default=default): SelectSelector(
+            probatio.Required(CONF_ENTITY_IDS, default=default): SelectSelector(
                 SelectSelectorConfig(
                     options=[ENTITY_IDS_MIGRATE, ENTITY_IDS_NEW],
                     mode=SelectSelectorMode.LIST,
@@ -274,7 +276,7 @@ def _entity_id_style_selector() -> SelectSelector:
     )
 
 
-def _other_inverter_schema(default: str) -> vol.Schema:
+def _other_inverter_schema(default: str) -> probatio.Schema:
     """Return the "what is it" box, asked only when the answer was yes.
 
     Free text and published, like the comment field, so the label says to
@@ -282,16 +284,16 @@ def _other_inverter_schema(default: str) -> vol.Schema:
     size -- those say *how large* the load error is, which is the whole
     reason the question exists.
     """
-    return vol.Schema(
+    return probatio.Schema(
         {
-            vol.Optional(
+            probatio.Optional(
                 CONF_SURVEY_OTHER_INVERTER_DETAIL, default=default
             ): TextSelector(),
         }
     )
 
 
-def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> vol.Schema:
+def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> probatio.Schema:
     """Return the questions a survey needs and no register can answer.
 
     Shared by the diagnostics setup step and the options page's section:
@@ -303,12 +305,12 @@ def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> vol.Schema
     "" is injected when the field is left alone and "" is not one of the
     choices, which would fail validation for anybody who had never answered.
     """
-    return vol.Schema(
+    return probatio.Schema(
         {
-            vol.Optional(
+            probatio.Optional(
                 CONF_REPORTER, default=options.get(CONF_REPORTER, "")
             ): TextSelector(),
-            vol.Optional(
+            probatio.Optional(
                 CONF_SURVEY_TRANSPORT,
                 description={
                     "suggested_value": options.get(CONF_SURVEY_TRANSPORT) or None
@@ -320,7 +322,7 @@ def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> vol.Schema
                     options=list(TRANSPORT_CLAIMS),
                 )
             ),
-            vol.Optional(
+            probatio.Optional(
                 CONF_SURVEY_PROXY,
                 description={"suggested_value": options.get(CONF_SURVEY_PROXY) or None},
             ): SelectSelector(
@@ -330,7 +332,7 @@ def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> vol.Schema
                     options=list(PROXY_CLAIMS),
                 )
             ),
-            vol.Optional(
+            probatio.Optional(
                 CONF_SURVEY_POLLERS, default=options.get(CONF_SURVEY_POLLERS, "")
             ): TextSelector(),
             # Yes or no here, and *what it is* only after a yes, on a step of
@@ -340,7 +342,7 @@ def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> vol.Schema
             # there empty for everybody with one inverter, or a second step
             # for the few who have two. The second step is the better trade:
             # it costs a click to the people the question is actually about.
-            vol.Optional(
+            probatio.Optional(
                 CONF_SURVEY_OTHER_INVERTER,
                 description={
                     "suggested_value": options.get(CONF_SURVEY_OTHER_INVERTER) or None
@@ -352,10 +354,10 @@ def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> vol.Schema
                     options=list(OTHER_INVERTER_CLAIMS),
                 )
             ),
-            vol.Optional(
+            probatio.Optional(
                 CONF_SURVEY_BATTERY, default=options.get(CONF_SURVEY_BATTERY, "")
             ): TextSelector(),
-            vol.Optional(
+            probatio.Optional(
                 CONF_SURVEY_COMMENT, default=options.get(CONF_SURVEY_COMMENT, "")
             ): TextSelector(TextSelectorConfig(multiline=True)),
             # **On by default, and still a question.** Only the last two
@@ -368,7 +370,7 @@ def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> vol.Schema
             # submitting, which is what makes it permission rather than an
             # assumption; a document from somebody who cleared it reads
             # `xxx.xxx` and is complete rather than damaged.
-            vol.Required(
+            probatio.Required(
                 CONF_PUBLISH_ADDRESS,
                 default=options.get(CONF_PUBLISH_ADDRESS, True),
             ): BooleanSelector(),
@@ -380,7 +382,7 @@ def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> vol.Schema
             # decision -- whether to spend something on this project -- and
             # because a contributor who has been asked for a dump by name
             # should find it where they were already answering questions.
-            vol.Required(
+            probatio.Required(
                 CONF_SURVEY_DUMP,
                 default=options.get(CONF_SURVEY_DUMP, DEFAULT_SURVEY_DUMP),
             ): BooleanSelector(),
@@ -413,7 +415,7 @@ def _roles(
     """
 
     def address(serial: str) -> int:
-        return max(found[host][CONF_UNIT_ID] for host in by_serial[serial])
+        return max(int(found[host][CONF_UNIT_ID]) for host in by_serial[serial])
 
     def battery(serial: str) -> bool | None:
         answers = [found[host].get("battery") for host in by_serial[serial]]

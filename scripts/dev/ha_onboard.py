@@ -275,7 +275,7 @@ def main(argv: list[str] | None = None) -> int:
                     instance.log_in(args.username, args.password)
                 instance.finish(step)
             print(f"onboarding: {step} done", flush=True)
-    except Exception as error:  # one line beats a traceback for a dev script
+    except Exception as error:  # noqa: BLE001 -- one line beats a traceback for a dev script
         print(f"onboarding failed at {step}: {error}", file=sys.stderr)
         print(
             "Finish it in the browser; nothing here is required for the "

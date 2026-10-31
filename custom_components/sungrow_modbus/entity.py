@@ -10,10 +10,12 @@ from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.switch import SwitchEntityDescription
 from homeassistant.components.time import TimeEntityDescription
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from sungrow_modbus import Capability, present
+from sungrow_modbus import Capability, RegisterValue, present
 
+from .const import DOMAIN
 from .coordinator import (
     SungrowDataUpdateCoordinator,
     SungrowRuntimeData,
@@ -229,6 +231,15 @@ def as_reading(value: object) -> float | int | str | None:
     return None
 
 
+def write_failed(entity_id: str, error: object) -> HomeAssistantError:
+    """Return the error a control raises when its write did not happen."""
+    return HomeAssistantError(
+        translation_domain=DOMAIN,
+        translation_key="write_failed",
+        translation_placeholders={"entity_id": entity_id, "error": str(error)},
+    )
+
+
 class SungrowEntity(CoordinatorEntity[SungrowDataUpdateCoordinator]):
     """Base entity backed by one field of one component."""
 
@@ -257,7 +268,7 @@ class SungrowEntity(CoordinatorEntity[SungrowDataUpdateCoordinator]):
         self._attr_device_info = self.coordinator.device_info
 
     @property
-    def native_value_source(self) -> object:
+    def native_value_source(self) -> RegisterValue:
         """Return the decoded field value, or None if it was never read."""
         device = self.coordinator.device
         component = (
@@ -289,7 +300,7 @@ class SungrowEntity(CoordinatorEntity[SungrowDataUpdateCoordinator]):
         }
 
 
-class SungrowDeviceEntity(CoordinatorEntity):
+class SungrowDeviceEntity(CoordinatorEntity[SungrowSubDeviceCoordinator]):
     """Base for a value some device other than the inverter reports.
 
     Shared by the SBR pack and the wallbox, because their needs are the same

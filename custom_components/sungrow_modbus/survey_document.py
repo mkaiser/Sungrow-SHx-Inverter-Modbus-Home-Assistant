@@ -88,6 +88,9 @@ from .survey import Progress
 
 _LOGGER = logging.getLogger(__name__)
 
+Step = Callable[[str], None]
+"""What each read of a survey reports: the label the step sensor shows."""
+
 
 def summarise(document: dict[str, Any]) -> str:
     """Return the library's one-paragraph summary of a document."""
@@ -310,9 +313,7 @@ class _EntrySource:
     very few sessions, and could disagree with the entities on the same page.
     """
 
-    def __init__(
-        self, runtime: Any, device: Any, dumping: bool, step: Progress
-    ) -> None:
+    def __init__(self, runtime: Any, device: Any, dumping: bool, step: Step) -> None:
         self.runtime = runtime
         self.device = device
         self.dumping = dumping
@@ -365,7 +366,7 @@ def attach_control_test(
     survey.attach_control_test(document, block, serial=device.serial_number or "")
 
 
-async def _async_dump(device: Any, step: Progress) -> dict[str, Any]:
+async def _async_dump(device: Any, step: Step) -> dict[str, Any]:
     """Sweep the raw address bands, reporting each block as a step.
 
     The band's reason -- "the block a WiNet-S does not forward" -- is what the
@@ -381,7 +382,7 @@ async def _async_dump(device: Any, step: Progress) -> dict[str, Any]:
 
 
 async def _async_probe_words(
-    device: Any, step: Callable[[str], None] | None = None
+    device: Any, step: Step | None = None
 ) -> tuple[dict[str, list[int]], dict[str, str]]:
     """Read every curated probe once: raw words and states.
 
@@ -395,7 +396,7 @@ async def _async_probe_words(
 
 
 async def _async_probes(
-    device: Any, step: Callable[[str], None] | None = None
+    device: Any, step: Step | None = None
 ) -> dict[str, dict[str, Any]]:
     """Read every curated probe once, in the package's published shape."""
     raw, states = await _async_probe_words(device, step)
@@ -479,7 +480,7 @@ async def _async_battery_pack(runtime: Any) -> dict[str, Any] | None:
 
 
 async def _async_wallbox(
-    runtime: Any, dumping: bool, step: Progress
+    runtime: Any, dumping: bool, step: Step
 ) -> dict[str, Any] | None:
     """Return the wallbox's section, when one answered behind this endpoint.
 

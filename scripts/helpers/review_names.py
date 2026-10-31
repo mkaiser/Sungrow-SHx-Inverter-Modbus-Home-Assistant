@@ -232,7 +232,7 @@ def _render(markdown: bool) -> str:
     """Return the review sheet, as markdown or as plain text."""
     out: list[str] = []
 
-    def print(*parts: object, **_kw: object) -> None:
+    def print(*parts: object, **_kw: object) -> None:  # noqa: A001
         """Collect a line instead of writing it, so the sheet can be compared."""
         out.append(" ".join(str(p) for p in parts))
 

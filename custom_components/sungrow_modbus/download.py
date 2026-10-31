@@ -23,7 +23,7 @@ from __future__ import annotations
 from http import HTTPStatus
 import json
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from aiohttp import web
 
@@ -87,7 +87,7 @@ class SurveyDownloadView(HomeAssistantView):
         )
 
 
-def _filename(document: dict) -> str:
+def _filename(document: dict[str, Any]) -> str:
     """Name the file the way this repository names a survey.
 
     Not a naming scheme of its own, and that is the point: a document from this

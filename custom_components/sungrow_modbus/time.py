@@ -13,12 +13,11 @@ from modbus_connection import ModbusError
 
 from homeassistant.components.time import TimeEntity
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from sungrow_modbus import present
 
 from .coordinator import SungrowConfigEntry
-from .entity import SungrowEntity, SungrowTimeDescription
+from .entity import SungrowEntity, SungrowTimeDescription, write_failed
 from .time_descriptions import TIME_DESCRIPTIONS
 
 # One write at a time: see `switch.py`. A time is two writes, and two of them
@@ -71,8 +70,6 @@ class SungrowTime(SungrowEntity, TimeEntity):
             await component.write(description.field, value.hour)
             await component.write(description.minute_field, value.minute)
         except ModbusError as err:
-            raise HomeAssistantError(
-                f"Could not write {self.entity_id}: {err}"
-            ) from err
+            raise write_failed(self.entity_id, err) from err
         # Not debounced, for the reason `switch.py` gives.
         await self.coordinator.async_refresh()

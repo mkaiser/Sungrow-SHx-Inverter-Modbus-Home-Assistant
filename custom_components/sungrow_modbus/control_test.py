@@ -41,7 +41,7 @@ from .const import (
 )
 
 if TYPE_CHECKING:
-    from . import SungrowConfigEntry
+    from .coordinator import SungrowConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 

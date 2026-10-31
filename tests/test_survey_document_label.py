@@ -83,7 +83,7 @@ def _document_for(
     # A value in `raw` came from a probe that answered, which a run records
     # as a state too; fixtures that give only the value mean that.
     states = {
-        **{label: "present" for label in raw.get("registers", {})},
+        **dict.fromkeys(raw.get("registers", {}), "present"),
         **probed.get("registers", {}),
     }
     document = publish_document(

@@ -834,7 +834,7 @@ def surveyed(monkeypatch, tmp_path):
     result = {"code": 0}
 
     async def ask_all(entry, args, echo):
-        answers = sungrow_survey.argparse.Namespace(
+        return sungrow_survey.argparse.Namespace(
             host=entry.host,
             port=entry.port,
             unit=entry.unit,
@@ -842,7 +842,6 @@ def surveyed(monkeypatch, tmp_path):
             transport="direct_lan",
             control_test=args.control_test,
         )
-        return answers
 
     async def check_transport(*_args):
         return None

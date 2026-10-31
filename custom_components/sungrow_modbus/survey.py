@@ -67,7 +67,7 @@ from .const import (
 )
 
 if TYPE_CHECKING:
-    from . import SungrowConfigEntry
+    from .coordinator import SungrowConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -512,7 +512,8 @@ class SurveyRunner:
 @callback
 def async_runner(entry: SungrowConfigEntry) -> SurveyRunner:
     """Return the runner for one entry, from its runtime data."""
-    return entry.runtime_data.survey
+    runner: SurveyRunner = entry.runtime_data.survey
+    return runner
 
 
 Progress = Callable[[float, str], None]

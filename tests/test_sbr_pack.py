@@ -75,7 +75,7 @@ async def test_a_discharging_pack_reads_negative() -> None:
 @pytest.mark.asyncio
 async def test_an_unavailable_field_is_none_not_a_huge_number() -> None:
     """0xFFFF is the specification's "no reading", not 6553.5 V."""
-    component = SbrBatteryPack(_unit_with({address: 0xFFFF for address in MEASURED}))
+    component = SbrBatteryPack(_unit_with(dict.fromkeys(MEASURED, 65535)))
     await component.async_update()
     assert component.voltage is None
     assert component.state_of_charge is None

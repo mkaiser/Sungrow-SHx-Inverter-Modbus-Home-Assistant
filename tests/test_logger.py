@@ -42,7 +42,7 @@ def _device() -> dict[str, dict[int, int]]:
         if space == "input":
             for address in range(start, start + count):
                 inputs.setdefault(address, 0)
-    holding = {a: 0 for a in range(7999, 8199)}
+    holding = dict.fromkeys(range(7999, 8199), 0)
     return {"input": inputs, "holding": holding}
 
 

@@ -65,7 +65,9 @@ wiki.
 | `scripts/dev/fetch_references.sh` (`make refs`) | Clone upstream sources into `.reference/` for reading, hassfest included |
 | `pytest` | Library and integration tests (no network needed) |
 | `ruff check . && ruff format .` | Lint and format |
-| `mypy` | `--strict` over the library only |
+| `mypy` | `--strict` over the library and the integration |
+| `make quick` | `make check` without the test suite, in about ten seconds |
+| `make hooks` | Run `make quick` before every commit (`scripts/dev/pre-commit.sh`); `git commit --no-verify` skips it once |
 
 Add the integration from *Settings → Devices & Services → Add Integration →
 Sungrow Modbus*. It offers a network search or an address typed by hand; for
@@ -153,6 +155,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `ha_http_port.py` | Write a scripted instance's HTTP port where Home Assistant 2026.9 reads it, the `stable` config in `.storage/http`. `http:` in `configuration.yaml` only becomes a pending config that reverts after five minutes unless somebody promotes it. `hacs_testbed.sh` calls it |
 | `simulate.sh` | Regenerate the register seed and serve it on :5020 (`simulator.py`, seed in `simulator_registers.json`) |
 | `fetch_references.sh` | Clone HA core + libs into `.reference/` (gitignored) |
+| `pre-commit.sh` | The git pre-commit hook `make hooks` installs: `make quick` |
 | `seed_migration_testbed.py` | Make the dev instance look like a house that ran the YAML package for years; see [Reviewing the migration by hand](#reviewing-the-migration-by-hand) |
 | **`scripts/generate/`** | **Everything that writes a committed file; each has `--check` but the multi-inverter YAML, which CI regenerates and commits instead** |
 | `descriptions.py` | The entity descriptions and names: `derived`, `numbers`, `switches`, `selects`, `strings`, or all five with no argument (`strings` last, since it reads the others) |
@@ -217,9 +220,12 @@ Each of these is verified in a container or against hardware.
   library ships a `py.typed` marker, without which mypy refuses the package
   and every consumer silently gets no checking; `mypy` is in `make check` and
   in CI rather than in a target somebody has to remember. It is `--strict`
-  over the library only: the integration is typed against Home Assistant,
-  whose annotations are not strict-clean, and a wall of ignores would hide
-  the findings worth having.
+  over the library and the integration, as Home Assistant core checks its
+  strict-typing integrations. The integration is checked as
+  `custom_components.sungrow_modbus` (`explicit_package_bases`), because
+  under its own import name mypy confuses it with the library; and
+  `homeassistant.*` may re-export, because core integrations import
+  `recorder.get_instance` and the like from the package and so does this one.
 
 ## Porting registers
 

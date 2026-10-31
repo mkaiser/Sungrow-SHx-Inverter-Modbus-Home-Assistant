@@ -12,6 +12,7 @@ document, the wiki included.
 | Running the survey / its document, scripts and pinned library | `device-survey/README.md` / `device-survey/reference.md` |
 | What is next, open decisions, what waits on hardware | `Todo.md` |
 | Goals, decisions, register sources and licences | `doc/architecture.md` |
+| Where the integration stands on Home Assistant's quality scale | `custom_components/sungrow_modbus/quality_scale.yaml`, held to the code by `tests/test_quality_scale.py` |
 
 ## Two tracks
 
@@ -79,10 +80,11 @@ source too.
 | --- | --- |
 | `make help` | Every shortcut |
 | `make check` | The CI gate: ruff, pytest (wiki lint included), mypy, `gen-check` |
+| `make quick` | The same without pytest, in seconds; `make hooks` runs it before every commit |
 | `make gen` | Rewrite every generated file |
 | `make dev` / `make sim` | HA on :8123 (login `dev`/`dev`) / the simulator on :5020 |
 | `make scan-local HOST=...` | The survey on this tree's library instead of the PyPI pin |
-| `pytest` · `ruff check . && ruff format .` · `mypy` | Tests (no network), lint, `--strict` over the library only |
+| `pytest` · `ruff check . && ruff format .` · `mypy` | Tests (no network), lint, `--strict` over the library and the integration |
 
 `doc/development.md` lists every script.
 

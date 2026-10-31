@@ -174,7 +174,7 @@ async def _tcp_open(host: str, port: int, timeout: float) -> bool:
         with contextlib.suppress(Exception):
             await writer.wait_closed()
         return True
-    except Exception:
+    except (OSError, TimeoutError):
         return False
 
 
@@ -1638,7 +1638,7 @@ async def _sweep_addresses(network: str, port: int) -> tuple[list[str], float]:
     """
     try:
         hosts = hosts_in(network)
-    except Exception as error:
+    except ValueError as error:
         print(f"  {network} is not a network this can sweep: {error}")
         return [], 0.0
     # Deliberately gentler than the `sweep` command's defaults: this path is
@@ -1689,7 +1689,7 @@ def _default_network() -> str:
             # knowable from a socket, and a wrong guess only changes the
             # default offered, which the person can type over.
             return network_of(address, 24)
-    except Exception:
+    except (OSError, ValueError):
         pass
     return "192.168.178.0/24"
 

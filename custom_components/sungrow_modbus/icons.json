@@ -1,0 +1,34 @@
+{
+  "entity": {
+    "button": {
+      "run_control_test": {
+        "default": "mdi:tune-variant"
+      },
+      "run_survey": {
+        "default": "mdi:clipboard-search-outline"
+      }
+    },
+    "sensor": {
+      "survey_progress": {
+        "default": "mdi:progress-clock"
+      },
+      "survey_step": {
+        "default": "mdi:format-list-checks"
+      }
+    }
+  },
+  "services": {
+    "run_control_test": {
+      "service": "mdi:tune-variant"
+    },
+    "run_survey": {
+      "service": "mdi:clipboard-search-outline"
+    },
+    "start_inverter": {
+      "service": "mdi:play"
+    },
+    "stop_inverter": {
+      "service": "mdi:stop"
+    }
+  }
+}

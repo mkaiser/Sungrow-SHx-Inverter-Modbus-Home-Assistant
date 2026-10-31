@@ -32,9 +32,10 @@ from .const import (
     CONF_EXPORT_WRITE_SCALE,
     CONF_EXPORT_WRITE_SCALE_FIRMWARE,
     CONF_EXPORT_WRITE_SCALE_PROBE,
+    DOMAIN,
 )
 from .coordinator import SungrowConfigEntry
-from .entity import SungrowEntity, SungrowNumberDescription
+from .entity import SungrowEntity, SungrowNumberDescription, write_failed
 from .number_descriptions import NUMBER_DESCRIPTIONS
 
 # One at a time, and not for the usual reason. A Sungrow accepts very few
@@ -84,7 +85,7 @@ class SungrowNumber(SungrowEntity, NumberEntity):
         field = self.entity_description.minimum_field
         if field is not None and (value := self._field(field)) is not None:
             return float(value)
-        return self.entity_description.native_min_value
+        return super().native_min_value
 
     @property
     def native_max_value(self) -> float:
@@ -101,7 +102,7 @@ class SungrowNumber(SungrowEntity, NumberEntity):
             return float(value)
         if description.maximum_from_battery:
             return float(self._battery_maximum())
-        return description.native_max_value
+        return super().native_max_value
 
     def _battery_maximum(self) -> int:
         """Return the lower of the inverter's rating and the pack's limit.
@@ -161,9 +162,7 @@ class SungrowNumber(SungrowEntity, NumberEntity):
         try:
             await component.write(self.entity_description.field, value)
         except ModbusError as err:
-            raise HomeAssistantError(
-                f"Could not write {self.entity_id}: {err}"
-            ) from err
+            raise write_failed(self.entity_id, err) from err
         # `async_refresh`, not `async_request_refresh`. The latter goes
         # through the coordinator's debouncer, which has a **10 second
         # cooldown** -- so a second change inside that window is written to
@@ -200,9 +199,7 @@ class SungrowExportLimitNumber(SungrowNumber):
                 export_scale.LIMIT.address, word
             )
         except ModbusError as err:
-            raise HomeAssistantError(
-                f"Could not write {self.entity_id}: {err}"
-            ) from err
+            raise write_failed(self.entity_id, err) from err
         # A direct refresh, for the reason `SungrowNumber` gives.
         await self.coordinator.async_refresh()
 
@@ -228,8 +225,12 @@ class SungrowExportLimitNumber(SungrowNumber):
             # written, and guessing a factor here would be guessing at a
             # real house's export limit.
             raise HomeAssistantError(
-                f"Could not write {self.entity_id}: could not read the export "
-                f"limit's bounds to work out this inverter's write scale: {err}"
+                translation_domain=DOMAIN,
+                translation_key="write_scale_unread",
+                translation_placeholders={
+                    "entity_id": self.entity_id,
+                    "error": str(err),
+                },
             ) from err
         if result.left_changed:
             _LOGGER.error(
@@ -237,9 +238,7 @@ class SungrowExportLimitNumber(SungrowNumber):
                 self.entity_id,
                 result.reason,
             )
-            raise HomeAssistantError(
-                f"Could not write {self.entity_id}: {result.reason}"
-            )
+            raise write_failed(self.entity_id, result.reason)
         if result.write_units_per_count is None:
             _LOGGER.info(
                 "Export limit write scale for %s not determined, dividing by %s: %s",

@@ -1202,6 +1202,48 @@
     },
     "survey_already_running": {
       "message": "A survey is already running on this inverter. Two at once would compete for one of its very few Modbus connections."
+    },
+    "write_failed": {
+      "message": "Could not write {entity_id}: {error}"
+    },
+    "write_scale_unread": {
+      "message": "Could not write {entity_id}: could not read the export limit's bounds to work out this inverter's write scale: {error}"
+    },
+    "start_failed": {
+      "message": "Could not start {device}: {error}"
+    },
+    "stop_failed": {
+      "message": "Could not stop {device}: {error}"
+    },
+    "setup_unreachable": {
+      "message": "Could not reach {title}: {error}. A Sungrow inverter accepts very few Modbus connections at once, so check whether something else is polling it -- the modbus_sungrow.yaml package, another Home Assistant, or another tool."
+    },
+    "identity_unread": {
+      "message": "Could not read the identity of {title}: {error}"
+    },
+    "no_serial": {
+      "message": "{title} answered but reported no serial number, so its entities cannot be identified. Please open an issue with the model and firmware version."
+    },
+    "firmware_unread": {
+      "message": "Could not read the firmware of {title}: {error}"
+    },
+    "nothing_to_poll": {
+      "message": "Every poll tier of {title} is set to never, so there is nothing to read. Set at least one interval in the integration's options."
+    },
+    "connection_lost": {
+      "message": "Lost the connection to the inverter: {error}. A Sungrow inverter accepts very few Modbus connections at once, so check whether something else is polling it -- the modbus_sungrow.yaml package, another Home Assistant, or another tool."
+    },
+    "communication_error": {
+      "message": "Error communicating with the inverter: {error}"
+    },
+    "no_block_answered": {
+      "message": "No register block answered"
+    },
+    "device_connection_lost": {
+      "message": "Lost the connection while reading the {device}: {error}"
+    },
+    "device_read_error": {
+      "message": "Error reading the {device}: {error}"
     }
   }
 }

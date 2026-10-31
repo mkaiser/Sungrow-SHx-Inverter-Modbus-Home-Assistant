@@ -142,7 +142,7 @@ def test_the_average_agrees_with_home_assistants_own_filter() -> None:
     notion of being asked for a value later, which is the one behaviour added
     here.
     """
-    from datetime import datetime, timedelta
+    from datetime import UTC, datetime, timedelta
 
     from homeassistant.components.filter.sensor import FilterState, TimeSMAFilter
     from homeassistant.core import State
@@ -155,7 +155,7 @@ def test_the_average_agrees_with_home_assistants_own_filter() -> None:
     )
     mine = TimeWeightedAverage(window)
 
-    epoch = datetime(2026, 9, 7, 12, 0, 0)
+    epoch = datetime(2026, 9, 7, 12, 0, 0, tzinfo=UTC)
     offsets = [0, 5, 10, 11, 12, 200, 299, 300, 301, 700, 1000, 1000.5]
     values = [10.0, 10.0, 0.0, 0.0, 4.0, 4.0, 4.0, 9.0, 9.0, 9.0, 1.0, 1.0]
 

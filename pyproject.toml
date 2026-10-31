@@ -50,11 +50,18 @@ target-version = "py313"
 extend-exclude = [".reference", "debug", "scripts/generate/generate_second_inverter_config.py"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "D"]
-ignore = ["D203", "D213"]
+select = [
+    "A", "ASYNC", "B", "BLE", "C4", "D", "DTZ", "E", "F", "G", "I", "LOG",
+    "PIE", "RET", "RSE", "RUF", "SIM", "UP", "W",
+]
+# ASYNC109: the discovery API takes a `timeout` and hands it to `wait_for`
+# on purpose, so one caller can give each probe its own budget.
+ignore = ["ASYNC109", "D203", "D213"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D100", "D103"]
+# Blocking file reads in a test or a command-line script stall nothing else.
+"tests/*" = ["ASYNC240", "D100", "D103"]
+"device-survey/scripts/*" = ["ASYNC240"]
 # E402 here rather than as a `# noqa` on the import: with the comment the line
 # sits exactly where ruff 0.16 and 0.17 disagree about wrapping it, so each
 # version's isort rejects the other's output and CI fails on a ruff upgrade.
@@ -71,8 +78,30 @@ split-on-trailing-comma = false
 
 [tool.mypy]
 python_version = "3.13"
-packages = ["sungrow_modbus"]
+# The library and the integration. With `src` as a package base the first is
+# `sungrow_modbus` and the second `custom_components.sungrow_modbus`; without
+# explicit bases mypy names both `sungrow_modbus` and confuses one with the
+# other.
+files = ["src/sungrow_modbus", "custom_components/sungrow_modbus"]
+mypy_path = "src"
+explicit_package_bases = true
 strict = true
+
+# Home Assistant's own modules re-export what core integrations import from
+# them (`recorder.get_instance`, `binary_sensor.BinarySensorDeviceClass`);
+# core's mypy accepts that, and so does this one.
+[[tool.mypy.overrides]]
+module = "homeassistant.*"
+implicit_reexport = true
+
+# CI runs the suite with `--cov`; the floor is what the suite covers today, so
+# coverage can rise and a change that drops it fails. Silver's `test-coverage`
+# asks for 95 %.
+[tool.coverage.run]
+source = ["custom_components/sungrow_modbus", "src/sungrow_modbus"]
+
+[tool.coverage.report]
+fail_under = 92
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
