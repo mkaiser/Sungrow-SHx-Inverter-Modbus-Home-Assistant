@@ -1,8 +1,26 @@
-# Actions, limits and troubleshooting
+# Using the integration
 
-What the integration can be asked to do from an automation or script, what it
-cannot do on your hardware, and what to try when something does not work.
+What people use it for, what it can be asked to do from an automation or
+script, what it cannot do on your hardware, and what to try when something
+does not work.
 [integration_options.md](integration_options.md) lists the settings.
+
+## What people use it for
+
+- **Replacing the YAML package** without losing years of history: the
+  entities can take over the package's entity ids, statistics and
+  dashboards included ([integration_migration.md](integration_migration.md)).
+- **Watching the house**: generation, consumption, import and export, the
+  battery's charge and the wallbox's sessions, for the Energy dashboard and
+  for automations.
+- **Steering the battery and the export**: the charge limits, the export
+  power limit and the forced-charging schedule are entities an automation
+  can set, for example to charge from the grid at a cheap tariff or to cap
+  export where the grid operator requires it.
+- **Stopping at a negative price**: the actions below.
+- **Telling the project what your installation can do**: the survey reads
+  it and writes a document, so support for your model is measured rather
+  than guessed.
 
 ## Actions
 

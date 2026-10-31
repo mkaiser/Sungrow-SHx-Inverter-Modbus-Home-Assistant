@@ -337,3 +337,41 @@ finds the file hard to work in.
 **17:45 — final run.** 4010 passed, 2 skipped; `make quick` clean.
 Coverage 92 % → 93.1 % (floor raised to 93): `config_flow.py` 91 → 94 %,
 `download.py` 64 → 95 %, `inverter/export_scale.py` 83 → 99 %.
+
+**17:40 — the config flow's remaining paths.**
+
+- `tests/test_config_flow_manual.py`: the address form's four refusals
+  (nothing answered, no serial, an unknown model code, no code at all), the
+  testimony page's route wording for 6100 answered, refused and unanswered,
+  and reconfigure refusing an inverter without a serial.
+- `test_config_flow_search.py`: a disabled adapter is not offered; a /16 is
+  offered as the /24 around the address.
+- `test_options_evidence.py`: a fitted module named beside a cable route;
+  the house-load line for unread, positive and negative readings.
+
+No defects found in these paths; they behave as their docstrings say.
+
+**17:44 — the control test's restart.** `async_ensure_running` is what a
+shutdown hook and the repair flow call to make sure an inverter is never
+left stopped; its failure paths had no test. Now covered: a start still
+stopped after `RESTART_RESEND_AFTER` is sent once more (and only once); an
+inverter that never reports running ends the run in exit 5 with
+`stopped_at` kept for the repair flow; a link that stays down after a stop
+reads as "not running", never as running; a refused start command is still
+watched for. A restore write tells a refusal (`REFUSED`) from a timeout or
+reset (`DROPPED`), and a dry run writes nothing. All behave as written.
+
+**17:58 — final run.** 4040 passed, 2 skipped; `make quick` clean.
+Coverage 93.1 % → 93.5 %; `config_flow.py` 94 → 96 %, the library's
+`control_test.py` 87 → 88 %. `docs-use-cases` is done (`doc/integration_help.md`,
+"What people use it for"), so every documentation rule is.
+
+Not pursued: the last 1.5 % to Silver's 95 %. Most of it is the optional mDNS
+browser (needs the `zeroconf` extra, and whether a WiNet-S advertises is
+unmeasured) and the identification of devices nobody has surveyed; tests
+there would raise the number without protecting a house.
+
+Remaining quality-scale todos: `config-flow-test-coverage` (alpha-gate
+fallbacks and progress text), `test-coverage` (95 %), `discovery` and
+`discovery-update-info` (hardware), `dynamic-devices` and
+`entity-disabled-by-default` (maintainer decisions).

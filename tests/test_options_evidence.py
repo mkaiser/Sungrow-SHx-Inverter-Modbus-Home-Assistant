@@ -31,9 +31,17 @@ ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
 
 async def _measured(
-    hass: HomeAssistant, unit: MockModbusUnit, *, load: bool = True
+    hass: HomeAssistant,
+    unit: MockModbusUnit,
+    *,
+    load: bool = True,
+    fields: dict[str, object] | None = None,
 ) -> dict[str, str]:
-    """Return the options page's placeholders for one entry."""
+    """Return the options page's placeholders for one entry.
+
+    `fields` overrides what the device reports for those names, the decoded
+    values the page words; the registers behind them are tested elsewhere.
+    """
     entry = MockConfigEntry(
         domain=DOMAIN, data=ENTRY_DATA, unique_id=SERIAL, title="SH10RT"
     )
@@ -44,6 +52,14 @@ async def _measured(
         ):
             assert await hass.config_entries.async_setup(entry.entry_id)
             await hass.async_block_till_done()
+    if fields:
+        device = next(iter(entry.runtime_data.coordinators.values())).device
+        reported = device.field
+
+        def field(name: str) -> object:
+            return fields[name] if name in fields else reported(name)
+
+        device.field = field
     result = await hass.config_entries.options.async_init(entry.entry_id)
     return result["description_placeholders"]
 
@@ -87,3 +103,42 @@ async def test_an_entry_that_is_not_loaded_claims_no_measurement(
 
     assert "nothing has been measured" in placeholders["measured"]
     assert "nothing can be read" in placeholders["battery_status"]
+
+
+async def test_a_fitted_module_is_named_beside_a_cable_route(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """A house can have a cable and a dongle at once.
+
+    Saying both stops a correct "its own LAN port" reading as a mistake to an
+    owner who can see the dongle on the wall.
+    """
+    module = "WINET-SV200.001.00.P023"
+    text = (
+        await _measured(
+            hass,
+            sungrow_unit,
+            fields={"communication_module_firmware_version": module},
+        )
+    )["measured"]
+
+    assert "its own LAN port" in text
+    assert "names itself WINET-SV200.001.00.P023" in text
+
+
+@pytest.mark.parametrize(
+    ("load", "says"),
+    [
+        (None, "has not reported a load figure"),
+        (850.0, "house load of 850 W, which does not include"),
+        (-850.0, "unmetered generator"),
+    ],
+    ids=["unread", "positive", "negative"],
+)
+async def test_the_load_reading_is_shown_as_the_evidence(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit, load: float | None, says: str
+) -> None:
+    """A negative house load is the symptom the external-generator option fixes."""
+    placeholders = await _measured(hass, sungrow_unit, fields={"load_power": load})
+
+    assert says in placeholders["reported_load"]

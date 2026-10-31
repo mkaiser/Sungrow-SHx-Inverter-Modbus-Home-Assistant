@@ -23,6 +23,7 @@ from pathlib import Path
 import sys
 from typing import Any
 
+from modbus_connection import IllegalDataValueError, ModbusConnectionError
 from modbus_connection.mock import MockModbusUnit
 import pytest
 
@@ -32,6 +33,7 @@ from sungrow_modbus.control_test import (
     CONFIRMED,
     DECADE_OUT_OF_RANGE,
     DEVICE,
+    DROPPED,
     EFFECT_FLOOR_W,
     EFFECT_SCALED,
     EMS_MODE,
@@ -2098,3 +2100,118 @@ async def test_a_house_discharge_cap_limits_the_manufactured_export(
     assert any(
         "battery_max_discharge_power at 10 W" in note for note in run.unestablished
     )
+
+
+# -- the restart's failure paths: the inverter must never be left stopped ----
+
+
+async def _stuck(run: ControlTest, words: list[int | None]) -> None:
+    """Make the running state read as `words`, then whatever the last one was."""
+    polls = iter(words)
+    last = words[-1]
+
+    async def reads() -> int | None:
+        return next(polls, last)
+
+    run._running_word = reads  # type: ignore[method-assign]
+
+
+async def test_a_start_that_is_still_stopped_a_minute_later_is_sent_again(
+    full_unit: MockModbusUnit,
+) -> None:
+    """Lost rather than slow: a stopped state after the wait earns one more send."""
+    from sungrow_modbus.control_test import (
+        RESTART_POLL,
+        RESTART_RESEND_AFTER,
+        RUNNING_STATES_STOPPED,
+    )
+
+    sends: list[int] = []
+    full_unit.on_write(
+        lambda event: sends.append(event.values[0]) if event.address == 12999 else None
+    )
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    run = _runner(full_unit)
+    stopped = min(RUNNING_STATES_STOPPED)
+    still_stopped = int(RESTART_RESEND_AFTER / RESTART_POLL) + 2
+    await _stuck(run, [stopped] * still_stopped + [0x0000])
+
+    assert await run.async_ensure_running() is True
+    assert sends.count(0xCF) == 2
+
+
+async def test_an_inverter_that_never_comes_back_ends_the_run_in_exit_5(
+    full_unit: MockModbusUnit,
+) -> None:
+    """Exit 5 is the one code that means the house was left changed.
+
+    Here it was: the inverter is stopped and will not report running. The
+    snapshot keeps the time it was stopped, so the repair flow can say so.
+    """
+    from sungrow_modbus.control_test import RUNNING_STATES_STOPPED
+
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    run = _runner(full_unit)
+    run.snapshot.stopped_at = 1.0
+    await _stuck(run, [min(RUNNING_STATES_STOPPED)])
+
+    assert await run.async_ensure_running() is False
+    assert run.code == 5
+    assert run.snapshot.stopped_at == 1.0
+
+
+async def test_a_link_that_stays_down_after_a_stop_is_not_read_as_running(
+    full_unit: MockModbusUnit,
+) -> None:
+    """During a stop the inverter may drop the link; that is not "running"."""
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    run = _runner(full_unit)
+    full_unit.fail_requests(ModbusConnectionError("stopped and gone"))
+
+    assert await run._running_word() is None
+    assert await run.async_ensure_running() is False
+    assert run.code == 5
+
+
+async def test_a_refused_start_command_is_still_watched_for(
+    full_unit: MockModbusUnit,
+) -> None:
+    """The refusal is logged and the wait goes on: it may have started anyway."""
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    run = _runner(full_unit)
+    full_unit.fail_write(12999, IllegalDataValueError("refused"))
+    await _stuck(run, [0x0000])
+
+    assert await run.async_ensure_running() is True
+
+
+@pytest.mark.parametrize(
+    ("error", "expected"),
+    [
+        (IllegalDataValueError("refused"), REFUSED),
+        (TimeoutError("no answer"), DROPPED),
+        (OSError("reset"), DROPPED),
+    ],
+    ids=["refused", "timeout", "reset"],
+)
+async def test_a_restore_write_says_whether_it_was_refused_or_lost(
+    full_unit: MockModbusUnit, error: Exception, expected: str
+) -> None:
+    """A refusal is the device's answer; a dropped write says nothing about it."""
+    run = _runner(full_unit)
+    full_unit.fail_write(CHARGE_ADDRESS, error)
+
+    assert await run._write_word(_probe(), 500) == expected
+
+
+async def test_a_dry_run_restore_writes_nothing(full_unit: MockModbusUnit) -> None:
+    run = _runner(full_unit, dry_run=True)
+    writes: list[Any] = []
+    full_unit.on_write(writes.append)
+
+    assert await run._write_word(_probe(), 500) is None
+    assert writes == []

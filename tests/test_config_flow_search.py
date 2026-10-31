@@ -738,3 +738,60 @@ async def test_the_sweep_reports_progress_while_it_runs(
     assert all(0.0 <= value <= 1.0 for value in updates)
     # It ran to the end and reported honestly, rather than stalling.
     assert result["step_id"] == "nothing_found"
+
+
+async def _default_network(hass: HomeAssistant, adapters: list[dict]) -> str:
+    """Return what the search form prefills for these adapters."""
+    with patch(
+        "custom_components.sungrow_modbus.config_flow.network.async_get_adapters",
+        return_value=adapters,
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": SOURCE_USER}
+        )
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {"next_step_id": "setup_devices"}
+        )
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {"next_step_id": "search"}
+        )
+    return result["data_schema"]({})[CONF_NETWORK]
+
+
+async def test_a_disabled_adapter_is_not_offered(hass: HomeAssistant) -> None:
+    """Home Assistant lists adapters the owner switched off; they are not the LAN."""
+    default = await _default_network(
+        hass,
+        [
+            {
+                "name": "wlan0",
+                "enabled": False,
+                "ipv4": [{"address": "10.1.2.3", "network_prefix": 24}],
+            },
+            {
+                "name": "eth0",
+                "enabled": True,
+                "ipv4": [{"address": "192.168.178.35", "network_prefix": 24}],
+            },
+        ],
+    )
+
+    assert default == "192.168.178.0/24"
+
+
+async def test_a_network_wider_than_the_sweep_is_offered_as_its_slash_24(
+    hass: HomeAssistant,
+) -> None:
+    """A /16 is 65534 addresses; the /24 around this one is a search that ends."""
+    default = await _default_network(
+        hass,
+        [
+            {
+                "name": "eth0",
+                "enabled": True,
+                "ipv4": [{"address": "10.20.30.40", "network_prefix": 16}],
+            }
+        ],
+    )
+
+    assert default == "10.20.30.0/24"
