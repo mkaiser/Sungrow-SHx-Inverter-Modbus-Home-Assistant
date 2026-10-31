@@ -192,3 +192,35 @@ def test_a_wallbox_read_through_the_dongle_is_warned_about_before_a_cable() -> N
     assert not _loses_wallbox(with_wallbox, direct=None)
     assert not _loses_wallbox(own_address, direct=True)
     assert not _loses_wallbox(without, direct=True)
+
+
+async def test_the_address_form_has_every_placeholder_on_first_showing(
+    hass: HomeAssistant,
+) -> None:
+    """A placeholder missing from the first showing reads as a formatjs error.
+
+    The frontend renders `Translation [formatjs Error: MISSING_VALUE]` in
+    place of the whole description, which is what a user saw on the address
+    form until `error` was passed before any error had happened.
+    """
+    import json
+    from pathlib import Path
+    import re
+
+    import custom_components.sungrow_modbus as component
+
+    strings = json.loads((Path(component.__file__).parent / "strings.json").read_text())
+    wanted = set(
+        re.findall(r"{(\w+)}", strings["config"]["step"]["manual"]["description"])
+    )
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "setup_diagnostics"}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "manual"}
+    )
+    assert result["step_id"] == "manual"
+    assert wanted <= set(result["description_placeholders"] or {})

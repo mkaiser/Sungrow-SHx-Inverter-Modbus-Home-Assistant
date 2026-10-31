@@ -981,7 +981,7 @@
         "sections": {
           "polling": {
             "name": "Polling",
-            "description": "Registers are read in four groups. Each group is one request cycle, so the interval you set is how often that whole group is fetched.\n\n{tiers}\n\n**Why this is worth changing.** A Sungrow inverter accepts very few Modbus connections at once. If something else polls it — the YAML package, another Home Assistant, EVCC, a logger — you are competing for one, and most reported dropouts are exactly that. Slowing a group down, or switching it off, is the cheapest fix there is.\n\nSet **0** for never: that group is not read at all and its entities are not created. The minimum otherwise is 5 seconds — Sungrow's protocol warns against polling frequently through a WiNet-S dongle, and 5 seconds is already the fastest the YAML package ever used.\n\nChanging anything here reloads the integration.",
+            "description": "Registers are read in four groups, each fetched as one cycle at the interval you set. {tiers} A Sungrow accepts very few Modbus connections, so if something else polls it (the YAML package, another Home Assistant, EVCC, a logger), slowing a group down or setting it to 0 (never read, its entities not created) is the cheapest fix for dropouts. The minimum is 5 seconds. Changing anything here reloads the integration.",
             "data": {
               "realtime": "Realtime group",
               "fast": "Fast group",
@@ -997,7 +997,7 @@
           },
           "permissions": {
             "name": "Permissions",
-            "description": "**Starting and stopping the inverter** is an action rather than a switch, so this integration decides who may call it, and you decide here. Administrators only is the default: there is no way back from a stopped inverter except another call, and the house runs on the grid until somebody makes it.\n\nOpening it to users means users who can already change this device — a read-only login still cannot, and neither setting affects automations or scripts, which act for the household rather than for a person.\n\n**Everything else is not ours to decide, and it is worth knowing what already applies.** The settings this integration exposes — the state-of-charge limits, the EMS mode, the export and power limits — are entities, and Home Assistant checks who may control an entity itself, before any integration is asked. By default a normal user can change all of them and a read-only user none of them. To restrict one person, make their account read-only under *Settings → People*; there is no per-setting permission in Home Assistant for us to offer.",
+            "description": "Who may call the start and stop actions, and who may press the control write test's button. Administrators only is the default: a stopped inverter stays stopped until somebody starts it. Users means users who can already change this device; read-only logins never can, and automations and scripts are not affected. Every other setting is an entity, and Home Assistant decides who may change it: make an account read-only under Settings → People to keep a person from changing any of them.",
             "data": {
               "start_stop": "Start and stop the inverter",
               "control_test": "Run the control write test"
@@ -1009,7 +1009,7 @@
           },
           "external": {
             "name": "Another inverter on the same supply",
-            "description": "This inverter works out your house load from its own production and its grid meter. A second, non-Sungrow inverter is invisible to it, so the load reading comes out **low by exactly what that inverter is making** — and negative once it makes more than the house uses.\n\n{reported_load}\n\nName the entities that report the other inverter's power and this integration adds two corrected sensors. For **energy** in kWh, do not use this page: the Energy dashboard already accepts several solar sources, and adding yours there is both easier and more accurate.\n\nOne thing to check when picking a source: some integrations report `unavailable` overnight rather than 0 W. The corrected sensors then go unknown overnight too, because a generator that is not reporting is not the same as one making nothing — assuming zero would put back the very error this page removes.",
+            "description": "This inverter works out your house load from its own production and its grid meter, so a second, non-Sungrow inverter makes the load read low by exactly what it makes. {reported_load} Pick the entities that report the other inverter's power, and two corrected sensors are added. For energy in kWh, add it as a solar source on the Energy dashboard instead. A source that reports unavailable overnight makes the corrected sensors unknown overnight too, rather than assuming zero.",
             "data": {
               "external_sources": "Power sensors for the other generation",
               "external_placement": "Where it is connected"
@@ -1021,7 +1021,7 @@
           },
           "advanced": {
             "name": "Battery, wallbox and diagnostics",
-            "description": "**Battery charge power.** {battery_status}\n\nThe maximum a battery will take is not something the inverter knows — it reports its own converter rating, but not the pack's limit. Sungrow's own technical training recommends the **rated current × the low end of the voltage range**, not the nominal voltage: being conservative here is good for the battery's health.\n\n*Example — a Pylontech Force H1, 14.4 kWh: the datasheet gives a recommended charge current and an operating voltage range per module. Take the current × the lowest voltage in the range, not the nominal one. For a stack reporting 25 A at 355 V that is 25 × 355 ≈ 8875 W, and rounding down to 8500 W costs almost nothing.* Check your own datasheet — the arithmetic is the point, not these numbers.\n\nLeave it at 0 to let the integration work it out.\n\n---\n\n**Diagnostics.** Settings → Devices & Services → Sungrow Modbus → **Download diagnostics** produces a file describing this setup: the model, which capabilities the inverter confirmed, which registers reported themselves unavailable, how each poll group is doing, and why any entity was not created. The serial number and host address are removed from it.",
+            "description": "Battery charge power: {battery_status} Leave it at 0 to let the integration work it out. Otherwise take your datasheet's recommended charge current times the low end of the voltage range, not the nominal voltage (25 A at 355 V is about 8875 W), and round down. Download diagnostics on the device page describes this setup, with the serial number and address removed.",
             "data": {
               "battery_max_power": "Maximum battery charge power (W)",
               "register_dump": "Include a raw register dump in diagnostics",
@@ -1035,7 +1035,7 @@
           },
           "survey": {
             "name": "Contribute a capability survey",
-            "description": "Sungrow publishes no release notes, and its register specification has been wrong in both directions — so which registers your inverter answers is **measured** rather than looked up. Today that evidence comes from the few houses that have sent a reading, which is why some inverters are supported better than others — and why yours is worth one.\n\n{measured}\n\nEverything below is optional and answers something **no register can**. Leaving a field empty is honest — it records that the question was not answered, which is different from answering \"I don't know\".\n\nSaving this page keeps your answers. To **run** the survey, press **Run read only diagnosis** on the device page — it shows how far along it is and what it is reading, and offers the finished document as a download when it is done. It reads and never writes, and the serial number is replaced by a stand-in before anything reaches the file.",
+            "description": "Which registers an inverter answers is measured, not looked up, and a reading from yours is what improves support for it. {measured} Everything below is optional and answers what no register can; an empty field records that the question was not answered. Saving keeps your answers. To run the survey, press Run read only diagnosis on the device page: it reads and never writes, and replaces the serial number with a stand-in.",
             "data": {
               "reporter": "Your name or handle",
               "survey_transport": "How this inverter is connected",
@@ -1061,7 +1061,7 @@
           },
           "control_test": {
             "name": "What the control write test may do",
-            "description": "The **Run complete diagnosis and tests** button on the device page does something no other part of this integration does on its own: it **writes** to each setting it can, reads the register straight back, compares what came back against what Sungrow's specification says should be there, and puts your value back.\n\nIt exists because a whole class of bug is otherwise invisible. The registers mix units — one battery power setting counts in watts and the one beside it in hundredths of a kilowatt — so a value can be written, read back looking perfectly correct, and still be ten times what you asked for. Reading alone cannot find that. Writing and checking the raw register can.\n\nEverything it changes is changed back and read back before it reports success, and if anything could not be put back you get a repair here telling you exactly what and offering to fix it. The settings below are the parts that go further than that. **Each is on until you switch it off here**: pressing the button is your consent to them, and a run without them leaves the questions only your hardware can answer open. Switch off whatever you do not want, and it stays off.",
+            "description": "Run complete diagnosis and tests on the device page writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The three switches below go further, and each is on until you switch it off: pressing the button is your consent. What you switch off stays off.",
             "data": {
               "control_test_restart": "May it stop and restart the inverter?",
               "control_test_export_limit": "May it switch feed-in limitation on?",

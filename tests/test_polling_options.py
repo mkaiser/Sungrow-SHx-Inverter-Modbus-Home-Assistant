@@ -155,7 +155,7 @@ async def test_the_options_flow_shows_what_each_group_contains(
 
     table = result["description_placeholders"]["tiers"]
     for tier in DEFAULT_INTERVALS:
-        assert f"`{tier}`" in table
+        assert tier.capitalize() in table
     # The register counts, so the trade is visible. Derived rather than
     # written down: this assertion was a literal `| 61 |` and broke the first
     # time a register was added to a tier, which says nothing about the table
@@ -164,7 +164,7 @@ async def test_the_options_flow_shows_what_each_group_contains(
         count = len(
             {name for c in components for name in COMPONENTS[c].declared_fields}
         )
-        assert f"| {count} |" in table, f"{tier} should show its {count} registers"
+        assert f"{count} registers" in table, f"{tier} should show its {count}"
     assert "load power" in table
 
 
@@ -327,3 +327,31 @@ async def test_the_permissions_step_leaves_the_other_options_alone(
     # as the default anyway -- but only because `DEFAULT_PERMISSIONS` is
     # merged in first, which is the part worth pinning.
     assert entry.options[CONF_PERMISSIONS].keys() == DEFAULT_PERMISSIONS.keys()
+
+
+async def test_the_options_sections_carry_no_markdown(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """Home Assistant renders a section's description as plain text.
+
+    Asterisks, backticks and a table's pipes arrive on screen as they are,
+    and blank lines collapse, so neither the text nor what fills it may
+    carry any.
+    """
+    import json
+    from pathlib import Path
+
+    import custom_components.sungrow_modbus as component
+
+    strings = json.loads((Path(component.__file__).parent / "strings.json").read_text())
+    marks = ("**", "`", "|", "\n", "---")
+    for name, section in strings["options"]["step"]["init"]["sections"].items():
+        for mark in marks:
+            assert mark not in section["description"], (name, mark)
+
+    entry = await _setup(hass, sungrow_unit)
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    placeholders = result["description_placeholders"]
+    for name in ("tiers", "reported_load", "measured", "battery_status"):
+        for mark in marks:
+            assert mark not in placeholders[name], (name, mark)

@@ -14,9 +14,7 @@ Structure:
 
 # Next steps
 
-1. **A screenshot of the Configure dialog** with the control test section
-   open, beside the others in `device-survey/images/`, shown in
-   `doc/integration_options.md`.
+Nothing that can start now without a decision or a device.
 
 
 # Open decisions

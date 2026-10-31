@@ -2,8 +2,9 @@
 
 Everything **Settings → Devices & services → Sungrow Modbus (preview) →
 Configure** offers, with its default. The dialog explains each option in
-more detail; this page is where to find one before opening it. Sections
-start collapsed, and a section you do not open stays as it is.
+more detail; this page is where to find one before opening it. Every
+section but Polling starts collapsed, and a section you do not open stays as
+it is.
 
 The host and unit id are not here: changing them means a different device,
 which is **Reconfigure** on the same page.
@@ -72,6 +73,8 @@ your consent; the three switches below are the parts that go further, and
 **each is on until you switch it off**. Switch off what you do not want
 *before* pressing the button; what you switch off stays off. With all three
 off, the test still forces the battery and checks every setting's scale.
+
+<img src="../device-survey/images/HA-settings-configure-control-test.png" width="450" alt="The control write test section of the options dialog, with all three switches on">
 
 | Option | Default | What it does |
 | --- | --- | --- |

@@ -993,7 +993,9 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Take the connection details from the user."""
         errors: dict[str, str] = {}
-        placeholders: dict[str, str] = {}
+        # The description ends in `{error}`, so it must be present on the
+        # first showing too, or the frontend prints a formatjs error instead.
+        placeholders: dict[str, str] = {"error": ""}
 
         if user_input is not None:
             try:
@@ -2005,16 +2007,14 @@ class SungrowOptionsFlow(OptionsFlow):
 
     @callback
     def _async_tier_table(self, current: dict[str, int]) -> dict[str, str]:
-        """Return a markdown table of what each tier actually reads.
+        """Return what each tier actually reads, as one plain sentence.
 
-        A config-flow form cannot render a data table, so this goes into the
-        step description as markdown. It answers the question four bare
-        numbers raise and cannot: what am I slowing down?
+        It answers the question four bare numbers raise and cannot: what am
+        I slowing down? Plain text, because Home Assistant renders a
+        section's description without markdown, so a table would arrive as a
+        row of pipes.
         """
-        rows = [
-            "| Tier | Interval | Registers | Includes |",
-            "| --- | --- | --- | --- |",
-        ]
+        parts = []
         for tier, components in TIER_COMPONENTS.items():
             fields = sorted(
                 name
@@ -2022,10 +2022,12 @@ class SungrowOptionsFlow(OptionsFlow):
                 for name in COMPONENTS[component].declared_fields
             )
             interval = current.get(tier, DEFAULT_INTERVALS[tier])
-            shown = "**never**" if interval == INTERVAL_NEVER else f"{interval} s"
+            shown = "never" if interval == INTERVAL_NEVER else f"every {interval} s"
             examples = ", ".join(name.replace("_", " ") for name in fields[:3])
-            rows.append(f"| `{tier}` | {shown} | {len(fields)} | {examples}, … |")
-        return {"tiers": "\n".join(rows)}
+            parts.append(
+                f"{tier.capitalize()}, {shown}: {len(fields)} registers ({examples}, …)"
+            )
+        return {"tiers": "; ".join(parts) + "."}
 
     @callback
     def _async_load_now(self) -> str:
@@ -2049,13 +2051,13 @@ class SungrowOptionsFlow(OptionsFlow):
             return "The inverter has not reported a load figure yet."
         if reported < 0:
             return (
-                f"Right now this inverter reports a house load of **{reported:.0f} W**."
+                f"Right now this inverter reports a house load of {reported:.0f} W."
                 " A negative load is what an unmetered generator looks like: the"
                 " house appears to be using less than nothing because something is"
                 " producing that the inverter cannot see."
             )
         return (
-            f"Right now this inverter reports a house load of **{reported:.0f} W**, "
+            f"Right now this inverter reports a house load of {reported:.0f} W, "
             "which does not include anything it cannot see."
         )
 
@@ -2067,7 +2069,7 @@ class SungrowOptionsFlow(OptionsFlow):
         no register reaches -- whether a dongle is on its cable or its WiFi,
         which is not determinable and not guessed.
 
-        **It asks register 6100, not 13265**, and the difference is a wrong
+        It asks register 6100, not 13265, and the difference is a wrong
         answer rather than a detail. 13265 names the communication module
         that is *fitted*; 6100 says which path this endpoint actually is,
         because Sungrow does not forward the 6100 block through a dongle. A
@@ -2109,7 +2111,7 @@ class SungrowOptionsFlow(OptionsFlow):
             route = (
                 "reached through a communication module, so a WiNet-S, WiNet-S2 "
                 "or Logger is in the path — register 6100 was refused. Whether it "
-                "is using its Ethernet socket or its WiFi is **not** determinable "
+                "is using its Ethernet socket or its WiFi is not determinable "
                 "over Modbus, and that is the part only you can tell us"
             )
         else:
@@ -2130,13 +2132,13 @@ class SungrowOptionsFlow(OptionsFlow):
             # dongle is screwed to the wall needs to see that we know too,
             # or a correct "its own LAN port" reads as a mistake.
             fitted = (
-                f" A communication module is fitted and names itself **{module}**,"
+                f" A communication module is fitted and names itself {module},"
                 " which is a different question from which path this endpoint is:"
                 " a house can have a dongle and a cable at once."
             )
 
         return (
-            f"Already measured, so you do not need to tell us: this is **{model}**, "
+            f"Already measured, so you do not need to tell us: this is {model}, "
             f"{route}.{fitted}"
         )
 
@@ -2165,15 +2167,15 @@ class SungrowOptionsFlow(OptionsFlow):
 
         capacity = value("battery_capacity_high_precision")
         reported = (
-            f"Your battery reports **{capacity} kWh**" if capacity else "Your battery"
+            f"Your battery reports {capacity} kWh" if capacity else "Your battery"
         )
 
         if Capability.SUNGROW_BATTERY in runtime.capabilities:
             model = model_for_capacity(capacity)
             if model is not None:
                 return (
-                    f"{reported}, which matches a Sungrow **{model.name}**. Its "
-                    f"datasheet gives **{model.conservative_w} W** conservatively "
+                    f"{reported}, which matches a Sungrow {model.name}. Its "
+                    f"datasheet gives {model.conservative_w} W conservatively "
                     f"({model.nominal_w} W nominal), and that is what is used."
                 )
 
@@ -2184,12 +2186,12 @@ class SungrowOptionsFlow(OptionsFlow):
             return (
                 f"{reported}, which is not a Sungrow SBR or SBH. Its BMS reports a "
                 f"maximum charge current that works out to about "
-                f"**{suggestion} W** at the pack's current voltage — which reads "
+                f"{suggestion} W at the pack's current voltage — which reads "
                 "high at a high state of charge, so treat it as a starting point."
             )
         return (
             f"{reported}, and its BMS does not report a maximum charge current, so "
             f"there is nothing to derive one from. Without a value here the "
-            f"integration falls back to **{FALLBACK_W} W**, which is the YAML "
+            f"integration falls back to {FALLBACK_W} W, which is the YAML "
             "package's default rather than a recommendation."
         )

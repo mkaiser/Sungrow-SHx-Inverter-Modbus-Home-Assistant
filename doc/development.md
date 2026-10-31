@@ -325,6 +325,60 @@ a commit, a green CI run and a sync. HACS gets its own config directory
 because it downloads into `<config>/custom_components/`, which on the dev
 instance is a symlink into this repository.
 
+## Screenshots for the docs
+
+The images in `device-survey/images/` are taken headless, against the
+simulator, from a **second** Home Assistant. Never the one on :8123: its entry
+may point at real hardware, and a screenshot session clicks through flows.
+
+1. **A browser, outside the repository.** The container has none. Playwright
+   in a venv of its own, with its Chromium:
+
+   ```bash
+   python3 -m venv /tmp/pw && /tmp/pw/bin/pip install playwright
+   PLAYWRIGHT_BROWSERS_PATH=/tmp/pw/browsers /tmp/pw/bin/playwright install chromium
+   ```
+
+   The headless shell needs five libraries the image lacks. Without root,
+   unpack them beside it and point `LD_LIBRARY_PATH` there:
+
+   ```bash
+   mkdir -p /tmp/pw/debs /tmp/pw/lib && cd /tmp/pw/debs
+   apt-get download libatk1.0-0 libatk-bridge2.0-0 libxcomposite1 libxdamage1 libatspi2.0-0
+   for d in *.deb; do dpkg-deb -x "$d" /tmp/pw/lib; done
+   export LD_LIBRARY_PATH=/tmp/pw/lib/usr/lib/x86_64-linux-gnu
+   ```
+
+2. **A scratch instance on :8125.** Copy `config/configuration.yaml` into a
+   new directory, append `http: {server_port: 8125}`, symlink
+   `custom_components` into it as `develop.sh` does, start the simulator, run
+   `hass --config <dir>`, then `scripts/dev/ha_onboard.py --url
+   http://127.0.0.1:8125`. The first page asks to **confirm the new HTTP port**
+   and reverts it after a few minutes otherwise; confirm it.
+3. **Drive it.** Log in through the form (`dev` / `dev`) once and keep
+   `context.storage_state()`; use `locale="en-US"`, since the docs are
+   English. What the frontend needs:
+   - text inputs are `wa-input`: `locator("wa-input[name=host]")`, numbers
+     `locator("input[type=number]")`;
+   - buttons by role, `get_by_role("button", name="Submit")`: `get_by_text`
+     matches substrings, and a field's help text can contain "submit";
+   - the entry's cog on the integration page has no usable label; click it
+     by position;
+   - a flow left half-done blocks the next with "already being configured".
+     Restarting the scratch instance clears it.
+4. **Crop** with Pillow (`Image.crop`) to the dialog or card, and check the
+   result by eye before committing it.
+
+The HACS screenshots need the HACS testbed (`make hacs`) and a GitHub device
+login, so they are retaken only when HACS's dialogs change.
+
+**Looking is also a test.** A screenshot session is where these were found:
+a description placeholder missing on a step's first showing renders as
+`Translation [formatjs Error: MISSING_VALUE]`, and a section's description is
+plain text, so markdown in it arrives as literal asterisks and pipes. Both
+are now tests (`tests/test_config_flow_connection.py`,
+`tests/test_polling_options.py`).
+
 ## The survey on the device page
 
 A capability survey is what this project learns from. A tester with the
