@@ -2,7 +2,7 @@
 
 Sungrow's *Communication Protocol of iHomeManager* **V1.0.2** is the source,
 with V1.0.1 beside it; both ship in TCzerny/ha-modbus-manager's `docs/`, and
-`doc/cross_reference_modbus_manager.md` compares that project's MIT template
+`.wiki/raw/cross-reference-modbus-manager.md` compares that project's MIT template
 with them. **No iHomeManager has been measured anywhere**, so every field here
 is what a document says, and `CONFIDENCE` names which one:
 

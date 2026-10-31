@@ -13,6 +13,11 @@ Sungrow's energy manager. **Never measured here.**
   port takes one TCP connection**, so a port another client holds looks
   closed (Sungrow's V1.0.2 document, table 2, as
   `src/sungrow_modbus/ihomemanager/registers.py` records it).
+- **Its Modbus TCP is off until opened** in the iSolarCloud app:
+  *iHomeManager settings → Forwarding channel settings*, port 502, 503 or 504,
+  SSL off (Sungrow's *iHomeManager Modbus Transfer User Guide*, 2025).
+- **Port 516 is not an iHomeManager's**: it is a [WiNet-S](device-winet-s.md)'s
+  or a [wallbox](device-wallbox.md)'s Modbus over TLS.
 - **No serial number** in either revision of Sungrow's document, nor in the
   MIT template. What it says about itself is a type code (`0x072A`), the
   protocol number ("AW0"), the protocol version and its application software

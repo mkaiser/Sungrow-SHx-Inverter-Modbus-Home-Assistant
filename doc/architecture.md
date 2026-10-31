@@ -127,9 +127,8 @@ on moves with the transport**, so none of them is asked for:
 
 Each extra device gets its **own device registry entry**, hung off the
 inverter with `via_device`, identified by the *inverter's* serial plus a
-suffix. Neither reports a usable serial of its own: an SBR has none anywhere
-in its registers, and a wallbox has one this project deliberately never reads.
-So the wallbox's device and entity ids are the same whichever path reaches it,
+suffix: an SBR has no serial anywhere in its registers, and a wallbox's is
+shown on its device page but published only as a stand-in. So the wallbox's device and entity ids are the same whichever path reaches it,
 and moving it from the dongle to its own address keeps its history.
 
 A wallbox never answers through the inverter's own LAN port, and its own
@@ -277,3 +276,106 @@ producers pick it up.
 Where time enters a polled value, in `inverter/smoothing.py`, it takes the
 clock as an argument rather than reading one — which is what lets a
 sixty-second delay be tested without waiting sixty seconds.
+
+## Goals
+
+| Goal | Concretely |
+| --- | --- |
+| **Backwards compatibility** | An existing user keeps their `entity_id`s, so history, dashboards, automations and InfluxDB carry on. The default for anyone with a YAML installation |
+| **Migration forward** | Modern device-scoped ids carry recorder history *and* long-term statistics, with no reset or spike on the Energy dashboard |
+| **Migration backwards** | Reversible both ways; an occupied target id is archived, never deleted |
+| **Honest backups** | The guide says what a backup covers: SQLite yes; MariaDB, PostgreSQL and InfluxDB no |
+| **Dashboards** | The Energy dashboard from known entities; a generated Lovelace dashboard on request |
+| **Third-party inverters** | A foreign inverter behind the same meter is added back into the load figure |
+| **Auto detection** | The user supplies a host, not a topology. Unknown devices are reported, not dropped |
+| **Every Sungrow Modbus device** | Inverter, wallbox, SBR and SBH, iHomeManager, Logger, sharing one serialized connection instead of an external Modbus proxy |
+| **All models, one map** | Model and wiring differences are capabilities, not forks |
+
+Not a goal: rewriting anything outside Home Assistant. InfluxDB and Grafana
+get advice and a script (`scripts/helpers/influx_migration.py`).
+
+## Rules that do not move
+
+- **The integration never writes a register during setup or reload**, only on
+  an explicit user action. A leftover control-test snapshot becomes a repair,
+  not an automatic restore.
+- **Devices are identified by what answers**, never by an open port or a unit
+  id.
+- **Nothing is removed from an existing install silently.** Capabilities grow
+  an entry by reloading; they never remove an entity.
+
+## Decisions
+
+- **The domain is `sungrow_modbus`** (`sungrow` is taken by another
+  integration). The library is published to PyPI as `sungrow-modbus`, over
+  OIDC trusted publishing with no stored token.
+- **Entity ids are a choice at setup**: legacy ids for existing users, modern
+  device-scoped ones for new users. Modern ids take the prefix from the device
+  name: the model from the device type register or, where the search found
+  more than one inverter, a name the owner gives in setup (offered: the model
+  plus the role, where a direct connection could read it).
+  **The options page switches an entry either way** (`migration.async_plan_id_switch`):
+  towards modern ids each series moves by rename; towards legacy ids an id
+  that still holds the YAML package's history continues it, and the modern
+  series stays under its own id. Rows already on a target id are renamed to
+  `<id>_archive` first. An id the owner chose is left alone. A YAML orphan's
+  restored `unavailable` state does not count as the package running; a live
+  entity on the id refuses the move.
+- **Two live entries for one inverter are not offered**: both would poll a
+  machine that grants very few sessions. Moving the entry keeps its ids; the
+  survey's transport testimony is cleared, and sub-devices are found again.
+- **The config flow says each inverter's role and how it is known.** A
+  device address other than 1 is a measured slave; its partner at address 1
+  is the inferred master; through dongles only battery ownership survives,
+  so a role built on it is "probably" and says so.
+- **The fault and alarm words are counted, not split** (`inverter.faults`,
+  from V1.1.11's Appendix 4). One diagnostic sensor per word reports how
+  many named flags are set and names them in an `active` attribute; `Fault
+  reported` and `Alarm reported` are the problem binary sensors to automate
+  on. Reserved bits are never reported.
+- **The diagnostics download carries the block read test, never runs it.**
+  The survey button's last measurement goes in with its time; running one
+  costs minutes through a dongle, and a download is waited on.
+- **The `_raw` sensors exist in legacy mode only.** Modern mode exposes the
+  decoded value (a binary sensor for an `0xAA`/`0x55` mode, a ratio with its
+  unit); `Derived._mode_flag` returns None for anything else.
+- **A parenthetical says what a value is**: `(smoothed)` for the moving
+  average, `(delayed)` for the delayed binary sensors.
+- **The naming rule is per device**, and one convention is enforced by test
+  (`scripts/generate/tables/naming.py`).
+- **Start and stop are actions, not buttons**, with an audience set per entry
+  (admins only by default); the control test has an audience of its own, and
+  its restart, export limit and PV cut are each granted until the owner
+  switches them off. The YAML's danger-mode toggle and automations are not
+  ported.
+- **The wallbox is read-only.** No manufacturer document covers its map.
+- **The opt-in SBR YAML sensors are not adopted and keep no history**:
+  partial adoption looks like a migration and is not one.
+- **Localisation follows Home Assistant**: modern ids take the interface
+  language where HA says they should; legacy ids stay English. Only English
+  ships.
+- **13074's write scale is measured per device** (`sungrow_modbus.inverter.export_scale`)
+  and stored with the firmware it was measured on.
+- **Delivery is HACS first**, through the preview channel until the merge
+  into `main` ([maintainer_setup.md](maintainer_setup.md)).
+- **The brand mark is original**, not Sungrow's.
+
+## Register sources
+
+| Device | Map from | Licence |
+| --- | --- | --- |
+| Inverter | `legacy/modbus_sungrow.yaml` plus Sungrow's *Communication Protocol of Residential and Small Industrial Hybrid Inverter* **V1.1.16** | MIT, this repo |
+| SBR battery | `legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml`, input 10740-10788 | MIT, this repo |
+| SBH battery | nothing yet | — |
+| iHomeManager | Sungrow's *Communication Protocol of iHomeManager* V1.0.1/V1.0.2 and [ha-modbus-manager](https://github.com/TCzerny/ha-modbus-manager)'s 53-register map | MIT (ha-modbus-manager) |
+| Wallbox | [evcc `charger/sungrow.go`](https://github.com/evcc-io/evcc/blob/master/charger/sungrow.go) and our own AC22E-01 measurement, [wallbox_registers.md](wallbox_registers.md) | MIT (evcc, KevinD987); Louisbertelsmann's used with permission, for meanings only |
+| Logger1000/3000/4000 | Sungrow's *Logger Communication Protocol* AW0 1.0.2.9 and [discussion #262](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions/262) | Sungrow's document |
+
+The inverter map is audited against V1.1.16: every addition since V1.1.2 is
+read, gated by a capability where the remarks column limits it, and marked
+`layer: "specification"` in the entity map because it has no legacy id.
+`DEVICE_TYPES` matches Appendix 1 (`tests/test_device_types.py`), and
+`family_for` classifies by model name, not code range. **SH50-125CX is named
+but not supported** (ten MPP trackers against a map that stops at four).
+Compare registers on **space and address together**: input and holding are
+separate address spaces.

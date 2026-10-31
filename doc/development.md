@@ -4,17 +4,6 @@ This is about the **new custom integration** (`custom_components/sungrow_modbus`
 and its device library (`src/sungrow_modbus`), not the YAML package. The
 YAML package in `legacy/modbus_sungrow.yaml` is unaffected by anything here.
 
-## Why an integration at all
-
-Home Assistant 2026.9 modernized Modbus. A device integration now collects its
-own connection details in its own config flow and asks the `modbus`
-integration for a *unit*; integrations pointed at the same host and port share
-a single serialized connection, which matters because a Sungrow inverter
-accepts only a handful of simultaneous Modbus sessions. Register knowledge
-lives in a plain Python library built on
-[`modbus-connection`](https://github.com/home-assistant-libs/modbus-connection),
-so it can be tested without Home Assistant and without an inverter.
-
 ## Getting a dev environment
 
 > [doc/development.yaml](development.yaml) is the copy-paste companion to this
@@ -58,7 +47,7 @@ One thing does *not* follow automatically: Claude Code keys project memory by
 workspace path, and the workspace is `C:\...` on the host but
 `/workspaces/...` in the container, so the two resolve to different project
 directories. That is why the durable repo context lives in `AGENTS.md`, the
-wiki in `.wiki/` and `doc/integration_plan.md` instead - all committed and
+wiki in `.wiki/` and `Todo.md` instead - all committed and
 path-independent. `CLAUDE.md`, which includes `AGENTS.md`, is loaded
 automatically wherever the repo is opened, and `AGENTS.md` points into the
 wiki.
@@ -147,13 +136,8 @@ scripts/helpers/                    one-off tools
 device-survey/                      published survey documents, and the survey itself
 ```
 
-The split follows what Home Assistant's Modbus documentation recommends and
-what core's `sofar` integration does; [architecture.md](architecture.md) has
-the reasoning. The library is published to PyPI as `sungrow-modbus` from this
-repository, and the version in `pyproject.toml` must stay identical to the
-`requirements` entry in `custom_components/sungrow_modbus/manifest.json`,
-because Home Assistant checks the installed version on every start. `make
-version VERSION=X.Y.Z` moves both.
+[architecture.md](architecture.md) has the reasoning. `make version
+VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 
 ## Every script
 
@@ -334,26 +318,12 @@ Two steps are yours, and the script prints them before it boots:
 2. **HACS → ⋮ → Custom repositories**, the preview channel's URL, category
    *Integration*, then **Download** and restart.
 
-What this instance is for is the part you cannot see from :8123:
-
-- **The version HACS shows is a commit hash**, because the channel publishes
-  no releases of its own. That is what a bug report should quote, and seeing
-  it here is how you learn to ask for it.
-- **The library is pip-installed from PyPI** against the pin, on the restart
-  after downloading. `RequirementsNotFound` surfaces here and nowhere else —
-  `scripts/release/check_pinned_library.py` is the check that catches it earlier.
-- **It is not your working tree.** A change you make in this repository does
-  not appear there until it reaches the preview channel, which is a commit,
-  a green CI run and a sync away. That lag is the point: it is what a user
-  is subject to.
-
-Why a separate config directory rather than HACS in `config/`: HACS downloads
-into `<config>/custom_components/<domain>`, so through the dev instance's
-symlink it would write into this repository over tracked files, and drop its
-own `hacs/` directory where hassfest and the test suite would find it. The
-preview channel also ships the same domain, `sungrow_modbus`, so two copies
-at one path is the conflict `doc/installing_a_preview.md` warns users about
-rather than an upgrade.
+What it shows that :8123 cannot: the **commit hash** HACS reports (what a
+bug report quotes), the library **pip-installed from PyPI** against the pin
+(`RequirementsNotFound` surfaces here), and the lag to the preview channel:
+a commit, a green CI run and a sync. HACS gets its own config directory
+because it downloads into `<config>/custom_components/`, which on the dev
+instance is a symlink into this repository.
 
 ## The survey on the device page
 
@@ -379,40 +349,17 @@ inverter this project needs a write measurement from.
 
 ### Part B, which writes
 
-The survey answers *what is here* entirely by reading. It cannot answer *and
-does writing to it work*, and that second question has a whole class of bug
-behind it: `encode` and `decode` share one scale factor, so a wrong factor in
-`registers.py` returns the value you wrote, intact, while the inverter acts on
-something ten times bigger. The registers mix units on adjacent addresses —
-13052 counts in 1 W, 33047 next door in 0.01 kW — which is where such a factor
-comes from.
+The control test writes each control and checks it against the raw word,
+with a scale typed by hand from the specification, and against what the
+inverter does. How and why: the wiki's [control test](../.wiki/wiki/concepts/control-test.md)
+and [restore](../.wiki/wiki/concepts/control-test-restore.md) pages; the rules
+are in `AGENTS.md`; `doc/development.yaml`'s `control_test` section is the
+terminal runbook (`make controltest-dry HOST=…` writes nothing).
 
-So the control test writes each control and checks it three ways: through the
-library, against the **raw register word** compared to a scale typed by hand
-from the specification and never read from the map, and by watching what the
-inverter actually does. Only the second catches a wrong factor in our code;
-only the third catches a firmware that disagrees with the document.
-
-The same engine runs from a terminal — `make controltest-dry HOST=…` first,
-which writes nothing — and `doc/development.yaml`'s `control_test` section is
-the runbook. What matters if you touch it:
-
-- **the restore is never budgeted, deadlined or skipped**, and it reads before
-  it writes, because a restore is a statement about where the register *is*
-  rather than about whether a write succeeded;
-- **the snapshot is flushed before the first write** and removed only once
-  everything is back *and read back*, so one left on disk is the list of what
-  may still be changed — in Home Assistant it becomes a repair with a fix flow;
-- **the run refuses more often than it runs**, on a stopped inverter, in the
-  dark, at a state of charge where a probe value would command a grid charge,
-  and it says which. In Home Assistant that guard list is the only protection a
-  button press has, since a button gets no confirmation dialog.
-
-`survey.py` owns both parts and holds the state; `survey_document.py` does the
-reading and calls back with a fraction and a label; `control_test.py` does the
-writing and reports into the tail of the same progress bar; `survey_entities.py`
-turns that into states over one dispatcher signal per entry. Nothing in
-`survey.py` talks Modbus.
+`survey.py` owns both parts and holds the state; `survey_document.py` reads
+and reports progress; `control_test.py` writes into the tail of the same
+progress bar; `survey_entities.py` turns that into states over one dispatcher
+signal per entry. Nothing in `survey.py` talks Modbus.
 
 **Three things that are easy to get wrong here.**
 
@@ -448,15 +395,10 @@ hang, and an owner who enabled the option was answering a question about
 surveys. Reading the option directly inside `async_build` would be the
 obvious simplification and would break exactly that.
 
-Two switches in the options are called a register dump and they do different
-things. *Battery, wallbox and diagnostics* → *Include a raw register dump in
-diagnostics* (`CONF_REGISTER_DUMP`) re-reads the addresses the library already
-maps, into the diagnostics file, in seconds. *Contribute a capability survey*
-→ *Also sweep the raw register bands* (`CONF_SURVEY_DUMP`) sweeps
-`sungrow_modbus.dump.DUMP_BANDS`
-— 1510 addresses, mostly unmapped — into the survey document, in about five
-minutes. Only the second can discover a register. The survey's `--dump` reads
-the same bands.
+Two options are called a register dump: `CONF_REGISTER_DUMP` re-reads the
+mapped addresses into diagnostics, in seconds; `CONF_SURVEY_DUMP` sweeps
+`sungrow_modbus.dump.DUMP_BANDS` (1510 addresses) into the survey, in about
+five minutes, and only it can discover a register.
 
 To see any of this against a real run, the recorder is the fastest way in —
 the dev instance keeps it:
@@ -501,35 +443,17 @@ so the YAML's inconsistency is preserved there deliberately.
 
 ## First boot
 
-`scripts/dev/develop.sh` boots against `config/configuration.yaml`, which
-deliberately avoids `default_config:`. That keeps the dev instance small:
-Home Assistant pip-installs each component's requirements the first time it
-sets it up, and `default_config` drags in bluetooth, dhcp, usb, ssdp,
-conversation and video handling that a Modbus integration never touches.
-
-Even so, the very first boot installs a handful of packages (the frontend
-above all) and takes a few minutes before <http://localhost:8123> answers with
-something other than a 404. That is once per container, not once per run:
-the first boot logs ~20 setup errors while its dependencies are still
-downloading, and the next boot comes up in about two seconds with no errors
-at all. If the UI 404s on your very first run, give it a minute
-and reload rather than going looking for a bug.
+`config/configuration.yaml` avoids `default_config:`, so the dev instance
+installs only what a Modbus integration needs. The very first boot in a
+container still takes minutes, logs ~20 setup errors and 404s; the next is
+clean in seconds. Not a bug.
 
 ## Superseding the YAML package
 
-The integration replaces `legacy/modbus_sungrow.yaml`, and existing users
-must keep their recorder history and their dashboards. Both are keyed by
-`entity_id`: the YAML package produces `sensor.total_dc_power`, an
-integration entity with `_attr_has_entity_name = True` produces
-`sensor.<device name>_total_dc_power`, and getting that wrong breaks years of
-data and every dashboard card silently.
-
-So setup offers the choice: **keep the legacy ids**, which claims each one at
-entity creation so history simply continues, or **take modern, device-scoped
-ids**, which is that plus one registry rename. A rename carries raw states
-*and* long-term statistics and is reversible, so neither direction is a
-one-way door. Both are asserted against Home Assistant itself in
-[tests/test_recorder_migration.py](../tests/test_recorder_migration.py); the
-user's guide is [integration_migration.md](integration_migration.md), and
-[integration_plan.md](integration_plan.md) has the traps. Read those before
-touching entity ids.
+History and dashboards are keyed by `entity_id`, so the migration is the
+riskiest thing here. The rules are in `AGENTS.md`, the mechanism in the
+wiki's [adopting the legacy entity ids](../.wiki/wiki/concepts/legacy-id-adoption.md)
+and [legacy slot](../.wiki/wiki/concepts/legacy-slot.md) pages, the test in
+[tests/test_recorder_migration.py](../tests/test_recorder_migration.py), and
+the user's guide in [integration_migration.md](integration_migration.md).
+Read them before touching entity ids.

@@ -33,15 +33,16 @@ serial number or address**.
   - `wiki/index.md`: master index
   - `wiki/log.md`: change log
 
-**Most raw sources live outside `raw/`, where their tooling writes and reads
-them**, and they are never moved:
+**Data the tooling writes and reads stays where it is**; everything else the
+wiki relies on is a frozen copy in `raw/`, so the wiki does not depend on a
+human document staying as it was:
 
 | Source | Where | Written by |
 | --- | --- | --- |
 | inverter surveys | `device-survey/results/inverter/*.json` | `sungrow_survey.py --save`, a contributor's upload |
 | wallbox documents | `device-survey/results/wallbox/*.json` | the same |
 | the YAML package's entity record | `doc/legacy_entity_map.json` | by hand; tests read it |
-| register documents | `doc/wallbox_registers.md`, `doc/cross_reference_modbus_manager.md` | by hand |
+| register documents, issue findings, portal readings | `raw/*.md` | copied in at ingest; `doc/` keeps the living copy |
 
 A source page's `source_path` is relative to `.wiki/`, as llmwiki's ingest
 writes it, for example `../device-survey/results/inverter/<file>.json`.

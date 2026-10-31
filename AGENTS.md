@@ -9,8 +9,9 @@ document, the wiki included.
 | Dev loop, every script, environment pitfalls | `doc/development.md` (`doc/development.yaml` is the copy-paste runbook) |
 | How the integration is cut up, and why | `doc/architecture.md` |
 | Releasing, hassfest, HACS and the preview channel | `doc/maintainer_setup.md` |
-| The survey, its scripts and its pinned library | `device-survey/README.md` |
-| Plan of record, register sources and licences | `doc/integration_plan.md` |
+| Running the survey / its document, scripts and pinned library | `device-survey/README.md` / `device-survey/reference.md` |
+| What is next, open decisions, what waits on hardware | `Todo.md` |
+| Goals, decisions, register sources and licences | `doc/architecture.md` |
 
 ## Two tracks
 
@@ -91,9 +92,10 @@ The wiki is the repository's device knowledge, after
 [microsoft/llmwiki](https://github.com/microsoft/llmwiki). Before working on a
 device question, read `.wiki/wiki/index.md` and the pages it points to.
 
-- **Raw sources are immutable**: `device-survey/`, `doc/legacy_entity_map.json`,
-  `doc/cross_reference_modbus_manager.md`, `doc/wallbox_registers.md`,
-  `.wiki/raw/`. Read, cite, never rewrite. A survey transcript is never one.
+- **Raw sources are immutable**: `device-survey/results/`,
+  `doc/legacy_entity_map.json` and `.wiki/raw/`. Read, cite, never rewrite.
+  A survey transcript is never one. The `doc/` pages are for people and are
+  edited like any doc; the wiki cites its own frozen copy of one.
 - **Every claim cites its source.** One with none goes into `queries/`.
 - **Ingest is part of the work**: a new survey, control test or hardware
   finding updates its pages, the index and `log.md` in the same change.
@@ -124,7 +126,7 @@ does, and puts everything back. Non-negotiable:
   `SAPPHIRE-H_01011.95.03`).
 
 Before touching `device-survey/scripts/`, read
-`device-survey/README.md`: the PEP 723 header is the survey's whole install,
+`device-survey/reference.md`: the PEP 723 header is the survey's whole install,
 and it can use only what the pinned wheel has.
 
 ## Things that will bite you

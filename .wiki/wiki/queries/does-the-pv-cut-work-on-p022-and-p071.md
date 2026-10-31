@@ -24,4 +24,4 @@ allowed, in daylight with at least 500 W of PV, on the inverter's own LAN
 port. Run `survey.sh control <host> --cut-pv`, or use the device page's
 button with **May it cut PV generation** on. On a `CONFIRMED`, commit the
 survey and add its 13250 string to `CONFIRMED_ON_FIRMWARE`. On a T,
-watch whether 13018 acts as well. The steps are in `plans/cut-pv-generation.md`.
+watch whether 13018 acts as well.

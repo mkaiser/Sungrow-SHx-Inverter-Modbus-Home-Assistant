@@ -1,7 +1,7 @@
 ---
 type: source
 title: cross_reference_modbus_manager.md
-source_path: ../doc/cross_reference_modbus_manager.md
+source_path: raw/cross-reference-modbus-manager.md
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags: [ihomemanager, cross-reference, licences]
@@ -9,7 +9,7 @@ tags: [ihomemanager, cross-reference, licences]
 
 # Cross-reference: TCzerny/ha-modbus-manager
 
-`doc/cross_reference_modbus_manager.md` compares this project's registers,
+`raw/cross-reference-modbus-manager.md` compares this project's registers,
 one by one, with TCzerny/ha-modbus-manager, read at commit `1faff77`.
 
 - **Its SHx template derives from this repository's YAML package**, so the

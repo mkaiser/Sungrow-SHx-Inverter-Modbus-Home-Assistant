@@ -1,7 +1,7 @@
 ---
 type: source
 title: wallbox_registers.md
-source_path: ../doc/wallbox_registers.md
+source_path: raw/wallbox-registers.md
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags: [wallbox, registers, ac22e-01]
@@ -9,7 +9,7 @@ tags: [wallbox, registers, ac22e-01]
 
 # The wallbox registers
 
-`doc/wallbox_registers.md`: Sungrow publishes no register document for its
+`raw/wallbox-registers.md`, a frozen copy of `doc/wallbox_registers.md`: Sungrow publishes no register document for its
 AC wallboxes, so this is what the measurements agree on. It was read off one
 AC22E-01 at [gerd](../entities/installation-gerd.md), through the dongle at
 unit 3 (once while a car charged, once idle) and at its own address over TLS

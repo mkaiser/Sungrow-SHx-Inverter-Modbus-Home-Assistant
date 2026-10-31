@@ -15,7 +15,7 @@ YAML package's entity ids, and these are not in it -- the additional file is
 not part of the package, is not in the entity map, and is installed by
 copy-paste rather than by including a file. A user who did copy it in has ids
 like `sensor.sg_battery_1_max_voltage_of_cell`, and those are **not**
-adopted here. Recorded in `doc/integration_plan.md` as an open question with
+adopted here. Recorded in `Todo.md` as an open decision with
 its cost: this integration would be taking over entities it never generated,
 whose names it does not control, on evidence no survey carries. Doing
 that silently is worse than not doing it.

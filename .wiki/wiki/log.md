@@ -129,3 +129,11 @@ readbacks, 13074 x10 by refusal a third time, and forced charge, forced
 discharge and the export limit all as commanded over the cable. Committed as
 `-2`, the survey's number for a taken name. A run 14 minutes earlier on an
 older release was not committed; this one covers it.
+
+## [2026-10-31] moved | findings out of devices-wanted.md
+
+`device-survey/devices-wanted.md` now says only what is wanted. Its findings
+moved here: the SBH readings (scales, state of charge, over-rating), the SBR
+position encoding, and how an iHomeManager's Modbus TCP is opened. The wiki
+keeps frozen copies of the register documents in `raw/`; the `doc/` copies
+are ordinary docs, and `doc/cross_reference_modbus_manager.md` is retired.

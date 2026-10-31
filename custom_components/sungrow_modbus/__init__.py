@@ -461,7 +461,7 @@ async def _async_check_control_test(
     restore, and the registers it names may still hold a test's values rather
     than the owner's.
 
-    Deliberately not repaired automatically. `doc/integration_plan.md` states
+    Deliberately not repaired automatically. `doc/architecture.md` states
     the rule -- the integration never writes a register during setup or reload,
     only on an explicit user action -- and a setup that silently wrote to an
     inverter would be a worse thing to have built than the problem it fixed.

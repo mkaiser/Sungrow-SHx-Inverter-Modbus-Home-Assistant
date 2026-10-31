@@ -254,7 +254,7 @@ ABSENT_IN: dict[Capability, frozenset[Family]] = {
     # SH50~125CX are not supported." Note RS is *not* excluded, which settles
     # a question raised by another project gating these to a different pair of
     # registers on exactly the RS models -- see
-    # [cross_reference_modbus_manager.md](../../doc/cross_reference_modbus_manager.md).
+    # `.wiki/raw/cross-reference-modbus-manager.md`.
     Capability.ACTIVE_POWER_LIMIT: frozenset({Family.MG, Family.RL, Family.CX}),
     # V1.1.16 regs 13250-13369: "SH3.0-10RS and MG5-12RL and SH3-10RL are not
     # supported. SH50~125CX are not supported."

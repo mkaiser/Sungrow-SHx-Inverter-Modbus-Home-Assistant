@@ -15,120 +15,55 @@
 
 ## Trying it
 
-Install it through **HACS**, from the preview channel —
-`Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview`, a second repository
-that exists because HACS reads a repository's *default branch* and this
-one's is the YAML package. Add it under **HACS → ⋮ → Custom repositories**,
-category *Integration*.
-**[doc/installing_a_preview.md](doc/installing_a_preview.md)** has the four
-steps and explains the rest.
+Install it through **HACS** from the preview channel,
+`Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview`: HACS reads a
+repository's default branch, and this one's is the YAML package.
+[doc/installing_a_preview.md](doc/installing_a_preview.md) has the steps;
+[doc/integration_options.md](doc/integration_options.md) lists every option
+under *Configure*.
+
+**The preview sets up diagnostics only**: it identifies the inverter and runs
+the survey, and creates no sensors for the readings. Everything below is
+built and tested, and switched on in a later release.
 
 ## What this is
 
-A Home Assistant integration built on the Modbus architecture that arrived in
-Home Assistant 2026.9. It sets up through the UI, shares one serialized
-connection per inverter, and keeps its register knowledge in a plain Python
-library that tests without Home Assistant and without hardware.
+A Home Assistant integration on the Modbus architecture of Home Assistant
+2026.9, meant to **replace** the YAML package. The hard requirement is that
+existing users keep their recorder history, long-term statistics and
+dashboards when they switch ([doc/integration_migration.md](doc/integration_migration.md)).
 
-It is intended to **replace** the YAML package rather than sit beside it, so
-the hard requirement is that existing users keep their recorder history, their
-long-term statistics and their dashboards when they switch.
+**What it does:**
 
-## Where it has got to
+- All 135 read entities of the YAML package, held to it by tests, with the
+  unit and state class of every entry they replace; created **only where the
+  hardware has them**.
+- **Writes**, each read back at once: the state-of-charge limits, charge and
+  discharge maxima, the export power limit, three mode flags and three
+  selects. Start and stop are **actions**, with who may call them yours to
+  choose (administrators by default).
+- **The SBR battery** and **the wallbox** (AC011E-01 / AC22E-01, read-only)
+  as devices of their own, behind a WiNet-S or, for the wallbox, at its own
+  address over TLS.
+- **One shared connection per inverter**, so no external Modbus proxy.
+- Setup by **searching the network**; model, unit id and a cluster slave's
+  role come from what the devices answer.
+- **Configurable poll intervals**, per group, from 5 seconds to never.
+- **A generator the Sungrow cannot see**: a non-Sungrow inverter behind the
+  same meter, added back into the house load.
+- **Diagnostics** to attach to a bug report, serial and host removed.
+- **The survey**, which reads what your installation answers, and the
+  **control test**, which writes each control, checks the inverter acted on
+  it and puts everything back
+  ([device-survey/README.md](device-survey/README.md)).
 
-**Works:**
+**Not yet:** the iHomeManager and the Sungrow Logger (never measured; see
+[devices-wanted.md](device-survey/devices-wanted.md)), SBH batteries, the
+SBR's per-module entities, and writing to the wallbox.
 
-- All 135 read entities of the YAML package, tested against it so they cannot
-  drift, with the unit and state class of every entry they replace.
-- **Writes.** The state-of-charge limits, the charge and discharge maxima, the
-  export power limit, the three mode flags and the three selects. Starting and
-  stopping the inverter are **actions** rather than buttons, deliberately:
-  Home Assistant has no confirmation dialog for a button press.
-- **The SBR battery as its own device** — all forty registers, seventeen
-  entities. Which Modbus unit it answers on is worked out rather than asked,
-  because it moves with the transport.
-- **The wallbox as its own device** — AC011E-01 / AC22E-01, twenty-one
-  entities, read-only. Found behind a WiNet-S on the inverter's endpoint, or
-  read at its own LAN address (Modbus inside TLS, port 516) when you give
-  the inverter's entry that address.
-- Setup through the UI: search the network for inverters, or type an address.
-  The model, the Modbus unit id and a cluster slave's role are detected from
-  the devices themselves; where two inverters need telling apart you are asked
-  what to call them, once.
-- Entities are created **only where the hardware has them** — a two-tracker
-  inverter gets no MPPT3 sensors, a single-phase one gets no phase B or C.
-- A migration that keeps your entity IDs, so history and dashboards continue.
-  You are asked at setup; either answer works. See
-  [doc/integration_migration.md](doc/integration_migration.md).
-- Diagnostics you can download and attach to a bug report.
-- **A generator the Sungrow cannot see.** A second, non-Sungrow inverter
-  behind the same meter makes the reported house load low by exactly its
-  output. Name the entities another integration has for it, and a corrected
-  load is added beside the reported one.
-- One naming convention, enforced by a test.
-- **A one-command survey** you can run against your own installation, which is
-  how the capability model gets its evidence — see
-  [contributing a survey](device-survey/README.md#contributing-your-device-survey).
-  The survey itself only reads. At the end it asks whether it may also run
-  the **control write test**: it writes each control, checks the inverter
-  acted on the value it was given, and puts everything back. The answer
-  defaults to no. The same test is a button on the device page.
-
-**Not there yet:**
-
-- **A HACS install from _this_ repository.** Until the integration reaches
-  `main`, HACS installs it from the preview channel above.
-- The **iHomeManager** and the **Sungrow Logger**. Both are documented by
-  Sungrow and neither has ever been measured by this project — if you have
-  one, [device-survey/devices-wanted.md](device-survey/devices-wanted.md)
-  says what would help.
-- **SBH** batteries, which need a register document nobody has, and the SBR's
-  per-module cell entities, which need one more pack size measured before the
-  module count can be trusted.
-- Writing to the wallbox. Its registers are undocumented by Sungrow and known
-  from three independent measurements, which is not a basis for starting
-  somebody's car charging from an automation.
-
-## What it can do that the YAML package cannot
-
-Not a list of everything — a list of the things that are *only* possible
-because it is an integration.
-
-- **One shared connection per inverter.** Everything pointed at the same
-  host and port serialises behind one socket. A Sungrow accepts very few
-  Modbus sessions, so this is what removes the external Modbus proxy that
-  wallbox and iHomeManager users are told to run today.
-- **Entities exist only where the hardware has them.** A two-tracker inverter
-  gets no MPPT3 sensors and a single-phase one gets no phase B or C, decided
-  from what the device answers rather than from a comment in a YAML file.
-- **Per-user access control.** Home Assistant enforces permissions per entity,
-  so a household member in the read-only group sees every reading and can
-  change nothing. And **starting or stopping the inverter is an action rather
-  than a button**, so who may do it is yours to choose — administrators only
-  by default, or anyone who can already control the inverter, per inverter. A
-  YAML button can be pressed by any normal user from any dashboard, and has no
-  confirmation. The ladder is [asserted in
-  tests](tests/test_permissions.py), not just described.
-- **Configurable poll intervals**, per group, from 5 seconds to never. The
-  scarce resource is connections, not bandwidth, so being able to stop reading
-  data nobody looks at is the cheapest fix for the dropouts people report.
-- **Write, then read back, at once.** The YAML needs a `template number`, a
-  `modbus.write_register` action *and* a `homeassistant.update_entity` call to
-  show what the inverter actually accepted. One entity does all of it.
-- **Diagnostics you can attach to a bug report** — model, which capabilities
-  the inverter confirmed, which registers reported themselves unavailable, why
-  any entity was not created. Serial number and host removed.
-- **Setup without knowing your inverter's IP.** It searches the network, and
-  identifies devices by what answers rather than by unit id.
-- **Migration that keeps your history.** You are asked at setup; either answer
-  works, and it is reversible.
-
-[doc/architecture.md](doc/architecture.md) sketches how the pieces fit
-together — the integration, the device library, and which layer owns the
-connection. [doc/integration_plan.md](doc/integration_plan.md) is the plan of
-record and says what is decided, what is open, and why.
-[doc/compatibility.md](doc/compatibility.md) says which setups anybody has
-actually tested.
+[doc/architecture.md](doc/architecture.md) is how it is built and why,
+[Todo.md](Todo.md) what is open, and
+[doc/compatibility.md](doc/compatibility.md) which setups have been surveyed.
 
 ## Developing
 
@@ -170,25 +105,13 @@ have a newer version, say so in the [discussions](../../discussions).
 
 ## Help and contributions
 
-- [GitHub discussions](../../discussions) for questions.
-- [Discord](https://discord.gg/ZvYBejFkm2) — the lowest-threshold way to ask.
-- [GitHub issues](../../issues) for bugs and pull requests.
-
-**A diagnostics download answers most of the first round of questions on a bug
-report**, so attach one. It carries no serial number, no host address and no
-timestamp, which is why it can go straight into a public issue.
-
-**Reporting a setup that works is worth as much as reporting one that does
-not.** Which parts of the register map a device answers varies by model, phase
-count, wiring, transport and firmware, and Sungrow's specification says what
-*exists*, not what your machine does with it — so the capability model is
-built from surveys off real hardware. If your model is listed as
-untested in [doc/compatibility.md](doc/compatibility.md), a compatibility
-report is the single most useful thing you can contribute — including one that
-says everything works.
-
-Attach the diagnostics file to [the survey issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786), where every
-survey is collected.
+- [GitHub discussions](../../discussions) for questions, or
+  [Discord](https://discord.gg/ZvYBejFkm2).
+- [GitHub issues](../../issues) for bugs; attach a **diagnostics download**,
+  which carries no serial and no address.
+- **A survey of your installation** is the most useful contribution, one that
+  says everything works included: send it to
+  [the survey issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786).
 
 ## Related work
 

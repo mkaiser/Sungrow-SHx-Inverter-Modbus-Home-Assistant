@@ -1,8 +1,8 @@
 # Maintainer setup
 
 Things only the maintainer can do, because they need an account, a credential,
-or physical access to hardware. Everything else in
-[the plan](integration_plan.md) can proceed without them.
+or physical access to hardware. Everything else in `Todo.md` can proceed
+without them.
 
 Applies to the **integration** track only. The YAML package needs none of it.
 
@@ -52,6 +52,16 @@ Before tagging:
 - After the upload, `make pin-check` asks PyPI the same question of the
   published wheel. It is legitimately red between releases, and it must be
   green before anyone is told to install something.
+
+**Versioning.** One version, in `pyproject.toml`, mirrored into the
+manifest and the survey scripts by `scripts/release/sync_version.py` and
+checked in CI, pytest and at release. It accepts only the normalised PEP 440
+spellings (`0.1.0a1`, `b1`, `rc1`), which `release.yml` marks pre-release.
+`v*` tags are the integration; the YAML package keeps its dated scheme.
+Testers are told it is a preview in three places: the version (`pip` needs
+`--pre`), the "(preview)" name in `manifest.json` and `hacs.json`, and a
+`preview_release` repair. A rename during the preview is a registry
+migration away, not a broken install.
 
 Uploads are immutable -- a version number can never be reused -- and PyPI
 treats `sungrow-modbus` and `sungrow_modbus` as the same project. The manual
@@ -105,45 +115,18 @@ answer it.
 
 ## 3. Capturing a system
 
-The published documents are in
-[device-survey/results/inverter/](../device-survey/results/inverter/) and
-[device-survey/results/wallbox/](../device-survey/results/wallbox/), and
-[devices-wanted.md](../device-survey/devices-wanted.md) says what is
-missing, in the order it would help.
-
-Run the one entry point:
-
 ```bash
 make scan HOST=<host>          # or device-survey/scripts/survey.sh <host>
+make scan-local HOST=<host>    # the same on this tree's library
 ```
 
-It identifies every device on the endpoint before asking anything — which is
-what tells one inverter reached two ways from two inverters — then asks what
-no register can answer, checks the transport against the answer, runs the
-block read test on the still-idle link, reads every register, finds a wallbox
-on its own address (TLS on 516) and surveys it into a document of its own,
-and prints what it found. Its last question offers the control test, and
-defaults to no.
-
-`make scan-local HOST=<host>` runs the same through the launcher on this
-tree's library, which is what to use when the survey needs something the
-published wheel does not have yet.
-
-Everything is **read-only** unless that last question is answered yes. The
-one file in `device-survey/` that writes a register is
-`sungrow_control_test.py`, which the survey runs only then.
-
-The document and its transcript land in `device-survey/`, where both
-are gitignored. Publish a document by moving it into `results/inverter/` (or
-`results/wallbox/`) and committing it with `doc/compatibility.md`, which
-`scripts/generate/generate_compatibility.py` rebuilds from them. Leave the `sungrow-scan-*.log` transcript alone — it
-carries the real serial and the addresses. And if a system belongs to
-somebody else, **ask them before publishing its readings**; a stand-in
-serial is not consent.
-
-For anyone outside this repo — the users whose models nobody here owns —
-[device-survey/](../device-survey/) is a folder they can download
-and run with `./survey.sh` or `survey.cmd`; its README is written for them.
+What the survey does and writes is in
+[device-survey/README.md](../device-survey/README.md). To publish a
+document, move it into `device-survey/results/inverter/` (or `wallbox/`),
+run `make gen` for `doc/compatibility.md`, and ingest it into the wiki
+(`.wiki/AGENTS.md`). Never the `sungrow-scan-*.log` transcript: it carries
+the real serial and addresses. **Ask an owner before publishing their
+readings**; a stand-in serial is not consent.
 
 ## 4. Reaching the remote systems
 
@@ -174,9 +157,9 @@ repository. The icons are at `custom_components/sungrow_modbus/brand/`
 (`scripts/helpers/make_brand_icon.py` draws them), which satisfies the
 fallback.
 
-To do: submit `sungrow_modbus` to the brands repository before applying to
-the HACS default store — it is what puts a real icon on the integration in
-Home Assistant's own UI rather than only in HACS.
+Submitting `sungrow_modbus` to the brands repository puts a real icon in
+Home Assistant's own UI, not only in HACS; it is part of the merge decision
+in `Todo.md`.
 
 HACS reads a repository's *default branch* unless there is a stable release
 (`version_to_download()` in HACS's `repositories/base.py`), and this
@@ -222,7 +205,7 @@ The protections in place:
   fails on anything serial-shaped in a tracked file that is not on its list
   of invented ones.
 - Connection details for the maintainer's own inverter are deliberately not in
-  the repo; they live in his `secrets.yaml`.
+  the repo; they live in the maintainer's own `secrets.yaml`.
 
 **The shortest version:** keep credentials out of the container where you can.
 Where one must be inside, keep it outside the repo, `chmod 600`, and never
@@ -235,20 +218,31 @@ Needed before submitting to `hacs/default`, and free to do now: a repository
 Submission also needs at least one full, non-pre-release GitHub release.
 Expect the review to take months.
 
-## 8. Still open, and yours to decide
+## 8. The production database, when there is time
 
-- **Generate a Lovelace dashboard, or rely on entity metadata** and document
-  the auto-generated view? This decides how much dashboard code the
-  integration carries.
-- Credit for the wallbox project author in the docs — permission is already
-  granted, so this is courtesy.
-- Obtain Sungrow's *Logger Communication Protocol AW0 1.0.2.9* if the Logger
-  milestone is pursued; the copy found online 404s.
+The migration cannot be verified at real scale without it. The
+maintainer's instance has run the YAML package for years, and is the only
+way to show history and statistics survive at scale. Collect from it
+`home-assistant_v2.db`, `.storage/core.entity_registry`,
+`core.device_registry`, `core.restore_state`, `.storage/lovelace*` and the
+`modbus_sungrow.yaml` in use, into the gitignored `.testdata/`: real
+household data, never in the repo or CI. Run the migration against a copy and
+assert a known sensor's history and statistics are continuous, and diff the
+entity map against the real `unique_id` → `entity_id` map: any divergence is a
+silent history-loss case. `scripts/dev/seed_migration_testbed.py` builds the
+same situation on the dev instance for review in the GUI.
 
-## 9. The production database, when there is time
+A long-lived token as in item 6 answers a useful part of it read-only in the
+meantime, but only a copy lets a migration actually be run and rolled back.
 
-The migration cannot be verified at real scale without it. See
-[the plan](integration_plan.md#the-production-testbed) for what to collect and
-how to take it safely. A long-lived token as in item 6 answers a useful part of
-it read-only in the meantime, but only a copy lets a migration actually be run
-and rolled back.
+## 9. Test systems
+
+| Setup | What only this one proves |
+| --- | --- |
+| Reference: SH10RT, third-party battery, cable | The default development target |
+| fwitten: two SH10RT-V112 (master/slave), SBR, cables and dongles | Multi-device, unit 2 slaves, a firmware upgrade read before and after |
+| gerd: SH8.0RT-V112, SBR, wallbox, cable and dongle | The wallbox; cable against dongle on one inverter |
+| bar12: SH10RT-20, SBR, cable and dongle | A second cable/dongle pair; writes allowed |
+
+Two sites on the same subnet cannot both be routed; check before trusting an
+address. Section 4 has the access details.

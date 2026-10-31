@@ -4,7 +4,7 @@
     python scripts/helpers/review_names.py            # the table, to read
     python scripts/helpers/review_names.py --markdown # the same, for a document
 
-`doc/integration_plan.md` carries this as an open decision: *are the entity
+`Todo.md` carries this as an open decision: *are the entity
 names final?* With `has_entity_name` a name supplies the entity id, and it
 does so **at creation** -- so a rename later leaves an existing install's id
 alone and only diverges it from a fresh one, which is a support problem rather

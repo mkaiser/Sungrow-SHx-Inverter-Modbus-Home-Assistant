@@ -44,5 +44,4 @@ over the inverter's own LAN port: P023 on fwitten's master (1213 W, 0 W,
 0 W about 20 s after the write. After `0x55` it returns about 8 s later and is
 full within about 20 s. `PV_CUT_SETTLE` (35 s) waits out the ramp.
 
-The work still open is in `plans/cut-pv-generation.md`, and the question it
-answers is [does the PV cut work on P022 and P071](../queries/does-the-pv-cut-work-on-p022-and-p071.md).
+What is still open is in `Todo.md`; the question is [does the PV cut work on P022 and P071](../queries/does-the-pv-cut-work-on-p022-and-p071.md).

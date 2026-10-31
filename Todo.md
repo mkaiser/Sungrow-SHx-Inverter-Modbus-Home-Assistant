@@ -14,32 +14,28 @@ Structure:
 
 # Next steps
 
-1. **Finish the survey issue, #786.** Pin it, and set the repository
-   variable `SURVEY_ISSUE` to `786`: from then on
-   `.github/workflows/survey-issue.yml` writes `device-survey/survey-issue.md`
-   and the top of `device-survey/devices-wanted.md` into its body whenever
-   either changes, so the issue is edited through those files.
-2. **Document the GUI switches.** Every switch and option the integration's
-   *Configure* dialog offers, in one place a user reads (the control test's
-   restart, export limit and PV cut; the raw register dump; the testimony
-   and entity id sections): what each does, its default, and a screenshot
-   beside the existing ones in `device-survey/images/`. The opt-out text in
-   `device-survey/README.md` links to it once it exists.
-3. **Clean up the survey instructions.** `device-survey/survey-issue.md`,
-   the top of `device-survey/README.md`, `device-survey/devices-wanted.md`
-   and `doc/installing_a_preview.md` each explain how to run a survey,
-   what it writes and what to send. Say each thing once, link to it from
-   the others, and shorten the texts: the issue body above all, since it
-   is what a contributor reads first.
+1. **A screenshot of the Configure dialog** with the control test section
+   open, beside the others in `device-survey/images/`, shown in
+   `doc/integration_options.md`.
 
 
 # Open decisions
 
-## Naming
-
-- Deferred up to now. Create a table (YAML | HACS) with sensor names,
-  automations etc. Is there a good way for localization support, e.g.
-  English / German?
+1. **When to offer the ordinary setup** (`ONLY_SURVEY_MODE` in `const.py`;
+   turning it off is the whole re-enablement, `tests/test_alpha_gate.py`),
+   and **when to merge into `main`.** The merge retires the preview channel
+   and opens the HACS default store, which also needs the brand in
+   `home-assistant/brands` (`scripts/helpers/make_brand_icon.py` draws it).
+2. **Are the entity names final?** They are reviewed
+   (`doc/entity_name_review.md`, `scripts/helpers/review_names.py`). A rename
+   later leaves existing ids alone and only diverges new installs, which a
+   registry migration can close, so it stays cheap until release, not free.
+   Wanted with it: a table (YAML | HACS) of sensor names, automations etc.,
+   and whether localisation (English / German) is worth it.
+3. **Adopting the opt-in SBR YAML sensors.** Ids like
+   `sensor.sg_battery_1_max_voltage_of_cell` come from a copy-pasted file
+   outside the package and are **not** adopted. Doing it would mean taking
+   over entities this project never generated; the default stays "no".
 
 # Blockers
 
@@ -61,8 +57,9 @@ Structure:
      1:1, the integration's unanswered-probe fallback of ten sets a tenth of
      the asked export limit on an SH-T.
    - **The PV cut on P071** (holding 31211, #738): P022 and P023 are
-     confirmed; a watched cut puts P071 into `CONFIRMED_ON_FIRMWARE`.
-     [plans/cut-pv-generation.md](plans/cut-pv-generation.md).
+     confirmed; a watched cut puts P071 into `CONFIRMED_ON_FIRMWARE`
+     (`test_nothing_is_confirmed_without_a_document_that_shows_it` wants
+     the survey committed). On a T, watch whether 13018 acts as well.
    - **An SBH on a direct link.** `Capability.SUNGROW_BATTERY` is granted
      for an SBR found on its own unit (`with_sungrow_battery`); an SBH is
      not until its own-unit reading is seen without a dongle.
@@ -120,8 +117,76 @@ Structure:
       (RafAustralia, purcell-lab, NBS23) are the leads. RafAustralia notes the
       Logger1000A targets the T and commercial lines rather than RS/RT.
 
+7. **Firmware-dependent register semantics** ([#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)).
+   The pattern is `capabilities.ABSENT_ON_FIRMWARE`: a small table of
+   deviations keyed on the **whole** `sungrow_version_1` string (platform
+   prefix included: `PEARL-H_01011.01.45` is not older than
+   `SAPPHIRE-H_01011.95.03`), each citing the survey it came from. #763's
+   deviation, 13074's write scale, is measured per device and needs no
+   entry; no committed survey shows another.
+8. **A fault seen on hardware.** The fifteen words are decoded from V1.1.11's
+   Appendix 4; one survey has a flag set (bit 30 of the inverter alarm, a
+   slave with no meter), which confirms the word order. Wanted: a reading
+   during a real grid or battery fault, the battery words through a dongle,
+   and V1.1.16's appendix compared bit for bit.
+9. **SBH.** Answers the SBR's common block at unit 2 with the SBR's scales;
+    per-module arrays unread. Needs the register document.
+10. **Meter phase voltage/current (5741-5746) on dongle houses.** Read zero
+    through every WiNet-S measured and are gated on a non-zero voltage.
+    Whether they need reading on their own (#756) needs a survey from an
+    affected owner; `layout.py` changes only on measurement.
+11. **T-series energy counters.** One SH20T reads 13045 (daily export) as 0
+    while exporting, and 5003/5004-5005 duplicating the export counters. A
+    second T survey, ideally on a cable, before `registers.py` changes.
+12. **Modbus over TLS on a WiNet-S's 516.** Built for a wallbox's own
+    address (`wallbox_host`, `links.wallbox_tls_params`). For the dongle it is
+    worth building only if 516 is a *separate* session pool from 502: hold
+    502 until it refuses, then try 516. Also wanted: a certificate hash from a
+    third site, to show whether every dongle ships the same key.
+13. **Does a WiNet-S advertise over mDNS?** Needs a house with a dongle and
+    a run on the host, not in the container.
+14. **The production database.** The migration is verified at real scale
+    only against the maintainer's years-old YAML install; what to collect and
+    how is in `doc/maintainer_setup.md`, section 8.
+
 
 # Future work
+
+## SBR per-module entities
+
+All 24 registers are read, and the position encoding holds on three and four
+modules (wiki: SBR battery). `cell_type_module_n` is non-zero for each fitted
+module, which gives the module count. What is left is deciding the entities.
+
+## Two specification registers not read
+
+Holding 33042 (charge cutoff voltage, wide range) and holding 33274 (load
+rated power), both in V1.1.16; ha-modbus-manager carries them commented out.
+
+## The PV cut (31211, #738)
+
+- Ask the PR author on #738 for their 13250 string, or a survey; close #738
+  with a pointer to the release that ships the switch.
+- One evening's watch on a confirmed device: does a cut survive a night or
+  a restart, or does iSolarCloud rewrite it?
+- A run through a WiNet-S: whether the dongle forwards the write.
+
+## A generated dashboard
+
+Nothing generates one yet. Open: generate a Lovelace dashboard (asking
+first), or rely on entity metadata and document the auto-generated view.
+
+## The YAML track's documentation, for the integration
+
+Every page says which track it applies to; the first-line documentation of
+the integration is `strings.json`.
+
+| Page | To do |
+| --- | --- |
+| `legacy/doc/installation.md` | Add the integration: HACS, add integration, what discovery finds |
+| `legacy/doc/cleanup_entities.md` | Keep, linked from the repair as the manual fallback |
+| `legacy/doc/dashboard.md` | Generated dashboard and Energy dashboard |
+| `legacy/doc/faq.md` | The iHomeManager answer, once its entities ship |
 
 ## EVCC connection
 

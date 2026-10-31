@@ -126,21 +126,10 @@ Things that do **not** follow the entity IDs automatically:
 
 ## What the entities look like now
 
-Whichever answer you gave, the entities themselves follow Home Assistant's
-conventions rather than the YAML package's:
-
-- names are consistent — the YAML had `Battery min SoC` beside
-  `Battery Min Soc`, and this does not;
-- names come from translation files, so they can be translated; only English
-  ships so far;
-- identity strings, nameplate values and raw register codes are grouped under
-  **Diagnostic** on the device page rather than mixed in with the readings;
-- entities your hardware does not have are **not created**. A two-tracker
-  inverter gets no MPPT3 sensors, and a single-phase one gets no phase B or C
-  — rather than a permanently unavailable entity you have to go and delete.
-
-Migrating does not opt you out of any of that. Only the ID is inherited, with
-one difference: the raw register codes (`Running state raw` and friends) exist
+Whichever answer you gave, names are consistent and translatable (only
+English ships), identity and raw values sit under **Diagnostic**, and
+entities your hardware does not have are **not created**. Only the ID is
+inherited, with one difference: the raw register codes (`Running state raw` and friends) exist
 only with the YAML package's IDs, for the dashboards that read them. With
 device-scoped IDs the decoded value stands in their place — a binary sensor
 for an on/off mode, a ratio with its unit.
@@ -159,38 +148,20 @@ does properly.
 | `button.stop_inverter` | Action `sungrow_modbus.stop_inverter` |
 | `switch.sungrow_dashboard_enable_danger_mode` | Nothing — see below |
 
-**Start and stop became actions rather than buttons** because Home Assistant
-has no confirmation dialog for a button press. A button would sit in every
-dashboard picker and automation editor, and a misclick while scrolling on a
-phone stops your inverter. An action has to be written into a script or called
-from Developer Tools.
+**Start and stop are actions**, because Home Assistant has no confirmation
+dialog for a button press, and a misclick while scrolling on a phone would
+stop your inverter. Who may call them is yours to choose under **Configure →
+Permissions** (administrators by default); automations and scripts are not
+affected. If one of yours pressed those buttons, replace the `button.press`
+with the action: the register written is the same.
 
-Who may call them is **yours to choose**, in *Options → Permissions* on the
-integration: administrators only, which is the default, or anyone who can
-already control the inverter. A read-only account never can, whichever you
-pick, and neither setting affects automations and scripts — those act for the
-household rather than for a person. A button could not have been restricted at
-all.
-
-If a script or automation of yours pressed those buttons, replace the
-`button.press` with the action. The register written is the same one.
-
-**The danger-mode switch was a guard for the YAML's own dashboard** — it
-enabled the inverter and EMS controls so that browsing on a phone could not
-change them by accident, and an automation reset it after a minute. It was
-never a device setting, so the integration does not provide it. If you keep
-using that dashboard, keep the guard: before removing the package, copy its
-`Sungrow dashboard enable danger mode` template switch and the
-`sungrow dashboard enable danger mode auto reset` automation into your own
-configuration. The switch keeps its unique ID, so it keeps its entity ID and
-the dashboard keeps working.
-
-The integration's own answer to the same worry is different and does not need
-a switch. Home Assistant decides who may change a setting, by account: a
-read-only account under *Settings → People* sees every reading and can change
-nothing at all, which is a stronger guard than a toggle on a dashboard and
-cannot be un-toggled by the person browsing. Start and stop are further behind
-the Permissions option above.
+**The danger-mode switch guarded the YAML's own dashboard**, not the device,
+so it does not come across. To keep using that dashboard, copy its
+`Sungrow dashboard enable danger mode` template switch and its auto-reset
+automation into your own configuration before removing the package; the
+switch keeps its unique id, so the dashboard keeps working. The integration's
+own guard is per account: a read-only user sees every reading and can change
+nothing.
 
 ## Changing your mind
 

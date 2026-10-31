@@ -28,7 +28,7 @@
   //
   // Caveat: Claude Code keys project memory by workspace path, and that path
   // differs inside the container, so repo context lives in CLAUDE.md and
-  // doc/integration_plan.md instead - those are path-independent and
+  // Todo.md instead - those are path-independent and
   // committed.
   "mounts": [
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.claude,target=/home/vscode/.claude,type=bind"
