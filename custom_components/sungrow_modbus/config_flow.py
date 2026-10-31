@@ -104,6 +104,7 @@ from .const import (
     CONF_SURVEY_TRANSPORT,
     CONF_UNIT_ID,
     CONF_WALLBOX_HOST,
+    CONTROL_TEST_PERMISSION_DEFAULT,
     DEFAULT_EXTERNAL_PLACEMENT,
     DEFAULT_NAME,
     DEFAULT_PERMISSIONS,
@@ -1714,14 +1715,14 @@ class SungrowOptionsFlow(OptionsFlow):
         return section(_testimony_schema(options), {"collapsed": True})
 
     # What the control test is allowed to do, which is a different question
-    # from whether to run it. Running it is a button; these two decide how
-    # far it may go when somebody presses that button, and both default to
-    # the cautious answer. Their descriptions carry the consequences,
-    # because a checkbox label has no room for them and this is the only
-    # place either is explained.
+    # from whether to run it. Running it is a button; these three decide how
+    # far it may go when somebody presses that button. Each is granted until
+    # switched off (`CONTROL_TEST_PERMISSION_DEFAULT`). Their descriptions
+    # carry the consequences, because a checkbox label has no room for them
+    # and this is the only place any is explained.
 
     def _control_test_section(self) -> Any:
-        """Return the permissions part B needs, each off by default.
+        """Return the permissions part B needs, each on until switched off.
 
         They are separate flags rather than one level because they are not
         ordered: somebody who will allow a restart is not thereby somebody who
@@ -1733,15 +1734,21 @@ class SungrowOptionsFlow(OptionsFlow):
                 {
                     vol.Required(
                         CONF_CONTROL_TEST_RESTART,
-                        default=options.get(CONF_CONTROL_TEST_RESTART, False),
+                        default=options.get(
+                            CONF_CONTROL_TEST_RESTART, CONTROL_TEST_PERMISSION_DEFAULT
+                        ),
                     ): BooleanSelector(),
                     vol.Required(
                         CONF_CONTROL_TEST_EXPORT,
-                        default=options.get(CONF_CONTROL_TEST_EXPORT, False),
+                        default=options.get(
+                            CONF_CONTROL_TEST_EXPORT, CONTROL_TEST_PERMISSION_DEFAULT
+                        ),
                     ): BooleanSelector(),
                     vol.Required(
                         CONF_CONTROL_TEST_PV_CUT,
-                        default=options.get(CONF_CONTROL_TEST_PV_CUT, False),
+                        default=options.get(
+                            CONF_CONTROL_TEST_PV_CUT, CONTROL_TEST_PERMISSION_DEFAULT
+                        ),
                     ): BooleanSelector(),
                 }
             ),

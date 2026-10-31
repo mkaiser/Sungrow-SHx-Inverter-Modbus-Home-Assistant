@@ -25,6 +25,8 @@ import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.sungrow_modbus.const import (
+    CONF_CONTROL_TEST_EXPORT,
+    CONF_CONTROL_TEST_PV_CUT,
     CONF_CONTROL_TEST_RESTART,
     CONF_MODE,
     CONF_UNIT_ID,
@@ -78,9 +80,20 @@ def ready_unit(sungrow_unit: MockModbusUnit) -> MockModbusUnit:
     return sungrow_unit
 
 
+#: The control test's permissions, each switched off.
+REFUSED: dict[str, bool] = {
+    CONF_CONTROL_TEST_RESTART: False,
+    CONF_CONTROL_TEST_EXPORT: False,
+    CONF_CONTROL_TEST_PV_CUT: False,
+}
+
+
 async def _setup(
     hass: HomeAssistant, unit: MockModbusUnit, **options: Any
 ) -> MockConfigEntry:
+    # Every permission refused unless the test grants it: they default to on,
+    # and a restart nobody asked for costs a test its whole deadline.
+    options = {**REFUSED, **options}
     entry = MockConfigEntry(
         domain=DOMAIN,
         data={**ENTRY_DATA, CONF_MODE: MODE_DIAGNOSTICS},
@@ -369,9 +382,38 @@ async def test_the_button_runs_after_dark_where_the_cli_would_refuse(
     from custom_components.sungrow_modbus.control_test import ControlTestRunner
 
     entry = await _setup(hass, ready_unit)
+    # An entry whose options were never saved: what a new install runs with.
+    with patch(
+        "custom_components.sungrow_modbus.async_get_unit", return_value=ready_unit
+    ):
+        hass.config_entries.async_update_entry(entry, options={})
+        await hass.async_block_till_done()
     options = ControlTestRunner(hass, entry)._options()
 
     assert options.allow_dark is True
-    # The other two are still the owner's to grant, and default to no.
+    # The others are the owner's to refuse: granted until switched off.
+    assert options.restart is True
+    assert options.enable_export_limit is True
+    assert options.cut_pv is True
+
+
+async def test_a_permission_switched_off_stays_off(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """The opt-out: a switch the owner turned off is what the run gets."""
+    from custom_components.sungrow_modbus.control_test import ControlTestRunner
+
+    entry = await _setup(
+        hass,
+        ready_unit,
+        **{
+            CONF_CONTROL_TEST_RESTART: False,
+            CONF_CONTROL_TEST_EXPORT: False,
+            CONF_CONTROL_TEST_PV_CUT: False,
+        },
+    )
+    options = ControlTestRunner(hass, entry)._options()
+
     assert options.restart is False
     assert options.enable_export_limit is False
+    assert options.cut_pv is False

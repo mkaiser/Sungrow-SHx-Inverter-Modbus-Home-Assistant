@@ -8,7 +8,7 @@ Sungrow does not publish firmware changelogs, and we found that some registers b
 
 **How to run it:** [device-survey/README.md](README.md#contributing-your-device-survey), with screenshots. Either in Home Assistant with the HACS preview integration (choose *Perform the device survey*, then press *Run read only diagnosis*), or from a terminal. It takes 5–40 minutes per device, depending on the link. Stop anything else polling the inverter while it runs.
 
-**It only reads**, unless you also run the *control test*, which writes settings and puts them all back. That is a separate button, and the terminal survey asks first; the default is no.
+**It only reads**, unless you also run the *control test*, which writes settings and puts them all back. That is a separate button, *Run complete diagnosis and tests*; the terminal survey asks first, and the default is no. In Home Assistant the test may also restart the inverter, switch feed-in limitation on and cut PV for a minute, each unless you switch it off under *Configure* first ([how to opt out](README.md#in-home-assistant-opt-out-of-what-you-do-not-want)).
 
 **What to send:** attach the `<label>.json` file the run names to this issue. In that file your serial is replaced by an anonymized stand-in, and your IP address is left out. Keep the `.log` file to yourself, because it contains your real serial.
 

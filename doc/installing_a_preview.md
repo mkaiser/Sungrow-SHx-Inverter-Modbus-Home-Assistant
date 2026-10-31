@@ -245,10 +245,12 @@ register straight back against Sungrow's specification, and puts your value
 back — the only way to catch a setting written at ten times the value asked
 for. Everything it changes is saved first and read back after; anything
 that could not be put back becomes a repair under **Settings → Repairs**
-that restores it. It is for administrators by default, and stopping and
-restarting the inverter or lifting feed-in limitation each need a switch
-under **Configure** → *What the control write test may do*, both off. Its
-result goes into the same document.
+that restores it. It is for administrators by default. Stopping and
+restarting the inverter, switching feed-in limitation on and cutting PV each
+have a switch under **Configure** → *What the control write test may do*,
+**all on**: switch off what you do not want before pressing the button
+([opting out](../device-survey/README.md#in-home-assistant-opt-out-of-what-you-do-not-want)).
+Its result goes into the same document.
 
 There is also a standalone survey for anyone who would rather not install
 anything. See

@@ -36,6 +36,7 @@ from .const import (
     CONF_CONTROL_TEST_EXPORT,
     CONF_CONTROL_TEST_PV_CUT,
     CONF_CONTROL_TEST_RESTART,
+    CONTROL_TEST_PERMISSION_DEFAULT,
     DOMAIN,
 )
 
@@ -116,9 +117,15 @@ class ControlTestRunner:
         options = self.entry.options
         return Options(
             allow_dark=True,
-            restart=bool(options.get(CONF_CONTROL_TEST_RESTART, False)),
-            enable_export_limit=bool(options.get(CONF_CONTROL_TEST_EXPORT, False)),
-            cut_pv=bool(options.get(CONF_CONTROL_TEST_PV_CUT, False)),
+            restart=bool(
+                options.get(CONF_CONTROL_TEST_RESTART, CONTROL_TEST_PERMISSION_DEFAULT)
+            ),
+            enable_export_limit=bool(
+                options.get(CONF_CONTROL_TEST_EXPORT, CONTROL_TEST_PERMISSION_DEFAULT)
+            ),
+            cut_pv=bool(
+                options.get(CONF_CONTROL_TEST_PV_CUT, CONTROL_TEST_PERMISSION_DEFAULT)
+            ),
         )
 
     @callback

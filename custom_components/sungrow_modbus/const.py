@@ -128,27 +128,31 @@ DEFAULT_PERMISSIONS: dict[str, str] = {
     PERMISSION_CONTROL_TEST: AUDIENCE_ADMINS,
 }
 
+#: Whether each control test permission below is granted until its owner says no.
+#:
+#: Opt-out: pressing **Run complete diagnosis and tests** is the leave, and a
+#: run that skips its restart, export limit and PV cut leaves the checks only
+#: hardware can answer unanswered. Each switch is in the options' control
+#: test section, with its consequences spelled out there; one switched off is
+#: stored and stays off.
+CONTROL_TEST_PERMISSION_DEFAULT = True
+
 #: Let the control test stop and start the inverter, and time how long it takes.
 #:
-#: Off by default and asked for in its own options step, with the consequences
-#: spelled out there rather than in a label. Everything else the control test
-#: does is a setting that goes back; this one takes the house off its own
-#: generation for as long as the inverter takes to boot -- 3 to 4 minutes on
-#: the models measured so far -- which is why it is not on by default.
+#: Takes the house off its own generation for as long as the inverter takes to
+#: boot -- 3 to 4 minutes on the models measured so far.
 CONF_CONTROL_TEST_RESTART = "control_test_restart"
 
 #: Let the control test switch feed-in limitation on for the duration.
 #:
-#: Off by default. It is the one setting whose failed restore leaves the house
-#: generating less than it could, so a run will not turn it on unless somebody
-#: has said it may; where it is already on, the test uses it and this changes
-#: nothing.
+#: The one setting whose failed restore leaves the house generating less than
+#: it could; where it is already on, the test uses it and this changes nothing.
 CONF_CONTROL_TEST_EXPORT = "control_test_export_limit"
 
 #: Let the control test cut PV generation for about a minute (register 31211).
 #:
-#: Off by default: it is the one check that takes generation away on purpose.
-#: It is also the only evidence that writing 31211 does what it should, which
+#: The one check that takes generation away on purpose. It is also the only
+#: evidence that writing 31211 does what it should, which
 #: is what the `Cut PV generation` switch waits for on each firmware.
 CONF_CONTROL_TEST_PV_CUT = "control_test_pv_cut"
 

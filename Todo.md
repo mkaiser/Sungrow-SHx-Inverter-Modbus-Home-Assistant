@@ -19,6 +19,18 @@ Structure:
    `.github/workflows/survey-issue.yml` writes `device-survey/survey-issue.md`
    and the top of `device-survey/devices-wanted.md` into its body whenever
    either changes, so the issue is edited through those files.
+2. **Document the GUI switches.** Every switch and option the integration's
+   *Configure* dialog offers, in one place a user reads (the control test's
+   restart, export limit and PV cut; the raw register dump; the testimony
+   and entity id sections): what each does, its default, and a screenshot
+   beside the existing ones in `device-survey/images/`. The opt-out text in
+   `device-survey/README.md` links to it once it exists.
+3. **Clean up the survey instructions.** `device-survey/survey-issue.md`,
+   the top of `device-survey/README.md`, `device-survey/devices-wanted.md`
+   and `doc/installing_a_preview.md` each explain how to run a survey,
+   what it writes and what to send. Say each thing once, link to it from
+   the others, and shorten the texts: the issue body above all, since it
+   is what a contributor reads first.
 
 
 # Open decisions

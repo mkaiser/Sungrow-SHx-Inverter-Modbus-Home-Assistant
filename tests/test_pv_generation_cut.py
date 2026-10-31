@@ -24,7 +24,9 @@ from pytest_homeassistant_custom_component.common import (
 )
 
 from custom_components.sungrow_modbus.const import (
+    CONF_CONTROL_TEST_EXPORT,
     CONF_CONTROL_TEST_PV_CUT,
+    CONF_CONTROL_TEST_RESTART,
     CONF_UNIT_ID,
     DOMAIN,
 )
@@ -251,9 +253,20 @@ async def test_firmware_that_hangs_up_on_13250_is_never_asked_for_it(
 # -- the integration ------------------------------------------------------------
 
 
+#: The control test's permissions, each switched off.
+REFUSED: dict[str, bool] = {
+    CONF_CONTROL_TEST_RESTART: False,
+    CONF_CONTROL_TEST_EXPORT: False,
+    CONF_CONTROL_TEST_PV_CUT: False,
+}
+
+
 async def _setup(
     hass: HomeAssistant, unit: MockModbusUnit, **options: Any
 ) -> MockConfigEntry:
+    # Every permission refused unless the test grants it: they default to on,
+    # and a restart nobody asked for costs a test its whole deadline.
+    options = {**REFUSED, **options}
     entry = MockConfigEntry(
         domain=DOMAIN,
         data=ENTRY_DATA,

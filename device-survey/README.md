@@ -93,8 +93,9 @@ on Sungrow hardware: the survey reconnects around each one.
 
 ### It reads, and writes only if you say yes
 
-The survey reads your inverter and writes nothing to it — unless you answer
-yes to its last question, which offers the **control test**. That test
+The survey reads your inverter and writes nothing to it — unless you ask for
+the **control test**: in Home Assistant by pressing **Run complete diagnosis
+and tests**, in a terminal by answering yes to the last question. That test
 checks that the integration writes each setting at the right scale, and to do
 it, after the reading is finished, it:
 
@@ -114,6 +115,23 @@ restores it:
 ```bash
 scripts/survey.sh control 192.168.1.50 --restore <the file it names>
 ```
+
+#### In Home Assistant, opt out of what you do not want
+
+The button is your yes. The restart, the feed-in limitation and the PV cut
+are each **on unless you switch them off**, under *Settings → Devices &
+services → Sungrow Modbus (preview) → Configure → What the control write test
+may do*. Switch them off **before** pressing the button; what you switch off
+stays off. With all three off, the test still forces the battery and checks
+every setting's scale, and the document records which checks it skipped
+because you said no.
+
+Opting out is fine. Leaving them on is what answers the open questions:
+the PV cut is how your firmware gets the **Cut PV generation** switch, and
+the restart is how your model's recovery time gets on record. The PV cut
+needs daylight (500 W of PV or more); at night it skips itself.
+
+#### In a terminal, the default is no
 
 The default answer is no. Press Enter, or run it with nobody at the
 keyboard, and nothing is written. A survey that ran without it prints the

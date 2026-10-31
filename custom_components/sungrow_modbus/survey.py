@@ -59,6 +59,7 @@ from .const import (
     CONF_CONTROL_TEST_PV_CUT,
     CONF_CONTROL_TEST_RESTART,
     CONF_SURVEY_DUMP,
+    CONTROL_TEST_PERMISSION_DEFAULT,
     DEFAULT_SURVEY_DUMP,
     DOMAIN,
     LINK_VALID,
@@ -262,11 +263,21 @@ class SurveyRunner:
     def _control_options(self) -> ControlOptions:
         """Return what part B has leave to do, from this entry's options."""
         return ControlOptions(
-            restart=bool(self.entry.options.get(CONF_CONTROL_TEST_RESTART, False)),
-            enable_export_limit=bool(
-                self.entry.options.get(CONF_CONTROL_TEST_EXPORT, False)
+            restart=bool(
+                self.entry.options.get(
+                    CONF_CONTROL_TEST_RESTART, CONTROL_TEST_PERMISSION_DEFAULT
+                )
             ),
-            cut_pv=bool(self.entry.options.get(CONF_CONTROL_TEST_PV_CUT, False)),
+            enable_export_limit=bool(
+                self.entry.options.get(
+                    CONF_CONTROL_TEST_EXPORT, CONTROL_TEST_PERMISSION_DEFAULT
+                )
+            ),
+            cut_pv=bool(
+                self.entry.options.get(
+                    CONF_CONTROL_TEST_PV_CUT, CONTROL_TEST_PERMISSION_DEFAULT
+                )
+            ),
         )
 
     async def _async_run(self, control_test: bool = False) -> None:
