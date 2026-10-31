@@ -121,3 +121,11 @@ measure: peter-sm's 10 W caps made both forced checks report nothing.
 `device-survey/results/inverter/` and `device-survey/results/wallbox/`;
 iHomeManager and Logger documents go in `results/ihomemanager/` and
 `results/logger/`. The documents themselves are unchanged.
+
+## [2026-10-31] ingested | peter_sm's third reading (#785), every check confirmed
+
+On 0.1.0a19, with the house's battery limits back at 10000 W: outcome 0, 9/9
+readbacks, 13074 x10 by refusal a third time, and forced charge, forced
+discharge and the export limit all as commanded over the cable. Committed as
+`-2`, the survey's number for a taken name. A run 14 minutes earlier on an
+older release was not committed; this one covers it.

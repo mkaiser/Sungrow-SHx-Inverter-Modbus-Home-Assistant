@@ -55,9 +55,9 @@ dongle says so above its readback table.
   holds less than the command, the forced check and the manufactured export
   are commanded under it; below `EFFECT_FLOOR_W` the check is skipped with
   the limit named (`ControlTest._under_cap`). At
-  [peter-sm](../entities/installation-peter-sm.md) both were 10 W, and the
-  run reported "nothing measurable happened" for an inverter obeying its
-  owner. A 0 is not a limit: a dongle answers 0 for what it does not forward.
+  [peter-sm](../entities/installation-peter-sm.md)'s second reading both were
+  10 W, and the run reported "nothing measurable happened" for an inverter
+  obeying its owner; with 10000 W in the third, all three checks acted. A 0 is not a limit: a dongle answers 0 for what it does not forward.
 - **A pack's ceiling moves, so a clamp is normal near a full battery.** A
   manufactured discharge aims `FORCE_EXPORT_HEADROOM` below the ceiling and
   accepts a clamp within `CLAMP_TOLERANCE`. Decade verdicts are classified
