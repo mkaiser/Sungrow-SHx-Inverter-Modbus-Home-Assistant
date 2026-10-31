@@ -451,7 +451,7 @@ obvious simplification and would break exactly that.
 
 Two options are called a register dump: `CONF_REGISTER_DUMP` re-reads the
 mapped addresses into diagnostics, in seconds; `CONF_SURVEY_DUMP` sweeps
-`sungrow_modbus.dump.DUMP_BANDS` (1510 addresses) into the survey, in about
+`sungrow_modbus.dump.DUMP_BANDS` (1550 addresses) into the survey, in about
 five minutes, and only it can discover a register.
 
 To see any of this against a real run, the recorder is the fastest way in —

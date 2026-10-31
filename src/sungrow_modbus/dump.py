@@ -15,7 +15,7 @@ plus the ones that turned out to hold real values anyway.
 **The cost is the whole design problem here.** An unmapped address on a
 Sungrow does not refuse in milliseconds -- it goes quiet, and the read waits
 out its full timeout. A measured SH10RT takes about 300 seconds to read these
-1510 addresses for that reason, not because the bytes are slow. So this is
+1550 addresses for that reason, not because the bytes are slow. So this is
 bounded by a budget, reports which bands it never reached rather than
 pretending it covered them, and belongs behind a switch that is off.
 
@@ -46,7 +46,10 @@ DUMP_BANDS: tuple[tuple[str, int, int, str], ...] = (
     ("holding", 12999, 110, "the 13xxx settings"),
     ("holding", 31200, 60, "the active-power-limit block"),
     ("input", 33000, 200, "undocumented, and known to hold real values"),
-    ("holding", 33000, 200, "battery power limits and start thresholds"),
+    # From 32990, not 33000: 32997 holds a site import power limit and
+    # 33207-33218 the forced-charging schedule (#785), which a band ending
+    # at 33199 never read.
+    ("holding", 32990, 240, "battery power limits, start thresholds, forced charging"),
 )
 
 #: Never published raw, whatever band covers it: the serial number's ten

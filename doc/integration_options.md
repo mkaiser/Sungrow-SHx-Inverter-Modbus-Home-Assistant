@@ -63,7 +63,7 @@ itself is the **Run read only diagnosis** button on the device page.
 | *Battery make and model* | empty | No register reports it |
 | *Anything else worth knowing* | empty | |
 | *May the last two octets of the address be published?* | on | Only the last two octets, never the third. Off writes `xxx.xxx` |
-| *Also sweep the raw register bands* | on | Also reads 1510 addresses across twelve bands, including undocumented ones: about five minutes on a cable, longer through a WiNet-S. Off reads only the known registers, in seconds |
+| *Also sweep the raw register bands* | on | Also reads 1550 addresses across twelve bands, including undocumented ones: about five minutes on a cable, longer through a WiNet-S. Off reads only the known registers, in seconds |
 
 ## What the control write test may do
 

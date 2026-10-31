@@ -752,7 +752,7 @@ async def _ask_all(entry: Found, args, echo) -> argparse.Namespace:
     echo("")
     echo("  Starting now, and this is the long part: two registers that say")
     echo("  how the reading reaches the device, then every block read the")
-    echo("  integration makes, then the whole register map, then 1510 raw")
+    echo("  integration makes, then the whole register map, then 1550 raw")
     echo("  addresses. Over a slow link that can take a quarter of an hour, and")
     echo("  it will look stuck more than once. Every step says what it is")
     echo("  waiting for.")

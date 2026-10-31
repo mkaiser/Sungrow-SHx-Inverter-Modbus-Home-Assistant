@@ -3,7 +3,7 @@
 Two switches in this integration are called a register dump and they are not
 the same thing. `register_dump` in the options' Advanced section re-reads the
 addresses this library already maps and lands in the diagnostics file;
-`survey_register_dump` here sweeps twelve bands of 1510 addresses, most of
+`survey_register_dump` here sweeps twelve bands of 1550 addresses, most of
 which nothing maps, and lands in the survey document. The second is the one
 that can discover a register, and the one that costs five minutes.
 
@@ -120,7 +120,7 @@ async def test_the_diagnostics_download_never_dumps_however_the_option_is_set(
 async def test_an_asked_for_dump_covers_every_band(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """1510 addresses, in the shape the published documents already use.
+    """1550 addresses, in the shape the published documents already use.
 
     Keyed by address as a string and split by register space, because that is
     what `device-survey/scripts/python/sungrow_survey.py` writes and one

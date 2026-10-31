@@ -14,7 +14,24 @@ Structure:
 
 # Next steps
 
-Nothing that can start now without a decision or a device.
+1. **Forced charging schedule, registers 33208-33219** (#785, Korsberg's
+   request). In V1.1.16: 33208 enable (0xAA/0x55), 33209 valid time
+   (0 weekday, 1 every day), two windows of start and end hour and minute
+   (33210-33213, 33215-33218), a target SoC each (33214, 33219). Not on
+   MG5-12RL, SH3-10RL or SH50~125CX (an `ABSENT_IN` entry). No YAML entity,
+   so `layer: "specification"` with no legacy id. The appendix table in
+   V1.1.16 shifts names against registers by one; the main table is right.
+   Each start and end time is a `time` entity writing its hour and minute
+   registers together (a new platform here); the target SoCs are numbers.
+   Korsberg's addresses are protocol addresses: his 33207 is register 33208.
+2. **Sensors the YAML package dropped.** Some were removed because several
+   inverters did not answer them, starting with commit `6e9d3a6` ("Remove
+   history sensors": monthly PV generation per month, yearly PV generation
+   per year). The integration creates an entity only where the inverter
+   answers, so such sensors can come back without bothering anyone whose
+   inverter lacks them. Walk `git log -- modbus_sungrow.yaml` for removals,
+   list each register with why it went, and check the surveys for which
+   inverters answer it.
 
 
 # Open decisions
@@ -34,6 +51,7 @@ Nothing that can start now without a decision or a device.
    `sensor.sg_battery_1_max_voltage_of_cell` come from a copy-pasted file
    outside the package and are **not** adopted. Doing it would mean taking
    over entities this project never generated; the default stays "no".
+
 
 # Blockers
 
@@ -146,6 +164,18 @@ Nothing that can start now without a decision or a device.
 14. **The production database.** The migration is verified at real scale
     only against the maintainer's years-old YAML install; what to collect and
     how is in `doc/maintainer_setup.md`, section 8.
+
+15. **Discharge schedules and the import limit, not in any Sungrow document**
+    (#785). Korsberg has used them for years, as protocol addresses:
+    weekday discharge 33150-33157 (registers 33151-33158: two windows,
+    hour and minute), weekend discharge enable 33178 (0x55/0xAA) and two
+    windows 33179-33186 (registers 33179-33187), and a site import power
+    limit at 32997 (register 32998). His survey's dump agrees on the
+    schedules (weekday 00:00-24:00, weekend enabled, 00:00-24:00), on one
+    house. Read-only entities need the same values from a second house;
+    writes need a watched write, as 31211 did (wiki: firmware gating).
+    The survey's dump reads 32997 and the forced-charging block from
+    0.1.0a22.
 
 
 # Future work

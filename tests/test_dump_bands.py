@@ -38,4 +38,4 @@ def test_the_block_count_matches_what_the_bands_ask_for() -> None:
     assert block_count() == sum(
         len(range(0, count, 32)) for _space, _start, count, _why in DUMP_BANDS
     )
-    assert sum(count for _space, _start, count, _why in DUMP_BANDS) == 1510
+    assert sum(count for _space, _start, count, _why in DUMP_BANDS) == 1550
