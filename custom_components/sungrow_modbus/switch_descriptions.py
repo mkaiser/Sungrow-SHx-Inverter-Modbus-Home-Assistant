@@ -63,4 +63,14 @@ SWITCH_DESCRIPTIONS: tuple[SungrowSwitchDescription, ...] = (
         off_value=0x55,
         entity_category=EntityCategory.CONFIG,
     ),
+    SungrowSwitchDescription(
+        key="forced_charging_schedule",
+        component="forced_charging",
+        field="forced_charging_raw",
+        translation_key="forced_charging_schedule",
+        requires=Capability.FORCED_CHARGING,
+        on_value=0xAA,
+        off_value=0x55,
+        entity_category=EntityCategory.CONFIG,
+    ),
 )

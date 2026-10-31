@@ -39,8 +39,9 @@ dashboards when they switch ([doc/integration_migration.md](doc/integration_migr
   unit and state class of every entry they replace; created **only where the
   hardware has them**.
 - **Writes**, each read back at once: the state-of-charge limits, charge and
-  discharge maxima, the export power limit, three mode flags and three
-  selects. Start and stop are **actions**, with who may call them yours to
+  discharge maxima, the export power limit, three mode flags, three
+  selects, and the forced-charging schedule (two windows as times, with a
+  target SoC each). Start and stop are **actions**, with who may call them yours to
   choose (administrators by default).
 - **The SBR battery** and **the wallbox** (AC011E-01 / AC22E-01, read-only)
   as devices of their own, behind a WiNet-S or, for the wallbox, at its own

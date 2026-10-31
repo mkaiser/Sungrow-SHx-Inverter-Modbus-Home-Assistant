@@ -35,7 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "tables"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from naming import DIAGNOSTIC, modern_name
-from writes import NUMBERS, SELECTS, SWITCHES
+from writes import NUMBERS, SELECTS, SWITCHES, TIMES
 
 from sungrow_modbus.inverter.faults import FAULT_WORDS
 from sungrow_modbus.inverter.registers import COMPONENTS
@@ -86,6 +86,13 @@ def _by_unique_id(domain: str) -> dict[str, dict]:
 def _component(register: dict) -> str:
     """Return the component a register row is read by."""
     return f"{TIER_NAMES[register['scan_interval']]}_{register['input_type']}"
+
+
+def _component_of(field: str, registers: dict[str, dict]) -> str:
+    """Return the component a field is read by, YAML row or not."""
+    if field in registers:
+        return _component(registers[field])
+    return _component_declaring(field)
 
 
 def _component_declaring(field: str) -> str:
@@ -501,20 +508,19 @@ def render_numbers() -> str:
     lines = [NUMBERS_HEADER]
 
     for row in NUMBERS:
-        register = registers[row["field"]]
-        legacy = legacy_numbers[row["legacy_unique_id"]]
-
         lines.append("    SungrowNumberDescription(")
         lines.append(f'        key="{row["field"]}",')
-        lines.append(f'        component="{_component(register)}",')
+        lines.append(f'        component="{_component_of(row["field"], registers)}",')
         lines.append(f'        field="{row["field"]}",')
         lines.append(f'        translation_key="{row["field"]}",')
         # The YAML's `number` entity is what a migrating user has, so its name
         # and platform are what the id is claimed through -- not the sensor's,
-        # which reads the same register under a different entity id.
-        lines.append(f'        legacy_name="{legacy["name"]}",')
-        lines.append(f'        legacy_unique_id="{row["legacy_unique_id"]}",')
-        lines.append('        legacy_platform="template",')
+        # which reads the same register under a different entity id. A number
+        # the YAML never had claims nothing.
+        if unique_id := row.get("legacy_unique_id"):
+            lines.append(f'        legacy_name="{legacy_numbers[unique_id]["name"]}",')
+            lines.append(f'        legacy_unique_id="{unique_id}",')
+            lines.append('        legacy_platform="template",')
         # Read from the table rather than decided here. The conditional this
         # replaces said "BATTERY unless it is the export limit", which was
         # right about the export limit and wrong about the two start-power
@@ -577,10 +583,7 @@ def render_switches() -> str:
 
     for row in SWITCHES:
         key = row.get("key") or row["field"].removesuffix("_raw")
-        if row["field"] in registers:
-            component = _component(registers[row["field"]])
-        else:
-            component = _component_declaring(row["field"])
+        component = _component_of(row["field"], registers)
 
         lines.append("    SungrowSwitchDescription(")
         lines.append(f'        key="{key}",')
@@ -635,24 +638,67 @@ def render_selects() -> str:
     lines = [SELECTS_HEADER]
 
     for row in SELECTS:
-        register = registers[row["field"]]
-        entry = legacy[row["legacy_unique_id"]]
         key = row["key"]
         slugs = [option["slug"] for option in row["options"]]
         values = {option["slug"]: option["value"] for option in row["options"]}
 
         lines.append("    SungrowSelectDescription(")
         lines.append(f'        key="{key}",')
-        lines.append(f'        component="{_component(register)}",')
+        lines.append(f'        component="{_component_of(row["field"], registers)}",')
         lines.append(f'        field="{row["field"]}",')
         lines.append(f'        translation_key="{key}",')
-        lines.append(f'        legacy_name="{entry["name"]}",')
-        lines.append(f'        legacy_unique_id="{row["legacy_unique_id"]}",')
-        lines.append('        legacy_platform="template",')
+        if unique_id := row.get("legacy_unique_id"):
+            lines.append(f'        legacy_name="{legacy[unique_id]["name"]}",')
+            lines.append(f'        legacy_unique_id="{unique_id}",')
+            lines.append('        legacy_platform="template",')
         if capability := row.get("requires"):
             lines.append(f"        requires=Capability.{capability},")
         lines.append(f"        options={slugs!r},")
         lines.append(f"        values={values!r},")
+        lines.append("        entity_category=EntityCategory.CONFIG,")
+        lines.append("    ),")
+    lines.append(")")
+    return "\n".join(lines) + "\n"
+
+
+# --------------------------------------------------------------------------
+# times
+
+TIMES_HEADER = '''"""Time descriptions, generated from the write table.
+
+Do not edit by hand: `scripts/generate/descriptions.py times` writes this
+file from `scripts/generate/tables/writes.py`, and CI checks that it matches.
+
+Each is a time of day the inverter holds in two registers, an hour and a
+minute. One entity per pair, so a schedule reads as times rather than as
+numbers.
+"""
+
+from __future__ import annotations
+
+from homeassistant.const import EntityCategory
+
+from sungrow_modbus import Capability
+
+from .entity import SungrowTimeDescription
+
+TIME_DESCRIPTIONS: tuple[SungrowTimeDescription, ...] = (
+'''
+
+
+def render_times() -> str:
+    """Return the whole `time_descriptions.py` module."""
+    registers = _registers()
+    lines = [TIMES_HEADER]
+    for row in TIMES:
+        lines.append("    SungrowTimeDescription(")
+        lines.append(f'        key="{row["key"]}",')
+        lines.append(f'        component="{_component_of(row["hour"], registers)}",')
+        lines.append(f'        field="{row["hour"]}",')
+        lines.append(f'        minute_field="{row["minute"]}",')
+        lines.append(f'        translation_key="{row["key"]}",')
+        if capability := row.get("requires"):
+            lines.append(f"        requires=Capability.{capability},")
         lines.append("        entity_category=EntityCategory.CONFIG,")
         lines.append("    ),")
     lines.append(")")
@@ -684,6 +730,7 @@ def descriptions() -> list[tuple[str, str, str]]:
     from custom_components.sungrow_modbus.select_descriptions import SELECT_DESCRIPTIONS
     from custom_components.sungrow_modbus.sensor_descriptions import SENSOR_DESCRIPTIONS
     from custom_components.sungrow_modbus.switch_descriptions import SWITCH_DESCRIPTIONS
+    from custom_components.sungrow_modbus.time_descriptions import TIME_DESCRIPTIONS
     from custom_components.sungrow_modbus.wallbox_descriptions import (
         WALLBOX_BINARY_DESCRIPTIONS,
         WALLBOX_DESCRIPTIONS,
@@ -722,6 +769,7 @@ def descriptions() -> list[tuple[str, str, str]]:
     entries += [("number", d) for d in NUMBER_DESCRIPTIONS]
     entries += [("switch", d) for d in SWITCH_DESCRIPTIONS]
     entries += [("select", d) for d in SELECT_DESCRIPTIONS]
+    entries += [("time", d) for d in TIME_DESCRIPTIONS]
     return [
         (
             domain,
@@ -814,7 +862,10 @@ TARGETS: dict[str, Target] = {
         True,
         "the write table",
     ),
-    # Last: it reads what the four above write.
+    "times": Target(
+        (COMPONENT / "time_descriptions.py",), render_times, True, "the write table"
+    ),
+    # Last: it reads what the five above write.
     "strings": Target(
         (STRINGS, TRANSLATION), render_strings, False, "the descriptions"
     ),

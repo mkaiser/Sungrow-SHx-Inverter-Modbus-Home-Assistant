@@ -14,24 +14,21 @@ Structure:
 
 # Next steps
 
-1. **Forced charging schedule, registers 33208-33219** (#785, Korsberg's
-   request). In V1.1.16: 33208 enable (0xAA/0x55), 33209 valid time
-   (0 weekday, 1 every day), two windows of start and end hour and minute
-   (33210-33213, 33215-33218), a target SoC each (33214, 33219). Not on
-   MG5-12RL, SH3-10RL or SH50~125CX (an `ABSENT_IN` entry). No YAML entity,
-   so `layer: "specification"` with no legacy id. The appendix table in
-   V1.1.16 shifts names against registers by one; the main table is right.
-   Each start and end time is a `time` entity writing its hour and minute
-   registers together (a new platform here); the target SoCs are numbers.
-   Korsberg's addresses are protocol addresses: his 33207 is register 33208.
-2. **Sensors the YAML package dropped.** Some were removed because several
-   inverters did not answer them, starting with commit `6e9d3a6` ("Remove
-   history sensors": monthly PV generation per month, yearly PV generation
-   per year). The integration creates an entity only where the inverter
-   answers, so such sensors can come back without bothering anyone whose
-   inverter lacks them. Walk `git log -- modbus_sungrow.yaml` for removals,
-   list each register with why it went, and check the surveys for which
-   inverters answer it.
+1. **Bring back the YAML package's history sensors, for cable users.** Its
+   monthly and yearly PV generation (6227-6238, 6250-6289), monthly and
+   yearly direct consumption (6417-6428, 6429-6468) and monthly and yearly
+   export (6596-6607, 6608-6647) are all in V1.1.16. They went because most
+   YAML users read through a WiNet-S, which refuses the block: inputs
+   6196-6198 answer on every cable survey and are refused on every dongle
+   one (wiki: WiNet-S, the history registers), and V1.1.16 marks the whole
+   block 6100-6826 "WiNet-S/S2 and Logger is not supported". The survey
+   dump reads all of it from 0.1.0a23. Gate them on a capability
+   probed at 6227, so a dongle house gets none of them. Every other sensor
+   the YAML ever dropped was renamed and is still read, or moved (grid
+   frequency to 5242, battery power to 5214, battery capacity to 5639), or
+   went for cause: grid state's 13030 is reserved in V1.1.16, and the manual
+   MPP scan at holding 30230 is in no Sungrow document. What needs deciding
+   first is open decision 4.
 
 
 # Open decisions
@@ -51,6 +48,12 @@ Structure:
    `sensor.sg_battery_1_max_voltage_of_cell` come from a copy-pasted file
    outside the package and are **not** adopted. Doing it would mean taking
    over entities this project never generated; the default stays "no".
+4. **How many history entities.** Twelve monthly and up to twenty yearly
+   values per quantity is ~100 entities. Options: only the current month
+   and year as sensors (and the rest as attributes), or the YAML's full set
+   so its users' history continues under the same ids. The YAML's ids
+   (`sensor.monthly_pv_generation_01_january`...) still hold years of
+   history at some houses.
 
 
 # Blockers
@@ -190,6 +193,7 @@ module, which gives the module count. What is left is deciding the entities.
 
 Holding 33042 (charge cutoff voltage, wide range) and holding 33274 (load
 rated power), both in V1.1.16; ha-modbus-manager carries them commented out.
+The survey dump reads both from 0.1.0a23.
 
 ## The PV cut (31211, #738)
 

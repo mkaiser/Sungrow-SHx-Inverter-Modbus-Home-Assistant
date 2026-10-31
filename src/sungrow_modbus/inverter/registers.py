@@ -519,6 +519,71 @@ class InverterPvGenerationCut(Component):
     """PV generation cut raw."""
 
 
+class InverterForcedCharging(Component):
+    """12 holding fields, polled every 60s.
+
+    The forced-charging schedule, registers 33208-33219 in V1.1.16: on or off,
+    weekdays or every day, and two windows of a start and an end time with a
+    target state of charge each. "MG5-12RL and SH3-10RL are not supported.
+    SH50~125CX are not supported." Its own component, as 31211 is, so an
+    inverter without it costs one refused read rather than a pooled block.
+
+    Each time is two registers, an hour (0-23) and a minute (0-59); the
+    integration shows each pair as one `time` entity. V1.1.16's appendix
+    table shifts these names against their registers by one; the main table,
+    used here, is the one that agrees with what an SH10RT answers (#785).
+    """
+
+    register_space = "holding"
+
+    forced_charging_raw = integer(reg(33208), signed=False, nan=65535, writable=True)
+    """Forced charging raw: 0xAA enabled, 0x55 disabled."""
+    forced_charging_days_raw = integer(
+        reg(33209), signed=False, nan=65535, writable=True
+    )
+    """Forced charging valid time: 0 weekdays, 1 every day."""
+    forced_charging_start_1_hour = integer(
+        reg(33210), signed=False, nan=65535, writable=True
+    )
+    """Forced charging start time 1, hour."""
+    forced_charging_start_1_minute = integer(
+        reg(33211), signed=False, nan=65535, writable=True
+    )
+    """Forced charging start time 1, minute."""
+    forced_charging_end_1_hour = integer(
+        reg(33212), signed=False, nan=65535, writable=True
+    )
+    """Forced charging end time 1, hour."""
+    forced_charging_end_1_minute = integer(
+        reg(33213), signed=False, nan=65535, writable=True
+    )
+    """Forced charging end time 1, minute."""
+    forced_charging_target_soc_1 = integer(
+        reg(33214), signed=False, nan=65535, unit="%", writable=True
+    )
+    """Forced charging target SoC 1."""
+    forced_charging_start_2_hour = integer(
+        reg(33215), signed=False, nan=65535, writable=True
+    )
+    """Forced charging start time 2, hour."""
+    forced_charging_start_2_minute = integer(
+        reg(33216), signed=False, nan=65535, writable=True
+    )
+    """Forced charging start time 2, minute."""
+    forced_charging_end_2_hour = integer(
+        reg(33217), signed=False, nan=65535, writable=True
+    )
+    """Forced charging end time 2, hour."""
+    forced_charging_end_2_minute = integer(
+        reg(33218), signed=False, nan=65535, writable=True
+    )
+    """Forced charging end time 2, minute."""
+    forced_charging_target_soc_2 = integer(
+        reg(33219), signed=False, nan=65535, unit="%", writable=True
+    )
+    """Forced charging target SoC 2."""
+
+
 class InverterMediumInput(Component):
     """3 input fields, polled every 60s."""
 
@@ -743,6 +808,7 @@ COMPONENTS: dict[str, type[Component]] = {
     "apl_shutdown_at_zero": InverterAplShutdownAtZero,
     "medium_input": InverterMediumInput,
     "pv_generation_cut": InverterPvGenerationCut,
+    "forced_charging": InverterForcedCharging,
     "slowest_input": InverterSlowestInput,
     "battery_firmware": InverterBatteryFirmware,
     "firmware_block_battery": InverterFirmwareBlockBattery,
@@ -762,7 +828,7 @@ TIER_COMPONENTS: dict[str, tuple[str, ...]] = {
         "fast_holding",
         "apl_shutdown_at_zero",
     ),
-    "medium": ("medium_input", "pv_generation_cut"),
+    "medium": ("medium_input", "pv_generation_cut", "forced_charging"),
     "slowest": (
         "slowest_input",
         "battery_firmware",

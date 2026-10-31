@@ -21,11 +21,11 @@ flowchart TD
         flow["config_flow<br/>probe, identify, scan the LAN,<br/>ask about entity ids<br/><br/>config_flow_schemas: the forms it shows,<br/>separated from the decisions about showing them"]
         survey["survey &mdash; both parts, one progress bar<br/><br/>part A: probe every capability,<br/>publish a document that carries a<br/>stand-in serial and at most two octets<br/><br/>part B control_test (in the library): write each<br/>control, check the raw word against a hand-typed<br/>scale, watch what the inverter does, put it back<br/><br/>repairs: a run that did not finish restoring<br/>becomes a fix flow somebody can click<br/>download: a signed, short-lived link"]
         coord["coordinator<br/>four for the inverter, one per tier:<br/>realtime 5s, fast 10s, medium 60s, slowest 600s<br/><br/>one more per extra device that answered:<br/>the SBR pack on medium, the wallbox on fast<br/>with its slow blocks every 30th poll"]
-        ent["entity<br/>sensor, binary_sensor,<br/>number, switch, select<br/><br/>a diagnostics-only entry: the survey and<br/>control test buttons and three sensors"]
+        ent["entity<br/>sensor, binary_sensor,<br/>number, switch, select, time<br/><br/>a diagnostics-only entry: the survey and<br/>control test buttons and three sensors"]
         mig["migration<br/>claim the YAML entity_id,<br/>or take a modern id then rename"]
         svc["services<br/>start_inverter, stop_inverter,<br/>run_control_test: audience set per entry,<br/>admins only by default<br/>run_survey: anyone"]
         diag["diagnostics<br/>the downloadable report"]
-        gen["sensor_descriptions.py: source, tested against the entity map<br/>derived/number/switch/select: generated from<br/>the library's derived module and scripts/generate/tables"]
+        gen["sensor_descriptions.py: source, tested against the entity map<br/>derived/number/switch/select/time: generated from<br/>the library's derived module and scripts/generate/tables"]
         hand["battery_descriptions.py, wallbox_descriptions.py,<br/>external_descriptions.py<br/>source: none of them is in the entity map"]
         ext["external<br/>add back a generator the Sungrow cannot see,<br/>from entities another integration owns"]
     end
@@ -190,7 +190,7 @@ flowchart LR
 
     subgraph generated["generated, committed, --check in CI"]
         direction TB
-        descs["derived, number, switch<br/>and select descriptions"]
+        descs["derived, number, switch,<br/>select and time descriptions"]
         strings["strings.json<br/>translations/en.json"]
     end
 

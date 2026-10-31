@@ -156,7 +156,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `seed_migration_testbed.py` | Make the dev instance look like a house that ran the YAML package for years; see [Reviewing the migration by hand](#reviewing-the-migration-by-hand) |
 | **`scripts/generate/`** | **Everything that writes a committed file; each has `--check` but the multi-inverter YAML, which CI regenerates and commits instead** |
 | `descriptions.py` | The entity descriptions and names: `derived`, `numbers`, `switches`, `selects`, `strings`, or all five with no argument (`strings` last, since it reads the others) |
-| `tables/writes.py` | **Input table**: which registers the integration may write and within what bounds. Feeds the number/switch/select descriptions; `tests/test_writes.py` holds `registers.py`'s writable set to it |
+| `tables/writes.py` | **Input table**: which registers the integration may write and within what bounds. Feeds the number/switch/select/time descriptions; `tests/test_writes.py` holds `registers.py`'s writable set to it |
 | `tables/naming.py` | **Input table**: the entity-name convention. Feeds `strings.json`, `review_names.py` and the Influx helper |
 | `generate_compatibility.py` | Build `doc/compatibility.md` from the committed surveys |
 | `generate_simulator_registers.py` | The simulator's seed, from the entity map |
@@ -451,7 +451,7 @@ obvious simplification and would break exactly that.
 
 Two options are called a register dump: `CONF_REGISTER_DUMP` re-reads the
 mapped addresses into diagnostics, in seconds; `CONF_SURVEY_DUMP` sweeps
-`sungrow_modbus.dump.DUMP_BANDS` (1550 addresses) into the survey, in about
+`sungrow_modbus.dump.DUMP_BANDS` (2181 addresses) into the survey, in about
 five minutes, and only it can discover a register.
 
 To see any of this against a real run, the recorder is the fastest way in —

@@ -145,6 +145,14 @@ class Capability(StrEnum):
     what the reference SH10RT does.
     """
 
+    FORCED_CHARGING = "forced_charging"
+    """The forced-charging schedule, registers 33208-33219 (V1.1.16).
+
+    Probed on its enable register, and granted only by 0xAA or 0x55
+    (`MODE_CODES_ONLY`): a dongle's 0 for an absent register would otherwise
+    create eleven writable entities against nothing.
+    """
+
     PV_GENERATION_CUT = "pv_generation_cut"
     """Register 31211 answers: PV generation can be cut, and its state read.
 
@@ -277,6 +285,9 @@ ABSENT_IN: dict[Capability, frozenset[Family]] = {
     # V1.1.16 reg 13088: "MG5-12RL and SH3-10RL are not supported.
     # SH50~125CX are not supported."
     Capability.FEED_IN_LIMITATION_RATIO: frozenset({Family.MG, Family.RL, Family.CX}),
+    # V1.1.16 reg 33208: "MG5-12RL and SH3-10RL are not supported.
+    # SH50~125CX are not supported."
+    Capability.FORCED_CHARGING: frozenset({Family.MG, Family.RL, Family.CX}),
     # V1.1.10: "Only SHT are supported."
     Capability.PV_POWER_LIMITATION: frozenset(
         {Family.RS, Family.MG, Family.RL, Family.CX, Family.RT, Family.K}
@@ -504,6 +515,7 @@ PROBES: dict[Capability, tuple[str, ...]] = {
     Capability.PV_POWER_LIMITATION: ("pv_power_limitation_raw",),
     Capability.FORCED_STARTUP: ("forced_startup_under_low_soc_raw",),
     Capability.PV_GENERATION_CUT: ("pv_generation_cut_raw",),
+    Capability.FORCED_CHARGING: ("forced_charging_raw",),
 }
 
 #: Capabilities granted only by a Sungrow mode code, 0xAA or 0x55.
@@ -512,7 +524,9 @@ PROBES: dict[Capability, tuple[str, ...]] = {
 #: specification: the specification's sentinel is not promised there, and a
 #: dongle answers 0 where the inverter answers 0xFFFF. A mode register that
 #: holds neither code is not one this integration knows how to drive.
-MODE_CODES_ONLY: frozenset[Capability] = frozenset({Capability.PV_GENERATION_CUT})
+MODE_CODES_ONLY: frozenset[Capability] = frozenset(
+    {Capability.PV_GENERATION_CUT, Capability.FORCED_CHARGING}
+)
 
 #: The two codes every Sungrow mode register uses.
 MODE_CODES: frozenset[int] = frozenset({0xAA, 0x55})

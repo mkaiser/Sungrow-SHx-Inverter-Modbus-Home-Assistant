@@ -570,6 +570,26 @@ NOT_PROBED: dict[str, str] = {
         "a mode flag with no scale to get wrong, written only by the PV cut "
         "check, which judges it by what PV does"
     ),
+    # The forced-charging schedule (V1.1.16 33208-33219). Every register in it
+    # counts in ones, hours, minutes or whole percent, so there is no scale
+    # for a readback to catch; and a window written into it can start the
+    # battery charging from the grid at the time it names.
+    **dict.fromkeys(
+        (
+            "forced_charging_raw",
+            "forced_charging_days_raw",
+            "forced_charging_target_soc_1",
+            "forced_charging_target_soc_2",
+            *(
+                f"forced_charging_{part}_{window}_{unit}"
+                for window in (1, 2)
+                for part in ("start", "end")
+                for unit in ("hour", "minute")
+            ),
+        ),
+        "part of the forced-charging schedule: counted in ones with no scale to "
+        "get wrong, and a window written into it can charge from the grid",
+    ),
 }
 
 

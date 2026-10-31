@@ -286,7 +286,7 @@ CONF_PUBLISH_ADDRESS = "publish_address"
 #: is for.
 #:
 #: Not free, which is why it stays a question. The dump reads
-#: 1550 addresses that nothing maps, and on a Sungrow an address with no
+#: 2181 addresses, most of which nothing maps, and on a Sungrow an address with no
 #: register behind it goes quiet rather than refusing -- so every empty one
 #: costs a whole timeout. A measured SH10RT takes about five minutes.
 #:

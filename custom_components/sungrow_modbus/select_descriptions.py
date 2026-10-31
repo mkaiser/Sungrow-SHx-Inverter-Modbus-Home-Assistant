@@ -53,4 +53,14 @@ SELECT_DESCRIPTIONS: tuple[SungrowSelectDescription, ...] = (
         values={"timing": 0, "on_off": 1, "power_optimised": 2, "disabled": 3},
         entity_category=EntityCategory.CONFIG,
     ),
+    SungrowSelectDescription(
+        key="forced_charging_days",
+        component="forced_charging",
+        field="forced_charging_days_raw",
+        translation_key="forced_charging_days",
+        requires=Capability.FORCED_CHARGING,
+        options=["weekdays", "every_day"],
+        values={"weekdays": 0, "every_day": 1},
+        entity_category=EntityCategory.CONFIG,
+    ),
 )

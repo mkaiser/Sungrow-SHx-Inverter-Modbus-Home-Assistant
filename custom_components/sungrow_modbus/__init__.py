@@ -94,6 +94,7 @@ PLATFORMS: list[Platform] = [
     Platform.SELECT,
     Platform.SENSOR,
     Platform.SWITCH,
+    Platform.TIME,
 ]
 
 #: What a diagnostics-only entry sets up: the survey and control test buttons

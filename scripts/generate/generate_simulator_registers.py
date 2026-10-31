@@ -56,6 +56,21 @@ OVERRIDES: dict[int, int | list[int]] = {
     5621: 0,  # export power limit minimum, 10 W per count
     5622: 1000,  # export power limit maximum -> 10 kW
     5627: 50,  # BDC rated power, 100 W per count -> 5 kW
+    # The forced-charging schedule, holding 33208-33219: off, every day, one
+    # window 02:00-05:00 to 80 %, the second unused. The default 1 would read
+    # as neither on nor off, and as 01:01.
+    33207: 0x55,
+    33208: 1,
+    33209: 2,
+    33210: 0,
+    33211: 5,
+    33212: 0,
+    33213: 80,
+    33214: 0,
+    33215: 0,
+    33216: 0,
+    33217: 0,
+    33218: 0,
 }
 
 #: The fault and alarm words, input 13050-13079: no flag set, which is what

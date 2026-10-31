@@ -9,6 +9,7 @@ from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.switch import SwitchEntityDescription
+from homeassistant.components.time import TimeEntityDescription
 from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from sungrow_modbus import Capability, present
@@ -178,6 +179,17 @@ class SungrowSelectDescription(SungrowEntityDescription, SelectEntityDescription
 
     values: dict[str, int]
     """Option key to the value that goes in the register."""
+
+
+@dataclass(frozen=True, kw_only=True)
+class SungrowTimeDescription(SungrowEntityDescription, TimeEntityDescription):
+    """Describe a time of day the inverter holds as an hour and a minute.
+
+    `field` is the hour register and `minute_field` the minute beside it, in
+    the same component, so one poll reads both.
+    """
+
+    minute_field: str
 
 
 @dataclass(frozen=True, kw_only=True)

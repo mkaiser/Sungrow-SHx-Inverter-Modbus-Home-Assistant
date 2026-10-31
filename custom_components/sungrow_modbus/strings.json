@@ -118,7 +118,7 @@
           "survey_battery": "No register reports it. \"SBR096\" or \"Pylontech Force H1, 14.4 kWh\" is more useful than a capacity the inverter already reports.",
           "survey_comment": "Anything unusual about the installation — a cluster, a second inverter, a wallbox, a firmware update you remember.",
           "publish_address": "On, and yours to turn off before you submit. Only the last two octets ever reach the document — never the third, which is what would identify your network — and clear this and it reads xxx.xxx instead. What it buys is telling several readings from one house apart: a master, a slave and two dongles otherwise produce four files that look alike.",
-          "survey_register_dump": "On, and worth turning off if you are in a hurry. Without it a survey reads the registers this integration already knows about and takes a couple of seconds. With it, it also sweeps 1550 addresses across twelve bands, including the ones no specification documents — which is how every undocumented register this project knows was found. That is slow because an address with nothing behind it goes quiet rather than refusing, so each empty one costs a full timeout: about five minutes on a direct cable, and considerably longer through a WiNet-S or a VPN. Your inverter keeps being polled throughout, and the survey button on the device page shows how far along it is."
+          "survey_register_dump": "On, and worth turning off if you are in a hurry. Without it a survey reads the registers this integration already knows about and takes a couple of seconds. With it, it also sweeps 2181 addresses across sixteen bands, including the ones no specification documents — which is how every undocumented register this project knows was found. That is slow because an address with nothing behind it goes quiet rather than refusing, so each empty one costs a full timeout: about five minutes on a direct cable, and considerably longer through a WiNet-S or a VPN. Your inverter keeps being polled throughout, and the survey button on the device page shows how far along it is."
         }
       },
       "user": {
@@ -256,6 +256,12 @@
       },
       "export_power_limit": {
         "name": "Export power limit"
+      },
+      "forced_charging_target_soc_1": {
+        "name": "Forced charging target SoC 1"
+      },
+      "forced_charging_target_soc_2": {
+        "name": "Forced charging target SoC 2"
       }
     },
     "select": {
@@ -274,6 +280,13 @@
           "forced": "Forced (compulsory)",
           "external_ems": "External EMS",
           "vpp": "VPP"
+        }
+      },
+      "forced_charging_days": {
+        "name": "Forced charging days",
+        "state": {
+          "weekdays": "Weekdays",
+          "every_day": "Every day"
         }
       },
       "load_adjustment_mode": {
@@ -877,8 +890,25 @@
       "export_power_limit_mode": {
         "name": "Export power limit mode"
       },
+      "forced_charging_schedule": {
+        "name": "Forced charging schedule"
+      },
       "load_adjustment_mode_enable": {
         "name": "Load adjustment"
+      }
+    },
+    "time": {
+      "forced_charging_end_1": {
+        "name": "Forced charging end 1"
+      },
+      "forced_charging_end_2": {
+        "name": "Forced charging end 2"
+      },
+      "forced_charging_start_1": {
+        "name": "Forced charging start 1"
+      },
+      "forced_charging_start_2": {
+        "name": "Forced charging start 2"
       }
     }
   },
@@ -1056,7 +1086,7 @@
               "survey_battery": "No register reports it. \"SBR096\" or \"Pylontech Force H1, 14.4 kWh\" is more useful than a capacity the inverter already reports.",
               "survey_comment": "Anything unusual about the installation — a cluster, a second inverter, a wallbox, a firmware update you remember.",
               "publish_address": "On, and yours to turn off before you submit. Only the last two octets ever reach the document — never the third, which is what would identify your network — and clear this and it reads xxx.xxx instead. What it buys is telling several readings from one house apart: a master, a slave and two dongles otherwise produce four files that look alike.",
-              "survey_register_dump": "On, and worth turning off if you are in a hurry. Without it a survey reads the registers this integration already knows about and takes a couple of seconds. With it, it also sweeps 1550 addresses across twelve bands, including the ones no specification documents — which is how every undocumented register this project knows was found. That is slow because an address with nothing behind it goes quiet rather than refusing, so each empty one costs a full timeout: about five minutes on a direct cable, and considerably longer through a WiNet-S or a VPN. Your inverter keeps being polled throughout, and the survey button on the device page shows how far along it is."
+              "survey_register_dump": "On, and worth turning off if you are in a hurry. Without it a survey reads the registers this integration already knows about and takes a couple of seconds. With it, it also sweeps 2181 addresses across sixteen bands, including the ones no specification documents — which is how every undocumented register this project knows was found. That is slow because an address with nothing behind it goes quiet rather than refusing, so each empty one costs a full timeout: about five minutes on a direct cable, and considerably longer through a WiNet-S or a VPN. Your inverter keeps being polled throughout, and the survey button on the device page shows how far along it is."
             }
           },
           "control_test": {

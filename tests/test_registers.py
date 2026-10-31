@@ -28,7 +28,10 @@ def _expected() -> dict[str, dict]:
         for e in entities
         if e["layer"] in {"modbus", "specification", "observed"}
         and e.get("address") is not None
-        and e["domain"] != "switch"
+        # The YAML's switches read registers its sensors already name, under
+        # the same object ids. A specification switch has no sensor beside it,
+        # so its row is the only record of its field.
+        and (e["domain"] != "switch" or e["layer"] == "specification")
     }
 
 

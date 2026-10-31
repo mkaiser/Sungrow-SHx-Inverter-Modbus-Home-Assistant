@@ -137,3 +137,9 @@ moved here: the SBH readings (scales, state of charge, over-rating), the SBR
 position encoding, and how an iHomeManager's Modbus TCP is opened. The wiki
 keeps frozen copies of the register documents in `raw/`; the `doc/` copies
 are ordinary docs, and `doc/cross_reference_modbus_manager.md` is retired.
+
+## [2026-10-31] found | the history registers are cable-only
+
+Inputs 6196-6198 (daily PV yields) answer on every cable survey and are
+refused through every WiNet-S. The YAML package's dropped monthly and yearly
+sensors (6227 on) are in the same V1.1.16 block, unread so far.

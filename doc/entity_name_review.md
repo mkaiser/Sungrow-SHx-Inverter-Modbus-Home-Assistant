@@ -1,6 +1,6 @@
 # The entity names, for review
 
-**205 entities**, which is everything modern mode creates. The **entity id**
+**209 entities**, which is everything modern mode creates. The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
 it -- but only at creation. Rename later and anybody who already has the entity
 keeps the id they were born with; only the label changes. So the cost of a late
@@ -56,7 +56,7 @@ better.
 | Total consumed energy | `sensor.sh10rt_total_consumed_energy` | kWh | Total consumed energy |
 | Total direct energy consumption | `sensor.sh10rt_total_direct_energy_consumption` | kWh | Total direct energy consumption |
 
-## Everything else (35)
+## Everything else (39)
 
 | Name | Entity id | Unit | Legacy name |
 | --- | --- | --- | --- |
@@ -80,6 +80,10 @@ better.
 | Firmware version part 1 | `sensor.sh10rt_firmware_version_part_1` |  | Sungrow Version 1 **←** |
 | Firmware version part 2 | `sensor.sh10rt_firmware_version_part_2` |  | Sungrow Version 2 **←** |
 | Firmware version part 3 | `sensor.sh10rt_firmware_version_part_3` |  | Sungrow Version 3 **←** |
+| Forced charging days | `select.sh10rt_forced_charging_days` |  |  |
+| Forced charging schedule | `switch.sh10rt_forced_charging_schedule` |  |  |
+| Forced charging target SoC 1 | `number.sh10rt_forced_charging_target_soc_1` | % |  |
+| Forced charging target SoC 2 | `number.sh10rt_forced_charging_target_soc_2` | % |  |
 | Forced startup under low SoC raw | `sensor.sh10rt_forced_startup_under_low_soc_raw` |  |  |
 | Maximum charging power | `sensor.sh10rt_maximum_charging_power` | W |  |
 | Minimum charging power | `sensor.sh10rt_minimum_charging_power` | W |  |

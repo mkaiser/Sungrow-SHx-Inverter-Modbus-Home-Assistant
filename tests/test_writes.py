@@ -47,6 +47,10 @@ def _yaml_numbers() -> dict[str, dict]:
 
 YAML_NUMBERS = _yaml_numbers()
 
+#: The numbers the YAML package had. The others come from the specification
+#: alone and are checked against it below.
+FROM_YAML = [row for row in NUMBERS if row.get("legacy_unique_id")]
+
 
 def _is_static(bound: object) -> bool:
     """Whether the YAML states this bound as a number at all.
@@ -61,7 +65,7 @@ def _is_static(bound: object) -> bool:
     return isinstance(bound, (int, float)) and not isinstance(bound, bool)
 
 
-@pytest.mark.parametrize("row", NUMBERS, ids=lambda row: row["field"])
+@pytest.mark.parametrize("row", FROM_YAML, ids=lambda row: row["field"])
 def test_the_bounds_match_the_yaml_package(row: dict) -> None:
     template = YAML_NUMBERS[row["legacy_unique_id"]]
     assert row["step"] == template["step"], "step"
@@ -72,7 +76,7 @@ def test_the_bounds_match_the_yaml_package(row: dict) -> None:
         assert row["maximum"] == template["max"], "maximum"
 
 
-@pytest.mark.parametrize("row", NUMBERS, ids=lambda row: row["field"])
+@pytest.mark.parametrize("row", FROM_YAML, ids=lambda row: row["field"])
 def test_a_bound_the_yaml_could_not_state_is_resolved_not_invented(row: dict) -> None:
     """Where the YAML asked the user or read a sensor, so must this.
 
@@ -90,7 +94,7 @@ def test_a_bound_the_yaml_could_not_state_is_resolved_not_invented(row: dict) ->
         assert row.get("minimum_field"), row["field"]
 
 
-@pytest.mark.parametrize("row", NUMBERS, ids=lambda row: row["field"])
+@pytest.mark.parametrize("row", FROM_YAML, ids=lambda row: row["field"])
 def test_it_writes_the_register_the_yaml_wrote(row: dict) -> None:
     """The same register, or the setting would land somewhere else entirely."""
     import json
@@ -118,6 +122,29 @@ def test_it_writes_the_register_the_yaml_wrote(row: dict) -> None:
         if "data_template" in step and "address" in step["data_template"]
     ]
     assert written == [address]
+
+
+def test_a_number_the_yaml_never_had_follows_the_specification() -> None:
+    """The forced-charging targets: V1.1.16 regs 33214 and 33219, 0~100 %.
+
+    No YAML template to compare against, so the range is pinned to the
+    specification here, by hand, as the control test's scales are.
+    """
+    spec = {
+        "forced_charging_target_soc_1": (0, 100, 1, "%"),
+        "forced_charging_target_soc_2": (0, 100, 1, "%"),
+    }
+    rows = {row["field"]: row for row in NUMBERS if not row.get("legacy_unique_id")}
+    assert set(rows) == set(spec)
+    for field, (minimum, maximum, step, unit) in spec.items():
+        row = rows[field]
+        assert (row["minimum"], row["maximum"], row["step"], row["unit"]) == (
+            minimum,
+            maximum,
+            step,
+            unit,
+        ), field
+        assert row["requires"] == "FORCED_CHARGING", field
 
 
 def test_only_declared_fields_are_writable() -> None:
@@ -164,7 +191,7 @@ def test_the_dangerous_registers_are_not_writable_yet() -> None:
         assert field not in WRITABLE_FIELDS
 
 
-@pytest.mark.parametrize("row", NUMBERS, ids=lambda row: row["field"])
+@pytest.mark.parametrize("row", FROM_YAML, ids=lambda row: row["field"])
 def test_every_control_declares_the_capability_it_needs(row: dict) -> None:
     """One table decides which hardware gets which control.
 

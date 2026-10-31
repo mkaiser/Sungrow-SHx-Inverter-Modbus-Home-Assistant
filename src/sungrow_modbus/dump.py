@@ -15,7 +15,7 @@ plus the ones that turned out to hold real values anyway.
 **The cost is the whole design problem here.** An unmapped address on a
 Sungrow does not refuse in milliseconds -- it goes quiet, and the read waits
 out its full timeout. A measured SH10RT takes about 300 seconds to read these
-1550 addresses for that reason, not because the bytes are slow. So this is
+2181 addresses for that reason, not because the bytes are slow. So this is
 bounded by a budget, reports which bands it never reached rather than
 pretending it covered them, and belongs behind a switch that is off.
 
@@ -50,6 +50,23 @@ DUMP_BANDS: tuple[tuple[str, int, int, str], ...] = (
     # 33207-33218 the forced-charging schedule (#785), which a band ending
     # at 33199 never read.
     ("holding", 32990, 240, "battery power limits, start thresholds, forced charging"),
+    # Three registers V1.1.16 documents that no band reached, read alone
+    # rather than by stretching a band over the undocumented addresses
+    # between, each of which would cost a timeout.
+    (
+        "input",
+        5213,
+        2,
+        "battery power, the wide-range S32 the specification recommends",
+    ),
+    ("input", 5241, 1, "grid frequency, the 0.01 Hz one the specification recommends"),
+    ("holding", 33273, 1, "load rated power"),
+    # The rest of the history block, registers 6200-6826: daily, monthly and
+    # yearly PV, direct-consumption, export and battery-charge energy. V1.1.16:
+    # "WiNet-S/S2 and Logger is not supported", so a dongle refuses every
+    # address of it. Last, so that on a slow link it is this band the budget
+    # cuts short and not one before it.
+    ("input", 6199, 627, "the energy history, which no communication module forwards"),
 )
 
 #: Never published raw, whatever band covers it: the serial number's ten

@@ -244,6 +244,28 @@ NUMBERS += (
     },
 )
 
+#: The forced-charging schedule's target states of charge, registers 33214
+#: and 33219 (V1.1.16, 0~100 %, whole percent). No YAML entity, so no legacy
+#: id; the times beside them are `TIMES` below.
+NUMBERS += (
+    {
+        "field": "forced_charging_target_soc_1",
+        "requires": "FORCED_CHARGING",
+        "unit": "%",
+        "minimum": 0,
+        "maximum": 100,
+        "step": 1,
+    },
+    {
+        "field": "forced_charging_target_soc_2",
+        "requires": "FORCED_CHARGING",
+        "unit": "%",
+        "minimum": 0,
+        "maximum": 100,
+        "step": 1,
+    },
+)
+
 #: Nothing is held back any more. Kept as an empty table rather than deleted,
 #: because it is the mechanism by which shrinking the list is a deliberate
 #: commit and not a side effect -- and the next undocumented register that
@@ -313,6 +335,15 @@ SWITCHES: tuple[Switch, ...] = (
         "on": 0xAA,
         "off": 0x55,
     },
+    # Register 33208, V1.1.16: "0xAA: Enable, 0x55: Disable". Turns the
+    # schedule below on; the times and targets do nothing without it.
+    {
+        "field": "forced_charging_raw",
+        "key": "forced_charging_schedule",
+        "requires": "FORCED_CHARGING",
+        "on": 0xAA,
+        "off": 0x55,
+    },
 )
 
 
@@ -334,7 +365,7 @@ class Select(TypedDict):
 
     key: str
     field: str
-    legacy_unique_id: str
+    legacy_unique_id: NotRequired[str]
     requires: NotRequired[str]
     options: tuple[Option, ...]
 
@@ -391,6 +422,41 @@ SELECTS: tuple[Select, ...] = (
             {"slug": "disabled", "value": 3, "label": "Disabled"},
         ),
     },
+    # Spec reg 33209, "Forced Charging Valid Time": 0 weekday, 1 every day.
+    {
+        "key": "forced_charging_days",
+        "field": "forced_charging_days_raw",
+        "requires": "FORCED_CHARGING",
+        "options": (
+            {"slug": "weekdays", "value": 0, "label": "Weekdays"},
+            {"slug": "every_day", "value": 1, "label": "Every day"},
+        ),
+    },
+)
+
+
+class Time(TypedDict):
+    """A time of day held in two writable registers, an hour and a minute."""
+
+    key: str
+    hour: str
+    minute: str
+    requires: NotRequired[str]
+
+
+#: Step 6: the forced-charging windows, V1.1.16 registers 33210-33213 and
+#: 33215-33218, each an hour (0~23) and a minute (0~59). One `time` entity per
+#: pair, so a window reads 02:00-05:00 rather than as four numbers; setting
+#: one writes the hour, then the minute.
+TIMES: tuple[Time, ...] = tuple(
+    {
+        "key": f"forced_charging_{part}_{window}",
+        "hour": f"forced_charging_{part}_{window}_hour",
+        "minute": f"forced_charging_{part}_{window}_minute",
+        "requires": "FORCED_CHARGING",
+    }
+    for window in (1, 2)
+    for part in ("start", "end")
 )
 
 #: Step 5: starting and stopping the inverter. **Not an entity.**
@@ -434,4 +500,4 @@ START_STOP = {
 #: table stays exact.
 WRITABLE_FIELDS: frozenset[str] = frozenset(
     entry["field"] for entry in (*NUMBERS, *SWITCHES, *SELECTS)
-)
+) | frozenset(field for entry in TIMES for field in (entry["hour"], entry["minute"]))
