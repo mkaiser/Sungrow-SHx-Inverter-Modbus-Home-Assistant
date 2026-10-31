@@ -101,7 +101,7 @@ implicit_reexport = true
 source = ["custom_components/sungrow_modbus", "src/sungrow_modbus"]
 
 [tool.coverage.report]
-fail_under = 92
+fail_under = 93
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

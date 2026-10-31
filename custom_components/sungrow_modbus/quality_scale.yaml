@@ -16,14 +16,14 @@ rules:
     comment: coordinator.py and entity.py.
   config-flow-test-coverage:
     status: todo
-    comment: config_flow.py is covered 91 %; every flow path is the rule.
+    comment: config_flow.py is covered 94 %; every flow path is the rule.
   config-flow: done
   dependency-transparency:
     status: done
     comment: sungrow-modbus is built and published to PyPI by .github/workflows/release.yml from this repository.
   docs-actions:
-    status: todo
-    comment: The actions are described in doc/architecture.md and doc/integration_migration.md, not in a user page.
+    status: done
+    comment: doc/integration_help.md.
   docs-conditions:
     status: exempt
     comment: The integration provides no conditions.
@@ -58,8 +58,8 @@ rules:
     status: done
     comment: doc/integration_options.md.
   docs-installation-parameters:
-    status: todo
-    comment: Host, port and unit id are asked by the flow but not explained in doc/installing_a_preview.md.
+    status: done
+    comment: doc/installing_a_preview.md, step 4.
   entity-unavailable:
     status: done
     comment: Per component, so one refused block does not take a device's other entities with it.
@@ -73,7 +73,7 @@ rules:
     comment: Modbus TCP has no credentials that can expire.
   test-coverage:
     status: todo
-    comment: 92 % across library and integration, held as a floor in CI (pyproject.toml); download.py 64 %, __init__.py 90 %.
+    comment: 93 % across library and integration, held as a floor in CI (pyproject.toml); 95 % is the rule.
 
   # Gold
   devices: done
@@ -83,23 +83,25 @@ rules:
     comment: Follows discovery.
   discovery:
     status: todo
-    comment: A WiNet-S announces itself over mDNS and the config flow's search uses it, but the manifest declares no zeroconf matcher, so Home Assistant does not offer the device on its own.
+    comment: Waits on hardware (Todo.md, "Does a WiNet-S advertise over mDNS?"). A zeroconf or DHCP matcher needs a measured service type, hostname or MAC prefix; the config flow's network search covers setup until then.
   docs-data-update:
     status: done
     comment: Poll tiers in doc/integration_options.md.
   docs-examples:
-    status: todo
+    status: done
+    comment: An automation in doc/integration_help.md.
   docs-known-limitations:
-    status: todo
-    comment: What a WiNet-S refuses is known (the wiki) but not on a user page.
+    status: done
+    comment: doc/integration_help.md.
   docs-supported-devices:
     status: done
     comment: doc/compatibility.md.
   docs-supported-functions:
-    status: todo
+    status: done
+    comment: README, "What it does".
   docs-troubleshooting:
-    status: todo
-    comment: The README links the YAML package's help page only.
+    status: done
+    comment: doc/integration_help.md.
   docs-use-cases:
     status: todo
   dynamic-devices:

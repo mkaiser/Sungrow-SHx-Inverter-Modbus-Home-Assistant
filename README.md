@@ -20,7 +20,8 @@ Install it through **HACS** from the preview channel,
 repository's default branch, and this one's is the YAML package.
 [doc/installing_a_preview.md](doc/installing_a_preview.md) has the steps;
 [doc/integration_options.md](doc/integration_options.md) lists every option
-under *Configure*.
+under *Configure*, and [doc/integration_help.md](doc/integration_help.md) the
+actions, the known limitations and what to try when something fails.
 
 **The preview sets up diagnostics only**: it identifies the inverter and runs
 the survey, and creates no sensors for the readings. Everything below is

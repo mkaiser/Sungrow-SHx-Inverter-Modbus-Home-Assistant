@@ -150,11 +150,11 @@ A prompt names one rule, one scope and its check. For example:
 | --- | --- | --- |
 | 1. probatio | done | `make check` green; mypy errors 65 → 41 |
 | 2. strict typing | done | `mypy` covers library and integration, 0 errors |
-| 3. coverage | done | CI runs `--cov`; floor 92 % |
+| 3. coverage | done | CI runs `--cov`; floor 93 % |
 | 4. ruff families | done | A, ASYNC, BLE, C4, DTZ, G, LOG, PIE, RET, RSE enabled |
 | 5. `quality_scale.yaml` | done | held to the code by `tests/test_quality_scale.py` |
 | 6. Gold rules | done | exception and icon translations, stale devices |
-| 7. split `config_flow.py` | proposed | below; not started |
+| 7. split `config_flow.py` | proposed | waits on a decision; see the last entry |
 
 ### Log
 
@@ -253,7 +253,6 @@ helpers. Home Assistant needs only the `ConfigFlow` subclass in
 | `config_flow.py` | `SungrowConfigFlow`: user, setup modes, reconfigure, move, manual, name, create | ~900 |
 | `config_flow_search.py` | search, searching, sweep, pick, nothing found, identify, default network (the search steps as a mixin, since they share the flow's state) | ~450 |
 | `options_flow.py` | `SungrowOptionsFlow` and its section builders, polling tiers, survey measurement | ~800 |
-| `config_flow_entity_ids.py` | `entity_ids`, `slot_unknown`, `other_inverter`: written twice now, once in each flow, as a mixin both use | removes ~150 duplicated |
 
 Cost: tests patch `config_flow.async_sweep` (15 places),
 `async_hostname` (10), `async_get_temporary_unit` (7), `network` (5) and
@@ -277,3 +276,64 @@ probe, which writes to a house, and is the first place to add tests.
   (examples, use cases, supported functions, known limitations,
   troubleshooting).
 - Step 7, the `config_flow.py` split, as proposed above.
+
+**17:12 — tests where they matter most.**
+
+- `inverter/export_scale.py` (register 13074's write-scale probe, which
+  writes to a house): 83 % → 97 %. Six tests for the restore paths, against
+  firmware nobody has measured: a register that moves and is put back under
+  the factor it showed; one that will not go back and is reported changed;
+  a put-back whose check read fails; a lifted feed-in mode restored on the
+  second try, and one that will not go back. All behaved as written.
+- Promoting a diagnostics entry (`tests/test_config_flow_promote.py`): no
+  YAML package, its ids taken over, refused while it runs, slot unknown
+  stored as `None`. This path decides where history continues and had no
+  test past the checkbox.
+- The options page's transport evidence
+  (`tests/test_options_evidence.py`): 6100 answered, refused, busy and lost
+  each say what they should.
+
+Finding: the config flow classified the 6100 read twice, and the copies had
+drifted -- the setup probe let a `TimeoutError` or `OSError` escape, which
+the manual step does not catch, so a timed-out 6100 read would end the flow
+with an unknown error instead of "could not be measured". Both now use
+`_async_direct`. The library's control test keeps its own copy: the
+integration can use only what the pinned PyPI release has.
+
+**17:17 — documentation, the download view, and a claim corrected.**
+
+- New user page `doc/integration_help.md`: the four actions with an example
+  automation, the known limitations (sessions, what a WiNet-S does not
+  forward, what is not supported), and troubleshooting. Step 4 of
+  `doc/installing_a_preview.md` explains host, port and device address in
+  the form's own words. Six documentation rules move to done; only
+  `docs-use-cases` stays.
+- `tests/test_survey_download.py`: the signed link serves the document under
+  its survey name, an unsigned request without a login gets 401, no survey
+  is a 404 that says so, another integration's entry is not served.
+  `download.py` 64 % → 95 %.
+- Correction: `quality_scale.yaml` said a WiNet-S announces itself over
+  mDNS. That is not measured -- Todo.md's open question 13 -- so discovery
+  is a todo that waits on hardware, not on code.
+
+Open decisions for the maintainer, not built:
+
+- **dynamic-devices**: a battery or wallbox is looked for at setup only.
+  Looking again while running costs sessions on an inverter that grants
+  few; how often, if at all, is a choice.
+- **entity-disabled-by-default**: which entities the YAML package never had
+  should start disabled. Ported ones must stay enabled.
+
+Step 7 reconsidered: the proposal above listed `entity_ids`, `slot_unknown`
+and `other_inverter` as duplicated between the two flows. They are not:
+the names match, but the config flow's create the entry and the options
+flow's carry the page's pending options and write them. That leaves the
+split as moving code between files, which costs an import cycle between
+`config_flow.py` and `options_flow.py` and a second patch target for the
+alpha gate (`ONLY_SURVEY_MODE` is read by both flows and patched in one
+module by `tests/conftest.py`). Not done: worth it only if the maintainer
+finds the file hard to work in.
+
+**17:45 — final run.** 4010 passed, 2 skipped; `make quick` clean.
+Coverage 92 % → 93.1 % (floor raised to 93): `config_flow.py` 91 → 94 %,
+`download.py` 64 → 95 %, `inverter/export_scale.py` 83 → 99 %.

@@ -66,6 +66,19 @@ one device answers, it lists them with each inverter's part in a cluster.
 Last come a few questions no register can answer, all optional and editable
 later under **Configure** ([every option](integration_options.md)).
 
+Typing the address asks for three things:
+
+| Field | Default | What to give |
+| --- | --- | --- |
+| *IP address or hostname* | none | The inverter's address as your router lists it; behind a WiNet-S, the dongle's. Reserve it in the router first. If it moves anyway, **Reconfigure** on the entry points it at the new one |
+| *Port* | 502 | 502 unless somebody changed it; a Sungrow Logger uses 503 |
+| *Device address* | 1 | 1 for a single inverter. The second inverter of a master/slave cluster answers on 2: give its own address, and add each inverter as its own entry |
+
+A Sungrow accepts very few Modbus connections at once. Stop anything else
+that polls it (the YAML package, another Home Assistant, another tool)
+before adding the integration, or the first read fails with *could not
+reach*.
+
 ## Running the survey
 
 On the device page (Settings → Devices & services → Sungrow Modbus → the
@@ -83,8 +96,9 @@ device):
 
 Send the document to
 [the survey issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786).
-For a bug, open an issue with **Download diagnostics** (serial and address
-removed) and the commit hash HACS shows.
+For a bug, see [troubleshooting](integration_help.md#troubleshooting) first,
+then open an issue with **Download diagnostics** (serial and address removed)
+and the commit hash HACS shows.
 
 ## Updating
 

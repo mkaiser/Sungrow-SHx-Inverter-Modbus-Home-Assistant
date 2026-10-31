@@ -310,3 +310,130 @@ async def test_a_real_out_of_range_refusal_is_asked_three_times() -> None:
     assert result.write_units_per_count == 10
     assert sum(1 for address, _ in inverter.writes if address == LIMIT.address) == 3
     assert inverter.unchanged
+
+
+# -- the restore paths: a firmware nobody has measured, and a failing link ---
+
+
+class UnknownFirmware(Inverter):
+    """A firmware that stores a limit write as `word * num // den`.
+
+    Neither measured firmware does this; the construction says the register
+    cannot move. These are the cases where it does anyway, and the probe has
+    to notice and put the held value back, or say that it could not.
+    """
+
+    def __init__(self, *args, num: int, den: int = 1, **kwargs) -> None:
+        """Take the firmware's arguments, and its unexpected factor."""
+        super().__init__(False, *args, **kwargs)
+        self.num, self.den = num, den
+
+    async def async_write_word(self, address: int, word: int) -> None:
+        """Store the limit scaled by the unknown factor, or be the firmware."""
+        if address == LIMIT.address and self.mode == MODE_ON:
+            self.writes.append((address, word))
+            self.held = word * self.num // self.den
+            return
+        await super().async_write_word(address, word)
+
+
+async def test_a_limit_outside_its_own_bounds_is_not_asked() -> None:
+    """Neither reading of a write can be trusted, so there is none."""
+    inverter = Inverter(True, 12000, 0, 10000)
+
+    result = await async_probe(inverter)
+
+    assert result.write_units_per_count is None
+    assert inverter.writes == []
+    assert "outside its own bounds" in result.reason
+
+
+async def test_a_register_that_moves_is_put_back_under_the_factor_it_showed() -> None:
+    """Stored three times the word: the put-back writes a third of the held value.
+
+    3000 W is held; the probe writes 3000 and the register shows 9000. The
+    factor the register showed, 3, is the one observation there is, so 1000
+    is written to undo it -- and checked by reading.
+    """
+    inverter = UnknownFirmware(3000, 0, 10000, num=3)
+
+    result = await async_probe(inverter)
+
+    assert result.write_units_per_count is None
+    assert not result.left_changed
+    assert "it was put back" in result.reason
+    assert inverter.unchanged
+    assert inverter.writes[-1] == (LIMIT.address, 1000)
+
+
+async def test_a_register_that_moves_and_will_not_go_back_is_reported_changed() -> None:
+    """Halved on every write: neither the inferred word nor the raw one restores it."""
+    inverter = UnknownFirmware(10000, 0, 10000, num=1, den=2)
+
+    result = await async_probe(inverter)
+
+    assert result.write_units_per_count is None
+    assert result.left_changed
+    assert "could not be put back" in result.reason
+    assert not inverter.unchanged
+
+
+async def test_a_put_back_whose_check_read_fails_counts_as_changed() -> None:
+    """The register moved, and the read that would confirm the restore fails."""
+
+    class LosesTheLinkWhileRestoring(UnknownFirmware):
+        reads_of_limit = 0
+
+        async def async_read(self, where: Address) -> list[int]:
+            if where == LIMIT:
+                self.reads_of_limit += 1
+                if self.reads_of_limit > 2:
+                    raise ModbusConnectionError("lost")
+            return await super().async_read(where)
+
+    inverter = LosesTheLinkWhileRestoring(3000, 0, 10000, num=3)
+
+    result = await async_probe(inverter)
+
+    assert result.left_changed
+    assert "could not be put back" in result.reason
+
+
+class ModeWritesFail(Inverter):
+    """Refuses the first `failures` writes that put 13087 back after the probe."""
+
+    def __init__(self, *args, failures: int, **kwargs) -> None:
+        """Take the firmware's arguments, and how many restores to refuse."""
+        super().__init__(*args, **kwargs)
+        self.failures = failures
+
+    async def async_write_word(self, address: int, word: int) -> None:
+        """Refuse a restore of the mode while failures remain."""
+        if address == MODE.address and word != MODE_ON and self.failures:
+            self.failures -= 1
+            self.writes.append((address, word))
+            raise ServerDeviceBusyError
+        await super().async_write_word(address, word)
+
+
+async def test_a_lifted_mode_is_put_back_on_the_second_try() -> None:
+    """One busy answer to the restore is retried, and the house is as found."""
+    inverter = ModeWritesFail(True, 10000, 0, 10000, OFF, failures=1)
+
+    result = await async_probe(inverter, lift_mode=True)
+
+    assert result.write_units_per_count == 10
+    assert not result.left_changed
+    assert inverter.unchanged
+
+
+async def test_a_lifted_mode_that_will_not_go_back_is_reported() -> None:
+    """Both restores refused: the house is still capped, and the result says so."""
+    inverter = ModeWritesFail(True, 10000, 0, 10000, OFF, failures=2)
+
+    result = await async_probe(inverter, lift_mode=True)
+
+    assert result.write_units_per_count is None
+    assert result.left_changed
+    assert "could not be put back to 0x55" in result.reason
+    assert inverter.mode == MODE_ON

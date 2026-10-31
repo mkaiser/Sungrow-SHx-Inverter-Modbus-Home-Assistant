@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable, Mapping
+from collections.abc import Awaitable, Callable, Mapping
 from contextlib import suppress
 import logging
 from typing import Any
@@ -253,29 +253,34 @@ async def _async_probe(
     async with async_get_temporary_unit(hass, params, unit_id) as unit:
         inverter = SungrowInverter(unit)
         await inverter.async_update_identity()
-        direct: bool | None
-        try:
-            await read(unit, DIRECT_ONLY_PROBE)
-        except ModbusExceptionError as err:
-            # A refusal is the transport answering, and only a refusal is.
-            # 0x06 says "ask me later" rather than "no such register", and so
-            # does 0x04 from a WiNet-S other clients are polling; neither
-            # settles anything.
-            settles_nothing = (ServerDeviceBusyError, ServerDeviceFailureError)
-            direct = None if isinstance(err, settles_nothing) else False
-        except (ModbusError, HomeAssistantError):
-            # The link did not carry the question. That is not evidence about
-            # the register: reading it as a refusal would tell a house with no
-            # communication module fitted that it has a dongle. No retry here,
-            # deliberately: this runs once per
-            # candidate address in a /24 sweep, so a retry multiplies the
-            # search rather than the certainty. `None` is the honest answer
-            # and the prose says so.
-            direct = None
-        else:
-            direct = True
+        # No retry here, deliberately: this runs once per candidate address
+        # in a /24 sweep, so a retry multiplies the search rather than the
+        # certainty. `None` is the honest answer and the prose says so.
+        direct = await _async_direct(read(unit, DIRECT_ONLY_PROBE))
         battery = await _async_has_battery(unit) if inverter.serial_number else None
     return inverter, direct, battery
+
+
+async def _async_direct(probe: Awaitable[object]) -> bool | None:
+    """Return whether register 6100 says this endpoint is the inverter's own port.
+
+    Three answers. Answered is a cable: no communication module forwards the
+    block. Refused is a module in the path -- a refusal is the transport
+    answering, and only a refusal is. Anything else is `None`: 0x06 says "ask
+    me later" rather than "no such register", and so does 0x04 from a WiNet-S
+    other clients are polling; and a lost, timed-out or desynced read is the
+    link not carrying the question. Reading either as a refusal would tell a
+    house with no module fitted that it has a dongle.
+    """
+    try:
+        await probe
+    except (ServerDeviceBusyError, ServerDeviceFailureError):
+        return None
+    except ModbusExceptionError:
+        return False
+    except (ModbusError, HomeAssistantError, TimeoutError, OSError):
+        return None
+    return True
 
 
 async def _async_has_battery(unit: Any) -> bool | None:
@@ -2098,17 +2103,7 @@ class SungrowOptionsFlow(OptionsFlow):
         device = next(iter(runtime.coordinators.values())).device
         model = device.model or "an unidentified model"
 
-        direct: bool | None
-        try:
-            await device.async_read(DIRECT_ONLY_PROBE)
-        except (ServerDeviceBusyError, ServerDeviceFailureError):
-            direct = None
-        except ModbusExceptionError:
-            direct = False
-        except (ModbusError, HomeAssistantError, TimeoutError, OSError):
-            direct = None
-        else:
-            direct = True
+        direct = await _async_direct(device.async_read(DIRECT_ONLY_PROBE))
 
         if direct is True:
             route = (
