@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field as dataclass_field
+from datetime import datetime
 import math
 import time
 from typing import Any, NamedTuple, Protocol
@@ -81,6 +82,23 @@ the inverter searches for the maximum power point again from scratch. A
 DRIFT_ABS_W = 150.0
 DRIFT_FRACTION = 0.15
 STABLE_MAD_W = 200.0
+#: The timed windows (`Options.charge_window`, `Options.discharge_window`).
+#: The inverter judges a window by its own clock, read from holding 5000-5005,
+#: and a schedule is not acted on the instant it is written, so the window is
+#: wide around now and the settle is long.
+WINDOW_BUDGET = 300.0
+WINDOW_SETTLE = 60.0
+WINDOW_RECOVERY = 60.0
+CHARGE_WINDOW_BEFORE = 5
+"""Minutes the charging window starts before the inverter's now."""
+CHARGE_WINDOW_AFTER = 20
+"""Minutes it ends after: longer than the check, so it never ends mid-way."""
+CHARGE_WINDOW_SOC_STEP = 10
+"""Percent above the battery's level the window's target is set, so it has
+something to charge towards and stops soon after if the restore fails."""
+WINDOW_START_W = 300.0
+"""Charge power a window must add to count as having started one."""
+
 EFFECT_FLOOR_W = 200.0
 SIGNIFICANCE = 3.0
 
@@ -290,6 +308,15 @@ class Probe(NamedTuple):
     preferred: float | None = None
     """A probe value chosen by hand where the arithmetic would pick a worse
     one. Still validated against the admissibility rules, never trusted."""
+    raw_only: bool = False
+    """Written as a raw word to its register, never through the field. For
+    registers the library maps read only -- outside Sungrow's document, so
+    the integration offers no control for them -- which the run may still
+    write with leave, and must always be able to put back."""
+    leave: str | None = None
+    """The `Options` flag a run needs before this register is snapshotted at
+    all. A register nothing will write is not worth a read, and a snapshot
+    of it is a restore of something never changed."""
 
 
 #: The controls this procedure writes, safest first, in the order it writes
@@ -489,8 +516,73 @@ PV_CUT = Probe(
     requires=Capability.PV_GENERATION_CUT,
 )
 
+#: The forced-charging schedule's registers the charge window check writes
+#: (V1.1.16 33208-33214): the enable, the days, the first window and its
+#: target. Counted in ones, so no scale question; snapshotted only with leave.
+CHARGE_ENABLE = Probe(
+    field="forced_charging_raw",
+    component="forced_charging",
+    spec_register=33208,
+    spec_units_per_count=1,
+    unit="",
+    exact=(0x55, 0xAA),
+    requires=Capability.FORCED_CHARGING,
+    leave="charge_window",
+)
+CHARGE_WINDOW: tuple[Probe, ...] = (
+    CHARGE_ENABLE,
+    *(
+        Probe(
+            field=field,
+            component="forced_charging",
+            spec_register=register,
+            spec_units_per_count=1,
+            unit=unit,
+            requires=Capability.FORCED_CHARGING,
+            leave="charge_window",
+        )
+        for field, register, unit in (
+            ("forced_charging_days_raw", 33209, ""),
+            ("forced_charging_start_1_hour", 33210, "h"),
+            ("forced_charging_start_1_minute", 33211, "min"),
+            ("forced_charging_end_1_hour", 33212, "h"),
+            ("forced_charging_end_1_minute", 33213, "min"),
+            ("forced_charging_target_soc_1", 33214, "%"),
+        )
+    ),
+)
+
+#: Both discharge schedules' windows (#785): weekday 33151-33158, weekend
+#: 33180-33187, outside Sungrow's document and read only in the library, so
+#: written and put back by raw word. The weekend enable (33179) is never
+#: written: the check moves every window, whichever day's applies.
+DISCHARGE_WINDOW: tuple[Probe, ...] = tuple(
+    Probe(
+        field=f"{day}_discharge_{part}_{number}_{unit}",
+        component=f"discharge_{day}",
+        spec_register=base + 4 * (number - 1) + offset,
+        spec_units_per_count=1,
+        unit="h" if unit == "hour" else "min",
+        requires=Capability.DISCHARGE_SCHEDULE,
+        raw_only=True,
+        leave="discharge_window",
+    )
+    for day, base in (("weekday", 33151), ("weekend", 33180))
+    for number in (1, 2)
+    for offset, (part, unit) in enumerate(
+        (("start", "hour"), ("start", "minute"), ("end", "hour"), ("end", "minute"))
+    )
+)
+
 #: Every enumeration the run snapshots, restores and never walks.
-ENUMERATIONS: tuple[Probe, ...] = (EMS_MODE, FORCED_CMD, EXPORT_MODE, PV_CUT)
+ENUMERATIONS: tuple[Probe, ...] = (
+    EMS_MODE,
+    FORCED_CMD,
+    EXPORT_MODE,
+    PV_CUT,
+    *CHARGE_WINDOW,
+    *DISCHARGE_WINDOW,
+)
 
 EMS_FORCED = 2
 FORCE_CHARGE = 0xAA
@@ -552,7 +644,8 @@ NOT_PROBED: dict[str, str] = {
             ),
         ),
         "part of the forced-charging schedule: counted in ones with no scale to "
-        "get wrong, and a window written into it can charge from the grid",
+        "get wrong; written only by the charge window check, with leave, "
+        "because a window written into it can charge from the grid",
     ),
 }
 
@@ -896,6 +989,23 @@ class Options:
     `capabilities.CONFIRMED_ON_FIRMWARE` is filled from: a write judged by
     what PV does, which no readback can stand in for."""
 
+    charge_window: bool = False
+    """Write a forced-charging window around the inverter's own clock and
+    watch the battery start charging, then switch it off again.
+
+    Off by default because it is a charge the house did not ask for, and with
+    no sun it comes from the grid: a minute or two of it, towards a target a
+    few percent above the battery's level. The window, target, days and enable
+    are put back to their snapshot words afterwards, every one checked."""
+
+    discharge_window: bool = False
+    """Move both discharge windows, weekday and weekend, away from now and
+    watch the battery stop discharging, then put them back.
+
+    Off by default because the house imports from the grid while the battery
+    is held. The registers are outside Sungrow's document, so this is the
+    watched write that would let the integration offer them as controls."""
+
     simulated: bool = False
     """Stamp the result as evidence about nothing. A simulator stores raw words
     with no scale semantics, so legs A and B agree there by construction."""
@@ -998,8 +1108,52 @@ class Snapshot:
 #: describe a limit. Putting a power back while the inverter is still forcing a
 #: charge at the old one is a worse intermediate state than any other. PV cut
 #: comes straight after: it acts too, but by stopping, which costs only energy.
-RESTORE_FIRST = (FORCED_CMD.field, EMS_MODE.field, PV_CUT.field)
+#: The forced-charging enable goes back with them, before its window, so a
+#: half-restored schedule is one that is off.
+RESTORE_FIRST = (FORCED_CMD.field, EMS_MODE.field, PV_CUT.field, CHARGE_ENABLE.field)
 RESTORE_LAST = (EXPORT_MODE.field,)
+
+
+def inverter_clock(words: Sequence[int]) -> datetime | None:
+    """Decode holding 5000-5005, the inverter's own clock, or None.
+
+    Year, month, day, hour, minute, second, local time. A window is judged by
+    this clock, not by the machine running the test, so a window placed by the
+    wrong one could miss now entirely. A word that makes no date is None.
+    """
+    if len(words) < 6:
+        return None
+    year, month, day, hour, minute, second = (int(word) for word in words[:6])
+    try:
+        return datetime(year, month, day, hour, minute, second)  # noqa: DTZ001
+    except ValueError:
+        return None
+
+
+def window_around(
+    now: datetime, before: int, after: int
+) -> tuple[int, int, int, int] | None:
+    """Return a window from `before` minutes before now to `after` after it.
+
+    As (start hour, start minute, end hour, end minute), or None where it
+    would cross midnight: a schedule window is one day's, and which way a
+    wrapping one is read is not known.
+    """
+    minute = now.hour * 60 + now.minute
+    start, end = minute - before, minute + after
+    if start < 0 or end >= 24 * 60:
+        return None
+    return (*divmod(start, 60), *divmod(end, 60))
+
+
+def window_away(now: datetime) -> tuple[int, int, int, int]:
+    """Return a one-hour window that cannot contain now, far from it.
+
+    Late in the evening for a morning run and early in the morning for an
+    afternoon one, so a window that is still in place when somebody looks is
+    plainly not the owner's.
+    """
+    return (22, 0, 23, 0) if now.hour < 12 else (1, 0, 2, 0)
 
 
 def restore_order(fields: Iterable[str]) -> tuple[str, ...]:

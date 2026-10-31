@@ -30,6 +30,27 @@ Structure:
    went for cause: grid state's 13030 is reserved in V1.1.16, and the manual
    MPP scan at holding 30230 is in no Sungrow document. What needs deciding
    first is open decision 4.
+2. **The control test's timed windows** (#785), built and unit-tested,
+   not yet run on hardware: `Options.charge_window` writes a forced-charging window around
+   the inverter's own clock (holding 5000-5005) and expects a charge to
+   start; `Options.discharge_window` moves every weekday and weekend
+   discharge window away from now and expects the discharge to stop. Both
+   snapshot only with leave, write the discharge registers by raw word, and
+   are put back by the ordinary restore. Wired into `sungrow_control_test.py`
+   (`--charge-window`, `--discharge-window`, dropped with a line on an older
+   library), the survey's question and the integration's options. Left: a
+   run on the maintainer's SH10RT, in daylight -- a dry run on 2026-10-31 at
+   night was refused because the inverter reported Standby, and it grants
+   both `forced_charging` and `discharge_schedule`; its Home Assistant keeps
+   polling, so expect dropped connections -- then the wiki's control-test
+   page with what the run shows.
+3. **Incorporate #786, comment 6549649447.**
+4. **Make the suite fast.** Four tests in `tests/test_control_test_ha.py`
+   take about 150 s each of real waiting (the integration's runner uses the
+   real clock), which is most of the suite's eleven minutes; `pytest -n auto`
+   does not help much because the four share one file. Give that runner a
+   fake clock in those tests, and the suite runs in a couple of minutes.
+
 
 # Open decisions
 

@@ -18,7 +18,6 @@ from .procedure import (
     ENUMERATIONS,
     INCONCLUSIVE,
     PROBES,
-    REFUSED,
     RESTART_DWELL,
     RESTART_GENERATING_DEADLINE,
     RESTART_POLL,
@@ -204,33 +203,6 @@ class RestoreSteps(ControlTestBase):
             else:
                 detail = f"the write {failure}"
         return False, detail
-
-    async def _write_word(self, probe: Probe, word: int) -> str | None:
-        """Write one raw word to a control's register. None on success.
-
-        Refusals are deliberately **not** recorded in `self.refusals`: on a
-        multiplying firmware this write is expected to be refused, and that
-        table is what the report quotes for the probe's own write.
-        """
-        if self.options.dry_run:
-            return None
-        component = self.inverter.component(probe.component)
-        resolved = component.resolved_fields.get(probe.field)
-        if resolved is None or resolved.count != 1:
-            return REFUSED
-        try:
-            await self.inverter.async_write_word(resolved.address, word)
-        except ModbusError as err:
-            _LOGGER.debug(
-                "control test: %s refused word %s: %s", probe.field, word, err
-            )
-            return REFUSED
-        except (TimeoutError, OSError) as err:
-            _LOGGER.debug(
-                "control test: %s dropped word %s: %s", probe.field, word, err
-            )
-            return DROPPED
-        return None
 
     # -- restart -------------------------------------------------------------
 

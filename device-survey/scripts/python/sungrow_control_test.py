@@ -45,6 +45,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 from collections.abc import Awaitable, Callable
+import dataclasses
 from datetime import UTC, datetime
 import json
 import logging
@@ -600,6 +601,7 @@ async def _run(args: argparse.Namespace) -> int:
             allow_dark=args.allow_dark,
             enable_export_limit=args.enable_export_limit,
             cut_pv=args.cut_pv,
+            **_window_leave(args),
             # `--restart-only` is a request to restart, so it implies it rather
             # than quietly measuring nothing when the question is declined.
             restart=restart or args.restart_only,
@@ -822,6 +824,19 @@ def _parser() -> argparse.ArgumentParser:
         help="cut PV generation through register 31211 for about a minute, and "
         "watch DC power fall to zero; where the inverter has the register",
     )
+    parser.add_argument(
+        "--charge-window",
+        action="store_true",
+        help="write a forced-charging window around the inverter's clock and "
+        "watch the battery start charging, from the grid if there is no sun; "
+        "every word of the schedule is put back afterwards",
+    )
+    parser.add_argument(
+        "--discharge-window",
+        action="store_true",
+        help="move the weekday and weekend discharge windows away from now and "
+        "watch the battery stop discharging; every word is put back afterwards",
+    )
     restart = parser.add_mutually_exclusive_group()
     restart.add_argument(
         "--restart",
@@ -938,6 +953,25 @@ async def async_main(args: argparse.Namespace, drops: _LinkDrops) -> int:
         return 0
     print(f"\nexit {code}: {_means(code, args.dry_run)}", file=sys.stderr)
     return code
+
+
+def _window_leave(args: argparse.Namespace) -> dict[str, bool]:
+    """Return the timed-window leave this library can act on.
+
+    The survey runs on the pinned release, whose `Options` may predate the
+    window checks. Asked of a library without them, the leave is dropped with
+    a line saying so -- never a crash halfway into a run that writes.
+    """
+    known = {field.name for field in dataclasses.fields(Options)}
+    leave = {}
+    for name in ("charge_window", "discharge_window"):
+        if not getattr(args, name, False):
+            continue
+        if name in known:
+            leave[name] = True
+        else:
+            print(f"  --{name.replace('_', '-')}: this library cannot run it; skipped")
+    return leave
 
 
 def main(argv: list[str] | None = None) -> int:

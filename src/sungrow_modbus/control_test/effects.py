@@ -3,14 +3,24 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
+from datetime import datetime
 import logging
 import math
 
+from modbus_connection import ModbusError
+
+from ..addresses import reg
 from ..inverter.capabilities import Capability
 from .procedure import (
+    CHARGE_ENABLE,
+    CHARGE_WINDOW,
+    CHARGE_WINDOW_AFTER,
+    CHARGE_WINDOW_BEFORE,
+    CHARGE_WINDOW_SOC_STEP,
     CLAMP_TOLERANCE,
     CONFIRMED,
     DECADES,
+    DISCHARGE_WINDOW,
     DRIFT_ABS_W,
     DRIFT_FRACTION,
     DROPPED,
@@ -50,12 +60,19 @@ from .procedure import (
     STOP_BRACKET_W,
     STOPPED_W,
     WINDOW,
+    WINDOW_RECOVERY,
+    WINDOW_SETTLE,
+    WINDOW_START_W,
     EffectResult,
+    Probe,
     Sample,
     classify_ratio,
     export_cap,
+    inverter_clock,
     mad,
     median,
+    window_around,
+    window_away,
 )
 from .readback import ReadbackSteps
 
@@ -114,6 +131,7 @@ class EffectSteps(ReadbackSteps):
         *,
         setpoint: bool,
         expect_stop: bool = False,
+        expect_start: bool = False,
         commanded_unit: str = "W",
         settle: float | None = None,
         recovery: float = SETTLE,
@@ -226,6 +244,7 @@ class EffectSteps(ReadbackSteps):
             setpoint=setpoint,
             commanded=commanded,
             expect_stop=expect_stop,
+            expect_start=expect_start,
         )
 
     def _verdict(
@@ -237,6 +256,7 @@ class EffectSteps(ReadbackSteps):
         setpoint: bool,
         commanded: float | None,
         expect_stop: bool,
+        expect_start: bool = False,
     ) -> EffectResult:
         """Decide what three windows mean, given everything already measured.
 
@@ -260,6 +280,8 @@ class EffectSteps(ReadbackSteps):
            result rather than a confusing failure.
         4. **`expect_stop` is its own branch** because zero has no decades:
            there is no setpoint to be off by, only whether the thing went away.
+           `expect_start` is its mirror, for a schedule that starts something
+           at a rate the inverter chooses: only whether it began.
 
         `self._worst` and `self._note` are called here rather than returned,
         which is why this is a method: the exit code and the "could not
@@ -329,6 +351,19 @@ class EffectSteps(ReadbackSteps):
             return measured._replace(
                 verdict=NO_EFFECT,
                 detail=f"{observable_label} carried on at {during_mid:.0f} W",
+            )
+
+        if expect_start:
+            # A schedule names a time, not a power: the inverter picks the rate.
+            # So the question is only whether the quantity rose clearly while
+            # the setting was in place and fell back once it was put back --
+            # the second half is what the drift check above has already asked.
+            if delta > max(SIGNIFICANCE * max(before_mad, after_mad_), WINDOW_START_W):
+                return measured._replace(verdict=CONFIRMED)
+            self._worst(3)
+            return measured._replace(
+                verdict=NO_EFFECT,
+                detail=f"{observable_label} did not start: {delta:+.0f} W",
             )
 
         significant = abs(delta) > max(
@@ -557,6 +592,8 @@ class EffectSteps(ReadbackSteps):
         results.extend(await self._soc_ceiling_effect())
         results.extend(await self._export_effect())
         results.extend(await self._pv_cut_effect())
+        results.extend(await self._charge_window_effect())
+        results.extend(await self._discharge_window_effect())
         if self._expired("effect"):
             self._worst(3)
             self._note("the behavioural phase ran out of time before every check ran")
@@ -738,6 +775,180 @@ class EffectSteps(ReadbackSteps):
 
     def _pv(self, sample: Sample) -> float | None:
         return sample.pv
+
+    # -- the timed windows ----------------------------------------------------
+
+    async def _inverter_now(self) -> datetime | None:
+        """Read the inverter's own clock, holding 5000-5005, or None."""
+        try:
+            words = await self.inverter.async_read_words("holding", reg(5000), 6)
+        except (ModbusError, TimeoutError, OSError) as err:
+            _LOGGER.debug("control test: the inverter's clock did not read: %s", err)
+            return None
+        return inverter_clock(words)
+
+    def _snapshotted(self, probes: tuple[Probe, ...]) -> bool:
+        """Whether every register a check would write has a word to go back to."""
+        return all(probe.field in self.snapshot.raw for probe in probes)
+
+    async def _charge_window_effect(self) -> list[EffectResult]:
+        """Write a forced-charging window around now and watch a charge start.
+
+        The schedule acts by itself at a time it names, which no readback can
+        stand in for, so leg C alone: the battery's charge power, bracketed by
+        the house before and after. The window is set against the inverter's
+        own clock, the target a few percent above the battery so a charge has
+        somewhere to go, and the enable is written last and undone first.
+        Needs leave (`Options.charge_window`) and the schedule, and is skipped
+        where the owner's own schedule is on, so it is never disturbed.
+        """
+        if not self.options.charge_window:
+            return []
+        if not self._snapshotted(CHARGE_WINDOW):
+            self._note(
+                "no charge window check: the forced-charging schedule "
+                "did not answer or could not be read before the run"
+            )
+            return []
+        if self.snapshot.raw[CHARGE_ENABLE.field] == MODE_ON:
+            self._note(
+                "no charge window check: the owner's forced-charging schedule "
+                "is on, and this run does not overwrite it"
+            )
+            return []
+        soc = self.conditions.get("soc_percent")
+        if soc is None:
+            self._note(
+                "no charge window check: the battery's state of charge did not read"
+            )
+            return []
+        # A dongle's 0 for a register it does not forward is no ceiling.
+        ceiling = float(self.snapshot.values.get("battery_max_soc") or 100.0)
+        target = int(min(100.0, ceiling, float(soc) + CHARGE_WINDOW_SOC_STEP))
+        if target < float(soc) + CHARGE_WINDOW_SOC_STEP / 2:
+            self._note(
+                "no charge window check: the battery is too full for a window "
+                "to have anything to charge"
+            )
+            return []
+        now = await self._inverter_now()
+        window = (
+            None
+            if now is None
+            else window_around(now, CHARGE_WINDOW_BEFORE, CHARGE_WINDOW_AFTER)
+        )
+        if now is None or window is None:
+            self._note(
+                "no charge window check: "
+                + (
+                    "the inverter's clock did not read"
+                    if now is None
+                    else "the window would cross midnight on the inverter's clock"
+                )
+            )
+            return []
+        self.conditions["inverter_clock"] = now.isoformat()
+        if self._expired("effect"):
+            return []
+        self._step("forced-charging window")
+        start_hour, start_minute, end_hour, end_minute = window
+        enable, days, *times, target_probe = CHARGE_WINDOW
+        writes = (
+            (days, 1),
+            *zip(times, (start_hour, start_minute, end_hour, end_minute), strict=True),
+            (target_probe, target),
+            (enable, MODE_ON),
+        )
+
+        async def apply() -> str | None:
+            for probe, value in writes:
+                if (failure := await self._write(probe, value)) is not None:
+                    return failure
+            return None
+
+        async def undo() -> None:
+            await self._write(enable, self.snapshot.raw[enable.field])
+
+        return [
+            await self._bracket(
+                "forced-charging window",
+                self._charging,
+                "battery charge power",
+                None,
+                apply,
+                undo,
+                setpoint=False,
+                expect_start=True,
+                settle=WINDOW_SETTLE,
+                recovery=WINDOW_RECOVERY,
+            )
+        ]
+
+    async def _discharge_window_effect(self) -> list[EffectResult]:
+        """Move every discharge window away from now and watch discharge stop.
+
+        Registers outside Sungrow's document (#785), so this is the write that
+        would let the integration offer them as controls: whether the battery,
+        discharging into the house, stops when no window covers now and starts
+        again when they are put back. Every window on both days is moved,
+        because which day's applies is the inverter's call, and all of them go
+        back by their snapshot words. Needs leave (`Options.discharge_window`),
+        the schedule, and a battery discharging enough for a stop to show.
+        """
+        if not self.options.discharge_window:
+            return []
+        if not self._snapshotted(DISCHARGE_WINDOW):
+            self._note(
+                "no discharge window check: the discharge schedules did not "
+                "answer or could not be read before the run"
+            )
+            return []
+        sample = await self._sample()
+        discharging = self._discharging(sample) or 0.0
+        if discharging < STOP_BRACKET_W:
+            self._note(
+                f"no discharge window check: the battery was discharging "
+                f"{discharging:.0f} W, under the {STOP_BRACKET_W:.0f} W a stop "
+                "needs to be told from the house"
+            )
+            return []
+        now = await self._inverter_now()
+        if now is None:
+            self._note("no discharge window check: the inverter's clock did not read")
+            return []
+        self.conditions["inverter_clock"] = now.isoformat()
+        if self._expired("effect"):
+            return []
+        self._step("discharge windows moved away from now")
+        away = window_away(now)
+        writes = [
+            (probe, away[index % 4]) for index, probe in enumerate(DISCHARGE_WINDOW)
+        ]
+
+        async def apply() -> str | None:
+            for probe, value in writes:
+                if (failure := await self._write(probe, value)) is not None:
+                    return failure
+            return None
+
+        async def undo() -> None:
+            for probe in DISCHARGE_WINDOW:
+                await self._write(probe, self.snapshot.raw[probe.field])
+
+        return [
+            await self._bracket(
+                "discharge windows away from now",
+                self._discharging,
+                "battery discharge power",
+                None,
+                apply,
+                undo,
+                setpoint=False,
+                expect_stop=True,
+                settle=WINDOW_SETTLE,
+                recovery=WINDOW_RECOVERY,
+            )
+        ]
 
     async def _force_export(self, sample: Sample) -> float | None:
         """Make the house export by discharging the battery, or say why not.

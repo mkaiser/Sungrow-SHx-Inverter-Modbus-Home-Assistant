@@ -33,6 +33,8 @@ from homeassistant.helpers.storage import Store
 from sungrow_modbus.control_test import ControlTest, Options, Snapshot, document
 
 from .const import (
+    CONF_CONTROL_TEST_CHARGE_WINDOW,
+    CONF_CONTROL_TEST_DISCHARGE_WINDOW,
     CONF_CONTROL_TEST_EXPORT,
     CONF_CONTROL_TEST_PV_CUT,
     CONF_CONTROL_TEST_RESTART,
@@ -125,6 +127,16 @@ class ControlTestRunner:
             ),
             cut_pv=bool(
                 options.get(CONF_CONTROL_TEST_PV_CUT, CONTROL_TEST_PERMISSION_DEFAULT)
+            ),
+            charge_window=bool(
+                options.get(
+                    CONF_CONTROL_TEST_CHARGE_WINDOW, CONTROL_TEST_PERMISSION_DEFAULT
+                )
+            ),
+            discharge_window=bool(
+                options.get(
+                    CONF_CONTROL_TEST_DISCHARGE_WINDOW, CONTROL_TEST_PERMISSION_DEFAULT
+                )
             ),
         )
 

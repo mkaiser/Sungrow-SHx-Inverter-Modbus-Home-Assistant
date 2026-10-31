@@ -156,6 +156,17 @@ CONF_CONTROL_TEST_EXPORT = "control_test_export_limit"
 #: is what the `Cut PV generation` switch waits for on each firmware.
 CONF_CONTROL_TEST_PV_CUT = "control_test_pv_cut"
 
+#: Let the control test write a forced-charging window around now (#785).
+#:
+#: The battery charges a few percent, from the grid if there is no sun.
+CONF_CONTROL_TEST_CHARGE_WINDOW = "control_test_charge_window"
+
+#: Let the control test move the discharge windows away from now (#785).
+#:
+#: Registers outside Sungrow's document: a run with this on is the watched
+#: write the integration needs before it offers them as controls.
+CONF_CONTROL_TEST_DISCHARGE_WINDOW = "control_test_discharge_window"
+
 #: Which slot of a multi-inverter YAML install this entry's device was.
 #:
 #: `""` for a single-inverter package, `"_inv_2"` for the second inverter of a

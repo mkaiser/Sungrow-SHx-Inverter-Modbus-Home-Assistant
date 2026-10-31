@@ -87,6 +87,8 @@ from .const import (
     AUDIENCE_USERS,
     CONF_ADD_DEVICES,
     CONF_BATTERY_MAX_POWER,
+    CONF_CONTROL_TEST_CHARGE_WINDOW,
+    CONF_CONTROL_TEST_DISCHARGE_WINDOW,
     CONF_CONTROL_TEST_EXPORT,
     CONF_CONTROL_TEST_PV_CUT,
     CONF_CONTROL_TEST_RESTART,
@@ -1769,6 +1771,20 @@ class SungrowOptionsFlow(OptionsFlow):
                         CONF_CONTROL_TEST_PV_CUT,
                         default=options.get(
                             CONF_CONTROL_TEST_PV_CUT, CONTROL_TEST_PERMISSION_DEFAULT
+                        ),
+                    ): BooleanSelector(),
+                    probatio.Required(
+                        CONF_CONTROL_TEST_CHARGE_WINDOW,
+                        default=options.get(
+                            CONF_CONTROL_TEST_CHARGE_WINDOW,
+                            CONTROL_TEST_PERMISSION_DEFAULT,
+                        ),
+                    ): BooleanSelector(),
+                    probatio.Required(
+                        CONF_CONTROL_TEST_DISCHARGE_WINDOW,
+                        default=options.get(
+                            CONF_CONTROL_TEST_DISCHARGE_WINDOW,
+                            CONTROL_TEST_PERMISSION_DEFAULT,
                         ),
                     ): BooleanSelector(),
                 }

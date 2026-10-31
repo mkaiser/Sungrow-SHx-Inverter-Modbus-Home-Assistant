@@ -160,6 +160,8 @@ def planned_steps(options: Options) -> int:
     steps = 2 + len(PROBES) + len(ControlTest.TWO_POINT) + 4
     if options.restart:
         steps += 2
+    # One more for each timed window the run was given leave to write.
+    steps += options.charge_window + options.discharge_window
     return steps
 
 

@@ -55,6 +55,8 @@ from sungrow_modbus.control_test import (
 )
 
 from .const import (
+    CONF_CONTROL_TEST_CHARGE_WINDOW,
+    CONF_CONTROL_TEST_DISCHARGE_WINDOW,
     CONF_CONTROL_TEST_EXPORT,
     CONF_CONTROL_TEST_PV_CUT,
     CONF_CONTROL_TEST_RESTART,
@@ -276,6 +278,16 @@ class SurveyRunner:
             cut_pv=bool(
                 self.entry.options.get(
                     CONF_CONTROL_TEST_PV_CUT, CONTROL_TEST_PERMISSION_DEFAULT
+                )
+            ),
+            charge_window=bool(
+                self.entry.options.get(
+                    CONF_CONTROL_TEST_CHARGE_WINDOW, CONTROL_TEST_PERMISSION_DEFAULT
+                )
+            ),
+            discharge_window=bool(
+                self.entry.options.get(
+                    CONF_CONTROL_TEST_DISCHARGE_WINDOW, CONTROL_TEST_PERMISSION_DEFAULT
                 )
             ),
         )

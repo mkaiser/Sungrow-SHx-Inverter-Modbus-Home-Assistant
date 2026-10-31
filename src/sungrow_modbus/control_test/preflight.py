@@ -264,6 +264,8 @@ class PreflightSteps(RestoreSteps):
 
         plan: list[Probe] = []
         for probe in (*PROBES, *ENUMERATIONS):
+            if probe.leave is not None and not getattr(self.options, probe.leave):
+                continue
             if probe.requires is not None and probe.requires not in self.capabilities:
                 self._note(
                     f"{probe.field}: {NOT_CAPABLE} "

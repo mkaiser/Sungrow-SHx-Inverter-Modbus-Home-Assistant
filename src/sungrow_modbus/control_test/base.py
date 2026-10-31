@@ -25,6 +25,7 @@ from .procedure import (
     SEVERITY,
     VERIFY_BUDGET,
     WAIT_TICK,
+    WINDOW_BUDGET,
     Clock,
     Options,
     Probe,
@@ -145,6 +146,9 @@ class ControlTestBase:
         share = self.options.run_budget / RUN_BUDGET
         running = start
         effect = EFFECT_BUDGET + (PV_CUT_BUDGET if self.options.cut_pv else 0.0)
+        effect += WINDOW_BUDGET * (
+            self.options.charge_window + self.options.discharge_window
+        )
         for name, budget in (
             ("preflight", PREFLIGHT_BUDGET),
             ("readback", READBACK_BUDGET),
@@ -250,6 +254,14 @@ class ControlTestBase:
         """
         if self.options.dry_run:
             return None
+        if probe.raw_only:
+            failure = await self._write_word(probe, round(value))
+            if failure is not None:
+                self.refusals[probe.field] = f"the raw write {failure}"
+                self._last_refused = probe.field
+                return failure
+            self._written[probe.field] = value
+            return None
         try:
             if (
                 probe.field == "export_power_limit"
@@ -272,4 +284,31 @@ class ControlTestBase:
             self._last_refused = probe.field
             return DROPPED
         self._written[probe.field] = value
+        return None
+
+    async def _write_word(self, probe: Probe, word: int) -> str | None:
+        """Write one raw word to a control's register. None on success.
+
+        Refusals are deliberately **not** recorded in `self.refusals`: on a
+        multiplying firmware this write is expected to be refused, and that
+        table is what the report quotes for the probe's own write.
+        """
+        if self.options.dry_run:
+            return None
+        component = self.inverter.component(probe.component)
+        resolved = component.resolved_fields.get(probe.field)
+        if resolved is None or resolved.count != 1:
+            return REFUSED
+        try:
+            await self.inverter.async_write_word(resolved.address, word)
+        except ModbusError as err:
+            _LOGGER.debug(
+                "control test: %s refused word %s: %s", probe.field, word, err
+            )
+            return REFUSED
+        except (TimeoutError, OSError) as err:
+            _LOGGER.debug(
+                "control test: %s dropped word %s: %s", probe.field, word, err
+            )
+            return DROPPED
         return None

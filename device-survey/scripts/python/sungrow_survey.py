@@ -165,6 +165,11 @@ CONTROL_TEST_QUESTION = f"""
       capping the export while it is;
     * PV generation cut for about half a minute, where the inverter has
       the register for it, and back within a minute more;
+    * a forced-charging window around now, for a minute or two, where the
+      inverter has the schedule: the battery charges a few percent, from
+      the grid if there is no sun;
+    * the discharge windows moved away from now for a minute or two, where
+      the inverter has them: the house imports instead of using the battery;
     * a stop and a start of the inverter. Stopped within seconds, running
       again after 3 to 4 minutes in daylight and over 6 at night. While it
       is stopped there is no PV production, the battery is idle, backup
@@ -924,9 +929,10 @@ def control_arguments(
     """Return the control test's command line for the leave given in step 2.
 
     One yes covers everything the question named, so the restart, the
-    export-limit lift and the PV cut are all on. `--allow-dark` because the
-    readback half finds a factor-ten error with or without the sun, and
-    refusing a run for want of it would refuse the one the person agreed to.
+    export-limit lift, the PV cut and both timed windows are all on.
+    `--allow-dark` because the readback half finds a factor-ten error with or
+    without the sun, and refusing a run for want of it would refuse the one
+    the person agreed to.
     `--yes` because the leave was given among the questions, and the run must
     not stop to ask it again a quarter of an hour later.
     """
@@ -949,6 +955,8 @@ def control_arguments(
         "--restart",
         "--enable-export-limit",
         "--cut-pv",
+        "--charge-window",
+        "--discharge-window",
         "--allow-dark",
         "--yes",
     ]
@@ -1658,7 +1666,8 @@ def _parser() -> argparse.ArgumentParser:
         choices=CONTROL_TEST_ANSWERS,
         help="whether the control test may run after the reading: a short forced "
         "charge and discharge, feed-in limitation for seconds, PV cut for about "
-        "a minute, and a restart of the inverter, each put back afterwards",
+        "a minute, a forced-charging window and the discharge windows moved for "
+        "a minute or two, and a restart of the inverter, each put back afterwards",
     )
     parser.add_argument(
         "--simulated",
