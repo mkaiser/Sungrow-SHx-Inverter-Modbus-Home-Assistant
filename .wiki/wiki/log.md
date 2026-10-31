@@ -157,3 +157,12 @@ SH15T on P071 through a WiNet-S, from a diagnostics download whose `survey`
 section is committed: the first SH-T forced charge (as commanded) and restart
 (stopped 2 s, running 145 s), writes and the 13074 read refused by a busy
 dongle, and 33149-33150 answering in one round against the capability table.
+
+## [2026-10-31] ingested | the first SH-RS: an SH6.0RS on SUNSTONE-H P068 (#786)
+
+Through a WiNet-S, read only, published as anonymous. 31211 answers 0x55 on
+P068; the forced-charging block and the discharge schedules answer with the
+SH-RT layout; the history block is refused, as through every dongle; twelve
+blocks lost connections in some rounds with the owner's pollers stopped. The
+battery firmware string carries bytes after its NUL, which the library now
+drops (strings end at the first NUL).

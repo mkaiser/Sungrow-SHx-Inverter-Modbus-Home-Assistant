@@ -10,6 +10,7 @@ from modbus_connection import (
     ServerDeviceBusyError,
     ServerDeviceFailureError,
 )
+from modbus_connection.model import StringField
 
 #: Exception responses that are answers but settle nothing about a register.
 #: 0x06 says "ask me later". 0x04 does too through a busy WiNet-S: gerd's
@@ -57,15 +58,38 @@ RegisterValue = float | int | str | None
 
 
 def words_text(words: Iterable[int], encoding: str = "ascii") -> str:
-    """Decode raw register words as text, high byte first, without the padding.
+    """Decode raw register words as text, high byte first, up to the first NUL.
 
-    Sungrow pads a string field with 0x00, so the NULs are stripped; anything
-    undecodable is replaced rather than raised, because a reading with one
-    odd byte is still a reading. Whitespace is the caller's to strip: a
-    serial's exact text is what its stand-in is hashed from.
+    Sungrow pads a string field with 0x00, and the first NUL ends the text:
+    an SH6.0RS on SUNSTONE-H answers its battery firmware as
+    `SBRBCU-S_22011.01.30`, a NUL, and then `44` left over from a longer
+    string, which stripping only the ends kept. Anything undecodable is
+    replaced rather than raised, because a reading with one odd byte is still
+    a reading. Whitespace is the caller's to strip: a serial's exact text is
+    what its stand-in is hashed from.
     """
     raw = b"".join(int(word).to_bytes(2, "big") for word in words)
-    return raw.decode(encoding, "replace").strip("\x00")
+    return raw.lstrip(b"\x00").split(b"\x00", 1)[0].decode(encoding, "replace")
+
+
+class TextField(StringField):
+    """A Sungrow string register: the text before the first NUL.
+
+    `modbus_connection`'s own string strips only trailing NULs, which keeps
+    whatever a firmware left after its terminator -- invisible in a log, and
+    enough to make a firmware string match nothing it is compared against.
+    """
+
+    def decode(self, words: list[int], scale_exponent: int | None = None) -> str:
+        """Return the text before the first NUL, as ASCII, dropping odd bytes."""
+        raw = b"".join((word & 0xFFFF).to_bytes(2, "big") for word in words)
+        text = raw.lstrip(b"\x00").split(b"\x00", 1)[0]
+        return text.decode("ascii", errors="ignore")
+
+
+def string(address: int, length: int, *, writable: bool = False) -> TextField:
+    """Declare a fixed-length, NUL-terminated ASCII string over `length` words."""
+    return TextField(address, count=length, writable=writable)
 
 
 def present(value: RegisterValue) -> RegisterValue:

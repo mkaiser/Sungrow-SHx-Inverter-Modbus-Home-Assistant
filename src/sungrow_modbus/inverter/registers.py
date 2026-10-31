@@ -33,11 +33,11 @@ from modbus_connection.model import (
     gauge,
     int32,
     integer,
-    string,
     uint32,
 )
 
 from ..addresses import reg
+from ..model import string
 
 #: Unavailable sentinels the YAML package does not declare, by field name.
 #:

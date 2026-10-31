@@ -34,9 +34,10 @@ them with function code 3 to record their settings. Nothing here writes.
 
 from __future__ import annotations
 
-from modbus_connection.model import Component, gauge, int32, integer, string, uint32
+from modbus_connection.model import Component, gauge, int32, integer, uint32
 
 from ..addresses import reg
+from ..model import string
 
 #: The unit an iHomeManager answers on, fixed by Sungrow ("changes are not
 #: supported").

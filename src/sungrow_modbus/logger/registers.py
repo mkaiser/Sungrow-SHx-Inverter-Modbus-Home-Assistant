@@ -22,9 +22,10 @@ Read only. Two people report writes to a Logger failing; nothing here tries.
 
 from __future__ import annotations
 
-from modbus_connection.model import Component, integer, string, uint32
+from modbus_connection.model import Component, integer, uint32
 
 from ..addresses import reg
+from ..model import string
 
 #: Where a Logger answers on its own endpoint.
 UNIT = 247

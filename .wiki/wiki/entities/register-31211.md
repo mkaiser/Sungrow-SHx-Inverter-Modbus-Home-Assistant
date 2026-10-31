@@ -22,6 +22,7 @@ By the committed register dumps (asserted in `tests/test_pv_generation_cut.py`):
 | [B001.V000.P022](firmware-sapphire-h-b001-v000-p022.md) | 0x55 |
 | [B001.V000.P023](firmware-sapphire-h-b001-v000-p023.md) | 0x55 |
 | [PEARL-H_B000.V000.P071](firmware-pearl-h-b000-v000-p071.md) | 0x55 |
+| [SUNSTONE-H_B000.V001.P068](firmware-sunstone-h-b000-v001-p068.md) | 0x55 |
 
 The same two inverters at [fwitten](installation-fwitten.md) answer the
 sentinel on 95.03 and 0x55 on P023, so the firmware decides. The string that

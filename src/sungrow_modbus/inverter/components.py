@@ -10,9 +10,10 @@ Sungrow reports 32-bit values low word first, which the YAML package spells
 
 from __future__ import annotations
 
-from modbus_connection.model import Component, gauge, integer, string, uint32
+from modbus_connection.model import Component, gauge, integer, uint32
 
 from ..addresses import reg
+from ..model import string
 
 
 class InverterControl(Component):

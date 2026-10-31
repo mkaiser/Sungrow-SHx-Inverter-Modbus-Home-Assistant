@@ -49,7 +49,7 @@ wallbox's at the same house, so this TLS authenticates nothing.
 V1.1.16's inputs from 6196 hold PV, direct-consumption and export history:
 daily, monthly and yearly yields. Inputs 6196-6198 answer on every cable reading in the corpus, on P020, P022, P023
 and firmware the document did not report, and are refused on every dongle
-reading, SH-RT and SH-T alike, for example
+reading, SH-RT, SH-T and SH-RS alike, for example
 [gerd on the cable](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-summary.md)
 against [gerd through the dongle](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-summary.md).
 V1.1.16 says the same of the whole block, registers 6100-6826: "WiNet-S/S2

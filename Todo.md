@@ -44,8 +44,7 @@ Structure:
    both `forced_charging` and `discharge_schedule`; its Home Assistant keeps
    polling, so expect dropped connections -- then the wiki's control-test
    page with what the run shows.
-3. **Incorporate #786, comment 6549649447.**
-4. **Make the suite fast.** Four tests in `tests/test_control_test_ha.py`
+3. **Make the suite fast.** Four tests in `tests/test_control_test_ha.py`
    take about 150 s each of real waiting (the integration's runner uses the
    real clock), which is most of the suite's eleven minutes; `pytest -n auto`
    does not help much because the four share one file. Give that runner a

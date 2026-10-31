@@ -43,10 +43,10 @@ publishes the number the charger sent beside what it is taken to mean.
 
 from __future__ import annotations
 
-from modbus_connection.model import Component, gauge, integer, string, uint32
+from modbus_connection.model import Component, gauge, integer, uint32
 
 from ..addresses import reg
-from ..model import RegisterValue
+from ..model import RegisterValue, string
 
 #: What register 21317's charging status codes mean.
 #:
