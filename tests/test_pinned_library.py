@@ -193,3 +193,40 @@ def test_a_variable_that_is_not_provably_a_device_is_left_alone(tmp_path):
     )
 
     assert held == set()
+
+
+def test_an_enum_member_the_wheel_lacks_is_reported(tmp_path):
+    """`Capability.DISCHARGE_SCHEDULE` against a wheel whose enum predates it.
+
+    The import of `Capability` resolves, and the module-level description
+    table then fails at import time: #787, on 0.1.0a23 from PyPI. A member
+    inherited from a library base counts as there.
+    """
+    enum = (
+        "from enum import StrEnum\n"
+        "class Base(StrEnum):\n"
+        "    BATTERY = 'battery'\n"
+        "class Capability(Base):\n"
+        "    THREE_PHASE = 'three_phase'\n"
+    )
+    missing = check.unresolved_class_members(
+        _wheel(tmp_path, {"sungrow_modbus.inverter.capabilities": enum})
+    )
+
+    assert "Capability.DISCHARGE_SCHEDULE" in missing
+    assert "Capability.BATTERY" not in missing
+    assert "Capability.THREE_PHASE" not in missing
+    assert all(":" in where for where in missing.values()), "each names a source line"
+
+
+def test_the_tree_s_own_classes_have_every_member_it_uses(tmp_path):
+    """No false alarms on a consistent tree: `.value` and the like are not asked."""
+    root = Path(__file__).resolve().parents[1] / "src"
+    modules = {
+        ".".join(path.relative_to(root).with_suffix("").parts).removesuffix(
+            ".__init__"
+        ): path.read_text(encoding="utf-8")
+        for path in (root / "sungrow_modbus").rglob("*.py")
+    }
+
+    assert check.unresolved_class_members(_wheel(tmp_path, modules)) == {}

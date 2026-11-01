@@ -270,6 +270,87 @@ def unresolved_attributes(wheel: Path) -> dict[str, str]:
     return missing
 
 
+def class_members(wheel: Path) -> dict[str, set[str]]:
+    """Collect, per class the wheel defines, the names its body and bases give.
+
+    Bases are followed by name, within the wheel only: an enum's own `value`
+    and `name` come from the standard library, which is why
+    `unresolved_class_members` asks only about UPPER_CASE names.
+    """
+    bodies: dict[str, set[str]] = {}
+    bases: dict[str, list[str]] = {}
+    with zipfile.ZipFile(wheel) as archive:
+        for member in archive.namelist():
+            if not (member.endswith(".py") and member.split("/")[0] == LIBRARY):
+                continue
+            tree = ast.parse(archive.read(member).decode("utf-8"), filename=member)
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.ClassDef):
+                    continue
+                names = bodies.setdefault(node.name, set())
+                for item in node.body:
+                    if isinstance(item, ast.Assign):
+                        names.update(
+                            t.id for t in item.targets if isinstance(t, ast.Name)
+                        )
+                    elif isinstance(item, ast.AnnAssign) and isinstance(
+                        item.target, ast.Name
+                    ):
+                        names.add(item.target.id)
+                    elif isinstance(
+                        item, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef
+                    ):
+                        names.add(item.name)
+                bases.setdefault(node.name, []).extend(
+                    base.id for base in node.bases if isinstance(base, ast.Name)
+                )
+
+    def resolve(name: str, seen: frozenset[str] = frozenset()) -> set[str]:
+        found = set(bodies.get(name, set()))
+        for base in bases.get(name, []):
+            if base not in seen:
+                found |= resolve(base, seen | {name})
+        return found
+
+    return {name: resolve(name) for name in bodies}
+
+
+def unresolved_class_members(wheel: Path) -> dict[str, str]:
+    """`Class.MEMBER` uses whose member the wheel's class lacks.
+
+    The third half. `from sungrow_modbus... import Capability` resolves
+    against any wheel that has the enum, and `Capability.DISCHARGE_SCHEDULE`
+    then fails at import time on every install whose wheel predates the
+    member -- in a module-level description table, before the integration
+    has even loaded. Only UPPER_CASE members are asked about (enum members and
+    class constants), so an enum's inherited `value` never cries wolf.
+    """
+    members = class_members(wheel)
+    missing: dict[str, str] = {}
+    for path in sources():
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        classes: dict[str, str] = {}
+        for node in tree.body:
+            if isinstance(node, ast.ImportFrom) and (
+                (node.module or "") == LIBRARY
+                or (node.module or "").startswith(f"{LIBRARY}.")
+            ):
+                for alias in node.names:
+                    if alias.name in members:
+                        classes[alias.asname or alias.name] = alias.name
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Attribute)
+                and isinstance(node.value, ast.Name)
+                and node.value.id in classes
+                and node.attr.isupper()
+                and node.attr not in members[classes[node.value.id]]
+            ):
+                key = f"{classes[node.value.id]}.{node.attr}"
+                missing.setdefault(key, f"{path.name}:{node.lineno}")
+    return missing
+
+
 def download(version: str, into: Path) -> Path:
     """Fetch the wheel for one published version. Raises on anything unclear."""
     url = PYPI.format(name=DISTRIBUTION, version=version)
@@ -324,6 +405,10 @@ def report(wheel: Path, label: str) -> int:
     gaps += [
         f"a device has no {attr} in this wheel (used at {where})"
         for attr, where in sorted(attributes.items())
+    ]
+    gaps += [
+        f"{member} is not in this wheel (used at {where})"
+        for member, where in sorted(unresolved_class_members(wheel).items())
     ]
 
     print(f"imports      {len(wanted)} library modules, integration and scripts")
