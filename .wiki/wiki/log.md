@@ -166,3 +166,11 @@ SH-RT layout; the history block is refused, as through every dongle; twelve
 blocks lost connections in some rounds with the owner's pollers stopped. The
 battery firmware string carries bytes after its NUL, which the library now
 drops (strings end at the first NUL).
+
+## [2026-11-01] found | the yearly history slots start at 2015
+
+In peter-sm's cable dump (#785) each quantity's 2026 yearly slot (6272, 6451,
+6630) holds the sum of its monthly values, which places the first slot at
+2015, U32 low word first, 0.1 kWh; the slots after 2029 read 0xFFFF. The
+monthly registers hold the current calendar year only. Read by the
+integration as this month and this year per quantity.

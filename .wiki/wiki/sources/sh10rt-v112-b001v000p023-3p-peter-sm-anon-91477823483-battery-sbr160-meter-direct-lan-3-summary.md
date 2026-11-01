@@ -45,6 +45,8 @@ third reading, and 2629 and 13265, which were then, are not now.
   every address. Monthly PV generation (registers 6227-6238), direct consumption (6417-6428) and
   export (6596-6607) hold values up to October and 0 for November and December. See
   [WiNet-S, the history registers](../entities/device-winet-s.md).
+- **The yearly history slots**: 2024-2026 hold totals, and each quantity's 2026 slot equals the
+  sum of its monthly values, which places the first slot at 2015 (same page).
 - **The forced-charging schedule**, registers 33208-33219: 0x55 (off), days 1, every window
   00:00-00:00, both target SoCs 0.
 - **The discharge schedules** as in the earlier readings: weekday window 1 00:00-24:00, window 2

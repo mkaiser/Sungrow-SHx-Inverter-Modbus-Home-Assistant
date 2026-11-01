@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING
 
 from ..const import model_for
 from .faults import FAULT_WORDS, Kind, reported
+from .registers import HISTORY_FIRST_YEAR, HISTORY_YEARS
 
 if TYPE_CHECKING:
     from .device import SungrowInverter
@@ -215,6 +216,113 @@ class Derived:
     def weekend_discharge_window_2(self) -> str | None:
         """The second weekend discharge window (regs 33184-33187)."""
         return self._window("weekend", 2)
+
+    # -- the energy history (6227-6637) -----------------------------------
+
+    def _inverter_month(self) -> tuple[int, int] | None:
+        """Return the inverter clock's year and month, or None.
+
+        The inverter's calendar decides which monthly register is filling,
+        so it is the one asked; a clock outside V1.1.16's ranges is None
+        rather than a month guessed from it.
+        """
+        year = self._value("system_clock_year")
+        month = self._value("system_clock_month")
+        if year is None or month is None:
+            return None
+        y, m = int(year), int(month)
+        if not (2000 <= y <= 2099 and 1 <= m <= 12):
+            return None
+        return y, m
+
+    def _this_month(self, quantity: str) -> float | None:
+        """Return this month's total so far, by the inverter's calendar."""
+        now = self._inverter_month()
+        if now is None:
+            return None
+        value = self._value(f"{quantity}_month_{now[1]:02d}")
+        return None if value is None else float(value)
+
+    def _this_year(self, quantity: str) -> float | None:
+        """Return this year's total so far, or None past the fifteenth year."""
+        now = self._inverter_month()
+        if now is None or not 0 <= now[0] - HISTORY_FIRST_YEAR < HISTORY_YEARS:
+            return None
+        value = self._value(f"{quantity}_year_{now[0]}")
+        return None if value is None else float(value)
+
+    def _months(self, quantity: str) -> dict[str, float]:
+        """Return this year's months up to the current one, as `YYYY-MM`.
+
+        The registers after the current month are not history: the inverter
+        cleared them at the new year, so they would read as months of 0 kWh.
+        """
+        now = self._inverter_month()
+        if now is None:
+            return {}
+        year, current = now
+        months: dict[str, float] = {}
+        for month in range(1, current + 1):
+            value = self._value(f"{quantity}_month_{month:02d}")
+            if value is not None:
+                months[f"{year}-{month:02d}"] = float(value)
+        return months
+
+    def _years(self, quantity: str) -> dict[str, float]:
+        """Return every year with a total, up to the current one.
+
+        A year at 0 kWh is before the installation, not a year without sun.
+        """
+        now = self._inverter_month()
+        if now is None:
+            return {}
+        years: dict[str, float] = {}
+        for i in range(HISTORY_YEARS):
+            year = HISTORY_FIRST_YEAR + i
+            value = self._value(f"{quantity}_year_{year}")
+            if year <= now[0] and value is not None and float(value) > 0:
+                years[str(year)] = float(value)
+        return years
+
+    @property
+    def pv_generation_this_month(self) -> float | None:
+        """PV generation this month, by the inverter's clock (6227-6238)."""
+        return self._this_month("pv_generation")
+
+    @property
+    def pv_generation_this_year(self) -> float | None:
+        """PV generation this year (6250-6279)."""
+        return self._this_year("pv_generation")
+
+    @property
+    def direct_consumption_this_month(self) -> float | None:
+        """Direct consumption from PV this month (6417-6428)."""
+        return self._this_month("direct_consumption")
+
+    @property
+    def direct_consumption_this_year(self) -> float | None:
+        """Direct consumption from PV this year (6429-6458)."""
+        return self._this_year("direct_consumption")
+
+    @property
+    def export_from_pv_this_month(self) -> float | None:
+        """Export from PV this month (6596-6607)."""
+        return self._this_month("export_from_pv")
+
+    @property
+    def export_from_pv_this_year(self) -> float | None:
+        """Export from PV this year (6608-6637)."""
+        return self._this_year("export_from_pv")
+
+    def history(self, key: str) -> dict[str, float]:
+        """Return the history behind one of the six sensors above.
+
+        `pv_generation_this_month` gives this year's months, and
+        `pv_generation_this_year` the years before and including this one.
+        Empty, never None, so an attribute keeps one shape.
+        """
+        quantity, _, period = key.rpartition("_this_")
+        return self._months(quantity) if period == "month" else self._years(quantity)
 
     def _floats(self, *fields: str) -> tuple[float, ...] | None:
         """Return several readings as floats, or None if any is missing."""

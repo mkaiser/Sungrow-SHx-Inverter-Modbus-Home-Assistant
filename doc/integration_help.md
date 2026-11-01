@@ -76,7 +76,8 @@ automation:
   client is what breaks it.
 - **Through a WiNet-S dongle**, some registers are not forwarded:
   - the daily, monthly and yearly history registers (6100 and up), which
-    Sungrow documents as cable-only;
+    Sungrow documents as cable-only, so the six *this month* and *this
+    year* energy sensors exist only over the inverter's own LAN port;
   - the inverter's sub-controller and battery firmware versions;
   - an SBR battery's cell and module details.
 

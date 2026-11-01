@@ -14,29 +14,16 @@ Structure:
 
 # Next steps
 
-1. **Bring back the YAML package's history sensors, for cable users.** Its
-   monthly and yearly PV generation (6227-6238, 6250-6289), monthly and
-   yearly direct consumption (6417-6428, 6429-6468) and monthly and yearly
-   export (6596-6607, 6608-6647) are all in V1.1.16. They went because most
-   YAML users read through a WiNet-S, which refuses the block: inputs
-   6196-6198 answer on every cable survey and are refused on every dongle
-   one (wiki: WiNet-S, the history registers), and V1.1.16 marks the whole
-   block 6100-6826 "WiNet-S/S2 and Logger is not supported". Over the
-   cable the whole block answers, with monthly values up to the current
-   month (peter-sm, 0.1.0a23; one house so far). Gate them on a capability
-   probed at 6227, so a dongle house gets none of them. Every other sensor
-   the YAML ever dropped was renamed and is still read, or moved (grid
-   frequency to 5242, battery power to 5214, battery capacity to 5639), or
-   went for cause: grid state's 13030 is reserved in V1.1.16, and the manual
-   MPP scan at holding 30230 is in no Sungrow document. Decided: the YAML's
-   per-month ids (`sensor.monthly_pv_generation_01_january`...) are not
-   adopted. The inverter keeps one register per calendar month and
-   overwrites it every year, so the years before live only in Home
-   Assistant; a this-month sensor with `total_increasing` keeps every month
-   from now on in its long-term statistics, which are never purged, and the
-   old ids' statistics stay in the database. Per quantity, one sensor for
-   this month and one for this year, with the other months (the last twelve)
-   and years as attributes.
+1. **Confirm the energy history at a second cable house.** Built: six
+   sensors (PV generation, direct consumption and export from PV, this
+   month and this year by the inverter's clock, `total_increasing`, with
+   the months or years in a `history` attribute), gated on
+   `Capability.ENERGY_HISTORY`, read every 600 s. The layout (yearly slots
+   from 2015, months of the current year only) rests on peter-sm's dump
+   alone; the daylight runs below re-create the bar12, gerd and mkaiser
+   cable surveys, whose dumps check it. The YAML's per-month ids are not
+   adopted: a month's register is overwritten every year, and this month's
+   long-term statistics keep every month from now on.
 
 
 # Open decisions
@@ -202,7 +189,9 @@ Structure:
     it in the evening or with a load. Then: the wiki's control-test page,
     the device and firmware pages with each verdict, the log, and the
     options screenshot in `device-survey/images/` (it shows three switches,
-    now five).
+    now five). Then release 0.1.0a24: the window legs, the discharge
+    schedules, the energy history and the NUL fix are unreleased, and the
+    survey scripts reach contributors only through the PyPI pin.
 
 # Future work
 
@@ -263,6 +252,15 @@ the specification instead; its scan-interval check goes first.
 - Hand inverter and wallbox readings to evcc, e.g. over MQTT, so evcc
   need not open a Modbus session of its own. To find out: does evcc have
   a standard configuration for that?
+
+## Recurrent: new surveys to ingest (daily, after noon)
+
+Every day after noon, read the general survey thread
+([#786](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786))
+and any issue a survey was posted to since the last check. Ingest each new
+survey as `.wiki/AGENTS.md` describes (raw file, source page, entity pages,
+index, log), and name the contributor (without `@`) and the issue number in
+the commit; a survey signed `anonymous` stays unnamed.
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 

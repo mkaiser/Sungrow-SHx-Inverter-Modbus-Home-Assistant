@@ -1,6 +1,6 @@
 # The entity names, for review
 
-**214 entities**, which is everything modern mode creates. The **entity id**
+**220 entities**, which is everything modern mode creates. The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
 it -- but only at creation. Rename later and anybody who already has the entity
 keeps the id they were born with; only the label changes. So the cost of a late
@@ -56,7 +56,7 @@ better.
 | Total consumed energy | `sensor.sh10rt_total_consumed_energy` | kWh | Total consumed energy |
 | Total direct energy consumption | `sensor.sh10rt_total_direct_energy_consumption` | kWh | Total direct energy consumption |
 
-## Everything else (44)
+## Everything else (46)
 
 | Name | Entity id | Unit | Legacy name |
 | --- | --- | --- | --- |
@@ -75,6 +75,8 @@ better.
 | Control pilot voltage | `sensor.sh10rt_control_pilot_voltage` | V |  |
 | DC-side fault | `sensor.sh10rt_dc_side_fault` |  |  |
 | DSP software version | `sensor.sh10rt_dsp_software_version` |  | Sungrow DSP Software **←** |
+| Direct consumption this month | `sensor.sh10rt_direct_consumption_this_month` | kWh |  |
+| Direct consumption this year | `sensor.sh10rt_direct_consumption_this_year` | kWh |  |
 | Enabled | `binary_sensor.sh10rt_enabled` |  |  |
 | Fault reported | `binary_sensor.sh10rt_fault_reported` |  |  |
 | Firmware version part 1 | `sensor.sh10rt_firmware_version_part_1` |  | Sungrow Version 1 **←** |
@@ -143,13 +145,15 @@ better.
 | --- | --- | --- | --- |
 | Temperature | `sensor.sh10rt_temperature` | °C | Inverter temperature **←** |
 
-## The PV trackers (21)
+## The PV trackers (25)
 
 | Name | Entity id | Unit | Legacy name |
 | --- | --- | --- | --- |
 | Cut PV generation | `switch.sh10rt_cut_pv_generation` |  |  |
 | Daily PV generation | `sensor.sh10rt_daily_pv_generation` | kWh | Daily PV generation |
 | Daily exported energy from PV | `sensor.sh10rt_daily_exported_energy_from_pv` | kWh | Daily exported energy from PV |
+| Export from PV this month | `sensor.sh10rt_export_from_pv_this_month` | kWh |  |
+| Export from PV this year | `sensor.sh10rt_export_from_pv_this_year` | kWh |  |
 | MPPT1 current | `sensor.sh10rt_mppt1_current` | A | MPPT1 current |
 | MPPT1 power | `sensor.sh10rt_mppt1_power` | W | MPPT1 power |
 | MPPT1 voltage | `sensor.sh10rt_mppt1_voltage` | V | MPPT1 voltage |
@@ -165,6 +169,8 @@ better.
 | PV generating | `binary_sensor.sh10rt_pv_generating` |  | PV generating |
 | PV generating (delayed) | `binary_sensor.sh10rt_pv_generating_delayed` |  | PV generating (delay) **←** |
 | PV generation cut | `binary_sensor.sh10rt_pv_generation_cut` |  |  |
+| PV generation this month | `sensor.sh10rt_pv_generation_this_month` | kWh |  |
+| PV generation this year | `sensor.sh10rt_pv_generation_this_year` | kWh |  |
 | PV power limitation | `binary_sensor.sh10rt_pv_power_limitation` |  |  |
 | Total PV generation | `sensor.sh10rt_total_pv_generation` | kWh | Total PV generation |
 | Total exported energy from PV | `sensor.sh10rt_total_exported_energy_from_pv` | kWh | Total exported energy from PV |

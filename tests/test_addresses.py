@@ -119,7 +119,9 @@ def _undeclared_fields() -> list[str]:
                 isinstance(first, ast.Call)
                 and getattr(first.func, "id", None) == "reg"
                 and len(first.args) == 1
-                and isinstance(first.args[0], ast.Constant)
+                # A number, or arithmetic on one: the energy history builds
+                # each quantity's fields from its first register number.
+                and isinstance(first.args[0], (ast.Constant, ast.BinOp))
             ):
                 found.append(f"{path.relative_to(REPO)}:{node.lineno}")
     return found

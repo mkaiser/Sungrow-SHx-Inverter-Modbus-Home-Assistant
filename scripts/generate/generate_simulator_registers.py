@@ -80,6 +80,27 @@ OVERRIDES: dict[int, int | list[int]] = {
     33181: 24,
 }
 
+#: The energy history, input 6227-6637, as peter-sm's cable read it on
+#: 2026-10-31: this year's months to October, then 2024-2026. Each year is
+#: the sum of its months, which is how the yearly slots were placed.
+HISTORY: dict[int, tuple[tuple[int, ...], tuple[int, ...]]] = {
+    # monthly start (protocol address): (twelve months, 0.1 kWh), (2024-2026)
+    6226: (
+        (56, 1459, 6536, 11967, 14241, 13539, 14082, 11958, 6904, 3362, 0, 0),
+        (78412, 85419, 84104),
+    ),
+    6416: (
+        (56, 1147, 2520, 2687, 3039, 3724, 3872, 2924, 2071, 1466, 0, 0),
+        (24160, 27076, 23506),
+    ),
+    6595: (
+        (0, 66, 1164, 5638, 8018, 6672, 7498, 6318, 2075, 329, 0, 0),
+        (35767, 36021, 37778),
+    ),
+}
+#: Where each quantity's yearly slots start, by its monthly start.
+HISTORY_YEARS_AT = {6226: 6249, 6416: 6428, 6595: 6607}
+
 #: The fault and alarm words, input 13050-13079: no flag set, which is what
 #: every surveyed inverter read. The default's 1 would be bit 0 -- a fan alarm
 #: on the simulator for ever. Input only: the same addresses on the holding
@@ -98,6 +119,11 @@ FAULT_WORDS: dict[int, list[int]] = {
 #: turn an inverter off could be exercised only against somebody's house.
 HOLDING_ONLY: dict[int, list[int]] = {
     12999: [0xCF],  # Start/Stop, currently "started"
+    # The inverter clock, holding 5000-5005: 2026-10-31 14:00:00, the day
+    # peter-sm's history below was read. Here rather than in OVERRIDES, which
+    # would put the input side's device type and rated output into the year
+    # and the month.
+    **{4999 + i: [word] for i, word in enumerate((2026, 10, 31, 14, 0, 0))},
 }
 
 STRINGS = {
@@ -139,12 +165,13 @@ def _default_value(entry: dict[str, Any], width: int) -> list[int]:
 def _apply_fixtures(spaces: dict[str, dict[int, list[int]]]) -> None:
     """Overwrite the defaults where a plausible value matters more than a zero.
 
-    Four passes, in this order, because each is narrower than the last:
+    Five passes, in this order, because each is narrower than the last:
     `STRINGS` gives the text fields something readable, `OVERRIDES` pins
-    individual registers a probe would otherwise misread, `HOLDING_ONLY`
-    adds words that exist on the holding side alone -- 12999 among them, which
-    is what makes the control test's restart phase exercisable offline -- and
-    `FAULT_WORDS` clears the input-side fault and alarm words.
+    individual registers a probe would otherwise misread, `HISTORY` fills the
+    energy history, `HOLDING_ONLY` adds words that exist on the holding side
+    alone -- 12999 among them, which is what makes the control test's restart
+    phase exercisable offline -- and `FAULT_WORDS` clears the input-side fault
+    and alarm words.
     """
     for address, text in STRINGS.items():
         for space in spaces.values():
@@ -156,6 +183,14 @@ def _apply_fixtures(spaces: dict[str, dict[int, list[int]]]) -> None:
         for space in spaces.values():
             if address in space:
                 space[address] = words
+
+    for monthly, (months, years) in HISTORY.items():
+        for offset, word in enumerate(months):
+            spaces["input"][monthly + offset] = [word]
+        for index, total in enumerate(years):
+            # 2024 is the tenth slot after 2015; low word first.
+            address = HISTORY_YEARS_AT[monthly] + 2 * (9 + index)
+            spaces["input"][address] = [total & 0xFFFF, total >> 16]
 
     for address, words in HOLDING_ONLY.items():
         spaces["holding"][address] = list(words)

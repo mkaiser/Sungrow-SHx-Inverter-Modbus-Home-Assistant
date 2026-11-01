@@ -266,6 +266,23 @@ DISCHARGE_SCHEDULE: dict[str, tuple[str, ...]] = {
     "weekend_discharge": ("weekend_discharge_raw",),
 }
 
+#: The inverter's own energy history (6227-6637), read over the cable only.
+#: Per quantity, this month and this year by the inverter's clock, energy
+#: totals that reset at the period's start (`total_increasing`), with the
+#: months or years behind them in a `history` attribute. The YAML's
+#: per-month ids are not adopted: a month's register is overwritten every
+#: year, and this month's sensor keeps every month in long-term statistics.
+HISTORY: dict[str, tuple[str, ...]] = {
+    f"{quantity}_this_{period}": (
+        "system_clock_year",
+        "system_clock_month",
+        *(f"{quantity}_month_{month:02d}" for month in range(1, 13)),
+        *(f"{quantity}_year_{2015 + i}" for i in range(15)),
+    )
+    for quantity in ("pv_generation", "direct_consumption", "export_from_pv")
+    for period in ("month", "year")
+}
+
 #: Seconds a power-flow bit must hold before its `(delay)` twin reports it.
 #: One value for all seven, which is what the YAML uses.
 DELAY_ON = 60
@@ -329,6 +346,9 @@ CAPABILITY_BY_PREFIX: tuple[tuple[str, str], ...] = (
     ("phase_b_", "THREE_PHASE"),
     ("phase_c_", "THREE_PHASE"),
     ("pv_generation_cut", "PV_GENERATION_CUT"),
+    ("pv_generation_this_", "ENERGY_HISTORY"),
+    ("direct_consumption_this_", "ENERGY_HISTORY"),
+    ("export_from_pv_this_", "ENERGY_HISTORY"),
     ("weekday_discharge", "DISCHARGE_SCHEDULE"),
     ("weekend_discharge", "DISCHARGE_SCHEDULE"),
     # Battery power, charge and the charging/discharging flags: an inverter
@@ -450,6 +470,20 @@ def render_derived() -> str:
         lines.append(f"        requires=Capability.{_requires(key)},")
         if key in DIAGNOSTIC:
             lines.append("        entity_category=EntityCategory.DIAGNOSTIC,")
+        lines.append("    ),")
+    for key, depends in HISTORY.items():
+        lines.append("    SungrowSensorDescription(")
+        lines.append(f'        key="{key}",')
+        lines.append('        component="derived",')
+        lines.append(f'        field="{key}",')
+        lines.append(f'        translation_key="{key}",')
+        lines.append(f"        depends_on={depends!r},")
+        lines.append(f"        requires=Capability.{_requires(key)},")
+        lines.append("        history=True,")
+        lines.append("        device_class=SensorDeviceClass.ENERGY,")
+        lines.append("        state_class=SensorStateClass.TOTAL_INCREASING,")
+        lines.append('        native_unit_of_measurement="kWh",')
+        lines.append("        suggested_display_precision=1,")
         lines.append("    ),")
     lines.append(")")
 

@@ -858,6 +858,101 @@ class InverterSubControllerFirmware(Component):
     """
 
 
+class InverterClock(Component):
+    """6 holding fields, polled every 600s, read only.
+
+    The inverter's own clock, registers 5000-5005. Read for the energy
+    history: which of its twelve monthly registers is "this month" is the
+    inverter's calendar, not Home Assistant's, and the two can disagree for
+    a few minutes either side of midnight on the first.
+    """
+
+    register_space = "holding"
+
+    system_clock_year = integer(reg(5000), signed=False, nan=65535)
+    """System clock: year, 2000-2099."""
+    system_clock_month = integer(reg(5001), signed=False, nan=65535)
+    """System clock: month, 1-12."""
+    system_clock_day = integer(reg(5002), signed=False, nan=65535)
+    """System clock: day, 1-31."""
+    system_clock_hour = integer(reg(5003), signed=False, nan=65535)
+    """System clock: hour, 0-23."""
+    system_clock_minute = integer(reg(5004), signed=False, nan=65535)
+    """System clock: minute, 0-59."""
+    system_clock_second = integer(reg(5005), signed=False, nan=65535)
+    """System clock: second, 0-59."""
+
+
+#: The first year the yearly history registers hold, and how many they hold.
+#: V1.1.16 gives twenty U32 slots and says "valid for 15 years"; which year
+#: the first is, it does not say. peter-sm's dump (2026-10-31) settles it: the
+#: slot at 6272 holds exactly the sum of 2026's monthly values, so 6250 is
+#: 2015, and the five slots after 2029 read 0xFFFF.
+HISTORY_FIRST_YEAR = 2015
+HISTORY_YEARS = 15
+
+
+def _energy_history(
+    name: str, doc: str, quantity: str, monthly: int, yearly: int
+) -> type[Component]:
+    """Return one quantity's history: twelve months, then fifteen years.
+
+    V1.1.16, "Applicable types: SH5.0-10.0RT", and "WiNet-S/S2 and Logger is
+    not supported" -- measured: refused through every dongle, answered whole
+    over the cable. The months are this calendar year's; the inverter clears
+    them at the new year (peter-sm reads 0 for November and December while
+    the year before holds 8541.9 kWh). Each month is U16 and each year U32,
+    low word first, both 0.1 kWh.
+
+    `monthly` and `yearly` are register numbers, as `reg()` takes them.
+    Built rather than written out because the three quantities differ only
+    in their addresses, and twenty-seven hand-typed fields each is where an
+    address typo would hide; `tests/test_registers.py` still holds every
+    field to its row in the entity map.
+    """
+    fields: dict[str, Any] = {
+        f"{quantity}_month_{month:02d}": gauge(
+            reg(monthly + month - 1), 0.1, signed=False, nan=65535, unit="kWh"
+        )
+        for month in range(1, 13)
+    }
+    fields |= {
+        f"{quantity}_year_{HISTORY_FIRST_YEAR + i}": uint32(
+            reg(yearly + 2 * i),
+            scale=0.1,
+            word_order="little",
+            nan=0xFFFFFFFF,
+            unit="kWh",
+        )
+        for i in range(HISTORY_YEARS)
+    }
+    namespace = {"__doc__": doc, "register_space": "input", **fields}
+    return type(name, (Component,), namespace)
+
+
+InverterPvGenerationHistory = _energy_history(
+    "InverterPvGenerationHistory",
+    "PV generation per month (6227-6238) and per year (6250-6279).",
+    "pv_generation",
+    6227,
+    6250,
+)
+InverterDirectConsumptionHistory = _energy_history(
+    "InverterDirectConsumptionHistory",
+    "Direct consumption from PV per month (6417-6428) and per year (6429-6458).",
+    "direct_consumption",
+    6417,
+    6429,
+)
+InverterExportFromPvHistory = _energy_history(
+    "InverterExportFromPvHistory",
+    "Export from PV per month (6596-6607) and per year (6608-6637).",
+    "export_from_pv",
+    6596,
+    6608,
+)
+
+
 #: Attribute name on the device to the Component it holds.
 COMPONENTS: dict[str, type[Component]] = {
     "realtime_input": InverterRealtimeInput,
@@ -878,6 +973,10 @@ COMPONENTS: dict[str, type[Component]] = {
     "firmware_block_communication_module": InverterFirmwareBlockCommunicationModule,
     "firmware_block_inverter": InverterFirmwareBlockInverter,
     "sub_controller_firmware": InverterSubControllerFirmware,
+    "clock": InverterClock,
+    "pv_generation_history": InverterPvGenerationHistory,
+    "direct_consumption_history": InverterDirectConsumptionHistory,
+    "export_from_pv_history": InverterExportFromPvHistory,
 }
 
 #: Tier name to the components read at its interval.
@@ -905,6 +1004,10 @@ TIER_COMPONENTS: dict[str, tuple[str, ...]] = {
         "firmware_block_communication_module",
         "firmware_block_inverter",
         "sub_controller_firmware",
+        "clock",
+        "pv_generation_history",
+        "direct_consumption_history",
+        "export_from_pv_history",
     ),
 }
 

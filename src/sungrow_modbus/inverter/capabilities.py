@@ -162,6 +162,20 @@ class Capability(StrEnum):
     Read only until a watched write confirms what writing does.
     """
 
+    ENERGY_HISTORY = "energy_history"
+    """The inverter's own monthly and yearly energy totals, 6227-6637.
+
+    PV generation, direct consumption from PV and export from PV. V1.1.16
+    marks the block "WiNet-S/S2 and Logger is not supported", and every
+    dongle survey refuses it, so in practice this is a cable connection.
+    Probed on the twelve monthly PV values and denied when all are zero
+    (`ZERO_MEANS_ABSENT`): a model outside the block's "applicable types"
+    must not get six sensors reporting zero forever. A house that has
+    generated nothing yet this year -- new, or the night of 1 January -- is
+    granted by the first 0.1 kWh, because capabilities are re-probed after
+    every poll.
+    """
+
     PV_GENERATION_CUT = "pv_generation_cut"
     """Register 31211 answers: PV generation can be cut, and its state read.
 
@@ -526,6 +540,9 @@ PROBES: dict[Capability, tuple[str, ...]] = {
     Capability.PV_GENERATION_CUT: ("pv_generation_cut_raw",),
     Capability.FORCED_CHARGING: ("forced_charging_raw",),
     Capability.DISCHARGE_SCHEDULE: ("weekend_discharge_raw",),
+    Capability.ENERGY_HISTORY: tuple(
+        f"pv_generation_month_{month:02d}" for month in range(1, 13)
+    ),
 }
 
 #: Capabilities granted only by a Sungrow mode code, 0xAA or 0x55.
@@ -594,6 +611,8 @@ ZERO_MEANS_ABSENT: frozenset[Capability] = frozenset(
         # absence: the grid's own voltage is not zero while it is there.
         # See the capability's docstring for the five dongle paths.
         Capability.METER_PHASE_MEASUREMENTS,
+        # Every month of this year at 0 kWh is a block that is not there.
+        Capability.ENERGY_HISTORY,
     }
 )
 

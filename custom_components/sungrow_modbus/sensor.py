@@ -57,9 +57,7 @@ async def async_setup_entry(
         return
 
     async_add_entities(
-        (SungrowFlagsSensor if description.flags else SungrowSensor)(
-            runtime_data, description
-        )
+        _sensor_class(description)(runtime_data, description)
         for description in (*SENSOR_DESCRIPTIONS, *DERIVED_SENSORS)
         if runtime_data.serves(description)
     )
@@ -102,6 +100,17 @@ async def async_setup_entry(
             SungrowWallboxSensor(wallbox, description)
             for description in WALLBOX_DESCRIPTIONS
         )
+
+
+def _sensor_class(
+    description: SungrowSensorDescription,
+) -> type[SungrowSensor | SungrowFlagsSensor]:
+    """Return the entity class an inverter sensor description asks for."""
+    if description.flags:
+        return SungrowFlagsSensor
+    if description.history:
+        return SungrowHistorySensor
+    return SungrowSensor
 
 
 class SungrowWallboxSensor(SungrowDeviceEntity, SensorEntity):
@@ -217,6 +226,25 @@ class SungrowFlagsSensor(SungrowEntity, SensorEntity):
     def extra_state_attributes(self) -> dict[str, list[str]]:
         """Name the flags that are set."""
         return {"active": list(self._active or ())}
+
+
+class SungrowHistorySensor(SungrowSensor):
+    """Energy so far this month or this year, with the periods behind it.
+
+    The state is the running total, so long-term statistics keep every month
+    from now on. The `history` attribute is what the inverter itself still
+    holds -- this year's months, or every year since the installation --
+    which is the only record of the time before Home Assistant polled it.
+    """
+
+    @property
+    def extra_state_attributes(self) -> dict[str, dict[str, float]]:
+        """Return the months or years the inverter holds, by period."""
+        return {
+            "history": self.coordinator.device.derived.history(
+                self.entity_description.field
+            )
+        }
 
 
 class SungrowExternalSensor(SungrowEntity, SensorEntity):

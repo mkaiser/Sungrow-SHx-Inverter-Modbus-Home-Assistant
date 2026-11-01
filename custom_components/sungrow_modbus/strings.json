@@ -549,8 +549,20 @@
       "dc_side_fault": {
         "name": "DC-side fault"
       },
+      "direct_consumption_this_month": {
+        "name": "Direct consumption this month"
+      },
+      "direct_consumption_this_year": {
+        "name": "Direct consumption this year"
+      },
       "ems_mode_selection_raw": {
         "name": "EMS mode selection raw"
+      },
+      "export_from_pv_this_month": {
+        "name": "Export from PV this month"
+      },
+      "export_from_pv_this_year": {
+        "name": "Export from PV this year"
       },
       "export_power": {
         "name": "Export power"
@@ -722,6 +734,12 @@
       },
       "pv_generation_cut_raw": {
         "name": "PV generation cut raw"
+      },
+      "pv_generation_this_month": {
+        "name": "PV generation this month"
+      },
+      "pv_generation_this_year": {
+        "name": "PV generation this year"
       },
       "pv_power_limitation_raw": {
         "name": "PV power limitation raw"

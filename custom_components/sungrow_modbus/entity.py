@@ -106,6 +106,15 @@ class SungrowSensorDescription(SungrowEntityDescription, SensorEntityDescription
     and the raw U32 means nothing to anybody reading it.
     """
 
+    history: bool = False
+    """The field is one of `Derived`'s energy history totals.
+
+    Reported as this month's or this year's total, with the months or years
+    behind it in a `history` attribute from `Derived.history`: twenty-seven
+    registers per quantity as entities would be a page of numbers that
+    mostly never change.
+    """
+
     smoothed_over: float | None = None
     """Report a moving average over this many seconds, not the raw reading.
 

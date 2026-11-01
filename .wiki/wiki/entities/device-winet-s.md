@@ -60,5 +60,15 @@ read through a dongle. From 0.1.0a23 the survey's dump reads the whole block
 [peter-sm](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-3-summary.md)
 every address of it answered, and the monthly PV generation (6227-6238), direct consumption
 (6417-6428) and export (6596-6607) hold values up to October and 0 for the months to come.
-One house; the yearly registers' word order and scale are not yet read against anything.
+
+The same dump places the yearly registers, which V1.1.16 gives as twenty U32 slots "valid for
+15 years" without naming the first year. For all three quantities the slot at 6272, 6451 and
+6630 holds exactly the sum of that quantity's monthly values (PV 8410.4 kWh, direct
+consumption 2350.6, export 3777.8), so each slot is U32 low word first at 0.1 kWh, the first
+slot (6250, 6429, 6608) is 2015, and 2015-2029 are the fifteen; the five slots after 2029
+read 0xFFFF. November and December read 0 while 2025 holds 8541.9 kWh of PV, so the monthly
+registers hold the current calendar year only and are cleared at the new year. One house.
+
+The integration reads the block over the cable as six sensors, this month and this year per
+quantity, gated on `Capability.ENERGY_HISTORY` (`src/sungrow_modbus/inverter/capabilities.py`).
 

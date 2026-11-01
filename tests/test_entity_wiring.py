@@ -91,7 +91,7 @@ def test_the_derived_layer_covers_the_yaml_template_sensors() -> None:
     scripts = _Path(__file__).resolve().parent.parent / "scripts" / "generate"
     sys.path.insert(0, str(scripts))
     sys.path.insert(0, str(scripts / "tables"))
-    from descriptions import DISCHARGE_SCHEDULE, MODE_FLAGS, PROBLEMS
+    from descriptions import DISCHARGE_SCHEDULE, HISTORY, MODE_FLAGS, PROBLEMS
     from naming import LEGACY_ONLY_SENSORS
 
     declared = {f"binary_sensor.{key}" for key in MODE_FLAGS}
@@ -103,7 +103,10 @@ def test_the_derived_layer_covers_the_yaml_template_sensors() -> None:
         f"{'binary_sensor' if key.endswith('_discharge') else 'sensor'}.{key}"
         for key in DISCHARGE_SCHEDULE
     }
-    assert not ported - expected - declared - problems - schedule, (
+    # The energy history: the YAML's per-month ids are deliberately not
+    # adopted, so these replace nothing either.
+    history = {f"sensor.{key}" for key in HISTORY}
+    assert not ported - expected - declared - problems - schedule - history, (
         "derived entities with no YAML counterpart and no declaration"
     )
     for entity_id in declared:
