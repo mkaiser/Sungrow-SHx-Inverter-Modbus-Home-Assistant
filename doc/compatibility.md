@@ -15,6 +15,7 @@ no survey is listed as **untested** rather than assumed to work.
 
 | Setup | By | Model | Connection | Battery (as reported) | ARM firmware | Phases | MPPT3 | MPPT4 | Battery | Sungrow battery | Meter direct | Firmware block | PV power limit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `sh10rs-b000v002p059-1p-anonymous-anon-27241675299-battery-sungrow-winet-lan` | anonymous | SH10RS (`0x0D1B`) | WiNet-S, wired (reported) | — | `ARM_SUNSTONE-H_V11_V01_A` | single phase | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
 | `sh10rs-b000v002p065-1p-jam3s97-anon-35122522532-battery-sbh300-winet-lan` | Jam3s97 | SH10RS (`0x0D1B`) | WiNet-S, wired (reported) | — | `ARM_SUNSTONE-H_V11_V01_A` | single phase | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
 | `sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-lan` | bar12 | SH10RT-20 (`0x0E13`) | WiNet-S, wired (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
 | `sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-wlan` | bar12 | SH10RT-20 (`0x0E13`) | WiNet-S, WiFi (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
@@ -104,6 +105,15 @@ models or between transports? Sungrow publishes no release notes, so
 the only way to know is to compare two readings that agree on model
 and transport and differ only in firmware.
 
+### SH10RS, winet_lan
+
+Same model, same transport, different firmware — so a difference
+here is the firmware's.
+
+**No capability differs.** Every curated probe answered the
+same way on B000.V002.P059 and B000.V002.P065, which is a result worth having: it says this firmware
+change moved nothing this project reads.
+
 ### SH10RT-20, winet_lan
 
 Same model, same transport, different firmware — so a difference
@@ -133,6 +143,7 @@ that has only one would make the next pair.
 
 | Model | Transport | Inverter firmware |
 | --- | --- | --- |
+| SH10RS | winet_lan | B000.V002.P059 (1 reading) |
 | SH10RS | winet_lan | B000.V002.P065 (1 reading) |
 | SH10RT | direct_lan | B001.V000.P020 (2 readings) |
 | SH10RT-20 | direct_lan | B001.V000.P023 (3 readings) |

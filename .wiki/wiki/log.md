@@ -218,3 +218,10 @@ enable, 0 W 2 s after it went back, no rebound; the house drifted afterwards as 
 charge window of the day had risen clearly, and two were called "could not tell" on drift. A
 start standing `WINDOW_START_W` above both neighbours is now confirmed ahead of drift, and the
 wait after the window is 20 s. Confirmed live at mkaiser with the fix.
+
+## [2026-11-01] ingested | an anonymous SH10RS on SUNSTONE-H P059 (#786)
+
+Through a WiNet-S on Ethernet, read only, the owner's pollers running: six holding blocks came and
+went with exceptions, as through a busy dongle. 31211 answers 0x55 on P059, the third SH-RS
+firmware to; the schedules have the SH-RT layout. The pack reports 32.0 kWh at 5639 against a
+voltage of about six or seven SBR modules, unexplained. The owner first hit #787's import error.
