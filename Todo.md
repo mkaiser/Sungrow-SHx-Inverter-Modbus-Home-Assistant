@@ -173,6 +173,16 @@ Assumption (to be proven!): Inverter families of the SAME firmware version suppo
 Create a table: columns are inverter family + firmware version, rows are the supported registers/features.
 Maybe indicate if you were not able to test / confirm a register / feature.
 
+## Small fixes
+
+- The preview mirror's `sync.yml` uses `actions/checkout@v4`, which GitHub
+  now forces from Node 20 to Node 24 with a warning. Move to v5 in
+  `doc/preview-mirror/sync.yml` and the mirror's copy together (they must stay
+  byte-identical; the change needs a push to the preview repository).
+- `tests/test_control_test_cli.py` fails when run alone (`No module named
+  'probe'`): it relies on another test putting `device-survey/scripts/python`
+  on `sys.path` first. Green in the full suite.
+
 ## SBR per-module entities
 
 All 24 registers are read, and the position encoding holds on three and four

@@ -39,10 +39,12 @@
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.claude,target=/home/vscode/.claude,type=bind"
   ],
 
-  // VS Code copies the host ~/.gitconfig in on every create. On a Windows
-  // host that drags in safe.directory entries like C:\..., which are not
-  // absolute paths on Linux, and git then warns on every invocation.
-  "postCreateCommand": "git config --global --unset-all safe.directory '^[A-Za-z]:' || true; scripts/dev/setup.sh",
+  // VS Code copies the host ~/.gitconfig in when it attaches, after
+  // postCreateCommand has run. On a Windows host that drags in safe.directory
+  // entries like C:\..., which are not absolute paths on Linux, and git then
+  // warns on every invocation, so they are dropped on every attach.
+  "postCreateCommand": "scripts/dev/setup.sh",
+  "postAttachCommand": "git config --global --unset-all safe.directory '^[A-Za-z]:' || true",
 
   "containerEnv": {
     "TZ": "Europe/Berlin",
