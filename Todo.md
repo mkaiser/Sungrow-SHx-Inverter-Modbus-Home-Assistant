@@ -159,9 +159,8 @@ Structure:
     it starting in 4 s and stopping in 2 s; a start is now judged by its
     bracket. `--discharge-window` has run nowhere: it needs the battery
     discharging at least 500 W, so an evening run. fwitten's master is the
-    lead (SBR096, P023), with their Home Assistant stopped for a clean
-    2 s trace like the wiki's charge window trace (the wrapper that took it
-    is not in the repository); mkaiser once its battery is above its floor. Then the device and
+    lead (SBR096, P023), with their Home Assistant stopped; mkaiser once
+    its battery is above its floor. Then the device and
     firmware pages, the log, and the options screenshot in
     `device-survey/images/` (it shows three switches, now five).
 
