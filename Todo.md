@@ -30,10 +30,13 @@ Structure:
    went for cause: grid state's 13030 is reserved in V1.1.16, and the manual
    MPP scan at holding 30230 is in no Sungrow document. Decided: the YAML's
    per-month ids (`sensor.monthly_pv_generation_01_january`...) are not
-   adopted, because a past month's value never changes again and there is
-   no history to continue. Per quantity, one sensor for this month and one
-   for this year, `total_increasing`, with the past months and years as
-   attributes.
+   adopted. The inverter keeps one register per calendar month and
+   overwrites it every year, so the years before live only in Home
+   Assistant; a this-month sensor with `total_increasing` keeps every month
+   from now on in its long-term statistics, which are never purged, and the
+   old ids' statistics stay in the database. Per quantity, one sensor for
+   this month and one for this year, with the other months (the last twelve)
+   and years as attributes.
 2. **Make the suite fast.** Four tests in `tests/test_control_test_ha.py`
    take about 150 s each of real waiting (the integration's runner uses the
    real clock), which is most of the suite's eleven minutes; `pytest -n auto`
