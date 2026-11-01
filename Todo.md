@@ -14,13 +14,9 @@ Structure:
 
 # Next steps
 
-0. **Release 0.1.0a24 now: the preview channel is broken** (#787, Korsberg
-   and Firetribe). The branch uses `Capability.DISCHARGE_SCHEDULE` and
-   `Capability.ENERGY_HISTORY`, which the pinned 0.1.0a23 lacks, so the
-   integration fails at import. The mirror's gate
-   (`scripts/release/check_pinned_library.py`) checked imports, not enum
-   members, and let it through; it now checks both. After the release,
-   answer #787 and #786 (Korsberg rolled back to 17724a1).
+0. **Answer #787 and #786 once 0.1.0a24 is on PyPI** (`make pin-check`
+   green, the preview mirror synced): the import error Korsberg and
+   Firetribe hit is fixed by updating; Korsberg rolled back to 17724a1.
 
 
 # Open decisions
@@ -167,8 +163,7 @@ Structure:
     2 s trace like the wiki's charge window trace (the wrapper that took it
     is not in the repository); mkaiser once its battery is above its floor. Then the device and
     firmware pages, the log, and the options screenshot in
-    `device-survey/images/` (it shows three switches, now five). Then
-    release 0.1.0a24 (item 0).
+    `device-survey/images/` (it shows three switches, now five).
 
 # Future work
 
