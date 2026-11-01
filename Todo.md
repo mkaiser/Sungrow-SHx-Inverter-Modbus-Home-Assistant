@@ -30,21 +30,7 @@ Structure:
    went for cause: grid state's 13030 is reserved in V1.1.16, and the manual
    MPP scan at holding 30230 is in no Sungrow document. What needs deciding
    first is open decision 4.
-2. **The control test's timed windows** (#785), built and unit-tested,
-   not yet run on hardware: `Options.charge_window` writes a forced-charging window around
-   the inverter's own clock (holding 5000-5005) and expects a charge to
-   start; `Options.discharge_window` moves every weekday and weekend
-   discharge window away from now and expects the discharge to stop. Both
-   snapshot only with leave, write the discharge registers by raw word, and
-   are put back by the ordinary restore. Wired into `sungrow_control_test.py`
-   (`--charge-window`, `--discharge-window`, dropped with a line on an older
-   library), the survey's question and the integration's options. Left: a
-   run on the maintainer's SH10RT, in daylight -- a dry run on 2026-10-31 at
-   night was refused because the inverter reported Standby, and it grants
-   both `forced_charging` and `discharge_schedule`; its Home Assistant keeps
-   polling, so expect dropped connections -- then the wiki's control-test
-   page with what the run shows.
-3. **Make the suite fast.** Four tests in `tests/test_control_test_ha.py`
+2. **Make the suite fast.** Four tests in `tests/test_control_test_ha.py`
    take about 150 s each of real waiting (the integration's runner uses the
    real clock), which is most of the suite's eleven minutes; `pytest -n auto`
    does not help much because the four share one file. Give that runner a
@@ -196,6 +182,31 @@ Structure:
     peter-sm, with no unit or scale on record: it needs a second house and a
     known value (what the owner set it to) before it can be an entity.
 
+16. **The timed windows on hardware, in daylight** (#785). Built and
+    unit-tested: `--charge-window` writes a forced-charging window around the
+    inverter's own clock (holding 5000-5005) and expects a charge to start;
+    `--discharge-window` moves every weekday and weekend discharge window away
+    from now and expects the discharge to stop; the ordinary restore puts
+    every word back. A night dry run at the maintainer's SH10RT
+    (2026-10-31) was refused for Standby; it grants both
+    `forced_charging` and `discharge_schedule`. Re-run the survey with the
+    full control test, windows included, at the four houses with standing
+    leave, which also re-creates their surveys on 0.1.0a23 or later:
+    - **bar12** (SH10RT-20, SBR096): over the cable, then the WiNet-S;
+    - **gerd** (SH8.0RT, SBR096, wallbox): stop his Home Assistant first;
+      cable, then the WiNet-S;
+    - **mkaiser** (SH10RT, Pylontech): Home Assistant polls, so expect
+      dropped connections, or stop it for the run;
+    - **fwitten** (SH10RT pair on P023): the master, which carries the
+      battery; the slave has none, so its windows skip themselves.
+    bar12, gerd and mkaiser share one subnet numbering and only one is routed
+    at a time: check the stand-in before any write. The charge window needs
+    the battery below its maximum SoC and the owner's forced-charging
+    schedule off; the discharge window needs the battery discharging, so run
+    it in the evening or with a load. Then: the wiki's control-test page,
+    the device and firmware pages with each verdict, the log, and the
+    options screenshot in `device-survey/images/` (it shows three switches,
+    now five).
 
 # Future work
 

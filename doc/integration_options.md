@@ -69,9 +69,9 @@ itself is the **Run read only diagnosis** button on the device page.
 
 **Run complete diagnosis and tests** writes each setting, reads it back
 against Sungrow's specification, and puts your value back. Pressing it is
-your consent; the three switches below are the parts that go further, and
+your consent; the five switches below are the parts that go further, and
 **each is on until you switch it off**. Switch off what you do not want
-*before* pressing the button; what you switch off stays off. With all three
+*before* pressing the button; what you switch off stays off. With all five
 off, the test still forces the battery and checks every setting's scale.
 
 <img src="../device-survey/images/HA-settings-configure-control-test.png" width="450" alt="The control write test section of the options dialog, with all three switches on">
@@ -81,6 +81,8 @@ off, the test still forces the battery and checks every setting's scale.
 | *May it stop and restart the inverter?* | on | Stops it and starts it again, timing each step. 3 to 4 minutes without generation in daylight, over 6 at night; the backup output loses power meanwhile |
 | *May it switch feed-in limitation on?* | on | Where it is off, switches it on for about a minute to test the export limit. Where it is on already, this changes nothing |
 | *May it cut PV generation for about a minute?* | on | Where the inverter answers register 31211: cuts PV, checks DC power falls to zero, and allows it again. Needs 500 W of PV or more, so it skips itself at night. A passed check is how your firmware gets the **Cut PV generation** switch |
+| *May it set a forced-charging window around now?* | on | Where your own forced-charging schedule is off: writes a window around the inverter's clock, checks the battery starts charging, and puts every word of the schedule back. Skips itself when the battery is full |
+| *May it move the discharge windows away from now?* | on | Where the inverter answers the discharge schedules: moves every weekday and weekend window away from now, checks the battery stops discharging, and puts every word back. Skips itself when the battery is not discharging |
 
 Anything the test could not put back becomes a repair under **Settings →
 Repairs** that restores it. The terminal survey has no such switches: it

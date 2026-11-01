@@ -98,18 +98,21 @@ scripts/survey.sh control 192.168.1.50 --restore <the file it names>
 
 #### In Home Assistant, opt out of what you do not want
 
-The button is your yes. The restart, the feed-in limitation and the PV cut
-are each **on unless you switch them off**, under *Settings → Devices &
+The button is your yes. The restart, the feed-in limitation, the PV cut and
+the two timed windows are each **on unless you switch them off**, under *Settings → Devices &
 services → Sungrow Modbus (preview) → Configure → What the control write test
 may do* ([every option there](../doc/integration_options.md)). Switch them
 off **before** pressing the button; what you switch off stays off. With all
-three off, the test still forces the battery and checks every setting's
+five off, the test still forces the battery and checks every setting's
 scale, and the document records which checks it skipped because you said
 no.
 
 Leaving them on answers the open questions: the PV cut is how your firmware
 gets the **Cut PV generation** switch (it needs 500 W of PV, so it skips
-itself at night), and the restart puts your model's recovery time on record.
+itself at night), the restart puts your model's recovery time on record, and
+the timed windows show whether your firmware obeys a forced-charging window
+and the discharge schedules (they need the battery able to charge, or
+discharging, so they too skip themselves when there is nothing to watch).
 
 #### In a terminal, the default is no
 
