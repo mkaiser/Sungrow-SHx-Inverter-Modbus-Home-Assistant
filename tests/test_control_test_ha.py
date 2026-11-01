@@ -17,6 +17,7 @@ than a feature:
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 from unittest.mock import patch
 
@@ -46,28 +47,39 @@ SURVEY_BUTTON = "button.sh10rt_run_read_only_diagnosis"
 CONTROL_BUTTON = "button.sh10rt_run_complete_diagnosis_and_tests"
 
 
+class InstantClock:
+    """A clock whose every wait passes at once, still yielding to the loop."""
+
+    def __init__(self) -> None:
+        """Start at an arbitrary origin."""
+        self.now = 0.0
+
+    def monotonic(self) -> float:
+        """Return the fake time."""
+        return self.now
+
+    async def sleep(self, seconds: float) -> None:
+        """Advance instead of waiting, and let Home Assistant run meanwhile."""
+        self.now += seconds
+        await asyncio.sleep(0)
+
+
 @pytest.fixture(autouse=True)
 def no_waiting(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Collapse every wait in the procedure, without changing a code path.
+    """Make every wait in the procedure pass at once, without changing a path.
 
     A real run spends its ten minutes almost entirely asleep: settling after a
-    write, and sampling for twenty seconds at a time so a median means
-    something. None of that waiting is what these tests are about -- they are
-    about ordering, wiring and what gets written -- so the durations go to zero
-    and the same code runs.
+    write, sampling for twenty seconds at a time so a median means something,
+    waiting out a restart. None of that is what these tests are about -- they
+    are about ordering, wiring and what gets written -- so time is faked and
+    the same code runs, deadlines included.
 
-    Patched on the library module rather than passed in, so the integration
-    keeps building its runner exactly as it does in a house.
+    Patched where the runner picks its default clock, so the integration keeps
+    building its runner exactly as it does in a house.
     """
-    from sungrow_modbus import control_test as engine
+    from sungrow_modbus.control_test import base
 
-    monkeypatch.setattr(engine, "WINDOW", 0.0)
-    monkeypatch.setattr(engine, "SETTLE", 0.0)
-    monkeypatch.setattr(engine, "SAMPLE_INTERVAL", 0.0)
-    monkeypatch.setattr(engine, "RESTORE_PAUSE", 0.0)
-    monkeypatch.setattr(engine, "RESTART_DWELL", 0.0)
-    monkeypatch.setattr(engine, "RESTART_POLL", 0.0)
-    monkeypatch.setattr(engine.ControlTest, "WRITE_SETTLE", 0.0)
+    monkeypatch.setattr(base, "RealClock", InstantClock)
 
 
 @pytest.fixture

@@ -37,11 +37,6 @@ Structure:
    old ids' statistics stay in the database. Per quantity, one sensor for
    this month and one for this year, with the other months (the last twelve)
    and years as attributes.
-2. **Make the suite fast.** Four tests in `tests/test_control_test_ha.py`
-   take about 150 s each of real waiting (the integration's runner uses the
-   real clock), which is most of the suite's eleven minutes; `pytest -n auto`
-   does not help much because the four share one file. Give that runner a
-   fake clock in those tests, and the suite runs in a couple of minutes.
 
 
 # Open decisions
