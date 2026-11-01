@@ -174,3 +174,47 @@ In peter-sm's cable dump (#785) each quantity's 2026 yearly slot (6272, 6451,
 2015, U32 low word first, 0.1 kWh; the slots after 2029 read 0xFFFF. The
 monthly registers hold the current calendar year only. Read by the
 integration as this month and this year per quantity.
+
+## [2026-11-01] ingested | Jam3s97's SH10RS on SUNSTONE-H P065, with a control test (#786)
+
+Through a WiNet-S on Ethernet, the owner's pollers running. The PV cut did as it was told
+(3465 W, 0 W, 3092 W): the first cut on an SH-RS and the first through a dongle, so P065 joins
+`CONFIRMED_ON_FIRMWARE` and a dongle is shown to forward the write. 13074's probe was accepted
+with feed-in limitation on: P065 stores a written word as handed, the second firmware to do so.
+The stop was refused with an exception, the battery was full, and the SBH300 reads 30.41 kWh.
+bicnz's second SH6.0RS attachment is byte-identical to the committed one.
+
+## [2026-11-01] ingested | second readings at mkaiser and fwitten's master, with the timed windows
+
+Both over the inverter's own LAN port on this tree's library, around noon, full control test.
+fwitten with the owner's Home Assistant polling, every block still answered. The forced-charging
+window did as it was told on P023 (3258.5, 3599, 3339.5 W); on P020 it raised charging from 772 W
+to 4499 W and was judged "could not tell" when the house fell afterwards. The discharge window
+ran nowhere, both batteries charging. 13074 times ten at both; the PV cut confirmed on P023 a
+second time; restarts 186 s and 194 s. Both dumps carry the whole history block, and each 2026
+yearly slot equals the sum of its months: the layout holds at three cable houses.
+
+## [2026-11-01] ingested | gerd's second readings, cable and WiNet-S, with the timed windows
+
+Both around noon with the owner's Home Assistant stopped, full control test. Cable: 9/9, 13074
+times ten, the PV cut and export limit did as told, the charge window raised charging to 4399.5 W
+and was judged "could not tell" on drift. WiNet-S: the charge window and the PV cut did as told
+through the dongle. With fwitten and mkaiser the charge window raised charging on P020, P022 and
+P023 at every run. gerd's history breaks "a year is the sum of its months": PV and export each
+sit 1610.3 kWh above. The wallbox read after a 7854 Wh session this morning.
+
+## [2026-11-01] ingested | bar12's second readings, cable and WiNet-S, with the timed windows
+
+Early afternoon, nothing else polling, full control test. Cable: 9/9, 13074 times ten, the PV cut
+did as told, the history's yearly slots equal their months (four houses of five), but the battery
+swung by about 1000 W on its own, so neither the forced discharge nor the charge window was
+measured. WiNet-S: every behavioural check did as told through the dongle; the charge window rose
+from 1216 W to 4100 W and swung to -1912 W after it closed.
+
+## [2026-11-01] found | a charge window starts in 4 s and stops in 2 s; a start is judged by its bracket
+
+A 2 s trace of the charge window check at mkaiser (P020): a flat 4499 W charge 4 s after the
+enable, 0 W 2 s after it went back, no rebound; the house drifted afterwards as PV fell. Every
+charge window of the day had risen clearly, and two were called "could not tell" on drift. A
+start standing `WINDOW_START_W` above both neighbours is now confirmed ahead of drift, and the
+wait after the window is 20 s. Confirmed live at mkaiser with the fix.

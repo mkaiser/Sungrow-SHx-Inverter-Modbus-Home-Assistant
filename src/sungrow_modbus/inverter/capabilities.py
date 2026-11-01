@@ -465,8 +465,15 @@ CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
     # gerd's SH8.0RT-V112 over its own LAN port, 2026-10-30: 2938 W before,
     # 0 W during, 1913 W after, judged by its bracket (`STOP_BRACKET_W`).
     #   sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan.json  # noqa: E501
+    # Jam3s97's SH10RS through a WiNet-S, 2026-11-01: 3465 W before, 0 W
+    # during, 3092 W after; the behavioural leg, which a dongle cannot spoil.
+    #   sh10rs-b000v002p065-1p-jam3s97-anon-35122522532-battery-sbh300-winet-lan.json
     Capability.PV_GENERATION_CUT_CONTROL: frozenset(
-        {"SAPPHIRE-H_B001.V000.P022", "SAPPHIRE-H_B001.V000.P023"}
+        {
+            "SAPPHIRE-H_B001.V000.P022",
+            "SAPPHIRE-H_B001.V000.P023",
+            "SUNSTONE-H_B000.V002.P065",
+        }
     ),
 }
 

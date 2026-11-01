@@ -15,7 +15,8 @@ answers on **unit 2** at its own port; see [identify by what answers](../concept
 Read on [01011.95.03](firmware-sapphire-h-01011-95-03.md) and again on
 [P023](firmware-sapphire-h-b001-v000-p023.md) after the owner's upgrade: the cleanest evidence that
 [13074](register-13074.md)'s write scale and [31211](register-31211.md) follow the firmware.
-The PV cut was confirmed on the master.
+The PV cut and the forced-charging window were confirmed on the master, which answered every
+block with the owner's Home Assistant polling.
 
 ## Surveys
 
@@ -26,4 +27,5 @@ The PV cut was confirmed on the master.
 - [SH10RT-V112, B001.V000.P023, fwitten slave, the inverter's own LAN port](../sources/sh10rt-v112-b001v000p023-3p-fwitten-anon-33442450531-battery-none-direct-lan-summary.md)
 - [SH10RT-V112, B001.V000.P023, fwitten slave, a WiNet-S (medium not reported)](../sources/sh10rt-v112-b001v000p023-3p-fwitten-anon-33442450531-battery-none-winet-summary.md)
 - [SH10RT-V112, B001.V000.P023, fwitten master, the inverter's own LAN port](../sources/sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan-summary.md)
+- [SH10RT-V112, B001.V000.P023, fwitten master, the inverter's own LAN port, second reading](../sources/sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan-2-summary.md)
 - [SH10RT-V112, B001.V000.P023, fwitten master, a WiNet-S (medium not reported)](../sources/sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-winet-summary.md)

@@ -14,16 +14,13 @@ Structure:
 
 # Next steps
 
-1. **Confirm the energy history at a second cable house.** Built: six
-   sensors (PV generation, direct consumption and export from PV, this
-   month and this year by the inverter's clock, `total_increasing`, with
-   the months or years in a `history` attribute), gated on
-   `Capability.ENERGY_HISTORY`, read every 600 s. The layout (yearly slots
-   from 2015, months of the current year only) rests on peter-sm's dump
-   alone; the daylight runs below re-create the bar12, gerd and mkaiser
-   cable surveys, whose dumps check it. The YAML's per-month ids are not
-   adopted: a month's register is overwritten every year, and this month's
-   long-term statistics keep every month from now on.
+0. **Release 0.1.0a24 now: the preview channel is broken** (#787, Korsberg
+   and Firetribe). The branch uses `Capability.DISCHARGE_SCHEDULE` and
+   `Capability.ENERGY_HISTORY`, which the pinned 0.1.0a23 lacks, so the
+   integration fails at import. The mirror's gate
+   (`scripts/release/check_pinned_library.py`) checked imports, not enum
+   members, and let it through; it now checks both. After the release,
+   answer #787 and #786 (Korsberg rolled back to 17724a1).
 
 
 # Open decisions
@@ -39,11 +36,6 @@ Structure:
    registry migration can close, so it stays cheap until release, not free.
    Wanted with it: a table (YAML | HACS) of sensor names, automations etc.,
    and whether localisation (English / German) is worth it.
-3. **Adopting the opt-in SBR YAML sensors.** Ids like
-   `sensor.sg_battery_1_max_voltage_of_cell` come from a copy-pasted file
-   outside the package and are **not** adopted. Doing it would mean taking
-   over entities this project never generated; the default stays "no".
-
 
 # Blockers
 
@@ -165,35 +157,26 @@ Structure:
     peter-sm, with no unit or scale on record: it needs a second house and a
     known value (what the owner set it to) before it can be an entity.
 
-16. **The timed windows on hardware, in daylight** (#785). Built and
-    unit-tested: `--charge-window` writes a forced-charging window around the
-    inverter's own clock (holding 5000-5005) and expects a charge to start;
-    `--discharge-window` moves every weekday and weekend discharge window away
-    from now and expects the discharge to stop; the ordinary restore puts
-    every word back. A night dry run at the maintainer's SH10RT
-    (2026-10-31) was refused for Standby; it grants both
-    `forced_charging` and `discharge_schedule`. Re-run the survey with the
-    full control test, windows included, at the four houses with standing
-    leave, which also re-creates their surveys on 0.1.0a23 or later:
-    - **bar12** (SH10RT-20, SBR096): over the cable, then the WiNet-S;
-    - **gerd** (SH8.0RT, SBR096, wallbox): stop his Home Assistant first;
-      cable, then the WiNet-S;
-    - **mkaiser** (SH10RT, Pylontech): Home Assistant polls, so expect
-      dropped connections, or stop it for the run;
-    - **fwitten** (SH10RT pair on P023): the master, which carries the
-      battery; the slave has none, so its windows skip themselves.
-    bar12, gerd and mkaiser share one subnet numbering and only one is routed
-    at a time: check the stand-in before any write. The charge window needs
-    the battery below its maximum SoC and the owner's forced-charging
-    schedule off; the discharge window needs the battery discharging, so run
-    it in the evening or with a load. Then: the wiki's control-test page,
-    the device and firmware pages with each verdict, the log, and the
-    options screenshot in `device-survey/images/` (it shows three switches,
-    now five). Then release 0.1.0a24: the window legs, the discharge
-    schedules, the energy history and the NUL fix are unreleased, and the
-    survey scripts reach contributors only through the PyPI pin.
+16. **The discharge window on hardware** (#785). The charge window is
+    settled: it raised charging at all five houses' runs on 2026-11-01
+    (P020, P022, P023, cable and dongle), and a 2 s trace at mkaiser showed
+    it starting in 4 s and stopping in 2 s; a start is now judged by its
+    bracket. `--discharge-window` has run nowhere: it needs the battery
+    discharging at least 500 W, so an evening run. fwitten's master is the
+    lead (SBR096, P023), with their Home Assistant stopped for a clean
+    2 s trace like the wiki's charge window trace (the wrapper that took it
+    is not in the repository); mkaiser once its battery is above its floor. Then the device and
+    firmware pages, the log, and the options screenshot in
+    `device-survey/images/` (it shows three switches, now five). Then
+    release 0.1.0a24 (item 0).
 
 # Future work
+
+## Create a table with supported registers
+
+Assumption (to be proven!): Inverter families of the SAME firmware version support the same capabilities / register sets.
+Create a table: columns are inverter family + firmware version, rows are the supported registers/features.
+Maybe indicate if you were not able to test / confirm a register / feature.
 
 ## SBR per-module entities
 
@@ -213,7 +196,6 @@ The survey dump reads both from 0.1.0a23.
   with a pointer to the release that ships the switch.
 - One evening's watch on a confirmed device: does a cut survive a night or
   a restart, or does iSolarCloud rewrite it?
-- A run through a WiNet-S: whether the dongle forwards the write.
 
 ## A generated dashboard
 
@@ -257,10 +239,14 @@ the specification instead; its scan-interval check goes first.
 
 Every day after noon, read the general survey thread
 ([#786](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786))
-and any issue a survey was posted to since the last check. Ingest each new
+and any issue a survey was posted to since the last check. Comments older than
+the last check are done; read only what is newer. Ingest each new
 survey as `.wiki/AGENTS.md` describes (raw file, source page, entity pages,
 index, log), and name the contributor (without `@`) and the issue number in
-the commit; a survey signed `anonymous` stays unnamed.
+the commit; a survey signed `anonymous` stays unnamed. Then move the date
+below on.
+
+Last checked: **2026-11-01 10:45 UTC** (#786, #785, #787).
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 

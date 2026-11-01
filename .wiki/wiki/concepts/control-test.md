@@ -104,6 +104,31 @@ and over six at night, then up to 20 s more to generate. Much of the wait is
 deadline is ten minutes, with five each for the stop and for generation. The
 terminal prints a dot every `WAIT_TICK` (10 s) while it waits.
 
+## Timed windows
+
+`--charge-window` writes a forced-charging window around the inverter's own clock (holding
+5000-5005) and expects a charge; `--discharge-window` moves every discharge window away from now
+and expects the discharge to stop. The ordinary restore puts every word back.
+
+**The charge window works on P020, P022 and P023**: every run raised charge power while the
+window was open (battery charge power before, during, after):
+
+| Run | Before | During | After | Verdict |
+| --- | --- | --- | --- | --- |
+| [fwitten master, P023, cable](../sources/sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan-2-summary.md) | 3258.5 W | 3599 W | 3339.5 W | did as it was told |
+| [gerd, P022, WiNet-S](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-2-summary.md) | 1656 W | 4400 W | 1681.5 W | did as it was told |
+| [gerd, P022, cable](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-2-summary.md) | 2218 W | 4399.5 W | 1875 W | could not tell |
+| [mkaiser, P020, cable](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-2-summary.md) | 772 W | 4499 W | -245.5 W | could not tell |
+
+The two "could not tell" were the rule's, not the inverter's. A [2 s trace](../sources/mkaiser-charge-window-trace-2026-11-01-summary.md) at mkaiser shows
+the window starting a flat 4499 W charge within 4 s and stopping within 2 s of the enable going
+back, with no rebound; the house then drifted as PV fell. So **a start is now judged by its
+bracket, ahead of drift**: a window standing `WINDOW_START_W` above both neighbours is the
+setting's doing, as a stop between two windows of real power is (`STOP_BRACKET_W`). And the wait
+after the window is 20 s, not 60. Replayed, all four runs confirm; at mkaiser the fixed check
+confirmed live.
+The discharge window has not run anywhere: it needs a battery discharging at least 500 W.
+
 ## Drivers
 
 The engine is the package `src/sungrow_modbus/control_test/`, one module per

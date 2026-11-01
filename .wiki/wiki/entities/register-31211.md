@@ -23,6 +23,7 @@ By the committed register dumps (asserted in `tests/test_pv_generation_cut.py`):
 | [B001.V000.P023](firmware-sapphire-h-b001-v000-p023.md) | 0x55 |
 | [PEARL-H_B000.V000.P071](firmware-pearl-h-b000-v000-p071.md) | 0x55 |
 | [SUNSTONE-H_B000.V001.P068](firmware-sunstone-h-b000-v001-p068.md) | 0x55 |
+| [SUNSTONE-H_B000.V002.P065](firmware-sunstone-h-b000-v002-p065.md) | 0x55 |
 
 The same two inverters at [fwitten](installation-fwitten.md) answer the
 sentinel on 95.03 and 0x55 on P023, so the firmware decides. The string that
@@ -36,10 +37,13 @@ decides is 13250, not 2582.
 | 0x55 or 0xAA | binary sensor **PV generation cut** |
 | ...and its firmware is in `CONFIRMED_ON_FIRMWARE` | switch **Cut PV generation** |
 
-`CONFIRMED_ON_FIRMWARE` holds P022 and P023, each confirmed by a control test
+`CONFIRMED_ON_FIRMWARE` holds P022 and P023 on the SH-RT, each confirmed by a control test
 over the inverter's own LAN port: P023 on fwitten's master (1213 W, 0 W,
 1199 W), P022 on [gerd's](installation-gerd.md) SH8.0RT-V112 (2938 W, 0 W,
-1913 W; [the survey](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-summary.md)). See [firmware gating](../concepts/firmware-gating.md).
+1913 W; [the survey](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-summary.md)).
+It also holds the SH-RS's P065, confirmed through a WiNet-S at
+[Jam3s97](installation-jam3s97.md)'s (3465 W, 0 W, 3092 W): the dongle forwards the write, and
+the behaviour is the evidence a dongle cannot spoil. See [firmware gating](../concepts/firmware-gating.md).
 
 **The cut is a ramp.** After `0xAA`, DC power holds for about 6 s and reaches
 0 W about 20 s after the write. After `0x55` it returns about 8 s later and is

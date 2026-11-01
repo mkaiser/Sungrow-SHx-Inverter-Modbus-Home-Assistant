@@ -8,8 +8,11 @@ created: '2026-10-29'
 # Installation mkaiser
 
 The maintainer's [SH10RT](device-sh-rt.md) on [P020](firmware-sapphire-h-b001-v000-p020.md) with a
-third-party battery, on its own LAN port. Its control test matched every readback.
+third-party battery, on its own LAN port. Its control tests matched every readback written,
+13074 writes times ten, and the forced-charging window raised charging to 4499 W (judged "could
+not tell"). Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
 
 ## Surveys
 
 - [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-summary.md)
+- [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port, second reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-2-summary.md)

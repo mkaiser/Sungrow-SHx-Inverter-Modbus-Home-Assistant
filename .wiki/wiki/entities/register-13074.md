@@ -18,11 +18,14 @@ entry.
 | --- | --- | --- |
 | every B001 measured: [P020](firmware-sapphire-h-b001-v000-p020.md), [P022](firmware-sapphire-h-b001-v000-p022.md), [P023](firmware-sapphire-h-b001-v000-p023.md) | **multiplied by ten** before the range check | [mkaiser](installation-mkaiser.md), [bar12](installation-bar12.md), [gerd](installation-gerd.md), [peter-sm](installation-peter-sm.md), [fwitten](installation-fwitten.md) since P023 |
 | [01011.95.03](firmware-sapphire-h-01011-95-03.md) | stored as handed | [fwitten](installation-fwitten.md) before P023 |
+| [SUNSTONE-H_B000.V002.P065](firmware-sunstone-h-b000-v002-p065.md) (SH-RS) | stored as handed | [Jam3s97](installation-jam3s97.md), through a WiNet-S: the probe's acceptance |
 
 On the times-ten firmware, a plain write sets ten times what was asked, or
 it is refused with 0x04 when ten times the value is out of range. fwitten's
 SH10RT-V112 pair answered 1:1 on 01011.95.03, and times ten on P023, cable
-and dongle alike. So it is the firmware, not the model.
+and dongle alike. So it is the firmware, not the model. On the SH-RS, P065 stores as handed;
+[P068](firmware-sunstone-h-b000-v001-p068.md) is unmeasured, so the integration's per-device
+probe, not a family rule, is what keeps an RS right.
 
 **Only while feed-in limitation (13087) is on.** With it off, the register
 ignores writes on B001: no exception, no change. That is most houses.

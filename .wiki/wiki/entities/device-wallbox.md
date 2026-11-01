@@ -58,6 +58,9 @@ documented 0-2. Checked against Sungrow's own portal on 2026-10-30: input
 21201-21206 is the serial it shows, and 21300 and 21310 count lifetime and
 session energy in Wh; see
 [the portal cross-check](../sources/gerd-wallbox-isolarcloud-2026-10-30-summary.md).
+After a 7854 Wh session that ended at 11:33 on 2026-11-01, input 21310 still held the session's
+energy, input 21313 read 0 and the start mode 3
+([the dongle reading](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-2-summary.md)).
 What is fixed and what moves is in
 [wallbox registers](../sources/wallbox-registers-summary.md).
 RS485 at unit 248 is reported by others and never measured here; see

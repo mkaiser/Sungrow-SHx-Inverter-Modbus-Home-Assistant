@@ -84,11 +84,14 @@ DRIFT_FRACTION = 0.15
 STABLE_MAD_W = 200.0
 #: The timed windows (`Options.charge_window`, `Options.discharge_window`).
 #: The inverter judges a window by its own clock, read from holding 5000-5005,
-#: and a schedule is not acted on the instant it is written, so the window is
-#: wide around now and the settle is long.
+#: so the window is wide around now. The maintainer's SH10RT (P020,
+#: 2026-11-01, sampled every 2 s) charged at 4499 W 4 s after the enable and
+#: was back at 0 W 2 s after it was put back. The settle stays long, which
+#: costs nothing once a start is judged by its bracket; the recovery is short,
+#: because every second of it is a second for the house to move.
 WINDOW_BUDGET = 300.0
 WINDOW_SETTLE = 60.0
-WINDOW_RECOVERY = 60.0
+WINDOW_RECOVERY = 20.0
 CHARGE_WINDOW_BEFORE = 5
 """Minutes the charging window starts before the inverter's now."""
 CHARGE_WINDOW_AFTER = 20
@@ -97,7 +100,13 @@ CHARGE_WINDOW_SOC_STEP = 10
 """Percent above the battery's level the window's target is set, so it has
 something to charge towards and stops soon after if the restore fails."""
 WINDOW_START_W = 300.0
-"""Charge power a window must add to count as having started one."""
+"""Charge power a window must add to count as having started one.
+
+Also what the window must stand above **both** its neighbours by for the start
+to be judged by its bracket, ahead of drift, as a stop is by `STOP_BRACKET_W`.
+Four charge windows on 2026-11-01 rose to a flat 3.6-4.5 kW, and two were
+called inconclusive because the house moved after the window closed: 772 ->
+4499 -> -245.5 W at mkaiser (P020), 2218 -> 4399.5 -> 1875 W at gerd (P022)."""
 
 EFFECT_FLOOR_W = 200.0
 SIGNIFICANCE = 3.0

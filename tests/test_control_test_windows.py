@@ -21,6 +21,7 @@ from sungrow_modbus.control_test import CONFIRMED, ControlTest, Options
 from sungrow_modbus.control_test.procedure import (
     CHARGE_WINDOW,
     DISCHARGE_WINDOW,
+    Sample,
     inverter_clock,
     window_around,
     window_away,
@@ -258,3 +259,55 @@ async def test_a_battery_not_discharging_is_not_written(house: MockModbusUnit) -
     assert await run._discharge_window_effect() == []
     assert not set(writes) & {*WEEKDAY, *WEEKEND}
     assert any("discharging 0 W" in note for note in run.unestablished)
+
+
+# -- the start bracket -----------------------------------------------------------
+
+
+def _charge_script(run: ControlTest, *windows: list[float]) -> None:
+    """Script battery charge power, window by window; positive is charging."""
+    values = iter([value for window in windows for value in window])
+    last = windows[-1][-1]
+
+    async def sample() -> Sample:
+        return Sample(
+            at=run.clock.monotonic(),
+            pv=1000.0,
+            battery=-next(values, last),
+            export=0.0,
+            load=1000.0,
+            soc=50.0,
+        )
+
+    run._sample = sample  # type: ignore[method-assign]
+
+
+@pytest.mark.parametrize(
+    ("before", "during", "after"),
+    [(772.0, 4499.0, -245.5), (2218.0, 4399.5, 1875.0), (1216.0, 4100.0, -1912.0)],
+    ids=["mkaiser-p020", "gerd-p022", "bar12-p023-dongle"],
+)
+async def test_a_window_above_both_neighbours_is_judged_by_its_bracket(
+    house: MockModbusUnit, before: float, during: float, after: float
+) -> None:
+    """Three runs of 2026-11-01: the house moved after the window, not in it."""
+    run = await _run(house, charge_window=True)
+    _charge_script(run, [before] * 11, [during] * 10, [after] * 10)
+
+    [result] = await run._charge_window_effect()
+
+    assert result.verdict == CONFIRMED
+    assert not any("forced-charging window" in note for note in run.unestablished)
+
+
+async def test_a_window_under_its_after_neighbour_still_answers_to_drift(
+    house: MockModbusUnit,
+) -> None:
+    """A rise the house could have made on its own proves nothing."""
+    run = await _run(house, charge_window=True)
+    _charge_script(run, [500.0] * 11, [2500.0] * 10, [2400.0] * 10)
+
+    [result] = await run._charge_window_effect()
+
+    assert result.verdict != CONFIRMED
+    assert any("W different afterwards" in note for note in run.unestablished)

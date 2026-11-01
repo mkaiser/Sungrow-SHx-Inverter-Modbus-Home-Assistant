@@ -7,8 +7,8 @@ created: '2026-10-29'
 
 # SBH battery
 
-The high-voltage pack for the [SH-T](device-sh-t.md): SBH200 and SBH400 in
-this corpus, both read through a [WiNet-S](device-winet-s.md). The
+The high-voltage pack for the [SH-T](device-sh-t.md), and on an [SH-RS](device-sh-rs.md):
+SBH200, SBH300 and SBH400 in this corpus, all read through a [WiNet-S](device-winet-s.md). The
 survey reads it with the [SBR](device-sbr-battery.md)'s map, so its components carry
 `sbr_battery_*` names.
 
@@ -25,7 +25,8 @@ survey reads it with the [SBR](device-sbr-battery.md)'s map, so its components c
   `battery_power` is ([jm493](../sources/sh15t-b000v000p071-3p-jm493-anon-00578206904-battery-sbh200-winet-lan-summary.md)).
 - **The pack's state of charge is its own measurement**: jm493's pack said
   85.5 % where the inverter said 80.0 % ([jm493](../sources/sh15t-b000v000p071-3p-jm493-anon-00578206904-battery-sbh200-winet-lan-summary.md)).
-- **Both packs read over their rating**: 20.27 kWh on an SBH200, 40.55 kWh on
+- **Every pack reads over its rating**: 20.27 kWh on an SBH200, 30.41 kWh on an SBH300
+  ([Jam3s97](../sources/sh10rs-b000v002p065-1p-jam3s97-anon-35122522532-battery-sbh300-winet-lan-summary.md)), 40.55 kWh on
   an SBH400 ([jm493](../sources/sh15t-b000v000p071-3p-jm493-anon-00578206904-battery-sbh200-winet-lan-summary.md), [ra1k-0](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-summary.md)). So `model_for_capacity` names a
   pack within a window either side of its rating, not only below it.
 

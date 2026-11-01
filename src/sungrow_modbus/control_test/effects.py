@@ -266,9 +266,10 @@ class EffectSteps(ReadbackSteps):
 
         The order of the questions is the design, not an accident:
 
-        0. **A bracketed stop**, ahead of drift: zero between two windows of
-           real power (`STOP_BRACKET_W`) is attributable whatever the sky did
-           between them.
+        0. **A bracketed stop or start**, ahead of drift: zero between two
+           windows of real power (`STOP_BRACKET_W`), or a window standing
+           `WINDOW_START_W` above both its neighbours, is attributable whatever
+           the sky did between them.
         1. **Then drift.** Before and after are two readings of the same
            undisturbed house, and when they disagree nothing else is worth
            asking -- the change cannot be attributed to the setting. The answer
@@ -303,6 +304,14 @@ class EffectSteps(ReadbackSteps):
             and after_mid_ is not None
             and min(abs(before_mid), abs(after_mid_)) >= STOP_BRACKET_W
             and abs(during_mid) <= STOPPED_W
+        ):
+            return measured._replace(verdict=CONFIRMED)
+
+        if (
+            expect_start
+            and after_mid_ is not None
+            and during_mid - max(before_mid, after_mid_)
+            > max(SIGNIFICANCE * max(before_mad, after_mad_), WINDOW_START_W)
         ):
             return measured._replace(verdict=CONFIRMED)
 
