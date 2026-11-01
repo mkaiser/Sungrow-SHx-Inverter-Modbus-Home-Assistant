@@ -28,8 +28,12 @@ Structure:
    the YAML ever dropped was renamed and is still read, or moved (grid
    frequency to 5242, battery power to 5214, battery capacity to 5639), or
    went for cause: grid state's 13030 is reserved in V1.1.16, and the manual
-   MPP scan at holding 30230 is in no Sungrow document. What needs deciding
-   first is open decision 4.
+   MPP scan at holding 30230 is in no Sungrow document. Decided: the YAML's
+   per-month ids (`sensor.monthly_pv_generation_01_january`...) are not
+   adopted, because a past month's value never changes again and there is
+   no history to continue. Per quantity, one sensor for this month and one
+   for this year, `total_increasing`, with the past months and years as
+   attributes.
 2. **Make the suite fast.** Four tests in `tests/test_control_test_ha.py`
    take about 150 s each of real waiting (the integration's runner uses the
    real clock), which is most of the suite's eleven minutes; `pytest -n auto`
@@ -54,12 +58,6 @@ Structure:
    `sensor.sg_battery_1_max_voltage_of_cell` come from a copy-pasted file
    outside the package and are **not** adopted. Doing it would mean taking
    over entities this project never generated; the default stays "no".
-4. **How many history entities.** Twelve monthly and up to twenty yearly
-   values per quantity is ~100 entities. Options: only the current month
-   and year as sensors (and the rest as attributes), or the YAML's full set
-   so its users' history continues under the same ids. The YAML's ids
-   (`sensor.monthly_pv_generation_01_january`...) still hold years of
-   history at some houses.
 
 
 # Blockers
