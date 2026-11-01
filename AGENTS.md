@@ -12,6 +12,7 @@ document, the wiki included.
 | Running the survey / its document, scripts and pinned library | `device-survey/README.md` / `device-survey/reference.md` |
 | What is next, open decisions, what waits on hardware | `Todo.md` |
 | Goals, decisions, register sources and licences | `doc/architecture.md` |
+| Recurring procedures (ingest new surveys, release) | `.claude/skills/`, each pointing at the document it follows |
 | Where the integration stands on Home Assistant's quality scale | `custom_components/sungrow_modbus/quality_scale.yaml`, held to the code by `tests/test_quality_scale.py` |
 
 ## Two tracks

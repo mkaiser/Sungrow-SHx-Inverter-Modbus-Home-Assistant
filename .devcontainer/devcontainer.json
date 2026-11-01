@@ -9,11 +9,10 @@
   "image": "mcr.microsoft.com/devcontainers/python:3.14-bookworm",
 
   "features": {
-    // Home Assistant installs each component's requirements on first boot;
-    // a few of them build against these.
-    "ghcr.io/devcontainers-extra/features/apt-packages:1": {
-      "packages": "ffmpeg,libturbojpeg0,libpcap-dev"
-    }
+    // `gh`, for issues, workflow runs and the preview mirror's manual sync.
+    // No apt packages: ffmpeg, libturbojpeg and libpcap serve camera, stream
+    // and dhcp, which neither dev instance loads (no `default_config:`).
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
 
   "remoteUser": "vscode",
@@ -30,6 +29,12 @@
   // differs inside the container, so repo context lives in CLAUDE.md and
   // Todo.md instead - those are path-independent and
   // committed.
+  //
+  // The same bind keeps `gh auth login` across rebuilds: GH_CONFIG_DIR below
+  // puts gh's config in a folder of its own inside it, which gh creates on
+  // first login, so the host needs no folder made by hand. It is the
+  // container's own login, not the host's (gh on Windows keeps that in
+  // %AppData%\GitHub CLI).
   "mounts": [
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.claude,target=/home/vscode/.claude,type=bind"
   ],
@@ -40,7 +45,8 @@
   "postCreateCommand": "git config --global --unset-all safe.directory '^[A-Za-z]:' || true; scripts/dev/setup.sh",
 
   "containerEnv": {
-    "TZ": "Europe/Berlin"
+    "TZ": "Europe/Berlin",
+    "GH_CONFIG_DIR": "/home/vscode/.claude/gh-devcontainer"
   },
 
   "forwardPorts": [8123, 5020, 8124],

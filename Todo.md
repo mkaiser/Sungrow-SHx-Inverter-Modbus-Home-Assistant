@@ -241,7 +241,13 @@ index, log), and name the contributor (without `@`) and the issue number in
 the commit; a survey signed `anonymous` stays unnamed. Then move the date
 below on.
 
-Last checked: **2026-11-01 10:45 UTC** (#786, #785, #787).
+```bash
+gh issue list -s all --search "updated:>=2026-11-01T13:46:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-01T13:46:00Z&per_page=100' \
+  -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
+```
+
+Last checked: **2026-11-01 13:46 UTC** (#786, #787).
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 

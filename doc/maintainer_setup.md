@@ -24,6 +24,18 @@ git tag -a v0.1.0a18               # the tag message is the published release no
 git push --follow-tags
 ```
 
+Then, with `gh` (the devcontainer has it; [development.md](development.md)):
+
+```bash
+gh run watch $(gh run list -w release.yml -L 1 --json databaseId -q '.[0].databaseId') --exit-status
+make pin-check                     # the published wheel serves this integration
+gh workflow run sync.yml -R mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview
+```
+
+The last line publishes to the preview channel now instead of within the
+hour; it commits only once CI on the commit is green and the pin is on
+PyPI, so it is safe to run early, and a run with nothing new commits nothing.
+
 `.github/workflows/release.yml` then checks the tag against the files, runs
 ruff, pytest, hassfest and the HACS check, publishes the GitHub release
 (marked pre-release by PEP 440's rule) and uploads the library to PyPI through
@@ -167,7 +179,9 @@ repository's default branch is the YAML package. So while the integration is
 pre-release it reaches HACS users through the preview channel: a second
 repository whose default branch *is* the integration, synced by
 `doc/preview-mirror/sync.yml`, which must stay byte-identical to the copy
-running there. See [installing_a_preview.md](installing_a_preview.md);
+running there. Its cron runs some time within the hour;
+`gh workflow run sync.yml -R mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview`
+runs it now. See [installing_a_preview.md](installing_a_preview.md);
 `scripts/dev/hacs_testbed.sh` installs from it the way a user does. HACS
 itself requires a GitHub account.
 

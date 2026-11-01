@@ -23,13 +23,13 @@ Repository in Container Volume*) rather than bind-mounting the Windows
 filesystem. A bind mount works but makes Home Assistant startup and pytest
 noticeably slower.
 
-No devcontainer CLI? The devcontainer is Microsoft's Python image plus three
-apt packages, so the same environment is one command:
+No devcontainer CLI? The devcontainer is Microsoft's Python image plus `gh`,
+so the same environment, without `gh`, is one command:
 
 ```bash
 docker run --rm -it -p 8123:8123 -p 5020:5020 -v "$PWD:/workspace" -w /workspace \
   mcr.microsoft.com/devcontainers/python:3.14-bookworm bash -lc \
-  'apt-get update -qq && apt-get install -y -qq ffmpeg libturbojpeg0 libpcap-dev && scripts/dev/setup.sh && bash'
+  'scripts/dev/setup.sh && bash'
 ```
 
 ## Continuing a Claude Code session inside the container
@@ -51,6 +51,19 @@ wiki in `.wiki/` and `Todo.md` instead - all committed and
 path-independent. `CLAUDE.md`, which includes `AGENTS.md`, is loaded
 automatically wherever the repo is opened, and `AGENTS.md` points into the
 wiki.
+
+## The GitHub CLI
+
+The devcontainer installs `gh` and sets `GH_CONFIG_DIR` to
+`/home/vscode/.claude/gh-devcontainer`, inside the `~/.claude` bind above, so
+one `gh auth login` in the container's terminal (GitHub.com, HTTPS, log in
+with a web browser) survives every rebuild, and the host needs no folder made
+by hand. It is the container's own login: gh on Windows keeps the host's in
+`%AppData%\GitHub CLI`. The token sits in the host's `~/.claude`, so treat
+that folder as holding a credential.
+
+The preview mirror's sync, for one, is then
+`gh workflow run sync.yml -R mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview`.
 
 ## Day-to-day
 
