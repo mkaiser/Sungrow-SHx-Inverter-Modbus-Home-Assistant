@@ -25,7 +25,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
 from sungrow_modbus import FALLBACK_W, Capability
 from sungrow_modbus.battery import ceiling as battery_ceiling
-from sungrow_modbus.inverter import export_scale
+from sungrow_modbus.hybrid_inverter import export_scale
 
 from .const import (
     CONF_BATTERY_MAX_POWER,

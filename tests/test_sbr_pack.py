@@ -293,7 +293,7 @@ def test_the_pack_registers_live_outside_the_inverter_module() -> None:
     from pathlib import Path as _Path
 
     import sungrow_modbus.battery.registers as pack
-    import sungrow_modbus.inverter.registers as inverter
+    import sungrow_modbus.hybrid_inverter.registers as inverter
 
     assert _Path(pack.__file__).parts[-2:] == ("battery", "registers.py")
     text = _Path(inverter.__file__).read_text(encoding="utf-8")
@@ -584,3 +584,63 @@ def test_an_unfitted_module_reads_zero_and_is_not_a_measurement() -> None:
         # The cell type says the same thing a second way, which is what makes
         # "non-zero means fitted" checkable rather than assumed.
         assert bool(WHOLE_PACK_READING[10779 + module]) is (module in fitted)
+
+
+@pytest.mark.asyncio
+async def test_the_cell_spread_is_the_highest_cell_less_the_lowest() -> None:
+    """In millivolts, from the pack's own extremes; None when either is."""
+    unit = MockModbusConnection().for_unit(200)
+    cells = SbrBatteryCells(unit)
+    words = {10756: 33337, 10758: 33251}
+
+    async def answer(address: int, count: int):
+        return [words.get(address + i, 0) for i in range(count)]
+
+    unit.read_input_registers = answer
+    await cells.async_update()
+    assert cells.cell_voltage_spread == 8.6
+
+    words[10758] = 0xFFFF
+    await cells.async_update()
+    assert cells.cell_voltage_spread is None
+
+
+#: How far a cell may move between the pack block's read and the module
+#: block's, in volts: 1 mV, five times the largest seen.
+MOVED = 0.001
+
+
+def test_the_pack_extremes_are_the_module_extremes_in_every_reading() -> None:
+    """#788's reading of 10765-10780, held to every cable SBR document.
+
+    The pack's highest cell is the highest of the per-module maxima and its
+    lowest the lowest of the per-module minima, so the spread the integration
+    shows from 10757/10759 is the pack-wide spread across every module.
+
+    To within `MOVED`, not exactly: the pack and module blocks are separate
+    reads, and a pack at work moves between them -- gerd's third cable
+    reading, a car charging, has the pack's highest 0.2 mV above the
+    highest module's.
+    """
+    import json
+
+    from .corpus import INVERTER_DOCUMENTS
+
+    checked = 0
+    for path in INVERTER_DOCUMENTS:
+        name, document = path.name, json.loads(path.read_text())
+        values = ((document.get("battery_pack") or {}).get("readings") or {}).get(
+            "values"
+        ) or {}
+        if "max_cell_voltage_module_1" not in values:
+            continue
+        fitted = [n for n in range(1, 9) if values.get(f"cell_type_module_{n}")]
+        if not fitted:
+            # A dongle's zeros: no module is evidence of nothing.
+            continue
+        highest = max(values[f"max_cell_voltage_module_{n}"] for n in fitted)
+        lowest = min(values[f"min_cell_voltage_module_{n}"] for n in fitted)
+        assert abs(values["max_cell_voltage"] - highest) <= MOVED, name
+        assert abs(values["min_cell_voltage"] - lowest) <= MOVED, name
+        checked += 1
+    assert checked >= 16

@@ -30,7 +30,7 @@ reader to discover:
   its own, as a measurement rather than as testimony: the integration knows
   precisely what it was doing.
 * **The block read test runs from the button, never from the download.**
-  That measurement is what `src/sungrow_modbus/inverter/layout.py` is ever
+  That measurement is what `src/sungrow_modbus/hybrid_inverter/layout.py` is ever
   changed from, and it costs every block of the poll times three rounds plus
   narrowing -- fine for a background task with a progress bar, too long for a
   download somebody is waiting on. So a document from **Download diagnostics**
@@ -54,12 +54,13 @@ import json
 import logging
 from typing import Any
 
-from homeassistant.const import CONF_HOST
+from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 from sungrow_modbus import (
     block_test,
     dump as register_dump,
+    string_inverter,
     survey as survey_api,
     survey_document as survey,
     wallbox as wallbox_reader,
@@ -212,9 +213,11 @@ async def async_build(
     code, cannot acquire the power to write by inheriting a default.
     """
     runtime = entry.runtime_data
-    device = next(iter(runtime.coordinators.values())).device
     if options is None:
         options = dict(entry.options)
+    if runtime.is_string_inverter:
+        return await _async_build_string_inverter(entry, options, on_progress)
+    device = next(iter(runtime.coordinators.values())).device
 
     # Asked for and affordable are two different things; see the docstring.
     dumping = allow_dump and bool(options.get(CONF_SURVEY_DUMP, DEFAULT_SURVEY_DUMP))
@@ -277,6 +280,55 @@ async def async_build(
     )
     attach_export_scale(document, entry, device)
     return document
+
+
+async def _async_build_string_inverter(
+    entry: SungrowConfigEntry,
+    options: Mapping[str, Any],
+    on_progress: Progress | None,
+) -> dict[str, Any]:
+    """Return an SG's document: its own map read raw, as the terminal writes it.
+
+    The dump always runs, download included: it is the evidence for a map
+    nothing has measured, and `dump.SG_BANDS` is a dozen reads. No probes, no
+    block test, no control test: each asks the hybrid's map. The serial is
+    read from the dump and masked out of it before anything else sees it.
+    """
+    device = entry.runtime_data.inverter_coordinator.device
+    total = register_dump.block_count(string_inverter.BANDS) + 1
+
+    def on_block(done: int, blocks: int, why: str) -> None:
+        if on_progress is not None:
+            on_progress(
+                done / total, f"reading raw registers: {why} ({done} of {blocks})"
+            )
+
+    raw = await register_dump.async_dump(
+        device.async_read_words, on_progress=on_block, bands=string_inverter.BANDS
+    )
+    if on_progress is not None:
+        on_progress((total - 1) / total, "assembling the document")
+    serial = string_inverter.serial(raw) or device.serial_number
+    firmware = string_inverter.firmware(raw)
+    dump = string_inverter.mask(raw)
+    del raw
+    return string_inverter.document(
+        command_line=f"{survey.COLLECTED_BY_INTEGRATION} diagnostics",
+        read_at=dt_util.utcnow().isoformat(timespec="seconds").replace("+00:00", "Z"),
+        user_inputs=_testimony(options),
+        address_tail=survey.address_tail(
+            entry.data.get(CONF_HOST, ""),
+            bool(options.get(CONF_PUBLISH_ADDRESS, False)),
+        ),
+        device=string_inverter.device_block(dump, serial),
+        firmware=firmware,
+        connection={
+            "protocol": "Modbus TCP",
+            "port": entry.data.get(CONF_PORT),
+            "unit": device.unit_id,
+        },
+        string_inverter=string_inverter.section(dump, unit=device.unit_id),
+    )
 
 
 def attach_export_scale(document: dict[str, Any], entry: Any, device: Any) -> None:

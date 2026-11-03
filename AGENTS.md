@@ -38,8 +38,8 @@ never by unit id.
 Home Assistant 2026.9's `modbus` integration hands a device integration a
 *unit* (`async_get_unit(...)`), and everything on one host/port shares one
 serialized connection: a Sungrow accepts few sessions. The library has **no
-Home Assistant imports**, one subpackage per device (`inverter/`, `battery/`,
-`wallbox/`), and anything that must run without HA (the control test's
+Home Assistant imports**, one subpackage per device (`hybrid_inverter/`,
+`string_inverter/`, `battery/`, `wallbox/`, ...), and anything that must run without HA (the control test's
 engine included) lives there. Core's `sofar` integration is the reference
 implementation; read its real source (`make refs`), not blog posts.
 
@@ -55,7 +55,7 @@ Edit the source, not the output:
 
 - `custom_components/sungrow_modbus/{derived,number,switch,select,time}_descriptions.py`,
   `strings.json`, `translations/en.json` -- `scripts/generate/descriptions.py`,
-  from `sungrow_modbus.inverter.derived` and `scripts/generate/tables/`;
+  from `sungrow_modbus.hybrid_inverter.derived` and `scripts/generate/tables/`;
 - `doc/compatibility.md` -- `generate_compatibility.py`, from the surveys;
 - `scripts/dev/simulator_registers.json` -- `generate_simulator_registers.py`;
 - `doc/entity_name_review.md` -- `scripts/helpers/review_names.py --markdown`;

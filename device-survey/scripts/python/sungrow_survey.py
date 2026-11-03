@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "sungrow-modbus==0.1.0a24",
+#     "sungrow-modbus==0.1.0a25",
 #     "modbus-connection[tmodbus]>=4.10.0",
 #     "tzdata",
 # ]
@@ -65,7 +65,6 @@ import asyncio
 import contextlib
 from datetime import datetime
 import ipaddress
-import logging
 from pathlib import Path
 import shlex
 import sys
@@ -77,10 +76,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import blocks
 import ihomemanager_direct
 import probe
+import string_inverter_direct
 import sungrow_control_test
 import wallbox_direct
 
-from sungrow_modbus import block_test, dump as register_dump, model_for
+from sungrow_modbus import block_test, dump as register_dump, model_for, string_inverter
 from sungrow_modbus.block_test import ATTEMPTS, ROUNDS
 from sungrow_modbus.control_test import FORCED_EFFECT_W
 from sungrow_modbus.discovery import NetworkTooLarge, async_identify_unit_247, hosts_in
@@ -339,6 +339,10 @@ _WALLBOXES: list[wallbox_direct.Found] = []
 #: iHomeManagers found by `_find`, surveyed by `run` after the wallboxes.
 _MANAGERS: list[ihomemanager_direct.Found] = []
 
+#: SG string inverters found by `_find`, surveyed by `run` by their own map:
+#: the hybrid survey, its block test and its control test never reach one.
+_STRING_INVERTERS: list[string_inverter_direct.Found] = []
+
 
 async def _find(args, echo) -> list[Found]:
     """Find every device worth surveying, and ask each who it is.
@@ -353,6 +357,8 @@ async def _find(args, echo) -> list[Found]:
     wallboxes.clear()
     managers = _MANAGERS
     managers.clear()
+    string_inverters = _STRING_INVERTERS
+    string_inverters.clear()
     echo("-" * 72)
     echo("1  Finding devices")
     echo("-" * 72)
@@ -438,6 +444,17 @@ async def _find(args, echo) -> list[Found]:
             if not any(manager.host == host for manager in managers):
                 managers.append(
                     ihomemanager_direct.Found(host, port, who.model, "logger")
+                )
+            continue
+        if who.kind == "string_inverter":
+            # An SG: the hybrid map past 5035 means nothing on it, and its
+            # holding registers mean other things, so it never reaches
+            # `_survey` and nothing ever writes to it.
+            if not any(sg.host == host for sg in string_inverters):
+                string_inverters.append(
+                    string_inverter_direct.Found(
+                        host, port, args.unit or who.unit or 1, who.model or "SG"
+                    )
                 )
             continue
         if who.kind == "unit247":
@@ -972,7 +989,7 @@ async def _control_test(entry: Found, answers, document: Path, args, echo) -> in
     await asyncio.sleep(10)
     line = control_arguments(entry, answers, document, simulated=args.simulated)
     control = sungrow_control_test._parser().parse_args(line)
-    code = await sungrow_control_test.async_main(control, _DROPS)
+    code = await sungrow_control_test.async_main(control, probe.LINK_DROPS)
     echo("")
     return code
 
@@ -982,7 +999,7 @@ def _block_document(
 ) -> dict | None:
     """Render a block read test for the published document, or None.
 
-    The measurement `src/sungrow_modbus/inverter/layout.py` is ever changed
+    The measurement `src/sungrow_modbus/hybrid_inverter/layout.py` is ever changed
     from. Published, not left in the transcript -- the file a contributor is
     told to *keep*, because it carries their real address -- so a maintainer
     reading a submitted document can see which of the integration's reads
@@ -1223,7 +1240,7 @@ def _advice(finding: block_test.Finding) -> str:
             "fewer measuring points than the inverter's own LAN port -- so this "
             "may be a forwarding limit rather than a register fault. Read the "
             "same registers directly before touching "
-            "src/sungrow_modbus/inverter/layout.py; if they answer there, it "
+            "src/sungrow_modbus/hybrid_inverter/layout.py; if they answer there, it "
             "belongs in transport capability gating instead."
         )
     if finding.advice is Advice.NOT_NARROWED:
@@ -1241,8 +1258,8 @@ def _advice(finding: block_test.Finding) -> str:
             "This failed by timing out rather than by refusing. A timeout cannot "
             "tell a silent inverter from an answer lost on the way, so it is not "
             "evidence about the register -- do not add it to "
-            "src/sungrow_modbus/inverter/layout.py. Re-read these registers from "
-            "a link that fails fast."
+            "src/sungrow_modbus/hybrid_inverter/layout.py. Re-read these "
+            "registers from a link that fails fast."
         )
     if finding.advice is Advice.ALREADY_ISOLATED:
         # A refusal `layout.py` already isolates is the isolation working,
@@ -1250,14 +1267,14 @@ def _advice(finding: block_test.Finding) -> str:
         return (
             "Read directly from the inverter and refused outright, so this is "
             "the device. It is **already isolated** in "
-            "src/sungrow_modbus/inverter/layout.py, which is why it cost only "
+            "src/sungrow_modbus/hybrid_inverter/layout.py, which is why it cost only "
             "its own field(s) rather than its whole tier -- nothing to do, and worth "
             "adding to doc/compatibility.md as another machine that refuses it."
         )
     return (
         "Read directly from the inverter and refused outright, so this is the "
         "device refusing. Add the field(s) these belong to to "
-        "src/sungrow_modbus/inverter/layout.py and quote the block read test "
+        "src/sungrow_modbus/hybrid_inverter/layout.py and quote the block read test "
         "above -- that module is only ever added to from a measurement, and "
         "this is the measurement."
     )
@@ -1490,6 +1507,72 @@ async def _survey_ihomemanager(found: ihomemanager_direct.Found, args, echo) -> 
     return reading.code
 
 
+async def _survey_string_inverter(
+    found: string_inverter_direct.Found, args, echo
+) -> int:
+    """Ask a wallbox's three questions, read the SG by its own map.
+
+    Address, reporter and comment, asked as for a wallbox -- or answered by
+    `--address`, `--reporter` and `--comment`. An SG has no battery, and
+    nothing here writes to it, so no other question applies.
+    """
+    echo("-" * 72)
+    where = f"{found.host}:{found.port}, unit {found.unit}"
+    echo(f"String inverter at {where}, a {found.model}")
+    echo("-" * 72)
+    with contextlib.redirect_stdout(sys.stderr):
+        consent = args.address or probe._ask_address(found.host)
+        reporter = (
+            args.reporter
+            if args.reporter is not None
+            else probe._ask(
+                "Who is reporting this, to credit and to ask (blank for anonymous)",
+                "anonymous",
+            )
+        )
+        comment = (
+            args.comment
+            if args.comment is not None
+            else probe._ask("Anything else worth recording (blank to skip)")
+        )
+    tail = address_tail(found.host, consent == "two_octets")
+    asked = argparse.Namespace(
+        port=found.port,
+        timeout=args.timeout,
+        address=consent,
+        reporter=reporter,
+        comment=comment,
+    )
+    answers = argparse.Namespace(
+        timeout=args.timeout,
+        reporter=reporter,
+        comment=comment,
+        command_line=replay_command(asked),
+    )
+    _echo_replay(echo, replay_command(asked, host=found.host))
+    directory, _private = _workspace()
+    echo("  reading the SG map raw: identity, PV, AC, meter, trackers, settings;")
+    echo("  read only, nothing is written")
+    try:
+        reading = await string_inverter_direct.async_survey(
+            found, answers, directory, echo, address_tail=tail
+        )
+    except (OSError, RuntimeError, probe.ModbusError) as error:
+        echo(f"  {found.host}:{found.port} failed: {error}")
+        return 1
+    section = reading.document[string_inverter.DOCUMENT]
+    echo("")
+    echo(f"  read  readings         {len(section['readings'])}")
+    answered = register_dump.answered(section["register_dump"])
+    echo(f"  read  raw addresses    {answered} answered")
+    if reading.written is None:
+        echo("  Nothing was read from the inverter -- the link, not the device.")
+    else:
+        echo(f"  Wrote\n        {reading.written}\n          send this")
+    echo("")
+    return reading.code
+
+
 async def run(args) -> int:
     """Run the whole scan, and return the exit code."""
     _documents, private = _workspace()
@@ -1515,7 +1598,7 @@ async def run(args) -> int:
         except ValueError as error:
             echo(f"  {error}")
             return _finish(2, echo)
-        if not found and not _WALLBOXES and not _MANAGERS:
+        if not found and not _WALLBOXES and not _MANAGERS and not _STRING_INVERTERS:
             echo("  Nothing to scan.")
             return _finish(1, echo)
 
@@ -1532,6 +1615,11 @@ async def run(args) -> int:
             except (OSError, RuntimeError) as error:
                 echo(f"  {entry.host}:{entry.port} failed: {error}")
         device_codes = []
+        for found_sg in _STRING_INVERTERS:
+            if results or device_codes:
+                echo("  Pausing 10s before the next device.")
+                await asyncio.sleep(10)
+            device_codes.append(await _survey_string_inverter(found_sg, args, echo))
         for found_wallbox in _WALLBOXES:
             if results or device_codes:
                 echo("  Pausing 10s before the next device.")
@@ -1555,49 +1643,11 @@ async def run(args) -> int:
         errors.close()
 
 
-class _LinkDrops(logging.Handler):
-    """Count the Modbus backend's reconnects instead of printing each one.
-
-    `tmodbus` logs every connection the inverter drops, at ERROR, and re-opens
-    it by itself -- so with no logging configured those lines reach the
-    terminal through Python's last-resort handler, in the middle of a progress
-    bar. The survey already tolerates and retries each drop. What they say
-    together is worth one line: a Sungrow that keeps dropping the link has
-    another client polling it.
-    """
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.count = 0
-
-    def emit(self, record: logging.LogRecord) -> None:
-        message = record.getMessage()
-        if "connection lost" in message or "closed by remote host" in message:
-            self.count += 1
-
-
-#: Installed by `main`; `_finish` reports what it counted.
-_DROPS = _LinkDrops()
-
-
-def _quiet_backend() -> None:
-    """Keep the backend's connection log off the terminal, and count drops."""
-    backend = logging.getLogger("tmodbus")
-    backend.addHandler(_DROPS)
-    backend.propagate = False
-
-
 def _finish(code: int, echo) -> int:
     """Print the code and the sentence it means, and return it."""
-    if _DROPS.count:
-        echo(
-            f"The inverter dropped the connection {_DROPS.count} time(s); each "
-            "was re-opened and the scan carried on."
-        )
-        echo(
-            "Frequent drops mean something else is polling it -- stop Home "
-            "Assistant for a fuller report."
-        )
+    sentence = probe.link_drops_sentence(probe.LINK_DROPS.count, "scan")
+    if sentence:
+        echo(sentence)
         echo("")
     echo(f"exit {code} -- {CODES[code]}.")
     return code
@@ -1717,7 +1767,7 @@ def main(argv: list[str] | None = None) -> int:
             f"--address-tail {args.address_tail} on this machine's LAN prefix "
             f"is {args.host[0]}; if that is not the inverter, give its address"
         )
-    _quiet_backend()
+    probe.count_link_drops()
     try:
         return probe.run(run(args))
     except KeyboardInterrupt:

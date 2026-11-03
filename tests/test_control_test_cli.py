@@ -18,8 +18,8 @@ from modbus_connection import ModbusTimeoutError
 from modbus_connection.mock import MockModbusUnit
 import pytest
 
-from sungrow_modbus.inverter import export_scale
-from sungrow_modbus.inverter.export_scale import Result
+from sungrow_modbus.hybrid_inverter import export_scale
+from sungrow_modbus.hybrid_inverter.export_scale import Result
 from sungrow_modbus.survey_document import SCHEMA
 
 SCRIPT = (

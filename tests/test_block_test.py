@@ -1,13 +1,14 @@
 """The block read test from the device page, held to the terminal tool's.
 
 `sungrow_modbus.block_test` is the second producer of a measurement that
-`device-survey/scripts/python/blocks.py` and `sungrow_survey.py` already
-make, and its answers end up in the same place: a published document, read by
-a maintainer deciding what goes in `src/sungrow_modbus/inverter/layout.py`. So most of
-what is asserted here is *agreement* -- the same blocks, the same outcome
-words, the same budget and the same document shape -- and the rest is the
-classification that four bugs in this project got wrong: an exception response
-is an answer, a lost link is not.
+`device-survey/scripts/python/blocks.py` and `sungrow_survey.py` already make,
+and its answers end up in the same place: a published document, read by a
+maintainer deciding what goes in
+`src/sungrow_modbus/hybrid_inverter/layout.py`. So most of what is asserted
+here is *agreement* -- the same blocks, the same outcome words, the same budget
+and the same document shape -- and the rest is the classification that four
+bugs in this project got wrong: an exception response is an answer, a lost link
+is not.
 
 Fakes raise the library's real exception types. A fixture that fakes a
 refusal with a bare `ModbusError` cannot see the difference this module exists
@@ -82,7 +83,7 @@ def refuses(register: int) -> Callable[[str, int, int], BaseException | None]:
 
 
 def test_the_outcome_words_and_the_budget_are_the_terminal_tools() -> None:
-    """`inverter.layout` quotes these words, so they are part of the result."""
+    """`hybrid_inverter.layout` quotes these words, so they are part of the result."""
     for name in ("OK", "DROPPED", "REFUSED", "REJECTED", "INCONSISTENT"):
         assert getattr(block_test, name) == getattr(terminal, name), name
     assert block_test.UNNARROWED == terminal.UNNARROWED

@@ -253,7 +253,7 @@ one:
 | `data_type: uint32`, `swap: word` | `uint32(reg(n), word_order="little")` |
 | `data_type: string`, `count: 10` | `string(reg(n), 10)` |
 | `nan_value: 0xFFFF` | `nan=0xFFFF` |
-| state code decoded in a template | `integer(reg(n))`, decoded in `inverter/derived.py` |
+| state code decoded in a template | `integer(reg(n))`, decoded in `hybrid_inverter/derived.py` |
 | register written by a template | `writable=True`, plus a row in `scripts/generate/tables/writes.py` |
 
 Fields are declared by the register number in Sungrow's document, through

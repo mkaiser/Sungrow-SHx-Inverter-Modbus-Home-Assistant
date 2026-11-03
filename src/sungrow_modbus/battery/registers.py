@@ -162,6 +162,19 @@ class SbrBatteryCells(Component):
     # evidence; in short, `(module << 8) | index`.
 
     @property
+    def cell_voltage_spread(self) -> float | None:
+        """Highest cell less lowest cell across the whole pack, in mV.
+
+        Pack-wide, not per module: 10757/10759 are the pack's extremes, which
+        on every cable reading equal the highest module maximum and the
+        lowest module minimum at 10765-10780 (#788). Rounded to the 0.1 mV the
+        registers resolve.
+        """
+        if self.max_cell_voltage is None or self.min_cell_voltage is None:
+            return None
+        return round((self.max_cell_voltage - self.min_cell_voltage) * 1000, 1)
+
+    @property
     def max_cell_module(self) -> int | None:
         """Which module holds the highest cell (reg 10758, high byte)."""
         return _module(self.max_cell_position)

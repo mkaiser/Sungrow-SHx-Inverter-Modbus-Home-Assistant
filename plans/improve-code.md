@@ -264,7 +264,7 @@ change, with the full config-flow tests before and after.
 floor in CI (`[tool.coverage]` in `pyproject.toml`, `--cov` in
 `validate.yml`). Least covered: `download.py` 64 %, the library's
 `discovery.py` 77 %, `wallbox/discovery.py` 82 %, and
-`inverter/export_scale.py` 83 % -- the last is register 13074's write-scale
+`hybrid_inverter/export_scale.py` 83 % -- the last is register 13074's write-scale
 probe, which writes to a house, and is the first place to add tests.
 
 ## What remains
@@ -279,7 +279,7 @@ probe, which writes to a house, and is the first place to add tests.
 
 **17:12 — tests where they matter most.**
 
-- `inverter/export_scale.py` (register 13074's write-scale probe, which
+- `hybrid_inverter/export_scale.py` (register 13074's write-scale probe, which
   writes to a house): 83 % → 97 %. Six tests for the restore paths, against
   firmware nobody has measured: a register that moves and is put back under
   the factor it showed; one that will not go back and is reported changed;
@@ -336,7 +336,7 @@ finds the file hard to work in.
 
 **17:45 — final run.** 4010 passed, 2 skipped; `make quick` clean.
 Coverage 92 % → 93.1 % (floor raised to 93): `config_flow.py` 91 → 94 %,
-`download.py` 64 → 95 %, `inverter/export_scale.py` 83 → 99 %.
+`download.py` 64 → 95 %, `hybrid_inverter/export_scale.py` 83 → 99 %.
 
 **17:40 — the config flow's remaining paths.**
 

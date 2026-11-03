@@ -140,6 +140,7 @@ async def _async_run_control_test(call: ServiceCall) -> None:
     other's leftovers as a finding.
     """
     entry = _async_entry_for(call.hass, call.data[ATTR_DEVICE_ID])
+    _refuse_on_string_inverter(entry)
     await _async_authorize(call, entry, PERMISSION_CONTROL_TEST)
     _LOGGER.warning(
         "%s: control test requested through the %s.%s action by %s. It writes to "
@@ -229,6 +230,7 @@ async def async_authorize(
 async def _async_write(call: ServiceCall, value: int, what: str) -> None:
     """Write the start/stop register of the device this call targets."""
     entry = _async_entry_for(call.hass, call.data[ATTR_DEVICE_ID])
+    _refuse_on_string_inverter(entry)
     await _async_authorize(call, entry)
     coordinator = entry.runtime_data.coordinator_for(STATE_COMPONENT)
 
@@ -251,6 +253,16 @@ async def _async_write(call: ServiceCall, value: int, what: str) -> None:
             translation_placeholders={"device": entry.title, "error": str(err)},
         ) from err
     await coordinator.async_refresh()
+
+
+def _refuse_on_string_inverter(entry: SungrowConfigEntry) -> None:
+    """Refuse a writing action on an SG: nothing here writes to one."""
+    if entry.runtime_data.is_string_inverter:
+        raise HomeAssistantError(
+            translation_domain=DOMAIN,
+            translation_key="not_on_string_inverter",
+            translation_placeholders={"title": entry.title},
+        )
 
 
 def _async_entry_for(hass: HomeAssistant, device_id: str) -> SungrowConfigEntry:

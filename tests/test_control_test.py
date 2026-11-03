@@ -1130,6 +1130,195 @@ async def test_the_restore_still_puts_back_the_word_on_a_firmware_that_multiplie
     assert run.code != 5
 
 
+def _stale(unit: MockModbusUnit, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Make holding reads answer a frozen cache while writes reach the register.
+
+    What a WiNet-S does after forwarding a write: the write lands, and the
+    dongle goes on reporting the old word.
+    """
+    cache = dict(unit.holding)
+
+    async def read_holding_registers(address: int, count: int) -> list[int]:
+        return [cache.get(address + offset, 0) for offset in range(count)]
+
+    monkeypatch.setattr(unit, "read_holding_registers", read_holding_registers)
+
+
+async def test_a_dongle_s_stale_readback_does_not_skip_the_restore(
+    full_unit: MockModbusUnit, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """At gerd on 2026-11-03 a WiNet-S run left a forced-charging window changed.
+
+    The restore read first, the dongle's cache still showed the original, and
+    the write back was skipped as "already holding its original value". So
+    through a dongle the snapshot's word is always written.
+    """
+    full_unit.holding[CHARGE_ADDRESS] = 500
+    run = await _preflighted(full_unit)
+    run.direct = False
+    _stale(full_unit, monkeypatch)
+    await run._write(_probe(), 400.0)  # lands; the cache goes on saying 500
+    assert full_unit.holding[CHARGE_ADDRESS] == 40
+
+    restores = await run.async_restore()
+
+    row = next(row for row in restores if row.field == CHARGE_POWER)
+    assert row.restored
+    assert row.attempts == 1
+    assert "WiNet-S" in (row.detail or "")
+    assert full_unit.holding[CHARGE_ADDRESS] == 500
+    assert run.code != 5
+
+
+async def test_a_dongle_that_refuses_the_restore_is_not_believed(
+    full_unit: MockModbusUnit, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A stale cache showing the original is no excuse: refused is not restored.
+
+    The run's own write was refused too, and still counts as touched: at gerd
+    a window write refused with 0x04 through the dongle had landed.
+    """
+    from modbus_connection import ModbusError
+
+    full_unit.holding[CHARGE_ADDRESS] = 500
+    run = await _preflighted(full_unit)
+    run.direct = False
+    _stale(full_unit, monkeypatch)
+    full_unit.fail_write(CHARGE_ADDRESS, ModbusError("refused"))
+    await run._write(_probe(), 400.0)
+
+    restores = await run.async_restore()
+
+    row = next(row for row in restores if row.field == CHARGE_POWER)
+    assert not row.restored
+    assert run.code == 5
+
+
+async def test_a_dongle_restores_the_export_limit_at_its_measured_factor(
+    full_unit: MockModbusUnit, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With nothing read back, a raw word taken and multiplied would go unseen.
+
+    So where `export_scale` measured a factor, 13074 goes out at that factor
+    alone. The mock multiplies as the firmware does: the snapshot's word 500
+    would store 5000 W, and only the word 50 puts back 500 W.
+    """
+    full_unit.holding[13073] = 500
+    run = await _preflighted(full_unit)
+    run.direct = False
+    run.export_write_scale = 10
+    _stale(full_unit, monkeypatch)
+    export = next(row for row in PROBES if row.field == "export_power_limit")
+    await run._write(export, 600.0)
+    assert full_unit.holding[13073] == 600
+
+    restores = await run.async_restore()
+
+    row = next(row for row in restores if row.field == "export_power_limit")
+    assert row.restored
+    assert full_unit.holding[13073] == 500
+
+
+async def test_a_dongle_restore_leaves_alone_what_the_run_never_wrote(
+    full_unit: MockModbusUnit, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A register the run never wrote is not written back through a dongle.
+
+    At gerd on 2026-11-01 the dongle's snapshot held a window the cable had
+    already put back: its cache was hours old. Writing every snapshot word
+    would have put that stale window in place of the real one, so a register
+    this run never wrote is not written at all.
+    """
+    full_unit.holding[CHARGE_ADDRESS] = 450  # what the dongle last saw
+    run = await _preflighted(full_unit)
+    run.direct = False
+    _stale(full_unit, monkeypatch)
+    full_unit.holding[CHARGE_ADDRESS] = 500  # set over another path since
+
+    restores = await run.async_restore()
+
+    row = next(row for row in restores if row.field == CHARGE_POWER)
+    assert row.restored
+    assert row.attempts == 0
+    assert "never written" in (row.detail or "")
+    assert full_unit.holding[CHARGE_ADDRESS] == 500
+
+
+async def test_a_field_is_recorded_as_touched_before_its_write_goes_out(
+    full_unit: MockModbusUnit,
+) -> None:
+    """The snapshot learns of a write before the write goes out.
+
+    A write that lands and a process that dies before saying so would leave
+    a register changed that the snapshot does not know was touched.
+    """
+    flushed: list[list[str]] = []
+
+    async def on_snapshot(snapshot: Snapshot) -> None:
+        flushed.append(list(snapshot.touched or []))
+
+    seen_at_write: list[bool] = []
+    full_unit.on_write(
+        lambda event: (
+            seen_at_write.append(CHARGE_POWER in flushed[-1])
+            if event.address == CHARGE_ADDRESS
+            else None
+        )
+    )
+    full_unit.holding[CHARGE_ADDRESS] = 500
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    run = ControlTest(inverter, clock=FakeClock(), on_snapshot=on_snapshot)
+    await run._preflight()
+    assert flushed[-1] == []
+
+    await run._write(_probe(), 400.0)
+
+    assert seen_at_write == [True]
+    assert run.snapshot.touched == [CHARGE_POWER]
+
+
+async def test_a_restore_on_its_own_measures_the_transport_first(
+    full_unit: MockModbusUnit,
+) -> None:
+    """A restore with no preflight behind it asks whether this is a dongle.
+
+    `--restore` and the repair flow have had no preflight, and the default
+    for `direct` is a cable. Through a dongle that default would read the
+    cache first, which is the defect this guards against.
+    """
+    from modbus_connection import IllegalDataAddressError
+
+    full_unit.fail_read(
+        6099, IllegalDataAddressError("exception 0x02"), register_type="input"
+    )
+    full_unit.holding[CHARGE_ADDRESS] = 40
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    run = ControlTest(inverter, clock=FakeClock())
+    saved = Snapshot.from_dict(
+        {
+            "taken_at": 0.0,
+            "values": {CHARGE_POWER: 5000.0},
+            "raw": {CHARGE_POWER: 500},
+            "touched": [],
+        }
+    )
+
+    restores = await run.async_restore(saved)
+
+    assert run.direct is False
+    assert restores[0].attempts == 0
+    assert full_unit.holding[CHARGE_ADDRESS] == 40
+
+
+def test_a_snapshot_keeps_what_was_touched_and_an_old_one_means_everything() -> None:
+    """`None` is a snapshot saved before `touched` was kept: put everything back."""
+    snapshot = Snapshot(taken_at=1.0, touched=[CHARGE_POWER])
+    assert Snapshot.from_dict(snapshot.to_dict()).touched == [CHARGE_POWER]
+    assert Snapshot.from_dict({"taken_at": 1.0}).touched is None
+
+
 async def test_a_cancelled_run_still_puts_everything_back(
     full_unit: MockModbusUnit, monkeypatch: pytest.MonkeyPatch
 ) -> None:

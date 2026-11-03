@@ -19,8 +19,9 @@ from modbus_connection.model import Component
 
 from . import survey_document
 from .addresses import DIRECT_ONLY_PROBE, declared_field, field_address, read
-from .inverter.device import SungrowInverter
-from .inverter.registers import COMPONENTS
+from .hybrid_inverter.device import SungrowInverter
+from .hybrid_inverter.registers import COMPONENTS
+from .identity import STRING_INVERTER
 from .model import SETTLES_NOTHING, Silent, present, words_text
 from .survey_document import OTHER_INVERTER_YES, State, classify
 
@@ -699,6 +700,8 @@ def next_steps(document: dict[str, Any]) -> tuple[NextStep, ...]:
 
 def summarise(document: dict[str, Any]) -> str:
     """Render a concise, document-derived summary for any consumer."""
+    if document.get("document") == STRING_INVERTER:
+        return _summarise_string_inverter(document)
     device = document.get("device") or {}
     connection = document.get("connection") or {}
     probes = document.get("capability_probes") or {}
@@ -743,4 +746,29 @@ def summarise(document: dict[str, Any]) -> str:
         lines.append("- A Sungrow battery answered, and its own registers are in.")
     if document.get("wallbox"):
         lines.append("- A wallbox answered, and its registers are in.")
+    return "\n".join(lines)
+
+
+def _summarise_string_inverter(document: dict[str, Any]) -> str:
+    """Summarise an SG's document: its own map, read raw, nothing probed."""
+    from .dump import answered
+
+    device = document.get("device") or {}
+    firmware = document.get("firmware") or {}
+    section = document.get("string_inverter") or {}
+    model = device.get("device_type") or device.get("device_type_code") or "an SG"
+    lines = [
+        f"- **{model}**, read by the string inverter map, which is unmeasured: "
+        "the raw words are the evidence.",
+        f"- {len(section.get('readings') or {})} values decoded, "
+        f"{answered(section.get('register_dump') or {})} raw addresses answered.",
+        f"- Published as `{device.get('serial_anonymized_hashed', 'anon-…')}` — "
+        "a stand-in, not your serial number.",
+    ]
+    version = firmware.get("arm")
+    lines.append(
+        f"- Firmware `{version}`."
+        if version
+        else "- No firmware version: the identity block did not provide one."
+    )
     return "\n".join(lines)

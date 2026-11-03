@@ -351,6 +351,9 @@
       "battery_capacity_high_precision": {
         "name": "Battery capacity high precision"
       },
+      "battery_cell_voltage_spread": {
+        "name": "Cell voltage spread"
+      },
       "battery_charge": {
         "name": "Battery charge"
       },
@@ -752,6 +755,183 @@
       },
       "self_consumption_of_today": {
         "name": "Self-consumption of today"
+      },
+      "sg_bus_voltage": {
+        "name": "Bus voltage"
+      },
+      "sg_daily_direct_energy_consumption": {
+        "name": "Daily direct energy consumption"
+      },
+      "sg_daily_exported_energy": {
+        "name": "Daily exported energy"
+      },
+      "sg_daily_imported_energy": {
+        "name": "Daily imported energy"
+      },
+      "sg_daily_pv_generation": {
+        "name": "Daily PV generation"
+      },
+      "sg_daily_running_time": {
+        "name": "Daily running time"
+      },
+      "sg_grid_frequency": {
+        "name": "Grid frequency"
+      },
+      "sg_inverter_temperature": {
+        "name": "Internal temperature"
+      },
+      "sg_load_power": {
+        "name": "Load power"
+      },
+      "sg_meter_active_power": {
+        "name": "Meter active power"
+      },
+      "sg_meter_phase_a_power": {
+        "name": "Meter phase A power"
+      },
+      "sg_meter_phase_b_power": {
+        "name": "Meter phase B power"
+      },
+      "sg_meter_phase_c_power": {
+        "name": "Meter phase C power"
+      },
+      "sg_monthly_pv_generation": {
+        "name": "Monthly PV generation"
+      },
+      "sg_mppt10_current": {
+        "name": "MPPT10 current"
+      },
+      "sg_mppt10_voltage": {
+        "name": "MPPT10 voltage"
+      },
+      "sg_mppt11_current": {
+        "name": "MPPT11 current"
+      },
+      "sg_mppt11_voltage": {
+        "name": "MPPT11 voltage"
+      },
+      "sg_mppt12_current": {
+        "name": "MPPT12 current"
+      },
+      "sg_mppt12_voltage": {
+        "name": "MPPT12 voltage"
+      },
+      "sg_mppt1_current": {
+        "name": "MPPT1 current"
+      },
+      "sg_mppt1_voltage": {
+        "name": "MPPT1 voltage"
+      },
+      "sg_mppt2_current": {
+        "name": "MPPT2 current"
+      },
+      "sg_mppt2_voltage": {
+        "name": "MPPT2 voltage"
+      },
+      "sg_mppt3_current": {
+        "name": "MPPT3 current"
+      },
+      "sg_mppt3_voltage": {
+        "name": "MPPT3 voltage"
+      },
+      "sg_mppt4_current": {
+        "name": "MPPT4 current"
+      },
+      "sg_mppt4_voltage": {
+        "name": "MPPT4 voltage"
+      },
+      "sg_mppt5_current": {
+        "name": "MPPT5 current"
+      },
+      "sg_mppt5_voltage": {
+        "name": "MPPT5 voltage"
+      },
+      "sg_mppt6_current": {
+        "name": "MPPT6 current"
+      },
+      "sg_mppt6_voltage": {
+        "name": "MPPT6 voltage"
+      },
+      "sg_mppt7_current": {
+        "name": "MPPT7 current"
+      },
+      "sg_mppt7_voltage": {
+        "name": "MPPT7 voltage"
+      },
+      "sg_mppt8_current": {
+        "name": "MPPT8 current"
+      },
+      "sg_mppt8_voltage": {
+        "name": "MPPT8 voltage"
+      },
+      "sg_mppt9_current": {
+        "name": "MPPT9 current"
+      },
+      "sg_mppt9_voltage": {
+        "name": "MPPT9 voltage"
+      },
+      "sg_negative_voltage_to_ground": {
+        "name": "Negative voltage to ground"
+      },
+      "sg_phase_a_current": {
+        "name": "Phase A current"
+      },
+      "sg_phase_a_voltage": {
+        "name": "Phase A voltage"
+      },
+      "sg_phase_b_current": {
+        "name": "Phase B current"
+      },
+      "sg_phase_b_voltage": {
+        "name": "Phase B voltage"
+      },
+      "sg_phase_c_current": {
+        "name": "Phase C current"
+      },
+      "sg_phase_c_voltage": {
+        "name": "Phase C voltage"
+      },
+      "sg_power_factor": {
+        "name": "Power factor"
+      },
+      "sg_power_limitation": {
+        "name": "Power limitation"
+      },
+      "sg_power_limitation_setting": {
+        "name": "Power limit"
+      },
+      "sg_reactive_power": {
+        "name": "Reactive power"
+      },
+      "sg_total_active_power": {
+        "name": "Total active power"
+      },
+      "sg_total_apparent_power": {
+        "name": "Total apparent power"
+      },
+      "sg_total_dc_power": {
+        "name": "Total DC power"
+      },
+      "sg_total_direct_energy_consumption": {
+        "name": "Total direct energy consumption"
+      },
+      "sg_total_exported_energy": {
+        "name": "Total exported energy"
+      },
+      "sg_total_imported_energy": {
+        "name": "Total imported energy"
+      },
+      "sg_total_pv_generation": {
+        "name": "Total PV generation"
+      },
+      "sg_total_pv_generation_precise": {
+        "name": "Total PV generation (precise)"
+      },
+      "sg_total_running_time": {
+        "name": "Total running time"
+      },
+      "sg_work_state": {
+        "name": "Work state"
       },
       "sungrow_arm_software": {
         "name": "ARM software version"
@@ -1239,6 +1419,9 @@
     },
     "survey_already_running": {
       "message": "A survey is already running on this inverter. Two at once would compete for one of its very few Modbus connections."
+    },
+    "not_on_string_inverter": {
+      "message": "{title} is a string inverter. This action writes to a hybrid inverter's registers, and nothing in this integration writes to a string inverter."
     },
     "write_failed": {
       "message": "Could not write {entity_id}: {error}"

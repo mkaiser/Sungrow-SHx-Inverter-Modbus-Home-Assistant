@@ -5,12 +5,17 @@ from __future__ import annotations
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
-from sungrow_modbus.inverter.faults import active
-from sungrow_modbus.inverter.smoothing import TimeWeightedAverage
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from sungrow_modbus.hybrid_inverter.faults import active
+from sungrow_modbus.hybrid_inverter.smoothing import TimeWeightedAverage
 
 from .battery_descriptions import CELL_DESCRIPTIONS, PACK_DESCRIPTIONS
 from .const import CONF_MODE, MODE_DEVICES, MODE_DIAGNOSTICS
-from .coordinator import SungrowConfigEntry, SungrowRuntimeData
+from .coordinator import (
+    SungrowConfigEntry,
+    SungrowRuntimeData,
+    SungrowStringInverterCoordinator,
+)
 from .derived_descriptions import DERIVED_SENSORS
 from .entity import (
     SungrowBatteryEntity,
@@ -23,6 +28,7 @@ from .entity import (
 from .external import combined, external_power
 from .external_descriptions import EXTERNAL_SENSORS
 from .sensor_descriptions import SENSOR_DESCRIPTIONS
+from .string_inverter_descriptions import STRING_INVERTER_DESCRIPTIONS
 from .survey_entities import SurveyProgressSensor, SurveyResultSensor, SurveyStepSensor
 from .wallbox_descriptions import WALLBOX_DESCRIPTIONS
 
@@ -53,6 +59,21 @@ async def async_setup_entry(
                 SurveyStepSensor(runtime_data),
                 SurveyResultSensor(runtime_data),
             ]
+        )
+        return
+
+    # An SG: its own map, and nothing else on this entry. An entity only for
+    # a field that read a value, because tracker and phase counts differ by
+    # model and nothing ever removes an entity once made.
+    if runtime_data.is_string_inverter:
+        async_add_entities(
+            SungrowStringInverterSensor(
+                runtime_data.string_inverter[description.component], description
+            )
+            for description in STRING_INVERTER_DESCRIPTIONS
+            if description.component in runtime_data.string_inverter
+            and runtime_data.inverter_coordinator.device.field(description.field)
+            is not None
         )
         return
 
@@ -122,6 +143,48 @@ class SungrowWallboxSensor(SungrowDeviceEntity, SensorEntity):
     def native_value(self) -> float | int | str | None:
         """Return the reading, or None where the block did not answer."""
         return as_reading(self.native_value_source)
+
+
+class SungrowStringInverterSensor(
+    CoordinatorEntity[SungrowStringInverterCoordinator], SensorEntity
+):
+    """A sensor reading one value off an SG.
+
+    Its own small base rather than `SungrowEntity`, which is built on the
+    hybrid's map: capabilities, derived values, writes. The unique id is
+    `{serial}_{key}`, the inverter's own shape, and every key starts `sg_`.
+    """
+
+    _attr_has_entity_name = True
+    entity_description: SungrowSensorDescription
+
+    def __init__(
+        self,
+        coordinator: SungrowStringInverterCoordinator,
+        entity_description: SungrowSensorDescription,
+    ) -> None:
+        """Initialize the entity."""
+        super().__init__(coordinator)
+        self.entity_description = entity_description
+        serial = coordinator.device.serial_number
+        assert serial is not None
+        self._attr_unique_id = f"{serial}_{entity_description.key}"
+        self._attr_device_info = coordinator.device_info
+
+    @property
+    def available(self) -> bool:
+        """Whether the block this entity reads answered its last poll."""
+        if not super().available:
+            return False
+        report = self.coordinator.data
+        if report is None:
+            return False
+        return self.entity_description.component not in report.failed
+
+    @property
+    def native_value(self) -> float | int | str | None:
+        """Return the reading, or None where the device has none."""
+        return as_reading(self.coordinator.device.field(self.entity_description.field))
 
 
 class SungrowBatterySensor(SungrowBatteryEntity, SensorEntity):

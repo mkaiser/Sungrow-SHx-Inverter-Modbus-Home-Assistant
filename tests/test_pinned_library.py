@@ -99,7 +99,7 @@ def test_a_wheel_that_has_everything_passes(tmp_path, capsys):
     # listed here, so this cannot drift from the integration it describes.
     wanted = check.unresolved_attributes(_wheel(tmp_path / "bare", {}))
     body = "".join(f"    {attr}: object\n" for attr in sorted(wanted))
-    modules["sungrow_modbus.inverter.device"] = (
+    modules["sungrow_modbus.hybrid_inverter.device"] = (
         f"class SungrowInverter:\n{body or '    pass\n'}"
     )
 
@@ -210,7 +210,7 @@ def test_an_enum_member_the_wheel_lacks_is_reported(tmp_path):
         "    THREE_PHASE = 'three_phase'\n"
     )
     missing = check.unresolved_class_members(
-        _wheel(tmp_path, {"sungrow_modbus.inverter.capabilities": enum})
+        _wheel(tmp_path, {"sungrow_modbus.hybrid_inverter.capabilities": enum})
     )
 
     assert "Capability.DISCHARGE_SCHEDULE" in missing

@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "sungrow-modbus==0.1.0a24",
+#     "sungrow-modbus==0.1.0a25",
 #     "modbus-connection[tmodbus]>=4.10.0",
 # ]
 # ///
@@ -67,7 +67,7 @@ from sungrow_modbus.control_test import (
     Snapshot,
     document,
 )
-from sungrow_modbus.inverter import export_scale
+from sungrow_modbus.hybrid_inverter import export_scale
 from sungrow_modbus.survey_document import SCHEMA, stand_in
 
 _LOGGER = logging.getLogger("control_test")
@@ -454,9 +454,11 @@ def _save(directory: Path, stamp: str, name: str, text: str) -> Path:
 async def _restore_mode(inverter: SungrowInverter, args: argparse.Namespace) -> int:
     """Put a saved snapshot back, and report what could not be put back.
 
-    The way out of a run that died halfway. Idempotent by construction: it
-    reads each register before writing it, so running it when nothing is
-    actually wrong costs one read per control and changes nothing.
+    The way out of a run that died halfway. Idempotent by construction: over
+    a cable it reads each register before writing it, so running it when
+    nothing is actually wrong costs one read per control and changes nothing.
+    Through a WiNet-S it writes back only what the run touched, and writes it
+    whatever the dongle's cache says.
     """
     saved = Snapshot.from_dict(json.loads(Path(args.restore).read_text()))
     terminal = _Terminal()
@@ -501,7 +503,7 @@ async def _export_scale_mode(
     """Ask how this firmware writes 13074, and nothing else.
 
     At most one write, chosen so that it changes nothing on either known
-    firmware -- `sungrow_modbus.inverter.export_scale` has the argument. With
+    firmware -- `sungrow_modbus.hybrid_inverter.export_scale` has the argument. With
     `--enable-export-limit` it may switch feed-in limitation on for that one
     write, and only where the limit already held caps nothing. Exit 0 with an
     answer, 3 without one, 5 if anything was left changed.
@@ -741,45 +743,11 @@ def _merge(
     return target
 
 
-class _LinkDrops(logging.Handler):
-    """Count the Modbus backend's reconnects instead of printing each one.
-
-    `tmodbus` logs every connection it opens and every one the inverter drops,
-    and re-opens it by itself. Printed as they happen they are noise: the run
-    carries on, and a read that really fails is reported by `_retrying` or ends
-    the run with exit 1. What they say together is worth one line -- a Sungrow
-    that keeps dropping the link has another client polling it.
-    """
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.count = 0
-
-    def emit(self, record: logging.LogRecord) -> None:
-        message = record.getMessage()
-        if "connection lost" in message or "closed by remote host" in message:
-            self.count += 1
-
-
-def _quiet_backend() -> _LinkDrops:
-    """Keep the backend's connection log off the terminal, and count drops."""
-    drops = _LinkDrops()
-    backend = logging.getLogger("tmodbus")
-    backend.addHandler(drops)
-    backend.propagate = False
-    return drops
-
-
-def _say_drops(drops: _LinkDrops) -> None:
+def _say_drops(drops: probe.LinkDrops) -> None:
     """One line about the dropped connections, if there were any."""
-    if drops.count:
-        print(
-            f"\nThe inverter dropped the connection {drops.count} time(s); each "
-            "was re-opened and the run carried on. Frequent drops mean "
-            "something else is polling it -- stop Home Assistant for a "
-            "cleaner run.",
-            file=sys.stderr,
-        )
+    sentence = probe.link_drops_sentence(drops.count, "run")
+    if sentence:
+        print("\n" + sentence, file=sys.stderr)
 
 
 #: The library's `control_test.DRY_RUN_MEANS`, kept here because this script
@@ -904,7 +872,7 @@ def _resolve_paths(args: argparse.Namespace) -> bool:
     return True
 
 
-async def async_main(args: argparse.Namespace, drops: _LinkDrops) -> int:
+async def async_main(args: argparse.Namespace, drops: probe.LinkDrops) -> int:
     """Run with parsed arguments inside a running loop, and return the exit code.
 
     The survey's way in: it already has a loop and its own count of dropped
@@ -980,7 +948,7 @@ def main(argv: list[str] | None = None) -> int:
     if not _resolve_paths(args):
         return 2
     logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stderr)
-    drops = _quiet_backend()
+    drops = probe.count_link_drops()
     try:
         return probe.run(async_main(args, drops))
     except KeyboardInterrupt:

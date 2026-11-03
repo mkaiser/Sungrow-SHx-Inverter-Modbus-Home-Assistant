@@ -1,4 +1,4 @@
-"""The inverter's identity and start/stop blocks, outside the polled tiers.
+"""The hybrid's start/stop block, outside the polled tiers.
 
 Declared by the register number printed in Sungrow's communication protocol
 document and in the comments of modbus_sungrow.yaml; `reg()` turns it into the
@@ -10,10 +10,9 @@ Sungrow reports 32-bit values low word first, which the YAML package spells
 
 from __future__ import annotations
 
-from modbus_connection.model import Component, gauge, integer, uint32
+from modbus_connection.model import Component, integer
 
 from ..addresses import reg
-from ..model import string
 
 
 class InverterControl(Component):
@@ -40,38 +39,3 @@ class InverterControl(Component):
 
     start_stop = integer(reg(13000), signed=False, writable=True)
     """Register 13000: 0xCF boots the inverter, 0xCE shuts it down."""
-
-
-class InverterIdentity(Component):
-    """Who this inverter is: read once at setup, never polled.
-
-    Every field sits between protocol address 4951 and 5001, so the whole
-    component resolves to a single block read.
-    """
-
-    register_space = "input"
-
-    protocol_version = uint32(reg(4952), word_order="little")
-    """Sungrow Modbus protocol version."""
-
-    arm_software = string(reg(4954), 15)
-    """ARM firmware version string."""
-
-    dsp_software = string(reg(4969), 15)
-    """DSP firmware version string."""
-
-    serial_number = string(reg(4990), 10)
-    """Inverter serial number, used as the Home Assistant unique id."""
-
-    device_type_code = integer(reg(5000), signed=False)
-    """Model code; see ``const.DEVICE_TYPES``."""
-
-    nominal_output_power = gauge(reg(5001), 100, signed=False, unit="W")
-    """Rated output power of the inverter."""
-
-    output_type = integer(reg(5002), signed=False)
-    """0 single phase, 1 three-phase 3P4L, 2 three-phase 3P3L.
-
-    Sungrow states the phase count outright here, so it is never inferred from
-    the model — see `capabilities.resolve`.
-    """

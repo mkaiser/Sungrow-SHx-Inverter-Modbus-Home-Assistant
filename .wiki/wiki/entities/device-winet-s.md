@@ -70,5 +70,5 @@ read 0xFFFF. November and December read 0 while 2025 holds 8541.9 kWh of PV, so 
 registers hold the current calendar year only and are cleared at the new year. One house.
 
 The integration reads the block over the cable as six sensors, this month and this year per
-quantity, gated on `Capability.ENERGY_HISTORY` (`src/sungrow_modbus/inverter/capabilities.py`).
+quantity, gated on `Capability.ENERGY_HISTORY` (`src/sungrow_modbus/hybrid_inverter/capabilities.py`).
 

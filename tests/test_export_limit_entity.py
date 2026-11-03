@@ -2,8 +2,9 @@
 
 Register 13074 multiplies a written word by ten at three houses and stores it
 as handed at fwitten's pair. The library's field divides by ten for everyone,
-so the entity asks the inverter once -- `sungrow_modbus.inverter.export_scale` -- keeps
-the answer in the entry, and writes the raw word itself.
+so the entity asks the inverter once --
+`sungrow_modbus.hybrid_inverter.export_scale` -- keeps the answer in the
+entry, and writes the raw word itself.
 
 The double here is the firmware as measured, not as the probe reasons about
 it: the multiply happens **before** the range check, a refusal is exception
@@ -269,7 +270,7 @@ async def test_a_failed_read_writes_nothing_and_says_so(
 
     with (
         patch(
-            "sungrow_modbus.inverter.export_scale._word",
+            "sungrow_modbus.hybrid_inverter.export_scale._word",
             side_effect=IllegalDataValueError(0x02),
         ),
         patch.object(type(sungrow_unit), "write_register", side_effect=recording),

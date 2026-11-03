@@ -32,7 +32,7 @@ from modbus_connection import ModbusError, ModbusTcpParams
 from modbus_connection.tmodbus import ModbusConnection
 
 from .addresses import IHOMEMANAGER_PROTOCOL, IHOMEMANAGER_TYPE, field_address
-from .const import model_for
+from .identity import STRING_INVERTER, inverter_kind, inverter_model
 from .ihomemanager.registers import TYPE_CODE as IHOMEMANAGER_TYPE_CODE
 from .logger.registers import MODELS as LOGGER_MODELS
 from .model import words_text
@@ -310,7 +310,10 @@ async def async_identify(
             except (ModbusError, TimeoutError, OSError):
                 return Identity(serial, None, None, None, unit_id)
             code = int(device_type[0])
-            return Identity(serial, code, model_for(code), None, unit_id)
+            # Only an SG is named: the config flow reads no kind, and None
+            # has always meant a hybrid or an unmapped model.
+            kind = STRING_INVERTER if inverter_kind(code) == STRING_INVERTER else None
+            return Identity(serial, code, inverter_model(code), None, unit_id, kind)
 
         manager = await _identify_ihomemanager(connection)
         if manager is not None:

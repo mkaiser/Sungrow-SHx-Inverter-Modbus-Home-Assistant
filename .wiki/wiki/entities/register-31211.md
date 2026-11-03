@@ -25,6 +25,7 @@ By the committed register dumps (asserted in `tests/test_pv_generation_cut.py`):
 | [SUNSTONE-H_B000.V001.P068](firmware-sunstone-h-b000-v001-p068.md) | 0x55 |
 | [SUNSTONE-H_B000.V002.P065](firmware-sunstone-h-b000-v002-p065.md) | 0x55 |
 | [SUNSTONE-H_B000.V002.P059](firmware-sunstone-h-b000-v002-p059.md) | 0x55 |
+| [SUNSTONE-H_B000.V002.P057](firmware-sunstone-h-b000-v002-p057.md) | 0x55 (read in `readings`; the document has no dump) |
 
 The same two inverters at [fwitten](installation-fwitten.md) answer the
 sentinel on 95.03 and 0x55 on P023, so the firmware decides. The string that
@@ -44,10 +45,13 @@ over the inverter's own LAN port: P023 on fwitten's master (1213 W, 0 W,
 1913 W; [the survey](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-summary.md)).
 It also holds the SH-RS's P065, confirmed through a WiNet-S at
 [Jam3s97](installation-jam3s97.md)'s (3465 W, 0 W, 3092 W): the dongle forwards the write, and
-the behaviour is the evidence a dongle cannot spoil. See [firmware gating](../concepts/firmware-gating.md).
+the behaviour is the evidence a dongle cannot spoil. And the SH-T's P071, confirmed the same way
+at [ra1k-0](installation-ra1k-0.md)'s SH20T (20421 W, 28 W, 20395 W;
+[the survey](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2-summary.md)). The cut stops all PV, whatever the house draws. See [firmware gating](../concepts/firmware-gating.md).
 
 **The cut is a ramp.** After `0xAA`, DC power holds for about 6 s and reaches
 0 W about 20 s after the write. After `0x55` it returns about 8 s later and is
 full within about 20 s. `PV_CUT_SETTLE` (35 s) waits out the ramp.
 
-What is still open is in `Todo.md`; the question is [does the PV cut work on P022 and P071](../queries/does-the-pv-cut-work-on-p022-and-p071.md).
+Whether it works on P022 and P071 is [answered: yes on both](../queries/does-the-pv-cut-work-on-p022-and-p071.md).
+What is still open is in `Todo.md`.

@@ -11,7 +11,7 @@ created: '2026-10-29'
 
 - **Numbers.** A [WiNet-S](../entities/device-winet-s.md) answers 0 where the
   inverter answers 0xFFFF, which would invent MPPT3, MPPT4 and a second meter
-  channel. `ZERO_MEANS_ABSENT` in `src/sungrow_modbus/inverter/capabilities.py`
+  channel. `ZERO_MEANS_ABSENT` in `src/sungrow_modbus/hybrid_inverter/capabilities.py`
   is the guard.
 - **Strings.** Sungrow fills a UTF-8 field it cannot answer with 0x00, which
   decodes to `""`. `present()` in `model.py` maps that to None. Otherwise an

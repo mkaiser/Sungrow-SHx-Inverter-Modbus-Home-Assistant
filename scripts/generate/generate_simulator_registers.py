@@ -48,7 +48,7 @@ OVERRIDES: dict[int, int | list[int]] = {
     # side makes the control test refuse to run at all.
     #
     # Note the value: **0x0000 means Running**, not stopped, per the map in
-    # `inverter.derived.RUNNING_STATES`. The obvious guess is wrong.
+    # `hybrid_inverter.derived.RUNNING_STATES`. The obvious guess is wrong.
     12999: 0x0000,
     # Bounds the inverter is supposed to state about itself. Without them the
     # control test correctly declines to guess, which is worth seeing once but

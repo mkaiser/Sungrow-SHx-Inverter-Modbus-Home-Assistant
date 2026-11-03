@@ -1,0 +1,924 @@
+{
+  "schema": 22,
+  "command_line": "home assistant diagnostics",
+  "read_at": "2026-11-02T20:56:36Z",
+  "user_inputs": {
+    "reporter": "bleughb",
+    "comment": "I actually have TWO SG5.0RS and an AC coupled, no PV connected single SH10.RS with SBH250",
+    "battery": "SBH25- Sungrow",
+    "transport": "winet_wlan",
+    "modbus_proxy": "no",
+    "other_pollers": "yes. an energy meter",
+    "other_inverter": "yes",
+    "other_inverter_detail": "SG5.0RS"
+  },
+  "ip_address_last_two_octets": "000.122",
+  "device": {
+    "device_type_code": "0x0D1B",
+    "device_type": "SH10RS",
+    "output_type": "single phase",
+    "serial_anonymized_hashed": "anon-92100523190"
+  },
+  "firmware": {
+    "arm": "ARM_SUNSTONE-H_V11_V01_A",
+    "dsp": "MDSP_SUNSTONE-H_V11_V01_A",
+    "inverter": "SUNSTONE-H_B000.V002.P057",
+    "communication_module": "WINET-SV300.001.03.P021",
+    "battery": "SBHBCU-S_22011.04.07"
+  },
+  "connection": {
+    "communication_module_firmware": "WINET-SV300.001.03.P021",
+    "verdict": "through a communication module (WiNet-S, WiNet-S2 or Logger)",
+    "wifi_or_ethernet": "not determinable over Modbus. Nothing in the protocol reports it, and a WiNet-S answers identically wired and over WiFi. Use user_inputs.transport, which is what the contributor said.",
+    "winet_restricted_block_6100": "refused"
+  },
+  "readings": {
+    "values": {
+      "active_power_limitation_ratio_raw": 6553.5,
+      "active_power_limitation_raw": 65535,
+      "apl_shutdown_at_zero_raw": 170,
+      "backup_frequency": 49.97,
+      "backup_mode_raw": 170,
+      "backup_phase_a_current": 4.1,
+      "backup_phase_a_power": 283,
+      "backup_phase_a_voltage": 231.9,
+      "backup_phase_b_current": 0.0,
+      "backup_phase_b_power": 0,
+      "backup_phase_b_voltage": 0.0,
+      "backup_phase_c_current": 0.0,
+      "backup_phase_c_power": 0,
+      "backup_phase_c_voltage": 0.0,
+      "battery_alarm": 0,
+      "battery_capacity_high_precision": 25.34,
+      "battery_charging_start_power": null,
+      "battery_current": 0.8,
+      "battery_discharging_start_power": null,
+      "battery_fault": 0,
+      "battery_firmware_version": "SBHBCU-S_22011.04.07",
+      "battery_forced_charge_discharge_cmd_raw": 204,
+      "battery_forced_charge_discharge_power": 0,
+      "battery_level": 18.6,
+      "battery_max_charge_power": 10600,
+      "battery_max_discharge_power": 10600,
+      "battery_max_soc": 100.0,
+      "battery_min_soc": 5.0,
+      "battery_power": 137,
+      "battery_reserved_soc_for_backup": 10,
+      "battery_state_of_health": 98.0,
+      "battery_temperature": 22.7,
+      "battery_voltage": 356.4,
+      "bdc_rated_power": 0,
+      "bdc_side_fault": 0,
+      "bdc_side_permanent_fault": 0,
+      "bms_alarm": 0,
+      "bms_alarm_2": 0,
+      "bms_fault_1": 0,
+      "bms_fault_2": 0,
+      "bms_max_charging_current": 50,
+      "bms_max_discharging_current": 50,
+      "bms_protection": 0,
+      "communication_module_firmware_version": "WINET-SV300.001.03.P021",
+      "daily_battery_charge": 0.0,
+      "daily_battery_charge_from_pv": 0.0,
+      "daily_battery_discharge": 5.2,
+      "daily_direct_energy_consumption": 0.0,
+      "daily_exported_energy": 0.0,
+      "daily_exported_energy_from_pv": 0.0,
+      "daily_imported_energy": 0.0,
+      "daily_pv_generation": 0.0,
+      "daily_pv_generation_battery_discharge": 5.2,
+      "dc_side_fault": 0,
+      "direct_consumption_month_01": null,
+      "direct_consumption_month_02": null,
+      "direct_consumption_month_03": null,
+      "direct_consumption_month_04": null,
+      "direct_consumption_month_05": null,
+      "direct_consumption_month_06": null,
+      "direct_consumption_month_07": null,
+      "direct_consumption_month_08": null,
+      "direct_consumption_month_09": null,
+      "direct_consumption_month_10": null,
+      "direct_consumption_month_11": null,
+      "direct_consumption_month_12": null,
+      "direct_consumption_year_2015": null,
+      "direct_consumption_year_2016": null,
+      "direct_consumption_year_2017": null,
+      "direct_consumption_year_2018": null,
+      "direct_consumption_year_2019": null,
+      "direct_consumption_year_2020": null,
+      "direct_consumption_year_2021": null,
+      "direct_consumption_year_2022": null,
+      "direct_consumption_year_2023": null,
+      "direct_consumption_year_2024": null,
+      "direct_consumption_year_2025": null,
+      "direct_consumption_year_2026": null,
+      "direct_consumption_year_2027": null,
+      "direct_consumption_year_2028": null,
+      "direct_consumption_year_2029": null,
+      "ems_mode_selection_raw": 0,
+      "export_from_pv_month_01": null,
+      "export_from_pv_month_02": null,
+      "export_from_pv_month_03": null,
+      "export_from_pv_month_04": null,
+      "export_from_pv_month_05": null,
+      "export_from_pv_month_06": null,
+      "export_from_pv_month_07": null,
+      "export_from_pv_month_08": null,
+      "export_from_pv_month_09": null,
+      "export_from_pv_month_10": null,
+      "export_from_pv_month_11": null,
+      "export_from_pv_month_12": null,
+      "export_from_pv_year_2015": null,
+      "export_from_pv_year_2016": null,
+      "export_from_pv_year_2017": null,
+      "export_from_pv_year_2018": null,
+      "export_from_pv_year_2019": null,
+      "export_from_pv_year_2020": null,
+      "export_from_pv_year_2021": null,
+      "export_from_pv_year_2022": null,
+      "export_from_pv_year_2023": null,
+      "export_from_pv_year_2024": null,
+      "export_from_pv_year_2025": null,
+      "export_from_pv_year_2026": null,
+      "export_from_pv_year_2027": null,
+      "export_from_pv_year_2028": null,
+      "export_from_pv_year_2029": null,
+      "export_power_limit": 10000,
+      "export_power_limit_max": 20000,
+      "export_power_limit_min": 0,
+      "export_power_limit_mode_raw": 170,
+      "export_power_raw": 0,
+      "feed_in_limitation_ratio": null,
+      "forced_charging_days_raw": 1,
+      "forced_charging_end_1_hour": 13,
+      "forced_charging_end_1_minute": 0,
+      "forced_charging_end_2_hour": 13,
+      "forced_charging_end_2_minute": 0,
+      "forced_charging_raw": 85,
+      "forced_charging_start_1_hour": 10,
+      "forced_charging_start_1_minute": 10,
+      "forced_charging_start_2_hour": 10,
+      "forced_charging_start_2_minute": 10,
+      "forced_charging_target_soc_1": 100,
+      "forced_charging_target_soc_2": 100,
+      "forced_startup_under_low_soc_raw": null,
+      "grid_frequency": 49.98,
+      "grid_side_fault": 0,
+      "inverter_alarm": 0,
+      "inverter_firmware_version": "SUNSTONE-H_B000.V002.P057",
+      "inverter_rated_output": 10000,
+      "inverter_temperature": 27.8,
+      "load_adjustment_mode_enable_raw": 85,
+      "load_adjustment_mode_selection_raw": 0,
+      "load_power": 503,
+      "meter_active_power": 0,
+      "meter_channel_2_phase_a_active_power": 0,
+      "meter_channel_2_phase_b_active_power": 0,
+      "meter_channel_2_phase_c_active_power": 0,
+      "meter_channel_2_total_active_power": 0,
+      "meter_phase_a_active_power": 20,
+      "meter_phase_a_current": 0.0,
+      "meter_phase_a_voltage": 0.0,
+      "meter_phase_b_active_power": 0,
+      "meter_phase_b_current": 0.0,
+      "meter_phase_b_voltage": 0.0,
+      "meter_phase_c_active_power": 0,
+      "meter_phase_c_current": 0.0,
+      "meter_phase_c_voltage": 0.0,
+      "mppt1_current": 0.0,
+      "mppt1_voltage": 0.0,
+      "mppt2_current": 0.0,
+      "mppt2_voltage": 0.0,
+      "mppt3_current": 0.0,
+      "mppt3_voltage": 0.0,
+      "mppt4_current": 0.0,
+      "mppt4_voltage": 0.0,
+      "permanent_fault": 0,
+      "phase_a_current": 1.5,
+      "phase_a_voltage": 231.6,
+      "phase_b_current": 0.0,
+      "phase_b_voltage": 0.0,
+      "phase_c_current": 0.0,
+      "phase_c_voltage": 0.0,
+      "power_factor": 1.0,
+      "power_flow_status": 164,
+      "pv_generation_cut_raw": 85,
+      "pv_generation_month_01": null,
+      "pv_generation_month_02": null,
+      "pv_generation_month_03": null,
+      "pv_generation_month_04": null,
+      "pv_generation_month_05": null,
+      "pv_generation_month_06": null,
+      "pv_generation_month_07": null,
+      "pv_generation_month_08": null,
+      "pv_generation_month_09": null,
+      "pv_generation_month_10": null,
+      "pv_generation_month_11": null,
+      "pv_generation_month_12": null,
+      "pv_generation_year_2015": null,
+      "pv_generation_year_2016": null,
+      "pv_generation_year_2017": null,
+      "pv_generation_year_2018": null,
+      "pv_generation_year_2019": null,
+      "pv_generation_year_2020": null,
+      "pv_generation_year_2021": null,
+      "pv_generation_year_2022": null,
+      "pv_generation_year_2023": null,
+      "pv_generation_year_2024": null,
+      "pv_generation_year_2025": null,
+      "pv_generation_year_2026": null,
+      "pv_generation_year_2027": null,
+      "pv_generation_year_2028": null,
+      "pv_generation_year_2029": null,
+      "pv_power_limitation_raw": null,
+      "reactive_power": 0,
+      "running_state_raw": 33280,
+      "self_consumption_of_today": 0.0,
+      "sungrow_arm_software": "ARM_SUNSTONE-H_V11_V01_A",
+      "sungrow_device_type_code": 3355,
+      "sungrow_dsp_software": "MDSP_SUNSTONE-H_V11_V01_A",
+      "sungrow_protocol_version": 16781568,
+      "sungrow_version_1": "SUNSTONE-H_01011.02.57",
+      "sungrow_version_2": "SUNSTONE-H_03021.01.10",
+      "sungrow_version_3": null,
+      "sungrow_version_4_sungrow_battery": null,
+      "system_clock_day": 3,
+      "system_clock_hour": 7,
+      "system_clock_minute": 17,
+      "system_clock_month": 11,
+      "system_clock_second": 55,
+      "system_clock_year": 2026,
+      "system_fault_1": 0,
+      "system_fault_2": 0,
+      "total_active_power": 337,
+      "total_backup_power": 283,
+      "total_battery_charge": 9290.0,
+      "total_battery_charge_from_pv": 0.0,
+      "total_battery_discharge": 8150.4,
+      "total_dc_power": 0,
+      "total_direct_energy_consumption": 0.0,
+      "total_exported_energy": 3217.3,
+      "total_exported_energy_from_pv": 0.0,
+      "total_imported_energy": 11470.8,
+      "total_pv_generation": 0.8,
+      "total_pv_generation_battery_discharge": 8118.2,
+      "weekday_discharge_end_1_hour": 23,
+      "weekday_discharge_end_1_minute": 59,
+      "weekday_discharge_end_2_hour": 23,
+      "weekday_discharge_end_2_minute": 59,
+      "weekday_discharge_start_1_hour": 0,
+      "weekday_discharge_start_1_minute": 0,
+      "weekday_discharge_start_2_hour": 0,
+      "weekday_discharge_start_2_minute": 0,
+      "weekend_discharge_end_1_hour": 21,
+      "weekend_discharge_end_1_minute": 0,
+      "weekend_discharge_end_2_hour": 21,
+      "weekend_discharge_end_2_minute": 0,
+      "weekend_discharge_raw": 85,
+      "weekend_discharge_start_1_hour": 14,
+      "weekend_discharge_start_1_minute": 0,
+      "weekend_discharge_start_2_hour": 14,
+      "weekend_discharge_start_2_minute": 0
+    },
+    "components_that_did_not_answer": [
+      "battery_firmware",
+      "direct_consumption_history",
+      "export_from_pv_history",
+      "pv_generation_history",
+      "sub_controller_firmware"
+    ]
+  },
+  "capability_probes": {
+    "device type code (5000)": {
+      "state": "present",
+      "values": [
+        3355
+      ]
+    },
+    "nominal output power (5001)": {
+      "state": "present",
+      "values": [
+        100
+      ]
+    },
+    "output type (5002)": {
+      "state": "present",
+      "values": [
+        0
+      ]
+    },
+    "MPPT1 voltage": {
+      "state": "present",
+      "values": [
+        0
+      ]
+    },
+    "MPPT2 voltage": {
+      "state": "present",
+      "values": [
+        0
+      ]
+    },
+    "MPPT3 voltage": {
+      "state": "present",
+      "values": [
+        0
+      ]
+    },
+    "MPPT4 voltage": {
+      "state": "present",
+      "values": [
+        0
+      ]
+    },
+    "phase A voltage": {
+      "state": "present",
+      "values": [
+        2292
+      ]
+    },
+    "phase B voltage": {
+      "state": "present",
+      "values": [
+        0
+      ]
+    },
+    "phase C voltage": {
+      "state": "present",
+      "values": [
+        0
+      ]
+    },
+    "meter phase A voltage (5741)": {
+      "state": "refused"
+    },
+    "meter phase A current (5744)": {
+      "state": "refused"
+    },
+    "battery voltage": {
+      "state": "present",
+      "values": [
+        3564
+      ]
+    },
+    "battery level": {
+      "state": "present",
+      "values": [
+        183
+      ]
+    },
+    "battery temperature": {
+      "state": "present",
+      "values": [
+        227
+      ]
+    },
+    "battery capacity (5639)": {
+      "state": "present",
+      "values": [
+        2534
+      ]
+    },
+    "firmware block (13250, spec V1.1.7+)": {
+      "state": "present",
+      "values": [
+        21333
+      ]
+    },
+    "PV power of today (6100, direct-only)": {
+      "state": "refused"
+    },
+    "PV power limitation (13018, V1.1.10+)": {
+      "state": "unavailable",
+      "values": [
+        65535
+      ]
+    }
+  },
+  "contention": {
+    "polled_by": "this Home Assistant, throughout",
+    "components": 22,
+    "intervals_seconds": [
+      5,
+      10,
+      60,
+      600
+    ],
+    "coordinators_paused": false,
+    "block_read_test": "not run: it reads every block of the poll three times plus narrowing, which the survey button affords and a diagnostics download does not"
+  },
+  "battery_pack": {
+    "unit": 2,
+    "readings": {
+      "values": {
+        "current": 0.9,
+        "state_of_charge": 22.4,
+        "state_of_health": 98,
+        "temperature": 22.6,
+        "total_charge": 9190.2,
+        "total_discharge": 8935.7,
+        "voltage": 357.2
+      },
+      "components_that_did_not_answer": [
+        "sbr_battery_cells (IllegalDataAddressError)",
+        "sbr_battery_modules (IllegalDataAddressError)"
+      ]
+    }
+  },
+  "control_test": {
+    "schema": 2,
+    "outcome": 3,
+    "outcome_means": "ran, but checks were skipped or inconclusive",
+    "conditions": {
+      "direct_connection": false,
+      "capabilities": [
+        "active_power_limit",
+        "battery",
+        "discharge_schedule",
+        "firmware_versions",
+        "forced_charging",
+        "meter_direct",
+        "pv_generation_cut"
+      ],
+      "model": "SH10RS",
+      "pv_w": 0,
+      "soc_percent": 18.6,
+      "battery_ceiling_w": 17765,
+      "export_write_scale": {
+        "schema": 1,
+        "write_units_per_count": 1,
+        "answer": "stores a written word as handed",
+        "held_w": 10000,
+        "wrote": 10000,
+        "response": "accepted",
+        "mode_lifted": false,
+        "left_changed": false,
+        "reason": "this firmware stores a written word as handed: accepted, because writing the held 10000 back is a no-op if stored as handed, and 100000 W -- above the 20000 W maximum -- if multiplied, which is refused"
+      },
+      "simulated": false,
+      "dry_run": false
+    },
+    "readback": [
+      {
+        "field": "battery_min_soc",
+        "register": 13059,
+        "spec_units_per_count": 0.1,
+        "unit": "%",
+        "original": 5.0,
+        "written": 3.0,
+        "library_read": 3.0,
+        "raw_word": 30,
+        "expected_raw": 30,
+        "ratio": 1.0,
+        "slope": null,
+        "expected_slope": 10.0,
+        "verdict": "matched",
+        "visibility": "a decade error either way would be visible",
+        "implicates": null,
+        "detail": null
+      },
+      {
+        "field": "battery_max_soc",
+        "register": 13058,
+        "spec_units_per_count": 0.1,
+        "unit": "%",
+        "original": 100.0,
+        "written": 95.0,
+        "library_read": 95.0,
+        "raw_word": 950,
+        "expected_raw": 950,
+        "ratio": 1.0,
+        "slope": null,
+        "expected_slope": 10.0,
+        "verdict": "matched",
+        "visibility": "no decade error would be visible; it could only be refused",
+        "implicates": null,
+        "detail": null
+      },
+      {
+        "field": "battery_reserved_soc_for_backup",
+        "register": 13100,
+        "spec_units_per_count": 1,
+        "unit": "%",
+        "original": 10,
+        "written": 7.0,
+        "library_read": 7,
+        "raw_word": 7,
+        "expected_raw": 7,
+        "ratio": 1.0,
+        "slope": null,
+        "expected_slope": 1.0,
+        "verdict": "matched",
+        "visibility": "a decade error either way would be visible",
+        "implicates": null,
+        "detail": null
+      },
+      {
+        "field": "battery_max_charge_power",
+        "register": 33047,
+        "spec_units_per_count": 10,
+        "unit": "W",
+        "original": 10600,
+        "written": 1700,
+        "library_read": 1700,
+        "raw_word": 170,
+        "expected_raw": 170,
+        "ratio": 1.0,
+        "slope": 0.1,
+        "expected_slope": 0.1,
+        "verdict": "matched",
+        "visibility": "a decade error either way would be visible",
+        "implicates": null,
+        "detail": null
+      },
+      {
+        "field": "battery_max_discharge_power",
+        "register": 33048,
+        "spec_units_per_count": 10,
+        "unit": "W",
+        "original": 10600,
+        "written": 1600,
+        "library_read": 1600,
+        "raw_word": 160,
+        "expected_raw": 160,
+        "ratio": 1.0,
+        "slope": null,
+        "expected_slope": 0.1,
+        "verdict": "matched",
+        "visibility": "a decade error either way would be visible",
+        "implicates": null,
+        "detail": "one point only: the second read did not answer"
+      },
+      {
+        "field": "export_power_limit",
+        "register": 13074,
+        "spec_units_per_count": 1,
+        "unit": "W",
+        "original": 10000,
+        "written": 600.0,
+        "library_read": null,
+        "raw_word": null,
+        "expected_raw": 600,
+        "ratio": null,
+        "slope": null,
+        "expected_slope": 1.0,
+        "verdict": "refused with an exception",
+        "visibility": "a decade error either way would be visible",
+        "implicates": null,
+        "detail": "ServerDeviceFailureError: write_register(13073, 600): Modbus Exception 0x04 for function code 0x06"
+      },
+      {
+        "field": "battery_forced_charge_discharge_power",
+        "register": 13052,
+        "spec_units_per_count": 1,
+        "unit": "W",
+        "original": 0,
+        "written": 1500,
+        "library_read": 1500,
+        "raw_word": 1500,
+        "expected_raw": 1500,
+        "ratio": 1.0,
+        "slope": 1.0,
+        "expected_slope": 1.0,
+        "verdict": "matched",
+        "visibility": "a decade error either way would be visible",
+        "implicates": null,
+        "detail": null
+      }
+    ],
+    "effects": [
+      {
+        "check": "forced charge",
+        "observable": "battery charge power",
+        "commanded": 1250.0,
+        "commanded_unit": "W",
+        "before": -516.5,
+        "during": 1280.0,
+        "after": 1280.0,
+        "before_mad": 88.5,
+        "during_mad": 0.0,
+        "after_mad": 0.0,
+        "drift": 1796.5,
+        "delta": 1796.5,
+        "ratio": null,
+        "verdict": "could not tell",
+        "detail": "the input drifted across the measurement"
+      },
+      {
+        "check": "forced discharge",
+        "observable": "battery discharge power",
+        "commanded": 1250.0,
+        "commanded_unit": "W",
+        "before": -1280.0,
+        "during": 125.0,
+        "after": 137.0,
+        "before_mad": 0.0,
+        "during_mad": 0.0,
+        "after_mad": 0.0,
+        "drift": 1417.0,
+        "delta": 1405.0,
+        "ratio": null,
+        "verdict": "could not tell",
+        "detail": "the input drifted across the measurement"
+      }
+    ],
+    "restored": [
+      {
+        "field": "battery_forced_charge_discharge_cmd_raw",
+        "original": 204.0,
+        "readback": 204,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "ems_mode_selection_raw",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "pv_generation_cut_raw",
+        "original": 85.0,
+        "readback": 85,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "forced_charging_raw",
+        "original": 85.0,
+        "readback": 85,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "battery_reserved_soc_for_backup",
+        "original": 10.0,
+        "readback": 10,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "battery_max_charge_power",
+        "original": 10600.0,
+        "readback": 10600,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "battery_max_discharge_power",
+        "original": 10600.0,
+        "readback": 10600,
+        "restored": true,
+        "attempts": 2,
+        "detail": null
+      },
+      {
+        "field": "export_power_limit",
+        "original": 10000.0,
+        "readback": 10000,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "battery_forced_charge_discharge_power",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "forced_charging_days_raw",
+        "original": 1.0,
+        "readback": 1,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "forced_charging_start_1_hour",
+        "original": 10.0,
+        "readback": 10,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "forced_charging_start_1_minute",
+        "original": 10.0,
+        "readback": 10,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "forced_charging_end_1_hour",
+        "original": 13.0,
+        "readback": 13,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "forced_charging_end_1_minute",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "forced_charging_target_soc_1",
+        "original": 100.0,
+        "readback": 100,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "weekday_discharge_start_1_hour",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "weekday_discharge_start_1_minute",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "weekday_discharge_end_1_hour",
+        "original": 23.0,
+        "readback": 23,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "weekday_discharge_end_1_minute",
+        "original": 59.0,
+        "readback": 59,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "weekday_discharge_start_2_hour",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "weekday_discharge_start_2_minute",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "weekday_discharge_end_2_hour",
+        "original": 23.0,
+        "readback": 23,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "weekday_discharge_end_2_minute",
+        "original": 59.0,
+        "readback": 59,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "weekend_discharge_start_1_hour",
+        "original": 14.0,
+        "readback": 14,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "weekend_discharge_start_1_minute",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "weekend_discharge_end_1_hour",
+        "original": 21.0,
+        "readback": 21,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "weekend_discharge_end_1_minute",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "weekend_discharge_start_2_hour",
+        "original": 14.0,
+        "readback": 14,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "weekend_discharge_start_2_minute",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "weekend_discharge_end_2_hour",
+        "original": 21.0,
+        "readback": 21,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "weekend_discharge_end_2_minute",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "export_power_limit_mode_raw",
+        "original": 170.0,
+        "readback": 170,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "battery_min_soc",
+        "original": 5.0,
+        "readback": 5.0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      },
+      {
+        "field": "battery_max_soc",
+        "original": 100.0,
+        "readback": 100.0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "already holding its original value"
+      }
+    ],
+    "restart": {
+      "stopped_after": 4.036790066999856,
+      "running_after": 291.30526434700005,
+      "generating_after": null,
+      "stop_word_seen": 4864,
+      "polls_refused_connection": 0,
+      "settings_survived": true,
+      "verdict": "the inverter did as it was told",
+      "detail": null
+    },
+    "not_established": [
+      "this endpoint is a WiNet-S rather than the inverter's own port, and a WiNet-S answers a register stale after forwarding a write to it -- so every readback verdict here describes what the dongle reported, not what the register holds. Waiting does not help: polled every 5 s for two minutes one never reported a value the cable had confirmed. The behavioural checks are unaffected",
+      "battery_charging_start_power: the device does not have it (battery_start_power did not answer)",
+      "battery_discharging_start_power: the device does not have it (battery_start_power did not answer)",
+      "battery_max_soc: its bounds have no room for a value ten times larger or smaller, so a scale error here could only ever show as a refusal",
+      "forced charge: not measured -- the house was 1796 W different afterwards, so the change cannot be attributed to the setting",
+      "forced discharge: not measured -- the house was 1417 W different afterwards, so the change cannot be attributed to the setting",
+      "no charge-ceiling check: the battery is too low for the ceiling to be put under it, since battery_max_soc cannot go below 50 %",
+      "the battery clamped the manufactured discharge: asked for 3525 W, the pack accepted 3520 W -- its own limit moves with charge and temperature, and the check went ahead against what it accepted",
+      "no export limit check: discharging 3520 W still only produced -647 W of export, under the 1812 W a cap needs to bind against",
+      "no PV cut check: PV was 0 W, under the 500 W a stop needs to be told from the sky",
+      "no charge window check: the inverter's clock did not read",
+      "no discharge window check: the battery was discharging 137 W, under the 500 W a stop needs to be told from the house"
+    ]
+  }
+}

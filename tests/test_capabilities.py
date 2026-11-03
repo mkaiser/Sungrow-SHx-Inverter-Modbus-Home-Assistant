@@ -11,8 +11,8 @@ from __future__ import annotations
 import pytest
 
 from sungrow_modbus.const import DEVICE_TYPES
-from sungrow_modbus.inverter import registers
-from sungrow_modbus.inverter.capabilities import (
+from sungrow_modbus.hybrid_inverter import registers
+from sungrow_modbus.hybrid_inverter.capabilities import (
     ABSENT_ON_FIRMWARE,
     ZERO_MEANS_ABSENT,
     Capability,
@@ -308,7 +308,7 @@ def test_every_firmware_entry_names_a_committed_document() -> None:
 
     source = (
         Path(__file__).resolve().parent.parent
-        / "src/sungrow_modbus/inverter/capabilities.py"
+        / "src/sungrow_modbus/hybrid_inverter/capabilities.py"
     ).read_text(encoding="utf-8")
     surveys = Path(__file__).resolve().parent.parent / "device-survey" / "results"
     block = source.split("ABSENT_ON_FIRMWARE: dict", 1)[1].split("\n}\n", 1)[0]
@@ -346,7 +346,7 @@ def test_every_firmware_entry_names_a_committed_document() -> None:
 def test_sungrow_battery_is_granted_for_an_sbr_on_its_own_unit(
     pack_found, capacity, granted
 ) -> None:
-    from sungrow_modbus.inverter.capabilities import with_sungrow_battery
+    from sungrow_modbus.hybrid_inverter.capabilities import with_sungrow_battery
 
     base = frozenset({Capability.BATTERY})
     result = with_sungrow_battery(base, pack_found=pack_found, capacity_kwh=capacity)

@@ -11,7 +11,7 @@ from __future__ import annotations
 from modbus_connection.model import string as connection_string
 import pytest
 
-from sungrow_modbus.inverter.registers import InverterFirmwareBlockBattery
+from sungrow_modbus.hybrid_inverter.registers import InverterFirmwareBlockBattery
 from sungrow_modbus.model import TextField, string, words_text
 
 #: The SH6.0RS's answer, as its survey (#786) recorded it.

@@ -13,6 +13,7 @@ from .battery import (
     power_from_bms,
 )
 from .const import DEVICE_TYPES, MANUFACTURER, model_for
+from .device import Device, Inverter, MappedDevice
 from .discovery import (
     DEFAULT_PORT,
     IDENTIFY_UNITS,
@@ -25,12 +26,20 @@ from .discovery import (
     hosts_in,
     network_of,
 )
-from .inverter.capabilities import Capability, Family, family_for, known_absent, resolve
-from .inverter.components import InverterControl, InverterIdentity
-from .inverter.derived import RUNNING_STATES, Derived
-from .inverter.device import SungrowInverter
-from .inverter.registers import COMPONENTS, DEFAULT_INTERVALS, TIER_COMPONENTS
+from .hybrid_inverter.capabilities import (
+    Capability,
+    Family,
+    family_for,
+    known_absent,
+    resolve,
+)
+from .hybrid_inverter.components import InverterControl
+from .hybrid_inverter.derived import RUNNING_STATES, Derived
+from .hybrid_inverter.device import SungrowInverter
+from .hybrid_inverter.registers import COMPONENTS, DEFAULT_INTERVALS, TIER_COMPONENTS
+from .identity import InverterIdentity, InverterKind, inverter_kind, inverter_model
 from .model import RegisterValue, UpdateReport, present
+from .string_inverter import SungrowStringInverter
 from .survey import (
     CapabilitySurvey,
     NextStep,
@@ -88,15 +97,20 @@ __all__ = [
     "Capability",
     "CapabilitySurvey",
     "Derived",
+    "Device",
     "Family",
     "Identity",
+    "Inverter",
     "InverterControl",
     "InverterIdentity",
+    "InverterKind",
+    "MappedDevice",
     "NetworkTooLarge",
     "NextStep",
     "RegisterValue",
     "Step",
     "SungrowInverter",
+    "SungrowStringInverter",
     "SurveySource",
     "UpdateReport",
     "assemble_document",
@@ -123,6 +137,8 @@ __all__ = [
     "family_for",
     "firmware_section",
     "hosts_in",
+    "inverter_kind",
+    "inverter_model",
     "known_absent",
     "label_for",
     "local_time",

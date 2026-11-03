@@ -16,7 +16,7 @@ the integration knows was measured on these.
 - **Identity.** Register 5000 reports the device type code (for example
   `0x0E0E` on the SH8.0RT-V112), and 5002 reports the output type: 0 single,
   1 3P4L, 2 3P3L. Ask the inverter rather than inferring from the model
-  name. `src/sungrow_modbus/inverter/registers.py`.
+  name. `src/sungrow_modbus/hybrid_inverter/registers.py`.
 - **Unit id.** The inverter is usually unit 1. A cluster slave answers on
   unit **2**; see [identify by what answers](../concepts/identify-by-what-answers.md)
   and the [fwitten](installation-fwitten.md) pair.
@@ -46,4 +46,5 @@ Every SH-RT survey is listed in the [index](../index.md) under Sources.
 The ones with a control test:
 [mkaiser](installation-mkaiser.md), [gerd](installation-gerd.md),
 [bar12](installation-bar12.md), [fwitten](installation-fwitten.md),
-[peter-sm](installation-peter-sm.md) and [firetribe](installation-firetribe.md).
+[peter-sm](installation-peter-sm.md) and [firetribe](installation-firetribe.md). Read only:
+[robbensonmio](installation-robbensonmio.md) and others published as `anonymous`.

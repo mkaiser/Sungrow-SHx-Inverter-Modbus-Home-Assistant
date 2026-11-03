@@ -21,14 +21,14 @@ from custom_components.sungrow_modbus.const import (
 )
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
-from sungrow_modbus.inverter.faults import (
+from sungrow_modbus.hybrid_inverter.faults import (
     BY_FIELD,
     FAULT_WORDS,
     UNAVAILABLE,
     active,
     reported,
 )
-from sungrow_modbus.inverter.registers import InverterFaults
+from sungrow_modbus.hybrid_inverter.registers import InverterFaults
 
 from .conftest import SERIAL
 

@@ -55,9 +55,16 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceEntry
 from sungrow_modbus import Capability
 from sungrow_modbus.addresses import field_address
-from sungrow_modbus.inverter.capabilities import OUTPUT_TYPES, known_absent
+from sungrow_modbus.hybrid_inverter.capabilities import OUTPUT_TYPES, known_absent
+from sungrow_modbus.string_inverter import TIER_COMPONENTS as STRING_INVERTER_TIERS
 
-from .const import CONF_REGISTER_DUMP, CONF_UNIT_ID, CONF_WALLBOX_HOST, DOMAIN
+from .const import (
+    CONF_KIND,
+    CONF_REGISTER_DUMP,
+    CONF_UNIT_ID,
+    CONF_WALLBOX_HOST,
+    DOMAIN,
+)
 from .coordinator import COMPONENT_TIERS, SungrowConfigEntry
 from .migration import DESCRIPTIONS, legacy_entity_id
 from .survey_document import async_build, attach_control_test
@@ -84,6 +91,8 @@ async def async_get_config_entry_diagnostics(
 ) -> dict[str, Any]:
     """Return everything worth knowing about this entry."""
     runtime = entry.runtime_data
+    if runtime.is_string_inverter:
+        return await _async_string_inverter_diagnostics(hass, entry)
     device = next(iter(runtime.coordinators.values())).device
 
     report: dict[str, Any] = {
@@ -133,6 +142,54 @@ async def async_get_config_entry_diagnostics(
     if entry.options.get(CONF_REGISTER_DUMP, False):
         report["register_dump"] = await _async_register_dump(device)
 
+    return report
+
+
+async def _async_string_inverter_diagnostics(
+    hass: HomeAssistant, entry: SungrowConfigEntry
+) -> dict[str, Any]:
+    """Return an SG entry's report: the same shape, less the hybrid's parts.
+
+    No capabilities, entity gates, block read test or control test: each is
+    the hybrid's. The survey is the SG's own document, as the button builds.
+    """
+    runtime = entry.runtime_data
+    device = runtime.inverter_coordinator.device
+    tiers = {
+        component: tier
+        for tier, components in STRING_INVERTER_TIERS.items()
+        for component in components
+    }
+    report: dict[str, Any] = {
+        "entry": async_redact_data(
+            {
+                CONF_HOST: entry.data.get(CONF_HOST),
+                CONF_PORT: entry.data.get(CONF_PORT),
+                CONF_UNIT_ID: entry.data.get(CONF_UNIT_ID),
+                "kind": entry.data.get(CONF_KIND),
+                "options": dict(entry.options),
+            },
+            TO_REDACT,
+        ),
+        "device": async_redact_data(_device(device), TO_REDACT),
+        "polling": [
+            {
+                "component": component,
+                "tier": tiers.get(component),
+                "interval_seconds": runtime.intervals.get(tiers.get(component, "")),
+                "last_poll_succeeded": coordinator.last_update_success,
+                "answered_last_poll": coordinator.data is not None
+                and component in coordinator.data.updated,
+            }
+            for component, coordinator in sorted(runtime.string_inverter.items())
+        ],
+        "readings": async_redact_data(_readings(device), TO_REDACT),
+    }
+    try:
+        report["survey"] = await async_build(hass, entry)
+    except Exception as err:  # the report matters more than one section of it
+        _LOGGER.exception("Could not build the survey for %s", entry.title)
+        report["survey"] = {"error": f"{type(err).__name__}: {err}"}
     return report
 
 
@@ -257,7 +314,7 @@ def _entities(hass: HomeAssistant, runtime: Any) -> dict[str, Any]:
     gate turns a support round-trip into a one-line answer.
     """
     registry = er.async_get(hass)
-    serial = next(iter(runtime.coordinators.values())).device.serial_number
+    serial = runtime.inverter_coordinator.device.serial_number
 
     created: list[str] = []
     legacy_ids = 0

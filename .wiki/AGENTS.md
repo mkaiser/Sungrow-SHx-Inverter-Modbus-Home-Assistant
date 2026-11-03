@@ -93,7 +93,7 @@ keep reading the pages.
 ### Writing Rules
 
 - **Every claim cites its evidence**: a source page link, or a repository
-  path in backticks (`src/sungrow_modbus/inverter/layout.py`,
+  path in backticks (`src/sungrow_modbus/hybrid_inverter/layout.py`,
   `tests/test_export_scale.py`). A claim with no evidence is a query.
 - **Pages state what is true now.** `log.md` is the only history. When a
   measurement overturns a page, rewrite the page and log the ingest.

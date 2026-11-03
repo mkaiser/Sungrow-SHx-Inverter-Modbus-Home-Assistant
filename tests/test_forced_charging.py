@@ -25,7 +25,7 @@ from custom_components.sungrow_modbus.const import (
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
-from sungrow_modbus.inverter.capabilities import ABSENT_IN, Capability, Family
+from sungrow_modbus.hybrid_inverter.capabilities import ABSENT_IN, Capability, Family
 
 from .conftest import SERIAL
 

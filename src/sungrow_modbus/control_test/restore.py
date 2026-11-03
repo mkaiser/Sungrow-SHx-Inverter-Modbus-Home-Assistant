@@ -70,8 +70,18 @@ class RestoreSteps(ControlTestBase):
         A field that will not go back does not stop the others. A link can be
         lost *during* a restore; the answer is not to try harder on that field
         but to make sure its failure cannot take the rest with it.
+
+        **Through a dongle, only what this run touched.** The snapshot there is
+        the dongle's cache, and a register the run never wrote cannot have
+        been changed by it; writing the cached word into it could only put an
+        older figure in place of the real one. A restore with no preflight
+        behind it measures the transport first, because it may be running
+        through a dongle that the snapshot's run was not.
         """
         snapshot = snapshot or self.snapshot
+        if not self._transport_checked:
+            self.direct = await self._detect_transport()
+            self._transport_checked = True
         names = [name for name in snapshot.values if self._probe_for(name) is not None]
         order = list(restore_order(names))
         if "battery_min_soc" in order and "battery_max_soc" in order:
@@ -89,6 +99,25 @@ class RestoreSteps(ControlTestBase):
             probe = self._probe_for(name)
             original = snapshot.values.get(name)
             if probe is None or original is None:
+                continue
+            if (
+                self.direct is not True
+                and snapshot.touched is not None
+                and name not in snapshot.touched
+            ):
+                results.append(
+                    RestoreResult(
+                        field=name,
+                        original=float(original),
+                        readback=self._value(name),
+                        restored=True,
+                        attempts=0,
+                        detail=(
+                            "never written by this run, so left alone: through "
+                            "a WiNet-S the snapshot is the dongle's cache"
+                        ),
+                    )
+                )
                 continue
             results.append(
                 await self._restore_one(probe, float(original), snapshot.raw.get(name))
@@ -115,9 +144,16 @@ class RestoreSteps(ControlTestBase):
 
         `word` is the snapshot's raw word, and where there is one it is the
         target: see `_write_back`.
+
+        **Only on a confirmed cable.** Through a WiNet-S the read is the
+        dongle's stale cache, which still shows the original after a write
+        landed -- so "already holding" skipped the write and left the house
+        changed while the report said otherwise (gerd, 2026-11-03: a
+        forced-charging window start). Anywhere the transport is not known to
+        be direct, the snapshot's word is always written.
         """
         await self._refresh(probe.component)
-        if await self._holds(probe, original, word):
+        if self.direct is True and await self._holds(probe, original, word):
             return RestoreResult(
                 field=probe.field,
                 original=original,
@@ -137,7 +173,7 @@ class RestoreSteps(ControlTestBase):
                     readback=self._value(probe.field),
                     restored=True,
                     attempts=attempt,
-                    detail=None,
+                    detail=detail,
                 )
             if attempt < RESTORE_ATTEMPTS:
                 await self.clock.sleep(RESTORE_PAUSE)
@@ -186,14 +222,31 @@ class RestoreSteps(ControlTestBase):
         and only the scaled write puts it back. Each attempt is checked against
         the snapshot's word, so whichever firmware this is, the register ends
         where it started and a wrong intermediate lasts one settle.
+
+        Through a dongle the readback is a stale cache and proves nothing
+        either way, so the write being taken is the evidence: the snapshot's
+        word, accepted, is a restore. A refused word still falls through to
+        the scaled write, and two refusals are a register not put back. With
+        nothing read back, a raw word a multiplying firmware takes would land
+        ten times off unseen, so 13074 goes out at its measured factor alone.
+        Unmeasured through a dongle means feed-in limitation is off, and then
+        13074 ignores every write.
         """
         detail: str | None = None
         writes: list[Callable[[], Awaitable[str | None]]] = []
-        if word is not None:
+        measured = (
+            probe.field == "export_power_limit" and self.export_write_scale is not None
+        )
+        if word is not None and not (self.direct is False and measured):
             writes.append(lambda: self._write_word(probe, word))
         writes.append(lambda: self._write(probe, original))
         for write in writes:
             failure = await write()
+            if failure is None and self.direct is False:
+                return True, (
+                    "written back through a WiNet-S, which took the write; "
+                    "its readback is a stale cache, so it was not read"
+                )
             if failure is None:
                 await self.clock.sleep(self.WRITE_SETTLE)
                 await self._refresh(probe.component)

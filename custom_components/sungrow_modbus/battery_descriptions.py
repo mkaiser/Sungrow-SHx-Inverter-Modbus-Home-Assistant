@@ -20,10 +20,11 @@ its cost: this integration would be taking over entities it never generated,
 whose names it does not control, on evidence no survey carries. Doing
 that silently is worse than not doing it.
 
-Seventeen entities from seventeen registers, which is a coincidence rather
-than a mapping. Eleven fields become eleven entities; the four packed position
-words become **six**, because 780 is not a cell anybody can look up -- see
-`SbrBatteryCells` for the encoding and the reading that proves it. The raw
+Eighteen entities from seventeen registers. Eleven fields become eleven
+entities; the four packed position words become **six**, because 780 is not a
+cell anybody can look up -- see `SbrBatteryCells` for the encoding and the
+reading that proves it; and the highest and lowest cell give one more, their
+spread, which is what an owner watching balance looks at (#788). The raw
 words themselves get no entity, which is what modern mode does with a `_raw`
 value everywhere else.
 """
@@ -148,6 +149,16 @@ CELL_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=4,
+    ),
+    SungrowSensorDescription(
+        key="battery_cell_voltage_spread",
+        component="cells",
+        field="cell_voltage_spread",
+        translation_key="battery_cell_voltage_spread",
+        device_class=SensorDeviceClass.VOLTAGE,
+        native_unit_of_measurement=UnitOfElectricPotential.MILLIVOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
     ),
     SungrowSensorDescription(
         key="battery_max_module_temperature",

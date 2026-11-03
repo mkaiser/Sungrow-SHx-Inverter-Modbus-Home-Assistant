@@ -45,8 +45,8 @@ from sungrow_modbus.control_test import (
     Options,
     Sample,
 )
-from sungrow_modbus.inverter import capabilities
-from sungrow_modbus.inverter.capabilities import (
+from sungrow_modbus.hybrid_inverter import capabilities
+from sungrow_modbus.hybrid_inverter.capabilities import (
     Capability,
     absent_on_firmware,
     probe,
@@ -76,6 +76,7 @@ ANSWERING = {
     "SUNSTONE-H_B000.V001.P068",
     "SUNSTONE-H_B000.V002.P065",
     "SUNSTONE-H_B000.V002.P059",
+    "SUNSTONE-H_B000.V002.P057",
 }
 
 
@@ -104,9 +105,9 @@ def test_the_control_is_never_probed() -> None:
     found = probe(_reads({"pv_generation_cut_raw": 0x55}))
     assert Capability.PV_GENERATION_CUT_CONTROL not in found
     # On a firmware no control test has confirmed, the answer alone grants
-    # nothing. P071 reads 0x55 as P023 does, and nobody has watched it cut.
+    # nothing. P068 reads 0x55 as P023 does, and nobody has watched it cut.
     assert Capability.PV_GENERATION_CUT_CONTROL not in resolve(
-        SH10RT, 1, found, ("PEARL-H_B000.V000.P071",)
+        SH10RT, 1, found, ("SUNSTONE-H_B000.V001.P068",)
     )
 
 

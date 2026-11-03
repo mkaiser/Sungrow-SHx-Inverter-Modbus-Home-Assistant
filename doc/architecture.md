@@ -183,8 +183,8 @@ flowchart LR
 
     subgraph source["source, edited by hand"]
         direction TB
-        regs["src/sungrow_modbus/inverter/registers.py"]
-        layout["src/sungrow_modbus/inverter/layout.py<br/>where hardware<br/>contradicts the YAML"]
+        regs["src/sungrow_modbus/hybrid_inverter/registers.py"]
+        layout["src/sungrow_modbus/hybrid_inverter/layout.py<br/>where hardware<br/>contradicts the YAML"]
         sensors["sensor_descriptions.py"]
     end
 
@@ -244,11 +244,13 @@ Home Assistant and without an inverter — which is most of the test suite, and
 runs in about a second. Core's `sofar` integration is the reference
 implementation for this shape.
 
-Inside it, **one subpackage per kind of device** -- `inverter/`, `battery/`,
-`wallbox/` -- each holding that device's map (`registers`), the object that
+Inside it, **one subpackage per kind of device** -- `hybrid_inverter/`,
+`string_inverter/`, `battery/`, `wallbox/`, `ihomemanager/`, `logger/` -- each holding that device's map (`registers`), the object that
 reads it (`device`) and whatever only that device needs: how it is found on a
 unit, its capabilities, its derived values. What spans devices sits at the
-top: `addresses`, `discovery`, `dump`, the survey (`survey_document`, `survey`)
+top: `device` (the seam every device offers, and `MappedDevice`, the base
+most are built on), `identity` (the block both inverters answer, and which
+map a type code calls for), `addresses`, `discovery`, `dump`, the survey (`survey_document`, `survey`)
 and the two tests (`block_test`, `control_test`). A change that concerns one
 device belongs in its subpackage; a second device that needs it is the cue to
 move it up.
@@ -273,7 +275,7 @@ coordinators were doing, the progress entity, and the guard on part B. A
 change to what a document *says* therefore belongs in `src/`, where both
 producers pick it up.
 
-Where time enters a polled value, in `inverter/smoothing.py`, it takes the
+Where time enters a polled value, in `hybrid_inverter/smoothing.py`, it takes the
 clock as an argument rather than reading one — which is what lets a
 sixty-second delay be tested without waiting sixty seconds.
 
@@ -328,7 +330,7 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
   device address other than 1 is a measured slave; its partner at address 1
   is the inferred master; through dongles only battery ownership survives,
   so a role built on it is "probably" and says so.
-- **The fault and alarm words are counted, not split** (`inverter.faults`,
+- **The fault and alarm words are counted, not split** (`hybrid_inverter.faults`,
   from V1.1.11's Appendix 4). One diagnostic sensor per word reports how
   many named flags are set and names them in an `active` attribute; `Fault
   reported` and `Alarm reported` are the problem binary sensors to automate
@@ -354,7 +356,7 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
 - **Localisation follows Home Assistant**: modern ids take the interface
   language where HA says they should; legacy ids stay English. Only English
   ships.
-- **13074's write scale is measured per device** (`sungrow_modbus.inverter.export_scale`)
+- **13074's write scale is measured per device** (`sungrow_modbus.hybrid_inverter.export_scale`)
   and stored with the firmware it was measured on.
 - **Delivery is HACS first**, through the preview channel until the merge
   into `main` ([maintainer_setup.md](maintainer_setup.md)).

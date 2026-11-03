@@ -67,6 +67,7 @@ DOCUMENT_DIRS = (
     "device-survey/results/wallbox",
     "device-survey/results/ihomemanager",
     "device-survey/results/logger",
+    "device-survey/results/string_inverter",
 )
 
 

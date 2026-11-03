@@ -50,6 +50,14 @@ ACRONYMS: frozenset[str] = frozenset(
         "MPPT2",
         "MPPT3",
         "MPPT4",
+        "MPPT5",
+        "MPPT6",
+        "MPPT7",
+        "MPPT8",
+        "MPPT9",
+        "MPPT10",
+        "MPPT11",
+        "MPPT12",
         "PV",
         "SoC",
         "SoH",
@@ -109,6 +117,7 @@ OVERRIDES: dict[str, str] = {
     # reason.
     "battery_max_cell_voltage": "Highest cell voltage",
     "battery_min_cell_voltage": "Lowest cell voltage",
+    "battery_cell_voltage_spread": "Cell voltage spread",
     "battery_max_module_temperature": "Warmest module temperature",
     "battery_min_module_temperature": "Coolest module temperature",
     # The unpacked halves of the position words. `(module << 8) | cell`, so
@@ -158,6 +167,72 @@ OVERRIDES: dict[str, str] = {
     # for: something happening right now.
     "wallbox_charging": "Charging",
     "wallbox_enabled": "Enabled",
+    # -- an SG string inverter, the entry's own inverter ------------------
+    #
+    # No legacy name either: the YAML package never read an SG. Named as the
+    # hybrid's counterparts are, without an `SG` prefix -- the device already
+    # says `SG5.0RS` -- and the key's `sg_` keeps the translation keys apart.
+    # "Power limit" rather than "Power limitation setting", for the `-ing`
+    # rule's reason on the wallbox's configured output current.
+    "sg_total_dc_power": "Total DC power",
+    "sg_total_active_power": "Total active power",
+    "sg_total_apparent_power": "Total apparent power",
+    "sg_reactive_power": "Reactive power",
+    "sg_power_factor": "Power factor",
+    "sg_grid_frequency": "Grid frequency",
+    "sg_inverter_temperature": "Internal temperature",
+    "sg_work_state": "Work state",
+    "sg_mppt1_voltage": "MPPT1 voltage",
+    "sg_mppt1_current": "MPPT1 current",
+    "sg_mppt2_voltage": "MPPT2 voltage",
+    "sg_mppt2_current": "MPPT2 current",
+    "sg_mppt3_voltage": "MPPT3 voltage",
+    "sg_mppt3_current": "MPPT3 current",
+    "sg_phase_a_voltage": "Phase A voltage",
+    "sg_phase_a_current": "Phase A current",
+    "sg_phase_b_voltage": "Phase B voltage",
+    "sg_phase_b_current": "Phase B current",
+    "sg_phase_c_voltage": "Phase C voltage",
+    "sg_phase_c_current": "Phase C current",
+    "sg_daily_pv_generation": "Daily PV generation",
+    "sg_total_pv_generation": "Total PV generation",
+    "sg_monthly_pv_generation": "Monthly PV generation",
+    "sg_total_pv_generation_precise": "Total PV generation (precise)",
+    "sg_total_running_time": "Total running time",
+    "sg_daily_running_time": "Daily running time",
+    "sg_meter_active_power": "Meter active power",
+    "sg_meter_phase_a_power": "Meter phase A power",
+    "sg_meter_phase_b_power": "Meter phase B power",
+    "sg_meter_phase_c_power": "Meter phase C power",
+    "sg_load_power": "Load power",
+    "sg_daily_exported_energy": "Daily exported energy",
+    "sg_total_exported_energy": "Total exported energy",
+    "sg_daily_imported_energy": "Daily imported energy",
+    "sg_total_imported_energy": "Total imported energy",
+    "sg_daily_direct_energy_consumption": "Daily direct energy consumption",
+    "sg_total_direct_energy_consumption": "Total direct energy consumption",
+    "sg_mppt4_voltage": "MPPT4 voltage",
+    "sg_mppt4_current": "MPPT4 current",
+    "sg_mppt5_voltage": "MPPT5 voltage",
+    "sg_mppt5_current": "MPPT5 current",
+    "sg_mppt6_voltage": "MPPT6 voltage",
+    "sg_mppt6_current": "MPPT6 current",
+    "sg_mppt7_voltage": "MPPT7 voltage",
+    "sg_mppt7_current": "MPPT7 current",
+    "sg_mppt8_voltage": "MPPT8 voltage",
+    "sg_mppt8_current": "MPPT8 current",
+    "sg_mppt9_voltage": "MPPT9 voltage",
+    "sg_mppt9_current": "MPPT9 current",
+    "sg_mppt10_voltage": "MPPT10 voltage",
+    "sg_mppt10_current": "MPPT10 current",
+    "sg_mppt11_voltage": "MPPT11 voltage",
+    "sg_mppt11_current": "MPPT11 current",
+    "sg_mppt12_voltage": "MPPT12 voltage",
+    "sg_mppt12_current": "MPPT12 current",
+    "sg_negative_voltage_to_ground": "Negative voltage to ground",
+    "sg_bus_voltage": "Bus voltage",
+    "sg_power_limitation": "Power limitation",
+    "sg_power_limitation_setting": "Power limit",
     # -- corrections for a generator the inverter cannot see --------------
     #
     # No legacy name, like the wallbox's: the YAML package had no concept of
@@ -216,7 +291,7 @@ OVERRIDES: dict[str, str] = {
     # tested what it does. It stays a diagnostic number rather than becoming a
     # binary sensor because all three surveyed inverters read the same single
     # value, so its enum is assumed and not observed.
-    # `src/sungrow_modbus/inverter/layout.py` carries the same warning where the
+    # `src/sungrow_modbus/hybrid_inverter/layout.py` carries the same warning where the
     # component is described.
     "apl_shutdown_at_zero_raw": "Active power limitation shutdown at zero",
     # The two mode registers, now that a binary sensor decodes each. The
@@ -232,8 +307,8 @@ OVERRIDES: dict[str, str] = {
     # "Filtered" is also ambiguous where "smoothed" is not -- a filter might
     # reject outliers, or cut high frequencies, or drop readings -- and this
     # one is a 300-second time-weighted moving average, which is what
-    # `sungrow_modbus.inverter.smoothing` has always called smoothing. The module, the
-    # docs and the entity finally agree.
+    # `sungrow_modbus.hybrid_inverter.smoothing` has always called smoothing.
+    # The module, the docs and the entity finally agree.
     "daily_consumed_energy_filtered": "Daily consumed energy (smoothed)",
     # `(delayed)` for the same reason and in the same grammar: the seven
     # binary sensors below report true only once the condition has held for
@@ -433,6 +508,14 @@ DIAGNOSTIC: frozenset[str] = frozenset(
         # Nameplate constants, not measurements.
         "inverter_rated_output",
         "bdc_rated_power",
+        # An SG's run counters, insulation and bus, and the curtailment as
+        # set: for diagnosing, not for a dashboard.
+        "sg_total_running_time",
+        "sg_daily_running_time",
+        "sg_negative_voltage_to_ground",
+        "sg_bus_voltage",
+        "sg_power_limitation",
+        "sg_power_limitation_setting",
     }
 )
 

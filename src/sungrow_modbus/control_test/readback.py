@@ -7,7 +7,7 @@ import math
 
 from modbus_connection import ModbusError
 
-from ..inverter import export_scale
+from ..hybrid_inverter import export_scale
 from .preflight import PreflightSteps
 from .procedure import (
     CLAMPED,

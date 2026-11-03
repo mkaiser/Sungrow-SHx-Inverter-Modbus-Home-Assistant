@@ -14,8 +14,8 @@ from pathlib import Path
 from modbus_connection.model import Component
 import pytest
 
-from sungrow_modbus.inverter import registers
-from sungrow_modbus.inverter.layout import COUNTS, ISOLATE
+from sungrow_modbus.hybrid_inverter import registers
+from sungrow_modbus.hybrid_inverter.layout import COUNTS, ISOLATE
 
 ENTITY_MAP = Path(__file__).resolve().parent.parent / "doc" / "legacy_entity_map.json"
 

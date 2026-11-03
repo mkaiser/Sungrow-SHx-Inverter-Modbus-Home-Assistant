@@ -1462,7 +1462,7 @@ SENSOR_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         suggested_display_precision=1,
     ),
     # The fault and alarm words: a count of the named flags set, and the
-    # flags themselves as an attribute. `sungrow_modbus.inverter.faults`.
+    # flags themselves as an attribute. `sungrow_modbus.hybrid_inverter.faults`.
     SungrowSensorDescription(
         key="inverter_alarm",
         component="faults",

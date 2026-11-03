@@ -194,6 +194,18 @@ ran nowhere, both batteries charging. 13074 times ten at both; the PV cut confir
 second time; restarts 186 s and 194 s. Both dumps carry the whole history block, and each 2026
 yearly slot equals the sum of its months: the layout holds at three cable houses.
 
+## [2026-11-03] ingested | gerd's third readings, cable, WiNet-S and wallbox, while a car charged
+
+Around noon, the owner's Home Assistant stopped, a car charging at about 10.7 kW. Cable: exit 0,
+9/9, 13074 times ten, every behaviour check did as told including both windows, Running after
+181 s with the start sent three times. WiNet-S: the PV cut did as told, the stop and the window
+write were refused with an exception, the battery too low for the rest. Wallbox over TLS and at
+unit 3: 21313 read 527 during the session, 21320 held the time of the reading. The cable
+snapshot showed a forced-charging window the 2026-11-01 dongle run had left; the dongle run of
+today left 33210/33211 at 13:26 although 33211's write was refused with 0x04 (read afterwards
+over the cable by the maintainer, then put back to the owner's 00:00-00:00, target 0). The
+restore now always writes through a dongle.
+
 ## [2026-11-01] ingested | gerd's second readings, cable and WiNet-S, with the timed windows
 
 Both around noon with the owner's Home Assistant stopped, full control test. Cable: 9/9, 13074
@@ -225,3 +237,43 @@ Through a WiNet-S on Ethernet, read only, the owner's pollers running: six holdi
 went with exceptions, as through a busy dongle. 31211 answers 0x55 on P059, the third SH-RS
 firmware to; the schedules have the SH-RT layout. The pack reports 32.0 kWh at 5639 against a
 voltage of about six or seven SBR modules, unexplained. The owner first hit #787's import error.
+
+## [2026-11-02] ingested | an anonymous SH10RT-V112 on P020, through a Modbus proxy and direct (#786)
+
+Two read-only runs ten minutes apart with a BYD HVS 10.2: the first through a modbus-proxy
+add-on while the YAML package polled through it, the second straight to the inverter. Both
+answered 36 of 36 blocks with no reconnect and decoded the same 233 fields, and 6100 answered
+through the proxy, so it is transparent to transport detection. 31211 reads 0xFFFF, the fourth
+house on P020 to; the history block answers whole over the cable.
+
+## [2026-11-02] ingested | robbensonmio's SH10RT on P020 with an SBR256, and their SBR cell registers (#786, #788)
+
+Read only over the cable, every block answered. The first eight-module SBR, on the oldest BCU
+firmware in the corpus; `cell_type_module_n` reads 1 in every slot where other packs read 66 to
+76, so it is not one flag. Issue #788's finding that 10765-10780 are each module's highest and
+lowest cell, not sixteen cells, matches the library's reading, and every cable SBR reading in
+the corpus agrees with it.
+
+## [2026-11-02] ingested | peter_sm's fifth to seventh readings (#786)
+
+The fifth (evening, 0.1.0a24): the control test declined, Standby. The sixth and seventh, 13
+minutes apart over the cable: 9/9 readbacks, 13074 times ten by refusal, the forced charge,
+forced discharge and export limit as commanded in both. Both lost the connection on the charge
+window's write of 33213, at the same word each time; opened as a query, since fwitten's P023
+cable run wrote the same window cleanly.
+
+## [2026-11-02] ingested | ra1k_0's SH20T: the PV cut confirmed on P071 (#772)
+
+Through a WiNet-S at 20 kW PV and a full battery: the PV cut did as told (20421 W, 28 W,
+20395 W), the first on an SH-T, and P071 joins `CONFIRMED_ON_FIRMWARE`; the query on P022 and
+P071 is answered. A restart: 2 s to stop, 147.5 s to run. The outcome 4 is 13074 written at the
+fallback of ten and read back as forwarded through the dongle, the same lead as the first run,
+not evidence. The owner says the SH20T has no LAN port of its own.
+
+## [2026-11-02] ingested | bleughb's AC-coupled SH10RS on SUNSTONE-H P057, from a diagnostics download (#789)
+
+The owner attached the integration's diagnostics twice; the second carries a control test, and
+its `survey` section is committed under the library's own name for it. No register dump and no
+block read test, which a diagnostics download does not take. 13074 stores a written word as
+handed, by the probe's acceptance, as on P065; 31211 reads 0x55. The forced checks moved the
+battery but the house, with two SG5.0RS beside it, moved more. A restart: 4 s, 291 s.

@@ -183,3 +183,39 @@ def test_the_committed_documents_are_analysed_without_error() -> None:
     for _label, document in reports:
         marks = _capability_marks(document)
         assert marks, "a committed survey carries curated probes"
+
+
+def test_what_a_house_has_fitted_is_not_the_firmware() -> None:
+    """A battery or meter that answers on one house and not the other.
+
+    An SH10RT-V112 with a third-party battery on P020 and one with an SBR on
+    P023 differ at unit 200 because of the battery, not the firmware; the
+    comparison must not credit it to the firmware.
+    """
+    reports = [
+        (
+            "byd",
+            _document(
+                capability_probes={
+                    "MPPT3 voltage": {"state": "unavailable"},
+                    "unit 200 SBR battery module block": {"state": "no answer"},
+                    "meter phase A voltage (5741)": {"state": "unavailable"},
+                },
+            ),
+        ),
+        (
+            "sbr",
+            _document(
+                firmware={"inverter": "SAPPHIRE-H_B001.V000.P023"},
+                capability_probes={
+                    "MPPT3 voltage": {"state": "unavailable"},
+                    "unit 200 SBR battery module block": {"state": "present"},
+                    "meter phase A voltage (5741)": {"state": "present"},
+                },
+            ),
+        ),
+    ]
+    text = "\n".join(_attribution(reports))
+    assert "unit 200 SBR battery module block" not in text
+    assert "meter phase A voltage" not in text
+    assert "No capability differs" in text

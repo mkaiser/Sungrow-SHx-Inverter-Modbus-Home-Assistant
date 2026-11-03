@@ -58,12 +58,15 @@ from sungrow_modbus import (
     async_hostname,
     async_sweep,
     hosts_in,
+    inverter_kind,
     model_for_capacity,
     network_of,
     power_from_bms,
 )
 from sungrow_modbus.addresses import DIRECT_ONLY_PROBE, field_address, read
 from sungrow_modbus.discovery import CONCURRENCY, TIMEOUT
+from sungrow_modbus.identity import STRING_INVERTER
+from sungrow_modbus.string_inverter import model_for as string_inverter_model_for
 from sungrow_modbus.survey_document import OTHER_INVERTER_YES
 from sungrow_modbus.wallbox import probe_units as wallbox_probe_units
 
@@ -96,6 +99,7 @@ from .const import (
     CONF_EXTERNAL_PLACEMENT,
     CONF_EXTERNAL_SOURCES,
     CONF_INTERVALS,
+    CONF_KIND,
     CONF_LEGACY_SLOT,
     CONF_MODE,
     CONF_NETWORK,
@@ -116,6 +120,7 @@ from .const import (
     IDENTIFY_UNITS,
     INTERVAL_MINIMUM,
     INTERVAL_NEVER,
+    KIND_STRING_INVERTER,
     MODE_DEVICES,
     MODE_DIAGNOSTICS,
     ONLY_SURVEY_MODE,
@@ -285,8 +290,30 @@ async def _async_probe(
         # in a /24 sweep, so a retry multiplies the search rather than the
         # certainty. `None` is the honest answer and the prose says so.
         direct = await _async_direct(read(unit, DIRECT_ONLY_PROBE))
-        battery = await _async_has_battery(unit) if inverter.serial_number else None
+        # 5639 is the hybrid's register; an SG has no battery to report.
+        battery = (
+            await _async_has_battery(unit)
+            if inverter.serial_number
+            and inverter_kind(inverter.device_type_code) != STRING_INVERTER
+            else None
+        )
     return inverter, direct, battery
+
+
+def _model_of(inverter: Any) -> str | None:
+    """Name what the probe found: a hybrid by its own map, else an SG, or None."""
+    return inverter.model or string_inverter_model_for(inverter.device_type_code)
+
+
+def _kind_data(device_type_code: int | None) -> dict[str, str]:
+    """Return what the entry records about the inverter's kind.
+
+    Nothing for a hybrid, so every entry made before SGs existed already
+    reads as one; `CONF_KIND` for an SG, which setup reads to pick its map.
+    """
+    if inverter_kind(device_type_code) == STRING_INVERTER:
+        return {CONF_KIND: KIND_STRING_INVERTER}
+    return {}
 
 
 async def _async_direct(probe: Awaitable[object]) -> bool | None:
@@ -465,7 +492,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                         reason="wrong_device",
                         description_placeholders={
                             "title": entry.title,
-                            "model": inverter.model or DEFAULT_NAME,
+                            "model": _model_of(inverter) or DEFAULT_NAME,
                         },
                     )
                 elif _endpoint(user_input) == _endpoint(entry.data):
@@ -872,6 +899,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 CONF_HOST: found[CONF_HOST],
                 CONF_PORT: found[CONF_PORT],
                 CONF_UNIT_ID: found[CONF_UNIT_ID],
+                **found.get("kind", {}),
             }
             self._title = found["model"] or DEFAULT_NAME
             self._role = found.get("role")
@@ -1004,13 +1032,15 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                     # would be wrong.
                     break
                 hostname = await async_hostname(host)
-                model = inverter.model or DEFAULT_NAME
+                code = inverter.device_type_code
+                model = _model_of(inverter) or DEFAULT_NAME
                 found[host] = {
                     CONF_HOST: host,
                     CONF_PORT: port,
                     CONF_UNIT_ID: unit_id,
                     "serial": serial,
-                    "model": inverter.model,
+                    "model": _model_of(inverter),
+                    "kind": _kind_data(code),
                     "hostname": hostname,
                     "direct": direct,
                     "battery": battery,
@@ -1046,7 +1076,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 code = inverter.device_type_code
                 if serial is None:
                     errors["base"] = "no_serial_number"
-                elif inverter.model is None:
+                elif _model_of(inverter) is None:
                     errors["base"] = "unrecognized_inverter"
                     placeholders["code"] = (
                         "unknown" if code is None else f"0x{code:04X}"
@@ -1056,8 +1086,8 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 ) is not None:
                     return claimed
                 else:
-                    self._data = dict(user_input)
-                    self._title = inverter.model or DEFAULT_NAME
+                    self._data = {**user_input, **_kind_data(code)}
+                    self._title = _model_of(inverter) or DEFAULT_NAME
                     # `_found` is what `_async_measured` reads to tell the
                     # testimony step what has already been measured, so a
                     # typed address gets the probe's findings as a searched
@@ -1069,7 +1099,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                             CONF_PORT: user_input[CONF_PORT],
                             CONF_UNIT_ID: user_input[CONF_UNIT_ID],
                             "serial": serial,
-                            "model": inverter.model,
+                            "model": _model_of(inverter),
                             "direct": direct,
                         }
                     }
@@ -1099,6 +1129,9 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         # track of that history.
         if self._mode == MODE_DIAGNOSTICS:
             return await self.async_step_testimony()
+        # The YAML package reads only hybrids, so an SG has no history there.
+        if self._data.get(CONF_KIND) == KIND_STRING_INVERTER:
+            return self._async_create(ENTITY_IDS_NEW)
 
         # Which of the YAML package's inverter slots this device was, decided
         # here because this is when the evidence is best: the package may
@@ -1593,9 +1626,10 @@ class SungrowOptionsFlow(OptionsFlow):
                 )
             )
 
-        else:
+        elif self.config_entry.data.get(CONF_KIND) != KIND_STRING_INVERTER:
             # Changing it renames the entities, which `async_step_entity_ids`
-            # spells out before doing.
+            # spells out before doing. Not on an SG: the YAML package never
+            # read one, so there are no legacy ids to switch to.
             schema[
                 probatio.Required(CONF_ENTITY_IDS, default=self._entity_id_style())
             ] = _entity_id_style_selector()
@@ -1927,6 +1961,9 @@ class SungrowOptionsFlow(OptionsFlow):
         """
         if ONLY_SURVEY_MODE:
             return self.async_abort(reason="devices_mode_not_offered")
+        # The YAML package reads only hybrids, so an SG has no history there.
+        if self.config_entry.data.get(CONF_KIND) == KIND_STRING_INVERTER:
+            return await self._async_promote(ENTITY_IDS_NEW)
 
         # Prefer what the entry already settled. A diagnostics entry has
         # nothing stored -- its setup skips the id question -- so measure,
@@ -2071,7 +2108,7 @@ class SungrowOptionsFlow(OptionsFlow):
         if runtime is None:
             return "The inverter is not connected, so its load reading cannot be shown."
 
-        device = next(iter(runtime.coordinators.values())).device
+        device = runtime.inverter_coordinator.device
         try:
             reported = device.field("load_power")
         except (AttributeError, KeyError):
@@ -2116,7 +2153,7 @@ class SungrowOptionsFlow(OptionsFlow):
         if runtime is None:
             return "The inverter is not connected, so nothing has been measured yet."
 
-        device = next(iter(runtime.coordinators.values())).device
+        device = runtime.inverter_coordinator.device
         model = device.model or "an unidentified model"
 
         direct = await _async_direct(device.async_read(DIRECT_ONLY_PROBE))
@@ -2173,7 +2210,7 @@ class SungrowOptionsFlow(OptionsFlow):
         if runtime is None:
             return "The inverter is not connected, so nothing can be read from it."
 
-        device = next(iter(runtime.coordinators.values())).device
+        device = runtime.inverter_coordinator.device
         if Capability.BATTERY not in runtime.capabilities:
             return "No battery is connected, so this setting does nothing."
 

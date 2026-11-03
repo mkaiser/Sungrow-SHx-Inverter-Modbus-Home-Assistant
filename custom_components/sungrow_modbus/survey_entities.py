@@ -86,7 +86,7 @@ class SurveyEntity(Entity):
     def __init__(self, runtime_data: SungrowRuntimeData, key: str) -> None:
         """Attach to the entry's inverter device."""
         self._runner: SurveyRunner = runtime_data.survey
-        coordinator = next(iter(runtime_data.coordinators.values()))
+        coordinator = runtime_data.inverter_coordinator
         serial = coordinator.device.serial_number
         assert serial is not None
         self._attr_unique_id = f"{serial}_{key}"

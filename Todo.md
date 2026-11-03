@@ -14,9 +14,63 @@ Structure:
 
 # Next steps
 
-0. **Answer #787 and #786 once 0.1.0a24 is on PyPI** (`make pin-check`
-   green, the preview mirror synced): the import error Korsberg and
-   Firetribe hit is fixed by updating; Korsberg rolled back to 17724a1.
+1. **Review the SG work (#790), squash, then push (ask first).** Committed
+   on this branch: read-only SG string inverter support (map, terminal
+   survey, HA entry, sensors), the shared device seam (`device.py`,
+   `identity.py`) and the rename `inverter/` → `hybrid_inverter/`.
+   `make check` is green on it. None of the five commits since `origin` is
+   pushed.
+2. **A release.** The integration's manifest pin and the survey's PEP 723
+   header must both point at a release that has `hybrid_inverter/` and
+   `string_inverter/`, so the rename and everything importing it ship in
+   one release (`check_pinned_library.py` catches a mismatch). Until then
+   bleughb cannot run the SG survey: the pinned 0.1.0a24 wheel has neither
+   path. It also ships schema 23 (`connection.link_drops`, written only
+   where the library's `SCHEMA >= 23`).
+3. **The SG's documentation and what it lacks.**
+   - `doc/architecture.md` "Register sources": a row for the SG map,
+     ha-modbus-manager `sungrow_sg_dynamic.yaml` (MIT, TCzerny, commit
+     `4a1e662`), built from Sungrow's *Communication Protocol of
+     Residential and Commercial PV Grid-Connected Inverters* V1.1.53.
+   - A wiki page `entities/device-sg.md`, after today's ingest is done
+     (another session holds the wiki until then): what SG and SH share
+     (the identity block, input 4950-5002, and the core PV registers
+     5003-5035, MPPT4 at 5115-5116) and everything that differs (no 13000
+     block, no battery or EMS, other holding registers).
+   - `generate_compatibility.py` reads only `results/inverter/`; SG
+     documents need a table of their own.
+   - Not built: SG binary sensors, Energy dashboard hints, an SG in the
+     simulator (`make sim` serves only a hybrid).
+4. **Ingest gerd's surveys of 2026-11-03** (uncommitted, in `device-survey/`,
+   gitignored there): the cable survey with a full control test (exit 0, 9/9
+   matched, 13074 ×10, PV cut, both windows confirmed, Running after 181 s),
+   the dongle survey with the wallbox at unit 3 (control test exit 3: battery
+   at 10 %, the WiNet-S refused the stop and the window write with an
+   exception), and the wallbox over TLS, all read while a car charged at
+   10.7 kW. The wallbox log of the session is still being written (one TLS
+   session, 30 s); ingest it with the documents.
+   - New on hardware: the cable restart needed the start sent three times
+     (still stopped 60 s after each), where every earlier restart took the
+     first. Watch whether it recurs.
+5. **The control test's restore through a WiNet-S** (fixed in the tree,
+   uncommitted: `control_test/restore.py`, three tests in
+   `test_control_test.py`). It read first and wrote only when the register
+   differed, and through a dongle the read is a stale cache, so a write that
+   landed was "already holding its original value" and never undone. At
+   gerd's it left a forced-charging window changed on 2026-11-01 and again
+   on 2026-11-03 (forced charging off, so inert; put back over the cable).
+   Now only a confirmed cable reads first; a dongle always writes the
+   snapshot's word, counts an accepted write as the evidence, and writes
+   13074 at its measured factor alone. The snapshot is read from the same
+   cache, so through a dongle the restore now puts back **only the fields the
+   run touched** (`Snapshot.touched`, flushed before each write), and a
+   restore with no preflight (`--restore`, the HA repair) measures the
+   transport first (uncommitted). Left: a touched register goes back to the
+   dongle's word, wrong only if changed over another path since the dongle
+   last read it. Wants a dongle-only control test at gerd on this tree, with
+   the battery above 30 % and no car charging, then a cable read of every
+   snapshot register. The HA control test button shares this code, so it
+   needs a release.
 
 
 # Open decisions
@@ -44,23 +98,25 @@ Structure:
    Input 21267 is not a write counter (measured 2026-10-29); it looks like
    uptime in tens of seconds. A wallbox restart would confirm it: the count
    should fall to near zero.
-2. **An SH-T on its own LAN port, in daylight** (ra1k_0, #772, is the
-   lead; any SH15T/SH20T owner will do). Every T so far was read through a
-   WiNet-S, and one run with the control test (`--cut-pv`,
-   `--enable-export-limit`) settles four things:
+   **In progress 2026-11-03:** a car charged from before 11:55 UTC at a
+   steady 10.7 kW, logged every 30 s over TLS. So far 21313 wandered
+   297-527 at constant power (it does not follow power), the high words of
+   21308/21310 stayed 0, 21267 counted up, start mode read 3 throughout.
+   What is still missing is the end of the session.
+2. **An SH-T on its own LAN port, in daylight** (any SH15T owner with
+   one; ra1k_0 says the SH20T has none, #772). Every T so far was read
+   through a WiNet-S, and one run with the control test
+   (`--enable-export-limit`) settles three things:
    - **13074 on P071.** The dongle reported a word written with feed-in
      limitation off as handed, where B001 ignores it. If P071 really stores
      1:1, the integration's unanswered-probe fallback of ten sets a tenth of
      the asked export limit on an SH-T.
-   - **The PV cut on P071** (holding 31211, #738): P022 and P023 are
-     confirmed; a watched cut puts P071 into `CONFIRMED_ON_FIRMWARE`
-     (`test_nothing_is_confirmed_without_a_document_that_shows_it` wants
-     the survey committed). On a T, watch whether 13018 acts as well.
    - **An SBH on a direct link.** `Capability.SUNGROW_BATTERY` is granted
      for an SBR found on its own unit (`with_sungrow_battery`); an SBH is
      not until its own-unit reading is seen without a dongle.
    - **Whether an iHomeManager silences 5741-5746** (#647, #651), which
      every WiNet-S refuses anyway; ra1k_0 has one.
+   Still open on the T besides: whether 13018 acts as 31211 does.
 3. **A second wallbox's survey.** Settles whether 21211-21214 identify the
    unit. The wallbox reports its own serial (input 21201-21206, 11 ASCII
    characters, confirmed against Sungrow's portal 2026-10-30); the
@@ -149,9 +205,10 @@ Structure:
     no Sungrow document. The schedules read as diagnostic entities
     (`Capability.DISCHARGE_SCHEDULE`); writing them needs a watched write, as
     31211 did (wiki: firmware gating), from a control test run with leave. The
-    site import power limit Korsberg uses at register 32998 reads 950 at
-    peter-sm, with no unit or scale on record: it needs a second house and a
-    known value (what the owner set it to) before it can be an entity.
+    site import power limit Korsberg uses at register 32998 reads 950 and
+    990 at peter-sm, 2000 at two P020 houses and 4347 on an SH20T, with no
+    unit or scale on record: it needs a known value (what an owner set it
+    to) before it can be an entity.
 
 16. **The discharge window on hardware** (#785). The charge window is
     settled: it raised charging at all five houses' runs on 2026-11-01
@@ -163,6 +220,13 @@ Structure:
     its battery is above its floor. Then the device and
     firmware pages, the log, and the options screenshot in
     `device-survey/images/` (it shows three switches, now five).
+
+17. **A first SG survey** (#789, #790). The whole SG map is the protocol
+    document's, unmeasured; bleughb has two SG5.0RS and offered, once the
+    release is out. Settles what an RS answers: the meter block (5083-5104,
+    undocumented on RS by the source), the per-string currents at input
+    7013, the holding block from 5000, and whether the tiers suit it.
+    Writes (the power limitation, holding 5007-5008) wait for a watched one.
 
 # Future work
 
@@ -184,9 +248,12 @@ Maybe indicate if you were not able to test / confirm a register / feature.
 
 ## SBR per-module entities
 
-All 24 registers are read, and the position encoding holds on three and four
-modules (wiki: SBR battery). `cell_type_module_n` is non-zero for each fitted
-module, which gives the module count. What is left is deciding the entities.
+All 24 registers are read, and the position encoding and the per-module
+highest/lowest cell words hold on three to eight modules (wiki: SBR battery,
+#788). `cell_type_module_n` is non-zero for each fitted module, which gives
+the module count, though its value differs by pack (1 on an SBR256, 66-76
+elsewhere). The pack-wide cell spread ships as a sensor (#788); what is left
+is deciding the sixteen per-module entities.
 
 ## Two specification registers not read
 
@@ -251,12 +318,12 @@ the commit; a survey signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-01T13:46:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-01T13:46:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-02T21:52:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-02T21:52:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked: **2026-11-01 13:46 UTC** (#786, #787).
+Last checked: **2026-11-02 21:52 UTC** (#789).
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 import sys
 
 import pytest
@@ -37,7 +38,9 @@ def test_there_are_wallbox_documents_to_check() -> None:
 
 @pytest.mark.parametrize("path", DOCUMENTS, ids=lambda p: p.stem)
 def test_a_wallbox_document_derives_its_own_filename(path: Path) -> None:
-    assert path.stem == wallbox_direct.label_for(_load(path))
+    """Its derived name, or that name with `-2`, `-3` for a further reading."""
+    label = wallbox_direct.label_for(_load(path))
+    assert re.fullmatch(rf"{re.escape(label)}(-\d+)?", path.stem)
 
 
 @pytest.mark.parametrize("path", DOCUMENTS, ids=lambda p: p.stem)

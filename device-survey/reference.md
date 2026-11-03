@@ -17,6 +17,7 @@ same whichever of the two wrote it.
 | Document shape, schema number, privacy (stand-in serials, address tail, masked dumps, `NEVER_PUBLISH`) | `survey_document.assemble_document` (both producers), `publish_document` (the terminal's collected dicts), `attach_control_test` |
 | Sections: readings, battery pack, wallbox, firmware, connection | `survey_document.readings_section`, `battery_pack_section`, `wallbox_section` / `wallbox_from_dump`, `firmware_section`, `connection_block` |
 | A wallbox read at its own address, and its filename | `survey_document.wallbox_document`, `wallbox_label_for` |
+| An SG string inverter's document, its masks and its filename | `string_inverter.document`, `section`, `mask`, `label_for` |
 | Capability probes, retries, refusal versus no answer | `survey.async_probe_words`, `async_read_retrying`, `failure_state` |
 | Every decoded register, with multi-pass reads and field-by-field salvage | `survey.async_decoded_readings` |
 | Firmware strings read raw; the battery, slave and wallbox units behind the endpoint | `survey.async_read_firmware`, `async_probe_siblings`; `survey_document.battery_pack_unit`, `wallbox_unit` |
@@ -74,7 +75,7 @@ Unset, the launchers behave exactly as a contributor's.
 
 ## The document
 
-The format is `sungrow_modbus.survey_document.SCHEMA`, **22**; the comment beside
+The format is `sungrow_modbus.survey_document.SCHEMA`, **23**; the comment beside
 it says what each number from 17 admits, and `probe.py` keeps the older ones.
 A document is read by its own number, which is often older. Sections in
 order: `schema`, `command_line`, `read_at`,
@@ -192,6 +193,14 @@ it decides nothing.
 produced identical documents — every capability probe, every decoded field,
 and the same TLS certificate on port 443.
 
+**`connection.link_drops`** counts the connections the device closed while
+the terminal survey read it, each re-opened by the backend (`probe.LINK_DROPS`).
+It is there only when the survey was counting, so `0` means none rather than
+"not counted"; Home Assistant's documents leave it out, because its own
+coordinators share the link. Many drops usually mean another client is
+polling, but not always: an inverter's own LAN port has dropped a dozen times
+with nothing else connected.
+
 **No round-trip time is recorded.** It times the path from whoever reads,
 usually a VPN, and says nothing about the inverter or how it is attached.
 
@@ -221,7 +230,7 @@ or at the wallbox's own address.
 
 ### The block read test
 
-`block_read_test` is the measurement `src/sungrow_modbus/inverter/layout.py`
+`block_read_test` is the measurement `src/sungrow_modbus/hybrid_inverter/layout.py`
 is changed from: every block read the integration's poll makes, three rounds
 of two attempts, run before the reading because it only means anything on an
 idle link. `answered` read at least once; `never_answered` failed every
@@ -319,6 +328,22 @@ says `"document": "wallbox"`, which is how the checks and
 `doc/compatibility.md` leave it out of the inverter corpus;
 `tests/test_wallbox_documents.py` holds it to its masks, to its own filename
 and to the address rule.
+
+### String inverter documents
+
+An SG (a PV inverter with no battery) answers the hybrid identity block and
+the PV registers up to 5035, and none of the hybrid map past them, so
+`sungrow_survey.py` reads it by its own map (`string_inverter_direct.py`)
+when input 5000 names one. It says `"document": "string_inverter"` and is
+committed to `device-survey/results/string_inverter/`.
+
+Its `device` carries the type code, the model, the output type and the
+stand-in; `firmware` the ARM and DSP versions only. Everything else is under
+`string_inverter`: the unit, the map's source, the decoded readings and the
+raw dump of `dump.SG_BANDS`, with the serial's ten words (input 4990-4999)
+blanked as on a hybrid. The map is unmeasured, so the dump is the evidence.
+Its name is `<model>-<1p|3p>-<reporter>-<stand-in>`. Nothing writes to an SG:
+no control test, no block read test, no capability probes.
 
 ## The filename
 

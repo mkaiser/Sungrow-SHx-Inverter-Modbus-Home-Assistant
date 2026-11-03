@@ -360,7 +360,7 @@ ABSENT_ON_FIRMWARE: dict[str, frozenset[Capability]] = {
     # 2026-09-07 and again 2026-09-25: the three firmware strings at 13250,
     # 13265 and 13280, and the second meter channel at 13200, each closed the
     # connection 3 of 3 while their neighbours answered in the same session
-    # (`src/sungrow_modbus/inverter/layout.py` has the transcript). Both
+    # (`src/sungrow_modbus/hybrid_inverter/layout.py` has the transcript). Both
     # machines identically.
     #   sh10rt-v112-3p-fwitten-anon-33442450531-battery-none-direct-lan.json
     #   sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan.json
@@ -468,8 +468,12 @@ CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
     # Jam3s97's SH10RS through a WiNet-S, 2026-11-01: 3465 W before, 0 W
     # during, 3092 W after; the behavioural leg, which a dongle cannot spoil.
     #   sh10rs-b000v002p065-1p-jam3s97-anon-35122522532-battery-sbh300-winet-lan.json
+    # ra1k_0's SH20T through a WiNet-S, 2026-11-01: 20421 W before, 28 W
+    # during, 20395 W after; the behavioural leg again.
+    #   sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2.json
     Capability.PV_GENERATION_CUT_CONTROL: frozenset(
         {
+            "PEARL-H_B000.V000.P071",
             "SAPPHIRE-H_B001.V000.P022",
             "SAPPHIRE-H_B001.V000.P023",
             "SUNSTONE-H_B000.V002.P065",

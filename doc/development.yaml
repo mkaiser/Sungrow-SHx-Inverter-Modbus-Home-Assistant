@@ -335,7 +335,7 @@ control_test:
     change -- which is what UNCHANGED is in the verdict vocabulary for.
 
     The integration handles both. registers.AsymmetricNumberField carries the
-    common times-ten case; sungrow_modbus.inverter.export_scale asks the
+    common times-ten case; sungrow_modbus.hybrid_inverter.export_scale asks the
     inverter with one write that changes nothing on either firmware, and the
     export limit number stores the answer per entry and firmware. From a
     terminal, `survey.sh control <host> --export-scale` asks the same
@@ -478,7 +478,7 @@ generated_files:
   # .github/workflows/validate.yml it has to match; tests/test_makefile.py
   # asserts the two agree.
   source_not_generated: >-
-    src/sungrow_modbus/inverter/registers.py and
+    src/sungrow_modbus/hybrid_inverter/registers.py and
     custom_components/sungrow_modbus/sensor_descriptions.py are edited by hand.
     doc/legacy_entity_map.json is the record of what the YAML package
     produces, and tests hold both files to it.

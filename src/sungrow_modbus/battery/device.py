@@ -21,12 +21,10 @@ see its battery reported unreadable when half of it was fine.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
-from modbus_connection.model import Component
-
-from ..model import UpdateReport, present
+from ..device import MappedDevice
+from ..model import UpdateReport
 from .power import model_for_capacity
 from .registers import SbrBatteryCells, SbrBatteryModules, SbrBatteryPack
 
@@ -58,82 +56,28 @@ PUBLISHED_NAMES = {
 }
 
 
-class SungrowBattery:
+class SungrowBattery(MappedDevice):
     """An SBR/SBH pack on its own Modbus unit.
 
     Deliberately small. The pack has no tiers -- seventeen polled registers
     in two reads -- so there is one interval and one coordinator.
     """
 
-    # Declared, not assigned: `__init__` sets one attribute per entry in
-    # COMPONENTS with `setattr`, which a type checker cannot see. Naming them
-    # here is what lets `mypy --strict` check the code that reads them, and it
+    # Declared, not assigned: `MappedDevice` sets one attribute per component
+    # with `setattr`, which a type checker cannot see. Naming them here is
+    # what lets `mypy --strict` check the code that reads them, and it
     # doubles as the list of what a pack actually holds.
     pack: SbrBatteryPack
     cells: SbrBatteryCells
     modules: SbrBatteryModules
 
     def __init__(self, unit: ModbusUnit, unit_id: int) -> None:
-        """Bind every component to a unit handle, remembering which id it is."""
-        self._unit = unit
-        #: Which unit id answered, kept because it is worth reporting: the
-        #: same pack is 200 on a cable and 2 through a dongle, and somebody
-        #: comparing two documents from one house needs to see that.
-        self.unit_id = unit_id
-        for attribute, component in {**COMPONENTS, **SURVEY_COMPONENTS}.items():
-            setattr(self, attribute, component(unit))
-        self._fields = {
-            name: attribute
-            for attribute, component in {**COMPONENTS, **SURVEY_COMPONENTS}.items()
-            for name in vars(component)
-            if not name.startswith("_")
-            and name not in {"register_space", "declared_fields"}
-        }
+        """Bind every component, the survey's too, remembering which id it is.
 
-    def component(self, attribute: str) -> Component:
-        """Return one component by the name descriptions refer to it by."""
-        return getattr(self, attribute)  # type: ignore[no-any-return]
-
-    @property
-    def field_names(self) -> frozenset[str]:
-        """Every field name this device can be asked for, by `field()`.
-
-        Public because callers outside the library need to enumerate what a
-        device offers -- the survey publishes one value per field, and the
-        diagnostics download does the same. Reading `_fields` instead would
-        be worse here than it usually is: this library is pinned by version in
-        the integration's manifest, so renaming a private attribute would ship
-        as a perfectly good release and break the integration at runtime.
+        The id is worth reporting: the same pack is 200 on a cable and 2
+        through a dongle.
         """
-        return frozenset(self._fields)
-
-    def fields_of(self, attributes: Iterable[str]) -> frozenset[str]:
-        """Every field name that lives in the named components.
-
-        A survey leaves a failed component's fields out of its report rather
-        than publishing them as None: a None says the pack reported the point
-        unavailable, which a block that never answered did not.
-        """
-        wanted = set(attributes)
-        return frozenset(
-            name for name, attribute in self._fields.items() if attribute in wanted
-        )
-
-    def field(self, name: str) -> object:
-        """Return one value by name, wherever it lives.
-
-        Includes the unpacked halves of the position words, which are
-        properties on `SbrBatteryCells` rather than registers -- a reader
-        wants module 3, cell 12, not 780.
-        """
-        attribute = self._fields.get(name)
-        if attribute is not None:
-            return present(getattr(self.component(attribute), name))
-        for holder in {**COMPONENTS, **SURVEY_COMPONENTS}:
-            component = self.component(holder)
-            if isinstance(getattr(type(component), name, None), property):
-                return getattr(component, name)
-        raise AttributeError(f"no battery value named {name!r}")
+        super().__init__(unit, {**COMPONENTS, **SURVEY_COMPONENTS}, unit_id)
 
     @property
     def capacity_kwh(self) -> float | None:
@@ -179,15 +123,6 @@ class SungrowBattery:
         `survey` adds `SURVEY_COMPONENTS`, which a poll leaves unread: their
         fields read None until a survey has asked.
         """
-        from modbus_connection import ModbusError
-
-        updated: set[str] = set()
-        failed: dict[str, ModbusError] = {}
-        for attribute in {**COMPONENTS, **(SURVEY_COMPONENTS if survey else {})}:
-            try:
-                await self.component(attribute).async_update()
-            except ModbusError as err:
-                failed[attribute] = err
-            else:
-                updated.add(attribute)
-        return UpdateReport(updated=frozenset(updated), failed=failed)
+        return await self._async_update_components(
+            {**COMPONENTS, **(SURVEY_COMPONENTS if survey else {})}
+        )

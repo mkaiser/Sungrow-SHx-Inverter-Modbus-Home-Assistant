@@ -190,6 +190,27 @@ def _comparable(document: dict) -> tuple[str, str, str]:
     )
 
 
+#: Probes that answer for what is fitted at a house -- a battery, a meter, a
+#: wallbox, a second unit -- rather than for the inverter's firmware. A pair of
+#: readings that differ on one of these differ in the installation, so the
+#: firmware comparison leaves them out.
+INSTALLATION_PROBES = frozenset(
+    {
+        "battery capacity (5639)",
+        "battery level",
+        "battery temperature",
+        "battery voltage",
+        "meter phase A current (5744)",
+        "meter phase A voltage (5741)",
+        "unit 2 SBR battery module block",
+        "unit 2 inverter device type code",
+        "unit 200 SBR battery module block",
+        "unit 248 wallbox serial (direct)",
+        "unit 3 wallbox serial",
+    }
+)
+
+
 def _capability_marks(document: dict) -> dict[str, str]:
     """Return each curated probe's state, which is what varies."""
     probes = document.get("capability_probes") or {}
@@ -279,13 +300,17 @@ def _attribution(reports: list[tuple[str, dict]]) -> list[str]:
         }
         every = sorted({name for row in marks.values() for name in row})
         differing = [
-            name for name in every if len({row.get(name) for row in marks.values()}) > 1
+            name
+            for name in every
+            if name not in INSTALLATION_PROBES
+            and len({row.get(name) for row in marks.values()}) > 1
         ]
         lines += [
             f"### {model}, {transport}",
             "",
             "Same model, same transport, different firmware — so a difference",
-            "here is the firmware's.",
+            "here is the firmware's. What a house has fitted (battery, meter,",
+            "wallbox) is left out.",
             "",
         ]
         if not differing:
@@ -424,7 +449,8 @@ def render() -> str:
             "    minutes apart: its own LAN port called MPPT3, MPPT4 and the",
             "    second meter channel unavailable, and its dongle reported",
             "    them as zero. The integration guards this in",
-            "    [`capabilities.py`](../src/sungrow_modbus/inverter/capabilities.py);",
+            "    [`capabilities.py`]"
+            "(../src/sungrow_modbus/hybrid_inverter/capabilities.py);",
             "    the table cannot, so it says so.",
             "",
             "**Battery (as reported)** is free text, because no register",
@@ -516,7 +542,7 @@ def render() -> str:
         "  it is the shortest path from your hardware to working code.",
         "",
         "The capability model in",
-        "[`capabilities.py`](../src/sungrow_modbus/inverter/capabilities.py)",
+        "[`capabilities.py`](../src/sungrow_modbus/hybrid_inverter/capabilities.py)",
         "is built from these, so a survey from an untested model is the",
         "single most useful thing anybody can contribute — including one that",
         "says everything works.",

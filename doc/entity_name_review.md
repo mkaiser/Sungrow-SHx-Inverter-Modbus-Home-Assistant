@@ -1,6 +1,6 @@
 # The entity names, for review
 
-**220 entities**, which is everything modern mode creates. The **entity id**
+**222 entities**, which is everything modern mode creates. The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
 it -- but only at creation. Rename later and anybody who already has the entity
 keeps the id they were born with; only the label changes. So the cost of a late
@@ -56,10 +56,11 @@ better.
 | Total consumed energy | `sensor.sh10rt_total_consumed_energy` | kWh | Total consumed energy |
 | Total direct energy consumption | `sensor.sh10rt_total_direct_energy_consumption` | kWh | Total direct energy consumption |
 
-## Everything else (46)
+## Everything else (47)
 
 | Name | Entity id | Unit | Legacy name |
 | --- | --- | --- | --- |
+| (no name in strings.json) | `sensor.sh10rt_no_name_in_strings_json` | unit |  |
 | ARM software version | `sensor.sh10rt_arm_software_version` |  | Sungrow Arm Software **←** |
 | Active power limitation shutdown at zero | `sensor.sh10rt_active_power_limitation_shutdown_at_zero` |  | APL shutdown at zero raw **←** |
 | Alarm | `sensor.sh10rt_alarm` |  |  |
@@ -175,7 +176,7 @@ better.
 | Total PV generation | `sensor.sh10rt_total_pv_generation` | kWh | Total PV generation |
 | Total exported energy from PV | `sensor.sh10rt_total_exported_energy_from_pv` | kWh | Total exported energy from PV |
 
-## The battery (64)
+## The battery (65)
 
 | Name | Entity id | Unit | Legacy name |
 | --- | --- | --- | --- |
@@ -217,6 +218,7 @@ better.
 | Battery state of health | `sensor.sh10rt_battery_state_of_health` | % | Battery state of health |
 | Battery temperature | `sensor.sh10rt_battery_temperature` | °C | Battery temperature |
 | Battery voltage | `sensor.sh10rt_battery_voltage` | V | Battery voltage |
+| Cell voltage spread | `sensor.sh10rt_cell_voltage_spread` | mV |  |
 | Coolest module | `sensor.sh10rt_coolest_module` |  |  |
 | Coolest module temperature | `sensor.sh10rt_coolest_module_temperature` | °C |  |
 | Daily PV generation & battery discharge | `sensor.sh10rt_daily_pv_generation_battery_discharge` | kWh | Daily PV generation & battery discharge |

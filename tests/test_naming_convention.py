@@ -43,6 +43,9 @@ from custom_components.sungrow_modbus.external_descriptions import EXTERNAL_SENS
 from custom_components.sungrow_modbus.number_descriptions import NUMBER_DESCRIPTIONS
 from custom_components.sungrow_modbus.select_descriptions import SELECT_DESCRIPTIONS
 from custom_components.sungrow_modbus.sensor_descriptions import SENSOR_DESCRIPTIONS
+from custom_components.sungrow_modbus.string_inverter_descriptions import (
+    STRING_INVERTER_DESCRIPTIONS,
+)
 from custom_components.sungrow_modbus.survey_entities import SURVEY_ENTITIES
 from custom_components.sungrow_modbus.switch_descriptions import SWITCH_DESCRIPTIONS
 from custom_components.sungrow_modbus.wallbox_descriptions import (
@@ -69,6 +72,8 @@ DESCRIPTIONS = {
         # another integration's entities, so there is no register and no
         # legacy name to derive one from.
         *EXTERNAL_SENSORS,
+        # An SG's, hand-written like the wallbox's: no legacy name either.
+        *STRING_INVERTER_DESCRIPTIONS,
     ),
     "binary_sensor": (*DERIVED_BINARY_SENSORS, *WALLBOX_BINARY_DESCRIPTIONS),
     # The writable platforms are held to the same convention. They carry the
@@ -276,6 +281,8 @@ DEVICE_OF = {
     for device, group in (
         ("battery", BATTERY_DESCRIPTIONS),
         ("wallbox", WALLBOX_DESCRIPTIONS),
+        # An SG entry's own inverter: never on one page with a hybrid's.
+        ("string_inverter", STRING_INVERTER_DESCRIPTIONS),
     )
     for description in group
 }

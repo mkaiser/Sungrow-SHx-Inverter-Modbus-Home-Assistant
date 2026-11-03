@@ -15,8 +15,8 @@ import math
 import time
 from typing import Any, NamedTuple, Protocol
 
-from ..inverter.capabilities import Capability
-from ..inverter.derived import RUNNING_STATES
+from ..hybrid_inverter.capabilities import Capability
+from ..hybrid_inverter.derived import RUNNING_STATES
 
 #: Bumped when the shape of the published `control_test` block changes, not
 #: when a driver does. Carried into the block so a reader of an old document
@@ -1081,6 +1081,13 @@ class Snapshot:
     """Set the moment before 0xCE goes out and cleared only once the inverter
     has been *seen* running again. A snapshot that still carries it is the one
     thing a recovery path must lead with."""
+    touched: list[str] | None = None
+    """Every field this run has sent a write to, refused writes included,
+    recorded and flushed **before** the write goes out. Through a WiNet-S the
+    snapshot is the dongle's cache and can be hours old, so a restore there
+    writes back only what this run touched: writing a cached word into a
+    register the run never changed could only do harm. `None` is a snapshot
+    saved before this was kept, and then every field is put back."""
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-safe copy, for a file or Home Assistant's store."""
@@ -1092,6 +1099,7 @@ class Snapshot:
             "unreadable": dict(self.unreadable),
             "battery_ceiling": self.battery_ceiling,
             "stopped_at": self.stopped_at,
+            "touched": None if self.touched is None else list(self.touched),
         }
 
     @classmethod
@@ -1107,6 +1115,7 @@ class Snapshot:
             unreadable=dict(data.get("unreadable", {})),
             battery_ceiling=data.get("battery_ceiling"),
             stopped_at=data.get("stopped_at"),
+            touched=None if data.get("touched") is None else list(data["touched"]),
         )
 
 

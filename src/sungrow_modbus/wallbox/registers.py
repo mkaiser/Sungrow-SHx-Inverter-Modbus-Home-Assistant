@@ -1,7 +1,7 @@
 """The AC011E/AC22E wallbox registers, which Sungrow does not document.
 
 In its own module for the same reason the battery's map is:
-`inverter/registers.py` is held field by field to
+`hybrid_inverter/registers.py` is held field by field to
 `doc/legacy_entity_map.json`, the inverter's record, and the wallbox is not in
 it. The YAML package never covered a wallbox at all, so unlike the SBR there
 is not even an opt-in file to port -- there is only measurement.

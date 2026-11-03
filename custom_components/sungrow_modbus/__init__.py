@@ -8,7 +8,7 @@ share one serialized connection instead of competing for its few sessions.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import timedelta
 from functools import partial
 import logging
@@ -36,11 +36,14 @@ from sungrow_modbus import (
     DEFAULT_INTERVALS,
     TIER_COMPONENTS,
     Capability,
+    Inverter,
     SungrowInverter,
+    SungrowStringInverter,
 )
 from sungrow_modbus.battery import probe_units
 from sungrow_modbus.battery.device import SungrowBattery
-from sungrow_modbus.inverter.capabilities import with_sungrow_battery
+from sungrow_modbus.hybrid_inverter.capabilities import with_sungrow_battery
+from sungrow_modbus.string_inverter import TIER_COMPONENTS as STRING_INVERTER_TIERS
 from sungrow_modbus.wallbox import (
     UNITS as WALLBOX_UNITS,
     probe_units as wallbox_probe_units,
@@ -55,6 +58,7 @@ from .const import (
     CONF_EXTERNAL_PLACEMENT,
     CONF_EXTERNAL_SOURCES,
     CONF_INTERVALS,
+    CONF_KIND,
     CONF_MODE,
     CONF_UNIT_ID,
     CONF_WALLBOX_HOST,
@@ -62,16 +66,19 @@ from .const import (
     DOMAIN,
     ENTITY_IDS_MIGRATE,
     INTERVAL_NEVER,
+    KIND_STRING_INVERTER,
     MODE_DEVICES,
     MODE_DIAGNOSTICS,
     WALLBOX_TLS_PORT,
     WALLBOX_TLS_UNIT,
 )
 from .coordinator import (
+    InverterCoordinator,
     SungrowBatteryCoordinator,
     SungrowConfigEntry,
     SungrowDataUpdateCoordinator,
     SungrowRuntimeData,
+    SungrowStringInverterCoordinator,
     SungrowWallboxCoordinator,
 )
 from .download import async_register as async_register_download
@@ -114,6 +121,19 @@ PLATFORMS: list[Platform] = [
 #: either way -- asserted in `test_survey_device_page.py` -- but the cleanest
 #: cleanup is still the one that was never needed.
 DIAGNOSTIC_PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SENSOR]
+
+#: What an ordinary SG entry sets up: its readings, and nothing that writes.
+#: Read only by decision, until a write has been watched on one.
+STRING_INVERTER_PLATFORMS: list[Platform] = [Platform.SENSOR]
+
+
+def _platforms(entry: SungrowConfigEntry) -> list[Platform]:
+    """Return what this entry forwards, so setup and unload cannot disagree."""
+    if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
+        return DIAGNOSTIC_PLATFORMS
+    if entry.data.get(CONF_KIND) == KIND_STRING_INVERTER:
+        return STRING_INVERTER_PLATFORMS
+    return PLATFORMS
 
 
 #: This integration is not configurable from YAML, and says so.
@@ -183,7 +203,15 @@ async def _async_connect(
         entry.data[CONF_UNIT_ID],
     )
     inverter = SungrowInverter(unit)
+    serial = await _async_read_identity(entry, inverter)
+    return unit, inverter, serial
 
+
+async def _async_read_identity(entry: SungrowConfigEntry, inverter: Inverter) -> str:
+    """Read the identity block, hybrid or SG, and return the serial, or raise.
+
+    The two failures are the ones `_async_connect` describes.
+    """
     # Identity is read once and never polled: it cannot change while the
     # entry is loaded, and entities need the serial number to exist first.
     try:
@@ -210,7 +238,7 @@ async def _async_connect(
             translation_key="no_serial",
             translation_placeholders={"title": entry.title},
         )
-    return unit, inverter, serial
+    return serial
 
 
 async def _async_read_firmware(
@@ -339,8 +367,67 @@ async def _async_take_over_legacy_ids(
     )
 
 
+async def _async_setup_string_inverter(
+    hass: HomeAssistant, entry: SungrowConfigEntry
+) -> bool:
+    """Set up an SG: its own map, read only, and none of the hybrid's machinery.
+
+    No firmware gate, no capability table, no battery or wallbox probe, no
+    YAML package ids and no control test: each is built on the hybrid's map
+    and means nothing here. What it shares with a hybrid entry is the link,
+    the device page, the tiers' intervals and the survey.
+    """
+    unit = async_get_unit(
+        hass,
+        entry,
+        ModbusTcpParams(host=entry.data[CONF_HOST], port=entry.data[CONF_PORT]),
+        entry.data[CONF_UNIT_ID],
+    )
+    inverter = SungrowStringInverter(unit, entry.data[CONF_UNIT_ID])
+    await _async_read_identity(entry, inverter)
+
+    intervals = {**DEFAULT_INTERVALS, **entry.options.get(CONF_INTERVALS, {})}
+    coordinators: dict[str, SungrowStringInverterCoordinator] = {}
+    for tier, components in STRING_INVERTER_TIERS.items():
+        interval = intervals.get(tier, DEFAULT_INTERVALS[tier])
+        if interval == INTERVAL_NEVER:
+            continue
+        coordinator = SungrowStringInverterCoordinator(
+            hass,
+            entry,
+            inverter,
+            partial(inverter.async_update_tier, tier),
+            timedelta(seconds=interval),
+        )
+        await coordinator.async_config_entry_first_refresh()
+        for component in components:
+            coordinators[component] = coordinator
+    if not coordinators:
+        raise ConfigEntryError(
+            translation_domain=DOMAIN,
+            translation_key="nothing_to_poll",
+            translation_placeholders={"title": entry.title},
+        )
+
+    entry.runtime_data = SungrowRuntimeData(
+        {},
+        intervals=intervals,
+        inverter_device_id=_async_register_inverter(hass, entry, coordinators),
+        string_inverter=coordinators,
+    )
+    entry.runtime_data.survey = SurveyRunner(hass, entry)
+    entry.async_on_unload(entry.runtime_data.survey.async_shutdown)
+    _async_preview_notice(hass)
+    entry.async_on_unload(entry.add_update_listener(_async_options_changed))
+    entry.runtime_data.built_from = _built_from(entry)
+    await hass.config_entries.async_forward_entry_setups(entry, _platforms(entry))
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> bool:
-    """Set up a Sungrow SHx inverter from a config entry."""
+    """Set up a Sungrow inverter from a config entry, hybrid or string."""
+    if entry.data.get(CONF_KIND) == KIND_STRING_INVERTER:
+        return await _async_setup_string_inverter(hass, entry)
     _unit, inverter, serial = await _async_connect(hass, entry)
     firmware = await _async_read_firmware(entry, inverter)
 
@@ -436,7 +523,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
 def _async_register_inverter(
     hass: HomeAssistant,
     entry: SungrowConfigEntry,
-    coordinators: dict[str, SungrowDataUpdateCoordinator],
+    coordinators: Mapping[str, InverterCoordinator[Any]],
 ) -> str:
     """Put the inverter in the device registry before any entity, and return its id.
 
@@ -747,7 +834,7 @@ async def async_remove_config_entry_device(
     setup found refuse, because the next poll would recreate them.
     """
     runtime = entry.runtime_data
-    infos = [next(iter(runtime.coordinators.values())).device_info]
+    infos = [runtime.inverter_coordinator.device_info]
     infos += [
         c.device_info for c in (runtime.battery, runtime.wallbox) if c is not None
     ]
@@ -788,9 +875,4 @@ async def async_unload_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> 
     # Whatever was forwarded, and only that: unloading a platform that was
     # never set up is harmless, but the pair must match or the next reload
     # forwards onto entities that were left behind.
-    platforms = (
-        DIAGNOSTIC_PLATFORMS
-        if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS
-        else PLATFORMS
-    )
-    return await hass.config_entries.async_unload_platforms(entry, platforms)
+    return await hass.config_entries.async_unload_platforms(entry, _platforms(entry))

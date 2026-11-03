@@ -7,8 +7,8 @@ created: '2026-10-29'
 
 # SBR battery
 
-Sungrow's modular low-voltage pack for the [SH-RT](device-sh-rt.md): SBR096,
-SBR128 and SBR160 in this corpus. In the integration it is a **device of its
+Sungrow's modular low-voltage pack for the [SH-RT](device-sh-rt.md): SBR096 to SBR256 in this
+corpus, three to eight modules. In the integration it is a **device of its
 own**, with 40 fields in three components (`src/sungrow_modbus/battery/`).
 It is hung off the inverter with `via_device` and identified by the
 inverter's serial, because it reports no usable serial of its own.
@@ -28,7 +28,7 @@ between cable and dongle keeps the pack. See
 
 Once a pack answers on its own unit and register 5639's capacity names an
 SBR model, the inverter is granted `Capability.SUNGROW_BATTERY`
-(`inverter.capabilities.with_sungrow_battery`, held by
+(`hybrid_inverter.capabilities.with_sungrow_battery`, held by
 `tests/test_capabilities.py`). The battery's power controls then take the
 datasheet's conservative power for that model (`battery/power.py`) instead of
 BMS current times voltage. The integration and the control test grant it the
@@ -53,5 +53,19 @@ The four position fields pack a module and a cell into one word,
 1 to 3 on gerd's three-module SBR096, and up to 4 (`0x401`) on
 [sisu70's four-module SBR128](../sources/sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-meter-direct-lan-summary.md), and up to 7 (`0x703`) on
 [a seven-module SBR224](../sources/sh10rt-v112-b001v000p023-3p-anonymous-anon-40315531061-battery-sbr224-meter-direct-lan-summary.md),
-all over the cable. `cell_type_module_n` is non-zero for each fitted module (four at sisu70, five
-on peter-sm's SBR160, seven on the SBR224).
+and all eight on [robbensonmio's SBR256](installation-robbensonmio.md), all over the cable.
+`cell_type_module_n` is non-zero for each fitted module and 0 for an empty slot (four at sisu70,
+five on peter-sm's SBR160, seven on the SBR224, eight on the SBR256). The value itself varies:
+66, 68, 75 or 76 on most packs, 1 on the SBR256 (BCU `SBRBCU-S_22011.01.27`), so it is not a
+presence flag with one meaning.
+
+## Per-module cell extremes
+
+Registers 10765-10772 are each module's **highest** cell and 10773-10780 each module's
+**lowest**, not sixteen single cells (`max_cell_voltage_module_n`, `min_cell_voltage_module_n`).
+The owner of the SBR256 showed it in 7 of 7 samples
+([issue #788](../sources/robbensonmio-sbr-cell-registers-788-summary.md)), and every cable SBR
+reading in the corpus agrees: the pack's highest cell equals the module word of the module its
+position names, and likewise the lowest (`tests/test_sbr_pack.py` holds it to the corpus). So the
+pack-wide spread is the pack's highest cell less its lowest, which the integration shows as **Cell
+voltage spread** in mV (`SbrBatteryCells.cell_voltage_spread`). Per-module serials at 10822-10885 read NUL bytes on the SBR256.

@@ -23,9 +23,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from modbus_connection.model import Component
-
-from ..model import UpdateReport, present
+from ..device import MappedDevice
+from ..model import UpdateReport
 from .registers import (
     COMPONENTS,
     WallboxIdentity,
@@ -47,7 +46,7 @@ FAST = ("wallbox_live",)
 SLOW = tuple(name for name in COMPONENTS if name not in FAST)
 
 
-class SungrowWallbox:
+class SungrowWallbox(MappedDevice):
     """An AC011E/AC22E wallbox on its own Modbus unit.
 
     Which unit is not a setting: **3** through a WiNet-S, and **248** at the
@@ -57,7 +56,7 @@ class SungrowWallbox:
     `sungrow_modbus.wallbox.probe_units`.
     """
 
-    # Declared, not assigned: `__init__` sets one attribute per entry in
+    # Declared, not assigned: `MappedDevice` sets one attribute per entry in
     # COMPONENTS with `setattr`, which a type checker cannot see. Naming them
     # here is what lets `mypy --strict` check the code that reads them, and it
     # doubles as the list of what a wallbox actually holds.
@@ -67,55 +66,8 @@ class SungrowWallbox:
     wallbox_settings: WallboxSettings
 
     def __init__(self, unit: ModbusUnit, unit_id: int) -> None:
-        """Bind every component to a unit handle, remembering which id it is."""
-        self._unit = unit
-        #: Which unit id answered, kept because it is worth reporting: 3 and
-        #: 248 mean different paths, which do not read alike, and somebody
-        #: comparing two documents from one house needs to see which they are
-        #: looking at.
-        self.unit_id = unit_id
-        for attribute, component in COMPONENTS.items():
-            setattr(self, attribute, component(unit))
-        self._fields = {
-            name: attribute
-            for attribute, component in COMPONENTS.items()
-            for name in vars(component)
-            if not name.startswith("_")
-            and name not in {"register_space", "declared_fields"}
-        }
-
-    def component(self, attribute: str) -> Component:
-        """Return one component by the name descriptions refer to it by."""
-        return getattr(self, attribute)  # type: ignore[no-any-return]
-
-    @property
-    def field_names(self) -> frozenset[str]:
-        """Every field name this device can be asked for, by `field()`.
-
-        Public because callers outside the library need to enumerate what a
-        device offers -- the survey publishes one value per field, and the
-        diagnostics download does the same. Reading `_fields` instead would
-        be worse here than it usually is: this library is pinned by version in
-        the integration's manifest, so renaming a private attribute would ship
-        as a perfectly good release and break the integration at runtime.
-        """
-        return frozenset(self._fields)
-
-    def field(self, name: str) -> object:
-        """Return one value by name, wherever it lives.
-
-        Includes the decoded meanings, which are properties rather than
-        registers -- `charging_status` is a word where `charging_status_raw`
-        is a 6, and the word is the one worth showing.
-        """
-        attribute = self._fields.get(name)
-        if attribute is not None:
-            return present(getattr(self.component(attribute), name))
-        for holder in COMPONENTS:
-            component = self.component(holder)
-            if isinstance(getattr(type(component), name, None), property):
-                return getattr(component, name)
-        raise AttributeError(f"no wallbox value named {name!r}")
+        """Bind every component; 3 and 248 are different paths, so the id is kept."""
+        super().__init__(unit, COMPONENTS, unit_id)
 
     @property
     def model(self) -> str | None:
@@ -154,16 +106,6 @@ class SungrowWallbox:
         words = await self.async_read_words(SERIAL_SPACE, SERIAL_START, SERIAL_COUNT)
         return _printable(words)
 
-    async def async_read_words(self, space: str, address: int, count: int) -> list[int]:
-        """Read raw words at one address, for a survey's dump of this unit.
-
-        The same seam `SungrowInverter` offers. Raises, because only the
-        caller can tell a refusal from a timeout.
-        """
-        if space == "holding":
-            return list(await self._unit.read_holding_registers(address, count))
-        return list(await self._unit.read_input_registers(address, count))
-
     async def async_update(self, only: tuple[str, ...] | None = None) -> UpdateReport:
         """Refresh the components in `only`, tolerating each failing alone.
 
@@ -173,15 +115,4 @@ class SungrowWallbox:
         still answers, but a firmware that does not implement a register
         refuses only that block.
         """
-        from modbus_connection import ModbusError
-
-        updated: set[str] = set()
-        failed: dict[str, ModbusError] = {}
-        for attribute in only or tuple(COMPONENTS):
-            try:
-                await self.component(attribute).async_update()
-            except ModbusError as err:
-                failed[attribute] = err
-            else:
-                updated.add(attribute)
-        return UpdateReport(updated=frozenset(updated), failed=failed)
+        return await self._async_update_components(only or None)

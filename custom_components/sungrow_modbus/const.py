@@ -185,8 +185,8 @@ CONF_LEGACY_SLOT = "legacy_slot"
 #: How this inverter's firmware writes register 13074: 10 if it multiplies a
 #: written word by ten, 1 if it stores it as handed. Measured, not assumed --
 #: three houses multiply and fwitten's pair does not, and no register tells
-#: them apart -- by `sungrow_modbus.inverter.export_scale` on the first write to the
-#: export limit, and kept here so the probe runs once per inverter.
+#: them apart -- by `sungrow_modbus.hybrid_inverter.export_scale` on the
+#: first write to the export limit, and kept here so the probe runs once per inverter.
 #:
 #: Entry **data**, because it is a fact about the firmware on the far end of
 #: this endpoint and not a preference. Absent until the probe has answered;
@@ -315,6 +315,15 @@ DEFAULT_SURVEY_DUMP = True
 
 #: What an entry is for, chosen at setup and changeable afterwards.
 #:
+#: Which kind of inverter the entry's endpoint is, decided by its type code at
+#: input 5000 when the flow identified it (`sungrow_modbus.inverter_kind`).
+#: Absent means a hybrid: every entry made before string inverters existed is
+#: one, so absence needs no migration.
+CONF_KIND = "kind"
+
+KIND_STRING_INVERTER = "string_inverter"
+"""An SG: its own map, read only, no battery, no YAML package ids."""
+
 #: A contributor who wants to send a reading should not have to answer the
 #: migration question at all: it decides which entity ids years of recorder
 #: history attach to, and it has nothing whatever to do with producing a

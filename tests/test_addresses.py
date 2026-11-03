@@ -86,11 +86,12 @@ def test_no_register_is_read_by_a_literal_address() -> None:
 #: The register maps, where every field is declared, and the calls that
 #: declare one.
 MAPS = (
-    REPO / "src" / "sungrow_modbus" / "inverter" / "registers.py",
-    REPO / "src" / "sungrow_modbus" / "inverter" / "components.py",
+    REPO / "src" / "sungrow_modbus" / "hybrid_inverter" / "registers.py",
+    REPO / "src" / "sungrow_modbus" / "hybrid_inverter" / "components.py",
     REPO / "src" / "sungrow_modbus" / "battery" / "registers.py",
     REPO / "src" / "sungrow_modbus" / "wallbox" / "registers.py",
     REPO / "src" / "sungrow_modbus" / "ihomemanager" / "registers.py",
+    REPO / "src" / "sungrow_modbus" / "string_inverter" / "registers.py",
 )
 FIELD_FACTORIES = {
     "integer",

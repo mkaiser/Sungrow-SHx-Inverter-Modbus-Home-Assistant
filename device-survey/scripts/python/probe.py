@@ -83,6 +83,7 @@ from sungrow_modbus.survey_document import (
     OTHER_INVERTER_CLAIMS,
     OUTPUT_TYPES,
     REPORTED_TRANSPORTS as DOCUMENT_TRANSPORTS,
+    SCHEMA,
     TRANSPORT_CLAIMS,
     UNAVAILABLE,
     WIFI_OR_ETHERNET,  # noqa: F401
@@ -336,7 +337,7 @@ async def cmd_units(args: argparse.Namespace) -> int:
 #: which addresses answered. 16 added `block_read_test`: which of the
 #: integration's block reads this device answered, which never did, and which
 #: answered only sometimes. That measurement is the one
-#: `src/sungrow_modbus/inverter/layout.py` is ever changed from, and until now it
+#: `src/sungrow_modbus/hybrid_inverter/layout.py` is ever changed from, and until now it
 #: existed only in the transcript -- the file a contributor is told to keep, because it
 #: carries their real address. So a submitted document carried no block evidence at all.
 #: 15 added `battery_pack`, which closes the same
@@ -373,9 +374,79 @@ async def cmd_units(args: argparse.Namespace) -> int:
 #: `device-survey/scripts/python/sungrow_control_test.py`, never from here.
 #: 21 admits `wallbox.serial_anonymized_hashed`, a stand-in for the wallbox's
 #: serial. 22 gives `readings` one meaning whichever producer wrote it, and
-#: widens Home Assistant's `battery_pack` to this survey's. The number is the
+#: widens Home Assistant's `battery_pack` to this survey's. 23 admits
+#: `connection.link_drops`, the connections the device closed while this
+#: survey read it (`LINK_DROPS`). The number is the
 #: library's (`sungrow_modbus.survey_document.SCHEMA`), and the full reason
 #: for each bump is beside it there.
+
+
+class LinkDrops(logging.Handler):
+    """Count the Modbus backend's reconnects instead of printing each one.
+
+    `tmodbus` logs every connection the inverter drops, at ERROR, and re-opens
+    it by itself -- so with no logging configured those lines reach the
+    terminal through Python's last-resort handler, in the middle of a progress
+    bar. The survey and the control test already tolerate and retry each
+    drop; the count goes into the document and one line at the end.
+    """
+
+    def __init__(self) -> None:
+        """Start at no drops, not yet attached to the backend's logger."""
+        super().__init__()
+        self.count = 0
+        self.installed = False
+
+    def emit(self, record: logging.LogRecord) -> None:
+        """Count a lost or closed connection; ignore the opens."""
+        message = record.getMessage()
+        if "connection lost" in message or "closed by remote host" in message:
+            self.count += 1
+
+
+#: One counter for the whole process: the survey and the control test it
+#: starts share the link, and the document records what the survey's part saw.
+LINK_DROPS = LinkDrops()
+
+
+def count_link_drops() -> LinkDrops:
+    """Keep the backend's connection log off the terminal, and count drops."""
+    if not LINK_DROPS.installed:
+        backend = logging.getLogger("tmodbus")
+        backend.addHandler(LINK_DROPS)
+        backend.propagate = False
+        LINK_DROPS.installed = True
+    return LINK_DROPS
+
+
+def with_link_drops(connection: dict[str, object]) -> dict[str, object]:
+    """Add the drops counted so far, when they were counted.
+
+    Only where `count_link_drops` is installed, so a document says "none" only
+    when somebody was counting; and only on a library at schema 23, which
+    admits the key.
+    """
+    if not LINK_DROPS.installed or SCHEMA < 23:
+        return connection
+    return {**connection, "link_drops": LINK_DROPS.count}
+
+
+def link_drops_sentence(count: int, what: str) -> str:
+    """Return the one line about dropped connections, or "" for none.
+
+    Another client polling is the usual cause, not the only one: an owner
+    reported twelve drops on an SH10RT's own LAN port with nothing else
+    polling (#786).
+    """
+    if not count:
+        return ""
+    return (
+        f"The inverter dropped the connection {count} time(s); each was "
+        f"re-opened and the {what} carried on. Usually another client is "
+        "polling it -- stop Home Assistant for a cleaner run. If nothing else "
+        "was, the inverter's port drops by itself."
+    )
+
 
 #: Keys of the connection block that carry a claim rather than a measurement.
 #: They are moved into `user_inputs`, so the published `connection` holds only
@@ -1273,7 +1344,7 @@ async def capabilities(args: argparse.Namespace) -> Reading:
         raw["readings"] = survey.readings
     if survey.register_dump is not None:
         raw["register_dump"] = survey.register_dump
-    raw["connection"] = survey.connection
+    raw["connection"] = with_link_drops(survey.connection)
     raw["registers"] = survey.probe_values
     probed["registers"] = survey.probe_states
     if survey.battery_pack is not None:
@@ -1562,6 +1633,8 @@ def described(who: Identity) -> str:
         # Neither the iHomeManager's type code nor a known Logger's.
         return f"{who.model} -- neither an iHomeManager nor a known Logger"
     described = f"serial {who.serial}, anonymized to {stand_in(who.serial)}"
+    if who.kind == "string_inverter":
+        described += " -- a string inverter, read by its own map"
     if who.device_type_code is not None:
         model = who.model or f"0x{who.device_type_code:04X}"
         described = f"{model}, {described}"

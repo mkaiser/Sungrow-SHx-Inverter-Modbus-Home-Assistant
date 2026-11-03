@@ -105,8 +105,9 @@ def device_components() -> dict[Device, dict[str, type[Component]]]:
     survey cannot, or the other way round.
     """
     from .battery.registers import SbrBatteryCells, SbrBatteryModules, SbrBatteryPack
-    from .inverter.components import InverterControl, InverterIdentity
-    from .inverter.registers import COMPONENTS
+    from .hybrid_inverter.components import InverterControl
+    from .hybrid_inverter.registers import COMPONENTS
+    from .identity import InverterIdentity
     from .wallbox.registers import COMPONENTS as WALLBOX_COMPONENTS
 
     return {

@@ -8,7 +8,7 @@ created: '2026-10-29'
 # Register 13000 (running state)
 
 Input register 13000, the inverter's running state. The whole map is
-`derived.RUNNING_STATES` (`src/sungrow_modbus/inverter/derived.py`), and the
+`derived.RUNNING_STATES` (`src/sungrow_modbus/hybrid_inverter/derived.py`), and the
 running and stopped sets are derived from its labels.
 
 - **`0x0000` is "Running", not off.**

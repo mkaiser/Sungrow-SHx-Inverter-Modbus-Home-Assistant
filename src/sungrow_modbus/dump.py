@@ -175,6 +175,18 @@ LOGGER_BANDS: tuple[tuple[str, int, int, str], ...] = (
     ("holding", 7999, 200, "undocumented here: its settings, read only"),
 )
 
+#: An SG string inverter's register space, unit 1. The map is Sungrow's
+#: string-inverter protocol V1.1.53 by way of ha-modbus-manager
+#: (`string_inverter.registers`), never measured here, so the documented
+#: blocks are read whole and the addresses around them raw. The serial at
+#: input 4990-4999 is masked by `DUMP_MASKED`, as on a hybrid.
+SG_BANDS: tuple[tuple[str, int, int, str], ...] = (
+    ("input", 4949, 210, "identity, firmware, PV, AC, state, meter, trackers"),
+    ("input", 5159, 70, "above the documented block, export and meter power"),
+    ("input", 7012, 20, "the per-string currents"),
+    ("holding", 4999, 50, "clock, start/stop, power limitation, reactive power"),
+)
+
 #: Reads per request. Small, because the point is coverage: a band that fails
 #: as a whole tells nobody anything, where a band with eight addresses missing
 #: from the middle is a map of what this firmware answers.

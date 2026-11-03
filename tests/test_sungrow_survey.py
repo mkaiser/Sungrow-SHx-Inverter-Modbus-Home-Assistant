@@ -265,7 +265,10 @@ def test_a_summary_after_the_control_test_says_what_it_found() -> None:
 @pytest.mark.parametrize(
     ("verdict", "expected"),
     [
-        ("direct to the inverter's LAN port", "src/sungrow_modbus/inverter/layout.py"),
+        (
+            "direct to the inverter's LAN port",
+            "src/sungrow_modbus/hybrid_inverter/layout.py",
+        ),
         (
             "through a communication module (WiNet-S, WiNet-S2 or Logger)",
             "forwarding limit",
@@ -420,7 +423,7 @@ def test_a_range_the_budget_cut_short_is_not_offered_as_a_register() -> None:
     # And the command that finishes it, which is the only useful next step.
     assert "-r input:13282:13" in text
     assert "--narrow-budget 0" in text
-    assert "src/sungrow_modbus/inverter/layout.py" not in text
+    assert "src/sungrow_modbus/hybrid_inverter/layout.py" not in text
 
 
 def test_a_timeout_only_failure_is_not_evidence_about_the_register() -> None:
@@ -446,7 +449,7 @@ def test_a_timeout_only_failure_is_not_evidence_about_the_register() -> None:
         )
     )
     assert "timing out rather than by refusing" in text
-    assert "do not add it to src/sungrow_modbus/inverter/layout.py" in text
+    assert "do not add it to src/sungrow_modbus/hybrid_inverter/layout.py" in text
     assert "fails fast" in text
     assert "this is the device refusing" not in text
 

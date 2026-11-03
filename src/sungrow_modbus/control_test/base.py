@@ -7,11 +7,13 @@ import logging
 import math
 from typing import Any
 
-from modbus_connection import ModbusError
+from modbus_connection import ModbusError, ModbusExceptionError
 
-from ..inverter import export_scale
-from ..inverter.capabilities import Capability
-from ..inverter.device import SungrowInverter
+from ..addresses import DIRECT_ONLY_PROBE
+from ..hybrid_inverter import export_scale
+from ..hybrid_inverter.capabilities import Capability
+from ..hybrid_inverter.device import SungrowInverter
+from ..model import SETTLES_NOTHING
 from .procedure import (
     DROPPED,
     EFFECT_BUDGET,
@@ -82,6 +84,10 @@ class ControlTestBase:
         and read it back" settles nothing. `None` is not `False` -- it means
         the question could not be put, and the report says so rather than
         discarding legs A and B on a guess."""
+        self._transport_checked = False
+        """Whether `direct` was measured. A restore run on its own -- the CLI's
+        `--restore`, Home Assistant's repair -- has had no preflight, and must
+        not take the default for a cable."""
         self.unestablished: list[str] = []
         self._written: dict[str, float] = {}
         self._last_refused: str | None = None
@@ -241,6 +247,81 @@ class ControlTestBase:
     used one second for its switch verification and a tenth for its selects,
     and both worked; this is the larger of the two with room for a dongle."""
 
+    #: What tells a cable from a dongle: see `addresses.DIRECT_ONLY_PROBE`.
+    #: `survey_document.PROBES` reads the same register for the survey.
+    DIRECT_ONLY = DIRECT_ONLY_PROBE
+
+    #: Three attempts, a second apart, for the same reason `SNAPSHOT_PAUSE`
+    #: has them: on a link somebody else is polling, one read can simply miss.
+    TRANSPORT_ATTEMPTS = 3
+    TRANSPORT_PAUSE = 1.0
+
+    async def _detect_transport(self) -> bool | None:
+        """Whether this endpoint is the inverter's own port rather than a dongle.
+
+        Worth its own read, because it decides what the run may claim. A WiNet-S
+        forwards a write and then answers a **stale** value when the register is
+        read back -- measured at gerd, where cable and dongle disagreed about
+        33047 before anything was written, and a write sent over the dongle
+        arrived while the dongle went on reporting the old figure.
+
+        So through a dongle, "write it and read it back" is not evidence: it
+        cannot tell a dropped write from a cache, in either direction. Leg C is
+        untouched, since watching real power change needs no readback at all.
+
+        **And waiting does not fix it**, which is the measurement that decides
+        this rather than a guess. Polled every 5 s for two minutes, the same
+        dongle never once reported a value the cable had confirmed -- and the
+        figure it kept returning was hours old, not seconds. So there is no
+        settling time the tool could sit out to earn legs A and B back on a
+        dongle, and offering one would only make a stale answer look ripe.
+
+        **Three answers, not two**, and the third is the point. Treating *any*
+        failure as a dongle is wrong in the one direction that costs
+        something: a lost read is not a refusal. On a cable with Home Assistant
+        polling alongside, a lost read would stamp the readback table "not
+        evidence" while the survey half of the same document said "direct to
+        the inverter's LAN port" -- and over a VPN, where 10-second timeouts
+        are measured, that would be the common case rather than the unlucky
+        one.
+
+        So a *refusal* -- the device answering with an exception code -- is
+        evidence and means a dongle, while a connection lost, a timeout or a
+        desync is the link failing to carry the question and is evidence of
+        nothing. `model.SETTLES_NOTHING` sits with the latter: it means ask
+        me later, not there is no such register. Undetermined returns `None`,
+        which the report renders as an unknown rather than as a dongle,
+        because asserting a dongle discards legs A and B.
+        """
+        for attempt in range(self.TRANSPORT_ATTEMPTS):
+            try:
+                await self.inverter.async_read(self.DIRECT_ONLY)
+            except SETTLES_NOTHING:
+                pass
+            except ModbusExceptionError:
+                return False
+            except (ModbusError, TimeoutError, OSError):
+                pass
+            else:
+                return True
+            if attempt < self.TRANSPORT_ATTEMPTS - 1:
+                await self.clock.sleep(self.TRANSPORT_PAUSE)
+        return None
+
+    async def _touch(self, field: str) -> None:
+        """Record that this run is about to write `field`, and flush it first.
+
+        Before the write, for the snapshot's reason: a write that lands and a
+        process that dies before saying so would leave a register changed that
+        the snapshot does not know was touched. See `Snapshot.touched`.
+        """
+        touched = self.snapshot.touched
+        if touched is None or field in touched:
+            return
+        touched.append(field)
+        if self._on_snapshot is not None:
+            await self._on_snapshot(self.snapshot)
+
     async def _write(self, probe: Probe, value: float) -> str | None:
         """Write one control. Returns a verdict word on failure, None on success.
 
@@ -254,6 +335,7 @@ class ControlTestBase:
         """
         if self.options.dry_run:
             return None
+        await self._touch(probe.field)
         if probe.raw_only:
             failure = await self._write_word(probe, round(value))
             if failure is not None:
@@ -295,6 +377,7 @@ class ControlTestBase:
         """
         if self.options.dry_run:
             return None
+        await self._touch(probe.field)
         component = self.inverter.component(probe.component)
         resolved = component.resolved_fields.get(probe.field)
         if resolved is None or resolved.count != 1:

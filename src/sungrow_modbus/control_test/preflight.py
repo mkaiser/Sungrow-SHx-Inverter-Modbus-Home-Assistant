@@ -4,13 +4,9 @@ from __future__ import annotations
 
 import logging
 
-from modbus_connection import ModbusError, ModbusExceptionError
-
-from ..addresses import DIRECT_ONLY_PROBE
 from ..battery import ceiling as battery_ceiling
-from ..inverter.capabilities import Capability, with_sungrow_battery
-from ..inverter.derived import RUNNING_STATES
-from ..model import SETTLES_NOTHING
+from ..hybrid_inverter.capabilities import Capability, with_sungrow_battery
+from ..hybrid_inverter.derived import RUNNING_STATES
 from .procedure import (
     ENUMERATIONS,
     MIN_PV_W,
@@ -78,67 +74,6 @@ class PreflightSteps(RestoreSteps):
         if high <= low:
             return None
         return low, high
-
-    #: What tells a cable from a dongle: see `addresses.DIRECT_ONLY_PROBE`.
-    #: `survey_document.PROBES` reads the same register for the survey.
-    DIRECT_ONLY = DIRECT_ONLY_PROBE
-
-    #: Three attempts, a second apart, for the same reason `SNAPSHOT_PAUSE`
-    #: has them: on a link somebody else is polling, one read can simply miss.
-    TRANSPORT_ATTEMPTS = 3
-    TRANSPORT_PAUSE = 1.0
-
-    async def _detect_transport(self) -> bool | None:
-        """Whether this endpoint is the inverter's own port rather than a dongle.
-
-        Worth its own read, because it decides what the run may claim. A WiNet-S
-        forwards a write and then answers a **stale** value when the register is
-        read back -- measured at gerd, where cable and dongle disagreed about
-        33047 before anything was written, and a write sent over the dongle
-        arrived while the dongle went on reporting the old figure.
-
-        So through a dongle, "write it and read it back" is not evidence: it
-        cannot tell a dropped write from a cache, in either direction. Leg C is
-        untouched, since watching real power change needs no readback at all.
-
-        **And waiting does not fix it**, which is the measurement that decides
-        this rather than a guess. Polled every 5 s for two minutes, the same
-        dongle never once reported a value the cable had confirmed -- and the
-        figure it kept returning was hours old, not seconds. So there is no
-        settling time the tool could sit out to earn legs A and B back on a
-        dongle, and offering one would only make a stale answer look ripe.
-
-        **Three answers, not two**, and the third is the point. Treating *any*
-        failure as a dongle is wrong in the one direction that costs
-        something: a lost read is not a refusal. On a cable with Home Assistant
-        polling alongside, a lost read would stamp the readback table "not
-        evidence" while the survey half of the same document said "direct to
-        the inverter's LAN port" -- and over a VPN, where 10-second timeouts
-        are measured, that would be the common case rather than the unlucky
-        one.
-
-        So a *refusal* -- the device answering with an exception code -- is
-        evidence and means a dongle, while a connection lost, a timeout or a
-        desync is the link failing to carry the question and is evidence of
-        nothing. `model.SETTLES_NOTHING` sits with the latter: it means ask
-        me later, not there is no such register. Undetermined returns `None`,
-        which the report renders as an unknown rather than as a dongle,
-        because asserting a dongle discards legs A and B.
-        """
-        for attempt in range(self.TRANSPORT_ATTEMPTS):
-            try:
-                await self.inverter.async_read(self.DIRECT_ONLY)
-            except SETTLES_NOTHING:
-                pass
-            except ModbusExceptionError:
-                return False
-            except (ModbusError, TimeoutError, OSError):
-                pass
-            else:
-                return True
-            if attempt < self.TRANSPORT_ATTEMPTS - 1:
-                await self.clock.sleep(self.TRANSPORT_PAUSE)
-        return None
 
     def _guards(self) -> None:
         """Refuse a run the house is in no state for.
@@ -227,6 +162,7 @@ class PreflightSteps(RestoreSteps):
             capacity_kwh=self._value("battery_capacity_high_precision"),
         )
         self.direct = await self._detect_transport()
+        self._transport_checked = True
         self.conditions["direct_connection"] = self.direct
         if self.direct is False:
             self._note(
@@ -236,7 +172,11 @@ class PreflightSteps(RestoreSteps):
                 "describes what the dongle reported, not what the register "
                 "holds. Waiting does not help: polled every 5 s for two "
                 "minutes one never reported a value the cable had confirmed. "
-                "The behavioural checks are unaffected"
+                "The behavioural checks are unaffected. The before-state is "
+                "read through the same cache, so the restore puts back only "
+                "what this run wrote, and puts it back to the word the dongle "
+                "reported: a register changed over another path since the "
+                "dongle last read it would go back to the dongle's figure"
             )
         elif self.direct is None:
             self._note(
@@ -257,7 +197,7 @@ class PreflightSteps(RestoreSteps):
         self.conditions["model"] = self.inverter.model
         self._guards()
 
-        snapshot = Snapshot(taken_at=self.clock.monotonic())
+        snapshot = Snapshot(taken_at=self.clock.monotonic(), touched=[])
         snapshot.battery_ceiling = self._battery_ceiling()
         self.snapshot = snapshot
         self.conditions["battery_ceiling_w"] = snapshot.battery_ceiling

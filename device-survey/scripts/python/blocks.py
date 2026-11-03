@@ -16,16 +16,16 @@ field in it, often most of a tier. Two cases show the shapes:
   session, and read on a direct-LAN connection to the same inverter. So the
   tool's own output has to be read against the transport: this is a dongle
   not forwarding a measuring point, and no amount of isolating registers in
-  `src/sungrow_modbus/inverter/layout.py` will fix it.
+  `src/sungrow_modbus/hybrid_inverter/layout.py` will fix it.
 
 Those two are why the tool reports *how* a block failed rather than just
 that it did: the first has a fix in `layout.COUNTS`, the second in
 `layout.ISOLATE`, and a link that merely drops has no fix here at all.
 
-`src/sungrow_modbus/inverter/layout.py` is where the fix goes, and it takes two things
-this tool produces: the register to isolate, and the length that actually
-reads. Guessing either from a document is how the wrong fix gets committed,
-which is why that module says to add to it only from a measurement.
+`src/sungrow_modbus/hybrid_inverter/layout.py` is where the fix goes, and it
+takes two things this tool produces: the register to isolate, and the length
+that actually reads. Guessing either from a document is how the wrong fix gets
+committed, which is why that module says to add to it only from a measurement.
 
     cd device-survey/scripts/python
     python blocks.py 192.168.1.10                     # every component
@@ -141,7 +141,7 @@ def _blocks_of(component: str | None) -> list[Block]:
     input 10740 and 21215 answer 0xFFFF or refuse there whatever the pack and
     the charge point are doing. Recording them into every survey would add
     guaranteed failures, each narrowed at the cost of the budget and offered
-    to `src/sungrow_modbus/inverter/layout.py` as a register fault. Naming a
+    to `src/sungrow_modbus/hybrid_inverter/layout.py` as a register fault. Naming a
     component still selects it, so `-c sbr_battery_cells` works against a
     pack when that is what somebody is testing.
     """
@@ -289,7 +289,7 @@ def report(outcome: Outcome, echo: Callable[[str], None] = print) -> None:
     if len(stopped) < len(outcome.culprits):
         echo(
             "Put the fields these belong to in "
-            "src/sungrow_modbus/inverter/layout.py, and quote this"
+            "src/sungrow_modbus/hybrid_inverter/layout.py, and quote this"
         )
         echo("output in the comment: that module is only ever added to from a")
         echo("measurement, and this is the measurement.")

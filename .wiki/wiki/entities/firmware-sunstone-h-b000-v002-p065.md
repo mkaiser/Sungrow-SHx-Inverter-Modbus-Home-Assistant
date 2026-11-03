@@ -12,7 +12,7 @@ created: '2026-11-01'
 
 - [Register 31211](register-31211.md) answers 0x55, and **the PV cut is confirmed** by a watched
   cut (3465 W, 0 W, 3092 W), so it is in `CONFIRMED_ON_FIRMWARE`
-  (`src/sungrow_modbus/inverter/capabilities.py`).
+  (`src/sungrow_modbus/hybrid_inverter/capabilities.py`).
 - [Register 13074](register-13074.md) **stores a written word as handed**, by the probe's
   acceptance with feed-in limitation on.
 - The battery firmware string (13280) carries bytes after its NUL, as on

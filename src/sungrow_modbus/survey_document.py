@@ -55,10 +55,10 @@ from .const import model_for
 #: absence tells a reader nothing.
 #:
 #: 20 admits an optional **`export_scale`** block: how this firmware writes
-#: register 13074, as `sungrow_modbus.inverter.export_scale` asked it -- multiplied by
-#: ten, or stored as handed -- with the one write that asked. A bump for the
-#: same reason as 19: almost no document will carry it, and "not asked" has to
-#: be told apart from "predates the question".
+#: register 13074, as `sungrow_modbus.hybrid_inverter.export_scale` asked it --
+#: multiplied by ten, or stored as handed -- with the one write that asked. A
+#: bump for the same reason as 19: almost no document will carry it, and "not
+#: asked" has to be told apart from "predates the question".
 #:
 #: 21 admits **`wallbox.serial_anonymized_hashed`**: the wallbox's serial
 #: treated as the inverter's is, a `stand_in` hashed from it, so one wallbox
@@ -80,7 +80,13 @@ from .const import model_for
 #: reached" -- a cable-connected inverter reported behind a dongle. Its
 #: `ip_address_last_two_octets` is zero-filled now too (`107.005`, not
 #: `107.5`), as every terminal document's always was.
-SCHEMA = 22
+#:
+#: 23 admits **`connection.link_drops`**: how many times the device closed
+#: the connection while the terminal survey read it, each re-opened by the
+#: backend. Before 23 the count reached only the terminal, and a reader has to
+#: tell "none" from "not counted". Home Assistant's documents leave it out: its
+#: coordinators share the link, so a drop there is not the survey's own.
+SCHEMA = 23
 
 #: How a document says it was collected, when no command line could repeat it.
 #:

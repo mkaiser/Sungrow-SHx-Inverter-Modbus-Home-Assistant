@@ -10,7 +10,7 @@ import math
 from modbus_connection import ModbusError
 
 from ..addresses import reg
-from ..inverter.capabilities import Capability
+from ..hybrid_inverter.capabilities import Capability
 from .procedure import (
     CHARGE_ENABLE,
     CHARGE_WINDOW,

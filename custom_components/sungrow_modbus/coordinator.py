@@ -9,7 +9,7 @@ from datetime import timedelta
 import logging
 from typing import Any
 
-from modbus_connection import ModbusConnectionError, ModbusError
+from modbus_connection import ModbusConnectionError, ModbusError, ModbusExceptionError
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
@@ -21,7 +21,9 @@ from sungrow_modbus import (
     MANUFACTURER,
     TIER_COMPONENTS,
     Capability,
+    Inverter,
     SungrowInverter,
+    SungrowStringInverter,
     UpdateReport,
 )
 
@@ -73,10 +75,15 @@ class PausableCoordinator:
         return self.data if self.data is not None else UpdateReport()
 
 
-class SungrowDataUpdateCoordinator(
+class InverterCoordinator[DeviceT: Inverter](
     PausableCoordinator, DataUpdateCoordinator[UpdateReport]
 ):
-    """Poll one group of the inverter's registers."""
+    """Poll one group of an entry's own inverter's registers, hybrid or string.
+
+    What both kinds share: the device registry entry, built from the identity
+    block both answer, and how a failed poll is put into words. What only the
+    hybrid does after a poll is `SungrowDataUpdateCoordinator`'s.
+    """
 
     config_entry: SungrowConfigEntry
 
@@ -84,7 +91,7 @@ class SungrowDataUpdateCoordinator(
         self,
         hass: HomeAssistant,
         entry: SungrowConfigEntry,
-        device: SungrowInverter,
+        device: DeviceT,
         poll: Callable[[], Awaitable[UpdateReport]],
         interval: timedelta,
     ) -> None:
@@ -155,13 +162,45 @@ class SungrowDataUpdateCoordinator(
             ) from err
 
         self._log_transitions(report)
-        if not report.updated:
+        if self._nothing_answered(report):
             raise UpdateFailed(
                 translation_domain=DOMAIN,
                 translation_key="no_block_answered",
             )
-        self._async_recheck_capabilities()
+        self._async_after_poll()
         return report
+
+    @callback
+    def _async_after_poll(self) -> None:
+        """React to a poll that answered; nothing, unless a kind needs it."""
+
+    def _nothing_answered(self, report: UpdateReport) -> bool:
+        """Whether this poll got no answer worth keeping the entry up for."""
+        return not report.updated
+
+    def _log_transitions(self, report: UpdateReport) -> None:
+        """Log a component going quiet, and coming back, exactly once."""
+        for name, cause in report.failed.items():
+            if name not in self._failing:
+                self._failing.add(name)
+                _LOGGER.warning(
+                    "%s: %s did not answer and keeps its previous values: %s",
+                    self.name,
+                    name,
+                    cause,
+                )
+        for name in report.updated & self._failing:
+            self._failing.discard(name)
+            _LOGGER.info("%s: %s is answering again", self.name, name)
+
+
+class SungrowDataUpdateCoordinator(InverterCoordinator[SungrowInverter]):
+    """Poll one group of a hybrid's registers, and recheck what it has."""
+
+    @callback
+    def _async_after_poll(self) -> None:
+        """Reload the entry when the firmware moved or a capability appeared."""
+        self._async_recheck_capabilities()
 
     @callback
     def _async_recheck_capabilities(self) -> None:
@@ -223,20 +262,25 @@ class SungrowDataUpdateCoordinator(
                 return now
         return None
 
-    def _log_transitions(self, report: UpdateReport) -> None:
-        """Log a component going quiet, and coming back, exactly once."""
-        for name, cause in report.failed.items():
-            if name not in self._failing:
-                self._failing.add(name)
-                _LOGGER.warning(
-                    "%s: %s did not answer and keeps its previous values: %s",
-                    self.name,
-                    name,
-                    cause,
-                )
-        for name in report.updated & self._failing:
-            self._failing.discard(name)
-            _LOGGER.info("%s: %s is answering again", self.name, name)
+
+class SungrowStringInverterCoordinator(InverterCoordinator[SungrowStringInverter]):
+    """Poll one group of an SG's registers.
+
+    Nothing after a poll: an SG has no capability table and no firmware gate,
+    so there is nothing a poll can find that setup decided otherwise.
+    """
+
+    def _nothing_answered(self, report: UpdateReport) -> bool:
+        """Whether no block answered, a refusal counting as an answer.
+
+        An SG's tiers hold one or two blocks, and a model may refuse all of
+        one -- an RS the meter block its source calls undocumented. That is
+        the device answering, so its entities do not exist and the entry
+        stays up; only a tier that heard nothing at all fails.
+        """
+        return not report.updated and not all(
+            isinstance(err, ModbusExceptionError) for err in report.failed.values()
+        )
 
 
 class SungrowSubDeviceCoordinator(
@@ -573,6 +617,31 @@ class SungrowRuntimeData:
     listener, so a change setup never reads -- the export limit's measured
     write scale -- does not reload the entry under the entity storing it.
     """
+
+    string_inverter: dict[str, SungrowStringInverterCoordinator] = field(
+        default_factory=dict
+    )
+    """An SG's coordinators by component, where this entry's inverter is one.
+
+    Then `coordinators` is empty: everything keyed on it -- the hybrid's
+    entities, capabilities, battery, wallbox, control test -- has nothing to
+    find, which is the gate. After `survey`, for the reason `survey` gives.
+    """
+
+    @property
+    def is_string_inverter(self) -> bool:
+        """Whether this entry's inverter is an SG."""
+        return bool(self.string_inverter)
+
+    @property
+    def inverter_coordinator(self) -> InverterCoordinator[Any]:
+        """Return a coordinator of the entry's own inverter, whichever kind.
+
+        For what both kinds answer alike: the serial, the model, the device
+        registry entry, raw reads for a survey.
+        """
+        polled: dict[str, Any] = self.coordinators or self.string_inverter
+        return next(iter(polled.values()))
 
     @property
     def served_components(self) -> frozenset[str]:

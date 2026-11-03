@@ -12,8 +12,8 @@ The integration runs it from the device page and
 this module. Two callers, one measurement:
 
 * **The outcome words are the tool's**, `OK` to `UNNARROWED`, because they are
-  quoted in `src/sungrow_modbus/inverter/layout.py` and a measurement's phrasing is part
-  of it.
+  quoted in `src/sungrow_modbus/hybrid_inverter/layout.py` and a
+  measurement's phrasing is part of it.
 * **The published shape is `sungrow_survey.py`'s**, key for key, so one reader handles
   a document from either. `tests/test_block_test.py` holds the two together.
 * **The blocks are recorded, not computed** -- `inverter_blocks` drives every
@@ -47,8 +47,8 @@ from modbus_connection import (
 )
 
 from . import raw_client
-from .inverter.components import InverterIdentity
-from .inverter.registers import COMPONENTS
+from .hybrid_inverter.registers import COMPONENTS
+from .identity import InverterIdentity
 
 if TYPE_CHECKING:
     from modbus_connection.model import Component
@@ -72,7 +72,7 @@ TIMED_OUT = "timed out"
 
 #: Answered some attempts and not others: contention, not a fault. A block
 #: that answers *any* attempt is never narrowed and never offered to
-#: `src/sungrow_modbus/inverter/layout.py`, because isolating a register on that
+#: `src/sungrow_modbus/hybrid_inverter/layout.py`, because isolating a register on that
 #: evidence would be isolating whatever else was polling the inverter at the time.
 INCONSISTENT = "inconsistent"
 
@@ -461,7 +461,7 @@ def findings(outcome: Outcome, *, through_module: bool) -> list[Finding]:
     own LAN port four minutes later. Isolating them would make every direct
     user pay a per-field read for a dongle's behaviour.
     """
-    from .inverter.layout import ISOLATE
+    from .hybrid_inverter.layout import ISOLATE
 
     grouped: dict[tuple[str, str, str], list[int]] = {}
     details: dict[tuple[str, str, str], str] = {}

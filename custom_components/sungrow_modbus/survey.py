@@ -48,7 +48,7 @@ from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_call_later
 from homeassistant.util import dt as dt_util
-from sungrow_modbus import block_test
+from sungrow_modbus import block_test, string_inverter
 from sungrow_modbus.control_test import (
     Options as ControlOptions,
     planned_steps as control_test_steps,
@@ -188,6 +188,15 @@ class SurveyRunner:
         if self._task is not None and not self._task.done():
             _LOGGER.debug("Survey already running for %s", self.entry.title)
             return False
+        if control_test and self.entry.runtime_data.is_string_inverter:
+            # Nothing here writes to an SG: its holding registers are not the
+            # hybrid's, and no write to one has been watched.
+            _LOGGER.warning(
+                "%s is a string inverter; the control test writes only to a "
+                "hybrid, so it was not started",
+                self.entry.title,
+            )
+            return False
 
         # A run already announced has a timer waiting to mark its link
         # lapsed. Left alone it would fire later and overwrite *this* run's
@@ -243,7 +252,7 @@ class SurveyRunner:
 
     def _device(self) -> Any:
         """Return the inverter this entry's coordinators share."""
-        return next(iter(self.entry.runtime_data.coordinators.values())).device
+        return self.entry.runtime_data.inverter_coordinator.device
 
     async def _async_control_test(self, share: float) -> dict[str, Any]:
         """Run part B, reporting into the tail of the same progress bar.
@@ -310,10 +319,14 @@ class SurveyRunner:
         # the library, and this module is imported by the platforms.
         from .survey_document import async_build, attach_control_test
 
-        share, _a_steps = self._shares(
-            dict(self.entry.options),
-            control_test,
-            block_test.planned_steps(await block_test.inverter_blocks()),
+        share, _a_steps = (
+            (1.0, 0)
+            if self.entry.runtime_data.is_string_inverter
+            else self._shares(
+                dict(self.entry.options),
+                control_test,
+                block_test.planned_steps(await block_test.inverter_blocks()),
+            )
         )
         try:
             # Both parts run with this entry's own polling held off. They read
@@ -335,7 +348,7 @@ class SurveyRunner:
                     # because nothing there survives a wait like that.
                     allow_dump=True,
                     # Likewise only here, and not an option: the measurement
-                    # `src/sungrow_modbus/inverter/layout.py` is changed from.
+                    # `src/sungrow_modbus/hybrid_inverter/layout.py` is changed from.
                     allow_block_test=True,
                 )
                 if control_test:
@@ -364,12 +377,17 @@ class SurveyRunner:
         # showing: "95 of 104 fields" is how every summary in this project
         # reports a survey, and the other 9 are named beside it.
         readings = document.get("readings", {})
+        decoded = (
+            document["string_inverter"]["readings"]
+            if document.get("document") == string_inverter.DOCUMENT
+            else readings.get("values", {})
+        )
         self._set(
             running=False,
             fraction=1.0,
             step=None,
             finished=dt_util.now(),
-            fields_read=len(readings.get("values", {})),
+            fields_read=len(decoded),
             error=None,
             document=document,
             part=None,

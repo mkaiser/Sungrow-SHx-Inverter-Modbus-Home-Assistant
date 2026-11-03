@@ -13,9 +13,10 @@ from modbus_connection.model import Component
 
 from ..addresses import Address, read
 from ..const import model_for
+from ..identity import InverterIdentity
 from ..model import RegisterValue, UpdateReport, present
 from .capabilities import Capability, absent_on_firmware, probe, resolve
-from .components import InverterControl, InverterIdentity
+from .components import InverterControl
 from .derived import Derived
 from .registers import COMPONENTS, TIER_COMPONENTS
 

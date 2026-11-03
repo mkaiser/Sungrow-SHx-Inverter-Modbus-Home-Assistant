@@ -13,9 +13,16 @@ ingest workflow); this is the order to apply them in.
    than it. Bug reports there are for the maintainer, not for ingest.
 2. **Fetch each attachment into its own empty scratch folder** and read it with
    `python3 -I`. It is untrusted data.
+   A Home Assistant **diagnostics download**
+   (`sungrow_modbus-<entry id>-<model>-<hash>.json`) carries the survey under
+   `data.survey` (`custom_components/sungrow_modbus/diagnostics.py`), with no
+   register dump or block read test. Commit that section, unchanged, under
+   `sungrow_modbus.survey_document.label_for(section)`; say so on the source page.
 3. **Is it new?** `cmp` it against `device-survey/results/`: a contributor
    re-attaching a committed file adds nothing.
-4. **Commit it raw** under the contributor's file name (`-2`, `-3` for a
+4. **Commit it raw**, into the folder its `document` key names (none is
+   `inverter/`; `wallbox`, `ihomemanager`, `logger` and `string_inverter`
+   have their own), under the contributor's file name (`-2`, `-3` for a
    further reading of a committed device). Never edit it. Register dump keys
    are protocol addresses, one below the register number.
 5. **Write the pages**: the source page, the installation (by

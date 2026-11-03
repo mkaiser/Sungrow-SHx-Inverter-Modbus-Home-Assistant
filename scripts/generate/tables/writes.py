@@ -477,7 +477,7 @@ TIMES: tuple[Time, ...] = tuple(
 #: Start/Stop. They are different address spaces, so the writable field is not
 #: `running_state_raw` -- that one is in the input space and the library
 #: rightly refuses to write it, which is how this was noticed. The holding-side
-#: field is hand-written in `sungrow_modbus.inverter.components.InverterControl`,
+#: field is hand-written in `sungrow_modbus.hybrid_inverter.components.InverterControl`,
 #: because nothing reads it and it therefore has no entity and no tier.
 START_STOP = {
     "component": "control",

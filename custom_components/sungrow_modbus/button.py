@@ -35,7 +35,14 @@ async def async_setup_entry(
     entry: SungrowConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Set up the survey button and the control test button."""
+    """Set up the survey button, and the control test button on a hybrid.
+
+    No control test button on an SG: nothing in this integration writes to
+    one, and a button that can only refuse is worse than none.
+    """
+    if entry.runtime_data.is_string_inverter:
+        async_add_entities([SurveyButton(entry.runtime_data)])
+        return
     async_add_entities(
         [SurveyButton(entry.runtime_data), ControlTestButton(entry.runtime_data)]
     )

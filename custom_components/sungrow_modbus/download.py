@@ -30,6 +30,7 @@ from aiohttp import web
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.components.http.auth import async_sign_path
 from homeassistant.core import HomeAssistant, callback
+from sungrow_modbus import string_inverter
 from sungrow_modbus.survey_document import label_for
 
 if TYPE_CHECKING:
@@ -103,7 +104,10 @@ def _filename(document: dict[str, Any]) -> str:
     The standalone survey appends the address tail when a name is already
     taken by a different reading; nothing here does, because a download is
     one file and the collision it guards against is a directory's problem.
+    An SG's document is its own kind, and is named as the terminal names it.
     """
+    if document.get("document") == string_inverter.DOCUMENT:
+        return f"{string_inverter.label_for(document)}.json"
     return f"{label_for(document)}.json"
 
 

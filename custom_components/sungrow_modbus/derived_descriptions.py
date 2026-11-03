@@ -2,7 +2,7 @@
 
 Do not edit by hand: `scripts/generate/descriptions.py derived` writes this
 file, and CI checks it. The arithmetic itself lives in
-`sungrow_modbus.inverter.derived`.
+`sungrow_modbus.hybrid_inverter.derived`.
 
 Each entry names the registers its value reads, which decides both the
 coordinator that writes it — the fastest tier among them, so a derived value
