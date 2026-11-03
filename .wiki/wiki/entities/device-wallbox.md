@@ -52,7 +52,7 @@ and at its own address in the
 [wallbox document](../sources/ac22e01-gerd-anon-41346964423-wallbox-tls-summary.md).
 Read directly again on 2026-10-29: holding 21250-21259 is a constant
 20-digit ASCII number, shaped like an identifier, and is masked like the serial;
-input 21267 ticks about once per 10 s whatever a client reads or writes,
+input 21267 ticks about once per 5 s whatever a client reads or writes,
 the shape of an uptime counter; the start mode read 3, outside the
 documented 0-2. Checked against Sungrow's own portal on 2026-10-30: input
 21201-21206 is the serial it shows, and 21300 and 21310 count lifetime and
@@ -64,8 +64,11 @@ energy, input 21313 read 0 and the start mode 3
 During a session on 2026-11-03, read over TLS and through the dongle, input 21313 read **527**
 in both, the start mode 3, and **input 21320 held the time of the reading** rather than an end
 ([TLS](../sources/ac22e01-gerd-anon-41346964423-wallbox-tls-2-summary.md),
-[dongle](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-3-summary.md)). Whether 21313 falls to 0 when the
-session ends, and whether 21308/21310 are signed, are still open.
+[dongle](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-3-summary.md)). Over the whole session
+([the log](../sources/gerd-wallbox-charging-session-2026-11-03-summary.md))
+21313 fell to 0 when the charging ended, 94 s after the power did, as the
+status went 3, 5 (suspended by the vehicle), 6 (completed). Whether 21308/21310
+are signed is still open: the session never left 10.7 kW.
 What is fixed and what moves is in
 [wallbox registers](../sources/wallbox-registers-summary.md).
 RS485 at unit 248 is reported by others and never measured here; see

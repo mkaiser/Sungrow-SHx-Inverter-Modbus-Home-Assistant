@@ -194,6 +194,13 @@ ran nowhere, both batteries charging. 13074 times ten at both; the PV cut confir
 second time; restarts 186 s and 194 s. Both dumps carry the whole history block, and each 2026
 yearly slot equals the sum of its months: the layout holds at three cable houses.
 
+## [2026-11-03] ingested | gerd's wallbox through a charging session
+
+One TLS session, 30 s reads, 11:55-15:07 UTC; the car stopped at 14:50:42. 21313 fell to 0 94 s
+after the power did, as the status went 3, 5, 6; the control pilot went 5.94 V to 8.97 V. 21310 kept
+the session's energy. 21308/21310 signedness stays open (never above 10.76 kW). 21267 counts one in
+about 5.4 s, not one in 10.
+
 ## [2026-11-03] ingested | gerd's third readings, cable, WiNet-S and wallbox, while a car charged
 
 Around noon, the owner's Home Assistant stopped, a car charging at about 10.7 kW. Cable: exit 0,

@@ -14,20 +14,7 @@ Structure:
 
 # Next steps
 
-1. **Review the SG work (#790), squash, then push (ask first).** Committed
-   on this branch: read-only SG string inverter support (map, terminal
-   survey, HA entry, sensors), the shared device seam (`device.py`,
-   `identity.py`) and the rename `inverter/` → `hybrid_inverter/`.
-   `make check` is green on it. None of the five commits since `origin` is
-   pushed.
-2. **A release.** The integration's manifest pin and the survey's PEP 723
-   header must both point at a release that has `hybrid_inverter/` and
-   `string_inverter/`, so the rename and everything importing it ship in
-   one release (`check_pinned_library.py` catches a mismatch). Until then
-   bleughb cannot run the SG survey: the pinned 0.1.0a24 wheel has neither
-   path. It also ships schema 23 (`connection.link_drops`, written only
-   where the library's `SCHEMA >= 23`).
-3. **The SG's documentation and what it lacks.**
+1. **The SG's documentation and what it lacks.**
    - `doc/architecture.md` "Register sources": a row for the SG map,
      ha-modbus-manager `sungrow_sg_dynamic.yaml` (MIT, TCzerny, commit
      `4a1e662`), built from Sungrow's *Communication Protocol of
@@ -89,20 +76,13 @@ Structure:
 
 # Blockers
 
-1. **A charging car at gerd's.** Settles what input 21313 does over a session
-   (does it go to 0 when charging stops?) and whether 21308/21310 are signed.
-   Two dongle runs about five minutes apart, 90 s of quiet before each, while
-   the car charges. `doc/wallbox_registers.md` has both questions. The
-   same session would show what input 21267, input 21365, holding 21312 and
-   start mode 3 at input 21314 do, which a reading with no car cannot.
-   Input 21267 is not a write counter (measured 2026-10-29); it looks like
-   uptime in tens of seconds. A wallbox restart would confirm it: the count
-   should fall to near zero.
-   **In progress 2026-11-03:** a car charged from before 11:55 UTC at a
-   steady 10.7 kW, logged every 30 s over TLS. So far 21313 wandered
-   297-527 at constant power (it does not follow power), the high words of
-   21308/21310 stayed 0, 21267 counted up, start mode read 3 throughout.
-   What is still missing is the end of the session.
+1. **A wallbox charging negative, or past 32.7 kW.** Settles whether 21308/21310
+   are signed: a three-hour session at gerd (2026-11-03, 10.7 kW, logged every
+   30 s) kept both high words at 0. The same session answered the rest:
+   input 21313 falls to 0 when charging ends and is not power, 21267 ticks
+   about once per 5 s through a stop, and the status ran 3, 5, 6. Still
+   unnamed: 21313 itself and input 21365 (-71 to -63, flat). A wallbox
+   restart would show whether 21267 falls to near zero.
 2. **An SH-T on its own LAN port, in daylight** (any SH15T owner with
    one; ra1k_0 says the SH20T has none, #772). Every T so far was read
    through a WiNet-S, and one run with the control test
@@ -222,8 +202,8 @@ Structure:
     `device-survey/images/` (it shows three switches, now five).
 
 17. **A first SG survey** (#789, #790). The whole SG map is the protocol
-    document's, unmeasured; bleughb has two SG5.0RS and offered, once the
-    release is out. Settles what an RS answers: the meter block (5083-5104,
+    document's, unmeasured; bleughb has two SG5.0RS and offered, and
+    0.1.0a25 reads one. Settles what an RS answers: the meter block (5083-5104,
     undocumented on RS by the source), the per-string currents at input
     7013, the holding block from 5000, and whether the tiers suit it.
     Writes (the power limitation, holding 5007-5008) wait for a watched one.

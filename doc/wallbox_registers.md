@@ -157,7 +157,7 @@ and its echo, holding 21312, and what start mode 3 means.
 | 21308/21309 | u32, low word first | 1 W | Charging power | 1995-3324 W | three sources |
 | 21310/21311 | u32, low word first | 1 Wh | **This session's** energy. Reset to 15 when a new session began, which is what separates it from 21300 | 15 → 124 Wh | three sources |
 | 21312 | u16 | 0.01 V | **Control-pilot voltage.** 5.97 V charging, 9.03 V connected and not, 11.91 V with no vehicle — the levels IEC 61851 defines for states C, B and A, drifting as an analogue reading should | 597 / 903-893 / 1191 | two sources |
-| 21313 | u16 | — | **Open.** 131-256 while charging, 0 when not, and 0 with no vehicle; roughly a thirteenth of the power but not consistently. Neither project documents it | 192-256 | open |
+| 21313 | u16 | — | **Open.** 131-256 at 2-3 kW, 297-527 at a steady 10.7 kW, 0 when not charging and with no vehicle: it fell to 0 94 s after a session ended. Not proportional to power. Neither project documents it | 192-527 | open |
 | 21314 | u16 | — | Start mode: 0 stopped, 1 start with EMS, 2 start by swiping | 1 | two sources |
 | 21315 | u16 | — | Power request | 1 | named elsewhere |
 | 21316 | u16 | — | Power control allowed | 1 | named elsewhere |

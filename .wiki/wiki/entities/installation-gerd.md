@@ -24,4 +24,5 @@ The only wallbox measured.
 - [AC22E-01 wallbox, gerd, TLS](../sources/ac22e01-gerd-anon-41346964423-wallbox-tls-summary.md)
 - [SH8.0RT-V112, B001.V000.P022, gerd, the inverter's own LAN port, third reading](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-3-summary.md), 2026-11-03, while a car charged
 - [SH8.0RT-V112, B001.V000.P022, gerd, a WiNet-S on WiFi, third reading](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-3-summary.md), 2026-11-03, the wallbox charging
+- [The wallbox through a charging session](../sources/gerd-wallbox-charging-session-2026-11-03-summary.md), 2026-11-03
 - [AC22E-01 wallbox, gerd, TLS, while charging](../sources/ac22e01-gerd-anon-41346964423-wallbox-tls-2-summary.md), 2026-11-03
