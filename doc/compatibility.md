@@ -56,6 +56,7 @@ no survey is listed as **untested** rather than assumed to work.
 | `sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2` | ra1k_0 | SH20T (`0x0E26`) | WiNet-S, WiFi (reported) | SBH400-V11 | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan` | ra1k_0 | SH20T (`0x0E26`) | WiNet-S, WiFi (reported) | SBH400-V11 | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh60rs-b000v001p068-1p-anonymous-anon-17579213881-battery-sbr192-winet` | anonymous | SH6.0RS (`0x0D10`) | WiNet-S (reported) | — | `ARM_SUNSTONE-H_V11_V01_A` | single phase | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
+| `sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan` | anonymous | SH6.0RT-20 (`0x0E11`) | direct LAN port (reported), **via a Modbus proxy** | SBR064 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan` | Firetribe | SH6.0RT-V112 (`0x0E0D`) | direct LAN port (reported) | SB096 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan` | Firetribe | SH6.0RT-V112 (`0x0E0D`) | WiNet-S, wired (reported) | SBR096 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | — |
 | `sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-2` | gerd | SH8.0RT-V112 (`0x0E0E`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | yes | yes | yes | no |
@@ -179,6 +180,7 @@ that has only one would make the next pair.
 | SH15T | winet_lan | B000.V000.P071 (3 readings) |
 | SH20T | winet_wlan | B000.V000.P071 (3 readings) |
 | SH6.0RS | winet | B000.V001.P068 (1 reading) |
+| SH6.0RT-20 | direct_lan | B001.V000.P023 (1 reading) |
 | SH6.0RT-V112 | direct_lan | B001.V000.P023 (1 reading) |
 | SH6.0RT-V112 | winet_lan | B001.V000.P023 (1 reading) |
 | SH8.0RT-V112 | direct_lan | B001.V000.P022 (3 readings) |
@@ -233,7 +235,7 @@ last column says what that rules out before anything is even read.
 | `0x0E0E` | SH8.0RT-V112 | RT | **yes** | mppt3, mppt4, pv_power_limitation |
 | `0x0E0F` | SH10RT-V112 | RT | **yes** | mppt3, mppt4, pv_power_limitation |
 | `0x0E10` | SH5.0RT-20 | RT | untested | mppt3, mppt4, pv_power_limitation |
-| `0x0E11` | SH6.0RT-20 | RT | untested | mppt3, mppt4, pv_power_limitation |
+| `0x0E11` | SH6.0RT-20 | RT | **yes** | mppt3, mppt4, pv_power_limitation |
 | `0x0E12` | SH8.0RT-20 | RT | untested | mppt3, mppt4, pv_power_limitation |
 | `0x0E13` | SH10RT-20 | RT | **yes** | mppt3, mppt4, pv_power_limitation |
 | `0x0E20` | SH5T | T | untested | battery_start_power, mppt4 |
@@ -249,6 +251,63 @@ last column says what that rules out before anything is even read.
 | `0x0E3D` | SH125CX | CX | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, forced_charging, forced_startup, meter_channel_2, pv_power_limitation |
 | `0x0E51` | SH50CX | CX | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, forced_charging, forced_startup, meter_channel_2, pv_power_limitation |
 | `0x0E52` | SH80CX | CX | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, forced_charging, forced_startup, meter_channel_2, pv_power_limitation |
+
+## String inverters (SG)
+
+An SG has a map of its own (`src/sungrow_modbus/string_inverter/`),
+read only. **0 only** means the block answered with nothing but zeros:
+an SG answers 0 where the source promises the unavailable value, so
+that is not evidence the machine has it.
+
+| Setup | By | Model | Connection | ARM firmware | Phases | PV and AC | Meter block | MPPT4 and up | Precise totals | Power limitation (read) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `sg5-0rs-1p-bleughb-anon-85541281016` | bleughb | SG5.0RS (`0x2606`) | WiNet-S, WiFi (reported) | `ARM_SUNSTONE-S_V11_V01_A` | single phase | yes | 0 only | 0 only | yes | yes |
+| `sg5-0rs-1p-bleughb-anon-91627862515` | bleughb | SG5.0RS (`0x2606`) | WiNet-S, WiFi (reported) | `ARM_SUNSTONE-S_V11_V01_A` | single phase | yes | 0 only | 0 only | yes | yes |
+
+Every SG model the source names, and whether anybody has tested one:
+
+| Code | Model | Tested |
+| --- | --- | --- |
+| `0x0026` | SG10KTL | untested |
+| `0x0027` | SG30KTL | untested |
+| `0x0028` | SG15KTL | untested |
+| `0x0029` | SG12KTL | untested |
+| `0x002A` | SG20KTL | untested |
+| `0x002D` | SG36KTL | untested |
+| `0x002F` | SG40KTL | untested |
+| `0x010F` | SG60KTL | untested |
+| `0x011B` | SG50KTL-M | untested |
+| `0x0131` | SG60KTL-M | untested |
+| `0x0135` | SG40KTL-M | untested |
+| `0x0138` | SG80KTL | untested |
+| `0x0141` | SG30KTL-M | untested |
+| `0x2430` | SG5.0RT | untested |
+| `0x2431` | SG6.0RT | untested |
+| `0x2432` | SG8.0RT | untested |
+| `0x2433` | SG10RT | untested |
+| `0x2434` | SG12RT | untested |
+| `0x2435` | SG15RT | untested |
+| `0x2437` | SG20RT | untested |
+| `0x243C` | SG7.0RT | untested |
+| `0x243D` | SG3.0RT | untested |
+| `0x243E` | SG4.0RT | untested |
+| `0x2603` | SG3.0RS | untested |
+| `0x2604` | SG3.6RS | untested |
+| `0x2605` | SG4.0RS | untested |
+| `0x2606` | SG5.0RS | **yes** |
+| `0x2607` | SG6.0RS | untested |
+| `0x2608` | SG8.0RS | untested |
+| `0x2609` | SG10RS | untested |
+| `0x2C00` | SG33CX | untested |
+| `0x2C01` | SG40CX | untested |
+| `0x2C02` | SG50CX | untested |
+| `0x2C06` | SG110CX | untested |
+| `0x2C0C` | SG250HX | untested |
+| `0x2C10` | SG30CX | untested |
+| `0x2C12` | SG100CX | untested |
+| `0x2C22` | SG75CX | untested |
+| `0x2C26` | SG320HX | untested |
+| `0x2C27` | SG350HX | untested |
 
 ## Sending one
 

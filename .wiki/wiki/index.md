@@ -7,7 +7,7 @@
 - [SBH battery](entities/device-sbh-battery.md) — High-voltage pack for the SH-T, unit 2 through a dongle #battery #sbh #sub-device
 - [SBR battery](entities/device-sbr-battery.md) — Unit 200 direct, 2 through a WiNet-S; three to eight modules, per-module cell extremes; cells and modules not forwarded by a dongle #battery #sbr #sub-device
 - [SH-RT hybrid inverters](entities/device-sh-rt.md) — Three-phase SAPPHIRE-H hybrids: what is established and which surveys show it #inverter #sh-rt #sapphire-h #three-phase
-- [SG-RS string inverters](entities/device-sg-rs.md) — The single-phase PV-only SG5.0RS on SUNSTONE-S; the read block answers through a WiNet-S, the power limitation is holding 5006-5007 #inverter #sg-rs #string-inverter
+- [SG-RS string inverters](entities/device-sg-rs.md) — The single-phase PV-only SG5.0RS on SUNSTONE-S; the read block answers through a WiNet-S, the power limitation is holding 5007-5008 #inverter #sg-rs #string-inverter
 - [SH-RS hybrid inverters](entities/device-sh-rs.md) — Single-phase SUNSTONE-H hybrids, four surveys through a dongle; PV cut confirmed on P065, 13074 1:1 on P065 and P057 #inverter #sh-rs #sunstone-h #single-phase
 - [SH-T hybrid inverters](entities/device-sh-t.md) — SH15T and SH20T on PEARL-H, only read through a dongle; PV cut confirmed on P071 #inverter #sh-t #pearl-h #three-phase
 - [Sungrow AC wallbox](entities/device-wallbox.md) — Unit 3 through a WiNet-S or 248 over TLS at its own address; read only #wallbox #ac22e-01 #ac011e-01 #sub-device #tls
@@ -38,6 +38,7 @@
 - [Register 13000 \(running state\)](entities/register-13000.md) — Running state; 0x0000 is Running, and a dongle re-encodes it #register #input #running-state
 - [Register 13074 \(export power limit\)](entities/register-13074.md) — Export power limit; writes x10 on B001 firmware, 1:1 on 01011.95.03 #register #holding #export-limit #write-scale
 - [Register 31211 \(PV generation cut\)](entities/register-31211.md) — Undocumented PV generation cut, gated by firmware #register #holding #pv-cut #firmware-gated #undocumented
+- [Registers 33042 and 33274](entities/register-33042-and-33274.md) — Two specification registers not read: 33042 is 0xFFFF and 33274 is 0 on every survey #register #holding #specification #unread
 - [Register 6100 \(transport probe\)](entities/register-6100.md) — Answers on a cable, refused through a dongle: the transport question #register #input #transport
 
 ## Concepts
@@ -62,7 +63,7 @@
 
 - [ac22e01-gerd-anon-41346964423-wallbox-tls.json](sources/ac22e01-gerd-anon-41346964423-wallbox-tls-summary.md) — AC22E-01 wallbox, gerd, at its own address over TLS #survey #wallbox #ac22e-01 #gerd #tls
 - [ac22e01-gerd-anon-41346964423-wallbox-tls-2.json](sources/ac22e01-gerd-anon-41346964423-wallbox-tls-2-summary.md) — AC22E-01 wallbox, gerd, over TLS while a car charged; 21320 holds the time of reading during a session #survey #wallbox #ac22e-01 #gerd #tls
-- [bleughb-sg-power-limitation-registers-786.md](sources/bleughb-sg-power-limitation-registers-786-summary.md) — bleughb curtails two SG5.0RS with holding 5006 (switch, 0xAA/0x55) and 5007 (0.1 %); not watched here #string-inverter #sg5-0rs #bleughb #power-limitation
+- [bleughb-sg-power-limitation-registers-786.md](sources/bleughb-sg-power-limitation-registers-786-summary.md) — bleughb curtails two SG5.0RS with holding 5007 (switch, 0xAA/0x55) and 5008 (0.1 %); not watched here #string-inverter #sg5-0rs #bleughb #power-limitation
 - [cross_reference_modbus_manager.md](sources/cross-reference-modbus-manager-summary.md) — TCzerny/ha-modbus-manager compared register by register; the MIT iHomeManager map #ihomemanager #cross-reference #licences
 - [gerd-wallbox-charging-session-2026-11-03.md](sources/gerd-wallbox-charging-session-2026-11-03-summary.md) — gerd's AC22E-01 through a 3 h charging session and its end: 21313 falls to 0, status 3-5-6, 21267 about one per 5 s #wallbox #ac22e-01 #gerd #charging-session #tls
 - [gerd-wallbox-isolarcloud-2026-10-30.md](sources/gerd-wallbox-isolarcloud-2026-10-30-summary.md) — gerd's AC22E-01 beside Sungrow's portal: 21201-21206 is the serial, 21300 and 21310 in Wh #wallbox #ac22e-01 #gerd #isolarcloud
@@ -113,6 +114,7 @@
 - [sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan.json](sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-summary.md) — SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi #survey #sh20t #pearl-h-b000-v000-p071 #ra1k-0 #winet_wlan
 - [sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005.json](sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005-summary.md) — SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi, the first SH-T control test #survey #sh20t #pearl-h-b000-v000-p071 #ra1k-0 #winet_wlan #control-test
 - [sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2.json](sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2-summary.md) — SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi; the PV cut confirmed, a restart in 147.5 s #survey #sh20t #pearl-h-b000-v000-p071 #ra1k-0 #winet_wlan #control-test
+- [sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan.json](sources/sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan-summary.md) — SH6.0RT-20, B001.V000.P023, anonymous, own LAN port through a Modbus proxy beside EVCC; the first SH6.0RT-20, every block answered, a two-module SBR064 #survey #sh60rt-20 #sapphire-h-b001-v000-p023 #anonymous #direct_lan #modbus-proxy
 - [sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan.json](sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-summary.md) — SH6.0RT-V112, B001.V000.P023, firetribe, the inverter's own LAN port #survey #sh6.0rt-v112 #sapphire-h-b001-v000-p023 #firetribe #direct_lan #control-test
 - [sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan.json](sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan-summary.md) — SH6.0RT-V112, B001.V000.P023, firetribe, a WiNet-S on Ethernet #survey #sh6.0rt-v112 #sapphire-h-b001-v000-p023 #firetribe #winet_lan #control-test
 - [sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan.json](sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-summary.md) — SH8.0RT-V112, B001.V000.P022, gerd, the inverter's own LAN port #survey #sh8-0rt-v112 #sapphire-h-b001-v000-p022 #gerd #direct_lan #control-test #export-scale

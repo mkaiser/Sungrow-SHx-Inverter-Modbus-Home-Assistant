@@ -23,9 +23,9 @@ download (issue #786, 2026-11-04). The owner names the other as "SG50.RS".
 
 ## What answered
 
-The same blocks as its pair: input 4949-5228 and 7012-7031, holding 4999-5048, with 5019
-unread. The two machines' holding words agree except the clock, 5003 and 5004. 5006 reads 170 and
-5007 reads 1000, 5009 reads 85, 5010 reads 500. The meter block and the per-string block read 0, as on the
+The same blocks as its pair: input 4950-5229 and 7013-7032, holding 5000-5049, with 5020
+unread. The two machines' holding words agree except the clock, 5004 and 5005. 5007 reads 170 and
+5008 reads 1000, 5010 reads 85, 5011 reads 500. The meter block and the per-string block read 0, as on the
 first.
 
 Its total generation is 27196 kWh and its running time 14645 h, against 21826 kWh and 13797 h on

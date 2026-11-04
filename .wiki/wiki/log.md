@@ -295,7 +295,28 @@ reading; the gate is held to the cable documents already ingested.
 
 The first string-inverter surveys: two diagnostics downloads of 0.1.0a25 through a WiNet-S on
 WiFi, each `survey` section committed unchanged under `device-survey/results/string_inverter/`.
-The read block (input 4949-5228 and 7012-7031, holding 4999-5048) answers in one round; the
+The read block (input 4950-5229 and 7013-7032, holding 5000-5049) answers in one round; the
 meter block and the per-string block read 0. Both machines read the power limitation on at 100 %.
-With them the owner's note on holding 5006 and 5007, which curtail the output; new entity page
+With them the owner's note on holding 5007 and 5008, which curtail the output; new entity page
 [SG-RS](entities/device-sg-rs.md). No write watched, so no code follows.
+
+## [2026-11-04] ingested | an anonymous SH6.0RT-20 on P023 with an SBR064 (#786)
+
+The first SH6.0RT-20 (`0x0E11`), read only from Home Assistant, through a Modbus proxy with EVCC
+polling too. Every block answered in all three rounds. A two-module SBR064, the smallest pack yet;
+read nearly empty, the inverter's battery level (1.2 %) sits below the pack's own SoC (6.3 %).
+
+## [2026-11-04] answered | registers 33042 and 33274
+
+Over the corpus, holding 33042 reads 0xFFFF in all 42 dumps that hold it and 33274 reads 0 in all
+19 that answered it, so neither becomes an entity:
+[registers 33042 and 33274](entities/register-33042-and-33274.md). The SG's phases B and C read 0
+on a single-phase machine, so the integration now leaves them out by output type; the
+compatibility page has an SG section.
+
+## [2026-11-04] updated | SG entities by tracker and phase count
+
+Because bleughb's SG5.0RS reads MPPT3 to MPPT12 and phases B and C as 0, the integration now
+decides an SG's tracker and phase entities by the source's tracker count per model and the
+output type ([SG-RS](entities/device-sg-rs.md)). The SG also gets `Fault reported` from its work
+state, and `scripts/dev/simulator_sg.json` serves bleughb's survey for the dev loop.

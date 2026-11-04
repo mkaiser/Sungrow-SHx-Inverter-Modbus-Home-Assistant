@@ -32,7 +32,10 @@ from sungrow_modbus import DEVICE_TYPES, family_for, known_absent
 
 REPO = Path(__file__).resolve().parents[2]
 DOCUMENTS = REPO / "device-survey" / "results" / "inverter"
+SG_DOCUMENTS = REPO / "device-survey" / "results" / "string_inverter"
 
+from sungrow_modbus.string_inverter import MODELS as SG_MODELS  # noqa: E402
+from sungrow_modbus.string_inverter.registers import COMPONENTS as SG_COMPONENTS  # noqa: E402
 from sungrow_modbus.survey_document import REPORTED_TRANSPORTS  # noqa: E402
 
 
@@ -160,6 +163,120 @@ def _reports() -> list[tuple[str, dict]]:
     ]
     # A wallbox read at its own address has no `device` to put in a row.
     return [(stem, d) for stem, d in documents if d.get("document") != "wallbox"]
+
+
+#: The SG blocks a user asks about, the column each becomes, and the fields
+#: that answer it ("" for every field in the block).
+SG_COLUMNS: tuple[tuple[str, str, str], ...] = (
+    ("PV and AC", "sg_realtime", ""),
+    ("Meter block", "sg_meter", ""),
+    ("MPPT4 and up", "sg_trackers", "mppt"),
+    ("Precise totals", "sg_precision", ""),
+    ("Power limitation (read)", "sg_power_limit", ""),
+)
+
+
+def _sg_reports() -> list[tuple[str, dict]]:
+    """Return (label, document) for every committed SG survey."""
+    return [
+        (path.stem, json.loads(path.read_text(encoding="utf-8")))
+        for path in sorted(SG_DOCUMENTS.glob("*.json"))
+    ]
+
+
+def _sg_mark(document: dict, component: str, prefix: str) -> str:
+    """Return what one SG block did: answered, answered only zeros, or not.
+
+    "0 only" is kept apart from "yes" because an SG answers 0 where the
+    source promises the unavailable value (meter, trackers past its own), and
+    a zero is not evidence of a capability.
+    """
+    section = document.get("string_inverter") or {}
+    block = SG_COMPONENTS[component]
+    fields = {
+        name: field
+        for name, field in block.declared_fields.items()
+        if name.startswith(prefix)
+    }
+    words = (section.get("register_dump") or {}).get(block.register_space) or {}
+    if any(
+        words.get(str(field.address + i)) is None
+        for field in fields.values()
+        for i in range(field.count)
+    ):
+        return "no"
+    readings = section.get("readings") or {}
+    read = [
+        readings[name.removesuffix("_raw")].get("value")
+        for name in fields
+        if name.removesuffix("_raw") in readings
+    ]
+    return "yes" if any(value != 0 for value in read) else "0 only"
+
+
+def _sg_lines() -> list[str]:
+    """Return the SG section: one row per survey, then the models known."""
+    reports = _sg_reports()
+    lines = [
+        "## String inverters (SG)",
+        "",
+        "An SG has a map of its own (`src/sungrow_modbus/string_inverter/`),",
+        "read only. **0 only** means the block answered with nothing but zeros:",
+        "an SG answers 0 where the source promises the unavailable value, so",
+        "that is not evidence the machine has it.",
+        "",
+    ]
+    if not reports:
+        lines += ["_No surveys yet._", ""]
+    else:
+        header = [
+            "Setup",
+            "By",
+            "Model",
+            "Connection",
+            "ARM firmware",
+            "Phases",
+            *(name for name, _, _ in SG_COLUMNS),
+        ]
+        lines.append("| " + " | ".join(header) + " |")
+        lines.append("| " + " | ".join("---" for _ in header) + " |")
+        for label, document in reports:
+            device = document.get("device") or {}
+            said = document.get("user_inputs") or {}
+            row = [
+                f"`{label}`",
+                str(said.get("reporter") or "anonymous"),
+                f"{device.get('device_type', 'unknown')} "
+                f"(`{device.get('device_type_code', '—')}`)",
+                _connection_cell(document.get("connection") or {}, said),
+                f"`{(document.get('firmware') or {}).get('arm') or '—'}`",
+                str(device.get("output_type") or "—"),
+                *(
+                    _sg_mark(document, component, prefix)
+                    for _, component, prefix in SG_COLUMNS
+                ),
+            ]
+            lines.append("| " + " | ".join(row) + " |")
+        lines.append("")
+
+    tested = {
+        int(str(d.get("device", {}).get("device_type_code", "0x0")), 16)
+        for _, d in reports
+        if str(d.get("device", {}).get("device_type_code", "")).startswith("0x")
+    }
+    lines += [
+        "Every SG model the source names, and whether anybody has tested one:",
+        "",
+        "| Code | Model | Tested |",
+        "| --- | --- | --- |",
+    ]
+    for code in sorted(SG_MODELS):
+        lines.append(
+            f"| `0x{code:04X}` | {SG_MODELS[code]} | "
+            f"{'**yes**' if code in tested else 'untested'} |"
+        )
+    lines.append("")
+    return lines
 
 
 def _model(document: dict) -> tuple[str, str]:
@@ -515,8 +632,10 @@ def render() -> str:
             f"{', '.join(absent) or '—'} |"
         )
 
+    lines.append("")
+    lines += _sg_lines()
+
     lines += [
-        "",
         "## Sending one",
         "",
         "### First, get the file",

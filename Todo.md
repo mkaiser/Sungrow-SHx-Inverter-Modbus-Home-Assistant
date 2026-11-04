@@ -14,51 +14,7 @@ Structure:
 
 # Next steps
 
-1. **The SG's documentation and what it lacks.**
-   - `doc/architecture.md` "Register sources": a row for the SG map,
-     ha-modbus-manager `sungrow_sg_dynamic.yaml` (MIT, TCzerny, commit
-     `4a1e662`), built from Sungrow's *Communication Protocol of
-     Residential and Commercial PV Grid-Connected Inverters* V1.1.53.
-   - A wiki page `entities/device-sg.md`, after today's ingest is done
-     (another session holds the wiki until then): what SG and SH share
-     (the identity block, input 4950-5002, and the core PV registers
-     5003-5035, MPPT4 at 5115-5116) and everything that differs (no 13000
-     block, no battery or EMS, other holding registers).
-   - `generate_compatibility.py` reads only `results/inverter/`; SG
-     documents need a table of their own.
-   - Not built: SG binary sensors, Energy dashboard hints, an SG in the
-     simulator (`make sim` serves only a hybrid).
-4. **Ingest gerd's surveys of 2026-11-03** (uncommitted, in `device-survey/`,
-   gitignored there): the cable survey with a full control test (exit 0, 9/9
-   matched, 13074 ×10, PV cut, both windows confirmed, Running after 181 s),
-   the dongle survey with the wallbox at unit 3 (control test exit 3: battery
-   at 10 %, the WiNet-S refused the stop and the window write with an
-   exception), and the wallbox over TLS, all read while a car charged at
-   10.7 kW. The wallbox log of the session is still being written (one TLS
-   session, 30 s); ingest it with the documents.
-   - New on hardware: the cable restart needed the start sent three times
-     (still stopped 60 s after each), where every earlier restart took the
-     first. Watch whether it recurs.
-5. **The control test's restore through a WiNet-S** (fixed in the tree,
-   uncommitted: `control_test/restore.py`, three tests in
-   `test_control_test.py`). It read first and wrote only when the register
-   differed, and through a dongle the read is a stale cache, so a write that
-   landed was "already holding its original value" and never undone. At
-   gerd's it left a forced-charging window changed on 2026-11-01 and again
-   on 2026-11-03 (forced charging off, so inert; put back over the cable).
-   Now only a confirmed cable reads first; a dongle always writes the
-   snapshot's word, counts an accepted write as the evidence, and writes
-   13074 at its measured factor alone. The snapshot is read from the same
-   cache, so through a dongle the restore now puts back **only the fields the
-   run touched** (`Snapshot.touched`, flushed before each write), and a
-   restore with no preflight (`--restore`, the HA repair) measures the
-   transport first (uncommitted). Left: a touched register goes back to the
-   dongle's word, wrong only if changed over another path since the dongle
-   last read it. Wants a dongle-only control test at gerd on this tree, with
-   the battery above 30 % and no car charging, then a cable read of every
-   snapshot register. The HA control test button shares this code, so it
-   needs a release.
-
+_Nothing that can start without hardware, a contributor or a decision._
 
 # Open decisions
 
@@ -76,12 +32,9 @@ Structure:
 
 # Blockers
 
-1. **A wallbox charging negative, or past 32.7 kW.** Settles whether 21308/21310
-   are signed: a three-hour session at gerd (2026-11-03, 10.7 kW, logged every
-   30 s) kept both high words at 0. The same session answered the rest:
-   input 21313 falls to 0 when charging ends and is not power, 21267 ticks
-   about once per 5 s through a stop, and the status ran 3, 5, 6. Still
-   unnamed: 21313 itself and input 21365 (-71 to -63, flat). A wallbox
+1. **A wallbox charging negative, or past 32.7 kW.** Settles whether
+   21308/21310 are signed. Still unnamed: input 21313 (falls to 0 when
+   charging ends, not power) and input 21365 (-71 to -63, flat). A wallbox
    restart would show whether 21267 falls to near zero.
 2. **An SH-T on its own LAN port, in daylight** (any SH15T owner with
    one; ra1k_0 says the SH20T has none, #772). Every T so far was read
@@ -99,13 +52,13 @@ Structure:
    Still open on the T besides: whether 13018 acts as 31211 does.
 3. **A second wallbox's survey.** Settles whether 21211-21214 identify the
    unit. The wallbox reports its own serial (input 21201-21206, 11 ASCII
-   characters, confirmed against Sungrow's portal 2026-10-30); the
+   characters, as Sungrow's portal shows it); the
    integration shows it on the device page, identifies the device by the
    inverter's serial plus `-wallbox`, and publishes it only as a stand-in.
    Three registers wait on a second unit:
    input 21201-21206 (the serial: use it as the device identity?), input
    21211-21214 (a short code, masked), and holding 21250-21259 (twenty
-   constant ASCII digits, masked since 2026-10-29). Whichever differ between
+   constant ASCII digits, masked). Whichever differ between
    two wallboxes identify a unit and stay masked; whichever match are a model
    constant and can be unmasked. ra1k_0's AC22E-01 would be one.
 4. **firetribe, once more (#784).** A cable control test while the
@@ -190,26 +143,34 @@ Structure:
     unit or scale on record: it needs a known value (what an owner set it
     to) before it can be an entity.
 
-16. **The discharge window on hardware** (#785). The charge window is
-    settled: it raised charging at all five houses' runs on 2026-11-01
-    (P020, P022, P023, cable and dongle), and a 2 s trace at mkaiser showed
-    it starting in 4 s and stopping in 2 s; a start is now judged by its
-    bracket. `--discharge-window` has run nowhere: it needs the battery
-    discharging at least 500 W, so an evening run. fwitten's master is the
-    lead (SBR096, P023), with their Home Assistant stopped; mkaiser once
-    its battery is above its floor. Then the device and
-    firmware pages, the log, and the options screenshot in
+16. **The discharge window on hardware** (#785). `--discharge-window` has
+    run nowhere: it needs the battery discharging at least 500 W, so an
+    evening run. fwitten's master is the lead (SBR096, P023), with their Home
+    Assistant stopped; mkaiser once its battery is above its floor. Then the
+    device and firmware pages, the log, and the options screenshot in
     `device-survey/images/` (it shows three switches, now five).
 
-17. **A first SG survey** (#789, #790). The whole SG map is the protocol
-    document's, unmeasured; bleughb has two SG5.0RS and offered, and
-    0.1.0a25 reads one. Ingested 2026-11-04 (two SG5.0RS, #786): the read
-    block answers through a WiNet-S, the meter block (5083-5104) and the
-    per-string block (7013) read 0 and settle nothing, holding 5019 reads
-    nothing. Open: whether the tiers suit it, and whether those zeros are
-    capability or absence (a cable read, an inverter with its own meter).
-    Writes (the power limitation, holding 5006-5007, which bleughb writes
-    every ~30 s on both) wait for a watched one.
+17. **The SG's zeros and writes.** On bleughb's two SG5.0RS through a
+    WiNet-S, the meter block (5083-5104) and the per-string block (input
+    7013) read 0, and holding 5020 reads nothing. Whether that is absence or
+    the dongle needs an SG on a cable, or one with its own meter. Writing the
+    power limitation (holding 5007-5008, which bleughb writes on both) waits
+    for a watched write.
+
+18. **The control test's restore through a WiNet-S, on hardware.** A
+    dongle-only control test at gerd on the current tree, with the battery
+    above 30 % and no car charging, then a cable read of every snapshot
+    register. Left open in the code: a touched register goes back to the
+    dongle's word, wrong only if changed over another path since the dongle
+    last read it.
+
+19. **gerd's cable restart.** On 2026-11-03 the start had to be sent three
+    times (still stopped 60 s after each), where every earlier restart took
+    the first. Watch whether it recurs.
+
+20. **The SG's tracker counts beyond the SG5.0RS.** `MPPT_COUNTS` is the
+    source's model table, many entries unverified; a survey of any other SG
+    checks its row (wanted in `device-survey/devices-wanted.md`, row 11).
 
 # Future work
 
@@ -221,13 +182,10 @@ Maybe indicate if you were not able to test / confirm a register / feature.
 
 ## Small fixes
 
-- The preview mirror's `sync.yml` uses `actions/checkout@v4`, which GitHub
-  now forces from Node 20 to Node 24 with a warning. Move to v5 in
-  `doc/preview-mirror/sync.yml` and the mirror's copy together (they must stay
-  byte-identical; the change needs a push to the preview repository).
-- `tests/test_control_test_cli.py` fails when run alone (`No module named
-  'probe'`): it relies on another test putting `device-survey/scripts/python`
-  on `sys.path` first. Green in the full suite.
+- `doc/preview-mirror/sync.yml` is on `actions/checkout@v5` in this tree;
+  the preview repository's `.github/workflows/sync.yml` must get the same
+  byte-identical copy in the same push, or Validate's "documented preview
+  sync matches" step turns red and stalls the preview.
 
 ## SBR per-module entities
 
@@ -235,16 +193,13 @@ Each fitted module's highest and lowest cell are diagnostic entities,
 disabled by default (#788), polled only while one is enabled. Left: tell
 robbensonmio on #788 once it is released, and close the issue if they agree.
 
-## Two specification registers not read
-
-Holding 33042 (charge cutoff voltage, wide range) and holding 33274 (load
-rated power), both in V1.1.16; ha-modbus-manager carries them commented out.
-The survey dump reads both from 0.1.0a23.
-
 ## The PV cut (31211, #738)
 
-- Ask the PR author on #738 for their 13250 string, or a survey; close #738
-  with a pointer to the release that ships the switch.
+- More firmware confirmed: 31211 answers 0x55 but no cut has been watched on
+  `SUNSTONE-H_B000.V001.P068`, `B000.V002.P059` and `B000.V002.P057`. The
+  survey's control test watches the cut, so a measurement the survey takes is
+  asked for in the "Most wanted" table of `device-survey/devices-wanted.md`
+  (the survey issue is written from it), never from one person.
 - One evening's watch on a confirmed device: does a cut survive a night or
   a restart, or does iSolarCloud rewrite it?
 

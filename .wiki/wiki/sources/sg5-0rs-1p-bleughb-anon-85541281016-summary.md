@@ -24,22 +24,22 @@ second is [anon-91627862515](sg5-0rs-1p-bleughb-anon-91627862515-summary.md).
 
 ## What answered
 
-- **The whole read block**: input 4949-5228 and 7012-7031 (300 words), holding 4999-5048. Only
-  input 4989-4998, the serial, is blanked, and holding 5019 read nothing
+- **The whole read block**: input 4950-5229 and 7013-7032 (300 words), holding 5000-5049. Only
+  input 4990-4999, the serial, is blanked, and holding 5020 read nothing
   (`register_dump` in the document).
 - **Two MPPTs**: 231.3 V at 11.2 A and 232.3 V at 11.0 A; MPPT3 to MPPT12 read 0.
 - **The meter block (input 5083-5104) answers 0 throughout**: the DTSU66 is read by
   another poller, not by the inverter. Zero here is not evidence of a capability
   ([zero means absent](../concepts/zero-means-absent.md)).
-- **The per-string block at input 7012-7031 reads 0** while MPPT1 carries 11.2 A: it answers
+- **The per-string block at input 7013-7032 reads 0** while MPPT1 carries 11.2 A: it answers
   but holds nothing usable on this machine.
-- **Holding 5006 reads 170 (`0xAA`, power limitation on) and 5007 reads 1000 (100.0 %)**;
-  5009 reads 85 (export limit off) and 5010 reads 500. See
+- **Holding 5007 reads 170 (`0xAA`, power limitation on) and 5008 reads 1000 (100.0 %)**;
+  5010 reads 85 (export limit off) and 5011 reads 500. See
   [the owner's note](bleughb-sg-power-limitation-registers-786-summary.md).
 - Bus voltage 380.5 V, grid frequency 49.96 Hz, `total_pv_generation_precise` 21826.7 kWh.
-- The inverter's clock is holding 4999-5004 (2026-11-04 13:14:21).
+- The inverter's clock is holding 5000-5005 (2026-11-04 13:14:21).
 
 ## What did not answer
 
-Holding 5019, and input 4989-4998, blanked on purpose. No refusal pattern appeared through the
+Holding 5020; and input 4990-4999, blanked on purpose. No refusal pattern appeared through the
 WiNet-S: every other block read in one round.

@@ -19,9 +19,10 @@ details are under [Why each one](#why-each-one).
 | 5 | **A wallbox other than the one already read**, an AC011E-01 above all | Which of its registers identify a unit and which are a model constant, and a scale another source reads differently |
 | 6 | **A charging car**, at any house with a Sungrow wallbox | What input 21313 does over a session, and whether 21308/21310 are signed. Two runs a few minutes apart while charging |
 | 7 | **Version 1 between `.95.03` and `.95.12`, or a `.95.14` that is not 10 kW** | Where the export limit's write scale changes ([#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)) |
-| 8 | **An SBR other than SBR096, SBR128 or SBR160** | Battery sizes nobody has read |
+| 8 | **An SBR192 on a direct link** | The one size read only through a WiNet-S; SBR064, SBR096, SBR128, SBR160, SBR224 and SBR256 are read on a cable |
 | 9 | **A second master/slave cluster** | Whether a slave's address 2 is a rule or one house's convention |
-| 10 | **Any inverter behind a Modbus proxy** | What a proxy does to the readings; no document has one |
+| 10 | **An SH-RS on `SUNSTONE-H` P057, P059 or P068**, with the control test, in daylight | Whether the PV cut (register 31211) works there: it answers on all three, and has been watched cutting on P065 only |
+| 11 | **Any SG string inverter other than an SG5.0RS** | Its tracker and phase count, which decide its entities: the source's table is unverified for most models, and an SG answers 0 for hardware it lacks |
 | — | **A WiNet-S certificate hash**, five seconds, no survey | Whether every WiNet-S shares one TLS certificate, see [the last item](#a-winet-s-certificate-hash) |
 
 ## Not needed any more
@@ -115,20 +116,15 @@ A machine in between places the change: `survey.sh control <host>
 not 10 kW tells "0.1 % of rated power" from "10 W" apart, which coincide at
 10 kW.
 
-### 8. An SBR other than SBR096, SBR128 or SBR160
+### 8. An SBR192 on a direct link
 
-Sizes nobody has read ([SBR battery](../.wiki/wiki/entities/device-sbr-battery.md)).
+The one size not yet read over a cable ([SBR battery](../.wiki/wiki/entities/device-sbr-battery.md)).
 
 ### 9. A second master/slave cluster
 
 One cluster gave two rules the config flow relies on: a slave's device
 address is 2, and a slave answers 0 where a standalone inverter answers
 0xFFFF. A second shows whether they are rules or one house's convention.
-
-### 10. Any inverter behind a Modbus proxy
-
-A proxy holds one connection and rebuilds every frame, so it changes what a
-dropped or padded read means. No document has one.
 
 ### A WiNet-S certificate hash
 

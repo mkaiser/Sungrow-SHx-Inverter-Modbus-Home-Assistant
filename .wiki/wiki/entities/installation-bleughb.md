@@ -17,7 +17,7 @@ Assistant's diagnostics on 2026-11-04. The hybrid has one reading, with a contro
   1.8 kW, and the PV cut cannot be watched here at all.
 - A restart: 4 s to stop, 291 s to run again.
 - **The SG5.0RS pair** read through the same WiNet-S kind of link, each with the power limitation
-  at holding 5006 and 5007 switched on at 100 %; the owner curtails both during negative prices
+  at holding 5007 and 5008 switched on at 100 %; the owner curtails both during negative prices
   ([note](../sources/bleughb-sg-power-limitation-registers-786-summary.md)).
 
 ## Surveys

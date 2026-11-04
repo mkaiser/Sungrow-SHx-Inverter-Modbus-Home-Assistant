@@ -367,6 +367,7 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
 | Device | Map from | Licence |
 | --- | --- | --- |
 | Inverter | `legacy/modbus_sungrow.yaml` plus Sungrow's *Communication Protocol of Residential and Small Industrial Hybrid Inverter* **V1.1.16** | MIT, this repo |
+| SG string inverters | [ha-modbus-manager](https://github.com/TCzerny/ha-modbus-manager)'s `sungrow_sg_dynamic.yaml` (commit `4a1e662`), built from Sungrow's *Communication Protocol of Residential and Commercial PV Grid-Connected Inverters* **V1.1.53**; `src/sungrow_modbus/string_inverter/registers.py` | MIT (ha-modbus-manager) |
 | SBR battery | `legacy/additional_sensors/modbus_sungrow_SBR_battery.yaml`, input 10740-10788 | MIT, this repo |
 | SBH battery | nothing yet | — |
 | iHomeManager | Sungrow's *Communication Protocol of iHomeManager* V1.0.1/V1.0.2 and [ha-modbus-manager](https://github.com/TCzerny/ha-modbus-manager)'s 53-register map | MIT (ha-modbus-manager) |
