@@ -11,9 +11,10 @@ twice, once per protocol, rather than gated per family.
 
 **Every address here comes from ha-modbus-manager's
 `sungrow_sg_dynamic.yaml`** (MIT, TCzerny, commit `4a1e662`), which is built
-from V1.1.53. No SG reading has been surveyed yet, so nothing here is
-measured: a field's docstring says which models the source says answer it,
-and the entity layer creates an entity only for a field that read a value.
+from V1.1.53. Two SG5.0RS surveys (`device-survey/results/string_inverter/`)
+read every block through a WiNet-S; a value there is measured only on that
+model. A field's docstring says which models the source says answer it, and
+the entity layer creates an entity only for a field that read a value.
 
 **Nothing here writes.** The power limitation (holding 5007/5008) is read so an
 owner can see that a curtailment is set; writing it waits for a watched write,
@@ -72,6 +73,53 @@ MODELS: dict[int, str] = {
     0x2C27: "SG350HX",
 }
 
+#: How many MPP trackers each model has, from the same source's model table
+#: (many of its entries marked unverified against a datasheet). Measured on
+#: the SG5.0RS only: two trackers answer, and MPPT3 and up read 0 where the
+#: protocol promises 0xFFFF, so a value alone cannot say a tracker exists.
+MPPT_COUNTS: dict[int, int] = {
+    0x2603: 2,  # SG3.0RS
+    0x2604: 2,  # SG3.6RS
+    0x2605: 2,  # SG4.0RS
+    0x2606: 2,  # SG5.0RS
+    0x2607: 2,  # SG6.0RS
+    0x2608: 3,  # SG8.0RS
+    0x2609: 3,  # SG10RS
+    0x243D: 2,  # SG3.0RT
+    0x243E: 2,  # SG4.0RT
+    0x2430: 2,  # SG5.0RT
+    0x2431: 2,  # SG6.0RT
+    0x243C: 2,  # SG7.0RT
+    0x2432: 2,  # SG8.0RT
+    0x2433: 2,  # SG10RT
+    0x2434: 2,  # SG12RT
+    0x2435: 2,  # SG15RT
+    0x2437: 2,  # SG20RT
+    0x0026: 2,  # SG10KTL
+    0x0029: 2,  # SG12KTL
+    0x0028: 2,  # SG15KTL
+    0x002A: 2,  # SG20KTL
+    0x0027: 2,  # SG30KTL
+    0x002D: 2,  # SG36KTL
+    0x002F: 2,  # SG40KTL
+    0x010F: 1,  # SG60KTL
+    0x0138: 1,  # SG80KTL
+    0x0141: 3,  # SG30KTL-M
+    0x0135: 3,  # SG40KTL-M
+    0x011B: 4,  # SG50KTL-M
+    0x0131: 4,  # SG60KTL-M
+    0x2C10: 3,  # SG30CX
+    0x2C00: 3,  # SG33CX
+    0x2C01: 4,  # SG40CX
+    0x2C02: 5,  # SG50CX
+    0x2C22: 9,  # SG75CX
+    0x2C12: 12,  # SG100CX
+    0x2C06: 9,  # SG110CX
+    0x2C0C: 12,  # SG250HX
+    0x2C26: 12,  # SG320HX
+    0x2C27: 12,  # SG350HX
+}
+
 #: What input 5038, the work state, says. Codes, not bits.
 WORK_STATES: dict[int, str] = {
     0x0000: "run",
@@ -88,6 +136,9 @@ WORK_STATES: dict[int, str] = {
     0x2500: "communicate fault",
     0x1111: "uninitialized",
 }
+
+#: The work states that mean the inverter is not producing because of a fault.
+FAULT_STATES = frozenset({"fault", "communicate fault"})
 
 #: The power limitation switch, holding 5007.
 SWITCH: dict[int, str] = {0xAA: "on", 0x55: "off"}
@@ -113,7 +164,7 @@ def _meaning(table: dict[int, str], code: RegisterValue) -> str | None:
 
 
 class SgRealtime(Component):
-    """PV, AC and state, input 5003-5038, in one read. Fast tier.
+    """PV, AC and state, input 5003-5038, in one read. Realtime tier.
 
     The block the hybrid also has, up to 5035, then the SG's own grid
     frequency and work state.
@@ -185,9 +236,19 @@ class SgRealtime(Component):
         """What the work state code means, from `WORK_STATES`."""
         return _meaning(WORK_STATES, self.work_state_raw)
 
+    @property
+    def fault_reported(self) -> bool | None:
+        """Whether the work state is a fault, or None where it did not read.
+
+        `fault` and `communicate fault` only: `alarm run` still runs. A code
+        the table does not name is no evidence either way, so None.
+        """
+        state = self.work_state
+        return None if state is None else state in FAULT_STATES
+
 
 class SgMeter(Component):
-    """Meter, load and grid energy, input 5083-5104. Medium tier.
+    """Meter, load and grid energy, input 5083-5104. Fast tier.
 
     The source says V1.1.53 documents this block for the KTL series, and
     adds the RS models (and the SG10RT) undocumented. Its own component so
@@ -242,8 +303,8 @@ class SgMeter(Component):
 class SgTrackers(Component):
     """Daily running time, MPPT4-12 and the month's yield, input 5113-5137.
 
-    Medium tier. The trackers past three exist on the larger models only, and
-    read 0xFFFF elsewhere.
+    Medium tier. The trackers past three exist on the larger models only; the
+    source says they read 0xFFFF elsewhere, and an SG5.0RS reads them as 0.
     """
 
     register_space = "input"
@@ -296,7 +357,7 @@ class SgTrackers(Component):
 
 
 class SgPrecision(Component):
-    """The high-resolution yield, insulation and bus, input 5144-5151. Slow tier."""
+    """The high-resolution yield, insulation and bus, input 5144-5151. Slowest tier."""
 
     register_space = "input"
 
@@ -317,7 +378,7 @@ class SgPrecision(Component):
 
 
 class SgPowerLimit(Component):
-    """The power limitation as set, holding 5007-5008. Slow tier, read only."""
+    """The power limitation as set, holding 5007-5008. Slowest tier, read only."""
 
     register_space = "holding"
 

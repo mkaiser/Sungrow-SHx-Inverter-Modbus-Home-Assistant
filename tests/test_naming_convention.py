@@ -44,6 +44,7 @@ from custom_components.sungrow_modbus.number_descriptions import NUMBER_DESCRIPT
 from custom_components.sungrow_modbus.select_descriptions import SELECT_DESCRIPTIONS
 from custom_components.sungrow_modbus.sensor_descriptions import SENSOR_DESCRIPTIONS
 from custom_components.sungrow_modbus.string_inverter_descriptions import (
+    STRING_INVERTER_BINARY_DESCRIPTIONS,
     STRING_INVERTER_DESCRIPTIONS,
 )
 from custom_components.sungrow_modbus.survey_entities import SURVEY_ENTITIES
@@ -75,7 +76,11 @@ DESCRIPTIONS = {
         # An SG's, hand-written like the wallbox's: no legacy name either.
         *STRING_INVERTER_DESCRIPTIONS,
     ),
-    "binary_sensor": (*DERIVED_BINARY_SENSORS, *WALLBOX_BINARY_DESCRIPTIONS),
+    "binary_sensor": (
+        *DERIVED_BINARY_SENSORS,
+        *WALLBOX_BINARY_DESCRIPTIONS,
+        *STRING_INVERTER_BINARY_DESCRIPTIONS,
+    ),
     # The writable platforms are held to the same convention. They carry the
     # worst of the YAML's names -- `Battery Max Soc`, `Battery Reserved SoC
     # for Backup` -- which is exactly why they are checked and not exempted.
@@ -283,6 +288,7 @@ DEVICE_OF = {
         ("wallbox", WALLBOX_DESCRIPTIONS),
         # An SG entry's own inverter: never on one page with a hybrid's.
         ("string_inverter", STRING_INVERTER_DESCRIPTIONS),
+        ("string_inverter", STRING_INVERTER_BINARY_DESCRIPTIONS),
     )
     for description in group
 }

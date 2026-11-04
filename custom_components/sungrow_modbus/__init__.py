@@ -125,7 +125,7 @@ DIAGNOSTIC_PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SENSOR]
 
 #: What an ordinary SG entry sets up: its readings, and nothing that writes.
 #: Read only by decision, until a write has been watched on one.
-STRING_INVERTER_PLATFORMS: list[Platform] = [Platform.SENSOR]
+STRING_INVERTER_PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR]
 
 
 def _platforms(entry: SungrowConfigEntry) -> list[Platform]:

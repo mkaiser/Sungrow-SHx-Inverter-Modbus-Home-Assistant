@@ -237,6 +237,7 @@ OVERRIDES: dict[str, str] = {
     "sg_mppt11_current": "MPPT11 current",
     "sg_mppt12_voltage": "MPPT12 voltage",
     "sg_mppt12_current": "MPPT12 current",
+    "sg_fault_reported": "Fault reported",
     "sg_negative_voltage_to_ground": "Negative voltage to ground",
     "sg_bus_voltage": "Bus voltage",
     "sg_power_limitation": "Power limitation",

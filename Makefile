@@ -68,6 +68,12 @@ sim-logger-bg: ## A hand-written Logger1000 (unit 247) on :5022, in the backgrou
 	@echo "Logger simulator starting on :5022 -- tail -f /tmp/sim-logger.log"
 .PHONY: sim-logger-bg
 
+sim-sg-bg: ## An SG5.0RS (unit 1) from a real survey on :5023, in the background
+	nohup $(PY) scripts/dev/simulator.py --port 5023 --unit-id 1 \
+		--seed scripts/dev/simulator_sg.json > /tmp/sim-sg.log 2>&1 &
+	@echo "SG simulator starting on :5023 -- tail -f /tmp/sim-sg.log"
+.PHONY: sim-sg-bg
+
 # The [b] is not a typo: it stops the pattern matching this recipe's own
 # shell, whose command line contains the pattern itself.
 stop: ## Stop a backgrounded Home Assistant and simulator
@@ -163,6 +169,11 @@ scan-sim-logger: ## The survey against the Logger simulator -- needs `make sim-l
 	$(PY) device-survey/scripts/python/sungrow_survey.py 127.0.0.1 --port 5022 \
 		--address hidden --reporter simulator --comment '' --timeout 2 $(ARGS)
 .PHONY: scan-sim-logger
+
+scan-sim-sg: ## The survey against the SG simulator -- needs `make sim-sg-bg`
+	$(PY) device-survey/scripts/python/sungrow_survey.py 127.0.0.1 --port 5023 \
+		--address hidden --reporter simulator --comment '' --timeout 2 $(ARGS)
+.PHONY: scan-sim-sg
 
 # The launcher a contributor runs, on a library that is not released yet.
 # uv builds the environment from the script's header, as for anybody, and

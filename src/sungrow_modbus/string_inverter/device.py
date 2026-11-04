@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 import logging
+import re
 from typing import TYPE_CHECKING
 
 from modbus_connection import ModbusConnectionError, ModbusError
@@ -30,6 +31,7 @@ from ..identity import InverterIdentity
 from ..model import UpdateReport
 from .registers import (
     COMPONENTS,
+    MPPT_COUNTS,
     SgMeter,
     SgPowerLimit,
     SgPrecision,
@@ -81,6 +83,23 @@ class SungrowStringInverter(MappedDevice):
     def output_type(self) -> int | None:
         """0 single phase, 1 three-phase 3P4L, 2 three-phase 3P3L, or None."""
         return self.identity.output_type
+
+    def serves(self, field: str) -> bool:
+        """Whether a field belongs here: it read a value, and the hardware exists.
+
+        A value is not enough for phases or trackers: a single-phase SG5.0RS
+        reads phases B and C, and MPPT3 and up, as 0 rather than as the
+        unavailable value. So the output type (input 5002) decides the phases,
+        and the model's tracker count (`MPPT_COUNTS`) the trackers; a model
+        with no count keeps every tracker that read.
+        """
+        if self.field(field) is None:
+            return False
+        if self.output_type == 0 and field.startswith(("phase_b_", "phase_c_")):
+            return False
+        tracker = re.fullmatch(r"mppt(\d+)_(voltage|current)", field)
+        count = MPPT_COUNTS.get(self.device_type_code or -1)
+        return tracker is None or count is None or int(tracker[1]) <= count
 
     @property
     def model(self) -> str | None:

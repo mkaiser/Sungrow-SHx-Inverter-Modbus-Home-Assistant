@@ -87,11 +87,29 @@ automation:
 - **WiFi or Ethernet** on a dongle cannot be told apart over Modbus; the
   survey asks you.
 - **Not supported yet:** the iHomeManager, the Sungrow Logger, SBH batteries,
-  an SBR's per-module entities, and writing to the wallbox.
+  writing to the wallbox, and writing to an SG string inverter.
 - **The preview sets up diagnostics only**: it identifies the inverter and
   runs the survey, and creates no sensors for the readings.
 
 [compatibility.md](compatibility.md) lists every surveyed model and firmware.
+
+## An SG string inverter
+
+An SG (SG5.0RS and the rest of Sungrow's PV-only inverters) is set up like a
+hybrid and gets a map of its own, **read only**: what it makes, its trackers
+and phases, its totals, its work state, `Fault reported`, and the power
+limitation as set.
+
+- **Energy dashboard**: under *Solar production*, add **Total PV generation
+  (precise)**, in tenths of a kWh; where your model does not have it, **Total
+  PV generation**, in whole kWh. Not *Daily PV generation*: the dashboard
+  wants a total that only climbs.
+- **The meter block** (*Meter active power*, *Load power*, the import and
+  export totals) reads only if a meter is wired to the SG itself. A meter
+  that something else reads leaves these at 0.
+- **Only the trackers and phases your model has** get entities: an SG
+  answers 0 for the ones it lacks, so the model's tracker count and its
+  phase count decide, not the reading.
 
 ## Troubleshooting
 

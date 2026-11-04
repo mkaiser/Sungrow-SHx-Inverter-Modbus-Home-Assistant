@@ -21,7 +21,13 @@ from sungrow_modbus.hybrid_inverter.smoothing import DelayOn
 
 from .coordinator import SungrowConfigEntry, SungrowRuntimeData
 from .derived_descriptions import DERIVED_BINARY_SENSORS
-from .entity import SungrowBinarySensorDescription, SungrowDeviceEntity, SungrowEntity
+from .entity import (
+    SungrowBinarySensorDescription,
+    SungrowDeviceEntity,
+    SungrowEntity,
+    SungrowStringInverterEntity,
+)
+from .string_inverter_descriptions import STRING_INVERTER_BINARY_DESCRIPTIONS
 from .wallbox_descriptions import WALLBOX_BINARY_DESCRIPTIONS
 
 # The coordinator does the polling; entities never talk to the inverter.
@@ -35,6 +41,19 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Sungrow binary sensors."""
     runtime_data = entry.runtime_data
+
+    # An SG: its own two, and nothing of the hybrid's.
+    if runtime_data.is_string_inverter:
+        async_add_entities(
+            SungrowStringInverterBinarySensor(
+                runtime_data.string_inverter[description.component], description
+            )
+            for description in STRING_INVERTER_BINARY_DESCRIPTIONS
+            if description.component in runtime_data.string_inverter
+            and runtime_data.inverter_coordinator.device.serves(description.field)
+        )
+        return
+
     async_add_entities(
         SungrowBinarySensor(runtime_data, description)
         for description in DERIVED_BINARY_SENSORS
@@ -67,6 +86,20 @@ class SungrowWallboxBinarySensor(SungrowDeviceEntity, BinarySensorEntity):
         be the second one invented out of the first.
         """
         value = self.native_value_source
+        return value if isinstance(value, bool) else None
+
+
+class SungrowStringInverterBinarySensor(
+    SungrowStringInverterEntity, BinarySensorEntity
+):
+    """A state an SG reports about itself."""
+
+    entity_description: SungrowBinarySensorDescription
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return the state, or None where it did not read."""
+        value = self.coordinator.device.field(self.entity_description.field)
         return value if isinstance(value, bool) else None
 
 

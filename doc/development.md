@@ -132,7 +132,12 @@ to generate it from. `make sim-ihm-bg` serves it as unit 247 on :5021, and
 serial in an undocumented gap, so the masking runs end to end;
 `tests/test_ihomemanager.py` holds the seed to the map. **A Logger1000**
 likewise: `scripts/dev/simulator_logger.json`, `make sim-logger-bg` on :5022
-and `make scan-sim-logger`, held by `tests/test_logger.py`.
+and `make scan-sim-logger`, held by `tests/test_logger.py`. **An SG5.0RS**
+is the one seed taken from a real reading: `scripts/dev/simulator_sg.json`
+is bleughb's SG survey word for word, with the placeholder serial where the
+survey masked the real one. `make sim-sg-bg` serves it as unit 1 on :5023,
+`make scan-sim-sg` surveys it, and `tests/test_string_inverter.py` holds it
+to the survey.
 
 ## Layout
 
@@ -199,6 +204,11 @@ Each of these is verified in a container or against hardware.
   the devcontainer image (`mcr.microsoft.com/devcontainers/python:3.14-bookworm`).
   Its `bin/` comes first on the image's `PATH`, ahead of the image's own pipx
   tools, so `requirements_dev.txt`'s pytest, mypy and ruff are the ones that run.
+- **The tooling lives in the user site** (`~/.local/lib/python3.14/site-packages`):
+  `setup.sh` pip-installs there, and plain `python` finds it. `python -I`
+  (isolated mode, right for reading an untrusted file) drops the user site,
+  so the library then fails on `import modbus_connection`. A `.venv/` in the
+  checkout is not the environment; nothing here creates or uses one.
 - **Core's `modbus` drives `modbus-connection` with the _tmodbus_ backend,
   not pymodbus.** `import homeassistant.components.modbus` fails outright
   without `modbus-connection[tmodbus]`. `requirements_dev.txt` mirrors the

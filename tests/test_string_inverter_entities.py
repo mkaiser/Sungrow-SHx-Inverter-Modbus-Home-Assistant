@@ -82,19 +82,19 @@ SG_INPUT: dict[int, int] = {
 }
 
 
-def _sg() -> MockModbusUnit:
+def _sg(words: dict[int, int] = SG_INPUT) -> MockModbusUnit:
     """Return an SG answering its realtime and identity blocks, refusing the rest.
 
     Refused, as an RS refuses the meter block the source calls undocumented
     on it: a block that refuses gets no entities, and a refusal is an answer.
     """
     unit = MockModbusConnection().for_unit(1)
-    unit.input = dict(SG_INPUT)
+    unit.input = dict(words)
     unit.holding = {}
     real = unit.read_input_registers
 
     async def answer(address: int, count: int) -> list[int]:
-        unmapped = any(a not in SG_INPUT for a in range(address, address + count))
+        unmapped = any(a not in words for a in range(address, address + count))
         if unmapped and not 4949 <= address < 5038:
             raise IllegalDataAddressError("illegal data address")
         return list(await real(address, count))
@@ -107,7 +107,9 @@ def _sg() -> MockModbusUnit:
     return unit
 
 
-async def _setup(hass: HomeAssistant, mode: str = MODE_DEVICES) -> MockConfigEntry:
+async def _setup(
+    hass: HomeAssistant, mode: str = MODE_DEVICES, words: dict[int, int] = SG_INPUT
+) -> MockConfigEntry:
     entry = MockConfigEntry(
         domain=DOMAIN,
         data={**ENTRY_DATA, CONF_MODE: mode},
@@ -115,7 +117,7 @@ async def _setup(hass: HomeAssistant, mode: str = MODE_DEVICES) -> MockConfigEnt
         title="SG5.0RS",
     )
     entry.add_to_hass(hass)
-    unit = _sg()
+    unit = _sg(words)
     with patch("custom_components.sungrow_modbus.async_get_unit", return_value=unit):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
@@ -161,6 +163,34 @@ async def test_an_sg_entry_is_its_own_device_with_only_what_answered(
     assert all(unique_id.startswith(f"{SERIAL}_sg_") for unique_id in ids)
     assert hass.states.get("sensor.sg5_0rs_total_dc_power").state == "1890"
     assert hass.states.get("sensor.sg5_0rs_work_state").state == "run"
+    assert hass.states.get("binary_sensor.sg5_0rs_fault_reported").state == "off"
+
+
+async def test_a_fault_code_reports_a_fault(hass: HomeAssistant) -> None:
+    await _setup(hass, words={**SG_INPUT, 5037: 0x5500})
+
+    assert hass.states.get("sensor.sg5_0rs_work_state").state == "fault"
+    assert hass.states.get("binary_sensor.sg5_0rs_fault_reported").state == "on"
+
+
+async def test_an_sg5_0rs_gets_no_phase_or_tracker_it_lacks_from_their_zeros(
+    hass: HomeAssistant,
+) -> None:
+    """Measured on two SG5.0RS (`results/string_inverter/`): B, C and MPPT3 read 0.
+
+    Not the unavailable value the source promises, so a value alone would make
+    entities that never move; the output type and the tracker count decide.
+    """
+    zeros = {5014: 0, 5015: 0, 5019: 0, 5020: 0, 5022: 0, 5023: 0}
+    entry = await _setup(hass, words={**SG_INPUT, **zeros})
+
+    ids = _unique_ids(hass, entry)
+    assert f"{SERIAL}_sg_phase_a_voltage" in ids
+    for phase in ("b", "c"):
+        for quantity in ("voltage", "current"):
+            assert f"{SERIAL}_sg_phase_{phase}_{quantity}" not in ids
+    assert f"{SERIAL}_sg_mppt2_voltage" in ids
+    assert f"{SERIAL}_sg_mppt3_voltage" not in ids, "an SG5.0RS has two trackers"
 
 
 async def test_a_diagnostics_entry_surveys_an_sg_into_its_own_document(

@@ -214,6 +214,9 @@
       "pv_power_limitation_enabled": {
         "name": "PV power limitation"
       },
+      "sg_fault_reported": {
+        "name": "Fault reported"
+      },
       "wallbox_charging": {
         "name": "Charging"
       },

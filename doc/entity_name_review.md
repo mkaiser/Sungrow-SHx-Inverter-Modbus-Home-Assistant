@@ -1,6 +1,6 @@
 # The entity names, for review
 
-**223 entities**, which is everything modern mode creates. The **entity id**
+**224 entities**, which is everything modern mode creates. The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
 it -- but only at creation. Rename later and anybody who already has the entity
 keeps the id they were born with; only the label changes. So the cost of a late
@@ -56,12 +56,13 @@ better.
 | Total consumed energy | `sensor.sh10rt_total_consumed_energy` | kWh | Total consumed energy |
 | Total direct energy consumption | `sensor.sh10rt_total_direct_energy_consumption` | kWh | Total direct energy consumption |
 
-## Everything else (48)
+## Everything else (49)
 
 | Name | Entity id | Unit | Legacy name |
 | --- | --- | --- | --- |
 | (no name in strings.json) | `sensor.sh10rt_no_name_in_strings_json` | V |  |
 | (no name in strings.json) | `sensor.sh10rt_no_name_in_strings_json` | unit |  |
+| (no name in strings.json) | `binary_sensor.sh10rt_no_name_in_strings_json` |  |  |
 | ARM software version | `sensor.sh10rt_arm_software_version` |  | Sungrow Arm Software **←** |
 | Active power limitation shutdown at zero | `sensor.sh10rt_active_power_limitation_shutdown_at_zero` |  | APL shutdown at zero raw **←** |
 | Alarm | `sensor.sh10rt_alarm` |  |  |

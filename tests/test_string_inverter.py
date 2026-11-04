@@ -24,6 +24,7 @@ from sungrow_modbus import string_inverter
 from sungrow_modbus.const import DEVICE_TYPES
 from sungrow_modbus.discovery import async_identify
 from sungrow_modbus.identity import STRING_INVERTER
+from sungrow_modbus.model import words_text
 from sungrow_modbus.string_inverter import (
     COMPONENTS,
     MODELS,
@@ -324,3 +325,42 @@ async def test_a_lost_link_once_is_retried() -> None:
     report = await device.async_update_tier("realtime")
     assert report.updated == {"sg_realtime"}
     assert device.field("total_dc_power") == 1890
+
+
+def test_the_simulator_seed_is_the_survey_it_came_from() -> None:
+    """`scripts/dev/simulator_sg.json` is bleughb's dump, word for word.
+
+    Only the serial differs: the survey masked it, the seed carries the
+    placeholder, so the masking runs end to end against the simulator.
+    """
+    repo = Path(__file__).resolve().parents[1]
+    seed = json.loads((repo / "scripts/dev/simulator_sg.json").read_text())
+    survey = json.loads(
+        (
+            repo
+            / "device-survey/results/string_inverter"
+            / "sg5-0rs-1p-bleughb-anon-85541281016.json"
+        ).read_text()
+    )["string_inverter"]["register_dump"]
+
+    for space in ("input", "holding"):
+        served = {
+            int(start) + offset: word
+            for start, words in seed[space].items()
+            for offset, word in enumerate(words)
+        }
+        measured = {int(a): w for a, w in survey[space].items() if w is not None}
+        serial = range(4989, 4999) if space == "input" else range(0)
+        assert {a: w for a, w in served.items() if a not in serial} == measured
+    assert (
+        words_text([seed["input"]["4949"][4989 - 4949 + i] for i in range(10)]).strip()
+        == "A123456789"
+    )
+
+
+def test_every_model_has_a_tracker_count() -> None:
+    """`serves` falls back to "keep it" without one; every mapped model has one."""
+    from sungrow_modbus.string_inverter.registers import MODELS, MPPT_COUNTS
+
+    assert set(MPPT_COUNTS) == set(MODELS)
+    assert MPPT_COUNTS[0x2606] == 2, "measured: two trackers answer on an SG5.0RS"

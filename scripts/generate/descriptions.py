@@ -813,6 +813,7 @@ def descriptions() -> list[tuple[str, str, str]]:
     from custom_components.sungrow_modbus.select_descriptions import SELECT_DESCRIPTIONS
     from custom_components.sungrow_modbus.sensor_descriptions import SENSOR_DESCRIPTIONS
     from custom_components.sungrow_modbus.string_inverter_descriptions import (
+        STRING_INVERTER_BINARY_DESCRIPTIONS,
         STRING_INVERTER_DESCRIPTIONS,
     )
     from custom_components.sungrow_modbus.switch_descriptions import SWITCH_DESCRIPTIONS
@@ -851,7 +852,11 @@ def descriptions() -> list[tuple[str, str, str]]:
     ]
     entries += [
         ("binary_sensor", d)
-        for d in (*DERIVED_BINARY_SENSORS, *WALLBOX_BINARY_DESCRIPTIONS)
+        for d in (
+            *DERIVED_BINARY_SENSORS,
+            *WALLBOX_BINARY_DESCRIPTIONS,
+            *STRING_INVERTER_BINARY_DESCRIPTIONS,
+        )
     ]
     entries += [("number", d) for d in NUMBER_DESCRIPTIONS]
     entries += [("switch", d) for d in SWITCH_DESCRIPTIONS]

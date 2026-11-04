@@ -21,6 +21,7 @@ from .const import DOMAIN
 from .coordinator import (
     SungrowDataUpdateCoordinator,
     SungrowRuntimeData,
+    SungrowStringInverterCoordinator,
     SungrowSubDeviceCoordinator,
 )
 
@@ -395,6 +396,41 @@ class SungrowDeviceEntity(CoordinatorEntity[SungrowSubDeviceCoordinator]):
         Without this, one refused block would take every entity on the device
         unavailable, which is a report that is wrong rather than incomplete.
         """
+        if not super().available:
+            return False
+        report = self.coordinator.data
+        if report is None:
+            return False
+        return self.entity_description.component not in report.failed
+
+
+class SungrowStringInverterEntity(CoordinatorEntity[SungrowStringInverterCoordinator]):
+    """Base for a value read off an SG.
+
+    Its own small base rather than `SungrowEntity`, which is built on the
+    hybrid's map: capabilities, derived values, writes. The unique id is
+    `{serial}_{key}`, the inverter's own shape, and every key starts `sg_`.
+    """
+
+    _attr_has_entity_name = True
+    entity_description: SungrowEntityDescription
+
+    def __init__(
+        self,
+        coordinator: SungrowStringInverterCoordinator,
+        entity_description: SungrowEntityDescription,
+    ) -> None:
+        """Initialize the entity."""
+        super().__init__(coordinator)
+        self.entity_description = entity_description
+        serial = coordinator.device.serial_number
+        assert serial is not None
+        self._attr_unique_id = f"{serial}_{entity_description.key}"
+        self._attr_device_info = coordinator.device_info
+
+    @property
+    def available(self) -> bool:
+        """Whether the block this entity reads answered its last poll."""
         if not super().available:
             return False
         report = self.coordinator.data

@@ -8,10 +8,10 @@ resolves to a real field or property of `SungrowStringInverter`, and no
 `_raw` code gets an entity -- its decoded property does.
 
 **What gets an entity is decided per device**, after the first poll: an SG5.0RS
-has two trackers and one phase, an SG110CX twelve and three, and the map is
-the protocol's, unmeasured. A field that read nothing -- refused, or the
-protocol's "unavailable" -- gets no entity, rather than one that is
-unavailable forever.
+has two trackers and one phase, an SG110CX nine and three. A field that
+read nothing -- refused, or the protocol's "unavailable" -- gets no entity,
+rather than one that is unavailable forever; nor does a phase or tracker the
+model lacks, which an SG answers as 0 (`SungrowStringInverter.serves`).
 
 **Nothing is writable.** The power limitation is shown so an owner can see a
 curtailment is set; writing it waits for a watched write.
@@ -19,6 +19,7 @@ curtailment is set; writing it waits for a watched write.
 
 from __future__ import annotations
 
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import (
     PERCENTAGE,
@@ -34,7 +35,7 @@ from homeassistant.const import (
     UnitOfTime,
 )
 
-from .entity import SungrowSensorDescription
+from .entity import SungrowBinarySensorDescription, SungrowSensorDescription
 
 #: The prefix every key carries, so no translation key meets a hybrid's.
 PREFIX = "sg_"
@@ -222,5 +223,17 @@ STRING_INVERTER_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         "power_limitation_setting",
         unit=PERCENTAGE,
         category=EntityCategory.DIAGNOSTIC,
+    ),
+)
+
+#: States, where a boolean is the honest shape, as on the hybrid. The power
+#: limitation's on/off is already the `power_limitation` sensor.
+STRING_INVERTER_BINARY_DESCRIPTIONS: tuple[SungrowBinarySensorDescription, ...] = (
+    SungrowBinarySensorDescription(
+        key=f"{PREFIX}fault_reported",
+        component="sg_realtime",
+        field="fault_reported",
+        translation_key=f"{PREFIX}fault_reported",
+        device_class=BinarySensorDeviceClass.PROBLEM,
     ),
 )
