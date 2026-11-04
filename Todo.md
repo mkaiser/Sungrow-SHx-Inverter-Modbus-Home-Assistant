@@ -203,10 +203,13 @@ Structure:
 
 17. **A first SG survey** (#789, #790). The whole SG map is the protocol
     document's, unmeasured; bleughb has two SG5.0RS and offered, and
-    0.1.0a25 reads one. Settles what an RS answers: the meter block (5083-5104,
-    undocumented on RS by the source), the per-string currents at input
-    7013, the holding block from 5000, and whether the tiers suit it.
-    Writes (the power limitation, holding 5007-5008) wait for a watched one.
+    0.1.0a25 reads one. Ingested 2026-11-04 (two SG5.0RS, #786): the read
+    block answers through a WiNet-S, the meter block (5083-5104) and the
+    per-string block (7013) read 0 and settle nothing, holding 5019 reads
+    nothing. Open: whether the tiers suit it, and whether those zeros are
+    capability or absence (a cable read, an inverter with its own meter).
+    Writes (the power limitation, holding 5006-5007, which bleughb writes
+    every ~30 s on both) wait for a watched one.
 
 # Future work
 

@@ -290,3 +290,12 @@ battery but the house, with two SG5.0RS beside it, moved more. A restart: 4 s, 2
 [SBR battery](entities/device-sbr-battery.md): each fitted module's highest and lowest cell
 are now diagnostic entities, disabled by default, gated on a non-zero cell type. No new
 reading; the gate is held to the cable documents already ingested.
+
+## [2026-11-04] ingested | bleughb's two SG5.0RS and the SG power limitation note (#786)
+
+The first string-inverter surveys: two diagnostics downloads of 0.1.0a25 through a WiNet-S on
+WiFi, each `survey` section committed unchanged under `device-survey/results/string_inverter/`.
+The read block (input 4949-5228 and 7012-7031, holding 4999-5048) answers in one round; the
+meter block and the per-string block read 0. Both machines read the power limitation on at 100 %.
+With them the owner's note on holding 5006 and 5007, which curtail the output; new entity page
+[SG-RS](entities/device-sg-rs.md). No write watched, so no code follows.

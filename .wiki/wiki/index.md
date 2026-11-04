@@ -7,6 +7,7 @@
 - [SBH battery](entities/device-sbh-battery.md) — High-voltage pack for the SH-T, unit 2 through a dongle #battery #sbh #sub-device
 - [SBR battery](entities/device-sbr-battery.md) — Unit 200 direct, 2 through a WiNet-S; three to eight modules, per-module cell extremes; cells and modules not forwarded by a dongle #battery #sbr #sub-device
 - [SH-RT hybrid inverters](entities/device-sh-rt.md) — Three-phase SAPPHIRE-H hybrids: what is established and which surveys show it #inverter #sh-rt #sapphire-h #three-phase
+- [SG-RS string inverters](entities/device-sg-rs.md) — The single-phase PV-only SG5.0RS on SUNSTONE-S; the read block answers through a WiNet-S, the power limitation is holding 5006-5007 #inverter #sg-rs #string-inverter
 - [SH-RS hybrid inverters](entities/device-sh-rs.md) — Single-phase SUNSTONE-H hybrids, four surveys through a dongle; PV cut confirmed on P065, 13074 1:1 on P065 and P057 #inverter #sh-rs #sunstone-h #single-phase
 - [SH-T hybrid inverters](entities/device-sh-t.md) — SH15T and SH20T on PEARL-H, only read through a dongle; PV cut confirmed on P071 #inverter #sh-t #pearl-h #three-phase
 - [Sungrow AC wallbox](entities/device-wallbox.md) — Unit 3 through a WiNet-S or 248 over TLS at its own address; read only #wallbox #ac22e-01 #ac011e-01 #sub-device #tls
@@ -22,7 +23,7 @@
 - [SAPPHIRE-H_B001.V000.P023](entities/firmware-sapphire-h-b001-v000-p023.md) — SH-RT, most measured; 13074 writes x10, PV cut confirmed #firmware #sapphire-h-b001-v000-p023
 - [Installation peter-sm](entities/installation-peter-sm.md) — SH10RT-V112 on P023 with an SBR160, seven readings with control tests; 13074 writes x10, forced checks confirmed, the charge window's 33213 write drops the link #installation #peter-sm
 - [Installation bar12](entities/installation-bar12.md) — SH10RT-20 with SBR096, cable and WiNet-S, P020 then P023 #installation #bar12
-- [Installation bleughb](entities/installation-bleughb.md) — AC-coupled SH10RS on P057 with an SBH250 beside two SG5.0RS; 13074 stores as handed #installation #bleughb
+- [Installation bleughb](entities/installation-bleughb.md) — AC-coupled SH10RS on P057 with an SBH250 beside two SG5.0RS, both surveyed; 13074 stores as handed #installation #bleughb
 - [Installation firetribe](entities/installation-firetribe.md) — SH6.0RT-V112 on P023 with SBR096, cable and a busy WiNet-S #installation #firetribe
 - [Installation fullhd23](entities/installation-fullhd23.md) — SH15T on P071 through a WiNet-S #installation #fullhd23
 - [Installation fwitten](entities/installation-fwitten.md) — SH10RT-V112 master/slave cluster, read before and after the P023 upgrade #installation #fwitten
@@ -61,6 +62,7 @@
 
 - [ac22e01-gerd-anon-41346964423-wallbox-tls.json](sources/ac22e01-gerd-anon-41346964423-wallbox-tls-summary.md) — AC22E-01 wallbox, gerd, at its own address over TLS #survey #wallbox #ac22e-01 #gerd #tls
 - [ac22e01-gerd-anon-41346964423-wallbox-tls-2.json](sources/ac22e01-gerd-anon-41346964423-wallbox-tls-2-summary.md) — AC22E-01 wallbox, gerd, over TLS while a car charged; 21320 holds the time of reading during a session #survey #wallbox #ac22e-01 #gerd #tls
+- [bleughb-sg-power-limitation-registers-786.md](sources/bleughb-sg-power-limitation-registers-786-summary.md) — bleughb curtails two SG5.0RS with holding 5006 (switch, 0xAA/0x55) and 5007 (0.1 %); not watched here #string-inverter #sg5-0rs #bleughb #power-limitation
 - [cross_reference_modbus_manager.md](sources/cross-reference-modbus-manager-summary.md) — TCzerny/ha-modbus-manager compared register by register; the MIT iHomeManager map #ihomemanager #cross-reference #licences
 - [gerd-wallbox-charging-session-2026-11-03.md](sources/gerd-wallbox-charging-session-2026-11-03-summary.md) — gerd's AC22E-01 through a 3 h charging session and its end: 21313 falls to 0, status 3-5-6, 21267 about one per 5 s #wallbox #ac22e-01 #gerd #charging-session #tls
 - [gerd-wallbox-isolarcloud-2026-10-30.md](sources/gerd-wallbox-isolarcloud-2026-10-30-summary.md) — gerd's AC22E-01 beside Sungrow's portal: 21201-21206 is the serial, 21300 and 21310 in Wh #wallbox #ac22e-01 #gerd #isolarcloud
@@ -101,6 +103,8 @@
 - [sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-winet.json](sources/sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-winet-summary.md) — SH10RT-V112, B001.V000.P023, fwitten master, a WiNet-S (medium not reported) #survey #sh10rt-v112 #sapphire-h-b001-v000-p023 #fwitten #winet #export-scale
 - [sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan.json](sources/sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan-summary.md) — SH15T, B000.V000.P071, FullHD23, a WiNet-S on Ethernet #survey #sh15t #pearl-h-b000-v000-p071 #fullhd23 #winet_lan
 - [sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan.json](sources/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan-summary.md) — SH15T, B000.V000.P071, GalKar, a WiNet-S on Ethernet; forced charge and a restart, writes refused by a busy dongle #survey #sh15t #pearl-h-b000-v000-p071 #galkar #winet_lan #control-test
+- [sg5-0rs-1p-bleughb-anon-85541281016.json](sources/sg5-0rs-1p-bleughb-anon-85541281016-summary.md) — SG5.0RS, bleughb, a WiNet-S on WiFi; the first string-inverter survey, the read block answers #survey #string-inverter #sg5-0rs #bleughb #winet_wlan
+- [sg5-0rs-1p-bleughb-anon-91627862515.json](sources/sg5-0rs-1p-bleughb-anon-91627862515-summary.md) — SG5.0RS, bleughb, second machine, the same blocks and the same firmware #survey #string-inverter #sg5-0rs #bleughb #winet_wlan
 - [sh10rs-b000v002p057-1p-bleughb-anon-92100523190-battery-sungrow-winet-wlan.json](sources/sh10rs-b000v002p057-1p-bleughb-anon-92100523190-battery-sungrow-winet-wlan-summary.md) — SH10RS, B000.V002.P057, bleughb, a WiNet-S on WiFi, from a diagnostics download, with a control test; 13074 stores as handed #survey #sh10rs #sunstone-h-b000-v002-p057 #bleughb #winet_wlan #control-test
 - [sh10rs-b000v002p059-1p-anonymous-anon-27241675299-battery-sungrow-winet-lan.json](sources/sh10rs-b000v002p059-1p-anonymous-anon-27241675299-battery-sungrow-winet-lan-summary.md) — SH10RS, B000.V002.P059, anonymous, a busy WiNet-S, read only; 31211 answers, the pack reports 32.0 kWh #survey #sh10rs #sunstone-h-b000-v002-p059 #anonymous #winet
 - [sh10rs-b000v002p065-1p-jam3s97-anon-35122522532-battery-sbh300-winet-lan.json](sources/sh10rs-b000v002p065-1p-jam3s97-anon-35122522532-battery-sbh300-winet-lan-summary.md) — SH10RS, B000.V002.P065, Jam3s97, a WiNet-S, with a control test; PV cut through the dongle, 13074 stores as handed, stop refused #survey #sh10rs #sunstone-h-b000-v002-p065 #jam3s97 #winet #control-test
