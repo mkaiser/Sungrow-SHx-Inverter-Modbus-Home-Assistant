@@ -135,7 +135,7 @@ jobs:
     name: Copy the branch head
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Which commit to publish, and the reason it is not simply the branch
       # head.

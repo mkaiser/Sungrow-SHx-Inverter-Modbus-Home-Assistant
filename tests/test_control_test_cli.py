@@ -13,6 +13,7 @@ import argparse
 import importlib.util
 import json
 from pathlib import Path
+import sys
 
 from modbus_connection import ModbusTimeoutError
 from modbus_connection.mock import MockModbusUnit
@@ -29,6 +30,9 @@ SCRIPT = (
     / "python"
     / "sungrow_control_test.py"
 )
+
+# The script imports its siblings (`probe`, ...) as a launcher run finds them.
+sys.path.insert(0, str(SCRIPT.parent))
 
 
 @pytest.fixture(scope="module")
