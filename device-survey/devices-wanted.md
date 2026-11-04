@@ -14,7 +14,7 @@ details are under [Why each one](#why-each-one).
 | --- | --- | --- |
 | 1 | **Any single-phase inverter** (RS, K or MG family) | Nothing single-phase has ever been read; 18 of the 42 models are. Every capability the RS family is given today is an inference |
 | 2 | **An iHomeManager** (unit 247, port 502, 503 or 504) | The first reading of the device at all. Its Modbus TCP must be opened in the app first, see [item 2](#2-an-ihomemanager) |
-| 3 | **An SH-T (SH15T, SH20T…) on its own LAN port**, with the control test, in daylight | Every T so far was read through a WiNet-S. Settles the export limit's write scale (register 13074) on P071, the PV cut on P071, and an SBH pack on a direct link |
+| 3 | **An SH-T (SH15T, SH20T…) through its WiNet-S**, with the control test and feed-in limitation allowed, in daylight with export | Every T so far was read through a WiNet-S, and the T seems to have no LAN port of its own. Settles the export limit's write scale (register 13074) on P071 by what the inverter does, and the PV cut on P071 |
 | 4 | **A Sungrow Logger1000, 3000 or 4000** | The first reading. Answer *a Logger* to the transport question so the survey also reads the Logger itself |
 | 5 | **A wallbox other than the one already read**, an AC011E-01 above all | Which of its registers identify a unit and which are a model constant, and a scale another source reads differently |
 | 6 | **A charging car**, at any house with a Sungrow wallbox | What input 21313 does over a session, and whether 21308/21310 are signed. Two runs a few minutes apart while charging |
@@ -54,7 +54,7 @@ control test, and one wallbox read at its own address.
 | Version 1 | `SAPPHIRE-H_01011.95.03`, `.95.12`, `.95.13`, `.95.14`, `PEARL-H_01011.01.45` | see item 7 |
 | Communication module | WiNet-S `P040`, `P043`, `P044`, `P045`; WiNet-S2 `P032`, `P033` | a Logger |
 | Battery | SBR096, SBR128, SBR160, SBH200, SBH400, one Pylontech | the other SBR and SBH sizes, other third-party packs |
-| Transport | direct LAN, WiNet-S and WiNet-S2, wired and WiFi | a Logger, a Modbus proxy, **a T on its own LAN port** |
+| Transport | direct LAN, WiNet-S and WiNet-S2, wired and WiFi | a Logger, a Modbus proxy, **a T on a cable, if one exists** |
 | Wallbox | AC22E-01 | AC011E-01, AC007-00 |
 | iHomeManager | none | any |
 | Sungrow Logger | none | any |
@@ -80,11 +80,14 @@ finds it at unit 247 and writes a document of its own. It may also silence
 inverter registers 5741-5746 (#647, #651). See
 [iHomeManager](../.wiki/wiki/entities/device-ihomemanager.md).
 
-### 3. An SH-T on its own LAN port, in daylight
+### 3. An SH-T through its WiNet-S, in daylight, with export
 
-Every T so far was read through a WiNet-S. Run it with the control test, PV
-cut allowed: it settles 13074's write scale and the PV cut on P071, and reads
-an SBH pack's cell layout, which a dongle refuses. See
+Every T so far was read through a WiNet-S, and the T seems to have no LAN
+port of its own (an SH20T owner says so; Sungrow's SH5T-SH25T manual lists a
+WiNet-S2 and a COM2 terminal). Run it with the control test, feed-in
+limitation and PV cut allowed, while the house exports: through a dongle only
+what the inverter does counts, and that settles 13074's write scale and the PV
+cut on P071. An SBH pack's cell layout, which a dongle refuses, stays unread. See
 [SH-T](../.wiki/wiki/entities/device-sh-t.md).
 
 ### 4. A Sungrow Logger1000, 3000 or 4000

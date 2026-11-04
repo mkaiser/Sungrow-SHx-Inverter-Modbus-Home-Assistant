@@ -36,17 +36,23 @@ _Nothing that can start without hardware, a contributor or a decision._
    21308/21310 are signed. Still unnamed: input 21313 (falls to 0 when
    charging ends, not power) and input 21365 (-71 to -63, flat). A wallbox
    restart would show whether 21267 falls to near zero.
-2. **An SH-T on its own LAN port, in daylight** (any SH15T owner with
-   one; ra1k_0 says the SH20T has none, #772). Every T so far was read
-   through a WiNet-S, and one run with the control test
-   (`--enable-export-limit`) settles three things:
+2. **An SH-T through its WiNet-S, in daylight, with export** (any SH15T
+   owner; ra1k_0 says the SH20T has no LAN port of its own, #772, and
+   Sungrow's SH5T-SH25T manual lists a WiNet-S2 Ethernet connection and a
+   COM2 terminal, no LAN terminal: the manual's contents page, read through a
+   search; its text was not fetched). So the T has **no cable path** to ask
+   for, and what a dongle run can settle is its behavioural leg only. One run
+   with the control test (`--enable-export-limit`) settles:
    - **13074 on P071.** The dongle reported a word written with feed-in
-     limitation off as handed, where B001 ignores it. If P071 really stores
-     1:1, the integration's unanswered-probe fallback of ten sets a tenth of
-     the asked export limit on an SH-T.
-   - **An SBH on a direct link.** `Capability.SUNGROW_BATTERY` is granted
-     for an SBR found on its own unit (`with_sungrow_battery`); an SBH is
-     not until its own-unit reading is seen without a dongle.
+     limitation off as handed, where B001 ignores it. Readbacks through a
+     dongle are stale, so only the export check (the house must export) can
+     say whether P071 stores 1:1; if it does, the integration's
+     unanswered-probe fallback of ten sets a tenth of the asked export limit
+     on an SH-T.
+   - **An SBH on a direct link** cannot be had without a cable.
+     `Capability.SUNGROW_BATTERY` is granted for an SBR found on its own unit
+     (`with_sungrow_battery`); an SBH is not until its own-unit reading is
+     seen without a dongle. Parked until a T is found with a direct path.
    - **Whether an iHomeManager silences 5741-5746** (#647, #651), which
      every WiNet-S refuses anyway; ra1k_0 has one.
    Still open on the T besides: whether 13018 acts as 31211 does.
