@@ -320,3 +320,13 @@ Because bleughb's SG5.0RS reads MPPT3 to MPPT12 and phases B and C as 0, the int
 decides an SG's tracker and phase entities by the source's tracker count per model and the
 output type ([SG-RS](entities/device-sg-rs.md)). The SG also gets `Fault reported` from its work
 state, and `scripts/dev/simulator_sg.json` serves bleughb's survey for the dev loop.
+
+## [2026-11-04] ingested | the discharge window at mkaiser, on P020
+
+Two evening runs with `--discharge-window`, no PV, the owner's Home Assistant restarted. The first
+skipped it, the battery discharging 495 W against the 500 W floor; with the house load raised the
+second moved every window away from now and the discharge went 722.5, 0, 719 W: it works on P020.
+gerd's cable run (3799, 0, 3800 W on P022, 2026-11-03) was the first; the control-test page and
+the 2026-11-01 entries said it had run nowhere. Forced charge and discharge obeyed, the restore
+left nothing changed, 8 of 9 readbacks matched (13074 kept its word, feed-in limitation being off).
+

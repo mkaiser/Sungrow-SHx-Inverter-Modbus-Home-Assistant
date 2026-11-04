@@ -10,7 +10,8 @@ created: '2026-10-29'
 The maintainer's [SH10RT](device-sh-rt.md) on [P020](firmware-sapphire-h-b001-v000-p020.md) with a
 third-party battery, on its own LAN port. Its control tests matched every readback written,
 13074 writes times ten, and the forced-charging window raised charging to 4499 W (judged "could
-not tell"). Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
+not tell"), and moving the discharge windows away from now stopped a 722.5 W discharge to 0 W and
+it came back ([the check](../sources/mkaiser-discharge-window-2026-11-04-summary.md)). Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
 
 ## Surveys
 

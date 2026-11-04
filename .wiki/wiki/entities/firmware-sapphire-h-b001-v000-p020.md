@@ -12,6 +12,8 @@ SH-RT firmware in the B001 numbering ([SH-RT](device-sh-rt.md)). Version strings
 - [Register 13074](register-13074.md) writes **times ten**.
 - [Register 31211](register-31211.md) answers the sentinel 0xFFFF: no PV cut. Four houses now,
   on SH10RT, SH10RT-20 and SH10RT-V112.
+- The discharge windows obey: moved away from now, a 722.5 W discharge stopped and came back
+  ([mkaiser](../sources/mkaiser-discharge-window-2026-11-04-summary.md)).
 - The history block (inputs 6101-6826) answers whole over the cable, on the SH10RT-V112 and on
   [robbensonmio](installation-robbensonmio.md)'s SH10RT.
 

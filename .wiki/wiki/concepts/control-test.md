@@ -127,7 +127,17 @@ bracket, ahead of drift**: a window standing `WINDOW_START_W` above both neighbo
 setting's doing, as a stop between two windows of real power is (`STOP_BRACKET_W`). And the wait
 after the window is 20 s, not 60. Replayed, all four runs confirm; at mkaiser the fixed check
 confirmed live.
-The discharge window has not run anywhere: it needs a battery discharging at least 500 W.
+**The discharge window works on P020 and P022**: moving every window away from now stopped the
+discharge and the restore brought it back (battery discharge power before, during, after):
+
+| Run | Before | During | After | Verdict |
+| --- | --- | --- | --- | --- |
+| [gerd, P022, cable](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-3-summary.md) | 3799 W | 0 W | 3800 W | did as it was told |
+| [mkaiser, P020, cable](../sources/mkaiser-discharge-window-2026-11-04-summary.md) | 722.5 W | 0 W | 719 W | did as it was told |
+
+The check needs the battery discharging at least 500 W: a first mkaiser run at 495 W skipped it,
+naming the floor, and a run with the house load raised passed. The snapshot's windows were 00:00
+to 24:00 at mkaiser, so the stop is the window leaving "now", not a switch.
 
 ## Drivers
 

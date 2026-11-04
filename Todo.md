@@ -143,12 +143,11 @@ _Nothing that can start without hardware, a contributor or a decision._
     unit or scale on record: it needs a known value (what an owner set it
     to) before it can be an entity.
 
-16. **The discharge window on hardware** (#785). `--discharge-window` has
-    run nowhere: it needs the battery discharging at least 500 W, so an
-    evening run. fwitten's master is the lead (SBR096, P023), with their Home
-    Assistant stopped; mkaiser once its battery is above its floor. Then the
-    device and firmware pages, the log, and the options screenshot in
-    `device-survey/images/` (it shows three switches, now five).
+16. **The options screenshot, and the discharge window on P023** (#785). The
+    discharge window has run on P022 and P020, and the device pages and log say
+    so. Left: `device-survey/images/HA-settings-configure-control-test.png`
+    still shows three switches, now five; and no P023 or SBR house has run it
+    (fwitten's master, with their Home Assistant stopped, in the evening).
 
 17. **The SG's zeros and writes.** On bleughb's two SG5.0RS through a
     WiNet-S, the meter block (5083-5104) and the per-string block (input
@@ -179,13 +178,6 @@ _Nothing that can start without hardware, a contributor or a decision._
 Assumption (to be proven!): Inverter families of the SAME firmware version support the same capabilities / register sets.
 Create a table: columns are inverter family + firmware version, rows are the supported registers/features.
 Maybe indicate if you were not able to test / confirm a register / feature.
-
-## Small fixes
-
-- `doc/preview-mirror/sync.yml` is on `actions/checkout@v5` in this tree;
-  the preview repository's `.github/workflows/sync.yml` must get the same
-  byte-identical copy in the same push, or Validate's "documented preview
-  sync matches" step turns red and stalls the preview.
 
 ## SBR per-module entities
 
