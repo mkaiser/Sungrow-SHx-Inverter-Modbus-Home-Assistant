@@ -47,7 +47,7 @@ control test, and one wallbox read at its own address.
 
 | Axis | Covered | Missing |
 | --- | --- | --- |
-| Inverter model | **7 of 42**: SH10RT, SH10RT-20, SH6.0RT-V112, SH8.0RT-V112, SH10RT-V112, SH15T, SH20T | every model outside RT and T |
+| Inverter model | **8 of 42**: SH10RT, SH10RT-20, SH5.0RT-V112, SH6.0RT-V112, SH8.0RT-V112, SH10RT-V112, SH15T, SH20T | every model outside RT and T |
 | Product family | RT and T | RS, MG, RL, K, CX |
 | Phase / output type | three phase 3P4L only | **single phase**, and three phase 3P3L |
 | Inverter firmware | `B001.V000.P020`, `P022`, `P023`, `B000.V000.P071` | a fifth |
@@ -117,7 +117,8 @@ every later firmware measured ([register 13074](../.wiki/wiki/entities/register-
 A machine in between places the change: `survey.sh control <host>
 --export-scale` asks with one write that changes nothing. A `.95.14` that is
 not 10 kW tells "0.1 % of rated power" from "10 W" apart, which coincide at
-10 kW.
+10 kW. A 5 kW SH5.0RT-V112 on `.95.14` has answered the probe with a refusal, which both
+readings give: a control test on one, with limitation on, settles it.
 
 ### 8. An SBR192 on a direct link
 

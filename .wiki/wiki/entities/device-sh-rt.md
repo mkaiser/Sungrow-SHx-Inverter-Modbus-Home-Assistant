@@ -8,7 +8,7 @@ created: '2026-10-29'
 # SH-RT hybrid inverters
 
 Sungrow's three-phase residential hybrids: SH10RT, SH10RT-20, SH10RT-V112,
-SH8.0RT-V112, SH6.0RT-V112 (`0x0E0D`) and SH6.0RT-20 (`0x0E11`, [one survey](../sources/sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan-summary.md)) in this corpus. The firmware family is `SAPPHIRE-H`. Most of what
+SH8.0RT-V112, SH6.0RT-V112 (`0x0E0D`), SH5.0RT-V112 (`0x0E0C`, [one house](installation-mahagon.md)) and SH6.0RT-20 (`0x0E11`, [one survey](../sources/sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan-summary.md)) in this corpus. The firmware family is `SAPPHIRE-H`. Most of what
 the integration knows was measured on these.
 
 ## What is established
@@ -47,4 +47,4 @@ The ones with a control test:
 [mkaiser](installation-mkaiser.md), [gerd](installation-gerd.md),
 [bar12](installation-bar12.md), [fwitten](installation-fwitten.md),
 [peter-sm](installation-peter-sm.md) and [firetribe](installation-firetribe.md). Read only:
-[robbensonmio](installation-robbensonmio.md) and others published as `anonymous`.
+[mahagon](installation-mahagon.md), [robbensonmio](installation-robbensonmio.md) and others published as `anonymous`.

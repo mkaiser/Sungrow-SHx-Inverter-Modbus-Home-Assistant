@@ -251,12 +251,12 @@ the commit; a survey signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-02T21:52:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-02T21:52:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-04T10:43:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-04T10:43:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked: **2026-11-02 21:52 UTC** (#789).
+Last checked: **2026-11-04 10:43 UTC** (#786).
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 

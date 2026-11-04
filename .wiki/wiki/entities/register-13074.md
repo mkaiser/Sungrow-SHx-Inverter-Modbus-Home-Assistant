@@ -17,6 +17,7 @@ entry.
 | Firmware | A written word is | Measured at |
 | --- | --- | --- |
 | every B001 measured: [P020](firmware-sapphire-h-b001-v000-p020.md), [P022](firmware-sapphire-h-b001-v000-p022.md), [P023](firmware-sapphire-h-b001-v000-p023.md) | **multiplied by ten** before the range check | [mkaiser](installation-mkaiser.md), [bar12](installation-bar12.md), [gerd](installation-gerd.md), [peter-sm](installation-peter-sm.md), [fwitten](installation-fwitten.md) since P023 |
+| [P023](firmware-sapphire-h-b001-v000-p023.md), a 5 kW SH5.0RT-V112 on `.95.14` | **multiplied** by an unknown factor: the probe's write was refused, which ten and 0.1 % of the 5000 W rating both give | [mahagon](installation-mahagon.md), cable |
 | [01011.95.03](firmware-sapphire-h-01011-95-03.md) | stored as handed | [fwitten](installation-fwitten.md) before P023 |
 | [SUNSTONE-H_B000.V002.P065](firmware-sunstone-h-b000-v002-p065.md) (SH-RS) | stored as handed | [Jam3s97](installation-jam3s97.md), through a WiNet-S: the probe's acceptance |
 | [SUNSTONE-H_B000.V002.P057](firmware-sunstone-h-b000-v002-p057.md) (SH-RS) | stored as handed | [bleughb](installation-bleughb.md), through a WiNet-S: the probe's acceptance |

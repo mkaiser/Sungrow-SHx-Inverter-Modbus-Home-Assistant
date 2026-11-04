@@ -55,6 +55,8 @@ no survey is listed as **untested** rather than assumed to work.
 | `sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005` | ra1k_0 | SH20T (`0x0E26`) | WiNet-S, WiFi (reported) | SBH400-V11 | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2` | ra1k_0 | SH20T (`0x0E26`) | WiNet-S, WiFi (reported) | SBH400-V11 | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan` | ra1k_0 | SH20T (`0x0E26`) | WiNet-S, WiFi (reported) | SBH400-V11 | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
+| `sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-meter-direct-lan` | Mahagon | SH5.0RT-V112 (`0x0E0C`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | yes | yes | yes | no |
+| `sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-winet-wlan` | Mahagon | SH5.0RT-V112 (`0x0E0C`) | WiNet-S, WiFi (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
 | `sh60rs-b000v001p068-1p-anonymous-anon-17579213881-battery-sbr192-winet` | anonymous | SH6.0RS (`0x0D10`) | WiNet-S (reported) | — | `ARM_SUNSTONE-H_V11_V01_A` | single phase | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
 | `sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan` | anonymous | SH6.0RT-20 (`0x0E11`) | direct LAN port (reported), **via a Modbus proxy** | SBR064 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan` | Firetribe | SH6.0RT-V112 (`0x0E0D`) | direct LAN port (reported) | SB096 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
@@ -179,6 +181,8 @@ that has only one would make the next pair.
 | SH10RT-V112 | winet | unknown (2 readings) |
 | SH15T | winet_lan | B000.V000.P071 (3 readings) |
 | SH20T | winet_wlan | B000.V000.P071 (3 readings) |
+| SH5.0RT-V112 | direct_lan | B001.V000.P023 (1 reading) |
+| SH5.0RT-V112 | winet_wlan | B001.V000.P023 (1 reading) |
 | SH6.0RS | winet | B000.V001.P068 (1 reading) |
 | SH6.0RT-20 | direct_lan | B001.V000.P023 (1 reading) |
 | SH6.0RT-V112 | direct_lan | B001.V000.P023 (1 reading) |
@@ -230,7 +234,7 @@ last column says what that rules out before anything is even read.
 | `0x0E09` | SH6.0RT-V122 | RT | untested | mppt3, mppt4, pv_power_limitation |
 | `0x0E0A` | SH8.0RT-V122 | RT | untested | mppt3, mppt4, pv_power_limitation |
 | `0x0E0B` | SH10RT-V122 | RT | untested | mppt3, mppt4, pv_power_limitation |
-| `0x0E0C` | SH5.0RT-V112 | RT | untested | mppt3, mppt4, pv_power_limitation |
+| `0x0E0C` | SH5.0RT-V112 | RT | **yes** | mppt3, mppt4, pv_power_limitation |
 | `0x0E0D` | SH6.0RT-V112 | RT | **yes** | mppt3, mppt4, pv_power_limitation |
 | `0x0E0E` | SH8.0RT-V112 | RT | **yes** | mppt3, mppt4, pv_power_limitation |
 | `0x0E0F` | SH10RT-V112 | RT | **yes** | mppt3, mppt4, pv_power_limitation |

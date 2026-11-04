@@ -330,3 +330,13 @@ gerd's cable run (3799, 0, 3800 W on P022, 2026-11-03) was the first; the contro
 the 2026-11-01 entries said it had run nowhere. Forced charge and discharge obeyed, the restore
 left nothing changed, 8 of 9 readbacks matched (13074 kept its word, feed-in limitation being off).
 
+## [2026-11-04] ingested | mahagon's SH5.0RT-V112 on P023 with an SBR096, cable and WiNet-S2 (#786)
+
+The first SH5.0RT-V112 (`0x0E0C`) and the first 5 kW machine on version 1 `.95.14`, two read-only
+runs eight minutes apart with the owner's YAML package polling. On the cable 236 of 245 fields
+answered, with blocks read inconsistently in one round under the polling; through the WiNet-S2
+161 answered, the history, firmware and meter blocks refused as at every dongle. 31211 reads 0x55.
+The export-scale probe was refused three times, so 13074 multiplies; a refusal cannot tell ten from
+0.1 % of the 5000 W rating, so item 7 of the wanted list stays open for a control test on this
+size. The three-module pack's `cell_type_module_n` reads 1, as on the SBR256.
+

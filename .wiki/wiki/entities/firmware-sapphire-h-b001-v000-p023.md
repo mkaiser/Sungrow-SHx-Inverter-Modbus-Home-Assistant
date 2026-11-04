@@ -22,9 +22,14 @@ The most-measured firmware in the corpus.
 - On an SH6.0RT-V112 ([firetribe](installation-firetribe.md)) the 13074 write scale is not
   measured: through a busy WiNet-S its read was refused, and on the cable the inverter
   was starting.
+- On a 5 kW SH5.0RT-V112 with version 1 `.95.14` ([mahagon](installation-mahagon.md)) the probe of
+  13074 was refused three times: it multiplies. The factor is not separated from 0.1 % of the
+  rating, which a refusal cannot show.
 
 ## Surveys
 
+- [SH5.0RT-V112, B001.V000.P023, mahagon, the inverter's own LAN port](../sources/sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-meter-direct-lan-summary.md)
+- [SH5.0RT-V112, B001.V000.P023, mahagon, a WiNet-S2 on WiFi](../sources/sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-winet-wlan-summary.md)
 - [SH6.0RT-V112, B001.V000.P023, firetribe, the inverter's own LAN port](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-summary.md)
 - [SH6.0RT-V112, B001.V000.P023, firetribe, a WiNet-S on Ethernet](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan-summary.md)
 - [SH10RT-20, B001.V000.P023, bar12, the inverter's own LAN port](../sources/sh10rt-20-b001v000p023-3p-bar12-anon-81257679535-battery-sbr096-meter-direct-lan-summary.md)

@@ -54,9 +54,9 @@ The four position fields pack a module and a cell into one word,
 [sisu70's four-module SBR128](../sources/sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-meter-direct-lan-summary.md), and up to 7 (`0x703`) on
 [a seven-module SBR224](../sources/sh10rt-v112-b001v000p023-3p-anonymous-anon-40315531061-battery-sbr224-meter-direct-lan-summary.md),
 and all eight on [robbensonmio's SBR256](installation-robbensonmio.md), all over the cable.
-`cell_type_module_n` is non-zero for each fitted module and 0 for an empty slot (four at sisu70,
+`cell_type_module_n` is non-zero for each fitted module and 0 for an empty slot (three at [mahagon](installation-mahagon.md), four at sisu70,
 five on peter-sm's SBR160, seven on the SBR224, eight on the SBR256). The value itself varies:
-66, 68, 75 or 76 on most packs, 1 on the SBR256 (BCU `SBRBCU-S_22011.01.27`), so it is not a
+66, 68, 75 or 76 on most packs, 1 on the SBR256 (BCU `SBRBCU-S_22011.01.27`) and on mahagon's SBR096 (BCU `SBRBCU-S_22011.01.21`), so it is not a
 presence flag with one meaning.
 
 ## Per-module cell extremes
