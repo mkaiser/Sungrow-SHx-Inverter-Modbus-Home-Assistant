@@ -24,14 +24,19 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.sungrow_modbus.battery_descriptions import (
     BATTERY_DESCRIPTIONS,
     CELL_DESCRIPTIONS,
+    MODULE_DESCRIPTIONS,
     PACK_DESCRIPTIONS,
 )
 from custom_components.sungrow_modbus.const import CONF_UNIT_ID, DOMAIN
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import CONF_HOST, CONF_PORT
+from homeassistant.const import CONF_HOST, CONF_PORT, EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
-from sungrow_modbus.battery.registers import SbrBatteryCells, SbrBatteryPack
+from sungrow_modbus.battery.registers import (
+    SbrBatteryCells,
+    SbrBatteryModules,
+    SbrBatteryPack,
+)
 
 from .conftest import SERIAL
 
@@ -133,7 +138,11 @@ def test_every_description_names_a_field_that_exists(description) -> None:
     a module and a cell through properties on the component, and those are
     the values worth having.
     """
-    components = {"pack": SbrBatteryPack, "cells": SbrBatteryCells}
+    components = {
+        "pack": SbrBatteryPack,
+        "cells": SbrBatteryCells,
+        "modules": SbrBatteryModules,
+    }
     klass = components[description.component]
     declared = description.field in vars(klass)
     computed = isinstance(getattr(klass, description.field, None), property)
@@ -297,7 +306,9 @@ async def test_a_pack_whose_size_the_inverter_does_not_report_is_still_a_device(
     )
     assert device is not None
     assert device.model == "Battery"
-    assert len(_pack_entities(hass, entry.entry_id)) == len(BATTERY_DESCRIPTIONS)
+    assert len(_pack_entities(hass, entry.entry_id)) == len(
+        PACK_DESCRIPTIONS + CELL_DESCRIPTIONS
+    )
 
 
 async def test_a_survey_reads_the_module_block_the_poll_leaves_alone(
@@ -305,10 +316,10 @@ async def test_a_survey_reads_the_module_block_the_poll_leaves_alone(
 ) -> None:
     """The document's pack section is the terminal survey's, modules included.
 
-    The per-module block makes no entity yet -- an absent module reads 0,
-    indistinguishable from a fault -- so polling it would spend the shared
-    link on nothing. A survey reads it once, and the section it publishes is
-    the one `sungrow_survey.py` writes.
+    The poll leaves the per-module block alone while none of its entities is
+    enabled -- here no cell type is non-zero, so there are none at all; setup
+    reads it once to count the modules. A survey reads it too, and the
+    section it publishes is the one `sungrow_survey.py` writes.
     """
     from custom_components.sungrow_modbus.survey_document import async_build
 
@@ -318,7 +329,7 @@ async def test_a_survey_reads_the_module_block_the_poll_leaves_alone(
         hass, sungrow_unit, _pack({**PACK_WORDS, **CELL_WORDS, **module_words})
     )
     battery = entry.runtime_data.battery.device
-    assert battery.field("max_cell_voltage_module_1") is None, "the poll read it"
+    assert not battery.poll_modules, "the poll reads it"
 
     section = (await async_build(hass, entry))["battery_pack"]
 
@@ -327,6 +338,90 @@ async def test_a_survey_reads_the_module_block_the_poll_leaves_alone(
     assert values["max_cell_voltage_module_1"] == pytest.approx(3.3507)
     assert values["max_cell_module"] == 1
     assert section["readings"]["components_that_did_not_answer"] == []
+
+
+#: Two fitted modules of eight, as protocol addresses: highest cells at
+#: 10764-10771, lowest at 10772-10779, cell types at 10780-10787.
+MODULE_WORDS = {
+    10764: 33507,
+    10765: 33484,
+    10772: 33436,
+    10773: 33448,
+    10780: 66,
+    10781: 66,
+}
+
+
+def _module_keys(*modules: int) -> set[str]:
+    """Return the keys of these modules' entities."""
+    return {d.key for module in modules for d in MODULE_DESCRIPTIONS[module]}
+
+
+async def test_each_fitted_module_gets_two_disabled_diagnostic_entities(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """Only modules 1 and 2: the six empty slots read 0 V, not a measurement.
+
+    Disabled by default, so a first setup leaves the block unpolled.
+    """
+    entry = await _setup(
+        hass, sungrow_unit, _pack({**PACK_WORDS, **CELL_WORDS, **MODULE_WORDS})
+    )
+    assert entry.runtime_data.battery_modules == (1, 2)
+
+    module_entities = {
+        item.unique_id.removeprefix(f"{SERIAL}_"): item
+        for item in _pack_entities(hass, entry.entry_id)
+        if item.unique_id.removeprefix(f"{SERIAL}_") in _module_keys(*range(1, 9))
+    }
+    assert set(module_entities) == _module_keys(1, 2)
+    for item in module_entities.values():
+        assert item.disabled_by is er.RegistryEntryDisabler.INTEGRATION
+        assert item.entity_category is EntityCategory.DIAGNOSTIC
+    assert not entry.runtime_data.battery.device.poll_modules
+
+
+async def test_an_enabled_module_entity_is_polled_and_reads(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """Enabling one reloads the entry, and the reload polls the block."""
+    pack = _pack({**PACK_WORDS, **CELL_WORDS, **MODULE_WORDS})
+    entry = await _setup(hass, sungrow_unit, pack)
+    registry = er.async_get(hass)
+    entity_id = registry.async_get_entity_id(
+        "sensor", DOMAIN, f"{SERIAL}_battery_module_2_min_cell_voltage"
+    )
+    assert entity_id is not None
+    registry.async_update_entity(entity_id, disabled_by=None)
+
+    def units(_hass, _entry, _params, unit_id):
+        return sungrow_unit if unit_id == 1 else pack
+
+    with patch("custom_components.sungrow_modbus.async_get_unit", side_effect=units):
+        assert await hass.config_entries.async_reload(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert entry.runtime_data.battery.device.poll_modules
+    state = hass.states.get(entity_id)
+    assert state is not None
+    assert float(state.state) == pytest.approx(3.3448)
+
+
+async def test_a_module_block_of_zeros_creates_no_module_entities(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """A dongle's zeros give no cell type, so no module is fitted."""
+    entry = await _setup(
+        hass,
+        sungrow_unit,
+        _pack({**PACK_WORDS, **CELL_WORDS, **dict.fromkeys(MODULE_WORDS, 0)}),
+    )
+    assert entry.runtime_data.battery_modules == ()
+    created = {
+        item.unique_id.removeprefix(f"{SERIAL}_")
+        for item in _pack_entities(hass, entry.entry_id)
+    }
+    assert not created & _module_keys(*range(1, 9))
 
 
 async def test_an_sbr_on_its_own_unit_grants_the_sungrow_battery_capability(

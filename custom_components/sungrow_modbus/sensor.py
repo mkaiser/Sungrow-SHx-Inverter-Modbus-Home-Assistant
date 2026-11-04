@@ -9,7 +9,11 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from sungrow_modbus.hybrid_inverter.faults import active
 from sungrow_modbus.hybrid_inverter.smoothing import TimeWeightedAverage
 
-from .battery_descriptions import CELL_DESCRIPTIONS, PACK_DESCRIPTIONS
+from .battery_descriptions import (
+    CELL_DESCRIPTIONS,
+    MODULE_DESCRIPTIONS,
+    PACK_DESCRIPTIONS,
+)
 from .const import CONF_MODE, MODE_DEVICES, MODE_DIAGNOSTICS
 from .coordinator import (
     SungrowConfigEntry,
@@ -106,6 +110,8 @@ async def async_setup_entry(
         descriptions = PACK_DESCRIPTIONS
         if runtime_data.battery_has_cells:
             descriptions += CELL_DESCRIPTIONS
+        for module in runtime_data.battery_modules:
+            descriptions += MODULE_DESCRIPTIONS[module]
         async_add_entities(
             SungrowBatterySensor(battery, description) for description in descriptions
         )

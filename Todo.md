@@ -228,12 +228,9 @@ Maybe indicate if you were not able to test / confirm a register / feature.
 
 ## SBR per-module entities
 
-All 24 registers are read, and the position encoding and the per-module
-highest/lowest cell words hold on three to eight modules (wiki: SBR battery,
-#788). `cell_type_module_n` is non-zero for each fitted module, which gives
-the module count, though its value differs by pack (1 on an SBR256, 66-76
-elsewhere). The pack-wide cell spread ships as a sensor (#788); what is left
-is deciding the sixteen per-module entities.
+Each fitted module's highest and lowest cell are diagnostic entities,
+disabled by default (#788), polled only while one is enabled. Left: tell
+robbensonmio on #788 once it is released, and close the issue if they agree.
 
 ## Two specification registers not read
 

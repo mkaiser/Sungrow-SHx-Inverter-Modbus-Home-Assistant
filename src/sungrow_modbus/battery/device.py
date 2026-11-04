@@ -37,12 +37,11 @@ COMPONENTS: dict[str, type] = {
     "cells": SbrBatteryCells,
 }
 
-#: Components a survey reads and a poll never does.
+#: Components a survey always reads and a poll only when asked to.
 #:
-#: The per-module block becomes no entity yet -- a module that is not fitted
-#: reads 0, indistinguishable from a fault -- so polling it would spend the
-#: shared link's session time on nothing. A survey reads it once, which is
-#: where the module count will be settled.
+#: The per-module block's entities are disabled by default, so polling it
+#: for nobody would spend the shared link's session time on nothing:
+#: `poll_modules` turns it on once somebody has enabled one.
 SURVEY_COMPONENTS: dict[str, type] = {
     "modules": SbrBatteryModules,
 }
@@ -70,6 +69,9 @@ class SungrowBattery(MappedDevice):
     pack: SbrBatteryPack
     cells: SbrBatteryCells
     modules: SbrBatteryModules
+
+    #: Whether a poll reads the per-module block too. A survey always does.
+    poll_modules = False
 
     def __init__(self, unit: ModbusUnit, unit_id: int) -> None:
         """Bind every component, the survey's too, remembering which id it is.
@@ -120,9 +122,11 @@ class SungrowBattery(MappedDevice):
     async def async_update(self, *, survey: bool = False) -> UpdateReport:
         """Refresh the components, tolerating any one failing alone.
 
-        `survey` adds `SURVEY_COMPONENTS`, which a poll leaves unread: their
-        fields read None until a survey has asked.
+        `survey` adds `SURVEY_COMPONENTS`, which a poll reads only with
+        `poll_modules` set: otherwise their fields read None until a survey
+        has asked.
         """
+        extra = survey or self.poll_modules
         return await self._async_update_components(
-            {**COMPONENTS, **(SURVEY_COMPONENTS if survey else {})}
+            {**COMPONENTS, **(SURVEY_COMPONENTS if extra else {})}
         )

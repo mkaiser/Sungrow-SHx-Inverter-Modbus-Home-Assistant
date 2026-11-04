@@ -128,6 +128,14 @@ OVERRIDES: dict[str, str] = {
     "battery_min_cell_number": "Lowest cell number",
     "battery_max_module_temperature_module": "Warmest module",
     "battery_min_module_temperature_module": "Coolest module",
+    # Each module's own extremes, one pair per slot of the eight.
+    **{
+        f"battery_module_{module}_{end}_cell_voltage": (
+            f"Module {module} {word} cell voltage"
+        )
+        for module in range(1, 9)
+        for end, word in (("max", "highest"), ("min", "lowest"))
+    },
     # -- the wallbox, its own device on its own unit ----------------------
     #
     # No legacy name to derive from: the YAML package never covered a wallbox
@@ -456,6 +464,12 @@ DIAGNOSTIC: frozenset[str] = frozenset(
         "battery_min_cell_number",
         "battery_max_module_temperature_module",
         "battery_min_module_temperature_module",
+        # Each module's own extremes: opened when the pack's spread grows.
+        *(
+            f"battery_module_{module}_{end}_cell_voltage"
+            for module in range(1, 9)
+            for end in ("max", "min")
+        ),
         # The wallbox's ratings, settings and signalling line: what you look
         # at when a charge is not behaving, rather than what a dashboard
         # shows. Its power, current, energy and status are ordinary sensors,

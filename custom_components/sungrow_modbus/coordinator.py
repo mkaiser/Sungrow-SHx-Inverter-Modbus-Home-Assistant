@@ -405,7 +405,8 @@ class SungrowBatteryCoordinator(SungrowSubDeviceCoordinator):
     """Poll an SBR pack's own registers, on its own unit.
 
     One coordinator, not four. The pack has no tiers: fifteen fields in
-    seventeen registers, two reads, all of them things that move slowly -- a
+    seventeen registers, two reads (three once a per-module entity is
+    enabled), all of them things that move slowly -- a
     state of charge, a temperature, two lifetime counters. It follows the
     inverter's *medium* interval so that a house which has turned everything
     down does not get a battery polled faster than its inverter.
@@ -575,6 +576,13 @@ class SungrowRuntimeData:
     another -- and zeros are the dangerous one: they decode to values, so
     granting on them would create eight entities reporting 0 V and module 0
     forever, with nothing that ever removes an entity.
+    """
+
+    battery_modules: tuple[int, ...] = ()
+    """The pack's fitted modules, which get per-module entities.
+
+    Read once at setup, like `battery_has_cells`, and for the same reason: an
+    empty slot answers 0 V, and nothing ever removes an entity.
     """
 
     external_sources: tuple[str, ...] = ()

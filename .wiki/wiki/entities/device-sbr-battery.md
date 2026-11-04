@@ -68,4 +68,8 @@ The owner of the SBR256 showed it in 7 of 7 samples
 reading in the corpus agrees: the pack's highest cell equals the module word of the module its
 position names, and likewise the lowest (`tests/test_sbr_pack.py` holds it to the corpus). So the
 pack-wide spread is the pack's highest cell less its lowest, which the integration shows as **Cell
-voltage spread** in mV (`SbrBatteryCells.cell_voltage_spread`). Per-module serials at 10822-10885 read NUL bytes on the SBR256.
+voltage spread** in mV (`SbrBatteryCells.cell_voltage_spread`). Each fitted module's own highest
+and lowest cell are diagnostic entities, disabled by default, created only for the modules
+`SbrBatteryModules.fitted_modules` names: those whose cell type is non-zero, which on every cable
+reading are exactly the modules that read a voltage (`tests/test_sbr_pack.py`). The block is
+polled only while one of them is enabled. Per-module serials at 10822-10885 read NUL bytes on the SBR256.

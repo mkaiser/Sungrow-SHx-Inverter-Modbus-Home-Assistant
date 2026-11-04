@@ -573,9 +573,9 @@ def test_an_unfitted_module_reads_zero_and_is_not_a_measurement() -> None:
 
     They answer 0, not the 0xFFFF an inverter uses for "unavailable", so
     nothing declares them absent -- a zero decodes to a value and 0 V is a
-    plausible-looking cell voltage. Which is why none of these is an entity
-    yet: something has to establish the module count first, and this test
-    records what that something will have to work from.
+    plausible-looking cell voltage. Which is why only the modules
+    `fitted_modules` names get entities, and this test records what it works
+    from.
     """
     fitted = {1: 33507, 2: 33484, 3: 33487}
     for module in range(1, 9):
@@ -643,4 +643,37 @@ def test_the_pack_extremes_are_the_module_extremes_in_every_reading() -> None:
         assert abs(values["max_cell_voltage"] - highest) <= MOVED, name
         assert abs(values["min_cell_voltage"] - lowest) <= MOVED, name
         checked += 1
+    assert checked >= 16
+
+
+def test_every_module_the_cell_type_calls_fitted_reads_a_voltage() -> None:
+    """`fitted_modules` held to every cable SBR document.
+
+    Its modules read a voltage, and every other slot reads 0: a fitted
+    module at 0 V would be an entity reporting a fault forever, and an empty
+    slot with a voltage would be a module left without one.
+    """
+    import json
+    from types import SimpleNamespace
+
+    from .corpus import INVERTER_DOCUMENTS
+
+    checked = 0
+    for path in INVERTER_DOCUMENTS:
+        name, document = path.name, json.loads(path.read_text())
+        values = ((document.get("battery_pack") or {}).get("readings") or {}).get(
+            "values"
+        ) or {}
+        if "max_cell_voltage_module_1" not in values:
+            continue
+        # The property alone, on the document's values: it reads only
+        # `cell_type_module_n`.
+        fitted = SbrBatteryModules.fitted_modules.fget(SimpleNamespace(**values))
+        for module in range(1, 9):
+            voltages = (
+                values[f"max_cell_voltage_module_{module}"],
+                values[f"min_cell_voltage_module_{module}"],
+            )
+            assert all(voltages) is (module in fitted), (name, module)
+        checked += bool(fitted)
     assert checked >= 16

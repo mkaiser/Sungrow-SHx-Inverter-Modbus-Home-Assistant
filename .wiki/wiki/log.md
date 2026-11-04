@@ -284,3 +284,9 @@ its `survey` section is committed under the library's own name for it. No regist
 block read test, which a diagnostics download does not take. 13074 stores a written word as
 handed, by the probe's acceptance, as on P065; 31211 reads 0x55. The forced checks moved the
 battery but the house, with two SG5.0RS beside it, moved more. A restart: 4 s, 291 s.
+
+## [2026-11-04] updated | SBR per-module entities (#788)
+
+[SBR battery](entities/device-sbr-battery.md): each fitted module's highest and lowest cell
+are now diagnostic entities, disabled by default, gated on a non-zero cell type. No new
+reading; the gate is held to the cable documents already ingested.

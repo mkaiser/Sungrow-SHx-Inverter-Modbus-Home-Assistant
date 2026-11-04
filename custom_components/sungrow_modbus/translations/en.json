@@ -444,6 +444,54 @@
       "battery_min_soc": {
         "name": "Battery min SoC"
       },
+      "battery_module_1_max_cell_voltage": {
+        "name": "Module 1 highest cell voltage"
+      },
+      "battery_module_1_min_cell_voltage": {
+        "name": "Module 1 lowest cell voltage"
+      },
+      "battery_module_2_max_cell_voltage": {
+        "name": "Module 2 highest cell voltage"
+      },
+      "battery_module_2_min_cell_voltage": {
+        "name": "Module 2 lowest cell voltage"
+      },
+      "battery_module_3_max_cell_voltage": {
+        "name": "Module 3 highest cell voltage"
+      },
+      "battery_module_3_min_cell_voltage": {
+        "name": "Module 3 lowest cell voltage"
+      },
+      "battery_module_4_max_cell_voltage": {
+        "name": "Module 4 highest cell voltage"
+      },
+      "battery_module_4_min_cell_voltage": {
+        "name": "Module 4 lowest cell voltage"
+      },
+      "battery_module_5_max_cell_voltage": {
+        "name": "Module 5 highest cell voltage"
+      },
+      "battery_module_5_min_cell_voltage": {
+        "name": "Module 5 lowest cell voltage"
+      },
+      "battery_module_6_max_cell_voltage": {
+        "name": "Module 6 highest cell voltage"
+      },
+      "battery_module_6_min_cell_voltage": {
+        "name": "Module 6 lowest cell voltage"
+      },
+      "battery_module_7_max_cell_voltage": {
+        "name": "Module 7 highest cell voltage"
+      },
+      "battery_module_7_min_cell_voltage": {
+        "name": "Module 7 lowest cell voltage"
+      },
+      "battery_module_8_max_cell_voltage": {
+        "name": "Module 8 highest cell voltage"
+      },
+      "battery_module_8_min_cell_voltage": {
+        "name": "Module 8 lowest cell voltage"
+      },
       "battery_pack_current": {
         "name": "Pack current"
       },

@@ -232,6 +232,9 @@ class SbrBatteryCells(Component):
 MODULE_SHIFT = 8
 INDEX_MASK = 0xFF
 
+#: How many modules the per-module block has room for.
+MODULE_SLOTS = 8
+
 
 def _module(word: float | None) -> int | None:
     """Return the module a position word names, or None.
@@ -289,12 +292,10 @@ class SbrBatteryModules(Component):
     maximum and names module 1 in the high byte of its position word,
     checkable inside one reading.
 
-    **Nothing here becomes an entity yet.** A module that is not fitted reads
-    0, and a cell voltage of 0 V is indistinguishable from a fault -- so
-    something has to establish how many modules there are before these can be
-    granted, and that is a separate question from reading them. The survey
-    carries them meanwhile, which is where the next SBR128 will settle the
-    module count.
+    A module that is not fitted reads 0, and a cell voltage of 0 V is
+    indistinguishable from a fault, so the voltages become entities only for
+    `fitted_modules`: those whose cell type is non-zero, which held on every
+    cable reading from three modules to eight.
     """
 
     register_space = "input"
@@ -488,6 +489,22 @@ class SbrBatteryModules(Component):
     absent ones did, so the only reading this rests on is
     "non-zero means fitted".
     """
+
+    @property
+    def fitted_modules(self) -> tuple[int, ...]:
+        """The modules this pack has, by number, from their cell type.
+
+        Non-zero means fitted. The value itself is not a code anybody can
+        read -- 66 to 76 on most packs, 1 on an SBR256 -- but zero has only
+        ever meant an empty slot. Empty when the block was refused (every
+        field None) or answered with a dongle's zeros, which is what keeps
+        those two from becoming eight entities at 0 V.
+        """
+        return tuple(
+            module
+            for module in range(1, MODULE_SLOTS + 1)
+            if getattr(self, f"cell_type_module_{module}")
+        )
 
     dc_contactor_state = gauge(reg(10789), 1, signed=False, nan=0xFFFF)
     """State of the pack's DC contactor. Read 2.

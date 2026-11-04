@@ -27,6 +27,10 @@ reading that proves it; and the highest and lowest cell give one more, their
 spread, which is what an owner watching balance looks at (#788). The raw
 words themselves get no entity, which is what modern mode does with a `_raw`
 value everywhere else.
+
+Sixteen more, disabled by default, for the per-module block: each fitted
+module's highest and lowest cell, which is how a single module drifting shows
+before the pack-wide spread names it.
 """
 
 from __future__ import annotations
@@ -40,6 +44,7 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfTemperature,
 )
+from sungrow_modbus.battery.registers import MODULE_SLOTS
 
 from .entity import SungrowSensorDescription
 
@@ -228,6 +233,35 @@ CELL_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
     ),
 )
 
+
+def _module_cell(module: int, end: str) -> SungrowSensorDescription:
+    """Describe one module's highest (`max`) or lowest (`min`) cell."""
+    key = f"battery_module_{module}_{end}_cell_voltage"
+    return SungrowSensorDescription(
+        key=key,
+        component="modules",
+        field=f"{end}_cell_voltage_module_{module}",
+        translation_key=key,
+        device_class=SensorDeviceClass.VOLTAGE,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=4,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    )
+
+
+#: Each module's own extremes, by module number, created only for the modules
+#: `SbrBatteryModules.fitted_modules` names -- an empty slot reads 0 V.
+#:
+#: Diagnostic and disabled by default: the pack-wide spread and where its
+#: extremes sit are what a dashboard shows, and these are what an owner opens
+#: when that spread grows. The block is polled only once one is enabled.
+MODULE_DESCRIPTIONS: dict[int, tuple[SungrowSensorDescription, ...]] = {
+    module: (_module_cell(module, "max"), _module_cell(module, "min"))
+    for module in range(1, MODULE_SLOTS + 1)
+}
+
 #: Everything the pack can offer, in one tuple for the platform to walk.
 #:
 #: The two sensor-index halves of the temperature positions are deliberately
@@ -240,4 +274,5 @@ CELL_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
 BATTERY_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
     *PACK_DESCRIPTIONS,
     *CELL_DESCRIPTIONS,
+    *(d for pair in MODULE_DESCRIPTIONS.values() for d in pair),
 )
