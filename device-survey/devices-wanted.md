@@ -21,7 +21,7 @@ details are under [Why each one](#why-each-one).
 | 7 | **Version 1 between `.95.03` and `.95.12`, or a `.95.14` that is not 10 kW** | Where the export limit's write scale changes ([#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)) |
 | 8 | **An SBR192 on a direct link** | The one size read only through a WiNet-S; SBR064, SBR096, SBR128, SBR160, SBR224 and SBR256 are read on a cable |
 | 9 | **A second master/slave cluster** | Whether a slave's address 2 is a rule or one house's convention |
-| 10 | **An SH-RS on `SUNSTONE-H` P057, P059 or P068**, with the control test, in daylight | Whether the PV cut (register 31211) works there: it answers on all three, and has been watched cutting on P065 only |
+| 10 | **An SH-RS on `SUNSTONE-H` P057, P059, P067 or P068**, with the control test, in daylight | Whether the PV cut (register 31211) works there: it answers on all four, and has been watched cutting on P065 only |
 | 11 | **Any SG string inverter other than an SG5.0RS** | Its tracker and phase count, which decide its entities: the source's table is unverified for most models, and an SG answers 0 for hardware it lacks |
 | 12 | **Any inverter on a three-wire grid (3P3L, no neutral)**: the survey shows the output type it reads from register 5002 | On 3P3L, registers 5019-5021 carry line voltages, and the integration creates no phase voltages or phase powers there. One reading shows what to create instead |
 | — | **A WiNet-S certificate hash**, five seconds, no survey | Whether every WiNet-S shares one TLS certificate, see [the last item](#a-winet-s-certificate-hash) |
