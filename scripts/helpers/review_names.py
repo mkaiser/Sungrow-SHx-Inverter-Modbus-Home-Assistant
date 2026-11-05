@@ -15,73 +15,98 @@ the question. The question is whether
 each name is the right words for the thing, and nothing but a person reading
 them can answer that.
 
-Reading `strings.json` is the wrong way to do it: some two hundred names in
-alphabetical order, with no units, no domains and no sight of what a migrating user
-currently calls the same reading. So this prints what the judgement needs --
-the modern name, the entity id it produces, the unit, and the legacy name
-beside it -- grouped by what the entity is *about* rather than by domain,
-because that is how a reader notices two names for one idea.
+Reading `strings.json` is the wrong way to do it: some three hundred names in
+alphabetical order, with no units, no domains, no devices and no sight of what
+a migrating user currently calls the same reading. So this prints what the
+judgement needs -- the modern name, the entity id it produces, the unit, and
+the legacy name beside it -- per device, and on the inverter grouped by what
+the entity is *about* rather than by domain, because that is how a reader
+notices two names for one idea.
+
+The descriptions are imported, the way the platforms import them, rather than
+parsed: a description built by a helper or in a loop -- an SG's trackers, an
+SBR's modules -- has no call site to parse, and a sheet that silently leaves
+them out is the one thing this must not be.
 """
 
 from __future__ import annotations
 
 import argparse
-import ast
+from dataclasses import dataclass
+import functools
+import json
 from pathlib import Path
 import re
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "generate" / "tables"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from naming import LEGACY_ONLY_SENSORS
 
 REPO = Path(__file__).resolve().parents[2]
-DESCRIPTIONS = REPO / "custom_components" / "sungrow_modbus"
-STRINGS = DESCRIPTIONS / "strings.json"
+STRINGS = REPO / "custom_components" / "sungrow_modbus" / "strings.json"
+LEGACY_MAP = REPO / "doc" / "legacy_entity_map.json"
+
+#: The entity map's layers that are the YAML package itself. The others are
+#: what the specification and the surveys added, which the YAML never had.
+YAML_LAYERS = frozenset({"modbus", "template", "filter"})
 
 
-def _units() -> dict[str, str]:
-    """Map every `UnitOfX.MEMBER` written in the descriptions to its value.
+@dataclass(frozen=True)
+class Device:
+    """One device an entry can create, and the name its ids are built on."""
 
-    Resolved from Home Assistant where it is importable, and from a written
-    table where it is not, so this script keeps running outside the
-    devcontainer -- which is the reason it parses the descriptions rather
-    than importing them in the first place.
-    """
-    table = {"PERCENTAGE": "%", "UnitOfTemperature.CELSIUS": "°C"}
-    try:
-        from homeassistant import const
-    except ModuleNotFoundError:  # pragma: no cover - outside the container
-        return {
-            "UnitOfPower.WATT": "W",
-            "UnitOfPower.KILO_WATT": "kW",
-            "UnitOfEnergy.WATT_HOUR": "Wh",
-            "UnitOfEnergy.KILO_WATT_HOUR": "kWh",
-            "UnitOfElectricPotential.VOLT": "V",
-            "UnitOfElectricCurrent.AMPERE": "A",
-            "UnitOfFrequency.HERTZ": "Hz",
-            **table,
-        }
-    for name in dir(const):
-        enum = getattr(const, name)
-        if not (
-            isinstance(enum, type)
-            and issubclass(enum, str)
-            and name.startswith("UnitOf")
-        ):
-            continue
-        for member in enum:
-            table[f"{name}.{member.name}"] = str(member.value)
-    table["PERCENTAGE"] = const.PERCENTAGE
-    return table
+    heading: str
+    #: A representative device name. Home Assistant prefixes every entity id
+    #: with the slug of the device's name, which is the model unless the
+    #: owner named the inverter -- so the prefix differs between houses, and
+    #: one real model stands in for all of them.
+    example: str
+    note: str
 
 
-#: Written once, because it is read for every row.
-UNITS = _units()
+INVERTER = Device(
+    "Hybrid inverter",
+    "SH10RT",
+    "The inverter's own device, named after the model unless the owner named it.",
+)
+BATTERY = Device(
+    "SBR battery",
+    "SBR096",
+    "A device of its own under the inverter, named after the pack its "
+    "capacity matches, `Battery` where none does. Per-module entities exist "
+    "for the fitted modules only, and are disabled by default.",
+)
+WALLBOX = Device(
+    "Wallbox",
+    "AC22E-01",
+    "A device of its own under the inverter, named after the model it "
+    "reports, `Wallbox` where it reports none.",
+)
+STRING_INVERTER = Device(
+    "SG string inverter",
+    "SG5.0RS",
+    "An entry of its own, never beside a hybrid. Trackers and phases exist "
+    "only where the model serves them, so this is every one a model can have.",
+)
+DEVICES = (INVERTER, BATTERY, WALLBOX, STRING_INVERTER)
 
-#: How a name becomes an object id, which is the whole reason this matters.
-#: Home Assistant slugifies the *name*, having already prefixed the device.
-DEVICE = "sh10rt"
+
+@dataclass(frozen=True)
+class Row:
+    """One entity, as the review needs to see it."""
+
+    device: Device
+    domain: str
+    key: str
+    name: str
+    entity_id: str
+    unit: str
+    legacy: str
+    #: The id the YAML package gave the same entity, which a migrating user
+    #: keeps. Empty where the YAML had none.
+    legacy_id: str = ""
 
 
 def _slug(name: str) -> str:
@@ -89,57 +114,56 @@ def _slug(name: str) -> str:
     return re.sub(r"_+", "_", re.sub(r"[^a-z0-9]+", "_", name.lower())).strip("_")
 
 
-#: Which platform a description class belongs to. Taken from the class name
-#: rather than the file, because `derived_descriptions.py` declares both
-#: sensors and binary sensors -- and because the platform decides the entity
-#: id's prefix, which is the thing this whole review is about.
-PLATFORMS: dict[str, str] = {
-    "SungrowSensorDescription": "sensor",
-    "SungrowBinarySensorDescription": "binary_sensor",
-    "SungrowNumberDescription": "number",
-    "SungrowSelectDescription": "select",
-    "SungrowSwitchDescription": "switch",
-}
+def _descriptions() -> list[tuple[Device, str, object]]:
+    """Return (device, domain, description) for everything an entry can create.
 
-
-def _descriptions() -> list[dict]:
-    """Return every entity description, read from the source rather than run.
-
-    Importing them would pull in Home Assistant; parsing the call sites gets
-    the same fields and keeps this runnable anywhere.
+    The same tuples, and the same split between devices, as the platforms'
+    `async_setup_entry`.
     """
-    found: list[dict] = []
-    for path in sorted(DESCRIPTIONS.glob("*_descriptions.py")):
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.Call):
-                continue
-            called = ast.unparse(node.func).split(".")[-1]
-            if called not in PLATFORMS:
-                continue
-            entry: dict[str, object] = {
-                "source": path.stem,
-                "platform": PLATFORMS[called],
-            }
-            for keyword in node.keywords:
-                if keyword.arg is None:
-                    continue
-                try:
-                    entry[keyword.arg] = ast.literal_eval(keyword.value)
-                except ValueError:
-                    written = ast.unparse(keyword.value)
-                    # An enum or a constant. `UnitOfPower.WATT` printed as
-                    # "WATT", which somebody reviewing the units reasonably
-                    # queried -- Home Assistant shows `W`, because that is the
-                    # member's *value*. The member name is an implementation
-                    # detail of the constant, and this sheet is read as though
-                    # it were the entity.
-                    entry[keyword.arg] = UNITS.get(written, written.split(".")[-1])
-            if "translation_key" in entry:
-                found.append(entry)
-    return found
+    from custom_components.sungrow_modbus.battery_descriptions import (
+        BATTERY_DESCRIPTIONS,
+    )
+    from custom_components.sungrow_modbus.derived_descriptions import (
+        DERIVED_BINARY_SENSORS,
+        DERIVED_SENSORS,
+    )
+    from custom_components.sungrow_modbus.external_descriptions import EXTERNAL_SENSORS
+    from custom_components.sungrow_modbus.number_descriptions import NUMBER_DESCRIPTIONS
+    from custom_components.sungrow_modbus.select_descriptions import SELECT_DESCRIPTIONS
+    from custom_components.sungrow_modbus.sensor_descriptions import SENSOR_DESCRIPTIONS
+    from custom_components.sungrow_modbus.string_inverter_descriptions import (
+        STRING_INVERTER_BINARY_DESCRIPTIONS,
+        STRING_INVERTER_DESCRIPTIONS,
+    )
+    from custom_components.sungrow_modbus.switch_descriptions import SWITCH_DESCRIPTIONS
+    from custom_components.sungrow_modbus.time_descriptions import TIME_DESCRIPTIONS
+    from custom_components.sungrow_modbus.wallbox_descriptions import (
+        WALLBOX_BINARY_DESCRIPTIONS,
+        WALLBOX_DESCRIPTIONS,
+    )
+
+    groups: tuple[tuple[Device, str, tuple[object, ...]], ...] = (
+        (INVERTER, "sensor", (*SENSOR_DESCRIPTIONS, *DERIVED_SENSORS)),
+        (INVERTER, "sensor", EXTERNAL_SENSORS),
+        (INVERTER, "binary_sensor", DERIVED_BINARY_SENSORS),
+        (INVERTER, "number", NUMBER_DESCRIPTIONS),
+        (INVERTER, "switch", SWITCH_DESCRIPTIONS),
+        (INVERTER, "select", SELECT_DESCRIPTIONS),
+        (INVERTER, "time", TIME_DESCRIPTIONS),
+        (BATTERY, "sensor", BATTERY_DESCRIPTIONS),
+        (WALLBOX, "sensor", WALLBOX_DESCRIPTIONS),
+        (WALLBOX, "binary_sensor", WALLBOX_BINARY_DESCRIPTIONS),
+        (STRING_INVERTER, "sensor", STRING_INVERTER_DESCRIPTIONS),
+        (STRING_INVERTER, "binary_sensor", STRING_INVERTER_BINARY_DESCRIPTIONS),
+    )
+    return [
+        (device, domain, description)
+        for device, domain, descriptions in groups
+        for description in descriptions
+    ]
 
 
+@functools.cache
 def _names() -> dict[tuple[str, str], str]:
     """Return {(domain, translation_key): name} from the committed strings.
 
@@ -148,8 +172,6 @@ def _names() -> dict[tuple[str, str], str]:
     them -- and keying by the translation key alone silently filed all nine
     under `sensor.`, in a review whose entire subject is the entity id.
     """
-    import json
-
     document = json.loads(STRINGS.read_text(encoding="utf-8"))
     names: dict[tuple[str, str], str] = {}
     for domain, entities in document.get("entity", {}).items():
@@ -159,9 +181,64 @@ def _names() -> dict[tuple[str, str], str]:
     return names
 
 
-#: What each entity is about, matched in order against its key. Grouped this
-#: way because a reader judging names needs the neighbours in view: two names
-#: for one idea are invisible in an alphabetical list and obvious here.
+#: The buttons have no descriptions, only a translation key each: the survey
+#: on every entry, the control test on a hybrid only (`button.py`).
+BUTTONS: tuple[tuple[Device, str], ...] = (
+    (INVERTER, "run_survey"),
+    (INVERTER, "run_control_test"),
+    (STRING_INVERTER, "run_survey"),
+)
+
+
+def _row(
+    device: Device, domain: str, key: str, unit: str, legacy: str, legacy_id: str = ""
+) -> Row:
+    """Return the row for one entity, its id built as Home Assistant builds it."""
+    name = _names().get((domain, key), "(no name in strings.json)")
+    entity_id = f"{domain}.{_slug(device.example)}_{_slug(name)}"
+    return Row(device, domain, key, name, entity_id, unit, legacy, legacy_id)
+
+
+def _legacy_ids() -> dict[tuple[str, str], str]:
+    """Return {(domain, description key): legacy entity id} for every claim.
+
+    Asked of the migration itself, so the sheet shows the id a migrating user
+    actually keeps and cannot disagree with what the migration claims.
+    """
+    from custom_components.sungrow_modbus.migration import (
+        DESCRIPTIONS,
+        legacy_entity_id,
+    )
+
+    return {
+        (domain, description.key): entity_id
+        for domain, description in DESCRIPTIONS
+        if (entity_id := legacy_entity_id(domain, description)) is not None
+    }
+
+
+def _not_ported() -> list[tuple[str, str]]:
+    """Return (entity id, name) for each YAML entity no description claims.
+
+    From the entity map rather than a list, so an entity a change stops
+    claiming turns up here instead of vanishing from the sheet.
+    """
+    claimed = set(_legacy_ids().values())
+    entities = json.loads(LEGACY_MAP.read_text(encoding="utf-8"))["entities"]
+    return sorted(
+        (entity["entity_id"], entity["name"])
+        for entity in entities
+        if entity["layer"] in YAML_LAYERS
+        and entity["domain"] != "attribute"
+        and entity["entity_id"] not in claimed
+    )
+
+
+#: What each inverter entity is about, matched in order against its key.
+#: Grouped this way because a reader judging names needs the neighbours in
+#: view: two names for one idea are invisible in an alphabetical list and
+#: obvious here. Only the inverter is split: every other device is small
+#: enough to read whole, and is a topic in itself.
 TOPICS: tuple[tuple[str, str], ...] = (
     ("battery", "The battery"),
     ("bms", "The battery"),
@@ -172,9 +249,12 @@ TOPICS: tuple[tuple[str, str], ...] = (
     ("export", "The grid"),
     ("import", "The grid"),
     ("load", "The house"),
+    ("consum", "The house"),
     ("backup", "Backup power"),
     ("phase", "Per phase"),
     ("firmware", "Identity and firmware"),
+    ("version", "Identity and firmware"),
+    ("software", "Identity and firmware"),
     ("serial", "Identity and firmware"),
     ("model", "Identity and firmware"),
     ("device_type", "Identity and firmware"),
@@ -182,46 +262,56 @@ TOPICS: tuple[tuple[str, str], ...] = (
     ("power_limit", "Control"),
     ("limitation", "Control"),
     ("start_stop", "Control"),
+    ("forced_charging", "Control"),
+    ("discharge_window", "Control"),
+    ("weekend_discharge", "Control"),
+    ("fault", "Faults and alarms"),
+    ("alarm", "Faults and alarms"),
     ("temperature", "Temperatures"),
-    ("energy", "Energy totals"),
-    ("total_", "Energy totals"),
+    ("run_", "Actions"),
 )
 
+#: Units that make an entity an energy total. Matched on the unit rather than
+#: the key, because `total_dc_power` is a power and filed itself under the
+#: energy totals by its `total_`.
+ENERGY_UNITS = frozenset({"Wh", "kWh", "MWh"})
 
-def _topic(key: str) -> str:
-    """Return the heading a key belongs under."""
+
+def _topic(row: Row) -> str:
+    """Return the heading an inverter entity belongs under."""
     for fragment, heading in TOPICS:
-        if fragment in key:
+        if fragment in row.key:
             return heading
+    if row.unit in ENERGY_UNITS:
+        return "Energy totals"
+    if row.unit in {"W", "kW"}:
+        return "Power"
     return "Everything else"
 
 
-def _rows() -> tuple[
-    dict[str, list[tuple[str, str, str, str, str]]],
-    list[tuple[str, str, str, str, str]],
-]:
-    """Group every reviewable name by topic, and set the rest aside.
+def _rows() -> tuple[list[Row], list[tuple[Row, str]]]:
+    """Return every reviewable entity, and set the legacy-only sensors aside.
 
-    The second list is sensors modern mode does not create. Nineteen of those
-    names need no judgement at all -- the entity exists only for an entry
-    carrying the YAML package's history -- and one of them, `Active power
-    limitation raw`, sorts directly beside the binary sensor that replaced it,
-    which is worse than useless to somebody reviewing a list.
+    The second list is sensors modern mode does not create. Their names need
+    no judgement at all -- the entity exists only for an entry carrying the
+    YAML package's history -- and one of them, `Active power limitation raw`,
+    sorts directly beside the binary sensor that replaced it, which is worse
+    than useless to somebody reviewing a list.
     """
-    names = _names()
-    rows: dict[str, list[tuple[str, str, str, str, str]]] = {}
-    dropped: list[tuple[str, str, str, str, str]] = []
-    for entry in _descriptions():
-        key = str(entry["translation_key"])
-        domain = str(entry["platform"])
-        name = names.get((domain, key), "(no name in strings.json)")
-        unit = str(entry.get("native_unit_of_measurement") or "")
-        legacy = str(entry.get("legacy_name") or "")
-        row = (domain, name, f"{domain}.{DEVICE}_{_slug(name)}", unit, legacy)
-        if domain == "sensor" and key in LEGACY_ONLY_SENSORS:
-            dropped.append((*row[:4], LEGACY_ONLY_SENSORS[key]))
+    legacy_ids = _legacy_ids()
+    rows: list[Row] = []
+    dropped: list[tuple[Row, str]] = []
+    for device, domain, description in _descriptions():
+        key = str(getattr(description, "translation_key", None) or description.key)  # type: ignore[attr-defined]
+        unit = str(getattr(description, "native_unit_of_measurement", None) or "")
+        legacy = str(getattr(description, "legacy_name", None) or "")
+        legacy_id = legacy_ids.get((domain, description.key), "")  # type: ignore[attr-defined]
+        row = _row(device, domain, key, unit, legacy, legacy_id)
+        if device is INVERTER and domain == "sensor" and key in LEGACY_ONLY_SENSORS:
+            dropped.append((row, LEGACY_ONLY_SENSORS[key]))
             continue
-        rows.setdefault(_topic(key), []).append(row)
+        rows.append(row)
+    rows += [_row(device, "button", key, "", "") for device, key in BUTTONS]
     return rows, dropped
 
 
@@ -237,11 +327,16 @@ def _render(markdown: bool) -> str:
         out.append(" ".join(str(p) for p in parts))
 
     rows, dropped = _rows()
-    total = sum(len(group) for group in rows.values())
+    by_device = {
+        device: [row for row in rows if row.device is device] for device in DEVICES
+    }
     if markdown:
+        counts = ", ".join(
+            f"{device.heading} {len(by_device[device])}" for device in DEVICES
+        )
         print("# The entity names, for review\n")
         print(
-            f"**{total} entities**, which is everything modern mode creates. "
+            f"**{len(rows)} entities** that modern mode can create ({counts}).\n\n"
             "The **entity id**\ncolumn is what a dashboard and years of "
             "history are keyed to, and a name supplies\nit -- but only at "
             "creation. Rename later and anybody who already has the entity\n"
@@ -251,8 +346,12 @@ def _render(markdown: bool) -> str:
             "registry rename moves the early one across.\n"
         )
         print(
-            "The **legacy name** is what a migrating user calls the same "
-            "reading today, and\na **←** marks the ones that differ.\n"
+            "Each id begins with its **device's name**, which differs between "
+            "houses; one\nreal model stands in for each device below. The "
+            "**legacy name** and **legacy\nentity id** are what the YAML "
+            "package calls the same entity: a user who\nmigrates keeps that "
+            "id, and a fresh install gets the entity id. A **←**\nmarks a "
+            "name that differs.\n"
         )
         print(
             f"A further {len(dropped)} sensors exist **only in legacy mode** "
@@ -261,55 +360,99 @@ def _render(markdown: bool) -> str:
             "them carries on, and modern mode replaces each with something\n"
             "better.\n"
         )
-    for heading in sorted(rows):
-        group = sorted(rows[heading], key=lambda row: row[1])
+
+    def table(group: list[Row], level: str, heading: str) -> None:
+        group = sorted(group, key=lambda row: (row.name, row.entity_id))
         if markdown:
-            print(f"\n## {heading} ({len(group)})\n")
-            print("| Name | Entity id | Unit | Legacy name |")
-            print("| --- | --- | --- | --- |")
-            for _domain, name, entity_id, unit, legacy in group:
-                changed = " **←**" if legacy and legacy != name else ""
-                print(f"| {name} | `{entity_id}` | {unit} | {legacy}{changed} |")
-            continue
+            print(f"\n{level} {heading} ({len(group)})\n")
+            print("| Name | Entity id | Unit | Legacy name | Legacy entity id |")
+            print("| --- | --- | --- | --- | --- |")
+            for row in group:
+                changed = " **←**" if row.legacy and row.legacy != row.name else ""
+                legacy_id = f"`{row.legacy_id}`" if row.legacy_id else ""
+                print(
+                    f"| {row.name} | `{row.entity_id}` | {row.unit} | "
+                    f"{row.legacy}{changed} | {legacy_id} |"
+                )
+            return
         print(f"\n{heading} ({len(group)})")
         print("-" * 72)
-        for _domain, name, entity_id, unit, legacy in group:
-            mark = "  <-- renamed" if legacy and legacy != name else ""
-            print(f"  {name:<44} {unit:<8} {entity_id}")
-            if legacy and legacy != name:
-                print(f"    {'was: ' + legacy:<44}{mark}")
+        for row in group:
+            print(f"  {row.name:<44} {row.unit:<8} {row.entity_id}")
+            if row.legacy and row.legacy != row.name:
+                print(f"    {'was: ' + row.legacy:<44}  <-- renamed")
+            if row.legacy_id:
+                print(f"    {'yaml: ' + row.legacy_id}")
+
+    for device in DEVICES:
+        group = by_device[device]
+        if markdown:
+            print(f"\n## {device.heading} ({len(group)})\n")
+            print(f"{device.note} Ids shown for `{device.example}`.")
+        else:
+            print(f"\n{'=' * 72}\n{device.heading} ({len(group)}), as {device.example}")
+        if device is not INVERTER:
+            table(group, "###", "Everything")
+            continue
+        topics: dict[str, list[Row]] = {}
+        for row in group:
+            topics.setdefault(_topic(row), []).append(row)
+        for heading in sorted(topics):
+            table(topics[heading], "###", heading)
+
+    # `LEGACY_ONLY_SENSORS` names each replacement as `domain.translation_key`,
+    # which is a handle, not an id: shown as the entity it resolves to.
+    by_handle = {f"{row.domain}.{row.key}": row for row in rows}
+
+    def replaced_by(handle: str) -> str:
+        row = by_handle[handle]
+        return f"{row.name} (`{row.entity_id}`)"
+
     if dropped:
         if markdown:
             print(f"\n## Legacy mode only ({len(dropped)})\n")
             print(
                 "Not created in modern mode. Each is a second copy of "
                 "something a user\nalready has, so the column on the right "
-                "is where the reading went instead.\n"
+                "is where the reading went instead,\nwith its modern-mode "
+                "id.\n"
             )
-            print("| Name | Entity id | Replaced in modern mode by |")
+            print("| Name | Legacy entity id | Replaced in modern mode by |")
             print("| --- | --- | --- |")
-            for _domain, name, entity_id, _unit, replacement in sorted(
-                dropped, key=lambda row: row[1]
-            ):
-                print(f"| {name} | `{entity_id}` | `{replacement}` |")
+            for row, replacement in sorted(dropped, key=lambda pair: pair[0].name):
+                legacy_id = (
+                    f"`{row.legacy_id}`" if row.legacy_id else "(not in the YAML)"
+                )
+                print(f"| {row.name} | {legacy_id} | {replaced_by(replacement)} |")
         else:
             print(f"\nLegacy mode only ({len(dropped)})")
             print("-" * 72)
-            for _domain, name, _entity_id, _unit, replacement in sorted(
-                dropped, key=lambda row: row[1]
-            ):
-                print(f"  {name:<44} -> {replacement}")
+            for row, replacement in sorted(dropped, key=lambda pair: pair[0].name):
+                print(f"  {row.name:<44} -> {replaced_by(replacement)}")
+
+    not_ported = _not_ported()
+    if markdown:
+        print(f"\n## Not ported ({len(not_ported)})\n")
+        print(
+            "Entities of the YAML package that the integration does not "
+            "create. Why, and\nwhat replaces each, is in "
+            "[integration_migration.md](integration_migration.md),\nwhich "
+            "also covers the package's scenes and automations: they are not "
+            "entities\nof the integration, and go when the file goes.\n"
+        )
+        print("| Legacy entity id | Legacy name |")
+        print("| --- | --- |")
+        for entity_id, name in not_ported:
+            print(f"| `{entity_id}` | {name} |")
+    else:
+        print(f"\nNot ported ({len(not_ported)})")
+        print("-" * 72)
+        for entity_id, name in not_ported:
+            print(f"  {entity_id:<44} {name}")
 
     if not markdown:
-        print(f"\n{total} entities in modern mode. Renamed from the YAML: ", end="")
-        print(
-            sum(
-                1
-                for group in rows.values()
-                for _d, name, _e, _u, legacy in group
-                if legacy and legacy != name
-            )
-        )
+        renamed = sum(1 for row in rows if row.legacy and row.legacy != row.name)
+        print(f"\n{len(rows)} entities in modern mode. Renamed from the YAML:", renamed)
 
     return "\n".join(out) + "\n"
 

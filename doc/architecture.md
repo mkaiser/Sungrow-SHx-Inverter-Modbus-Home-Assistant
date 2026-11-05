@@ -353,9 +353,13 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
 - **The wallbox is read-only.** No manufacturer document covers its map.
 - **The opt-in SBR YAML sensors are not adopted and keep no history**:
   partial adoption looks like a migration and is not one.
-- **Localisation follows Home Assistant**: modern ids take the interface
-  language where HA says they should; legacy ids stay English. Only English
-  ships.
+- **Entity ids are English in every language; names are translated.** Home
+  Assistant would build a German system's ids from German names. Instead
+  every modern entity is registered with its English name as
+  `object_id_base`, so HA still adds the device prefix and follows the
+  owner's id settings, and one id means the same entity in every house, in
+  the docs and in support. Legacy ids are English anyway. Only English ships
+  so far; this has to be in place before a second language does.
 - **13074's write scale is measured per device** (`sungrow_modbus.hybrid_inverter.export_scale`)
   and stored with the firmware it was measured on.
 - **Delivery is HACS first**, through the preview channel until the merge

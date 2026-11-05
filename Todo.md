@@ -27,8 +27,15 @@ _Nothing that can start without hardware, a contributor or a decision._
    (`doc/entity_name_review.md`, `scripts/helpers/review_names.py`). A rename
    later leaves existing ids alone and only diverges new installs, which a
    registry migration can close, so it stays cheap until release, not free.
-   Wanted with it: a table (YAML | HACS) of sensor names, automations etc.,
-   and whether localisation (English / German) is worth it.
+   The sheet covers every device an entry can create (306 entities) and is
+   the YAML | HACS table: each entity's legacy name and entity id beside its
+   own, and the three YAML entities not ported. Compared against Sungrow's
+   protocol (V1.1.2): 16 names changed to match it or each other (load
+   control, battery energy totals, charging limits, internal temperature).
+   Next: the rest of the review, and the 36 registers V1.1.2 does not list
+   against V1.1.11/V1.1.16. Decided: ids
+   stay English in every language (`doc/architecture.md`); pinning them via
+   `object_id_base` is still to build, and must land before a `de.json`.
 
 # Blockers
 

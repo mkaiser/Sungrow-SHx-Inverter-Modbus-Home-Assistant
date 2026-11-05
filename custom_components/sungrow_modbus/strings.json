@@ -246,10 +246,10 @@
         "name": "Battery forced charge/discharge power"
       },
       "battery_max_charge_power": {
-        "name": "Battery max charge power"
+        "name": "Battery max charging power"
       },
       "battery_max_discharge_power": {
-        "name": "Battery max discharge power"
+        "name": "Battery max discharging power"
       },
       "battery_max_soc": {
         "name": "Battery max SoC"
@@ -272,7 +272,7 @@
     },
     "select": {
       "battery_forced_charge_discharge": {
-        "name": "Battery forced charge discharge",
+        "name": "Battery forced charge/discharge",
         "state": {
           "stop": "Stop",
           "charge": "Forced charge",
@@ -296,7 +296,7 @@
         }
       },
       "load_adjustment_mode": {
-        "name": "Load adjustment mode",
+        "name": "Load control mode",
         "state": {
           "timing": "Timing",
           "on_off": "On/off",
@@ -415,10 +415,10 @@
         "name": "Highest cell voltage"
       },
       "battery_max_charge_power": {
-        "name": "Battery max charge power"
+        "name": "Battery max charging power"
       },
       "battery_max_discharge_power": {
-        "name": "Battery max discharge power"
+        "name": "Battery max discharging power"
       },
       "battery_max_module_temperature": {
         "name": "Warmest module temperature"
@@ -508,10 +508,10 @@
         "name": "Pack temperature"
       },
       "battery_pack_total_charge": {
-        "name": "Pack total charge"
+        "name": "Pack total charge energy"
       },
       "battery_pack_total_discharge": {
-        "name": "Pack total discharge"
+        "name": "Pack total discharge energy"
       },
       "battery_pack_voltage": {
         "name": "Pack voltage"
@@ -568,13 +568,13 @@
         "name": "Corrected load power"
       },
       "daily_battery_charge": {
-        "name": "Daily battery charge"
+        "name": "Daily battery charge energy"
       },
       "daily_battery_charge_from_pv": {
-        "name": "Daily battery charge from PV"
+        "name": "Daily battery charge energy from PV"
       },
       "daily_battery_discharge": {
-        "name": "Daily battery discharge"
+        "name": "Daily battery discharge energy"
       },
       "daily_consumed_energy": {
         "name": "Daily consumed energy"
@@ -661,13 +661,13 @@
         "name": "Rated output power"
       },
       "inverter_temperature": {
-        "name": "Temperature"
+        "name": "Internal temperature"
       },
       "load_adjustment_mode_enable_raw": {
-        "name": "Load adjustment mode enable raw"
+        "name": "Load control mode enable raw"
       },
       "load_adjustment_mode_selection_raw": {
-        "name": "Load adjustment mode selection raw"
+        "name": "Load control mode selection raw"
       },
       "load_power": {
         "name": "Load power"
@@ -1039,13 +1039,13 @@
         "name": "Total backup power"
       },
       "total_battery_charge": {
-        "name": "Total battery charge"
+        "name": "Total battery charge energy"
       },
       "total_battery_charge_from_pv": {
-        "name": "Total battery charge from PV"
+        "name": "Total battery charge energy from PV"
       },
       "total_battery_discharge": {
-        "name": "Total battery discharge"
+        "name": "Total battery discharge energy"
       },
       "total_consumed_energy": {
         "name": "Total consumed energy"
@@ -1158,7 +1158,7 @@
         "name": "Forced charging schedule"
       },
       "load_adjustment_mode_enable": {
-        "name": "Load adjustment"
+        "name": "Load control"
       }
     },
     "time": {

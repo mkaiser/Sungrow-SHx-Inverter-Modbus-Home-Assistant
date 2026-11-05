@@ -109,8 +109,8 @@ OVERRIDES: dict[str, str] = {
     "battery_pack_temperature": "Pack temperature",
     "battery_pack_level": "Pack level",
     "battery_pack_state_of_health": "Pack state of health",
-    "battery_pack_total_charge": "Pack total charge",
-    "battery_pack_total_discharge": "Pack total discharge",
+    "battery_pack_total_charge": "Pack total charge energy",
+    "battery_pack_total_discharge": "Pack total discharge energy",
     # Highest and lowest rather than max and min, because these are readings
     # and not limits -- the inverter's "Battery max SoC" is a setting, and
     # reusing its word here would blur that. Warmest and coolest for the same
@@ -282,9 +282,24 @@ OVERRIDES: dict[str, str] = {
     # here: `switch.backup_mode` is "Backup mode". So this follows it, and
     # the number keeps the name a user would look for.
     "export_power_limit_mode": "Export power limit mode",
-    # And the enable beside `select.load_adjustment_mode`, which owns the
-    # longer name: the switch says whether load adjustment happens at all.
-    "load_adjustment_mode_enable": "Load adjustment",
+    # Sungrow's "Load Control Mode" (13002) and its enable (13011): "load
+    # control" is the document's word, and says what the feature does, which
+    # "load adjustment" never did. The select owns the longer name; the
+    # switch says whether load control happens at all.
+    "load_adjustment_mode": "Load control mode",
+    "load_adjustment_mode_enable": "Load control",
+    "load_adjustment_mode_selection_raw": "Load control mode selection raw",
+    "load_adjustment_mode_enable_raw": "Load control mode enable raw",
+    # "Energy" on every battery throughput total, as on the grid's and the
+    # house's ("Daily exported energy") and in Sungrow's own names ("Daily
+    # battery discharge energy", 13026). Without it "Daily battery charge"
+    # reads like `battery_charge`, which is the energy *stored* in the pack.
+    "daily_battery_charge": "Daily battery charge energy",
+    "total_battery_charge": "Total battery charge energy",
+    "daily_battery_discharge": "Daily battery discharge energy",
+    "total_battery_discharge": "Total battery discharge energy",
+    "daily_battery_charge_from_pv": "Daily battery charge energy from PV",
+    "total_battery_charge_from_pv": "Total battery charge energy from PV",
     # Not raw at all: register 13090 has a scale of 0.1 and a unit, and reads
     # 100.0 % on every machine surveyed. The YAML called it "raw" because it
     # sits beside the mode register, and the word has been describing the
@@ -336,12 +351,22 @@ OVERRIDES: dict[str, str] = {
     # The YAML abbreviates with a full stop, which nothing else here does.
     "bms_max_charging_current": "BMS max charging current",
     "bms_max_discharging_current": "BMS max discharging current",
+    # "Charging" for every limit, as beside it above and in Sungrow's own
+    # "Max. Charging Power" (33047): the YAML's "charge power" was the one
+    # limit spelled the other way.
+    "battery_max_charge_power": "Battery max charging power",
+    "battery_max_discharge_power": "Battery max discharging power",
+    # Sungrow's "Inside Temperature" (5008). "Temperature" alone sat among
+    # the pack's and the modules' temperatures without saying whose.
+    "inverter_temperature": "Internal temperature",
     # "cmd" is banned below, and the slash reads better than three nouns in a
     # row; Home Assistant slugifies it away, so the entity_id is unaffected.
     "battery_forced_charge_discharge_cmd_raw": (
         "Battery forced charge/discharge command raw"
     ),
     "battery_forced_charge_discharge_power": "Battery forced charge/discharge power",
+    # And the select that drives them, which the YAML wrote without the slash.
+    "battery_forced_charge_discharge": "Battery forced charge/discharge",
 }
 
 #: Abbreviations that save four characters and cost a reader a guess. "max"
