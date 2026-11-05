@@ -185,3 +185,33 @@ entities hold them, and the options page says so rather than handing out
 `_2` IDs. An entity whose ID you changed yourself is left where you put it.
 Dashboards, automations and scripts are not rewritten, so check them after a
 move.
+
+## Going back to the YAML package
+
+Removing the integration deletes its devices and entities, and nothing in
+the recorder: history and statistics stay where they are. Which way back is
+clean depends on the entity IDs the integration was using.
+
+**With the YAML package's IDs**, delete the integration (Settings → Devices &
+Services → *Sungrow Modbus* → Delete), put `modbus_sungrow.yaml` back and
+restart. The package's entities take their IDs again, and history and
+long-term statistics continue across the whole period, the integration's
+months included, because both wrote the same units to the same IDs.
+
+**With device-scoped IDs**, first decide where their history should end up:
+
+- If the entities once had the YAML package's IDs and you moved them, their
+  history moved with them. Set **Entity IDs** back to the YAML package's IDs
+  in the options first (see [Changing your mind](#changing-your-mind)), then
+  go back as above.
+- Otherwise the package's own history never moved, and putting the file back
+  picks it up again. What the integration recorded stays under its own IDs.
+  Its raw history expires with the recorder's `purge_keep_days` (10 days
+  unless you changed it), or at once with the `recorder.purge_entities`
+  action. Its long-term statistics stay until you delete them: Developer
+  tools → Statistics lists them as no longer provided, with a button to
+  remove each.
+
+Either way, the scenes, automations and danger-mode switch you copied out of
+the package come back with it, so remove your copies to avoid duplicates. A
+dashboard or automation you pointed at device-scoped IDs needs pointing back.

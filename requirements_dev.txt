@@ -15,7 +15,7 @@ homeassistant>=2026.9
 # drives modbus-connection with the *tmodbus* backend; importing
 # homeassistant.components.modbus fails without it. Bump these together with
 # the pins in homeassistant/components/modbus/manifest.json.
-modbus-connection[tmodbus]==4.10.0
+modbus-connection[tmodbus]==4.12.4
 tmodbus==0.6.2
 pymodbus==3.13.1
 

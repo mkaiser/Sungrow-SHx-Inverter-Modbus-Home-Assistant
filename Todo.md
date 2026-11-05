@@ -212,6 +212,19 @@ _Nothing that can start without hardware, a contributor or a decision._
 20. **The SG's tracker counts beyond the SG5.0RS.** `MPPT_COUNTS` is the
     source's model table, many entries unverified; a survey of any other SG
     checks its row (wanted in `device-survey/devices-wanted.md`, row 11).
+21. **Home Assistant 2026.11 and modbus-connection 4.12.7.** 2026.11.0
+    (2026-11-04) pins `modbus-connection[tmodbus]==4.12.7` and
+    `tmodbus==1.1.0`; the dev environment runs 2026.10.4 on 4.12.4 and
+    tmodbus 0.6.2, because `pytest-homeassistant-custom-component` 0.13.375
+    still pins `homeassistant==2026.10.4`, and forcing it does not work:
+    2026.11 aliases `httpx` to `httpx2` on import and raises if `httpx` is
+    already loaded, which the 2026.10 plugin's dependencies do first, so
+    pytest stops before collecting. Once a plugin release supports 2026.11, move
+    together: `requirements_dev.txt` (`homeassistant>=2026.11` and the two
+    pins), the survey and control test headers (`==4.12.7`),
+    `pyproject.toml`'s floor (`>=4.12.7`), `hacs.json`'s minimum
+    (`2026.11.0`), the README's "Home Assistant 2026.9" and the bug
+    template's version placeholder; then `make check`.
 
 # Future work
 
@@ -236,6 +249,18 @@ robbensonmio on #788 once it is released, and close the issue if they agree.
   (the survey issue is written from it), never from one person.
 - One evening's watch on a confirmed device: does a cut survive a night or
   a restart, or does iSolarCloud rewrite it?
+
+## An energy counter per MPPT
+
+Wanted: daily and total energy per tracker, so the energy dashboard can
+compare strings. No register counts it: neither the hybrid's V1.1.11 nor
+the SG's V1.1.58 lists energy per MPPT, only voltage and current. So it is
+integrated from power: the hybrid's derived *MPPT1-4 power* already exist,
+the SG would need *MPPTn power* (voltage × current) first. Open: a
+`total_increasing` sensor that integrates in the integration and restores
+its value across restarts, or a documented Riemann-sum helper per tracker;
+and how far the polling interval and a WiNet-S's stale reads skew the sum
+(the integrated total against *Total PV generation* says).
 
 ## A generated dashboard
 
@@ -302,11 +327,3 @@ Check upstream for changes to the index, log or frontmatter format
 lint rules. If something changed, update `tests/test_wiki.py` and
 `.wiki/AGENTS.md` together, and bump the version named in both and in
 `.wiki/wiki/log.md`. Then move the date above six weeks on.
-
-
-
-## Device setup in HA
-
-# When installed the first time, can we leave the old histry values in place and copy the history data to the new / renamed sensors?
-
-When deinstalling, is there an option to delete all new sensors and history data and go back to the old YAML sensors?
