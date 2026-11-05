@@ -348,3 +348,11 @@ with the owner's pollers running. 31211 reads 0x55, 13087 is 0xAA with 13074 at 
 5639 reads 44.8 kWh, twice an SBR224, beside 488.8 V of one stack: the capacity register sums the
 packs, the likelier cause of the anonymous P059 survey's 32.0 kWh too. The control test did not run:
 the inverter reported "Key stop", nothing was written, the PV cut on P067 stays unconfirmed.
+
+## [2026-11-05] ingested | an anonymous SH6.0RT-20 on P022 with an SBR128 (#786)
+
+The second SH6.0RT-20 and the first on P022 (version 1 `.95.13`), from the preview integration's
+diagnostics, through a Modbus proxy on the inverter's own LAN port with the YAML package stopped.
+Every block answered in three rounds, no reconnects. 31211 reads 0x55; export limit off with 13074
+at raw 7600 (no write, scale unmeasured); a four-module SBR128 reads 12.8 kWh. Read only, so no
+code change: P022 is already confirmed.
