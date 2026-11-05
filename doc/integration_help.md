@@ -86,6 +86,13 @@ automation:
   through a dongle can only judge what the inverter visibly does.
 - **WiFi or Ethernet** on a dongle cannot be told apart over Modbus; the
   survey asks you.
+- **On a three-wire grid (3P3L, no neutral)** the inverter reports the
+  voltages *between* phases (A-B, B-C, C-A, about 400 V) where a four-wire
+  one reports each phase against neutral (about 230 V). The integration
+  reads which one it is from the inverter and, on 3P3L, creates no *Phase A/B/C
+  voltage* or *Phase A/B/C power*, rather than show line voltages under a
+  phase name and powers about 1.7 times too high. The phase currents are
+  created as usual. No 3P3L inverter has been surveyed yet.
 - **Not supported yet:** the iHomeManager, the Sungrow Logger, SBH batteries,
   writing to the wallbox, and writing to an SG string inverter.
 - **The preview sets up diagnostics only**: it identifies the inverter and

@@ -279,6 +279,43 @@ def test_legacy_mode_keeps_everything_and_modern_mode_does_not() -> None:
     assert both.serves(ordinary)
 
 
+def test_a_3p3l_inverter_gets_no_phase_voltages() -> None:
+    """On 3P3L, 5019-5021 are line voltages, so nothing built on them is made.
+
+    The three voltages and the three powers computed from them, and nothing
+    else: the phase currents are still phase currents.
+    """
+    from custom_components.sungrow_modbus.coordinator import SungrowRuntimeData
+    from custom_components.sungrow_modbus.derived_descriptions import DERIVED_SENSORS
+    from sungrow_modbus.hybrid_inverter.capabilities import (
+        LINE_VOLTAGE_OUTPUT_TYPE,
+        Capability,
+    )
+
+    descriptions = (*SENSOR_DESCRIPTIONS, *DERIVED_SENSORS)
+    gated = {"phase_a_voltage", "phase_b_voltage", "phase_c_voltage"} | {
+        "phase_a_power",
+        "phase_b_power",
+        "phase_c_power",
+    }
+
+    def served(output_type: int | None) -> set[str]:
+        runtime = SungrowRuntimeData(
+            coordinators=dict.fromkeys(
+                {d.component for d in SENSOR_DESCRIPTIONS} | {"derived"}
+            ),
+            capabilities=frozenset(Capability),
+            legacy_ids=False,
+            output_type=output_type,
+        )
+        return {d.key for d in descriptions if runtime.serves(d)}
+
+    four_wire = served(1)
+    assert gated <= four_wire
+    assert served(None) == four_wire
+    assert four_wire - served(LINE_VOLTAGE_OUTPUT_TYPE) == gated
+
+
 # `sensor_descriptions.py` is edited by hand. These make the properties below
 # true by assertion, so a hand edit cannot quietly undo one.
 

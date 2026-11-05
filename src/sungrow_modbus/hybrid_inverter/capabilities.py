@@ -390,12 +390,11 @@ OUTPUT_TYPES: dict[int, str] = {0: "single phase", 1: "3P4L", 2: "3P3L"}
 #: voltages -- A-B, B-C, C-A -- rather than phase-to-neutral. Same registers,
 #: different measurement, and a value about 1.73x higher.
 #:
-#: **This integration does not yet model that**, and its entities are named
-#: `Phase A voltage` for everybody. On a 3P3L inverter that name, and the
-#: derived `phase_a_power` computed from it, are wrong -- they are line
-#: quantities. Nobody has 3P3L hardware to test against, so it is recorded
-#: here rather than guessed at; a survey from such a system is what would
-#: unblock it.
+#: **Not modelled.** The Home Assistant integration creates no phase voltages,
+#: and no `phase_a_power` computed from one, on an inverter reporting this
+#: type (`SungrowRuntimeData.serves`): under a phase name they would be line
+#: quantities. Nobody has 3P3L hardware to test against, so what to create
+#: instead waits for a survey from such a system.
 LINE_VOLTAGE_OUTPUT_TYPE = 2
 
 

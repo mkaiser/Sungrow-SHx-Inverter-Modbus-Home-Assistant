@@ -462,6 +462,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
         capabilities,
         intervals,
         firmware=firmware,
+        output_type=inverter.output_type,
         inverter_device_id=inverter_device_id,
         battery=battery,
         wallbox=wallbox,

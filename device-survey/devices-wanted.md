@@ -23,6 +23,7 @@ details are under [Why each one](#why-each-one).
 | 9 | **A second master/slave cluster** | Whether a slave's address 2 is a rule or one house's convention |
 | 10 | **An SH-RS on `SUNSTONE-H` P057, P059 or P068**, with the control test, in daylight | Whether the PV cut (register 31211) works there: it answers on all three, and has been watched cutting on P065 only |
 | 11 | **Any SG string inverter other than an SG5.0RS** | Its tracker and phase count, which decide its entities: the source's table is unverified for most models, and an SG answers 0 for hardware it lacks |
+| 12 | **Any inverter on a three-wire grid (3P3L, no neutral)**: the survey shows the output type it reads from register 5002 | On 3P3L, registers 5019-5021 carry line voltages, and the integration creates no phase voltages or phase powers there. One reading shows what to create instead |
 | — | **A WiNet-S certificate hash**, five seconds, no survey | Whether every WiNet-S shares one TLS certificate, see [the last item](#a-winet-s-certificate-hash) |
 
 ## Not needed any more

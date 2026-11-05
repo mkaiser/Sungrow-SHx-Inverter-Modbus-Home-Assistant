@@ -26,10 +26,15 @@ from sungrow_modbus import (
     SungrowStringInverter,
     UpdateReport,
 )
+from sungrow_modbus.hybrid_inverter.capabilities import LINE_VOLTAGE_OUTPUT_TYPE
 
 from .const import DEFAULT_EXTERNAL_PLACEMENT, DOMAIN, PLACEMENT_BEHIND_METER
 
 _LOGGER = logging.getLogger(__name__)
+
+#: The inverter's own phase voltages, 5019-5021: phase to neutral, except on
+#: a 3P3L inverter, where they are line to line.
+PHASE_VOLTAGES = frozenset({"phase_a_voltage", "phase_b_voltage", "phase_c_voltage"})
 
 #: Register field name to the component holding it. Field names are unique
 #: across components, which the library's tests assert.
@@ -544,6 +549,12 @@ class SungrowRuntimeData:
     poll that reads different ones knows the entry is out of date.
     """
 
+    output_type: int | None = None
+    """What register 5002 said at setup: single phase, 3P4L or 3P3L.
+
+    `None` where it did not read, which gates nothing.
+    """
+
     inverter_device_id: str | None = None
     """The inverter's device-registry id, which a sub-device hangs off.
 
@@ -710,6 +721,16 @@ class SungrowRuntimeData:
         if required is not None and required not in self.capabilities:
             return False
         depends = getattr(description, "depends_on", ())
+        # On a 3P3L inverter there is no neutral, and 5019-5021 report line
+        # voltages (Sungrow's table: "2: line voltage"), so a "Phase A
+        # voltage", and a phase power computed from one, would be a different
+        # quantity under the wrong name for good. Not created until a 3P3L
+        # survey shows what to create instead.
+        if self.output_type == LINE_VOLTAGE_OUTPUT_TYPE and PHASE_VOLTAGES & {
+            getattr(description, "field", None),
+            *depends,
+        }:
+            return False
         if depends:
             return all(self.component_of(f) in self.coordinators for f in depends)
         return getattr(description, "component", None) in self.coordinators
