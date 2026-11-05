@@ -2,7 +2,7 @@
 
 `modbus_sungrow.yaml` produces `sensor.total_dc_power`. This integration,
 being device-scoped as a modern integration should be, would produce
-`sensor.sh10rt_total_dc_power`. Recorder history and every dashboard card are
+`sensor.sh10rt_total_pv_input_power`. Recorder history and every dashboard card are
 keyed by the entity_id, so which of the two an entity claims decides whether
 years of data and a user's whole dashboard survive the switch.
 

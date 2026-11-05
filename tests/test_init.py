@@ -358,7 +358,7 @@ async def test_a_chosen_name_becomes_the_device_name_and_the_ids(
             er.async_get(hass), entry.entry_id
         )
     }
-    assert "sensor.garage_total_dc_power" in ids, sorted(ids)[:5]
+    assert "sensor.garage_total_pv_input_power" in ids, sorted(ids)[:5]
 
 
 async def test_an_entry_without_a_name_keeps_the_device_it_always_had(
@@ -384,4 +384,4 @@ async def test_an_entry_without_a_name_keeps_the_device_it_always_had(
             er.async_get(hass), entry.entry_id
         )
     }
-    assert "sensor.sh10rt_total_dc_power" in ids, sorted(ids)[:5]
+    assert "sensor.sh10rt_total_pv_input_power" in ids, sorted(ids)[:5]

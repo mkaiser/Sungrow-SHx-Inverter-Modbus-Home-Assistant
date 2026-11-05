@@ -214,12 +214,10 @@ FLAGS: dict[str, str] = {
 #: number itself -- `sensor.active_power_limitation_raw` reading 170 or 85 and
 #: leaving the reader to know which is which.
 #:
-#: There is no third one. `apl_shutdown_at_zero_raw` looks like these and is
-#: deliberately **not** here: register 31213 is absent from Sungrow's
-#: datasheet -- the comment that added it to the YAML says exactly that -- and
-#: all three surveyed inverters read the same single value, so its enum is a
-#: convention assumed rather than a pair observed. It stays a diagnostic
-#: number until a machine shows a second value.
+#: `apl_shutdown_at_zero_raw` looks like these and is not here yet: register
+#: 31213 is absent from Sungrow's datasheet, so its pair is a convention found
+#: in issue #554. The surveys now read both `0x55` and `0xAA` on it, so it
+#: can become a flag once a write is watched.
 MODE_FLAGS: dict[str, tuple[str, str]] = {
     # key: (the boolean on `Derived`, the register it decodes)
     "active_power_limitation_enabled": (

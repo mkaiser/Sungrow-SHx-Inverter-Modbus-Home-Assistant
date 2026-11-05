@@ -40,7 +40,9 @@
 - [Installation sisu70](entities/installation-sisu70.md) — SH10RT-20 on P023 with SBR128, cable and dongle, read while polling #installation #sisu70
 - [Register 13000 \(running state\)](entities/register-13000.md) — Running state; 0x0000 is Running, and a dongle re-encodes it #register #input #running-state
 - [Register 13074 \(export power limit\)](entities/register-13074.md) — Export power limit; writes x10 on B001 firmware, 1:1 on 01011.95.03 #register #holding #export-limit #write-scale
+- [Register 13017 \(forced startup under low SoC standby\)](entities/register-13017.md) — A 0xAA command that wakes an inverter in low-SoC standby; reads 0, 0x55 or unavailable, never 0xAA #register #holding #command
 - [Register 31211 \(PV generation cut\)](entities/register-31211.md) — Undocumented PV generation cut, gated by firmware #register #holding #pv-cut #firmware-gated #undocumented
+- [Register 31213 \(shutdown at a 0 % power limit\)](entities/register-31213.md) — Undocumented: 0xAA stops the inverter at a 0 % active power limit; 0xAA on SH-RS and SH-T, 0x55 on SH-RT #register #holding #active-power-limit #undocumented
 - [Registers 33042 and 33274](entities/register-33042-and-33274.md) — Two specification registers not read: 33042 is 0xFFFF and 33274 is 0 on every survey #register #holding #specification #unread
 - [Register 6100 \(transport probe\)](entities/register-6100.md) — Answers on a cable, refused through a dongle: the transport question #register #input #transport
 
@@ -72,9 +74,11 @@
 - [gerd-wallbox-isolarcloud-2026-10-30.md](sources/gerd-wallbox-isolarcloud-2026-10-30-summary.md) — gerd's AC22E-01 beside Sungrow's portal: 21201-21206 is the serial, 21300 and 21310 in Wh #wallbox #ac22e-01 #gerd #isolarcloud
 - [mkaiser-charge-window-trace-2026-11-01.md](sources/mkaiser-charge-window-trace-2026-11-01-summary.md) — A forced-charging window sampled every 2 s at mkaiser: starts in 4 s, stops in 2 s, no rebound #control-test #charge-window #mkaiser #sapphire-h-b001-v000-p020
 - [mkaiser-discharge-window-2026-11-04.md](sources/mkaiser-discharge-window-2026-11-04-summary.md) — The discharge window check at mkaiser: 722.5 W stops to 0 W when the windows leave now, and returns #control-test #discharge-window #mkaiser #sapphire-h-b001-v000-p020
+- [issue-554-active-power-limit-registers.md](sources/issue-554-active-power-limit-registers-summary.md) — iSolarCloud's active power limit registers 31204/31205 and the 0 % shutdown flag 31213 #issue #active-power-limit #register-31213
 - [robbensonmio-sbr-cell-registers-788.md](sources/robbensonmio-sbr-cell-registers-788-summary.md) — Issue #788: 10765-10780 are per-module highest and lowest cells, not 16 cells; the corpus agrees #sbr #battery #robbensonmio #sapphire-h-b001-v000-p020
 - [github-issues-user-findings.md](sources/github-issues-user-findings-summary.md) — Issues #654-#775 read in full; a YAML package cannot decide anything #users #issues #yaml-package
 - [legacy_entity_map.json](sources/legacy-entity-map-summary.md) — What the YAML package produces; the tests hold the integration to it #yaml-package #migration #entity-id
+- [sungrow-datasheet-names-2026-11-05.md](sources/sungrow-datasheet-names-2026-11-05-summary.md) — Sungrow's register names from hybrid V1.1.2-V1.1.11 and SG V1.1.58; the documents are not distributed #specification #naming #datasheet
 - [sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-lan.json](sources/sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-lan-summary.md) — SH10RT-20, B001.V000.P020, bar12, a WiNet-S on Ethernet #survey #sh10rt-20 #sapphire-h-b001-v000-p020 #bar12 #winet_lan
 - [sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-wlan.json](sources/sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-wlan-summary.md) — SH10RT-20, B001.V000.P020, bar12, a WiNet-S on WiFi #survey #sh10rt-20 #sapphire-h-b001-v000-p020 #bar12 #winet_wlan #control-test
 - [sh10rt-20-b001v000p023-3p-bar12-anon-81257679535-battery-sbr096-meter-direct-lan.json](sources/sh10rt-20-b001v000p023-3p-bar12-anon-81257679535-battery-sbr096-meter-direct-lan-summary.md) — SH10RT-20, B001.V000.P023, bar12, the inverter's own LAN port #survey #sh10rt-20 #sapphire-h-b001-v000-p023 #bar12 #direct_lan
@@ -140,4 +144,5 @@
 - [Does the PV cut work on P022 and P071?](queries/does-the-pv-cut-work-on-p022-and-p071.md) — Answered: yes on both, P022 at gerd, P071 at ra1k-0 #pv-cut #register-31211 #answered
 - [Does writing 33213 drop the link at peter-sm?](queries/does-writing-33213-drop-the-link-at-peter-sm.md) — Open: the charge window's write lost the connection twice, at one house only #contention #charge-window #peter-sm #open
 - [What does an iHomeManager answer?](queries/what-does-an-ihomemanager-answer.md) — Open: never surveyed #ihomemanager #open #survey-wanted
+- [What does V1.1.16 call the registers no datasheet here lists?](queries/what-does-v1-1-16-call-the-unlisted-registers.md) — Open: 15 hybrid registers the integration reads are in neither V1.1.2 nor V1.1.11 #specification #naming #open
 - [What does a Sungrow Logger answer?](queries/what-does-a-logger-answer.md) — Open: never surveyed #logger #open #survey-wanted

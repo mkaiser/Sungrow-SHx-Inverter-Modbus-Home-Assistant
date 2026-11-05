@@ -214,7 +214,7 @@ async def test_site_production_adds_the_foreign_inverter(
     _report(hass, FOREIGN, "2.0", unit="kW")
     await _setup(hass, sungrow_unit, _behind(FOREIGN))
 
-    sungrow = float(hass.states.get("sensor.sh10rt_total_dc_power").state)
+    sungrow = float(hass.states.get("sensor.sh10rt_total_pv_input_power").state)
     assert float(hass.states.get(SITE).state) == pytest.approx(sungrow + 2000)
 
 

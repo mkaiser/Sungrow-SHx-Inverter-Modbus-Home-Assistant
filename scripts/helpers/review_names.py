@@ -3,6 +3,7 @@
 
     python scripts/helpers/review_names.py            # the table, to read
     python scripts/helpers/review_names.py --markdown # the same, for a document
+    python scripts/helpers/review_names.py --texts    # every other text, EN and DE
 
 `Todo.md` carries this as an open decision: *are the entity
 names final?* With `has_entity_name` a name supplies the entity id, and it
@@ -42,10 +43,17 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "generate" / "tables"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from naming import LEGACY_ONLY_SENSORS
+from naming import (
+    GERMAN,
+    GERMAN_TEXTS,
+    LEGACY_ONLY_SENSORS,
+    NAME_DISCUSSION,
+    text_leaves,
+)
 
 REPO = Path(__file__).resolve().parents[2]
 STRINGS = REPO / "custom_components" / "sungrow_modbus" / "strings.json"
+DATASHEET = REPO / "scripts" / "generate" / "tables" / "datasheet_names.json"
 LEGACY_MAP = REPO / "doc" / "legacy_entity_map.json"
 
 #: The entity map's layers that are the YAML package itself. The others are
@@ -107,6 +115,11 @@ class Row:
     #: The id the YAML package gave the same entity, which a migrating user
     #: keeps. Empty where the YAML had none.
     legacy_id: str = ""
+    #: The suggested German name (`naming.GERMAN`), for the maintainer to decide.
+    german: str = ""
+    #: Sungrow's name for the register, with its number; empty where the
+    #: entity is derived or the device has no Sungrow datasheet.
+    datasheet: str = ""
 
 
 def _slug(name: str) -> str:
@@ -191,12 +204,67 @@ BUTTONS: tuple[tuple[Device, str], ...] = (
 
 
 def _row(
-    device: Device, domain: str, key: str, unit: str, legacy: str, legacy_id: str = ""
+    device: Device,
+    domain: str,
+    key: str,
+    unit: str,
+    legacy: str,
+    legacy_id: str = "",
+    datasheet: str = "",
 ) -> Row:
     """Return the row for one entity, its id built as Home Assistant builds it."""
     name = _names().get((domain, key), "(no name in strings.json)")
     entity_id = f"{domain}.{_slug(device.example)}_{_slug(name)}"
-    return Row(device, domain, key, name, entity_id, unit, legacy, legacy_id)
+    return Row(
+        device,
+        domain,
+        key,
+        name,
+        entity_id,
+        unit,
+        legacy,
+        legacy_id,
+        GERMAN[key],
+        datasheet,
+    )
+
+
+@functools.cache
+def _registers() -> dict[str, dict[str, tuple[str, int]]]:
+    """Return {device table: {field: (space, register)}} for the two inverters.
+
+    Sungrow's register number, the one its datasheets print: the address the
+    map holds plus one.
+    """
+    from sungrow_modbus.hybrid_inverter.registers import COMPONENTS as HYBRID
+    from sungrow_modbus.string_inverter.registers import COMPONENTS as STRING
+
+    tables: dict[str, dict[str, tuple[str, int]]] = {}
+    for name, components in (("hybrid", HYBRID), ("sg", STRING)):
+        fields: dict[str, tuple[str, int]] = {}
+        for klass in components.values():
+            for field, spec in klass.declared_fields.items():
+                fields.setdefault(field, (klass.register_space, spec.address + 1))
+        tables[name] = fields
+    return tables
+
+
+def _datasheet(device: Device, field: str | None) -> str:
+    """Return Sungrow's name for the register an entity reads, and its number.
+
+    Empty for a derived entity and for a device without a Sungrow datasheet;
+    a register no datasheet lists says so, because that is worth knowing.
+    """
+    table = {INVERTER: "hybrid", STRING_INVERTER: "sg"}.get(device)
+    if table is None or field is None:
+        return ""
+    where = _registers()[table].get(field)
+    if where is None:
+        return ""
+    space, register = where
+    names: dict[str, str] = json.loads(DATASHEET.read_text(encoding="utf-8"))[table]
+    name = names.get(f"{space}:{register}", "*not in the datasheet*")
+    return f"{name} ({register})"
 
 
 def _legacy_ids() -> dict[tuple[str, str], str]:
@@ -306,7 +374,10 @@ def _rows() -> tuple[list[Row], list[tuple[Row, str]]]:
         unit = str(getattr(description, "native_unit_of_measurement", None) or "")
         legacy = str(getattr(description, "legacy_name", None) or "")
         legacy_id = legacy_ids.get((domain, description.key), "")  # type: ignore[attr-defined]
-        row = _row(device, domain, key, unit, legacy, legacy_id)
+        field = getattr(description, "field", None)
+        row = _row(
+            device, domain, key, unit, legacy, legacy_id, _datasheet(device, field)
+        )
         if device is INVERTER and domain == "sensor" and key in LEGACY_ONLY_SENSORS:
             dropped.append((row, LEGACY_ONLY_SENSORS[key]))
             continue
@@ -315,7 +386,27 @@ def _rows() -> tuple[list[Row], list[tuple[Row, str]]]:
     return rows, dropped
 
 
-REVIEW_DOC = Path(__file__).resolve().parents[2] / "doc" / "entity_name_review.md"
+#: What each part of `strings.json` is, for the headings of the texts.
+TEXT_GROUPS: dict[str, str] = {
+    "config": "Setup flow",
+    "options": "Options flow",
+    "issues": "Repairs",
+    "services": "Actions",
+    "exceptions": "Error messages",
+    "selector": "Selector options",
+    "entity": "Select states",
+}
+
+
+def _quote(label: str, text: str) -> str:
+    """Return a text as a block quote, paragraphs and list items kept."""
+    lines = text.split("\n")
+    lines[0] = f"**{label}** {lines[0]}"
+    return "\n".join(f"> {line}".rstrip() for line in lines)
+
+
+REVIEW_DOC = Path(__file__).resolve().parents[2] / "doc" / "entity_names.md"
+TEXTS_DOC = REVIEW_DOC.with_name("text_translation_review.md")
 
 
 def _render(markdown: bool) -> str:
@@ -334,7 +425,7 @@ def _render(markdown: bool) -> str:
         counts = ", ".join(
             f"{device.heading} {len(by_device[device])}" for device in DEVICES
         )
-        print("# The entity names, for review\n")
+        print("# The entity names\n")
         print(
             f"**{len(rows)} entities** that modern mode can create ({counts}).\n\n"
             "The **entity id**\ncolumn is what a dashboard and years of "
@@ -347,42 +438,84 @@ def _render(markdown: bool) -> str:
         )
         print(
             "Each id begins with its **device's name**, which differs between "
-            "houses; one\nreal model stands in for each device below. The "
-            "**legacy name** and **legacy\nentity id** are what the YAML "
-            "package calls the same entity: a user who\nmigrates keeps that "
-            "id, and a fresh install gets the entity id. A **←**\nmarks a "
-            "name that differs.\n"
+            "houses; one\nreal model stands in for each device below. "
+            "**YAML** and **YAML entity id** are\nwhat the YAML package "
+            "calls the same entity: a user who migrates keeps that\nid, and a "
+            "fresh install gets the entity id. A **←** marks a YAML name the\n"
+            "**English** one differs from.\n"
+        )
+        print(
+            "**Datasheet** is Sungrow's own name for the register, with its "
+            "number: the hybrid's\n*Communication Protocol of Residential "
+            "Hybrid Inverter* V1.1.11, the SG's *Modbus\nRegister Protokoll* "
+            "V1.1.58 (`scripts/generate/tables/datasheet_names.json`). Empty\n"
+            "for a derived entity and for the battery and wallbox, which have "
+            "no Sungrow\ndatasheet here.\n"
+        )
+        print(
+            "**Deutsch** is a suggested German name for each, to decide beside "
+            "the English\none. It is a suggestion only: no German translation "
+            "ships yet, and entity ids\nstay English whichever names are "
+            "chosen. The names live in `GERMAN` in\n"
+            "`scripts/generate/tables/naming.py`, with the German word each "
+            "recurring idea\nmust use (`GERMAN_TERMS`). Every other text in "
+            "`strings.json` -- the setup and\noptions flows, repairs, actions "
+            "and error messages -- is in\n"
+            "[text_translation_review.md](text_translation_review.md), "
+            "English above German.\n"
+        )
+        print(
+            "A name with an open question has it **To discuss** under its "
+            "table: what the\nentity is and the names to choose from "
+            "(`NAME_DISCUSSION` in `naming.py`).\n"
         )
         print(
             f"A further {len(dropped)} sensors exist **only in legacy mode** "
-            "and are listed at the\nend. Their names need no judgement: "
-            "they are the YAML package's, kept so that\nhistory keyed to "
-            "them carries on, and modern mode replaces each with something\n"
-            "better.\n"
+            "and are listed at the\nend. Their ids are the YAML package's, "
+            "kept so that history keyed to them\ncarries on, and modern mode "
+            "replaces each with something better.\n"
         )
+
+    def discuss(group: list[Row]) -> None:
+        """List the open questions on a table's names, beneath it."""
+        open_rows = [row for row in group if row.key in NAME_DISCUSSION]
+        if not open_rows:
+            return
+        print("\n**To discuss**\n")
+        for row in open_rows:
+            print(f"- **{row.name}** / **{row.german}**: {NAME_DISCUSSION[row.key]}")
 
     def table(group: list[Row], level: str, heading: str) -> None:
         group = sorted(group, key=lambda row: (row.name, row.entity_id))
         if markdown:
             print(f"\n{level} {heading} ({len(group)})\n")
-            print("| Name | Entity id | Unit | Legacy name | Legacy entity id |")
-            print("| --- | --- | --- | --- | --- |")
+            print(
+                "| Datasheet | YAML | English | Deutsch | Entity id | "
+                "YAML entity id | Unit |"
+            )
+            print("| --- | --- | --- | --- | --- | --- | --- |")
             for row in group:
                 changed = " **←**" if row.legacy and row.legacy != row.name else ""
                 legacy_id = f"`{row.legacy_id}`" if row.legacy_id else ""
                 print(
-                    f"| {row.name} | `{row.entity_id}` | {row.unit} | "
-                    f"{row.legacy}{changed} | {legacy_id} |"
+                    f"| {row.datasheet} | {row.legacy}{changed} | {row.name} | "
+                    f"{row.german} | `{row.entity_id}` | {legacy_id} | {row.unit} |"
                 )
+            discuss(group)
             return
         print(f"\n{heading} ({len(group)})")
         print("-" * 72)
         for row in group:
             print(f"  {row.name:<44} {row.unit:<8} {row.entity_id}")
+            if row.datasheet:
+                print(f"    {'sungrow: ' + row.datasheet}")
+            print(f"    {'de: ' + row.german}")
             if row.legacy and row.legacy != row.name:
                 print(f"    {'was: ' + row.legacy:<44}  <-- renamed")
             if row.legacy_id:
                 print(f"    {'yaml: ' + row.legacy_id}")
+            if row.key in NAME_DISCUSSION:
+                print(f"    discuss: {NAME_DISCUSSION[row.key]}")
 
     for device in DEVICES:
         group = by_device[device]
@@ -417,13 +550,20 @@ def _render(markdown: bool) -> str:
                 "is where the reading went instead,\nwith its modern-mode "
                 "id.\n"
             )
-            print("| Name | Legacy entity id | Replaced in modern mode by |")
-            print("| --- | --- | --- |")
+            print(
+                "| Datasheet | YAML | English | Deutsch | YAML entity id | "
+                "Replaced in modern mode by |"
+            )
+            print("| --- | --- | --- | --- | --- | --- |")
             for row, replacement in sorted(dropped, key=lambda pair: pair[0].name):
                 legacy_id = (
                     f"`{row.legacy_id}`" if row.legacy_id else "(not in the YAML)"
                 )
-                print(f"| {row.name} | {legacy_id} | {replaced_by(replacement)} |")
+                print(
+                    f"| {row.datasheet} | {row.legacy} | {row.name} | {row.german} | "
+                    f"{legacy_id} | {replaced_by(replacement)} |"
+                )
+            discuss([row for row, _replacement in dropped])
         else:
             print(f"\nLegacy mode only ({len(dropped)})")
             print("-" * 72)
@@ -451,10 +591,51 @@ def _render(markdown: bool) -> str:
             print(f"  {entity_id:<44} {name}")
 
     if not markdown:
+        print(f"\n{len(GERMAN_TEXTS)} further texts: run with --texts.")
         renamed = sum(1 for row in rows if row.legacy and row.legacy != row.name)
         print(f"\n{len(rows)} entities in modern mode. Renamed from the YAML:", renamed)
 
     return "\n".join(out) + "\n"
+
+
+def _render_texts() -> str:
+    """Return every other text of `strings.json`, English above German."""
+    out: list[str] = []
+
+    def print(*parts: object, **_kw: object) -> None:  # noqa: A001
+        """Collect a line instead of writing it, so the document can be compared."""
+        out.append(" ".join(str(p) for p in parts))
+
+    texts = text_leaves(json.loads(STRINGS.read_text(encoding="utf-8")))
+    print("# The texts, for review\n")
+    print(
+        f"**{len(texts)} texts**: everything in `strings.json` that is not an "
+        "entity name, by its\npath -- the setup and options flows, repairs, "
+        "actions and error messages.\nEach is shown in English and with its "
+        "suggested German, which lives in\n"
+        "`scripts/generate/tables/german_texts.json`. It is a suggestion only: "
+        "no German\ntranslation ships yet. The entity names are in\n"
+        "[entity_names.md](entity_names.md).\n"
+    )
+    print(
+        "A `{placeholder}` is filled in by the integration and stays as "
+        "written; backticks\nand bold are kept.\n"
+    )
+    heading = ""
+    for path, english in texts.items():
+        group = TEXT_GROUPS[path.split(".", 1)[0]]
+        if group != heading:
+            heading = group
+            count = sum(
+                1 for other in texts if TEXT_GROUPS[other.split(".", 1)[0]] == group
+            )
+            print(f"\n## {group} ({count})\n")
+        print(f"### `{path}`\n")
+        print(_quote("EN", english))
+        print()
+        print(_quote("DE", GERMAN_TEXTS[path]))
+        print()
+    return "\n".join(out).rstrip("\n") + "\n"
 
 
 def main() -> int:
@@ -462,9 +643,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--markdown", action="store_true")
     parser.add_argument(
+        "--texts",
+        action="store_true",
+        help="print the other texts of strings.json, English and German",
+    )
+    parser.add_argument(
         "--check",
         action="store_true",
-        help="verify doc/entity_name_review.md matches what this would write",
+        help="verify the two review documents match what this would write",
     )
     args = parser.parse_args()
 
@@ -474,19 +660,26 @@ def main() -> int:
         # number was 186 -- the wallbox, the pack and the derived values had
         # arrived and nothing compared the file to the code. A document that
         # states a wrong number confidently is worse than no document.
-        want = _render(markdown=True)
-        have = REVIEW_DOC.read_text(encoding="utf-8")
-        if want != have:
-            print(
-                f"{REVIEW_DOC.relative_to(REVIEW_DOC.parents[1])} is stale. "
-                "Run: python scripts/helpers/review_names.py --markdown > "
-                f"{REVIEW_DOC.relative_to(REVIEW_DOC.parents[1])}",
-                file=sys.stderr,
-            )
-            return 1
-        print(f"{REVIEW_DOC.relative_to(REVIEW_DOC.parents[1])} is current")
-        return 0
+        stale = 0
+        for doc, want, flag in (
+            (REVIEW_DOC, _render(markdown=True), "--markdown"),
+            (TEXTS_DOC, _render_texts(), "--texts"),
+        ):
+            where = doc.relative_to(doc.parents[1])
+            if not doc.exists() or doc.read_text(encoding="utf-8") != want:
+                print(
+                    f"{where} is stale. Run: python scripts/helpers/"
+                    f"review_names.py {flag} > {where}",
+                    file=sys.stderr,
+                )
+                stale += 1
+            else:
+                print(f"{where} is current")
+        return 1 if stale else 0
 
+    if args.texts:
+        sys.stdout.write(_render_texts())
+        return 0
     sys.stdout.write(_render(markdown=args.markdown))
     return 0
 

@@ -48,7 +48,7 @@ def test_it_maps_object_ids_not_entity_ids() -> None:
 
 def test_the_modern_id_carries_the_device_prefix() -> None:
     lookup = {key: (legacy, modern) for key, legacy, modern in ROWS}
-    assert lookup["total_dc_power"] == ("total_dc_power", "sh10rt_total_dc_power")
+    assert lookup["total_dc_power"] == ("total_dc_power", "sh10rt_total_pv_input_power")
 
 
 def test_no_two_entities_map_to_the_same_id() -> None:
@@ -64,7 +64,7 @@ def test_the_grafana_regex_matches_both_names_and_nothing_else() -> None:
     line = next(x for x in text.splitlines() if x.startswith("/^(total_dc_power|"))
     pattern = re.compile(line.split("    #")[0].strip().strip("/"))
     assert pattern.fullmatch("total_dc_power")
-    assert pattern.fullmatch("sh10rt_total_dc_power")
+    assert pattern.fullmatch("sh10rt_total_pv_input_power")
     # Anchored, so it must not swallow a longer id that merely contains it.
     assert not pattern.fullmatch("total_dc_power_2")
 
@@ -94,6 +94,6 @@ def test_the_destructive_steps_are_present_but_commented_out() -> None:
 def test_both_directions_are_offered(reverse: bool) -> None:
     """The migration is reversible, so its helper has to be too."""
     text = grafana(ROWS, reverse=reverse)
-    source = "sh10rt_total_dc_power" if reverse else "total_dc_power"
-    target = "total_dc_power" if reverse else "sh10rt_total_dc_power"
+    source = "sh10rt_total_pv_input_power" if reverse else "total_dc_power"
+    target = "total_dc_power" if reverse else "sh10rt_total_pv_input_power"
     assert f"/^({source}|{target})$/" in text

@@ -58,7 +58,8 @@ Edit the source, not the output:
   from `sungrow_modbus.hybrid_inverter.derived` and `scripts/generate/tables/`;
 - `doc/compatibility.md` -- `generate_compatibility.py`, from the surveys;
 - `scripts/dev/simulator_registers.json` -- `generate_simulator_registers.py`;
-- `doc/entity_name_review.md` -- `scripts/helpers/review_names.py --markdown`;
+- `doc/entity_names.md` and `doc/text_translation_review.md` --
+  `scripts/helpers/review_names.py --markdown` and `--texts`;
 - `legacy/modbus_sungrow_multiple_inverters_{1,2,3}.yaml` --
   `generate_second_inverter_config.py`; CI regenerates and commits it,
   overwriting any hand edit.

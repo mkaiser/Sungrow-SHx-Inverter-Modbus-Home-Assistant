@@ -24,18 +24,47 @@ _Nothing that can start without hardware, a contributor or a decision._
    and opens the HACS default store, which also needs the brand in
    `home-assistant/brands` (`scripts/helpers/make_brand_icon.py` draws it).
 2. **Are the entity names final?** They are reviewed
-   (`doc/entity_name_review.md`, `scripts/helpers/review_names.py`). A rename
+   (`doc/entity_names.md`, `scripts/helpers/review_names.py`). A rename
    later leaves existing ids alone and only diverges new installs, which a
    registry migration can close, so it stays cheap until release, not free.
    The sheet covers every device an entry can create (306 entities) and is
    the YAML | HACS table: each entity's legacy name and entity id beside its
    own, and the three YAML entities not ported. Compared against Sungrow's
    protocol (V1.1.2): 16 names changed to match it or each other (load
-   control, battery energy totals, charging limits, internal temperature).
-   Next: the rest of the review, and the 36 registers V1.1.2 does not list
-   against V1.1.11/V1.1.16. Decided: ids
-   stay English in every language (`doc/architecture.md`); pinning them via
-   `object_id_base` is still to build, and must land before a `de.json`.
+   control, battery energy totals, charging limits, device temperature).
+   The sheet carries a suggested German name for each entity (`GERMAN` in
+   `scripts/generate/tables/naming.py`) and German for every other text in
+   `strings.json` (`german_texts.json` beside it, shown in
+   `doc/text_translation_review.md`); none of it is shipped. Decided: entity
+   ids stay English in every language (`doc/architecture.md`).
+
+   Left, in order:
+
+   1. **Decide the names, English and German together**, in
+      `doc/entity_names.md` (datasheet, YAML, English and German side by
+      side): the SG, SBR and wallbox sections are next. The inverter's open
+      points are decided (*code* for every raw number, *Leistungsaufnahme* /
+      *Energieaufnahme Verbraucher*, *Total PV input power*, *Device alarm*,
+      *Feed-in limit* / *Einspeiselimit*, 31213 as *Shutdown inverter when
+      limited to 0 % power*); a new question goes under **To discuss**
+      (`NAME_DISCUSSION` in `naming.py`).
+   2. **13017 becomes a button** *Force startup* / *Zwangsstart*: it is a
+      command (reads 0 or 0x55, never 0xAA), not a state. It writes, so it
+      is gated like *Cut PV generation* (`CONFIRMED_ON_FIRMWARE` only from a
+      watched write), and the raw sensor goes.
+   3. **Decode 31213 to a binary sensor**: the surveys read both 0x55 and
+      0xAA on it (issue #554's pair), so it is a flag like 13089.
+   4. **Compare the registers V1.1.2 does not list** against V1.1.16. V1.1.11
+      (and V1.1.5, V1.1.9 and the SG's V1.1.58) are read: 35 of the 50 names
+      match, and the open naming points they raised are on the sheet
+      (*Feed-in* against *Export* for the limit family; 13075 is Sungrow's
+      *Off-grid option*). 15 are in neither V1.1.2 nor V1.1.11: the four
+      firmware parts (2582 ...), the serial (4990), meter phase voltage and
+      current (5741-5746), 31211, 31213 and 33149/33150. V1.1.16 is not in
+      the container.
+   5. **If German ships:** pin the English ids with `object_id_base` first
+      (`doc/architecture.md`), then have `scripts/generate/descriptions.py`
+      write `translations/de.json` from the two tables.
 
 # Blockers
 
@@ -201,7 +230,7 @@ robbensonmio on #788 once it is released, and close the issue if they agree.
 ## The PV cut (31211, #738)
 
 - More firmware confirmed: 31211 answers 0x55 but no cut has been watched on
-  `SUNSTONE-H_B000.V001.P068`, `B000.V002.P059` and `B000.V002.P057`. The
+  `SUNSTONE-H_B000.V001.P068`, `B000.V002.P067`, `B000.V002.P059` and `B000.V002.P057`. The
   survey's control test watches the cut, so a measurement the survey takes is
   asked for in the "Most wanted" table of `device-survey/devices-wanted.md`
   (the survey issue is written from it), never from one person.
@@ -258,12 +287,12 @@ the commit; a survey signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-04T10:43:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-04T10:43:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-05T11:30:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-05T11:30:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked: **2026-11-04 10:43 UTC** (#786).
+Last checked: **2026-11-05 11:30 UTC** (#786).
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 
@@ -273,3 +302,11 @@ Check upstream for changes to the index, log or frontmatter format
 lint rules. If something changed, update `tests/test_wiki.py` and
 `.wiki/AGENTS.md` together, and bump the version named in both and in
 `.wiki/wiki/log.md`. Then move the date above six weeks on.
+
+
+
+## Device setup in HA
+
+# When installed the first time, can we leave the old histry values in place and copy the history data to the new / renamed sensors?
+
+When deinstalling, is there an option to delete all new sensors and history data and go back to the old YAML sensors?

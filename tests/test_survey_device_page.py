@@ -125,7 +125,7 @@ async def test_a_diagnostics_entry_polls_but_reports_no_readings(
     entry = await _setup(hass, sungrow_unit, mode=MODE_DIAGNOSTICS)
 
     assert entry.runtime_data.coordinators
-    assert hass.states.get("sensor.sh10rt_total_dc_power") is None
+    assert hass.states.get("sensor.sh10rt_total_pv_input_power") is None
 
 
 async def test_the_entities_give_the_entry_a_device_page(
@@ -159,7 +159,7 @@ async def test_an_ordinary_entry_gets_none_of_them(
 
     for entity_id in DIAGNOSTIC_ENTITIES:
         assert hass.states.get(entity_id) is None, entity_id
-    assert hass.states.get("sensor.sh10rt_total_dc_power") is not None
+    assert hass.states.get("sensor.sh10rt_total_pv_input_power") is not None
 
 
 async def test_an_ordinary_entry_can_still_run_one_as_an_action(

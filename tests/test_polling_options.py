@@ -126,7 +126,7 @@ async def test_a_group_set_to_never_is_not_polled_and_has_no_entities(
     # than present and permanently unavailable.
     assert hass.states.get("sensor.sh10rt_total_pv_generation") is None
     # While a group that is still polled is unaffected.
-    assert hass.states.get("sensor.sh10rt_total_dc_power") is not None
+    assert hass.states.get("sensor.sh10rt_total_pv_input_power") is not None
 
 
 async def test_turning_everything_off_is_refused_rather_than_silently_empty(

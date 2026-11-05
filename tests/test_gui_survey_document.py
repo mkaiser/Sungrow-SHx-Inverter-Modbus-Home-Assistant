@@ -544,7 +544,7 @@ async def test_a_diagnostics_entry_creates_no_entities(
         for state in hass.states.async_all()
         if state.entity_id.endswith("_load_power")
     ]
-    assert hass.states.get("sensor.sh10rt_total_dc_power") is None
+    assert hass.states.get("sensor.sh10rt_total_pv_input_power") is None
     # But it is polling, which is what a survey needs.
     assert entry.runtime_data.coordinators
 
@@ -769,7 +769,7 @@ async def test_a_diagnostics_entry_is_offered_a_way_to_become_a_full_one(
 
     assert entry.data[CONF_MODE] == MODE_DEVICES
     # And now the entities exist.
-    assert hass.states.get("sensor.sh10rt_total_dc_power") is not None
+    assert hass.states.get("sensor.sh10rt_total_pv_input_power") is not None
 
 
 async def test_promotion_with_an_undetermined_slot_explains_and_claims_nothing(

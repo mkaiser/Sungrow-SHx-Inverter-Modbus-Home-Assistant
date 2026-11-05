@@ -30,6 +30,8 @@ rules fails just as loudly as a hand edit would.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 import re
 
 #: Words that keep their capitals wherever they appear: initialisms, plus
@@ -182,13 +184,13 @@ OVERRIDES: dict[str, str] = {
     # says `SG5.0RS` -- and the key's `sg_` keeps the translation keys apart.
     # "Power limit" rather than "Power limitation setting", for the `-ing`
     # rule's reason on the wallbox's configured output current.
-    "sg_total_dc_power": "Total DC power",
+    "sg_total_dc_power": "Total PV input power",
     "sg_total_active_power": "Total active power",
     "sg_total_apparent_power": "Total apparent power",
     "sg_reactive_power": "Reactive power",
     "sg_power_factor": "Power factor",
     "sg_grid_frequency": "Grid frequency",
-    "sg_inverter_temperature": "Internal temperature",
+    "sg_inverter_temperature": "Device temperature",
     "sg_work_state": "Work state",
     "sg_mppt1_voltage": "MPPT1 voltage",
     "sg_mppt1_current": "MPPT1 current",
@@ -249,8 +251,8 @@ OVERRIDES: dict[str, str] = {
     # different from the register beside them, because that is the only
     # question a device page raises -- why are there two load figures?
     "corrected_load_power": "Corrected load power",
-    # "Site" rather than "total": `sensor.total_dc_power` is already "Total
-    # DC power", so the distinguishing word has to be the one that says
+    # "Site" rather than "total": `total_dc_power` is already "Total PV
+    # input power", so the distinguishing word has to be the one that says
     # *whose* production is counted, not that it is a total.
     "total_site_pv_power": "Total site PV power",
     # Stripping both device words leaves "Serial" and "State", which are too
@@ -272,6 +274,12 @@ OVERRIDES: dict[str, str] = {
     # switch that turns limiting on, the number that sets the watts, and a
     # read-only copy of that number, all called "Export power limit".
     #
+    # "Feed-in limit" for the whole family, as Sungrow has named these
+    # registers since V1.1.9 ("Feed-in Limitation Value/Ratio", 13074,
+    # 13088; "Min./Max. Feed-in Power Limitation Value", 5622/5623). The
+    # measured flow keeps "export", which is Sungrow's word for it too
+    # ("Export power", 13010).
+    #
     # `-ing` was considered and rejected on the evidence: the three names in
     # this map that end in it -- Battery charging, Battery discharging, PV
     # generating -- are all binary sensors meaning "this is happening right
@@ -281,15 +289,19 @@ OVERRIDES: dict[str, str] = {
     # A switch named for the mode register it writes is already the pattern
     # here: `switch.backup_mode` is "Backup mode". So this follows it, and
     # the number keeps the name a user would look for.
-    "export_power_limit_mode": "Export power limit mode",
+    "export_power_limit": "Feed-in limit",
+    "export_power_limit_mode": "Feed-in limit mode",
+    "export_power_limit_max": "Feed-in limit maximum",
+    "export_power_limit_min": "Feed-in limit minimum",
+    "feed_in_limitation_ratio": "Feed-in limit ratio",
     # Sungrow's "Load Control Mode" (13002) and its enable (13011): "load
     # control" is the document's word, and says what the feature does, which
     # "load adjustment" never did. The select owns the longer name; the
     # switch says whether load control happens at all.
     "load_adjustment_mode": "Load control mode",
     "load_adjustment_mode_enable": "Load control",
-    "load_adjustment_mode_selection_raw": "Load control mode selection raw",
-    "load_adjustment_mode_enable_raw": "Load control mode enable raw",
+    "load_adjustment_mode_selection_raw": "Load control mode selection code",
+    "load_adjustment_mode_enable_raw": "Load control mode enable code",
     # "Energy" on every battery throughput total, as on the grid's and the
     # house's ("Daily exported energy") and in Sungrow's own names ("Daily
     # battery discharge energy", 13026). Without it "Daily battery charge"
@@ -300,24 +312,41 @@ OVERRIDES: dict[str, str] = {
     "total_battery_discharge": "Total battery discharge energy",
     "daily_battery_charge_from_pv": "Daily battery charge energy from PV",
     "total_battery_charge_from_pv": "Total battery charge energy from PV",
+    # The raw number behind a decoded entity says "code": each is a value
+    # looked up in a table (0xAA/0x55, a mode number, a state code), and one
+    # word for all of them shows at a glance which entity is the raw one.
+    # The power flow register is one too: its bits are the on/off sensors.
+    "power_flow_status": "Power flow code",
+    "running_state_raw": "Running state code",
+    "backup_mode_raw": "Backup mode code",
+    "ems_mode_selection_raw": "EMS mode selection code",
+    "export_power_limit_mode_raw": "Feed-in limit mode code",
+    "active_power_limitation_raw": "Active power limitation code",
+    "pv_power_limitation_raw": "PV power limitation code",
+    "pv_generation_cut_raw": "PV generation cut code",
+    # Not a code: a signed power, like "Battery charging power signed".
+    "export_power_raw": "Export power signed",
+    # The inverter's own alarm word (13050), and the summary of all four
+    # alarm words: "Device" says whose, as "Device temperature" does, where
+    # "Inverter alarm" would repeat the device's name.
+    "inverter_alarm": "Device alarm",
+    "alarm_reported": "Any alarm",
+    # Register 5017, Sungrow's "Total DC power" with the remark "Total PV
+    # power": the trackers' inputs summed, on the DC side. "Total" because it
+    # is the sum of the MPPT readings beside it, as "Total active power" is
+    # of the phases.
+    "total_dc_power": "Total PV input power",
     # Not raw at all: register 13090 has a scale of 0.1 and a unit, and reads
     # 100.0 % on every machine surveyed. The YAML called it "raw" because it
     # sits beside the mode register, and the word has been describing the
     # neighbour ever since.
     "active_power_limitation_ratio_raw": "Active power limitation ratio",
-    # APL is Sungrow's "active power limitation" -- capping the inverter's AC
-    # output, as a grid operator's curtailment does. Spelled out because an
-    # acronym only somebody who has read the forum thread would recognise is
-    # not a name, and without "raw" because the number is all there is.
-    #
-    # **Experimental.** Register 31213 is not in Sungrow's protocol document;
-    # it comes from community feedback in issue #554 and nobody here has
-    # tested what it does. It stays a diagnostic number rather than becoming a
-    # binary sensor because all three surveyed inverters read the same single
-    # value, so its enum is assumed and not observed.
-    # `src/sungrow_modbus/hybrid_inverter/layout.py` carries the same warning where the
-    # component is described.
-    "apl_shutdown_at_zero_raw": "Active power limitation shutdown at zero",
+    # Register 31213, which is in no Sungrow datasheet: issue #554 found it
+    # by watching iSolarCloud, as "Shutdown at active power limit ratio of
+    # 0%". Named for what it decides -- whether a 0 % active power limit
+    # stops the inverter or holds it running at 0 W -- in words that need no
+    # knowledge of "active power". The surveys read both 0x55 and 0xAA on it.
+    "apl_shutdown_at_zero_raw": "Shutdown inverter when limited to 0 % power",
     # The two mode registers, now that a binary sensor decodes each. The
     # entity says whether limiting is happening; the ratio above says how
     # much.
@@ -357,12 +386,13 @@ OVERRIDES: dict[str, str] = {
     "battery_max_charge_power": "Battery max charging power",
     "battery_max_discharge_power": "Battery max discharging power",
     # Sungrow's "Inside Temperature" (5008). "Temperature" alone sat among
-    # the pack's and the modules' temperatures without saying whose.
-    "inverter_temperature": "Internal temperature",
+    # the pack's and the modules' temperatures without saying whose, and
+    # "Device" says whose where "Internal" only said where.
+    "inverter_temperature": "Device temperature",
     # "cmd" is banned below, and the slash reads better than three nouns in a
     # row; Home Assistant slugifies it away, so the entity_id is unaffected.
     "battery_forced_charge_discharge_cmd_raw": (
-        "Battery forced charge/discharge command raw"
+        "Battery forced charge/discharge command code"
     ),
     "battery_forced_charge_discharge_power": "Battery forced charge/discharge power",
     # And the select that drives them, which the YAML wrote without the slash.
@@ -558,6 +588,433 @@ DIAGNOSTIC: frozenset[str] = frozenset(
         "sg_power_limitation_setting",
     }
 )
+
+#: **Suggested German names**, one per translation key, for the maintainer to
+#: decide on beside the English ones in `doc/entity_names.md`. Nothing
+#: reads this at runtime and no `de.json` exists: a decided name goes into
+#: the translation when German ships. Entity ids stay English either way
+#: (`doc/architecture.md`).
+#:
+#: The convention follows the English one: sentence case, no abbreviation with
+#: a full stop, the device's own name left to Home Assistant. A reading is
+#: written **quantity first, then the phase** ("Phase A Spannung"), so the
+#: three phases and the four trackers sort together; `GERMAN_TERMS` holds the
+#: words every name must use for the same idea, and `tests/test_naming_convention.py`
+#: holds the table to them.
+GERMAN: dict[str, str] = {
+    # -- on/off states ----------------------------------------------------
+    "active_power_limitation_enabled": "Wirkleistungsbegrenzung",
+    "alarm_reported": "Alarm aktiv",
+    "battery_charging": "Batterie lädt",
+    "battery_charging_delay": "Batterie lädt (verzögert)",
+    "battery_discharging": "Batterie entlädt",
+    "battery_discharging_delay": "Batterie entlädt (verzögert)",
+    "exporting_power": "Einspeisung",
+    "exporting_power_delay": "Einspeisung (verzögert)",
+    "fault_reported": "Fehler gemeldet",
+    "importing_power": "Netzbezug",
+    "importing_power_delay": "Netzbezug (verzögert)",
+    "negative_load_power": "Negative Leistungsaufnahme Verbraucher",
+    "negative_load_power_delay": "Negative Leistungsaufnahme Verbraucher (verzögert)",
+    "positive_load_power": "Positive Leistungsaufnahme Verbraucher",
+    "positive_load_power_delay": "Positive Leistungsaufnahme Verbraucher (verzögert)",
+    "pv_generating": "PV erzeugt",
+    "pv_generating_delay": "PV erzeugt (verzögert)",
+    "pv_generation_cut": "PV-Erzeugung abgeschaltet",
+    "pv_power_limitation_enabled": "PV-Leistungsbegrenzung",
+    "sg_fault_reported": "Fehler gemeldet",
+    "wallbox_charging": "Lädt",
+    "wallbox_enabled": "Aktiviert",
+    "weekend_discharge": "Entladung am Wochenende",
+    # -- the survey -------------------------------------------------------
+    "run_control_test": "Vollständige Diagnose und Tests ausführen",
+    "run_survey": "Schreibgeschützte Diagnose ausführen",
+    "survey_finished": "Diagnose beendet",
+    "survey_progress": "Diagnosefortschritt",
+    "survey_step": "Diagnoseschritt",
+    # -- settings: numbers, selects, switches, times ----------------------
+    "backup_mode": "Backup-Modus",
+    "battery_charging_start_power": "Batterie Ladestartleistung",
+    "battery_discharging_start_power": "Batterie Entladestartleistung",
+    "battery_forced_charge_discharge": "Batterie Zwangsladung/-entladung",
+    "battery_forced_charge_discharge_power": (
+        "Batterie Zwangsladung/-entladung Leistung"
+    ),
+    "battery_max_charge_power": "Maximale Batterie-Ladeleistung",
+    "battery_max_discharge_power": "Maximale Batterie-Entladeleistung",
+    "battery_max_soc": "Maximaler Batterie-Ladezustand",
+    "battery_min_soc": "Minimaler Batterie-Ladezustand",
+    "battery_reserved_soc_for_backup": "Reservierter Batterie-Ladezustand für Backup",
+    "cut_pv_generation": "PV-Erzeugung abschalten",
+    "ems_mode": "EMS-Modus",
+    "export_power_limit": "Einspeiselimit",
+    "export_power_limit_mode": "Einspeiselimit-Modus",
+    "forced_charging_days": "Zwangsladung Tage",
+    "forced_charging_end_1": "Zwangsladung Ende 1",
+    "forced_charging_end_2": "Zwangsladung Ende 2",
+    "forced_charging_schedule": "Zwangsladung Zeitplan",
+    "forced_charging_start_1": "Zwangsladung Start 1",
+    "forced_charging_start_2": "Zwangsladung Start 2",
+    "forced_charging_target_soc_1": "Zwangsladung Ziel-Ladezustand 1",
+    "forced_charging_target_soc_2": "Zwangsladung Ziel-Ladezustand 2",
+    "load_adjustment_mode": "Laststeuerungsmodus",
+    "load_adjustment_mode_enable": "Laststeuerung",
+    # -- raw codes: "Code", never "Rohwert" ----------------------------
+    "active_power_limitation_raw": "Wirkleistungsbegrenzung Code",
+    "backup_mode_raw": "Backup-Modus Code",
+    "battery_forced_charge_discharge_cmd_raw": (
+        "Batterie Zwangsladung/-entladung Befehl Code"
+    ),
+    "ems_mode_selection_raw": "EMS-Modus Auswahl Code",
+    "export_power_limit_mode_raw": "Einspeiselimit-Modus Code",
+    "export_power_raw": "Einspeiseleistung (mit Vorzeichen)",
+    "forced_startup_under_low_soc_raw": "Zwangsstart bei niedrigem Ladezustand",
+    "load_adjustment_mode_enable_raw": "Laststeuerungsmodus Aktivierung Code",
+    "load_adjustment_mode_selection_raw": "Laststeuerungsmodus Auswahl Code",
+    "pv_generation_cut_raw": "PV-Erzeugung abgeschaltet Code",
+    "pv_power_limitation_raw": "PV-Leistungsbegrenzung Code",
+    "running_state_raw": "Betriebszustand Code",
+    # -- limits and control state -----------------------------------------
+    "active_power_limitation_ratio_raw": "Wirkleistungsbegrenzung prozentual",
+    "apl_shutdown_at_zero_raw": "Abschalten bei Begrenzung auf 0 % Leistung",
+    "export_power_limit_max": "Einspeiselimit Maximum",
+    "export_power_limit_min": "Einspeiselimit Minimum",
+    "feed_in_limitation_ratio": "Einspeiselimit prozentual",
+    # -- the inverter's own readings --------------------------------------
+    "backup_frequency": "Backup Frequenz",
+    "bdc_rated_power": "BDC-Nennleistung",
+    "corrected_load_power": "Korrigierte Leistungsaufnahme Verbraucher",
+    "export_power": "Einspeiseleistung",
+    "grid_frequency": "Netzfrequenz",
+    "import_power": "Bezugsleistung",
+    "inverter_alarm": "Gerätealarm",
+    "inverter_rated_output": "Nennausgangsleistung",
+    "inverter_temperature": "Gerätetemperatur",
+    "load_power": "Leistungsaufnahme Verbraucher",
+    "power_factor": "Leistungsfaktor",
+    "power_flow_status": "Leistungsfluss Code",
+    "reactive_power": "Blindleistung",
+    "self_consumption_of_today": "Eigenverbrauch heute",
+    "total_active_power": "Gesamte Wirkleistung",
+    "total_backup_power": "Backup Gesamtleistung",
+    "total_dc_power": "Gesamte PV-Eingangsleistung",
+    "total_site_pv_power": "Gesamte PV-Leistung der Anlage",
+    # -- faults and alarms ------------------------------------------------
+    "battery_alarm": "Batteriealarm",
+    "battery_fault": "Batteriefehler",
+    "bdc_side_fault": "BDC-seitiger Fehler",
+    "bdc_side_permanent_fault": "BDC-seitiger permanenter Fehler",
+    "bms_alarm": "BMS-Alarm",
+    "bms_alarm_2": "BMS-Alarm 2",
+    "bms_fault_1": "BMS-Fehler 1",
+    "bms_fault_2": "BMS-Fehler 2",
+    "bms_protection": "BMS-Schutz",
+    "dc_side_fault": "DC-seitiger Fehler",
+    "grid_side_fault": "Netzseitiger Fehler",
+    "permanent_fault": "Permanenter Fehler",
+    "system_fault_1": "Systemfehler 1",
+    "system_fault_2": "Systemfehler 2",
+    # -- identity and firmware --------------------------------------------
+    "battery_firmware_version": "Batterie Firmware-Version",
+    "communication_module_firmware_version": "Firmware-Version Kommunikationsmodul",
+    "inverter_firmware_version": "Firmware-Version",
+    "sungrow_arm_software": "ARM-Software-Version",
+    "sungrow_device_type": "Gerätetyp",
+    "sungrow_device_type_code": "Gerätetypcode",
+    "sungrow_dsp_software": "DSP-Software-Version",
+    "sungrow_inverter_serial": "Seriennummer",
+    "sungrow_inverter_state": "Betriebszustand",
+    "sungrow_protocol_version": "Protokollversion",
+    "sungrow_version_1": "Firmware-Version Teil 1",
+    "sungrow_version_2": "Firmware-Version Teil 2",
+    "sungrow_version_3": "Firmware-Version Teil 3",
+    "sungrow_version_4_sungrow_battery": "Firmware-Version Teil 4 (Sungrow-Batterie)",
+    # -- energy: today, the total, this month and this year ---------------
+    "daily_battery_charge": "Tägliche Batterie-Ladeenergie",
+    "daily_battery_charge_from_pv": "Tägliche Batterie-Ladeenergie aus PV",
+    "daily_battery_discharge": "Tägliche Batterie-Entladeenergie",
+    "daily_consumed_energy": "Tägliche Energieaufnahme Verbraucher",
+    "daily_consumed_energy_filtered": (
+        "Tägliche Energieaufnahme Verbraucher (geglättet)"
+    ),
+    "daily_direct_energy_consumption": "Täglicher Direktverbrauch",
+    "daily_exported_energy": "Täglich eingespeiste Energie",
+    "daily_exported_energy_from_pv": "Täglich aus PV eingespeiste Energie",
+    "daily_imported_energy": "Täglich bezogene Energie",
+    "daily_pv_generation": "Tägliche PV-Erzeugung",
+    "daily_pv_generation_battery_discharge": (
+        "Tägliche PV-Erzeugung und Batterieentladung"
+    ),
+    "direct_consumption_this_month": "Direktverbrauch diesen Monat",
+    "direct_consumption_this_year": "Direktverbrauch dieses Jahr",
+    "export_from_pv_this_month": "Einspeisung aus PV diesen Monat",
+    "export_from_pv_this_year": "Einspeisung aus PV dieses Jahr",
+    "pv_generation_this_month": "PV-Erzeugung diesen Monat",
+    "pv_generation_this_year": "PV-Erzeugung dieses Jahr",
+    "total_battery_charge": "Gesamte Batterie-Ladeenergie",
+    "total_battery_charge_from_pv": "Gesamte Batterie-Ladeenergie aus PV",
+    "total_battery_discharge": "Gesamte Batterie-Entladeenergie",
+    "total_consumed_energy": "Gesamte Energieaufnahme Verbraucher",
+    "total_direct_energy_consumption": "Gesamter Direktverbrauch",
+    "total_exported_energy": "Gesamt eingespeiste Energie",
+    "total_exported_energy_from_pv": "Gesamt aus PV eingespeiste Energie",
+    "total_imported_energy": "Gesamt bezogene Energie",
+    "total_pv_generation": "Gesamte PV-Erzeugung",
+    "total_pv_generation_battery_discharge": (
+        "Gesamte PV-Erzeugung und Batterieentladung"
+    ),
+    # -- the battery, as the inverter sees it -----------------------------
+    "battery_capacity_high_precision": "Batteriekapazität (hohe Genauigkeit)",
+    "battery_charge": "Gespeicherte Energie",
+    "battery_charge_health_rated": "Gespeicherte Energie (gesundheitsbereinigt)",
+    "battery_charge_nominal": "Gespeicherte Energie (nominal)",
+    "battery_charging_power": "Batterie-Ladeleistung",
+    "battery_charging_power_signed": "Batterie-Ladeleistung (mit Vorzeichen)",
+    "battery_current": "Batteriestrom",
+    "battery_discharging_power": "Batterie-Entladeleistung",
+    "battery_discharging_power_signed": "Batterie-Entladeleistung (mit Vorzeichen)",
+    "battery_level": "Batterie-Ladestand",
+    "battery_level_nominal": "Batterie-Ladestand (nominal)",
+    "battery_power": "Batterieleistung",
+    "battery_state_of_health": "Batterie-Gesundheitszustand",
+    "battery_temperature": "Batterietemperatur",
+    "battery_voltage": "Batteriespannung",
+    "bms_max_charging_current": "BMS maximaler Ladestrom",
+    "bms_max_discharging_current": "BMS maximaler Entladestrom",
+    # -- the SBR pack, which is its own device ----------------------------
+    "battery_cell_voltage_spread": "Zellspannungsdifferenz",
+    "battery_max_cell_module": "Höchstes Zellmodul",
+    "battery_max_cell_number": "Höchste Zellnummer",
+    "battery_max_cell_voltage": "Höchste Zellspannung",
+    "battery_max_module_temperature": "Temperatur wärmstes Modul",
+    "battery_max_module_temperature_module": "Wärmstes Modul",
+    "battery_min_cell_module": "Niedrigstes Zellmodul",
+    "battery_min_cell_number": "Niedrigste Zellnummer",
+    "battery_min_cell_voltage": "Niedrigste Zellspannung",
+    "battery_min_module_temperature": "Temperatur kühlstes Modul",
+    "battery_min_module_temperature_module": "Kühlstes Modul",
+    **{
+        f"battery_module_{n}_max_cell_voltage": f"Modul {n} höchste Zellspannung"
+        for n in range(1, 9)
+    },
+    **{
+        f"battery_module_{n}_min_cell_voltage": f"Modul {n} niedrigste Zellspannung"
+        for n in range(1, 9)
+    },
+    "battery_pack_current": "Packstrom",
+    "battery_pack_level": "Pack-Ladestand",
+    "battery_pack_state_of_health": "Pack-Gesundheitszustand",
+    "battery_pack_temperature": "Packtemperatur",
+    "battery_pack_total_charge": "Gesamte Pack-Ladeenergie",
+    "battery_pack_total_discharge": "Gesamte Pack-Entladeenergie",
+    "battery_pack_voltage": "Packspannung",
+    # -- the meter and backup output, per phase ---------------------------
+    "meter_active_power": "Zähler Wirkleistung",
+    "meter_channel_2_total_active_power": "Zähler Kanal 2 Gesamtwirkleistung",
+    **{
+        f"meter_channel_2_phase_{p}_active_power": (
+            f"Zähler Kanal 2 Phase {p.upper()} Wirkleistung"
+        )
+        for p in "abc"
+    },
+    **{
+        f"meter_phase_{p}_{quantity}": f"Zähler Phase {p.upper()} {german}"
+        for p in "abc"
+        for quantity, german in (
+            ("active_power", "Wirkleistung"),
+            ("current", "Strom"),
+            ("voltage", "Spannung"),
+        )
+    },
+    **{
+        f"backup_phase_{p}_{quantity}": f"Backup Phase {p.upper()} {german}"
+        for p in "abc"
+        for quantity, german in (
+            ("current", "Strom"),
+            ("power", "Leistung"),
+            ("voltage", "Spannung"),
+        )
+    },
+    **{
+        f"phase_{p}_{quantity}": f"Phase {p.upper()} {german}"
+        for p in "abc"
+        for quantity, german in (
+            ("current", "Strom"),
+            ("power", "Leistung"),
+            ("voltage", "Spannung"),
+        )
+    },
+    # -- the PV trackers --------------------------------------------------
+    **{
+        f"mppt{n}_{quantity}": f"MPPT{n} {german}"
+        for n in range(1, 5)
+        for quantity, german in (
+            ("current", "Strom"),
+            ("power", "Leistung"),
+            ("voltage", "Spannung"),
+        )
+    },
+    # -- discharge schedule ------------------------------------------------
+    "weekday_discharge_window_1": "Entladefenster Werktag 1",
+    "weekday_discharge_window_2": "Entladefenster Werktag 2",
+    "weekend_discharge_window_1": "Entladefenster Wochenende 1",
+    "weekend_discharge_window_2": "Entladefenster Wochenende 2",
+    # -- the wallbox, which is its own device -----------------------------
+    "wallbox_available_current": "Ladestromgrenze",
+    "wallbox_charging_power": "Ladeleistung",
+    "wallbox_charging_status": "Ladestatus",
+    "wallbox_control_pilot_voltage": "Control-Pilot-Spannung",
+    "wallbox_firmware_version": "Firmware-Version",
+    "wallbox_lifetime_energy": "Gesamtenergie",
+    "wallbox_maximum_charging_power": "Maximale Ladeleistung",
+    "wallbox_minimum_charging_power": "Minimale Ladeleistung",
+    "wallbox_output_current_setting": "Eingestellter Ausgangsstrom",
+    "wallbox_phase_a_current": "Phase A Strom",
+    "wallbox_phase_a_voltage": "Phase A Spannung",
+    "wallbox_phase_b_current": "Phase B Strom",
+    "wallbox_phase_b_voltage": "Phase B Spannung",
+    "wallbox_phase_c_current": "Phase C Strom",
+    "wallbox_phase_c_voltage": "Phase C Spannung",
+    "wallbox_phase_mode": "Phasenmodus",
+    "wallbox_rated_current": "Nennstrom",
+    "wallbox_session_energy": "Energie der Ladesitzung",
+    "wallbox_start_mode": "Startmodus",
+    # -- an SG string inverter --------------------------------------------
+    "sg_bus_voltage": "Zwischenkreisspannung",
+    "sg_daily_direct_energy_consumption": "Täglicher Direktverbrauch",
+    "sg_daily_exported_energy": "Täglich eingespeiste Energie",
+    "sg_daily_imported_energy": "Täglich bezogene Energie",
+    "sg_daily_pv_generation": "Tägliche PV-Erzeugung",
+    "sg_daily_running_time": "Tägliche Laufzeit",
+    "sg_grid_frequency": "Netzfrequenz",
+    "sg_inverter_temperature": "Gerätetemperatur",
+    "sg_load_power": "Leistungsaufnahme Verbraucher",
+    "sg_meter_active_power": "Zähler Wirkleistung",
+    "sg_monthly_pv_generation": "Monatliche PV-Erzeugung",
+    **{
+        f"sg_meter_phase_{p}_power": f"Zähler Phase {p.upper()} Leistung" for p in "abc"
+    },
+    **{
+        f"sg_mppt{n}_{quantity}": f"MPPT{n} {german}"
+        for n in range(1, 13)
+        for quantity, german in (("current", "Strom"), ("voltage", "Spannung"))
+    },
+    "sg_negative_voltage_to_ground": "Negative Spannung gegen Erde",
+    **{
+        f"sg_phase_{p}_{quantity}": f"Phase {p.upper()} {german}"
+        for p in "abc"
+        for quantity, german in (("current", "Strom"), ("voltage", "Spannung"))
+    },
+    "sg_power_factor": "Leistungsfaktor",
+    "sg_power_limitation": "Leistungsbegrenzung",
+    "sg_power_limitation_setting": "Leistungsgrenze",
+    "sg_reactive_power": "Blindleistung",
+    "sg_total_active_power": "Gesamte Wirkleistung",
+    "sg_total_apparent_power": "Gesamte Scheinleistung",
+    "sg_total_dc_power": "Gesamte PV-Eingangsleistung",
+    "sg_total_direct_energy_consumption": "Gesamter Direktverbrauch",
+    "sg_total_exported_energy": "Gesamt eingespeiste Energie",
+    "sg_total_imported_energy": "Gesamt bezogene Energie",
+    "sg_total_pv_generation": "Gesamte PV-Erzeugung",
+    "sg_total_pv_generation_precise": "Gesamte PV-Erzeugung (genau)",
+    "sg_total_running_time": "Gesamte Laufzeit",
+    "sg_work_state": "Arbeitszustand",
+}
+
+#: A word in an English name, and the German stem the name must then contain,
+#: so one idea has one German word across 319 names. Matched on whole English
+#: words and on the lower-cased German name.
+GERMAN_TERMS: dict[str, str] = {
+    "alarm": "alarm",
+    "current": "strom",
+    "daily": "tägl",
+    "energy": "energie",
+    "fault": "fehler",
+    "firmware": "firmware",
+    "frequency": "frequenz",
+    "month": "monat",
+    "monthly": "monatlich",
+    "phase": "phase",
+    "power": "leistung",
+    "temperature": "temperatur",
+    "total": "gesamt",
+    "version": "version",
+    "voltage": "spannung",
+    "weekday": "werktag",
+    "weekend": "wochenende",
+    "year": "jahr",
+}
+
+#: Where an English word is there and its German stem rightly is not, by word.
+#: Each is a name that says the idea another way, and says which.
+GERMAN_EXEMPT: dict[str, frozenset[str]] = {
+    # "Einspeisung" and "Netzbezug" are the grid's own words for exporting and
+    # importing power.
+    "power": frozenset(
+        {
+            "exporting_power",
+            "exporting_power_delay",
+            "importing_power",
+            "importing_power_delay",
+        }
+    ),
+    # "Direktverbrauch" is the German for direct energy consumption.
+    "energy": frozenset(
+        {
+            "daily_direct_energy_consumption",
+            "total_direct_energy_consumption",
+            "sg_daily_direct_energy_consumption",
+            "sg_total_direct_energy_consumption",
+        }
+    ),
+}
+
+#: **Open questions on a name**, by translation key, shown under its table in
+#: `doc/entity_names.md` as "To discuss". Each says what the entity is
+#: and offers names to choose from; an entry goes once its name is decided.
+NAME_DISCUSSION: dict[str, str] = {}
+
+
+#: **Suggested German for every other text in `strings.json`**: the setup and
+#: options flows, selector options, repairs, actions, exceptions and the
+#: select states -- everything but the entity names above. By dotted path, in
+#: `german_texts.json` because a paragraph does not fit a line of source.
+#: Suggestions for the maintainer to decide beside the English, like `GERMAN`;
+#: nothing ships them. `tests/test_naming_convention.py` holds each to its
+#: English text's placeholders, markup and paragraph structure.
+GERMAN_TEXTS: dict[str, str] = json.loads(
+    Path(__file__).with_name("german_texts.json").read_text(encoding="utf-8")
+)
+
+
+def text_leaves(document: dict[str, object]) -> dict[str, str]:
+    """Return every text of `strings.json` that is not an entity name.
+
+    By dotted path, in file order: the keys of `GERMAN_TEXTS`. An entity's
+    name is a leaf too, but belongs to `GERMAN`, so it is left out here; an
+    entity's other leaves (a select's states) are not.
+    """
+    found: dict[str, str] = {}
+
+    def walk(node: object, path: list[str]) -> None:
+        if isinstance(node, dict):
+            for key, value in node.items():
+                walk(value, [*path, key])
+        else:
+            found[".".join(path)] = str(node)
+
+    for top, value in document.items():
+        if top != "entity":
+            walk(value, [top])
+            continue
+        assert isinstance(value, dict)
+        for domain, entries in value.items():
+            for key, entry in entries.items():
+                for field, text in entry.items():
+                    if field != "name":
+                        walk(text, ["entity", domain, key, field])
+    return found
+
 
 _ACRONYM_BY_UPPER = {a.upper(): a for a in ACRONYMS}
 _PROPER_BY_UPPER = {p.upper(): p for p in PROPER_NOUNS}

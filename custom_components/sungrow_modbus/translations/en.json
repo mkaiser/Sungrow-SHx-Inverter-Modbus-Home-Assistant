@@ -18,7 +18,7 @@
     "step": {
       "entity_ids": {
         "title": "Existing entities found",
-        "description": "Home Assistant found **{count} entities** from the `modbus_sungrow.yaml` package, such as `{example}`. Your recorder history, your statistics and every dashboard card are stored against those entity IDs.\n\n{status}\n\n**Migrate my existing entities** takes those IDs over. History and statistics carry on uninterrupted and your dashboards keep working unchanged. Nothing is copied and nothing is deleted.\n\n**Start fresh** gives this inverter its own IDs, such as `sensor.sh10rt_total_dc_power`. Your old history stays where it is, under the old IDs, and your dashboards keep pointing at it.\n\nEither way the entities are identical in every other respect.",
+        "description": "Home Assistant found **{count} entities** from the `modbus_sungrow.yaml` package, such as `{example}`. Your recorder history, your statistics and every dashboard card are stored against those entity IDs.\n\n{status}\n\n**Migrate my existing entities** takes those IDs over. History and statistics carry on uninterrupted and your dashboards keep working unchanged. Nothing is copied and nothing is deleted.\n\n**Start fresh** gives this inverter its own IDs, such as `sensor.sh10rt_total_pv_input_power`. Your old history stays where it is, under the old IDs, and your dashboards keep pointing at it.\n\nEither way the entities are identical in every other respect.",
         "data": {
           "entity_ids": "Entity IDs"
         },
@@ -28,7 +28,7 @@
       },
       "slot_unknown": {
         "title": "Existing entities found",
-        "description": "This house ran the YAML package for more than one inverter, and Home Assistant cannot tell which of them this one was. The package's serial sensors are what say so, and neither the running package nor the recorded history has this inverter's serial.\n\nSo the YAML package's entity IDs are not offered: taking the wrong set would give this inverter another inverter's history. **Submit** sets it up with its own IDs, such as `sensor.sh10rt_total_dc_power`.\n\nTo keep its old IDs, put the YAML package back for one restart, so this inverter's serial is recorded, then remove it and restart again. **Configure** can then switch this inverter to its old IDs; the serial stays on record for the recorder's retention, ten days unless you changed it."
+        "description": "This house ran the YAML package for more than one inverter, and Home Assistant cannot tell which of them this one was. The package's serial sensors are what say so, and neither the running package nor the recorded history has this inverter's serial.\n\nSo the YAML package's entity IDs are not offered: taking the wrong set would give this inverter another inverter's history. **Submit** sets it up with its own IDs, such as `sensor.sh10rt_total_pv_input_power`.\n\nTo keep its old IDs, put the YAML package back for one restart, so this inverter's serial is recorded, then remove it and restart again. **Configure** can then switch this inverter to its old IDs; the serial stays on record for the recorder's retention, ten days unless you changed it."
       },
       "find": {
         "title": "Where is the inverter?",
@@ -161,7 +161,7 @@
         "name": "Active power limitation"
       },
       "alarm_reported": {
-        "name": "Alarm reported"
+        "name": "Any alarm"
       },
       "battery_charging": {
         "name": "Battery charging"
@@ -261,7 +261,7 @@
         "name": "Battery reserved SoC for backup"
       },
       "export_power_limit": {
-        "name": "Export power limit"
+        "name": "Feed-in limit"
       },
       "forced_charging_target_soc_1": {
         "name": "Forced charging target SoC 1"
@@ -310,16 +310,16 @@
         "name": "Active power limitation ratio"
       },
       "active_power_limitation_raw": {
-        "name": "Active power limitation raw"
+        "name": "Active power limitation code"
       },
       "apl_shutdown_at_zero_raw": {
-        "name": "Active power limitation shutdown at zero"
+        "name": "Shutdown inverter when limited to 0 % power"
       },
       "backup_frequency": {
         "name": "Backup frequency"
       },
       "backup_mode_raw": {
-        "name": "Backup mode raw"
+        "name": "Backup mode code"
       },
       "backup_phase_a_current": {
         "name": "Backup phase A current"
@@ -394,7 +394,7 @@
         "name": "Battery firmware version"
       },
       "battery_forced_charge_discharge_cmd_raw": {
-        "name": "Battery forced charge/discharge command raw"
+        "name": "Battery forced charge/discharge command code"
       },
       "battery_forced_charge_discharge_power": {
         "name": "Battery forced charge/discharge power"
@@ -610,7 +610,7 @@
         "name": "Direct consumption this year"
       },
       "ems_mode_selection_raw": {
-        "name": "EMS mode selection raw"
+        "name": "EMS mode selection code"
       },
       "export_from_pv_this_month": {
         "name": "Export from PV this month"
@@ -622,22 +622,22 @@
         "name": "Export power"
       },
       "export_power_limit": {
-        "name": "Export power limit"
+        "name": "Feed-in limit"
       },
       "export_power_limit_max": {
-        "name": "Export power limit max"
+        "name": "Feed-in limit maximum"
       },
       "export_power_limit_min": {
-        "name": "Export power limit min"
+        "name": "Feed-in limit minimum"
       },
       "export_power_limit_mode_raw": {
-        "name": "Export power limit mode raw"
+        "name": "Feed-in limit mode code"
       },
       "export_power_raw": {
-        "name": "Export power raw"
+        "name": "Export power signed"
       },
       "feed_in_limitation_ratio": {
-        "name": "Feed-in limitation ratio"
+        "name": "Feed-in limit ratio"
       },
       "forced_startup_under_low_soc_raw": {
         "name": "Forced startup under low SoC raw"
@@ -652,7 +652,7 @@
         "name": "Import power"
       },
       "inverter_alarm": {
-        "name": "Alarm"
+        "name": "Device alarm"
       },
       "inverter_firmware_version": {
         "name": "Firmware version"
@@ -661,13 +661,13 @@
         "name": "Rated output power"
       },
       "inverter_temperature": {
-        "name": "Internal temperature"
+        "name": "Device temperature"
       },
       "load_adjustment_mode_enable_raw": {
-        "name": "Load control mode enable raw"
+        "name": "Load control mode enable code"
       },
       "load_adjustment_mode_selection_raw": {
-        "name": "Load control mode selection raw"
+        "name": "Load control mode selection code"
       },
       "load_power": {
         "name": "Load power"
@@ -784,10 +784,10 @@
         "name": "Power factor"
       },
       "power_flow_status": {
-        "name": "Power flow status"
+        "name": "Power flow code"
       },
       "pv_generation_cut_raw": {
-        "name": "PV generation cut raw"
+        "name": "PV generation cut code"
       },
       "pv_generation_this_month": {
         "name": "PV generation this month"
@@ -796,13 +796,13 @@
         "name": "PV generation this year"
       },
       "pv_power_limitation_raw": {
-        "name": "PV power limitation raw"
+        "name": "PV power limitation code"
       },
       "reactive_power": {
         "name": "Reactive power"
       },
       "running_state_raw": {
-        "name": "Running state raw"
+        "name": "Running state code"
       },
       "self_consumption_of_today": {
         "name": "Self-consumption of today"
@@ -829,7 +829,7 @@
         "name": "Grid frequency"
       },
       "sg_inverter_temperature": {
-        "name": "Internal temperature"
+        "name": "Device temperature"
       },
       "sg_load_power": {
         "name": "Load power"
@@ -961,7 +961,7 @@
         "name": "Total apparent power"
       },
       "sg_total_dc_power": {
-        "name": "Total DC power"
+        "name": "Total PV input power"
       },
       "sg_total_direct_energy_consumption": {
         "name": "Total direct energy consumption"
@@ -1051,7 +1051,7 @@
         "name": "Total consumed energy"
       },
       "total_dc_power": {
-        "name": "Total DC power"
+        "name": "Total PV input power"
       },
       "total_direct_energy_consumption": {
         "name": "Total direct energy consumption"
@@ -1152,7 +1152,7 @@
         "name": "Cut PV generation"
       },
       "export_power_limit_mode": {
-        "name": "Export power limit mode"
+        "name": "Feed-in limit mode"
       },
       "forced_charging_schedule": {
         "name": "Forced charging schedule"
@@ -1221,7 +1221,7 @@
     "entity_id_style": {
       "options": {
         "migrate": "The YAML package's IDs, such as sensor.total_dc_power",
-        "new": "Device-scoped IDs, such as sensor.sh10rt_total_dc_power"
+        "new": "Device-scoped IDs, such as sensor.sh10rt_total_pv_input_power"
       }
     }
   },
@@ -1375,7 +1375,7 @@
       },
       "promote": {
         "title": "Set up the devices",
-        "description": "Home Assistant found **{count} entities** from the `modbus_sungrow.yaml` package, such as `{example}`. Your recorder history, your statistics and every dashboard card are stored against those entity IDs.\n\n{status}\n\n**Migrate my existing entities** takes those IDs over. History and statistics carry on uninterrupted and your dashboards keep working unchanged. Nothing is copied and nothing is deleted.\n\n**Start fresh** gives this inverter its own IDs, such as `sensor.sh10rt_total_dc_power`. Your old history stays where it is, under the old IDs, and your dashboards keep pointing at it.\n\nEither way the entities are identical in every other respect.",
+        "description": "Home Assistant found **{count} entities** from the `modbus_sungrow.yaml` package, such as `{example}`. Your recorder history, your statistics and every dashboard card are stored against those entity IDs.\n\n{status}\n\n**Migrate my existing entities** takes those IDs over. History and statistics carry on uninterrupted and your dashboards keep working unchanged. Nothing is copied and nothing is deleted.\n\n**Start fresh** gives this inverter its own IDs, such as `sensor.sh10rt_total_pv_input_power`. Your old history stays where it is, under the old IDs, and your dashboards keep pointing at it.\n\nEither way the entities are identical in every other respect.",
         "data": {
           "entity_ids": "Entity IDs"
         },
@@ -1385,7 +1385,7 @@
       },
       "slot_unknown": {
         "title": "Set up the devices",
-        "description": "This house ran the YAML package for more than one inverter, and Home Assistant cannot tell which of them this one was. The package's serial sensors are what say so, and neither the running package nor the recorded history has this inverter's serial.\n\nSo the YAML package's entity IDs are not offered: taking the wrong set would give this inverter another inverter's history. **Submit** sets it up with its own IDs, such as `sensor.sh10rt_total_dc_power`.\n\nTo keep its old IDs, put the YAML package back for one restart, so this inverter's serial is recorded, then remove it and restart again. **Configure** can then switch this inverter to its old IDs; the serial stays on record for the recorder's retention, ten days unless you changed it."
+        "description": "This house ran the YAML package for more than one inverter, and Home Assistant cannot tell which of them this one was. The package's serial sensors are what say so, and neither the running package nor the recorded history has this inverter's serial.\n\nSo the YAML package's entity IDs are not offered: taking the wrong set would give this inverter another inverter's history. **Submit** sets it up with its own IDs, such as `sensor.sh10rt_total_pv_input_power`.\n\nTo keep its old IDs, put the YAML package back for one restart, so this inverter's serial is recorded, then remove it and restart again. **Configure** can then switch this inverter to its old IDs; the serial stays on record for the recorder's retention, ten days unless you changed it."
       },
       "other_inverter": {
         "title": "What is the other inverter?",
@@ -1400,7 +1400,7 @@
       },
       "entity_ids_modern": {
         "title": "Move to device-scoped entity IDs",
-        "description": "The entities take IDs named after this device, such as `sensor.sh10rt_total_dc_power`. Their history and statistics move with them.\n\n{changes}{status}\n\nNothing is copied and nothing is deleted. Names, areas and other settings you gave the entities stay with them. Dashboards, automations and scripts that use the old IDs are not rewritten, so check them afterwards.\n\nYou can move back here at any time."
+        "description": "The entities take IDs named after this device, such as `sensor.sh10rt_total_pv_input_power`. Their history and statistics move with them.\n\n{changes}{status}\n\nNothing is copied and nothing is deleted. Names, areas and other settings you gave the entities stay with them. Dashboards, automations and scripts that use the old IDs are not rewritten, so check them afterwards.\n\nYou can move back here at any time."
       }
     },
     "error": {

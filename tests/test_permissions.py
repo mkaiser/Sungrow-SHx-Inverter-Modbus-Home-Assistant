@@ -214,7 +214,7 @@ async def test_a_read_only_user_can_still_read_everything(
 ) -> None:
     """The point of the group: a household dashboard that cannot be broken."""
     assert hass.states.get(MIN_SOC) is not None
-    assert hass.states.get("sensor.sh10rt_total_dc_power") is not None
+    assert hass.states.get("sensor.sh10rt_total_pv_input_power") is not None
     # Reading a state is not a service call, so nothing is gated -- which is
     # exactly the shape a family dashboard wants.
 

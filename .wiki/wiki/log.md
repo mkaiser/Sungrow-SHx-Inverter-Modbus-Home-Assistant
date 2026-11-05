@@ -356,3 +356,15 @@ diagnostics, through a Modbus proxy on the inverter's own LAN port with the YAML
 Every block answered in three rounds, no reconnects. 31211 reads 0x55; export limit off with 13074
 at raw 7600 (no write, scale unmeasured); a four-module SBR128 reads 12.8 kWh. Read only, so no
 code change: P022 is already confirmed.
+
+## [2026-11-05] ingested | Sungrow's register names and issue #554's 0 % shutdown flag
+
+Sungrow's hybrid protocol V1.1.2, V1.1.5, V1.1.9 and V1.1.11 and the SG's V1.1.58, read for the
+names of the registers the integration reads; the documents stay outside the repository and the
+notes record names only. V1.1.11 names 123 of 138 hybrid registers and V1.1.58 all 57 SG ones;
+the 15 unlisted are an open query. The limit family turned from *Export* to *Feed-in* by V1.1.9,
+while measured flows stay *export*; 13075 is *Off-grid option*. New pages for holding 13017, a
+command that reads 0 on SH-RT, 0x55 on SH-T and is unavailable on SH-RS, and holding 31213, the
+undocumented flag issue #554 found: 0xAA on four SH-RS and two SH15T, 0x55 on every SH-RT, which
+contradicts the earlier claim in the code that every survey read one value.
+

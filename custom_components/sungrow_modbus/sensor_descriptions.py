@@ -1154,6 +1154,10 @@ SENSOR_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         legacy_unique_id="uid_power_flow_status",
         legacy_platform="modbus",
         entity_category=EntityCategory.DIAGNOSTIC,
+        # The raw bits behind the power flow binary sensors: for diagnosing
+        # them, not for a dashboard. A migrating user's entity is registered
+        # before the platform runs, so it stays enabled.
+        entity_registry_enabled_default=False,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=0,
     ),

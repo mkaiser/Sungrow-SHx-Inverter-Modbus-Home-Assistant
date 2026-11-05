@@ -480,17 +480,12 @@ class InverterAplShutdownAtZero(Component):
     """1 holding field, polled every 10s.
 
     The active-power-limit shutdown flag at register 31213, refused by one
-    measured firmware on the inverter's own LAN port. **Experimental and
-    unverified:** this register is not in Sungrow's protocol document --
-    the comment that added it to the YAML package says so outright -- and
-    it comes from community feedback in issue #554, a request for ramping
-    PV production down. What it does is inferred from its name, whether the
-    inverter shuts down when the active power limit is set to zero or idles
-    at zero output, and nobody here has tested it. All three surveyed
-    inverters read 85 (0x55), one value three times, so its 0xAA/0x55 pair
-    is a convention assumed rather than observed -- which is why it stays a
-    number instead of becoming a binary sensor like the two documented mode
-    registers beside it.
+    measured firmware on the inverter's own LAN port. Not in Sungrow's
+    protocol document: found by watching what iSolarCloud writes, in issue
+    #554 ("Shutdown at active power limit ratio of 0%"). On (`0xAA`), a limit
+    ratio of 0 % stops the inverter instead of holding it at 0 W. The surveys
+    read `0x55` on most inverters and `0xAA` on some SH-RS and SH-T, so it is a
+    configured value; nobody here has written it.
     """
 
     register_space = "holding"

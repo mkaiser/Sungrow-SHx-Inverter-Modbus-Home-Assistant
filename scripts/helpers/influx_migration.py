@@ -82,14 +82,14 @@ def grafana(rows: list[tuple[str, str, str]], reverse: bool) -> str:
 
     This is the whole fix for most people. A Grafana panel filtering
     `entity_id = 'total_dc_power'` keeps working across the change if it
-    filters `entity_id =~ /^(total_dc_power|sh10rt_total_dc_power)$/` instead,
+    filters `entity_id =~ /^(total_dc_power|sh10rt_total_pv_input_power)$/` instead,
     and nothing in the database has to move.
     """
     lines = [
         "# Grafana: replace the entity_id filter in each panel.",
         "#",
         "#   before:  \"entity_id\" = 'total_dc_power'",
-        '#   after:   "entity_id" =~ /^(total_dc_power|sh10rt_total_dc_power)$/',
+        '#   after:   "entity_id" =~ /^(total_dc_power|sh10rt_total_pv_input_power)$/',
         "#",
         "# No data moves, both halves of the series render, and it keeps working",
         "# whichever way you migrate later.",

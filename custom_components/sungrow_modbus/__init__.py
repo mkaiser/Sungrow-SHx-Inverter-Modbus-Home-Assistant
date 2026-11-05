@@ -790,7 +790,7 @@ def _async_preview_notice(hass: HomeAssistant) -> None:
         translation_key=PREVIEW_ISSUE,
         learn_more_url=(
             "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant"
-            "/blob/proper-ha-integration/doc/entity_name_review.md"
+            "/blob/proper-ha-integration/doc/entity_names.md"
         ),
     )
 

@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 import sys
 
 import pytest
@@ -32,7 +33,17 @@ import pytest
 sys.path.insert(0, "scripts/generate/tables")
 sys.path.insert(0, "scripts/generate")
 
-from naming import DIAGNOSTIC, violations
+from naming import (
+    DIAGNOSTIC,
+    GERMAN,
+    GERMAN_EXEMPT,
+    GERMAN_TERMS,
+    GERMAN_TEXTS,
+    LEGACY_ONLY_SENSORS,
+    NAME_DISCUSSION,
+    text_leaves,
+    violations,
+)
 
 from custom_components.sungrow_modbus.battery_descriptions import BATTERY_DESCRIPTIONS
 from custom_components.sungrow_modbus.derived_descriptions import (
@@ -397,3 +408,137 @@ def test_a_parenthetical_says_what_the_value_is() -> None:
             f"{domain}.{key} is called {name!r}; a parenthetical names what "
             "the value is, not the option that produced it"
         )
+
+
+# -- the suggested German names --------------------------------------------
+#
+# Suggestions, not a translation: nothing ships them, and the maintainer
+# decides each beside the English name in `doc/entity_names.md`. They
+# are held to the same standard as the English names so that the decision is
+# about words, and not about a name that was never well formed.
+
+GERMAN_KEYS = sorted({key for _domain, key, _name in EVERY_NAME})
+ENGLISH_BY_KEY = {key: name for _domain, key, name in EVERY_NAME}
+
+
+def test_every_name_has_a_german_suggestion_and_none_is_orphaned() -> None:
+    """One German name per translation key, and none for a key that is gone."""
+    assert sorted(GERMAN) == GERMAN_KEYS
+
+
+def test_every_open_question_is_on_a_name_that_exists() -> None:
+    """A discussion note for a key that is gone would never show on the sheet."""
+    assert set(NAME_DISCUSSION) <= set(GERMAN_KEYS)
+
+
+@pytest.mark.parametrize("key", GERMAN_KEYS)
+def test_a_german_suggestion_is_well_formed(key: str) -> None:
+    """The English rules that do not depend on the language.
+
+    No abbreviation with a full stop ("max."), as in English; the name
+    begins with a capital, as every German name that starts with a noun or a
+    verb in sentence case does; balanced brackets; no stray space.
+    """
+    name = GERMAN[key]
+    assert name == name.strip() and "  " not in name, repr(name)
+    assert name[0].isupper(), f"{name!r} does not begin with a capital"
+    assert "." not in name, f"{name!r} abbreviates with a full stop"
+    assert name.count("(") == name.count(")"), f"{name!r} has unbalanced brackets"
+
+
+@pytest.mark.parametrize("key", GERMAN_KEYS)
+def test_one_idea_has_one_german_word(key: str) -> None:
+    """A name says "Spannung" wherever the English says "voltage".
+
+    Three hundred names written by hand drift the way the YAML's did, and
+    German has several words for most of these ideas. `GERMAN_TERMS` fixes
+    one for each; a name that says it another way is listed in
+    `GERMAN_EXEMPT` with the reason, so the exception is deliberate.
+    """
+    english = set(re.findall(r"[a-z]+", ENGLISH_BY_KEY[key].lower()))
+    german = GERMAN[key].lower()
+    for word, stem in GERMAN_TERMS.items():
+        if word in english and key not in GERMAN_EXEMPT.get(word, frozenset()):
+            assert stem in german, (
+                f"{ENGLISH_BY_KEY[key]!r} says {word!r}, so {GERMAN[key]!r} "
+                f"should contain {stem!r}"
+            )
+
+
+def test_no_two_german_names_share_a_device_page() -> None:
+    """The English rule, in German: one label, one entity, per device."""
+    seen: dict[tuple[str, str], str] = {}
+    for domain, key, _name in EVERY_NAME:
+        if domain == "sensor" and key in LEGACY_ONLY_SENSORS:
+            continue
+        where = (_device(key, domain), GERMAN[key])
+        assert where not in seen, (
+            f"{domain}.{key} and {seen[where]} are both {GERMAN[key]!r} on the "
+            f"{where[0]}, so its device page lists the same label twice"
+        )
+        seen[where] = f"{domain}.{key}"
+
+
+# -- the suggested German texts ---------------------------------------------
+#
+# Everything in `strings.json` that is not an entity name. A translated text
+# fails in ways a name cannot: a dropped `{error}` raises a KeyError when the
+# dialog opens, a lost backtick breaks the formatting, a merged paragraph
+# changes how it reads. So each is held to what its English text carries.
+
+ENGLISH_TEXTS = text_leaves(
+    json.loads((COMPONENT / "strings.json").read_text(encoding="utf-8"))
+)
+
+
+def test_every_text_has_a_german_suggestion_and_none_is_orphaned() -> None:
+    """One German text per English one, and none for a text that is gone."""
+    assert sorted(GERMAN_TEXTS) == sorted(ENGLISH_TEXTS)
+
+
+@pytest.mark.parametrize("path", sorted(ENGLISH_TEXTS))
+def test_a_german_text_keeps_what_the_english_text_carries(path: str) -> None:
+    """The same placeholders, markup, paragraphs and list items.
+
+    A placeholder missing from a translation is not a cosmetic fault:
+    Home Assistant formats the text with the values it has, and the dialog
+    or the exception fails to render.
+    """
+    english, german = ENGLISH_TEXTS[path], GERMAN_TEXTS[path]
+    assert german.strip(), f"{path} has no German text"
+    assert sorted(re.findall(r"\{\w+\}", german)) == sorted(
+        re.findall(r"\{\w+\}", english)
+    ), f"{path}: placeholders differ"
+    plain = (english.replace("**", ""), german.replace("**", ""))
+    for marker, what in (
+        ("**", "bold"),
+        ("`", "code"),
+        ("*", "italic"),
+        ("](", "links"),
+        ("\n\n", "paragraphs"),
+        ("\n", "line breaks"),
+        ("\n- ", "list items"),
+    ):
+        # Italic is counted without the bold markers, which are asterisks too.
+        pair = plain if marker == "*" else (english, german)
+        assert pair[0].count(marker) == pair[1].count(marker), f"{path}: {what} differ"
+
+
+def test_one_english_text_has_one_german_text() -> None:
+    """The setup flow and the options flow say some things twice, and agree.
+
+    The survey's questions, the entity-id explanation and the unknown-slot
+    text are each shown in both. Two translations of one sentence would be
+    two things to keep in step.
+    """
+    seen: dict[str, tuple[str, str]] = {}
+    for path, english in ENGLISH_TEXTS.items():
+        if len(english) < 12:
+            continue
+        if english in seen:
+            first, german = seen[english]
+            assert GERMAN_TEXTS[path] == german, (
+                f"{path} and {first} are the same English text with different German"
+            )
+        else:
+            seen[english] = (path, GERMAN_TEXTS[path])

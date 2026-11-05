@@ -449,7 +449,7 @@ async def test_two_inverters_are_asked_and_the_suggestion_says_the_role(
     # The slave's own LAN port, so the role is readable and offered.
     assert "slave" in placeholders["suggestion"]
     assert placeholders["example"].startswith("sensor.")
-    assert "total_dc_power" in placeholders["example"]
+    assert "total_pv_input_power" in placeholders["example"]
 
 
 async def test_the_name_becomes_the_entry_title_and_the_device_name(

@@ -15,7 +15,7 @@ You are asked once, during setup, and either answer is a real answer:
 
 | | Migrate my existing entities | Start fresh |
 | --- | --- | --- |
-| Entity IDs | `sensor.total_dc_power` | `sensor.sh10rt_total_dc_power` |
+| Entity IDs | `sensor.total_dc_power` | `sensor.sh10rt_total_pv_input_power` |
 | Recorder history | continues, uninterrupted | old history stays under the old IDs |
 | Energy dashboard | keeps its statistics | needs the new sensors selected |
 | Your dashboards | keep working unchanged | need updating |

@@ -208,7 +208,7 @@ async def test_promotion_asked_for_by_hand_does_not_happen(
     # The options were still saved -- the toggle is ignored, not fatal.
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert entry.data[CONF_MODE] == MODE_DIAGNOSTICS
-    assert hass.states.get("sensor.sh10rt_total_dc_power") is None
+    assert hass.states.get("sensor.sh10rt_total_pv_input_power") is None
 
 
 async def test_an_entry_that_is_already_devices_mode_still_works(
@@ -239,7 +239,7 @@ async def test_an_entry_that_is_already_devices_mode_still_works(
         await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
 
-    assert hass.states.get("sensor.sh10rt_total_dc_power") is not None
+    assert hass.states.get("sensor.sh10rt_total_pv_input_power") is not None
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
     assert result["type"] is FlowResultType.FORM

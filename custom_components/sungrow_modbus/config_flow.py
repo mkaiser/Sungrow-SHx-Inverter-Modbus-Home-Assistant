@@ -1201,12 +1201,12 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         inverter the model is a perfectly good name and a question about it
         is noise. With two, the model is the **same string** for both, and
         Home Assistant appends `_2` to whichever was set up second:
-        `sensor.sh10rt_total_dc_power_2`. That suffix records click order and
+        `sensor.sh10rt_total_pv_input_power_2`. That suffix records click order and
         nothing else.
 
         Deriving something better fixes uniqueness and not legibility. The
         serial's last four, the address tail, `inv 2` as the YAML package
-        does -- `sensor.sh10rt_0234_total_dc_power` is unique, permanent, and
+        does -- `sensor.sh10rt_0234_total_pv_input_power` is unique, permanent, and
         still does not say which roof. Only the owner knows that it is the
         one over the garage.
 
@@ -1234,7 +1234,9 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 "count": str(self._others),
                 "model": self._title,
                 "suggestion": self._suggested_name(),
-                "example": f"sensor.{slugify(self._suggested_name())}_total_dc_power",
+                "example": (
+                    f"sensor.{slugify(self._suggested_name())}_total_pv_input_power"
+                ),
             },
             last_step=False,
         )

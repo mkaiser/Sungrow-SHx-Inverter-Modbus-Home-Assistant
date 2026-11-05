@@ -107,7 +107,7 @@ async def test_a_quiet_inverter_reports_nothing(
     assert state.state == "0"
     assert state.attributes["active"] == []
     assert hass.states.get("binary_sensor.sh10rt_fault_reported").state == "off"
-    assert hass.states.get("binary_sensor.sh10rt_alarm_reported").state == "off"
+    assert hass.states.get("binary_sensor.sh10rt_any_alarm").state == "off"
 
 
 async def test_a_set_flag_is_counted_named_and_reported(
@@ -124,4 +124,4 @@ async def test_a_set_flag_is_counted_named_and_reported(
     assert state.attributes["active"] == ["Grid Overvoltage", "Grid Power Outage"]
     assert hass.states.get("binary_sensor.sh10rt_fault_reported").state == "on"
     # A fault is not an alarm.
-    assert hass.states.get("binary_sensor.sh10rt_alarm_reported").state == "off"
+    assert hass.states.get("binary_sensor.sh10rt_any_alarm").state == "off"

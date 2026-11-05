@@ -42,7 +42,7 @@ from .conftest import SERIAL, encode_string
 
 ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
-LIMIT_ENTITY = "number.sh10rt_export_power_limit"
+LIMIT_ENTITY = "number.sh10rt_feed_in_limit"
 
 # Protocol addresses, one below the specification's register numbers.
 LIMIT = 13073  # reg 13074

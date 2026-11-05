@@ -102,7 +102,7 @@ keep reading the pages.
 - **Devices by stand-in** (`anon-86493117545`), never by a real serial. No
   addresses, not even the last two octets.
 - **Generated files are linked, never copied**: `doc/compatibility.md`,
-  `doc/entity_name_review.md` and the generated `*_descriptions.py`.
+  `doc/entity_names.md` and the generated `*_descriptions.py`.
 
 ### Ingest Workflow
 

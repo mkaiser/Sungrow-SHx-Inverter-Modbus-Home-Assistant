@@ -178,7 +178,9 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | **`scripts/generate/`** | **Everything that writes a committed file; each has `--check` but the multi-inverter YAML, which CI regenerates and commits instead** |
 | `descriptions.py` | The entity descriptions and names: `derived`, `numbers`, `switches`, `selects`, `strings`, or all five with no argument (`strings` last, since it reads the others) |
 | `tables/writes.py` | **Input table**: which registers the integration may write and within what bounds. Feeds the number/switch/select/time descriptions; `tests/test_writes.py` holds `registers.py`'s writable set to it |
-| `tables/naming.py` | **Input table**: the entity-name convention. Feeds `strings.json`, `review_names.py` and the Influx helper |
+| `tables/naming.py` | **Input table**: the entity-name convention, and a suggested German name for every key (`GERMAN`, not shipped). Feeds `strings.json`, `review_names.py` and the Influx helper |
+| `tables/german_texts.json` | **Input table**: suggested German for every `strings.json` text that is not an entity name, by path (not shipped); read through `naming.GERMAN_TEXTS`. Feeds `review_names.py --texts` (`doc/text_translation_review.md`) |
+| `tables/datasheet_names.json` | **Input table**: Sungrow's own name for every register an entity reads, as the hybrid's V1.1.11 and the SG's V1.1.58 datasheets print it, by `space:register`. Feeds the **Datasheet** column of `review_names.py` |
 | `generate_compatibility.py` | Build `doc/compatibility.md` from the committed surveys |
 | `generate_simulator_registers.py` | The simulator's seed, from the entity map |
 | `generate_second_inverter_config.py` | The `legacy/` multi-inverter YAML files; run by CI on a change to the YAML package |
@@ -187,7 +189,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `check_pinned_library.py` | Do the integration's `sungrow_modbus` imports resolve against the library version `manifest.json` pins? `--wheel dist/*.whl` asks it of a local build and gates CI; with no argument it asks it of **PyPI**, which is legitimately red between releases |
 | **`scripts/helpers/`** | **One-off tools** |
 | `influx_migration.py` | Print Grafana regexes and rewrite recipes for InfluxDB users; connects to nothing |
-| `review_names.py` | Lay the entity names out for the open naming decision -- grouped by subject, each with the entity id it produces and its legacy name. `--markdown` prints the sheet (redirect it into `doc/entity_name_review.md`); `--check` fails when that file has drifted from the names |
+| `review_names.py` | Lay the entity names out for the open naming decision -- grouped by subject, each with the entity id it produces and its legacy name. `--markdown` prints the name table (redirect it into `doc/entity_names.md`), `--texts` the other texts of `strings.json` in English and German (into `doc/text_translation_review.md`); `--check` fails when either file has drifted |
 | `make_brand_icon.py` | Regenerate the integration's `brand/` icons (`--preview` renders a check sheet) |
 
 What a contributor is handed, `device-survey/scripts/`, is described in
