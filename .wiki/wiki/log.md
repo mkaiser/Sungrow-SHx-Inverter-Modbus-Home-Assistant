@@ -340,3 +340,11 @@ The export-scale probe was refused three times, so 13074 multiplies; a refusal c
 0.1 % of the 5000 W rating, so item 7 of the wanted list stays open for a control test on this
 size. The three-module pack's `cell_type_module_n` reads 1, as on the SBR256.
 
+
+## [2026-11-05] ingested | brendan's SH10RS on P067 with two SBR224, WiNet-S (#786)
+
+The first survey on `SUNSTONE-H_B000.V002.P067` (version 1 `.02.67`), through a WiNet-S on Ethernet
+with the owner's pollers running. 31211 reads 0x55, 13087 is 0xAA with 13074 at raw 50. Register
+5639 reads 44.8 kWh, twice an SBR224, beside 488.8 V of one stack: the capacity register sums the
+packs, the likelier cause of the anonymous P059 survey's 32.0 kWh too. The control test did not run:
+the inverter reported "Key stop", nothing was written, the PV cut on P067 stays unconfirmed.
