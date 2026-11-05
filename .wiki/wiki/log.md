@@ -368,3 +368,9 @@ command that reads 0 on SH-RT, 0x55 on SH-T and is unavailable on SH-RS, and hol
 undocumented flag issue #554 found: 0xAA on four SH-RS and two SH15T, 0x55 on every SH-RT, which
 contradicts the earlier claim in the code that every survey read one value.
 
+## [2026-11-05] answered | do models on one firmware answer alike?
+
+`doc/firmware_support.md`, generated from every survey with a register dump, pools them by platform
+and firmware and replays each through the integration's decoding and probe. No model disagrees with
+another on its firmware in the five columns that pool two; the SUNSTONE-H firmware each have one
+model so far, and stay open.

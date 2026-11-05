@@ -1,0 +1,359 @@
+# Entities by firmware
+
+**Generated — do not edit.** `scripts/generate/generate_firmware_support.py`
+builds this from the surveys in
+[device-survey/results/](../device-survey/results/), and CI checks that it
+matches. [compatibility.md](compatibility.md) has the surveys themselves,
+one row each.
+
+The question: **do inverters on the same firmware support the same
+registers?** A column is one platform and firmware, every model seen on
+it pooled, so a cell marked **split** is a place where models on one
+firmware disagree, and names them. A row is an entity the integration
+can create on the inverter; the battery pack, the wallbox and SG string
+inverters are not in this table.
+
+Each survey's raw register dump is replayed through the integration's
+own decoding and capability probe, so a cell is what the device
+answered for the registers that entity reads.
+
+## What the surveys say so far
+
+**No cell is split.** Wherever two models on one firmware were both
+surveyed, they answered every entity's registers alike, once what a
+house has fitted is set aside. The assumption holds on this evidence;
+it is tested only where a column pools more than one model.
+
+What moves between firmware versions of one platform, over one kind of link:
+
+- **SAPPHIRE-H, direct** (01011.95.03, B001.V000.P020, B001.V000.P022, B001.V000.P023): 6 differ.
+  - Backup frequency: 01011.95.03 ✗, B001.V000.P020 ✓, B001.V000.P022 ✓, B001.V000.P023 ✓
+  - Firmware version: 01011.95.03 ✗, B001.V000.P020 ✓, B001.V000.P022 ✓, B001.V000.P023 ✓
+  - Cut PV generation *(switch)*: B001.V000.P020 ✗, B001.V000.P022 ✓, B001.V000.P023 ✓
+  - PV generation cut *(binary_sensor)*: B001.V000.P020 ✗, B001.V000.P022 ✓, B001.V000.P023 ✓
+  - PV generation cut code: B001.V000.P020 ✗, B001.V000.P022 ✓, B001.V000.P023 ✓
+  - Battery firmware version: 01011.95.03 ✗, B001.V000.P020 ✓, B001.V000.P022 ✓, B001.V000.P023 ✓
+- **SAPPHIRE-H, dongle** (01011.95.03, B001.V000.P020, B001.V000.P022, B001.V000.P023): 7 differ.
+  - Feed-in limit ratio: 01011.95.03 ✗, B001.V000.P020 ✓, B001.V000.P022 ✓, B001.V000.P023 ✓
+  - Forced startup under low SoC raw: 01011.95.03 ✗, B001.V000.P020 ✓, B001.V000.P022 ✓, B001.V000.P023 ✓
+  - Communication module firmware version: 01011.95.03 ✗, B001.V000.P020 ✓, B001.V000.P022 ✓, B001.V000.P023 ✓
+  - Firmware version: 01011.95.03 ✗, B001.V000.P020 ✓, B001.V000.P022 ✓, B001.V000.P023 ✓
+  - Cut PV generation *(switch)*: 01011.95.03 ✗, B001.V000.P020 ✗, B001.V000.P022 ✓, B001.V000.P023 ✓
+  - PV generation cut *(binary_sensor)*: 01011.95.03 ✗, B001.V000.P020 ✗, B001.V000.P022 ✓, B001.V000.P023 ✓
+  - PV generation cut code: 01011.95.03 ✗, B001.V000.P020 ✗, B001.V000.P022 ✓, B001.V000.P023 ✓
+- **SUNSTONE-H, dongle** (B000.V001.P068, B000.V002.P059, B000.V002.P065, B000.V002.P067): nothing differs.
+
+## Reading the table
+
+| Mark | Means |
+| --- | --- |
+| ✓ | Answered with a value. |
+| ✓ W | Answered, and a write was confirmed on this firmware: read back over a cable by the [control test](../.wiki/wiki/concepts/control-test.md), or its effect watched (`CONFIRMED_ON_FIRMWARE`). A writable entity without the W has not had its write confirmed here. |
+| ✗ | Answered "unavailable", refused, or did not answer. |
+| 0? | Answered only zeros where the integration reads zero as absent (MPPT3 at night, a dongle's stand-in for "unavailable"): cannot tell. |
+| – | Not fitted: needs a part (battery, meter, dual-channel meter, communication module, Sungrow pack) none of these houses has. |
+| *(empty)* | Untested: no dump reached these registers, or a dump cannot read them (the masked serial; the padded firmware strings at 2613 and 2629). |
+
+A **dongle** column was read through a WiNet-S or Logger, which refuses
+some blocks and answers 0 where the inverter answers "unavailable";
+compare a dongle column with a dongle column.
+
+## Columns
+
+| Column | Platform | Firmware | Link | Models | Surveys |
+| --- | --- | --- | --- | --- | --- |
+| 1 | PEARL-H | B000.V000.P071 | dongle | SH15T, SH20T | 5 |
+| 2 | SAPPHIRE-H | 01011.95.03 | direct | SH10RT-V112 | 2 |
+| 3 | SAPPHIRE-H | 01011.95.03 | dongle | SH10RT-V112 | 2 |
+| 4 | SAPPHIRE-H | B001.V000.P020 | direct | SH10RT, SH10RT-V112 | 5 |
+| 5 | SAPPHIRE-H | B001.V000.P020 | dongle | SH10RT-20 | 2 |
+| 6 | SAPPHIRE-H | B001.V000.P022 | direct | SH6.0RT-20, SH8.0RT-V112 | 4 |
+| 7 | SAPPHIRE-H | B001.V000.P022 | dongle | SH8.0RT-V112 | 3 |
+| 8 | SAPPHIRE-H | B001.V000.P023 | direct | SH10RT-20, SH10RT-V112, SH5.0RT-V112, SH6.0RT-V112 | 15 |
+| 9 | SAPPHIRE-H | B001.V000.P023 | dongle | SH10RT-20, SH10RT-V112, SH5.0RT-V112, SH6.0RT-V112 | 6 |
+| 10 | SUNSTONE-H | B000.V001.P068 | dongle | SH6.0RS | 1 |
+| 11 | SUNSTONE-H | B000.V002.P059 | dongle | SH10RS | 1 |
+| 12 | SUNSTONE-H | B000.V002.P065 | dongle | SH10RS | 1 |
+| 13 | SUNSTONE-H | B000.V002.P067 | dongle | SH10RS | 1 |
+
+Left out, with no register dump, no firmware or no way to tell the link:
+
+- `sh10rs-b000v002p057-1p-bleughb-anon-92100523190-battery-sungrow-winet-wlan`
+- `sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-meter-direct-lan`
+- `sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-lan`
+- `sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-wlan`
+- `sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan`
+- `sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan`
+
+## Backup power
+
+| Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Backup frequency | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Backup mode *(switch)* | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Backup mode code | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Backup phase A current | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Backup phase A power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Backup phase A voltage | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Backup phase B current | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Backup phase B power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Backup phase B voltage | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Backup phase C current | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Backup phase C power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Backup phase C voltage | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Total backup power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+## Control
+
+| Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Active power limitation *(binary_sensor)* | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Active power limitation code | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Active power limitation ratio | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| EMS mode *(select)* | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| EMS mode selection code | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Feed-in limit ratio | ✓ |  | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Forced charging days *(select)* | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Forced charging end 1 *(time)* | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Forced charging end 2 *(time)* | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Forced charging schedule *(switch)* | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Forced charging start 1 *(time)* | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Forced charging start 2 *(time)* | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Forced charging target SoC 1 *(number)* | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Forced charging target SoC 2 *(number)* | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Weekday discharge window 1 | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Weekday discharge window 2 | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Weekend discharge *(binary_sensor)* | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Weekend discharge window 1 | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Weekend discharge window 2 | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+## Everything else
+
+| Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Forced startup under low SoC raw | ✓ |  | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Power factor | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Power flow code | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Running state | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Running state code | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Shutdown inverter when limited to 0 % power | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+## Faults and alarms
+
+| Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Any alarm *(binary_sensor)* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| BDC-side fault | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| BDC-side permanent fault | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| DC-side fault | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Device alarm | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Fault reported *(binary_sensor)* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Permanent fault | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| System fault 1 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| System fault 2 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+## Identity and firmware
+
+| Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ARM software version | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Communication module firmware version | ✓ | – | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| DSP software version | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Device type | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Device type code | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Firmware version | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Firmware version part 1 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Firmware version part 2 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Firmware version part 3 |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Protocol version | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Serial number |  |  |  |  |  |  |  |  |  |  |  |  |  |
+
+## Per phase
+
+| Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Phase A current | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Phase A power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Phase A voltage | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Phase B current | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Phase B power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Phase B voltage | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Phase C current | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Phase C power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Phase C voltage | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
+
+## Power
+
+| Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| BDC rated power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Rated output power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Reactive power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Total PV input power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Total active power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+## Temperatures
+
+| Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Device temperature | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+## The PV trackers
+
+| Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Cut PV generation *(switch)* | ✓ W |  | ✗ | ✗ | ✗ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ W | ✓ |
+| Daily PV generation | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Daily exported energy from PV | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Export from PV this month | ✗ |  |  | ✓ |  | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Export from PV this year | ✗ |  |  | ✓ |  | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| MPPT1 current | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| MPPT1 power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| MPPT1 voltage | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| MPPT2 current | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| MPPT2 power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| MPPT2 voltage | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| MPPT3 current | ✓ | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
+| MPPT3 power | ✓ | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
+| MPPT3 voltage | ✓ | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
+| MPPT4 current | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
+| MPPT4 power | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
+| MPPT4 voltage | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
+| PV generating (delayed) *(binary_sensor)* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| PV generating *(binary_sensor)* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| PV generation cut *(binary_sensor)* | ✓ |  | ✗ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| PV generation cut code | ✓ |  | ✗ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| PV generation this month | ✗ |  |  | ✓ |  | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| PV generation this year | ✗ |  |  | ✓ |  | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| PV power limitation *(binary_sensor)* | ✓ |  | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| PV power limitation code | ✓ |  | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Total PV generation | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Total exported energy from PV | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Total site PV power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+## The battery
+
+| Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| BMS alarm | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| BMS alarm 2 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| BMS fault 1 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| BMS fault 2 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| BMS max charging current | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| BMS max discharging current | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| BMS protection | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery alarm | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery capacity high precision | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery charge | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery charge (health-rated) | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery charge (nominal) | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery charging (delayed) *(binary_sensor)* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery charging *(binary_sensor)* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery charging power | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery charging power signed | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery charging start power | ✗ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Battery charging start power *(number)* | ✗ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Battery current | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery discharging (delayed) *(binary_sensor)* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery discharging *(binary_sensor)* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery discharging power | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery discharging power signed | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery discharging start power | ✗ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Battery discharging start power *(number)* | ✗ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Battery fault | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery firmware version | ✓ | ✗ | – | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery forced charge/discharge *(select)* | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery forced charge/discharge command code | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery forced charge/discharge power | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery forced charge/discharge power *(number)* | ✓ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery level | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery level (nominal) | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery max SoC | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery max SoC *(number)* | ✓ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery max charging power | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery max charging power *(number)* | ✓ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery max discharging power | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery max discharging power *(number)* | ✓ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery min SoC | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery min SoC *(number)* | ✓ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery power | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery reserved SoC for backup | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery reserved SoC for backup *(number)* | ✓ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery state of health | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery temperature | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery voltage | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Daily PV generation & battery discharge | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Daily battery charge energy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Daily battery charge energy from PV | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Daily battery discharge energy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Firmware version part 4 (Sungrow battery) |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Total PV generation & battery discharge | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Total battery charge energy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Total battery charge energy from PV | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Total battery discharge energy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+## The grid
+
+| Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Daily exported energy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Daily imported energy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Export power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Export power signed | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Exporting power (delayed) *(binary_sensor)* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Exporting power *(binary_sensor)* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Feed-in limit | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Feed-in limit *(number)* | ✓ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Feed-in limit maximum | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Feed-in limit minimum | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Feed-in limit mode *(switch)* | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Feed-in limit mode code | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Grid frequency | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Grid-side fault | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Import power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Importing power (delayed) *(binary_sensor)* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Importing power *(binary_sensor)* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Total exported energy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Total imported energy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+## The house
+
+| Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Corrected load power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Daily consumed energy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Daily consumed energy (smoothed) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Daily direct energy consumption | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Direct consumption this month | ✗ |  |  | ✓ |  | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Direct consumption this year | ✗ |  |  | ✓ |  | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Load control *(switch)* | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Load control mode *(select)* | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Load control mode enable code | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Load control mode selection code | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Load power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Negative load power (delayed) *(binary_sensor)* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Negative load power *(binary_sensor)* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Positive load power (delayed) *(binary_sensor)* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Positive load power *(binary_sensor)* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Self-consumption of today | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Total consumed energy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Total direct energy consumption | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+## The meter
+
+| Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Meter active power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Meter channel 2 phase A active power | – | – | – | – | – | – | – | – | – | – | – | – | – |
+| Meter channel 2 phase B active power | – | – | – | – | – | – | – | – | – | – | – | – | – |
+| Meter channel 2 phase C active power | – | – | – | – | – | – | – | – | – | – | – | – | – |
+| Meter channel 2 total active power | – | – | – | – | – | – | – | – | – | – | – | – | – |
+| Meter phase A active power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Meter phase A current | 0? | ✓ | 0? | ✓ | 0? | ✓ | 0? | ✓ | 0? | 0? | 0? | 0? | 0? |
+| Meter phase A voltage | 0? | ✓ | 0? | ✓ | 0? | ✓ | 0? | ✓ | 0? | 0? | 0? | 0? | 0? |
+| Meter phase B active power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Meter phase B current | 0? | ✓ | 0? | ✓ | 0? | ✓ | 0? | ✓ | 0? | 0? | 0? | 0? | 0? |
+| Meter phase B voltage | 0? | ✓ | 0? | ✓ | 0? | ✓ | 0? | ✓ | 0? | 0? | 0? | 0? | 0? |
+| Meter phase C active power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Meter phase C current | 0? | ✓ | 0? | ✓ | 0? | ✓ | 0? | ✓ | 0? | 0? | 0? | 0? | 0? |
+| Meter phase C voltage | 0? | ✓ | 0? | ✓ | 0? | ✓ | 0? | ✓ | 0? | 0? | 0? | 0? | 0? |

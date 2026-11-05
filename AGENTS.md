@@ -56,7 +56,8 @@ Edit the source, not the output:
 - `custom_components/sungrow_modbus/{derived,number,switch,select,time}_descriptions.py`,
   `strings.json`, `translations/en.json` -- `scripts/generate/descriptions.py`,
   from `sungrow_modbus.hybrid_inverter.derived` and `scripts/generate/tables/`;
-- `doc/compatibility.md` -- `generate_compatibility.py`, from the surveys;
+- `doc/compatibility.md` and `doc/firmware_support.md` --
+  `generate_compatibility.py` and `generate_firmware_support.py`, from the surveys;
 - `scripts/dev/simulator_registers.json` -- `generate_simulator_registers.py`;
 - `doc/entity_names.md` and `doc/text_translation_review.md` --
   `scripts/helpers/review_names.py --markdown` and `--texts`;

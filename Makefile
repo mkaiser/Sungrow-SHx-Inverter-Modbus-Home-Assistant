@@ -18,6 +18,7 @@ VERSION ?=
 # runs all six of its own, strings last. Adding a generator means adding it
 # here and in .github/workflows/validate.yml -- the two lists must agree.
 GENERATORS := generate/descriptions.py generate/generate_compatibility.py \
+              generate/generate_firmware_support.py \
               generate/generate_simulator_registers.py
 
 .DEFAULT_GOAL := help

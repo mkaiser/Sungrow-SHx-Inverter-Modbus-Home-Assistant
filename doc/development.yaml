@@ -464,6 +464,8 @@ generated_files:
       tables: scripts/generate/tables/writes.py, scripts/generate/tables/naming.py
     - script: scripts/generate/generate_compatibility.py
       writes: doc/compatibility.md
+    - script: scripts/generate/generate_firmware_support.py
+      writes: doc/firmware_support.md
     - script: scripts/generate/generate_simulator_registers.py
       writes: scripts/dev/simulator_registers.json   # also on every simulate.sh
     - script: scripts/generate/generate_second_inverter_config.py

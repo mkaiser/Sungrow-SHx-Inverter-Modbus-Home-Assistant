@@ -120,6 +120,10 @@ models or between transports? Sungrow publishes no release notes, so
 the only way to know is to compare two readings that agree on model
 and transport and differ only in firmware.
 
+[firmware_support.md](firmware_support.md) asks the same question
+entity by entity, from each survey's raw register dump, and pools
+every model on one firmware to ask whether they agree.
+
 ### SH10RS, winet_lan
 
 Same model, same transport, different firmware — so a difference

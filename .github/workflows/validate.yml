@@ -79,6 +79,8 @@ jobs:
         run: python scripts/generate/descriptions.py strings --check
       - name: The compatibility page matches the surveys
         run: python scripts/generate/generate_compatibility.py --check
+      - name: The firmware support table matches the surveys
+        run: python scripts/generate/generate_firmware_support.py --check
       - name: The simulator seed matches the YAML package and the entity map
         run: python scripts/generate/generate_simulator_registers.py --check
       - name: The entity name review sheet matches the descriptions
