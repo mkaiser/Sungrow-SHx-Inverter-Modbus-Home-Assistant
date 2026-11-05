@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the table of which inverter entities each firmware supports.
+"""Build the table of which entities each firmware supports, inverter and pack.
 
     python scripts/generate/generate_firmware_support.py           # write the page
     python scripts/generate/generate_firmware_support.py --check   # or check it
@@ -22,6 +22,11 @@ makes is not the firmware's.
 What it cannot see it says so: an address no dump reached is *untested*, not
 absent, and a battery or meter a house does not have is *not fitted*, not a
 firmware that lacks it.
+
+An SBR or SBH pack gets a table of its own, columned by its BCU firmware: it
+is a device on its own unit, with firmware of its own. Its evidence is the
+survey's `battery_pack` block, which the library already decoded, rather than
+the inverter's dump.
 """
 
 from __future__ import annotations
@@ -32,6 +37,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 import inspect
 from pathlib import Path
+import re
 import sys
 from typing import Any
 
@@ -41,13 +47,16 @@ sys.path.insert(0, str(REPO / "scripts" / "helpers"))
 sys.path.insert(0, str(REPO / "scripts" / "generate"))
 
 from generate_compatibility import _model, _reports  # noqa: E402
+from modbus_connection import ModbusExceptionError  # noqa: E402
 from modbus_connection.model import Component  # noqa: E402
 import review_names  # noqa: E402
 
 from sungrow_modbus import Capability  # noqa: E402
+from sungrow_modbus.battery.device import PUBLISHED_NAMES  # noqa: E402
+from sungrow_modbus.battery.power import model_for_capacity  # noqa: E402
 from sungrow_modbus.dump import DUMP_MASKED  # noqa: E402
 from sungrow_modbus.hybrid_inverter import capabilities, components, layout, registers  # noqa: E402
-from sungrow_modbus.model import present  # noqa: E402
+from sungrow_modbus.model import SETTLES_NOTHING, present  # noqa: E402
 from sungrow_modbus.survey_document import OUTPUT_TYPES  # noqa: E402
 
 OUTPUT = REPO / "doc" / "firmware_support.md"
@@ -403,7 +412,7 @@ def _confirmed(column: Column, readings: list[Reading], description: object) -> 
     return any(field in reading.written for reading in readings)
 
 
-def _cell(answers: list[tuple[Reading, str]], write: bool) -> str:
+def _cell(answers: list[tuple[Any, str]], write: bool) -> str:
     """Combine one column's surveys into a cell.
 
     Untested and not-fitted readings say nothing about the firmware, so they
@@ -429,9 +438,9 @@ def _cell(answers: list[tuple[Reading, str]], write: bool) -> str:
     return "**split**: " + "; ".join(parts)
 
 
-def _columns(readings: list[Reading]) -> dict[Column, list[Reading]]:
+def _columns(readings: list[Any]) -> dict[Column, list[Any]]:
     """Group the readings by platform, firmware and link, in a stable order."""
-    grouped: dict[Column, list[Reading]] = defaultdict(list)
+    grouped: dict[Column, list[Any]] = defaultdict(list)
     for reading in readings:
         grouped[Column(reading.platform, reading.firmware, reading.dongle)].append(
             reading
@@ -485,6 +494,132 @@ def _matrix(
     return sorted(matrix, key=lambda row: (row[0], row[1]))
 
 
+def _exception_names(klass: type) -> set[str]:
+    """Return the names of `klass` and every subclass of it."""
+    names = {klass.__name__}
+    for child in klass.__subclasses__():
+        names |= _exception_names(child)
+    return names
+
+
+#: The exception names a survey records that are the device declining, and so
+#: evidence the register is not there. Anything else -- a link failure, a busy
+#: device, or an older survey that did not record the type -- settles nothing
+#: (`.wiki/wiki/concepts/failed-read-is-not-refusal.md`).
+REFUSALS = frozenset(
+    _exception_names(ModbusExceptionError)
+    - {klass.__name__ for klass in SETTLES_NOTHING}
+    - {ModbusExceptionError.__name__}
+)
+
+#: A per-module field, and the slot it reports.
+MODULE_FIELD = re.compile(r"_module_(\d+)$")
+
+
+@dataclass(frozen=True)
+class PackReading:
+    """One survey's reading of a battery pack, on the pack's own unit."""
+
+    label: str
+    model: str
+    platform: str
+    firmware: str
+    dongle: bool
+    values: dict[str, object]
+    #: Published component name to the exception it failed with, None where
+    #: the survey recorded no type.
+    silent: dict[str, str | None]
+
+
+def _pack_model(capacity: object) -> str:
+    """Return the pack's model from the inverter's capacity register."""
+    if not isinstance(capacity, int | float):
+        return "unknown"
+    model = model_for_capacity(float(capacity))
+    return model.name if model else f"{capacity:g} kWh, no single model"
+
+
+def _silent(readings: dict) -> dict[str, str | None]:
+    """Return {component: exception name or None} for what did not answer."""
+    silent: dict[str, str | None] = {}
+    for entry in readings.get("components_that_did_not_answer") or []:
+        name, _, rest = str(entry).partition(" (")
+        silent[name] = rest.rstrip(")") or None
+    return silent
+
+
+def _pack_readings() -> tuple[list[PackReading], list[str]]:
+    """Return the pack readings that can be placed, and the labels of the rest.
+
+    The firmware is the BCU string the inverter reports at 13280. A survey that
+    names a pack firmware but read no pack is left out, and one with neither
+    is a house without a Sungrow pack.
+    """
+    readings: list[PackReading] = []
+    skipped: list[str] = []
+    for label, document in _reports():
+        pack = document.get("battery_pack") or {}
+        firmware = str((document.get("firmware") or {}).get("battery") or "")
+        if not pack and not firmware:
+            continue
+        platform, _, version = firmware.partition("_")
+        unit = pack.get("unit")
+        if not pack or not version or unit not in (2, 200):
+            skipped.append(label)
+            continue
+        block = pack.get("readings") or {}
+        capacity = ((document.get("readings") or {}).get("values") or {}).get(
+            "battery_capacity_high_precision"
+        )
+        readings.append(
+            PackReading(
+                label=label,
+                model=_pack_model(capacity),
+                platform=platform,
+                firmware=version,
+                dongle=unit == 2,
+                values=block.get("values") or {},
+                silent=_silent(block),
+            )
+        )
+    return readings, skipped
+
+
+def _pack_answer(reading: PackReading, description: object) -> str:
+    """Return what one survey says about one pack entity."""
+    field = str(getattr(description, "field", ""))
+    component = PUBLISHED_NAMES[str(getattr(description, "component", ""))]
+    if component in reading.silent:
+        return NO if reading.silent[component] in REFUSALS else UNTESTED
+    if field not in reading.values:
+        return UNTESTED
+    slot = MODULE_FIELD.search(field)
+    if slot and reading.values.get(f"cell_type_module_{slot.group(1)}") == 0:
+        # An empty slot reads 0 V; the cell type names the fitted ones.
+        return NOT_FITTED
+    if reading.values[field] is None:
+        return NO
+    return YES
+
+
+def _pack_matrix(
+    columns: dict[Column, list[PackReading]],
+) -> list[tuple[str, str, list[str]]]:
+    """Return ("", row label, one cell per column) for every pack entity, in order."""
+    names = review_names._names()
+    matrix = []
+    for device, domain, description in review_names._descriptions():
+        if device is not review_names.BATTERY:
+            continue
+        key = str(getattr(description, "translation_key", None) or description.key)  # type: ignore[attr-defined]
+        cells = [
+            _cell([(r, _pack_answer(r, description)) for r in members], write=False)
+            for members in columns.values()
+        ]
+        matrix.append(("", names.get((domain, key), key), cells))
+    return matrix
+
+
 def _firmware_differences(
     columns: list[Column], matrix: list[tuple[str, str, list[str]]]
 ) -> list[str]:
@@ -523,6 +658,85 @@ def _firmware_differences(
             + (f"{len(moved)} differ." if moved else "nothing differs.")
         )
         lines += moved
+    return lines or ["- No platform has two firmware versions over one link yet."]
+
+
+def _summary(
+    columns: list[Column], matrix: list[tuple[str, str, list[str]]], what: str
+) -> list[str]:
+    """Return a part's answer: the split cells, then what moves with firmware."""
+    splits = [
+        (label, columns[i])
+        for _topic, label, cells in matrix
+        for i, cell in enumerate(cells)
+        if cell.startswith("**split**")
+    ]
+    lines = ["### What the surveys say so far", ""]
+    if splits:
+        lines += [
+            f"**{len(splits)} cell(s) split**: {what} on one firmware disagree.",
+            "",
+            *(
+                f"- {label}, in {column.platform} {column.heading}"
+                for label, column in splits
+            ),
+        ]
+    else:
+        lines += [
+            f"**No cell is split.** Wherever two {what} on one firmware were both",
+            "surveyed, they answered every entity's registers alike, once what a",
+            "house has fitted is set aside. The assumption holds on this evidence;",
+            f"it is tested only where a column pools more than one of the {what}.",
+        ]
+    return [
+        *lines,
+        "",
+        "What moves between firmware versions of one platform, over one kind of link:",
+        "",
+        *_firmware_differences(columns, matrix),
+    ]
+
+
+def _column_key(
+    columns: dict[Column, list[Any]],
+    prefix: str,
+    links: tuple[str, str],
+    skipped: list[str],
+    why: str,
+) -> list[str]:
+    """Return a part's column key, and the surveys it could not place."""
+    lines = [
+        "### Columns",
+        "",
+        "| Column | Platform | Firmware | Link | Models | Surveys |",
+        "| --- | --- | --- | --- | --- | --- |",
+    ]
+    for index, (column, members) in enumerate(columns.items(), 1):
+        models = ", ".join(sorted({r.model for r in members}))
+        lines.append(
+            f"| {prefix}{index} | {column.platform} | {column.firmware} | "
+            f"{links[column.dongle]} | {models} | {len(members)} |"
+        )
+    if skipped:
+        lines += ["", f"Left out, {why}:", "", *(f"- `{label}`" for label in skipped)]
+    return lines
+
+
+def _tables(
+    matrix: list[tuple[str, str, list[str]]], count: int, prefix: str
+) -> list[str]:
+    """Return the part's tables, one per topic where the rows carry one."""
+    header = (
+        "| Entity | " + " | ".join(f"{prefix}{i}" for i in range(1, count + 1)) + " |"
+    )
+    rule = "| --- |" + " --- |" * count
+    lines: list[str] = []
+    current = None
+    for topic, label, cells in matrix:
+        if topic != current or not lines:
+            lines += ["", f"### {topic or 'Entities'}", "", header, rule]
+            current = topic
+        lines.append(f"| {_escape(label)} | " + " | ".join(cells) + " |")
     return lines
 
 
@@ -531,12 +745,9 @@ def render() -> str:
     readings, skipped = _readings()
     columns = _columns(readings)
     matrix = _matrix(columns)
-    splits = [
-        (label, list(columns)[i])
-        for _topic, label, cells in matrix
-        for i, cell in enumerate(cells)
-        if cell.startswith("**split**")
-    ]
+    packs, packs_skipped = _pack_readings()
+    pack_columns = _columns(packs)
+    pack_matrix = _pack_matrix(pack_columns)
     lines = [
         "# Entities by firmware",
         "",
@@ -546,43 +757,14 @@ def render() -> str:
         "matches. [compatibility.md](compatibility.md) has the surveys themselves,",
         "one row each.",
         "",
-        "The question: **do inverters on the same firmware support the same",
+        "The question: **do devices on the same firmware support the same",
         "registers?** A column is one platform and firmware, every model seen on",
         "it pooled, so a cell marked **split** is a place where models on one",
         "firmware disagree, and names them. A row is an entity the integration",
-        "can create on the inverter; the battery pack, the wallbox and SG string",
-        "inverters are not in this table.",
+        "can create: first on the inverter, then on an SBR or SBH battery pack.",
+        "The wallbox and SG string inverters are not in this page.",
         "",
-        "Each survey's raw register dump is replayed through the integration's",
-        "own decoding and capability probe, so a cell is what the device",
-        "answered for the registers that entity reads.",
-        "",
-        "## What the surveys say so far",
-        "",
-    ]
-    if splits:
-        lines += [
-            f"**{len(splits)} cell(s) split**: models on one firmware disagree.",
-            "",
-            *(
-                f"- {label}, in {column.platform} {column.heading}"
-                for label, column in splits
-            ),
-        ]
-    else:
-        lines += [
-            "**No cell is split.** Wherever two models on one firmware were both",
-            "surveyed, they answered every entity's registers alike, once what a",
-            "house has fitted is set aside. The assumption holds on this evidence;",
-            "it is tested only where a column pools more than one model.",
-        ]
-    lines += [
-        "",
-        "What moves between firmware versions of one platform, over one kind of link:",
-        "",
-        *_firmware_differences(list(columns), matrix),
-        "",
-        "## Reading the table",
+        "## Reading the tables",
         "",
         "| Mark | Means |",
         "| --- | --- |",
@@ -595,9 +777,9 @@ def render() -> str:
         "| 0? | Answered only zeros where the integration reads zero as absent"
         ' (MPPT3 at night, a dongle\'s stand-in for "unavailable"): cannot tell. |',
         f"| {MARKS[NOT_FITTED]} | Not fitted: needs a part (battery, meter,"
-        " dual-channel meter, communication module, Sungrow pack) none of these"
-        " houses has. |",
-        "| *(empty)* | Untested: no dump reached these registers, or a dump cannot"
+        " dual-channel meter, communication module, Sungrow pack, a pack module)"
+        " none of these houses has. |",
+        "| *(empty)* | Untested: no survey reached these registers, or none can"
         " read them (the masked serial; the padded firmware strings at 2613 and"
         " 2629). |",
         "",
@@ -605,35 +787,44 @@ def render() -> str:
         'some blocks and answers 0 where the inverter answers "unavailable";',
         "compare a dongle column with a dongle column.",
         "",
-        "## Columns",
+        "## Inverters",
         "",
-        "| Column | Platform | Firmware | Link | Models | Surveys |",
-        "| --- | --- | --- | --- | --- | --- |",
+        "Each survey's raw register dump is replayed through the integration's",
+        "own decoding and capability probe, so a cell is what the inverter",
+        "answered for the registers that entity reads.",
+        "",
+        *_summary(list(columns), matrix, "models"),
+        "",
+        *_column_key(
+            columns,
+            "",
+            ("direct", "dongle"),
+            skipped,
+            "with no register dump, no firmware or no way to tell the link",
+        ),
+        *_tables(matrix, len(columns), ""),
+        "",
+        "## Battery packs",
+        "",
+        "A pack is a device on its own unit with firmware of its own, so a column",
+        "is its **BCU firmware**, the battery firmware string the inverter reports",
+        "at register 13280. Over the inverter's LAN port the pack answers on unit",
+        "200; through a WiNet-S, on unit 2. The model is the one the inverter's",
+        "capacity register (5639) matches. A cell is the survey's own decoded",
+        "reading of the pack: a component the pack refused with an exception is",
+        "absent, one lost to the link is untested.",
+        "",
+        *_summary(list(pack_columns), pack_matrix, "pack models"),
+        "",
+        *_column_key(
+            pack_columns,
+            "B",
+            ("unit 200 (cable)", "unit 2 (dongle)"),
+            packs_skipped,
+            "with a battery firmware but no pack reading, or no battery firmware",
+        ),
+        *_tables(pack_matrix, len(pack_columns), "B"),
     ]
-    for index, (column, members) in enumerate(columns.items(), 1):
-        models = ", ".join(sorted({r.model for r in members}))
-        lines.append(
-            f"| {index} | {column.platform} | {column.firmware} | "
-            f"{'dongle' if column.dongle else 'direct'} | {models} | {len(members)} |"
-        )
-    if skipped:
-        lines += [
-            "",
-            "Left out, with no register dump, no firmware or no way to tell the link:",
-            "",
-            *(f"- `{label}`" for label in skipped),
-        ]
-
-    header = (
-        "| Entity | " + " | ".join(str(i) for i in range(1, len(columns) + 1)) + " |"
-    )
-    rule = "| --- |" + " --- |" * len(columns)
-    current = None
-    for topic, label, cells in matrix:
-        if topic != current:
-            lines += ["", f"## {topic}", "", header, rule]
-            current = topic
-        lines.append(f"| {_escape(label)} | " + " | ".join(cells) + " |")
     return "\n".join(lines) + "\n"
 
 

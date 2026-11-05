@@ -1,10 +1,10 @@
 ---
 type: query
 title: "Do models on one firmware answer alike?"
-tags: [firmware, capability, answered]
+tags: [firmware, capability, battery, answered]
 created: '2026-11-05'
-query: "Do inverters of one platform on the same firmware version answer the same registers, whatever the model?"
-results_count: 5
+query: "Do inverters, and battery packs, on the same firmware version answer the same registers, whatever the model?"
+results_count: 9
 ---
 
 # Do models on one firmware answer alike?
@@ -33,10 +33,23 @@ present from P022, and
 firmware block, as `ABSENT_ON_FIRMWARE` in
 `src/sungrow_modbus/hybrid_inverter/capabilities.py` already records.
 
+**Battery packs: yes, too.** The pack table columns by BCU firmware, the
+string the inverter reports at 13280, with the model the capacity register
+matches. Four columns pool more than one pack model and none is split:
+`SBRBCU-S_22011.01.27` over the cable (SBR096, SBR128, SBR256),
+`SBRBCU-S_22011.01.30` over the cable (SBR064, SBR096, SBR128, SBR160,
+SBR224) and through a dongle, and `SBHBCU-S_22011.04.11` through a dongle
+(SBH150, SBH200, SBH400). Across the SBR firmware nothing moves; what moves
+is the link, as the [SBR page](../entities/device-sbr-battery.md) records:
+unit 2 refuses the cell and module blocks for an
+[SBH](../entities/device-sbh-battery.md) as for an SBR.
+
 **Still open:** the SUNSTONE-H firmware seen so far each have one model
 (SH6.0RS on P068, SH10RS on P059, P065 and P067), and every SH-RS and SH-T
 reading went through a WiNet-S. A second model on one of those firmware, or
-any of them over a cable, would test it there.
+any of them over a cable, would test it there. No SBH pack has been read over
+a cable, so whether its unit 200 answers the cell and module blocks is
+untested.
 
 What the method cannot see is listed on the page: an address no dump reached
 is untested; a register that reports a part the house lacks (a meter, a

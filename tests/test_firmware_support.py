@@ -1,4 +1,4 @@
-"""How `doc/firmware_support.md` turns a survey's dump into a mark.
+"""How `doc/firmware_support.md` turns a survey into a mark.
 
 The table pools every model on one firmware, so a wrong judgement for one
 survey shows up as a **split** -- a claim that the models disagree. Each case
@@ -22,10 +22,13 @@ from generate_firmware_support import (
     UNTESTED,
     YES,
     ZERO,
+    PackReading,
     Reading,
     _answer,
     _capabilities,
     _cell,
+    _pack_answer,
+    _silent,
     _written,
 )
 
@@ -149,3 +152,53 @@ def test_a_dongle_read_back_confirms_no_write() -> None:
     }
     assert _written(document, dongle=False) == {"battery_min_soc"}
     assert _written(document, dongle=True) == frozenset()
+
+
+def _pack(values: dict[str, object], silent: list[str] | None = None) -> PackReading:
+    return PackReading(
+        label="test",
+        model="SBR096",
+        platform="SBRBCU-S",
+        firmware="22011.01.30",
+        dongle=False,
+        values=values,
+        silent=_silent({"components_that_did_not_answer": silent or []}),
+    )
+
+
+def test_a_pack_refusal_is_absent_and_a_lost_link_is_untested() -> None:
+    """A dongle's unit 2 refuses the cell block with an exception: an answer.
+
+    A connection lost, or an older survey that recorded no exception type,
+    says nothing about the register.
+    """
+    cell = SimpleNamespace(component="cells", field="max_cell_voltage")
+
+    refused = _pack({}, ["sbr_battery_cells (IllegalDataAddressError)"])
+    lost = _pack({}, ["sbr_battery_cells (ModbusConnectionError)"])
+    busy = _pack({}, ["sbr_battery_cells (ServerDeviceBusyError)"])
+    untyped = _pack({}, ["sbr_battery_cells"])
+
+    assert _pack_answer(refused, cell) == NO
+    assert _pack_answer(lost, cell) == UNTESTED
+    assert _pack_answer(busy, cell) == UNTESTED
+    assert _pack_answer(untyped, cell) == UNTESTED
+
+
+def test_an_empty_module_slot_is_not_fitted() -> None:
+    """A three-module pack reads 0 V in slot 4; its cell type names it empty."""
+    values = {
+        "max_cell_voltage_module_3": 3.30,
+        "cell_type_module_3": 68,
+        "max_cell_voltage_module_4": 0.0,
+        "cell_type_module_4": 0,
+    }
+
+    def slot(n: int) -> object:
+        return SimpleNamespace(
+            component="modules", field=f"max_cell_voltage_module_{n}"
+        )
+
+    assert _pack_answer(_pack(values), slot(3)) == YES
+    assert _pack_answer(_pack(values), slot(4)) == NOT_FITTED
+    assert _pack_answer(_pack(values), slot(5)) == UNTESTED

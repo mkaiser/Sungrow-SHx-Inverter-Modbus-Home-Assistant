@@ -374,3 +374,9 @@ contradicts the earlier claim in the code that every survey read one value.
 and firmware and replays each through the integration's decoding and probe. No model disagrees with
 another on its firmware in the five columns that pool two; the SUNSTONE-H firmware each have one
 model so far, and stay open.
+
+## [2026-11-05] answered | do battery packs on one firmware answer alike?
+
+`doc/firmware_support.md` gained the SBR and SBH packs, columned by BCU firmware and link, from each
+survey's decoded `battery_pack` block. No pack model disagrees with another on its firmware in the
+four columns that pool two; unit 2 refuses the cell and module blocks on every pack.

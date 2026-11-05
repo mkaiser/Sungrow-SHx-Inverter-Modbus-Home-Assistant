@@ -6,23 +6,40 @@ builds this from the surveys in
 matches. [compatibility.md](compatibility.md) has the surveys themselves,
 one row each.
 
-The question: **do inverters on the same firmware support the same
+The question: **do devices on the same firmware support the same
 registers?** A column is one platform and firmware, every model seen on
 it pooled, so a cell marked **split** is a place where models on one
 firmware disagree, and names them. A row is an entity the integration
-can create on the inverter; the battery pack, the wallbox and SG string
-inverters are not in this table.
+can create: first on the inverter, then on an SBR or SBH battery pack.
+The wallbox and SG string inverters are not in this page.
+
+## Reading the tables
+
+| Mark | Means |
+| --- | --- |
+| ✓ | Answered with a value. |
+| ✓ W | Answered, and a write was confirmed on this firmware: read back over a cable by the [control test](../.wiki/wiki/concepts/control-test.md), or its effect watched (`CONFIRMED_ON_FIRMWARE`). A writable entity without the W has not had its write confirmed here. |
+| ✗ | Answered "unavailable", refused, or did not answer. |
+| 0? | Answered only zeros where the integration reads zero as absent (MPPT3 at night, a dongle's stand-in for "unavailable"): cannot tell. |
+| – | Not fitted: needs a part (battery, meter, dual-channel meter, communication module, Sungrow pack, a pack module) none of these houses has. |
+| *(empty)* | Untested: no survey reached these registers, or none can read them (the masked serial; the padded firmware strings at 2613 and 2629). |
+
+A **dongle** column was read through a WiNet-S or Logger, which refuses
+some blocks and answers 0 where the inverter answers "unavailable";
+compare a dongle column with a dongle column.
+
+## Inverters
 
 Each survey's raw register dump is replayed through the integration's
-own decoding and capability probe, so a cell is what the device
+own decoding and capability probe, so a cell is what the inverter
 answered for the registers that entity reads.
 
-## What the surveys say so far
+### What the surveys say so far
 
 **No cell is split.** Wherever two models on one firmware were both
 surveyed, they answered every entity's registers alike, once what a
 house has fitted is set aside. The assumption holds on this evidence;
-it is tested only where a column pools more than one model.
+it is tested only where a column pools more than one of the models.
 
 What moves between firmware versions of one platform, over one kind of link:
 
@@ -43,22 +60,7 @@ What moves between firmware versions of one platform, over one kind of link:
   - PV generation cut code: 01011.95.03 ✗, B001.V000.P020 ✗, B001.V000.P022 ✓, B001.V000.P023 ✓
 - **SUNSTONE-H, dongle** (B000.V001.P068, B000.V002.P059, B000.V002.P065, B000.V002.P067): nothing differs.
 
-## Reading the table
-
-| Mark | Means |
-| --- | --- |
-| ✓ | Answered with a value. |
-| ✓ W | Answered, and a write was confirmed on this firmware: read back over a cable by the [control test](../.wiki/wiki/concepts/control-test.md), or its effect watched (`CONFIRMED_ON_FIRMWARE`). A writable entity without the W has not had its write confirmed here. |
-| ✗ | Answered "unavailable", refused, or did not answer. |
-| 0? | Answered only zeros where the integration reads zero as absent (MPPT3 at night, a dongle's stand-in for "unavailable"): cannot tell. |
-| – | Not fitted: needs a part (battery, meter, dual-channel meter, communication module, Sungrow pack) none of these houses has. |
-| *(empty)* | Untested: no dump reached these registers, or a dump cannot read them (the masked serial; the padded firmware strings at 2613 and 2629). |
-
-A **dongle** column was read through a WiNet-S or Logger, which refuses
-some blocks and answers 0 where the inverter answers "unavailable";
-compare a dongle column with a dongle column.
-
-## Columns
+### Columns
 
 | Column | Platform | Firmware | Link | Models | Surveys |
 | --- | --- | --- | --- | --- | --- |
@@ -85,7 +87,7 @@ Left out, with no register dump, no firmware or no way to tell the link:
 - `sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan`
 - `sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan`
 
-## Backup power
+### Backup power
 
 | Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -103,7 +105,7 @@ Left out, with no register dump, no firmware or no way to tell the link:
 | Backup phase C voltage | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Total backup power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-## Control
+### Control
 
 | Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -127,7 +129,7 @@ Left out, with no register dump, no firmware or no way to tell the link:
 | Weekend discharge window 1 | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Weekend discharge window 2 | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-## Everything else
+### Everything else
 
 | Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -138,7 +140,7 @@ Left out, with no register dump, no firmware or no way to tell the link:
 | Running state code | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Shutdown inverter when limited to 0 % power | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-## Faults and alarms
+### Faults and alarms
 
 | Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -152,7 +154,7 @@ Left out, with no register dump, no firmware or no way to tell the link:
 | System fault 1 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | System fault 2 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-## Identity and firmware
+### Identity and firmware
 
 | Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -168,7 +170,7 @@ Left out, with no register dump, no firmware or no way to tell the link:
 | Protocol version | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Serial number |  |  |  |  |  |  |  |  |  |  |  |  |  |
 
-## Per phase
+### Per phase
 
 | Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -182,7 +184,7 @@ Left out, with no register dump, no firmware or no way to tell the link:
 | Phase C power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
 | Phase C voltage | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
 
-## Power
+### Power
 
 | Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -192,13 +194,13 @@ Left out, with no register dump, no firmware or no way to tell the link:
 | Total PV input power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Total active power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-## Temperatures
+### Temperatures
 
 | Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Device temperature | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-## The PV trackers
+### The PV trackers
 
 | Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -231,7 +233,7 @@ Left out, with no register dump, no firmware or no way to tell the link:
 | Total exported energy from PV | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Total site PV power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-## The battery
+### The battery
 
 | Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -292,7 +294,7 @@ Left out, with no register dump, no firmware or no way to tell the link:
 | Total battery charge energy from PV | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Total battery discharge energy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-## The grid
+### The grid
 
 | Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -316,7 +318,7 @@ Left out, with no register dump, no firmware or no way to tell the link:
 | Total exported energy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Total imported energy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-## The house
+### The house
 
 | Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -339,7 +341,7 @@ Left out, with no register dump, no firmware or no way to tell the link:
 | Total consumed energy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Total direct energy consumption | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-## The meter
+### The meter
 
 | Entity | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -357,3 +359,89 @@ Left out, with no register dump, no firmware or no way to tell the link:
 | Meter phase C active power | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Meter phase C current | 0? | ✓ | 0? | ✓ | 0? | ✓ | 0? | ✓ | 0? | 0? | 0? | 0? | 0? |
 | Meter phase C voltage | 0? | ✓ | 0? | ✓ | 0? | ✓ | 0? | ✓ | 0? | 0? | 0? | 0? | 0? |
+
+## Battery packs
+
+A pack is a device on its own unit with firmware of its own, so a column
+is its **BCU firmware**, the battery firmware string the inverter reports
+at register 13280. Over the inverter's LAN port the pack answers on unit
+200; through a WiNet-S, on unit 2. The model is the one the inverter's
+capacity register (5639) matches. A cell is the survey's own decoded
+reading of the pack: a component the pack refused with an exception is
+absent, one lost to the link is untested.
+
+### What the surveys say so far
+
+**No cell is split.** Wherever two pack models on one firmware were both
+surveyed, they answered every entity's registers alike, once what a
+house has fitted is set aside. The assumption holds on this evidence;
+it is tested only where a column pools more than one of the pack models.
+
+What moves between firmware versions of one platform, over one kind of link:
+
+- **SBHBCU-S, dongle** (22011.04.07, 22011.04.08 32, 22011.04.11): nothing differs.
+- **SBRBCU-S, direct** (22011.01.21, 22011.01.27, 22011.01.30): nothing differs.
+- **SBRBCU-S, dongle** (22011.01.21, 22011.01.27, 22011.01.27 24, 22011.01.30, 22011.01.30 44): nothing differs.
+
+### Columns
+
+| Column | Platform | Firmware | Link | Models | Surveys |
+| --- | --- | --- | --- | --- | --- |
+| B1 | SBHBCU-S | 22011.04.07 | unit 2 (dongle) | 25.34 kWh, no single model | 1 |
+| B2 | SBHBCU-S | 22011.04.08 32 | unit 2 (dongle) | SBH300 | 1 |
+| B3 | SBHBCU-S | 22011.04.11 | unit 2 (dongle) | SBH150, SBH200, SBH400 | 5 |
+| B4 | SBRBCU-S | 22011.01.21 | unit 200 (cable) | SBR096 | 1 |
+| B5 | SBRBCU-S | 22011.01.21 | unit 2 (dongle) | SBR096 | 1 |
+| B6 | SBRBCU-S | 22011.01.27 | unit 200 (cable) | SBR096, SBR128, SBR256 | 4 |
+| B7 | SBRBCU-S | 22011.01.27 | unit 2 (dongle) | SBR096 | 2 |
+| B8 | SBRBCU-S | 22011.01.27 24 | unit 2 (dongle) | 32 kWh, no single model | 1 |
+| B9 | SBRBCU-S | 22011.01.30 | unit 200 (cable) | SBR064, SBR096, SBR128, SBR160, SBR224 | 16 |
+| B10 | SBRBCU-S | 22011.01.30 | unit 2 (dongle) | 44.8 kWh, no single model, SBR096, SBR128 | 8 |
+| B11 | SBRBCU-S | 22011.01.30 44 | unit 2 (dongle) | SBR192 | 1 |
+
+Left out, with a battery firmware but no pack reading, or no battery firmware:
+
+- `sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-lan`
+- `sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-wlan`
+- `sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan`
+- `sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-winet`
+- `sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan`
+
+### Entities
+
+| Entity | B1 | B2 | B3 | B4 | B5 | B6 | B7 | B8 | B9 | B10 | B11 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Pack voltage | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Pack current | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Pack temperature | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Pack level | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Pack state of health | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Pack total charge energy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Pack total discharge energy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Highest cell voltage | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Lowest cell voltage | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Cell voltage spread | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Warmest module temperature | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Coolest module temperature | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Highest cell module | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Highest cell number | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Lowest cell module | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Lowest cell number | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Warmest module | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Coolest module | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Module 1 highest cell voltage | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Module 1 lowest cell voltage | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Module 2 highest cell voltage | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Module 2 lowest cell voltage | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Module 3 highest cell voltage | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Module 3 lowest cell voltage | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Module 4 highest cell voltage | ✗ | ✗ | ✗ | – | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Module 4 lowest cell voltage | ✗ | ✗ | ✗ | – | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Module 5 highest cell voltage | ✗ | ✗ | ✗ | – | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Module 5 lowest cell voltage | ✗ | ✗ | ✗ | – | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Module 6 highest cell voltage | ✗ | ✗ | ✗ | – | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Module 6 lowest cell voltage | ✗ | ✗ | ✗ | – | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Module 7 highest cell voltage | ✗ | ✗ | ✗ | – | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Module 7 lowest cell voltage | ✗ | ✗ | ✗ | – | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Module 8 highest cell voltage | ✗ | ✗ | ✗ | – | ✗ | ✓ | ✗ | ✗ | – | ✗ | ✗ |
+| Module 8 lowest cell voltage | ✗ | ✗ | ✗ | – | ✗ | ✓ | ✗ | ✗ | – | ✗ | ✗ |

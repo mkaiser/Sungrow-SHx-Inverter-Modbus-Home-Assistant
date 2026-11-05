@@ -141,7 +141,7 @@
 
 - [Does a wallbox answer unit 248 on RS485?](queries/does-a-wallbox-answer-unit-248-on-rs485.md) — Open: reported by others, never measured #wallbox #rs485 #open
 - [Does a busy WiNet-S refuse with 0x04?](queries/does-a-busy-winet-s-refuse-with-0x04.md) — Answered: yes, reproduced at gerd with three clients #winet-s #contention #answered
-- [Do models on one firmware answer alike?](queries/do-models-on-one-firmware-answer-alike.md) — Answered so far: yes, in all five columns that pool two models #firmware #capability #answered
+- [Do models on one firmware answer alike?](queries/do-models-on-one-firmware-answer-alike.md) — Answered so far: yes, for inverters and battery packs, in every column that pools two models #firmware #capability #battery #answered
 - [Does the PV cut work on P022 and P071?](queries/does-the-pv-cut-work-on-p022-and-p071.md) — Answered: yes on both, P022 at gerd, P071 at ra1k-0 #pv-cut #register-31211 #answered
 - [Does writing 33213 drop the link at peter-sm?](queries/does-writing-33213-drop-the-link-at-peter-sm.md) — Open: the charge window's write lost the connection twice, at one house only #contention #charge-window #peter-sm #open
 - [What does an iHomeManager answer?](queries/what-does-an-ihomemanager-answer.md) — Open: never surveyed #ihomemanager #open #survey-wanted
