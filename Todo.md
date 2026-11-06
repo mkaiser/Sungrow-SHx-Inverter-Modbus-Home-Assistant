@@ -65,7 +65,9 @@ Structure:
       read and tries five times, and an unrestored register is code 5. A
       setting that reads above the rating at 0.1 A per count and inside it at
       0.01 is reported as the scale finding (code 4) before any write.
-   2. **A dry run at gerd's first.** Read only, no leave: identifies the
+   2. **A dry run at gerd's first. Waits on his network being routed** (not
+      the case on 2026-11-06; set aside for another session, the maintainer
+      says when). Read only, no leave: identifies the
       wallbox, reads the rating, the setting and what the car draws, and says
       which scale they fit. If a car is charging, "the car draws 13 A while
       the setting is 160" already excludes 0.01 A per count (1.6 A could not
