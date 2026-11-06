@@ -74,7 +74,7 @@ your consent; the five switches below are the parts that go further, and
 *before* pressing the button; what you switch off stays off. With all five
 off, the test still forces the battery and checks every setting's scale.
 
-<img src="../device-survey/images/HA-settings-configure-control-test.png" width="450" alt="The control write test section of the options dialog, with all three switches on">
+<img src="../device-survey/images/HA-settings-configure-control-test.png" width="450" alt="The control write test section of the options dialog, with all five switches on">
 
 | Option | Default | What it does |
 | --- | --- | --- |

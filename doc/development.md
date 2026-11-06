@@ -166,7 +166,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | Script | What it does |
 | --- | --- |
 | **`scripts/dev/`** | **The dev loop** |
-| `setup.sh` | Install HA, the device library (editable) and tooling |
+| `setup.sh` | Install HA, the device library (editable) and tooling, and a headless browser for screenshots in a venv of its own |
 | `develop.sh` | Boot HA on <http://localhost:8123> against `config/` |
 | `ha_onboard.py` | Walk a fresh instance through onboarding over the API, so nobody types `dev`/`dev` into a wizard. Both boot scripts run it in the background; idempotent, and it refuses a non-loopback URL |
 | `hacs_testbed.sh` | Boot a **second** HA on :8124 against `config-hacs/`, with HACS installed; see [Testing the install a user actually gets](#testing-the-install-a-user-actually-gets) |
@@ -174,10 +174,11 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `simulate.sh` | Regenerate the register seed and serve it on :5020 (`simulator.py`, seed in `simulator_registers.json`) |
 | `fetch_references.sh` | Clone HA core + libs into `.reference/` (gitignored) |
 | `pre-commit.sh` | The git pre-commit hook `make hooks` installs: `make quick` |
+| `screenshot.py` | Retake a documentation screenshot from a scratch instance, on the screenshot venv's Python; see [Screenshots for the docs](#screenshots-for-the-docs) |
 | `seed_migration_testbed.py` | Make the dev instance look like a house that ran the YAML package for years; see [Reviewing the migration by hand](#reviewing-the-migration-by-hand) |
 | **`scripts/generate/`** | **Everything that writes a committed file; each has `--check` but the multi-inverter YAML, which CI regenerates and commits instead** |
-| `descriptions.py` | The entity descriptions and names: `derived`, `numbers`, `switches`, `selects`, `strings`, or all five with no argument (`strings` last, since it reads the others) |
-| `tables/writes.py` | **Input table**: which registers the integration may write and within what bounds. Feeds the number/switch/select/time descriptions; `tests/test_writes.py` holds `registers.py`'s writable set to it |
+| `descriptions.py` | The entity descriptions and names: `derived`, `numbers`, `switches`, `selects`, `times`, `buttons`, `strings`, or all seven with no argument (`strings` last, since it reads the others) |
+| `tables/writes.py` | **Input table**: which registers the integration may write and within what bounds. Feeds the number/switch/select/time/button descriptions; `tests/test_writes.py` holds `registers.py`'s writable set to it |
 | `tables/naming.py` | **Input table**: the entity-name convention, and a suggested German name for every key (`GERMAN`, not shipped). Feeds `strings.json`, `review_names.py` and the Influx helper |
 | `tables/german_texts.json` | **Input table**: suggested German for every `strings.json` text that is not an entity name, by path (not shipped); read through `naming.GERMAN_TEXTS`. Feeds `review_names.py --texts` (`doc/text_translation_review.md`) |
 | `tables/datasheet_names.json` | **Input table**: Sungrow's own name for every register an entity reads, as the hybrid's V1.1.11 and the SG's V1.1.58 datasheets print it, by `space:register`. Feeds the **Datasheet** column of `review_names.py` |
@@ -363,43 +364,45 @@ The images in `device-survey/images/` are taken headless, against the
 simulator, from a **second** Home Assistant. Never the one on :8123: its entry
 may point at real hardware, and a screenshot session clicks through flows.
 
-1. **A browser, outside the repository.** The container has none. Playwright
-   in a venv of its own, with its Chromium:
-
-   ```bash
-   python3 -m venv /tmp/pw && /tmp/pw/bin/pip install playwright
-   PLAYWRIGHT_BROWSERS_PATH=/tmp/pw/browsers /tmp/pw/bin/playwright install chromium
-   ```
-
-   The headless shell needs five libraries the image lacks. Without root,
-   unpack them beside it and point `LD_LIBRARY_PATH` there:
-
-   ```bash
-   mkdir -p /tmp/pw/debs /tmp/pw/lib && cd /tmp/pw/debs
-   apt-get download libatk1.0-0 libatk-bridge2.0-0 libxcomposite1 libxdamage1 libatspi2.0-0
-   for d in *.deb; do dpkg-deb -x "$d" /tmp/pw/lib; done
-   export LD_LIBRARY_PATH=/tmp/pw/lib/usr/lib/x86_64-linux-gnu
-   ```
-
+1. **The browser.** `scripts/dev/setup.sh` installs it with the container:
+   Playwright in a venv of its own (`~/.local/share/sungrow-screenshots`, so
+   its dependencies never meet Home Assistant's pins) and Chromium's headless
+   shell, whose system libraries `playwright install --with-deps` takes from
+   apt. Its Python is `~/.local/share/sungrow-screenshots/bin/python`. In a
+   container built before that step, run the last four lines of `setup.sh`.
 2. **A scratch instance on :8125.** Copy `config/configuration.yaml` into a
-   new directory, append `http: {server_port: 8125}`, symlink
-   `custom_components` into it as `develop.sh` does, start the simulator, run
-   `hass --config <dir>`, then `scripts/dev/ha_onboard.py --url
-   http://127.0.0.1:8125`. The first page asks to **confirm the new HTTP port**
-   and reverts it after a few minutes otherwise; confirm it.
-3. **Drive it.** Log in through the form (`dev` / `dev`) once and keep
-   `context.storage_state()`; use `locale="en-US"`, since the docs are
-   English. What the frontend needs:
-   - text inputs are `wa-input`: `locator("wa-input[name=host]")`, numbers
-     `locator("input[type=number]")`;
-   - buttons by role, `get_by_role("button", name="Submit")`: `get_by_text`
-     matches substrings, and a field's help text can contain "submit";
-   - the entry's cog on the integration page has no usable label; click it
-     by position;
-   - a flow left half-done blocks the next with "already being configured".
-     Restarting the scratch instance clears it.
-4. **Crop** with Pillow (`Image.crop`) to the dialog or card, and check the
-   result by eye before committing it.
+   new directory outside the repository and symlink `custom_components` into
+   it as `develop.sh` does. Boot `hass --config <dir>` once and stop it;
+   `scripts/dev/ha_http_port.py <dir> 8125` then moves it off :8123 for good
+   (it needs the first boot's `.storage/http`). Start the simulator
+   (`make sim-bg`), boot the instance again, and run
+   `scripts/dev/ha_onboard.py --url http://127.0.0.1:8125`.
+3. **An entry on the simulator.** Add the integration with host `127.0.0.1`,
+   port `5020`, in the browser or through the config flow's REST API
+   (`POST /api/config/config_entries/flow`, then each step's form).
+4. **The shot.** `scripts/dev/screenshot.py` logs in as `dev` / `dev`, clicks
+   to the page and writes the PNG into `device-survey/images/`:
+
+   ```bash
+   ~/.local/share/sungrow-screenshots/bin/python scripts/dev/screenshot.py \
+       options-control-test --url http://127.0.0.1:8125
+   ```
+
+   Each shot is one function in its `SHOTS` table; a new one is a new
+   function. Look at the result before committing it.
+
+What the frontend needs, for a new shot:
+
+- log in through the form, `input[name=username]` and `input[name=password]`;
+- `locale="en-US"`, since the docs are English;
+- buttons by role, `get_by_role("button", name="Configure")`: an
+  `ha-icon-button` has no label of its own, but the `button` inside it does,
+  and `get_by_text` matches substrings a field's help text can contain;
+- an open `ha-dialog` reads as hidden to Playwright (its host has no box), so
+  wait for something inside it, `ha-dialog ha-form`;
+- screenshot an element (`locator.screenshot`) rather than cropping a page;
+- a flow left half-done blocks the next with "already being configured".
+  Restarting the scratch instance clears it.
 
 The HACS screenshots need the HACS testbed (`make hacs`) and a GitHub device
 login, so they are retaken only when HACS's dialogs change.
