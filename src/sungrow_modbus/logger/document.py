@@ -1,10 +1,10 @@
 """What a Logger puts into a published document.
 
-Its identity decoded, and every other word raw. Most of a Logger is
-undocumented here, so the text guard of `ihomemanager.masked_text` runs over
-all of it: any text outside the protocol number is masked and published as a
-stand-in, because a Logger's serial, if it has one in these bands, would
-otherwise be published as words.
+Every documented field decoded, and every word raw. The document lists no
+serial, so the text guard of `ihomemanager.masked_text` runs over the words
+no field reads: any text there is masked and published as a stand-in,
+because a Logger's serial, if it has one in these bands, would otherwise be
+published as words.
 """
 
 from __future__ import annotations
@@ -13,15 +13,15 @@ from collections.abc import Mapping
 from typing import Any
 
 from ..ihomemanager.document import masked_text, readings as decoded
-from .registers import COMPONENTS, CONFIDENCE, MODELS, UNIT
+from .registers import CODES, COMPONENTS, CONFIDENCE, MODELS, UNIT
 
 #: The `document` key of a Logger document.
 LOGGER_DOCUMENT = "logger"
 
 
 def readings(dump: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
-    """Decode the identity block, naming the model from the type code."""
-    out = decoded(dump, COMPONENTS, CONFIDENCE, {})
+    """Decode every documented field, naming the model from the type code."""
+    out = decoded(dump, COMPONENTS, CONFIDENCE, CODES)
     if (code := out.get("device_type_code")) is not None:
         model = MODELS.get(int(str(code["value"]), 16))
         if model is not None:

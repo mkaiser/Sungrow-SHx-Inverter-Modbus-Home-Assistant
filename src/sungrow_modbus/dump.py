@@ -165,15 +165,22 @@ IHOMEMANAGER_BANDS: tuple[tuple[str, int, int, str], ...] = (
     ("holding", 8053, 75, "undocumented, above the settings"),
 )
 
-#: A Sungrow Logger's own register space, unit 247. Only its identity block
-#: (8000-8006) is mapped, from two community maps; Sungrow's document has not
-#: been read here. So the rest of the 8000 block both maps use is read raw,
-#: holding included (read with function code 3, never written), and the
-#: survey's text guard masks anything shaped like a serial.
+#: A Sungrow Logger's own register space, unit 247, mapped from Sungrow's
+#: *Logger Communication Protocol* 1.0.2.9 (`logger.registers`) and never
+#: measured here. The documented blocks come first, so a run out of time
+#: still has them; the words between and above them follow, holding included
+#: (read with function code 3, never written), and the survey's text guard
+#: masks anything shaped like a serial.
 LOGGER_BANDS: tuple[tuple[str, int, int, str], ...] = (
     ("input", 7999, 7, "identity: type code, protocol, devices"),
-    ("input", 8006, 194, "undocumented here: the rest of the 8000 block"),
-    ("holding", 7999, 200, "undocumented here: its settings, read only"),
+    ("input", 8020, 16, "digital, temperature and analogue inputs"),
+    ("input", 8057, 52, "the array: limits, state, power, yields"),
+    ("holding", 8001, 19, "the plant controls, read only"),
+    ("input", 8006, 14, "undocumented, between identity and inputs"),
+    ("input", 8036, 21, "undocumented, between inputs and the array"),
+    ("input", 8109, 90, "undocumented, above the array"),
+    ("holding", 7999, 2, "undocumented, below the controls"),
+    ("holding", 8020, 179, "undocumented, above the controls"),
 )
 
 #: An SG string inverter's register space, unit 1. The map is Sungrow's

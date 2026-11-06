@@ -1,5 +1,5 @@
 {
- "_comment": "A hand-written Logger1000 for the dev loop, protocol addresses. Only 8000-8006 rest on two community maps; every other word is invented filler. 8021 carries the placeholder serial, so the masking runs end to end. Not generated, and not a measurement.",
+ "_comment": "A hand-written Logger1000 for the dev loop, protocol addresses, laid out as Sungrow's Logger Communication Protocol 1.0.2.9 says: a 110 kW array of two inverters. Every value is invented; 8040-8044 carry the placeholder serial in an undocumented gap, so the masking runs end to end. Not generated, and not a measurement.",
  "input": {
   "7999": [
    1808,
@@ -11,41 +11,104 @@
    1
   ],
   "8020": [
+   1,
+   0
+  ],
+  "8026": [
+   32767,
+   32767,
+   500,
+   800,
+   32767,
+   32767,
+   32767,
+   32767,
+   32767,
+   32767
+  ],
+  "8039": [
    16689,
    12851,
    13365,
    13879,
    14393
   ],
-  "8028": [
-   2310,
-   512,
-   2295,
-   498
-  ],
   "8057": [
-   1000,
+   110,
    0,
-   500,
-   0
-  ],
-  "8069": [
-   8650,
+   66,
+   65470,
    0,
    0,
    0,
-   312,
+   0,
+   110,
+   0,
+   1,
+   1,
+   0,
+   0,
+   1,
+   20964,
+   3124,
    0,
    0,
    0,
-   9812,
-   1
+   0,
+   1200,
+   0,
+   0,
+   14,
+   63701,
+   0,
+   0,
+   1100,
+   0,
+   64876,
+   65535,
+   660,
+   0,
+   1100,
+   0,
+   660,
+   0,
+   2,
+   0,
+   0,
+   0,
+   0,
+   21042,
+   0,
+   0,
+   2,
+   19128,
+   0,
+   0,
+   1,
+   21464
   ]
  },
  "holding": {
-  "8000": [
-   207,
-   1000
+  "8001": [
+   1,
+   1100,
+   0,
+   1000,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1000,
+   0,
+   65535,
+   65535,
+   65535,
+   65535,
+   85,
+   10,
+   10,
+   170
   ]
  }
 }

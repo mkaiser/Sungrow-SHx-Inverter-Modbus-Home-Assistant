@@ -391,3 +391,21 @@ model so far, and stay open.
 `doc/firmware_support.md` gained the SBR and SBH packs, columned by BCU firmware and link, from each
 survey's decoded `battery_pack` block. No pack model disagrees with another on its firmware in the
 four columns that pool two; unit 2 refuses the cell and module blocks on every pack.
+
+## [2026-11-06] ingested | Sungrow's Logger protocol 1.0.2.9 and the Logger manuals
+
+The protocol, marked public, found on an installer's file server, with 1.0.2.5's text beside it. It
+agrees with the identity block mapped before and lists the rest: inputs 8021-8036, the array
+8058-8109 with 64-bit totals sent high word first, and holding 8002-8020. All of it is now in
+`src/sungrow_modbus/logger/registers.py`, held `spec`; the survey reads the documented blocks first.
+The Logger1000 manual Ver129 adds that only port 516, with TLS, is open by default from P044.
+Where every document and map was found, and what was not, is a saved answer, so the searches are
+not repeated.
+
+## [2026-11-06] ingested | shcshc76/sungrow, the origin of Eisbaeeer/sungrow
+
+Its AC011E-01 tables, read again with their protocol addresses: they agree with the wallbox map
+everywhere they overlap, read 21263 as a working mode as two other maps do, and name 21268 an
+enable flag. Its README's claim that a WiNet-S faults when the wallbox is polled faster than every
+10 s went on the wallbox and WiNet-S pages, unmeasured.
+

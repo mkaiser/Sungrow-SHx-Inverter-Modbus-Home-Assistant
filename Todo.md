@@ -14,7 +14,12 @@ Structure:
 
 # Next steps
 
-_Nothing that can start without hardware, a contributor or a decision._
+1. **Let the survey read a Logger over TLS on 516.** A current Logger1000
+   opens only that port, with TLS, from firmware P044 (Sungrow's manual
+   Ver129, `.wiki/wiki/entities/device-logger.md`); the survey reads TLS
+   only from a wallbox (`device-survey/scripts/python/sungrow_survey.py`).
+   Reuse the wallbox's TLS path for unit 247, so a first Logger survey
+   (blocker 6) does not depend on its owner turning 502 on.
 
 # Open decisions
 
@@ -115,34 +120,22 @@ _Nothing that can start without hardware, a contributor or a decision._
    building entities on `sungrow_modbus.ihomemanager`. Sungrow's protocol PDF:
    https://github.com/TCzerny/ha-modbus-manager/blob/main/docs/Communication%20Protocol%20of%20iHomeManager_V1.0.2.pdf
 
-6. **A first Sungrow Logger survey** (#786). Unblocks a Logger map
-   (milestone 8). Logger1000/3000/4000. The survey names one by its type code at
-   unit 247, decodes its identity block and publishes the rest of its 8000
-   block raw (`sungrow_modbus.logger`); behind an inverter it asks unit 247
-   only when the owner answers `logger` for the transport. Missing for a map:
+6. **A first Sungrow Logger survey** (#786). Unblocks Logger entities
+   (milestone 8). The map is done from Sungrow's protocol 1.0.2.9
+   (`sungrow_modbus.logger`, every field `spec`; where every document is:
+   `.wiki/wiki/queries/where-are-sungrows-documents.md`); what a first
+   survey settles is on `.wiki/wiki/queries/what-does-a-logger-answer.md`.
+   It reaches surveys with the next release, since the survey runs the
+   pinned wheel. Missing:
 
-   1. **Sungrow's *Logger Communication Protocol*.** Not on GitHub (searched
-      2026-10-30); copies of 1.0.2.5, 1.0.2.7 (`TI_20211201`) and 1.0.2.9 are
-      on Scribd, behind a login, and Sungrow's support portal does not list
-      it. A firmware archive on GitHub that collected Sungrow documents
-      (sungrow-firmware/firmware) answers HTTP 451, so do not commit the PDF
-      here: keep it local and cite it, as with the inverter's. What is known
-      without it: type codes at input 8000 are 0x0705 Logger3000, 0x0710
-      Logger1000, 0x0718 Logger4000 (as Voyanti/ha-sungrow, GPL-3.0, cites the
-      document); and register numbers in the document are one above the
-      protocol address, as everywhere here (Homey community thread 126405).
-      Existing maps, read for what exists and never copied:
-      RafAustralia/Sungrow-Logger1000a-Modbus (no licence, read only) and
-      Voyanti/ha-sungrow's `src/sungrow_logger.py` (GPL-3.0, Logger1000 only,
-      read only; writes reported failing at Homey).
-   2. **What sits behind it.** A Logger gives each connected inverter and meter
-      a unit id of its own on its endpoint (a DTSU666-20 at unit 5 in #262),
-      and wants a port per client (502, 503, 504...). `identify` looks at units
-      1-5 only, so an inverter at a higher unit is not reached yet; a DTSU666
-      is a device nothing maps.
+   1. **The survey cannot read a current Logger1000** until next step 1, or
+      until its owner turns port 502 on.
+   2. **What sits behind it.** Each inverter and meter answers at its
+      forwarding address (the Logger's Device List page), not at a unit the
+      survey guesses; `identify` looks at units 1-5 only. A DTSU666 is a
+      device nothing maps.
    3. **A contributor with one.** Nobody has offered; the #262 participants
-      (RafAustralia, purcell-lab, NBS23) are the leads. RafAustralia notes the
-      Logger1000A targets the T and commercial lines rather than RS/RT.
+      (RafAustralia, purcell-lab, NBS23) are the leads.
 
 7. **Firmware-dependent register semantics** ([#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)).
    The pattern is `capabilities.ABSENT_ON_FIRMWARE`: a small table of

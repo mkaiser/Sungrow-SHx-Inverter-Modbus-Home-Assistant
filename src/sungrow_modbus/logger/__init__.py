@@ -1,17 +1,19 @@
-"""A Sungrow Logger1000/3000/4000 at unit 247: identified and read raw.
+"""A Sungrow Logger1000/3000/4000 at unit 247, from Sungrow's document.
 
-Its identity is decoded (`registers`); the rest is published raw, with any
-undocumented text masked (`document`). `BANDS` is what the survey reads.
+Its documented registers are decoded (`registers`); every word is published
+raw too, with any text no field reads masked (`document`). `BANDS` is what
+the survey reads.
 """
 
 from ..dump import LOGGER_BANDS as BANDS
 from .document import LOGGER_DOCUMENT, document, label_for, readings, section
-from .registers import COMPONENTS, CONFIDENCE, MODELS, UNIT
+from .registers import CODES, COMPONENTS, CONFIDENCE, MODELS, UNIT
 
 DOCUMENT = LOGGER_DOCUMENT
 
 __all__ = [
     "BANDS",
+    "CODES",
     "COMPONENTS",
     "CONFIDENCE",
     "DOCUMENT",

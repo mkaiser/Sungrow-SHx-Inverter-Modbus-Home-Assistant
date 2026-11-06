@@ -34,6 +34,13 @@ integration reads the wallbox on the inverter's fast tier
 (`custom_components/sungrow_modbus/coordinator.py`), inside that by default;
 a fast tier set above 60 s would let the wallbox drop the session.
 
+**Through a WiNet-S, not faster than every 10 s**: polled faster, the dongle
+goes into a fault state, by an ioBroker user's account
+([shcshc76 cross-reference](../sources/cross-reference-shcshc76-summary.md));
+not measured here. The fast tier's default is exactly 10 s
+(`DEFAULT_INTERVALS` in `src/sungrow_modbus/hybrid_inverter/registers.py`),
+so the defaults sit on that edge and a shorter fast tier would cross it.
+
 ## Reading rules
 
 - **Over TLS a read must start on a data point's first register.** 21295 ×24
