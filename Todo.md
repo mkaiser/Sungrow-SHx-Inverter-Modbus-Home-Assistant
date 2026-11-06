@@ -27,12 +27,7 @@ _Nothing that can start without hardware, a contributor or a decision._
    (`doc/entity_names.md`, `scripts/helpers/review_names.py`). A rename
    later leaves existing ids alone and only diverges new installs, which a
    registry migration can close, so it stays cheap until release, not free.
-   The sheet covers every device an entry can create (306 entities) and is
-   the YAML | HACS table: each entity's legacy name and entity id beside its
-   own, and the three YAML entities not ported. Compared against Sungrow's
-   protocol (V1.1.2): 16 names changed to match it or each other (load
-   control, battery energy totals, charging limits, device temperature).
-   The sheet carries a suggested German name for each entity (`GERMAN` in
+   The sheet covers every device an entry can create and carries a suggested German name for each entity (`GERMAN` in
    `scripts/generate/tables/naming.py`) and German for every other text in
    `strings.json` (`german_texts.json` beside it, shown in
    `doc/text_translation_review.md`); none of it is shipped. Decided: entity
@@ -48,13 +43,7 @@ _Nothing that can start without hardware, a contributor or a decision._
       *Feed-in limit* / *Einspeiselimit*, 31213 as *Shutdown inverter when
       limited to 0 % power*); a new question goes under **To discuss**
       (`NAME_DISCUSSION` in `naming.py`).
-   2. **13017 becomes a button** *Force startup* / *Zwangsstart*: it is a
-      command (reads 0 or 0x55, never 0xAA), not a state. It writes, so it
-      is gated like *Cut PV generation* (`CONFIRMED_ON_FIRMWARE` only from a
-      watched write), and the raw sensor goes.
-   3. **Decode 31213 to a binary sensor**: the surveys read both 0x55 and
-      0xAA on it (issue #554's pair), so it is a flag like 13089.
-   4. **Compare the registers V1.1.2 does not list** against V1.1.16. V1.1.11
+   2. **Compare the registers V1.1.2 does not list** against V1.1.16. V1.1.11
       (and V1.1.5, V1.1.9 and the SG's V1.1.58) are read: 35 of the 50 names
       match, and the open naming points they raised are on the sheet
       (*Feed-in* against *Export* for the limit family; 13075 is Sungrow's
@@ -62,7 +51,7 @@ _Nothing that can start without hardware, a contributor or a decision._
       firmware parts (2582 ...), the serial (4990), meter phase voltage and
       current (5741-5746), 31211, 31213 and 33149/33150. V1.1.16 is not in
       the container.
-   5. **If German ships:** pin the English ids with `object_id_base` first
+   3. **If German ships:** pin the English ids with `object_id_base` first
       (`doc/architecture.md`), then have `scripts/generate/descriptions.py`
       write `translations/de.json` from the two tables.
 
@@ -133,39 +122,32 @@ _Nothing that can start without hardware, a contributor or a decision._
    3. **A contributor with one.** Nobody has offered; the #262 participants
       (RafAustralia, purcell-lab, NBS23) are the leads.
 
-7. **Firmware-dependent register semantics** ([#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)).
-   The pattern is `capabilities.ABSENT_ON_FIRMWARE`: a small table of
-   deviations keyed on the **whole** `sungrow_version_1` string (platform
-   prefix included: `PEARL-H_01011.01.45` is not older than
-   `SAPPHIRE-H_01011.95.03`), each citing the survey it came from. #763's
-   deviation, 13074's write scale, is measured per device and needs no
-   entry; no committed survey shows another.
-8. **A fault seen on hardware.** The fifteen words are decoded from V1.1.11's
+7. **A fault seen on hardware.** The fifteen words are decoded from V1.1.11's
    Appendix 4; one survey has a flag set (bit 30 of the inverter alarm, a
    slave with no meter), which confirms the word order. Wanted: a reading
    during a real grid or battery fault, the battery words through a dongle,
    and V1.1.16's appendix compared bit for bit.
-9. **SBH.** Answers the SBR's common block at unit 2 with the SBR's scales;
+8. **SBH.** Answers the SBR's common block at unit 2 with the SBR's scales;
     per-module arrays unread. Needs the register document.
-10. **Meter phase voltage/current (5741-5746) on dongle houses.** Read zero
+9. **Meter phase voltage/current (5741-5746) on dongle houses.** Read zero
     through every WiNet-S measured and are gated on a non-zero voltage.
     Whether they need reading on their own (#756) needs a survey from an
     affected owner; `layout.py` changes only on measurement.
-11. **T-series energy counters.** One SH20T reads 13045 (daily export) as 0
+10. **T-series energy counters.** One SH20T reads 13045 (daily export) as 0
     while exporting, and 5003/5004-5005 duplicating the export counters. A
     second T survey, ideally on a cable, before `registers.py` changes.
-12. **Modbus over TLS on a WiNet-S's 516.** Built for a wallbox's own
+11. **Modbus over TLS on a WiNet-S's 516.** Built for a wallbox's own
     address (`wallbox_host`, `links.wallbox_tls_params`). For the dongle it is
     worth building only if 516 is a *separate* session pool from 502: hold
     502 until it refuses, then try 516. Also wanted: a certificate hash from a
     third site, to show whether every dongle ships the same key.
-13. **Does a WiNet-S advertise over mDNS?** Needs a house with a dongle and
+12. **Does a WiNet-S advertise over mDNS?** Needs a house with a dongle and
     a run on the host, not in the container.
-14. **The production database.** The migration is verified at real scale
+13. **The production database.** The migration is verified at real scale
     only against the maintainer's years-old YAML install; what to collect and
     how is in `doc/maintainer_setup.md`, section 8.
 
-15. **Writing the discharge schedules, and the import limit** (#785), in
+14. **Writing the discharge schedules, and the import limit** (#785), in
     no Sungrow document. The schedules read as diagnostic entities
     (`Capability.DISCHARGE_SCHEDULE`); writing them needs a watched write, as
     31211 did (wiki: firmware gating), from a control test run with leave. The
@@ -174,34 +156,32 @@ _Nothing that can start without hardware, a contributor or a decision._
     unit or scale on record: it needs a known value (what an owner set it
     to) before it can be an entity.
 
-16. **The options screenshot, and the discharge window on P023** (#785). The
-    discharge window has run on P022 and P020, and the device pages and log say
-    so. Left: `device-survey/images/HA-settings-configure-control-test.png`
-    still shows three switches, now five; and no P023 or SBR house has run it
+15. **The discharge window on P023** (#785). It has run on P022 and P020,
+    and the device pages and log say so; no P023 or SBR house has run it
     (fwitten's master, with their Home Assistant stopped, in the evening).
 
-17. **The SG's zeros and writes.** On bleughb's two SG5.0RS through a
+16. **The SG's zeros and writes.** On bleughb's two SG5.0RS through a
     WiNet-S, the meter block (5083-5104) and the per-string block (input
     7013) read 0, and holding 5020 reads nothing. Whether that is absence or
     the dongle needs an SG on a cable, or one with its own meter. Writing the
     power limitation (holding 5007-5008, which bleughb writes on both) waits
     for a watched write.
 
-18. **The control test's restore through a WiNet-S, on hardware.** A
+17. **The control test's restore through a WiNet-S, on hardware.** A
     dongle-only control test at gerd on the current tree, with the battery
     above 30 % and no car charging, then a cable read of every snapshot
     register. Left open in the code: a touched register goes back to the
     dongle's word, wrong only if changed over another path since the dongle
     last read it.
 
-19. **gerd's cable restart.** On 2026-11-03 the start had to be sent three
+18. **gerd's cable restart.** On 2026-11-03 the start had to be sent three
     times (still stopped 60 s after each), where every earlier restart took
     the first. Watch whether it recurs.
 
-20. **The SG's tracker counts beyond the SG5.0RS.** `MPPT_COUNTS` is the
+19. **The SG's tracker counts beyond the SG5.0RS.** `MPPT_COUNTS` is the
     source's model table, many entries unverified; a survey of any other SG
     checks its row (wanted in `device-survey/devices-wanted.md`, row 11).
-21. **Home Assistant 2026.11 and modbus-connection 4.12.7.** 2026.11.0
+20. **Home Assistant 2026.11 and modbus-connection 4.12.7.** 2026.11.0
     (2026-11-04) pins `modbus-connection[tmodbus]==4.12.7` and
     `tmodbus==1.1.0`; the dev environment runs 2026.10.4 on 4.12.4 and
     tmodbus 0.6.2, because `pytest-homeassistant-custom-component` 0.13.375
@@ -214,20 +194,15 @@ _Nothing that can start without hardware, a contributor or a decision._
     `pyproject.toml`'s floor (`>=4.12.7`), `hacs.json`'s minimum
     (`2026.11.0`), the README's "Home Assistant 2026.9" and the bug
     template's version placeholder; then `make check`.
+21. **A watched forced startup (13017).** The *Force startup* button exists
+    only on firmware in `CONFIRMED_ON_FIRMWARE`, and nothing can put one
+    there: the control test has no check for it. One needs an inverter in
+    low-SoC standby with no PV (an evening, the battery at its minimum SoC),
+    writes 0xAA and watches the running state leave standby. Building that
+    check is a control-test change, so it waits for a house that can give
+    such an evening.
 
 # Future work
-
-## Create a table with supported registers
-
-Assumption (to be proven!): Inverter families of the SAME firmware version support the same capabilities / register sets.
-Create a table: columns are inverter family + firmware version, rows are the supported registers/features.
-Maybe indicate if you were not able to test / confirm a register / feature.
-
-## SBR per-module entities
-
-Each fitted module's highest and lowest cell are diagnostic entities,
-disabled by default (#788), polled only while one is enabled. Left: tell
-robbensonmio on #788 once it is released, and close the issue if they agree.
 
 ## The PV cut (31211, #738)
 
@@ -239,17 +214,13 @@ robbensonmio on #788 once it is released, and close the issue if they agree.
 - One evening's watch on a confirmed device: does a cut survive a night or
   a restart, or does iSolarCloud rewrite it?
 
-## An energy counter per MPPT
+## How far the MPPT energy drifts
 
-Wanted: daily and total energy per tracker, so the energy dashboard can
-compare strings. No register counts it: neither the hybrid's V1.1.11 nor
-the SG's V1.1.58 lists energy per MPPT, only voltage and current. So it is
-integrated from power: the hybrid's derived *MPPT1-4 power* already exist,
-the SG would need *MPPTn power* (voltage × current) first. Open: a
-`total_increasing` sensor that integrates in the integration and restores
-its value across restarts, or a documented Riemann-sum helper per tracker;
-and how far the polling interval and a WiNet-S's stale reads skew the sum
-(the integrated total against *Total PV generation* says).
+*MPPTn energy* integrates voltage times current over the polls
+(`sungrow_modbus.energy_integral`). Wanted from a house running it a few
+days: the trackers' daily sum against *Daily PV generation*, on a cable and
+through a WiNet-S, which says how much the polling interval and a dongle's
+stale reads cost.
 
 ## A generated dashboard
 
