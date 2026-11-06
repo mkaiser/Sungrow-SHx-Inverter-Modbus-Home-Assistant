@@ -1,6 +1,6 @@
 # The texts, for review
 
-**248 texts**: everything in `strings.json` that is not an entity name, by its
+**290 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -715,7 +715,7 @@ and bold are kept.
 > **DE** Deaktiviert
 
 
-## Selector options (19)
+## Selector options (61)
 
 ### `selector.entity_ids.options.migrate`
 
@@ -830,6 +830,266 @@ and bold are kept.
 > **EN** Device-scoped IDs, such as sensor.sh10rt_total_pv_input_power
 
 > **DE** Gerätebezogene IDs, etwa sensor.sh10rt_total_pv_input_power
+
+### `selector.flow_text.options.devices_mode_coming`
+
+> **EN** ⚠️ **Sensors and controls are not in this release.** This is an early alpha, and it exists to gather readings: it connects to your inverter, works out what it is and which registers it answers, and creates no entities for the values. Setting up the inverter properly -- including taking over the entity IDs of the YAML package, which decides where years of history continue -- comes in a later release, and an entry made now can be upgraded to it then without being deleted.
+
+> **DE** ⚠️ **Sensoren und Steuerungen sind in dieser Version nicht enthalten.** Dies ist eine frühe Alpha, und sie ist dazu da, Messwerte zu sammeln: Sie verbindet sich mit deinem Wechselrichter, ermittelt, was er ist und welche Register er beantwortet, und legt keine Entitäten für die Werte an. Den Wechselrichter richtig einzurichten -- einschließlich der Übernahme der Entitäts-IDs des YAML-Pakets, die entscheidet, wo Jahre an Verlauf weitergehen -- kommt in einer späteren Version, und ein jetzt angelegter Eintrag kann dann darauf umgestellt werden, ohne ihn zu löschen.
+
+### `selector.flow_text.options.devices_mode_open`
+
+> **EN** Both answers are fine, and you can change your mind later: picking **the device survey** skips the weightiest question in this dialog, about which entity IDs to take over, because a reading does not need it.
+
+> **DE** Beide Antworten sind in Ordnung, und du kannst es dir später anders überlegen: **Die Geräteerfassung** überspringt die gewichtigste Frage in diesem Dialog, welche Entitäts-IDs übernommen werden, weil eine Messung sie nicht braucht.
+
+### `selector.flow_text.options.devices_mode_intro`
+
+> **EN** **Set up my inverter** is what you want if you came here to see your solar production in Home Assistant.
+
+> **DE** **Meinen Wechselrichter einrichten** ist das Richtige, wenn du hier bist, um deine Solarproduktion in Home Assistant zu sehen.
+
+### `selector.flow_text.options.package_loaded`
+
+> **EN** ⚠️ **The YAML package is still running.** {live} of its entities are live on this instance right now and are holding their entity IDs, so migrating cannot work yet.
+>
+> To migrate: remove `modbus_sungrow.yaml` from your configuration — or comment out the line that includes it — then **restart Home Assistant** and add this integration again. Until then only starting fresh will work.
+
+> **DE** ⚠️ **Das YAML-Paket läuft noch.** {live} seiner Entitäten sind gerade auf dieser Instanz aktiv und halten ihre Entitäts-IDs, deshalb kann die Übernahme noch nicht funktionieren.
+>
+> Zum Übernehmen: Entferne `modbus_sungrow.yaml` aus deiner Konfiguration — oder kommentiere die Zeile aus, die es einbindet —, dann **starte Home Assistant neu** und füge diese Integration erneut hinzu. Bis dahin funktioniert nur ein Neuanfang.
+
+### `selector.flow_text.options.package_not_loaded`
+
+> **EN** ✅ **The YAML package is not running**, so its entity IDs are free to take over. Both answers below will work.
+
+> **DE** ✅ **Das YAML-Paket läuft nicht**, seine Entitäts-IDs können also übernommen werden. Beide Antworten unten funktionieren.
+
+### `selector.flow_text.options.switch_blocked`
+
+> **EN** ⚠️ **The YAML package is still running.** {live} of its entities are live and hold the ids these would move to. Remove `modbus_sungrow.yaml` from your configuration, restart Home Assistant, and come back here.
+
+> **DE** ⚠️ **Das YAML-Paket läuft noch.** {live} seiner Entitäten sind aktiv und halten die IDs, auf die diese umziehen würden. Entferne `modbus_sungrow.yaml` aus deiner Konfiguration, starte Home Assistant neu und komm hierher zurück.
+
+### `selector.flow_text.options.wallbox_lost`
+
+> **EN** **The wallbox goes quiet.** It is read through the WiNet-S today, and the inverter's own LAN port does not reach it. Its entities stay, unavailable, until **Wallbox address** in this entry's options points at the wallbox itself.
+
+> **DE** **Die Wallbox verstummt.** Sie wird heute über den WiNet-S gelesen, und der eigene LAN-Anschluss des Wechselrichters erreicht sie nicht. Ihre Entitäten bleiben, nicht verfügbar, bis **Wallbox-Adresse** in den Optionen dieses Eintrags auf die Wallbox selbst zeigt.
+
+### `selector.flow_text.options.search_prefilled`
+
+> **EN** The range below is the network Home Assistant is on, which on a home network is almost always the right one.
+
+> **DE** Der Bereich unten ist das Netzwerk, in dem Home Assistant läuft, und in einem Heimnetz ist das fast immer das richtige.
+
+### `selector.flow_text.options.search_not_detected`
+
+> **EN** **Home Assistant could not work out which network to search.** It is running in a container that can see only its own virtual network, so there is nothing here to detect your inverter's range from -- your inverter is still reachable, it just cannot be guessed at. Type the range your inverter is on, for example `192.168.1.0/24`; if you do not know it, the address of any computer on the same network gives it to you -- replace the last number with 0 and add `/24`.
+
+> **DE** **Home Assistant konnte nicht ermitteln, welches Netzwerk durchsucht werden soll.** Es läuft in einem Container, der nur sein eigenes virtuelles Netzwerk sieht, also gibt es hier nichts, woraus sich der Bereich deines Wechselrichters ablesen ließe -- dein Wechselrichter ist trotzdem erreichbar, er lässt sich nur nicht erraten. Gib den Bereich ein, in dem dein Wechselrichter ist, zum Beispiel `192.168.1.0/24`; wenn du ihn nicht kennst, verrät ihn dir die Adresse eines beliebigen Computers im selben Netz -- ersetze die letzte Zahl durch 0 und hänge `/24` an.
+
+### `selector.flow_text.options.search_same_dongle`
+
+> **EN** **Two of these are one inverter behind one WiNet-S** — its network socket and its WiFi, which have separate addresses. Modbus cannot say which is which: nothing in the protocol reports it.
+>
+> It makes no difference which you pick. Both go through the same dongle to the same inverter, and both answer identically — measured on a dongle read on both of its addresses, where every register matched. If you want to know anyway, your router's client list shows them as two devices with different MAC addresses, and the WiNet-S web interface names the one it is using.
+
+> **DE** **Zwei davon sind ein Wechselrichter hinter einem WiNet-S** — dessen Netzwerkbuchse und dessen WLAN, die getrennte Adressen haben. Modbus kann nicht sagen, welche welche ist: Nichts im Protokoll meldet es.
+>
+> Es macht keinen Unterschied, welche du wählst. Beide gehen über denselben Dongle zum selben Wechselrichter, und beide antworten gleich — gemessen an einem Dongle, der über beide Adressen gelesen wurde, wobei jedes Register übereinstimmte. Wenn du es trotzdem wissen willst: Die Geräteliste deines Routers zeigt sie als zwei Geräte mit unterschiedlichen MAC-Adressen, und die Weboberfläche des WiNet-S nennt die, die er benutzt.
+
+### `selector.flow_text.options.search_already_tried`
+
+> **EN** Already searched, and nothing answered as an inverter: **{tried}**. Pick another range below, or type one. If you do not know it, the address of any computer on the same network as the inverter gives it to you -- replace the last number with 0 and add `/24`.
+
+> **DE** Schon durchsucht, und nichts hat als Wechselrichter geantwortet: **{tried}**. Wähle unten einen anderen Bereich oder gib einen ein. Wenn du ihn nicht kennst, verrät ihn dir die Adresse eines beliebigen Computers im selben Netz wie der Wechselrichter -- ersetze die letzte Zahl durch 0 und hänge `/24` an.
+
+### `selector.flow_text.options.search_checked`
+
+> **EN** Checked {settled} of {total} addresses; {answered} answered so far.
+
+> **DE** {settled} von {total} Adressen geprüft; bisher haben {answered} geantwortet.
+
+### `selector.flow_text.options.search_retry`
+
+> **EN** Nothing answered. Trying again more slowly, because a busy moment can make a sweep miss a device that is there.
+
+> **DE** Nichts hat geantwortet. Es wird langsamer noch einmal versucht, weil ein Gerät, das da ist, in einem geschäftigen Moment beim Durchsuchen übersehen werden kann.
+
+### `selector.flow_text.options.search_asking`
+
+> **EN** Asking {host} what it is ({index} of {of}). Anything that is not a Sungrow has to time out on every unit id before it can be ruled out, which is the slowest part of this.
+
+> **DE** {host} wird gefragt, was es ist ({index} von {of}). Alles, was kein Sungrow ist, muss auf jeder Unit-ID in eine Zeitüberschreitung laufen, bevor es ausgeschlossen werden kann, und das ist der langsamste Teil davon.
+
+### `selector.flow_text.options.model_unidentified`
+
+> **EN** an unidentified model
+
+> **DE** ein nicht erkanntes Modell
+
+### `selector.flow_text.options.measured_nothing`
+
+> **EN** Nothing has been measured for this address yet, so please answer from what you know.
+
+> **DE** Für diese Adresse wurde noch nichts gemessen, bitte antworte also nach dem, was du weißt.
+
+### `selector.flow_text.options.measured_direct`
+
+> **EN** Already measured, so you do not need to tell us: this is **{model}**, reached through its own LAN port — register 6100 answers, which is what a cable straight into the inverter looks like.
+
+> **DE** Schon gemessen, du musst es uns also nicht sagen: Das ist **{model}**, erreicht über seinen eigenen LAN-Anschluss — Register 6100 antwortet, und so sieht ein Kabel direkt in den Wechselrichter aus.
+
+### `selector.flow_text.options.measured_dongle`
+
+> **EN** Already measured, so you do not need to tell us: this is **{model}**, reached through a communication module, so a WiNet-S, WiNet-S2 or Logger is in the path — register 6100 was refused. Whether it is using its Ethernet socket or its WiFi is **not** determinable over Modbus, and that is the part only you can tell us.
+
+> **DE** Schon gemessen, du musst es uns also nicht sagen: Das ist **{model}**, erreicht über ein Kommunikationsmodul, also ist ein WiNet-S, WiNet-S2 oder Logger im Weg — Register 6100 wurde abgelehnt. Ob es seine Ethernet-Buchse oder sein WLAN nutzt, ist über Modbus **nicht** feststellbar, und das ist der Teil, den nur du uns sagen kannst.
+
+### `selector.flow_text.options.measured_unknown`
+
+> **EN** Already measured, so you do not need to tell us: this is **{model}**, and the route could not be measured — register 6100 neither answered nor was refused, which is what a busy link looks like from here. A cable answers it and a dongle refuses it, so this is one for you to tell us.
+
+> **DE** Schon gemessen, du musst es uns also nicht sagen: Das ist **{model}**, und der Weg ließ sich nicht messen — Register 6100 hat weder geantwortet noch abgelehnt, und so sieht von hier aus eine ausgelastete Verbindung aus. Ein Kabel beantwortet es, ein Dongle lehnt es ab, also ist das eine Frage für dich.
+
+### `selector.flow_text.options.load_offline`
+
+> **EN** The inverter is not connected, so its load reading cannot be shown.
+
+> **DE** Der Wechselrichter ist nicht verbunden, deshalb lässt sich sein Lastwert nicht anzeigen.
+
+### `selector.flow_text.options.load_none`
+
+> **EN** The inverter has not reported a load figure yet.
+
+> **DE** Der Wechselrichter hat noch keinen Lastwert gemeldet.
+
+### `selector.flow_text.options.load_negative`
+
+> **EN** Right now this inverter reports a house load of {load} W. A negative load is what an unmetered generator looks like: the house appears to be using less than nothing because something is producing that the inverter cannot see.
+
+> **DE** Gerade meldet dieser Wechselrichter einen Hausverbrauch von {load} W. Eine negative Last ist das, wonach ein ungemessener Generator aussieht: Das Haus scheint weniger als nichts zu verbrauchen, weil etwas erzeugt, das der Wechselrichter nicht sieht.
+
+### `selector.flow_text.options.load_positive`
+
+> **EN** Right now this inverter reports a house load of {load} W, which does not include anything it cannot see.
+
+> **DE** Gerade meldet dieser Wechselrichter einen Hausverbrauch von {load} W, und darin ist nichts enthalten, was er nicht sieht.
+
+### `selector.flow_text.options.survey_offline`
+
+> **EN** The inverter is not connected, so nothing has been measured yet.
+
+> **DE** Der Wechselrichter ist nicht verbunden, deshalb wurde noch nichts gemessen.
+
+### `selector.flow_text.options.survey_direct`
+
+> **EN** Already measured, so you do not need to tell us: this is {model}, reached through its own LAN port — register 6100 answers, which no communication module forwards.
+
+> **DE** Schon gemessen, du musst es uns also nicht sagen: Das ist {model}, erreicht über seinen eigenen LAN-Anschluss — Register 6100 antwortet, und das leitet kein Kommunikationsmodul weiter.
+
+### `selector.flow_text.options.survey_dongle`
+
+> **EN** Already measured, so you do not need to tell us: this is {model}, reached through a communication module, so a WiNet-S, WiNet-S2 or Logger is in the path — register 6100 was refused. Whether it is using its Ethernet socket or its WiFi is not determinable over Modbus, and that is the part only you can tell us.
+
+> **DE** Schon gemessen, du musst es uns also nicht sagen: Das ist {model}, erreicht über ein Kommunikationsmodul, also ist ein WiNet-S, WiNet-S2 oder Logger im Weg — Register 6100 wurde abgelehnt. Ob es seine Ethernet-Buchse oder sein WLAN nutzt, ist über Modbus nicht feststellbar, und das ist der Teil, den nur du uns sagen kannst.
+
+### `selector.flow_text.options.survey_unknown`
+
+> **EN** Already measured, so you do not need to tell us: this is {model}, and the route could not be measured — register 6100 neither answered nor was refused, which is what a busy link looks like. A cable answers it and a dongle refuses it, so this one is for you to tell us.
+
+> **DE** Schon gemessen, du musst es uns also nicht sagen: Das ist {model}, und der Weg ließ sich nicht messen — Register 6100 hat weder geantwortet noch abgelehnt, und so sieht eine ausgelastete Verbindung aus. Ein Kabel beantwortet es, ein Dongle lehnt es ab, also ist das eine Frage für dich.
+
+### `selector.flow_text.options.survey_fitted`
+
+> **EN** A communication module is fitted and names itself {module}, which is a different question from which path this endpoint is: a house can have a dongle and a cable at once.
+
+> **DE** Ein Kommunikationsmodul ist eingebaut und nennt sich {module}, und das ist eine andere Frage als die, welcher Weg dieser Endpunkt ist: Ein Haus kann einen Dongle und ein Kabel gleichzeitig haben.
+
+### `selector.flow_text.options.battery_offline`
+
+> **EN** The inverter is not connected, so nothing can be read from it.
+
+> **DE** Der Wechselrichter ist nicht verbunden, deshalb lässt sich nichts von ihm lesen.
+
+### `selector.flow_text.options.battery_none`
+
+> **EN** No battery is connected, so this setting does nothing.
+
+> **DE** Es ist kein Akku angeschlossen, diese Einstellung bewirkt also nichts.
+
+### `selector.flow_text.options.battery_reports_capacity`
+
+> **EN** Your battery reports {capacity} kWh
+
+> **DE** Dein Akku meldet {capacity} kWh
+
+### `selector.flow_text.options.battery_reports`
+
+> **EN** Your battery
+
+> **DE** Dein Akku
+
+### `selector.flow_text.options.battery_sungrow`
+
+> **EN** {reported}, which matches a Sungrow {model}. Its datasheet gives {conservative} W conservatively ({nominal} W nominal), and that is what is used.
+
+> **DE** {reported}, und das passt zu einem Sungrow {model}. Sein Datenblatt nennt vorsichtig {conservative} W ({nominal} W nominal), und das wird verwendet.
+
+### `selector.flow_text.options.battery_bms`
+
+> **EN** {reported}, which is not a Sungrow SBR or SBH. Its BMS reports a maximum charge current that works out to about {suggestion} W at the pack's current voltage — which reads high at a high state of charge, so treat it as a starting point.
+
+> **DE** {reported}, und das ist kein Sungrow SBR oder SBH. Sein BMS meldet einen maximalen Ladestrom, der bei der aktuellen Spannung des Akkus etwa {suggestion} W ergibt — bei hohem Ladestand ist das zu hoch, nimm es also als Ausgangspunkt.
+
+### `selector.flow_text.options.battery_no_bms`
+
+> **EN** {reported}, and its BMS does not report a maximum charge current, so there is nothing to derive one from. Without a value here the integration falls back to {fallback} W, which is the YAML package's default rather than a recommendation.
+
+> **DE** {reported}, und sein BMS meldet keinen maximalen Ladestrom, es gibt also nichts, woraus sich einer ableiten ließe. Ohne einen Wert hier nimmt die Integration {fallback} W, den Standardwert des YAML-Pakets und keine Empfehlung.
+
+### `selector.flow_text.options.restore_some_refused`
+
+> **EN** some registers would not take the write. Check that nothing else is polling the inverter, then try again.
+
+> **DE** einige Register haben den Schreibbefehl nicht angenommen. Prüfe, dass nichts anderes den Wechselrichter abfragt, und versuche es dann erneut.
+
+### `selector.flow_text.options.switch_renames`
+
+> **EN** **{count}** move, history and statistics with them:
+
+> **DE** **{count}** ziehen um, Verlauf und Statistiken mit ihnen:
+
+### `selector.flow_text.options.switch_joins`
+
+> **EN** **{count}** continue the YAML package's history under its ids; what was recorded under the current ids stays there:
+
+> **DE** **{count}** führen den Verlauf des YAML-Pakets unter dessen IDs fort; was unter den aktuellen IDs aufgezeichnet wurde, bleibt dort:
+
+### `selector.flow_text.options.switch_archives`
+
+> **EN** **{count}** ids already hold older history, which is renamed aside first, not deleted:
+
+> **DE** **{count}** IDs enthalten bereits älteren Verlauf, der zuerst beiseite umbenannt wird, nicht gelöscht:
+
+### `selector.flow_text.options.switch_dropped`
+
+> **EN** **{count}** raw sensors exist with legacy ids only and are removed; their history stays where it is.
+
+> **DE** **{count}** Rohsensoren gibt es nur unter alten IDs; sie werden entfernt, ihr Verlauf bleibt, wo er ist.
+
+### `selector.flow_text.options.switch_nothing`
+
+> **EN** Nothing to move: every entity is already there, or has an id you chose yourself, which is left alone.
+
+> **DE** Nichts umzuziehen: Jede Entität ist schon dort oder hat eine selbst gewählte ID, die unangetastet bleibt.
+
+### `selector.flow_text.options.endpoint`
+
+> **EN** {host}:{port}, unit {unit}
+
+> **DE** {host}:{port}, Unit {unit}
 
 
 ## Repairs (10)

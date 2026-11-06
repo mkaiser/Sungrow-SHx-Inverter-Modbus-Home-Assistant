@@ -162,61 +162,6 @@ def _scan_schema(
     )
 
 
-#: Shown when the range could be worked out from a network adapter.
-_PREFILLED = (
-    "The range below is the network Home Assistant is on, which on a home "
-    "network is almost always the right one."
-)
-
-#: Shown when it could not, which is what a container bridge produces.
-#:
-#: Home Assistant in Docker with bridge networking sees only its own bridge,
-#: and a sweep of that finds nothing however long it runs -- while the
-#: inverter stays perfectly reachable, because the bridge forwards outbound
-#: traffic. So the honest thing is an empty field and this sentence, rather
-#: than a default that looks right and leads nowhere.
-_NOT_DETECTED = (
-    "**Home Assistant could not work out which network to search.** It is "
-    "running in a container that can see only its own virtual network, so "
-    "there is nothing here to detect your inverter's range from -- your "
-    "inverter is still reachable, it just cannot be guessed at. Type the "
-    "range your inverter is on, for example `192.168.1.0/24`; if you do not "
-    "know it, the address of any computer on the same network gives it to "
-    "you -- replace the last number with 0 and add `/24`."
-)
-
-#: Shown when two addresses are one inverter behind one dongle.
-#:
-#: That is a WiNet-S's Ethernet socket and its WiFi radio, and **which is
-#: which cannot be determined over Modbus**. Settled against a controlled
-#: pair -- one dongle read wired and then over WiFi -- with a nil structural
-#: diff.
-#:
-#: So the dialog says it cannot tell, says it does not matter, and says where
-#: the answer actually lives. "It does not matter" is the load-bearing part
-#: and it is measured: the same dongle is on both, and both addresses
-#: returned identical documents -- every probe, every field, even the TLS
-#: certificate.
-_SAME_DONGLE = (
-    "\n\n**Two of these are one inverter behind one WiNet-S** — its network "
-    "socket and its WiFi, which have separate addresses. Modbus cannot say "
-    "which is which: nothing in the protocol reports it.\n\nIt makes no "
-    "difference which you pick. Both go through the same dongle to the same "
-    "inverter, and both "
-    "answer identically — measured on a dongle read on both of its addresses, "
-    "where every register matched. If you want to know anyway, your router's "
-    "client list shows them as two devices with different MAC addresses, and "
-    "the WiNet-S web interface names the one it is using."
-)
-
-#: Shown on a second attempt, so a user can see what has been covered.
-_ALREADY_TRIED = (
-    "Already searched, and nothing answered as an inverter: **{tried}**. "
-    "Pick another range below, or type one. If you do not know it, the "
-    "address of any computer on the same network as the inverter gives it "
-    "to you -- replace the last number with 0 and add `/24`."
-)
-
 #: Ranges Docker and Podman hand out to bridge networks by default.
 #:
 #: `172.17.0.0/16` is Docker's own bridge and the first of a pool it allocates

@@ -39,6 +39,7 @@ from homeassistant.helpers import issue_registry as ir
 from sungrow_modbus.control_test import Snapshot
 
 from .const import DOMAIN
+from .texts import async_texts
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -142,10 +143,7 @@ class ControlTestRepairFlow(RepairsFlow):
             return self.async_abort(
                 reason="restore_failed",
                 description_placeholders={
-                    "error": (
-                        "some registers would not take the write. Check that "
-                        "nothing else is polling the inverter, then try again."
-                    )
+                    "error": (await async_texts(self.hass))("restore_some_refused")
                 },
             )
         async_clear(self.hass, self.entry)

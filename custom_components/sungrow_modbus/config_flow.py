@@ -71,10 +71,6 @@ from sungrow_modbus.survey_document import OTHER_INVERTER_YES
 from sungrow_modbus.wallbox import probe_units as wallbox_probe_units
 
 from .config_flow_schemas import (
-    _ALREADY_TRIED,
-    _NOT_DETECTED,
-    _PREFILLED,
-    _SAME_DONGLE,
     NOT_LISTED,
     STEP_USER_DATA_SCHEMA,
     _described,
@@ -148,43 +144,12 @@ from .migration import (
     async_resolve_legacy_slot,
     async_switch_entity_ids,
 )
+from .texts import Texts, async_texts
 
 _LOGGER = logging.getLogger(__name__)
 
 
-#: What the gated controls say while `ONLY_SURVEY_MODE` is on, written
-#: once and rendered in two places: the opening step and the options page's
-#: promotion toggle explain the same gate, and a gate explained in two
-#: wordings is a gate somebody will misread. Markdown, because both slots
-#: render through `ha-markdown`.
-_DEVICES_MODE_COMING = (
-    "\n\n⚠️ **Sensors and controls are not in this release.** This is an "
-    "early alpha, and it exists to gather readings: it connects to your "
-    "inverter, works out what it is and which registers it answers, and "
-    "creates no entities for the values. Setting up the inverter properly -- "
-    "including taking over the entity IDs of the YAML package, which decides "
-    "where years of history continue -- comes in a later release, and an "
-    "entry made now can be upgraded to it then without being deleted."
-)
-
-#: And what the same sentence has to say when the gate is open, because then
-#: both answers really are available and the step has to explain the choice
-#: rather than the restriction.
-_DEVICES_MODE_OPEN = (
-    "\n\nBoth answers are fine, and you can change your mind later: picking "
-    "**the device survey** skips the weightiest question in this dialog, "
-    "about which entity IDs to take over, because a reading does not need it."
-)
-
-#: The opening step's first paragraph, which introduces the answer that is
-#: only on the menu while the gate is open.
-_DEVICES_MODE_INTRO = (
-    "**Set up my inverter** is what you want if you came here to see your "
-    "solar production in Home Assistant.\n\n"
-)
-
-
-def _alpha_placeholders() -> dict[str, str]:
+def _alpha_placeholders(texts: Texts) -> dict[str, str]:
     """Return what the two gated dialogs should say about the gate.
 
     A function rather than a constant because `ONLY_SURVEY_MODE` is read
@@ -202,40 +167,23 @@ def _alpha_placeholders() -> dict[str, str]:
     renders as the literal `{devices_mode}` in the dialog, which is the one
     outcome worse than either sentence.
     """
+    coming = "\n\n" + texts("devices_mode_coming")
     return {
-        "mode_intro": "" if ONLY_SURVEY_MODE else _DEVICES_MODE_INTRO,
+        "mode_intro": "" if ONLY_SURVEY_MODE else texts("devices_mode_intro") + "\n\n",
         "mode_choice": (
-            _DEVICES_MODE_COMING if ONLY_SURVEY_MODE else _DEVICES_MODE_OPEN
+            coming if ONLY_SURVEY_MODE else "\n\n" + texts("devices_mode_open")
         ),
-        "devices_mode": _DEVICES_MODE_COMING if ONLY_SURVEY_MODE else "",
+        "devices_mode": coming if ONLY_SURVEY_MODE else "",
     }
 
 
-#: Substituted into the step description. Two states, both stated as facts
-#: about this instance right now rather than as instructions -- "it is still
-#: running" lands where "it must be removed first" did not.
-_PACKAGE_LOADED = (
-    "\u26a0\ufe0f **The YAML package is still running.** {live} of its entities are "
-    "live on this instance right now and are holding their entity IDs, so "
-    "migrating cannot work yet.\n\n"
-    "To migrate: remove `modbus_sungrow.yaml` from your configuration — or "
-    "comment out the line that includes it — then **restart Home Assistant** "
-    "and add this integration again. Until then only starting fresh will work."
-)
-
-_PACKAGE_NOT_LOADED = (
-    "\u2705 **The YAML package is not running**, so its entity IDs are free to "
-    "take over. Both answers below will work."
-)
-
-
-#: The one reason a move to legacy ids is refused, said on the page itself.
-_SWITCH_BLOCKED = (
-    "\n\n\u26a0\ufe0f **The YAML package is still running.** {live} of its "
-    "entities are live and hold the ids these would move to. Remove "
-    "`modbus_sungrow.yaml` from your configuration, restart Home Assistant, "
-    "and come back here."
-)
+async def _flow_texts(flow: ConfigFlow | OptionsFlow) -> Texts:
+    """Return the flow's sentences, fetched once per flow (`texts.py`)."""
+    texts: Texts | None = getattr(flow, "_texts_cache", None)
+    if texts is None:
+        texts = await async_texts(flow.hass)
+        setattr(flow, "_texts_cache", texts)  # noqa: B010 -- not a declared attribute
+    return texts
 
 
 async def _async_legacy_ids(hass: HomeAssistant, slot: str) -> set[str]:
@@ -253,13 +201,22 @@ async def _async_legacy_ids(hass: HomeAssistant, slot: str) -> set[str]:
     )
 
 
-def _entity_ids_placeholders(known: set[str], live: set[str]) -> dict[str, str]:
-    """Fill the id question's description: how many, one example, and why."""
+def _entity_ids_placeholders(
+    known: set[str], live: set[str], texts: Texts
+) -> dict[str, str]:
+    """Fill the id question's description: how many, one example, and why.
+
+    The status is one of two states, both stated as facts about this
+    instance right now rather than as instructions: "it is still running"
+    lands where "it must be removed first" did not.
+    """
     return {
         "count": str(len(known)),
         "example": min(known),
         "status": (
-            _PACKAGE_LOADED.format(live=len(live)) if live else _PACKAGE_NOT_LOADED
+            texts("package_loaded", live=len(live))
+            if live
+            else texts("package_not_loaded")
         ),
     }
 
@@ -366,19 +323,14 @@ def _endpoint(data: Mapping[str, Any]) -> dict[str, Any]:
     return {key: data.get(key) for key in ENDPOINT}
 
 
-def _where(data: Mapping[str, Any]) -> str:
+def _where(data: Mapping[str, Any], texts: Texts) -> str:
     """Say where an endpoint is, the way the user typed it."""
-    return f"{data.get(CONF_HOST)}:{data.get(CONF_PORT)}, unit {data.get(CONF_UNIT_ID)}"
-
-
-#: Said before a move to the inverter's own LAN port, when a wallbox was
-#: being read through the dongle and has no address of its own configured.
-_WALLBOX_LOST = (
-    "\n\n**The wallbox goes quiet.** It is read through the WiNet-S today, and "
-    "the inverter's own LAN port does not reach it. Its entities stay, "
-    "unavailable, until **Wallbox address** in this entry's options points at "
-    "the wallbox itself."
-)
+    return texts(
+        "endpoint",
+        host=data.get(CONF_HOST),
+        port=data.get(CONF_PORT),
+        unit=data.get(CONF_UNIT_ID),
+    )
 
 
 def _loses_wallbox(entry: ConfigEntry, direct: bool | None) -> bool:
@@ -472,7 +424,11 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         """
         entry = self._get_reconfigure_entry()
         errors: dict[str, str] = {}
-        placeholders: dict[str, str] = {"current": _where(entry.data), "error": ""}
+        texts = await _flow_texts(self)
+        placeholders: dict[str, str] = {
+            "current": _where(entry.data, texts),
+            "error": "",
+        }
         if user_input is not None:
             try:
                 inverter, direct, _battery = await _async_probe(
@@ -542,13 +498,18 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 reason="connection_moved",
                 description_placeholders={"title": entry.title},
             )
+        texts = await _flow_texts(self)
         return self.async_show_form(
             step_id="move",
             description_placeholders={
                 "title": entry.title,
-                "old": _where(entry.data),
-                "new": _where(endpoint),
-                "wallbox": _WALLBOX_LOST if _loses_wallbox(entry, direct) else "",
+                "old": _where(entry.data, texts),
+                "new": _where(endpoint, texts),
+                "wallbox": (
+                    "\n\n" + texts("wallbox_lost")
+                    if _loses_wallbox(entry, direct)
+                    else ""
+                ),
             },
         )
 
@@ -580,7 +541,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             # The step description carries placeholders, so the menu has to
             # substitute them -- an unfilled placeholder is rendered literally
             # rather than dropped.
-            description_placeholders=_alpha_placeholders(),
+            description_placeholders=_alpha_placeholders(await _flow_texts(self)),
         )
 
     async def async_step_setup_devices(
@@ -657,6 +618,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             else:
                 return await self.async_step_searching()
 
+        texts = await _flow_texts(self)
         return self.async_show_form(
             step_id="search",
             # Not prefilled with the range that just failed: after a sweep
@@ -674,11 +636,11 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 # left empty because nothing usable was found. Without this a
                 # blank box looks like a bug rather than an honest answer.
                 "detected": (
-                    _ALREADY_TRIED.format(tried=", ".join(self._tried))
+                    texts("search_already_tried", tried=", ".join(self._tried))
                     if self._tried
-                    else _PREFILLED
+                    else texts("search_prefilled")
                     if await self._async_default_network()
-                    else _NOT_DETECTED
+                    else texts("search_not_detected")
                 ),
             },
             last_step=False,
@@ -727,6 +689,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         back, so nothing is called an inverter until it has answered a read
         of its device type register.
         """
+        texts = await _flow_texts(self)
         candidates: list[tuple[str, int]] = []
         addresses = len(hosts_in(self._searched))
         settled = 0
@@ -763,8 +726,12 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             candidates.extend((host, port) for host in found)
             settled += addresses
             self._set_stage(
-                f"Checked {settled} of {addresses * len(SCAN_PORTS)} addresses; "
-                f"{len({host for host, _ in candidates})} answered so far."
+                texts(
+                    "search_checked",
+                    settled=settled,
+                    total=addresses * len(SCAN_PORTS),
+                    answered=len({host for host, _ in candidates}),
+                )
             )
 
         # **A sweep that found nothing gets one slower second chance**, and
@@ -788,10 +755,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         # the timeout, which was enough for three runs out of three under the
         # same debug loop that failed three out of three at the defaults.
         if not candidates:
-            self._set_stage(
-                "Nothing answered. Trying again more slowly, because a busy "
-                "moment can make a sweep miss a device that is there."
-            )
+            self._set_stage(texts("search_retry"))
             for port in SCAN_PORTS:
                 found = await async_sweep(
                     self._searched,
@@ -815,11 +779,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
 
         def _identifying(host: str, index: int, of: int) -> None:
             self.async_update_progress(sweeping + (1 - sweeping) * (index - 1) / of)
-            self._set_stage(
-                f"Asking {host} what it is ({index} of {of}). Anything that is "
-                "not a Sungrow has to time out on every unit id before it can "
-                "be ruled out, which is the slowest part of this."
-            )
+            self._set_stage(texts("search_asking", host=host, index=index, of=of))
 
         self._found = await self._async_identify(candidates, on_candidate=_identifying)
         _LOGGER.debug(
@@ -923,6 +883,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         options.append(
             SelectOptionDict(value=NOT_LISTED, label="None of these — let me choose")
         )
+        texts = await _flow_texts(self)
         return self.async_show_form(
             step_id="pick",
             data_schema=probatio.Schema(
@@ -939,7 +900,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             description_placeholders={
                 "count": str(len(self._found)),
                 "note": (
-                    _SAME_DONGLE
+                    "\n\n" + texts("search_same_dongle")
                     if any(entry.get("same_dongle") for entry in self._found.values())
                     else ""
                 ),
@@ -1173,7 +1134,9 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 ENTITY_IDS_NEW if live else ENTITY_IDS_MIGRATE
             ),
             errors=errors,
-            description_placeholders=_entity_ids_placeholders(known, live),
+            description_placeholders=_entity_ids_placeholders(
+                known, live, await _flow_texts(self)
+            ),
         )
 
     async def async_step_slot_unknown(
@@ -1260,7 +1223,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         return self._title
 
     @callback
-    def _async_measured(self) -> str:
+    def _async_measured(self, texts: Texts) -> str:
         """Say what discovery already worked out, so nobody re-answers it.
 
         The transport is the one that matters and the one already settled:
@@ -1273,38 +1236,17 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         if not device:
             # Nothing was probed for this address, so there is nothing to
             # report. Saying so beats inventing a route.
-            return (
-                "Nothing has been measured for this address yet, so please "
-                "answer from what you know."
-            )
-        model = device.get("model") or "an unidentified model"
+            return texts("measured_nothing")
+        model = device.get("model") or texts("model_unidentified")
         direct = device.get("direct")
         if direct is True:
-            route = (
-                "reached through its own LAN port — register 6100 answers, which "
-                "is what a cable straight into the inverter looks like"
-            )
-        elif direct is False:
-            route = (
-                "reached through a communication module, so a WiNet-S, WiNet-S2 "
-                "or Logger is in the path — register 6100 was refused. Whether it "
-                "is using its Ethernet socket or its WiFi is **not** determinable "
-                "over Modbus, and that is the part only you can tell us"
-            )
-        else:
-            # Neither answered nor refused: the read failed on the link. A
-            # guess here is worse than a question, because this steers the
-            # `survey_transport` answer and that is published.
-            route = (
-                "and the route could not be measured — register 6100 neither "
-                "answered nor was refused, which is what a busy link looks like "
-                "from here. A cable answers it and a dongle refuses it, so this "
-                "is one for you to tell us"
-            )
-        return (
-            f"Already measured, so you do not need to tell us: this is "
-            f"**{model}**, {route}."
-        )
+            return texts("measured_direct", model=model)
+        if direct is False:
+            return texts("measured_dongle", model=model)
+        # Neither answered nor refused: the read failed on the link. A guess
+        # here is worse than a question, because this steers the
+        # `survey_transport` answer and that is published.
+        return texts("measured_unknown", model=model)
 
     async def async_step_testimony(
         self, user_input: dict[str, Any] | None = None
@@ -1334,7 +1276,9 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="testimony",
             data_schema=_testimony_schema({}),
-            description_placeholders={"measured": self._async_measured()},
+            description_placeholders={
+                "measured": self._async_measured(await _flow_texts(self))
+            },
             # Not the last step when the answer turns out to be yes, and Home
             # Assistant has to be told before it knows: the flag decides
             # whether the button says "Submit" or "Next". It is set here
@@ -1394,7 +1338,9 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
 
-def _switch_placeholders(plan: IdSwitch, live: set[str]) -> dict[str, str]:
+def _switch_placeholders(
+    plan: IdSwitch, live: set[str], texts: Texts
+) -> dict[str, str]:
     """Say what a planned id switch does, one line per kind of change."""
 
     def examples(moves: dict[str, str]) -> str:
@@ -1406,33 +1352,27 @@ def _switch_placeholders(plan: IdSwitch, live: set[str]) -> dict[str, str]:
     lines: list[str] = []
     if plan.renames:
         lines.append(
-            f"- **{len(plan.renames)}** move, history and statistics with them:"
+            "- "
+            + texts("switch_renames", count=len(plan.renames))
             + examples(plan.renames)
         )
     if plan.joins:
         lines.append(
-            f"- **{len(plan.joins)}** continue the YAML package's history under "
-            "its ids; what was recorded under the current ids stays there:"
-            + examples(plan.joins)
+            "- " + texts("switch_joins", count=len(plan.joins)) + examples(plan.joins)
         )
     if plan.archives:
         lines.append(
-            f"- **{len(plan.archives)}** ids already hold older history, which "
-            "is renamed aside first, not deleted:" + examples(plan.archives)
+            "- "
+            + texts("switch_archives", count=len(plan.archives))
+            + examples(plan.archives)
         )
     if plan.dropped:
-        lines.append(
-            f"- **{len(plan.dropped)}** raw sensors exist with legacy ids only "
-            "and are removed; their history stays where it is."
-        )
+        lines.append("- " + texts("switch_dropped", count=len(plan.dropped)))
     if not lines:
-        lines.append(
-            "- Nothing to move: every entity is already there, or has an id "
-            "you chose yourself, which is left alone."
-        )
+        lines.append("- " + texts("switch_nothing"))
     return {
         "changes": "\n".join(lines),
-        "status": _SWITCH_BLOCKED.format(live=len(live)) if live else "",
+        "status": ("\n\n" + texts("switch_blocked", live=len(live)) if live else ""),
     }
 
 
@@ -1575,6 +1515,7 @@ class SungrowOptionsFlow(OptionsFlow):
                 else:
                     return self.async_create_entry(data=options)
 
+        texts = await _flow_texts(self)
         return self.async_show_form(
             step_id="init",
             data_schema=self._async_options_schema(),
@@ -1589,12 +1530,12 @@ class SungrowOptionsFlow(OptionsFlow):
                         **self.config_entry.options.get(CONF_INTERVALS, {}),
                     }
                 ),
-                "reported_load": self._async_load_now(),
-                "measured": await self._async_survey_measured(),
-                "battery_status": self._async_battery_status(),
+                "reported_load": self._async_load_now(texts),
+                "measured": await self._async_survey_measured(texts),
+                "battery_status": self._async_battery_status(texts),
                 # Why the promotion toggle above is greyed, in the same words
                 # the config flow uses for the same gate.
-                **_alpha_placeholders(),
+                **_alpha_placeholders(texts),
             },
         )
 
@@ -1908,7 +1849,9 @@ class SungrowOptionsFlow(OptionsFlow):
             step_id="entity_ids_legacy" if to_legacy else "entity_ids_modern",
             data_schema=probatio.Schema({}),
             errors=errors,
-            description_placeholders=_switch_placeholders(self._switch, live),
+            description_placeholders=_switch_placeholders(
+                self._switch, live, await _flow_texts(self)
+            ),
         )
 
     async def async_step_entity_ids_legacy(
@@ -1999,7 +1942,9 @@ class SungrowOptionsFlow(OptionsFlow):
                 ENTITY_IDS_NEW if live else ENTITY_IDS_MIGRATE
             ),
             errors=errors,
-            description_placeholders=_entity_ids_placeholders(known, live),
+            description_placeholders=_entity_ids_placeholders(
+                known, live, await _flow_texts(self)
+            ),
         )
 
     async def async_step_slot_unknown(
@@ -2098,7 +2043,7 @@ class SungrowOptionsFlow(OptionsFlow):
         return {"tiers": "; ".join(parts) + "."}
 
     @callback
-    def _async_load_now(self) -> str:
+    def _async_load_now(self, texts: Texts) -> str:
         """Say what the inverter currently reports the house is using.
 
         Because that number is the evidence. Somebody reaches this page
@@ -2108,7 +2053,7 @@ class SungrowOptionsFlow(OptionsFlow):
         """
         runtime = getattr(self.config_entry, "runtime_data", None)
         if runtime is None:
-            return "The inverter is not connected, so its load reading cannot be shown."
+            return texts("load_offline")
 
         device = runtime.inverter_coordinator.device
         try:
@@ -2116,20 +2061,12 @@ class SungrowOptionsFlow(OptionsFlow):
         except (AttributeError, KeyError):
             reported = None
         if reported is None:
-            return "The inverter has not reported a load figure yet."
+            return texts("load_none")
         if reported < 0:
-            return (
-                f"Right now this inverter reports a house load of {reported:.0f} W."
-                " A negative load is what an unmetered generator looks like: the"
-                " house appears to be using less than nothing because something is"
-                " producing that the inverter cannot see."
-            )
-        return (
-            f"Right now this inverter reports a house load of {reported:.0f} W, "
-            "which does not include anything it cannot see."
-        )
+            return texts("load_negative", load=f"{reported:.0f}")
+        return texts("load_positive", load=f"{reported:.0f}")
 
-    async def _async_survey_measured(self) -> str:
+    async def _async_survey_measured(self, texts: Texts) -> str:
         """Say what the integration has already worked out for itself.
 
         So that nobody answers a question that has been measured. The
@@ -2153,33 +2090,19 @@ class SungrowOptionsFlow(OptionsFlow):
         """
         runtime = getattr(self.config_entry, "runtime_data", None)
         if runtime is None:
-            return "The inverter is not connected, so nothing has been measured yet."
+            return texts("survey_offline")
 
         device = runtime.inverter_coordinator.device
-        model = device.model or "an unidentified model"
+        model = device.model or texts("model_unidentified")
 
         direct = await _async_direct(device.async_read(DIRECT_ONLY_PROBE))
 
         if direct is True:
-            route = (
-                "reached through its own LAN port — register 6100 answers, which "
-                "no communication module forwards"
-            )
+            key = "survey_direct"
         elif direct is False:
-            route = (
-                "reached through a communication module, so a WiNet-S, WiNet-S2 "
-                "or Logger is in the path — register 6100 was refused. Whether it "
-                "is using its Ethernet socket or its WiFi is not determinable "
-                "over Modbus, and that is the part only you can tell us"
-            )
+            key = "survey_dongle"
         else:
-            route = (
-                "and the route could not be measured — register 6100 neither "
-                "answered nor was refused, which is what a busy link looks like. "
-                "A cable answers it and a dongle refuses it, so this one is for "
-                "you to tell us"
-            )
-
+            key = "survey_unknown"
         fitted = ""
         try:
             module = device.field("communication_module_firmware_version")
@@ -2189,19 +2112,11 @@ class SungrowOptionsFlow(OptionsFlow):
             # Worth saying, and worth saying separately: an owner who knows a
             # dongle is screwed to the wall needs to see that we know too,
             # or a correct "its own LAN port" reads as a mistake.
-            fitted = (
-                f" A communication module is fitted and names itself {module},"
-                " which is a different question from which path this endpoint is:"
-                " a house can have a dongle and a cable at once."
-            )
-
-        return (
-            f"Already measured, so you do not need to tell us: this is {model}, "
-            f"{route}.{fitted}"
-        )
+            fitted = " " + texts("survey_fitted", module=module)
+        return texts(key, model=model) + fitted
 
     @callback
-    def _async_battery_status(self) -> str:
+    def _async_battery_status(self, texts: Texts) -> str:
         """Say what the integration currently thinks the battery will take.
 
         Written as a statement about *this* installation rather than as
@@ -2210,11 +2125,11 @@ class SungrowOptionsFlow(OptionsFlow):
         """
         runtime = getattr(self.config_entry, "runtime_data", None)
         if runtime is None:
-            return "The inverter is not connected, so nothing can be read from it."
+            return texts("battery_offline")
 
         device = runtime.inverter_coordinator.device
         if Capability.BATTERY not in runtime.capabilities:
-            return "No battery is connected, so this setting does nothing."
+            return texts("battery_none")
 
         def value(name: str) -> float | None:
             try:
@@ -2225,31 +2140,25 @@ class SungrowOptionsFlow(OptionsFlow):
 
         capacity = value("battery_capacity_high_precision")
         reported = (
-            f"Your battery reports {capacity} kWh" if capacity else "Your battery"
+            texts("battery_reports_capacity", capacity=capacity)
+            if capacity
+            else texts("battery_reports")
         )
 
         if Capability.SUNGROW_BATTERY in runtime.capabilities:
             model = model_for_capacity(capacity)
             if model is not None:
-                return (
-                    f"{reported}, which matches a Sungrow {model.name}. Its "
-                    f"datasheet gives {model.conservative_w} W conservatively "
-                    f"({model.nominal_w} W nominal), and that is what is used."
+                return texts(
+                    "battery_sungrow",
+                    reported=reported,
+                    model=model.name,
+                    conservative=model.conservative_w,
+                    nominal=model.nominal_w,
                 )
 
         suggestion = power_from_bms(
             value("bms_max_charging_current"), value("battery_voltage")
         )
         if suggestion is not None:
-            return (
-                f"{reported}, which is not a Sungrow SBR or SBH. Its BMS reports a "
-                f"maximum charge current that works out to about "
-                f"{suggestion} W at the pack's current voltage — which reads "
-                "high at a high state of charge, so treat it as a starting point."
-            )
-        return (
-            f"{reported}, and its BMS does not report a maximum charge current, so "
-            f"there is nothing to derive one from. Without a value here the "
-            f"integration falls back to {FALLBACK_W} W, which is the YAML "
-            "package's default rather than a recommendation."
-        )
+            return texts("battery_bms", reported=reported, suggestion=suggestion)
+        return texts("battery_no_bms", reported=reported, fallback=FALLBACK_W)
