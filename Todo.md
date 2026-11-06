@@ -71,9 +71,16 @@ Structure:
 
    Open: whether a repository whose only releases are pre-releases passes
    (not stated); so the first stable release (0.1.0, not an alpha) is the
-   real gate. Pick `categories` (one to three, from
-   contributors.home-assistant.io/core/integrations/categories/, not read
-   yet). Drop "(preview)" from the name on `main` only. The Marketplace
+   real gate. `categories` (one to three, optional for a custom integration;
+   read from contributors.home-assistant.io/core/integrations/categories/):
+   the page puts "solar panels, home batteries, energy meters, EV chargers"
+   under `energy` (subcategories `energy.solar_batteries`,
+   `energy.ev_charging`, `energy.meters_monitoring`) and reserves
+   `diy_makers` for generic Modbus connectors, so the proposal is
+   `["energy.solar_batteries", "energy.ev_charging"]`, or `["energy"]` alone.
+   Not stated: whether a parent and its own subcategory may be listed
+   together. Not in `manifest.json` yet: add it with the stable release, and
+   check hassfest accepts it. Drop "(preview)" from the name on `main` only. The Marketplace
    refreshes the catalog every 6 hours and a repository added from a link
    every 48 hours.
 
