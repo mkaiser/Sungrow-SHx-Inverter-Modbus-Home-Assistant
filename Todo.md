@@ -88,7 +88,24 @@ Structure:
    gerd's waits until his Home Assistant is stopped: a read-only survey
    on 2026-11-06 ran into it and is not evidence.
 
-3. **Spoil the December release at the top of `main`'s README.** The
+3. **English prose inside the German dialogs.** German ships, but the config
+   and options flows put English sentences into translated descriptions as
+   placeholders, which no translation reaches: the constants
+   `_DEVICES_MODE_COMING`/`_OPEN`/`_INTRO`, `_PACKAGE_LOADED`,
+   `_PACKAGE_NOT_LOADED`, `_SWITCH_BLOCKED` and `_WALLBOX_LOST` in
+   `config_flow.py`, `_PREFILLED`, `_NOT_DETECTED`, `_SAME_DONGLE` and
+   `_ALREADY_TRIED` in `config_flow_schemas.py`, and lines built in code (the
+   battery status, the options page's transport evidence and house-load line,
+   the search's progress text). A German user sees, for example, "**The YAML
+   package is still running.** ..." in the middle of a German page. Found
+   2026-11-06 checking the migration guide's quotes, which are right.
+   Fix: each variant becomes text in `strings.json` (a description per
+   variant, chosen by step, or a translated fragment the flow selects by key)
+   so the generator writes its German too; a placeholder then carries only
+   values (counts, names, ids, addresses). Guard it with a test that walks
+   every flow step and fails on a placeholder holding prose. Before
+   December, since a release that ships German should not ship this.
+4. **Spoil the December release at the top of `main`'s README.** The
    maintainer targets a release in December 2026 (said 2026-11-06). `main`'s
    README opens with dated news headings that the YAML package's users read;
    a teaser there tells them what is coming before it does. It is a commit on
@@ -113,10 +130,10 @@ Structure:
    needs, from the rest of this file: the ordinary setup switched on
    (open decision 1, `ONLY_SURVEY_MODE`), a stable `0.1.0` rather than an
    alpha, the production-database run (blocker 12) or a decision to go
-   without it, the logo (Future work), the catalog submission (next step 4;
+   without it, the logo (Future work), the catalog submission (next step 5;
    its review takes months, so submit on release, not before), and the
    migration guide made current.
-4. **Submitting to the catalog, when the merge is decided.** Read
+5. **Submitting to the catalog, when the merge is decided.** Read
    2026-11-06 (a subagent's reading of hacs.xyz and
    contributors.home-assistant.io/marketplace; not checked against
    `hacs/default` itself): the route is unchanged. The catalog is still
