@@ -12,10 +12,12 @@ wordmark or brand colours: this is a third-party community integration, and
 borrowing a manufacturer's trademark both risks the trademark and implies an
 endorsement that does not exist.
 
-What it shows: a rayed sun above a battery — solar generation and storage,
-which is exactly what an SH-series hybrid inverter is. Two shapes, two
-colours, and deliberately no more: the icon is displayed at around 32 pixels
-in Home Assistant's own UI, where anything finer turns to mush.
+What it shows: a PV array, and under it an inverter (a box around ~), a
+battery and a car -- generation, conversion, storage and the charge point this
+integration reads. Two colours, slate and amber, and no text: the icon is shown
+at about 32 pixels in Home Assistant's own UI, so every part is a plain
+silhouette, and the parts sit in one row under the array so none overlaps
+another. Chosen by the maintainer on 2026-11-07 from three drafts.
 
     python scripts/helpers/make_brand_icon.py            # writes the brand/ folder
     python scripts/helpers/make_brand_icon.py --preview  # also writes a large preview
@@ -34,74 +36,136 @@ BRAND = REPO / "custom_components" / "sungrow_modbus" / "brand"
 
 #: Drawn far larger than needed and downsampled, which is the cheapest way to
 #: get clean edges out of Pillow's non-antialiased primitives.
-SUPERSAMPLE = 8
+SUPERSAMPLE = 4
 SIZES = (512, 256)
 
-#: Warm amber for the sun and a deep slate for the flow. The amber carries on
-#: both light and dark backgrounds; the slate does not, which is why there is
-#: a separate dark variant that lifts it to a pale blue.
+#: Warm amber for what carries energy and a deep slate for the hardware. The
+#: amber carries on both light and dark backgrounds; the slate does not, which
+#: is why there is a separate dark variant that lifts it to a pale blue.
 LIGHT = {"sun": (245, 166, 35, 255), "flow": (38, 55, 71, 255)}
 DARK = {"sun": (250, 183, 70, 255), "flow": (208, 222, 235, 255)}
 
 
-def draw_mark(size: int, palette: dict[str, tuple[int, int, int, int]]) -> Image.Image:
-    """Draw the mark at ``size`` pixels square, on transparency.
+Colour = tuple[int, int, int, int]
+CLEAR: Colour = (0, 0, 0, 0)
 
-    Two shapes stacked and centred: a rayed sun above a battery. They are
-    deliberately different silhouettes — round over rectangular — so the mark
-    still reads at the ~32 pixels Home Assistant actually displays it at,
-    where any finer detail disappears.
-    """
-    s = size * SUPERSAMPLE
-    image = Image.new("RGBA", (s, s), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(image)
+#: The car, side on, facing right, in a box one unit wide: the outline, the two
+#: windows (cut out) and the two wheel centres.
+CAR_OUTLINE = (
+    (0.00, 0.30), (0.04, 0.22), (0.20, 0.18), (0.30, 0.04), (0.68, 0.04),
+    (0.82, 0.18), (0.96, 0.22), (1.00, 0.30), (1.00, 0.40), (0.00, 0.40),
+)  # fmt: skip
+CAR_WINDOWS = (
+    ((0.32, 0.09), (0.49, 0.09), (0.49, 0.18), (0.27, 0.18)),
+    ((0.53, 0.09), (0.665, 0.09), (0.77, 0.18), (0.53, 0.18)),
+)
+CAR_WHEELS = (0.24, 0.76)
 
-    def box(cx, cy, w, h):
-        return [(cx - w / 2) * s, (cy - h / 2) * s, (cx + w / 2) * s, (cy + h / 2) * s]
 
-    # --- the sun: disc plus eight stubby rays, centred on the upper third.
-    sun_cx, sun_cy = 0.5, 0.285
-    draw.ellipse(box(sun_cx, sun_cy, 0.325, 0.325), fill=palette["sun"])
+class _Pen:
+    """Pillow's primitives in unit coordinates, on a supersampled canvas."""
 
-    ray_inner, ray_outer, ray_w = 0.208, 0.284, 0.056
-    for i in range(8):
-        angle = math.radians(i * 45)
-        dx, dy = math.cos(angle), math.sin(angle)
-        x0 = (sun_cx + dx * ray_inner) * s
-        y0 = (sun_cy + dy * ray_inner) * s
-        x1 = (sun_cx + dx * ray_outer) * s
-        y1 = (sun_cy + dy * ray_outer) * s
-        draw.line([x0, y0, x1, y1], fill=palette["sun"], width=int(ray_w * s))
-        # Round the ends; Pillow's line joins are square.
-        for px, py in ((x0, y0), (x1, y1)):
-            r = ray_w * s / 2
-            draw.ellipse([px - r, py - r, px + r, py + r], fill=palette["sun"])
+    def __init__(self, size: int) -> None:
+        self.n = size * SUPERSAMPLE
+        self.image = Image.new("RGBA", (self.n, self.n), CLEAR)
+        self.draw = ImageDraw.Draw(self.image)
 
-    # --- the battery: a wide block with a terminal, centred below the sun.
-    body_w, body_h = 0.66, 0.265
-    body_cx, body_cy = 0.472, 0.760
-    draw.rounded_rectangle(
-        box(body_cx, body_cy, body_w, body_h), radius=0.055 * s, fill=palette["flow"]
-    )
-    draw.rounded_rectangle(
-        box(body_cx + body_w / 2 + 0.032, body_cy, 0.064, 0.105),
-        radius=0.020 * s,
-        fill=palette["flow"],
-    )
+    def at(self, x: float, y: float) -> tuple[float, float]:
+        return (x * self.n, y * self.n)
 
-    # Charge cells knocked back out, which is what makes the block a battery
-    # rather than a bar.
-    cell_w, cell_h, gap = 0.116, 0.125, 0.055
-    span = cell_w * 3 + gap * 2
-    first = body_cx - span / 2 + cell_w / 2
-    for i in range(3):
-        draw.rounded_rectangle(
-            box(first + i * (cell_w + gap), body_cy, cell_w, cell_h),
-            radius=0.018 * s,
-            fill=(0, 0, 0, 0),
+    def polygon(self, points: tuple[tuple[float, float], ...], fill: Colour) -> None:
+        self.draw.polygon([self.at(x, y) for x, y in points], fill=fill)
+
+    def box(
+        self, cx: float, cy: float, w: float, h: float, r: float, fill: Colour
+    ) -> None:
+        x0, y0 = self.at(cx - w / 2, cy - h / 2)
+        x1, y1 = self.at(cx + w / 2, cy + h / 2)
+        self.draw.rounded_rectangle([x0, y0, x1, y1], radius=r * self.n, fill=fill)
+
+    def disc(self, cx: float, cy: float, r: float, fill: Colour) -> None:
+        x0, y0 = self.at(cx - r, cy - r)
+        x1, y1 = self.at(cx + r, cy + r)
+        self.draw.ellipse([x0, y0, x1, y1], fill=fill)
+
+    def stroke(self, points: list[tuple[float, float]], w: float, fill: Colour) -> None:
+        """Draw a polyline with round ends and joins."""
+        width = max(1, int(w * self.n))
+        self.draw.line([self.at(x, y) for x, y in points], fill=fill, width=width)
+        for x, y in points:
+            self.disc(x, y, w / 2, fill)
+
+
+def _array(pen: _Pen, fill: Colour) -> None:
+    """Draw the PV array: a quad in perspective, cut into 4 x 2 modules."""
+    tl, tr, br, bl = (0.30, 0.06), (0.70, 0.06), (0.90, 0.34), (0.10, 0.34)
+    cols, rows, gap = 4, 2, 0.13
+
+    def at(u: float, v: float) -> tuple[float, float]:
+        top = (tl[0] + (tr[0] - tl[0]) * u, tl[1] + (tr[1] - tl[1]) * u)
+        bottom = (bl[0] + (br[0] - bl[0]) * u, bl[1] + (br[1] - bl[1]) * u)
+        return (top[0] + (bottom[0] - top[0]) * v, top[1] + (bottom[1] - top[1]) * v)
+
+    gu, gv = gap / cols, gap / rows
+    for i in range(cols):
+        for j in range(rows):
+            u0, u1 = i / cols + gu / 2, (i + 1) / cols - gu / 2
+            v0, v1 = j / rows + gv / 2, (j + 1) / rows - gv / 2
+            pen.polygon((at(u0, v0), at(u1, v0), at(u1, v1), at(u0, v1)), fill)
+
+
+def _inverter(pen: _Pen, box: Colour, wave: Colour) -> None:
+    """Draw the inverter: a box around ~."""
+    cx, cy, side = 0.13, 0.635, 0.22
+    pen.box(cx, cy, side, side, 0.038, box)
+    width, amplitude = 0.13, 0.033
+    points = [
+        (
+            cx - width / 2 + width * k / 60,
+            cy - amplitude * math.sin(2 * math.pi * k / 60),
         )
+        for k in range(61)
+    ]
+    pen.stroke(points, 0.026, wave)
 
-    return image.resize((size, size), Image.LANCZOS)
+
+def _battery(pen: _Pen, body: Colour, cells: Colour) -> None:
+    """Draw the battery: upright, four cells, its foot level with the inverter's."""
+    w, h = 0.19 * 0.85, 0.31 * 0.85
+    cx, cy = 0.355, 0.745 - h / 2
+    pen.box(cx, cy, w, h, 0.032 * 0.85, body)
+    cell, gap = 0.049 * 0.85, 0.019 * 0.85
+    top = cy - (cell * 4 + gap * 3) / 2 + cell / 2
+    for k in range(4):
+        pen.box(cx, top + k * (cell + gap), w - 0.064 * 0.85, cell, 0.008, cells)
+
+
+def _car(pen: _Pen, fill: Colour) -> None:
+    """Draw the car beside them, windows and hubs cut out."""
+    x, y, s = 0.49, 0.515, 0.48
+
+    def at(px: float, py: float) -> tuple[float, float]:
+        return (x + px * s, y + py * s)
+
+    pen.polygon(tuple(at(px, py) for px, py in CAR_OUTLINE), fill)
+    for window in CAR_WINDOWS:
+        pen.polygon(tuple(at(px, py) for px, py in window), CLEAR)
+    for wx in CAR_WHEELS:
+        cx, cy = at(wx, 0.42)
+        pen.disc(cx, cy, 0.115 * s, CLEAR)
+        pen.disc(cx, cy, 0.085 * s, fill)
+        pen.disc(cx, cy, 0.035 * s, CLEAR)
+
+
+def draw_mark(size: int, palette: dict[str, Colour]) -> Image.Image:
+    """Draw the mark at ``size`` pixels square, on transparency."""
+    pen = _Pen(size)
+    hardware, energy = palette["flow"], palette["sun"]
+    _array(pen, hardware)
+    _inverter(pen, hardware, energy)
+    _battery(pen, hardware, energy)
+    _car(pen, energy)
+    return pen.image.resize((size, size), Image.LANCZOS)
 
 
 def trimmed(image: Image.Image) -> Image.Image:
