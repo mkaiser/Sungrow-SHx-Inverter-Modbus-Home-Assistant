@@ -127,6 +127,12 @@ Things that do **not** follow the entity IDs automatically:
   shows a device's entity as the device name followed by the entity name:
   the YAML package's *Battery level* reads *SH10RT Battery level*. Give the
   card a name, or rename the device, to change it.
+- **The language of an entity's name.** The integration ships German. On a
+  Home Assistant set to German, the names it shows are German (a card that
+  shows the default name now reads, say, *Gesamte PV-Erzeugung*); the ids
+  stay English on every system, so nothing keyed by id is affected, and a
+  name you set yourself is kept. There is no language option: the names follow
+  Settings → System → General.
 
 ## What the entities look like now
 

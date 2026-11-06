@@ -63,6 +63,8 @@ dashboards when they switch ([doc/integration_migration.md](doc/integration_migr
 [devices-wanted.md](device-survey/devices-wanted.md)), SBH batteries, the
 SBR's per-module entities, and writing to the wallbox.
 
+[doc/energy_dashboard.md](doc/energy_dashboard.md) says which sensors to pick
+for Home Assistant's Energy dashboard,
 [doc/architecture.md](doc/architecture.md) is how it is built and why,
 [Todo.md](Todo.md) what is open, and
 [doc/compatibility.md](doc/compatibility.md) which setups have been surveyed.
