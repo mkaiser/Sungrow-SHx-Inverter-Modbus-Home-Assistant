@@ -109,9 +109,11 @@ Structure:
    - *Verified:* `make hassfest` (`scripts/dev/hassfest.sh`: current core's
      hassfest in the 2026.11 venv) reports 0 invalid and no warning; the same
      run on a manifest with `energy.nonsense` and `carrier_pigeon` warns for
-     both, so the four values are known to core. Not yet seen: the integration
-     in Add integration under its category, which needs the change in a
-     published preview (and 2026.11).
+     both, so the four values are known to core. Pushed 2026-11-06 (CI green:
+     tests, hassfest, HACS), synced to the preview (`5bc5666`), installed on
+     the 2026.11 testbed through the Marketplace: Add integration's
+     descriptions carry the three categories and `connectivity: ["modbus"]`.
+     Not seen: the dialog itself in a browser.
    refreshes the catalog every 6 hours and a repository added from a link
    every 48 hours.
 
