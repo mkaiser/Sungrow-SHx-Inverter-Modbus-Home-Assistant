@@ -19,11 +19,10 @@ details are under [Why each one](#why-each-one).
 | 5 | **A wallbox other than the one already read**, an AC011E-01 above all | Which of its registers identify a unit and which are a model constant, and a scale another source reads differently |
 | 6 | **A charging car**, at any house with a Sungrow wallbox | What input 21313 does over a session, and whether 21308/21310 are signed. Two runs a few minutes apart while charging |
 | 7 | **Version 1 between `.95.03` and `.95.12`, or a `.95.14` that is not 10 kW** | Where the export limit's write scale changes ([#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)) |
-| 8 | **An SBR192 on a direct link** | The one size read only through a WiNet-S; SBR064, SBR096, SBR128, SBR160, SBR224 and SBR256 are read on a cable |
-| 9 | **A second master/slave cluster** | Whether a slave's address 2 is a rule or one house's convention |
-| 10 | **An SH-RS on `SUNSTONE-H` P057, P059, P067 or P068**, with the control test, in daylight | Whether the PV cut (register 31211) works there: it answers on all four, and has been watched cutting on P065 only |
-| 11 | **Any SG string inverter other than an SG5.0RS** | Its tracker and phase count, which decide its entities: the source's table is unverified for most models, and an SG answers 0 for hardware it lacks |
-| 12 | **Any inverter on a three-wire grid (3P3L, no neutral)**: the survey shows the output type it reads from register 5002 | On 3P3L, registers 5019-5021 carry line voltages, and the integration creates no phase voltages or phase powers there. One reading shows what to create instead |
+| 8 | **A second master/slave cluster** | Whether a slave's address 2 is a rule or one house's convention |
+| 9 | **An SH-RS on `SUNSTONE-H` P057, P059, P066, P067 or P068**, with the control test, in daylight | Whether the PV cut (register 31211) works there: it answers on all five, and has been watched cutting on P065 only |
+| 10 | **Any SG string inverter other than an SG5.0RS** | Its tracker and phase count, which decide its entities: the source's table is unverified for most models, and an SG answers 0 for hardware it lacks |
+| 11 | **Any inverter on a three-wire grid (3P3L, no neutral)**: the survey shows the output type it reads from register 5002 | On 3P3L, registers 5019-5021 carry line voltages, and the integration creates no phase voltages or phase powers there. One reading shows what to create instead |
 
 ## Not needed any more
 

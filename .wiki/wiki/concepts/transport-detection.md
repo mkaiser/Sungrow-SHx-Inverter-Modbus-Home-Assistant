@@ -12,7 +12,11 @@ a [WiNet-S](../entities/device-winet-s.md) changes what can be read, so
 capability varies by transport as well as by model.
 
 - **Measure it with [register 6100](../entities/register-6100.md)**: it
-  answers on a cable and is refused through a dongle.
+  answers on a cable and is refused through a dongle. **It also answers over
+  RS485** (icefest's SH6.0RS through a Waveshare converter,
+  [the survey](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-summary.md)), so "direct"
+  means *no communication module in the path*, LAN port or RS485 alike, and
+  only the owner's answer tells the two apart.
 - **Not with 13265**, which names the fitted module, not the one in the path.
 - **Not with round-trip time**, which times the reader's path.
 - **WiFi versus Ethernet is not determinable** over Modbus.

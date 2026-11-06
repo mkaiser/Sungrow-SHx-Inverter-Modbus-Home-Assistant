@@ -23,6 +23,7 @@ By the committed register dumps (asserted in `tests/test_pv_generation_cut.py`):
 | [B001.V000.P023](firmware-sapphire-h-b001-v000-p023.md) | 0x55 |
 | [PEARL-H_B000.V000.P071](firmware-pearl-h-b000-v000-p071.md) | 0x55 |
 | [SUNSTONE-H_B000.V001.P068](firmware-sunstone-h-b000-v001-p068.md) | 0x55 |
+| [SUNSTONE-H_B000.V001.P066](firmware-sunstone-h-b000-v001-p066.md) | 0x55 |
 | [SUNSTONE-H_B000.V002.P065](firmware-sunstone-h-b000-v002-p065.md) | 0x55 |
 | [SUNSTONE-H_B000.V002.P059](firmware-sunstone-h-b000-v002-p059.md) | 0x55 |
 | [SUNSTONE-H_B000.V002.P057](firmware-sunstone-h-b000-v002-p057.md) | 0x55 (read in `readings`; the document has no dump) |

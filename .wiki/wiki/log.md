@@ -457,3 +457,11 @@ points to one built into the firmware; the same hash from another house would se
 bar12's WiNet-S, confirmed by its stand-in through the same address, serves the certificate gerd's
 WiNet-S and wallbox serve, byte for byte. Two houses and two products on one certificate: it is
 built into the firmware, and port 516's TLS authenticates nothing.
+
+## [2026-11-06] ingested | icefest's SH6.0RS on P066, through a WiNet-S and over RS485 (#786)
+
+Two diagnostics downloads ten minutes apart, both with the control test and a restart. P066 stores
+13074's word as handed, answers 31211 with 0x55, and refuses the forced-charging window's days word
+(33209) with 0x04 on both paths. The dongle run's code 5 was that refused word, which had never
+changed; the RS485 run found it holding its original value. RS485 through a Waveshare converter
+answers 6100, so it reads as direct. The first SBR192 read on a direct link.

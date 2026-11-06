@@ -1,0 +1,922 @@
+{
+  "schema": 23,
+  "command_line": "home assistant diagnostics",
+  "read_at": "2026-11-06T20:07:36Z",
+  "user_inputs": {
+    "reporter": "icefest",
+    "comment": "",
+    "battery": "SBR192",
+    "transport": "winet_lan",
+    "modbus_proxy": "no",
+    "other_pollers": "disabled",
+    "other_inverter": "no",
+    "other_inverter_detail": ""
+  },
+  "ip_address_last_two_octets": "068.103",
+  "device": {
+    "device_type_code": "0x0D10",
+    "device_type": "SH6.0RS",
+    "output_type": "single phase",
+    "serial_anonymized_hashed": "anon-85753181177"
+  },
+  "firmware": {
+    "arm": "ARM_SUNSTONE-H_V11_V01_A",
+    "dsp": "MDSP_SUNSTONE-H_V11_V01_A",
+    "inverter": "SUNSTONE-H_B000.V001.P066",
+    "communication_module": "WINET-SV200.001.00.P044",
+    "battery": "SBRBCU-S_22011.01.30"
+  },
+  "connection": {
+    "communication_module_firmware": "WINET-SV200.001.00.P044",
+    "verdict": "through a communication module (WiNet-S, WiNet-S2 or Logger)",
+    "wifi_or_ethernet": "not determinable over Modbus. Nothing in the protocol reports it, and a WiNet-S answers identically wired and over WiFi. Use user_inputs.transport, which is what the contributor said.",
+    "winet_restricted_block_6100": "refused"
+  },
+  "readings": {
+    "values": {
+      "active_power_limitation_ratio_raw": 6553.5,
+      "active_power_limitation_raw": 65535,
+      "apl_shutdown_at_zero_raw": 170,
+      "backup_frequency": 50.01,
+      "backup_mode_raw": 170,
+      "backup_phase_a_current": 2.9,
+      "backup_phase_a_power": 580,
+      "backup_phase_a_voltage": 238.2,
+      "backup_phase_b_current": 0.0,
+      "backup_phase_b_power": 0,
+      "backup_phase_b_voltage": 0.0,
+      "backup_phase_c_current": 0.0,
+      "backup_phase_c_power": 0,
+      "backup_phase_c_voltage": 0.0,
+      "battery_alarm": 0,
+      "battery_capacity_high_precision": 19.2,
+      "battery_charging_start_power": null,
+      "battery_current": 0.0,
+      "battery_discharging_start_power": null,
+      "battery_fault": 0,
+      "battery_firmware_version": "SBRBCU-S_22011.01.30",
+      "battery_forced_charge_discharge_cmd_raw": 204,
+      "battery_forced_charge_discharge_power": 6600,
+      "battery_level": 3.0,
+      "battery_max_charge_power": 6600,
+      "battery_max_discharge_power": 6600,
+      "battery_max_soc": 100.0,
+      "battery_min_soc": 5.0,
+      "battery_power": 0,
+      "battery_reserved_soc_for_backup": 5,
+      "battery_state_of_health": 96.0,
+      "battery_temperature": 15.5,
+      "battery_voltage": 378.4,
+      "bdc_rated_power": 0,
+      "bdc_side_fault": 0,
+      "bdc_side_permanent_fault": 0,
+      "bms_alarm": 0,
+      "bms_alarm_2": 0,
+      "bms_fault_1": 0,
+      "bms_fault_2": 0,
+      "bms_max_charging_current": 27,
+      "bms_max_discharging_current": 30,
+      "bms_protection": 0,
+      "communication_module_firmware_version": "WINET-SV200.001.00.P044",
+      "daily_battery_charge": 0.0,
+      "daily_battery_charge_from_pv": 0.0,
+      "daily_battery_discharge": 3.3,
+      "daily_direct_energy_consumption": 0.0,
+      "daily_exported_energy": 0.0,
+      "daily_exported_energy_from_pv": 0.0,
+      "daily_imported_energy": 0.0,
+      "daily_pv_generation": 0.0,
+      "daily_pv_generation_battery_discharge": 3.6,
+      "dc_side_fault": 0,
+      "direct_consumption_month_01": null,
+      "direct_consumption_month_02": null,
+      "direct_consumption_month_03": null,
+      "direct_consumption_month_04": null,
+      "direct_consumption_month_05": null,
+      "direct_consumption_month_06": null,
+      "direct_consumption_month_07": null,
+      "direct_consumption_month_08": null,
+      "direct_consumption_month_09": null,
+      "direct_consumption_month_10": null,
+      "direct_consumption_month_11": null,
+      "direct_consumption_month_12": null,
+      "direct_consumption_year_2015": null,
+      "direct_consumption_year_2016": null,
+      "direct_consumption_year_2017": null,
+      "direct_consumption_year_2018": null,
+      "direct_consumption_year_2019": null,
+      "direct_consumption_year_2020": null,
+      "direct_consumption_year_2021": null,
+      "direct_consumption_year_2022": null,
+      "direct_consumption_year_2023": null,
+      "direct_consumption_year_2024": null,
+      "direct_consumption_year_2025": null,
+      "direct_consumption_year_2026": null,
+      "direct_consumption_year_2027": null,
+      "direct_consumption_year_2028": null,
+      "direct_consumption_year_2029": null,
+      "ems_mode_selection_raw": 0,
+      "export_from_pv_month_01": null,
+      "export_from_pv_month_02": null,
+      "export_from_pv_month_03": null,
+      "export_from_pv_month_04": null,
+      "export_from_pv_month_05": null,
+      "export_from_pv_month_06": null,
+      "export_from_pv_month_07": null,
+      "export_from_pv_month_08": null,
+      "export_from_pv_month_09": null,
+      "export_from_pv_month_10": null,
+      "export_from_pv_month_11": null,
+      "export_from_pv_month_12": null,
+      "export_from_pv_year_2015": null,
+      "export_from_pv_year_2016": null,
+      "export_from_pv_year_2017": null,
+      "export_from_pv_year_2018": null,
+      "export_from_pv_year_2019": null,
+      "export_from_pv_year_2020": null,
+      "export_from_pv_year_2021": null,
+      "export_from_pv_year_2022": null,
+      "export_from_pv_year_2023": null,
+      "export_from_pv_year_2024": null,
+      "export_from_pv_year_2025": null,
+      "export_from_pv_year_2026": null,
+      "export_from_pv_year_2027": null,
+      "export_from_pv_year_2028": null,
+      "export_from_pv_year_2029": null,
+      "export_power_limit": 5100,
+      "export_power_limit_max": 6000,
+      "export_power_limit_min": 0,
+      "export_power_limit_mode_raw": 170,
+      "export_power_raw": -519,
+      "feed_in_limitation_ratio": null,
+      "forced_charging_days_raw": 1,
+      "forced_charging_end_1_hour": 10,
+      "forced_charging_end_1_minute": 30,
+      "forced_charging_end_2_hour": 24,
+      "forced_charging_end_2_minute": 0,
+      "forced_charging_raw": 85,
+      "forced_charging_start_1_hour": 10,
+      "forced_charging_start_1_minute": 0,
+      "forced_charging_start_2_hour": 0,
+      "forced_charging_start_2_minute": 0,
+      "forced_charging_target_soc_1": 100,
+      "forced_charging_target_soc_2": 0,
+      "forced_startup_under_low_soc_raw": null,
+      "grid_frequency": 50.0,
+      "grid_side_fault": 0,
+      "inverter_alarm": 0,
+      "inverter_firmware_version": "SUNSTONE-H_B000.V001.P066",
+      "inverter_rated_output": 6000,
+      "inverter_temperature": 18.7,
+      "load_adjustment_mode_enable_raw": 85,
+      "load_adjustment_mode_selection_raw": 3,
+      "load_power": 567,
+      "meter_active_power": 434,
+      "meter_channel_2_phase_a_active_power": 0,
+      "meter_channel_2_phase_b_active_power": 0,
+      "meter_channel_2_phase_c_active_power": 0,
+      "meter_channel_2_total_active_power": 0,
+      "meter_phase_a_active_power": 0,
+      "meter_phase_a_current": 0.0,
+      "meter_phase_a_voltage": 0.0,
+      "meter_phase_b_active_power": 0,
+      "meter_phase_b_current": 0.0,
+      "meter_phase_b_voltage": 0.0,
+      "meter_phase_c_active_power": 0,
+      "meter_phase_c_current": 0.0,
+      "meter_phase_c_voltage": 0.0,
+      "mppt1_current": 0.5,
+      "mppt1_voltage": 393.2,
+      "mppt2_current": 0.1,
+      "mppt2_voltage": 234.0,
+      "mppt3_current": 0.0,
+      "mppt3_voltage": 0.0,
+      "mppt4_current": 0.0,
+      "mppt4_voltage": 0.0,
+      "permanent_fault": 0,
+      "phase_a_current": 1.7,
+      "phase_a_voltage": 238.1,
+      "phase_b_current": 0.0,
+      "phase_b_voltage": 0.0,
+      "phase_c_current": 0.0,
+      "phase_c_voltage": 0.0,
+      "power_factor": 0.999,
+      "power_flow_status": 32,
+      "pv_generation_cut_raw": 85,
+      "pv_generation_month_01": null,
+      "pv_generation_month_02": null,
+      "pv_generation_month_03": null,
+      "pv_generation_month_04": null,
+      "pv_generation_month_05": null,
+      "pv_generation_month_06": null,
+      "pv_generation_month_07": null,
+      "pv_generation_month_08": null,
+      "pv_generation_month_09": null,
+      "pv_generation_month_10": null,
+      "pv_generation_month_11": null,
+      "pv_generation_month_12": null,
+      "pv_generation_year_2015": null,
+      "pv_generation_year_2016": null,
+      "pv_generation_year_2017": null,
+      "pv_generation_year_2018": null,
+      "pv_generation_year_2019": null,
+      "pv_generation_year_2020": null,
+      "pv_generation_year_2021": null,
+      "pv_generation_year_2022": null,
+      "pv_generation_year_2023": null,
+      "pv_generation_year_2024": null,
+      "pv_generation_year_2025": null,
+      "pv_generation_year_2026": null,
+      "pv_generation_year_2027": null,
+      "pv_generation_year_2028": null,
+      "pv_generation_year_2029": null,
+      "pv_power_limitation_raw": null,
+      "reactive_power": 0,
+      "running_state_raw": 33280,
+      "self_consumption_of_today": 23.7,
+      "sungrow_arm_software": "ARM_SUNSTONE-H_V11_V01_A",
+      "sungrow_device_type_code": 3344,
+      "sungrow_dsp_software": "MDSP_SUNSTONE-H_V11_V01_A",
+      "sungrow_protocol_version": 16781568,
+      "sungrow_version_1": "SUNSTONE-H_01011.03.66",
+      "sungrow_version_2": "SUNSTONE-H_03011.02.47",
+      "sungrow_version_3": null,
+      "sungrow_version_4_sungrow_battery": null,
+      "system_clock_day": 7,
+      "system_clock_hour": 6,
+      "system_clock_minute": 58,
+      "system_clock_month": 11,
+      "system_clock_second": 6,
+      "system_clock_year": 2026,
+      "system_fault_1": 0,
+      "system_fault_2": 0,
+      "total_active_power": 59,
+      "total_backup_power": 580,
+      "total_battery_charge": 10797.3,
+      "total_battery_charge_from_pv": 11019.2,
+      "total_battery_discharge": 9370.6,
+      "total_dc_power": 100,
+      "total_direct_energy_consumption": 10364.0,
+      "total_exported_energy": 24559.0,
+      "total_exported_energy_from_pv": 20806.6,
+      "total_imported_energy": 3181.0,
+      "total_pv_generation": 42189.8,
+      "total_pv_generation_battery_discharge": 40885.1,
+      "weekday_discharge_end_1_hour": 24,
+      "weekday_discharge_end_1_minute": 0,
+      "weekday_discharge_end_2_hour": 24,
+      "weekday_discharge_end_2_minute": 0,
+      "weekday_discharge_start_1_hour": 0,
+      "weekday_discharge_start_1_minute": 0,
+      "weekday_discharge_start_2_hour": 0,
+      "weekday_discharge_start_2_minute": 0,
+      "weekend_discharge_end_1_hour": 24,
+      "weekend_discharge_end_1_minute": 0,
+      "weekend_discharge_end_2_hour": 24,
+      "weekend_discharge_end_2_minute": 0,
+      "weekend_discharge_raw": 170,
+      "weekend_discharge_start_1_hour": 0,
+      "weekend_discharge_start_1_minute": 0,
+      "weekend_discharge_start_2_hour": 0,
+      "weekend_discharge_start_2_minute": 0
+    },
+    "components_that_did_not_answer": [
+      "battery_firmware",
+      "direct_consumption_history",
+      "export_from_pv_history",
+      "pv_generation_history",
+      "sub_controller_firmware"
+    ]
+  },
+  "capability_probes": {
+    "device type code (5000)": {
+      "state": "present",
+      "values": [
+        3344
+      ]
+    },
+    "nominal output power (5001)": {
+      "state": "present",
+      "values": [
+        60
+      ]
+    },
+    "output type (5002)": {
+      "state": "present",
+      "values": [
+        0
+      ]
+    },
+    "MPPT1 voltage": {
+      "state": "present",
+      "values": [
+        3850
+      ]
+    },
+    "MPPT2 voltage": {
+      "state": "present",
+      "values": [
+        2403
+      ]
+    },
+    "MPPT3 voltage": {
+      "state": "present",
+      "values": [
+        0
+      ]
+    },
+    "MPPT4 voltage": {
+      "state": "present",
+      "values": [
+        0
+      ]
+    },
+    "phase A voltage": {
+      "state": "present",
+      "values": [
+        2394
+      ]
+    },
+    "phase B voltage": {
+      "state": "present",
+      "values": [
+        0
+      ]
+    },
+    "phase C voltage": {
+      "state": "present",
+      "values": [
+        0
+      ]
+    },
+    "meter phase A voltage (5741)": {
+      "state": "refused"
+    },
+    "meter phase A current (5744)": {
+      "state": "refused"
+    },
+    "battery voltage": {
+      "state": "present",
+      "values": [
+        3784
+      ]
+    },
+    "battery level": {
+      "state": "present",
+      "values": [
+        30
+      ]
+    },
+    "battery temperature": {
+      "state": "present",
+      "values": [
+        155
+      ]
+    },
+    "battery capacity (5639)": {
+      "state": "present",
+      "values": [
+        1920
+      ]
+    },
+    "firmware block (13250, spec V1.1.7+)": {
+      "state": "present",
+      "values": [
+        21333
+      ]
+    },
+    "PV power of today (6100, direct-only)": {
+      "state": "refused"
+    },
+    "PV power limitation (13018, V1.1.10+)": {
+      "state": "no answer"
+    }
+  },
+  "contention": {
+    "polled_by": "this Home Assistant, throughout",
+    "components": 22,
+    "intervals_seconds": [
+      5,
+      10,
+      60,
+      600
+    ],
+    "coordinators_paused": false,
+    "block_read_test": "not run: it reads every block of the poll three times plus narrowing, which the survey button affords and a diagnostics download does not"
+  },
+  "battery_pack": {
+    "unit": 2,
+    "readings": {
+      "values": {
+        "current": 0.0,
+        "state_of_charge": 7.9,
+        "state_of_health": 96,
+        "temperature": 15.3,
+        "total_charge": 10909.2,
+        "total_discharge": 10407.5,
+        "voltage": 379.1
+      },
+      "components_that_did_not_answer": [
+        "sbr_battery_cells (IllegalDataAddressError)",
+        "sbr_battery_modules (IllegalDataAddressError)"
+      ]
+    }
+  },
+  "control_test": {
+    "schema": 2,
+    "outcome": 5,
+    "outcome_means": "something was not restored, or the inverter may still be stopped",
+    "conditions": {
+      "direct_connection": false,
+      "capabilities": [
+        "active_power_limit",
+        "battery",
+        "discharge_schedule",
+        "firmware_versions",
+        "forced_charging",
+        "meter_direct",
+        "pv_generation_cut",
+        "sungrow_battery"
+      ],
+      "model": "SH6.0RS",
+      "pv_w": 229,
+      "soc_percent": 3.0,
+      "battery_ceiling_w": 9720,
+      "export_write_scale": {
+        "schema": 1,
+        "write_units_per_count": 1,
+        "answer": "stores a written word as handed",
+        "held_w": 5100,
+        "wrote": 5100,
+        "response": "accepted",
+        "mode_lifted": false,
+        "left_changed": false,
+        "reason": "this firmware stores a written word as handed: accepted, because writing the held 5100 back is a no-op if stored as handed, and 51000 W -- above the 6000 W maximum -- if multiplied, which is refused"
+      },
+      "inverter_clock": "2026-11-07T07:02:24",
+      "simulated": false,
+      "dry_run": false
+    },
+    "readback": [
+      {
+        "field": "battery_min_soc",
+        "register": 13059,
+        "spec_units_per_count": 0.1,
+        "unit": "%",
+        "original": 5.0,
+        "written": null,
+        "library_read": null,
+        "raw_word": null,
+        "expected_raw": null,
+        "ratio": null,
+        "slope": null,
+        "expected_slope": 10.0,
+        "verdict": "not run",
+        "visibility": "no decade error would be visible; it could only be refused",
+        "implicates": null,
+        "detail": "the house was in no state for it"
+      },
+      {
+        "field": "battery_max_soc",
+        "register": 13058,
+        "spec_units_per_count": 0.1,
+        "unit": "%",
+        "original": 100.0,
+        "written": 95.0,
+        "library_read": 95.0,
+        "raw_word": 1000,
+        "expected_raw": 950,
+        "ratio": null,
+        "slope": null,
+        "expected_slope": 10.0,
+        "verdict": "the device kept its old value",
+        "visibility": "no decade error would be visible; it could only be refused",
+        "implicates": null,
+        "detail": null
+      },
+      {
+        "field": "battery_reserved_soc_for_backup",
+        "register": 13100,
+        "spec_units_per_count": 1,
+        "unit": "%",
+        "original": 5,
+        "written": null,
+        "library_read": null,
+        "raw_word": null,
+        "expected_raw": null,
+        "ratio": null,
+        "slope": null,
+        "expected_slope": 1.0,
+        "verdict": "not run",
+        "visibility": "no decade error would be visible; it could only be refused",
+        "implicates": null,
+        "detail": "the house was in no state for it"
+      },
+      {
+        "field": "battery_max_charge_power",
+        "register": 33047,
+        "spec_units_per_count": 10,
+        "unit": "W",
+        "original": 6600,
+        "written": 900,
+        "library_read": 6600,
+        "raw_word": 660,
+        "expected_raw": 90,
+        "ratio": null,
+        "slope": null,
+        "expected_slope": 0.1,
+        "verdict": "the device kept its old value",
+        "visibility": "a decade error either way would be visible",
+        "implicates": null,
+        "detail": null
+      },
+      {
+        "field": "battery_max_discharge_power",
+        "register": 33048,
+        "spec_units_per_count": 10,
+        "unit": "W",
+        "original": 6600,
+        "written": 800,
+        "library_read": 6600,
+        "raw_word": 660,
+        "expected_raw": 80,
+        "ratio": null,
+        "slope": null,
+        "expected_slope": 0.1,
+        "verdict": "the device kept its old value",
+        "visibility": "a decade error either way would be visible",
+        "implicates": null,
+        "detail": null
+      },
+      {
+        "field": "export_power_limit",
+        "register": 13074,
+        "spec_units_per_count": 1,
+        "unit": "W",
+        "original": 5100,
+        "written": 600.0,
+        "library_read": 600,
+        "raw_word": 600,
+        "expected_raw": 600,
+        "ratio": 1.0,
+        "slope": 1.0,
+        "expected_slope": 1.0,
+        "verdict": "matched",
+        "visibility": "a decade error either way would be visible",
+        "implicates": null,
+        "detail": null
+      },
+      {
+        "field": "battery_forced_charge_discharge_power",
+        "register": 13052,
+        "spec_units_per_count": 1,
+        "unit": "W",
+        "original": 6600,
+        "written": 700,
+        "library_read": 700,
+        "raw_word": 700,
+        "expected_raw": 700,
+        "ratio": 1.0,
+        "slope": 1.0,
+        "expected_slope": 1.0,
+        "verdict": "matched",
+        "visibility": "a decade error either way would be visible",
+        "implicates": null,
+        "detail": null
+      }
+    ],
+    "effects": [
+      {
+        "check": "forced charge",
+        "observable": "battery charge power",
+        "commanded": 1250.0,
+        "commanded_unit": "W",
+        "before": -0.0,
+        "during": 1272.0,
+        "after": -0.0,
+        "before_mad": 0.0,
+        "during_mad": 0.0,
+        "after_mad": 0.0,
+        "drift": 0.0,
+        "delta": 1272.0,
+        "ratio": 1.0176,
+        "verdict": "the inverter did as it was told",
+        "detail": null
+      },
+      {
+        "check": "forced-charging window",
+        "observable": "battery charge power",
+        "commanded": null,
+        "commanded_unit": "W",
+        "before": -0.0,
+        "during": null,
+        "after": null,
+        "before_mad": 0.0,
+        "during_mad": null,
+        "after_mad": null,
+        "drift": null,
+        "delta": null,
+        "ratio": null,
+        "verdict": "could not tell",
+        "detail": "the write refused with an exception: ServerDeviceFailureError: write_register(33208, 1): Modbus Exception 0x04 for function code 0x06"
+      }
+    ],
+    "restored": [
+      {
+        "field": "battery_forced_charge_discharge_cmd_raw",
+        "original": 204.0,
+        "readback": 204,
+        "restored": true,
+        "attempts": 1,
+        "detail": "written back through a WiNet-S, which took the write; its readback is a stale cache, so it was not read"
+      },
+      {
+        "field": "ems_mode_selection_raw",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 1,
+        "detail": "written back through a WiNet-S, which took the write; its readback is a stale cache, so it was not read"
+      },
+      {
+        "field": "pv_generation_cut_raw",
+        "original": 85.0,
+        "readback": 85,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "forced_charging_raw",
+        "original": 85.0,
+        "readback": 85,
+        "restored": true,
+        "attempts": 1,
+        "detail": "written back through a WiNet-S, which took the write; its readback is a stale cache, so it was not read"
+      },
+      {
+        "field": "battery_reserved_soc_for_backup",
+        "original": 5.0,
+        "readback": 5,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "battery_max_charge_power",
+        "original": 6600.0,
+        "readback": 6600,
+        "restored": true,
+        "attempts": 1,
+        "detail": "written back through a WiNet-S, which took the write; its readback is a stale cache, so it was not read"
+      },
+      {
+        "field": "battery_max_discharge_power",
+        "original": 6600.0,
+        "readback": 6600,
+        "restored": true,
+        "attempts": 1,
+        "detail": "written back through a WiNet-S, which took the write; its readback is a stale cache, so it was not read"
+      },
+      {
+        "field": "export_power_limit",
+        "original": 5100.0,
+        "readback": 5100,
+        "restored": true,
+        "attempts": 1,
+        "detail": "written back through a WiNet-S, which took the write; its readback is a stale cache, so it was not read"
+      },
+      {
+        "field": "battery_forced_charge_discharge_power",
+        "original": 6600.0,
+        "readback": 6600,
+        "restored": true,
+        "attempts": 1,
+        "detail": "written back through a WiNet-S, which took the write; its readback is a stale cache, so it was not read"
+      },
+      {
+        "field": "forced_charging_days_raw",
+        "original": 1.0,
+        "readback": 1,
+        "restored": false,
+        "attempts": 5,
+        "detail": "the write refused with an exception"
+      },
+      {
+        "field": "forced_charging_start_1_hour",
+        "original": 10.0,
+        "readback": 10,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "forced_charging_start_1_minute",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "forced_charging_end_1_hour",
+        "original": 10.0,
+        "readback": 10,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "forced_charging_end_1_minute",
+        "original": 30.0,
+        "readback": 30,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "forced_charging_target_soc_1",
+        "original": 100.0,
+        "readback": 100,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "weekday_discharge_start_1_hour",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "weekday_discharge_start_1_minute",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "weekday_discharge_end_1_hour",
+        "original": 24.0,
+        "readback": 24,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "weekday_discharge_end_1_minute",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "weekday_discharge_start_2_hour",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "weekday_discharge_start_2_minute",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "weekday_discharge_end_2_hour",
+        "original": 24.0,
+        "readback": 24,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "weekday_discharge_end_2_minute",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "weekend_discharge_start_1_hour",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "weekend_discharge_start_1_minute",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "weekend_discharge_end_1_hour",
+        "original": 24.0,
+        "readback": 24,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "weekend_discharge_end_1_minute",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "weekend_discharge_start_2_hour",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "weekend_discharge_start_2_minute",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "weekend_discharge_end_2_hour",
+        "original": 24.0,
+        "readback": 24,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "weekend_discharge_end_2_minute",
+        "original": 0.0,
+        "readback": 0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "export_power_limit_mode_raw",
+        "original": 170.0,
+        "readback": 170,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "battery_min_soc",
+        "original": 5.0,
+        "readback": 5.0,
+        "restored": true,
+        "attempts": 0,
+        "detail": "never written by this run, so left alone: through a WiNet-S the snapshot is the dongle's cache"
+      },
+      {
+        "field": "battery_max_soc",
+        "original": 100.0,
+        "readback": 100.0,
+        "restored": true,
+        "attempts": 1,
+        "detail": "written back through a WiNet-S, which took the write; its readback is a stale cache, so it was not read"
+      }
+    ],
+    "restart": {
+      "stopped_after": 2.025359885999933,
+      "running_after": 163.2576218669999,
+      "generating_after": 16.675618956000108,
+      "stop_word_seen": 4864,
+      "polls_refused_connection": 0,
+      "settings_survived": true,
+      "verdict": "the inverter did as it was told",
+      "detail": null
+    },
+    "not_established": [
+      "this endpoint is a WiNet-S rather than the inverter's own port, and a WiNet-S answers a register stale after forwarding a write to it -- so every readback verdict here describes what the dongle reported, not what the register holds. Waiting does not help: polled every 5 s for two minutes one never reported a value the cable had confirmed. The behavioural checks are unaffected. The before-state is read through the same cache, so the restore puts back only what this run wrote, and puts it back to the word the dongle reported: a register changed over another path since the dongle last read it would go back to the dongle's figure",
+      "battery_charging_start_power: the device does not have it (battery_start_power did not answer)",
+      "battery_discharging_start_power: the device does not have it (battery_start_power did not answer)",
+      "battery_min_soc: not written, because every admissible value was too close to the battery's actual level to be safe",
+      "battery_max_soc: its bounds have no room for a value ten times larger or smaller, so a scale error here could only ever show as a refusal",
+      "battery_reserved_soc_for_backup: not written, because every admissible value was too close to the battery's actual level to be safe",
+      "no forced discharge check: the battery is at or near its minimum state of charge, so there is nothing to discharge",
+      "no charge-ceiling check: the battery is too low for the ceiling to be put under it, since battery_max_soc cannot go below 50 %",
+      "could not make the house export: the battery is at 3.0% against a floor of 5%, so there is nothing to spend on making one",
+      "no PV cut check: PV was 229 W, under the 500 W a stop needs to be told from the sky",
+      "no discharge window check: the battery was discharging 0 W, under the 500 W a stop needs to be told from the house"
+    ]
+  }
+}

@@ -21,6 +21,7 @@ entry.
 | [01011.95.03](firmware-sapphire-h-01011-95-03.md) | stored as handed | [fwitten](installation-fwitten.md) before P023 |
 | [SUNSTONE-H_B000.V002.P065](firmware-sunstone-h-b000-v002-p065.md) (SH-RS) | stored as handed | [Jam3s97](installation-jam3s97.md), through a WiNet-S: the probe's acceptance |
 | [SUNSTONE-H_B000.V002.P057](firmware-sunstone-h-b000-v002-p057.md) (SH-RS) | stored as handed | [bleughb](installation-bleughb.md), through a WiNet-S: the probe's acceptance |
+| [SUNSTONE-H_B000.V001.P066](firmware-sunstone-h-b000-v001-p066.md) (SH-RS) | stored as handed | [icefest](installation-icefest.md), over RS485 and through a WiNet-S: the probe's acceptance |
 
 On the times-ten firmware, a plain write sets ten times what was asked, or
 it is refused with 0x04 when ten times the value is out of range. fwitten's
