@@ -33,6 +33,14 @@ HACS itself needs a GitHub account (it asks for a device code at
 <https://github.com/login/device>). Any account works; it is not tied to this
 integration.
 
+**On Home Assistant 2026.11 or later** HACS is built in, as **Settings →
+Marketplace**, and can no longer be installed separately. Add the channel
+there with **Add from link**, giving the same repository and the type
+**Integration**. Adding a custom repository needs a GitHub connection
+(read-only); browsing and updating do not. A preview installed through HACS
+before the upgrade stays installed: the Marketplace takes it over on its first
+start.
+
 ## 2. Download it
 
 Open the repository HACS lists and press **Download**. The version shown is a
@@ -110,7 +118,8 @@ entities and their history survive.
 ## Going back
 
 1. **Settings → Devices & services → Sungrow Modbus →** delete the entry.
-2. **HACS →** the integration **→ ⋮ → Remove**.
+2. **HACS →** the integration **→ ⋮ → Remove** (on 2026.11 or later, the
+   same in **Settings → Marketplace**).
 3. Restart.
 
 If you took over the YAML package's entity ids, returning to the package needs

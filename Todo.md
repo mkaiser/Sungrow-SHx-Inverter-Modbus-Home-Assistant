@@ -14,7 +14,31 @@ Structure:
 
 # Next steps
 
-_Nothing that can start without hardware, a contributor or a decision._
+1. **The preview channel under the Marketplace.** In Home Assistant 2026.11
+   HACS is built in as Settings → Marketplace, and the HACS installer stops
+   at 2026.11. The Marketplace offers stable releases only, unless the user
+   turns on a repository's *Pre-release* switch (an entity disabled by
+   default). The preview channel publishes no releases, so its version is a
+   commit hash. Find out on a real 2026.11:
+   - Does *Add from link* install the channel at all?
+   - Does it offer an update when the channel moves?
+   - Does a HACS install made before the upgrade keep updating?
+
+   Then correct `doc/installing_a_preview.md` (its 2026.11 paragraph states
+   only what Home Assistant's Marketplace page says) and
+   `doc/maintainer_setup.md` §5. This does not wait on blocker 20: a
+   Home Assistant run needs no test plugin. Give `scripts/dev/hacs_testbed.sh`
+   a venv of its own on `homeassistant==2026.11.*` (it shares the dev
+   environment today, which is held at 2026.10.4), with the Marketplace in
+   place of downloading HACS. Keep the HACS path while `hacs.json` allows
+   2026.9 and 2026.10.
+2. **Where the catalog takes submissions now.** The default store is the
+   Marketplace's catalog, maintained by Home Assistant. Find its submission
+   route and its rules before the merge decision (open decision 1,
+   `doc/maintainer_setup.md` §7). Check whether `hacs/default` still applies.
+   With it, pick a `categories` value for `manifest.json`: it is optional,
+   the Marketplace browses by it, and the HACS action fails on an unknown one
+   (contributors.home-assistant.io/core/integrations/categories/).
 
 # Open decisions
 
@@ -179,7 +203,15 @@ _Nothing that can start without hardware, a contributor or a decision._
     pins), the survey and control test headers (`==4.12.7`),
     `pyproject.toml`'s floor (`>=4.12.7`), `hacs.json`'s minimum
     (`2026.11.0`), the README's "Home Assistant 2026.9" and the bug
-    template's version placeholder; then `make check`.
+    template's version placeholder; then `make check`. With the floor at
+    2026.11, `DeviceInfo` is a dataclass, and item access on it is deprecated:
+    `async_remove_config_entry_device` reads `info["identifiers"]`
+    (`__init__.py`), which becomes `info.identifiers`. Also on 2026.11:
+    sensor, binary sensor and survey entities override
+    `async_added_to_hass`. Until they implement `async_entity_id_changed`,
+    an `entity_id` rename still removes and re-adds them, instead of
+    updating in place. That fallback ends in 2027.11. Check the renames in
+    `migration.py` against the hook before adding it.
 21. **A watched forced startup (13017).** The *Force startup* button exists
     only on firmware in `CONFIRMED_ON_FIRMWARE`, and nothing can put one
     there: the control test has no check for it. One needs an inverter in
@@ -273,6 +305,21 @@ gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments
 ```
 
 Last checked: **2026-11-06 11:15 UTC** (#786): nothing new.
+
+## Recurrent: a test plugin for Home Assistant 2026.11 (daily, until it ships)
+
+Blocker 20 waits on `pytest-homeassistant-custom-component` pinning
+`homeassistant==2026.11.x`. Every day, ask PyPI; while it prints
+`2026.10.4`, nothing changes. Once it prints a 2026.11 pin, do blocker 20
+and drop this check.
+
+```bash
+curl -s https://pypi.org/pypi/pytest-homeassistant-custom-component/json \
+  | python3 -c "import json,sys; i=json.load(sys.stdin)['info']; \
+print(i['version'], [r for r in i['requires_dist'] if r.startswith('homeassistant')])"
+```
+
+Last checked: **2026-11-06**: 0.13.375, still `homeassistant==2026.10.4`.
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 

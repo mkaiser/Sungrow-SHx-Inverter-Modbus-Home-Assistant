@@ -123,6 +123,10 @@ Things that do **not** follow the entity IDs automatically:
   series there. See `scripts/helpers/influx_migration.py`.
 - **Hand-built Lovelace cards that hard-code an entity ID**, if you chose
   device-scoped IDs.
+- **The label on a card that sets no name of its own.** Home Assistant
+  shows a device's entity as the device name followed by the entity name:
+  the YAML package's *Battery level* reads *SH10RT Battery level*. Give the
+  card a name, or rename the device, to change it.
 
 ## What the entities look like now
 

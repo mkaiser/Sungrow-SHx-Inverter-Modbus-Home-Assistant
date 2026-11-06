@@ -185,6 +185,13 @@ runs it now. See [installing_a_preview.md](installing_a_preview.md);
 `scripts/dev/hacs_testbed.sh` installs from it the way a user does. HACS
 itself requires a GitHub account.
 
+From Home Assistant 2026.11, HACS is built in as the **Marketplace**
+(Settings → Marketplace) and its installer stops there. It keeps the
+`hacs.json` contract: a repository without one stays installed but gets no
+updates. It offers stable releases only, unless the user turns on that
+repository's *Pre-release* switch, an entity disabled by default. Whether that
+changes what the preview channel delivers is open in `Todo.md`.
+
 ## 6. Keeping data out of the cloud
 
 Worth being precise, because "cloud" means two different things here and the
@@ -226,6 +233,10 @@ Where one must be inside, keep it outside the repo, `chmod 600`, and never
 print it.
 
 ## 7. Repository settings, for the HACS default store later
+
+The default store is the Marketplace's catalog from 2026.11, which Home
+Assistant maintains. Its submission route is not yet documented, so whether
+`hacs/default` still takes submissions is open in `Todo.md`.
 
 Needed before submitting to `hacs/default`, and free to do now: a repository
 **description**, **topics**, and **issues enabled**. The brand icon exists.
