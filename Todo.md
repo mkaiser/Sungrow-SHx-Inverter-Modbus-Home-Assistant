@@ -90,9 +90,51 @@ Structure:
       (`scripts/generate/tables/writes.py`), with the wallbox's 60 s fallback
       in mind.
 
-   Not to copy: evcc's `sungrow.go` reserves all rights. Still open: enable
-   (holding 21211) and the phase setting have no step yet.
-3. **Submitting to the catalog, when the merge is decided.** Read
+   Not to copy: evcc's `sungrow.go` reserves all rights.
+
+   Done 2026-11-06, beyond step 1: the enable register (holding 21211:
+   disabled on 0, the wallbox must say status 8, then enabled on 1) and the
+   phase setting (holding 21204, only when nothing flows, the actual mode
+   input 21270 must follow) are steps, each behind its own option and each
+   skipped when its register could not be read or reads something that is not
+   the state it takes it for. And the driver, step 3:
+   `device-survey/scripts/python/sungrow_wallbox_control_test.py`
+   (`--leave`, `--enable`, `--phase`, `--start-stop`, `--max-amps`,
+   `--restore`; TLS 516 unit 248 only; a snapshot flushed before the first
+   write; the raw readback on a fresh session after ten quiet seconds; no
+   address or serial in its report) with `tests/test_wallbox_control_test_cli.py`.
+   It is in `sync_version.py`'s script list, so its pin moves with the version,
+   but the pinned 0.1.0a27 wheel has no `wallbox.control_test`: it prints that
+   and exits 2 until the next release, which contains it.
+3. **Spoil the December release at the top of `main`'s README.** The
+   maintainer targets a release in December 2026 (said 2026-11-06). `main`'s
+   README opens with dated news headings that the YAML package's users read;
+   a teaser there tells them what is coming before it does. It is a commit on
+   `main`, which AGENTS.md keeps production: the YAML package is not touched,
+   only its README, and only when the maintainer says. Draft, to approve:
+
+   > # 2026-11-06 "A real Home Assistant integration is coming"
+   >
+   > A Home Assistant integration to replace this YAML package is being built
+   > on the `proper-ha-integration` branch, and is targeted for **December
+   > 2026**. It keeps your entity ids, so your recorder history, statistics
+   > and dashboards carry on across the switch. **Nothing changes for you now:**
+   > this package keeps working and is maintained until the integration has
+   > everything it has. A guide for the move comes with the release.
+   > If you are new, you can still install it like described in the README and
+   > quickly migrate later. 
+   > Own a Sungrow device and want to help? Run the survey
+   > ([#786](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786)).
+
+   Wording to decide: "targeted" and not "will", the month or a date, and
+   whether the preview's own README (this branch) says it too. What December
+   needs, from the rest of this file: the ordinary setup switched on
+   (open decision 1, `ONLY_SURVEY_MODE`), a stable `0.1.0` rather than an
+   alpha, the production-database run (blocker 12) or a decision to go
+   without it, the logo (Future work), the catalog submission (next step 4;
+   its review takes months, so submit on release, not before), and the
+   migration guide made current.
+4. **Submitting to the catalog, when the merge is decided.** Read
    2026-11-06 (a subagent's reading of hacs.xyz and
    contributors.home-assistant.io/marketplace; not checked against
    `hacs/default` itself): the route is unchanged. The catalog is still
@@ -162,7 +204,8 @@ Structure:
 
 # Open decisions
 
-1. **When to offer the ordinary setup** (`ONLY_SURVEY_MODE` in `const.py`;
+1. **When to offer the ordinary setup**, targeted for December 2026 (the
+   maintainer, 2026-11-06) (`ONLY_SURVEY_MODE` in `const.py`;
    turning it off is the whole re-enablement, `tests/test_alpha_gate.py`),
    and **when to merge into `main`.** The merge retires the preview channel
    and opens the HACS default store, which also needs the brand in
@@ -377,6 +420,15 @@ inverters and a car charging. Open:
   to mush, so the icon may need to be a reduced cut of the picture (modules
   and a plug, say) while a wider image (a README and Marketplace header, the
   documentation) can carry all of it: modules, inverter and car.
+- **Three drafts exist (2026-11-06)**, in the two-colour palette, at icon size on
+  light and dark, in `tmp/logo-drafts/` (gitignored; `contact-sheet.png` shows
+  them at 200, 64, 48 and 32 pixels, `draft_logos.py` draws them):
+  *1-chain* a module, an inverter and a car stacked, joined by the flow, the
+  car carrying the bolt; *2-array* a module array over the inverter with the
+  car in front (the house shape is weak: it reads as an array and a box);
+  *3-loop* three nodes in a ring, modules, inverter, car, with arrows around,
+  which is the one that survives 32 pixels best. Pick one, or ask for another
+  round; the chosen one moves into `make_brand_icon.py`, which writes `brand/`.
 - **Original, never Sungrow's.** No Sungrow logo, wordmark or colours: this is
   a community integration and borrowing the trademark implies an endorsement
   (`make_brand_icon.py` says so).
@@ -545,6 +597,13 @@ maintainer can take it from bar12's or gerd's WiNet-S (the five-second
 script in `device-survey/devices-wanted.md`) when their network is
 routed; the two share a subnet, so confirm the house by its stand-in
 first. Port 516 timed out from the rebuilt container on 2026-11-06.
+Measured 2026-11-06 over the VPN at gerd's (the one hash so far): his WiNet-S
+and his wallbox serve the byte-identical certificate, SHA-256
+`84505e46778f2611df26ed1ad8a4e872945f7eb33e050e617c96a73add005b5b`, serial
+0x1, RSA-2048, `CN=sun`, issuer `OT.SUNGROW`, valid 2024-10-24 to 2054-10-17,
+TLS 1.2 `ECDHE-RSA-AES256-GCM-SHA384`. Two different Sungrow products on one
+key makes a per-device key unlikely; what is still missing is the same hash
+from a house that is not gerd's.
 
 ## EVCC connection
 
