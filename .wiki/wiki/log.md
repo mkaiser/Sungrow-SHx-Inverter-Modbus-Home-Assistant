@@ -431,3 +431,11 @@ The three registers the hybrid map does not read, read off the surveys already c
 DRM state), and 13080 is 0 on 42, 330 on two houses and 875, then 961, on an SH20T in EMS mode 3, so
 it is not the heartbeat setting its name says.
 
+
+## [2026-11-06] ingested | peter_sm's eighth reading, from a diagnostics download (#786)
+
+Posted by Korsberg, 0.1.0a26 on Home Assistant 2026.11.0: the `survey` section of the integration's
+diagnostics, committed as `-7`. Nothing new: the same firmware, probes and answering components as
+the seventh reading, live values only, and no control test, register dump or block read test, which a
+diagnostics download does not take. The installation's first reading from a diagnostics download and
+the first on Home Assistant 2026.11.0.

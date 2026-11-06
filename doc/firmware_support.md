@@ -83,6 +83,7 @@ Left out, with no register dump, no firmware or no way to tell the link:
 - `sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-meter-direct-lan`
 - `sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-lan`
 - `sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-wlan`
+- `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-7`
 - `sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan`
 - `sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan`
 
@@ -398,7 +399,7 @@ What moves between firmware versions of one platform, over one kind of link:
 | B6 | SBRBCU-S | 22011.01.27 | unit 200 (cable) | SBR096, SBR128, SBR256 | 4 |
 | B7 | SBRBCU-S | 22011.01.27 | unit 2 (dongle) | SBR096 | 2 |
 | B8 | SBRBCU-S | 22011.01.27 24 | unit 2 (dongle) | 32 kWh, no single model | 1 |
-| B9 | SBRBCU-S | 22011.01.30 | unit 200 (cable) | SBR064, SBR096, SBR128, SBR160, SBR224 | 16 |
+| B9 | SBRBCU-S | 22011.01.30 | unit 200 (cable) | SBR064, SBR096, SBR128, SBR160, SBR224 | 17 |
 | B10 | SBRBCU-S | 22011.01.30 | unit 2 (dongle) | 44.8 kWh, no single model, SBR096, SBR128 | 8 |
 | B11 | SBRBCU-S | 22011.01.30 44 | unit 2 (dongle) | SBR192 | 1 |
 

@@ -404,12 +404,12 @@ the commit; a survey signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-06T11:15:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-06T11:15:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-06T18:15:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-06T18:15:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked: **2026-11-06 11:15 UTC** (#786): nothing new.
+Last checked: **2026-11-06 18:15 UTC** (#786): peter_sm's eighth reading ingested (Korsberg, a diagnostics download).
 
 ## Recurrent: a test plugin for Home Assistant 2026.11 (daily, until it ships)
 
