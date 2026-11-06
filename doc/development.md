@@ -193,7 +193,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | **`scripts/helpers/`** | **One-off tools** |
 | `influx_migration.py` | Print Grafana regexes and rewrite recipes for InfluxDB users; connects to nothing |
 | `review_names.py` | Lay the entity names out for the open naming decision -- grouped by subject, each with the entity id it produces and its legacy name. `--markdown` prints the name table (redirect it into `doc/entity_names.md`), `--texts` the other texts of `strings.json` in English and German (into `doc/text_translation_review.md`); `--check` fails when either file has drifted |
-| `make_brand_icon.py` | Regenerate the integration's `brand/` icons (`--preview` renders a check sheet) |
+| `make_brand_icon.py` | Regenerate the integration's `brand/` icons and wide logos, light and dark (`--preview` renders a check sheet of the icons) |
 
 What a contributor is handed, `device-survey/scripts/`, is described in
 [device-survey/README.md](../device-survey/README.md#what-is-in-scripts).

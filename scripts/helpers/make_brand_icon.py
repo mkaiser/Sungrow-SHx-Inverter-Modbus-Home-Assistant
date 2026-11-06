@@ -63,15 +63,25 @@ CAR_WHEELS = (0.24, 0.76)
 
 
 class _Pen:
-    """Pillow's primitives in unit coordinates, on a supersampled canvas."""
+    """Pillow's primitives in unit coordinates, on a supersampled canvas.
 
-    def __init__(self, size: int) -> None:
+    A unit is the canvas's height. `place` moves and scales what is drawn
+    next, so the parts drawn for the square icon can be laid out again for
+    the wide logo without a second copy of any of them.
+    """
+
+    def __init__(self, size: int, aspect: float = 1.0) -> None:
         self.n = size * SUPERSAMPLE
-        self.image = Image.new("RGBA", (self.n, self.n), CLEAR)
+        self.image = Image.new("RGBA", (round(self.n * aspect), self.n), CLEAR)
         self.draw = ImageDraw.Draw(self.image)
+        self.place(0.0, 0.0, 1.0)
+
+    def place(self, ox: float, oy: float, k: float) -> None:
+        """Draw what follows at `k` times its size, its origin at (ox, oy)."""
+        self.ox, self.oy, self.k = ox, oy, k
 
     def at(self, x: float, y: float) -> tuple[float, float]:
-        return (x * self.n, y * self.n)
+        return ((self.ox + x * self.k) * self.n, (self.oy + y * self.k) * self.n)
 
     def polygon(self, points: tuple[tuple[float, float], ...], fill: Colour) -> None:
         self.draw.polygon([self.at(x, y) for x, y in points], fill=fill)
@@ -81,7 +91,9 @@ class _Pen:
     ) -> None:
         x0, y0 = self.at(cx - w / 2, cy - h / 2)
         x1, y1 = self.at(cx + w / 2, cy + h / 2)
-        self.draw.rounded_rectangle([x0, y0, x1, y1], radius=r * self.n, fill=fill)
+        self.draw.rounded_rectangle(
+            [x0, y0, x1, y1], radius=r * self.k * self.n, fill=fill
+        )
 
     def disc(self, cx: float, cy: float, r: float, fill: Colour) -> None:
         x0, y0 = self.at(cx - r, cy - r)
@@ -90,7 +102,7 @@ class _Pen:
 
     def stroke(self, points: list[tuple[float, float]], w: float, fill: Colour) -> None:
         """Draw a polyline with round ends and joins."""
-        width = max(1, int(w * self.n))
+        width = max(1, int(w * self.k * self.n))
         self.draw.line([self.at(x, y) for x, y in points], fill=fill, width=width)
         for x, y in points:
             self.disc(x, y, w / 2, fill)
@@ -168,6 +180,48 @@ def draw_mark(size: int, palette: dict[str, Colour]) -> Image.Image:
     return pen.image.resize((size, size), Image.LANCZOS)
 
 
+#: The wide logo: the array on the left, then the inverter, the battery and
+#: the car, generation to the car read left to right. Each part is drawn by the
+#: same function as in the icon, placed again: (origin x, origin y, scale), in
+#: units of the logo's height.
+LOGO_ASPECT = 4.6
+LOGO_ARRAY = (-0.20, 0.17, 2.0)
+LOGO_ROW = (1.80, -1.087, 2.6)
+
+
+def draw_logo(height: int, palette: dict[str, Colour]) -> Image.Image:
+    """Draw the wide logo, ``height`` pixels high, trimmed to its content."""
+    pen = _Pen(height, LOGO_ASPECT)
+    hardware, energy = palette["flow"], palette["sun"]
+    pen.place(*LOGO_ARRAY)
+    _array(pen, hardware)
+    pen.place(*LOGO_ROW)
+    _inverter(pen, hardware, energy)
+    _battery(pen, hardware, energy)
+    _car(pen, energy)
+    image = pen.image
+    box = image.getbbox()
+    if box is not None:
+        image = image.crop(box)
+    return image.resize(
+        (round(image.width * height / image.height), height), Image.LANCZOS
+    )
+
+
+def render_logo(name: str, palette: dict[str, Colour]) -> list[Path]:
+    """Write the logo at the brands repository's two heights, 256 and 512."""
+    written = []
+    master = draw_logo(1024, palette)
+    for height, suffix in ((512, "@2x"), (256, "")):
+        image = master.resize(
+            (round(master.width * height / master.height), height), Image.LANCZOS
+        )
+        path = BRAND / f"{name}{suffix}.png"
+        image.save(path, "PNG", optimize=True)
+        written.append(path)
+    return written
+
+
 def trimmed(image: Image.Image) -> Image.Image:
     """Trim transparent edges, then pad back to square.
 
@@ -209,6 +263,7 @@ def main() -> int:
 
     BRAND.mkdir(exist_ok=True)
     written = render("icon", LIGHT) + render("dark_icon", DARK)
+    written += render_logo("logo", LIGHT) + render_logo("dark_logo", DARK)
 
     if args.preview:
         # Both marks at display size and at inspection size, on the two

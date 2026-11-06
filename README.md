@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="custom_components/sungrow_modbus/brand/dark_logo.png">
+    <img src="custom_components/sungrow_modbus/brand/logo.png" alt="A PV array, an inverter, a battery and a car" width="480">
+  </picture>
+</p>
+
 # Sungrow Modbus — Home Assistant integration
 
 [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2)
