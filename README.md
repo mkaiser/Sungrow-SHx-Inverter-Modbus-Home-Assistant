@@ -53,6 +53,9 @@ dashboards when they switch ([doc/integration_migration.md](doc/integration_migr
 - **Configurable poll intervals**, per group, from 5 seconds to never.
 - **A generator the Sungrow cannot see**: a non-Sungrow inverter behind the
   same meter, added back into the house load.
+- **English and German**: names, dialogs and messages follow Home
+  Assistant's language; entity ids stay English on every system, so one id
+  means the same entity everywhere.
 - **Diagnostics** to attach to a bug report, serial and host removed.
 - **The survey**, which reads what your installation answers, and the
   **control test**, which writes each control, checks the inverter acted on
