@@ -99,7 +99,18 @@ Structure:
    contention, not evidence, and is not ingested (the document sits in
    `device-survey/`, gitignored). Nothing was written. The maintainer had
    meant the wallbox, not the inverter; inverter work there waits until his
-   Home Assistant is stopped. The wallbox dry run (step 2) has not run yet.
+   Home Assistant is stopped.
+
+   **Step 2, the dry run, ran 2026-11-06** at the wallbox's own address, read
+   only, no car (wiki: `gerd-wallbox-dry-run-2026-11-06-summary.md`). It
+   identified the AC22E-01 (rated 32.0 A) and found the **output current setting
+   at 0 while idle**, against 160 and 151 while charging: 0 is 0 at either
+   scale, so the scale needs a car charging (step 4). Input 21322 read 161
+   beside it, so it is not the setting's echo. What this changes: the restore
+   would put back a 0 whose meaning (no limit set, or nothing offered) is not
+   established, so step 4 should start with the car already charging, when
+   the setting holds a real current; and the procedure should refuse to write
+   when the setting reads 0 until that is understood. Not yet built.
 
    Done 2026-11-06, beyond step 1: the enable register (holding 21211:
    disabled on 0, the wallbox must say status 8, then enabled on 1) and the

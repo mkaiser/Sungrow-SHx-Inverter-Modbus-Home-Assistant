@@ -439,3 +439,9 @@ diagnostics, committed as `-7`. Nothing new: the same firmware, probes and answe
 the seventh reading, live values only, and no control test, register dump or block read test, which a
 diagnostics download does not take. The installation's first reading from a diagnostics download and
 the first on Home Assistant 2026.11.0.
+
+## [2026-11-06] ingested | gerd's wallbox, the control test's dry run
+
+The wallbox control test's first hardware run, read only over TLS with no car. The output current
+setting read 0 idle (160 and 151 while charging), so its scale needs a car charging; input 21322
+read 161 beside it, so it is not the setting's echo, as the one earlier reading suggested.

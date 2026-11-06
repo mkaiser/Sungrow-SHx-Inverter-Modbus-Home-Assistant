@@ -91,3 +91,8 @@ What is fixed and what moves is in
 [wallbox registers](../sources/wallbox-registers-summary.md).
 RS485 at unit 248 is reported by others and never measured here; see
 [the open query](../queries/does-a-wallbox-answer-unit-248-on-rs485.md).
+
+The [control test's dry run](../sources/gerd-wallbox-dry-run-2026-11-06-summary.md) on
+2026-11-06, with no car: the output current setting (holding 21203) read **0**, against 160
+and 151 while charging, and input 21322 read 161 beside it, so 21322 is not the setting
+echoed. Nothing is written to a wallbox outside a control test with leave.

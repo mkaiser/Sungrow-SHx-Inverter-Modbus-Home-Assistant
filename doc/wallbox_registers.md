@@ -165,7 +165,7 @@ and its echo, holding 21312, and what start mode 3 means.
 | 21317 | u16 | — | **Charging status.** Codes below | 1 / 3 / 4 / 6 | three sources |
 | 21318/21319 | u32, low word first | epoch | Charging **start** time. See the note on the clock. 0 with no vehicle connected, as is 21320 | 17:25:24 | named elsewhere |
 | 21320/21321 | u32, low word first | epoch | Charging **end** time; it advances while charging and freezes when the session ends | 17:28:28 | named elsewhere |
-| 21322 | u16 | 0.1 A | Tracks the output current setting in holding 21203 — 160 against 160 — but read 161 once while the setting stayed at 160, so "available current" fits better than "the setting, echoed" | 160-161 | measured here |
+| 21322 | u16 | 0.1 A | Tracks the output current setting in holding 21203 — 160 against 160 — but read 161 once while the setting stayed at 160, so "available current" fits better; idle with no car it read 161 while the setting read 0 (2026-11-06), so it is not the setting echoed than "the setting, echoed" | 160-161 | measured here |
 
 ## Holding registers
 
