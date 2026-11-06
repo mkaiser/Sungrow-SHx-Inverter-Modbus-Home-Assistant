@@ -20,17 +20,18 @@ flowchart TD
         direction TB
         flow["config_flow<br/>probe, identify, scan the LAN,<br/>ask about entity ids<br/><br/>config_flow_schemas: the forms it shows,<br/>separated from the decisions about showing them"]
         survey["survey &mdash; both parts, one progress bar<br/><br/>part A: probe every capability,<br/>publish a document that carries a<br/>stand-in serial and at most two octets<br/><br/>part B control_test (in the library): write each<br/>control, check the raw word against a hand-typed<br/>scale, watch what the inverter does, put it back<br/><br/>repairs: a run that did not finish restoring<br/>becomes a fix flow somebody can click<br/>download: a signed, short-lived link"]
-        coord["coordinator<br/>four for the inverter, one per tier:<br/>realtime 5s, fast 10s, medium 60s, slowest 600s<br/><br/>one more per extra device that answered:<br/>the SBR pack on medium, the wallbox on fast<br/>with its slow blocks every 30th poll"]
-        ent["entity<br/>sensor, binary_sensor,<br/>number, switch, select, time<br/><br/>a diagnostics-only entry: the survey and<br/>control test buttons and three sensors"]
+        coord["coordinator<br/>four for the inverter, one per tier:<br/>realtime 5s, fast 10s, medium 60s, slowest 600s<br/><br/>one more per extra device that answered:<br/>the SBR pack on medium, the wallbox on fast<br/>with its slow blocks every 30th poll<br/><br/>an SG string inverter: the same four tiers,<br/>its own coordinator class"]
+        ent["entity<br/>sensor, binary_sensor, button,<br/>number, switch, select, time<br/>an SG entry: sensor and binary_sensor only<br/><br/>survey_entities: a diagnostics-only entry's<br/>survey and control test buttons and three sensors"]
         mig["migration<br/>claim the YAML entity_id,<br/>or take a modern id then rename"]
         svc["services<br/>start_inverter, stop_inverter,<br/>run_control_test: audience set per entry,<br/>admins only by default<br/>run_survey: anyone"]
         diag["diagnostics<br/>the downloadable report"]
-        gen["sensor_descriptions.py: source, tested against the entity map<br/>derived/number/switch/select/time: generated from<br/>the library's derived module and scripts/generate/tables"]
-        hand["battery_descriptions.py, wallbox_descriptions.py,<br/>external_descriptions.py<br/>source: none of them is in the entity map"]
+        gen["sensor_descriptions.py: source, tested against the entity map<br/>derived/number/switch/select/time/button: generated from<br/>the library's derived module and scripts/generate/tables"]
+        hand["battery_descriptions.py, wallbox_descriptions.py,<br/>string_inverter_descriptions.py, external_descriptions.py<br/>source: none of them is in the entity map"]
         ext["external<br/>add back a generator the Sungrow cannot see,<br/>from entities another integration owns"]
+        links["links<br/>the wallbox's own address:<br/>Modbus inside TLS, unverified"]
     end
 
-    lib["sungrow_modbus &mdash; the library, installed from PyPI<br/>no Home Assistant imports anywhere<br/><br/>inverter/: device, registers, components (block reads, per tier),<br/>layout (registers read alone), capabilities, faults,<br/>derived and smoothing, export_scale<br/>battery/: the SBR pack &mdash; device, registers, discovery, power<br/>wallbox/: the charge point &mdash; device, registers, discovery, document<br/>top level: addresses, discovery (identify, LAN sweep, reverse DNS),<br/>dump, survey_document, survey, block_test, control_test"]
+    lib["sungrow_modbus &mdash; the library, installed from PyPI<br/>no Home Assistant imports anywhere<br/><br/>hybrid_inverter/: the SH &mdash; device, registers, components<br/>(block reads, per tier), layout (registers read alone),<br/>capabilities, faults, derived and smoothing, export_scale<br/>string_inverter/: the SG &mdash; device, registers, document<br/>battery/: the SBR pack &mdash; device, registers, discovery, power<br/>wallbox/: the charge point &mdash; device, registers, discovery,<br/>document, control_test<br/>ihomemanager/, logger/: unit 247, identified and surveyed,<br/>no entities &mdash; registers, document<br/>control_test/: the engine &mdash; preflight, procedure,<br/>readback, effects, restore<br/>top level: device and identity (the seams every device shares),<br/>addresses, discovery (identify, LAN sweep, reverse DNS),<br/>energy_integral, dump, survey_document, survey,<br/>block_test with raw_client"]
 
     subgraph modbus["homeassistant.components.modbus &mdash; owns the connection"]
         direction TB
