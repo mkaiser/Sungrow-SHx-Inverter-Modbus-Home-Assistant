@@ -88,18 +88,7 @@ Structure:
    gerd's waits until his Home Assistant is stopped: a read-only survey
    on 2026-11-06 ran into it and is not evidence.
 
-3. **A false code 5 from the inverter's control test through a WiNet-S.**
-   At icefest (P066, 2026-11-06) the forced-charging window's days word,
-   holding 33209, refused its test write with 0x04, so it never changed; the
-   restore's write was refused too, and through a WiNet-S the run cannot read
-   the register back, so it reported it not restored: exit 5, the code that
-   means a house is left changed. The RS485 run ten minutes later found it
-   holding its original value. Fix in `control_test/restore.py`: a field whose
-   every write this run sent was refused has not changed, so it needs no
-   restore, and a refused restore write there is not code 5 (say so in the
-   report). The wallbox leg already reads back after a refused restore write.
-   A test with a fixture that raises the real `ModbusExceptionError`.
-4. **Spoil the December release at the top of `main`'s README.** The
+3. **Spoil the December release at the top of `main`'s README.** The
    maintainer targets a release in December 2026 (said 2026-11-06). `main`'s
    README opens with dated news headings that the YAML package's users read;
    a teaser there tells them what is coming before it does. It is a commit on
@@ -124,10 +113,10 @@ Structure:
    needs, from the rest of this file: the ordinary setup switched on
    (open decision 1, `ONLY_SURVEY_MODE`), a stable `0.1.0` rather than an
    alpha, the production-database run (blocker 12) or a decision to go
-   without it, the logo (Future work), the catalog submission (next step 5;
+   without it, the logo (Future work), the catalog submission (next step 4;
    its review takes months, so submit on release, not before), and the
    migration guide made current.
-5. **Submitting to the catalog, when the merge is decided.** Read
+4. **Submitting to the catalog, when the merge is decided.** Read
    2026-11-06 (a subagent's reading of hacs.xyz and
    contributors.home-assistant.io/marketplace; not checked against
    `hacs/default` itself): the route is unchanged. The catalog is still

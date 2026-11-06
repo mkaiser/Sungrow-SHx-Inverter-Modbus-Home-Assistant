@@ -16,8 +16,9 @@ converter.
 - **13074 stores a written word as handed** on P066, on both paths.
 - **The forced-charging window cannot be written**: its days word, holding 33209, refuses with
   0x04 on both paths.
-- **The dongle run's code 5 was a false alarm**: the unrestored word was the refused one, which had
-  never changed, and the RS485 run found it holding its original value.
+- **The dongle run's code 5 could not be settled through the dongle**: the unrestored word was the
+  refused one, and a refusal there is not proof it stayed put. The RS485 run found it holding its
+  original value, so the house was not left changed.
 - **RS485 reads as "direct"**: register 6100 answers on it, so transport detection cannot tell it
   from the LAN port.
 - The first SBR192 read on a direct link.

@@ -462,6 +462,7 @@ built into the firmware, and port 516's TLS authenticates nothing.
 
 Two diagnostics downloads ten minutes apart, both with the control test and a restart. P066 stores
 13074's word as handed, answers 31211 with 0x55, and refuses the forced-charging window's days word
-(33209) with 0x04 on both paths. The dongle run's code 5 was that refused word, which had never
-changed; the RS485 run found it holding its original value. RS485 through a Waveshare converter
+(33209) with 0x04 on both paths. The dongle run's code 5 was that refused word, which a dongle cannot
+read back and whose refusal proves nothing there; the RS485 run found it holding its original
+value. RS485 through a Waveshare converter
 answers 6100, so it reads as direct. The first SBR192 read on a direct link.

@@ -1192,6 +1192,9 @@ async def test_a_dongle_that_refuses_the_restore_is_not_believed(
     row = next(row for row in restores if row.field == CHARGE_POWER)
     assert not row.restored
     assert run.code == 5
+    # And it says what is not known, and which read settles it.
+    assert "not known" in (row.detail or "")
+    assert "own port" in (row.detail or "")
 
 
 async def test_a_dongle_restores_the_export_limit_at_its_measured_factor(

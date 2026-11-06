@@ -177,6 +177,18 @@ class RestoreSteps(ControlTestBase):
                 )
             if attempt < RESTORE_ATTEMPTS:
                 await self.clock.sleep(RESTORE_PAUSE)
+        if self.direct is not True:
+            # Through a dongle nothing can be read back, and a refusal there is
+            # not proof the register stayed put: a window write refused with
+            # 0x04 through gerd's WiNet-S had landed. So this may be a register
+            # that never changed (icefest, 2026-11-06: the cable later found
+            # it holding its original) or one left changed. Say which read
+            # settles it rather than leave "not restored" to be guessed at.
+            detail = (
+                f"{detail}; through a WiNet-S it cannot be read back, and a "
+                "refused write has landed there before, so whether it changed is "
+                "not known: read this register over the inverter's own port"
+            )
         _LOGGER.warning(
             "control test could not restore %s to %s: %s", probe.field, original, detail
         )

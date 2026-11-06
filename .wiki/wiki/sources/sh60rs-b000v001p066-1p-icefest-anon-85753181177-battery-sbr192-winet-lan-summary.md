@@ -45,7 +45,7 @@ test, which a diagnostics download does not take.
 
 ## Control test
 
-Outcome **5**, which here is a false alarm. PV about 230 W, the battery at 3 %.
+Outcome **5**: one register could not be shown to be back. PV about 230 W, the battery at 3 %.
 
 - [13074](../entities/register-13074.md) **stores a written word as handed** (1:1): the held 5100 W
   written back was accepted, where times ten would be 51000 W, above the 6000 W maximum.
@@ -54,9 +54,12 @@ Outcome **5**, which here is a false alarm. PV about 230 W, the battery at 3 %.
   exception 0x04 (`ServerDeviceFailureError`), so the window was never set.
 - **The restore of that word was refused too, five times**, and through a WiNet-S the run cannot
   read a register back (the dongle's cache is stale), so it reported the word as not restored:
-  code 5. The register had never changed, since its only write was refused, and the reading over
-  RS485 ten minutes later found it **already holding its original value**
-  ([that reading](sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-summary.md)). The house was not left changed.
+  code 5. That is the procedure being right to doubt: a refusal through a dongle is not proof the
+  register stayed put (a window write refused with 0x04 through gerd's WiNet-S had landed;
+  [the restore](../concepts/control-test-restore.md)). Here the reading over RS485 ten minutes later
+  found it **already holding its original value**
+  ([that reading](sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-summary.md)),
+  so the house was not left changed.
 - Readbacks through the dongle are its cache: the maximum SoC and the charge and discharge maxima
   "kept the old value" here and matched over RS485.
 - A restart: 2.0 s to stop, 163 s to run again, generating 17 s after that, settings intact.
