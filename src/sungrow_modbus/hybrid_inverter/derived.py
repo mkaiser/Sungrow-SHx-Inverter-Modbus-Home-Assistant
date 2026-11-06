@@ -166,6 +166,16 @@ class Derived:
         """
         return self._mode_flag("pv_generation_cut_raw")
 
+    @property
+    def apl_shutdown_at_zero(self) -> bool | None:
+        """Whether a 0 % active power limit stops the inverter (reg 31213).
+
+        Outside Sungrow's protocol document; iSolarCloud writes it as
+        "Shutdown at active power limit ratio of 0%" (#554), `0xAA` stopping
+        the inverter and `0x55` holding it at 0 W. The surveys read both.
+        """
+        return self._mode_flag("apl_shutdown_at_zero_raw")
+
     # -- the discharge schedules (#785) -----------------------------------
 
     def _clock(self, prefix: str) -> str | None:

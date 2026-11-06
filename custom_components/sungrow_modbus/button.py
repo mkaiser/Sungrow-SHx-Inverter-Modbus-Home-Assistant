@@ -1,11 +1,17 @@
-"""The two buttons this integration has: survey, and control test.
+"""Buttons: the inverter's commands, and on a diagnostics-only entry the survey.
 
-Set up only for a diagnostics-only entry, and that is the point of the
-platform existing at all. Such an entry has no readings, no controls and no
-numbers -- it was set up by somebody who offered to send a reading and did not
-want their house filled with entities -- so these buttons and the three
-sensors beside them are the entirety of its device page, and the reason it
-has one. An ordinary entry reaches the same runs through the `run_survey` and
+**An ordinary entry** gets the commands in `button_descriptions.py`, each
+gated on a capability only a watched write grants. A command register holds
+no state worth a switch -- *Force startup* (13017) never reads back the 0xAA
+it was sent -- so a press writes one word and the device page shows nothing
+else.
+
+**A diagnostics-only entry** gets the survey and control test buttons, and
+nothing else. Such an entry has no readings, no controls and no numbers -- it
+was set up by somebody who offered to send a reading and did not want their
+house filled with entities -- so these buttons and the three sensors beside
+them are the entirety of its device page, and the reason it has one. An
+ordinary entry reaches the same runs through the `run_survey` and
 `run_control_test` actions, which leave no entity behind.
 
 The control test button is there too. That entry mode exists for the
@@ -16,18 +22,21 @@ button's own description and the guards behind it, not a missing entity.
 
 from __future__ import annotations
 
+from homeassistant.components.button import ButtonEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
+from .button_descriptions import BUTTON_DESCRIPTIONS
+from .const import CONF_MODE, MODE_DEVICES, MODE_DIAGNOSTICS
 from .coordinator import SungrowConfigEntry
+from .entity import SungrowButtonDescription, SungrowEntity
 from .survey_entities import ControlTestButton, SurveyButton
 
-# A press schedules the run and returns; it does not hold the call open for
-# the ten minutes a control test takes. So there is nothing to serialize here,
-# and a limit would suggest there is. The runner refuses a second run itself,
-# which is the check that actually matters: two surveys would interleave on one
-# serialized connection.
-PARALLEL_UPDATES = 0
+# One at a time, as on every platform that writes: everything on this endpoint
+# shares one serialized connection. The survey buttons schedule their run and
+# return, and the runner refuses a second run itself, so the limit costs them
+# nothing.
+PARALLEL_UPDATES = 1
 
 
 async def async_setup_entry(
@@ -35,14 +44,32 @@ async def async_setup_entry(
     entry: SungrowConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Set up the survey button, and the control test button on a hybrid.
+    """Set up the commands this device has, or the survey's buttons.
 
     No control test button on an SG: nothing in this integration writes to
     one, and a button that can only refuse is worse than none.
     """
-    if entry.runtime_data.is_string_inverter:
-        async_add_entities([SurveyButton(entry.runtime_data)])
+    runtime_data = entry.runtime_data
+    if entry.data.get(CONF_MODE, MODE_DEVICES) != MODE_DIAGNOSTICS:
+        async_add_entities(
+            SungrowButton(runtime_data, description)
+            for description in BUTTON_DESCRIPTIONS
+            if runtime_data.serves(description)
+        )
         return
-    async_add_entities(
-        [SurveyButton(entry.runtime_data), ControlTestButton(entry.runtime_data)]
-    )
+    if runtime_data.is_string_inverter:
+        async_add_entities([SurveyButton(runtime_data)])
+        return
+    async_add_entities([SurveyButton(runtime_data), ControlTestButton(runtime_data)])
+
+
+class SungrowButton(SungrowEntity, ButtonEntity):
+    """One command register: a press writes its word, then reads back."""
+
+    entity_description: SungrowButtonDescription
+
+    async def async_press(self) -> None:
+        """Send the command."""
+        await self._async_write(
+            (self.entity_description.field, self.entity_description.press_value)
+        )

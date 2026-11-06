@@ -79,6 +79,13 @@ def _energy(component: str, field: str) -> SungrowSensorDescription:
 
 
 def _tracker(component: str, number: int) -> tuple[SungrowSensorDescription, ...]:
+    """Describe one tracker: voltage, current, their product, and its integral.
+
+    The power is computed (`_tracker_power` in the library), and the energy
+    is that power integrated over every poll, since no SG register counts
+    energy per tracker.
+    """
+    key = f"{PREFIX}mppt{number}_energy"
     return (
         _sensor(
             component,
@@ -91,6 +98,23 @@ def _tracker(component: str, number: int) -> tuple[SungrowSensorDescription, ...
             f"mppt{number}_current",
             SensorDeviceClass.CURRENT,
             UnitOfElectricCurrent.AMPERE,
+        ),
+        _sensor(
+            component,
+            f"mppt{number}_power",
+            SensorDeviceClass.POWER,
+            UnitOfPower.WATT,
+        ),
+        SungrowSensorDescription(
+            key=key,
+            component=component,
+            field=f"mppt{number}_power",
+            translation_key=key,
+            integrated=True,
+            device_class=SensorDeviceClass.ENERGY,
+            native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+            state_class=SensorStateClass.TOTAL_INCREASING,
+            suggested_display_precision=2,
         ),
     )
 

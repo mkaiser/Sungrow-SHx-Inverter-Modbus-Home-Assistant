@@ -31,7 +31,10 @@ write has not been watched.
 
 ## In the integration
 
-A diagnostic sensor today, *Forced startup under low SoC raw*, gated by `Capability.FORCED_STARTUP`
-in `src/sungrow_modbus/hybrid_inverter/capabilities.py` (SH-CX excluded). Decided: it becomes a
-button, *Force startup* / *Zwangsstart*, created only on firmware where a write has been watched
-([firmware gating](../concepts/firmware-gating.md)); in `Todo.md`.
+A button, *Force startup* / *Zwangsstart*, that writes `0xAA`: `BUTTONS` in
+`scripts/generate/tables/writes.py`. It is created only where `Capability.FORCED_STARTUP` answered
+(SH-CX excluded) **and** the firmware is in `CONFIRMED_ON_FIRMWARE` for
+`Capability.FORCED_STARTUP_CONTROL` ([firmware gating](../concepts/firmware-gating.md)). That set is
+empty: no survey has watched a standby inverter start on the write, and the control test has no
+check that would, so the button exists on no device yet. There is no sensor: the register reads
+nothing worth showing.

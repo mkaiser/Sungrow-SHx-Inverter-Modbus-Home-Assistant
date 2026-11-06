@@ -239,6 +239,13 @@ OVERRIDES: dict[str, str] = {
     "sg_mppt11_current": "MPPT11 current",
     "sg_mppt12_voltage": "MPPT12 voltage",
     "sg_mppt12_current": "MPPT12 current",
+    # Computed, voltage times current, and its integral: no SG register
+    # reports either per tracker.
+    **{
+        f"sg_mppt{n}_{quantity}": f"MPPT{n} {quantity}"
+        for n in range(1, 13)
+        for quantity in ("power", "energy")
+    },
     "sg_fault_reported": "Fault reported",
     "sg_negative_voltage_to_ground": "Negative voltage to ground",
     "sg_bus_voltage": "Bus voltage",
@@ -345,8 +352,13 @@ OVERRIDES: dict[str, str] = {
     # by watching iSolarCloud, as "Shutdown at active power limit ratio of
     # 0%". Named for what it decides -- whether a 0 % active power limit
     # stops the inverter or holds it running at 0 W -- in words that need no
-    # knowledge of "active power". The surveys read both 0x55 and 0xAA on it.
-    "apl_shutdown_at_zero_raw": "Shutdown inverter when limited to 0 % power",
+    # knowledge of "active power". The surveys read both 0x55 and 0xAA on it,
+    # so the binary sensor decodes it and the number is a code.
+    "apl_shutdown_at_zero": "Shutdown inverter when limited to 0 % power",
+    "apl_shutdown_at_zero_raw": "Shutdown inverter when limited to 0 % power code",
+    # Register 13017, Sungrow's "Forced Startup Under Low SOC Standby": a
+    # command, named for what pressing it does.
+    "force_startup": "Force startup",
     # The two mode registers, now that a binary sensor decodes each. The
     # entity says whether limiting is happening; the ratio above says how
     # much.
@@ -426,14 +438,12 @@ BANNED_WORDS: dict[str, str] = {
 #:   number shows its value *and* sets it, so `sensor.battery_max_soc` beside
 #:   `number.battery_max_soc` is one reading listed twice under one name. The
 #:   YAML package needed both because a YAML `sensor` cannot be written.
-#: * **Ten `_raw` codes whose decoded counterpart exists.**
+#: * **`_raw` codes whose decoded counterpart exists.**
 #:   `backup_mode_raw` reads 170 or 85 where `switch.backup_mode` says on or
 #:   off. Nobody should have to know that 170 means enabled.
 #:
-#: The two `_raw` codes **not** here -- `active_power_limitation_ratio_raw`
-#: and `apl_shutdown_at_zero_raw` -- are the only exposure of their register,
-#: so dropping them would remove the capability. To do: add them when their
-#: friendly forms land.
+#: `active_power_limitation_ratio_raw` is **not** here: it is the only
+#: exposure of its register, and not a code at all but a percentage.
 #:
 #: A field named here loses its *sensor* and keeps its switch, select or
 #: number: its description in `sensor_descriptions.py` carries
@@ -469,6 +479,7 @@ LEGACY_ONLY_SENSORS: dict[str, str] = {
     "active_power_limitation_raw": "binary_sensor.active_power_limitation_enabled",
     "pv_power_limitation_raw": "binary_sensor.pv_power_limitation_enabled",
     "pv_generation_cut_raw": "binary_sensor.pv_generation_cut",
+    "apl_shutdown_at_zero_raw": "binary_sensor.apl_shutdown_at_zero",
 }
 
 #: Entities that belong under the device page's Diagnostic heading rather than
@@ -490,7 +501,6 @@ DIAGNOSTIC: frozenset[str] = frozenset(
         "running_state_raw",
         "pv_power_limitation_raw",
         "pv_generation_cut_raw",
-        "forced_startup_under_low_soc_raw",
         # The two mode flags that replaced a raw number. They mirror a
         # setting rather than measure the house, which is what Diagnostic
         # means -- and their `number`/`select` counterparts, being writable,
@@ -498,6 +508,7 @@ DIAGNOSTIC: frozenset[str] = frozenset(
         "active_power_limitation_enabled",
         "pv_power_limitation_enabled",
         "pv_generation_cut",
+        "apl_shutdown_at_zero",
         # The discharge schedules (#785): settings mirrored read only, like
         # the flags above, so Diagnostic until a watched write makes them
         # writable and CONFIG.
@@ -604,6 +615,7 @@ DIAGNOSTIC: frozenset[str] = frozenset(
 GERMAN: dict[str, str] = {
     # -- on/off states ----------------------------------------------------
     "active_power_limitation_enabled": "Wirkleistungsbegrenzung",
+    "apl_shutdown_at_zero": "Abschalten bei Begrenzung auf 0 % Leistung",
     "alarm_reported": "Alarm aktiv",
     "battery_charging": "Batterie lädt",
     "battery_charging_delay": "Batterie lädt (verzögert)",
@@ -649,6 +661,7 @@ GERMAN: dict[str, str] = {
     "ems_mode": "EMS-Modus",
     "export_power_limit": "Einspeiselimit",
     "export_power_limit_mode": "Einspeiselimit-Modus",
+    "force_startup": "Zwangsstart",
     "forced_charging_days": "Zwangsladung Tage",
     "forced_charging_end_1": "Zwangsladung Ende 1",
     "forced_charging_end_2": "Zwangsladung Ende 2",
@@ -668,7 +681,6 @@ GERMAN: dict[str, str] = {
     "ems_mode_selection_raw": "EMS-Modus Auswahl Code",
     "export_power_limit_mode_raw": "Einspeiselimit-Modus Code",
     "export_power_raw": "Einspeiseleistung (mit Vorzeichen)",
-    "forced_startup_under_low_soc_raw": "Zwangsstart bei niedrigem Ladezustand",
     "load_adjustment_mode_enable_raw": "Laststeuerungsmodus Aktivierung Code",
     "load_adjustment_mode_selection_raw": "Laststeuerungsmodus Auswahl Code",
     "pv_generation_cut_raw": "PV-Erzeugung abgeschaltet Code",
@@ -676,7 +688,7 @@ GERMAN: dict[str, str] = {
     "running_state_raw": "Betriebszustand Code",
     # -- limits and control state -----------------------------------------
     "active_power_limitation_ratio_raw": "Wirkleistungsbegrenzung prozentual",
-    "apl_shutdown_at_zero_raw": "Abschalten bei Begrenzung auf 0 % Leistung",
+    "apl_shutdown_at_zero_raw": "Abschalten bei Begrenzung auf 0 % Leistung Code",
     "export_power_limit_max": "Einspeiselimit Maximum",
     "export_power_limit_min": "Einspeiselimit Minimum",
     "feed_in_limitation_ratio": "Einspeiselimit prozentual",
@@ -850,6 +862,7 @@ GERMAN: dict[str, str] = {
         for n in range(1, 5)
         for quantity, german in (
             ("current", "Strom"),
+            ("energy", "Energie"),
             ("power", "Leistung"),
             ("voltage", "Spannung"),
         )
@@ -897,7 +910,12 @@ GERMAN: dict[str, str] = {
     **{
         f"sg_mppt{n}_{quantity}": f"MPPT{n} {german}"
         for n in range(1, 13)
-        for quantity, german in (("current", "Strom"), ("voltage", "Spannung"))
+        for quantity, german in (
+            ("current", "Strom"),
+            ("energy", "Energie"),
+            ("power", "Leistung"),
+            ("voltage", "Spannung"),
+        )
     },
     "sg_negative_voltage_to_ground": "Negative Spannung gegen Erde",
     **{

@@ -1,6 +1,6 @@
 # The entity names
 
-**306 entities** that modern mode can create (Hybrid inverter 190, SBR battery 34, Wallbox 21, SG string inverter 61).
+**333 entities** that modern mode can create (Hybrid inverter 193, SBR battery 34, Wallbox 21, SG string inverter 85).
 
 The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
@@ -32,12 +32,12 @@ options flows, repairs, actions and error messages -- is in
 A name with an open question has it **To discuss** under its table: what the
 entity is and the names to choose from (`NAME_DISCUSSION` in `naming.py`).
 
-A further 20 sensors exist **only in legacy mode** and are listed at the
+A further 21 sensors exist **only in legacy mode** and are listed at the
 end. Their ids are the YAML package's, kept so that history keyed to them
 carries on, and modern mode replaces each with something better.
 
 
-## Hybrid inverter (190)
+## Hybrid inverter (193)
 
 The inverter's own device, named after the model unless the owner named it. Ids shown for `SH10RT`.
 
@@ -87,15 +87,14 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 |  |  | Weekend discharge window 1 | Entladefenster Wochenende 1 | `sensor.sh10rt_weekend_discharge_window_1` |  |  |
 |  |  | Weekend discharge window 2 | Entladefenster Wochenende 2 | `sensor.sh10rt_weekend_discharge_window_2` |  |  |
 
-### Everything else (5)
+### Everything else (4)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
-| Forced Startup Under Low SOC Standby (13017) |  | Forced startup under low SoC raw | Zwangsstart bei niedrigem Ladezustand | `sensor.sh10rt_forced_startup_under_low_soc_raw` |  |  |
 | Power factor (5035) | Power factor | Power factor | Leistungsfaktor | `sensor.sh10rt_power_factor` | `sensor.power_factor` |  |
 | Power Flow Status (13001) | Power Flow Status **←** | Power flow code | Leistungsfluss Code | `sensor.sh10rt_power_flow_code` | `sensor.power_flow_status` |  |
 |  | Sungrow inverter state **←** | Running state | Betriebszustand | `sensor.sh10rt_running_state` | `sensor.sungrow_inverter_state` |  |
-| *not in the datasheet* (31213) | APL shutdown at zero raw **←** | Shutdown inverter when limited to 0 % power | Abschalten bei Begrenzung auf 0 % Leistung | `sensor.sh10rt_shutdown_inverter_when_limited_to_0_power` | `sensor.apl_shutdown_at_zero_raw` |  |
+|  |  | Shutdown inverter when limited to 0 % power | Abschalten bei Begrenzung auf 0 % Leistung | `binary_sensor.sh10rt_shutdown_inverter_when_limited_to_0_power` |  |  |
 
 ### Faults and alarms (9)
 
@@ -157,7 +156,7 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 | --- | --- | --- | --- | --- | --- | --- |
 | Inside Temperature (5008) | Inverter temperature **←** | Device temperature | Gerätetemperatur | `sensor.sh10rt_device_temperature` | `sensor.inverter_temperature` | °C |
 
-### The PV trackers (26)
+### The PV trackers (30)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -167,15 +166,19 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 |  |  | Export from PV this month | Einspeisung aus PV diesen Monat | `sensor.sh10rt_export_from_pv_this_month` |  | kWh |
 |  |  | Export from PV this year | Einspeisung aus PV dieses Jahr | `sensor.sh10rt_export_from_pv_this_year` |  | kWh |
 | MPPT 1 Current (5012) | MPPT1 current | MPPT1 current | MPPT1 Strom | `sensor.sh10rt_mppt1_current` | `sensor.mppt1_current` | A |
+|  |  | MPPT1 energy | MPPT1 Energie | `sensor.sh10rt_mppt1_energy` |  | kWh |
 |  | MPPT1 power | MPPT1 power | MPPT1 Leistung | `sensor.sh10rt_mppt1_power` | `sensor.mppt1_power` | W |
 | MPPT 1 Voltage (5011) | MPPT1 voltage | MPPT1 voltage | MPPT1 Spannung | `sensor.sh10rt_mppt1_voltage` | `sensor.mppt1_voltage` | V |
 | MPPT 2 Current (5014) | MPPT2 current | MPPT2 current | MPPT2 Strom | `sensor.sh10rt_mppt2_current` | `sensor.mppt2_current` | A |
+|  |  | MPPT2 energy | MPPT2 Energie | `sensor.sh10rt_mppt2_energy` |  | kWh |
 |  | MPPT2 power | MPPT2 power | MPPT2 Leistung | `sensor.sh10rt_mppt2_power` | `sensor.mppt2_power` | W |
 | MPPT 2 Voltage (5013) | MPPT2 voltage | MPPT2 voltage | MPPT2 Spannung | `sensor.sh10rt_mppt2_voltage` | `sensor.mppt2_voltage` | V |
 | MPPT 3 Current (5016) | MPPT3 current | MPPT3 current | MPPT3 Strom | `sensor.sh10rt_mppt3_current` | `sensor.mppt3_current` | A |
+|  |  | MPPT3 energy | MPPT3 Energie | `sensor.sh10rt_mppt3_energy` |  | kWh |
 |  | MPPT3 power | MPPT3 power | MPPT3 Leistung | `sensor.sh10rt_mppt3_power` | `sensor.mppt3_power` | W |
 | MPPT 3 Voltage (5015) | MPPT3 voltage | MPPT3 voltage | MPPT3 Spannung | `sensor.sh10rt_mppt3_voltage` | `sensor.mppt3_voltage` | V |
 | MPPT 4 Current (5116) | MPPT4 current | MPPT4 current | MPPT4 Strom | `sensor.sh10rt_mppt4_current` | `sensor.mppt4_current` | A |
+|  |  | MPPT4 energy | MPPT4 Energie | `sensor.sh10rt_mppt4_energy` |  | kWh |
 |  | MPPT4 power | MPPT4 power | MPPT4 Leistung | `sensor.sh10rt_mppt4_power` | `sensor.mppt4_power` | W |
 | MPPT 4 Voltage (5115) | MPPT4 voltage | MPPT4 voltage | MPPT4 Spannung | `sensor.sh10rt_mppt4_voltage` | `sensor.mppt4_voltage` | V |
 |  | PV generating | PV generating | PV erzeugt | `binary_sensor.sh10rt_pv_generating` | `binary_sensor.pv_generating` |  |
@@ -374,11 +377,11 @@ A device of its own under the inverter, named after the model it reports, `Wallb
 |  |  | Session energy | Energie der Ladesitzung | `sensor.ac22e_01_session_energy` |  | Wh |
 |  |  | Start mode | Startmodus | `sensor.ac22e_01_start_mode` |  |  |
 
-## SG string inverter (61)
+## SG string inverter (85)
 
 An entry of its own, never beside a hybrid. Trackers and phases exist only where the model serves them, so this is every one a model can have. Ids shown for `SG5.0RS`.
 
-### Everything (61)
+### Everything (85)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -393,28 +396,52 @@ An entry of its own, never beside a hybrid. Trackers and phases exist only where
 | Grid frequency (5036) |  | Grid frequency | Netzfrequenz | `sensor.sg5_0rs_grid_frequency` |  | Hz |
 | Load power (5091) |  | Load power | Leistungsaufnahme Verbraucher | `sensor.sg5_0rs_load_power` |  | W |
 | MPPT 1 current (5012) |  | MPPT1 current | MPPT1 Strom | `sensor.sg5_0rs_mppt1_current` |  | A |
+|  |  | MPPT1 energy | MPPT1 Energie | `sensor.sg5_0rs_mppt1_energy` |  | kWh |
+|  |  | MPPT1 power | MPPT1 Leistung | `sensor.sg5_0rs_mppt1_power` |  | W |
 | MPPT 1 voltage (5011) |  | MPPT1 voltage | MPPT1 Spannung | `sensor.sg5_0rs_mppt1_voltage` |  | V |
 | MPPT 10 current (5133) |  | MPPT10 current | MPPT10 Strom | `sensor.sg5_0rs_mppt10_current` |  | A |
+|  |  | MPPT10 energy | MPPT10 Energie | `sensor.sg5_0rs_mppt10_energy` |  | kWh |
+|  |  | MPPT10 power | MPPT10 Leistung | `sensor.sg5_0rs_mppt10_power` |  | W |
 | MPPT 10 voltage (5132) |  | MPPT10 voltage | MPPT10 Spannung | `sensor.sg5_0rs_mppt10_voltage` |  | V |
 | MPPT 11 current (5135) |  | MPPT11 current | MPPT11 Strom | `sensor.sg5_0rs_mppt11_current` |  | A |
+|  |  | MPPT11 energy | MPPT11 Energie | `sensor.sg5_0rs_mppt11_energy` |  | kWh |
+|  |  | MPPT11 power | MPPT11 Leistung | `sensor.sg5_0rs_mppt11_power` |  | W |
 | MPPT 11 voltage (5134) |  | MPPT11 voltage | MPPT11 Spannung | `sensor.sg5_0rs_mppt11_voltage` |  | V |
 | MPPT 12 current (5137) |  | MPPT12 current | MPPT12 Strom | `sensor.sg5_0rs_mppt12_current` |  | A |
+|  |  | MPPT12 energy | MPPT12 Energie | `sensor.sg5_0rs_mppt12_energy` |  | kWh |
+|  |  | MPPT12 power | MPPT12 Leistung | `sensor.sg5_0rs_mppt12_power` |  | W |
 | MPPT 12 voltage (5136) |  | MPPT12 voltage | MPPT12 Spannung | `sensor.sg5_0rs_mppt12_voltage` |  | V |
 | MPPT 2 current (5014) |  | MPPT2 current | MPPT2 Strom | `sensor.sg5_0rs_mppt2_current` |  | A |
+|  |  | MPPT2 energy | MPPT2 Energie | `sensor.sg5_0rs_mppt2_energy` |  | kWh |
+|  |  | MPPT2 power | MPPT2 Leistung | `sensor.sg5_0rs_mppt2_power` |  | W |
 | MPPT 2 voltage (5013) |  | MPPT2 voltage | MPPT2 Spannung | `sensor.sg5_0rs_mppt2_voltage` |  | V |
 | MPPT 3 current (5016) |  | MPPT3 current | MPPT3 Strom | `sensor.sg5_0rs_mppt3_current` |  | A |
+|  |  | MPPT3 energy | MPPT3 Energie | `sensor.sg5_0rs_mppt3_energy` |  | kWh |
+|  |  | MPPT3 power | MPPT3 Leistung | `sensor.sg5_0rs_mppt3_power` |  | W |
 | MPPT 3 voltage (5015) |  | MPPT3 voltage | MPPT3 Spannung | `sensor.sg5_0rs_mppt3_voltage` |  | V |
 | MPPT 4 current (5116) |  | MPPT4 current | MPPT4 Strom | `sensor.sg5_0rs_mppt4_current` |  | A |
+|  |  | MPPT4 energy | MPPT4 Energie | `sensor.sg5_0rs_mppt4_energy` |  | kWh |
+|  |  | MPPT4 power | MPPT4 Leistung | `sensor.sg5_0rs_mppt4_power` |  | W |
 | MPPT 4 voltage (5115) |  | MPPT4 voltage | MPPT4 Spannung | `sensor.sg5_0rs_mppt4_voltage` |  | V |
 | MPPT 5 current (5118) |  | MPPT5 current | MPPT5 Strom | `sensor.sg5_0rs_mppt5_current` |  | A |
+|  |  | MPPT5 energy | MPPT5 Energie | `sensor.sg5_0rs_mppt5_energy` |  | kWh |
+|  |  | MPPT5 power | MPPT5 Leistung | `sensor.sg5_0rs_mppt5_power` |  | W |
 | MPPT 5 voltage (5117) |  | MPPT5 voltage | MPPT5 Spannung | `sensor.sg5_0rs_mppt5_voltage` |  | V |
 | MPPT 6 current (5120) |  | MPPT6 current | MPPT6 Strom | `sensor.sg5_0rs_mppt6_current` |  | A |
+|  |  | MPPT6 energy | MPPT6 Energie | `sensor.sg5_0rs_mppt6_energy` |  | kWh |
+|  |  | MPPT6 power | MPPT6 Leistung | `sensor.sg5_0rs_mppt6_power` |  | W |
 | MPPT 6 voltage (5119) |  | MPPT6 voltage | MPPT6 Spannung | `sensor.sg5_0rs_mppt6_voltage` |  | V |
 | MPPT 7 current (5122) |  | MPPT7 current | MPPT7 Strom | `sensor.sg5_0rs_mppt7_current` |  | A |
+|  |  | MPPT7 energy | MPPT7 Energie | `sensor.sg5_0rs_mppt7_energy` |  | kWh |
+|  |  | MPPT7 power | MPPT7 Leistung | `sensor.sg5_0rs_mppt7_power` |  | W |
 | MPPT 7 voltage (5121) |  | MPPT7 voltage | MPPT7 Spannung | `sensor.sg5_0rs_mppt7_voltage` |  | V |
 | MPPT 8 current (5124) |  | MPPT8 current | MPPT8 Strom | `sensor.sg5_0rs_mppt8_current` |  | A |
+|  |  | MPPT8 energy | MPPT8 Energie | `sensor.sg5_0rs_mppt8_energy` |  | kWh |
+|  |  | MPPT8 power | MPPT8 Leistung | `sensor.sg5_0rs_mppt8_power` |  | W |
 | MPPT 8 voltage (5123) |  | MPPT8 voltage | MPPT8 Spannung | `sensor.sg5_0rs_mppt8_voltage` |  | V |
 | MPPT 9 current (5131) |  | MPPT9 current | MPPT9 Strom | `sensor.sg5_0rs_mppt9_current` |  | A |
+|  |  | MPPT9 energy | MPPT9 Energie | `sensor.sg5_0rs_mppt9_energy` |  | kWh |
+|  |  | MPPT9 power | MPPT9 Leistung | `sensor.sg5_0rs_mppt9_power` |  | W |
 | MPPT 9 voltage (5130) |  | MPPT9 voltage | MPPT9 Spannung | `sensor.sg5_0rs_mppt9_voltage` |  | V |
 | Meter power (5083) |  | Meter active power | Zähler Wirkleistung | `sensor.sg5_0rs_meter_active_power` |  | W |
 | Meter A phase power (5085) |  | Meter phase A power | Zähler Phase A Leistung | `sensor.sg5_0rs_meter_phase_a_power` |  | W |
@@ -444,7 +471,7 @@ An entry of its own, never beside a hybrid. Trackers and phases exist only where
 | Total running time (5006) |  | Total running time | Gesamte Laufzeit | `sensor.sg5_0rs_total_running_time` |  | h |
 |  |  | Work state | Arbeitszustand | `sensor.sg5_0rs_work_state` |  |  |
 
-## Legacy mode only (20)
+## Legacy mode only (21)
 
 Not created in modern mode. Each is a second copy of something a user
 already has, so the column on the right is where the reading went instead,
@@ -472,6 +499,7 @@ with its modern-mode id.
 | *not in the datasheet* (31211) |  | PV generation cut code | PV-Erzeugung abgeschaltet Code | (not in the YAML) | PV generation cut (`binary_sensor.sh10rt_pv_generation_cut`) |
 | PV power limitation (13018) |  | PV power limitation code | PV-Leistungsbegrenzung Code | (not in the YAML) | PV power limitation (`binary_sensor.sh10rt_pv_power_limitation`) |
 | Running state (13000) | Running state raw | Running state code | Betriebszustand Code | `sensor.running_state_raw` | Running state (`sensor.sh10rt_running_state`) |
+| *not in the datasheet* (31213) | APL shutdown at zero raw | Shutdown inverter when limited to 0 % power code | Abschalten bei Begrenzung auf 0 % Leistung Code | `sensor.apl_shutdown_at_zero_raw` | Shutdown inverter when limited to 0 % power (`binary_sensor.sh10rt_shutdown_inverter_when_limited_to_0_power`) |
 
 ## Not ported (3)
 

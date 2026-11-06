@@ -385,8 +385,15 @@ class InverterFastHolding(Component):
     """Load adjustment mode selection raw."""
     load_adjustment_mode_enable_raw = integer(reg(13011), signed=False, writable=True)
     """Load adjustment mode enable raw."""
-    forced_startup_under_low_soc_raw = integer(reg(13017), signed=False, nan=65535)
-    """Forced startup under low SoC raw."""
+    forced_startup_under_low_soc_raw = integer(
+        reg(13017), signed=False, nan=65535, writable=True
+    )
+    """Forced startup under low SoC raw.
+
+    A command: 0xAA wakes an inverter in low-SoC standby, and it never reads
+    0xAA back. Written only by the *Force startup* button, where
+    `Capability.FORCED_STARTUP_CONTROL` is granted.
+    """
     pv_power_limitation_raw = integer(reg(13018), signed=False, nan=65535)
     """PV power limitation raw."""
     ems_mode_selection_raw = integer(reg(13050), signed=False, writable=True)

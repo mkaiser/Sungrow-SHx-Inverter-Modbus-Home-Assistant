@@ -97,7 +97,7 @@ class SungrowStringInverter(MappedDevice):
             return False
         if self.output_type == 0 and field.startswith(("phase_b_", "phase_c_")):
             return False
-        tracker = re.fullmatch(r"mppt(\d+)_(voltage|current)", field)
+        tracker = re.fullmatch(r"mppt(\d+)_(voltage|current|power)", field)
         count = MPPT_COUNTS.get(self.device_type_code or -1)
         return tracker is None or count is None or int(tracker[1]) <= count
 

@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """Generate the integration's entity descriptions and their names.
 
-Five artefacts, one command each, all from tables rather than typed by hand:
+Seven artefacts, one command each, all from tables rather than typed by hand:
 
 * `derived` -- the computed values in `sungrow_modbus.hybrid_inverter.derived`, as the
   entities that replace the YAML package's `template:` sensors;
-* `numbers`, `switches`, `selects` -- one entity per row of the write table in
-  [tables/writes.py](tables/writes.py), because a bound typed twice is a bound
-  that will disagree with itself eventually, and the number that decides how
-  far a battery discharges is not one to get wrong;
+* `numbers`, `switches`, `selects`, `times`, `buttons` -- one entity per row
+  of the write table in [tables/writes.py](tables/writes.py), because a bound
+  typed twice is a bound that will disagree with itself eventually, and the
+  number that decides how far a battery discharges is not one to get wrong;
 * `strings` -- every entity's name, to the convention in
   [tables/naming.py](tables/naming.py), into `strings.json` and its English
   copy under `translations/`.
 
-`strings` reads the descriptions the other four write, so `all` runs it last.
+`strings` reads the descriptions the other six write, so `all` runs it last.
 
-    python scripts/generate/descriptions.py                  # write all five
+    python scripts/generate/descriptions.py                  # write all seven
     python scripts/generate/descriptions.py --check          # fail if any is stale
     python scripts/generate/descriptions.py numbers --check  # just one
 """
@@ -35,7 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "tables"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from naming import DIAGNOSTIC, modern_name
-from writes import NUMBERS, SELECTS, SWITCHES, TIMES
+from writes import BUTTONS, NUMBERS, SELECTS, SWITCHES, TIMES
 
 from sungrow_modbus.hybrid_inverter.faults import FAULT_WORDS
 from sungrow_modbus.hybrid_inverter.registers import COMPONENTS
@@ -214,10 +214,9 @@ FLAGS: dict[str, str] = {
 #: number itself -- `sensor.active_power_limitation_raw` reading 170 or 85 and
 #: leaving the reader to know which is which.
 #:
-#: `apl_shutdown_at_zero_raw` looks like these and is not here yet: register
-#: 31213 is absent from Sungrow's datasheet, so its pair is a convention found
-#: in issue #554. The surveys now read both `0x55` and `0xAA` on it, so it
-#: can become a flag once a write is watched.
+#: `apl_shutdown_at_zero` is outside Sungrow's datasheet: its pair is the
+#: convention issue #554 found iSolarCloud writing, and the surveys read both
+#: codes on it. It is decoded, never written.
 MODE_FLAGS: dict[str, tuple[str, str]] = {
     # key: (the boolean on `Derived`, the register it decodes)
     "active_power_limitation_enabled": (
@@ -231,6 +230,7 @@ MODE_FLAGS: dict[str, tuple[str, str]] = {
     # Outside the specification, but both codes were observed by their effect
     # (#738), which is the bar the comment above sets.
     "pv_generation_cut": ("pv_generation_cut", "pv_generation_cut_raw"),
+    "apl_shutdown_at_zero": ("apl_shutdown_at_zero", "apl_shutdown_at_zero_raw"),
 }
 
 #: Whether the inverter reports a problem, from Appendix 4's words.
@@ -279,6 +279,12 @@ HISTORY: dict[str, tuple[str, ...]] = {
     )
     for quantity in ("pv_generation", "direct_consumption", "export_from_pv")
     for period in ("month", "year")
+}
+
+#: Energy per MPP tracker, which no register counts: the derived power it
+#: integrates, by key. New entities with no YAML predecessor.
+INTEGRATED: dict[str, str] = {
+    f"mppt{number}_energy": f"mppt{number}_power" for number in range(1, 5)
 }
 
 #: Seconds a power-flow bit must hold before its `(delay)` twin reports it.
@@ -455,6 +461,23 @@ def render_derived() -> str:
 
     for key, (source_key, window) in SMOOTHED.items():
         lines += _smoothed_description(key, source_key, window, legacy)
+
+    for key, source in INTEGRATED.items():
+        _, depends = DERIVED[source]
+        lines.append("    SungrowSensorDescription(")
+        lines.append(f'        key="{key}",')
+        lines.append('        component="derived",')
+        lines.append(f'        field="{source}",')
+        lines.append(f'        translation_key="{key}",')
+        lines.append(f"        depends_on={depends!r},")
+        if capability := _requires(key):
+            lines.append(f"        requires=Capability.{capability},")
+        lines.append("        integrated=True,")
+        lines.append("        device_class=SensorDeviceClass.ENERGY,")
+        lines.append("        state_class=SensorStateClass.TOTAL_INCREASING,")
+        lines.append('        native_unit_of_measurement="kWh",')
+        lines.append("        suggested_display_precision=2,")
+        lines.append("    ),")
 
     for key, depends in DISCHARGE_SCHEDULE.items():
         if key.endswith("_discharge"):
@@ -787,6 +810,48 @@ def render_times() -> str:
 
 
 # --------------------------------------------------------------------------
+# buttons
+
+BUTTONS_HEADER = '''"""Button descriptions, generated from the write table.
+
+Do not edit by hand: `scripts/generate/descriptions.py buttons` writes this
+file from `scripts/generate/tables/writes.py`, and CI checks that it matches.
+
+Each is a command register: a press writes one word, and there is no state to
+show, because a command does not read back what was sent.
+"""
+
+from __future__ import annotations
+
+from homeassistant.const import EntityCategory
+
+from sungrow_modbus import Capability
+
+from .entity import SungrowButtonDescription
+
+BUTTON_DESCRIPTIONS: tuple[SungrowButtonDescription, ...] = (
+'''
+
+
+def render_buttons() -> str:
+    """Return the whole `button_descriptions.py` module."""
+    registers = _registers()
+    lines = [BUTTONS_HEADER]
+    for row in BUTTONS:
+        lines.append("    SungrowButtonDescription(")
+        lines.append(f'        key="{row["key"]}",')
+        lines.append(f'        component="{_component_of(row["field"], registers)}",')
+        lines.append(f'        field="{row["field"]}",')
+        lines.append(f'        translation_key="{row["key"]}",')
+        lines.append(f"        requires=Capability.{row['requires']},")
+        lines.append(f"        press_value={row['press']:#04x},")
+        lines.append("        entity_category=EntityCategory.CONFIG,")
+        lines.append("    ),")
+    lines.append(")")
+    return "\n".join(lines) + "\n"
+
+
+# --------------------------------------------------------------------------
 # strings: every entity's name
 #
 # English is the source language, so `en.json` is a copy rather than a
@@ -802,6 +867,7 @@ def descriptions() -> list[tuple[str, str, str]]:
     from custom_components.sungrow_modbus.battery_descriptions import (
         BATTERY_DESCRIPTIONS,
     )
+    from custom_components.sungrow_modbus.button_descriptions import BUTTON_DESCRIPTIONS
     from custom_components.sungrow_modbus.derived_descriptions import (
         DERIVED_BINARY_SENSORS,
         DERIVED_SENSORS,
@@ -860,6 +926,7 @@ def descriptions() -> list[tuple[str, str, str]]:
     entries += [("switch", d) for d in SWITCH_DESCRIPTIONS]
     entries += [("select", d) for d in SELECT_DESCRIPTIONS]
     entries += [("time", d) for d in TIME_DESCRIPTIONS]
+    entries += [("button", d) for d in BUTTON_DESCRIPTIONS]
     return [
         (
             domain,
@@ -955,7 +1022,13 @@ TARGETS: dict[str, Target] = {
     "times": Target(
         (COMPONENT / "time_descriptions.py",), render_times, True, "the write table"
     ),
-    # Last: it reads what the five above write.
+    "buttons": Target(
+        (COMPONENT / "button_descriptions.py",),
+        render_buttons,
+        True,
+        "the write table",
+    ),
+    # Last: it reads what the six above write.
     "strings": Target(
         (STRINGS, TRANSLATION), render_strings, False, "the descriptions"
     ),

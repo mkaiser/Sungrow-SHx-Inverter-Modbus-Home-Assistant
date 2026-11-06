@@ -453,6 +453,36 @@ TIMES: tuple[Time, ...] = tuple(
     for part in ("start", "end")
 )
 
+
+class Button(TypedDict):
+    """One command register exposed as a `button`: a press writes one word."""
+
+    field: str
+    key: str
+    requires: str
+    press: int
+
+
+#: Commands, which hold no state to show: a press writes `press` and that is
+#: all. Each needs a capability only a watched write grants, because a
+#: command's readback proves nothing.
+#:
+#: Register 13017, V1.1.7's "Forced Startup Under Low SOC Standby": 0xAA
+#: wakes an inverter waiting in standby with the battery at its minimum SoC
+#: and no PV, which it otherwise does not leave until PV returns. It reads 0
+#: or 0x55, never 0xAA, so it is no switch. Gated by
+#: `FORCED_STARTUP_CONTROL`, which `capabilities.CONFIRMED_ON_FIRMWARE`
+#: grants on no firmware yet: the button is created nowhere until a control
+#: test watches a standby inverter start on it.
+BUTTONS: tuple[Button, ...] = (
+    {
+        "field": "forced_startup_under_low_soc_raw",
+        "key": "force_startup",
+        "requires": "FORCED_STARTUP_CONTROL",
+        "press": 0xAA,
+    },
+)
+
 #: Step 5: starting and stopping the inverter. **Not an entity.**
 #:
 #: Register 13000 is the one register in the map that turns the inverter off:
@@ -493,5 +523,5 @@ START_STOP = {
 #: set -- and the test that asserts `registers.py`'s writable set *is* this
 #: table stays exact.
 WRITABLE_FIELDS: frozenset[str] = frozenset(
-    entry["field"] for entry in (*NUMBERS, *SWITCHES, *SELECTS)
+    entry["field"] for entry in (*NUMBERS, *SWITCHES, *SELECTS, *BUTTONS)
 ) | frozenset(field for entry in TIMES for field in (entry["hour"], entry["minute"]))

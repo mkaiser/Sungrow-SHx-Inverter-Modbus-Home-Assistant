@@ -635,6 +635,11 @@ NOT_PROBED: dict[str, str] = {
         "a mode flag with no scale to get wrong, written only by the PV cut "
         "check, which judges it by what PV does"
     ),
+    "forced_startup_under_low_soc_raw": (
+        "a command with no state to read back: it never reads 0xAA, and writing "
+        "it wakes an inverter in low-SoC standby, so only a watched start can "
+        "judge it"
+    ),
     # The forced-charging schedule (V1.1.16 33208-33219). Every register in it
     # counts in ones, hours, minutes or whole percent, so there is no scale
     # for a readback to catch; and a window written into it can start the

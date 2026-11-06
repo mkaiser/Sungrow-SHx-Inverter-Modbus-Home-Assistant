@@ -56,6 +56,7 @@ SENSOR_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         legacy_unique_id="sg_apl_shutdown_on_zero_raw",
         legacy_platform="modbus",
         entity_category=EntityCategory.DIAGNOSTIC,
+        legacy_only=True,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SungrowSensorDescription(
@@ -673,13 +674,6 @@ SENSOR_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="%",
         suggested_display_precision=1,
-    ),
-    SungrowSensorDescription(
-        key="forced_startup_under_low_soc_raw",
-        component="fast_holding",
-        field="forced_startup_under_low_soc_raw",
-        translation_key="forced_startup_under_low_soc_raw",
-        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SungrowSensorDescription(
         key="grid_frequency",

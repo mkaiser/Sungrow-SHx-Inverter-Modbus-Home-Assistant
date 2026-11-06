@@ -275,7 +275,8 @@ coordinators were doing, the progress entity, and the guard on part B. A
 change to what a document *says* therefore belongs in `src/`, where both
 producers pick it up.
 
-Where time enters a polled value, in `hybrid_inverter/smoothing.py`, it takes the
+Where time enters a polled value, in `hybrid_inverter/smoothing.py` and in
+`energy_integral.py` (each tracker's energy, integrated from its power), it takes the
 clock as an argument rather than reading one — which is what lets a
 sixty-second delay be tested without waiting sixty seconds.
 

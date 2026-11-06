@@ -94,7 +94,11 @@ async def test_the_realtime_block_decodes_as_the_protocol_says() -> None:
     assert device.field("total_pv_generation") == 4567
     assert device.field("inverter_temperature") == 41.2
     assert device.field("mppt1_voltage") == 360.1
+    assert device.field("mppt1_power") == pytest.approx(
+        device.field("mppt1_voltage") * device.field("mppt1_current")
+    )
     assert device.field("mppt3_voltage") is None, "0xFFFF is no tracker"
+    assert device.field("mppt3_power") is None
     assert device.field("phase_b_voltage") is None
     assert device.field("total_dc_power") == 1890
     assert device.field("total_active_power") == 1850

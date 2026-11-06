@@ -139,7 +139,12 @@ def test_every_description_names_a_field_that_exists(description) -> None:
     device = SungrowStringInverter(MockModbusConnection().for_unit(1))
     assert description.field in device.field_names
     assert not description.field.endswith("_raw"), "the decoded property, not the code"
-    assert description.key == f"sg_{description.field}"
+    # A tracker's energy integrates its power, so the two share a field.
+    expected = description.field.replace("_power", "_energy")
+    assert (
+        description.key
+        == f"sg_{expected if description.integrated else description.field}"
+    )
 
 
 async def test_an_sg_entry_is_its_own_device_with_only_what_answered(

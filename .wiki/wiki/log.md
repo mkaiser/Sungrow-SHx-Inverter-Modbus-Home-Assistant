@@ -392,6 +392,12 @@ model so far, and stay open.
 survey's decoded `battery_pack` block. No pack model disagrees with another on its firmware in the
 four columns that pool two; unit 2 refuses the cell and module blocks on every pack.
 
+## [2026-11-05] updated | registers 13017 and 31213 in the integration
+
+31213 is decoded to an on/off sensor, its number kept only for legacy ids. 13017 is a *Force startup*
+button gated on a watched write, which no firmware has, so it is created nowhere yet; its raw sensor
+is gone.
+
 ## [2026-11-06] ingested | Sungrow's Logger protocol 1.0.2.9 and the Logger manuals
 
 The protocol, marked public, found on an installer's file server, with 1.0.2.5's text beside it. It

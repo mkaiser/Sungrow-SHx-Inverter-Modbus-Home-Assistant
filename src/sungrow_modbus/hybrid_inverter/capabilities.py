@@ -136,6 +136,16 @@ class Capability(StrEnum):
     """Forced startup from a low-SoC standby (register 13017).
 
     Added to the specification in V1.1.7. V1.1.16 excludes only SH50~125CX.
+    This is the *read*; pressing it is `FORCED_STARTUP_CONTROL`.
+    """
+
+    FORCED_STARTUP_CONTROL = "forced_startup_control"
+    """Register 13017 may be written, because a write was watched here.
+
+    A command, not a state: 0xAA wakes an inverter waiting in low-SoC
+    standby, and the register never reads 0xAA back, so a readback proves
+    nothing. Never probed; granted by `resolve` only where `FORCED_STARTUP`
+    answered **and** the firmware is in `CONFIRMED_ON_FIRMWARE`.
     """
 
     PV_POWER_LIMITATION = "pv_power_limitation"
@@ -478,12 +488,15 @@ CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
             "SUNSTONE-H_B000.V002.P065",
         }
     ),
+    # Nothing yet: no survey has watched a standby inverter start on 0xAA.
+    Capability.FORCED_STARTUP_CONTROL: frozenset(),
 }
 
 #: The read a confirmed write also needs, so a firmware entry can never grant
 #: control over a register this particular device does not answer.
 CONTROL_REQUIRES: dict[Capability, Capability] = {
     Capability.PV_GENERATION_CUT_CONTROL: Capability.PV_GENERATION_CUT,
+    Capability.FORCED_STARTUP_CONTROL: Capability.FORCED_STARTUP,
 }
 
 

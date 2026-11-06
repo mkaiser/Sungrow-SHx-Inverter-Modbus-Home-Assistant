@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from modbus_connection import ModbusError
 
 from homeassistant.components.binary_sensor import BinarySensorEntityDescription
+from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.number import NumberEntityDescription
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.sensor import SensorEntityDescription
@@ -116,6 +117,14 @@ class SungrowSensorDescription(SungrowEntityDescription, SensorEntityDescription
     mostly never change.
     """
 
+    integrated: bool = False
+    """Report the running time integral of this power field, in kWh.
+
+    For the MPP trackers, which no register counts energy for: the sum of
+    voltage times current over every poll, restored across restarts --
+    see `sungrow_modbus.energy_integral`.
+    """
+
     smoothed_over: float | None = None
     """Report a moving average over this many seconds, not the raw reading.
 
@@ -180,6 +189,13 @@ class SungrowSwitchDescription(SungrowEntityDescription, SwitchEntityDescription
 
     on_value: int
     off_value: int
+
+
+@dataclass(frozen=True, kw_only=True)
+class SungrowButtonDescription(SungrowEntityDescription, ButtonEntityDescription):
+    """Describe a Sungrow command: a press writes `press_value`, once."""
+
+    press_value: int
 
 
 @dataclass(frozen=True, kw_only=True)

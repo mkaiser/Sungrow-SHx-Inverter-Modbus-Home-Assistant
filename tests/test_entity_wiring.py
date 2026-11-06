@@ -91,7 +91,13 @@ def test_the_derived_layer_covers_the_yaml_template_sensors() -> None:
     scripts = _Path(__file__).resolve().parent.parent / "scripts" / "generate"
     sys.path.insert(0, str(scripts))
     sys.path.insert(0, str(scripts / "tables"))
-    from descriptions import DISCHARGE_SCHEDULE, HISTORY, MODE_FLAGS, PROBLEMS
+    from descriptions import (
+        DISCHARGE_SCHEDULE,
+        HISTORY,
+        INTEGRATED,
+        MODE_FLAGS,
+        PROBLEMS,
+    )
     from naming import LEGACY_ONLY_SENSORS
 
     declared = {f"binary_sensor.{key}" for key in MODE_FLAGS}
@@ -106,9 +112,11 @@ def test_the_derived_layer_covers_the_yaml_template_sensors() -> None:
     # The energy history: the YAML's per-month ids are deliberately not
     # adopted, so these replace nothing either.
     history = {f"sensor.{key}" for key in HISTORY}
-    assert not ported - expected - declared - problems - schedule - history, (
-        "derived entities with no YAML counterpart and no declaration"
-    )
+    # The trackers' energy: no register counts it, so the YAML had none.
+    integrated = {f"sensor.{key}" for key in INTEGRATED}
+    assert not (
+        ported - expected - declared - problems - schedule - history - integrated
+    ), "derived entities with no YAML counterpart and no declaration"
     for entity_id in declared:
         assert entity_id in set(LEGACY_ONLY_SENSORS.values()), (
             f"{entity_id} is a new entity that nothing names as its "

@@ -33,6 +33,8 @@ a cable and through a WiNet-S read `0x55` both ways. Why ra1k-0's SH20T reads 0 
 
 ## In the integration
 
-A diagnostic sensor, **Shutdown inverter when limited to 0 % power** (`apl_shutdown_at_zero_raw`
-in `src/sungrow_modbus/hybrid_inverter/registers.py`), showing the number. Nothing writes it.
-Decoding it to an on/off sensor is in `Todo.md`.
+A diagnostic binary sensor, **Shutdown inverter when limited to 0 % power**
+(`Derived.apl_shutdown_at_zero` in `src/sungrow_modbus/hybrid_inverter/derived.py`): on for `0xAA`,
+off for `0x55`, unknown for anything else, a 0 included. The number itself
+(`apl_shutdown_at_zero_raw`) is a sensor only where an entry keeps the YAML package's entity ids,
+for that history. Nothing writes it.

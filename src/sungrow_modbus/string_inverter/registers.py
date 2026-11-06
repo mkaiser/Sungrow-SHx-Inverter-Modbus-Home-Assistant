@@ -163,6 +163,23 @@ def _meaning(table: dict[int, str], code: RegisterValue) -> str | None:
     return table.get(int(code))
 
 
+def _tracker_power(number: int) -> property:
+    """Return a property: one tracker's voltage times its current, in W.
+
+    No SG register reports a tracker's power, so it is computed, as the
+    hybrid's `Derived.mppt1_power` is. None where either reading is missing.
+    """
+
+    def power(self: Component) -> float | None:
+        voltage = getattr(self, f"mppt{number}_voltage")
+        current = getattr(self, f"mppt{number}_current")
+        if voltage is None or current is None:
+            return None
+        return float(voltage) * float(current)
+
+    return property(power, doc=f"MPPT{number} voltage times its current, in W.")
+
+
 class SgRealtime(Component):
     """PV, AC and state, input 5003-5038, in one read. Realtime tier.
 
@@ -199,6 +216,10 @@ class SgRealtime(Component):
     """MPPT3 voltage; only models with three trackers."""
     mppt3_current = gauge(reg(5016), 0.1, signed=False, nan=65535, unit="A")
     """MPPT3 current."""
+
+    mppt1_power = _tracker_power(1)
+    mppt2_power = _tracker_power(2)
+    mppt3_power = _tracker_power(3)
 
     total_dc_power = uint32(reg(5017), word_order="little", unit="W")
     """Total DC power."""
@@ -333,6 +354,12 @@ class SgTrackers(Component):
     mppt8_current = gauge(reg(5124), 0.1, signed=False, nan=65535, unit="A")
     """MPPT8 current."""
 
+    mppt4_power = _tracker_power(4)
+    mppt5_power = _tracker_power(5)
+    mppt6_power = _tracker_power(6)
+    mppt7_power = _tracker_power(7)
+    mppt8_power = _tracker_power(8)
+
     monthly_pv_generation = uint32(
         reg(5128), scale=0.1, word_order="little", unit="kWh"
     )
@@ -354,6 +381,11 @@ class SgTrackers(Component):
     """MPPT12 voltage."""
     mppt12_current = gauge(reg(5137), 0.1, signed=False, nan=65535, unit="A")
     """MPPT12 current."""
+
+    mppt9_power = _tracker_power(9)
+    mppt10_power = _tracker_power(10)
+    mppt11_power = _tracker_power(11)
+    mppt12_power = _tracker_power(12)
 
 
 class SgPrecision(Component):

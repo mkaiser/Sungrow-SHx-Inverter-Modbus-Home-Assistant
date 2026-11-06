@@ -75,6 +75,7 @@ jobs:
           python scripts/generate/descriptions.py switches --check
           python scripts/generate/descriptions.py selects --check
           python scripts/generate/descriptions.py times --check
+          python scripts/generate/descriptions.py buttons --check
       - name: The entity names follow the naming convention
         run: python scripts/generate/descriptions.py strings --check
       - name: The compatibility page matches the surveys

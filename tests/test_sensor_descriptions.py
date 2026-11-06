@@ -119,6 +119,25 @@ ADDED = {
     if e["layer"] in {"specification", "observed"} and e["domain"] == "sensor"
 }
 
+#: Additions that are an entity on another platform instead of a sensor. The
+#: map records a sensor because the specification lists a register; a command
+#: register reads back nothing worth showing, so it is a button.
+NOT_A_SENSOR: dict[str, str] = {
+    # 13017 never reads 0xAA; `writes.BUTTONS` explains.
+    "forced_startup_under_low_soc_raw": "button.force_startup",
+}
+for _key in NOT_A_SENSOR:
+    del ADDED[_key]
+
+
+def test_an_addition_that_is_not_a_sensor_names_what_it_became() -> None:
+    from custom_components.sungrow_modbus.button_descriptions import BUTTON_DESCRIPTIONS
+
+    buttons = {f"button.{d.key}": d.field for d in BUTTON_DESCRIPTIONS}
+    for field, entity in NOT_A_SENSOR.items():
+        assert field not in BY_KEY
+        assert buttons.get(entity) == field
+
 
 def test_the_specification_additions_all_became_entities() -> None:
     assert set(ADDED) <= set(BY_KEY), sorted(set(ADDED) - set(BY_KEY))
@@ -209,29 +228,26 @@ def test_every_dropped_sensor_names_a_replacement_that_exists() -> None:
         assert replacement != f"sensor.{dropped}", dropped
 
 
-def test_the_two_registers_with_nothing_better_are_kept() -> None:
-    """What is left of the four, and why each one stayed.
+def test_the_register_with_nothing_better_is_kept() -> None:
+    """What is left of the four, and why it stayed.
 
-    Two of the four became something better and are therefore dropped: 13089
-    and 13018 are Sungrow mode registers, and a binary sensor now decodes
+    Three of the four became something better and are therefore dropped:
+    13089 and 13018 are Sungrow mode registers, and 31213 holds the same
+    0xAA/0x55 pair -- undocumented, but the surveys read both codes on it
+    (issue #554's pair, wiki: register 31213) -- so a binary sensor decodes
     each.
 
-    The two here stay for opposite reasons. **13090 was never raw** -- it has
-    a scale and a unit and reads 100.0 % on every machine surveyed -- so it
-    only needed the word taken out of its name. **31213 is undocumented**:
-    absent from Sungrow's protocol document, contributed through community
-    feedback in issue #554, untested here, and all three surveyed inverters
-    read the same single value -- so its 0xAA/0x55 pair is a convention
-    assumed rather than a pair observed. Making it a flag would be a guess
-    wearing a decode, and this test fails if somebody does it.
+    **13090 was never raw**: it has a scale and a unit and reads 100.0 % on
+    every machine surveyed, so it only needed the word taken out of its name.
     """
     kept = {
         description.translation_key
         for description in SENSOR_DESCRIPTIONS
         if not description.legacy_only
     }
-    for key in ("active_power_limitation_ratio_raw", "apl_shutdown_at_zero_raw"):
-        assert key in kept, f"{key} was dropped without anything replacing it"
+    assert "active_power_limitation_ratio_raw" in kept, (
+        "dropped without anything replacing it"
+    )
 
 
 def test_legacy_mode_keeps_everything_and_modern_mode_does_not() -> None:
@@ -245,7 +261,7 @@ def test_legacy_mode_keeps_everything_and_modern_mode_does_not() -> None:
     from custom_components.sungrow_modbus.coordinator import SungrowRuntimeData
 
     dropped = [d for d in SENSOR_DESCRIPTIONS if d.legacy_only]
-    assert len(dropped) == 20
+    assert len(dropped) == 21
 
     # Every capability granted, so the *only* thing under test is the mode.
     # Without it `pv_power_limitation_raw` is refused for requiring a
