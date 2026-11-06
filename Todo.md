@@ -184,7 +184,11 @@ Structure:
     address (`wallbox_host`, `links.wallbox_tls_params`). For the dongle it is
     worth building only if 516 is a *separate* session pool from 502: hold
     502 until it refuses, then try 516. Also wanted: a certificate hash from a
-    third site, to show whether every dongle ships the same key.
+    third site, to show whether every dongle ships the same key. The
+    maintainer can take it from bar12's or gerd's WiNet-S (the five-second
+    script in `device-survey/devices-wanted.md`) when their network is
+    routed; the two share a subnet, so confirm the house by its stand-in
+    first. Port 516 timed out from the rebuilt container on 2026-11-06.
 12. **Does a WiNet-S advertise over mDNS?** Needs a house with a dongle and
     a run on the host, not in the container.
 13. **The production database.** The migration is verified at real scale
