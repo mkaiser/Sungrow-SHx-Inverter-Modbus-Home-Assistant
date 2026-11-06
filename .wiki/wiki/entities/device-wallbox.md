@@ -21,7 +21,18 @@ with 32 fields in four components (`src/sungrow_modbus/wallbox/`). It is
 `wallbox_host` is an option, not an entry, so the device and its entity ids
 are the same either way. Never reachable through the inverter's own LAN port
 (every unit 0-255 swept). It needs no [iHomeManager](device-ihomemanager.md),
-and sweeping for one cannot find it.
+and sweeping for one cannot find it. Where an iHomeManager is installed it
+drives the wallbox over 516 itself, so `wallbox_host` may find the port taken
+(reported to evcc, not measured here:
+[evcc cross-reference](../sources/cross-reference-evcc-summary.md)).
+
+**Sixty seconds without Modbus traffic and the wallbox drops the
+connection** and applies its fallback current, by evcc's account; evcc reads
+the status every 30 s for it
+([evcc cross-reference](../sources/cross-reference-evcc-summary.md)). The
+integration reads the wallbox on the inverter's fast tier
+(`custom_components/sungrow_modbus/coordinator.py`), inside that by default;
+a fast tier set above 60 s would let the wallbox drop the session.
 
 ## Reading rules
 

@@ -386,7 +386,11 @@ class SgPowerLimit(Component):
     """0xAA on, 0x55 off; `power_limitation` is what it means."""
 
     power_limitation_setting = gauge(reg(5008), 0.1, signed=False, unit="%")
-    """The limit, as a share of rated power."""
+    """The limit, as a share of rated power.
+
+    Reset to 110 % while the switch is off, by evcc's account, so a writer
+    sets the switch first (`.wiki/raw/cross-reference-evcc.md`).
+    """
 
     @property
     def power_limitation(self) -> str | None:

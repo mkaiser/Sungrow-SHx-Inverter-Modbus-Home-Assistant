@@ -1,9 +1,10 @@
 """The iHomeManager: its map, the text it must not publish, and its survey.
 
-No iHomeManager has been read anywhere, so the fixtures are Sungrow's own
+No iHomeManager has been read here, so the fixtures are Sungrow's own
 document -- the type code, the protocol number and the version example of
-*Communication Protocol of iHomeManager* V1.0.2 -- typed here by hand, not
-taken from the map under test.
+*Communication Protocol of iHomeManager* V1.0.2 -- and the words evcc's users
+read off theirs (`.wiki/raw/cross-reference-evcc.md`), typed here by hand,
+not taken from the map under test.
 """
 
 from __future__ import annotations
@@ -91,6 +92,30 @@ def test_the_identity_decodes_as_the_document_says() -> None:
     assert readings["application_software_version"]["value"] == "IHM_V1.2.3"
     assert readings["protocol_version"]["held"] == "spec V1.0.2"
     assert readings["charger_power"]["held"] == "field"
+
+
+@pytest.mark.parametrize(("word", "means"), [(0x55, "off"), (0xAA, "on")])
+def test_feed_in_limitation_decodes_as_a_unit_answers(word, means) -> None:
+    """As in evcc #33775: 0x55 with the limitation off, 0xAA cutting feed-in."""
+    device = _device()
+    device["holding"][8027] = word  # 8028
+    readings = ihomemanager.readings(ihomemanager.masked_text(_dump(device))[0])
+
+    assert readings["feed_in_limitation"]["means"] == means
+
+
+def test_phase_voltages_decode_from_the_block_a_unit_answered() -> None:
+    """As in evcc #34169: 0, 2247, 0, 2244, 0, 2252 at registers 4357-4362."""
+    device = _device()
+    for offset, word in enumerate([0, 2247, 0, 2244, 0, 2252]):
+        device["input"][4356 + offset] = word
+    readings = ihomemanager.readings(ihomemanager.masked_text(_dump(device))[0])
+
+    assert readings["phase_a_voltage"]["value"] == pytest.approx(224.7)
+    assert readings["phase_b_voltage"]["value"] == pytest.approx(224.4)
+    assert readings["phase_c_voltage"]["value"] == pytest.approx(225.2)
+    assert readings["phase_a_voltage"]["register"] == 4358
+    assert readings["phase_a_voltage"]["held"] == "field"
 
 
 def test_an_unavailable_or_missing_field_is_absent_not_zero() -> None:

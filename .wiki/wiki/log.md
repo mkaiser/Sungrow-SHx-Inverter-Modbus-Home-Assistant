@@ -368,6 +368,17 @@ command that reads 0 on SH-RT, 0x55 on SH-T and is unavailable on SH-RS, and hol
 undocumented flag issue #554 found: 0xAA on four SH-RS and two SH15T, 0x55 on every SH-RT, which
 contradicts the earlier claim in the code that every survey read one value.
 
+## [2026-11-05] ingested | evcc's Sungrow templates and wallbox driver
+
+evcc at `bcea759cd9`, compared register by register, with the issues in which its users read real
+devices. The hybrid, SG and wallbox maps agree everywhere evcc reads. Two iHomeManager readings
+overturn the map, which followed Sungrow's V1.0.2: holding 8028 answers 0x55/0xAA, not 0/1, and
+input 4358/4360/4362 carry the phase voltages no document lists; both are now read, held `field`.
+evcc's wallbox driver is not MIT and derives from Louisbertelsmann's map, which corrects
+`doc/architecture.md`; the SG resets 5008 to 110 % while its limitation is off; a wallbox drops an
+idle session after 60 s. Logger leads (Voyanti's GPL transcription of the 1.0.2.7 protocol) went on
+its open query.
+
 ## [2026-11-05] answered | do models on one firmware answer alike?
 
 `doc/firmware_support.md`, generated from every survey with a register dump, pools them by platform

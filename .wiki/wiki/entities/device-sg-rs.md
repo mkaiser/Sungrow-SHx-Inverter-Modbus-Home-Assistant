@@ -28,6 +28,9 @@ the protocol document's, `src/sungrow_modbus/string_inverter/registers.py`.
   rated power), and the owner writes both on two machines
   ([source](../sources/bleughb-sg-power-limitation-registers-786-summary.md)). Both surveys read the
   limit switched on at 100.0 %. Not watched by this repository: the integration does not write to an SG.
+  **While the switch is off the inverter resets 5008 to 110 %**, so a writer sets the switch
+  first and the limit second, as evcc's template does
+  ([evcc cross-reference](../sources/cross-reference-evcc-summary.md)); unmeasured here.
 - Two MPPTs carry current; MPPT3 and up read 0.
 - **Phases B and C read 0, not the unavailable value**, on a single-phase machine; so do
   MPPT3 to MPPT12. The integration therefore decides by the output type (input 5002) and the

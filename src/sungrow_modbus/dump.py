@@ -140,11 +140,11 @@ WALLBOX_MASKED: tuple[tuple[str, int, int], ...] = (
     ("holding", 21249, 10),
 )
 
-#: An iHomeManager's register space, unit 247. Never measured, so the first
-#: seven bands are what Sungrow's V1.0.2 document defines (plus the charger
-#: power a scan elsewhere found), each read whole; the rest are the gaps
-#: between them, read **last** so that a budget running out costs
-#: exploration and never a documented field. A gap is where an undocumented
+#: An iHomeManager's register space, unit 247. Never measured here, so the
+#: first eight bands are what Sungrow's V1.0.2 document defines (plus the
+#: charger power and phase voltages read elsewhere), each read whole; the
+#: rest are the gaps between them, read **last** so that a budget running
+#: out costs exploration and never a documented field. A gap is where an undocumented
 #: register would be, a serial included, so `ihomemanager.document` masks
 #: any text found there.
 IHOMEMANAGER_BANDS: tuple[tuple[str, int, int, str], ...] = (
@@ -154,6 +154,7 @@ IHOMEMANAGER_BANDS: tuple[tuple[str, int, int, str], ...] = (
     ("input", 8317, 15, "the application software version, read whole"),
     ("input", 8551, 23, "charger status and the two CT channels"),
     ("input", 8593, 8, "charger power, from a scan elsewhere"),
+    ("input", 4356, 6, "phase voltages, from a reading elsewhere"),
     ("holding", 8023, 30, "the settings: EMS mode, battery, limits, charger"),
     ("input", 8006, 138, "undocumented, between identity and the totals"),
     ("input", 8163, 12, "undocumented, between level and energy"),

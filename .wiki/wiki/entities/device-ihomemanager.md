@@ -7,7 +7,8 @@ created: '2026-10-29'
 
 # iHomeManager
 
-Sungrow's energy manager. **Never measured here.**
+Sungrow's energy manager. **Never measured here**; evcc's users have read a few registers on
+theirs ([evcc cross-reference](../sources/cross-reference-evcc-summary.md)).
 
 - **Where it answers:** slave 247, on port **502, 503 or 504**, and **each
   port takes one TCP connection**, so a port another client holds looks
@@ -17,7 +18,17 @@ Sungrow's energy manager. **Never measured here.**
   *iHomeManager settings → Forwarding channel settings*, port 502, 503 or 504,
   SSL off (Sungrow's *iHomeManager Modbus Transfer User Guide*, 2025).
 - **Port 516 is not an iHomeManager's**: it is a [WiNet-S](device-winet-s.md)'s
-  or a [wallbox](device-wallbox.md)'s Modbus over TLS.
+  or a [wallbox](device-wallbox.md)'s Modbus over TLS. An iHomeManager is a *client* there: it
+  drives the wallbox over 516, so that wallbox is not free for another client at its own
+  address (reported in evcc's discussion #20739, [evcc cross-reference](../sources/cross-reference-evcc-summary.md)).
+- **Where a unit contradicts the document** (both from the
+  [evcc cross-reference](../sources/cross-reference-evcc-summary.md)):
+  - **Holding 8028, feed-in limitation, reads 0x55 off and 0xAA on**, where V1.0.2 says 0 and 1.
+    On firmware `iHomeManager-SV930.001.00.P015`, 0xAA with 8031 at 20 % cut the feed-in of
+    two SH10RT-20. The map decodes both pairs.
+  - **Phase-to-neutral voltages are at input 4358, 4360 and 4362** (0.1 V, a 0 between each),
+    which no document lists; 8555-8557 are line to line on a three-phase site. Read as
+    `phase_voltages`, held `field`.
 - **No serial number** in either revision of Sungrow's document, nor in the
   MIT template. What it says about itself is a type code (`0x072A`), the
   protocol number ("AW0"), the protocol version and its application software

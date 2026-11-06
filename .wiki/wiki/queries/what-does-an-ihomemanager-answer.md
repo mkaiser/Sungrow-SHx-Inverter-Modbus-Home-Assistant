@@ -9,8 +9,11 @@ results_count: 0
 
 # What does an iHomeManager answer?
 
-**Open: never measured.** The map is the 53 registers in the
-[cross-reference](../sources/cross-reference-modbus-manager-summary.md). What
+**Open: never measured here.** The map is the 53 registers in the
+[cross-reference](../sources/cross-reference-modbus-manager-summary.md). Two units elsewhere
+have answered 8028 (as 0x55/0xAA), 8031, 8155-8163, 8176-8179, 8559-8564 and the undocumented
+4358-4362 ([evcc cross-reference](../sources/cross-reference-evcc-summary.md)); a survey here
+would say which of the rest answer, and whether 4358-4362 are U32. What
 is known about the device is on [iHomeManager](../entities/device-ihomemanager.md).
 
 What answers it: a survey of one, at slave 247 on port 502 or 503.

@@ -24,6 +24,7 @@ session boundary tells them apart.
 | [Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant](https://github.com/Louisbertelsmann/Sungrow-Wallbox-Modbus-HomeAssistant) | Not stated | **No licence file** — used with the author's permission, and only for *which register means what* | Its charging-status enum is the single most useful thing any of the three has |
 | [KevinD987/sungrow-ac011e](https://github.com/KevinD987/sungrow-ac011e) | AC011E-01, by measurement | **MIT** | Carries its own confidence marks — VERIFIED, LIKELY, UNVERIFIED — and says plainly that the allocation is not manufacturer-confirmed and may move between firmwares |
 | [Discussion #571](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/discussions/571) on this repo | AC22E-01 | this repo's own tracker | The **same model measured here**, which none of the other sources is. Gives names in the manufacturer's own idiom — `SetOutI`, `PhaseSwitch`, `Availability`, `RemoteControl`, `State` — and one scale that this project's reading contradicts, below |
+| [evcc's `charger/sungrow.go`](https://github.com/evcc-io/evcc/blob/master/charger/sungrow.go) | AC011E-01, AC22E-01 | **Not MIT**: its header reserves all rights, unlike the rest of evcc | Written from Louisbertelsmann's map ([evcc#11742](https://github.com/evcc-io/evcc/issues/11742)), so where the two agree that is one source, not two. Its behaviour notes come from users' chargers: see [what evcc adds](#what-evcc-adds) |
 | [Eisbaeeer/sungrow](https://github.com/Eisbaeeer/sungrow) | AC011E-01 | **No licence file**, and no permission asked -- so a lead to measure, never a definition | The only source that names input 21267 (protocol 21266), below |
 | [Jam3s97/sungrow_ihomemanager](https://github.com/Jam3s97/sungrow_ihomemanager) | iHomeManager, tested with AC22E-01 | **GPL-3.0** | Read for *what exists*, never copied. GPL-3.0 is incompatible with this repo's MIT, so no definition here comes from it — what it contributed is the name of an **official Sungrow document**, `iHM.Communication.Protocol`, which is the licence-clean route to the same registers |
 
@@ -332,6 +333,10 @@ permitted to offer. A setting of 1.51 A is below the device's own floor, so
 comes out at 32.0 A, which is the 32 A in `AC22E-01`'s 22 kW, and the maximum
 charging power of 22080 W is 32 A across three phases at 230 V.
 
+evcc's driver agrees in its code and not in its comment: the comment says
+0.01 A, the code writes ten times the current in amperes, starting from 60
+for 6 A.
+
 So the scale here stays 0.1, and the disagreement is recorded rather than
 averaged. It may still be right for the AC011E-01, which is a different
 model.
@@ -364,6 +369,29 @@ that measured the same model:
   #20739](https://github.com/evcc-io/evcc/discussions/20739) describes the
   same unit as **Modbus RTU at 9600 8N1** over RS485, which is not measured
   here, and says the wallbox must be in **EMS mode**.
+
+### What evcc adds
+
+Compared on 2026-11-05 at evcc commit `bcea759cd9`; every register its
+driver reads is in the tables above with the same meaning
+(`.wiki/raw/cross-reference-evcc.md`). What it adds is behaviour, reported
+by its users and not measured here:
+
+- **Sixty seconds without Modbus traffic and the wallbox drops the
+  connection** and falls back to its default current. evcc reads the
+  charging status every 30 s to prevent it
+  ([evcc#27388](https://github.com/evcc-io/evcc/pull/27388)).
+- **Phase switching is done with charging disabled**
+  ([evcc#23716](https://github.com/evcc-io/evcc/pull/23716)).
+- **An iHomeManager holds port 516.** It talks to the wallbox there over
+  TLS, so a wallbox with an iHomeManager is not free for another client at
+  its own address ([evcc discussion
+  #20739](https://github.com/evcc-io/evcc/discussions/20739)).
+- **Sungrow's own document exists**, as
+  `AC011E-01_Modbus_Protocol_V1.0.16_EN_Confidential.pdf`, given to evcc's
+  maintainer ([evcc discussion
+  #7104](https://github.com/evcc-io/evcc/discussions/7104)). It is
+  confidential, and nothing here comes from it.
 
 ## What is still open
 

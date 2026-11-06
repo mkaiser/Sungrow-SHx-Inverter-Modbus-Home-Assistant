@@ -3,14 +3,17 @@
 Sungrow's *Communication Protocol of iHomeManager* **V1.0.2** is the source,
 with V1.0.1 beside it; both ship in TCzerny/ha-modbus-manager's `docs/`, and
 `.wiki/raw/cross-reference-modbus-manager.md` compares that project's MIT template
-with them. **No iHomeManager has been measured anywhere**, so every field here
-is what a document says, and `CONFIDENCE` names which one:
+with them. **No iHomeManager has been measured here.** Users of other
+projects have read a few registers on theirs
+(`.wiki/raw/cross-reference-evcc.md`), and where they contradict the document
+the reading wins. `CONFIDENCE` names the source of each field:
 
 * **spec V1.0.2** -- in V1.0.2's register tables.
 * **spec V1.0.1** -- in V1.0.1 only: channel 2's phase voltages, which
   V1.0.2's table skips.
 * **template** -- in the MIT template only, source unstated.
-* **field** -- found by a live scan in that project's issue #86.
+* **field** -- read on a real unit elsewhere: ha-modbus-manager's issue #86,
+  evcc's #33775 and #34169.
 
 What the document fixes, and this map follows:
 
@@ -62,8 +65,16 @@ EMS_MODE: dict[int, str] = {
 #: Register 8025.
 CHARGE_COMMAND: dict[int, str] = {0xAA: "charge", 0xBB: "discharge", 0xCC: "stop"}
 
-#: Register 8028, feed-in limitation. 1 and 0 here, not 0xAA/0x55.
-FEED_IN_LIMITATION: dict[int, str] = {1: "on", 0: "off"}
+#: Register 8028, feed-in limitation. A unit on firmware SV930.001.00.P015
+#: reads 0xAA on and 0x55 off, and cut its feed-in at 0xAA (evcc #33775);
+#: V1.0.2 says 1 and 0, kept so that a firmware which follows it still
+#: decodes.
+FEED_IN_LIMITATION: dict[int, str] = {
+    0xAA: "on",
+    0x55: "off",
+    1: "on (V1.0.2's code)",
+    0: "off (V1.0.2's code)",
+}
 
 #: The 0xAA/0x55 pair the other switches use: 8049, 8050 and 8051.
 ENABLED: dict[int, str] = {0xAA: "on", 0x55: "off"}
@@ -205,7 +216,11 @@ class IHomeManagerMeters(Component):
     charger_status_raw = integer(reg(8552), signed=False, nan=0xFFFF)
     output_type_raw = integer(reg(8554), signed=False, nan=0xFFFF)
     voltage_a = gauge(reg(8555), 0.1, signed=False, nan=0xFFFF, unit="V")
-    """A-B line voltage or A phase voltage, by the output type."""
+    """A-B line voltage or A phase voltage, by the output type.
+
+    Line to line on a three-phase site (evcc #27985); the phase voltages are
+    `IHomeManagerPhaseVoltages`.
+    """
 
     voltage_b = gauge(reg(8556), 0.1, signed=False, nan=0xFFFF, unit="V")
     voltage_c = gauge(reg(8557), 0.1, signed=False, nan=0xFFFF, unit="V")
@@ -243,6 +258,21 @@ class IHomeManagerCharger(Component):
     charger_phase_c_power = int32(
         reg(8600), word_order="little", nan=0x7FFFFFFF, unit="W"
     )
+
+
+class IHomeManagerPhaseVoltages(Component):
+    """Phase to neutral, which no document lists. Field only: evcc #34169.
+
+    One unit read 0 at 4357, 4359 and 4361 and the voltages between them,
+    the shape of a U32 sent low word first; read as the one word that held
+    a value until a second unit says which.
+    """
+
+    register_space = "input"
+
+    phase_a_voltage = gauge(reg(4358), 0.1, signed=False, nan=0xFFFF, unit="V")
+    phase_b_voltage = gauge(reg(4360), 0.1, signed=False, nan=0xFFFF, unit="V")
+    phase_c_voltage = gauge(reg(4362), 0.1, signed=False, nan=0xFFFF, unit="V")
 
 
 class IHomeManagerSettings(Component):
@@ -283,6 +313,7 @@ COMPONENTS: dict[str, type[Component]] = {
     "software": IHomeManagerSoftware,
     "meters": IHomeManagerMeters,
     "charger": IHomeManagerCharger,
+    "phase_voltages": IHomeManagerPhaseVoltages,
     "settings": IHomeManagerSettings,
 }
 
@@ -312,6 +343,10 @@ CONFIDENCE: dict[str, str] = {
     "charger_phase_a_power": "field",
     "charger_phase_b_power": "field",
     "charger_phase_c_power": "field",
+    "phase_a_voltage": "field",
+    "phase_b_voltage": "field",
+    "phase_c_voltage": "field",
+    "feed_in_limitation": "spec V1.0.2, codes field",
 }
 
 #: What each coded field's number means, by its published name.
