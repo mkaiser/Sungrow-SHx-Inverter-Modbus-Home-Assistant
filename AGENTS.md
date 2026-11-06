@@ -49,6 +49,22 @@ implementation; read its real source (`make refs`), not blog posts.
 earlier "commit and push" covers that one change, not the next one.
 Committing when asked is fine; pushing is a separate question.
 
+## Other agents write here too
+
+Several agents work in this repository at the same time, and their changes
+can sit uncommitted, or staged, beside yours.
+
+- **Commit only the files you changed**, by naming them:
+  `git commit -- <your paths>`. A plain `git commit` takes everything
+  staged, another agent's staged files included. Never `git add -A` or
+  `git add .` across the tree.
+- **`Todo.md` has more than one writer.** Before every write to it, run
+  `git status --short Todo.md` and `git diff Todo.md` to see changes that
+  are not yours, re-read it from disk (never write back a copy read
+  earlier), and change only your part, as a targeted replacement. If
+  another agent's edits to it are uncommitted, leave them out of your
+  commit, or wait until they are committed, and say so.
+
 ## Do not hand-edit
 
 Edit the source, not the output:
