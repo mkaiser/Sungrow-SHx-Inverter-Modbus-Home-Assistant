@@ -38,11 +38,7 @@ _Nothing that can start without hardware, a contributor or a decision._
 
    Left, in order:
 
-   1. **Registers V1.1.17 lists that the hybrid map does not read**
-      (`.wiki/wiki/sources/hybrid-protocol-v1-1-17-summary.md`): 31222 (feed-in
-      limit, wide range), 13080 (external EMS heartbeat) and 13043 (DRM state)
-      are new to the repo. Decide which become entities; none is measured.
-   2. **If German ships:** pin the English ids with `object_id_base` first
+   1. **If German ships:** pin the English ids with `object_id_base` first
       (`doc/architecture.md`), then have `scripts/generate/descriptions.py`
       write `translations/de.json` from the two tables.
 
@@ -100,8 +96,7 @@ _Nothing that can start without hardware, a contributor or a decision._
    (`sungrow_modbus.logger`, every field `spec`; where every document is:
    `.wiki/wiki/queries/where-are-sungrows-documents.md`); what a first
    survey settles is on `.wiki/wiki/queries/what-does-a-logger-answer.md`.
-   It reaches surveys with the next release, since the survey runs the
-   pinned wheel. Missing:
+   It reached surveys with 0.1.0a26, which the survey pins. Missing:
 
    1. **Its TLS port, untried.** The survey asks unit 247 over TLS on 516
       (a current Logger1000 opens only that port); no Logger has answered
@@ -205,6 +200,13 @@ _Nothing that can start without hardware, a contributor or a decision._
       does a cut survive a night or a restart, or does iSolarCloud rewrite
       it?
 
+23. **What register 13080 counts.** Documented as the external EMS
+    heartbeat (0-1000 s, default 20 s), it reads 0 on 42 surveys, 330 on two
+    houses in EMS mode 0, and 875 then 961 on ra1k_0's SH20T in EMS mode 3
+    (`.wiki/wiki/queries/what-do-the-v1-1-17-only-registers-read.md`). Two
+    reads of it a minute apart at that house would show whether it counts
+    seconds. Nothing reads or writes it until then.
+
 # Future work
 
 ## How far the MPPT energy drifts
@@ -265,12 +267,12 @@ the commit; a survey signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-05T11:30:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-05T11:30:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-06T11:15:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-06T11:15:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked: **2026-11-05 11:30 UTC** (#786).
+Last checked: **2026-11-06 11:15 UTC** (#786): nothing new.
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 

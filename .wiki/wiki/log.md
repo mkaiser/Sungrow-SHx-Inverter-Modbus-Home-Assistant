@@ -424,3 +424,10 @@ the other fourteen are unlisted. Its five MG10-25TL types are in `DEVICE_TYPES` 
 of their own, because the document groups them apart from MG5-12RL. 13017 works only
 grid-connected.
 
+## [2026-11-06] answered | what do the registers only V1.1.17 lists read?
+
+The three registers the hybrid map does not read, read off the surveys already committed: 31222 is
+13074 divided by ten on all 46 surveys that read both, 13043 is 255 or 0 on every survey (never a
+DRM state), and 13080 is 0 on 42, 330 on two houses and 875, then 961, on an SH20T in EMS mode 3, so
+it is not the heartbeat setting its name says.
+

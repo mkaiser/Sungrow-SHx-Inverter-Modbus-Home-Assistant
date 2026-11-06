@@ -49,7 +49,7 @@ control test, and one wallbox read at its own address.
 | Axis | Covered | Missing |
 | --- | --- | --- |
 | Inverter model | **8 of 42**: SH10RT, SH10RT-20, SH5.0RT-V112, SH6.0RT-V112, SH8.0RT-V112, SH10RT-V112, SH15T, SH20T | every model outside RT and T |
-| Product family | RT and T | RS, MG, RL, K, CX |
+| Product family | RT and T | RS, MG, RL, K, CX, TL (MG10-25TL) |
 | Phase / output type | three phase 3P4L only | **single phase**, and three phase 3P3L |
 | Inverter firmware | `B001.V000.P020`, `P022`, `P023`, `B000.V000.P071` | a fifth |
 | Version 1 | `SAPPHIRE-H_01011.95.03`, `.95.12`, `.95.13`, `.95.14`, `PEARL-H_01011.01.45` | see item 7 |
@@ -96,7 +96,9 @@ cut on P071. An SBH pack's cell layout, which a dongle refuses, stays unread. Se
 Never measured; it fronts a whole installation, the shape the
 one-entry-per-endpoint design was built for. **Answer "a Logger" to the
 transport question** so the survey also reads it at unit 247, and say which
-unit ids it lists. See [Logger](../.wiki/wiki/entities/device-logger.md).
+unit ids it lists. A current Logger1000 opens only port 516 with TLS; the
+survey tries that too, so no setting needs changing. See
+[Logger](../.wiki/wiki/entities/device-logger.md).
 
 ### 5. A wallbox other than the AC22E-01
 

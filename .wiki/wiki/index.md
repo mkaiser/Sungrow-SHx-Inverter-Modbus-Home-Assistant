@@ -151,4 +151,5 @@
 - [What does an iHomeManager answer?](queries/what-does-an-ihomemanager-answer.md) — Open: never surveyed #ihomemanager #open #survey-wanted
 - [What does V1.1.16 call the registers no datasheet here lists?](queries/what-does-v1-1-16-call-the-unlisted-registers.md) — Answered: V1.1.17 lists the serial, not the other fourteen #specification #naming #answered
 - [What does a Sungrow Logger answer?](queries/what-does-a-logger-answer.md) — Open: documented, never surveyed #logger #open #survey-wanted
+- [What do the registers only V1.1.17 lists read?](queries/what-do-the-v1-1-17-only-registers-read.md) — Answered: 31222 is 13074 in 0.01 kW, 13043 is never a DRM state, 13080 is not a heartbeat setting #specification #hybrid #drm #ems #answered
 - [Where are Sungrow's documents?](queries/where-are-sungrows-documents.md) — Answered: where each protocol, manual and community map is, and which searches found nothing #specification #logger #ihomemanager #wallbox #answered
