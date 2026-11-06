@@ -44,7 +44,7 @@ Structure:
    Then correct `doc/installing_a_preview.md` and `doc/maintainer_setup.md`
    §5 (done for the takeover and the update; *Add from link* still states only
    what the Marketplace's page says). Keep the HACS path while `hacs.json`
-   allows 2026.9 and 2026.10. Nothing here waits on blocker 20.
+   allows 2026.9 and 2026.10. Nothing here waits on blocker 19.
 2. **Release note for the German names.** German ships from the next
    release (`translations/de.json`); on a German system the displayed
    entity names change, ids do not. Say so in the release notes, and in
@@ -180,18 +180,9 @@ Structure:
 10. **T-series energy counters.** One SH20T reads 13045 (daily export) as 0
     while exporting, and 5003/5004-5005 duplicating the export counters. A
     second T survey, ideally on a cable, before `registers.py` changes.
-11. **Modbus over TLS on a WiNet-S's 516.** Built for a wallbox's own
-    address (`wallbox_host`, `links.wallbox_tls_params`). For the dongle it is
-    worth building only if 516 is a *separate* session pool from 502: hold
-    502 until it refuses, then try 516. Also wanted: a certificate hash from a
-    third site, to show whether every dongle ships the same key. The
-    maintainer can take it from bar12's or gerd's WiNet-S (the five-second
-    script in `device-survey/devices-wanted.md`) when their network is
-    routed; the two share a subnet, so confirm the house by its stand-in
-    first. Port 516 timed out from the rebuilt container on 2026-11-06.
-12. **Does a WiNet-S advertise over mDNS?** Needs a house with a dongle and
+11. **Does a WiNet-S advertise over mDNS?** Needs a house with a dongle and
     a run on the host, not in the container.
-13. **The production database.** The migration is verified at real scale
+12. **The production database.** The migration is verified at real scale
     only against the maintainer's years-old YAML install; what to collect and
     how is in `doc/maintainer_setup.md`, section 8. Offered 2026-11-06: a
     copy of the instance's files (preferred: the migration can be run and
@@ -200,7 +191,7 @@ Structure:
     never at the real inverter. Waits on the maintainer choosing and placing
     the copy; counts and mismatches are reported, no serial or address.
 
-14. **Writing the discharge schedules, and the import limit** (#785), in
+13. **Writing the discharge schedules, and the import limit** (#785), in
     no Sungrow document. The schedules read as diagnostic entities
     (`Capability.DISCHARGE_SCHEDULE`); writing them needs a watched write, as
     31211 did (wiki: firmware gating), from a control test run with leave. The
@@ -209,32 +200,32 @@ Structure:
     unit or scale on record: it needs a known value (what an owner set it
     to) before it can be an entity.
 
-15. **The discharge window on P023** (#785). It has run on P022 and P020,
+14. **The discharge window on P023** (#785). It has run on P022 and P020,
     and the device pages and log say so; no P023 or SBR house has run it
     (fwitten's master, with their Home Assistant stopped, in the evening).
 
-16. **The SG's zeros and writes.** On bleughb's two SG5.0RS through a
+15. **The SG's zeros and writes.** On bleughb's two SG5.0RS through a
     WiNet-S, the meter block (5083-5104) and the per-string block (input
     7013) read 0, and holding 5020 reads nothing. Whether that is absence or
     the dongle needs an SG on a cable, or one with its own meter. Writing the
     power limitation (holding 5007-5008, which bleughb writes on both) waits
     for a watched write.
 
-17. **The control test's restore through a WiNet-S, on hardware.** A
+16. **The control test's restore through a WiNet-S, on hardware.** A
     dongle-only control test at gerd on the current tree, with the battery
     above 30 % and no car charging, then a cable read of every snapshot
     register. Left open in the code: a touched register goes back to the
     dongle's word, wrong only if changed over another path since the dongle
     last read it.
 
-18. **gerd's cable restart.** On 2026-11-03 the start had to be sent three
+17. **gerd's cable restart.** On 2026-11-03 the start had to be sent three
     times (still stopped 60 s after each), where every earlier restart took
     the first. Watch whether it recurs.
 
-19. **The SG's tracker counts beyond the SG5.0RS.** `MPPT_COUNTS` is the
+18. **The SG's tracker counts beyond the SG5.0RS.** `MPPT_COUNTS` is the
     source's model table, many entries unverified; a survey of any other SG
     checks its row (wanted in `device-survey/devices-wanted.md`, row 11).
-20. **Home Assistant 2026.11 and modbus-connection 4.12.7.** 2026.11.0
+19. **Home Assistant 2026.11 and modbus-connection 4.12.7.** 2026.11.0
     (2026-11-04) pins `modbus-connection[tmodbus]==4.12.7` and
     `tmodbus==1.1.0`; the dev environment runs 2026.10.4 on 4.12.4 and
     tmodbus 0.6.2, because `pytest-homeassistant-custom-component` 0.13.375
@@ -255,7 +246,7 @@ Structure:
     an `entity_id` rename still removes and re-adds them, instead of
     updating in place. That fallback ends in 2027.11. Check the renames in
     `migration.py` against the hook before adding it.
-21. **A watched forced startup (13017).** The *Force startup* button exists
+20. **A watched forced startup (13017).** The *Force startup* button exists
     only on firmware in `CONFIRMED_ON_FIRMWARE`, and nothing can put one
     there: the control test has no check for it. One needs an inverter in
     low-SoC standby with no PV (an evening, the battery at its minimum SoC),
@@ -263,7 +254,7 @@ Structure:
     check is a control-test change, so it waits for a house that can give
     such an evening.
 
-22. **The PV cut (31211, #738), beyond the four confirmed firmwares.**
+21. **The PV cut (31211, #738), beyond the four confirmed firmwares.**
     Waits on contributors; nothing here or at the maintainer's P020 (31211
     reads 0xFFFF there) can answer it.
     - More firmware confirmed: 31211 answers 0x55 but no cut has been
@@ -275,7 +266,7 @@ Structure:
       does a cut survive a night or a restart, or does iSolarCloud rewrite
       it?
 
-23. **What register 13080 counts.** Documented as the external EMS
+22. **What register 13080 counts.** Documented as the external EMS
     heartbeat (0-1000 s, default 20 s), it reads 0 on 42 surveys, 330 on two
     houses in EMS mode 0, and 875 then 961 on ra1k_0's SH20T in EMS mode 3
     (`.wiki/wiki/queries/what-do-the-v1-1-17-only-registers-read.md`). Two
@@ -296,6 +287,33 @@ stale reads cost.
 
 Nothing generates one yet. Open: generate a Lovelace dashboard (asking
 first), or rely on entity metadata and document the auto-generated view.
+
+## A new logo and brand image
+
+The mark today is a rayed sun above a battery, drawn from code
+(`scripts/helpers/make_brand_icon.py`, written to
+`custom_components/sungrow_modbus/brand/`: `icon.png` and `dark_icon.png`,
+each also `@2x`). Wanted: an image that shows the whole system: PV modules,
+inverters and a car charging. Open:
+
+- **The design.** One picture at three sizes: the icon is shown at about 32
+  pixels in Home Assistant's own UI, where more than two or three shapes turn
+  to mush, so the icon may need to be a reduced cut of the picture (modules
+  and a plug, say) while a wider image (a README and Marketplace header, the
+  documentation) can carry all of it: modules, inverter and car.
+- **Original, never Sungrow's.** No Sungrow logo, wordmark or colours: this is
+  a community integration and borrowing the trademark implies an endorsement
+  (`make_brand_icon.py` says so).
+- **How it is made.** Keep it reproducible: a script that draws it
+  (Pillow today), or a hand-made vector in the repository with the PNGs
+  exported from it by a script; either way the maintainer approves a sketch
+  before it replaces the current mark.
+- **Where it goes.** The integration's `brand/` folder (square, transparent,
+  trimmed, 256 and 512 pixels, a dark variant), the README, the Marketplace
+  and the documentation; `home-assistant/brands` is the fallback the catalog
+  reads when `brand/` is missing, so it is not needed while `brand/` exists.
+  Do it before the merge decision (open decision 1), when the brand becomes
+  visible to everyone.
 
 ## Helping users set up the Energy dashboard
 
@@ -366,7 +384,7 @@ Open: what the integration should do when an id does change (a repair that
 names the affected entities and links the recipe; a list of old and new ids
 a user can export), how a rename after release is announced, and whether a
 real InfluxDB with the migrated data is worth testing once the production
-copy (blocker 13, `doc/maintainer_setup.md` §8)
+copy (blocker 12, `doc/maintainer_setup.md` §8)
 exists.
 
 ## The YAML track's documentation, for the integration
@@ -395,6 +413,18 @@ adoption and its guards stay as long as migration is offered.
 `doc/legacy_entity_map.json`) keeps history continuous and stays.
 `tests/test_registers.py`'s comparison with the YAML can then be anchored to
 the specification instead; its scan-interval check goes first.
+
+## Modbus over TLS on a WiNet-S's 516
+
+Built for a wallbox's own
+address (`wallbox_host`, `links.wallbox_tls_params`). For the dongle it is
+worth building only if 516 is a *separate* session pool from 502: hold
+502 until it refuses, then try 516. Also wanted: a certificate hash from a
+third site, to show whether every dongle ships the same key. The
+maintainer can take it from bar12's or gerd's WiNet-S (the five-second
+script in `device-survey/devices-wanted.md`) when their network is
+routed; the two share a subnet, so confirm the house by its stand-in
+first. Port 516 timed out from the rebuilt container on 2026-11-06.
 
 ## EVCC connection
 
@@ -425,7 +455,7 @@ Last checked: **2026-11-06 18:15 UTC** (#786): peter_sm's eighth reading ingeste
 
 Blocker 20 waits on `pytest-homeassistant-custom-component` pinning
 `homeassistant==2026.11.x`. Every day, ask PyPI; while it prints
-`2026.10.4`, nothing changes. Once it prints a 2026.11 pin, do blocker 20
+`2026.10.4`, nothing changes. Once it prints a 2026.11 pin, do blocker 19
 and drop this check.
 
 ```bash
