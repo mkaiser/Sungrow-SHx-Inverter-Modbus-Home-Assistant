@@ -17,7 +17,10 @@ if [[ ! -d .reference/core ]]; then
     git clone --filter=blob:none --sparse --depth 1 \
         https://github.com/home-assistant/core.git .reference/core
 else
-    git -C .reference/core pull --depth 1 --ff-only
+    # A depth-1 clone cannot fast-forward once upstream has moved, so take
+    # the latest snapshot and reset to it; the clone is only for reading.
+    git -C .reference/core fetch --depth 1 origin
+    git -C .reference/core reset --hard FETCH_HEAD
 fi
 git -C .reference/core sparse-checkout set \
     homeassistant/components/modbus \
@@ -25,6 +28,9 @@ git -C .reference/core sparse-checkout set \
     homeassistant/components/fronius \
     tests/components/recorder \
     tests/components/sensor \
+    homeassistant/components/homeassistant \
+    homeassistant/generated \
+    packages/hassfest \
     script
 
 for repo in home-assistant-libs/modbus-connection pymodbus-dev/pymodbus; do

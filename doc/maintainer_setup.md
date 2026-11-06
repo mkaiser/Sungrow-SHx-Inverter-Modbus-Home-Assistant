@@ -48,15 +48,13 @@ Before tagging:
 
 - `make ci` runs what CI runs, including the build and the gate that the
   built wheel provides every import the integration and the survey make.
-- Run hassfest locally (`make refs` fetches what it needs):
-
-      python -c "import sys; sys.path.append('.reference/core'); \
-        sys.argv=['hassfest','--integration-path','custom_components/sungrow_modbus',\
-        '--action','validate']; \
-        from script.hassfest.__main__ import main; raise SystemExit(main())"
-
-  Appended to `sys.path`, not prepended, so the **installed** Home Assistant
-  wins: `.reference/core` is a partial clone with no `homeassistant.generated`.
+- Run hassfest locally: `make refs`, then `make hassfest`
+  (`scripts/dev/hassfest.sh`). Current core's hassfest needs the Home Assistant
+  of the same month, so it runs in `.venv-marketplace/` (2026.11, created on
+  first use), not in the dev environment. The clone's `homeassistant` is a
+  partial tree, so the script appends it to `sys.path` and the **installed**
+  Home Assistant wins. Without core's strings in the clone an unknown
+  `categories` or `connectivity` value is not reported at all.
   The finding it most often makes: a repair issue is `title` + `description`
   *or* `title` + `fix_flow`, never both (*"two or more values in the same
   group of exclusion 'fixable'"*). For a fixable issue the text belongs in

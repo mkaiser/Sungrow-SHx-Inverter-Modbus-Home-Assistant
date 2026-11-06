@@ -67,7 +67,7 @@ Structure:
    | Brand: `brand/icon.png` in the integration, or the domain in `home-assistant/brands` | `brand/` exists |
    | HACS action and hassfest pass with no ignores | CI runs both; confirm none is ignored |
    | **At least one full GitHub release** (a tag is not enough) | **no: every release is a pre-release** |
-   | `categories` in `manifest.json` | none: hassfest and the HACS action warn; see below |
+   | `categories` in `manifest.json` | yes, three (see below) |
 
    Open: whether a repository whose only releases are pre-releases passes
    (not stated); so the first stable release (0.1.0, not an alpha) is the
@@ -97,25 +97,21 @@ Structure:
      `["diy_makers"]` because it is the generic connector; a vendor integration
      is a product, so not that. No core integration lists a parent beside its
      own child (0 of 1274), so do not.
-   - *Options.* (A) `["energy.solar_batteries"]`: the inverter and the SBR,
-     the primary purpose, identical to the reference integrations. (B)
-     `["energy.solar_batteries", "energy.ev_charging"]`: adds the wallbox, a
-     device of its own here (its own connection option, 19 sensors and 2 binary sensors) and the
-     only way to read a Sungrow AC22E in Home Assistant, but it is read only,
-     which a user browsing EV charging may not expect; the page allows a second
-     category "only when the integration really is that too". (C) B plus
-     `energy.meters_monitoring` as `fronius` has: weak, the meter is read
-     through the inverter. `energy.backup_power` (UPS, generators) fits the
-     external generator no better than it fits the rest. **Suggestion: B**,
-     primary first, with the wallbox's read-only state said in the description;
-     A if the maintainer wants the narrowest claim. Adding it needs no
-     release: it silences the hassfest warning and puts the integration in its
-     category in Add integration at once; check hassfest accepts the values.
-   - *Next to it:* 2026.11 manifests also have `connectivity` (core: `sofar`
-     `["modbus"]`, `fronius` `["modbus", "network"]`, `goodwe` `["network"]`).
-     Ours reaches the inverter over Modbus TCP through core's `modbus`, so
-     `["modbus"]` would match `sofar`; not yet checked: whether it is required
-     of a custom integration and what the Add integration list does with it.
+   - *Decision (2026-11-06): option C.* `categories` is
+     `["energy.solar_batteries", "energy.ev_charging",
+     "energy.meters_monitoring"]` and `connectivity` is `["modbus"]` (as
+     `sofar`), both in `manifest.json`. The alternatives were A, the narrowest
+     (`["energy.solar_batteries"]`, as `sofar`, `goodwe`, `solax`, `sma`), and B,
+     without the meters. C adds the wallbox (a device of its own here, 19
+     sensors and 2 binary sensors, but read only, which the description
+     should say) and, as `fronius` does, the meter read through the inverter.
+     `diy_makers` stays for core's generic `modbus`.
+   - *Verified:* `make hassfest` (`scripts/dev/hassfest.sh`: current core's
+     hassfest in the 2026.11 venv) reports 0 invalid and no warning; the same
+     run on a manifest with `energy.nonsense` and `carrier_pigeon` warns for
+     both, so the four values are known to core. Not yet seen: the integration
+     in Add integration under its category, which needs the change in a
+     published preview (and 2026.11).
    refreshes the catalog every 6 hours and a repository added from a link
    every 48 hours.
 
