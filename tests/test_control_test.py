@@ -53,6 +53,7 @@ from sungrow_modbus.control_test import (
     REFUSED,
     SCALED,
     SEVERITY,
+    SKIPPED,
     START_WORD_PROBE,
     TWO_SIDED,
     ControlTest,
@@ -1417,6 +1418,97 @@ async def test_a_run_without_consent_never_writes_the_stop_register(
 
     assert outcome.restart is None
     assert restartable.holding.get(12999) is None
+
+
+async def _restart_only(unit: MockModbusUnit) -> tuple[ControlTest, Any]:
+    inverter = SungrowInverter(unit)
+    await inverter.async_update()
+    run = ControlTest(
+        inverter,
+        options=Options(restart=True, restart_only=True),
+        clock=FakeClock(),
+    )
+    return run, await run.async_run()
+
+
+async def test_a_refused_stop_is_reported_and_leaves_nothing_stopped(
+    restartable: MockModbusUnit,
+) -> None:
+    """The stop never landed, so there is nothing to start and nothing to wait for."""
+    restartable.fail_write(12999, IllegalDataValueError("refused"))
+
+    run, outcome = await _restart_only(restartable)
+
+    assert outcome.restart is not None
+    assert outcome.restart.verdict == SKIPPED
+    assert "the stop" in (outcome.restart.detail or "")
+    assert run.snapshot.stopped_at is None
+    # Never stopped: the running state was never written, and reads Running.
+    assert restartable.input.get(12999, 0x0000) == 0x0000
+
+
+async def test_an_inverter_that_never_reports_stopped_is_inconclusive(
+    full_unit: MockModbusUnit,
+) -> None:
+    """The stop was taken but 12999 never left Running: not evidence of a stop."""
+    _run, outcome = await _restart_only(full_unit)
+
+    assert outcome.restart is not None
+    assert outcome.restart.stopped_after is None
+    assert outcome.restart.verdict == INCONCLUSIVE
+    assert "never reported a stopped state" in (outcome.restart.detail or "")
+
+
+async def test_a_setting_the_restart_did_not_keep_is_reported(
+    restartable: MockModbusUnit,
+) -> None:
+    """The inverter came back with a different charge maximum: say so."""
+
+    def forget(event: Any) -> None:
+        if event.address == 12999 and event.values[0] != 0xCE:
+            restartable.holding[CHARGE_ADDRESS] = 123
+
+    restartable.on_write(forget)
+    _run, outcome = await _restart_only(restartable)
+
+    assert outcome.restart is not None
+    assert outcome.restart.running_after is not None
+    assert outcome.restart.settings_survived is False
+
+
+async def test_an_inverter_that_runs_but_never_generates_says_so(
+    restartable: MockModbusUnit,
+) -> None:
+    """Running again is not generating again: at dusk it may never be."""
+
+    def dusk(event: Any) -> None:
+        if event.address == 12999 and event.values[0] == 0xCE:
+            restartable.input[5016] = 0
+            restartable.input[5017] = 0
+
+    restartable.on_write(dusk)
+    _run, outcome = await _restart_only(restartable)
+
+    assert outcome.restart is not None
+    assert outcome.restart.running_after is not None
+    assert outcome.restart.generating_after is None
+
+
+async def test_an_old_snapshot_without_words_is_restored_by_its_value(
+    full_unit: MockModbusUnit,
+) -> None:
+    """A snapshot saved before raw words were kept is judged by the decoded value."""
+    run = _runner(full_unit)
+    run.snapshot.raw = {}
+    run.direct = True
+    run._transport_checked = True
+    full_unit.holding[CHARGE_ADDRESS] = 500  # 5000 W: already where it was
+
+    restores = await run.async_restore()
+
+    row = next(row for row in restores if row.field == CHARGE_POWER)
+    assert row.restored
+    assert row.attempts == 0
 
 
 # -- the charge ceiling, which stops a charge rather than commanding one -----
