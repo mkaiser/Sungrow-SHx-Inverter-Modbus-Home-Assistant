@@ -317,13 +317,40 @@ inverters and a car charging. Open:
 
 ## Helping users set up the Energy dashboard
 
-Investigate how to assist a user in setting up Home Assistant's Energy
-dashboard from this integration's entities: which sensors go into grid
-import and export, solar production (total or per MPPT), the battery's
-charge and discharge, and whether the integration can offer them (the
-Energy platform's solar forecast hook, a repair or a note after setup that
-names the right entities) instead of leaving the user to pick among 300.
-Feeds `legacy/doc/dashboard.md`'s Energy dashboard row below.
+Investigated 2026-11-06 against Home Assistant 2026.11. Findings:
+
+- **No hook to pre-fill it.** Core's `energy` component has one platform hook
+  for integrations, the solar *forecast* (`async_get_solar_forecast`, for a
+  forecast provider, not for an inverter). The sources are saved through
+  `energy/save_prefs`, and `EnergyManager.async_update` could merge entries
+  from the integration, but that edits the user's own preferences: only with
+  an explicit action and a confirmation, never on setup.
+- **What the dashboard accepts.** An energy-class sensor in kWh with the
+  state class `total` or `total_increasing` (Wh and kWh both). Ours qualify,
+  54 entities (hybrid 18, derived 13, SG 21, wallbox 2, in Wh). Offered in a
+  list of that size the user
+  picks by name, and several names are traps: *Daily …* resets at midnight,
+  *Total PV generation & battery discharge* double counts, *(smoothed)* is for
+  a card, *MPPTn energy* is the integrated estimate.
+- **What to pick** (hybrid, names as shipped): grid consumption *Total
+  imported energy*, grid return *Total exported energy*, solar *Total PV
+  generation*, battery in *Total battery charge energy*, out *Total battery
+  discharge energy*, and under individual devices the wallbox's *Total
+  charged energy*. An SG: its *Total PV generation*, *Total exported energy*
+  and *Total imported energy*. Several inverters: each is a solar source of
+  its own, so no sum is needed; the battery comes from the inverter that has
+  it.
+- **Unverified:** whether the import and export totals need a meter fitted
+  (what a house without one reads), and whether the *Total …* energies, which
+  keep the YAML package's `total` state class, behave across an inverter
+  reset. Both want a house to check before a guide states them.
+
+Proposed, in order of cost: a user guide, `doc/energy_dashboard.md`, listing
+the entities to pick for each setup (hybrid, SG, SBR, wallbox, several
+inverters), linked from the README and the setup's last step; then a repair
+or notification after setup that names the same entities; an action that adds
+them to the dashboard last, and only on request. Feeds `legacy/doc/dashboard.md`'s
+Energy dashboard row below.
 
 ## Site-wide sensors for several inverters
 
