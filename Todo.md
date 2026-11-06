@@ -92,6 +92,15 @@ Structure:
 
    Not to copy: evcc's `sungrow.go` reserves all rights.
 
+   2026-11-06 at gerd's (VPN routed): a **read-only** survey of the inverter
+   over the cable (178.114) identified it by its stand-in, anon-00267885816,
+   so the house is gerd's. His Home Assistant was polling throughout: many
+   blocks answered on one pass of two or dropped the link, so the reading is
+   contention, not evidence, and is not ingested (the document sits in
+   `device-survey/`, gitignored). Nothing was written. The maintainer had
+   meant the wallbox, not the inverter; inverter work there waits until his
+   Home Assistant is stopped. The wallbox dry run (step 2) has not run yet.
+
    Done 2026-11-06, beyond step 1: the enable register (holding 21211:
    disabled on 0, the wallbox must say status 8, then enabled on 1) and the
    phase setting (holding 21204, only when nothing flows, the actual mode
