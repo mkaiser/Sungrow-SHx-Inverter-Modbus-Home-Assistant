@@ -25,5 +25,5 @@ The first certificate *hash* this project has recorded, from port 516 of
   validity, is what a certificate built into the firmware looks like, not one made per device. If
   so, its private key ships with every unit, and this TLS encrypts the link but authenticates
   nothing.
-- **Not yet proven across houses.** Both readings are from one house. The same hash from a
-  WiNet-S anywhere else settles it.
+- **The same at another house**: [bar12's WiNet-S](bar12-tls-certificate-2026-11-06-summary.md)
+  serves this certificate too.

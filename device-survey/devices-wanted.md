@@ -24,7 +24,6 @@ details are under [Why each one](#why-each-one).
 | 10 | **An SH-RS on `SUNSTONE-H` P057, P059, P067 or P068**, with the control test, in daylight | Whether the PV cut (register 31211) works there: it answers on all four, and has been watched cutting on P065 only |
 | 11 | **Any SG string inverter other than an SG5.0RS** | Its tracker and phase count, which decide its entities: the source's table is unverified for most models, and an SG answers 0 for hardware it lacks |
 | 12 | **Any inverter on a three-wire grid (3P3L, no neutral)**: the survey shows the output type it reads from register 5002 | On 3P3L, registers 5019-5021 carry line voltages, and the integration creates no phase voltages or phase powers there. One reading shows what to create instead |
-| — | **A WiNet-S certificate hash**, five seconds, no survey | Whether every WiNet-S shares one TLS certificate, see [the last item](#a-winet-s-certificate-hash) |
 
 ## Not needed any more
 
@@ -34,7 +33,9 @@ differs from what is in [`results/inverter/`](results/inverter/) in one of the w
 - an **SH10RT, SH10RT-20 or SH10RT-V112 on P023**, on either path (five
   houses);
 - an **SH8.0RT-V112 on P022** or an **SH6.0RT-V112 on P023**;
-- an **SBR096** behind any of those.
+- an **SBR096** behind any of those;
+- a **WiNet-S certificate hash**: two houses, a WiNet-S and a wallbox all
+  serve one certificate, so another hash adds nothing.
 
 It is still worth sending when it brings **a firmware update** since your
 last survey (that is how a silent change is noticed), **the first control
@@ -132,25 +133,6 @@ The one size not yet read over a cable ([SBR battery](../.wiki/wiki/entities/dev
 One cluster gave two rules the config flow relies on: a slave's device
 address is 2, and a slave answers 0 where a standalone inverter answers
 0xFFFF. A second shows whether they are rules or one house's convention.
-
-### A WiNet-S certificate hash
-
-Five seconds, no survey. A WiNet-S serves Modbus over TLS on port 516 with a
-certificate that looks baked into the firmware. One house's WiNet-S and wallbox
-both print
-`84505e46778f2611df26ed1ad8a4e872945f7eb33e050e617c96a73add005b5b`; yours, the
-same or different, shows whether every dongle shares one key:
-
-```bash
-python - <<'PY'
-import hashlib, socket, ssl
-ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-ctx.check_hostname = False; ctx.verify_mode = ssl.CERT_NONE
-raw = socket.create_connection(("YOUR.DONGLE.IP", 516), 8)
-with ctx.wrap_socket(raw, server_hostname="x") as tls:
-    print(hashlib.sha256(tls.getpeercert(True)).hexdigest())
-PY
-```
 
 ## Also worth sending
 

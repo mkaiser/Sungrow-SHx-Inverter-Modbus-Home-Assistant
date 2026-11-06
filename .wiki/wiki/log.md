@@ -451,3 +451,9 @@ read 161 beside it, so it is not the setting's echo, as the one earlier reading 
 Port 516 of gerd's WiNet-S and of his wallbox serve the byte-identical certificate, serial number
 1, RSA-2048, valid 2024 to 2054; its SHA-256 is now recorded. Two products on one certificate
 points to one built into the firmware; the same hash from another house would settle it.
+
+## [2026-11-06] ingested | bar12's TLS certificate: the same as gerd's
+
+bar12's WiNet-S, confirmed by its stand-in through the same address, serves the certificate gerd's
+WiNet-S and wallbox serve, byte for byte. Two houses and two products on one certificate: it is
+built into the firmware, and port 516's TLS authenticates nothing.

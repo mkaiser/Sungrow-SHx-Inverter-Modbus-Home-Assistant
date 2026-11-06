@@ -46,86 +46,48 @@ Structure:
    what the Marketplace's page says). Keep the HACS path while `hacs.json`
    allows 2026.9 and 2026.10. Nothing here waits on blocker 19.
 2. **Writing to the wallbox: measure the output current's scale at gerd's.**
-   The wallbox is read only (`doc/wallbox_registers.md`; no file in
-   `device-survey/` writes). Three sources disagree on the output current
-   setting, holding 21203: 0.1 A per count here, 0.01 A in discussion #571. On
-   a mains charger that is a factor ten, so no wallbox entity is built until
-   a run like the inverter's has settled it. Plan:
+   The wallbox is read only. Three sources disagree on the output current
+   setting, holding 21203: 0.1 A per count here, 0.01 A in discussion #571, a
+   factor ten on a mains charger. No wallbox control is built until a measured
+   run settles it.
 
-   1. **The test, in the library. Done 2026-11-06:**
-      `src/sungrow_modbus/wallbox/control_test.py` and
-      `tests/test_wallbox_control_test.py` (22 tests). It writes only through a
-      `WallboxPort` the driver supplies, so `SungrowWallbox` stays read only.
-      The words it offers (60, 80, 100; 6, 8 and 10 A at 0.1 A per count) are
-      safe at either scale, capped by `max_amps` (10 A); the snapshot is
-      flushed before the first write, and without a callback nothing is
-      written; no leave is a dry run; the readback is the raw word on a fresh
-      session (a same-session holding read answered another register after a
-      write); the restore writes the snapshot's raw word, checks it by a raw
-      read and tries five times, and an unrestored register is code 5. A
-      setting that reads above the rating at 0.1 A per count and inside it at
-      0.01 is reported as the scale finding (code 4) before any write.
-   2. **A dry run at gerd's first. Waits on his network being routed** (not
-      the case on 2026-11-06; set aside for another session, the maintainer
-      says when). Read only, no leave: identifies the
-      wallbox, reads the rating, the setting and what the car draws, and says
-      which scale they fit. If a car is charging, "the car draws 13 A while
-      the setting is 160" already excludes 0.01 A per count (1.6 A could not
-      charge it). This may settle the question before one write; it needs only
-      the network and the wallbox's own address.
-   3. **The driver.** `device-survey/scripts/python/sungrow_wallbox_control_test.py`
-      (PEP 723, `--leave` defaulting to no, a snapshot file per day, TLS 516
-      unit 248 as `wallbox_direct.py` connects, a fresh session for the raw
-      readback, a document with the stand-in serial). It can use only what the
-      pinned wheel has (`device-survey/reference.md`), so it waits on a release
-      that contains step 1.
-   4. **One window with gerd and a car.** A car plugged in and charging, his
-      Home Assistant and evcc off, the TLS port kept on one session (it
-      refuses reconnects within seconds). Start low, never above his
-      installation's limit, no phase switch with the car charging, and the
-      optional stop/start only if the register reads 0 while charging. His
-      consent covers any test; ask again for writes with a car attached.
-   5. **Only then, entities.** A charging current number and an enable switch,
-      on what was measured, through the write table
-      (`scripts/generate/tables/writes.py`), with the wallbox's 60 s fallback
-      in mind.
+   Built and tested (41 tests): the procedure,
+   `src/sungrow_modbus/wallbox/control_test.py`, and its terminal driver,
+   `device-survey/scripts/python/sungrow_wallbox_control_test.py` (TLS 516,
+   unit 248 only; no `--leave` is a dry run; `--enable`, `--phase`,
+   `--start-stop`, `--max-amps`, `--restore`). It offers 6, 8 and 10 A, safe at
+   either scale; flushes a snapshot before the first write; reads the raw word
+   back on a fresh session (a same-session read after a write answered another
+   register); restores the snapshot's raw word, never skipped. The enable step
+   disables and re-enables (status 8 in between); the phase step switches only
+   when nothing flows. It refuses to write when the setting reads 0.
 
-   Not to copy: evcc's `sungrow.go` reserves all rights.
+   What gerd's wallbox said in the dry run (wiki:
+   `gerd-wallbox-dry-run-2026-11-06-summary.md`): idle, with no car, the
+   setting reads **0** (160 and 151 while charging), so an idle wallbox cannot
+   separate the two scales and the meaning of 0 is not known. Input 21322 is
+   not the setting's echo.
 
-   2026-11-06 at gerd's (VPN routed): a **read-only** survey of the inverter
-   over the cable (178.114) identified it by its stand-in, anon-00267885816,
-   so the house is gerd's. His Home Assistant was polling throughout: many
-   blocks answered on one pass of two or dropped the link, so the reading is
-   contention, not evidence, and is not ingested (the document sits in
-   `device-survey/`, gitignored). Nothing was written. The maintainer had
-   meant the wallbox, not the inverter; inverter work there waits until his
-   Home Assistant is stopped.
+   Left, in order:
 
-   **Step 2, the dry run, ran 2026-11-06** at the wallbox's own address, read
-   only, no car (wiki: `gerd-wallbox-dry-run-2026-11-06-summary.md`). It
-   identified the AC22E-01 (rated 32.0 A) and found the **output current setting
-   at 0 while idle**, against 160 and 151 while charging: 0 is 0 at either
-   scale, so the scale needs a car charging (step 4). Input 21322 read 161
-   beside it, so it is not the setting's echo. What this changes: the restore
-   would put back a 0 whose meaning (no limit set, or nothing offered) is not
-   established, so step 4 should start with the car already charging, when
-   the setting holds a real current. The procedure now refuses to write
-   when the setting reads 0 (code 2; a dry run still runs), tested.
+   1. **A release that contains the procedure**, so the driver's pinned wheel
+      has it (until then it says so and exits 2). Or run it from a checkout,
+      as the dry run was.
+   2. **One window with gerd and a car charging**, so the setting holds a
+      real current: his Home Assistant and evcc off, one TLS session, the
+      lowest current first, never above his installation's limit, no phase
+      switch with the car charging. His consent covers any test; ask again
+      for writes with a car attached. A car drawing more than a tenth of the
+      setting already rules out 0.01 A per count before the first write.
+   3. **Then entities**: a charging current number and an enable switch, on
+      what was measured, through the write table
+      (`scripts/generate/tables/writes.py`), with the wallbox's 60 s
+      fallback in mind.
 
-   Done 2026-11-06, beyond step 1: the enable register (holding 21211:
-   disabled on 0, the wallbox must say status 8, then enabled on 1) and the
-   phase setting (holding 21204, only when nothing flows, the actual mode
-   input 21270 must follow) are steps, each behind its own option and each
-   skipped when its register could not be read or reads something that is not
-   the state it takes it for. And the driver, step 3:
-   `device-survey/scripts/python/sungrow_wallbox_control_test.py`
-   (`--leave`, `--enable`, `--phase`, `--start-stop`, `--max-amps`,
-   `--restore`; TLS 516 unit 248 only; a snapshot flushed before the first
-   write; the raw readback on a fresh session after ten quiet seconds; no
-   address or serial in its report) with `tests/test_wallbox_control_test_cli.py`.
-   It is in `sync_version.py`'s script list, so its pin moves with the version,
-   but the pinned 0.1.0a27 wheel has no `wallbox.control_test`: it prints that
-   and exits 2 until the next release, which contains it.
+   Not to copy: evcc's `sungrow.go` reserves all rights. Inverter work at
+   gerd's waits until his Home Assistant is stopped: a read-only survey
+   on 2026-11-06 ran into it and is not evidence.
+
 3. **Spoil the December release at the top of `main`'s README.** The
    maintainer targets a release in December 2026 (said 2026-11-06). `main`'s
    README opens with dated news headings that the YAML package's users read;
@@ -323,12 +285,15 @@ Structure:
     a run on the host, not in the container.
 12. **The production database.** The migration is verified at real scale
     only against the maintainer's years-old YAML install; what to collect and
-    how is in `doc/maintainer_setup.md`, section 8. Offered 2026-11-06: a
-    copy of the instance's files (preferred: the migration can be run and
-    rolled back) or read-only API access (the entity map and statistics only),
-    into the gitignored `.testdata/`, with the copy pointed at the simulator,
-    never at the real inverter. Waits on the maintainer choosing and placing
-    the copy; counts and mismatches are reported, no serial or address.
+    how is in `doc/maintainer_setup.md`, section 8. Two routes: a copy of the
+    instance's files (preferred: the migration can be run and rolled back, in
+    the gitignored `.testdata/`, pointed at the simulator, never at the real
+    inverter) or read-only API access (the entity map and statistics only).
+    For the API: a non-admin user's token and the instance's address are in
+    `~/.claude/secrets/` (never in this repository), but the hostname resolves
+    to IPv6 only and the devcontainer has no IPv6 route, so it is unreachable
+    from here until Docker gets IPv6 or an IPv4 address is given. Counts and
+    mismatches are reported, no serial or address.
 
 13. **Writing the discharge schedules, and the import limit** (#785), in
     no Sungrow document. The schedules read as diagnostic entities
@@ -608,21 +573,12 @@ the specification instead; its scan-interval check goes first.
 
 ## Modbus over TLS on a WiNet-S's 516
 
-Built for a wallbox's own
-address (`wallbox_host`, `links.wallbox_tls_params`). For the dongle it is
-worth building only if 516 is a *separate* session pool from 502: hold
-502 until it refuses, then try 516.
-
-The certificate: measured 2026-11-06 at gerd's (wiki:
-`gerd-tls-certificate-2026-11-06-summary.md`). His WiNet-S and his wallbox serve
-the byte-identical certificate, SHA-256
-`84505e46778f2611df26ed1ad8a4e872945f7eb33e050e617c96a73add005b5b`, serial 0x1,
-RSA-2048, valid 2024 to 2054: two products on one certificate, so a per-device
-key is unlikely. Still wanted: the same hash from a WiNet-S at another house.
-bar12's is the nearest (the maintainer can take it when bar12's network is
-routed; it shares gerd's subnet, so confirm the house by its stand-in first);
-`device-survey/devices-wanted.md` now gives contributors the hash to compare
-against.
+Built for a wallbox's own address (`wallbox_host`,
+`links.wallbox_tls_params`). For the dongle it is worth building only if 516
+is a *separate* session pool from 502: hold 502 until it refuses, then try
+516. The certificate is settled (wiki: `device-winet-s.md`): gerd's WiNet-S,
+his wallbox and bar12's WiNet-S serve one certificate, so it is built into the
+firmware, its key is on every unit, and verifying it gains nothing.
 
 ## EVCC connection
 
@@ -642,12 +598,14 @@ the commit; a survey signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-06T19:57:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-06T19:57:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-06T21:20:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-06T21:20:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked: **2026-11-06 19:57 UTC** (#786): nothing new since peter_sm's eighth reading.
+Last checked: **2026-11-06 21:20 UTC** (#786): **to ingest**, icefest's two
+diagnostics downloads of one SH6.0RS (20:17 UTC): through a WiNet-S on Ethernet,
+and over RS485 through a Waveshare converter, a transport not surveyed before.
 
 ## Recurrent: a test plugin for Home Assistant 2026.11 (daily, until it ships)
 
@@ -662,7 +620,7 @@ curl -s https://pypi.org/pypi/pytest-homeassistant-custom-component/json \
 print(i['version'], [r for r in i['requires_dist'] if r.startswith('homeassistant')])"
 ```
 
-Last checked: **2026-11-06 19:57 UTC**: 0.13.375, still `homeassistant==2026.10.4`.
+Last checked: **2026-11-06 21:20 UTC**: 0.13.375, still `homeassistant==2026.10.4`.
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 

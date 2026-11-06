@@ -44,9 +44,10 @@ exhausts under rapid reconnects the same way. The certificate is
 Sungrow-signed (issuer `OT.SUNGROW`, CN `sun`, serial number 1, RSA-2048, valid
 2024-10-24 to 2054-10-17) and byte-identical to the wallbox's at the same house,
 SHA-256 `84505e46778f2611df26ed1ad8a4e872945f7eb33e050e617c96a73add005b5b`
-([gerd's certificate](../sources/gerd-tls-certificate-2026-11-06-summary.md)),
-so this TLS authenticates nothing. Whether every WiNet-S serves it needs the
-same hash from another house.
+([gerd's certificate](../sources/gerd-tls-certificate-2026-11-06-summary.md)), and the same
+at another house ([bar12's](../sources/bar12-tls-certificate-2026-11-06-summary.md)): one
+certificate built into the firmware, its private key on every unit, so this TLS
+authenticates nothing and verifying it gains nothing.
 `sungrow_survey.py` reports a WiNet-S's 516 without reading it, after asking it for a wallbox at unit 248 and a Logger at unit 247.
 
 ## The history registers
