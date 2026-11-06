@@ -212,7 +212,7 @@ the reading but not the block read test.
 | `python/blocks.py` | the block read test from a terminal: which grouped read a device fails. `--client raw` uses the library's strict raw socket, which names the count a padded frame needs |
 | `python/wallbox_direct.py` | finds and reads a wallbox at its own address, over TLS on port 516 |
 | `python/string_inverter_direct.py` | reads an SG string inverter by its own map, read only: the identity, PV, AC, meter and tracker blocks raw, the serial masked. The control test and the block read test never run on one |
-| `python/ihomemanager_direct.py` | reads an iHomeManager or a Logger at unit 247: the iHomeManager's documented registers and the gaps between them, or a Logger's identity and the rest of its 8000 block raw; any text outside a documented string is published only as a stand-in |
+| `python/ihomemanager_direct.py` | reads an iHomeManager or a Logger at unit 247, over Modbus TCP or inside TLS on port 516: its documented registers and the gaps between them; any text outside a documented string is published only as a stand-in |
 
 `probe.py capabilities <host>` is the reading on its own, for a maintainer
 who wants only that. It writes the document to the current directory, or to

@@ -96,16 +96,19 @@ from sungrow_modbus.survey_document import (
 #: The ports a sweep looks at, what answering on each one means, and whether
 #: this tool can then read it.
 #:
-#: 502 and 503 are Modbus TCP and get identified. **516 is swept and not
-#: read**, and what it is was measured rather than taken from the web.
+#: 502 and 503 are Modbus TCP and get identified. **516 is swept, and read
+#: only from a wallbox, a Logger or an iHomeManager**; what it is was measured
+#: rather than taken from the web.
 #:
-#: It is Modbus TCP **inside TLS**, served by two different devices. A
+#: It is Modbus TCP **inside TLS**, served by several devices. A
 #: **WiNet-S** has it beside its 502, and is not read here: it refuses the same
 #: registers over TLS as on 502 -- inputs 2612 and 2628 with 0x02 -- so it is
 #: not a way round what a dongle will not forward. A **wallbox with a network
 #: connection of its own** has only this, answering as unit 248, and is read:
 #: `wallbox_direct.py` finds it by its model name and surveys it into a
-#: document of its own.
+#: document of its own. A **Logger1000** from firmware P044 opens only this
+#: port (Sungrow's manual Ver129), and is read at unit 247 through it
+#: (`ihomemanager_direct.async_identify_tls`).
 #:
 #: 503 is the Logger's port, and one an iHomeManager may answer on at unit
 #: 247. Sungrow's V1.0.2 document gives it 502, 503 and 504, **one TCP
@@ -123,7 +126,7 @@ SWEEP_PORTS: tuple[tuple[int, str, bool], ...] = (
     (503, "a Logger1000/3000, or an iHomeManager at unit 247", True),
     (
         516,
-        "Modbus over TLS: a wallbox at its own address (read),"
+        "Modbus over TLS: a wallbox at its own address or a Logger (read),"
         "\n          or a WiNet-S (reported only)",
         False,
     ),
@@ -410,6 +413,11 @@ async def _find(args, echo) -> list[Found]:
                     wallboxes.append(found_wallbox)
                     echo(f"    {host}:{port} a {found_wallbox.model} wallbox")
                     continue
+                if found_tls := await ihomemanager_direct.async_identify_tls(host):
+                    if not any(manager.host == host for manager in managers):
+                        managers.append(found_tls)
+                    echo(f"    {host}:{port} {found_tls.model}, over TLS")
+                    continue
                 unreadable.append((host, port))
                 echo(f"    {host}:{port} answered, and cannot be read -- see below")
         if not addresses:
@@ -428,6 +436,17 @@ async def _find(args, echo) -> list[Found]:
     echo("")
     for host, port in addresses:
         who = await probe.identify(host, port)
+        # A current Logger1000 opens only 516, with TLS; a sweep finds it
+        # there on its own, a typed address only by asking.
+        if (
+            who.error is not None
+            and args.host
+            and (found_tls := await ihomemanager_direct.async_identify_tls(host))
+        ):
+            if not any(manager.host == host for manager in managers):
+                managers.append(found_tls)
+            echo(f"  {host}:{found_tls.port}  {found_tls.model}, over TLS")
+            continue
         echo(f"  {host}:{port}  {probe.described(who)}")
         if who.kind == "ihomemanager":
             # Read by its own map, not the inverter's: every inverter block
@@ -1209,7 +1228,8 @@ def _summary_unreadable(echo) -> None:
     through the tunnel -- and refused on the inverters' own LAN ports, so it
     is the dongle's port and not, as reported elsewhere, an iHomeManager's.
 
-    A wallbox on 516 is read (`wallbox_direct.py`) and never lands here; a
+    A wallbox, a Logger or an iHomeManager on 516 is read and never lands
+    here (`wallbox_direct.py`, `ihomemanager_direct.py`); a
     dongle's TLS port is only reported, because it serves what its 502
     serves. Printed as a finding rather than a warning, because a user told
     there is nothing on 516 would be told something false -- there is a
@@ -1223,9 +1243,10 @@ def _summary_unreadable(echo) -> None:
     echo("  Answered a port this tool cannot read")
     for host, port in _UNREADABLE:
         echo(f"  read  {host}:{port}")
-    echo("        Modbus over TLS, which this survey reads only from a wallbox. On a")
-    echo("        WiNet-S this is normal and not a fault: the port works and")
-    echo("        serves the same registers as 502, refusing the same ones.")
+    echo("        Modbus over TLS, which this survey reads only from a wallbox,")
+    echo("        a Logger or an iHomeManager. On a WiNet-S this is normal and")
+    echo("        not a fault: the port works and serves the same registers as")
+    echo("        502, refusing the same ones.")
     echo("        Worth mentioning in an issue only if 502 found nothing --")
     echo("        then this is where your device is.")
     echo("")

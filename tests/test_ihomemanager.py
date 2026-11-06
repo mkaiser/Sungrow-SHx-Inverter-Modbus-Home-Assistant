@@ -322,7 +322,9 @@ async def test_a_second_reading_from_another_address_does_not_overwrite(
 async def test_the_survey_reads_an_ihomemanager_instead_of_skipping_it() -> None:
     """Found by `identify`, it is collected for reading, not reported and dropped."""
     args = argparse.Namespace(host=["192.0.2.40"], port=503, unit=None)
-    who = SimpleNamespace(kind="ihomemanager", model="iHomeManager", unit=247)
+    who = SimpleNamespace(
+        kind="ihomemanager", model="iHomeManager", unit=247, error=None
+    )
 
     async def identify(host, port):
         return who
@@ -368,7 +370,11 @@ async def test_a_unit_247_device_that_is_not_an_ihomemanager_is_not_read() -> No
     """A Logger answers at unit 247 too; it is reported, not read as an iHM."""
     args = argparse.Namespace(host=["192.0.2.41"], port=502, unit=None)
     who = SimpleNamespace(
-        kind="unit247", model="a device at unit 247", unit=247, device_type_code=0x0130
+        kind="unit247",
+        model="a device at unit 247",
+        unit=247,
+        device_type_code=0x0130,
+        error=None,
     )
     said: list[str] = []
 

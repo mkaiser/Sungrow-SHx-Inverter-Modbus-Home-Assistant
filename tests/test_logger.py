@@ -12,7 +12,7 @@ import sys
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from modbus_connection import IllegalDataAddressError
+from modbus_connection import IllegalDataAddressError, ModbusTlsParams
 from modbus_connection.mock import MockModbusConnection
 import pytest
 
@@ -174,7 +174,7 @@ def test_every_field_has_a_source() -> None:
             assert name.removesuffix("_raw") in logger.CONFIDENCE
 
 
-def _connection(device):
+def _connection(device, opened=None):
     class Unit:
         def __init__(self) -> None:
             self.mock = MockModbusConnection().for_unit(247)
@@ -193,6 +193,8 @@ def _connection(device):
     class Connection:
         def __init__(self, params, timeout):
             self.unit = Unit()
+            if opened is not None:
+                opened.append(params)
 
         def for_unit(self, unit_id):
             assert unit_id == 247
@@ -225,6 +227,79 @@ async def test_a_logger_survey_writes_a_logger_document(tmp_path) -> None:
     assert "ihomemanager" not in document
     assert reading.written.name == "logger1000-tester-port502.json"
     assert "A123456789" not in reading.written.read_text()
+
+
+async def test_a_logger_on_516_is_identified_over_tls() -> None:
+    """A Logger1000 from firmware P044 opens only 516, with TLS."""
+    opened: list = []
+    with patch.object(
+        ihomemanager_direct, "ModbusConnection", _connection(_device(), opened)
+    ):
+        found = await ihomemanager_direct.async_identify_tls("192.0.2.62")
+
+    assert found == ihomemanager_direct.Found(
+        "192.0.2.62", 516, "a Logger1000", "logger", tls=True
+    )
+    assert [type(params) for params in opened] == [ModbusTlsParams]
+    assert opened[0].port == 516
+
+
+async def test_a_dongle_on_516_is_not_taken_for_a_logger() -> None:
+    """A WiNet-S's TLS port refuses unit 247's type code: nothing found."""
+    refusing = {"input": {}, "holding": {}}
+    with patch.object(ihomemanager_direct, "ModbusConnection", _connection(refusing)):
+        assert await ihomemanager_direct.async_identify_tls("192.0.2.63") is None
+
+
+async def test_a_logger_read_over_tls_says_so_in_its_document(tmp_path) -> None:
+    found = ihomemanager_direct.Found(
+        "192.0.2.64", 516, "a Logger1000", "logger", tls=True
+    )
+    answers = SimpleNamespace(timeout=1, reporter="tester", comment="")
+    opened: list = []
+    with (
+        patch.object(
+            ihomemanager_direct, "ModbusConnection", _connection(_device(), opened)
+        ),
+        patch("sungrow_modbus.dump.asyncio.sleep", _no_sleep),
+    ):
+        reading = await ihomemanager_direct.async_survey(
+            found, answers, tmp_path, lambda _text: None, address_tail="000.064"
+        )
+
+    assert reading.code == 0
+    assert reading.document["connection"] == {
+        "protocol": "Modbus TCP inside TLS",
+        "port": 516,
+    }
+    assert {type(params) for params in opened} == {ModbusTlsParams}
+    assert reading.written.name == "logger1000-tester-port516.json"
+
+
+async def test_a_host_with_only_516_open_is_asked_for_a_logger_over_tls() -> None:
+    """`--host` on a Logger whose 502 is off still finds it."""
+    tls = ihomemanager_direct.Found("192.0.2.65", 516, "a Logger1000", "logger", True)
+
+    async def no_wallbox(_host):
+        return None
+
+    async def nothing_on_502(_host, _port):
+        return SimpleNamespace(error="connection refused")
+
+    async def logger_over_tls(_host):
+        return tls
+
+    args = SimpleNamespace(host=["192.0.2.65"], port=502, unit=None)
+    with (
+        patch.object(sungrow_survey.wallbox_direct, "async_identify", no_wallbox),
+        patch.object(sungrow_survey.probe, "identify", nothing_on_502),
+        patch.object(ihomemanager_direct, "async_identify_tls", logger_over_tls),
+    ):
+        found = await sungrow_survey._find(args, lambda *_a: None)
+
+    assert found == []
+    assert [tls] == sungrow_survey._MANAGERS
+    sungrow_survey._MANAGERS.clear()
 
 
 async def test_a_logger_behind_an_inverter_is_found_when_the_owner_says_so() -> None:

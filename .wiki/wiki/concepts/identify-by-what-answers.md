@@ -27,6 +27,7 @@ is a Sungrow, and an inverter is not always unit 1.
 | [SBR battery](../entities/device-sbr-battery.md) | 200 | 2 | |
 | [wallbox](../entities/device-wallbox.md) | never | 3 | 248, TLS on 516 |
 | [iHomeManager](../entities/device-ihomemanager.md) | | | 247 on 502 or 503 |
+| [Logger](../entities/device-logger.md) | | | 247 on 502, or TLS on 516 (by Sungrow's manual) |
 
 Sub-devices are found again whenever an entry's endpoint changes. So moving
 to a cable keeps the pack, and loses a wallbox the dongle was carrying unless

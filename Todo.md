@@ -14,12 +14,7 @@ Structure:
 
 # Next steps
 
-1. **Let the survey read a Logger over TLS on 516.** A current Logger1000
-   opens only that port, with TLS, from firmware P044 (Sungrow's manual
-   Ver129, `.wiki/wiki/entities/device-logger.md`); the survey reads TLS
-   only from a wallbox (`device-survey/scripts/python/sungrow_survey.py`).
-   Reuse the wallbox's TLS path for unit 247, so a first Logger survey
-   (blocker 6) does not depend on its owner turning 502 on.
+_Nothing that can start without hardware, a contributor or a decision._
 
 # Open decisions
 
@@ -128,8 +123,9 @@ Structure:
    It reaches surveys with the next release, since the survey runs the
    pinned wheel. Missing:
 
-   1. **The survey cannot read a current Logger1000** until next step 1, or
-      until its owner turns port 502 on.
+   1. **Its TLS port, untried.** The survey asks unit 247 over TLS on 516
+      (a current Logger1000 opens only that port); no Logger has answered
+      there yet, so that path is held to fakes only (`tests/test_logger.py`).
    2. **What sits behind it.** Each inverter and meter answers at its
       forwarding address (the Logger's Device List page), not at a unit the
       survey guesses; `identify` looks at units 1-5 only. A DTSU666 is a

@@ -27,8 +27,10 @@ fronts inverters and meters. **Documented, never measured here.**
   64-bit (`tests/test_logger.py`).
 - **Which port:** a current Logger1000 opens only **port 516, with TLS**, by
   default; 502 is off from firmware `LOGGER-SV300.001.00.P044`. That is the
-  wallbox's arrangement ([wallbox](device-wallbox.md)), so a survey of a
-  Logger needs TLS on 516, or the owner turning 502 on.
+  wallbox's arrangement ([wallbox](device-wallbox.md)). The survey asks
+  unit 247 over TLS on 516 wherever no wallbox answers there, and wherever a
+  typed address answers nothing on its plain port
+  (`device-survey/scripts/python/ihomemanager_direct.py`, `tests/test_logger.py`).
 - **What sits behind it:** each inverter and meter answers on the Logger's
   endpoint at its **forwarding address**, which the Logger's web page lists
   under Device List. The survey's `identify` stops at the first inverter on

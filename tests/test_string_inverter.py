@@ -260,7 +260,7 @@ async def test_the_survey_never_reads_an_sg_as_a_hybrid() -> None:
     So neither the block test nor the control test can reach it.
     """
     args = argparse.Namespace(host=["192.0.2.50"], port=502, unit=None)
-    who = SimpleNamespace(kind="string_inverter", model="SG5.0RS", unit=1)
+    who = SimpleNamespace(kind="string_inverter", model="SG5.0RS", unit=1, error=None)
 
     async def identify(host, port):
         return who

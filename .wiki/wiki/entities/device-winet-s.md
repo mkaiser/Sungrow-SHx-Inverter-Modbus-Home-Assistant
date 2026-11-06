@@ -43,7 +43,7 @@ Real Modbus behind TLS 1.2. It refuses the same registers as 502, and it
 exhausts under rapid reconnects the same way. The certificate is
 Sungrow-signed (issuer `OT.SUNGROW`, CN `sun`) and byte-identical to the
 wallbox's at the same house, so this TLS authenticates nothing.
-`sungrow_survey.py` reports a WiNet-S's 516 without reading it.
+`sungrow_survey.py` reports a WiNet-S's 516 without reading it, after asking it for a wallbox at unit 248 and a Logger at unit 247.
 
 ## The history registers
 
