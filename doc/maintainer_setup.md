@@ -234,9 +234,11 @@ print it.
 
 ## 7. Repository settings, for the HACS default store later
 
-The default store is the Marketplace's catalog from 2026.11, which Home
-Assistant maintains. Its submission route is not yet documented, so whether
-`hacs/default` still takes submissions is open in `Todo.md`.
+The default store is the Marketplace's catalog from 2026.11. It is still the
+`hacs/default` repository, run by the HACS team: the route is a pull request
+there, as before (the guide has moved to
+contributors.home-assistant.io/marketplace). What stands in the way, and what
+is open, is in `Todo.md`.
 
 Needed before submitting to `hacs/default`, and free to do now: a repository
 **description**, **topics**, and **issues enabled**. The brand icon exists.

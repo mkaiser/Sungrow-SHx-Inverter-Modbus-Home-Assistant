@@ -50,16 +50,33 @@ Structure:
    release (`translations/de.json`); on a German system the displayed
    entity names change, ids do not. Say so in the release notes, and in
    `doc/integration_migration.md` beside the card-label note.
-3. **Where the catalog takes submissions now.** The default store is the
-   Marketplace's catalog, maintained by Home Assistant. Find its submission
-   route and its rules before the merge decision (open decision 1,
-   `doc/maintainer_setup.md` §7). The Marketplace's source names the catalog
-   repository `hacs/default` and fetches it from `data-v2.hacs.xyz`, so the
-   route is probably unchanged; what is open is the rules and who reviews
-   (nothing read yet).
-   With it, pick a `categories` value for `manifest.json`: it is optional,
-   the Marketplace browses by it, and the HACS action fails on an unknown one
-   (contributors.home-assistant.io/core/integrations/categories/).
+3. **Submitting to the catalog, when the merge is decided.** Read
+   2026-11-06 (a subagent's reading of hacs.xyz and
+   contributors.home-assistant.io/marketplace; not checked against
+   `hacs/default` itself): the route is unchanged. The catalog is still
+   `hacs/default`, run by the HACS team and read by the Marketplace; a PR
+   from a personal account adds `owner/repository` to its `integration`
+   file, alphabetically, with the template filled in. Review is automated
+   checks and then "months" in the queue. Where this repository stands:
+
+   | Requirement | Here |
+   | --- | --- |
+   | Public repository, owner submits, OSI licence | yes, MIT |
+   | Description, topics, issues enabled | yes |
+   | `hacs.json` with `name` | yes |
+   | `manifest.json`: domain, documentation, issue_tracker, codeowners, name, version | yes; the name still ends "(preview)" |
+   | Brand: `brand/icon.png` in the integration, or the domain in `home-assistant/brands` | `brand/` exists |
+   | HACS action and hassfest pass with no ignores | CI runs both; confirm none is ignored |
+   | **At least one full GitHub release** (a tag is not enough) | **no: every release is a pre-release** |
+   | `categories` in `manifest.json` | none; the HACS action only warns |
+
+   Open: whether a repository whose only releases are pre-releases passes
+   (not stated); so the first stable release (0.1.0, not an alpha) is the
+   real gate. Pick `categories` (one to three, from
+   contributors.home-assistant.io/core/integrations/categories/, not read
+   yet). Drop "(preview)" from the name on `main` only. The Marketplace
+   refreshes the catalog every 6 hours and a repository added from a link
+   every 48 hours.
 
 # Open decisions
 
