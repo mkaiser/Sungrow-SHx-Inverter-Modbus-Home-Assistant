@@ -11,6 +11,11 @@ config/*
 # working tree.
 config-hacs/
 
+# The same for 2026.11's Marketplace (hacs_testbed.sh --marketplace), and the
+# venv that holds its Home Assistant apart from the dev environment's.
+config-marketplace/
+.venv-marketplace/
+
 # Generated simulator seed.
 
 # Upstream sources cloned for reference (scripts/dev/fetch_references.sh).

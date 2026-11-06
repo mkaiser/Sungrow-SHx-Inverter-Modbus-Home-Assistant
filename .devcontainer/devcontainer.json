@@ -51,7 +51,7 @@
     "GH_CONFIG_DIR": "/home/vscode/.claude/gh-devcontainer"
   },
 
-  "forwardPorts": [8123, 5020, 8124],
+  "forwardPorts": [8123, 5020, 8124, 8126],
   "portsAttributes": {
     "8123": {
       "label": "Home Assistant",
@@ -63,6 +63,12 @@
     // the other is what a user actually receives.
     "8124": {
       "label": "Home Assistant (HACS testbed)",
+      "onAutoForward": "notify"
+    },
+    // The same on Home Assistant 2026.11, through its built-in Marketplace
+    // (hacs_testbed.sh --marketplace), from a venv of its own.
+    "8126": {
+      "label": "Home Assistant (Marketplace testbed)",
       "onAutoForward": "notify"
     },
     "5020": {

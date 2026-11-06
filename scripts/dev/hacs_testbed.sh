@@ -26,6 +26,23 @@
 #     scripts/dev/hacs_testbed.sh --reset        # delete the testbed and start over
 #     PORT=8125 scripts/dev/hacs_testbed.sh      # somewhere else
 #
+# ## The Marketplace, from Home Assistant 2026.11
+#
+# 2026.11 builds HACS in, as Settings -> Marketplace, and the HACS installer
+# stops there. `--marketplace` boots that instead: Home Assistant 2026.11 from
+# a venv of its own (`.venv-marketplace/`, created on first use, because the
+# dev environment is held at the version the test plugin supports), against
+# `config-marketplace/` on :8126, with nothing downloaded. Add the preview
+# channel there with Add from link.
+#
+#     scripts/dev/hacs_testbed.sh --marketplace              # 2026.11, fresh
+#     scripts/dev/hacs_testbed.sh --marketplace --adopt-hacs # from a copy of config-hacs/
+#     scripts/dev/hacs_testbed.sh --marketplace --reset      # delete config-marketplace/
+#
+# `--adopt-hacs` starts it from a copy of `config-hacs/`, HACS and its
+# installed preview included: the upgrade a HACS user makes. `config-hacs/`
+# itself is not touched.
+#
 # The parts that cannot be scripted are printed before it boots: Home
 # Assistant's own onboarding, and HACS asking GitHub to authorise this
 # instance through a device code.
@@ -33,8 +50,31 @@ set -euo pipefail
 
 cd "$(dirname "$0")/../.."
 
-CONFIG="${PWD}/config-hacs"
-PORT="${PORT:-8124}"
+marketplace=false
+adopt=false
+for argument in "$@"; do
+    case "${argument}" in
+        --marketplace) marketplace=true ;;
+        --adopt-hacs) adopt=true ;;
+    esac
+done
+if [[ "${adopt}" == true && "${marketplace}" == false ]]; then
+    echo "--adopt-hacs only makes sense with --marketplace" >&2
+    exit 2
+fi
+
+if [[ "${marketplace}" == true ]]; then
+    NAME="config-marketplace"
+    PORT="${PORT:-8126}"
+    VENV="${PWD}/.venv-marketplace"
+    HASS="${VENV}/bin/hass"
+    HA_PIN="homeassistant==2026.11.*"
+else
+    NAME="config-hacs"
+    PORT="${PORT:-8124}"
+    HASS="hass"
+fi
+CONFIG="${PWD}/${NAME}"
 HACS_URL="https://github.com/hacs/integration/releases/latest/download/hacs.zip"
 PREVIEW="https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview"
 
@@ -75,26 +115,32 @@ for argument in "$@"; do
     case "${argument}" in
         --update) update=true ;;
         --setup-only) boot=false ;;
+        --marketplace | --adopt-hacs) ;;
         --reset)
             if pid="$(running_pid)"; then
-                echo "config-hacs is being served right now by pid ${pid}." >&2
+                echo "${NAME} is being served right now by pid ${pid}." >&2
                 echo "Stop it first (kill ${pid}), then reset." >&2
                 exit 2
             fi
             # Deliberately not `rm -rf $CONFIG` from a variable that could be
-            # empty: an unset CONFIG would make that `rm -rf /`. The path is
+            # empty: an unset CONFIG would make that `rm -rf /`. Each path is
             # spelled out, and checked first.
-            if [[ -d "${PWD}/config-hacs" ]]; then
-                rm -rf "${PWD}/config-hacs"
-                echo "deleted config-hacs/ -- the next run starts from nothing"
+            if [[ "${marketplace}" == true ]]; then
+                target="${PWD}/config-marketplace"
             else
-                echo "config-hacs/ does not exist; nothing to reset"
+                target="${PWD}/config-hacs"
+            fi
+            if [[ -d "${target}" ]]; then
+                rm -rf "${target}"
+                echo "deleted ${NAME}/ -- the next run starts from nothing"
+            else
+                echo "${NAME}/ does not exist; nothing to reset"
             fi
             exit 0
             ;;
         *)
             echo "unknown option: ${argument}" >&2
-            echo "usage: $0 [--update] [--setup-only] [--reset]" >&2
+            echo "usage: $0 [--marketplace [--adopt-hacs]] [--update] [--setup-only] [--reset]" >&2
             exit 2
             ;;
     esac
@@ -102,7 +148,7 @@ done
 
 if pid="$(running_pid)"; then
     cat <<ALREADY
-A Home Assistant is already serving config-hacs/, as pid ${pid}.
+A Home Assistant is already serving ${NAME}/, as pid ${pid}.
 
   Open it:   http://localhost:${PORT}   (log in as dev / dev)
   Stop it:   kill ${pid}
@@ -115,10 +161,32 @@ ALREADY
     exit 0
 fi
 
+if [[ "${marketplace}" == true ]]; then
+    if [[ ! -x "${HASS}" ]]; then
+        echo "creating ${VENV} with ${HA_PIN} -- a few minutes, once"
+        python3 -m venv "${VENV}"
+        "${VENV}/bin/pip" install --quiet --upgrade pip
+        "${VENV}/bin/pip" install --quiet "${HA_PIN}"
+    fi
+    if [[ "${adopt}" == true ]]; then
+        if [[ -e "${CONFIG}" ]]; then
+            echo "${NAME}/ exists already; --reset it first to adopt config-hacs/ afresh." >&2
+            exit 2
+        fi
+        if [[ ! -f "${PWD}/config-hacs/custom_components/hacs/manifest.json" ]]; then
+            echo "config-hacs/ has no HACS install to adopt; run make hacs first." >&2
+            exit 2
+        fi
+        cp -a "${PWD}/config-hacs" "${CONFIG}"
+        rm -f "${CONFIG}/.ha_run.lock"
+        echo "copied config-hacs/ to ${NAME}/ -- 2026.11 takes HACS over on its first boot"
+    fi
+fi
+
 mkdir -p "${CONFIG}"
 
 if [[ ! -f "${CONFIG}/.HA_VERSION" ]]; then
-    hass --config "${CONFIG}" --script ensure_config
+    "${HASS}" --config "${CONFIG}" --script ensure_config
 fi
 
 # No `default_config:`, and the reason is worth keeping.
@@ -168,7 +236,7 @@ fi
 # HACS is itself a custom integration, and it is not in HACS -- it is the one
 # thing you install by hand. Its release asset unpacks flat, so it goes into a
 # directory of its own.
-if [[ ! -f "${CONFIG}/custom_components/hacs/manifest.json" ]] || [[ "${update}" == true ]]; then
+if [[ "${marketplace}" == false ]] && { [[ ! -f "${CONFIG}/custom_components/hacs/manifest.json" ]] || [[ "${update}" == true ]]; }; then
     echo "downloading HACS from ${HACS_URL}"
     rm -rf "${CONFIG}/custom_components/hacs"
     mkdir -p "${CONFIG}/custom_components/hacs"
@@ -208,6 +276,42 @@ print(json.loads(pathlib.Path(sys.argv[1]).read_text())['version'])
 " "${CONFIG}/custom_components/sungrow_modbus/manifest.json")"
 fi
 
+if [[ "${marketplace}" == true ]]; then
+cat <<NEXT
+
+========================================================================
+Home Assistant $("${HASS}" --version) with the built-in Marketplace
+${NAME}/                                  http://localhost:${PORT}
+========================================================================
+
+  This integration here:  ${installed}
+
+  Onboarding is done for you, in the background: log in as dev / dev.
+
+  What this script cannot do for you
+
+  1  Settings -> Marketplace. Connect GitHub (a device code at
+     https://github.com/login/device): adding a custom repository and
+     keeping it up to date need it, browsing does not.
+
+  2  Add from link:
+     ${PREVIEW}
+     type Integration. Then open it and Download, and restart.
+
+  3  Settings -> Devices & services -> Add integration ->
+     Sungrow Modbus (preview).
+
+  What to find out (Todo.md, next step 1)
+
+  - Does Add from link install the channel, at a commit hash?
+  - Is an update offered when the channel moves?
+  - After --adopt-hacs: did the Marketplace take over the HACS install,
+    and does it still offer the preview's updates?
+
+========================================================================
+
+NEXT
+else
 cat <<NEXT
 
 ========================================================================
@@ -263,6 +367,7 @@ print(json.loads(pathlib.Path('${CONFIG}/custom_components/hacs/manifest.json').
 ========================================================================
 
 NEXT
+fi
 
 if [[ "${boot}" == false ]]; then
     echo "--setup-only: not booting. \`make hacs\` when you want it."
@@ -289,4 +394,4 @@ fi
 # a loop mode rather than a logging flag, and an asyncio debug loop makes this
 # integration's network search report an empty network. This testbed exists to
 # see what a user gets, and a user does not run with it.
-exec hass --config "${CONFIG}"
+exec "${HASS}" --config "${CONFIG}"

@@ -16,7 +16,7 @@ Open the repo in the devcontainer (VS Code: *Dev Containers: Reopen in
 Container*). It pins Python 3.14 - Home Assistant 2026.9 requires 3.14.2 or
 newer - installs Home Assistant and the tooling via
 `scripts/dev/setup.sh`, and forwards ports 8123 (Home Assistant), 5020 (the
-simulator) and 8124 (the HACS testbed).
+simulator), 8124 (the HACS testbed) and 8126 (the Marketplace testbed).
 
 On Windows, clone into a **named container volume** (*Dev Containers: Clone
 Repository in Container Volume*) rather than bind-mounting the Windows
@@ -169,7 +169,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `setup.sh` | Install HA, the device library (editable) and tooling, and a headless browser for screenshots in a venv of its own |
 | `develop.sh` | Boot HA on <http://localhost:8123> against `config/` |
 | `ha_onboard.py` | Walk a fresh instance through onboarding over the API, so nobody types `dev`/`dev` into a wizard. Both boot scripts run it in the background; idempotent, and it refuses a non-loopback URL |
-| `hacs_testbed.sh` | Boot a **second** HA on :8124 against `config-hacs/`, with HACS installed; see [Testing the install a user actually gets](#testing-the-install-a-user-actually-gets) |
+| `hacs_testbed.sh` | Boot a **second** HA on :8124 against `config-hacs/`, with HACS installed, or with `--marketplace` HA 2026.11 on :8126 against `config-marketplace/`; see [Testing the install a user actually gets](#testing-the-install-a-user-actually-gets) |
 | `ha_http_port.py` | Write a scripted instance's HTTP port where Home Assistant 2026.9 reads it, the `stable` config in `.storage/http`. `http:` in `configuration.yaml` only becomes a pending config that reverts after five minutes unless somebody promotes it. `hacs_testbed.sh` calls it |
 | `simulate.sh` | Regenerate the register seed and serve it on :5020 (`simulator.py`, seed in `simulator_registers.json`) |
 | `fetch_references.sh` | Clone HA core + libs into `.reference/` (gitignored) |
@@ -357,6 +357,26 @@ bug report quotes), the library **pip-installed from PyPI** against the pin
 a commit, a green CI run and a sync. HACS gets its own config directory
 because it downloads into `<config>/custom_components/`, which on the dev
 instance is a symlink into this repository.
+
+### The Marketplace, on 2026.11
+
+Home Assistant 2026.11 builds HACS in as **Settings → Marketplace**, and the
+HACS installer stops there. `make marketplace` (`hacs_testbed.sh
+--marketplace`) is the same testbed for it: Home Assistant 2026.11 from a
+venv of its own, `.venv-marketplace/` (the dev environment is held at the
+version `pytest-homeassistant-custom-component` supports), against
+`config-marketplace/` on :8126, with nothing downloaded.
+
+```console
+$ make marketplace                         # 2026.11, fresh
+$ make marketplace ARGS=--adopt-hacs       # from a copy of config-hacs/
+$ make marketplace ARGS=--reset            # delete config-marketplace/
+```
+
+`--adopt-hacs` copies `config-hacs/`, HACS and its installed preview
+included, which is the upgrade a HACS user makes; `config-hacs/` is not
+touched. In the Marketplace, **Connect GitHub** (the same device code) and
+**Add from link** with the preview channel's URL, type *Integration*.
 
 ## Screenshots for the docs
 

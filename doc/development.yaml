@@ -125,6 +125,21 @@ running:
       Custom repositories -> the preview URL, category Integration ->
       Download -> restart. The script prints all of it before it boots.
 
+  marketplace_testbed:
+    why: >-
+      The same on Home Assistant 2026.11, where HACS is built in as Settings ->
+      Marketplace and its installer stops. Home Assistant 2026.11 runs from a
+      venv of its own, because the dev environment is held at the version the
+      test plugin supports.
+    command: scripts/dev/hacs_testbed.sh --marketplace   # make marketplace; --adopt-hacs, --reset
+    listens: 0.0.0.0:8126
+    config: config-marketplace/           # gitignored entirely, like .venv-marketplace/
+    manual_steps: >-
+      Settings -> Marketplace -> Connect GitHub (the same device code), then
+      Add from link -> the preview URL, type Integration -> Download -> restart.
+      --adopt-hacs starts from a copy of config-hacs/ instead, the upgrade a
+      HACS user makes.
+
   login:
     # Created by the onboarding API for this dev instance only.
     username: dev
@@ -360,7 +375,7 @@ web_gui:
 
   to_your_desktop:
     how: >-
-      Automatic. devcontainer.json declares forwardPorts [8123, 5020, 8124], so VS
+      Automatic. devcontainer.json declares forwardPorts [8123, 5020, 8124, 8126], so VS
       Code forwards 8123 to the host's localhost as soon as something listens.
     url: http://localhost:8123
     if_it_does_not_appear: >-

@@ -43,6 +43,10 @@ hacs: ## Boot a second HA on :8124 that installs this integration through HACS
 	scripts/dev/hacs_testbed.sh $(ARGS)
 .PHONY: hacs
 
+marketplace: ## Boot HA 2026.11 on :8126 that installs this integration through its Marketplace
+	scripts/dev/hacs_testbed.sh --marketplace $(ARGS)
+.PHONY: marketplace
+
 forget: ## Forget the stored inverter, so the next boot re-detects it
 	scripts/dev/develop.sh --forget
 .PHONY: forget

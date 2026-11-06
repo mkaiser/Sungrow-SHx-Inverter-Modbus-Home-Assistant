@@ -17,25 +17,46 @@ Structure:
 1. **The preview channel under the Marketplace.** In Home Assistant 2026.11
    HACS is built in as Settings → Marketplace, and the HACS installer stops
    at 2026.11. The Marketplace offers stable releases only, unless the user
-   turns on a repository's *Pre-release* switch (an entity disabled by
-   default). The preview channel publishes no releases, so its version is a
-   commit hash. Find out on a real 2026.11:
-   - Does *Add from link* install the channel at all?
-   - Does it offer an update when the channel moves?
-   - Does a HACS install made before the upgrade keep updating?
+   turns on a repository's *Pre-release* switch. The preview channel
+   publishes no releases, so it is tracked by commit hash. The testbed is
+   `make marketplace` (`hacs_testbed.sh --marketplace`: 2026.11.0 from
+   `.venv-marketplace/`, `config-marketplace/`, :8126, login dev/dev;
+   `ARGS=--adopt-hacs` starts from a copy of `config-hacs/`).
+
+   Verified on 2026.11.0, 2026-11-06, adopting a HACS install of preview
+   0.1.0a17 (commit `2d735b1`): the Marketplace took over 4 entities and 2
+   devices, adopted HACS's stored data, removed `custom_components/hacs`, and
+   kept the preview as an installed, commit-tracked repository with its
+   integration in place. Without a GitHub connection it already reports
+   `pending_upgrade` (installed `2d735b1`, available `e0d1840`).
+
+   Open, each needing the maintainer to connect GitHub on :8126 (a device
+   code, read-only):
+   - Does the offered update install without the connection, or only with it?
+     (The add and update commands are marked `requires_github` in the
+     source.)
+   - Does *Add from link* install the channel at all, from a fresh
+     `make marketplace ARGS=--reset`, and at a commit hash?
+   - Is the `hacs/integration` entry left in the stored repositories after
+     the takeover harmless?
+   - Does the update, once installed, keep the integration working after a
+     restart (the library from PyPI against the manifest pin)?
 
    Then correct `doc/installing_a_preview.md` (its 2026.11 paragraph states
-   only what Home Assistant's Marketplace page says) and
-   `doc/maintainer_setup.md` §5. This does not wait on blocker 20: a
-   Home Assistant run needs no test plugin. Give `scripts/dev/hacs_testbed.sh`
-   a venv of its own on `homeassistant==2026.11.*` (it shares the dev
-   environment today, which is held at 2026.10.4), with the Marketplace in
-   place of downloading HACS. Keep the HACS path while `hacs.json` allows
-   2026.9 and 2026.10.
-2. **Where the catalog takes submissions now.** The default store is the
+   only what the Marketplace's page says, plus the takeover above) and
+   `doc/maintainer_setup.md` §5. Keep the HACS path while `hacs.json` allows
+   2026.9 and 2026.10. Nothing here waits on blocker 20.
+2. **Release note for the German names.** German ships from the next
+   release (`translations/de.json`); on a German system the displayed
+   entity names change, ids do not. Say so in the release notes, and in
+   `doc/integration_migration.md` beside the card-label note.
+3. **Where the catalog takes submissions now.** The default store is the
    Marketplace's catalog, maintained by Home Assistant. Find its submission
    route and its rules before the merge decision (open decision 1,
-   `doc/maintainer_setup.md` §7). Check whether `hacs/default` still applies.
+   `doc/maintainer_setup.md` §7). The Marketplace's source names the catalog
+   repository `hacs/default` and fetches it from `data-v2.hacs.xyz`, so the
+   route is probably unchanged; what is open is the rules and who reviews
+   (nothing read yet).
    With it, pick a `categories` value for `manifest.json`: it is optional,
    the Marketplace browses by it, and the HACS action fails on an unknown one
    (contributors.home-assistant.io/core/integrations/categories/).
@@ -145,7 +166,12 @@ Structure:
     a run on the host, not in the container.
 13. **The production database.** The migration is verified at real scale
     only against the maintainer's years-old YAML install; what to collect and
-    how is in `doc/maintainer_setup.md`, section 8.
+    how is in `doc/maintainer_setup.md`, section 8. Offered 2026-11-06: a
+    copy of the instance's files (preferred: the migration can be run and
+    rolled back) or read-only API access (the entity map and statistics only),
+    into the gitignored `.testdata/`, with the copy pointed at the simulator,
+    never at the real inverter. Waits on the maintainer choosing and placing
+    the copy; counts and mismatches are reported, no serial or address.
 
 14. **Writing the discharge schedules, and the import limit** (#785), in
     no Sungrow document. The schedules read as diagnostic entities
@@ -243,6 +269,78 @@ stale reads cost.
 
 Nothing generates one yet. Open: generate a Lovelace dashboard (asking
 first), or rely on entity metadata and document the auto-generated view.
+
+## Helping users set up the Energy dashboard
+
+Investigate how to assist a user in setting up Home Assistant's Energy
+dashboard from this integration's entities: which sensors go into grid
+import and export, solar production (total or per MPPT), the battery's
+charge and discharge, and whether the integration can offer them (the
+Energy platform's solar forecast hook, a repair or a note after setup that
+names the right entities) instead of leaving the user to pick among 300.
+Feeds `legacy/doc/dashboard.md`'s Energy dashboard row below.
+
+## Site-wide sensors for several inverters
+
+Each inverter is its own config entry (and the SG, the hybrid and a
+master/slave cluster each have their own readings), so nothing adds them up:
+the YAML package gave the second inverter `inv <n>` ids and no total. Open:
+how to offer site-wide sensors, and where they live.
+
+Where: a Home Assistant helper the user creates (Sum, or a template sensor;
+documented, nothing to build); or an entity of the integration's own on a
+"Site" device, which needs something above the one-entry-per-inverter rule
+(`doc/architecture.md`), such as the first entry owning it or a separate
+site entry. `total_site_pv_power` already exists for the inverter that has a
+second one on its supply, so the Site wording has a precedent.
+
+What adds up, and what does not (to confirm on fwitten's pair, whose battery
+hangs off the master only):
+
+- **Sums:** PV power and its MPPT parts, daily and total PV generation,
+  AC output power, the battery charge and discharge of each pack.
+- **Does not sum:** grid import and export, load power and the meter's
+  phases when both inverters read the same meter (double counted), battery
+  level, and anything that is a setting. These want the master's value or a
+  maximum, not a sum.
+- **Energy counters:** a `total_increasing` sum drops when one member is
+  unavailable and then jumps back, which the statistics read as a negative
+  and then a very large generation. The Energy dashboard takes several solar
+  sources, so adding each inverter there needs no sum at all (see the Energy
+  dashboard item above).
+
+Naming suggestions, in the existing convention (sentence case, the device
+name added by Home Assistant, the ids in English):
+
+| Entity | Name | Id (device "Site") |
+| --- | --- | --- |
+| Summed PV power | Site PV power | `sensor.site_pv_power` |
+| Summed AC output | Site AC output power | `sensor.site_ac_output_power` |
+| Summed daily PV energy | Site daily PV generation | `sensor.site_daily_pv_generation` |
+| Summed total PV energy | Site total PV generation | `sensor.site_total_pv_generation` |
+| Summed battery charge / discharge power | Site battery power | `sensor.site_battery_power` |
+| The meter's own values, taken from the master | Grid power, as on the master | no new entity |
+| Inverters in the sum | Site inverters counted | `sensor.site_inverters_counted` (diagnostic) |
+
+The device: "Sungrow site" (or the system name the owner gives in setup),
+with each inverter keeping its own "SH10RT" or name. German: "Anlage" for
+site ("Anlage PV-Leistung", "Anlage Tagesertrag PV"). A user who wants other
+words renames the helper, not the integration.
+
+## Renames and the databases outside Home Assistant
+
+How to deal with entity renames, the user-visible ones and the ones a
+future name change would cause, for the stores that do not follow the
+recorder: InfluxDB, and with it Grafana, Prometheus, MQTT statestream and
+Node-RED. Today they get advice and a print-only script
+(`scripts/helpers/influx_migration.py`, `doc/integration_migration.md`),
+and the legacy-id adoption keeps ids so most users never need either.
+Open: what the integration should do when an id does change (a repair that
+names the affected entities and links the recipe; a list of old and new ids
+a user can export), how a rename after release is announced, and whether a
+real InfluxDB with the migrated data is worth testing once the production
+copy (blocker 13, `doc/maintainer_setup.md` §8)
+exists.
 
 ## The YAML track's documentation, for the integration
 
