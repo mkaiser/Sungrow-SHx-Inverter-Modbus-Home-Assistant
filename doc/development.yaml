@@ -459,8 +459,8 @@ generated_files:
   # Everything that writes a committed file is in scripts/generate/.
   files:
     - script: scripts/generate/descriptions.py
-      targets: derived, numbers, switches, selects, strings (no argument = all)
-      writes: custom_components/sungrow_modbus/{derived,number,switch,select}_descriptions.py, strings.json (+ translations/en.json)
+      targets: derived, numbers, switches, selects, times, buttons, strings, german (no argument = all)
+      writes: custom_components/sungrow_modbus/{derived,number,switch,select,time,button}_descriptions.py, strings.json (+ translations/en.json), translations/de.json
       tables: scripts/generate/tables/writes.py, scripts/generate/tables/naming.py
     - script: scripts/generate/generate_compatibility.py
       writes: doc/compatibility.md

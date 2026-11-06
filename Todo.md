@@ -47,24 +47,14 @@ Structure:
    and **when to merge into `main`.** The merge retires the preview channel
    and opens the HACS default store, which also needs the brand in
    `home-assistant/brands` (`scripts/helpers/make_brand_icon.py` draws it).
-2. **Are the entity names final?** They are reviewed
-   (`doc/entity_names.md`, `scripts/helpers/review_names.py`). A rename
-   later leaves existing ids alone and only diverges new installs, which a
-   registry migration can close, so it stays cheap until release, not free.
-   The sheet covers every device an entry can create and carries a suggested German name for each entity (`GERMAN` in
-   `scripts/generate/tables/naming.py`) and German for every other text in
-   `strings.json` (`german_texts.json` beside it, shown in
-   `doc/text_translation_review.md`); none of it is shipped. Decided: entity
-   ids stay English in every language (`doc/architecture.md`). Every
-   section of the sheet is decided, English and German, the *Force startup*
-   button's *Zwangsstart* included; a new name goes under **To discuss**
-   (`NAME_DISCUSSION` in `naming.py`).
-
-   Left, in order:
-
-   1. **If German ships:** pin the English ids with `object_id_base` first
-      (`doc/architecture.md`), then have `scripts/generate/descriptions.py`
-      write `translations/de.json` from the two tables.
+2. **Are the entity names final?** They are reviewed and decided, English
+   and German (`doc/entity_names.md`, `doc/text_translation_review.md`,
+   `scripts/generate/tables/naming.py`); both ship, German as
+   `translations/de.json`, and entity ids stay English in every language
+   (`doc/architecture.md`). A rename later leaves existing ids alone and
+   only diverges new installs, which a registry migration can close, so it
+   stays cheap until release, not free. A new name goes under **To
+   discuss** (`NAME_DISCUSSION` in `naming.py`).
 
 # Blockers
 

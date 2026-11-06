@@ -54,7 +54,7 @@ Committing when asked is fine; pushing is a separate question.
 Edit the source, not the output:
 
 - `custom_components/sungrow_modbus/{derived,number,switch,select,time,button}_descriptions.py`,
-  `strings.json`, `translations/en.json` -- `scripts/generate/descriptions.py`,
+  `strings.json`, `translations/{en,de}.json` -- `scripts/generate/descriptions.py`,
   from `sungrow_modbus.hybrid_inverter.derived` and `scripts/generate/tables/`;
 - `doc/compatibility.md` and `doc/firmware_support.md` --
   `generate_compatibility.py` and `generate_firmware_support.py`, from the surveys;

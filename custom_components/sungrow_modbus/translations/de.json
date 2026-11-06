@@ -1,0 +1,1604 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Das Gerät ist bereits konfiguriert",
+      "devices_mode_not_offered": "Der Geräte-Modus ist in dieser Vorschau nicht verfügbar. Diese Version richtet die Integration nur für die Diagnose ein: Sie fragt den Wechselrichter ab und kann die Diagnose ausführen, legt aber keine Sensoren an. Die Freischaltung folgt in einer späteren Version; der Eintrag muss dafür nicht entfernt und neu hinzugefügt werden.",
+      "wrong_device": "Diese Adresse meldet sich als anderer Wechselrichter ({model}), nicht als der hinter „{title}“. Es wurde nichts geändert. Jeder Wechselrichter behält seinen eigenen Eintrag; um jenen hinzuzufügen, wähle „Integration hinzufügen“.",
+      "connection_unchanged": "Das ist bereits die Verbindung dieses Eintrags. Es wurde nichts geändert.",
+      "connection_moved": "„{title}“ verwendet jetzt die neue Verbindung. Der Eintrag wurde neu geladen; seine Entitäten, deren Verlauf und seine Einstellungen sind unverändert."
+    },
+    "error": {
+      "cannot_connect": "Verbindung fehlgeschlagen: {error}",
+      "no_serial_number": "Das Gerät hat geantwortet, aber keine Seriennummer gemeldet.",
+      "unrecognized_inverter": "Das Gerät hat mit einem unbekannten Modellcode ({code}) geantwortet. Bitte eröffne ein Issue mit diesem Code, damit das Modell ergänzt werden kann.",
+      "legacy_package_still_loaded": "Das YAML-Paket läuft noch, daher belegen seine Entitäten weiterhin ihre IDs. Entferne `modbus_sungrow.yaml` aus deiner Konfiguration – oder kommentiere die Zeile aus, die es einbindet –, starte Home Assistant neu und versuche es erneut. Oder wähle „Neu beginnen“.",
+      "network_too_large": "Dieser Bereich umfasst {hosts} Adressen, mehr als die Grenze von {limit}. Ihn zu durchsuchen würde Minuten dauern und das Netzwerk überfluten. Grenze ihn auf das Subnetz ein, in dem der Wechselrichter ist, meist ein /24.",
+      "invalid_network": "Kein Netzwerkbereich: {error}"
+    },
+    "step": {
+      "entity_ids": {
+        "title": "Bestehende Entitäten gefunden",
+        "description": "Home Assistant hat **{count} Entitäten** aus dem Paket `modbus_sungrow.yaml` gefunden, zum Beispiel `{example}`. Dein Recorder-Verlauf, deine Statistiken und jede Dashboard-Karte sind an diese Entitäts-IDs gebunden.\n\n{status}\n\n**Bestehende Entitäten übernehmen** übernimmt diese IDs. Verlauf und Statistiken laufen ohne Unterbrechung weiter und deine Dashboards funktionieren unverändert. Es wird nichts kopiert und nichts gelöscht.\n\n**Neu beginnen** gibt diesem Wechselrichter eigene IDs, zum Beispiel `sensor.sh10rt_total_pv_input_power`. Dein alter Verlauf bleibt unter den alten IDs, wo er ist, und deine Dashboards zeigen weiterhin darauf.\n\nIn jeder anderen Hinsicht sind die Entitäten in beiden Fällen identisch.",
+        "data": {
+          "entity_ids": "Entitäts-IDs"
+        },
+        "data_description": {
+          "entity_ids": "Das lässt sich später ändern, ohne dass etwas verloren geht."
+        }
+      },
+      "slot_unknown": {
+        "title": "Bestehende Entitäten gefunden",
+        "description": "In diesem Haus lief das YAML-Paket für mehr als einen Wechselrichter, und Home Assistant kann nicht erkennen, welcher davon dieser war. Das sagen die Seriennummer-Sensoren des Pakets, und weder das laufende Paket noch der aufgezeichnete Verlauf kennt die Seriennummer dieses Wechselrichters.\n\nDeshalb werden die Entitäts-IDs des YAML-Pakets nicht angeboten: Mit dem falschen Satz bekäme dieser Wechselrichter den Verlauf eines anderen. **Absenden** richtet ihn mit eigenen IDs ein, zum Beispiel `sensor.sh10rt_total_pv_input_power`.\n\nUm die alten IDs zu behalten, aktiviere das YAML-Paket für einen Neustart wieder, damit die Seriennummer dieses Wechselrichters aufgezeichnet wird, entferne es dann und starte erneut. Mit **Konfigurieren** lässt sich dieser Wechselrichter danach auf seine alten IDs umstellen; die Seriennummer bleibt für die Aufbewahrungsdauer des Recorders gespeichert, zehn Tage, sofern du sie nicht geändert hast."
+      },
+      "find": {
+        "title": "Wo ist der Wechselrichter?",
+        "description": "Die Suche ist meist einfacher: Viele können die IP-Adresse ihres Wechselrichters nicht nennen, ohne erst im Router nachzusehen. Die Suche prüft nur Adressen in dem Bereich, den du bestätigst.",
+        "menu_options": {
+          "search": "Mein Netzwerk danach durchsuchen",
+          "manual": "Ich kenne die Adresse"
+        }
+      },
+      "manual": {
+        "title": "Adresse des Wechselrichters",
+        "description": "Die IP-Adresse des Wechselrichters sowie der Modbus-TCP-Port und die Geräteadresse, unter denen er antwortet. Die Standardwerte passen für fast jede Installation: Port 502, Geräteadresse 1.\n\nBefindet sich der Wechselrichter hinter einem WiNet-S-Dongle, ist dies die Adresse des Dongles, nicht die des Wechselrichters selbst. Richte für die Adresse zuerst eine Reservierung im Router ein. Ändert sie sich trotzdem, richtet **Neu konfigurieren** am Eintrag ihn auf die neue aus.{error}",
+        "data": {
+          "host": "IP-Adresse oder Hostname",
+          "port": "Port",
+          "unit_id": "Geräteadresse"
+        },
+        "data_description": {
+          "host": "So, wie dein Router sie anzeigt.",
+          "port": "502, sofern es niemand geändert hat. Ein Sungrow Logger verwendet 503.",
+          "unit_id": "1 bei einem einzelnen Wechselrichter. Ein zweiter Wechselrichter in einem Master/Slave-Verbund antwortet auf 2, und seine eigene Adresse ist hier anzugeben."
+        }
+      },
+      "name": {
+        "title": "Wie soll dieser Wechselrichter heißen?",
+        "description": "Du hast **{count}** Wechselrichter, und beide hießen sonst „{model}“ – Home Assistant würde beim zuletzt eingerichteten `_2` anhängen, was nur die Reihenfolge deiner Klicks festhält.\n\nDieser Name wird Teil jeder Entitäts-ID dieses Wechselrichters, zum Beispiel `{example}`. An diese IDs sind dein Verlauf und deine Dashboards gebunden, also lohnt sich jetzt ein Moment: Eine spätere Umbenennung ändert die Bezeichnung, lässt aber die bereits angelegten IDs, wo sie sind.\n\nAm besten eignet sich etwas zum Standort – `Dach`, `Garage`, `Scheune`. Der Vorschlag ist das Meiste, was der Wechselrichter selbst verraten kann.",
+        "data": {
+          "name": "Name"
+        },
+        "data_description": {
+          "name": "Vorschlag: {suggestion}. Ändere ihn in etwas, das du wiedererkennst."
+        }
+      },
+      "nothing_found": {
+        "title": "Kein Wechselrichter gefunden",
+        "description": "Nichts in **{scanned}** hat sich als Sungrow-Wechselrichter zu erkennen gegeben. {candidates} Gerät(e) hatten den Port offen, haben aber nicht als einer geantwortet – ein offener Modbus-Port allein genügt nicht.\n\nDas solltest du prüfen:\n- der Wechselrichter ist in **diesem** Netzwerk – läuft Home Assistant in einem Container oder einer VM, kann es ein anderes sein als das deines Wechselrichters;\n- nichts anderes hält die Modbus-Verbindung des Wechselrichters. Ein Sungrow nimmt nur sehr wenige gleichzeitig an, daher blockieren eine andere Integration, ein zweites Home Assistant oder das alte YAML-Paket, das noch abfragt, ihn;\n- der Port stimmt – 502 bei direkter Verbindung, etwas anderes über eine Modbus-TCP-Bridge.\n\nDu kannst einen anderen Bereich durchsuchen, die Adresse selbst eingeben oder zum Anfang zurückgehen.",
+        "menu_options": {
+          "search": "Anderen Bereich durchsuchen",
+          "manual": "Adresse selbst eingeben",
+          "start_over": "Zurück zum Anfang"
+        }
+      },
+      "other_inverter": {
+        "title": "Welcher ist der andere Wechselrichter?",
+        "description": "Der Hersteller und, falls bekannt, die Größe – *Fronius Symo 8.2* oder *5-kW-String-Wechselrichter auf dem Süddach*. Die Größe ist der nützliche Teil: Sie sagt, wie groß die Lücke in den Lastwerten ist.\n\nDas gelangt in das Dokument, lass deshalb Seriennummern, Adressen und Namen weg. Du kannst es leer lassen.",
+        "data": {
+          "survey_other_inverter_detail": "Der andere Wechselrichter"
+        }
+      },
+      "pick": {
+        "title": "Wechselrichter gefunden",
+        "description": "{count} Gerät(e) haben geantwortet und sich zu erkennen gegeben. Namen stammen aus dem DNS deines Routers, sofern er welche liefert, sonst wird die Adresse angezeigt.\n\nGibt es mehr als einen Wechselrichter, nennt jeder seine Rolle im Verbund und woher man sie kennt: **gemessen** wurde vom Wechselrichter selbst gelesen, **abgeleitet** wird aus den Antworten der anderen geschlossen. Eine abgeleitete Rolle ist eine gute Vermutung, keine Messung.\n\nIst keiner davon der gemeinte Wechselrichter, wähle die letzte Option, dann kannst du seine Adresse selbst eingeben.{note}",
+        "data": {
+          "host": "Wechselrichter"
+        }
+      },
+      "search": {
+        "title": "Mein Netzwerk durchsuchen",
+        "description": "Home Assistant probiert jede Adresse in diesem Bereich auf dem Modbus-Port aus und fragt dann jedes Gerät, das antwortet, was es ist – ein offener Port allein genügt nicht, um etwas als Wechselrichter zu bezeichnen.\n\n{detected}\n\nEin `/24` dauert etwa eine Sekunde; deutlich größere Bereiche werden abgelehnt, weil jede geprüfte Adresse echter Datenverkehr in deinem Netzwerk ist.",
+        "data": {
+          "network": "Netzwerkbereich"
+        },
+        "data_description": {
+          "network": "In CIDR-Notation, zum Beispiel 192.168.1.0/24."
+        }
+      },
+      "testimony": {
+        "title": "Was möchtest du uns mitteilen?",
+        "description": "Du hast „nur Diagnose“ gewählt, das heißt, dieser Eintrag existiert, um eine Messung zu erzeugen – dies sind also die Fragen, die diese Messung braucht und die kein Register beantworten kann.\n\n{measured}\n\nAlles hier ist optional, und ein leeres Feld ist ehrlich: Es hält fest, dass die Frage nicht beantwortet wurde, was etwas anderes ist, als mit „Ich weiß es nicht“ zu antworten. Du kannst alles später unter den Optionen der Integration ändern.\n\nDrücke danach auf der Geräteseite **Diagnose ausführen (nur lesend)**.",
+        "data": {
+          "reporter": "Dein Name oder Pseudonym",
+          "survey_transport": "Wie dieser Wechselrichter angebunden ist",
+          "survey_proxy": "Befindet sich ein Modbus-Proxy im Pfad?",
+          "survey_pollers": "Fragt noch etwas anderes diesen Wechselrichter ab?",
+          "survey_other_inverter": "Gibt es hier einen weiteren Wechselrichter, der kein Sungrow ist?",
+          "survey_battery": "Hersteller und Modell der Batterie",
+          "survey_comment": "Sonst noch etwas Wissenswertes",
+          "publish_address": "Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?",
+          "survey_register_dump": "Auch die rohen Registerbereiche durchsuchen (etwa fünf Minuten)"
+        },
+        "data_description": {
+          "reporter": "Wird in der veröffentlichten Messung genannt und gefragt, wenn eine Zeile Fragen aufwirft. Leer lassen, um anonym beizutragen.",
+          "survey_transport": "Kabel gegenüber Dongle ist bereits gemessen. Nur du weißt, ob ein Dongle an seiner Ethernet-Buchse oder per WLAN hängt – ein WiNet-S antwortet in beiden Fällen gleich, daher ist \"nicht sicher\" eine echte Antwort und besser als eine Vermutung.",
+          "survey_proxy": "modbus-proxy, der Proxy von evcc, ein Home-Assistant-Add-on. Ein Proxy hält eine Verbindung und verleiht sie weiter, was die Bedeutung eines ausgefallenen Registers verändert – und er baut jeden Frame neu auf, was die Frame-Eigenheiten, die dieses Projekt verfolgt, verbergen oder erzeugen kann.",
+          "survey_pollers": "Dieses Home Assistant wird automatisch erfasst. Wichtig ist hier alles andere: ein anderes Home Assistant, das YAML-Paket, evcc, ein Logger. Ein Wechselrichter gewährt sehr wenige Verbindungen, und zwei Clients, die um eine konkurrieren, sehen genau wie ein defektes Register aus.",
+          "survey_other_inverter": "Dein Sungrow misst nicht, wie viel dein Haus verbraucht – er errechnet es aus seiner eigenen Leistung plus dem, was der Netzzähler als Bezug meldet. Ein zweiter Wechselrichter am selben Zähler macht daher jeden Lastwert um genau dessen Erzeugung zu niedrig, während alles andere normal aussieht. Kein Register kann uns das sagen: Der Sungrow sieht ihn nicht. Antworte mit Ja, dann fragen wir, was es ist.",
+          "survey_battery": "Kein Register meldet das. \"SBR096\" oder \"Pylontech Force H1, 14,4 kWh\" ist nützlicher als eine Kapazität, die der Wechselrichter ohnehin meldet.",
+          "survey_comment": "Alles Ungewöhnliche an der Anlage – ein Verbund, ein zweiter Wechselrichter, eine Wallbox, ein Firmware-Update, an das du dich erinnerst.",
+          "publish_address": "An, und du kannst es vor dem Absenden ausschalten. Nur die letzten zwei Oktette gelangen je in das Dokument – nie das dritte, das dein Netzwerk identifizieren würde –, und wenn du das deaktivierst, steht stattdessen xxx.xxx. Der Nutzen: Mehrere Messungen aus einem Haus lassen sich unterscheiden – ein Master, ein Slave und zwei Dongles ergeben sonst vier gleich aussehende Dateien.",
+          "survey_register_dump": "An, und besser auszuschalten, wenn du es eilig hast. Ohne sie liest die Diagnose die Register, die diese Integration bereits kennt, und braucht ein paar Sekunden. Mit ihr durchsucht sie zusätzlich 2181 Adressen in sechzehn Bereichen, auch die, die keine Spezifikation dokumentiert – so wurde jedes undokumentierte Register gefunden, das dieses Projekt kennt. Das ist langsam, weil eine Adresse ohne Inhalt verstummt statt abzulehnen, sodass jede leere ein volles Timeout kostet: etwa fünf Minuten am direkten Kabel und deutlich länger über ein WiNet-S oder ein VPN. Dein Wechselrichter wird die ganze Zeit weiter abgefragt, und die Diagnose-Schaltfläche auf der Geräteseite zeigt den Fortschritt."
+        }
+      },
+      "user": {
+        "title": "Wofür ist das?",
+        "description": "{mode_intro}**Die Geräte-Diagnose** verbindet sich mit dem Wechselrichter, ermittelt, was er ist und was er beantwortet, und legt **überhaupt keine Entitäten an**. Es gibt sie, weil dieses Projekt *messen* muss, welche Register jedes Modell und jede Firmware unterstützt – Sungrows eigene Spezifikation lag in beide Richtungen falsch – und dieser Nachweis stammt heute von den wenigen Haushalten, die eine Messung eingesandt haben.{mode_choice}",
+        "menu_options": {
+          "setup_devices": "Meinen Wechselrichter einrichten – Sensoren, Steuerungen, alles",
+          "setup_diagnostics": "Geräte-Diagnose durchführen – dem Projekt helfen, keine Entitäten anlegen"
+        }
+      },
+      "reconfigure": {
+        "title": "Verbindung ändern",
+        "description": "Dieser Eintrag erreicht seinen Wechselrichter unter **{current}**. Gib den anderen Weg zum **selben** Wechselrichter an – seinen eigenen LAN-Port nach dem Verlegen eines Kabels, den WiNet-S-Dongle oder eine neue Adresse.\n\nDie neue Verbindung wird zuerst geprüft: Sie muss mit der Seriennummer dieses Wechselrichters antworten. Entitäts-IDs, Verlauf und Einstellungen bleiben, wie sie sind.{error}",
+        "data": {
+          "host": "IP-Adresse oder Hostname",
+          "port": "Port",
+          "unit_id": "Geräteadresse"
+        },
+        "data_description": {
+          "host": "So, wie dein Router sie anzeigt.",
+          "port": "502, sofern es niemand geändert hat. Ein Sungrow Logger verwendet 503.",
+          "unit_id": "1 bei einem einzelnen Wechselrichter. Ein zweiter Wechselrichter in einem Master/Slave-Verbund antwortet auf 2, und seine eigene Adresse ist hier anzugeben."
+        }
+      },
+      "move": {
+        "title": "Neue Verbindung verwenden?",
+        "description": "Dieser Wechselrichter ist bereits als **{title}** eingerichtet und wird unter **{old}** erreicht. Er antwortet auch unter **{new}**.\n\n**Absenden** stellt den Eintrag auf **{new}** um und lädt ihn neu. Seine Entitäts-IDs, deren Verlauf und seine Einstellungen bleiben, wie sie sind; Batterie und Wallbox werden an der neuen Verbindung erneut gesucht. Deine Antwort darauf, wie die Diagnose den Wechselrichter erreicht, wird gelöscht, weil sie die alte Verbindung beschrieb.{wallbox}\n\nUm die aktuelle Verbindung zu behalten, schließe diesen Dialog."
+      }
+    },
+    "progress": {
+      "searching": "{network} wird durchsucht.\n\n{stage}\n\nDie Ports 502 und 503 werden beide probiert, du musst also nicht wissen, welchen deine Geräte verwenden."
+    },
+    "create_entry": {
+      "diagnostics": "**Die Einrichtung ist abgeschlossen, und es wurde noch nichts gelesen.** Zwei weitere Schritte, beide auf der Geräteseite, die dieser Dialog gleich anzeigt:\n\n1. Drücke **Diagnose ausführen (nur lesend)** unter *Diagnose*. Sie liest und schreibt nie. Am Kabel ist sie mit dem Registerdurchlauf in ein paar Minuten fertig; über ein VPN kann es deutlich länger dauern, und die drei Sensoren neben der Schaltfläche zeigen, wie weit sie ist und was sie liest.\n2. Öffne danach **Benachrichtigungen** in der Seitenleiste – das Abzeichen unten links. Die Benachrichtigung dort enthält eine Zusammenfassung und einen Link **Dokument herunterladen**. Dieser Link ist die JSON-Datei, die du uns schicken sollst, und er funktioniert nach einer Stunde nicht mehr.\n\nVerpasst, oder erst am nächsten Tag zurück? **Diagnose herunterladen** auf derselben Geräteseite enthält dasselbe Dokument und läuft nie ab. Schicke eines davon an [das Diagnose-Issue]({survey_issue_url}).\n\nDie Datei benennt deinen Wechselrichter mit einem Platzhalter statt der Seriennummer und enthält die letzten zwei Oktette seiner Adresse nur, solange dieses Feld angehakt ist."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "active_power_limitation_enabled": {
+        "name": "Wirkleistungsbegrenzung"
+      },
+      "alarm_reported": {
+        "name": "Alarm aktiv"
+      },
+      "apl_shutdown_at_zero": {
+        "name": "Abschalten bei Begrenzung auf 0 % Leistung"
+      },
+      "battery_charging": {
+        "name": "Batterie lädt"
+      },
+      "battery_charging_delay": {
+        "name": "Batterie lädt (verzögert)"
+      },
+      "battery_discharging": {
+        "name": "Batterie entlädt"
+      },
+      "battery_discharging_delay": {
+        "name": "Batterie entlädt (verzögert)"
+      },
+      "exporting_power": {
+        "name": "Einspeisung"
+      },
+      "exporting_power_delay": {
+        "name": "Einspeisung (verzögert)"
+      },
+      "fault_reported": {
+        "name": "Fehler gemeldet"
+      },
+      "importing_power": {
+        "name": "Netzbezug"
+      },
+      "importing_power_delay": {
+        "name": "Netzbezug (verzögert)"
+      },
+      "negative_load_power": {
+        "name": "Negative Leistungsaufnahme Verbraucher"
+      },
+      "negative_load_power_delay": {
+        "name": "Negative Leistungsaufnahme Verbraucher (verzögert)"
+      },
+      "positive_load_power": {
+        "name": "Positive Leistungsaufnahme Verbraucher"
+      },
+      "positive_load_power_delay": {
+        "name": "Positive Leistungsaufnahme Verbraucher (verzögert)"
+      },
+      "pv_generating": {
+        "name": "PV erzeugt"
+      },
+      "pv_generating_delay": {
+        "name": "PV erzeugt (verzögert)"
+      },
+      "pv_generation_cut": {
+        "name": "PV-Erzeugung abgeschaltet"
+      },
+      "pv_power_limitation_enabled": {
+        "name": "PV-Leistungsbegrenzung"
+      },
+      "sg_fault_reported": {
+        "name": "Fehler gemeldet"
+      },
+      "wallbox_charging": {
+        "name": "Lädt"
+      },
+      "wallbox_enabled": {
+        "name": "Ladestation aktiviert"
+      },
+      "weekend_discharge": {
+        "name": "Entladung am Wochenende"
+      }
+    },
+    "button": {
+      "force_startup": {
+        "name": "Zwangsstart"
+      },
+      "run_control_test": {
+        "name": "Vollständige Diagnose und Tests ausführen"
+      },
+      "run_survey": {
+        "name": "Diagnose ausführen (nur lesend)"
+      }
+    },
+    "number": {
+      "battery_charging_start_power": {
+        "name": "Batterie Ladestartleistung"
+      },
+      "battery_discharging_start_power": {
+        "name": "Batterie Entladestartleistung"
+      },
+      "battery_forced_charge_discharge_power": {
+        "name": "Batterie Zwangsladung/-entladung Leistung"
+      },
+      "battery_max_charge_power": {
+        "name": "Maximale Batterie-Ladeleistung"
+      },
+      "battery_max_discharge_power": {
+        "name": "Maximale Batterie-Entladeleistung"
+      },
+      "battery_max_soc": {
+        "name": "Maximaler Batterie-Ladezustand"
+      },
+      "battery_min_soc": {
+        "name": "Minimaler Batterie-Ladezustand"
+      },
+      "battery_reserved_soc_for_backup": {
+        "name": "Reservierter Batterie-Ladezustand für Backup"
+      },
+      "export_power_limit": {
+        "name": "Einspeiselimit"
+      },
+      "forced_charging_target_soc_1": {
+        "name": "Zwangsladung Ziel-Ladezustand 1"
+      },
+      "forced_charging_target_soc_2": {
+        "name": "Zwangsladung Ziel-Ladezustand 2"
+      }
+    },
+    "select": {
+      "battery_forced_charge_discharge": {
+        "name": "Batterie Zwangsladung/-entladung",
+        "state": {
+          "stop": "Stopp",
+          "charge": "Zwangsladung",
+          "discharge": "Zwangsentladung"
+        }
+      },
+      "ems_mode": {
+        "name": "EMS-Modus",
+        "state": {
+          "self_consumption": "Eigenverbrauch",
+          "forced": "Zwangsbetrieb",
+          "external_ems": "Externes EMS",
+          "vpp": "VPP"
+        }
+      },
+      "forced_charging_days": {
+        "name": "Zwangsladung Tage",
+        "state": {
+          "weekdays": "Werktage",
+          "every_day": "Jeden Tag"
+        }
+      },
+      "load_adjustment_mode": {
+        "name": "Laststeuerungsmodus",
+        "state": {
+          "timing": "Zeitsteuerung",
+          "on_off": "Ein/Aus",
+          "power_optimised": "Leistungsoptimiert",
+          "disabled": "Deaktiviert"
+        }
+      }
+    },
+    "sensor": {
+      "active_power_limitation_ratio_raw": {
+        "name": "Wirkleistungsbegrenzung prozentual"
+      },
+      "active_power_limitation_raw": {
+        "name": "Wirkleistungsbegrenzung Code"
+      },
+      "apl_shutdown_at_zero_raw": {
+        "name": "Abschalten bei Begrenzung auf 0 % Leistung Code"
+      },
+      "backup_frequency": {
+        "name": "Backup Frequenz"
+      },
+      "backup_mode_raw": {
+        "name": "Backup-Modus Code"
+      },
+      "backup_phase_a_current": {
+        "name": "Backup Phase A Strom"
+      },
+      "backup_phase_a_power": {
+        "name": "Backup Phase A Leistung"
+      },
+      "backup_phase_a_voltage": {
+        "name": "Backup Phase A Spannung"
+      },
+      "backup_phase_b_current": {
+        "name": "Backup Phase B Strom"
+      },
+      "backup_phase_b_power": {
+        "name": "Backup Phase B Leistung"
+      },
+      "backup_phase_b_voltage": {
+        "name": "Backup Phase B Spannung"
+      },
+      "backup_phase_c_current": {
+        "name": "Backup Phase C Strom"
+      },
+      "backup_phase_c_power": {
+        "name": "Backup Phase C Leistung"
+      },
+      "backup_phase_c_voltage": {
+        "name": "Backup Phase C Spannung"
+      },
+      "battery_alarm": {
+        "name": "Batteriealarm"
+      },
+      "battery_capacity_high_precision": {
+        "name": "Batteriekapazität (hohe Genauigkeit)"
+      },
+      "battery_cell_voltage_spread": {
+        "name": "Zellspannungsdifferenz"
+      },
+      "battery_charge": {
+        "name": "Gespeicherte Energie"
+      },
+      "battery_charge_health_rated": {
+        "name": "Gespeicherte Energie (gesundheitsbereinigt)"
+      },
+      "battery_charge_nominal": {
+        "name": "Gespeicherte Energie (nominal)"
+      },
+      "battery_charging_power": {
+        "name": "Batterie-Ladeleistung"
+      },
+      "battery_charging_power_signed": {
+        "name": "Batterie-Ladeleistung (mit Vorzeichen)"
+      },
+      "battery_charging_start_power": {
+        "name": "Batterie Ladestartleistung"
+      },
+      "battery_current": {
+        "name": "Batteriestrom"
+      },
+      "battery_discharging_power": {
+        "name": "Batterie-Entladeleistung"
+      },
+      "battery_discharging_power_signed": {
+        "name": "Batterie-Entladeleistung (mit Vorzeichen)"
+      },
+      "battery_discharging_start_power": {
+        "name": "Batterie Entladestartleistung"
+      },
+      "battery_fault": {
+        "name": "Batteriefehler"
+      },
+      "battery_firmware_version": {
+        "name": "Batterie Firmware-Version"
+      },
+      "battery_forced_charge_discharge_cmd_raw": {
+        "name": "Batterie Zwangsladung/-entladung Befehl Code"
+      },
+      "battery_forced_charge_discharge_power": {
+        "name": "Batterie Zwangsladung/-entladung Leistung"
+      },
+      "battery_level": {
+        "name": "Batterie-Ladestand"
+      },
+      "battery_level_nominal": {
+        "name": "Batterie-Ladestand (nominal)"
+      },
+      "battery_max_cell_module": {
+        "name": "Modul mit höchster Zelle"
+      },
+      "battery_max_cell_number": {
+        "name": "Höchste Zellnummer"
+      },
+      "battery_max_cell_voltage": {
+        "name": "Höchste Zellspannung"
+      },
+      "battery_max_charge_power": {
+        "name": "Maximale Batterie-Ladeleistung"
+      },
+      "battery_max_discharge_power": {
+        "name": "Maximale Batterie-Entladeleistung"
+      },
+      "battery_max_module_temperature": {
+        "name": "Temperatur wärmstes Modul"
+      },
+      "battery_max_module_temperature_module": {
+        "name": "Wärmstes Modul"
+      },
+      "battery_max_soc": {
+        "name": "Maximaler Batterie-Ladezustand"
+      },
+      "battery_min_cell_module": {
+        "name": "Modul mit niedrigster Zelle"
+      },
+      "battery_min_cell_number": {
+        "name": "Niedrigste Zellnummer"
+      },
+      "battery_min_cell_voltage": {
+        "name": "Niedrigste Zellspannung"
+      },
+      "battery_min_module_temperature": {
+        "name": "Temperatur kühlstes Modul"
+      },
+      "battery_min_module_temperature_module": {
+        "name": "Kühlstes Modul"
+      },
+      "battery_min_soc": {
+        "name": "Minimaler Batterie-Ladezustand"
+      },
+      "battery_module_1_max_cell_voltage": {
+        "name": "Modul 1 höchste Zellspannung"
+      },
+      "battery_module_1_min_cell_voltage": {
+        "name": "Modul 1 niedrigste Zellspannung"
+      },
+      "battery_module_2_max_cell_voltage": {
+        "name": "Modul 2 höchste Zellspannung"
+      },
+      "battery_module_2_min_cell_voltage": {
+        "name": "Modul 2 niedrigste Zellspannung"
+      },
+      "battery_module_3_max_cell_voltage": {
+        "name": "Modul 3 höchste Zellspannung"
+      },
+      "battery_module_3_min_cell_voltage": {
+        "name": "Modul 3 niedrigste Zellspannung"
+      },
+      "battery_module_4_max_cell_voltage": {
+        "name": "Modul 4 höchste Zellspannung"
+      },
+      "battery_module_4_min_cell_voltage": {
+        "name": "Modul 4 niedrigste Zellspannung"
+      },
+      "battery_module_5_max_cell_voltage": {
+        "name": "Modul 5 höchste Zellspannung"
+      },
+      "battery_module_5_min_cell_voltage": {
+        "name": "Modul 5 niedrigste Zellspannung"
+      },
+      "battery_module_6_max_cell_voltage": {
+        "name": "Modul 6 höchste Zellspannung"
+      },
+      "battery_module_6_min_cell_voltage": {
+        "name": "Modul 6 niedrigste Zellspannung"
+      },
+      "battery_module_7_max_cell_voltage": {
+        "name": "Modul 7 höchste Zellspannung"
+      },
+      "battery_module_7_min_cell_voltage": {
+        "name": "Modul 7 niedrigste Zellspannung"
+      },
+      "battery_module_8_max_cell_voltage": {
+        "name": "Modul 8 höchste Zellspannung"
+      },
+      "battery_module_8_min_cell_voltage": {
+        "name": "Modul 8 niedrigste Zellspannung"
+      },
+      "battery_pack_current": {
+        "name": "Packstrom"
+      },
+      "battery_pack_level": {
+        "name": "Pack-Ladestand"
+      },
+      "battery_pack_state_of_health": {
+        "name": "Pack-Gesundheitszustand"
+      },
+      "battery_pack_temperature": {
+        "name": "Packtemperatur"
+      },
+      "battery_pack_total_charge": {
+        "name": "Gesamte Pack-Ladeenergie"
+      },
+      "battery_pack_total_discharge": {
+        "name": "Gesamte Pack-Entladeenergie"
+      },
+      "battery_pack_voltage": {
+        "name": "Packspannung"
+      },
+      "battery_power": {
+        "name": "Batterieleistung"
+      },
+      "battery_reserved_soc_for_backup": {
+        "name": "Reservierter Batterie-Ladezustand für Backup"
+      },
+      "battery_state_of_health": {
+        "name": "Batterie-Gesundheitszustand"
+      },
+      "battery_temperature": {
+        "name": "Batterietemperatur"
+      },
+      "battery_voltage": {
+        "name": "Batteriespannung"
+      },
+      "bdc_rated_power": {
+        "name": "BDC-Nennleistung"
+      },
+      "bdc_side_fault": {
+        "name": "BDC-seitiger Fehler"
+      },
+      "bdc_side_permanent_fault": {
+        "name": "BDC-seitiger permanenter Fehler"
+      },
+      "bms_alarm": {
+        "name": "BMS-Alarm"
+      },
+      "bms_alarm_2": {
+        "name": "BMS-Alarm 2"
+      },
+      "bms_fault_1": {
+        "name": "BMS-Fehler 1"
+      },
+      "bms_fault_2": {
+        "name": "BMS-Fehler 2"
+      },
+      "bms_max_charging_current": {
+        "name": "BMS maximaler Ladestrom"
+      },
+      "bms_max_discharging_current": {
+        "name": "BMS maximaler Entladestrom"
+      },
+      "bms_protection": {
+        "name": "BMS-Schutz"
+      },
+      "communication_module_firmware_version": {
+        "name": "Firmware-Version Kommunikationsmodul"
+      },
+      "corrected_load_power": {
+        "name": "Korrigierte Leistungsaufnahme Verbraucher"
+      },
+      "daily_battery_charge": {
+        "name": "Tägliche Batterie-Ladeenergie"
+      },
+      "daily_battery_charge_from_pv": {
+        "name": "Tägliche Batterie-Ladeenergie aus PV"
+      },
+      "daily_battery_discharge": {
+        "name": "Tägliche Batterie-Entladeenergie"
+      },
+      "daily_consumed_energy": {
+        "name": "Tägliche Energieaufnahme Verbraucher"
+      },
+      "daily_consumed_energy_filtered": {
+        "name": "Tägliche Energieaufnahme Verbraucher (geglättet)"
+      },
+      "daily_direct_energy_consumption": {
+        "name": "Täglicher Direktverbrauch"
+      },
+      "daily_exported_energy": {
+        "name": "Täglich eingespeiste Energie"
+      },
+      "daily_exported_energy_from_pv": {
+        "name": "Täglich aus PV eingespeiste Energie"
+      },
+      "daily_imported_energy": {
+        "name": "Täglich bezogene Energie"
+      },
+      "daily_pv_generation": {
+        "name": "Tägliche PV-Erzeugung"
+      },
+      "daily_pv_generation_battery_discharge": {
+        "name": "Tägliche PV-Erzeugung und Batterieentladung"
+      },
+      "dc_side_fault": {
+        "name": "DC-seitiger Fehler"
+      },
+      "direct_consumption_this_month": {
+        "name": "Direktverbrauch diesen Monat"
+      },
+      "direct_consumption_this_year": {
+        "name": "Direktverbrauch dieses Jahr"
+      },
+      "ems_mode_selection_raw": {
+        "name": "EMS-Modus Auswahl Code"
+      },
+      "export_from_pv_this_month": {
+        "name": "Einspeisung aus PV diesen Monat"
+      },
+      "export_from_pv_this_year": {
+        "name": "Einspeisung aus PV dieses Jahr"
+      },
+      "export_power": {
+        "name": "Einspeiseleistung"
+      },
+      "export_power_limit": {
+        "name": "Einspeiselimit"
+      },
+      "export_power_limit_max": {
+        "name": "Einspeiselimit Maximum"
+      },
+      "export_power_limit_min": {
+        "name": "Einspeiselimit Minimum"
+      },
+      "export_power_limit_mode_raw": {
+        "name": "Einspeiselimit-Modus Code"
+      },
+      "export_power_raw": {
+        "name": "Einspeiseleistung (mit Vorzeichen)"
+      },
+      "feed_in_limitation_ratio": {
+        "name": "Einspeiselimit prozentual"
+      },
+      "grid_frequency": {
+        "name": "Netzfrequenz"
+      },
+      "grid_side_fault": {
+        "name": "Netzseitiger Fehler"
+      },
+      "import_power": {
+        "name": "Bezugsleistung"
+      },
+      "inverter_alarm": {
+        "name": "Gerätealarm"
+      },
+      "inverter_firmware_version": {
+        "name": "Firmware-Version"
+      },
+      "inverter_rated_output": {
+        "name": "Nennausgangsleistung"
+      },
+      "inverter_temperature": {
+        "name": "Gerätetemperatur"
+      },
+      "load_adjustment_mode_enable_raw": {
+        "name": "Laststeuerungsmodus Aktivierung Code"
+      },
+      "load_adjustment_mode_selection_raw": {
+        "name": "Laststeuerungsmodus Auswahl Code"
+      },
+      "load_power": {
+        "name": "Leistungsaufnahme Verbraucher"
+      },
+      "meter_active_power": {
+        "name": "Zähler Wirkleistung"
+      },
+      "meter_channel_2_phase_a_active_power": {
+        "name": "Zähler Kanal 2 Phase A Wirkleistung"
+      },
+      "meter_channel_2_phase_b_active_power": {
+        "name": "Zähler Kanal 2 Phase B Wirkleistung"
+      },
+      "meter_channel_2_phase_c_active_power": {
+        "name": "Zähler Kanal 2 Phase C Wirkleistung"
+      },
+      "meter_channel_2_total_active_power": {
+        "name": "Zähler Kanal 2 Gesamtwirkleistung"
+      },
+      "meter_phase_a_active_power": {
+        "name": "Zähler Phase A Wirkleistung"
+      },
+      "meter_phase_a_current": {
+        "name": "Zähler Phase A Strom"
+      },
+      "meter_phase_a_voltage": {
+        "name": "Zähler Phase A Spannung"
+      },
+      "meter_phase_b_active_power": {
+        "name": "Zähler Phase B Wirkleistung"
+      },
+      "meter_phase_b_current": {
+        "name": "Zähler Phase B Strom"
+      },
+      "meter_phase_b_voltage": {
+        "name": "Zähler Phase B Spannung"
+      },
+      "meter_phase_c_active_power": {
+        "name": "Zähler Phase C Wirkleistung"
+      },
+      "meter_phase_c_current": {
+        "name": "Zähler Phase C Strom"
+      },
+      "meter_phase_c_voltage": {
+        "name": "Zähler Phase C Spannung"
+      },
+      "mppt1_current": {
+        "name": "MPPT1 Strom"
+      },
+      "mppt1_energy": {
+        "name": "MPPT1 Energie"
+      },
+      "mppt1_power": {
+        "name": "MPPT1 Leistung"
+      },
+      "mppt1_voltage": {
+        "name": "MPPT1 Spannung"
+      },
+      "mppt2_current": {
+        "name": "MPPT2 Strom"
+      },
+      "mppt2_energy": {
+        "name": "MPPT2 Energie"
+      },
+      "mppt2_power": {
+        "name": "MPPT2 Leistung"
+      },
+      "mppt2_voltage": {
+        "name": "MPPT2 Spannung"
+      },
+      "mppt3_current": {
+        "name": "MPPT3 Strom"
+      },
+      "mppt3_energy": {
+        "name": "MPPT3 Energie"
+      },
+      "mppt3_power": {
+        "name": "MPPT3 Leistung"
+      },
+      "mppt3_voltage": {
+        "name": "MPPT3 Spannung"
+      },
+      "mppt4_current": {
+        "name": "MPPT4 Strom"
+      },
+      "mppt4_energy": {
+        "name": "MPPT4 Energie"
+      },
+      "mppt4_power": {
+        "name": "MPPT4 Leistung"
+      },
+      "mppt4_voltage": {
+        "name": "MPPT4 Spannung"
+      },
+      "permanent_fault": {
+        "name": "Permanenter Fehler"
+      },
+      "phase_a_current": {
+        "name": "Phase A Strom"
+      },
+      "phase_a_power": {
+        "name": "Phase A Leistung"
+      },
+      "phase_a_voltage": {
+        "name": "Phase A Spannung"
+      },
+      "phase_b_current": {
+        "name": "Phase B Strom"
+      },
+      "phase_b_power": {
+        "name": "Phase B Leistung"
+      },
+      "phase_b_voltage": {
+        "name": "Phase B Spannung"
+      },
+      "phase_c_current": {
+        "name": "Phase C Strom"
+      },
+      "phase_c_power": {
+        "name": "Phase C Leistung"
+      },
+      "phase_c_voltage": {
+        "name": "Phase C Spannung"
+      },
+      "power_factor": {
+        "name": "Leistungsfaktor"
+      },
+      "power_flow_status": {
+        "name": "Leistungsfluss Code"
+      },
+      "pv_generation_cut_raw": {
+        "name": "PV-Erzeugung abgeschaltet Code"
+      },
+      "pv_generation_this_month": {
+        "name": "PV-Erzeugung diesen Monat"
+      },
+      "pv_generation_this_year": {
+        "name": "PV-Erzeugung dieses Jahr"
+      },
+      "pv_power_limitation_raw": {
+        "name": "PV-Leistungsbegrenzung Code"
+      },
+      "reactive_power": {
+        "name": "Blindleistung"
+      },
+      "running_state_raw": {
+        "name": "Betriebszustand Code"
+      },
+      "self_consumption_of_today": {
+        "name": "Eigenverbrauch heute"
+      },
+      "sg_bus_voltage": {
+        "name": "Zwischenkreisspannung"
+      },
+      "sg_daily_direct_energy_consumption": {
+        "name": "Täglicher Direktverbrauch"
+      },
+      "sg_daily_exported_energy": {
+        "name": "Täglich eingespeiste Energie"
+      },
+      "sg_daily_imported_energy": {
+        "name": "Täglich bezogene Energie"
+      },
+      "sg_daily_pv_generation": {
+        "name": "Tägliche PV-Erzeugung"
+      },
+      "sg_daily_running_time": {
+        "name": "Tägliche Laufzeit"
+      },
+      "sg_grid_frequency": {
+        "name": "Netzfrequenz"
+      },
+      "sg_inverter_temperature": {
+        "name": "Gerätetemperatur"
+      },
+      "sg_load_power": {
+        "name": "Leistungsaufnahme Verbraucher"
+      },
+      "sg_meter_active_power": {
+        "name": "Zähler Wirkleistung"
+      },
+      "sg_meter_phase_a_power": {
+        "name": "Zähler Phase A Leistung"
+      },
+      "sg_meter_phase_b_power": {
+        "name": "Zähler Phase B Leistung"
+      },
+      "sg_meter_phase_c_power": {
+        "name": "Zähler Phase C Leistung"
+      },
+      "sg_monthly_pv_generation": {
+        "name": "Monatliche PV-Erzeugung"
+      },
+      "sg_mppt10_current": {
+        "name": "MPPT10 Strom"
+      },
+      "sg_mppt10_energy": {
+        "name": "MPPT10 Energie"
+      },
+      "sg_mppt10_power": {
+        "name": "MPPT10 Leistung"
+      },
+      "sg_mppt10_voltage": {
+        "name": "MPPT10 Spannung"
+      },
+      "sg_mppt11_current": {
+        "name": "MPPT11 Strom"
+      },
+      "sg_mppt11_energy": {
+        "name": "MPPT11 Energie"
+      },
+      "sg_mppt11_power": {
+        "name": "MPPT11 Leistung"
+      },
+      "sg_mppt11_voltage": {
+        "name": "MPPT11 Spannung"
+      },
+      "sg_mppt12_current": {
+        "name": "MPPT12 Strom"
+      },
+      "sg_mppt12_energy": {
+        "name": "MPPT12 Energie"
+      },
+      "sg_mppt12_power": {
+        "name": "MPPT12 Leistung"
+      },
+      "sg_mppt12_voltage": {
+        "name": "MPPT12 Spannung"
+      },
+      "sg_mppt1_current": {
+        "name": "MPPT1 Strom"
+      },
+      "sg_mppt1_energy": {
+        "name": "MPPT1 Energie"
+      },
+      "sg_mppt1_power": {
+        "name": "MPPT1 Leistung"
+      },
+      "sg_mppt1_voltage": {
+        "name": "MPPT1 Spannung"
+      },
+      "sg_mppt2_current": {
+        "name": "MPPT2 Strom"
+      },
+      "sg_mppt2_energy": {
+        "name": "MPPT2 Energie"
+      },
+      "sg_mppt2_power": {
+        "name": "MPPT2 Leistung"
+      },
+      "sg_mppt2_voltage": {
+        "name": "MPPT2 Spannung"
+      },
+      "sg_mppt3_current": {
+        "name": "MPPT3 Strom"
+      },
+      "sg_mppt3_energy": {
+        "name": "MPPT3 Energie"
+      },
+      "sg_mppt3_power": {
+        "name": "MPPT3 Leistung"
+      },
+      "sg_mppt3_voltage": {
+        "name": "MPPT3 Spannung"
+      },
+      "sg_mppt4_current": {
+        "name": "MPPT4 Strom"
+      },
+      "sg_mppt4_energy": {
+        "name": "MPPT4 Energie"
+      },
+      "sg_mppt4_power": {
+        "name": "MPPT4 Leistung"
+      },
+      "sg_mppt4_voltage": {
+        "name": "MPPT4 Spannung"
+      },
+      "sg_mppt5_current": {
+        "name": "MPPT5 Strom"
+      },
+      "sg_mppt5_energy": {
+        "name": "MPPT5 Energie"
+      },
+      "sg_mppt5_power": {
+        "name": "MPPT5 Leistung"
+      },
+      "sg_mppt5_voltage": {
+        "name": "MPPT5 Spannung"
+      },
+      "sg_mppt6_current": {
+        "name": "MPPT6 Strom"
+      },
+      "sg_mppt6_energy": {
+        "name": "MPPT6 Energie"
+      },
+      "sg_mppt6_power": {
+        "name": "MPPT6 Leistung"
+      },
+      "sg_mppt6_voltage": {
+        "name": "MPPT6 Spannung"
+      },
+      "sg_mppt7_current": {
+        "name": "MPPT7 Strom"
+      },
+      "sg_mppt7_energy": {
+        "name": "MPPT7 Energie"
+      },
+      "sg_mppt7_power": {
+        "name": "MPPT7 Leistung"
+      },
+      "sg_mppt7_voltage": {
+        "name": "MPPT7 Spannung"
+      },
+      "sg_mppt8_current": {
+        "name": "MPPT8 Strom"
+      },
+      "sg_mppt8_energy": {
+        "name": "MPPT8 Energie"
+      },
+      "sg_mppt8_power": {
+        "name": "MPPT8 Leistung"
+      },
+      "sg_mppt8_voltage": {
+        "name": "MPPT8 Spannung"
+      },
+      "sg_mppt9_current": {
+        "name": "MPPT9 Strom"
+      },
+      "sg_mppt9_energy": {
+        "name": "MPPT9 Energie"
+      },
+      "sg_mppt9_power": {
+        "name": "MPPT9 Leistung"
+      },
+      "sg_mppt9_voltage": {
+        "name": "MPPT9 Spannung"
+      },
+      "sg_negative_voltage_to_ground": {
+        "name": "Negative Spannung gegen Erde"
+      },
+      "sg_phase_a_current": {
+        "name": "Phase A Strom"
+      },
+      "sg_phase_a_voltage": {
+        "name": "Phase A Spannung"
+      },
+      "sg_phase_b_current": {
+        "name": "Phase B Strom"
+      },
+      "sg_phase_b_voltage": {
+        "name": "Phase B Spannung"
+      },
+      "sg_phase_c_current": {
+        "name": "Phase C Strom"
+      },
+      "sg_phase_c_voltage": {
+        "name": "Phase C Spannung"
+      },
+      "sg_power_factor": {
+        "name": "Leistungsfaktor"
+      },
+      "sg_power_limitation": {
+        "name": "Leistungsgrenze aktiv"
+      },
+      "sg_power_limitation_setting": {
+        "name": "Leistungsgrenze"
+      },
+      "sg_reactive_power": {
+        "name": "Blindleistung"
+      },
+      "sg_total_active_power": {
+        "name": "Gesamte Wirkleistung"
+      },
+      "sg_total_apparent_power": {
+        "name": "Gesamte Scheinleistung"
+      },
+      "sg_total_dc_power": {
+        "name": "Gesamte PV-Eingangsleistung"
+      },
+      "sg_total_direct_energy_consumption": {
+        "name": "Gesamter Direktverbrauch"
+      },
+      "sg_total_exported_energy": {
+        "name": "Gesamt eingespeiste Energie"
+      },
+      "sg_total_imported_energy": {
+        "name": "Gesamt bezogene Energie"
+      },
+      "sg_total_pv_generation": {
+        "name": "Gesamte PV-Erzeugung"
+      },
+      "sg_total_running_time": {
+        "name": "Gesamte Laufzeit"
+      },
+      "sg_work_state": {
+        "name": "Betriebszustand"
+      },
+      "sungrow_arm_software": {
+        "name": "ARM-Software-Version"
+      },
+      "sungrow_device_type": {
+        "name": "Gerätetyp"
+      },
+      "sungrow_device_type_code": {
+        "name": "Gerätetypcode"
+      },
+      "sungrow_dsp_software": {
+        "name": "DSP-Software-Version"
+      },
+      "sungrow_inverter_serial": {
+        "name": "Seriennummer"
+      },
+      "sungrow_inverter_state": {
+        "name": "Betriebszustand"
+      },
+      "sungrow_protocol_version": {
+        "name": "Protokollversion"
+      },
+      "sungrow_version_1": {
+        "name": "Firmware-Version Teil 1"
+      },
+      "sungrow_version_2": {
+        "name": "Firmware-Version Teil 2"
+      },
+      "sungrow_version_3": {
+        "name": "Firmware-Version Teil 3"
+      },
+      "sungrow_version_4_sungrow_battery": {
+        "name": "Firmware-Version Teil 4 (Sungrow-Batterie)"
+      },
+      "survey_finished": {
+        "name": "Diagnose beendet"
+      },
+      "survey_progress": {
+        "name": "Diagnosefortschritt"
+      },
+      "survey_step": {
+        "name": "Diagnoseschritt"
+      },
+      "system_fault_1": {
+        "name": "Systemfehler 1"
+      },
+      "system_fault_2": {
+        "name": "Systemfehler 2"
+      },
+      "total_active_power": {
+        "name": "Gesamte Wirkleistung"
+      },
+      "total_backup_power": {
+        "name": "Backup Gesamtleistung"
+      },
+      "total_battery_charge": {
+        "name": "Gesamte Batterie-Ladeenergie"
+      },
+      "total_battery_charge_from_pv": {
+        "name": "Gesamte Batterie-Ladeenergie aus PV"
+      },
+      "total_battery_discharge": {
+        "name": "Gesamte Batterie-Entladeenergie"
+      },
+      "total_consumed_energy": {
+        "name": "Gesamte Energieaufnahme Verbraucher"
+      },
+      "total_dc_power": {
+        "name": "Gesamte PV-Eingangsleistung"
+      },
+      "total_direct_energy_consumption": {
+        "name": "Gesamter Direktverbrauch"
+      },
+      "total_exported_energy": {
+        "name": "Gesamt eingespeiste Energie"
+      },
+      "total_exported_energy_from_pv": {
+        "name": "Gesamt aus PV eingespeiste Energie"
+      },
+      "total_imported_energy": {
+        "name": "Gesamt bezogene Energie"
+      },
+      "total_pv_generation": {
+        "name": "Gesamte PV-Erzeugung"
+      },
+      "total_pv_generation_battery_discharge": {
+        "name": "Gesamte PV-Erzeugung und Batterieentladung"
+      },
+      "total_site_pv_power": {
+        "name": "Gesamte PV-Leistung der Anlage"
+      },
+      "wallbox_available_current": {
+        "name": "Freigegebener Ladestrom"
+      },
+      "wallbox_charging_power": {
+        "name": "Ladeleistung"
+      },
+      "wallbox_charging_status": {
+        "name": "Ladestatus"
+      },
+      "wallbox_control_pilot_voltage": {
+        "name": "Control-Pilot-Spannung"
+      },
+      "wallbox_firmware_version": {
+        "name": "Firmware-Version"
+      },
+      "wallbox_lifetime_energy": {
+        "name": "Gesamte Ladeenergie"
+      },
+      "wallbox_maximum_charging_power": {
+        "name": "Maximale Ladeleistung"
+      },
+      "wallbox_minimum_charging_power": {
+        "name": "Minimale Ladeleistung"
+      },
+      "wallbox_output_current_setting": {
+        "name": "Ladestrom-Sollwert"
+      },
+      "wallbox_phase_a_current": {
+        "name": "Ladestrom Phase A"
+      },
+      "wallbox_phase_a_voltage": {
+        "name": "Phase A Spannung"
+      },
+      "wallbox_phase_b_current": {
+        "name": "Ladestrom Phase B"
+      },
+      "wallbox_phase_b_voltage": {
+        "name": "Phase B Spannung"
+      },
+      "wallbox_phase_c_current": {
+        "name": "Ladestrom Phase C"
+      },
+      "wallbox_phase_c_voltage": {
+        "name": "Phase C Spannung"
+      },
+      "wallbox_phase_mode": {
+        "name": "Phasenmodus"
+      },
+      "wallbox_rated_current": {
+        "name": "Maximaler Ladestrom"
+      },
+      "wallbox_session_energy": {
+        "name": "Energie der Ladesitzung"
+      },
+      "wallbox_start_mode": {
+        "name": "Startmodus"
+      },
+      "weekday_discharge_window_1": {
+        "name": "Entladefenster Werktag 1"
+      },
+      "weekday_discharge_window_2": {
+        "name": "Entladefenster Werktag 2"
+      },
+      "weekend_discharge_window_1": {
+        "name": "Entladefenster Wochenende 1"
+      },
+      "weekend_discharge_window_2": {
+        "name": "Entladefenster Wochenende 2"
+      }
+    },
+    "switch": {
+      "backup_mode": {
+        "name": "Backup-Modus"
+      },
+      "cut_pv_generation": {
+        "name": "PV-Erzeugung abschalten"
+      },
+      "export_power_limit_mode": {
+        "name": "Einspeiselimit-Modus"
+      },
+      "forced_charging_schedule": {
+        "name": "Zwangsladung Zeitplan"
+      },
+      "load_adjustment_mode_enable": {
+        "name": "Laststeuerung"
+      }
+    },
+    "time": {
+      "forced_charging_end_1": {
+        "name": "Zwangsladung Ende 1"
+      },
+      "forced_charging_end_2": {
+        "name": "Zwangsladung Ende 2"
+      },
+      "forced_charging_start_1": {
+        "name": "Zwangsladung Start 1"
+      },
+      "forced_charging_start_2": {
+        "name": "Zwangsladung Start 2"
+      }
+    }
+  },
+  "selector": {
+    "entity_ids": {
+      "options": {
+        "migrate": "Bestehende Entitäten übernehmen — Verlauf behalten",
+        "new": "Neu beginnen / neue Entitäten anlegen"
+      }
+    },
+    "audience": {
+      "options": {
+        "admins": "Nur Administratoren",
+        "users": "Jeder Benutzer, der dieses Gerät steuern darf"
+      }
+    },
+    "external_placement": {
+      "options": {
+        "behind_meter": "Hinter demselben Netzzähler – er verringert, was das Haus bezieht",
+        "separately_metered": "An einem eigenen Anschluss – nichts davon passiert den Zähler dieses Wechselrichters"
+      }
+    },
+    "survey_transport": {
+      "options": {
+        "direct_lan": "Ein Kabel direkt am eigenen LAN-Port des Wechselrichters",
+        "winet_lan": "Ein WiNet-S-Dongle an seiner Ethernet-Buchse",
+        "winet_wlan": "Ein WiNet-S-Dongle über WLAN",
+        "winet": "Ein WiNet-S-Dongle, aber ich bin nicht sicher, über welches Medium",
+        "logger": "Ein Logger1000 oder Logger3000",
+        "unsure": "Nicht sicher"
+      }
+    },
+    "survey_proxy": {
+      "options": {
+        "yes": "Ja – modbus-proxy, der Proxy von evcc oder ein Home-Assistant-Add-on",
+        "no": "Nein, er spricht direkt mit dem Wechselrichter",
+        "unknown": "Ich weiß nicht, was das ist"
+      }
+    },
+    "survey_other_inverter": {
+      "options": {
+        "yes": "Ja – es gibt einen weiteren Wechselrichter, der kein Sungrow ist",
+        "no": "Nein – der Sungrow ist hier der einzige Wechselrichter"
+      }
+    },
+    "entity_id_style": {
+      "options": {
+        "migrate": "Die IDs des YAML-Pakets, etwa sensor.total_dc_power",
+        "new": "Gerätebezogene IDs, etwa sensor.sh10rt_total_pv_input_power"
+      }
+    }
+  },
+  "issues": {
+    "preview_release": {
+      "title": "Sungrow Modbus ist eine Vorschau",
+      "description": "Diese Integration ist eine Vorschauversion, für Tester und nicht für ein System, auf das du dich verlässt.\n\n**Entitätsnamen können sich noch ändern.** Ein Name liefert eine Entitäts-ID, wenn die Entität erstmals angelegt wird, eine Änderung verschiebt also die vorhandenen IDs nicht – dein Verlauf und deine Dashboards sind sicher. Es bedeutet aber, dass deine IDs von denen eines später Installierenden abweichen können. Wo das eine Rolle spielt, kommt eine Umbenennung mit einer Migration, die deine IDs mitzieht und den Verlauf mitnimmt.\n\n**Was nicht im Fluss ist:** Messwerte, Einheiten und die Migration vom YAML-Paket. Wenn du dich für die Entitäts-IDs des YAML-Pakets entschieden hast, werden diese genau reproduziert, und nichts davon berührt sie.\n\nBitte melde alles, was falsch aussieht – dafür ist eine Vorschau da."
+    },
+    "control_test_unfinished": {
+      "title": "Ein Steuerungs-Schreibtest an {name} wurde nicht abgeschlossen",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Diese Einstellungen zurücksetzen",
+            "description": "Der Steuerungs-Schreibtest ändert eine Einstellung, prüft sie und ändert sie zurück. Dieser kam nicht bis zum Zurückändern – Home Assistant wurde neu gestartet, der Eintrag neu geladen oder der Wechselrichter hörte mittendrin auf zu antworten.\n\nDiese Einstellungen enthalten womöglich noch die Werte des Tests statt deiner:\n\n{registers}\n\nDie Behebung schreibt jede davon zurück und liest sie erneut, um zu prüfen, dass es geklappt hat.\n\nFolgendes wird an deinen Wechselrichter zurückgeschrieben und zur Bestätigung erneut gelesen:\n\n{registers}\n\nVerweigert etwas das Schreiben, wird nichts verschwiegen – du erfährst, was, und die Reparatur bleibt bestehen. Die übliche Ursache ist, dass gleichzeitig etwas anderes den Wechselrichter abfragt."
+          }
+        },
+        "abort": {
+          "restore_failed": "Es konnte nicht alles zurückgesetzt werden: {error}\n\nDiese Reparatur bleibt offen, damit du es erneut versuchen kannst."
+        }
+      }
+    },
+    "control_test_left_stopped": {
+      "title": "{name} ist nach einem Steuerungs-Schreibtest womöglich noch gestoppt",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Den Wechselrichter starten und diese Einstellungen zurücksetzen",
+            "description": "**Prüfe, ob dein Wechselrichter erzeugt.** Ein Steuerungs-Schreibtest durfte ihn stoppen und neu starten und kam nicht bis zum Neustart – Home Assistant wurde neu gestartet, der Eintrag neu geladen oder der Wechselrichter hörte mittendrin auf zu antworten.\n\nDie Behebung startet den Wechselrichter, setzt dann diese Einstellungen zurück und liest jede erneut, um zu prüfen, dass es geklappt hat:\n\n{registers}\n\nDer Wechselrichter wird zuerst gestartet, dann wird Folgendes zurückgeschrieben und zur Bestätigung erneut gelesen:\n\n{registers}\n\nVerweigert etwas, erfährst du, was, und die Reparatur bleibt bestehen."
+          }
+        },
+        "abort": {
+          "restore_failed": "Es konnte nicht abgeschlossen werden: {error}\n\n**Prüfe, ob dein Wechselrichter läuft.** Diese Reparatur bleibt offen, damit du es erneut versuchen kannst."
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Sungrow-Modbus-Optionen",
+        "description": "Alles, was diese Integration dich ändern lässt, an einem Ort. Öffne einen Abschnitt, um ihn zu sehen; was du nicht öffnest, bleibt, wie es ist.\n\nVerbindungsdaten sind nicht hier – Host oder Geräteadresse zu ändern heißt, mit einem anderen Gerät zu sprechen, das ist **Neu konfigurieren** und keine Option.",
+        "data": {
+          "add_devices": "Die Geräte dieses Endpunkts jetzt hinzufügen",
+          "entity_ids": "Entitäts-IDs"
+        },
+        "data_description": {
+          "add_devices": "Dieser Eintrag wurde nur für die Diagnose eingerichtet und hat deshalb keine Entitäten. Das Anhaken stellt die eine übersprungene Frage – ob die Entitäts-IDs des YAML-Pakets übernommen werden sollen – und legt sie dann an.{devices_mode}",
+          "entity_ids": "Welche IDs die Entitäten dieses Wechselrichters haben. Eine Änderung verschiebt sie samt Verlauf und Statistiken; die nächste Seite sagt genau, was sich verschiebt, bevor etwas passiert."
+        },
+        "sections": {
+          "polling": {
+            "name": "Abfrage",
+            "description": "Die Register werden in vier Gruppen gelesen, jede als ein Zyklus im von dir eingestellten Intervall. {tiers} Ein Sungrow nimmt nur sehr wenige Modbus-Verbindungen an. Wenn also etwas anderes ihn abfragt (das YAML-Paket, ein anderes Home Assistant, EVCC, ein Logger), ist das Verlangsamen einer Gruppe oder das Setzen auf 0 (nie lesen, ihre Entitäten werden nicht angelegt) die günstigste Abhilfe gegen Aussetzer. Das Minimum sind 5 Sekunden. Jede Änderung hier lädt die Integration neu.",
+            "data": {
+              "realtime": "Echtzeit-Gruppe",
+              "fast": "Schnelle Gruppe",
+              "medium": "Mittlere Gruppe",
+              "slowest": "Langsamste Gruppe"
+            },
+            "data_description": {
+              "realtime": "Sekunden zwischen den Lesevorgängen, oder 0 für nie.",
+              "fast": "Sekunden zwischen den Lesevorgängen, oder 0 für nie.",
+              "medium": "Sekunden zwischen den Lesevorgängen, oder 0 für nie.",
+              "slowest": "Sekunden zwischen den Lesevorgängen, oder 0 für nie."
+            }
+          },
+          "permissions": {
+            "name": "Berechtigungen",
+            "description": "Wer die Aktionen Start und Stopp aufrufen darf und wer die Schaltfläche des Steuerungs-Schreibtests drücken darf. Standard ist nur Administratoren: Ein gestoppter Wechselrichter bleibt gestoppt, bis ihn jemand startet. Benutzer bedeutet Benutzer, die dieses Gerät bereits ändern dürfen; Konten mit reinem Lesezugriff können das nie, und Automationen und Skripte sind nicht betroffen. Jede andere Einstellung ist eine Entität, und Home Assistant entscheidet, wer sie ändern darf: Mache ein Konto unter Einstellungen → Personen schreibgeschützt, um einer Person jede Änderung zu verwehren.",
+            "data": {
+              "start_stop": "Den Wechselrichter starten und stoppen",
+              "control_test": "Den Steuerungs-Schreibtest ausführen"
+            },
+            "data_description": {
+              "start_stop": "Wer die Aktionen Start und Stopp für diesen Wechselrichter aufrufen darf.",
+              "control_test": "Standardmäßig nur Administratoren. Der Steuerungs-Schreibtest ändert Einstellungen am Wechselrichter und setzt sie zurück und – wo du es oben erlaubt hast – stoppt und startet ihn neu. Ihn für Benutzer zu öffnen bedeutet Benutzer, die dieses Gerät bereits ändern dürfen; ein Konto mit reinem Lesezugriff kann es weiterhin nicht."
+            }
+          },
+          "external": {
+            "name": "Ein weiterer Wechselrichter an derselben Einspeisung",
+            "description": "Dieser Wechselrichter ermittelt deine Hauslast aus seiner eigenen Erzeugung und seinem Netzzähler, ein zweiter Wechselrichter, der kein Sungrow ist, lässt die Last daher um genau dessen Erzeugung zu niedrig erscheinen. {reported_load} Wähle die Entitäten, die die Leistung des anderen Wechselrichters melden, dann werden zwei korrigierte Sensoren hinzugefügt. Für Energie in kWh füge ihn stattdessen als Solarquelle im Energie-Dashboard hinzu. Eine Quelle, die über Nacht „nicht verfügbar“ meldet, macht die korrigierten Sensoren über Nacht ebenfalls unbekannt, statt Null anzunehmen.",
+            "data": {
+              "external_sources": "Leistungssensoren für die andere Erzeugung",
+              "external_placement": "Wo er angeschlossen ist"
+            },
+            "data_description": {
+              "external_sources": "Nur Leistungssensoren werden aufgelistet. Wähle jeden, der Erzeugung meldet, die dieser Sungrow nicht sehen kann; leer lassen, um die Korrektur auszuschalten.",
+              "external_placement": "Das ändert die Rechnung, daher wird gefragt statt geraten."
+            }
+          },
+          "advanced": {
+            "name": "Batterie, Wallbox und Diagnose",
+            "description": "Batterie-Ladeleistung: {battery_status} Auf 0 lassen, damit die Integration sie selbst ermittelt. Andernfalls nimm den vom Datenblatt empfohlenen Ladestrom mal das untere Ende des Spannungsbereichs, nicht die Nennspannung (25 A bei 355 V sind etwa 8875 W), und runde ab. Diagnose herunterladen auf der Geräteseite beschreibt diese Einrichtung, ohne Seriennummer und Adresse.",
+            "data": {
+              "battery_max_power": "Maximale Batterie-Ladeleistung (W)",
+              "register_dump": "Rohen Registerauszug in die Diagnose aufnehmen",
+              "wallbox_host": "Wallbox-Adresse, wenn sie selbst im Netzwerk ist"
+            },
+            "data_description": {
+              "battery_max_power": "0 heißt selbst ermitteln: Ein Sungrow-Pack wird anhand der gemeldeten Kapazität erkannt und im Datenblatt nachgeschlagen, und jeder andere Pack, der einen BMS-Ladestrom meldet, bekommt stattdessen diesen. Setze einen Wert, um beides zu überschreiben.",
+              "register_dump": "Fügt den Rohwert jedes abgebildeten Registers hinzu. Nur nützlich, wenn ein Wert falsch aussieht und die Dekodierung selbst in Frage steht. Ihn zu erzeugen ist ein zweiter vollständiger Lesedurchlauf der Registerkarte zusätzlich zur normalen Abfrage, was über einen WiNet-S-Dongle langsam ist, lass es also aus, außer jemand hat danach gefragt.",
+              "wallbox_host": "Nur für eine Sungrow-Wallbox mit eigenem Netzwerkkabel oder WLAN. Ohne dies findet die Integration eine Wallbox hinter einem WiNet-S selbst, und das ist alles, was die meisten Installationen brauchen. Mit dieser Angabe wird die Wallbox stattdessen an ihrer eigenen Adresse gelesen – verschlüsselt, auf Port 516 –, was auch funktioniert, wenn dieser Eintrag am eigenen LAN-Port des Wechselrichters hängt, wo eine Wallbox sonst nicht zu sehen ist. Ihre Entitäten und deren Verlauf bleiben, wie sie sind. Leer lassen, um zum WiNet-S zurückzukehren."
+            }
+          },
+          "survey": {
+            "name": "Eine Funktionsdiagnose beisteuern",
+            "description": "Welche Register ein Wechselrichter beantwortet, wird gemessen, nicht nachgeschlagen, und eine Messung von deinem verbessert die Unterstützung dafür. {measured} Alles unten ist optional und beantwortet, was kein Register kann; ein leeres Feld hält fest, dass die Frage nicht beantwortet wurde. Speichern behält deine Antworten. Um die Diagnose auszuführen, drücke auf der Geräteseite Diagnose ausführen (nur lesend): Sie liest und schreibt nie und ersetzt die Seriennummer durch einen Platzhalter.",
+            "data": {
+              "reporter": "Dein Name oder Pseudonym",
+              "survey_transport": "Wie dieser Wechselrichter angebunden ist",
+              "survey_proxy": "Befindet sich ein Modbus-Proxy im Pfad?",
+              "survey_pollers": "Fragt noch etwas anderes diesen Wechselrichter ab?",
+              "survey_other_inverter": "Gibt es hier einen weiteren Wechselrichter, der kein Sungrow ist?",
+              "survey_battery": "Hersteller und Modell der Batterie",
+              "survey_comment": "Sonst noch etwas Wissenswertes",
+              "publish_address": "Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?",
+              "survey_register_dump": "Auch die rohen Registerbereiche durchsuchen (etwa fünf Minuten)"
+            },
+            "data_description": {
+              "reporter": "Wird in der veröffentlichten Messung genannt und gefragt, wenn eine Zeile Fragen aufwirft. Leer lassen, um anonym beizutragen.",
+              "survey_transport": "Kabel gegenüber Dongle ist bereits gemessen. Nur du weißt, ob ein Dongle an seiner Ethernet-Buchse oder per WLAN hängt – ein WiNet-S antwortet in beiden Fällen gleich, daher ist \"nicht sicher\" eine echte Antwort und besser als eine Vermutung.",
+              "survey_proxy": "modbus-proxy, der Proxy von evcc, ein Home-Assistant-Add-on. Ein Proxy hält eine Verbindung und verleiht sie weiter, was die Bedeutung eines ausgefallenen Registers verändert – und er baut jeden Frame neu auf, was die Frame-Eigenheiten, die dieses Projekt verfolgt, verbergen oder erzeugen kann.",
+              "survey_pollers": "Dieses Home Assistant wird automatisch erfasst. Wichtig ist hier alles andere: ein anderes Home Assistant, das YAML-Paket, evcc, ein Logger. Ein Wechselrichter gewährt sehr wenige Verbindungen, und zwei Clients, die um eine konkurrieren, sehen genau wie ein defektes Register aus.",
+              "survey_other_inverter": "Dein Sungrow misst nicht, wie viel dein Haus verbraucht – er errechnet es aus seiner eigenen Leistung plus dem, was der Netzzähler als Bezug meldet. Ein zweiter Wechselrichter am selben Zähler macht daher jeden Lastwert um genau dessen Erzeugung zu niedrig, während alles andere normal aussieht. Kein Register kann uns das sagen: Der Sungrow sieht ihn nicht. Antworte mit Ja, dann fragen wir, was es ist.",
+              "survey_battery": "Kein Register meldet das. \"SBR096\" oder \"Pylontech Force H1, 14,4 kWh\" ist nützlicher als eine Kapazität, die der Wechselrichter ohnehin meldet.",
+              "survey_comment": "Alles Ungewöhnliche an der Anlage – ein Verbund, ein zweiter Wechselrichter, eine Wallbox, ein Firmware-Update, an das du dich erinnerst.",
+              "publish_address": "An, und du kannst es vor dem Absenden ausschalten. Nur die letzten zwei Oktette gelangen je in das Dokument – nie das dritte, das dein Netzwerk identifizieren würde –, und wenn du das deaktivierst, steht stattdessen xxx.xxx. Der Nutzen: Mehrere Messungen aus einem Haus lassen sich unterscheiden – ein Master, ein Slave und zwei Dongles ergeben sonst vier gleich aussehende Dateien.",
+              "survey_register_dump": "An, und besser auszuschalten, wenn du es eilig hast. Ohne sie liest die Diagnose die Register, die diese Integration bereits kennt, und braucht ein paar Sekunden. Mit ihr durchsucht sie zusätzlich 2181 Adressen in sechzehn Bereichen, auch die, die keine Spezifikation dokumentiert – so wurde jedes undokumentierte Register gefunden, das dieses Projekt kennt. Das ist langsam, weil eine Adresse ohne Inhalt verstummt statt abzulehnen, sodass jede leere ein volles Timeout kostet: etwa fünf Minuten am direkten Kabel und deutlich länger über ein WiNet-S oder ein VPN. Dein Wechselrichter wird die ganze Zeit weiter abgefragt, und die Diagnose-Schaltfläche auf der Geräteseite zeigt den Fortschritt."
+            }
+          },
+          "control_test": {
+            "name": "Was der Steuerungs-Schreibtest darf",
+            "description": "Vollständige Diagnose und Tests ausführen auf der Geräteseite schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die fünf Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Das Drücken der Schaltfläche ist deine Zustimmung. Was du ausschaltest, bleibt aus.",
+            "data": {
+              "control_test_restart": "Darf er den Wechselrichter stoppen und neu starten?",
+              "control_test_export_limit": "Darf er die Einspeisebegrenzung einschalten?",
+              "control_test_pv_cut": "Darf er die PV-Erzeugung für etwa eine Minute abschalten?",
+              "control_test_charge_window": "Darf er ein Zwangslade-Fenster um jetzt herum setzen?",
+              "control_test_discharge_window": "Darf er die Entladefenster von jetzt weg verschieben?"
+            },
+            "data_description": {
+              "control_test_restart": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung schreibt der Test das Stoppregister, wartet, bis sich der Wechselrichter als gestoppt meldet, startet ihn wieder und misst alle drei Übergänge, damit die Zahlen jedes Modells festgehalten sind.\n\nWährend er gestoppt ist, erzeugst du nichts, die Batterie lädt und entlädt nicht, und alles am Backup-Ausgang verliert die Versorgung. Bisher gemessen: gestoppt nach etwa 2 Sekunden, wieder in Betrieb nach 3 bis 4 Minuten bei Tageslicht und über 6 nachts, Erzeugung bis zu 20 Sekunden später. Der Wechselrichter bleibt nie gestoppt: Der Start wird über frische Verbindungen wiederholt, er wird erneut gestartet, wenn Home Assistant mitten im Test herunterfährt, und schlägt all das fehl, bekommst du eine Reparatur, die ihn startet.",
+              "control_test_export_limit": "An, sofern du es nicht ausschaltest. Wo du die Einspeisung bereits begrenzt, nutzt der Test diese Begrenzung und das ändert nichts. Mit dieser Einstellung darf er die Begrenzung dort, wo du keine hast, für etwa eine Minute einschalten.\n\nEs ist die eine Einstellung, deren fehlgeschlagene Wiederherstellung dich etwas Dauerhaftes kostet statt nur Genauigkeit: Eine nicht zurückgeschaltete Einspeisebegrenzung heißt, du speist weniger ein, als du könntest. Passiert das, bekommst du hier eine Reparatur, die sie zurückschaltet.",
+              "control_test_pv_cut": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter Register 31211 beantwortet, schreibt der Test den Code, der die PV-Erzeugung stoppt, prüft, dass die DC-Leistung auf null fällt, und erlaubt PV wieder. Die Erzeugung stoppt für etwa eine halbe Minute und braucht bis zu eine Minute mehr, um zurückzukommen, während der Wechselrichter seinen Arbeitspunkt neu sucht; Batterie und Netz versorgen das Haus in der Zwischenzeit.\n\nDieses Register steht nicht in Sungrows Dokumentation, weshalb der Schalter **PV-Erzeugung abschalten** nur für Firmware angeboten wird, auf der diese Prüfung bestanden wurde. Ein Lauf auf deiner ist der Weg, wie deine Firmware auf diese Liste kommt.",
+              "control_test_charge_window": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter den Zwangslade-Zeitplan hat und dieser aus ist, schreibt der Test ein Fenster um die eigene Uhr des Wechselrichters mit einem Ziel einige Prozent über der Batterie, schaltet den Zeitplan ein, prüft, dass die Batterie zu laden beginnt, und schaltet ihn wieder aus. Die Batterie lädt ein bis zwei Minuten, aus dem Netz, wenn keine Sonne scheint. Jedes Wort des Zeitplans wird danach zurückgesetzt. Übersprungen, wo dein eigener Zeitplan an ist.",
+              "control_test_discharge_window": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter die Entladezeitpläne beantwortet (Register 33151–33187), verschiebt der Test jedes Entladefenster an Werktagen und am Wochenende von jetzt weg, prüft, dass die Batterie nicht mehr entlädt, und setzt jedes Fenster zurück. Ein bis zwei Minuten bezieht das Haus Strom, statt die Batterie zu nutzen.\n\nDiese Register stehen nicht in Sungrows Dokumentation, weshalb sie nur als Messwerte angeboten werden. Ein Lauf auf deiner ist der Beleg, dass Schreiben darauf tut, was es soll."
+            }
+          }
+        }
+      },
+      "promote": {
+        "title": "Die Geräte einrichten",
+        "description": "Home Assistant hat **{count} Entitäten** aus dem Paket `modbus_sungrow.yaml` gefunden, zum Beispiel `{example}`. Dein Recorder-Verlauf, deine Statistiken und jede Dashboard-Karte sind an diese Entitäts-IDs gebunden.\n\n{status}\n\n**Bestehende Entitäten übernehmen** übernimmt diese IDs. Verlauf und Statistiken laufen ohne Unterbrechung weiter und deine Dashboards funktionieren unverändert. Es wird nichts kopiert und nichts gelöscht.\n\n**Neu beginnen** gibt diesem Wechselrichter eigene IDs, zum Beispiel `sensor.sh10rt_total_pv_input_power`. Dein alter Verlauf bleibt unter den alten IDs, wo er ist, und deine Dashboards zeigen weiterhin darauf.\n\nIn jeder anderen Hinsicht sind die Entitäten in beiden Fällen identisch.",
+        "data": {
+          "entity_ids": "Entitäts-IDs"
+        },
+        "data_description": {
+          "entity_ids": "Das lässt sich später ändern, ohne dass etwas verloren geht."
+        }
+      },
+      "slot_unknown": {
+        "title": "Die Geräte einrichten",
+        "description": "In diesem Haus lief das YAML-Paket für mehr als einen Wechselrichter, und Home Assistant kann nicht erkennen, welcher davon dieser war. Das sagen die Seriennummer-Sensoren des Pakets, und weder das laufende Paket noch der aufgezeichnete Verlauf kennt die Seriennummer dieses Wechselrichters.\n\nDeshalb werden die Entitäts-IDs des YAML-Pakets nicht angeboten: Mit dem falschen Satz bekäme dieser Wechselrichter den Verlauf eines anderen. **Absenden** richtet ihn mit eigenen IDs ein, zum Beispiel `sensor.sh10rt_total_pv_input_power`.\n\nUm die alten IDs zu behalten, aktiviere das YAML-Paket für einen Neustart wieder, damit die Seriennummer dieses Wechselrichters aufgezeichnet wird, entferne es dann und starte erneut. Mit **Konfigurieren** lässt sich dieser Wechselrichter danach auf seine alten IDs umstellen; die Seriennummer bleibt für die Aufbewahrungsdauer des Recorders gespeichert, zehn Tage, sofern du sie nicht geändert hast."
+      },
+      "other_inverter": {
+        "title": "Welcher ist der andere Wechselrichter?",
+        "description": "Der Hersteller und, falls bekannt, die Größe – *Fronius Symo 8.2* oder *5-kW-String-Wechselrichter auf dem Süddach*. Die Größe ist der nützliche Teil: Sie sagt, wie groß die Lücke in den Lastwerten ist.\n\nDas gelangt in das Dokument, lass deshalb Seriennummern, Adressen und Namen weg. Du kannst es leer lassen.",
+        "data": {
+          "survey_other_inverter_detail": "Der andere Wechselrichter"
+        }
+      },
+      "entity_ids_legacy": {
+        "title": "Zu den Entitäts-IDs des YAML-Pakets wechseln",
+        "description": "Die Entitäten erhalten die IDs, die `modbus_sungrow.yaml` ihnen gab, etwa `sensor.total_dc_power` – die IDs, an die bestehende Dashboards und jahrelanger Verlauf gebunden sind.\n\n{changes}{status}\n\nEs wird nichts kopiert und nichts gelöscht. Namen, Bereiche und andere Einstellungen, die du den Entitäten gegeben hast, bleiben bei ihnen. Dashboards, Automationen und Skripte, die die alten IDs verwenden, werden nicht umgeschrieben, prüfe sie also danach."
+      },
+      "entity_ids_modern": {
+        "title": "Zu gerätebezogenen Entitäts-IDs wechseln",
+        "description": "Die Entitäten erhalten IDs, die nach diesem Gerät benannt sind, etwa `sensor.sh10rt_total_pv_input_power`. Ihr Verlauf und ihre Statistiken ziehen mit.\n\n{changes}{status}\n\nEs wird nichts kopiert und nichts gelöscht. Namen, Bereiche und andere Einstellungen, die du den Entitäten gegeben hast, bleiben bei ihnen. Dashboards, Automationen und Skripte, die die alten IDs verwenden, werden nicht umgeschrieben, prüfe sie also danach.\n\nDu kannst jederzeit hierher zurückwechseln."
+      }
+    },
+    "error": {
+      "nothing_left_to_poll": "Jede Gruppe steht auf „nie“, was der Integration nichts zu lesen und überhaupt keine Entitäten ließe. Lass mindestens eine Gruppe mit einem Intervall.",
+      "wallbox_not_found": "Unter dieser Adresse hat keine Sungrow-Wallbox geantwortet. Es muss die eigene Adresse der Wallbox sein (nicht die des Wechselrichters oder des WiNet-S), von Home Assistant erreichbar und nicht von einem anderen Client belegt.",
+      "legacy_package_still_loaded": "Das YAML-Paket läuft noch, daher belegen seine Entitäten weiterhin ihre IDs. Entferne `modbus_sungrow.yaml` aus deiner Konfiguration, starte Home Assistant neu und versuche es erneut.",
+      "legacy_slot_unknown": "In diesem Haus lief das YAML-Paket für mehr als einen Wechselrichter, und Home Assistant kann nicht erkennen, welcher davon dieser war, die alten IDs könnten also die eines anderen Wechselrichters sein. Aktiviere das YAML-Paket für einen Neustart wieder, damit die Seriennummer dieses Wechselrichters aufgezeichnet wird, entferne es dann, starte erneut und komm hierher zurück."
+    },
+    "progress": {
+      "running_survey": "Dein Wechselrichter wird gelesen: 19 Funktionsprüfungen. Über ein WiNet-S kann das eine Minute dauern."
+    },
+    "abort": {
+      "devices_mode_not_offered": "Sensoren und Steuerungen einzurichten ist in dieser Version nicht enthalten. Diese Alpha legt nur Einträge für die Diagnose an; beginne erneut und wähle **Geräte-Diagnose durchführen**."
+    }
+  },
+  "services": {
+    "run_control_test": {
+      "name": "Vollständige Diagnose und Tests ausführen",
+      "description": "Schreibt in jede Steuerung, in die diese Integration schreiben kann, prüft jede auf drei Arten und setzt sie zurück. Anders als die Diagnose ÄNDERT dies EINSTELLUNGEN am Wechselrichter: Es begrenzt die Batterie und die Einspeisung und erzwingt kurz ein Laden und ein Entladen. Alles wird vor dem ersten Schreiben festgehalten und danach wiederhergestellt, und der Lauf meldet alles, was er nicht zurücksetzen konnte. Es gibt sie, weil ein falscher Skalierungsfaktor für ein Zurücklesen unsichtbar ist – 700 W schreiben, 700 W zurückbekommen – und nur Schreiben ihn finden kann. Die Berechtigungen für Neustart und Einspeisebegrenzung werden in den Optionen der Integration gesetzt und sind standardmäßig aus.",
+      "fields": {
+        "device_id": {
+          "name": "Gerät",
+          "description": "Das Sungrow-Gerät, in das geschrieben wird und das zurückgesetzt wird."
+        }
+      }
+    },
+    "run_survey": {
+      "name": "Diagnose ausführen (nur lesend)",
+      "description": "Liest die Register dieser Installation und erzeugt ein Dokument, das beschreibt, was geantwortet hat, damit die Unterstützung dafür gemessen statt geraten werden kann. Nur Lesen; es wird nichts in den Wechselrichter geschrieben, und die Seriennummer wird durch einen Platzhalter ersetzt. Das fertige Dokument kommt als Benachrichtigung mit Download-Link.",
+      "fields": {
+        "device_id": {
+          "name": "Gerät",
+          "description": "Das Sungrow-Gerät, das diagnostiziert wird."
+        }
+      }
+    },
+    "start_inverter": {
+      "name": "Wechselrichter starten",
+      "description": "Fährt einen heruntergefahrenen Wechselrichter hoch. Bewusst eine Aktion statt einer Schaltfläche: Home Assistant hat keinen Bestätigungsdialog für einen Tastendruck, und zum Aufruf sind Administratorrechte nötig.",
+      "fields": {
+        "device_id": {
+          "name": "Wechselrichter",
+          "description": "Welcher Wechselrichter gestartet werden soll."
+        }
+      }
+    },
+    "stop_inverter": {
+      "name": "Wechselrichter stoppen",
+      "description": "Fährt den Wechselrichter herunter. Er hört auf zu erzeugen, zu laden und zu entladen, bis er wieder gestartet wird. Bewusst eine Aktion statt einer Schaltfläche, und zum Aufruf sind Administratorrechte nötig – eine Dashboard-Karte kann das nicht versehentlich tun.",
+      "fields": {
+        "device_id": {
+          "name": "Wechselrichter",
+          "description": "Welcher Wechselrichter gestoppt werden soll."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "device_not_found": {
+      "message": "Es gibt kein Gerät mit der ID {device_id}. Stammt dieser Aufruf aus einem Skript, wurde das Gerät möglicherweise seit dessen Erstellung entfernt und neu hinzugefügt."
+    },
+    "entry_not_loaded": {
+      "message": "{title} ist nicht geladen und kann daher nicht gestartet oder gestoppt werden. Prüfe die Integrationsseite auf einen Einrichtungsfehler."
+    },
+    "not_a_sungrow_device": {
+      "message": "{name} ist kein Sungrow-Modbus-Gerät."
+    },
+    "survey_already_running": {
+      "message": "Auf diesem Wechselrichter läuft bereits eine Diagnose. Zwei gleichzeitig würden um eine seiner sehr wenigen Modbus-Verbindungen konkurrieren."
+    },
+    "not_on_string_inverter": {
+      "message": "{title} ist ein String-Wechselrichter. Diese Aktion schreibt in die Register eines Hybrid-Wechselrichters, und nichts in dieser Integration schreibt in einen String-Wechselrichter."
+    },
+    "write_failed": {
+      "message": "{entity_id} konnte nicht geschrieben werden: {error}"
+    },
+    "write_scale_unread": {
+      "message": "{entity_id} konnte nicht geschrieben werden: Die Grenzen der Einspeisebegrenzung konnten nicht gelesen werden, um den Schreibfaktor dieses Wechselrichters zu ermitteln: {error}"
+    },
+    "start_failed": {
+      "message": "{device} konnte nicht gestartet werden: {error}"
+    },
+    "stop_failed": {
+      "message": "{device} konnte nicht gestoppt werden: {error}"
+    },
+    "setup_unreachable": {
+      "message": "{title} konnte nicht erreicht werden: {error}. Ein Sungrow-Wechselrichter nimmt nur sehr wenige Modbus-Verbindungen gleichzeitig an, prüfe daher, ob etwas anderes ihn abfragt – das Paket modbus_sungrow.yaml, ein anderes Home Assistant oder ein anderes Werkzeug."
+    },
+    "identity_unread": {
+      "message": "Die Identität von {title} konnte nicht gelesen werden: {error}"
+    },
+    "no_serial": {
+      "message": "{title} hat geantwortet, aber keine Seriennummer gemeldet, daher können seine Entitäten nicht identifiziert werden. Bitte eröffne ein Issue mit Modell und Firmware-Version."
+    },
+    "firmware_unread": {
+      "message": "Die Firmware von {title} konnte nicht gelesen werden: {error}"
+    },
+    "nothing_to_poll": {
+      "message": "Jede Abfragestufe von {title} steht auf „nie“, es gibt also nichts zu lesen. Setze in den Optionen der Integration mindestens ein Intervall."
+    },
+    "connection_lost": {
+      "message": "Die Verbindung zum Wechselrichter ging verloren: {error}. Ein Sungrow-Wechselrichter nimmt nur sehr wenige Modbus-Verbindungen gleichzeitig an, prüfe daher, ob etwas anderes ihn abfragt – das Paket modbus_sungrow.yaml, ein anderes Home Assistant oder ein anderes Werkzeug."
+    },
+    "communication_error": {
+      "message": "Fehler bei der Kommunikation mit dem Wechselrichter: {error}"
+    },
+    "no_block_answered": {
+      "message": "Kein Registerblock hat geantwortet"
+    },
+    "device_connection_lost": {
+      "message": "Die Verbindung ging beim Lesen von {device} verloren: {error}"
+    },
+    "device_read_error": {
+      "message": "Fehler beim Lesen von {device}: {error}"
+    }
+  }
+}

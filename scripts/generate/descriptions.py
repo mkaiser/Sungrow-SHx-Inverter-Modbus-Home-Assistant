@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate the integration's entity descriptions and their names.
 
-Seven artefacts, one command each, all from tables rather than typed by hand:
+Eight artefacts, one command each, all from tables rather than typed by hand:
 
 * `derived` -- the computed values in `sungrow_modbus.hybrid_inverter.derived`, as the
   entities that replace the YAML package's `template:` sensors;
@@ -11,11 +11,14 @@ Seven artefacts, one command each, all from tables rather than typed by hand:
   number that decides how far a battery discharges is not one to get wrong;
 * `strings` -- every entity's name, to the convention in
   [tables/naming.py](tables/naming.py), into `strings.json` and its English
-  copy under `translations/`.
+  copy under `translations/`;
+* `german` -- `translations/de.json`, every text of `strings.json` in the
+  decided German of [tables/naming.py](tables/naming.py).
 
-`strings` reads the descriptions the other six write, so `all` runs it last.
+`strings` reads the descriptions the six before it write, and `german` reads
+`strings`, so `all` runs them last.
 
-    python scripts/generate/descriptions.py                  # write all seven
+    python scripts/generate/descriptions.py                  # write all eight
     python scripts/generate/descriptions.py --check          # fail if any is stale
     python scripts/generate/descriptions.py numbers --check  # just one
 """
@@ -34,7 +37,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "tables"))
 # `strings` imports the integration's descriptions to name them.
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from naming import DIAGNOSTIC, modern_name
+from naming import DIAGNOSTIC, GERMAN, GERMAN_TEXTS, modern_name
 from writes import BUTTONS, NUMBERS, SELECTS, SWITCHES, TIMES
 
 from sungrow_modbus.hybrid_inverter.faults import FAULT_WORDS
@@ -855,11 +858,12 @@ def render_buttons() -> str:
 # strings: every entity's name
 #
 # English is the source language, so `en.json` is a copy rather than a
-# translation; every other language is a real translation of it, and none of
-# them is generated here.
+# translation. `de.json` is generated too, from the decided German in
+# `tables/naming.py` (`GERMAN` for names, `GERMAN_TEXTS` for everything else).
 
 STRINGS = COMPONENT / "strings.json"
 TRANSLATION = COMPONENT / "translations" / "en.json"
+GERMAN_TRANSLATION = COMPONENT / "translations" / "de.json"
 
 
 def descriptions() -> list[tuple[str, str, str]]:
@@ -982,6 +986,40 @@ def render_strings() -> str:
     return json.dumps(document, indent=2, ensure_ascii=False) + "\n"
 
 
+def render_german() -> str:
+    """Return `de.json`: `strings.json` with every text in its German.
+
+    Built from the rendered English rather than the file, so a stale
+    `strings.json` cannot leak into it. A text without its German is an
+    error, not an English fallback: `tests/test_naming_convention.py`
+    holds both tables complete, and a gap here means they drifted.
+    """
+    document = json.loads(render_strings())
+    missing: list[str] = []
+
+    def translate(node: dict[str, object], path: list[str]) -> None:
+        for key, value in node.items():
+            here = [*path, key]
+            if isinstance(value, dict):
+                translate(value, here)
+                continue
+            if here[0] == "entity" and len(here) == 4 and key == "name":
+                german = GERMAN.get(here[2])
+            else:
+                german = GERMAN_TEXTS.get(".".join(here))
+            if german is None:
+                missing.append(".".join(here))
+            else:
+                node[key] = german
+
+    translate(document, [])
+    if missing:
+        raise SystemExit(
+            "No German for: " + ", ".join(missing) + " (scripts/generate/tables/)"
+        )
+    return json.dumps(document, indent=2, ensure_ascii=False) + "\n"
+
+
 # --------------------------------------------------------------------------
 # The command
 
@@ -1028,10 +1066,11 @@ TARGETS: dict[str, Target] = {
         True,
         "the write table",
     ),
-    # Last: it reads what the six above write.
+    # Last: it reads what the six above write, and `german` reads it.
     "strings": Target(
         (STRINGS, TRANSLATION), render_strings, False, "the descriptions"
     ),
+    "german": Target((GERMAN_TRANSLATION,), render_german, False, "the German tables"),
 }
 
 

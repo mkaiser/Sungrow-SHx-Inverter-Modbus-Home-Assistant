@@ -32,9 +32,9 @@ from homeassistant.const import PERCENTAGE, EntityCategory
 from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity import Entity
 
 from .const import PERMISSION_CONTROL_TEST
+from .entity import EnglishEntityId
 from .services import async_authorize
 
 if TYPE_CHECKING:
@@ -70,7 +70,7 @@ def _findings(control_test: dict[str, Any]) -> int | None:
     return sum(1 for row in readback if "decade" in str(row.get("verdict", "")))
 
 
-class SurveyEntity(Entity):
+class SurveyEntity(EnglishEntityId):
     """Common wiring: which device, which runner, and how updates arrive.
 
     Not a `CoordinatorEntity`: a survey is not polled. It is pushed, from the

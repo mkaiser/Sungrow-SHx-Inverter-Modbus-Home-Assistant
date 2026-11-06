@@ -21,9 +21,9 @@ Register Protokoll* V1.1.58 (`scripts/generate/tables/datasheet_names.json`). Em
 for a derived entity and for the battery and wallbox, which have no Sungrow
 datasheet here.
 
-**Deutsch** is a suggested German name for each, to decide beside the English
-one. It is a suggestion only: no German translation ships yet, and entity ids
-stay English whichever names are chosen. The names live in `GERMAN` in
+**Deutsch** is the German name for each, decided beside the English one and
+shipped in `translations/de.json`; entity ids stay English in every
+language. The names live in `GERMAN` in
 `scripts/generate/tables/naming.py`, with the German word each recurring idea
 must use (`GERMAN_TERMS`). Every other text in `strings.json` -- the setup and
 options flows, repairs, actions and error messages -- is in

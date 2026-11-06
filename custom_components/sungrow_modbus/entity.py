@@ -14,7 +14,7 @@ from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.switch import SwitchEntityDescription
 from homeassistant.components.time import TimeEntityDescription
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.entity import EntityDescription
+from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from sungrow_modbus import Capability, RegisterValue, present
 
@@ -25,6 +25,35 @@ from .coordinator import (
     SungrowStringInverterCoordinator,
     SungrowSubDeviceCoordinator,
 )
+
+
+class EnglishEntityId(Entity):
+    """Build the entity id from the English name, in every language.
+
+    Home Assistant builds a new entity's id from its name in the system's
+    language (German among them, `homeassistant.generated.languages`), so a
+    German system would get German ids. One id has to mean the same entity
+    in every house, in the docs and in support (`doc/architecture.md`), so
+    the id comes from `en.json` and only the displayed name is translated.
+
+    It is returned as `suggested_object_id`, which Home Assistant stores as
+    `object_id_base`: the device name still goes in front and the owner's id
+    settings still apply. Legacy ids are untouched; they are claimed in the
+    registry before the platforms add anything (`migration.py`).
+    """
+
+    @property
+    def suggested_object_id(self) -> str | None:
+        """Return the English name the entity id is built from."""
+        if self.translation_key is not None and self.platform_data is not None:
+            platform = self.platform_data
+            english = platform.default_language_platform_translations.get(
+                f"component.{platform.platform_name}.entity.{platform.domain}"
+                f".{self.translation_key}.name"
+            )
+            if english is not None:
+                return english.format(**(self.translation_placeholders or {}))
+        return super().suggested_object_id
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -268,7 +297,7 @@ def write_failed(entity_id: str, error: object) -> HomeAssistantError:
     )
 
 
-class SungrowEntity(CoordinatorEntity[SungrowDataUpdateCoordinator]):
+class SungrowEntity(EnglishEntityId, CoordinatorEntity[SungrowDataUpdateCoordinator]):
     """Base entity backed by one field of one component."""
 
     _attr_has_entity_name = True
@@ -361,7 +390,9 @@ class SungrowEntity(CoordinatorEntity[SungrowDataUpdateCoordinator]):
         }
 
 
-class SungrowDeviceEntity(CoordinatorEntity[SungrowSubDeviceCoordinator]):
+class SungrowDeviceEntity(
+    EnglishEntityId, CoordinatorEntity[SungrowSubDeviceCoordinator]
+):
     """Base for a value some device other than the inverter reports.
 
     Shared by the SBR pack and the wallbox, because their needs are the same
@@ -420,7 +451,9 @@ class SungrowDeviceEntity(CoordinatorEntity[SungrowSubDeviceCoordinator]):
         return self.entity_description.component not in report.failed
 
 
-class SungrowStringInverterEntity(CoordinatorEntity[SungrowStringInverterCoordinator]):
+class SungrowStringInverterEntity(
+    EnglishEntityId, CoordinatorEntity[SungrowStringInverterCoordinator]
+):
     """Base for a value read off an SG.
 
     Its own small base rather than `SungrowEntity`, which is built on the

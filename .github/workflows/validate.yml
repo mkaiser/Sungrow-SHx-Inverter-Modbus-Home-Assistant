@@ -78,6 +78,8 @@ jobs:
           python scripts/generate/descriptions.py buttons --check
       - name: The entity names follow the naming convention
         run: python scripts/generate/descriptions.py strings --check
+      - name: The German translation matches the German tables
+        run: python scripts/generate/descriptions.py german --check
       - name: The compatibility page matches the surveys
         run: python scripts/generate/generate_compatibility.py --check
       - name: The firmware support table matches the surveys

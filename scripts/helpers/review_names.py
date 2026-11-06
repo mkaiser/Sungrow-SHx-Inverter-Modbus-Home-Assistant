@@ -115,7 +115,7 @@ class Row:
     #: The id the YAML package gave the same entity, which a migrating user
     #: keeps. Empty where the YAML had none.
     legacy_id: str = ""
-    #: The suggested German name (`naming.GERMAN`), for the maintainer to decide.
+    #: The German name (`naming.GERMAN`), shipped in `translations/de.json`.
     german: str = ""
     #: Sungrow's name for the register, with its number; empty where the
     #: entity is derived or the device has no Sungrow datasheet.
@@ -453,10 +453,9 @@ def _render(markdown: bool) -> str:
             "no Sungrow\ndatasheet here.\n"
         )
         print(
-            "**Deutsch** is a suggested German name for each, to decide beside "
-            "the English\none. It is a suggestion only: no German translation "
-            "ships yet, and entity ids\nstay English whichever names are "
-            "chosen. The names live in `GERMAN` in\n"
+            "**Deutsch** is the German name for each, decided beside the "
+            "English one and\nshipped in `translations/de.json`; entity ids "
+            "stay English in every\nlanguage. The names live in `GERMAN` in\n"
             "`scripts/generate/tables/naming.py`, with the German word each "
             "recurring idea\nmust use (`GERMAN_TERMS`). Every other text in "
             "`strings.json` -- the setup and\noptions flows, repairs, actions "
@@ -612,9 +611,9 @@ def _render_texts() -> str:
         f"**{len(texts)} texts**: everything in `strings.json` that is not an "
         "entity name, by its\npath -- the setup and options flows, repairs, "
         "actions and error messages.\nEach is shown in English and with its "
-        "suggested German, which lives in\n"
-        "`scripts/generate/tables/german_texts.json`. It is a suggestion only: "
-        "no German\ntranslation ships yet. The entity names are in\n"
+        "German, which lives in\n"
+        "`scripts/generate/tables/german_texts.json` and ships in\n"
+        "`translations/de.json`. The entity names are in\n"
         "[entity_names.md](entity_names.md).\n"
     )
     print(

@@ -191,7 +191,7 @@ flowchart LR
     subgraph generated["generated, committed, --check in CI"]
         direction TB
         descs["derived, number, switch,<br/>select and time descriptions"]
-        strings["strings.json<br/>translations/en.json"]
+        strings["strings.json<br/>translations/en.json, de.json"]
     end
 
     map -. "tests" .-> regs
@@ -356,11 +356,13 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
   partial adoption looks like a migration and is not one.
 - **Entity ids are English in every language; names are translated.** Home
   Assistant would build a German system's ids from German names. Instead
-  every modern entity is registered with its English name as
-  `object_id_base`, so HA still adds the device prefix and follows the
-  owner's id settings, and one id means the same entity in every house, in
-  the docs and in support. Legacy ids are English anyway. Only English ships
-  so far; this has to be in place before a second language does.
+  every modern entity offers its English name, from `en.json`, as
+  `suggested_object_id` (`entity.EnglishEntityId`), which HA stores as
+  `object_id_base`: it still adds the device prefix and follows the owner's
+  id settings, and one id means the same entity in every house, in the docs
+  and in support. Legacy ids are English anyway. English and German ship;
+  `tests/test_entity_id_language.py` holds every id English on a German
+  system.
 - **13074's write scale is measured per device** (`sungrow_modbus.hybrid_inverter.export_scale`)
   and stored with the firmware it was measured on.
 - **Delivery is HACS first**, through the preview channel until the merge

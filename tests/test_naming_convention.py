@@ -410,12 +410,12 @@ def test_a_parenthetical_says_what_the_value_is() -> None:
         )
 
 
-# -- the suggested German names --------------------------------------------
+# -- the German names --------------------------------------------------------
 #
-# Suggestions, not a translation: nothing ships them, and the maintainer
-# decides each beside the English name in `doc/entity_names.md`. They
-# are held to the same standard as the English names so that the decision is
-# about words, and not about a name that was never well formed.
+# They ship, in `translations/de.json`, and the maintainer decides each
+# beside the English name in `doc/entity_names.md`. They are held to the same
+# standard as the English names, so a German name is as well formed as the
+# English one it stands beside.
 
 GERMAN_KEYS = sorted({key for _domain, key, _name in EVERY_NAME})
 ENGLISH_BY_KEY = {key: name for _domain, key, name in EVERY_NAME}

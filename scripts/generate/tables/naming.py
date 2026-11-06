@@ -599,10 +599,9 @@ DIAGNOSTIC: frozenset[str] = frozenset(
     }
 )
 
-#: **Suggested German names**, one per translation key, for the maintainer to
-#: decide on beside the English ones in `doc/entity_names.md`. Nothing
-#: reads this at runtime and no `de.json` exists: a decided name goes into
-#: the translation when German ships. Entity ids stay English either way
+#: **German names**, one per translation key, decided beside the English
+#: ones in `doc/entity_names.md`. `scripts/generate/descriptions.py german`
+#: writes them into `translations/de.json`. Entity ids stay English either way
 #: (`doc/architecture.md`).
 #:
 #: The convention follows the English one: sentence case, no abbreviation with
@@ -991,12 +990,12 @@ GERMAN_EXEMPT: dict[str, frozenset[str]] = {
 NAME_DISCUSSION: dict[str, str] = {}
 
 
-#: **Suggested German for every other text in `strings.json`**: the setup and
+#: **German for every other text in `strings.json`**: the setup and
 #: options flows, selector options, repairs, actions, exceptions and the
 #: select states -- everything but the entity names above. By dotted path, in
 #: `german_texts.json` because a paragraph does not fit a line of source.
-#: Suggestions for the maintainer to decide beside the English, like `GERMAN`;
-#: nothing ships them. `tests/test_naming_convention.py` holds each to its
+#: Decided beside the English, like `GERMAN`, and written into `de.json` the
+#: same way. `tests/test_naming_convention.py` holds each to its
 #: English text's placeholders, markup and paragraph structure.
 GERMAN_TEXTS: dict[str, str] = json.loads(
     Path(__file__).with_name("german_texts.json").read_text(encoding="utf-8")

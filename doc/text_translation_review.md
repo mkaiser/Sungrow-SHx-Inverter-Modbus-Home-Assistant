@@ -2,9 +2,9 @@
 
 **248 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
-Each is shown in English and with its suggested German, which lives in
-`scripts/generate/tables/german_texts.json`. It is a suggestion only: no German
-translation ships yet. The entity names are in
+Each is shown in English and with its German, which lives in
+`scripts/generate/tables/german_texts.json` and ships in
+`translations/de.json`. The entity names are in
 [entity_names.md](entity_names.md).
 
 A `{placeholder}` is filled in by the integration and stays as written; backticks
