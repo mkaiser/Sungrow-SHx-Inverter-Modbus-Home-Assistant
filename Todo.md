@@ -366,20 +366,36 @@ documented, nothing to build); or an entity of the integration's own on a
 site entry. `total_site_pv_power` already exists for the inverter that has a
 second one on its supply, so the Site wording has a precedent.
 
-What adds up, and what does not (to confirm on fwitten's pair, whose battery
-hangs off the master only):
+What adds up, and what does not. Measured on fwitten's master and slave
+(committed surveys, 2026-10-29, P023 cables): the slave has no meter and no
+battery. Its total imported and exported energy read 0.0, its meter values are
+absent, its battery power is 0 and its battery level is the 6553.5 sentinel,
+while both report PV (31.9 and 27.5 MWh total, 1.9 and 1.8 kWh that day) and
+AC output (1196 and 1226 W).
 
-- **Sums:** PV power and its MPPT parts, daily and total PV generation,
-  AC output power, the battery charge and discharge of each pack.
-- **Does not sum:** grid import and export, load power and the meter's
-  phases when both inverters read the same meter (double counted), battery
-  level, and anything that is a setting. These want the master's value or a
-  maximum, not a sum.
+- **Sums:** PV power and its MPPT parts, daily and total PV generation, AC
+  output power, direct consumption totals, and battery charge and discharge
+  (the slave contributes 0).
+- **Master only, not a sum:** the meter's values, load power, import and
+  export. Summing them would also work here, because the slave reads 0, but
+  only because of this wiring; a house with two meters would be different, and
+  none is measured.
+- **Never summed or averaged:** battery level (the sentinel), settings, and
+  any reading that is a state.
 - **Energy counters:** a `total_increasing` sum drops when one member is
   unavailable and then jumps back, which the statistics read as a negative
   and then a very large generation. The Energy dashboard takes several solar
   sources, so adding each inverter there needs no sum at all (see the Energy
-  dashboard item above).
+  dashboard item above); the sum is for cards and the power flow.
+
+Proposal, so the choice is one decision: start with **documented helpers**
+(a Sum helper over the inverters' PV power and generation sensors; the guide
+in the Energy dashboard item names them), since they cost nothing and need no
+change to the one-entry-per-inverter rule; build **entities of our own** only
+if users ask. If built, the entry that is the cluster's master owns a "Site"
+device, found by the roles the survey already measures (*measured* or
+*inferred*, `doc/architecture.md`), and the sensors are unavailable, not 0,
+when a member is.
 
 Naming suggestions, in the existing convention (sentence case, the device
 name added by Home Assistant, the ids in English):
