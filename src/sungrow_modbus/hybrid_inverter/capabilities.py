@@ -227,6 +227,17 @@ class Family(StrEnum):
     K = "K"
     """The withdrawn SH*K series, still in the field."""
 
+    TL = "TL"
+    """MG10TL to MG25TL, added in V1.1.17.
+
+    Not `MG` even though every name starts with it. The specification groups
+    them apart: "MG5-12RL and SH3-10RL **and MG10-25TL** are not supported"
+    on three registers, while only "MG5-12RL and SH3-10RL" on the others, so a
+    TL has what an MG*RL lacks (the active power limit, the feed-in ratio)
+    and lacks what an MG*RL has in common with it. Appendix 1 gives it three
+    trackers. Nothing here has been tested against one.
+    """
+
     RL = "RL"
     """Single-phase SH3RL to SH10RL.
 
@@ -290,7 +301,7 @@ ABSENT_IN: dict[Capability, frozenset[Family]] = {
     # survives this table, so the stale entry costs an MG8RL nothing.
     Capability.MPPT3: frozenset({Family.RS, Family.MG, Family.RT, Family.K}),
     # "only for inverters with 4 MPPTs (SH8|10RS)"
-    Capability.MPPT4: frozenset({Family.MG, Family.RT, Family.T, Family.K}),
+    Capability.MPPT4: frozenset({Family.MG, Family.RT, Family.T, Family.K, Family.TL}),
     # V1.1.16 reg 13089/13090: "MG5-12RL and SH3-10RL are not supported.
     # SH50~125CX are not supported." Note RS is *not* excluded, which settles
     # a question raised by another project gating these to a different pair of
@@ -299,8 +310,9 @@ ABSENT_IN: dict[Capability, frozenset[Family]] = {
     Capability.ACTIVE_POWER_LIMIT: frozenset({Family.MG, Family.RL, Family.CX}),
     # V1.1.16 regs 13250-13369: "SH3.0-10RS and MG5-12RL and SH3-10RL are not
     # supported. SH50~125CX are not supported."
+    # V1.1.17 adds "and MG10-25TL" to the same remark.
     Capability.FIRMWARE_VERSIONS: frozenset(
-        {Family.RS, Family.MG, Family.RL, Family.CX}
+        {Family.RS, Family.MG, Family.RL, Family.CX, Family.TL}
     ),
     # "not available on SHxRS as per issue #743". T joins it from a
     # measurement rather than a remark: the SH20T in
@@ -314,16 +326,20 @@ ABSENT_IN: dict[Capability, frozenset[Family]] = {
     Capability.BATTERY_START_POWER: frozenset({Family.RS, Family.T}),
     # V1.1.16 regs 13200-13207: "SH3.0-10RS and MG5-12RL and SH3-10RL are not
     # supported. SH50~125CX are not supported."
-    Capability.METER_CHANNEL_2: frozenset({Family.RS, Family.MG, Family.RL, Family.CX}),
+    # V1.1.17 adds "and MG10-25TL".
+    Capability.METER_CHANNEL_2: frozenset(
+        {Family.RS, Family.MG, Family.RL, Family.CX, Family.TL}
+    ),
     # V1.1.16 reg 13088: "MG5-12RL and SH3-10RL are not supported.
     # SH50~125CX are not supported."
     Capability.FEED_IN_LIMITATION_RATIO: frozenset({Family.MG, Family.RL, Family.CX}),
     # V1.1.16 reg 33208: "MG5-12RL and SH3-10RL are not supported.
     # SH50~125CX are not supported."
-    Capability.FORCED_CHARGING: frozenset({Family.MG, Family.RL, Family.CX}),
+    # V1.1.17 adds "and MG10-25TL".
+    Capability.FORCED_CHARGING: frozenset({Family.MG, Family.RL, Family.CX, Family.TL}),
     # V1.1.10: "Only SHT are supported."
     Capability.PV_POWER_LIMITATION: frozenset(
-        {Family.RS, Family.MG, Family.RL, Family.CX, Family.RT, Family.K}
+        {Family.RS, Family.MG, Family.RL, Family.CX, Family.RT, Family.K, Family.TL}
     ),
     # V1.1.16 reg 13017: "SH50~125CX are not supported."
     Capability.FORCED_STARTUP: frozenset({Family.CX}),
@@ -424,6 +440,10 @@ def family_for(device_type_code: int | None) -> Family | None:
         return None
     # MG*RL before the bare RL rule, and RT before the bare T rule: both
     # suffixes are substrings of the other family's names.
+    # TL before MG: the names start alike, and the specification does not
+    # treat them as one group.
+    if model.endswith("TL"):
+        return Family.TL
     if model.startswith("MG"):
         return Family.MG
     if "RT" in model:

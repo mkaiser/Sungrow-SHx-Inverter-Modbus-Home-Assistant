@@ -3,7 +3,7 @@
 `DEVICE_TYPES` decides what an inverter is called and, in modern mode, what
 its entities are called — so a wrong or missing entry is user-visible. This
 holds it against Appendix 1 of the *Communication Protocol of Residential and
-Small Industrial Hybrid Inverter* V1.1.16, transcribed below because the PDF
+Small Industrial Hybrid Inverter* V1.1.17, transcribed below because the PDF
 is not in the repository.
 """
 
@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from sungrow_modbus.const import DEVICE_TYPES, model_for
 
-#: Appendix 1, "Adaptive Inverter Models", V1.1.16 (2026-07-03). All 49.
+#: Appendix 1, "Adaptive Inverter Models", V1.1.17 (2026-09-30). All 54.
 #:
 #: Note the ordering of the 0x0D2x block: the MG codes are **interrupted** by
 #: SH5RL to SH10RL and resume above them. That is what falsified the
@@ -67,6 +67,12 @@ SPECIFICATION = {
     0x0E3D: "SH125CX",
     0x0E51: "SH50CX",
     0x0E52: "SH80CX",
+    # V1.1.17 (2026-09-30).
+    0x0E53: "MG10TL",
+    0x0E54: "MG12TL",
+    0x0E55: "MG15TL",
+    0x0E56: "MG20TL",
+    0x0E57: "MG25TL",
 }
 
 #: Removed from the specification by protocol V1.1.0 in 2023, but still real
@@ -84,7 +90,7 @@ DELIBERATE_EXTRAS = {
 
 def test_every_model_in_the_specification_is_known() -> None:
     missing = {c: n for c, n in SPECIFICATION.items() if c not in DEVICE_TYPES}
-    assert not missing, f"models in V1.1.16 that DEVICE_TYPES does not know: {missing}"
+    assert not missing, f"models in V1.1.17 that DEVICE_TYPES does not know: {missing}"
 
 
 def test_names_agree_with_the_specification() -> None:

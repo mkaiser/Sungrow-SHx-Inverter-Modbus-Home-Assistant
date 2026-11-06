@@ -83,6 +83,14 @@ DEVICE_TYPES: dict[int, str] = {
     0x0E3D: "SH125CX",
     0x0E51: "SH50CX",
     0x0E52: "SH80CX",
+    # V1.1.17. Three trackers, like the MG*RL, but a group of their own in the
+    # specification's remarks ("... and MG10-25TL are not supported"): see
+    # `Family.TL`. MG20TL has strings 2;2;1, the others 1;1;1.
+    0x0E53: "MG10TL",
+    0x0E54: "MG12TL",
+    0x0E55: "MG15TL",
+    0x0E56: "MG20TL",
+    0x0E57: "MG25TL",
 }
 
 

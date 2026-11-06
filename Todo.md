@@ -31,27 +31,18 @@ _Nothing that can start without hardware, a contributor or a decision._
    `scripts/generate/tables/naming.py`) and German for every other text in
    `strings.json` (`german_texts.json` beside it, shown in
    `doc/text_translation_review.md`); none of it is shipped. Decided: entity
-   ids stay English in every language (`doc/architecture.md`).
+   ids stay English in every language (`doc/architecture.md`). Every
+   section of the sheet is decided, English and German, the *Force startup*
+   button's *Zwangsstart* included; a new name goes under **To discuss**
+   (`NAME_DISCUSSION` in `naming.py`).
 
    Left, in order:
 
-   1. **Decide the names, English and German together**, in
-      `doc/entity_names.md` (datasheet, YAML, English and German side by
-      side): the SG, SBR and wallbox sections are next. The inverter's open
-      points are decided (*code* for every raw number, *Leistungsaufnahme* /
-      *Energieaufnahme Verbraucher*, *Total PV input power*, *Device alarm*,
-      *Feed-in limit* / *Einspeiselimit*, 31213 as *Shutdown inverter when
-      limited to 0 % power*); a new question goes under **To discuss**
-      (`NAME_DISCUSSION` in `naming.py`).
-   2. **Compare the registers V1.1.2 does not list** against V1.1.16. V1.1.11
-      (and V1.1.5, V1.1.9 and the SG's V1.1.58) are read: 35 of the 50 names
-      match, and the open naming points they raised are on the sheet
-      (*Feed-in* against *Export* for the limit family; 13075 is Sungrow's
-      *Off-grid option*). 15 are in neither V1.1.2 nor V1.1.11: the four
-      firmware parts (2582 ...), the serial (4990), meter phase voltage and
-      current (5741-5746), 31211, 31213 and 33149/33150. V1.1.16 is not in
-      the container.
-   3. **If German ships:** pin the English ids with `object_id_base` first
+   1. **Registers V1.1.17 lists that the hybrid map does not read**
+      (`.wiki/wiki/sources/hybrid-protocol-v1-1-17-summary.md`): 31222 (feed-in
+      limit, wide range), 13080 (external EMS heartbeat) and 13043 (DRM state)
+      are new to the repo. Decide which become entities; none is measured.
+   2. **If German ships:** pin the English ids with `object_id_base` first
       (`doc/architecture.md`), then have `scripts/generate/descriptions.py`
       write `translations/de.json` from the two tables.
 
@@ -125,8 +116,8 @@ _Nothing that can start without hardware, a contributor or a decision._
 7. **A fault seen on hardware.** The fifteen words are decoded from V1.1.11's
    Appendix 4; one survey has a flag set (bit 30 of the inverter alarm, a
    slave with no meter), which confirms the word order. Wanted: a reading
-   during a real grid or battery fault, the battery words through a dongle,
-   and V1.1.16's appendix compared bit for bit.
+   during a real grid or battery fault, and the battery words through a
+   dongle. V1.1.17's Appendix 4 is word for word V1.1.11's.
 8. **SBH.** Answers the SBR's common block at unit 2 with the SBR's scales;
     per-module arrays unread. Needs the register document.
 9. **Meter phase voltage/current (5741-5746) on dongle houses.** Read zero
@@ -202,17 +193,19 @@ _Nothing that can start without hardware, a contributor or a decision._
     check is a control-test change, so it waits for a house that can give
     such an evening.
 
+22. **The PV cut (31211, #738), beyond the four confirmed firmwares.**
+    Waits on contributors; nothing here or at the maintainer's P020 (31211
+    reads 0xFFFF there) can answer it.
+    - More firmware confirmed: 31211 answers 0x55 but no cut has been
+      watched on `SUNSTONE-H_B000.V001.P068`, `B000.V002.P067`,
+      `B000.V002.P059` and `B000.V002.P057`. The survey's control test
+      watches the cut, so it is asked for in the "Most wanted" table of
+      `device-survey/devices-wanted.md`, never from one person.
+    - One evening's watch on a confirmed device (P022, P023, P071 or P065):
+      does a cut survive a night or a restart, or does iSolarCloud rewrite
+      it?
+
 # Future work
-
-## The PV cut (31211, #738)
-
-- More firmware confirmed: 31211 answers 0x55 but no cut has been watched on
-  `SUNSTONE-H_B000.V001.P068`, `B000.V002.P067`, `B000.V002.P059` and `B000.V002.P057`. The
-  survey's control test watches the cut, so a measurement the survey takes is
-  asked for in the "Most wanted" table of `device-survey/devices-wanted.md`
-  (the survey issue is written from it), never from one person.
-- One evening's watch on a confirmed device: does a cut survive a night or
-  a restart, or does iSolarCloud rewrite it?
 
 ## How far the MPPT energy drifts
 

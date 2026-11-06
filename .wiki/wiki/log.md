@@ -415,3 +415,12 @@ everywhere they overlap, read 21263 as a working mode as two other maps do, and 
 enable flag. Its README's claim that a WiNet-S faults when the wallbox is polled faster than every
 10 s went on the wallbox and WiNet-S pages, unmeasured.
 
+## [2026-11-06] ingested | Sungrow's hybrid protocol V1.1.17
+
+The newest version, found through a third party's guide and served by Sungrow. V1.1.16 was not found
+anywhere, but V1.1.17 differs from it in device types only, and no register has changed since
+V1.1.11. It answers the open V1.1.16 question for one of the fifteen registers (the serial, 4990);
+the other fourteen are unlisted. Its five MG10-25TL types are in `DEVICE_TYPES` as a `Family.TL`
+of their own, because the document groups them apart from MG5-12RL. 13017 works only
+grid-connected.
+

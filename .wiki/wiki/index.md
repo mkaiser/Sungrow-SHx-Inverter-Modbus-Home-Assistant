@@ -74,6 +74,7 @@
 - [cross_reference_modbus_manager.md](sources/cross-reference-modbus-manager-summary.md) — TCzerny/ha-modbus-manager compared register by register; the MIT iHomeManager map #ihomemanager #cross-reference #licences
 - [gerd-wallbox-charging-session-2026-11-03.md](sources/gerd-wallbox-charging-session-2026-11-03-summary.md) — gerd's AC22E-01 through a 3 h charging session and its end: 21313 falls to 0, status 3-5-6, 21267 about one per 5 s #wallbox #ac22e-01 #gerd #charging-session #tls
 - [gerd-wallbox-isolarcloud-2026-10-30.md](sources/gerd-wallbox-isolarcloud-2026-10-30-summary.md) — gerd's AC22E-01 beside Sungrow's portal: 21201-21206 is the serial, 21300 and 21310 in Wh #wallbox #ac22e-01 #gerd #isolarcloud
+- [hybrid-protocol-v1-1-17.md](sources/hybrid-protocol-v1-1-17-summary.md) — Sungrow's hybrid protocol V1.1.17: no registers since V1.1.11, five MG..TL types, 13017 grid-connected only #specification #hybrid #device-types #naming
 - [logger-communication-protocol.md](sources/logger-communication-protocol-summary.md) — Sungrow's Logger protocol 1.0.2.9 and 1.0.2.5 and its manuals: the whole map, port 516 with TLS by default, forwarding addresses #logger #specification #ports #tls
 - [mkaiser-charge-window-trace-2026-11-01.md](sources/mkaiser-charge-window-trace-2026-11-01-summary.md) — A forced-charging window sampled every 2 s at mkaiser: starts in 4 s, stops in 2 s, no rebound #control-test #charge-window #mkaiser #sapphire-h-b001-v000-p020
 - [mkaiser-discharge-window-2026-11-04.md](sources/mkaiser-discharge-window-2026-11-04-summary.md) — The discharge window check at mkaiser: 722.5 W stops to 0 W when the windows leave now, and returns #control-test #discharge-window #mkaiser #sapphire-h-b001-v000-p020
@@ -148,6 +149,6 @@
 - [Does the PV cut work on P022 and P071?](queries/does-the-pv-cut-work-on-p022-and-p071.md) — Answered: yes on both, P022 at gerd, P071 at ra1k-0 #pv-cut #register-31211 #answered
 - [Does writing 33213 drop the link at peter-sm?](queries/does-writing-33213-drop-the-link-at-peter-sm.md) — Open: the charge window's write lost the connection twice, at one house only #contention #charge-window #peter-sm #open
 - [What does an iHomeManager answer?](queries/what-does-an-ihomemanager-answer.md) — Open: never surveyed #ihomemanager #open #survey-wanted
-- [What does V1.1.16 call the registers no datasheet here lists?](queries/what-does-v1-1-16-call-the-unlisted-registers.md) — Open: 15 hybrid registers the integration reads are in neither V1.1.2 nor V1.1.11 #specification #naming #open
+- [What does V1.1.16 call the registers no datasheet here lists?](queries/what-does-v1-1-16-call-the-unlisted-registers.md) — Answered: V1.1.17 lists the serial, not the other fourteen #specification #naming #answered
 - [What does a Sungrow Logger answer?](queries/what-does-a-logger-answer.md) — Open: documented, never surveyed #logger #open #survey-wanted
 - [Where are Sungrow's documents?](queries/where-are-sungrows-documents.md) — Answered: where each protocol, manual and community map is, and which searches found nothing #specification #logger #ihomemanager #wallbox #answered

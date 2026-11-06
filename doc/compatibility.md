@@ -263,6 +263,11 @@ last column says what that rules out before anything is even read.
 | `0x0E3D` | SH125CX | CX | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, forced_charging, forced_startup, meter_channel_2, pv_power_limitation |
 | `0x0E51` | SH50CX | CX | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, forced_charging, forced_startup, meter_channel_2, pv_power_limitation |
 | `0x0E52` | SH80CX | CX | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, forced_charging, forced_startup, meter_channel_2, pv_power_limitation |
+| `0x0E53` | MG10TL | TL | untested | firmware_versions, forced_charging, meter_channel_2, mppt4, pv_power_limitation |
+| `0x0E54` | MG12TL | TL | untested | firmware_versions, forced_charging, meter_channel_2, mppt4, pv_power_limitation |
+| `0x0E55` | MG15TL | TL | untested | firmware_versions, forced_charging, meter_channel_2, mppt4, pv_power_limitation |
+| `0x0E56` | MG20TL | TL | untested | firmware_versions, forced_charging, meter_channel_2, mppt4, pv_power_limitation |
+| `0x0E57` | MG25TL | TL | untested | firmware_versions, forced_charging, meter_channel_2, mppt4, pv_power_limitation |
 
 ## String inverters (SG)
 

@@ -50,6 +50,8 @@ SH5K_30 = 0x0D0C
         (0x0D41, Family.RL),  # SH3RL, a second SH*RL block
         (0x0E51, Family.CX),  # SH50CX
         (0x0E3D, Family.CX),  # SH125CX
+        (0x0E53, Family.TL),  # MG10TL: an MG by name, a group of its own by remark
+        (0x0E57, Family.TL),  # MG25TL
     ],
 )
 def test_families_are_recognised(code: int, family: Family) -> None:
@@ -353,3 +355,27 @@ def test_sungrow_battery_is_granted_for_an_sbr_on_its_own_unit(
 
     assert (Capability.SUNGROW_BATTERY in result) is granted
     assert base <= result
+
+
+def test_a_tl_is_known_absent_only_where_the_specification_says() -> None:
+    """V1.1.17: three registers name "MG10-25TL"; two of the MG*RL's do not.
+
+    So a TL is not an MG: it keeps the active power limit and the feed-in
+    ratio, which "MG5-12RL and SH3-10RL" lack, and it has MPPT3 (Appendix 1:
+    three trackers). Nothing is vetoed on the registers the document is silent
+    about, so they are probed like an unknown model's.
+    """
+    absent = known_absent(0x0E53)  # MG10TL
+
+    assert absent == {
+        Capability.FIRMWARE_VERSIONS,
+        Capability.METER_CHANNEL_2,
+        Capability.FORCED_CHARGING,
+        Capability.MPPT4,
+        Capability.PV_POWER_LIMITATION,
+    }
+    assert not absent & {
+        Capability.ACTIVE_POWER_LIMIT,
+        Capability.FEED_IN_LIMITATION_RATIO,
+        Capability.MPPT3,
+    }

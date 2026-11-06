@@ -24,6 +24,7 @@ protocol forbids redistribution, and the rest are Sungrow's.
 | *Logger Modbus Protocol Data Forwarding Guide* | **found nowhere**; the Logger manuals cover it | — |
 | iHomeManager protocol V1.0.1 and *Modbus Transfer User Guide* | GitHub attachments `files/22764216` and `files/22764134` under `github.com/user-attachments/files/`; also in Jam3s97/sungrow_ihomemanager's `Modbus Information` folder | PDF |
 | iHomeManager protocol V1.0.2 (2026-01-21, marked test) | GitHub attachment `files/26009392`, `iHM.Communication.Protocol-20260121-test.1.pdf`; also TCzerny/ha-modbus-manager's `docs/` folder | PDF; no redistribution |
+| Hybrid protocol **V1.1.17** (2026-09-30), the newest; V1.1.16 itself was not found and differs from it in device types only | `info-support.sungrowpower.com/general-material/2d6b9595-3579-4124-a82c-68482d545d8c.pdf`, found through episensor.com/devices/sungrow-sh10rt; "no distribution" on its cover | PDF; [summary](../sources/hybrid-protocol-v1-1-17-summary.md) |
 | Hybrid protocol V1.1.9 | openHAB's forum upload (community-openhab-org S3); bohdan-s/Sungrow-Inverter's `Modbus Information` folder | PDF |
 | SG protocol V1.1.53 | shop.kpenergy.fi product sheets | PDF |
 | SG protocol V1.1.2 | photovoltaicsolar.in, `Sungrow_Manual/Modbus RS485 RTU Protocol.pdf` | PDF |

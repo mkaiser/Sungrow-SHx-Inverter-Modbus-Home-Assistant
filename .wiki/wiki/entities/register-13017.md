@@ -26,6 +26,11 @@ From the committed surveys under `device-survey/results/inverter/`, **never `0xA
 | `0x55` | every [SH-T](device-sh-t.md) (SH15T, SH20T, P071) |
 | unavailable (`0xFFFF`) | every [SH-RS](device-sh-rs.md), and the SH-RT on [01011.95.03](firmware-sapphire-h-01011-95-03.md) |
 
+Sungrow's document says the same of it
+([hybrid protocol V1.1.17](../sources/hybrid-protocol-v1-1-17-summary.md)): only `0xAA` is a value,
+and "this function is only active when the inverter is in grid-connected mode ... and does not work
+in off-grid scenarios". So a watch of the write needs a grid-connected inverter.
+
 So the register holds no lasting state worth showing: it is a **command**. What it reads after a
 write has not been watched.
 

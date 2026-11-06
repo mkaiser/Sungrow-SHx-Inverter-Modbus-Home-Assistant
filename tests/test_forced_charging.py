@@ -157,5 +157,10 @@ async def test_an_inverter_without_it_gets_none_of_it(
 
 
 def test_the_specifications_exclusions_are_recorded() -> None:
-    """V1.1.16: "MG5-12RL and SH3-10RL are not supported. SH50~125CX are not"."""
-    assert ABSENT_IN[Capability.FORCED_CHARGING] == {Family.MG, Family.RL, Family.CX}
+    """V1.1.17: "MG5-12RL and SH3-10RL and MG10-25TL are not supported"."""
+    assert ABSENT_IN[Capability.FORCED_CHARGING] == {
+        Family.MG,
+        Family.RL,
+        Family.CX,
+        Family.TL,
+    }
