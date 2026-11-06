@@ -105,6 +105,18 @@ STOP_WORD = 1
 
 CHARGING = 3
 
+#: The charge point's enable register, holding 21211: 1 enabled, 0 disabled.
+#: The opposite polarity to the start/stop register beside it.
+ENABLED_WORD = 1
+DISABLED_WORD = 0
+DISABLED_STATUS = 8
+
+#: The phase setting's two words (0 three phase, 1 single phase), and the
+#: statuses in which nothing is flowing, so a contactor is not opened under
+#: load: idle, standby, completed and disabled. Never while charging.
+PHASE_WORDS = (0, 1)
+IDLE_STATUSES = (1, 2, 6, 8)
+
 # -- what a run can say --------------------------------------------------------
 
 MATCHED = "matched"
@@ -136,6 +148,9 @@ def _address(component: type[Any], name: str) -> int:
 
 OUTPUT_CURRENT = _address(WallboxSettings, "output_current_setting")
 START_STOP = _address(WallboxSettings, "start_stop_raw")
+ENABLED = _address(WallboxSettings, "charger_enabled_raw")
+PHASE_SETPOINT = _address(WallboxSettings, "phase_mode_setpoint_raw")
+PHASE_ACTUAL = _address(WallboxRatings, "phase_mode_raw")
 RATED_CURRENT = _address(WallboxRatings, "rated_current")
 PHASE_A_CURRENT = _address(WallboxLive, "phase_a_current")
 PHASE_B_CURRENT = _address(WallboxLive, "phase_b_current")
@@ -175,7 +190,15 @@ class Options:
 
     start_stop: bool = False
     """Also stop and start the charge once. Off by default, because it is
-    the one step that interrupts a car."""
+    an interruption to a car."""
+
+    enable: bool = False
+    """Also disable the charge point and enable it again. Off by default; it
+    stops a charge in progress, and is harmless on an idle wallbox."""
+
+    phase: bool = False
+    """Also switch the phase setting and back. Off by default, and refused
+    unless nothing is flowing: a contactor does not open under load."""
 
 
 class Step(NamedTuple):
@@ -353,6 +376,10 @@ class WallboxControlTest:
                 await self._current_steps()
                 if self.options.start_stop:
                     await self._start_stop()
+                if self.options.enable:
+                    await self._enable()
+                if self.options.phase:
+                    await self._phase()
             else:
                 self.conditions["dry_run"] = DRY_RUN_MEANS
         except Guard as guard:
@@ -406,6 +433,18 @@ class WallboxControlTest:
         start_stop = await self._read_one("holding", START_STOP)
         sample = await self._sample()
         self.snapshot["raw"] = {OUTPUT_CURRENT: setting, START_STOP: start_stop}
+        # The two settings a step may touch later. A failed read drops the
+        # step rather than the run, because a lost read is not a refusal and
+        # never write what cannot be put back.
+        for address, name in ((ENABLED, "enabled"), (PHASE_SETPOINT, "phase")):
+            try:
+                self.snapshot["raw"][address] = await self._read_one("holding", address)
+            except _LOST as err:
+                self.conditions.setdefault("unreadable", {})[name] = (
+                    f"{type(err).__name__}: {err}"
+                )
+        self.conditions["enabled_word"] = self.snapshot["raw"].get(ENABLED)
+        self.conditions["phase_word"] = self.snapshot["raw"].get(PHASE_SETPOINT)
         self.snapshot["taken_at"] = self.clock.monotonic()
         self.conditions.update(
             rated_a=rated_word * SCALE_THIS_PROJECT,
@@ -599,12 +638,133 @@ class WallboxControlTest:
             self._worst(3)
 
     async def _until(self, condition: Callable[[Sample], bool], timeout: float) -> bool:
+        """Poll the live registers until `condition` holds, or the time is up."""
+
+        async def check() -> bool:
+            return condition(await self._sample())
+
+        return await self._poll(check, timeout)
+
+    async def _poll(self, check: Callable[[], Awaitable[bool]], timeout: float) -> bool:
+        """Ask `check` every sample interval, so the session never goes quiet."""
         end = self.clock.monotonic() + timeout
         while self.clock.monotonic() < end:
-            if condition(await self._sample()):
+            if await check():
                 return True
             await self.clock.sleep(SAMPLE_INTERVAL)
         return False
+
+    # -- enable and disable --------------------------------------------------
+
+    def _skip(self, name: str, reason: str) -> None:
+        self.steps.append(Step(name, SKIPPED, reason))
+        self._note(f"{name}: {reason}")
+        self._worst(3)
+
+    async def _enable(self) -> None:
+        """Disable the charge point, see the wallbox say so, enable it again."""
+        self._step("disable and enable the charge point")
+        original = self.snapshot["raw"].get(ENABLED)
+        if original is None:
+            self._skip("enable", "the register could not be read, so it is not written")
+            return
+        if original != ENABLED_WORD:
+            self._skip(
+                "enable",
+                f"the register reads {original}, not {ENABLED_WORD}: it is already "
+                "disabled, or not the state this took it for",
+            )
+            return
+        failure = await self._write(ENABLED, DISABLED_WORD)
+        if failure is not None:
+            self.steps.append(
+                Step("disable", failure, self.conditions["refusals"][ENABLED])
+            )
+            self._worst(3)
+            return
+        disabled = await self._until(
+            lambda s: s.status == DISABLED_STATUS, STATE_TIMEOUT
+        )
+        failure = await self._write(ENABLED, ENABLED_WORD)
+        if failure is not None:
+            self.steps.append(
+                Step("enable", failure, self.conditions["refusals"][ENABLED])
+            )
+            self._worst(3)
+            return
+        if self._charging_at_start:
+            back = await self._until(lambda s: s.status == CHARGING, STATE_TIMEOUT)
+        else:
+            back = await self._until(
+                lambda s: s.status != DISABLED_STATUS, STATE_TIMEOUT
+            )
+        if disabled and back:
+            self.steps.append(Step("enable", CONFIRMED, "disabled on 0, back on 1"))
+        else:
+            self.steps.append(
+                Step("enable", INCONCLUSIVE, f"disabled: {disabled}, back: {back}")
+            )
+            self._worst(3)
+
+    # -- the phase setting ----------------------------------------------------
+
+    async def _phase(self) -> None:
+        """Switch the phase setting and see the wallbox follow, only when idle."""
+        self._step("switch the phase setting")
+        original = self.snapshot["raw"].get(PHASE_SETPOINT)
+        if original not in PHASE_WORDS:
+            self._skip(
+                "phase", f"the setting reads {original!r}, not one of {PHASE_WORDS}"
+            )
+            return
+        sample = await self._sample()
+        if sample.status not in IDLE_STATUSES:
+            self._skip(
+                "phase",
+                f"status {CHARGING_STATUS.get(sample.status or 0, sample.status)}: a "
+                "contactor is not opened with a car charging or the pilot active",
+            )
+            return
+        before = await self._read_one("input", PHASE_ACTUAL)
+        target = PHASE_WORDS[1 - PHASE_WORDS.index(original)]
+        failure = await self._write(PHASE_SETPOINT, target)
+        if failure is not None:
+            self.steps.append(
+                Step("phase", failure, self.conditions["refusals"][PHASE_SETPOINT])
+            )
+            self._worst(3)
+            return
+
+        async def followed() -> bool:
+            return await self._read_one("input", PHASE_ACTUAL) == target
+
+        moved = await self._poll(followed, STATE_TIMEOUT)
+        if moved:
+            self.steps.append(
+                Step(
+                    "phase",
+                    CONFIRMED,
+                    f"setting {original} to {target}; the wallbox followed",
+                )
+            )
+        else:
+            self.steps.append(
+                Step(
+                    "phase",
+                    INCONCLUSIVE,
+                    f"setting {original} to {target}; the actual mode stayed {before}: "
+                    "a single-phase unit, or it needs longer",
+                )
+            )
+            self._worst(3)
+
+    async def async_restore(self) -> None:
+        """Put back everything in the snapshot, shielded from cancellation.
+
+        For a driver restoring a saved snapshot after a run died; a run does it
+        itself, last, whatever happened.
+        """
+        await self._shielded(self._restore())
 
     # -- the restore: never budgeted, never deadlined, never skipped --------
 

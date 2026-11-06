@@ -52,3 +52,4 @@ device-survey/*.json
 device-survey/sungrow-scan-*.log
 device-survey/*-control_test.json
 device-survey/*-snapshot.json
+device-survey/*-wallbox-control-test.json

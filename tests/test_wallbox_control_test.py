@@ -22,6 +22,7 @@ import math
 from typing import Any
 
 from modbus_connection import ModbusExceptionError
+import pytest
 
 from sungrow_modbus.wallbox import control_test as wct
 from sungrow_modbus.wallbox.discovery import MODEL_NAME
@@ -66,6 +67,9 @@ class FakeWallbox:
         drop_writes_after: int | None = None,
         restore_fails: bool = False,
         until_first_write_reads_as: float | None = None,
+        enabled: int = 1,
+        phase: int = 0,
+        phase_follows: bool = True,
     ) -> None:
         """Set the wallbox up; every argument is a way for it to be different."""
         self.scale = scale
@@ -82,7 +86,11 @@ class FakeWallbox:
         self.holding = {
             wct.OUTPUT_CURRENT: setting,
             wct.START_STOP: start_stop,
+            wct.ENABLED: enabled,
+            wct.PHASE_SETPOINT: phase,
         }
+        self.phase_follows = phase_follows
+        self.fixed_phase = phase
         self.original = dict(self.holding)
         self.writes: list[tuple[int, int]] = []
         self._just_wrote = False
@@ -91,6 +99,8 @@ class FakeWallbox:
 
     def _live(self) -> tuple[int, float]:
         """Return (status, amps the car draws) from what is set."""
+        if self.holding[wct.ENABLED] == wct.DISABLED_WORD:
+            return wct.DISABLED_STATUS, 0.0
         if not self.charging:
             return 1, 0.0
         if self.holding[wct.START_STOP] == wct.STOP_WORD:
@@ -126,6 +136,11 @@ class FakeWallbox:
         counts = round(amps / wct.SCALE_THIS_PROJECT)
         table: dict[int, int] = {
             wct.RATED_CURRENT: self.rated,
+            wct.PHASE_ACTUAL: (
+                self.holding[wct.PHASE_SETPOINT]
+                if self.phase_follows
+                else self.fixed_phase
+            ),
             wct.PHASE_A_CURRENT: counts,
             wct.PHASE_B_CURRENT: counts,
             wct.PHASE_C_CURRENT: counts,
@@ -428,3 +443,88 @@ def test_the_candidate_scales_are_typed_here_and_not_read_from_the_library() -> 
     assert field.scale in (wct.SCALE_THIS_PROJECT, wct.SCALE_DISCUSSION_571)
     assert math.isclose(wct.SCALE_THIS_PROJECT, 0.1)
     assert math.isclose(wct.SCALE_DISCUSSION_571, 0.01)
+
+
+# -- enable and phase -------------------------------------------------------------
+
+
+async def test_enable_is_not_run_by_default() -> None:
+    box = FakeWallbox()
+    await _run(box)
+
+    assert all(a not in (wct.ENABLED, wct.PHASE_SETPOINT) for a, _w in box.writes)
+
+
+@pytest.mark.parametrize("charging", [True, False])
+async def test_disable_and_enable_are_seen_with_or_without_a_car(
+    charging: bool,
+) -> None:
+    box = FakeWallbox(charging=charging)
+    outcome, _ = await _run(box, enable=True)
+
+    step = next(s for s in outcome.steps if s.name == "enable")
+    assert step.verdict == wct.CONFIRMED
+    words = [w for a, w in box.writes if a == wct.ENABLED]
+    assert words[:2] == [wct.DISABLED_WORD, wct.ENABLED_WORD]
+    assert box.holding == box.original
+
+
+async def test_enable_is_skipped_when_the_register_already_reads_disabled() -> None:
+    box = FakeWallbox(enabled=0)
+    outcome, _ = await _run(box, enable=True)
+
+    assert all(a != wct.ENABLED for a, _w in box.writes)
+    assert any(s.name == "enable" and s.verdict == wct.SKIPPED for s in outcome.steps)
+
+
+async def test_the_phase_is_never_switched_with_a_car_charging() -> None:
+    box = FakeWallbox(charging=True)
+    outcome, _ = await _run(box, phase=True)
+
+    assert all(a != wct.PHASE_SETPOINT for a, _w in box.writes)
+    step = next(s for s in outcome.steps if s.name == "phase")
+    assert step.verdict == wct.SKIPPED
+    assert outcome.code == 3
+
+
+async def test_the_phase_follows_when_nothing_is_flowing_and_is_put_back() -> None:
+    box = FakeWallbox(charging=False, phase=0)
+    outcome, _ = await _run(box, phase=True)
+
+    step = next(s for s in outcome.steps if s.name == "phase")
+    assert step.verdict == wct.CONFIRMED
+    written = [w for a, w in box.writes if a == wct.PHASE_SETPOINT]
+    assert written[0] == 1  # the other of the two words, and only those two
+    assert set(written) <= {0, 1}
+    assert box.holding == box.original
+
+
+async def test_a_phase_that_does_not_follow_is_inconclusive_and_still_restored() -> (
+    None
+):
+    """A single-phase unit takes the write and stays single phase."""
+    box = FakeWallbox(charging=False, phase=1, phase_follows=False)
+    outcome, _ = await _run(box, phase=True)
+
+    step = next(s for s in outcome.steps if s.name == "phase")
+    assert step.verdict == wct.INCONCLUSIVE
+    assert outcome.code == 3
+    assert box.holding == box.original
+
+
+async def test_a_setting_that_cannot_be_read_is_not_written() -> None:
+    """A lost read is not a refusal, and nothing is written that cannot be put back."""
+    box = FakeWallbox(charging=False)
+    real = box.read
+
+    async def read(space: str, address: int, count: int) -> list[int]:
+        if space == "holding" and address == wct.PHASE_SETPOINT:
+            raise TimeoutError("no answer")
+        return await real(space, address, count)
+
+    box.read = read  # type: ignore[method-assign]
+    outcome, _ = await _run(box, phase=True)
+
+    assert all(a != wct.PHASE_SETPOINT for a, _w in box.writes)
+    assert "phase" in outcome.conditions["unreadable"]
+    assert any(s.name == "phase" and s.verdict == wct.SKIPPED for s in outcome.steps)

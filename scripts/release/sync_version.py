@@ -46,6 +46,7 @@ REQUIREMENT_NAME = "sungrow-modbus"
 SCRIPTS = (
     REPO / "device-survey" / "scripts" / "python" / "sungrow_survey.py",
     REPO / "device-survey" / "scripts" / "python" / "sungrow_control_test.py",
+    REPO / "device-survey" / "scripts" / "python" / "sungrow_wallbox_control_test.py",
 )
 
 #: The pin inside a script's `# /// script` block, where the dependency list
