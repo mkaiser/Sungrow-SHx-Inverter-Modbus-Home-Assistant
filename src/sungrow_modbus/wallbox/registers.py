@@ -324,11 +324,12 @@ class WallboxLive(Component):
 class WallboxSettings(Component):
     """The holding registers, which are settings rather than readings.
 
-    Read, not written. Nothing in this library writes to a wallbox: the write
+    Read, not written. The integration never writes to a wallbox: the write
     table in `scripts/generate/tables/writes.py` is the only place a writable register
-    is declared, and no wallbox register is in it. Starting somebody's car
-    charging from a stale automation is not a thing to enable on one
-    measurement of one unit.
+    is declared, and no wallbox register is in it. `control_test` writes three of
+    these, through a port, with leave, to measure the output current's scale.
+    Starting somebody's car charging from a stale automation is not a thing to
+    enable on one measurement of one unit.
     """
 
     register_space = "holding"

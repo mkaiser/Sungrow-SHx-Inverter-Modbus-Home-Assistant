@@ -12,8 +12,10 @@ seconds would read some forty registers nobody is watching, on a link a
 Sungrow inverter grants very few sessions on.
 
 **Nothing here writes.** The write table in `scripts/generate/tables/writes.py` is the
-only place a writable register is declared and no wallbox register is in it. That
-is a decision, not an omission: the registers that would start and stop a
+only place a writable register is declared and no wallbox register is in it. The
+one thing that writes to a wallbox is `control_test`, through a port its driver
+supplies, only with leave and only to measure a scale. That is a decision, not an
+omission: the registers that would start and stop a
 charge are known -- holding 21211 and 21212 -- and starting somebody's car
 charging from a stale automation is not a thing to enable on one measurement
 of one unit, on a map no manufacturer document covers.

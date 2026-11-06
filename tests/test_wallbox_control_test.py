@@ -1,0 +1,430 @@
+"""The wallbox control test, against a wallbox that can be wrong where it matters.
+
+`FakeWallbox` is a wallbox with a car on it. It models the three things the
+procedure turns on, none of which a passing mock would show:
+
+* **The scale in dispute.** `scale` is what the output current setting really
+  means per count: 0.1 A here, 0.01 A in discussion #571. A car offered less
+  than 6 A stops, as it does on a real pilot signal.
+* **The stale readback.** A holding read straight after a write, on the same
+  session, answers another register's value (measured on 2026-10-29 over
+  TLS). `read_fresh` never does.
+* **Refusal and loss.** A write can come back as the real exception type
+  (`ModbusExceptionError`), and a link can drop (`TimeoutError`). A bare
+  `ModbusError` would not be the thing a device sends.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import contextlib
+import math
+from typing import Any
+
+from modbus_connection import ModbusExceptionError
+
+from sungrow_modbus.wallbox import control_test as wct
+from sungrow_modbus.wallbox.discovery import MODEL_NAME
+
+from .conftest import encode_string
+
+STALE_JUNK = 4242
+
+
+class FakeClock:
+    """Time that only passes when somebody sleeps, so a run takes no time."""
+
+    def __init__(self) -> None:
+        """Start at zero."""
+        self.now = 0.0
+
+    def monotonic(self) -> float:
+        """Return the pretend time."""
+        return self.now
+
+    async def sleep(self, seconds: float) -> None:
+        """Pass time without waiting."""
+        self.now += seconds
+
+
+class FakeWallbox:
+    """An AC22E-01 with a car, as a `WallboxPort`."""
+
+    def __init__(
+        self,
+        *,
+        scale: float = 0.1,
+        charging: bool = True,
+        car_max_a: float = 13.0,
+        setting: int = 160,
+        rated: int = 320,
+        name: str = "AC22E-01",
+        start_stop: int = 0,
+        fresh: bool = True,
+        stale: bool = True,
+        refuse: set[int] | None = None,
+        drop_writes_after: int | None = None,
+        restore_fails: bool = False,
+        until_first_write_reads_as: float | None = None,
+    ) -> None:
+        """Set the wallbox up; every argument is a way for it to be different."""
+        self.scale = scale
+        self.charging = charging
+        self.car_max_a = car_max_a
+        self.name = name
+        self.fresh = fresh
+        self.stale = stale
+        self.refuse = refuse or set()
+        self.drop_writes_after = drop_writes_after
+        self.restore_fails = restore_fails
+        self.rated = rated
+        self.until_first_write_reads_as = until_first_write_reads_as
+        self.holding = {
+            wct.OUTPUT_CURRENT: setting,
+            wct.START_STOP: start_stop,
+        }
+        self.original = dict(self.holding)
+        self.writes: list[tuple[int, int]] = []
+        self._just_wrote = False
+
+    # -- the car -----------------------------------------------------------
+
+    def _live(self) -> tuple[int, float]:
+        """Return (status, amps the car draws) from what is set."""
+        if not self.charging:
+            return 1, 0.0
+        if self.holding[wct.START_STOP] == wct.STOP_WORD:
+            return 5, 0.0
+        scale = self.scale
+        if self.until_first_write_reads_as is not None and not self.writes:
+            scale = self.until_first_write_reads_as
+        offered = self.holding[wct.OUTPUT_CURRENT] * scale
+        if offered < wct.MIN_CURRENT_A:
+            return 5, 0.0
+        return 3, min(offered, self.car_max_a)
+
+    # -- the port ----------------------------------------------------------
+
+    async def read(self, space: str, address: int, count: int) -> list[int]:
+        """Read on the open session, stale straight after a write."""
+        words = self._words(space, address, count)
+        if space == "holding" and self.stale and self._just_wrote:
+            self._just_wrote = False
+            return [STALE_JUNK] * count
+        return words
+
+    async def read_fresh(self, space: str, address: int, count: int) -> list[int]:
+        """Read on a new session, which is never stale."""
+        return self._words(space, address, count)
+
+    def _words(self, space: str, address: int, count: int) -> list[int]:
+        if space == "holding":
+            return [self.holding.get(address + i, 0) for i in range(count)]
+        if address == MODEL_NAME.address:
+            return encode_string(self.name, MODEL_NAME.length)
+        status, amps = self._live()
+        counts = round(amps / wct.SCALE_THIS_PROJECT)
+        table: dict[int, int] = {
+            wct.RATED_CURRENT: self.rated,
+            wct.PHASE_A_CURRENT: counts,
+            wct.PHASE_B_CURRENT: counts,
+            wct.PHASE_C_CURRENT: counts,
+            wct.CHARGING_POWER: round(amps * 230 * 3) & 0xFFFF,
+            wct.CHARGING_POWER + 1: round(amps * 230 * 3) >> 16,
+            wct.CHARGING_STATUS_ADDRESS: status,
+            wct.AVAILABLE_CURRENT: self.holding[wct.OUTPUT_CURRENT],
+        }
+        return [table.get(address + i, 0) for i in range(count)]
+
+    async def write(self, address: int, word: int) -> None:
+        """Write a word, or refuse, or lose the link."""
+        if address in self.refuse:
+            raise ModbusExceptionError(4, "illegal data value")
+        if self.drop_writes_after is not None and len(self.writes) >= (
+            self.drop_writes_after
+        ):
+            raise TimeoutError("the link dropped")
+        if self.restore_fails and word == self.original[address]:
+            raise TimeoutError("the link dropped")
+        self.writes.append((address, word))
+        self.holding[address] = word
+        self._just_wrote = True
+
+
+async def _run(
+    box: FakeWallbox,
+    *,
+    leave: bool = True,
+    snapshot: bool = True,
+    **options: Any,
+) -> tuple[wct.Outcome, list[str]]:
+    """Run the procedure; return the outcome and the order things happened in."""
+    events: list[str] = []
+
+    async def on_snapshot(data: dict[str, Any]) -> None:
+        events.append(
+            f"snapshot touched={list(data['touched'])} writes={len(box.writes)}"
+        )
+
+    run = wct.WallboxControlTest(
+        box,
+        wct.Options(leave=leave, **options),
+        clock=FakeClock(),
+        on_snapshot=on_snapshot if snapshot else None,
+    )
+    return await run.async_run(), events
+
+
+# -- the straight run -----------------------------------------------------------
+
+
+async def test_the_scale_is_confirmed_and_everything_is_put_back() -> None:
+    box = FakeWallbox()
+    outcome, _events = await _run(box)
+
+    assert outcome.code == 0
+    assert [s.verdict for s in outcome.steps] == [wct.CONFIRMED] * 3
+    assert box.holding == box.original
+    assert all(row.restored for row in outcome.restores)
+
+
+async def test_every_word_written_is_safe_at_either_scale() -> None:
+    """The wrong reading may only offer less than meant, never ten times more."""
+    box = FakeWallbox()
+    await _run(box)
+
+    out = [word for address, word in box.writes if address == wct.OUTPUT_CURRENT]
+    steps = out[:-1]  # the last write is the restore
+    assert steps == [60, 80, 100]
+    assert max(steps) * wct.SCALE_THIS_PROJECT <= wct.DEFAULT_MAX_AMPS
+    assert all(
+        word * scale <= wct.DEFAULT_MAX_AMPS
+        for word in steps
+        for scale in (wct.SCALE_THIS_PROJECT, wct.SCALE_DISCUSSION_571)
+    )
+
+
+async def test_the_snapshot_is_flushed_before_the_first_write() -> None:
+    box = FakeWallbox()
+    _outcome, events = await _run(box)
+
+    assert events[0] == "snapshot touched=[] writes=0"
+    assert "touched=[21202] writes=0" in events[1]
+
+
+async def test_the_cap_is_obeyed() -> None:
+    box = FakeWallbox()
+    await _run(box, max_amps=8.0)
+
+    words = [w for a, w in box.writes if a == wct.OUTPUT_CURRENT][:-1]
+    assert words == [60, 80]
+
+
+# -- the scale error the test exists to find -------------------------------------
+
+
+async def test_a_decade_error_is_found_before_a_single_write() -> None:
+    """A setting of 1000 is 100 A at 0.1 A per count and 10 A at 0.01."""
+    box = FakeWallbox(scale=0.01, setting=1000)
+    outcome, _ = await _run(box)
+
+    assert outcome.code == 4
+    assert box.writes == []
+    assert "0.01" in outcome.conditions["scale_before_writing"]
+
+
+async def test_a_car_that_stops_when_offered_6_a_is_a_decade_error_too() -> None:
+    """The step-level evidence: charging before, stopped by the first write."""
+    box = FakeWallbox(scale=0.01, setting=160, until_first_write_reads_as=0.1)
+    outcome, _ = await _run(box)
+
+    assert outcome.code == 4
+    assert outcome.steps[0].verdict == wct.DECADE
+    # It stopped at the first step: no point offering more.
+    assert len(outcome.steps) == 1
+    # The last write is the restore; the steps never went past 100.
+    assert max(w for _a, w in box.writes[:-1]) <= 100
+    assert box.holding == box.original
+
+
+# -- what it declines to do -------------------------------------------------------
+
+
+async def test_no_leave_is_a_dry_run_that_writes_nothing() -> None:
+    box = FakeWallbox()
+    outcome, _ = await _run(box, leave=False)
+
+    assert box.writes == []
+    assert outcome.code == 0
+    assert outcome.conditions["dry_run"] == wct.DRY_RUN_MEANS
+    assert outcome.steps == ()
+
+
+async def test_no_snapshot_means_no_writes() -> None:
+    box = FakeWallbox()
+    outcome, _ = await _run(box, snapshot=False)
+
+    assert box.writes == []
+    assert outcome.code == 2
+    assert "snapshot" in outcome.conditions["guard"]
+
+
+async def test_a_device_that_is_not_a_wallbox_is_left_alone() -> None:
+    box = FakeWallbox(name="SH10RT")
+    outcome, _ = await _run(box)
+
+    assert box.writes == []
+    assert outcome.code == 2
+
+
+async def test_a_setting_above_the_rating_is_not_understood_and_not_touched() -> None:
+    box = FakeWallbox(setting=5000, rated=320)
+    outcome, _ = await _run(box)
+
+    assert box.writes == []
+    assert outcome.code == 2
+
+
+async def test_without_a_car_only_the_plumbing_is_checked() -> None:
+    box = FakeWallbox(charging=False)
+    outcome, _ = await _run(box)
+
+    assert outcome.code == 3
+    assert [s.verdict for s in outcome.steps] == [wct.MATCHED] * 3
+    assert any("no car" in sentence for sentence in outcome.unestablished)
+    assert box.holding == box.original
+
+
+# -- readback ------------------------------------------------------------------------
+
+
+async def test_the_stale_same_session_read_does_not_fool_the_raw_leg() -> None:
+    """The same session answered 4242; the fresh one told the truth."""
+    box = FakeWallbox(stale=True)
+    outcome, _ = await _run(box)
+
+    assert outcome.code == 0
+
+
+async def test_a_port_without_a_fresh_session_cannot_call_the_raw_leg_independent() -> (
+    None
+):
+    box = FakeWallbox(fresh=False, stale=False)
+    outcome, _ = await _run(box)
+
+    assert outcome.code == 3
+    assert any("not independent" in s for s in outcome.unestablished)
+
+
+async def test_a_word_that_does_not_stay_is_a_mismatch_and_ends_the_steps() -> None:
+    box = FakeWallbox()
+    original_write = box.write
+
+    async def lossy(address: int, word: int) -> None:
+        # The register keeps a different word than was sent.
+        await original_write(address, word)
+        if word != box.original[address]:
+            box.holding[address] = word + 1
+
+    box.write = lossy  # type: ignore[method-assign]
+    outcome, _ = await _run(box)
+
+    assert outcome.steps[0].verdict == wct.MISMATCH
+    assert len(outcome.steps) == 1
+    assert outcome.code == 3
+    assert box.holding == box.original
+
+
+# -- refusal, loss and the restore -------------------------------------------------
+
+
+async def test_a_refused_write_is_recorded_with_its_exception_and_nothing_is_left() -> (
+    None
+):
+    box = FakeWallbox(refuse={wct.OUTPUT_CURRENT})
+    outcome, _ = await _run(box)
+
+    assert outcome.steps[0].verdict == wct.REFUSED
+    assert "ModbusExceptionError" in outcome.conditions["refusals"][wct.OUTPUT_CURRENT]
+    assert outcome.code == 3
+    assert box.holding == box.original
+
+
+async def test_a_link_lost_mid_run_still_restores() -> None:
+    box = FakeWallbox(drop_writes_after=1)
+    outcome, _ = await _run(box)
+
+    assert outcome.steps[-1].verdict == wct.DROPPED
+    assert box.holding == box.original or outcome.code == 5
+
+
+async def test_a_restore_that_cannot_land_is_code_5_and_is_tried_again() -> None:
+    box = FakeWallbox(restore_fails=True)
+    outcome, _ = await _run(box)
+
+    assert outcome.code == 5
+    assert outcome.not_restored
+    assert outcome.not_restored[0].attempts == wct.RESTORE_ATTEMPTS
+
+
+async def test_a_cancelled_run_still_finishes_its_restore() -> None:
+    box = FakeWallbox()
+    run = wct.WallboxControlTest(
+        box, wct.Options(leave=True), clock=FakeClock(), on_snapshot=_noop_snapshot
+    )
+    task = asyncio.ensure_future(run.async_run())
+    # Let it get into the steps, then cancel.
+    for _ in range(40):
+        await asyncio.sleep(0)
+    task.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await task
+    assert box.holding == box.original
+
+
+async def _noop_snapshot(_data: dict[str, Any]) -> None:
+    return None
+
+
+# -- start and stop --------------------------------------------------------------
+
+
+async def test_start_stop_runs_only_when_asked_and_resumes_the_charge() -> None:
+    box = FakeWallbox()
+    outcome, _ = await _run(box, start_stop=True)
+
+    names = [s.name for s in outcome.steps]
+    assert "start/stop" in names
+    assert outcome.steps[-1].verdict == wct.CONFIRMED
+    assert box.holding == box.original
+
+
+async def test_start_stop_is_not_run_by_default() -> None:
+    box = FakeWallbox()
+    await _run(box)
+
+    assert all(a != wct.START_STOP for a, _w in box.writes)
+
+
+async def test_start_stop_is_skipped_when_the_register_is_not_a_state() -> None:
+    """Reading 1 ("stop") while a car charges means it is not a state."""
+    box = FakeWallbox(start_stop=1)
+    # The fake stops the car when the register is 1, so make the car charge anyway.
+    box.charging = True
+    outcome, _ = await _run(box, start_stop=True)
+
+    assert all(a != wct.START_STOP for a, _w in box.writes)
+    assert any(s.verdict == wct.SKIPPED for s in outcome.steps) or (
+        outcome.code in (2, 3)
+    )
+
+
+def test_the_candidate_scales_are_typed_here_and_not_read_from_the_library() -> None:
+    from sungrow_modbus.wallbox.registers import WallboxSettings
+
+    field = WallboxSettings.declared_fields["output_current_setting"]
+    # They meet: the library's scale is one of the two hypotheses, and the
+    # hypotheses are not derived from it.
+    assert field.scale in (wct.SCALE_THIS_PROJECT, wct.SCALE_DISCUSSION_571)
+    assert math.isclose(wct.SCALE_THIS_PROJECT, 0.1)
+    assert math.isclose(wct.SCALE_DISCUSSION_571, 0.01)

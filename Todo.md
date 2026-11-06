@@ -45,7 +45,52 @@ Structure:
    §5 (done for the takeover and the update; *Add from link* still states only
    what the Marketplace's page says). Keep the HACS path while `hacs.json`
    allows 2026.9 and 2026.10. Nothing here waits on blocker 19.
-2. **Submitting to the catalog, when the merge is decided.** Read
+2. **Writing to the wallbox: measure the output current's scale at gerd's.**
+   The wallbox is read only (`doc/wallbox_registers.md`; no file in
+   `device-survey/` writes). Three sources disagree on the output current
+   setting, holding 21203: 0.1 A per count here, 0.01 A in discussion #571. On
+   a mains charger that is a factor ten, so no wallbox entity is built until
+   a run like the inverter's has settled it. Plan:
+
+   1. **The test, in the library. Done 2026-11-06:**
+      `src/sungrow_modbus/wallbox/control_test.py` and
+      `tests/test_wallbox_control_test.py` (22 tests). It writes only through a
+      `WallboxPort` the driver supplies, so `SungrowWallbox` stays read only.
+      The words it offers (60, 80, 100; 6, 8 and 10 A at 0.1 A per count) are
+      safe at either scale, capped by `max_amps` (10 A); the snapshot is
+      flushed before the first write, and without a callback nothing is
+      written; no leave is a dry run; the readback is the raw word on a fresh
+      session (a same-session holding read answered another register after a
+      write); the restore writes the snapshot's raw word, checks it by a raw
+      read and tries five times, and an unrestored register is code 5. A
+      setting that reads above the rating at 0.1 A per count and inside it at
+      0.01 is reported as the scale finding (code 4) before any write.
+   2. **A dry run at gerd's first.** Read only, no leave: identifies the
+      wallbox, reads the rating, the setting and what the car draws, and says
+      which scale they fit. If a car is charging, "the car draws 13 A while
+      the setting is 160" already excludes 0.01 A per count (1.6 A could not
+      charge it). This may settle the question before one write; it needs only
+      the network and the wallbox's own address.
+   3. **The driver.** `device-survey/scripts/python/sungrow_wallbox_control_test.py`
+      (PEP 723, `--leave` defaulting to no, a snapshot file per day, TLS 516
+      unit 248 as `wallbox_direct.py` connects, a fresh session for the raw
+      readback, a document with the stand-in serial). It can use only what the
+      pinned wheel has (`device-survey/reference.md`), so it waits on a release
+      that contains step 1.
+   4. **One window with gerd and a car.** A car plugged in and charging, his
+      Home Assistant and evcc off, the TLS port kept on one session (it
+      refuses reconnects within seconds). Start low, never above his
+      installation's limit, no phase switch with the car charging, and the
+      optional stop/start only if the register reads 0 while charging. His
+      consent covers any test; ask again for writes with a car attached.
+   5. **Only then, entities.** A charging current number and an enable switch,
+      on what was measured, through the write table
+      (`scripts/generate/tables/writes.py`), with the wallbox's 60 s fallback
+      in mind.
+
+   Not to copy: evcc's `sungrow.go` reserves all rights. Still open: enable
+   (holding 21211) and the phase setting have no step yet.
+3. **Submitting to the catalog, when the merge is decided.** Read
    2026-11-06 (a subagent's reading of hacs.xyz and
    contributors.home-assistant.io/marketplace; not checked against
    `hacs/default` itself): the route is unchanged. The catalog is still
@@ -344,46 +389,6 @@ inverters and a car charging. Open:
   Do it before the merge decision (open decision 1), when the brand becomes
   visible to everyone.
 
-## Writing to the wallbox
-
-The wallbox is read only (`doc/wallbox_registers.md`: "Nothing writes to the
-wallbox"; no file in `device-survey/` implements a Modbus write). Writing is
-what would give Home Assistant a charging current and a start/stop, for
-surplus charging; evcc already does it for people who use evcc.
-
-Would a test at gerd's help? Yes, as the first measured evidence, and it is
-the only way to know the scales: three sources disagree on the output current
-setting (holding 21203: 0.1 A here, 0.01 A in discussion #571), which is a
-factor ten on a mains charger, the same shape as register 13074's. But not
-yet, for these reasons:
-
-- **No wallbox leg exists.** The control test is for the inverter. It needs one
-  for the wallbox, written first and run against the simulator: snapshot the
-  settings, write one, read back by a fresh connection (a holding read in the
-  same TLS session returned another register's value), watch the charging
-  power on the input registers, restore the raw word. Candidates: holding
-  21203 (output current), 21211 (availability), and the phase setting (holding
-  agrees with input 21270); never the unexplained ones (21250-21259,
-  21282-21285, 21298/21299, 21312).
-- **A car has to be plugged in** and willing, or there is no behavioural
-  evidence; over a WiNet-S only the behavioural leg is evidence anyway, so the
-  run belongs on the wallbox's own address (TLS 516, unit 248), where a held
-  session also stops the 60 s fallback.
-- **Safety limits first.** Start from the lowest current and step up, never
-  above what gerd's installation allows; do not switch phases with the car
-  charging; the restore is never budgeted or skipped (`AGENTS.md`).
-- **Access.** gerd's network is not routed now; the wallbox's own address
-  shares its tail with bar12's dongle, so identify it by reading input 21216
-  (`AC22E-01`); his Home Assistant is stopped first; the TLS port refuses
-  reconnects within seconds, so one session stays open. gerd's consent covers
-  any test; ask again for writes with a car attached.
-- **Licence.** evcc's `sungrow.go` reserves all rights: read for what exists,
-  never copied.
-
-Order: write the wallbox leg and its simulator test; agree a window with gerd
-and a car; run it once on the wallbox's own address; then build the entities
-(a current number, an enable switch) only on what was measured.
-
 ## Helping users set up the Energy dashboard
 
 Investigated 2026-11-06 against Home Assistant 2026.11. Findings:
@@ -557,12 +562,12 @@ the commit; a survey signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-06T18:15:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-06T18:15:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-06T19:57:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-06T19:57:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked: **2026-11-06 18:15 UTC** (#786): peter_sm's eighth reading ingested (Korsberg, a diagnostics download).
+Last checked: **2026-11-06 19:57 UTC** (#786): nothing new since peter_sm's eighth reading.
 
 ## Recurrent: a test plugin for Home Assistant 2026.11 (daily, until it ships)
 
@@ -577,7 +582,7 @@ curl -s https://pypi.org/pypi/pytest-homeassistant-custom-component/json \
 print(i['version'], [r for r in i['requires_dist'] if r.startswith('homeassistant')])"
 ```
 
-Last checked: **2026-11-06**: 0.13.375, still `homeassistant==2026.10.4`.
+Last checked: **2026-11-06 19:57 UTC**: 0.13.375, still `homeassistant==2026.10.4`.
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 
