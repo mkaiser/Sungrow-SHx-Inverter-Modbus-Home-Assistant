@@ -39,7 +39,10 @@ there with **Add from link**, giving the same repository and the type
 **Integration**. Adding a custom repository needs a GitHub connection
 (read-only); browsing and updating do not. A preview installed through HACS
 before the upgrade stays installed: the Marketplace takes it over on its first
-start.
+start, as a repository followed by commit. When the channel moves, the
+Marketplace offers the new commit as an update (the version is a commit
+hash, as it was in HACS) and installs it without a GitHub connection;
+restart afterwards.
 
 ## 2. Download it
 

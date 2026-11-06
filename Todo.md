@@ -26,26 +26,25 @@ Structure:
    Verified on 2026.11.0, 2026-11-06, adopting a HACS install of preview
    0.1.0a17 (commit `2d735b1`): the Marketplace took over 4 entities and 2
    devices, adopted HACS's stored data, removed `custom_components/hacs`, and
-   kept the preview as an installed, commit-tracked repository with its
-   integration in place. Without a GitHub connection it already reports
-   `pending_upgrade` (installed `2d735b1`, available `e0d1840`).
+   kept the preview as an installed, commit-tracked repository. It reported
+   `pending_upgrade` (available `e0d1840`) with no GitHub connection, and
+   `marketplace/repository/install` installed it without one (only
+   *detect* and *add*, that is *Add from link*, are marked `requires_github`
+   in the source). After a restart Home Assistant pip-installed
+   `sungrow-modbus==0.1.0a26` from PyPI against the manifest pin, with
+   `modbus-connection` 4.12.7 and `tmodbus` 1.1.0, and the integration
+   loaded (the copied entry then failed only to reach its old inverter
+   address). The stored `hacs/integration` entry was gone after the restart.
 
-   Open, each needing the maintainer to connect GitHub on :8126 (a device
-   code, read-only):
-   - Does the offered update install without the connection, or only with it?
-     (The add and update commands are marked `requires_github` in the
-     source.)
-   - Does *Add from link* install the channel at all, from a fresh
-     `make marketplace ARGS=--reset`, and at a commit hash?
-   - Is the `hacs/integration` entry left in the stored repositories after
-     the takeover harmless?
-   - Does the update, once installed, keep the integration working after a
-     restart (the library from PyPI against the manifest pin)?
+   Open, needing the maintainer to connect GitHub on :8126 (a device code,
+   read-only): does *Add from link* install the channel from a fresh
+   `make marketplace ARGS=--reset`, and at a commit hash? Only that is left
+   of the three questions.
 
-   Then correct `doc/installing_a_preview.md` (its 2026.11 paragraph states
-   only what the Marketplace's page says, plus the takeover above) and
-   `doc/maintainer_setup.md` §5. Keep the HACS path while `hacs.json` allows
-   2026.9 and 2026.10. Nothing here waits on blocker 20.
+   Then correct `doc/installing_a_preview.md` and `doc/maintainer_setup.md`
+   §5 (done for the takeover and the update; *Add from link* still states only
+   what the Marketplace's page says). Keep the HACS path while `hacs.json`
+   allows 2026.9 and 2026.10. Nothing here waits on blocker 20.
 2. **Release note for the German names.** German ships from the next
    release (`translations/de.json`); on a German system the displayed
    entity names change, ids do not. Say so in the release notes, and in

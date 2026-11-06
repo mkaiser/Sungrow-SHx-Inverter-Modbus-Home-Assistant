@@ -44,11 +44,17 @@ import json
 from pathlib import Path
 import sys
 
-#: The store version this script understands. Home Assistant migrates its own
-#: stores; a bump here means the shape changed and the assumptions below need
-#: re-reading rather than forcing.
+#: The store versions this script understands. Home Assistant migrates its own
+#: stores; a version not listed here means the shape changed and the
+#: assumptions below need re-reading rather than forcing.
+#:
+#: 2.2 is 2026.9 and 2026.10. 3.1 is 2026.11, which only versioned the SSL
+#: profile names (`homeassistant/components/http/config.py`,
+#: `_async_migrate_func`): the keys this script touches are the same, and it
+#: keeps the profile the store already has.
 VERSION = 2
 MINOR_VERSION = 2
+KNOWN_VERSIONS = {(2, 2), (3, 1)}
 
 #: What `http` writes for an unconfigured instance, which is what the fields
 #: beside the port have to look like.
@@ -94,14 +100,12 @@ def pin(config_dir: Path, port: int) -> int:
         return 0
 
     document = json.loads(store.read_text(encoding="utf-8"))
-    if (document.get("version"), document.get("minor_version")) != (
-        VERSION,
-        MINOR_VERSION,
-    ):
+    if (document.get("version"), document.get("minor_version")) not in KNOWN_VERSIONS:
+        known = ", ".join(f"{major}.{minor}" for major, minor in sorted(KNOWN_VERSIONS))
         print(
             f"refusing to edit {store}: it is version "
             f"{document.get('version')}.{document.get('minor_version')}, and this "
-            f"script knows {VERSION}.{MINOR_VERSION}. Read "
+            f"script knows {known}. Read "
             "homeassistant/components/http/config.py before changing it.",
             file=sys.stderr,
         )

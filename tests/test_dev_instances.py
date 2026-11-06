@@ -114,6 +114,24 @@ def test_pinning_twice_changes_nothing(tmp_path, capsys):
     assert "already pinned" in capsys.readouterr().out
 
 
+def test_the_store_home_assistant_2026_11_writes_is_pinned_too(tmp_path):
+    """2026.11 migrated 2.2 to 3.1 (versioned SSL profiles) and nothing else.
+
+    The Marketplace testbed hit this on its second boot: the first boot
+    migrated the store, and the script then refused it.
+    """
+    document = _store(8126)
+    document["version"], document["minor_version"] = 3, 1
+    document["data"]["stable"]["ssl_profile"] = "intermediate_v6"
+    config = _write(tmp_path, document)
+
+    assert http_port.pin(config, 8127) == 0
+    after = json.loads((config / ".storage" / "http").read_text())
+    assert (after["version"], after["minor_version"]) == (3, 1)
+    assert after["data"]["stable"]["server_port"] == 8127
+    assert after["data"]["stable"]["ssl_profile"] == "intermediate_v6"
+
+
 def test_an_unrecognised_schema_is_refused_rather_than_forced(tmp_path, capsys):
     """A mangled store is a Home Assistant that cannot serve anything."""
     document = _store(8123)

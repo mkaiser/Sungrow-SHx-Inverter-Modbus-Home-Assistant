@@ -190,7 +190,11 @@ From Home Assistant 2026.11, HACS is built in as the **Marketplace**
 `hacs.json` contract: a repository without one stays installed but gets no
 updates. It offers stable releases only, unless the user turns on that
 repository's *Pre-release* switch, an entity disabled by default. Whether that
-changes what the preview channel delivers is open in `Todo.md`.
+changes what the preview channel delivers: checked on 2026.11.0 with a
+copy of a HACS install (`make marketplace ARGS=--adopt-hacs`), the Marketplace
+took it over and offered and installed the channel's newer commit without a
+GitHub connection. Adding the channel from a link (*Add from link*) needs the
+connection, and is still to be tried (`Todo.md`).
 
 ## 6. Keeping data out of the cloud
 
