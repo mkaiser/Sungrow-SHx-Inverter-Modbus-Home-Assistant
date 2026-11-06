@@ -611,19 +611,18 @@ the specification instead; its scan-interval check goes first.
 Built for a wallbox's own
 address (`wallbox_host`, `links.wallbox_tls_params`). For the dongle it is
 worth building only if 516 is a *separate* session pool from 502: hold
-502 until it refuses, then try 516. Also wanted: a certificate hash from a
-third site, to show whether every dongle ships the same key. The
-maintainer can take it from bar12's or gerd's WiNet-S (the five-second
-script in `device-survey/devices-wanted.md`) when their network is
-routed; the two share a subnet, so confirm the house by its stand-in
-first. Port 516 timed out from the rebuilt container on 2026-11-06.
-Measured 2026-11-06 over the VPN at gerd's (the one hash so far): his WiNet-S
-and his wallbox serve the byte-identical certificate, SHA-256
-`84505e46778f2611df26ed1ad8a4e872945f7eb33e050e617c96a73add005b5b`, serial
-0x1, RSA-2048, `CN=sun`, issuer `OT.SUNGROW`, valid 2024-10-24 to 2054-10-17,
-TLS 1.2 `ECDHE-RSA-AES256-GCM-SHA384`. Two different Sungrow products on one
-key makes a per-device key unlikely; what is still missing is the same hash
-from a house that is not gerd's.
+502 until it refuses, then try 516.
+
+The certificate: measured 2026-11-06 at gerd's (wiki:
+`gerd-tls-certificate-2026-11-06-summary.md`). His WiNet-S and his wallbox serve
+the byte-identical certificate, SHA-256
+`84505e46778f2611df26ed1ad8a4e872945f7eb33e050e617c96a73add005b5b`, serial 0x1,
+RSA-2048, valid 2024 to 2054: two products on one certificate, so a per-device
+key is unlikely. Still wanted: the same hash from a WiNet-S at another house.
+bar12's is the nearest (the maintainer can take it when bar12's network is
+routed; it shares gerd's subnet, so confirm the house by its stand-in first);
+`device-survey/devices-wanted.md` now gives contributors the hash to compare
+against.
 
 ## EVCC connection
 

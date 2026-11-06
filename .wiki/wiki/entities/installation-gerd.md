@@ -26,4 +26,5 @@ The only wallbox measured.
 - [SH8.0RT-V112, B001.V000.P022, gerd, a WiNet-S on WiFi, third reading](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-3-summary.md), 2026-11-03, the wallbox charging
 - [The wallbox through a charging session](../sources/gerd-wallbox-charging-session-2026-11-03-summary.md), 2026-11-03
 - [AC22E-01 wallbox, gerd, TLS, while charging](../sources/ac22e01-gerd-anon-41346964423-wallbox-tls-2-summary.md), 2026-11-03
+- [The TLS certificate of the WiNet-S and the wallbox](../sources/gerd-tls-certificate-2026-11-06-summary.md), 2026-11-06, one certificate
 - [The wallbox control test's dry run](../sources/gerd-wallbox-dry-run-2026-11-06-summary.md), 2026-11-06, no car

@@ -445,3 +445,9 @@ the first on Home Assistant 2026.11.0.
 The wallbox control test's first hardware run, read only over TLS with no car. The output current
 setting read 0 idle (160 and 151 while charging), so its scale needs a car charging; input 21322
 read 161 beside it, so it is not the setting's echo, as the one earlier reading suggested.
+
+## [2026-11-06] ingested | gerd's TLS certificate, by hash
+
+Port 516 of gerd's WiNet-S and of his wallbox serve the byte-identical certificate, serial number
+1, RSA-2048, valid 2024 to 2054; its SHA-256 is now recorded. Two products on one certificate
+points to one built into the firmware; the same hash from another house would settle it.

@@ -136,8 +136,10 @@ address is 2, and a slave answers 0 where a standalone inverter answers
 ### A WiNet-S certificate hash
 
 Five seconds, no survey. A WiNet-S serves Modbus over TLS on port 516 with a
-certificate that looks baked into the firmware. A hash from another site
-shows whether every dongle shares one key:
+certificate that looks baked into the firmware. One house's WiNet-S and wallbox
+both print
+`84505e46778f2611df26ed1ad8a4e872945f7eb33e050e617c96a73add005b5b`; yours, the
+same or different, shows whether every dongle shares one key:
 
 ```bash
 python - <<'PY'
