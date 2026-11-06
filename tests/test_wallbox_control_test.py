@@ -528,3 +528,21 @@ async def test_a_setting_that_cannot_be_read_is_not_written() -> None:
     assert all(a != wct.PHASE_SETPOINT for a, _w in box.writes)
     assert "phase" in outcome.conditions["unreadable"]
     assert any(s.name == "phase" and s.verdict == wct.SKIPPED for s in outcome.steps)
+
+
+async def test_a_setting_of_0_is_not_written_over() -> None:
+    """Idle at gerd's the setting read 0; its meaning is not established."""
+    box = FakeWallbox(charging=False, setting=0)
+    outcome, _ = await _run(box)
+
+    assert box.writes == []
+    assert outcome.code == 2
+    assert "reads 0" in outcome.conditions["guard"]
+
+
+async def test_a_setting_of_0_still_allows_a_dry_run() -> None:
+    box = FakeWallbox(charging=False, setting=0)
+    outcome, _ = await _run(box, leave=False)
+
+    assert box.writes == []
+    assert outcome.code == 0

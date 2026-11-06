@@ -465,6 +465,15 @@ class WallboxControlTest:
         if self.options.max_amps <= 0:
             raise Guard(2, "max_amps must be positive")
 
+        # Measured idle at gerd's (2026-11-06): 0 with no car, where a charge
+        # read 160. What a 0 means -- no limit set, or nothing offered -- is not
+        # established, so it is not a value to restore after writing 6 A.
+        if setting == 0 and self.options.leave:
+            raise Guard(
+                2,
+                "the output current setting reads 0, whose meaning is not "
+                "established: run with a car charging, when it holds a current",
+            )
         rated_a = rated_word * SCALE_THIS_PROJECT
         first = setting * SCALE_THIS_PROJECT
         second = setting * SCALE_DISCUSSION_571

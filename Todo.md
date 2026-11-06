@@ -109,8 +109,8 @@ Structure:
    beside it, so it is not the setting's echo. What this changes: the restore
    would put back a 0 whose meaning (no limit set, or nothing offered) is not
    established, so step 4 should start with the car already charging, when
-   the setting holds a real current; and the procedure should refuse to write
-   when the setting reads 0 until that is understood. Not yet built.
+   the setting holds a real current. The procedure now refuses to write
+   when the setting reads 0 (code 2; a dry run still runs), tested.
 
    Done 2026-11-06, beyond step 1: the enable register (holding 21211:
    disabled on 0, the wallbox must say status 8, then enabled on 1) and the
