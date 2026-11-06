@@ -70,6 +70,8 @@ class FakeWallbox:
         enabled: int = 1,
         phase: int = 0,
         phase_follows: bool = True,
+        ignores_start_stop: bool = False,
+        ignores_enable: bool = False,
     ) -> None:
         """Set the wallbox up; every argument is a way for it to be different."""
         self.scale = scale
@@ -90,6 +92,8 @@ class FakeWallbox:
             wct.PHASE_SETPOINT: phase,
         }
         self.phase_follows = phase_follows
+        self.ignores_start_stop = ignores_start_stop
+        self.ignores_enable = ignores_enable
         self.fixed_phase = phase
         self.original = dict(self.holding)
         self.writes: list[tuple[int, int]] = []
@@ -99,11 +103,14 @@ class FakeWallbox:
 
     def _live(self) -> tuple[int, float]:
         """Return (status, amps the car draws) from what is set."""
-        if self.holding[wct.ENABLED] == wct.DISABLED_WORD:
+        if self.holding[wct.ENABLED] == wct.DISABLED_WORD and not self.ignores_enable:
             return wct.DISABLED_STATUS, 0.0
         if not self.charging:
             return 1, 0.0
-        if self.holding[wct.START_STOP] == wct.STOP_WORD:
+        if (
+            self.holding[wct.START_STOP] == wct.STOP_WORD
+            and not self.ignores_start_stop
+        ):
             return 5, 0.0
         scale = self.scale
         if self.until_first_write_reads_as is not None and not self.writes:
@@ -422,16 +429,20 @@ async def test_start_stop_is_not_run_by_default() -> None:
 
 
 async def test_start_stop_is_skipped_when_the_register_is_not_a_state() -> None:
-    """Reading 1 ("stop") while a car charges means it is not a state."""
-    box = FakeWallbox(start_stop=1)
-    # The fake stops the car when the register is 1, so make the car charge anyway.
-    box.charging = True
+    """Reading 1 ("stop") while a car charges means it is not a state.
+
+    Measured at gerd's: start/stop read 1 on a wallbox whose charge had
+    finished. A register that reads "stop" while the car charges cannot be
+    the start/stop state, so its polarity is unknown and it is not written.
+    """
+    box = FakeWallbox(start_stop=1, ignores_start_stop=True)
     outcome, _ = await _run(box, start_stop=True)
 
     assert all(a != wct.START_STOP for a, _w in box.writes)
-    assert any(s.verdict == wct.SKIPPED for s in outcome.steps) or (
-        outcome.code in (2, 3)
-    )
+    step = next(s for s in outcome.steps if s.name == "start/stop")
+    assert step.verdict == wct.SKIPPED
+    assert "polarity" in step.detail
+    assert outcome.code == 3
 
 
 def test_the_candidate_scales_are_typed_here_and_not_read_from_the_library() -> None:
@@ -546,3 +557,237 @@ async def test_a_setting_of_0_still_allows_a_dry_run() -> None:
 
     assert box.writes == []
     assert outcome.code == 0
+
+
+# -- the paths that decide whether a charger is left changed -----------------------
+
+
+def _refuse_the_nth_write_to(box: FakeWallbox, address: int, n: int) -> None:
+    """Refuse the n-th write to one address (1-based), as the device would."""
+    real = box.write
+    seen = {"count": 0}
+
+    async def write(at: int, word: int) -> None:
+        if at == address:
+            seen["count"] += 1
+            if seen["count"] == n:
+                raise ModbusExceptionError(4, "illegal data value")
+        await real(at, word)
+
+    box.write = write  # type: ignore[method-assign]
+
+
+async def test_a_model_name_that_cannot_be_read_is_code_1_and_nothing_is_written() -> (
+    None
+):
+    box = FakeWallbox()
+    real = box.read
+
+    async def read(space: str, address: int, count: int) -> list[int]:
+        if address == MODEL_NAME.address:
+            raise TimeoutError("no answer")
+        return await real(space, address, count)
+
+    box.read = read  # type: ignore[method-assign]
+    outcome, _ = await _run(box)
+
+    assert outcome.code == 1
+    assert box.writes == []
+
+
+async def test_a_wallbox_reporting_a_fault_is_left_alone() -> None:
+    box = FakeWallbox()
+    real = box._words
+
+    def words(space: str, address: int, count: int) -> list[int]:
+        if space == "input" and address == wct.CHARGING_STATUS_ADDRESS:
+            return [9]
+        return real(space, address, count)
+
+    box._words = words  # type: ignore[method-assign]
+    outcome, _ = await _run(box)
+
+    assert outcome.code == 2
+    assert box.writes == []
+
+
+@pytest.mark.parametrize("max_amps", [0.0, -1.0])
+async def test_a_cap_that_is_not_positive_is_refused(max_amps: float) -> None:
+    box = FakeWallbox()
+    outcome, _ = await _run(box, max_amps=max_amps)
+
+    assert outcome.code == 2
+    assert box.writes == []
+
+
+async def test_a_cap_below_the_lowest_step_writes_nothing() -> None:
+    box = FakeWallbox()
+    outcome, _ = await _run(box, max_amps=5.0)
+
+    assert outcome.code == 3
+    assert box.writes == []
+    assert any("below the lowest step" in s for s in outcome.unestablished)
+
+
+async def test_a_link_lost_mid_run_is_reported_and_the_restore_still_runs() -> None:
+    box = FakeWallbox()
+    real = box.read
+    reads = {"n": 0}
+
+    async def read(space: str, address: int, count: int) -> list[int]:
+        reads["n"] += 1
+        if reads["n"] == 12:  # after the first write
+            raise TimeoutError("the link dropped")
+        return await real(space, address, count)
+
+    box.read = read  # type: ignore[method-assign]
+    outcome, _ = await _run(box)
+
+    assert outcome.conditions["guard"] == "the wallbox stopped answering"
+    assert outcome.code in (3, 5)
+    assert box.holding == box.original
+
+
+async def test_a_car_that_limits_itself_leaves_the_scale_unsettled() -> None:
+    """Offered 6 A and up, a car that takes 3 A says nothing about the scale."""
+    box = FakeWallbox(car_max_a=3.0)
+    outcome, _ = await _run(box)
+
+    assert [s.verdict for s in outcome.steps] == [wct.INCONCLUSIVE] * 3
+    assert outcome.code == 3
+    assert any("did not settle the scale" in s for s in outcome.unestablished)
+    assert box.holding == box.original
+
+
+async def test_a_draw_that_cannot_separate_the_readings_is_said_so() -> None:
+    """A car drawing 1 A against a setting of 160 fits 16 A and 1.6 A alike."""
+    box = FakeWallbox(car_max_a=1.0)
+    outcome, _ = await _run(box, leave=False)
+
+    assert any("does not separate" in s for s in outcome.unestablished)
+    assert box.writes == []
+
+
+async def test_a_refused_stop_ends_the_step_and_nothing_is_left() -> None:
+    box = FakeWallbox()
+    _refuse_the_nth_write_to(box, wct.START_STOP, 1)
+    outcome, _ = await _run(box, start_stop=True)
+
+    step = next(s for s in outcome.steps if s.name == "stop")
+    assert step.verdict == wct.REFUSED
+    assert outcome.code == 3
+    assert box.holding == box.original
+
+
+async def test_a_refused_start_is_still_put_back_by_the_restore() -> None:
+    """Stopped, and the start refused: the restore writes the original 0 again."""
+    box = FakeWallbox()
+    _refuse_the_nth_write_to(box, wct.START_STOP, 2)
+    outcome, _ = await _run(box, start_stop=True)
+
+    step = next(s for s in outcome.steps if s.name == "start")
+    assert step.verdict == wct.REFUSED
+    assert box.holding[wct.START_STOP] == wct.START_WORD
+    assert all(row.restored for row in outcome.restores)
+
+
+async def test_a_wallbox_that_ignores_stop_is_inconclusive() -> None:
+    box = FakeWallbox(ignores_start_stop=True)
+    outcome, _ = await _run(box, start_stop=True)
+
+    step = next(s for s in outcome.steps if s.name == "start/stop")
+    assert step.verdict == wct.INCONCLUSIVE
+    assert outcome.code == 3
+
+
+async def test_start_stop_without_a_car_is_skipped() -> None:
+    box = FakeWallbox(charging=False)
+    outcome, _ = await _run(box, start_stop=True)
+
+    assert all(a != wct.START_STOP for a, _w in box.writes)
+    assert any(
+        s.name == "start/stop" and s.verdict == wct.SKIPPED for s in outcome.steps
+    )
+
+
+async def test_an_enable_register_that_cannot_be_read_is_not_written() -> None:
+    box = FakeWallbox(charging=False)
+    real = box.read
+
+    async def read(space: str, address: int, count: int) -> list[int]:
+        if space == "holding" and address == wct.ENABLED:
+            raise TimeoutError("no answer")
+        return await real(space, address, count)
+
+    box.read = read  # type: ignore[method-assign]
+    outcome, _ = await _run(box, enable=True)
+
+    assert all(a != wct.ENABLED for a, _w in box.writes)
+    assert any(s.name == "enable" and s.verdict == wct.SKIPPED for s in outcome.steps)
+
+
+async def test_a_refused_disable_ends_the_step() -> None:
+    box = FakeWallbox(charging=False)
+    _refuse_the_nth_write_to(box, wct.ENABLED, 1)
+    outcome, _ = await _run(box, enable=True)
+
+    step = next(s for s in outcome.steps if s.name == "disable")
+    assert step.verdict == wct.REFUSED
+    assert box.holding == box.original
+
+
+async def test_a_refused_re_enable_is_put_back_by_the_restore() -> None:
+    """The one that matters: a charge point left disabled would stop every charge."""
+    box = FakeWallbox(charging=False)
+    _refuse_the_nth_write_to(box, wct.ENABLED, 2)
+    outcome, _ = await _run(box, enable=True)
+
+    step = next(s for s in outcome.steps if s.name == "enable")
+    assert step.verdict == wct.REFUSED
+    assert box.holding[wct.ENABLED] == wct.ENABLED_WORD
+    assert all(row.restored for row in outcome.restores)
+
+
+async def test_a_wallbox_that_ignores_disable_is_inconclusive() -> None:
+    box = FakeWallbox(charging=False, ignores_enable=True)
+    outcome, _ = await _run(box, enable=True)
+
+    step = next(s for s in outcome.steps if s.name == "enable")
+    assert step.verdict == wct.INCONCLUSIVE
+    assert box.holding == box.original
+
+
+async def test_a_refused_phase_write_ends_the_step() -> None:
+    box = FakeWallbox(charging=False)
+    _refuse_the_nth_write_to(box, wct.PHASE_SETPOINT, 1)
+    outcome, _ = await _run(box, phase=True)
+
+    step = next(s for s in outcome.steps if s.name == "phase")
+    assert step.verdict == wct.REFUSED
+    assert box.holding == box.original
+
+
+async def test_a_restore_whose_check_read_fails_is_tried_again_and_reported() -> None:
+    """A restore is a statement about where the register is: no read, no claim."""
+    box = FakeWallbox()
+    real = box.read_fresh
+    state = {"restoring": False}
+    real_write = box.write
+
+    async def write(address: int, word: int) -> None:
+        if word == box.original.get(address) and box.writes:
+            state["restoring"] = True
+        await real_write(address, word)
+
+    async def read_fresh(space: str, address: int, count: int) -> list[int]:
+        if state["restoring"]:
+            raise TimeoutError("no answer")
+        return await real(space, address, count)
+
+    box.write = write  # type: ignore[method-assign]
+    box.read_fresh = read_fresh  # type: ignore[method-assign]
+    outcome, _ = await _run(box)
+
+    assert outcome.code == 5
+    assert outcome.not_restored
+    assert outcome.not_restored[0].attempts == wct.RESTORE_ATTEMPTS

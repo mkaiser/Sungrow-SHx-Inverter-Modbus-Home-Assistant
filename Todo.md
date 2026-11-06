@@ -51,7 +51,7 @@ Structure:
    factor ten on a mains charger. No wallbox control is built until a measured
    run settles it.
 
-   Built and tested (41 tests): the procedure,
+   Built and tested (59 tests, 99 % of the procedure): the procedure,
    `src/sungrow_modbus/wallbox/control_test.py`, and its terminal driver,
    `device-survey/scripts/python/sungrow_wallbox_control_test.py` (TLS 516,
    unit 248 only; no `--leave` is a dry run; `--enable`, `--phase`,
