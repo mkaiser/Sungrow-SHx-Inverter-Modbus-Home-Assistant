@@ -224,7 +224,7 @@
         "name": "Charging"
       },
       "wallbox_enabled": {
-        "name": "Enabled"
+        "name": "Charger enabled"
       },
       "weekend_discharge": {
         "name": "Weekend discharge"
@@ -412,7 +412,7 @@
         "name": "Battery level (nominal)"
       },
       "battery_max_cell_module": {
-        "name": "Highest cell module"
+        "name": "Module with highest cell"
       },
       "battery_max_cell_number": {
         "name": "Highest cell number"
@@ -436,7 +436,7 @@
         "name": "Battery max SoC"
       },
       "battery_min_cell_module": {
-        "name": "Lowest cell module"
+        "name": "Module with lowest cell"
       },
       "battery_min_cell_number": {
         "name": "Lowest cell number"
@@ -514,10 +514,10 @@
         "name": "Pack temperature"
       },
       "battery_pack_total_charge": {
-        "name": "Pack total charge energy"
+        "name": "Total pack charge energy"
       },
       "battery_pack_total_discharge": {
-        "name": "Pack total discharge energy"
+        "name": "Total pack discharge energy"
       },
       "battery_pack_voltage": {
         "name": "Pack voltage"
@@ -1033,7 +1033,7 @@
         "name": "Power factor"
       },
       "sg_power_limitation": {
-        "name": "Power limitation"
+        "name": "Power limit active"
       },
       "sg_power_limitation_setting": {
         "name": "Power limit"
@@ -1062,14 +1062,11 @@
       "sg_total_pv_generation": {
         "name": "Total PV generation"
       },
-      "sg_total_pv_generation_precise": {
-        "name": "Total PV generation (precise)"
-      },
       "sg_total_running_time": {
         "name": "Total running time"
       },
       "sg_work_state": {
-        "name": "Work state"
+        "name": "Running state"
       },
       "sungrow_arm_software": {
         "name": "ARM software version"
@@ -1162,7 +1159,7 @@
         "name": "Total site PV power"
       },
       "wallbox_available_current": {
-        "name": "Available current"
+        "name": "Offered charging current"
       },
       "wallbox_charging_power": {
         "name": "Charging power"
@@ -1177,7 +1174,7 @@
         "name": "Firmware version"
       },
       "wallbox_lifetime_energy": {
-        "name": "Lifetime energy"
+        "name": "Total charged energy"
       },
       "wallbox_maximum_charging_power": {
         "name": "Maximum charging power"
@@ -1186,22 +1183,22 @@
         "name": "Minimum charging power"
       },
       "wallbox_output_current_setting": {
-        "name": "Configured output current"
+        "name": "Charging current setpoint"
       },
       "wallbox_phase_a_current": {
-        "name": "Phase A current"
+        "name": "Phase A charging current"
       },
       "wallbox_phase_a_voltage": {
         "name": "Phase A voltage"
       },
       "wallbox_phase_b_current": {
-        "name": "Phase B current"
+        "name": "Phase B charging current"
       },
       "wallbox_phase_b_voltage": {
         "name": "Phase B voltage"
       },
       "wallbox_phase_c_current": {
-        "name": "Phase C current"
+        "name": "Phase C charging current"
       },
       "wallbox_phase_c_voltage": {
         "name": "Phase C voltage"
@@ -1210,7 +1207,7 @@
         "name": "Phase mode"
       },
       "wallbox_rated_current": {
-        "name": "Rated current"
+        "name": "Maximum charging current"
       },
       "wallbox_session_energy": {
         "name": "Session energy"

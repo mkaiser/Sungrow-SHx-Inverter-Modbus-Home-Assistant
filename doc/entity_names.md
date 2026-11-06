@@ -1,6 +1,6 @@
 # The entity names
 
-**333 entities** that modern mode can create (Hybrid inverter 193, SBR battery 34, Wallbox 21, SG string inverter 85).
+**332 entities** that modern mode can create (Hybrid inverter 193, SBR battery 34, Wallbox 21, SG string inverter 84).
 
 The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
@@ -46,7 +46,7 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
 |  |  | Run complete diagnosis and tests | Vollständige Diagnose und Tests ausführen | `button.sh10rt_run_complete_diagnosis_and_tests` |  |  |
-|  |  | Run read only diagnosis | Schreibgeschützte Diagnose ausführen | `button.sh10rt_run_read_only_diagnosis` |  |  |
+|  |  | Run read only diagnosis | Diagnose ausführen (nur lesend) | `button.sh10rt_run_read_only_diagnosis` |  |  |
 
 ### Backup power (12)
 
@@ -315,10 +315,8 @@ A device of its own under the inverter, named after the pack its capacity matche
 |  |  | Cell voltage spread | Zellspannungsdifferenz | `sensor.sbr096_cell_voltage_spread` |  | mV |
 |  |  | Coolest module | Kühlstes Modul | `sensor.sbr096_coolest_module` |  |  |
 |  |  | Coolest module temperature | Temperatur kühlstes Modul | `sensor.sbr096_coolest_module_temperature` |  | °C |
-|  |  | Highest cell module | Höchstes Zellmodul | `sensor.sbr096_highest_cell_module` |  |  |
 |  |  | Highest cell number | Höchste Zellnummer | `sensor.sbr096_highest_cell_number` |  |  |
 |  |  | Highest cell voltage | Höchste Zellspannung | `sensor.sbr096_highest_cell_voltage` |  | V |
-|  |  | Lowest cell module | Niedrigstes Zellmodul | `sensor.sbr096_lowest_cell_module` |  |  |
 |  |  | Lowest cell number | Niedrigste Zellnummer | `sensor.sbr096_lowest_cell_number` |  |  |
 |  |  | Lowest cell voltage | Niedrigste Zellspannung | `sensor.sbr096_lowest_cell_voltage` |  | V |
 |  |  | Module 1 highest cell voltage | Modul 1 höchste Zellspannung | `sensor.sbr096_module_1_highest_cell_voltage` |  | V |
@@ -337,13 +335,15 @@ A device of its own under the inverter, named after the pack its capacity matche
 |  |  | Module 7 lowest cell voltage | Modul 7 niedrigste Zellspannung | `sensor.sbr096_module_7_lowest_cell_voltage` |  | V |
 |  |  | Module 8 highest cell voltage | Modul 8 höchste Zellspannung | `sensor.sbr096_module_8_highest_cell_voltage` |  | V |
 |  |  | Module 8 lowest cell voltage | Modul 8 niedrigste Zellspannung | `sensor.sbr096_module_8_lowest_cell_voltage` |  | V |
+|  |  | Module with highest cell | Modul mit höchster Zelle | `sensor.sbr096_module_with_highest_cell` |  |  |
+|  |  | Module with lowest cell | Modul mit niedrigster Zelle | `sensor.sbr096_module_with_lowest_cell` |  |  |
 |  |  | Pack current | Packstrom | `sensor.sbr096_pack_current` |  | A |
 |  |  | Pack level | Pack-Ladestand | `sensor.sbr096_pack_level` |  | % |
 |  |  | Pack state of health | Pack-Gesundheitszustand | `sensor.sbr096_pack_state_of_health` |  | % |
 |  |  | Pack temperature | Packtemperatur | `sensor.sbr096_pack_temperature` |  | °C |
-|  |  | Pack total charge energy | Gesamte Pack-Ladeenergie | `sensor.sbr096_pack_total_charge_energy` |  | kWh |
-|  |  | Pack total discharge energy | Gesamte Pack-Entladeenergie | `sensor.sbr096_pack_total_discharge_energy` |  | kWh |
 |  |  | Pack voltage | Packspannung | `sensor.sbr096_pack_voltage` |  | V |
+|  |  | Total pack charge energy | Gesamte Pack-Ladeenergie | `sensor.sbr096_total_pack_charge_energy` |  | kWh |
+|  |  | Total pack discharge energy | Gesamte Pack-Entladeenergie | `sensor.sbr096_total_pack_discharge_energy` |  | kWh |
 |  |  | Warmest module | Wärmstes Modul | `sensor.sbr096_warmest_module` |  |  |
 |  |  | Warmest module temperature | Temperatur wärmstes Modul | `sensor.sbr096_warmest_module_temperature` |  | °C |
 
@@ -355,33 +355,33 @@ A device of its own under the inverter, named after the model it reports, `Wallb
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
-|  |  | Available current | Ladestromgrenze | `sensor.ac22e_01_available_current` |  | A |
+|  |  | Charger enabled | Ladestation aktiviert | `binary_sensor.ac22e_01_charger_enabled` |  |  |
 |  |  | Charging | Lädt | `binary_sensor.ac22e_01_charging` |  |  |
+|  |  | Charging current setpoint | Ladestrom-Sollwert | `sensor.ac22e_01_charging_current_setpoint` |  | A |
 |  |  | Charging power | Ladeleistung | `sensor.ac22e_01_charging_power` |  | W |
 |  |  | Charging status | Ladestatus | `sensor.ac22e_01_charging_status` |  |  |
-|  |  | Configured output current | Eingestellter Ausgangsstrom | `sensor.ac22e_01_configured_output_current` |  | A |
 |  |  | Control pilot voltage | Control-Pilot-Spannung | `sensor.ac22e_01_control_pilot_voltage` |  | V |
-|  |  | Enabled | Aktiviert | `binary_sensor.ac22e_01_enabled` |  |  |
 |  |  | Firmware version | Firmware-Version | `sensor.ac22e_01_firmware_version` |  |  |
-|  |  | Lifetime energy | Gesamtenergie | `sensor.ac22e_01_lifetime_energy` |  | Wh |
+|  |  | Maximum charging current | Maximaler Ladestrom | `sensor.ac22e_01_maximum_charging_current` |  | A |
 |  |  | Maximum charging power | Maximale Ladeleistung | `sensor.ac22e_01_maximum_charging_power` |  | W |
 |  |  | Minimum charging power | Minimale Ladeleistung | `sensor.ac22e_01_minimum_charging_power` |  | W |
-|  |  | Phase A current | Phase A Strom | `sensor.ac22e_01_phase_a_current` |  | A |
+|  |  | Offered charging current | Freigegebener Ladestrom | `sensor.ac22e_01_offered_charging_current` |  | A |
+|  |  | Phase A charging current | Ladestrom Phase A | `sensor.ac22e_01_phase_a_charging_current` |  | A |
 |  |  | Phase A voltage | Phase A Spannung | `sensor.ac22e_01_phase_a_voltage` |  | V |
-|  |  | Phase B current | Phase B Strom | `sensor.ac22e_01_phase_b_current` |  | A |
+|  |  | Phase B charging current | Ladestrom Phase B | `sensor.ac22e_01_phase_b_charging_current` |  | A |
 |  |  | Phase B voltage | Phase B Spannung | `sensor.ac22e_01_phase_b_voltage` |  | V |
-|  |  | Phase C current | Phase C Strom | `sensor.ac22e_01_phase_c_current` |  | A |
+|  |  | Phase C charging current | Ladestrom Phase C | `sensor.ac22e_01_phase_c_charging_current` |  | A |
 |  |  | Phase C voltage | Phase C Spannung | `sensor.ac22e_01_phase_c_voltage` |  | V |
 |  |  | Phase mode | Phasenmodus | `sensor.ac22e_01_phase_mode` |  |  |
-|  |  | Rated current | Nennstrom | `sensor.ac22e_01_rated_current` |  | A |
 |  |  | Session energy | Energie der Ladesitzung | `sensor.ac22e_01_session_energy` |  | Wh |
 |  |  | Start mode | Startmodus | `sensor.ac22e_01_start_mode` |  |  |
+|  |  | Total charged energy | Gesamte Ladeenergie | `sensor.ac22e_01_total_charged_energy` |  | Wh |
 
-## SG string inverter (85)
+## SG string inverter (84)
 
 An entry of its own, never beside a hybrid. Trackers and phases exist only where the model serves them, so this is every one a model can have. Ids shown for `SG5.0RS`.
 
-### Everything (85)
+### Everything (84)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -457,11 +457,11 @@ An entry of its own, never beside a hybrid. Trackers and phases exist only where
 | C-A line Voltage/phase C Voltage (5021) |  | Phase C voltage | Phase C Spannung | `sensor.sg5_0rs_phase_c_voltage` |  | V |
 | Power factor (5035) |  | Power factor | Leistungsfaktor | `sensor.sg5_0rs_power_factor` |  |  |
 | Power limitation setting (5008) |  | Power limit | Leistungsgrenze | `sensor.sg5_0rs_power_limit` |  | % |
-|  |  | Power limitation | Leistungsbegrenzung | `sensor.sg5_0rs_power_limitation` |  |  |
+|  |  | Power limit active | Leistungsgrenze aktiv | `sensor.sg5_0rs_power_limit_active` |  |  |
 | Total reactive power (5033) |  | Reactive power | Blindleistung | `sensor.sg5_0rs_reactive_power` |  | var |
-|  |  | Run read only diagnosis | Schreibgeschützte Diagnose ausführen | `button.sg5_0rs_run_read_only_diagnosis` |  |  |
-| Total power yields (5004) |  | Total PV generation | Gesamte PV-Erzeugung | `sensor.sg5_0rs_total_pv_generation` |  | kWh |
-| Total power yields (5144) |  | Total PV generation (precise) | Gesamte PV-Erzeugung (genau) | `sensor.sg5_0rs_total_pv_generation_precise` |  | kWh |
+|  |  | Run read only diagnosis | Diagnose ausführen (nur lesend) | `button.sg5_0rs_run_read_only_diagnosis` |  |  |
+|  |  | Running state | Betriebszustand | `sensor.sg5_0rs_running_state` |  |  |
+| Total power yields (5144) |  | Total PV generation | Gesamte PV-Erzeugung | `sensor.sg5_0rs_total_pv_generation` |  | kWh |
 | Total DC power (5017) |  | Total PV input power | Gesamte PV-Eingangsleistung | `sensor.sg5_0rs_total_pv_input_power` |  | W |
 | Total active power (5031) |  | Total active power | Gesamte Wirkleistung | `sensor.sg5_0rs_total_active_power` |  | W |
 | Total apparent power (5009) |  | Total apparent power | Gesamte Scheinleistung | `sensor.sg5_0rs_total_apparent_power` |  | VA |
@@ -469,7 +469,6 @@ An entry of its own, never beside a hybrid. Trackers and phases exist only where
 | Total export energy (5095) |  | Total exported energy | Gesamt eingespeiste Energie | `sensor.sg5_0rs_total_exported_energy` |  | kWh |
 | Total import energy (5099) |  | Total imported energy | Gesamt bezogene Energie | `sensor.sg5_0rs_total_imported_energy` |  | kWh |
 | Total running time (5006) |  | Total running time | Gesamte Laufzeit | `sensor.sg5_0rs_total_running_time` |  | h |
-|  |  | Work state | Arbeitszustand | `sensor.sg5_0rs_work_state` |  |  |
 
 ## Legacy mode only (21)
 

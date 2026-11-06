@@ -49,8 +49,10 @@ def _sensor(
     state_class: SensorStateClass | None = SensorStateClass.MEASUREMENT,
     *,
     category: EntityCategory | None = None,
+    key: str | None = None,
 ) -> SungrowSensorDescription:
-    key = f"{PREFIX}{field}"
+    """Describe one value; `key` names it where it is not the field's name."""
+    key = f"{PREFIX}{key or field}"
     return SungrowSensorDescription(
         key=key,
         component=component,
@@ -63,7 +65,9 @@ def _sensor(
     )
 
 
-def _energy(component: str, field: str) -> SungrowSensorDescription:
+def _energy(
+    component: str, field: str, *, key: str | None = None
+) -> SungrowSensorDescription:
     """Describe a meter that only climbs, or resets at midnight or month end.
 
     `total_increasing` for both: a daily total's reset is exactly the reset
@@ -75,6 +79,7 @@ def _energy(component: str, field: str) -> SungrowSensorDescription:
         SensorDeviceClass.ENERGY,
         UnitOfEnergy.KILO_WATT_HOUR,
         SensorStateClass.TOTAL_INCREASING,
+        key=key,
     )
 
 
@@ -176,9 +181,10 @@ STRING_INVERTER_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
     *_phase("c"),
     # -- what it has made ---------------------------------------------------
     _energy("sg_realtime", "daily_pv_generation"),
-    _energy("sg_realtime", "total_pv_generation"),
+    # One lifetime total, from 5144 in 0.1 kWh rather than 5004 in whole kWh,
+    # which steps the Energy dashboard's hourly bars by a kWh at a time.
+    _energy("sg_precision", "total_pv_generation_precise", key="total_pv_generation"),
     _energy("sg_trackers", "monthly_pv_generation"),
-    _energy("sg_precision", "total_pv_generation_precise"),
     _sensor(
         "sg_realtime",
         "total_running_time",

@@ -393,7 +393,7 @@ and bold are kept.
 >
 > Alles hier ist optional, und ein leeres Feld ist ehrlich: Es hält fest, dass die Frage nicht beantwortet wurde, was etwas anderes ist, als mit „Ich weiß es nicht“ zu antworten. Du kannst alles später unter den Optionen der Integration ändern.
 >
-> Drücke danach auf der Geräteseite **Schreibgeschützte Diagnose ausführen**.
+> Drücke danach auf der Geräteseite **Diagnose ausführen (nur lesend)**.
 
 ### `config.step.testimony.data.reporter`
 
@@ -626,7 +626,7 @@ and bold are kept.
 
 > **DE** **Die Einrichtung ist abgeschlossen, und es wurde noch nichts gelesen.** Zwei weitere Schritte, beide auf der Geräteseite, die dieser Dialog gleich anzeigt:
 >
-> 1. Drücke **Schreibgeschützte Diagnose ausführen** unter *Diagnose*. Sie liest und schreibt nie. Am Kabel ist sie mit dem Registerdurchlauf in ein paar Minuten fertig; über ein VPN kann es deutlich länger dauern, und die drei Sensoren neben der Schaltfläche zeigen, wie weit sie ist und was sie liest.
+> 1. Drücke **Diagnose ausführen (nur lesend)** unter *Diagnose*. Sie liest und schreibt nie. Am Kabel ist sie mit dem Registerdurchlauf in ein paar Minuten fertig; über ein VPN kann es deutlich länger dauern, und die drei Sensoren neben der Schaltfläche zeigen, wie weit sie ist und was sie liest.
 > 2. Öffne danach **Benachrichtigungen** in der Seitenleiste – das Abzeichen unten links. Die Benachrichtigung dort enthält eine Zusammenfassung und einen Link **Dokument herunterladen**. Dieser Link ist die JSON-Datei, die du uns schicken sollst, und er funktioniert nach einer Stunde nicht mehr.
 >
 > Verpasst, oder erst am nächsten Tag zurück? **Diagnose herunterladen** auf derselben Geräteseite enthält dasselbe Dokument und läuft nie ab. Schicke eines davon an [das Diagnose-Issue]({survey_issue_url}).
@@ -1191,7 +1191,7 @@ and bold are kept.
 
 > **EN** Which registers an inverter answers is measured, not looked up, and a reading from yours is what improves support for it. {measured} Everything below is optional and answers what no register can; an empty field records that the question was not answered. Saving keeps your answers. To run the survey, press Run read only diagnosis on the device page: it reads and never writes, and replaces the serial number with a stand-in.
 
-> **DE** Welche Register ein Wechselrichter beantwortet, wird gemessen, nicht nachgeschlagen, und eine Messung von deinem verbessert die Unterstützung dafür. {measured} Alles unten ist optional und beantwortet, was kein Register kann; ein leeres Feld hält fest, dass die Frage nicht beantwortet wurde. Speichern behält deine Antworten. Um die Diagnose auszuführen, drücke auf der Geräteseite Schreibgeschützte Diagnose ausführen: Sie liest und schreibt nie und ersetzt die Seriennummer durch einen Platzhalter.
+> **DE** Welche Register ein Wechselrichter beantwortet, wird gemessen, nicht nachgeschlagen, und eine Messung von deinem verbessert die Unterstützung dafür. {measured} Alles unten ist optional und beantwortet, was kein Register kann; ein leeres Feld hält fest, dass die Frage nicht beantwortet wurde. Speichern behält deine Antworten. Um die Diagnose auszuführen, drücke auf der Geräteseite Diagnose ausführen (nur lesend): Sie liest und schreibt nie und ersetzt die Seriennummer durch einen Platzhalter.
 
 ### `options.step.init.sections.survey.data.reporter`
 
@@ -1582,7 +1582,7 @@ and bold are kept.
 
 > **EN** Run read only diagnosis
 
-> **DE** Schreibgeschützte Diagnose ausführen
+> **DE** Diagnose ausführen (nur lesend)
 
 ### `services.run_survey.description`
 

@@ -139,12 +139,28 @@ def test_every_description_names_a_field_that_exists(description) -> None:
     device = SungrowStringInverter(MockModbusConnection().for_unit(1))
     assert description.field in device.field_names
     assert not description.field.endswith("_raw"), "the decoded property, not the code"
-    # A tracker's energy integrates its power, so the two share a field.
-    expected = description.field.replace("_power", "_energy")
-    assert (
-        description.key
-        == f"sg_{expected if description.integrated else description.field}"
-    )
+    if description.field in RENAMED:
+        expected = RENAMED[description.field]
+    elif description.integrated:
+        # A tracker's energy integrates its power, so the two share a field.
+        expected = description.field.replace("_power", "_energy")
+    else:
+        expected = description.field
+    assert description.key == f"sg_{expected}"
+
+
+#: Fields whose entity is named for something other than the field: the one
+#: lifetime total reads 5144, in 0.1 kWh, under the plain name.
+RENAMED = {"total_pv_generation_precise": "total_pv_generation"}
+
+
+def test_there_is_one_lifetime_total() -> None:
+    keys = [d.key for d in STRING_INVERTER_DESCRIPTIONS]
+    fields = {d.key: d.field for d in STRING_INVERTER_DESCRIPTIONS}
+    assert [k for k in keys if k.startswith("sg_total_pv_generation")] == [
+        "sg_total_pv_generation"
+    ]
+    assert fields["sg_total_pv_generation"] == "total_pv_generation_precise"
 
 
 async def test_an_sg_entry_is_its_own_device_with_only_what_answered(
@@ -167,14 +183,14 @@ async def test_an_sg_entry_is_its_own_device_with_only_what_answered(
         assert f"{SERIAL}_sg_{absent}" not in ids, "unavailable or refused"
     assert all(unique_id.startswith(f"{SERIAL}_sg_") for unique_id in ids)
     assert hass.states.get("sensor.sg5_0rs_total_pv_input_power").state == "1890"
-    assert hass.states.get("sensor.sg5_0rs_work_state").state == "run"
+    assert hass.states.get("sensor.sg5_0rs_running_state").state == "run"
     assert hass.states.get("binary_sensor.sg5_0rs_fault_reported").state == "off"
 
 
 async def test_a_fault_code_reports_a_fault(hass: HomeAssistant) -> None:
     await _setup(hass, words={**SG_INPUT, 5037: 0x5500})
 
-    assert hass.states.get("sensor.sg5_0rs_work_state").state == "fault"
+    assert hass.states.get("sensor.sg5_0rs_running_state").state == "fault"
     assert hass.states.get("binary_sensor.sg5_0rs_fault_reported").state == "on"
 
 

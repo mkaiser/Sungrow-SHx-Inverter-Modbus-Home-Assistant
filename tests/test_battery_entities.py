@@ -225,7 +225,7 @@ async def test_the_pack_reports_what_it_read(
     assert float(one("highest_cell_voltage")) == pytest.approx(3.3507)
     # The unpacked halves: 260 is 0x0104, so module 1 and cell 4 -- and the
     # reading that proves the encoding is in `SbrBatteryCells`.
-    assert int(float(one("highest_cell_module"))) == 1
+    assert int(float(one("module_with_highest_cell"))) == 1
     assert int(float(one("highest_cell_number"))) == 4
 
 

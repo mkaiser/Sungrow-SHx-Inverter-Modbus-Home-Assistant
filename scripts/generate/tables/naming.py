@@ -111,8 +111,8 @@ OVERRIDES: dict[str, str] = {
     "battery_pack_temperature": "Pack temperature",
     "battery_pack_level": "Pack level",
     "battery_pack_state_of_health": "Pack state of health",
-    "battery_pack_total_charge": "Pack total charge energy",
-    "battery_pack_total_discharge": "Pack total discharge energy",
+    "battery_pack_total_charge": "Total pack charge energy",
+    "battery_pack_total_discharge": "Total pack discharge energy",
     # Highest and lowest rather than max and min, because these are readings
     # and not limits -- the inverter's "Battery max SoC" is a setting, and
     # reusing its word here would blur that. Warmest and coolest for the same
@@ -124,9 +124,9 @@ OVERRIDES: dict[str, str] = {
     "battery_min_module_temperature": "Coolest module temperature",
     # The unpacked halves of the position words. `(module << 8) | cell`, so
     # each word becomes two entities -- see `SbrBatteryCells`.
-    "battery_max_cell_module": "Highest cell module",
+    "battery_max_cell_module": "Module with highest cell",
     "battery_max_cell_number": "Highest cell number",
-    "battery_min_cell_module": "Lowest cell module",
+    "battery_min_cell_module": "Module with lowest cell",
     "battery_min_cell_number": "Lowest cell number",
     "battery_max_module_temperature_module": "Warmest module",
     "battery_min_module_temperature_module": "Coolest module",
@@ -148,35 +148,35 @@ OVERRIDES: dict[str, str] = {
     # to get out of the inverter's way.
     "wallbox_charging_power": "Charging power",
     "wallbox_session_energy": "Session energy",
-    "wallbox_lifetime_energy": "Lifetime energy",
+    "wallbox_lifetime_energy": "Total charged energy",
     "wallbox_charging_status": "Charging status",
     "wallbox_phase_a_voltage": "Phase A voltage",
-    "wallbox_phase_a_current": "Phase A current",
+    "wallbox_phase_a_current": "Phase A charging current",
     "wallbox_phase_b_voltage": "Phase B voltage",
-    "wallbox_phase_b_current": "Phase B current",
+    "wallbox_phase_b_current": "Phase B charging current",
     "wallbox_phase_c_voltage": "Phase C voltage",
-    "wallbox_phase_c_current": "Phase C current",
-    "wallbox_available_current": "Available current",
+    "wallbox_phase_c_current": "Phase C charging current",
+    "wallbox_available_current": "Offered charging current",
     # The Type 2 signalling line. Named for what it is rather than for what
     # it tells you, because what it tells you is a table: 12 V nothing
     # plugged in, 9 V connected and idle, 6 V charging.
     "wallbox_control_pilot_voltage": "Control pilot voltage",
     "wallbox_start_mode": "Start mode",
-    "wallbox_rated_current": "Rated current",
+    "wallbox_rated_current": "Maximum charging current",
     "wallbox_maximum_charging_power": "Maximum charging power",
     "wallbox_minimum_charging_power": "Minimum charging power",
     "wallbox_phase_mode": "Phase mode",
     "wallbox_firmware_version": "Firmware version",
-    # "Output current setting" was the first name and it trips the `-ing`
-    # rule on "setting" -- a noun there, not a present participle. Renamed
-    # rather than exempted: the rule is a good one, a narrow exception would
-    # weaken it for a name nobody prefers, and "configured" says the same
-    # thing without the argument.
-    "wallbox_output_current_setting": "Configured output current",
+    # Four currents, named by who limits them: the hardware's maximum
+    # (21263), the setpoint the owner or an EMS writes (21203), what the
+    # wallbox offers the car -- the lower of the two, IEC 61851's word
+    # (21322) -- and what the car draws per phase. "Setpoint" rather than
+    # "setting", which would trip the `-ing` rule.
+    "wallbox_output_current_setting": "Charging current setpoint",
     # `-ing` on a binary sensor, which is what the convention reserves it
     # for: something happening right now.
     "wallbox_charging": "Charging",
-    "wallbox_enabled": "Enabled",
+    "wallbox_enabled": "Charger enabled",
     # -- an SG string inverter, the entry's own inverter ------------------
     #
     # No legacy name either: the YAML package never read an SG. Named as the
@@ -191,7 +191,7 @@ OVERRIDES: dict[str, str] = {
     "sg_power_factor": "Power factor",
     "sg_grid_frequency": "Grid frequency",
     "sg_inverter_temperature": "Device temperature",
-    "sg_work_state": "Work state",
+    "sg_work_state": "Running state",
     "sg_mppt1_voltage": "MPPT1 voltage",
     "sg_mppt1_current": "MPPT1 current",
     "sg_mppt2_voltage": "MPPT2 voltage",
@@ -207,7 +207,6 @@ OVERRIDES: dict[str, str] = {
     "sg_daily_pv_generation": "Daily PV generation",
     "sg_total_pv_generation": "Total PV generation",
     "sg_monthly_pv_generation": "Monthly PV generation",
-    "sg_total_pv_generation_precise": "Total PV generation (precise)",
     "sg_total_running_time": "Total running time",
     "sg_daily_running_time": "Daily running time",
     "sg_meter_active_power": "Meter active power",
@@ -249,7 +248,7 @@ OVERRIDES: dict[str, str] = {
     "sg_fault_reported": "Fault reported",
     "sg_negative_voltage_to_ground": "Negative voltage to ground",
     "sg_bus_voltage": "Bus voltage",
-    "sg_power_limitation": "Power limitation",
+    "sg_power_limitation": "Power limit active",
     "sg_power_limitation_setting": "Power limit",
     # -- corrections for a generator the inverter cannot see --------------
     #
@@ -636,11 +635,11 @@ GERMAN: dict[str, str] = {
     "pv_power_limitation_enabled": "PV-Leistungsbegrenzung",
     "sg_fault_reported": "Fehler gemeldet",
     "wallbox_charging": "Lädt",
-    "wallbox_enabled": "Aktiviert",
+    "wallbox_enabled": "Ladestation aktiviert",
     "weekend_discharge": "Entladung am Wochenende",
     # -- the survey -------------------------------------------------------
     "run_control_test": "Vollständige Diagnose und Tests ausführen",
-    "run_survey": "Schreibgeschützte Diagnose ausführen",
+    "run_survey": "Diagnose ausführen (nur lesend)",
     "survey_finished": "Diagnose beendet",
     "survey_progress": "Diagnosefortschritt",
     "survey_step": "Diagnoseschritt",
@@ -795,12 +794,12 @@ GERMAN: dict[str, str] = {
     "bms_max_discharging_current": "BMS maximaler Entladestrom",
     # -- the SBR pack, which is its own device ----------------------------
     "battery_cell_voltage_spread": "Zellspannungsdifferenz",
-    "battery_max_cell_module": "Höchstes Zellmodul",
+    "battery_max_cell_module": "Modul mit höchster Zelle",
     "battery_max_cell_number": "Höchste Zellnummer",
     "battery_max_cell_voltage": "Höchste Zellspannung",
     "battery_max_module_temperature": "Temperatur wärmstes Modul",
     "battery_max_module_temperature_module": "Wärmstes Modul",
-    "battery_min_cell_module": "Niedrigstes Zellmodul",
+    "battery_min_cell_module": "Modul mit niedrigster Zelle",
     "battery_min_cell_number": "Niedrigste Zellnummer",
     "battery_min_cell_voltage": "Niedrigste Zellspannung",
     "battery_min_module_temperature": "Temperatur kühlstes Modul",
@@ -873,23 +872,23 @@ GERMAN: dict[str, str] = {
     "weekend_discharge_window_1": "Entladefenster Wochenende 1",
     "weekend_discharge_window_2": "Entladefenster Wochenende 2",
     # -- the wallbox, which is its own device -----------------------------
-    "wallbox_available_current": "Ladestromgrenze",
+    "wallbox_available_current": "Freigegebener Ladestrom",
     "wallbox_charging_power": "Ladeleistung",
     "wallbox_charging_status": "Ladestatus",
     "wallbox_control_pilot_voltage": "Control-Pilot-Spannung",
     "wallbox_firmware_version": "Firmware-Version",
-    "wallbox_lifetime_energy": "Gesamtenergie",
+    "wallbox_lifetime_energy": "Gesamte Ladeenergie",
     "wallbox_maximum_charging_power": "Maximale Ladeleistung",
     "wallbox_minimum_charging_power": "Minimale Ladeleistung",
-    "wallbox_output_current_setting": "Eingestellter Ausgangsstrom",
-    "wallbox_phase_a_current": "Phase A Strom",
+    "wallbox_output_current_setting": "Ladestrom-Sollwert",
+    "wallbox_phase_a_current": "Ladestrom Phase A",
     "wallbox_phase_a_voltage": "Phase A Spannung",
-    "wallbox_phase_b_current": "Phase B Strom",
+    "wallbox_phase_b_current": "Ladestrom Phase B",
     "wallbox_phase_b_voltage": "Phase B Spannung",
-    "wallbox_phase_c_current": "Phase C Strom",
+    "wallbox_phase_c_current": "Ladestrom Phase C",
     "wallbox_phase_c_voltage": "Phase C Spannung",
     "wallbox_phase_mode": "Phasenmodus",
-    "wallbox_rated_current": "Nennstrom",
+    "wallbox_rated_current": "Maximaler Ladestrom",
     "wallbox_session_energy": "Energie der Ladesitzung",
     "wallbox_start_mode": "Startmodus",
     # -- an SG string inverter --------------------------------------------
@@ -924,7 +923,7 @@ GERMAN: dict[str, str] = {
         for quantity, german in (("current", "Strom"), ("voltage", "Spannung"))
     },
     "sg_power_factor": "Leistungsfaktor",
-    "sg_power_limitation": "Leistungsbegrenzung",
+    "sg_power_limitation": "Leistungsgrenze aktiv",
     "sg_power_limitation_setting": "Leistungsgrenze",
     "sg_reactive_power": "Blindleistung",
     "sg_total_active_power": "Gesamte Wirkleistung",
@@ -934,9 +933,8 @@ GERMAN: dict[str, str] = {
     "sg_total_exported_energy": "Gesamt eingespeiste Energie",
     "sg_total_imported_energy": "Gesamt bezogene Energie",
     "sg_total_pv_generation": "Gesamte PV-Erzeugung",
-    "sg_total_pv_generation_precise": "Gesamte PV-Erzeugung (genau)",
     "sg_total_running_time": "Gesamte Laufzeit",
-    "sg_work_state": "Arbeitszustand",
+    "sg_work_state": "Betriebszustand",
 }
 
 #: A word in an English name, and the German stem the name must then contain,
