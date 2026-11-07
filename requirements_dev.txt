@@ -26,6 +26,7 @@ pymodbus==3.13.1
 PyYAML>=6.0
 pytest>=8.0
 pytest-asyncio>=0.24
+pytest-cov  # CI runs the suite with --cov; pytest-homeassistant does not bring it
 pytest-homeassistant
 
 # Tooling.
