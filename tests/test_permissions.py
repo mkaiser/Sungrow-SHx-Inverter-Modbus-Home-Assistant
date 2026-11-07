@@ -34,7 +34,7 @@ from unittest.mock import patch
 
 from modbus_connection.mock import MockModbusConnection, MockModbusUnit
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry, MockUser
+from pytest_homeassistant.common import MockConfigEntry, MockUser
 
 from custom_components.sungrow_modbus.const import (
     AUDIENCE_USERS,

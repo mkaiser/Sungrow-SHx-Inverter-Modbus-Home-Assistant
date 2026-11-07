@@ -14,7 +14,7 @@ import json
 from unittest.mock import patch
 
 from modbus_connection.mock import MockModbusUnit
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.sungrow_modbus.const import CONF_UNIT_ID, DOMAIN
 from custom_components.sungrow_modbus.download import URL, async_download_url

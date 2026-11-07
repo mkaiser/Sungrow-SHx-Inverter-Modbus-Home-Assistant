@@ -364,8 +364,8 @@ instance is a symlink into this repository.
 Home Assistant 2026.11 builds HACS in as **Settings → Marketplace**, and the
 HACS installer stops there. `make marketplace` (`hacs_testbed.sh
 --marketplace`) is the same testbed for it: Home Assistant 2026.11 from a
-venv of its own, `.venv-marketplace/` (the dev environment is held at the
-version `pytest-homeassistant-custom-component` supports), against
+venv of its own, `.venv-marketplace/` (apart from the dev environment, so a
+testbed's installs never reach it), against
 `config-marketplace/` on :8126, with nothing downloaded.
 
 ```console

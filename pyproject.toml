@@ -107,3 +107,6 @@ fail_under = 93
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+# Home Assistant aliases httpx on import; respx's own plugin must not load first.
+addopts = "-p no:respx"

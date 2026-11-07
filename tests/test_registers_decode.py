@@ -17,6 +17,7 @@ from pathlib import Path
 
 from modbus_connection.mock import MockModbusConnection
 import pytest
+import pytest_asyncio
 
 from custom_components.sungrow_modbus.sensor_descriptions import SENSOR_DESCRIPTIONS
 from sungrow_modbus import TIER_COMPONENTS, SungrowInverter
@@ -27,6 +28,9 @@ SEED = (
     / "dev"
     / "simulator_registers.json"
 )
+
+# One event loop for the module, so the module-scoped `polled` can be awaited.
+pytestmark = pytest.mark.asyncio(loop_scope="module")
 
 
 @pytest.fixture(scope="module")
@@ -39,7 +43,7 @@ def inverter() -> SungrowInverter:
     return SungrowInverter(unit)
 
 
-@pytest.fixture(scope="module")
+@pytest_asyncio.fixture(scope="module", loop_scope="module")
 async def polled(inverter: SungrowInverter) -> SungrowInverter:
     """Return the same inverter, with every tier read once."""
     await inverter.async_update_identity()

@@ -43,14 +43,14 @@ from datetime import datetime, timedelta
 from freezegun import freeze_time
 from freezegun.api import FrozenDateTimeFactory
 import pytest
-from pytest_homeassistant_custom_component.components.recorder.common import (
+from pytest_homeassistant.components.recorder.common import (
     async_recorder_block_till_done,
     async_wait_recording_done,
     do_adhoc_statistics,
     get_start_time,
     statistics_during_period,
 )
-from pytest_homeassistant_custom_component.typing import RecorderInstanceContextManager
+from pytest_homeassistant.typing import RecorderInstanceContextManager
 from sqlalchemy import select
 
 from homeassistant.components.recorder import Recorder, get_instance, history

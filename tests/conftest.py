@@ -9,8 +9,6 @@ from unittest.mock import patch
 from modbus_connection.mock import MockModbusConnection, MockModbusUnit
 import pytest
 
-pytest_plugins = ["pytest_homeassistant_custom_component"]
-
 SERIAL = "A123456789"
 
 

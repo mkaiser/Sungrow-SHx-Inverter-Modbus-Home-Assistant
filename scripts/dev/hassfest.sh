@@ -3,11 +3,12 @@
 # does, before tagging.
 #
 # Current core's hassfest is built against current core: it imports symbols
-# Home Assistant 2026.10 does not have (`LORAWAN_SCHEMA`), so it cannot run in
-# the dev environment, which is held at the version the test plugin supports.
-# It runs in `.venv-marketplace/` instead, the Home Assistant 2026.11 venv that
-# `make marketplace` also uses, created here when missing. Its two extra
-# dependencies, tqdm and ruff, go into that venv, never into the dev one.
+# an older Home Assistant does not have (`LORAWAN_SCHEMA`), and the dev
+# environment follows the version core's test package, `pytest-homeassistant`,
+# is released for, which can lag. It runs in `.venv-marketplace/` instead, the
+# Home Assistant 2026.11 venv that `make marketplace` also uses, created here
+# when missing. Its two extra dependencies, tqdm and ruff, go into that venv,
+# never into the dev one.
 #
 # What it needs from core is read from the reference clone (`make refs`):
 # hassfest itself, the `packages/hassfest` library, and the strings that say

@@ -15,7 +15,7 @@ from unittest.mock import patch
 from modbus_connection import ModbusError
 from modbus_connection.mock import MockModbusUnit
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.sungrow_modbus.const import CONF_UNIT_ID, DOMAIN
 from homeassistant.components.number import (

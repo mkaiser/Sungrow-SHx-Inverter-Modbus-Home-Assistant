@@ -371,13 +371,15 @@ class SungrowSubDeviceCoordinator(
         via = self.config_entry.runtime_data.inverter_device_id
         # Passed to the constructor, never set by key: from 2026.11
         # `DeviceInfo` is a dataclass, and item access on it is deprecated.
+        # Left out, not None, when there is no inverter device to hang it on.
+        via_device: dict[str, Any] = {} if via is None else {"via_device_id": via}
         return dr.DeviceInfo(
             identifiers={(DOMAIN, f"{serial}-{self.kind}")},
             manufacturer=MANUFACTURER,
             model=model or label,
             name=model or label,
             serial_number=self.own_serial,
-            **({"via_device_id": via} if via is not None else {}),
+            **via_device,
         )
 
     #: The device's own serial, where it reports one. Read once at setup.

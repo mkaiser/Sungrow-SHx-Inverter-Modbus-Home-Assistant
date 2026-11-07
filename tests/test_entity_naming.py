@@ -9,7 +9,7 @@ difference is what the migration depends on.
 
 from __future__ import annotations
 
-from pytest_homeassistant_custom_component.common import MockEntity, MockEntityPlatform
+from pytest_homeassistant.common import MockEntity, MockEntityPlatform
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er

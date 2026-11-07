@@ -3,7 +3,7 @@
 # Home Assistant 2026.9 is the first release with the modernized modbus
 # integration (homeassistant.components.modbus.async_get_unit); the
 # integration does not work on anything older.
-homeassistant>=2026.9
+homeassistant>=2026.11
 
 # The device library lives in this repo. Installing it editable keeps the
 # version reported to pip identical to manifest.json's `requirements` entry,
@@ -15,15 +15,15 @@ homeassistant>=2026.9
 # drives modbus-connection with the *tmodbus* backend; importing
 # homeassistant.components.modbus fails without it. Bump these together with
 # the pins in homeassistant/components/modbus/manifest.json.
-modbus-connection[tmodbus]==4.12.4
-tmodbus==0.6.2
+modbus-connection[tmodbus]==4.12.7
+tmodbus==1.1.0
 pymodbus==3.13.1
 
 # Simulator + tests.
 PyYAML>=6.0
 pytest>=8.0
 pytest-asyncio>=0.24
-pytest-homeassistant-custom-component
+pytest-homeassistant
 
 # Tooling.
 ruff>=0.14

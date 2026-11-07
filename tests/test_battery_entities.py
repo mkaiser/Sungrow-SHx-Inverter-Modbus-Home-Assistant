@@ -19,7 +19,7 @@ from unittest.mock import patch
 
 from modbus_connection.mock import MockModbusConnection, MockModbusUnit
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.sungrow_modbus.battery_descriptions import (
     BATTERY_DESCRIPTIONS,

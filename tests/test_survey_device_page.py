@@ -21,10 +21,7 @@ from unittest.mock import patch
 
 from modbus_connection.mock import MockModbusUnit
 import pytest
-from pytest_homeassistant_custom_component.common import (
-    MockConfigEntry,
-    async_fire_time_changed,
-)
+from pytest_homeassistant.common import MockConfigEntry, async_fire_time_changed
 
 from custom_components.sungrow_modbus.const import (
     CONF_MODE,

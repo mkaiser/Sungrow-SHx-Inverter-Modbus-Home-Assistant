@@ -16,7 +16,7 @@ from unittest.mock import patch
 
 from modbus_connection.mock import MockModbusConnection, MockModbusUnit
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.sungrow_modbus.const import CONF_UNIT_ID, DOMAIN
 from custom_components.sungrow_modbus.wallbox_descriptions import (
@@ -466,7 +466,7 @@ async def test_the_wallbox_shows_its_own_serial_and_publishes_only_its_hash(
     The identifier stays the inverter's serial plus `-wallbox`, so a device
     an owner already has keeps its entities and history.
     """
-    from pytest_homeassistant_custom_component.components.diagnostics import (
+    from pytest_homeassistant.components.diagnostics import (
         get_diagnostics_for_config_entry,
     )
 

@@ -18,11 +18,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from pytest_homeassistant_custom_component.components.recorder.common import (
+from pytest_homeassistant.components.recorder.common import (
     async_recorder_block_till_done,
     async_wait_recording_done,
 )
-from pytest_homeassistant_custom_component.typing import RecorderInstanceContextManager
+from pytest_homeassistant.typing import RecorderInstanceContextManager
 
 from custom_components.sungrow_modbus.migration import (
     LEGACY_SERIAL_DOMAIN,
@@ -261,7 +261,7 @@ async def test_two_entries_claim_two_different_sets_of_ids(
     itself rather than on the detector, because the detector being right is
     only useful if the value reaches the registry.
     """
-    from pytest_homeassistant_custom_component.common import MockConfigEntry
+    from pytest_homeassistant.common import MockConfigEntry
 
     from custom_components.sungrow_modbus.const import CONF_LEGACY_SLOT, DOMAIN
     from custom_components.sungrow_modbus.migration import async_claim_legacy_ids
@@ -301,7 +301,7 @@ async def test_an_entry_with_no_stored_slot_behaves_exactly_as_before(
     So the absent case is not an edge case, it is the whole installed base, and
     it has to keep claiming the unsuffixed ids it has always claimed.
     """
-    from pytest_homeassistant_custom_component.common import MockConfigEntry
+    from pytest_homeassistant.common import MockConfigEntry
 
     from custom_components.sungrow_modbus.const import DOMAIN
     from custom_components.sungrow_modbus.migration import async_claim_legacy_ids
@@ -477,7 +477,7 @@ async def test_a_serial_recorded_in_two_slots_is_evidence_for_neither(
 
 
 def test_a_stored_slot_is_read_as_stored() -> None:
-    from pytest_homeassistant_custom_component.common import MockConfigEntry
+    from pytest_homeassistant.common import MockConfigEntry
 
     from custom_components.sungrow_modbus.const import CONF_LEGACY_SLOT, DOMAIN
 
@@ -492,7 +492,7 @@ def test_a_stored_slot_is_read_as_stored() -> None:
 
 async def test_an_undetermined_slot_claims_nothing(hass: HomeAssistant) -> None:
     """Not the unsuffixed ids, which may be another inverter's history."""
-    from pytest_homeassistant_custom_component.common import MockConfigEntry
+    from pytest_homeassistant.common import MockConfigEntry
 
     from custom_components.sungrow_modbus.const import CONF_LEGACY_SLOT, DOMAIN
     from custom_components.sungrow_modbus.migration import async_claim_legacy_ids

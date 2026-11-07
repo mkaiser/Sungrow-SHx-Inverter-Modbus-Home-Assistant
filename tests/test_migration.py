@@ -20,15 +20,15 @@ from unittest.mock import patch
 from freezegun import freeze_time
 from modbus_connection.mock import MockModbusUnit
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-from pytest_homeassistant_custom_component.components.recorder.common import (
+from pytest_homeassistant.common import MockConfigEntry
+from pytest_homeassistant.components.recorder.common import (
     async_recorder_block_till_done,
     async_wait_recording_done,
     do_adhoc_statistics,
     get_start_time,
     statistics_during_period,
 )
-from pytest_homeassistant_custom_component.typing import RecorderInstanceContextManager
+from pytest_homeassistant.typing import RecorderInstanceContextManager
 from sqlalchemy import select
 
 from custom_components.sungrow_modbus.const import (
