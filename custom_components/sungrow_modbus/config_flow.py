@@ -112,6 +112,7 @@ from .const import (
     DEFAULT_NAME,
     DEFAULT_PERMISSIONS,
     DOMAIN,
+    ENERGY_DASHBOARD_GUIDE_URL,
     ENTITY_IDS_MIGRATE,
     ENTITY_IDS_NEW,
     IDENTIFY_UNITS,
@@ -1335,7 +1336,10 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 "diagnostics" if self._mode == MODE_DIAGNOSTICS else "default"
             ),
             # hassfest refuses a URL inside a translation string.
-            description_placeholders={"survey_issue_url": SURVEY_ISSUE_URL},
+            description_placeholders={
+                "survey_issue_url": SURVEY_ISSUE_URL,
+                "energy_dashboard_url": ENERGY_DASHBOARD_GUIDE_URL,
+            },
         )
 
 

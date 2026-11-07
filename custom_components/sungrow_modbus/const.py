@@ -387,6 +387,14 @@ SURVEY_ISSUE_URL = (
     "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786"
 )
 
+#: Which sensors to pick in the Energy dashboard, linked from the success
+#: dialog of the ordinary setup. On the development branch until the merge
+#: into `main`, which moves it.
+ENERGY_DASHBOARD_GUIDE_URL = (
+    "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant"
+    "/blob/proper-ha-integration/doc/energy_dashboard.md"
+)
+
 #: How long a signed survey download link stays valid. Long enough to
 #: notice the notification and press it, short enough that a copied URL in
 #: a chat window is not a standing grant. A fresh link comes with every

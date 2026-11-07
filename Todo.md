@@ -337,6 +337,9 @@ catalog submission on release, not before (item 3), and
    and **when to merge into `main`.** The merge retires the preview channel
    and opens the HACS default store, which also needs the brand in
    `home-assistant/brands` (`scripts/helpers/make_brand_icon.py` draws it).
+   At the merge, the links that name the `proper-ha-integration` branch move
+   to `main` (`grep -rn proper-ha-integration custom_components`: the Energy
+   dashboard guide and the preview repair's entity names).
 
 2. **Spoil the December release at the top of `main`'s README.** The
    maintainer targets a release in December 2026 (said 2026-11-06). `main`'s
@@ -555,9 +558,10 @@ Investigated 2026-11-06 against Home Assistant 2026.11. Findings:
 
 Done: the user guide, `doc/energy_dashboard.md` (hybrid, SG, battery,
 wallbox, several inverters with a Sum helper for one power total), linked from
-the README. Still proposed, in order of cost: link it from the setup's last
-step; a repair or notification after setup that names the same entities; an
-action that adds them to the dashboard, only on request. The guide states the
+the README. The ordinary setup's success dialog links it
+(`ENERGY_DASHBOARD_GUIDE_URL`). Still proposed, in order of cost: a repair or
+notification after setup that names the same entities; an action that adds
+them to the dashboard, only on request. The guide states the
 two unverified points; each is answered by one house. Feeds `legacy/doc/dashboard.md`'s
 Energy dashboard row below.
 

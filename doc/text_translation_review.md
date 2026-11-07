@@ -1,6 +1,6 @@
 # The texts, for review
 
-**292 texts**: everything in `strings.json` that is not an entity name, by its
+**293 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -11,7 +11,7 @@ A `{placeholder}` is filled in by the integration and stays as written; backtick
 and bold are kept.
 
 
-## Setup flow (84)
+## Setup flow (85)
 
 ### `config.abort.already_configured`
 
@@ -612,6 +612,16 @@ and bold are kept.
 > {stage}
 >
 > Die Ports 502 und 503 werden beide probiert, du musst also nicht wissen, welchen deine Geräte verwenden.
+
+### `config.create_entry.default`
+
+> **EN** **You are set up.** The inverter's entities appear on its device page as their first readings arrive.
+>
+> To see it in the Energy dashboard (**Settings → Dashboards → Energy**), pick the sensors [the Energy dashboard guide]({energy_dashboard_url}) names: several energy sensors have names that look right and are not.
+
+> **DE** **Die Einrichtung ist abgeschlossen.** Die Entitäten des Wechselrichters erscheinen auf seiner Geräteseite, sobald ihre ersten Messwerte eintreffen.
+>
+> Um ihn im Energie-Dashboard zu sehen (**Einstellungen → Dashboards → Energie**), wähle die Sensoren, die [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt: Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.
 
 ### `config.create_entry.diagnostics`
 

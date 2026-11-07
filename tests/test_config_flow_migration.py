@@ -112,6 +112,34 @@ async def test_a_newcomer_is_not_asked_about_migrating(
     assert result["data"][CONF_ENTITY_IDS] == ENTITY_IDS_NEW
 
 
+async def test_the_last_screen_links_the_energy_dashboard_guide(
+    hass: HomeAssistant, probe: None
+) -> None:
+    """The ordinary setup ends on the guide that says which sensors to pick.
+
+    More than fifty energy sensors qualify for the Energy dashboard, and
+    several have names that look right and are not.
+    """
+    import json
+    from pathlib import Path
+
+    import custom_components.sungrow_modbus as component
+    from custom_components.sungrow_modbus.const import ENERGY_DASHBOARD_GUIDE_URL
+
+    result = await _connect(hass)
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    # The key the frontend looks up as `config.create_entry.<description>`.
+    assert result["description"] == "default"
+    placeholders = result["description_placeholders"] or {}
+    assert placeholders["energy_dashboard_url"] == ENERGY_DASHBOARD_GUIDE_URL
+    assert ENERGY_DASHBOARD_GUIDE_URL.endswith("/doc/energy_dashboard.md")
+    folder = Path(component.__file__).parent
+    for name in ("strings.json", "translations/de.json"):
+        texts = json.loads((folder / name).read_text(encoding="utf-8"))
+        assert "{energy_dashboard_url}" in texts["config"]["create_entry"]["default"]
+
+
 async def test_an_existing_user_is_asked(
     hass: HomeAssistant, probe: None, entity_registry: er.EntityRegistry
 ) -> None:
