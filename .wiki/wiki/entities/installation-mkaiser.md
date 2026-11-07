@@ -13,7 +13,9 @@ third-party battery, on its own LAN port. Its control tests matched every readba
 not tell"), and moving the discharge windows away from now stopped a 722.5 W discharge to 0 W and
 it came back ([the check](../sources/mkaiser-discharge-window-2026-11-04-summary.md)). A watched write of [register 32998](register-32998.md) held grid import at 2.00 kW under a
 4500 W forced charge ([the run](../sources/mkaiser-import-limit-2026-11-07-summary.md)), and with PV capped import alone
-([the PV run](../sources/mkaiser-import-limit-pv-2026-11-07-summary.md)). Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
+([the PV run](../sources/mkaiser-import-limit-pv-2026-11-07-summary.md)); the control test's check
+confirmed it, and with the PV isolator open the inverter first went to Standby
+([the engine run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md)). Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
 
 ## Surveys
 

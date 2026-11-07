@@ -19,6 +19,7 @@ SH-RT firmware in the B001 numbering ([SH-RT](device-sh-rt.md)). Version strings
 - **[Register 32998](register-32998.md), the site import limit, holds during a forced charge**: set to
   2.00 kW under a 4500 W forced charge, import held at 1978 W by cutting the charge; [the run](../sources/mkaiser-import-limit-2026-11-07-summary.md). With PV it caps
   grid import alone, 1 (0.01 kW) charges from PV only, and 0 and 5001 are refused; [the PV run](../sources/mkaiser-import-limit-pv-2026-11-07-summary.md).
+  The control test's `--import-limit` check confirmed it; [the engine run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md).
 
 ## Surveys
 

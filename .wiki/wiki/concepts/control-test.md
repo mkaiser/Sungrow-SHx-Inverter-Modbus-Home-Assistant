@@ -148,10 +148,17 @@ bracketed by the same forced charge before and after. A decade off would show as
 scale. With the charge stopped, it then writes 0, 5001 and 5000 once each and records which
 the inverter refuses, by exception type; a lost link is recorded as not answered. Every write
 is followed by the snapshot's word, and the ordinary restore puts it back again. It skips
-itself when PV covers most of the charge, so it measures best after dark. It has not yet run
-in the engine; two runs by script on P020 found it obeyed
+itself when PV covers most of the charge, so it measures best after dark.
+
+**It confirms the cap on P020**: at mkaiser, over the cable, a cap of 1580 W took import from
+2192 W to 1549 W and back to 2206 W, and 0 and 5001 were refused with 0x04
+([the run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md)), as two runs by script had found
 ([night](../sources/mkaiser-import-limit-2026-11-07-summary.md),
 [PV](../sources/mkaiser-import-limit-pv-2026-11-07-summary.md)).
+
+**Opening the PV isolator is not the same as night.** With 0 W of PV the SH10RT first went to
+Standby with the battery idle, and the run refused to start. Minutes later it was Running on the
+battery and the next run went through ([the run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md)).
 
 ## Drivers
 

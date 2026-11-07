@@ -196,11 +196,14 @@ Structure:
      battery must not change.
    - **House load above the cap that the battery cannot cover** (battery
      discharge held at 0, or at minimum SoC): does import exceed the cap?
-   - **The engine's `--import-limit` check, on hardware.** Written
-     (uncommitted, 2026-11-07): the survey's leave and the integration's
-     control-test option turn it on. First run: the maintainer's SH10RT after
-     dark, then a P023 house. Then answer discussion #546 (the drafted reply
-     has both script runs).
+   - **The engine's `--import-limit` check on other firmware.** It confirmed
+     the cap on the maintainer's SH10RT (P020, 2026-11-07, wiki:
+     mkaiser-import-limit-engine-2026-11-07). Next, each with its owner's
+     leave and after dark (an open PV isolator first left the SH10RT in
+     Standby): fwitten's master (SH10RT-V112, P023, SBR, the closest to
+     ulfben's), then gerd or bar12 through a WiNet-S. Then a preview release
+     so ulfben can run it from the diagnosis button, and answer discussion
+     #546 (a reply is drafted).
 
 6. **A survey step the link loses leaves no trace in the document.**
    peter_sm's tenth reading (2026-11-07, a diagnostics download after a

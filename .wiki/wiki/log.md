@@ -511,3 +511,9 @@ Posted by Korsberg on 0.1.0a27. The ninth adds nothing new. The tenth carries a 
 nine readbacks matched, 13074 times ten by refusal, a Modbus restart in 269 s, and the charge
 window's write of 33213 lost the connection a third time. Its file is named `battery-thirdparty`
 because its document lost the `battery_pack` section; the pack is the SBR160.
+
+## [2026-11-07] ingested | mkaiser-import-limit-engine-2026-11-07
+
+The first engine run of `--import-limit`, at mkaiser's SH10RT (P020): the cap was met and 0 and
+5001 were refused. With the PV isolator open the inverter first went to Standby, and a run
+refused. Updated register-32998, control-test, the forced-charge query, P020, installation-mkaiser.
