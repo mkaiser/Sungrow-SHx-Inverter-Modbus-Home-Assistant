@@ -2,7 +2,10 @@
 #
 # Home Assistant 2026.9 is the first release with the modernized modbus
 # integration (homeassistant.components.modbus.async_get_unit); the
-# integration does not work on anything older.
+# integration does not work on anything older, and supports 2026.9 on
+# (`hacs.json`). The dev environment runs 2026.11 because core's test package,
+# `pytest-homeassistant`, starts there; that is no reason to raise the
+# integration's minimum, which stays at 2026.9 with no CI job of its own.
 homeassistant>=2026.11
 
 # The device library lives in this repo. Installing it editable keeps the

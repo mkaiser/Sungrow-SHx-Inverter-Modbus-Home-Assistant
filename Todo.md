@@ -104,21 +104,14 @@ Nothing can start now (blocker 18).
    dev environment and CI run 2026.11.0 with modbus-connection 4.12.7 and
    tmodbus 1.1.0, tested with core's own `pytest-homeassistant` (2026.11.0),
    which replaced `pytest-homeassistant-custom-component` (that one stops at
-   2026.10.4 and is declared broken upstream). The integration still allows
-   2026.9 and 2026.10. Left:
-   1. **Decide: drop 2026.9 and 2026.10?** Then together: `hacs.json`'s
-      minimum (`2026.11.0`), `pyproject.toml`'s floor
-      (`modbus-connection>=4.12.7`), the README's "Home Assistant 2026.9",
-      the bug template's placeholder. Only then can
-      `async_remove_config_entry_device` read `info.identifiers` instead of
-      `info["identifiers"]` (`__init__.py`; item access on the 2026.11
-      `DeviceInfo` dataclass is deprecated, and 2026.10's is a dict).
-   2. **The survey's PEP 723 headers** (`sungrow_survey.py`,
+   2026.10.4 and is declared broken upstream). The integration keeps
+   supporting 2026.9 (`requirements_dev.txt` says why). Left:
+   1. **The survey's PEP 723 headers** (`sungrow_survey.py`,
       `sungrow_control_test.py`, `sungrow_wallbox_control_test.py`) still pin
       `modbus-connection[tmodbus]==4.12.4`; to 4.12.7 with tmodbus 1.1.0, a
       new transport for contributors' runs, so after one survey on hardware
       with it (`device-survey/reference.md` first).
-   3. **`async_entity_id_changed`.** Sensor, binary sensor and survey
+   2. **`async_entity_id_changed`.** Sensor, binary sensor and survey
       entities override `async_added_to_hass`; until they implement the hook,
       an `entity_id` rename removes and re-adds them instead of updating in
       place, a fallback that ends in 2027.11. Check the renames in
