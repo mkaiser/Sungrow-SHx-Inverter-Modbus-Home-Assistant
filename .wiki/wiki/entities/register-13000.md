@@ -15,7 +15,9 @@ running and stopped sets are derived from its labels.
 - **A [WiNet-S](device-winet-s.md) re-encodes it**: cable 0x0040 becomes
   0x0000, and 0x0080 becomes 0x8100. So a code seen only through a dongle says
   nothing about what the inverter sends, and the duplicates in the map are
-  the dongle's.
+  the dongle's. Read over both paths at once at [bar12](installation-bar12.md) on P023: cable
+  0x0008 Standby is the dongle's 0x1400, cable 0x0020 Starting its 0x1600, and 0x0800 (forced
+  mode) the same on both ([the run](../sources/bar12-import-limit-2026-11-07-summary.md)).
 - **`0x0020 Starting`** is most of the wait after a Modbus start.
   `is_starting` recognises it.
 - **A start can take several `0xCF` commands** before the state moves, so

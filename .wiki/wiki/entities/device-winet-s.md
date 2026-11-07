@@ -22,6 +22,7 @@ what a survey sees through it is the dongle's doing, not the inverter's.
 | Answers **0** where the inverter answers 0xFFFF | invents MPPT3, MPPT4, a second meter channel | [zero means absent](../concepts/zero-means-absent.md) |
 | Re-encodes **13000** (cable 0x0040 → 0x0000, 0x0080 → 0x8100) | duplicate running-state codes | [register 13000](register-13000.md) |
 | Forwards a write and **reads it back stale**, indefinitely | legs A and B of the control test are not evidence; only leg C survives | [control test](../concepts/control-test.md) |
+| Not always: at [bar12](installation-bar12.md) on P023, writes of **13017** and **32998** through the dongle read back current at once, and the cable agreed | one dongle, one night; the rule above stands for the control test | [forced startup](../sources/bar12-forced-startup-2026-11-07-summary.md), [import limit](../sources/bar12-import-limit-2026-11-07-summary.md) |
 | Answers **0x04** to reads it answers alone, while other clients poll it ([firetribe](installation-firetribe.md), and reproduced at [gerd](installation-gerd.md)) | 0x04 through a dongle settles nothing, like 0x06 | [busy WiNet-S](../queries/does-a-busy-winet-s-refuse-with-0x04.md) |
 | Refuses the SBR's cells and modules blocks | fewer pack fields | [SBR battery](device-sbr-battery.md) |
 | Faults when the wallbox behind it is polled faster than every 10 s, by an ioBroker user's account ([shcshc76](../sources/cross-reference-shcshc76-summary.md)); not measured here | the wallbox's poll stays at 10 s or slower | [wallbox](device-wallbox.md) |

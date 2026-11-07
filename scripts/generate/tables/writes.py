@@ -469,11 +469,12 @@ class Button(TypedDict):
 #:
 #: Register 13017, V1.1.7's "Forced Startup Under Low SOC Standby": 0xAA
 #: wakes an inverter waiting in standby with the battery at its minimum SoC
-#: and no PV, which it otherwise does not leave until PV returns. It reads 0
-#: or 0x55, never 0xAA, so it is no switch. Gated by
-#: `FORCED_STARTUP_CONTROL`, which `capabilities.CONFIRMED_ON_FIRMWARE`
-#: grants on no firmware yet: the button is created nowhere until a control
-#: test watches a standby inverter start on it.
+#: and no PV, which it otherwise does not leave until PV returns. Watched on
+#: P023 (bar12) it is a switch: 0xAA stays, reads back and keeps the inverter
+#: running; 0x55 sends it back to standby; every other word is refused. So a
+#: button that only presses 0xAA leaves the inverter awake (`Todo.md`). Gated
+#: by `FORCED_STARTUP_CONTROL`, which `capabilities.CONFIRMED_ON_FIRMWARE`
+#: grants on no firmware yet: the button is created nowhere.
 BUTTONS: tuple[Button, ...] = (
     {
         "field": "forced_startup_under_low_soc_raw",

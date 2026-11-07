@@ -523,3 +523,12 @@ refused. Updated register-32998, control-test, the forced-charge query, P020, in
 A watched write of 32998 at mkaiser's SH10RT (P020) after dark, the battery held idle by a forced
 stop: at a 2.00 kW cap the house imported its whole ~2.2 kW load. The cap limits a charge, not
 the house. Updated register-32998, P020, installation-mkaiser.
+
+## [2026-11-07] ingested | bar12-import-limit-2026-11-07 and bar12-forced-startup-2026-11-07
+
+bar12's SH10RT-20 (P023) after dark, the battery empty and the inverter in Standby. 32998 capped a
+forced charge over the cable and written through the WiNet-S; with the battery empty it did not cap
+the load. A forced charge, EMS or scheduled, woke the inverter in ~2 min. The first watched writes of
+13017: a switch, 0xAA on and 0x55 off, every other word refused, so the factory 0 cannot be put
+back. Updated register-13017 (overturned: it reads back what is written), register-32998,
+register-13000, device-winet-s, P023, installation-bar12, the forced-charge query.

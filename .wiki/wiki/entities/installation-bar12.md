@@ -10,7 +10,11 @@ created: '2026-10-29'
 One [SH10RT-20](device-sh-rt.md) with an [SBR096](device-sbr-battery.md), reached two ways: a
 cable in the inverter's own LAN port, and a [WiNet-S](device-winet-s.md) on WiFi (on Ethernet too,
 earlier). Read on [P020](firmware-sapphire-h-b001-v000-p020.md) and on
-[P023](firmware-sapphire-h-b001-v000-p023.md). [Register 13074](register-13074.md) writes times ten.
+[P023](firmware-sapphire-h-b001-v000-p023.md). [Register 13074](register-13074.md) writes times ten. After dark with the battery empty it waits in
+Standby; [register 13017](register-13017.md) and a forced charge each wake it, and
+[register 32998](register-32998.md) capped a forced charge over the cable and through the dongle
+([forced startup](../sources/bar12-forced-startup-2026-11-07-summary.md),
+[the import limit](../sources/bar12-import-limit-2026-11-07-summary.md)).
 
 ## Surveys
 

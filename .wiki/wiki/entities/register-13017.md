@@ -1,7 +1,7 @@
 ---
 type: entity
 title: Register 13017 (forced startup under low SoC standby)
-tags: [register, holding, command, specification]
+tags: [register, holding, switch, specification, write]
 created: '2026-11-05'
 ---
 
@@ -31,8 +31,24 @@ Sungrow's document says the same of it
 and "this function is only active when the inverter is in grid-connected mode ... and does not work
 in off-grid scenarios". So a watch of the write needs a grid-connected inverter.
 
-So the register holds no lasting state worth showing: it is a **command**. What it reads after a
-write has not been watched.
+## What a write does
+
+Watched at [bar12](installation-bar12.md) on [P023](firmware-sapphire-h-b001-v000-p023.md), over
+the cable and through a [WiNet-S](device-winet-s.md), with the battery below its minimum SoC
+([the run](../sources/bar12-forced-startup-2026-11-07-summary.md)):
+
+- **It is a switch, not a pulse.** `0xAA` wakes an inverter in low-SoC Standby with no other
+  command (Starting after 2.5-4 min, Running after ~5 min, battery idle), reads back `0xAA`, and
+  keeps the inverter running: 23 minutes later it was still `0xAA` and Running.
+- **`0x55` is off**: a running inverter at low SoC returns to Standby within ~20 s.
+- **Only `0xAA` and `0x55` are taken**: 0, 0x01 and 0xFF are refused with exception 0x04. So the
+  factory 0 cannot be written back; a restore writes `0x55`.
+- Through the WiNet-S the same, and the dongle's readback is current.
+- **A forced charge does not need it**: an EMS forced charge or the forced-charging schedule wakes
+  a standby inverter by itself in ~2 min ([the import limit runs](../sources/bar12-import-limit-2026-11-07-summary.md)).
+
+One owner reports the inverter flipping `0xAA` to `0x55` by itself ~20 minutes after the write
+(issue #444, firmware not stated); at bar12 it had not after 23 minutes.
 
 ## In the integration
 
@@ -40,6 +56,6 @@ A button, *Force startup* / *Zwangsstart*, that writes `0xAA`: `BUTTONS` in
 `scripts/generate/tables/writes.py`. It is created only where `Capability.FORCED_STARTUP` answered
 (SH-CX excluded) **and** the firmware is in `CONFIRMED_ON_FIRMWARE` for
 `Capability.FORCED_STARTUP_CONTROL` ([firmware gating](../concepts/firmware-gating.md)). That set is
-empty: no survey has watched a standby inverter start on the write, and the control test has no
-check that would, so the button exists on no device yet. There is no sensor: the register reads
-nothing worth showing.
+still empty. P023 now has a watched write, but a button that only writes `0xAA` leaves the
+inverter awake with nothing to turn it off; the register is a switch, and reads back its state.
+`Todo.md` holds the decision.

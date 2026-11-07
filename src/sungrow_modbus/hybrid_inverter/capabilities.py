@@ -142,10 +142,12 @@ class Capability(StrEnum):
     FORCED_STARTUP_CONTROL = "forced_startup_control"
     """Register 13017 may be written, because a write was watched here.
 
-    A command, not a state: 0xAA wakes an inverter waiting in low-SoC
-    standby, and the register never reads 0xAA back, so a readback proves
-    nothing. Never probed; granted by `resolve` only where `FORCED_STARTUP`
-    answered **and** the firmware is in `CONFIRMED_ON_FIRMWARE`.
+    A switch: 0xAA wakes an inverter waiting in low-SoC standby and keeps it
+    running, 0x55 returns it to standby, and both read back as written
+    (watched on P023). A readback proves the word landed, not that the
+    inverter woke. Never probed; granted by `resolve` only where
+    `FORCED_STARTUP` answered **and** the firmware is in
+    `CONFIRMED_ON_FIRMWARE`.
     """
 
     PV_POWER_LIMITATION = "pv_power_limitation"

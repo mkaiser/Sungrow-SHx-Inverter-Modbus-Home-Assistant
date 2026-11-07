@@ -26,23 +26,43 @@ stays unique.
 
 ## Inverter
 
-1. **The site import limit (32998): what the PV runs left open, at the
-   maintainer's SH10RT.** Settled on P020 over the cable (2026-11-07, wiki:
-   mkaiser-import-limit-2026-11-07 and mkaiser-import-limit-pv-2026-11-07):
-   under a forced charge the cap is on grid import alone, with PV counted;
-   at 1 (0.01 kW) the charge comes only from PV; it settles in ~4-6 s and
-   holds 0-3 % above the cap; 0 and 5001 are refused with exception 0x04,
-   and 5000 is accepted. With the battery held idle by a forced stop it
-   does not cap house load: ~2.2 kW imported against 2.00 kW (wiki:
-   mkaiser-import-limit-load-2026-11-07). Still open:
-   - **PV surplus exporting, limit 200, self-consumption** (needs daylight
-     and export: a full battery or PV above load plus charge power).
-     Export, PV and the battery must not change.
-   - **Self-consumption with load above what the battery may discharge**
-     (its discharge limit lowered, not a forced stop): does the inverter
-     import past the cap, as under the forced stop?
-   - The engine's `--import-limit` check on other firmware: Planned tests
-     item 1.
+1. **The site import limit (32998): the cases still open.** Measured
+   (wiki: mkaiser-import-limit-*, bar12-import-limit-2026-11-07): under a
+   forced charge the cap is on grid import alone, PV counted, on P020 and
+   P023, over the cable and through a WiNet-S; it settles in ~4-6 s, 0-3 %
+   over the cap on P020 and ~5 % under on P023; 0 and 5001 are refused.
+   It does not cap house load: not with the battery held idle by a forced
+   stop (P020), and not with the battery empty in normal operation (P023).
+
+   | # | PV | Battery | Command | Question | How, where |
+   | --- | --- | --- | --- | --- | --- |
+   | a | none | part full | normal operation, load above the battery's discharge limit (33048 lowered) | does the cap draw on the battery past its limit? expected no | script, the maintainer's SH10RT, any evening |
+   | b | any | part full | **the forced-charging schedule** (33208-33219) under a cap | does the cap hold a scheduled charge? the one way left to explain ulfben (#546) | script, either site, any evening; at bar12 the charge began only after the cap was lifted |
+   | c | above the load | not full | normal operation, cap 200 | does the cap disturb export or the charge? expected no | script, a bright day |
+   | d | above the load | full | normal operation, cap 200 | the same with export | script, a bright day, battery full |
+   | e | above the load | part full | forced charge above the surplus | the grid's share capped, PV counted | the engine check, daylight |
+   | f | none | empty | forced charge, through a WiNet-S on P022 | the transport on other firmware | gerd |
+
+   Not worth a run: a full battery at night, a forced charge into a full
+   battery (the engine skips at 90 %), a forced discharge.
+
+   **The engine refuses an inverter in low-SoC Standby** ("reports
+   'Standby'"), though a forced charge wakes one by itself in ~2 min (EMS
+   or schedule, bar12). Whether the import-limit check should command its
+   charge and wait for the start instead of refusing: decide with the
+   survey's rework.
+
+   **Register 13017 is a switch, not a command** (wiki:
+   bar12-forced-startup-2026-11-07, P023): 0xAA wakes a low-SoC standby
+   inverter and keeps it running, 0x55 sends it back, both read back,
+   every other word is refused, and the factory 0 cannot be written back.
+   The *Force startup* button only presses 0xAA, so it would leave the
+   inverter awake. Decide: a switch (0xAA/0x55, its state read from the
+   register; P023 into `CONFIRMED_ON_FIRMWARE` for
+   `FORCED_STARTUP_CONTROL`), or no control, since a forced charge does
+   not need it. Still unmeasured: whether the inverter resets it by itself
+   later or on PV (#444 reports 0xAA to 0x55 after ~20 min), and any other
+   firmware (the maintainer's SH10RT on P020, with its battery at minimum).
 
 ## Battery
 
@@ -142,31 +162,19 @@ Nothing can start now (blocker 18).
 
 # Planned tests
 
-1. **The site import limit (32998) on P023 and through a WiNet-S,
-   2026-11-07 after dark.** The control test's `--import-limit` check
-   confirmed the cap on the maintainer's SH10RT (P020, cable; wiki:
-   mkaiser-import-limit-engine-2026-11-07). ulfben (discussion #546) reports
-   an SH10RT-V112 with an SBR behind a WiNet-S ignoring it during a forced
-   charge. In this order, each only with its owner's leave for this check (a
-   forced charge of 1250 W from the grid for about two minutes):
-   1. **fwitten's master** (SH10RT-V112, P023, SBR096, cable): the same
-      model, firmware and battery as ulfben's. Obeyed: the hardware and
-      firmware are not the cause, and the question for ulfben is how his
-      charge was commanded. Ignored: the first watched case, and no control
-      on P023.
-   2. **gerd (P022) or bar12 (P023), through the WiNet-S**: ulfben's
-      transport. The cap is judged by the meter, so the dongle's verdict
-      stands; its 0/5001/5000 refusals do not (a refused write through a
-      WiNet-S has landed before).
-
-   How: from this checkout (the pinned library lacks the check),
+1. **The site import limit (32998) at fwitten's master, when it is
+   reachable** (SH10RT-V112, P023, SBR096, cable): the same model,
+   firmware and battery as ulfben's (#546). bar12 settled P023 and the
+   WiNet-S on 2026-11-07 by script (wiki: bar12-import-limit-2026-11-07):
+   the cap held both ways. What fwitten adds is the engine's own
+   `--import-limit` check on P023, and ulfben's exact hardware. Its
+   addresses did not answer on 2026-11-07 (nothing on 502 at the master,
+   its WiNet-S or the slave). How: from this checkout,
    `sungrow_control_test.py <host> --import-limit --allow-dark --no-restart`,
-   a dry run first; the stand-in read before any write (the 178.x subnets
-   collide); the house's Home Assistant stopped for the run. After dark,
-   not with the PV isolator open: the maintainer's SH10RT went to Standby
-   with the battery idle when it was opened, and a run refused. A battery
-   above 90 % skips the check. Then ingest, a preview release so ulfben can
-   run it from the diagnosis button, and the reply to #546 (drafted).
+   a dry run first, the stand-in read before any write; their Home
+   Assistant stays connected, so expect retries. After dark, a battery
+   under 90 % and not in Standby. Then ingest, and the reply to #546
+   (drafted), which can already say P023 and the WiNet-S obey.
 
 # Blockers
 
