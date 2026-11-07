@@ -202,6 +202,17 @@ Structure:
      dark, then a P023 house. Then answer discussion #546 (the drafted reply
      has both script runs).
 
+6. **A survey step the link loses leaves no trace in the document.**
+   peter_sm's tenth reading (2026-11-07, a diagnostics download after a
+   control test with a restart) has no `battery_pack` section, and nothing
+   says the step failed: `survey.py`'s `take` logs a warning and publishes
+   without it. `label_for` then names the SBR160 `battery-thirdparty`. Record
+   a lost step in the document (`survey.failed` exists and is not
+   published), and let `label_for` say `battery-unknown`, not `thirdparty`,
+   when a step was lost. Committed names must keep deriving
+   (`tests/test_document_filenames.py`), so the change applies to new
+   documents only.
+
 # Open decisions
 
 1. **When to offer the ordinary setup**, targeted for December 2026 (the
@@ -587,13 +598,14 @@ the commit; a survey signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-06T21:20:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-06T21:20:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-07T10:40:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-07T10:40:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked: **2026-11-06 21:20 UTC** (#786): icefest's two SH6.0RS readings
-(a WiNet-S and RS485) ingested.
+Last checked: **2026-11-07 10:40 UTC** (#786, #791): code-imstillalive's
+SH25T and SH15T through a Logger1000A, and peter_sm's ninth and tenth
+readings (Korsberg's diagnostics downloads), ingested.
 
 ## Recurrent: a test plugin for Home Assistant 2026.11 (daily, until it ships)
 
