@@ -205,17 +205,6 @@ Structure:
      so ulfben can run it from the diagnosis button, and answer discussion
      #546 (a reply is drafted).
 
-6. **A survey step the link loses leaves no trace in the document.**
-   peter_sm's tenth reading (2026-11-07, a diagnostics download after a
-   control test with a restart) has no `battery_pack` section, and nothing
-   says the step failed: `survey.py`'s `take` logs a warning and publishes
-   without it. `label_for` then names the SBR160 `battery-thirdparty`. Record
-   a lost step in the document (`survey.failed` exists and is not
-   published), and let `label_for` say `battery-unknown`, not `thirdparty`,
-   when a step was lost. Committed names must keep deriving
-   (`tests/test_document_filenames.py`), so the change applies to new
-   documents only.
-
 # Open decisions
 
 1. **When to offer the ordinary setup**, targeted for December 2026 (the
