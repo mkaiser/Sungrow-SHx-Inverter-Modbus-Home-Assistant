@@ -99,7 +99,10 @@ from .const import model_for
 #: 25 names the part B block **`capability_test`**, the name of the test that
 #: writes it; 19 to 24 call the same block `control_test`. Its content is
 #: unchanged, so a reader takes either key by the document's number
-#: (`capability_test_block`).
+#: (`capability_test_block`). 25 also admits **`features`**: each feature set
+#: and how far this document tested it (`sungrow_modbus.features`), computed
+#: from the document itself and recomputed whenever a block is attached, so a
+#: reader can always check it against the sections it summarises.
 SCHEMA = 25
 
 #: The key part B's block is under, by schema: `control_test` before 25.
@@ -776,7 +779,15 @@ def assemble_document(
         document["battery_pack"] = dict(battery_pack)
     if capability_test:
         attach_capability_test(document, capability_test, serial=serial)
+    attach_features(document)
     return document
+
+
+def attach_features(document: dict[str, Any] | dict[str, object]) -> None:
+    """Put the feature report into a document, from what the document holds."""
+    from .features import feature_report
+
+    document["features"] = feature_report(document)
 
 
 def attach_capability_test(
@@ -804,6 +815,7 @@ def attach_capability_test(
             "refusing to publish the capability test block: it carries the serial"
         )
     document[CAPABILITY_TEST_KEY] = dict(block)
+    attach_features(document)
 
 
 def publish_document(

@@ -71,10 +71,18 @@ which file to send.
 accepts very few connections, and a second reader makes registers look
 broken. Dropped connections in the output are normal; the diagnosis reconnects.
 
-### It reads, and writes only if you say yes
+### Two modes: read-only, or with capability tests
 
-The diagnosis reads your inverter and writes nothing to it — unless you ask for
-the **capability test**: in Home Assistant by pressing **Run complete diagnosis
+A **read-only diagnosis** reads your inverter and writes nothing to it. A
+**diagnosis with capability tests** reads the same, then runs the capability
+test. Both end with a table of **feature sets** (forced charging, the feed-in
+limit, cutting PV, the schedules, the battery limits, backup, stop and start),
+each with how far this run tested it: *confirmed*, *wrong scale*, *write
+refused*, *inconclusive*, *readable* (it answered, and nothing wrote to it),
+*not available* or *not read*. A read-only diagnosis can say no more than
+*readable*.
+
+You get the **capability test** only if you ask for it: in Home Assistant by pressing **Run complete diagnosis
 and tests**, in a terminal by answering yes to the last question. That test
 checks that the integration writes each setting at the right scale, and to do
 it, after the reading is finished, it:

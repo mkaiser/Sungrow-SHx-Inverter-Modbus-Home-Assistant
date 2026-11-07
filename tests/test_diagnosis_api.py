@@ -265,6 +265,7 @@ def test_both_producers_get_one_section_order() -> None:
         "block_read_test",
         "battery_pack",
         "capability_test",
+        "features",
     ]
     # Testimony never reaches the measured section, whoever the caller is.
     assert document["connection"] == {"verdict": "direct"}

@@ -75,14 +75,15 @@ Unset, the launchers behave exactly as a contributor's.
 
 ## The document
 
-The format is `sungrow_modbus.diagnosis_document.SCHEMA`, **24**; the comment beside
+The format is `sungrow_modbus.diagnosis_document.SCHEMA`, **25**; the comment beside
 it says what each number from 17 admits, and `probe.py` keeps the older ones.
 A document is read by its own number, which is often older. Sections in
 order: `schema`, `command_line`, `read_at`,
 `user_inputs`, `ip_address_last_two_octets`, `device`, `firmware`,
 `connection`, `readings`, `capability_probes`, then whichever of
 `steps_lost`, `contention`, `register_dump`, `wallbox`, `block_read_test`, `battery_pack`,
-`capability_test` and `export_scale` the run produced.
+`capability_test` and `export_scale` the run produced, and last `features`.
+Up to schema 24 the `capability_test` block is called `control_test`.
 
 ### What a person typed, and what a wire said
 
@@ -294,6 +295,27 @@ side is implicated: the library, if the register map's scale disagrees with
 the specification, or the device, if the two agree and the firmware stored
 something else anyway. The second is a finding about Sungrow and is the reason
 these are published.
+
+### The `features` section
+
+From schema 25 a document ends with **`features`**, one row per feature set
+in `sungrow_modbus.features.FEATURE_SETS`: `feature`, `name`, `state` and
+`why`, the lines of evidence the state rests on. It is computed from the
+document's own sections and recomputed whenever a capability test block is
+attached, so it never says more than they do:
+
+| State | From |
+| --- | --- |
+| `confirmed` | a readback that matched **over a cable**, or a behavioural check the inverter obeyed |
+| `wrong scale` | a readback off by a decade or of the wrong slope, or an effect on a decade-wrong value or in the wrong direction |
+| `write refused` | the device answered a write with an exception, through any link |
+| `inconclusive` | tested, settled nothing, including any readback through a WiNet-S |
+| `readable` | a decoded reading or the raw dump answered for its registers; nothing wrote to them |
+| `not available` | the capability test's preflight did not grant the set's capability |
+| `not read` | nothing in the document speaks for it |
+
+A finding outranks a match within one set. A simulated or dry run is no
+evidence, so its rows can say no more than `readable`.
 
 ### An `export_scale` block, where a document has one
 

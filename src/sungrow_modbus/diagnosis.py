@@ -746,7 +746,25 @@ def summarise(document: dict[str, Any]) -> str:
         lines.append("- A Sungrow battery answered, and its own registers are in.")
     if document.get("wallbox"):
         lines.append("- A wallbox answered, and its registers are in.")
+    lines += _summarise_features(document)
     return "\n".join(lines)
+
+
+def _summarise_features(document: dict[str, Any]) -> list[str]:
+    """Return the feature sets by state, strongest evidence first."""
+    from .features import STATES, feature_report
+
+    rows = document.get("features") or feature_report(document)
+    by_state: dict[str, list[str]] = {}
+    for row in rows:
+        by_state.setdefault(str(row["state"]), []).append(str(row["name"]))
+    if not by_state:
+        return []
+    return ["- **Feature sets**"] + [
+        f"  - {state}: {', '.join(by_state[state])}"
+        for state in STATES
+        if state in by_state
+    ]
 
 
 def _summarise_string_inverter(document: dict[str, Any]) -> str:

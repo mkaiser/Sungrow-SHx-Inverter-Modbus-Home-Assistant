@@ -67,7 +67,7 @@ from sungrow_modbus.capability_test import (
     Snapshot,
     document,
 )
-from sungrow_modbus.diagnosis_document import stand_in
+from sungrow_modbus.diagnosis_document import attach_features, stand_in
 from sungrow_modbus.hybrid_inverter import export_scale
 
 _LOGGER = logging.getLogger("capability_test")
@@ -89,6 +89,8 @@ CANCELLED = -2
 #: older document and no higher: a higher one would claim what the merge did
 #: not record, such as schema 24's "no step was lost".
 EXPORT_SCALE_SCHEMA = 20
+#: The schema that admits the `features` report, recomputed on every merge.
+FEATURES_SCHEMA = 25
 
 
 def _stamp() -> str:
@@ -751,6 +753,9 @@ def _merge(
             )
         document_data["schema"] = admitted
     document_data[key] = block
+    if document_data.get("schema", 0) >= FEATURES_SCHEMA:
+        # The report summarises the blocks, so a new block means a new report.
+        attach_features(document_data)
     target.write_text(json.dumps(document_data, indent=2) + "\n")
     return target
 

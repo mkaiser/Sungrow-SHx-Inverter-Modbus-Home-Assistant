@@ -65,6 +65,7 @@ import asyncio
 import contextlib
 from datetime import datetime
 import ipaddress
+import json
 from pathlib import Path
 import shlex
 import sys
@@ -80,7 +81,13 @@ import string_inverter_direct
 import sungrow_capability_test
 import wallbox_direct
 
-from sungrow_modbus import block_test, dump as register_dump, model_for, string_inverter
+from sungrow_modbus import (
+    block_test,
+    dump as register_dump,
+    features,
+    model_for,
+    string_inverter,
+)
 from sungrow_modbus.block_test import ATTEMPTS, ROUNDS
 from sungrow_modbus.capability_test import FORCED_EFFECT_W
 from sungrow_modbus.diagnosis import async_read_6100, async_read_module, next_steps
@@ -156,7 +163,8 @@ CAPABILITY_TEST_ANSWERS: tuple[str, ...] = ("no", "yes")
 #: the run needs nobody at the keyboard. Every effect the test can have is
 #: named, because leave given for less than it does is not leave.
 CAPABILITY_TEST_QUESTION = f"""
-  One last question, and the only one that lets this run write.
+  One last question, and the only one that lets this run write: a
+  read-only diagnosis, or a diagnosis with capability tests.
 
   After the reading, the capability test can check that the integration writes
   each setting at the right scale: it writes a setting, reads it back, and
@@ -307,9 +315,14 @@ def _preamble(echo, transcript: Path) -> None:
     echo("Sungrow device diagnosis")
     echo("=" * 72)
     echo("")
-    echo("  This reads registers. It writes to your inverter only if you say")
-    echo("  yes to the capability test at the end of the questions, and then only")
-    echo("  after the reading is done.")
+    echo("  Two modes, chosen by the last question:")
+    echo("    * read-only diagnosis -- reads registers and writes nothing, and")
+    echo("      reports which feature sets your inverter answers for;")
+    echo("    * diagnosis with capability tests -- the same reading, then the")
+    echo("      capability test writes each setting, checks it and puts it back,")
+    echo("      and the report says which features it confirmed.")
+    echo("  The answer defaults to read-only, and nothing is written before the")
+    echo("  reading is done.")
     echo("")
     echo("  What it does, in order:")
     echo("    1  find the devices on your network and ask each one who it is")
@@ -818,7 +831,7 @@ def _ask_capability_test(args) -> str:
     with contextlib.redirect_stdout(sys.stderr):
         print(CAPABILITY_TEST_QUESTION)
         allowed = probe._ask_yes(
-            "May the capability test run after the reading, and restart the inverter?",
+            "Run the capability tests after the reading, restart included?",
             False,
         )
     return "yes" if allowed else "no"
@@ -1157,6 +1170,7 @@ def _summary(results: list[Outcome], echo) -> None:
         echo("")
         _summary_blocks(result, echo)
         _summary_actions(result, echo)
+        _summary_features(result, echo)
         echo("  Told to this run, not measured")
         for key in sorted(inputs):
             # An empty answer is not silence. The battery question is only
@@ -1174,6 +1188,29 @@ def _summary(results: list[Outcome], echo) -> None:
             _summary_control(result, path, echo)
         echo("=" * 72)
         echo("")
+
+
+def _summary_features(result: Outcome, echo) -> None:
+    """Say which feature sets the diagnosis found, and how far it tested each.
+
+    From the written document where there is one, because the capability
+    test merges its block into the file after the reading: only the file has
+    both halves.
+    """
+    document = result.document
+    if result.written:
+        try:
+            document = json.loads(result.written[0].read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            document = result.document
+    rows = document.get("features") or features.feature_report(document)
+    echo("  Feature sets")
+    for line in features.format_report(rows):
+        echo(f"  read  {line}")
+    if result.control_code is None:
+        echo("        The capability test did not run: readable is as far as a")
+        echo("        read-only diagnosis goes.")
+    echo("")
 
 
 def _summary_control(result: Outcome, path: Path, echo) -> None:
