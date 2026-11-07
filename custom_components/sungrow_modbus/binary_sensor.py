@@ -142,6 +142,18 @@ class SungrowBinarySensor(SungrowEntity, BinarySensorEntity):
             return self._bit
         return self._delayed
 
+    @callback
+    def async_entity_id_changed(self, old_entity_id: str) -> None:
+        """Take a new entity id in place; nothing here is keyed on the id.
+
+        Defining it opts this class's add hook out of Home Assistant's
+        remove-and-re-add on a rename (2026.11 to 2027.11). Before 2026.11 the
+        base class has no such method and nothing calls it.
+        """
+        parent = getattr(super(), "async_entity_id_changed", None)
+        if parent is not None:
+            parent(old_entity_id)
+
     async def async_added_to_hass(self) -> None:
         """Start the delay from the reading already in hand.
 

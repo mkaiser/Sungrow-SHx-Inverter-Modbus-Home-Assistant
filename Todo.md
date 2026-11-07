@@ -100,7 +100,7 @@ Nothing can start now (blocker 18).
 
 ## Integration and tooling
 
-3. **Home Assistant 2026.11: what is left after the dev environment.** The
+3. **Home Assistant 2026.11: the survey's headers.** The
    dev environment and CI run 2026.11.0 with modbus-connection 4.12.7 and
    tmodbus 1.1.0, tested with core's own `pytest-homeassistant` (2026.11.0),
    which replaced `pytest-homeassistant-custom-component` (that one stops at
@@ -111,11 +111,6 @@ Nothing can start now (blocker 18).
       `modbus-connection[tmodbus]==4.12.4`; to 4.12.7 with tmodbus 1.1.0, a
       new transport for contributors' runs, so after one survey on hardware
       with it (`device-survey/reference.md` first).
-   2. **`async_entity_id_changed`.** Sensor, binary sensor and survey
-      entities override `async_added_to_hass`; until they implement the hook,
-      an `entity_id` rename removes and re-adds them instead of updating in
-      place, a fallback that ends in 2027.11. Check the renames in
-      `migration.py` against the hook before adding it.
 
 # Open decisions
 

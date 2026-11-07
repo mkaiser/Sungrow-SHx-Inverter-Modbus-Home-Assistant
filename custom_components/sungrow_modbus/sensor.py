@@ -211,6 +211,18 @@ class SungrowEnergySensor(SungrowEntity, _IntegratesPower):
     def _update_interval(self) -> timedelta | None:
         return self.coordinator.update_interval
 
+    @callback
+    def async_entity_id_changed(self, old_entity_id: str) -> None:
+        """Take a new entity id in place; nothing here is keyed on the id.
+
+        Defining it opts this class's add hook out of Home Assistant's
+        remove-and-re-add on a rename (2026.11 to 2027.11). Before 2026.11 the
+        base class has no such method and nothing calls it.
+        """
+        parent = getattr(super(), "async_entity_id_changed", None)
+        if parent is not None:
+            parent(old_entity_id)
+
     async def async_added_to_hass(self) -> None:
         """Restore the total, then start sampling."""
         await super().async_added_to_hass()
@@ -259,6 +271,18 @@ class SungrowStringInverterEnergySensor(SungrowStringInverterEntity, _Integrates
 
     def _update_interval(self) -> timedelta | None:
         return self.coordinator.update_interval
+
+    @callback
+    def async_entity_id_changed(self, old_entity_id: str) -> None:
+        """Take a new entity id in place; nothing here is keyed on the id.
+
+        Defining it opts this class's add hook out of Home Assistant's
+        remove-and-re-add on a rename (2026.11 to 2027.11). Before 2026.11 the
+        base class has no such method and nothing calls it.
+        """
+        parent = getattr(super(), "async_entity_id_changed", None)
+        if parent is not None:
+            parent(old_entity_id)
 
     async def async_added_to_hass(self) -> None:
         """Restore the total, then start sampling."""
@@ -313,6 +337,18 @@ class SungrowSensor(SungrowEntity, SensorEntity):
         # that was missed must not make the value drift while the source sits
         # still. Samples are collected on the coordinator update.
         return self._average.value(self.hass.loop.time())
+
+    @callback
+    def async_entity_id_changed(self, old_entity_id: str) -> None:
+        """Take a new entity id in place; nothing here is keyed on the id.
+
+        Defining it opts this class's add hook out of Home Assistant's
+        remove-and-re-add on a rename (2026.11 to 2027.11). Before 2026.11 the
+        base class has no such method and nothing calls it.
+        """
+        parent = getattr(super(), "async_entity_id_changed", None)
+        if parent is not None:
+            parent(old_entity_id)
 
     async def async_added_to_hass(self) -> None:
         """Take the first sample from the reading already in hand."""
