@@ -1,5 +1,11 @@
 # Cleanup unavailable entities
 
+> **This page is for the YAML package** (`modbus_sungrow.yaml`). The Home
+> Assistant integration that replaces it is set up from the UI instead:
+> [installing_a_preview.md](../../doc/installing_a_preview.md) installs it, and
+> [integration_migration.md](../../doc/integration_migration.md) moves an
+> existing installation over with its history.
+
 After migrating to the 2026 version of this integration, some entities were removed. If you want to cleanup your installation follow these steps:
 
 ## Find and delete unavailable entities

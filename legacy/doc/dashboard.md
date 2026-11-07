@@ -1,5 +1,11 @@
 #  Configure dashboards (see screenshots below)
 
+> **This page is for the YAML package** (`modbus_sungrow.yaml`). The Home
+> Assistant integration that replaces it is set up from the UI instead:
+> [installing_a_preview.md](../../doc/installing_a_preview.md) installs it, and
+> [integration_migration.md](../../doc/integration_migration.md) moves an
+> existing installation over with its history.
+
 ## PV dashboard
 
 
@@ -54,6 +60,10 @@ NOTE: Click on the highlighted switch to show or hide the advanced EMS controls.
 
 
 ### Configuration
+
+With the integration, pick the sensors
+[energy_dashboard.md](../../doc/energy_dashboard.md) names; some names differ
+from the YAML package's. For the YAML package:
 
 Edit the Energy Dashboard (Top right --> edit") and adapt the values (see screenshots): 
 

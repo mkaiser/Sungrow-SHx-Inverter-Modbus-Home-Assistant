@@ -442,15 +442,16 @@ catalog submission on release, not before (item 3), and
    from here until Docker gets IPv6 or an IPv4 address is given. Counts and
    mismatches are reported, no serial or address.
 
-6. **The YAML track's documentation, for the integration.** Every page
-   says which track it applies to; the first-line documentation of the
-   integration is `strings.json`.
+6. **The YAML track's documentation, for the integration.** The four pages
+   below open with a note that they are for the YAML package, pointing at
+   `doc/installing_a_preview.md` and `doc/integration_migration.md`; the
+   first-line documentation of the integration is `strings.json`. At the
+   release, the note points at the ordinary install instead of the preview.
 
    | Page | To do |
    | --- | --- |
-   | `legacy/doc/installation.md` | Add the integration: HACS, add integration, what discovery finds |
-   | `legacy/doc/cleanup_entities.md` | Keep, linked from the repair as the manual fallback |
-   | `legacy/doc/dashboard.md` | Generated dashboard and Energy dashboard |
+   | `legacy/doc/cleanup_entities.md` | Link it from a repair as the manual fallback, if one is built |
+   | `legacy/doc/dashboard.md` | A generated dashboard (Future work) |
    | `legacy/doc/faq.md` | The iHomeManager answer, once its entities ship |
 
 7. **Handing the preview channel's users over to the release.** Read in
