@@ -6,45 +6,47 @@ Structure:
 1. **Next steps** -- work that can start now, in order of priority.
 2. **Open decisions** -- questions for the maintainer; nothing is built on
    them until they are answered.
-3. **Blockers** -- work that waits on something outside this repository
+3. **Planned tests** -- runs on hardware with a date: whose inverter, what
+   to run, and what each result decides. Removed once run and ingested.
+4. **Blockers** -- work that waits on something outside this repository
    (hardware, daylight, a contributor). A next step that turns out blocked
    moves here, with what unblocks it.
-4. **Future work** -- wanted, not scheduled; includes recurrent checks.
+5. **Release** -- what the first stable release needs, and what follows it:
+   `main`, the catalog, the preview channel, announcing it.
+6. **Future work** -- wanted, not scheduled; includes recurrent checks.
+
+Next steps and blockers are grouped by device: Inverter (hybrid and
+string, with the meter read through it), Battery, Wallbox, Logger,
+iHomeManager, and Integration and tooling for what belongs to none.
+Numbers run on across the groups, so a reference such as "blocker 17"
+stays unique.
 
 
 # Next steps
 
-1. **The preview channel under the Marketplace.** In Home Assistant 2026.11
-   HACS is built in as Settings → Marketplace, and the HACS installer stops
-   at 2026.11. The Marketplace offers stable releases only, unless the user
-   turns on a repository's *Pre-release* switch. The preview channel
-   publishes no releases, so it is tracked by commit hash. The testbed is
-   `make marketplace` (`hacs_testbed.sh --marketplace`: 2026.11.0 from
-   `.venv-marketplace/`, `config-marketplace/`, :8126, login dev/dev;
-   `ARGS=--adopt-hacs` starts from a copy of `config-hacs/`).
+## Inverter
 
-   Verified on 2026.11.0, 2026-11-06, adopting a HACS install of preview
-   0.1.0a17 (commit `2d735b1`): the Marketplace took over 4 entities and 2
-   devices, adopted HACS's stored data, removed `custom_components/hacs`, and
-   kept the preview as an installed, commit-tracked repository. It reported
-   `pending_upgrade` (available `e0d1840`) with no GitHub connection, and
-   `marketplace/repository/install` installed it without one (only
-   *detect* and *add*, that is *Add from link*, are marked `requires_github`
-   in the source). After a restart Home Assistant pip-installed
-   `sungrow-modbus==0.1.0a26` from PyPI against the manifest pin, with
-   `modbus-connection` 4.12.7 and `tmodbus` 1.1.0, and the integration
-   loaded (the copied entry then failed only to reach its old inverter
-   address). The stored `hacs/integration` entry was gone after the restart.
+1. **The site import limit (32998): what the PV runs left open, at the
+   maintainer's SH10RT.** Settled on P020 over the cable (2026-11-07, wiki:
+   mkaiser-import-limit-2026-11-07 and mkaiser-import-limit-pv-2026-11-07):
+   under a forced charge the cap is on grid import alone, with PV counted;
+   at 1 (0.01 kW) the charge comes only from PV; it settles in ~4-6 s and
+   holds 0-3 % above the cap; 0 and 5001 are refused with exception 0x04,
+   and 5000 is accepted. Still open:
+   - **PV surplus exporting, limit 200, self-consumption** (needs export:
+     a full battery or PV above load plus charge power). Export, PV and the
+     battery must not change.
+   - **House load above the cap that the battery cannot cover** (battery
+     discharge held at 0, or at minimum SoC): does import exceed the cap?
+   - The engine's `--import-limit` check on other firmware: Planned tests
+     item 1.
 
-   Open, needing the maintainer to connect GitHub on :8126 (a device code,
-   read-only): does *Add from link* install the channel from a fresh
-   `make marketplace ARGS=--reset`, and at a commit hash? Only that is left
-   of the three questions.
+## Battery
 
-   Then correct `doc/installing_a_preview.md` and `doc/maintainer_setup.md`
-   §5 (done for the takeover and the update; *Add from link* still states only
-   what the Marketplace's page says). Keep the HACS path while `hacs.json`
-   allows 2026.9 and 2026.10. Nothing here waits on blocker 19.
+Nothing can start now (blocker 14).
+
+## Wallbox
+
 2. **Writing to the wallbox: measure the output current's scale at gerd's.**
    The wallbox is read only. Three sources disagree on the output current
    setting, holding 21203: 0.1 A per count here, 0.01 A in discussion #571, a
@@ -88,132 +90,43 @@ Structure:
    gerd's waits until his Home Assistant is stopped: a read-only survey
    on 2026-11-06 ran into it and is not evidence.
 
-3. **Spoil the December release at the top of `main`'s README.** The
-   maintainer targets a release in December 2026 (said 2026-11-06). `main`'s
-   README opens with dated news headings that the YAML package's users read;
-   a teaser there tells them what is coming before it does. It is a commit on
-   `main`, which AGENTS.md keeps production: the YAML package is not touched,
-   only its README, and only when the maintainer says. Draft, to approve:
+## Logger
 
-   > # 2026-11-06 "A real Home Assistant integration is coming"
-   >
-   > A Home Assistant integration to replace this YAML package is being built
-   > on the `proper-ha-integration` branch, and is targeted for **December
-   > 2026**. It keeps your entity ids, so your recorder history, statistics
-   > and dashboards carry on across the switch. **Nothing changes for you now:**
-   > this package keeps working and is maintained until the integration has
-   > everything it has. A guide for the move comes with the release.
-   > If you are new, you can still install it like described in the README and
-   > quickly migrate later. 
-   > Own a Sungrow device and want to help? Run the survey
-   > ([#786](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786)).
+Nothing can start now (blocker 17).
 
-   Wording to decide: "targeted" and not "will", the month or a date, and
-   whether the preview's own README (this branch) says it too. What December
-   needs, from the rest of this file: the ordinary setup switched on
-   (open decision 1, `ONLY_SURVEY_MODE`), a stable `0.1.0` rather than an
-   alpha, the production-database run (blocker 12) or a decision to go
-   without it, the catalog submission (next step 4;
-   its review takes months, so submit on release, not before), and the
-   migration guide made current.
-4. **Submitting to the catalog, when the merge is decided.** Read
-   2026-11-06 (a subagent's reading of hacs.xyz and
-   contributors.home-assistant.io/marketplace; not checked against
-   `hacs/default` itself): the route is unchanged. The catalog is still
-   `hacs/default`, run by the HACS team and read by the Marketplace; a PR
-   from a personal account adds `owner/repository` to its `integration`
-   file, alphabetically, with the template filled in. Review is automated
-   checks and then "months" in the queue. Where this repository stands:
+## iHomeManager
 
-   | Requirement | Here |
-   | --- | --- |
-   | Public repository, owner submits, OSI licence | yes, MIT |
-   | Description, topics, issues enabled | yes |
-   | `hacs.json` with `name` | yes |
-   | `manifest.json`: domain, documentation, issue_tracker, codeowners, name, version | yes; the name still ends "(preview)" |
-   | Brand: `brand/icon.png` in the integration, or the domain in `home-assistant/brands` | `brand/` exists |
-   | HACS action and hassfest pass with no ignores | CI runs both; confirm none is ignored |
-   | **At least one full GitHub release** (a tag is not enough) | **no: every release is a pre-release** |
-   | `categories` in `manifest.json` | yes, three (see below) |
+Nothing can start now (blocker 18).
 
-   Open: whether a repository whose only releases are pre-releases passes
-   (not stated); so the first stable release (0.1.0, not an alpha) is the
-   real gate. Drop "(preview)" from the name on `main` only. The
-   Marketplace refreshes the catalog every 6 hours and a repository added from
-   a link every 48 hours.
+## Integration and tooling
 
-   **`categories`, investigated 2026-11-06** (core 2026.11's 1562 manifests,
-   its loader and the Marketplace's code; the list is
-   contributors.home-assistant.io/core/integrations/categories/):
-
-   - *What reads them.* Core ships a custom integration's manifest
-     `categories` to the frontend (`loader.py`, the integration descriptions
-     behind Add integration, "the primary category first"), so they matter to
-     users on 2026.11 today, not only for the catalog. hassfest warns when
-     there are none (the release run's annotation); the HACS action's
-     `integration_categories` check warns for none and fails an unknown
-     value, one to three, no duplicates. The Marketplace's own browsing takes
-     categories from the *catalog* entry, so a custom repository such as the
-     preview shows none there; a wrong value loses only the categories.
-   - *What comparable integrations declare.* `sofar` (our reference
-     implementation), `goodwe`, `solax`, `sma`, `kostal_plenticore`,
-     `enphase_envoy`, `solarlog`: exactly `["energy.solar_batteries"]`.
-     `fronius` (inverter and meters): `["energy.solar_batteries",
-     "energy.meters_monitoring"]`. EV chargers (`tesla_wall_connector`,
-     `openevse`, `wallbox`): `["energy.ev_charging"]`. Core's own `modbus` is
-     `["diy_makers"]` because it is the generic connector; a vendor integration
-     is a product, so not that. No core integration lists a parent beside its
-     own child (0 of 1274), so do not.
-   - *Decision (2026-11-06): option C.* `categories` is
-     `["energy.solar_batteries", "energy.ev_charging",
-     "energy.meters_monitoring"]` and `connectivity` is `["modbus"]` (as
-     `sofar`), both in `manifest.json`. The alternatives were A, the narrowest
-     (`["energy.solar_batteries"]`, as `sofar`, `goodwe`, `solax`, `sma`), and B,
-     without the meters. C adds the wallbox (a device of its own here, 19
-     sensors and 2 binary sensors, but read only, which the description
-     should say) and, as `fronius` does, the meter read through the inverter.
-     `diy_makers` stays for core's generic `modbus`.
-   - *Verified:* `make hassfest` (`scripts/dev/hassfest.sh`: current core's
-     hassfest in the 2026.11 venv) reports 0 invalid and no warning; the same
-     run on a manifest with `energy.nonsense` and `carrier_pigeon` warns for
-     both, so the four values are known to core. Pushed 2026-11-06 (CI green:
-     tests, hassfest, HACS), synced to the preview (`5bc5666`), installed on
-     the 2026.11 testbed through the Marketplace: Add integration's
-     descriptions carry the three categories and `connectivity: ["modbus"]`.
-     Not seen: the dialog itself in a browser.
-   refreshes the catalog every 6 hours and a repository added from a link
-   every 48 hours.
-
-5. **The site import limit (32998): what the PV runs left open, at the
-   maintainer's SH10RT.** Settled on P020 over the cable (2026-11-07, wiki:
-   mkaiser-import-limit-2026-11-07 and mkaiser-import-limit-pv-2026-11-07):
-   under a forced charge the cap is on grid import alone, with PV counted;
-   at 1 (0.01 kW) the charge comes only from PV; it settles in ~4-6 s and
-   holds 0-3 % above the cap; 0 and 5001 are refused with exception 0x04,
-   and 5000 is accepted. Still open:
-   - **PV surplus exporting, limit 200, self-consumption** (needs export:
-     a full battery or PV above load plus charge power). Export, PV and the
-     battery must not change.
-   - **House load above the cap that the battery cannot cover** (battery
-     discharge held at 0, or at minimum SoC): does import exceed the cap?
-   - **The engine's `--import-limit` check on other firmware.** It confirmed
-     the cap on the maintainer's SH10RT (P020, 2026-11-07, wiki:
-     mkaiser-import-limit-engine-2026-11-07). Next, each with its owner's
-     leave and after dark (an open PV isolator first left the SH10RT in
-     Standby): fwitten's master (SH10RT-V112, P023, SBR, the closest to
-     ulfben's), then gerd or bar12 through a WiNet-S. Then a preview release
-     so ulfben can run it from the diagnosis button, and answer discussion
-     #546 (a reply is drafted).
+3. **Home Assistant 2026.11: what is left after the dev environment.** The
+   dev environment and CI run 2026.11.0 with modbus-connection 4.12.7 and
+   tmodbus 1.1.0, tested with core's own `pytest-homeassistant` (2026.11.0),
+   which replaced `pytest-homeassistant-custom-component` (that one stops at
+   2026.10.4 and is declared broken upstream). The integration still allows
+   2026.9 and 2026.10. Left:
+   1. **Decide: drop 2026.9 and 2026.10?** Then together: `hacs.json`'s
+      minimum (`2026.11.0`), `pyproject.toml`'s floor
+      (`modbus-connection>=4.12.7`), the README's "Home Assistant 2026.9",
+      the bug template's placeholder. Only then can
+      `async_remove_config_entry_device` read `info.identifiers` instead of
+      `info["identifiers"]` (`__init__.py`; item access on the 2026.11
+      `DeviceInfo` dataclass is deprecated, and 2026.10's is a dict).
+   2. **The survey's PEP 723 headers** (`sungrow_survey.py`,
+      `sungrow_control_test.py`, `sungrow_wallbox_control_test.py`) still pin
+      `modbus-connection[tmodbus]==4.12.4`; to 4.12.7 with tmodbus 1.1.0, a
+      new transport for contributors' runs, so after one survey on hardware
+      with it (`device-survey/reference.md` first).
+   3. **`async_entity_id_changed`.** Sensor, binary sensor and survey
+      entities override `async_added_to_hass`; until they implement the hook,
+      an `entity_id` rename removes and re-adds them instead of updating in
+      place, a fallback that ends in 2027.11. Check the renames in
+      `migration.py` against the hook before adding it.
 
 # Open decisions
 
-1. **When to offer the ordinary setup**, targeted for December 2026 (the
-   maintainer, 2026-11-06) (`ONLY_SURVEY_MODE` in `const.py`;
-   turning it off is the whole re-enablement, `tests/test_alpha_gate.py`),
-   and **when to merge into `main`.** The merge retires the preview channel
-   and opens the HACS default store, which also needs the brand in
-   `home-assistant/brands` (`scripts/helpers/make_brand_icon.py` draws it).
-2. **Are the entity names final?** They are reviewed and decided, English
+1. **Are the entity names final?** They are reviewed and decided, English
    and German (`doc/entity_names.md`, `doc/text_translation_review.md`,
    `scripts/generate/tables/naming.py`); both ship, German as
    `translations/de.json`, and entity ids stay English in every language
@@ -222,13 +135,39 @@ Structure:
    stays cheap until release, not free. A new name goes under **To
    discuss** (`NAME_DISCUSSION` in `naming.py`).
 
+# Planned tests
+
+1. **The site import limit (32998) on P023 and through a WiNet-S,
+   2026-11-07 after dark.** The control test's `--import-limit` check
+   confirmed the cap on the maintainer's SH10RT (P020, cable; wiki:
+   mkaiser-import-limit-engine-2026-11-07). ulfben (discussion #546) reports
+   an SH10RT-V112 with an SBR behind a WiNet-S ignoring it during a forced
+   charge. In this order, each only with its owner's leave for this check (a
+   forced charge of 1250 W from the grid for about two minutes):
+   1. **fwitten's master** (SH10RT-V112, P023, SBR096, cable): the same
+      model, firmware and battery as ulfben's. Obeyed: the hardware and
+      firmware are not the cause, and the question for ulfben is how his
+      charge was commanded. Ignored: the first watched case, and no control
+      on P023.
+   2. **gerd (P022) or bar12 (P023), through the WiNet-S**: ulfben's
+      transport. The cap is judged by the meter, so the dongle's verdict
+      stands; its 0/5001/5000 refusals do not (a refused write through a
+      WiNet-S has landed before).
+
+   How: from this checkout (the pinned library lacks the check),
+   `sungrow_control_test.py <host> --import-limit --allow-dark --no-restart`,
+   a dry run first; the stand-in read before any write (the 178.x subnets
+   collide); the house's Home Assistant stopped for the run. After dark,
+   not with the PV isolator open: the maintainer's SH10RT went to Standby
+   with the battery idle when it was opened, and a run refused. A battery
+   above 90 % skips the check. Then ingest, a preview release so ulfben can
+   run it from the diagnosis button, and the reply to #546 (drafted).
+
 # Blockers
 
-1. **A wallbox charging negative, or past 32.7 kW.** Settles whether
-   21308/21310 are signed. Still unnamed: input 21313 (falls to 0 when
-   charging ends, not power) and input 21365 (-71 to -63, flat). A wallbox
-   restart would show whether 21267 falls to near zero.
-2. **An SH-T through its WiNet-S, in daylight, with export** (any SH15T
+## Inverter
+
+1. **An SH-T through its WiNet-S, in daylight, with export** (any SH15T
    owner; ra1k_0 says the SH20T has no LAN port of its own, #772, and
    Sungrow's SH5T-SH25T manual lists a WiNet-S2 Ethernet connection and a
    COM2 terminal, no LAN terminal: the manual's contents page, read through a
@@ -248,137 +187,63 @@ Structure:
    - **Whether an iHomeManager silences 5741-5746** (#647, #651), which
      every WiNet-S refuses anyway; ra1k_0 has one.
    Still open on the T besides: whether 13018 acts as 31211 does.
-3. **A second wallbox's survey.** Settles whether 21211-21214 identify the
-   unit. The wallbox reports its own serial (input 21201-21206, 11 ASCII
-   characters, as Sungrow's portal shows it); the
-   integration shows it on the device page, identifies the device by the
-   inverter's serial plus `-wallbox`, and publishes it only as a stand-in.
-   Three registers wait on a second unit:
-   input 21201-21206 (the serial: use it as the device identity?), input
-   21211-21214 (a short code, masked), and holding 21250-21259 (twenty
-   constant ASCII digits, masked). Whichever differ between
-   two wallboxes identify a unit and stay masked; whichever match are a model
-   constant and can be unmasked. ra1k_0's AC22E-01 would be one.
-4. **firetribe, once more (#784).** A cable control test while the
+
+2. **firetribe, once more (#784).** A cable control test while the
    inverter is running (it was `Starting`) gives the first SH6.0RT-V112
    readbacks and its 13074 write scale. Their WiNet-S 0x04s are contention,
    reproduced at gerd's.
 
-5. **A first iHomeManager survey** (#786). Unblocks building its entities
-   (milestone 5). The survey reads one (unit 247, port 502, 503 or 504, one
-   connection each); the integration does not, and its config flow fails such
-   an endpoint with `no_serial_number`. Wait for a measured reading before
-   building entities on `sungrow_modbus.ihomemanager`. Sungrow's protocol PDF:
-   https://github.com/TCzerny/ha-modbus-manager/blob/main/docs/Communication%20Protocol%20of%20iHomeManager_V1.0.2.pdf
-
-6. **A first Sungrow Logger survey** (#786). Unblocks Logger entities
-   (milestone 8). The map is done from Sungrow's protocol 1.0.2.9
-   (`sungrow_modbus.logger`, every field `spec`; where every document is:
-   `.wiki/wiki/queries/where-are-sungrows-documents.md`); what a first
-   survey settles is on `.wiki/wiki/queries/what-does-a-logger-answer.md`.
-   It reached surveys with 0.1.0a26, which the survey pins. Missing:
-
-   1. **Its TLS port, untried.** The survey asks unit 247 over TLS on 516
-      (a current Logger1000 opens only that port); no Logger has answered
-      there yet, so that path is held to fakes only (`tests/test_logger.py`).
-   2. **What sits behind it.** Each inverter and meter answers at its
-      forwarding address (the Logger's Device List page), not at a unit the
-      survey guesses; `identify` looks at units 1-5 only. A DTSU666 is a
-      device nothing maps.
-   3. **A contributor with one.** Nobody has offered; the #262 participants
-      (RafAustralia, purcell-lab, NBS23) are the leads.
-
-7. **A fault seen on hardware.** The fifteen words are decoded from V1.1.11's
+3. **A fault seen on hardware.** The fifteen words are decoded from V1.1.11's
    Appendix 4; one survey has a flag set (bit 30 of the inverter alarm, a
    slave with no meter), which confirms the word order. Wanted: a reading
    during a real grid or battery fault, and the battery words through a
    dongle. V1.1.17's Appendix 4 is word for word V1.1.11's.
-8. **SBH.** Answers the SBR's common block at unit 2 with the SBR's scales;
-    per-module arrays unread. Needs the register document.
-9. **Meter phase voltage/current (5741-5746) on dongle houses.** Read zero
+
+4. **Meter phase voltage/current (5741-5746) on dongle houses.** Read zero
     through every WiNet-S measured and are gated on a non-zero voltage.
     Whether they need reading on their own (#756) needs a survey from an
     affected owner; `layout.py` changes only on measurement.
-10. **T-series energy counters.** One SH20T reads 13045 (daily export) as 0
-    while exporting, and 5003/5004-5005 duplicating the export counters. A
-    second T survey, ideally on a cable, before `registers.py` changes.
-11. **Does a WiNet-S advertise over mDNS?** Needs a house with a dongle and
-    a run on the host, not in the container.
-12. **The production database.** The migration is verified at real scale
-    only against the maintainer's years-old YAML install; what to collect and
-    how is in `doc/maintainer_setup.md`, section 8. Two routes: a copy of the
-    instance's files (preferred: the migration can be run and rolled back, in
-    the gitignored `.testdata/`, pointed at the simulator, never at the real
-    inverter) or read-only API access (the entity map and statistics only).
-    For the API: a non-admin user's token and the instance's address are in
-    `~/.claude/secrets/` (never in this repository), but the hostname resolves
-    to IPv6 only and the devcontainer has no IPv6 route, so it is unreachable
-    from here until Docker gets IPv6 or an IPv4 address is given. Counts and
-    mismatches are reported, no serial or address.
 
-13. **Writing the discharge schedules, and the import limit** (#785), in
-    no Sungrow document. The schedules read as diagnostic entities
-    (`Capability.DISCHARGE_SCHEDULE`); writing them needs a watched write, as
-    31211 did (wiki: firmware gating), from a control test run with leave. The
-    site import power limit, register 32998, is in 0.01 kW (discussion #546;
-    wiki: register 32998): it holds a meter-measured cap on an SH10RS, refuses
-    a word above 5000, and on the maintainer's SH10RT (P020) held import at
-    2.00 kW under a 4500 W forced charge by cutting the charge (2026-11-07,
-    night, cable; wiki: mkaiser-import-limit-2026-11-07). On one SH10RT-V112
-    it is reported ignored during a forced charge (wiki query). An entity
-    needs a watched write per firmware. P020 has two (night and PV, 2026-11-07):
-    the cap is on import alone, and 1-5000 is the accepted range. The
-    integration reads it as the diagnostic sensor Grid import limit, and the
-    control test's `--import-limit` check is written for P023 owners to run;
-    the control waits on those runs (Next steps item 5).
+5. **T-series energy counters.** One SH20T reads 13045 (daily export) as 0
+   while exporting, and 5003/5004-5005 duplicating the export counters. A
+   second T survey, ideally on a cable, before `registers.py` changes.
 
-14. **The discharge window on P023** (#785). It has run on P022 and P020,
-    and the device pages and log say so; no P023 or SBR house has run it
-    (fwitten's master, with their Home Assistant stopped, in the evening).
+6. **Writing the discharge schedules, and the import limit** (#785), in
+   no Sungrow document. The schedules read as diagnostic entities
+   (`Capability.DISCHARGE_SCHEDULE`); writing them needs a watched write, as
+   31211 did (wiki: firmware gating), from a control test run with leave. The
+   site import power limit, register 32998, is in 0.01 kW (discussion #546;
+   wiki: register 32998): it holds a meter-measured cap on an SH10RS, refuses
+   a word above 5000, and on the maintainer's SH10RT (P020) held import at
+   2.00 kW under a 4500 W forced charge by cutting the charge (2026-11-07,
+   night, cable; wiki: mkaiser-import-limit-2026-11-07). On one SH10RT-V112
+   it is reported ignored during a forced charge (wiki query). An entity
+   needs a watched write per firmware. P020 has three (night and PV by
+   script, then the control test's `--import-limit` check, 2026-11-07): the
+   cap is on import alone, and 1-5000 is the accepted range. The integration
+   reads it as the diagnostic sensor Grid import limit; the control waits on
+   the P023 and WiNet-S runs (Planned tests item 1).
 
-15. **The SG's zeros and writes.** On bleughb's two SG5.0RS through a
-    WiNet-S, the meter block (5083-5104) and the per-string block (input
-    7013) read 0, and holding 5020 reads nothing. Whether that is absence or
-    the dongle needs an SG on a cable, or one with its own meter. Writing the
-    power limitation (holding 5007-5008, which bleughb writes on both) waits
-    for a watched write.
+7. **The discharge window on P023** (#785). It has run on P022 and P020,
+   and the device pages and log say so; no P023 or SBR house has run it
+   (fwitten's master, with their Home Assistant stopped, in the evening).
 
-16. **The control test's restore through a WiNet-S, on hardware.** A
-    dongle-only control test at gerd on the current tree, with the battery
-    above 30 % and no car charging, then a cable read of every snapshot
-    register. Left open in the code: a touched register goes back to the
-    dongle's word, wrong only if changed over another path since the dongle
-    last read it.
+8. **The SG's zeros and writes.** On bleughb's two SG5.0RS through a
+   WiNet-S, the meter block (5083-5104) and the per-string block (input
+   7013) read 0, and holding 5020 reads nothing. Whether that is absence or
+   the dongle needs an SG on a cable, or one with its own meter. Writing the
+   power limitation (holding 5007-5008, which bleughb writes on both) waits
+   for a watched write.
 
-17. **gerd's cable restart.** On 2026-11-03 the start had to be sent three
-    times (still stopped 60 s after each), where every earlier restart took
-    the first. Watch whether it recurs.
+9. **gerd's cable restart.** On 2026-11-03 the start had to be sent three
+   times (still stopped 60 s after each), where every earlier restart took
+   the first. Watch whether it recurs.
 
-18. **The SG's tracker counts beyond the SG5.0RS.** `MPPT_COUNTS` is the
+10. **The SG's tracker counts beyond the SG5.0RS.** `MPPT_COUNTS` is the
     source's model table, many entries unverified; a survey of any other SG
     checks its row (wanted in `device-survey/devices-wanted.md`, row 10).
-19. **Home Assistant 2026.11 and modbus-connection 4.12.7.** 2026.11.0
-    (2026-11-04) pins `modbus-connection[tmodbus]==4.12.7` and
-    `tmodbus==1.1.0`; the dev environment runs 2026.10.4 on 4.12.4 and
-    tmodbus 0.6.2, because `pytest-homeassistant-custom-component` 0.13.375
-    still pins `homeassistant==2026.10.4`, and forcing it does not work:
-    2026.11 aliases `httpx` to `httpx2` on import and raises if `httpx` is
-    already loaded, which the 2026.10 plugin's dependencies do first, so
-    pytest stops before collecting. Once a plugin release supports 2026.11, move
-    together: `requirements_dev.txt` (`homeassistant>=2026.11` and the two
-    pins), the survey and control test headers (`==4.12.7`),
-    `pyproject.toml`'s floor (`>=4.12.7`), `hacs.json`'s minimum
-    (`2026.11.0`), the README's "Home Assistant 2026.9" and the bug
-    template's version placeholder; then `make check`. With the floor at
-    2026.11, `DeviceInfo` is a dataclass, and item access on it is deprecated:
-    `async_remove_config_entry_device` reads `info["identifiers"]`
-    (`__init__.py`), which becomes `info.identifiers`. Also on 2026.11:
-    sensor, binary sensor and survey entities override
-    `async_added_to_hass`. Until they implement `async_entity_id_changed`,
-    an `entity_id` rename still removes and re-adds them, instead of
-    updating in place. That fallback ends in 2027.11. Check the renames in
-    `migration.py` against the hook before adding it.
-20. **A watched forced startup (13017).** The *Force startup* button exists
+
+11. **A watched forced startup (13017).** The *Force startup* button exists
     only on firmware in `CONFIRMED_ON_FIRMWARE`, and nothing can put one
     there: the control test has no check for it. One needs an inverter in
     low-SoC standby with no PV (an evening, the battery at its minimum SoC),
@@ -386,7 +251,7 @@ Structure:
     check is a control-test change, so it waits for a house that can give
     such an evening.
 
-21. **The PV cut (31211, #738), beyond the four confirmed firmwares.**
+12. **The PV cut (31211, #738), beyond the four confirmed firmwares.**
     Waits on contributors; nothing here or at the maintainer's P020 (31211
     reads 0xFFFF there) can answer it.
     - More firmware confirmed: 31211 answers 0x55 but no cut has been
@@ -398,12 +263,262 @@ Structure:
       does a cut survive a night or a restart, or does iSolarCloud rewrite
       it?
 
-22. **What register 13080 counts.** Documented as the external EMS
+13. **What register 13080 counts.** Documented as the external EMS
     heartbeat (0-1000 s, default 20 s), it reads 0 on 42 surveys, 330 on two
     houses in EMS mode 0, and 875 then 961 on ra1k_0's SH20T in EMS mode 3
     (`.wiki/wiki/queries/what-do-the-v1-1-17-only-registers-read.md`). Two
     reads of it a minute apart at that house would show whether it counts
     seconds. Nothing reads or writes it until then.
+
+## Battery
+
+14. **SBH.** Answers the SBR's common block at unit 2 with the SBR's scales;
+     per-module arrays unread. Needs the register document.
+
+## Wallbox
+
+15. **A wallbox charging negative, or past 32.7 kW.** Settles whether
+    21308/21310 are signed. Still unnamed: input 21313 (falls to 0 when
+    charging ends, not power) and input 21365 (-71 to -63, flat). A wallbox
+    restart would show whether 21267 falls to near zero.
+
+16. **A second wallbox's survey.** Settles whether 21211-21214 identify the
+    unit. The wallbox reports its own serial (input 21201-21206, 11 ASCII
+    characters, as Sungrow's portal shows it); the
+    integration shows it on the device page, identifies the device by the
+    inverter's serial plus `-wallbox`, and publishes it only as a stand-in.
+    Three registers wait on a second unit:
+    input 21201-21206 (the serial: use it as the device identity?), input
+    21211-21214 (a short code, masked), and holding 21250-21259 (twenty
+    constant ASCII digits, masked). Whichever differ between
+    two wallboxes identify a unit and stay masked; whichever match are a model
+    constant and can be unmasked. ra1k_0's AC22E-01 would be one.
+
+## Logger
+
+17. **A first Sungrow Logger survey** (#786). Unblocks Logger entities.
+    The map is done from Sungrow's protocol 1.0.2.9
+    (`sungrow_modbus.logger`, every field `spec`; where every document is:
+    `.wiki/wiki/queries/where-are-sungrows-documents.md`); what a first
+    survey settles is on `.wiki/wiki/queries/what-does-a-logger-answer.md`.
+    It reached surveys with 0.1.0a26, which the survey pins. Missing:
+
+    1. **Its TLS port, untried.** The survey asks unit 247 over TLS on 516
+       (a current Logger1000 opens only that port); no Logger has answered
+       there yet, so that path is held to fakes only (`tests/test_logger.py`).
+    2. **What sits behind it.** Each inverter and meter answers at its
+       forwarding address (the Logger's Device List page), not at a unit the
+       survey guesses; `identify` looks at units 1-5 only. A DTSU666 is a
+       device nothing maps.
+    3. **A contributor with one.** Nobody has offered; the #262 participants
+       (RafAustralia, purcell-lab, NBS23) are the leads.
+
+## iHomeManager
+
+18. **A first iHomeManager survey** (#786). Unblocks building its entities.
+    The survey reads one (unit 247, port 502, 503 or 504, one
+    connection each); the integration does not, and its config flow fails such
+    an endpoint with `no_serial_number`. Wait for a measured reading before
+    building entities on `sungrow_modbus.ihomemanager`. Sungrow's protocol PDF:
+    https://github.com/TCzerny/ha-modbus-manager/blob/main/docs/Communication%20Protocol%20of%20iHomeManager_V1.0.2.pdf
+
+## Integration and tooling
+
+19. **Does a WiNet-S advertise over mDNS?** Needs a house with a dongle and
+    a run on the host, not in the container.
+
+20. **The control test's restore through a WiNet-S, on hardware.** A
+    dongle-only control test at gerd on the current tree, with the battery
+    above 30 % and no car charging, then a cable read of every snapshot
+    register. Left open in the code: a touched register goes back to the
+    dongle's word, wrong only if changed over another path since the dongle
+    last read it.
+
+# Release
+
+The maintainer targets a stable release in December 2026 (said
+2026-11-06). It needs: the ordinary setup switched on (item 1,
+`ONLY_SURVEY_MODE`), a stable `0.1.0` rather than an alpha (item 3), the
+production-database run or a decision to go without it (item 5), the
+catalog submission on release, not before (item 3), and
+`doc/integration_migration.md` made current.
+
+1. **When to offer the ordinary setup**, targeted for December 2026 (the
+   maintainer, 2026-11-06) (`ONLY_SURVEY_MODE` in `const.py`;
+   turning it off is the whole re-enablement, `tests/test_alpha_gate.py`),
+   and **when to merge into `main`.** The merge retires the preview channel
+   and opens the HACS default store, which also needs the brand in
+   `home-assistant/brands` (`scripts/helpers/make_brand_icon.py` draws it).
+
+2. **Spoil the December release at the top of `main`'s README.** The
+   maintainer targets a release in December 2026 (said 2026-11-06). `main`'s
+   README opens with dated news headings that the YAML package's users read;
+   a teaser there tells them what is coming before it does. It is a commit on
+   `main`, which AGENTS.md keeps production: the YAML package is not touched,
+   only its README, and only when the maintainer says. Draft, to approve:
+
+   > # 2026-11-06 "A real Home Assistant integration is coming"
+   >
+   > A Home Assistant integration to replace this YAML package is being built
+   > on the `proper-ha-integration` branch, and is targeted for **December
+   > 2026**. It keeps your entity ids, so your recorder history, statistics
+   > and dashboards carry on across the switch. **Nothing changes for you now:**
+   > this package keeps working and is maintained until the integration has
+   > everything it has.
+   > The integration will support multiple inverters, meters, wallboxes, logger
+   > and iHomeManager units.
+   > A guide for the move comes with the release.
+   > If you are new, you can still install it like described in the README and
+   > quickly migrate later.
+   > Own a Sungrow device and want to help? Run the survey
+   > ([#786](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786)).
+
+   Wording to decide: "targeted" and not "will", the month or a date, and
+   whether the preview's own README (this branch) says it too. The line on
+   multiple inverters, meters, wallboxes, Logger and iHomeManager promises
+   more than December may hold: Logger and iHomeManager entities wait on a
+   first survey (blockers 17 and 18), a second wallbox has never been seen
+   (blocker 16), and the wallbox is read only (next step 2). "Is built to
+   support", or naming what ships, keeps it true.
+
+3. **Submitting to the catalog, when the merge is decided.** Read
+   2026-11-06 (a subagent's reading of hacs.xyz and
+   contributors.home-assistant.io/marketplace; not checked against
+   `hacs/default` itself): the route is unchanged. The catalog is still
+   `hacs/default`, run by the HACS team and read by the Marketplace; a PR
+   from a personal account adds `owner/repository` to its `integration`
+   file, alphabetically, with the template filled in. Review is automated
+   checks and then "months" in the queue. Where this repository stands:
+
+   | Requirement | Here |
+   | --- | --- |
+   | Public repository, owner submits, OSI licence | yes, MIT |
+   | Description, topics, issues enabled | yes |
+   | `hacs.json` with `name` | yes |
+   | `manifest.json`: domain, documentation, issue_tracker, codeowners, name, version | yes; the name still ends "(preview)" |
+   | Brand: `brand/icon.png` in the integration, or the domain in `home-assistant/brands` | `brand/` exists |
+   | HACS action and hassfest pass with no ignores | yes: CI runs both and ignores no check |
+   | **At least one full GitHub release** (a tag is not enough) | **no: every release is a pre-release** |
+   | `categories` in `manifest.json` | yes, three, and `connectivity: ["modbus"]` |
+
+   Open: whether a repository whose only releases are pre-releases passes
+   (not stated); so the first stable release (0.1.0, not an alpha) is the
+   real gate. Drop "(preview)" from the name on `main` only. The
+   Marketplace refreshes the catalog every 6 hours and a repository added from
+   a link every 48 hours.
+
+4. **The preview channel under the Marketplace.** In Home Assistant 2026.11
+   HACS is built in as Settings → Marketplace, and the HACS installer stops
+   at 2026.11. The Marketplace offers stable releases only, unless the user
+   turns on a repository's *Pre-release* switch. The preview channel
+   publishes no releases, so it is tracked by commit hash. The testbed is
+   `make marketplace` (`hacs_testbed.sh --marketplace`: 2026.11.0 from
+   `.venv-marketplace/`, `config-marketplace/`, :8126, login dev/dev;
+   `ARGS=--adopt-hacs` starts from a copy of `config-hacs/`).
+
+   Verified on 2026.11.0, 2026-11-06, adopting a HACS install of preview
+   0.1.0a17 (commit `2d735b1`): the Marketplace took over 4 entities and 2
+   devices, adopted HACS's stored data, removed `custom_components/hacs`, and
+   kept the preview as an installed, commit-tracked repository. It reported
+   `pending_upgrade` (available `e0d1840`) with no GitHub connection, and
+   `marketplace/repository/install` installed it without one (only
+   *detect* and *add*, that is *Add from link*, are marked `requires_github`
+   in the source). After a restart Home Assistant pip-installed
+   `sungrow-modbus==0.1.0a26` from PyPI against the manifest pin, with
+   `modbus-connection` 4.12.7 and `tmodbus` 1.1.0, and the integration
+   loaded (the copied entry then failed only to reach its old inverter
+   address). The stored `hacs/integration` entry was gone after the restart.
+
+   Open, needing the maintainer to connect GitHub on :8126 (a device code,
+   read-only): does *Add from link* install the channel from a fresh
+   `make marketplace ARGS=--reset`, and at a commit hash? Only that is left
+   of the three questions.
+
+   Then correct `doc/installing_a_preview.md` and `doc/maintainer_setup.md`
+   §5 (done for the takeover and the update; *Add from link* still states only
+   what the Marketplace's page says). Keep the HACS path while `hacs.json`
+   allows 2026.9 and 2026.10. Nothing here waits on next step 3.
+
+5. **The production database.** The migration is verified at real scale
+   only against the maintainer's years-old YAML install; what to collect and
+   how is in `doc/maintainer_setup.md`, section 8. Two routes: a copy of the
+   instance's files (preferred: the migration can be run and rolled back, in
+   the gitignored `.testdata/`, pointed at the simulator, never at the real
+   inverter) or read-only API access (the entity map and statistics only).
+   For the API: a non-admin user's token and the instance's address are in
+   `~/.claude/secrets/` (never in this repository), but the hostname resolves
+   to IPv6 only and the devcontainer has no IPv6 route, so it is unreachable
+   from here until Docker gets IPv6 or an IPv4 address is given. Counts and
+   mismatches are reported, no serial or address.
+
+6. **The YAML track's documentation, for the integration.** Every page
+   says which track it applies to; the first-line documentation of the
+   integration is `strings.json`.
+
+   | Page | To do |
+   | --- | --- |
+   | `legacy/doc/installation.md` | Add the integration: HACS, add integration, what discovery finds |
+   | `legacy/doc/cleanup_entities.md` | Keep, linked from the repair as the manual fallback |
+   | `legacy/doc/dashboard.md` | Generated dashboard and Energy dashboard |
+   | `legacy/doc/faq.md` | The iHomeManager answer, once its entities ship |
+
+7. **Handing the preview channel's users over to the release.** Read in
+   core 2026.11.0's Marketplace source (`.venv-marketplace`,
+   `components/marketplace`), 2026-11-07; nothing tried on the testbed yet.
+
+   **There is no one-click switch.** The Marketplace refuses to install an
+   integration whose domain another installed repository owns ("The
+   sungrow_modbus directory belongs to ...-preview", `async_pre_install` in
+   `repositories/integration.py`). The switch is: **Remove** the preview in
+   the Marketplace (it deletes `custom_components/sungrow_modbus`; the config
+   entry, its entities and their history are Home Assistant's and stay),
+   **Download** from this repository, restart. A restart between the two
+   leaves the entry failing to load until the download. Two more routes
+   that do not help:
+   - The catalog's `removed` feed raises a repair for an installed
+     repository it lists (`async_handle_removed_repositories` in `base.py`),
+     but that repair is not fixable: it only links the repository's page.
+     Unknown: whether `hacs/default` takes a removal entry for a repository
+     that was never in the catalog.
+   - A GitHub rename carries over by repository id
+     (`_async_take_over_catalog_entry`), but two repositories cannot be
+     merged into one, so no rename moves the mirror's users.
+
+   The options:
+   1. **Zero clicks: keep the mirror going after the release.** `sync.yml`
+      follows `main`'s release tags and publishes the same release on the
+      mirror, with the name lacking "(preview)". Mirror users get an
+      ordinary **Update** and never have to switch. Costs a second
+      repository for as long as anyone is on it.
+   2. **A repair of our own** that names the three steps above, raised when
+      the integration was installed from the mirror (a marker `sync.yml`
+      writes, such as a constant in `const.py`; the Marketplace's stored data
+      also names the repository, but that is its internals). A fix flow that
+      drives the Marketplace's remove and install would use its websocket
+      API (`marketplace/repository/install`) from a custom integration: not
+      worth the fragility.
+
+   Proposal: 1 at the release, with 2 alongside it, then archive the mirror
+   once few installs use it. Before deciding, on `make marketplace`: the
+   remove-then-download order keeps the entry, its entities and history; and
+   whether a commit-tracked install switches to versions once the mirror
+   publishes a release. Then update `doc/installing_a_preview.md`'s last
+   paragraph.
+
+8. **Deprecating and retiring the YAML package, after the release.** Once
+   the integration is complete (parity with the YAML package, merged into
+   `main`, in the HACS default store), deprecate `legacy/modbus_sungrow.yaml`
+   and the generated multi-inverter files, then retire them: announce it,
+   point every `legacy/doc/` page at the integration and
+   `doc/integration_migration.md`, and set a date after which the YAML
+   package gets no further changes.
+
+   What retiring does not end: anyone may still migrate later, so the legacy-id
+   adoption and its guards stay as long as migration is offered.
+   `tests/test_sensor_descriptions.py` (ids, unit class, `state_class` against
+   `doc/legacy_entity_map.json`) keeps history continuous and stays.
+   `tests/test_registers.py`'s comparison with the YAML can then be anchored to
+   the specification instead; its scan-interval check goes first.
 
 # Future work
 
@@ -533,35 +648,8 @@ Open: what the integration should do when an id does change (a repair that
 names the affected entities and links the recipe; a list of old and new ids
 a user can export), how a rename after release is announced, and whether a
 real InfluxDB with the migrated data is worth testing once the production
-copy (blocker 12, `doc/maintainer_setup.md` §8)
+copy (Release item 5, `doc/maintainer_setup.md` §8)
 exists.
-
-## The YAML track's documentation, for the integration
-
-Every page says which track it applies to; the first-line documentation of
-the integration is `strings.json`.
-
-| Page | To do |
-| --- | --- |
-| `legacy/doc/installation.md` | Add the integration: HACS, add integration, what discovery finds |
-| `legacy/doc/cleanup_entities.md` | Keep, linked from the repair as the manual fallback |
-| `legacy/doc/dashboard.md` | Generated dashboard and Energy dashboard |
-| `legacy/doc/faq.md` | The iHomeManager answer, once its entities ship |
-
-## Deprecating and retiring the YAML package
-
-Once the integration is complete (parity with the YAML package, merged into
-`main`, in the HACS default store), deprecate `legacy/modbus_sungrow.yaml`
-and the generated multi-inverter files, then retire them: announce it, point
-every `legacy/doc/` page at the integration and `doc/integration_migration.md`,
-and set a date after which the YAML package gets no further changes.
-
-What retiring does not end: anyone may still migrate later, so the legacy-id
-adoption and its guards stay as long as migration is offered.
-`tests/test_sensor_descriptions.py` (ids, unit class, `state_class` against
-`doc/legacy_entity_map.json`) keeps history continuous and stays.
-`tests/test_registers.py`'s comparison with the YAML can then be anchored to
-the specification instead; its scan-interval check goes first.
 
 ## Modbus over TLS on a WiNet-S's 516
 
@@ -598,21 +686,6 @@ gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments
 Last checked: **2026-11-07 10:40 UTC** (#786, #791): code-imstillalive's
 SH25T and SH15T through a Logger1000A, and peter_sm's ninth and tenth
 readings (Korsberg's diagnostics downloads), ingested.
-
-## Recurrent: a test plugin for Home Assistant 2026.11 (daily, until it ships)
-
-Blocker 20 waits on `pytest-homeassistant-custom-component` pinning
-`homeassistant==2026.11.x`. Every day, ask PyPI; while it prints
-`2026.10.4`, nothing changes. Once it prints a 2026.11 pin, do blocker 19
-and drop this check.
-
-```bash
-curl -s https://pypi.org/pypi/pytest-homeassistant-custom-component/json \
-  | python3 -c "import json,sys; i=json.load(sys.stdin)['info']; \
-print(i['version'], [r for r in i['requires_dist'] if r.startswith('homeassistant')])"
-```
-
-Last checked: **2026-11-06 21:20 UTC**: 0.13.375, still `homeassistant==2026.10.4`.
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 
