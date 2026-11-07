@@ -44,7 +44,7 @@
 - [Installation sisu70](entities/installation-sisu70.md) — SH10RT-20 on P023 with SBR128, cable and dongle, read while polling #installation #sisu70
 - [Register 13000 \(running state\)](entities/register-13000.md) — Running state; 0x0000 is Running, and a dongle re-encodes it #register #input #running-state
 - [Register 13074 \(export power limit\)](entities/register-13074.md) — Export power limit; writes x10 on B001 firmware, 1:1 on 01011.95.03 #register #holding #export-limit #write-scale
-- [Register 13017 \(forced startup under low SoC standby\)](entities/register-13017.md) — A switch: 0xAA wakes a low-SoC standby inverter and keeps it running, 0x55 is off, other words refused (P023); reads 0 from the factory, which cannot be written back #register #holding #switch
+- [Register 13017 \(forced startup under low SoC standby\)](entities/register-13017.md) — A switch: 0xAA wakes a low-SoC standby inverter and keeps it running, 0x55 is off, other words refused (P023); reads 0 from the factory, which cannot be written back; a switch on P023 #register #holding #switch
 - [Register 31211 \(PV generation cut\)](entities/register-31211.md) — Undocumented PV generation cut, gated by firmware #register #holding #pv-cut #firmware-gated #undocumented
 - [Register 31213 \(shutdown at a 0 % power limit\)](entities/register-31213.md) — Undocumented: 0xAA stops the inverter at a 0 % active power limit; 0xAA on SH-RS and SH-T, 0x55 on SH-RT #register #holding #active-power-limit #undocumented
 - [Registers 33042 and 33274](entities/register-33042-and-33274.md) — Two specification registers not read: 33042 is 0xFFFF and 33274 is 0 on every diagnosis #register #holding #specification #unread

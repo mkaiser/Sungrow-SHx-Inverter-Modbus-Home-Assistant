@@ -120,11 +120,11 @@ ADDED = {
 }
 
 #: Additions that are an entity on another platform instead of a sensor. The
-#: map records a sensor because the specification lists a register; a command
-#: register reads back nothing worth showing, so it is a button.
+#: map records a sensor because the specification lists a register; a
+#: register an owner sets is a control rather than a reading.
 NOT_A_SENSOR: dict[str, str] = {
-    # 13017 never reads 0xAA; `writes.BUTTONS` explains.
-    "forced_startup_under_low_soc_raw": "button.force_startup",
+    # 13017 reads back 0xAA and 0x55; `writes.SWITCHES` explains.
+    "forced_startup_under_low_soc_raw": "switch.forced_startup_under_low_soc",
 }
 for _key in NOT_A_SENSOR:
     del ADDED[_key]
@@ -132,11 +132,14 @@ for _key in NOT_A_SENSOR:
 
 def test_an_addition_that_is_not_a_sensor_names_what_it_became() -> None:
     from custom_components.sungrow_modbus.button_descriptions import BUTTON_DESCRIPTIONS
+    from custom_components.sungrow_modbus.switch_descriptions import SWITCH_DESCRIPTIONS
 
-    buttons = {f"button.{d.key}": d.field for d in BUTTON_DESCRIPTIONS}
+    controls = {f"button.{d.key}": d.field for d in BUTTON_DESCRIPTIONS} | {
+        f"switch.{d.key}": d.field for d in SWITCH_DESCRIPTIONS
+    }
     for field, entity in NOT_A_SENSOR.items():
         assert field not in BY_KEY
-        assert buttons.get(entity) == field
+        assert controls.get(entity) == field
 
 
 def test_the_specification_additions_all_became_entities() -> None:

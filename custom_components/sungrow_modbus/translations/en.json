@@ -232,9 +232,6 @@
       }
     },
     "button": {
-      "force_startup": {
-        "name": "Force startup"
-      },
       "run_capability_test": {
         "name": "Run complete diagnosis and tests"
       },
@@ -1244,6 +1241,9 @@
       },
       "forced_charging_schedule": {
         "name": "Forced charging schedule"
+      },
+      "forced_startup_under_low_soc": {
+        "name": "Forced startup under low SoC"
       },
       "load_adjustment_mode_enable": {
         "name": "Load control"

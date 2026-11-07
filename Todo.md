@@ -56,11 +56,8 @@ stays unique.
    bar12-forced-startup-2026-11-07, P023): 0xAA wakes a low-SoC standby
    inverter and keeps it running, 0x55 sends it back, both read back,
    every other word is refused, and the factory 0 cannot be written back.
-   The *Force startup* button only presses 0xAA, so it would leave the
-   inverter awake. Decide: a switch (0xAA/0x55, its state read from the
-   register; P023 into `CONFIRMED_ON_FIRMWARE` for
-   `FORCED_STARTUP_CONTROL`), or no control, since a forced charge does
-   not need it. Still unmeasured: whether the inverter resets it by itself
+   It is now the switch *Forced startup under low SoC*, on P023 only.
+   Still unmeasured: whether the inverter resets it by itself
    later or on PV (#444 reports 0xAA to 0x55 after ~20 min), and any other
    firmware (the maintainer's SH10RT on P020, with its battery at minimum).
 

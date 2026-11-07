@@ -73,7 +73,10 @@ class SungrowSwitch(SungrowEntity, SwitchEntity):
         value = int(raw)
         if value == self.entity_description.on_value:
             return True
-        if value == self.entity_description.off_value:
+        if (
+            value == self.entity_description.off_value
+            or value in self.entity_description.also_off
+        ):
             return False
         return None
 

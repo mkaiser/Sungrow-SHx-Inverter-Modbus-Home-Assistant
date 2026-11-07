@@ -707,6 +707,9 @@ def render_switches() -> str:
             lines.append(f"        requires=Capability.{capability},")
         lines.append(f"        on_value={row['on']:#04x},")
         lines.append(f"        off_value={row['off']:#04x},")
+        if also_off := row.get("also_off"):
+            words = ", ".join(f"{word:#04x}" for word in also_off)
+            lines.append(f"        also_off=({words},),")
         lines.append("        entity_category=EntityCategory.CONFIG,")
         lines.append("    ),")
     lines.append(")")
@@ -826,20 +829,25 @@ show, because a command does not read back what was sent.
 
 from __future__ import annotations
 
-from homeassistant.const import EntityCategory
-
-from sungrow_modbus import Capability
-
-from .entity import SungrowButtonDescription
+{imports}from .entity import SungrowButtonDescription
 
 BUTTON_DESCRIPTIONS: tuple[SungrowButtonDescription, ...] = (
 '''
+
+#: What a module with at least one button imports beyond the description.
+BUTTONS_IMPORTS = """from homeassistant.const import EntityCategory
+
+from sungrow_modbus import Capability
+
+"""
 
 
 def render_buttons() -> str:
     """Return the whole `button_descriptions.py` module."""
     registers = _registers()
-    lines = [BUTTONS_HEADER]
+    if not BUTTONS:
+        return BUTTONS_HEADER.format(imports="").rstrip("\n") + ")\n"
+    lines = [BUTTONS_HEADER.format(imports=BUTTONS_IMPORTS)]
     for row in BUTTONS:
         lines.append("    SungrowButtonDescription(")
         lines.append(f'        key="{row["key"]}",')

@@ -218,6 +218,9 @@ class SungrowSwitchDescription(SungrowEntityDescription, SwitchEntityDescription
 
     on_value: int
     off_value: int
+    #: Words read as off that are never written: a factory value outside the
+    #: two codes, such as 13017's 0, which the inverter refuses to take.
+    also_off: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True, kw_only=True)

@@ -357,8 +357,8 @@ OVERRIDES: dict[str, str] = {
     "apl_shutdown_at_zero": "Shutdown inverter when limited to 0 % power",
     "apl_shutdown_at_zero_raw": "Shutdown inverter when limited to 0 % power code",
     # Register 13017, Sungrow's "Forced Startup Under Low SOC Standby": a
-    # command, named for what pressing it does.
-    "force_startup": "Force startup",
+    # switch, named after the specification.
+    "forced_startup_under_low_soc": "Forced startup under low SoC",
     # The two mode registers, now that a binary sensor decodes each. The
     # entity says whether limiting is happening; the ratio above says how
     # much.
@@ -661,11 +661,11 @@ GERMAN: dict[str, str] = {
     "ems_mode": "EMS-Modus",
     "export_power_limit": "Einspeiselimit",
     "export_power_limit_mode": "Einspeiselimit-Modus",
-    "force_startup": "Zwangsstart",
     "forced_charging_days": "Zwangsladung Tage",
     "forced_charging_end_1": "Zwangsladung Ende 1",
     "forced_charging_end_2": "Zwangsladung Ende 2",
     "forced_charging_schedule": "Zwangsladung Zeitplan",
+    "forced_startup_under_low_soc": "Zwangsstart bei niedrigem Ladezustand",
     "forced_charging_start_1": "Zwangsladung Start 1",
     "forced_charging_start_2": "Zwangsladung Start 2",
     "forced_charging_target_soc_1": "Zwangsladung Ziel-Ladezustand 1",

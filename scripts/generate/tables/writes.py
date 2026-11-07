@@ -278,6 +278,9 @@ class Switch(TypedDict):
     requires: NotRequired[str]
     on: int
     off: int
+    #: Words the register holds that mean off but cannot be written: a
+    #: factory value outside the two the specification defines.
+    also_off: NotRequired[tuple[int, ...]]
 
 
 #: Step 3: the three mode flags. Each is one holding register holding 0xAA or
@@ -337,6 +340,23 @@ SWITCHES: tuple[Switch, ...] = (
         "requires": "FORCED_CHARGING",
         "on": 0xAA,
         "off": 0x55,
+    },
+    # Register 13017, V1.1.7's "Forced Startup Under Low SOC Standby": 0xAA
+    # wakes an inverter waiting in standby with the battery at its minimum SoC
+    # and no PV, which it otherwise does not leave until PV returns. The
+    # specification names only 0xAA; watched on P023 (bar12) it is a switch:
+    # 0xAA stays, reads back and keeps the inverter running, 0x55 sends it
+    # back to standby, and every other word is refused with 0x04. Every SH-RT
+    # reads 0 from the factory, which behaves as off and cannot be written
+    # back, so 0 reads as off. Gated by `FORCED_STARTUP_CONTROL`, which
+    # `capabilities.CONFIRMED_ON_FIRMWARE` grants per watched firmware.
+    {
+        "field": "forced_startup_under_low_soc_raw",
+        "key": "forced_startup_under_low_soc",
+        "requires": "FORCED_STARTUP_CONTROL",
+        "on": 0xAA,
+        "off": 0x55,
+        "also_off": (0,),
     },
 )
 
@@ -465,24 +485,9 @@ class Button(TypedDict):
 
 #: Commands, which hold no state to show: a press writes `press` and that is
 #: all. Each needs a capability only a watched write grants, because a
-#: command's readback proves nothing.
-#:
-#: Register 13017, V1.1.7's "Forced Startup Under Low SOC Standby": 0xAA
-#: wakes an inverter waiting in standby with the battery at its minimum SoC
-#: and no PV, which it otherwise does not leave until PV returns. Watched on
-#: P023 (bar12) it is a switch: 0xAA stays, reads back and keeps the inverter
-#: running; 0x55 sends it back to standby; every other word is refused. So a
-#: button that only presses 0xAA leaves the inverter awake (`Todo.md`). Gated
-#: by `FORCED_STARTUP_CONTROL`, which `capabilities.CONFIRMED_ON_FIRMWARE`
-#: grants on no firmware yet: the button is created nowhere.
-BUTTONS: tuple[Button, ...] = (
-    {
-        "field": "forced_startup_under_low_soc_raw",
-        "key": "force_startup",
-        "requires": "FORCED_STARTUP_CONTROL",
-        "press": 0xAA,
-    },
-)
+#: command's readback proves nothing. None yet: register 13017, once a button
+#: here, turned out to be a switch (`SWITCHES`).
+BUTTONS: tuple[Button, ...] = ()
 
 #: Step 5: starting and stopping the inverter. **Not an entity.**
 #:

@@ -1,6 +1,6 @@
 # The entity names
 
-**333 entities** that modern mode can create (Hybrid inverter 194, SBR battery 34, Wallbox 21, SG string inverter 84).
+**334 entities** that modern mode can create (Hybrid inverter 195, SBR battery 34, Wallbox 21, SG string inverter 84).
 
 The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
@@ -37,7 +37,7 @@ end. Their ids are the YAML package's, kept so that history keyed to them
 carries on, and modern mode replaces each with something better.
 
 
-## Hybrid inverter (194)
+## Hybrid inverter (195)
 
 The inverter's own device, named after the model unless the owner named it. Ids shown for `SH10RT`.
 
@@ -87,10 +87,11 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 |  |  | Weekend discharge window 1 | Entladefenster Wochenende 1 | `sensor.sh10rt_weekend_discharge_window_1` |  |  |
 |  |  | Weekend discharge window 2 | Entladefenster Wochenende 2 | `sensor.sh10rt_weekend_discharge_window_2` |  |  |
 
-### Everything else (4)
+### Everything else (5)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
+| Forced Startup Under Low SOC Standby (13017) |  | Forced startup under low SoC | Zwangsstart bei niedrigem Ladezustand | `switch.sh10rt_forced_startup_under_low_soc` |  |  |
 | Power factor (5035) | Power factor | Power factor | Leistungsfaktor | `sensor.sh10rt_power_factor` | `sensor.power_factor` |  |
 | Power Flow Status (13001) | Power Flow Status **←** | Power flow code | Leistungsfluss Code | `sensor.sh10rt_power_flow_code` | `sensor.power_flow_status` |  |
 |  | Sungrow inverter state **←** | Running state | Betriebszustand | `sensor.sh10rt_running_state` | `sensor.sungrow_inverter_state` |  |

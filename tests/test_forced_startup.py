@@ -1,9 +1,11 @@
-"""Register 13017 as a button, and register 31213 as an on/off sensor.
+"""Register 13017 as a switch, and register 31213 as an on/off sensor.
 
-13017 is a command: 0xAA wakes an inverter in low-SoC standby, and it never
-reads 0xAA back. So it is a button, created only on firmware where a start
-was watched -- none yet. 31213 holds a setting both ways round in the
-diagnoses, so it is decoded, and its number stays only for legacy history.
+13017 is a switch, watched on P023 (bar12): 0xAA wakes an inverter in
+low-SoC standby and keeps it running, 0x55 sends it back, and every other
+word is refused -- the factory 0 included, which reads as off. The switch is
+created only on firmware where a start was watched. 31213 holds a setting
+both ways round in the diagnoses, so it is decoded, and its number stays only
+for legacy history.
 """
 
 from __future__ import annotations
@@ -52,46 +54,64 @@ def _entity_id(hass: HomeAssistant, domain: str, key: str) -> str | None:
 # -- 13017 ------------------------------------------------------------------
 
 
-def test_no_firmware_is_confirmed_to_start_on_13017_yet() -> None:
+KEY = "forced_startup_under_low_soc"
+UNCONFIRMED = "SAPPHIRE-H_B001.V000.P020"
+
+
+def test_p023_is_confirmed_to_start_on_13017() -> None:
     assert capabilities.CONFIRMED_ON_FIRMWARE[Capability.FORCED_STARTUP_CONTROL] == (
-        frozenset()
+        frozenset({FIRMWARE})
     )
 
 
-def test_a_confirmed_firmware_grants_the_button_only_where_13017_answers(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setitem(
-        capabilities.CONFIRMED_ON_FIRMWARE,
-        Capability.FORCED_STARTUP_CONTROL,
-        frozenset({FIRMWARE}),
-    )
+def test_a_confirmed_firmware_grants_the_switch_only_where_13017_answers() -> None:
     answered = resolve(0x0E03, 1, frozenset({Capability.FORCED_STARTUP}), FIRMWARE)
     silent = resolve(0x0E03, 1, frozenset(), FIRMWARE)
+    other = resolve(0x0E03, 1, frozenset({Capability.FORCED_STARTUP}), UNCONFIRMED)
 
     assert Capability.FORCED_STARTUP_CONTROL in answered
     assert Capability.FORCED_STARTUP_CONTROL not in silent
+    assert Capability.FORCED_STARTUP_CONTROL not in other
 
 
-async def test_no_button_and_no_raw_sensor_on_unconfirmed_firmware(
+async def test_no_switch_and_no_raw_sensor_on_unconfirmed_firmware(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
+    sungrow_unit.input[INVERTER_FIRMWARE_ADDRESS] = encode_string(UNCONFIRMED, 15)
     await _setup(hass, sungrow_unit)
 
-    assert _entity_id(hass, "button", "force_startup") is None
+    assert _entity_id(hass, "switch", KEY) is None
     assert _entity_id(hass, "sensor", "forced_startup_under_low_soc_raw") is None
 
 
-async def test_a_press_writes_0xaa_on_confirmed_firmware(
-    hass: HomeAssistant,
-    sungrow_unit: MockModbusUnit,
-    monkeypatch: pytest.MonkeyPatch,
+@pytest.mark.parametrize(
+    ("word", "expected"), [(0, "off"), (0x55, "off"), (0xAA, "on")]
+)
+async def test_the_switch_reads_the_factory_0_as_off(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit, word: int, expected: str
 ) -> None:
-    monkeypatch.setitem(
-        capabilities.CONFIRMED_ON_FIRMWARE,
-        Capability.FORCED_STARTUP_CONTROL,
-        frozenset({FIRMWARE}),
-    )
+    sungrow_unit.input[INVERTER_FIRMWARE_ADDRESS] = encode_string(FIRMWARE, 15)
+    sungrow_unit.holding[FORCED_STARTUP_ADDRESS] = word
+    await _setup(hass, sungrow_unit)
+    switch_id = _entity_id(hass, "switch", KEY)
+    assert switch_id is not None
+
+    assert hass.states.get(switch_id).state == expected
+
+
+async def test_no_switch_where_13017_reads_unavailable(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    sungrow_unit.input[INVERTER_FIRMWARE_ADDRESS] = encode_string(FIRMWARE, 15)
+    sungrow_unit.holding[FORCED_STARTUP_ADDRESS] = 0xFFFF
+    await _setup(hass, sungrow_unit)
+
+    assert _entity_id(hass, "switch", KEY) is None
+
+
+async def test_on_writes_0xaa_and_off_writes_0x55(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
     sungrow_unit.input[INVERTER_FIRMWARE_ADDRESS] = encode_string(FIRMWARE, 15)
     sungrow_unit.holding[FORCED_STARTUP_ADDRESS] = 0
     written: list[Any] = []
@@ -103,14 +123,18 @@ async def test_a_press_writes_0xaa_on_confirmed_firmware(
         )
     )
     await _setup(hass, sungrow_unit)
-    button_id = _entity_id(hass, "button", "force_startup")
-    assert button_id is not None
+    switch_id = _entity_id(hass, "switch", KEY)
+    assert switch_id is not None
 
     await hass.services.async_call(
-        "button", "press", {"entity_id": button_id}, blocking=True
+        "switch", "turn_on", {"entity_id": switch_id}, blocking=True
+    )
+    await hass.services.async_call(
+        "switch", "turn_off", {"entity_id": switch_id}, blocking=True
     )
 
-    assert written == [0xAA]
+    assert written == [0xAA, 0x55]
+    assert all(word != 0 for word in written)
 
 
 # -- 31213 ------------------------------------------------------------------

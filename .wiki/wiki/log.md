@@ -533,6 +533,11 @@ the load. A forced charge, EMS or scheduled, woke the inverter in ~2 min. The fi
 back. Updated register-13017 (overturned: it reads back what is written), register-32998,
 register-13000, device-winet-s, P023, installation-bar12, the forced-charge query.
 
+## [2026-11-07] updated | register-13017: a switch in the integration
+
+The *Force startup* button became the switch *Forced startup under low SoC* (0xAA on, 0x55 off,
+the factory 0 read as off), confirmed on P023 from the bar12 run.
+
 ## [2026-11-07] renamed | the survey is the diagnosis, the control test the capability test
 
 `device-survey/` is now `device-diagnosis/`, its launchers `diagnosis.sh`, `.cmd` and `.ps1`

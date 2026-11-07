@@ -136,7 +136,7 @@ class Capability(StrEnum):
     """Forced startup from a low-SoC standby (register 13017).
 
     Added to the specification in V1.1.7. V1.1.16 excludes only SH50~125CX.
-    This is the *read*; pressing it is `FORCED_STARTUP_CONTROL`.
+    This is the *read*; writing it is `FORCED_STARTUP_CONTROL`.
     """
 
     FORCED_STARTUP_CONTROL = "forced_startup_control"
@@ -510,8 +510,9 @@ CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
             "SUNSTONE-H_B000.V002.P065",
         }
     ),
-    # Nothing yet: no diagnosis has watched a standby inverter start on 0xAA.
-    Capability.FORCED_STARTUP_CONTROL: frozenset(),
+    # Watched at bar12 (SH10RT-20), over the cable and through a WiNet-S:
+    # 0xAA woke the standby inverter, 0x55 put it back.
+    Capability.FORCED_STARTUP_CONTROL: frozenset({"SAPPHIRE-H_B001.V000.P023"}),
 }
 
 #: The read a confirmed write also needs, so a firmware entry can never grant

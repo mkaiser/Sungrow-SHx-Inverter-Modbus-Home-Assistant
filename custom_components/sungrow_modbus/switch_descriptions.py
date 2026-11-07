@@ -73,4 +73,15 @@ SWITCH_DESCRIPTIONS: tuple[SungrowSwitchDescription, ...] = (
         off_value=0x55,
         entity_category=EntityCategory.CONFIG,
     ),
+    SungrowSwitchDescription(
+        key="forced_startup_under_low_soc",
+        component="fast_holding",
+        field="forced_startup_under_low_soc_raw",
+        translation_key="forced_startup_under_low_soc",
+        requires=Capability.FORCED_STARTUP_CONTROL,
+        on_value=0xAA,
+        off_value=0x55,
+        also_off=(0x00,),
+        entity_category=EntityCategory.CONFIG,
+    ),
 )

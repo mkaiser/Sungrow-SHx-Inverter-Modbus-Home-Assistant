@@ -232,9 +232,6 @@
       }
     },
     "button": {
-      "force_startup": {
-        "name": "Zwangsstart"
-      },
       "run_capability_test": {
         "name": "Vollständige Diagnose und Tests ausführen"
       },
@@ -1244,6 +1241,9 @@
       },
       "forced_charging_schedule": {
         "name": "Zwangsladung Zeitplan"
+      },
+      "forced_startup_under_low_soc": {
+        "name": "Zwangsstart bei niedrigem Ladezustand"
       },
       "load_adjustment_mode_enable": {
         "name": "Laststeuerung"

@@ -9,19 +9,6 @@ show, because a command does not read back what was sent.
 
 from __future__ import annotations
 
-from homeassistant.const import EntityCategory
-from sungrow_modbus import Capability
-
 from .entity import SungrowButtonDescription
 
-BUTTON_DESCRIPTIONS: tuple[SungrowButtonDescription, ...] = (
-    SungrowButtonDescription(
-        key="force_startup",
-        component="fast_holding",
-        field="forced_startup_under_low_soc_raw",
-        translation_key="force_startup",
-        requires=Capability.FORCED_STARTUP_CONTROL,
-        press_value=0xAA,
-        entity_category=EntityCategory.CONFIG,
-    ),
-)
+BUTTON_DESCRIPTIONS: tuple[SungrowButtonDescription, ...] = ()

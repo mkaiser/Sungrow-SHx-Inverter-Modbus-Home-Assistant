@@ -52,10 +52,11 @@ One owner reports the inverter flipping `0xAA` to `0x55` by itself ~20 minutes a
 
 ## In the integration
 
-A button, *Force startup* / *Zwangsstart*, that writes `0xAA`: `BUTTONS` in
-`scripts/generate/tables/writes.py`. It is created only where `Capability.FORCED_STARTUP` answered
-(SH-CX excluded) **and** the firmware is in `CONFIRMED_ON_FIRMWARE` for
-`Capability.FORCED_STARTUP_CONTROL` ([firmware gating](../concepts/firmware-gating.md)). That set is
-still empty. P023 now has a watched write, but a button that only writes `0xAA` leaves the
-inverter awake with nothing to turn it off; the register is a switch, and reads back its state.
-`Todo.md` holds the decision.
+A switch, *Forced startup under low SoC* / *Zwangsstart bei niedrigem Ladezustand*: on writes
+`0xAA`, off writes `0x55`, and its state is read from the register, the factory 0 as off
+(`SWITCHES` in `scripts/generate/tables/writes.py`). It is created only where
+`Capability.FORCED_STARTUP` answered (SH-CX excluded) **and** the firmware is in
+`CONFIRMED_ON_FIRMWARE` for `Capability.FORCED_STARTUP_CONTROL`
+([firmware gating](../concepts/firmware-gating.md)): P023, from
+[the bar12 run](../sources/bar12-forced-startup-2026-11-07-summary.md). Other firmware gets it
+from a watched start.
