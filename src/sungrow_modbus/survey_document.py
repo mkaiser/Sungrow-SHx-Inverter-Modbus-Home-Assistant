@@ -86,7 +86,15 @@ from .const import model_for
 #: backend. Before 23 the count reached only the terminal, and a reader has to
 #: tell "none" from "not counted". Home Assistant's documents leave it out: its
 #: coordinators share the link, so a drop there is not the survey's own.
-SCHEMA = 23
+#:
+#: 24 admits **`steps_lost`**: each step of the survey the link lost, named as
+#: `sungrow_modbus.survey.Step` names it, with the exception's type. The
+#: step's section is then absent, and before 24 nothing told that from a
+#: device with nothing to report there: a pack whose section the link lost
+#: read as no pack, and a file was named `battery-thirdparty` beside a
+#: Sungrow BCU. Written only when a step was lost, so at 24 its absence means
+#: none was.
+SCHEMA = 24
 
 #: How a document says it was collected, when no command line could repeat it.
 #:
@@ -674,6 +682,7 @@ def assemble_document(
     block_read_test: object = None,
     battery_pack: Mapping[str, Any] | None = None,
     control_test: Mapping[str, object] | None = None,
+    steps_lost: Mapping[str, str] | None = None,
 ) -> dict[str, object]:
     """Build the publishable document from sections already collected.
 
@@ -721,6 +730,12 @@ def assemble_document(
         "readings": readings,
         "capability_probes": capability_probes,
     }
+    # First of the optional sections, because it says which of the others
+    # are missing for want of a link rather than for want of anything to say.
+    if steps_lost:
+        document["steps_lost"] = {
+            str(step): str(why) for step, why in steps_lost.items()
+        }
     if contention is not None:
         document["contention"] = dict(contention)
     if register_dump:
@@ -820,6 +835,7 @@ def publish_document(
         block_read_test=raw_data.get("block_read_test"),
         battery_pack=raw_data.get("battery_pack"),
         control_test=raw_data.get("control_test"),
+        steps_lost=raw_data.get("steps_lost"),
     )
 
 
@@ -1142,7 +1158,8 @@ def _battery_word(document: dict[str, Any]) -> str:
     A `battery_pack` section is the same evidence: a pack decoded at a unit
     of its own. Home Assistant's document carries that section and not the
     sibling probes, because the integration found the pack when it was set
-    up rather than by probing for it during the survey.
+    up rather than by probing for it during the survey. So when the link
+    lost that step (`steps_lost`), the silence is not a third-party pack's.
     """
     probe_states = {
         label: entry.get("state")
@@ -1173,8 +1190,12 @@ def _battery_word(document: dict[str, Any]) -> str:
         # answers voltage 0 beside level 0xFFFF, and the zero decodes as a value.
         return "battery-none"
     if any(state == State.PRESENT for state in states):
+        # A pack's section lost to the link is not a pack that kept silent.
+        lost = "battery" in (document.get("steps_lost") or {})
         return (
-            "battery-thirdparty" if _reached_directly(document) else "battery-unknown"
+            "battery-thirdparty"
+            if _reached_directly(document) and not lost
+            else "battery-unknown"
         )
     return "battery-unreadable"
 

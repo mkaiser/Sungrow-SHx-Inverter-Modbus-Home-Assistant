@@ -65,19 +65,32 @@ def _document(tmp_path: Path, schema: int) -> Path:
 
 def test_an_export_scale_block_stamps_the_schema_that_admits_it(cli, tmp_path):
     """A document carrying the block claims the number that defines it."""
-    path = _document(tmp_path, SCHEMA - 1)
+    path = _document(tmp_path, cli.EXPORT_SCALE_SCHEMA - 1)
 
     cli._merge(path, "export_scale", _block(), "A123456789", "192.0.2.10")
 
     document = json.loads(path.read_text())
-    assert document["schema"] == SCHEMA
+    assert document["schema"] == cli.EXPORT_SCALE_SCHEMA
     assert document["export_scale"]["write_units_per_count"] == 1
     assert document["export_scale"]["answer"] == "stores a written word as handed"
 
 
+def test_a_newer_document_keeps_its_own_number(cli, tmp_path):
+    """Stamping the newest number would claim what the merge did not record.
+
+    Schema 24 says a document without `steps_lost` lost no step, which a
+    document from 23 never recorded either way.
+    """
+    path = _document(tmp_path, SCHEMA - 1)
+
+    cli._merge(path, "export_scale", _block(), "A123456789", "192.0.2.10")
+
+    assert json.loads(path.read_text())["schema"] == SCHEMA - 1
+
+
 def test_a_document_too_old_for_the_number_is_refused(cli, tmp_path):
     """Stamping 20 on a document from before 19 would claim fields it lacks."""
-    path = _document(tmp_path, SCHEMA - 2)
+    path = _document(tmp_path, cli.EXPORT_SCALE_SCHEMA - 2)
     before = path.read_text()
 
     with pytest.raises(SystemExit, match="too old"):

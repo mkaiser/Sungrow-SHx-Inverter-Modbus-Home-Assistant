@@ -117,6 +117,30 @@ async def test_the_document_leads_with_what_it_is_and_who_said_what(
     assert document["schema"] == survey.SCHEMA
 
 
+async def test_a_step_the_link_lost_is_named_in_the_document(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """A section lost to the link must not read as nothing to report.
+
+    peter_sm's tenth reading lost its pack's section after a control test and
+    said nothing, so a Sungrow SBR160 was named `battery-thirdparty`.
+    """
+    from modbus_connection import ModbusConnectionError
+
+    entry = await _setup(hass, sungrow_unit)
+    document = await async_build(hass, entry)
+    assert "steps_lost" not in document
+
+    with patch(
+        "custom_components.sungrow_modbus.survey_document._async_battery_pack",
+        side_effect=ModbusConnectionError("Connection lost"),
+    ):
+        document = await async_build(hass, entry)
+
+    assert document["steps_lost"] == {"battery": "ModbusConnectionError"}
+    assert "battery_pack" not in document
+
+
 async def test_it_says_a_tool_made_it_rather_than_printing_a_command(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:

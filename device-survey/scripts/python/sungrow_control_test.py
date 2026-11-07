@@ -68,7 +68,7 @@ from sungrow_modbus.control_test import (
     document,
 )
 from sungrow_modbus.hybrid_inverter import export_scale
-from sungrow_modbus.survey_document import SCHEMA, stand_in
+from sungrow_modbus.survey_document import stand_in
 
 _LOGGER = logging.getLogger("control_test")
 
@@ -84,6 +84,11 @@ RESTORED = -1
 
 #: Cancelled at the last prompt, before anything was written.
 CANCELLED = -2
+
+#: The schema that admits `export_scale`. A merge stamps this number on an
+#: older document and no higher: a higher one would claim what the merge did
+#: not record, such as schema 24's "no step was lost".
+EXPORT_SCALE_SCHEMA = 20
 
 
 def _stamp() -> str:
@@ -728,16 +733,21 @@ def _merge(
         )
 
     document_data = json.loads(target.read_text())
-    if key == "export_scale" and document_data.get("schema", 0) < SCHEMA:
+    schema = document_data.get("schema", 0)
+    admitted = EXPORT_SCALE_SCHEMA if key == "export_scale" else 0
+    if schema < admitted:
         # The schema says what a document *can* carry, so a reader takes the
-        # block's absence as "not asked". A document from before 19 lacks
-        # other fields that number promises; survey it again instead.
-        if document_data.get("schema", 0) < SCHEMA - 1:
+        # block's absence as "not asked". The number before the one that
+        # admits the block differs from it by that block alone, so it is
+        # stamped; anything older lacks fields the number promises, so it is
+        # surveyed again instead. Never a number past the block's own: that
+        # would claim what this merge did not record.
+        if schema < admitted - 1:
             raise SystemExit(
                 f"refusing to merge: {target} is at schema "
-                f"{document_data.get('schema')}, too old to be stamped {SCHEMA}"
+                f"{document_data.get('schema')}, too old to be stamped {admitted}"
             )
-        document_data["schema"] = SCHEMA
+        document_data["schema"] = admitted
     document_data[key] = block
     target.write_text(json.dumps(document_data, indent=2) + "\n")
     return target

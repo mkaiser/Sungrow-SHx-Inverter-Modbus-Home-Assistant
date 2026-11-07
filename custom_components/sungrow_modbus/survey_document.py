@@ -277,6 +277,7 @@ async def async_build(
             else None
         ),
         battery_pack=collected.battery_pack,
+        steps_lost={str(step): why for step, why in collected.failed.items()},
     )
     attach_export_scale(document, entry, device)
     return document

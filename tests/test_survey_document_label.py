@@ -180,6 +180,59 @@ def test_a_decoded_pack_names_its_model_without_the_sibling_probes() -> None:
     assert _battery_word(document) == "battery-sbr128"
 
 
+def test_a_pack_section_the_link_lost_claims_nothing_about_the_maker() -> None:
+    # peter_sm's tenth reading: a direct path, the battery registers
+    # answering, and the pack's section lost to the link after a control
+    # test. Silence that was never asked for is not a third-party pack's.
+    probed = {"registers": {"battery voltage": "present", "battery level": "present"}}
+    raw = {"registers": {"battery voltage": [2593], "battery level": [826]}}
+    document = _document_for(probed, DIRECT, "", raw)
+    assert _battery_word(document) == "battery-thirdparty"
+    document["steps_lost"] = {"battery": "ModbusConnectionError"}
+    assert _battery_word(document) == "battery-unknown"
+
+
+def test_a_lost_step_is_published_only_when_there_is_one() -> None:
+    from sungrow_modbus.survey import Step
+    from sungrow_modbus.survey_document import assemble_document
+
+    def build(lost: dict) -> dict:
+        return assemble_document(
+            command_line="x",
+            read_at="2026-11-07T00:00:00Z",
+            user_inputs={},
+            host="",
+            publish_address=False,
+            device_type_code=0x0E0F,
+            output_type=None,
+            serial="",
+            firmware={},
+            connection={},
+            readings={},
+            capability_probes={},
+            steps_lost=lost,
+        )
+
+    assert "steps_lost" not in build({})
+    document = build({Step.BATTERY: "ModbusConnectionError"})
+    assert document["steps_lost"] == {"battery": "ModbusConnectionError"}
+    # Before the optional sections, whose absence it explains.
+    keys = list(document)
+    assert keys.index("steps_lost") == keys.index("capability_probes") + 1
+
+
+def test_the_terminal_surveys_lost_steps_reach_its_document() -> None:
+    # `probe.py` hands `survey.failed` over as `raw["steps_lost"]`.
+    probed = _probed("no answer", "present")
+    raw = {
+        "registers": {"battery voltage": [1992], "battery level": [1000]},
+        "steps_lost": {"battery": "ModbusConnectionError"},
+    }
+    document = _document_for(probed, DIRECT, "", raw)
+    assert document["steps_lost"] == {"battery": "ModbusConnectionError"}
+    assert _battery_word(document) == "battery-unknown"
+
+
 def test_the_sentinel_remains_the_ordinary_way_to_say_no_battery() -> None:
     probed = _probed("no answer", "unavailable")
     raw = {"registers": {"battery voltage": [0xFFFF], "battery level": [0xFFFF]}}

@@ -376,7 +376,8 @@ async def cmd_units(args: argparse.Namespace) -> int:
 #: serial. 22 gives `readings` one meaning whichever producer wrote it, and
 #: widens Home Assistant's `battery_pack` to this survey's. 23 admits
 #: `connection.link_drops`, the connections the device closed while this
-#: survey read it (`LINK_DROPS`). The number is the
+#: survey read it (`LINK_DROPS`). 24 admits `steps_lost`, each survey step
+#: the link lost, with the exception's type. The number is the
 #: library's (`sungrow_modbus.survey_document.SCHEMA`), and the full reason
 #: for each bump is beside it there.
 
@@ -1351,6 +1352,9 @@ async def capabilities(args: argparse.Namespace) -> Reading:
         raw["battery_pack"] = survey.battery_pack
     if survey.wallbox is not None:
         raw["wallbox"] = survey.wallbox
+    if survey.failed:
+        # A library before schema 24 does not publish it, and ignores it.
+        raw["steps_lost"] = dict(survey.failed)
 
     # Computed whether or not anything is saved, because a caller wanting to
     # summarise the run needs to know the reading was thin.

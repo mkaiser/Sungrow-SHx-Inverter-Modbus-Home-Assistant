@@ -75,13 +75,13 @@ Unset, the launchers behave exactly as a contributor's.
 
 ## The document
 
-The format is `sungrow_modbus.survey_document.SCHEMA`, **23**; the comment beside
+The format is `sungrow_modbus.survey_document.SCHEMA`, **24**; the comment beside
 it says what each number from 17 admits, and `probe.py` keeps the older ones.
 A document is read by its own number, which is often older. Sections in
 order: `schema`, `command_line`, `read_at`,
 `user_inputs`, `ip_address_last_two_octets`, `device`, `firmware`,
 `connection`, `readings`, `capability_probes`, then whichever of
-`contention`, `register_dump`, `wallbox`, `block_read_test`, `battery_pack`,
+`steps_lost`, `contention`, `register_dump`, `wallbox`, `block_read_test`, `battery_pack`,
 `control_test` and `export_scale` the run produced.
 
 ### What a person typed, and what a wire said
@@ -200,6 +200,14 @@ It is there only when the survey was counting, so `0` means none rather than
 coordinators share the link. Many drops usually mean another client is
 polling, but not always: an inverter's own LAN port has dropped a dozen times
 with nothing else connected.
+
+**`steps_lost`** names each survey step the link lost (`identity`,
+`readings`, `probes`, `connection`, `register dump`, `battery`, `wallbox`,
+as `sungrow_modbus.survey.Step` names them), with the exception's type. That
+step's section is absent because the link failed, not because the device had
+nothing there. It is written only when a step was lost, so from schema 24 its
+absence means none was. A lost `battery` step keeps the filename from saying
+`battery-thirdparty`: the pack never got the chance to answer.
 
 **No round-trip time is recorded.** It times the path from whoever reads,
 usually a VPN, and says nothing about the inverter or how it is attached.
