@@ -32,12 +32,15 @@ stays unique.
    under a forced charge the cap is on grid import alone, with PV counted;
    at 1 (0.01 kW) the charge comes only from PV; it settles in ~4-6 s and
    holds 0-3 % above the cap; 0 and 5001 are refused with exception 0x04,
-   and 5000 is accepted. Still open:
-   - **PV surplus exporting, limit 200, self-consumption** (needs export:
-     a full battery or PV above load plus charge power). Export, PV and the
-     battery must not change.
-   - **House load above the cap that the battery cannot cover** (battery
-     discharge held at 0, or at minimum SoC): does import exceed the cap?
+   and 5000 is accepted. With the battery held idle by a forced stop it
+   does not cap house load: ~2.2 kW imported against 2.00 kW (wiki:
+   mkaiser-import-limit-load-2026-11-07). Still open:
+   - **PV surplus exporting, limit 200, self-consumption** (needs daylight
+     and export: a full battery or PV above load plus charge power).
+     Export, PV and the battery must not change.
+   - **Self-consumption with load above what the battery may discharge**
+     (its discharge limit lowered, not a forced stop): does the inverter
+     import past the cap, as under the forced stop?
    - The engine's `--import-limit` check on other firmware: Planned tests
      item 1.
 

@@ -517,3 +517,9 @@ because its document lost the `battery_pack` section; the pack is the SBR160.
 The first engine run of `--import-limit`, at mkaiser's SH10RT (P020): the cap was met and 0 and
 5001 were refused. With the PV isolator open the inverter first went to Standby, and a run
 refused. Updated register-32998, control-test, the forced-charge query, P020, installation-mkaiser.
+
+## [2026-11-07] ingested | mkaiser-import-limit-load-2026-11-07
+
+A watched write of 32998 at mkaiser's SH10RT (P020) after dark, the battery held idle by a forced
+stop: at a 2.00 kW cap the house imported its whole ~2.2 kW load. The cap limits a charge, not
+the house. Updated register-32998, P020, installation-mkaiser.

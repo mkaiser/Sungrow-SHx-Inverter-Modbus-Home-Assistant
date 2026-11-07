@@ -15,7 +15,8 @@ it came back ([the check](../sources/mkaiser-discharge-window-2026-11-04-summary
 4500 W forced charge ([the run](../sources/mkaiser-import-limit-2026-11-07-summary.md)), and with PV capped import alone
 ([the PV run](../sources/mkaiser-import-limit-pv-2026-11-07-summary.md)); the control test's check
 confirmed it, and with the PV isolator open the inverter first went to Standby
-([the engine run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md)). Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
+([the engine run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md)); with the battery
+held idle it did not cap the house's own load ([the load run](../sources/mkaiser-import-limit-load-2026-11-07-summary.md)). Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
 
 ## Surveys
 

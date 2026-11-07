@@ -20,6 +20,8 @@ SH-RT firmware in the B001 numbering ([SH-RT](device-sh-rt.md)). Version strings
   2.00 kW under a 4500 W forced charge, import held at 1978 W by cutting the charge; [the run](../sources/mkaiser-import-limit-2026-11-07-summary.md). With PV it caps
   grid import alone, 1 (0.01 kW) charges from PV only, and 0 and 5001 are refused; [the PV run](../sources/mkaiser-import-limit-pv-2026-11-07-summary.md).
   The control test's `--import-limit` check confirmed it; [the engine run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md).
+  It does not hold against house load with the battery idle: import ran at the whole ~2.2 kW
+  load against a 2.00 kW cap; [the load run](../sources/mkaiser-import-limit-load-2026-11-07-summary.md).
 
 ## Surveys
 

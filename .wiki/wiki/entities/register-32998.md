@@ -29,6 +29,11 @@ limit** in kW, and offers no control; the survey's register dump reads it too.
   cap. The device refuses 0 and 5001 with exception 0x04 and accepts 5000
   ([the PV run](../sources/mkaiser-import-limit-pv-2026-11-07-summary.md)). The control test's
   `--import-limit` check confirmed it there too ([the run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md)).
+- **There it does not hold against house load the battery does not cover.** With the battery
+  held idle by a forced stop and ~2.2 kW of load, import ran at the whole load against a
+  2.00 kW cap, as at 20.00 kW; the inverter neither shed load nor discharged
+  ([the load run](../sources/mkaiser-import-limit-load-2026-11-07-summary.md)). The cap limits
+  what the inverter draws, a charge, not the house past it.
 - **On one SH10RT-V112 it does not hold during a forced charge**, by its owner's report, with
   how the charge was commanded and the B001 firmware unknown;
   [open](../queries/does-the-import-limit-hold-during-a-forced-charge.md).
