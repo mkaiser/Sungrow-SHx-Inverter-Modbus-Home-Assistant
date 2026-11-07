@@ -2,11 +2,11 @@
   "generated_from": "modbus_sungrow.yaml",
   "generated_by": "scripts/generate_entity_map.py",
   "summary": {
-    "entities": 300,
+    "entities": 301,
     "by_layer": {
       "filter": 1,
       "modbus": 102,
-      "observed": 18,
+      "observed": 19,
       "specification": 129,
       "template": 50
     },
@@ -16,7 +16,7 @@
       "button": 2,
       "number": 11,
       "select": 4,
-      "sensor": 152,
+      "sensor": 153,
       "switch": 5,
       "time": 30
     },
@@ -2468,6 +2468,22 @@
       "input_type": "holding",
       "address": 31210,
       "data_type": "uint16",
+      "nan_value": 65535,
+      "scan_interval": 60
+    },
+    {
+      "entity_id": "sensor.site_import_power_limit",
+      "unique_id": null,
+      "name": "Site import power limit",
+      "domain": "sensor",
+      "layer": "observed",
+      "device_class": "power",
+      "unit_of_measurement": "kW",
+      "precision": 2,
+      "input_type": "holding",
+      "address": 32997,
+      "data_type": "uint16",
+      "scale": 0.01,
       "nan_value": 65535,
       "scan_interval": 60
     },

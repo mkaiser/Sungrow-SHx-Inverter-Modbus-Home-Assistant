@@ -1,6 +1,6 @@
 # The entity names
 
-**332 entities** that modern mode can create (Hybrid inverter 193, SBR battery 34, Wallbox 21, SG string inverter 84).
+**333 entities** that modern mode can create (Hybrid inverter 194, SBR battery 34, Wallbox 21, SG string inverter 84).
 
 The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
@@ -37,7 +37,7 @@ end. Their ids are the YAML package's, kept so that history keyed to them
 carries on, and modern mode replaces each with something better.
 
 
-## Hybrid inverter (193)
+## Hybrid inverter (194)
 
 The inverter's own device, named after the model unless the owner named it. Ids shown for `SH10RT`.
 
@@ -243,7 +243,7 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 | Total battery charge energy from PV (13013) | Total battery charge from PV **←** | Total battery charge energy from PV | Gesamte Batterie-Ladeenergie aus PV | `sensor.sh10rt_total_battery_charge_energy_from_pv` | `sensor.total_battery_charge_from_pv` | kWh |
 | Total battery discharge energy (13027) | Total battery discharge **←** | Total battery discharge energy | Gesamte Batterie-Entladeenergie | `sensor.sh10rt_total_battery_discharge_energy` | `sensor.total_battery_discharge` | kWh |
 
-### The grid (16)
+### The grid (17)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -257,6 +257,7 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 | Min. Feed-in Power Limitation Value (5622) | Export power limit min **←** | Feed-in limit minimum | Einspeiselimit Minimum | `sensor.sh10rt_feed_in_limit_minimum` | `sensor.export_power_limit_min` | W |
 | Feed-in Limitation (13087) | Export power limit **←** | Feed-in limit mode | Einspeiselimit-Modus | `switch.sh10rt_feed_in_limit_mode` | `switch.export_power_limit` |  |
 | Grid Frequency (5242) | Grid frequency | Grid frequency | Netzfrequenz | `sensor.sh10rt_grid_frequency` | `sensor.grid_frequency` | Hz |
+| *not in the datasheet* (32998) |  | Grid import limit | Netzbezugslimit | `sensor.sh10rt_grid_import_limit` |  | kW |
 | Grid-side fault (13052) |  | Grid-side fault | Netzseitiger Fehler | `sensor.sh10rt_grid_side_fault` |  |  |
 |  | Import power | Import power | Bezugsleistung | `sensor.sh10rt_import_power` | `sensor.import_power` | W |
 |  | Importing Power **←** | Importing power | Netzbezug | `binary_sensor.sh10rt_importing_power` | `binary_sensor.importing_power` |  |

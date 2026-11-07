@@ -1068,6 +1068,9 @@
       "sg_work_state": {
         "name": "Betriebszustand"
       },
+      "site_import_power_limit": {
+        "name": "Netzbezugslimit"
+      },
       "sungrow_arm_software": {
         "name": "ARM-Software-Version"
       },
@@ -1485,20 +1488,22 @@
           },
           "control_test": {
             "name": "Was der Steuerungs-Schreibtest darf",
-            "description": "Vollständige Diagnose und Tests ausführen auf der Geräteseite schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die fünf Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Das Drücken der Schaltfläche ist deine Zustimmung. Was du ausschaltest, bleibt aus.",
+            "description": "Vollständige Diagnose und Tests ausführen auf der Geräteseite schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die sechs Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Das Drücken der Schaltfläche ist deine Zustimmung. Was du ausschaltest, bleibt aus.",
             "data": {
               "control_test_restart": "Darf er den Wechselrichter stoppen und neu starten?",
               "control_test_export_limit": "Darf er die Einspeisebegrenzung einschalten?",
               "control_test_pv_cut": "Darf er die PV-Erzeugung für etwa eine Minute abschalten?",
               "control_test_charge_window": "Darf er ein Zwangslade-Fenster um jetzt herum setzen?",
-              "control_test_discharge_window": "Darf er die Entladefenster von jetzt weg verschieben?"
+              "control_test_discharge_window": "Darf er die Entladefenster von jetzt weg verschieben?",
+              "control_test_import_limit": "Darf er den Netzbezug während einer kurzen Zwangsladung begrenzen?"
             },
             "data_description": {
               "control_test_restart": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung schreibt der Test das Stoppregister, wartet, bis sich der Wechselrichter als gestoppt meldet, startet ihn wieder und misst alle drei Übergänge, damit die Zahlen jedes Modells festgehalten sind.\n\nWährend er gestoppt ist, erzeugst du nichts, die Batterie lädt und entlädt nicht, und alles am Backup-Ausgang verliert die Versorgung. Bisher gemessen: gestoppt nach etwa 2 Sekunden, wieder in Betrieb nach 3 bis 4 Minuten bei Tageslicht und über 6 nachts, Erzeugung bis zu 20 Sekunden später. Der Wechselrichter bleibt nie gestoppt: Der Start wird über frische Verbindungen wiederholt, er wird erneut gestartet, wenn Home Assistant mitten im Test herunterfährt, und schlägt all das fehl, bekommst du eine Reparatur, die ihn startet.",
               "control_test_export_limit": "An, sofern du es nicht ausschaltest. Wo du die Einspeisung bereits begrenzt, nutzt der Test diese Begrenzung und das ändert nichts. Mit dieser Einstellung darf er die Begrenzung dort, wo du keine hast, für etwa eine Minute einschalten.\n\nEs ist die eine Einstellung, deren fehlgeschlagene Wiederherstellung dich etwas Dauerhaftes kostet statt nur Genauigkeit: Eine nicht zurückgeschaltete Einspeisebegrenzung heißt, du speist weniger ein, als du könntest. Passiert das, bekommst du hier eine Reparatur, die sie zurückschaltet.",
               "control_test_pv_cut": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter Register 31211 beantwortet, schreibt der Test den Code, der die PV-Erzeugung stoppt, prüft, dass die DC-Leistung auf null fällt, und erlaubt PV wieder. Die Erzeugung stoppt für etwa eine halbe Minute und braucht bis zu eine Minute mehr, um zurückzukommen, während der Wechselrichter seinen Arbeitspunkt neu sucht; Batterie und Netz versorgen das Haus in der Zwischenzeit.\n\nDieses Register steht nicht in Sungrows Dokumentation, weshalb der Schalter **PV-Erzeugung abschalten** nur für Firmware angeboten wird, auf der diese Prüfung bestanden wurde. Ein Lauf auf deiner ist der Weg, wie deine Firmware auf diese Liste kommt.",
               "control_test_charge_window": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter den Zwangslade-Zeitplan hat und dieser aus ist, schreibt der Test ein Fenster um die eigene Uhr des Wechselrichters mit einem Ziel einige Prozent über der Batterie, schaltet den Zeitplan ein, prüft, dass die Batterie zu laden beginnt, und schaltet ihn wieder aus. Die Batterie lädt ein bis zwei Minuten, aus dem Netz, wenn keine Sonne scheint. Jedes Wort des Zeitplans wird danach zurückgesetzt. Übersprungen, wo dein eigener Zeitplan an ist.",
-              "control_test_discharge_window": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter die Entladezeitpläne beantwortet (Register 33151–33187), verschiebt der Test jedes Entladefenster an Werktagen und am Wochenende von jetzt weg, prüft, dass die Batterie nicht mehr entlädt, und setzt jedes Fenster zurück. Ein bis zwei Minuten bezieht das Haus Strom, statt die Batterie zu nutzen.\n\nDiese Register stehen nicht in Sungrows Dokumentation, weshalb sie nur als Messwerte angeboten werden. Ein Lauf auf deiner ist der Beleg, dass Schreiben darauf tut, was es soll."
+              "control_test_discharge_window": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter die Entladezeitpläne beantwortet (Register 33151–33187), verschiebt der Test jedes Entladefenster an Werktagen und am Wochenende von jetzt weg, prüft, dass die Batterie nicht mehr entlädt, und setzt jedes Fenster zurück. Ein bis zwei Minuten bezieht das Haus Strom, statt die Batterie zu nutzen.\n\nDiese Register stehen nicht in Sungrows Dokumentation, weshalb sie nur als Messwerte angeboten werden. Ein Lauf auf deiner ist der Beleg, dass Schreiben darauf tut, was es soll.",
+              "control_test_import_limit": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter Register 32998 beantwortet, das Netzbezugslimit, lädt der Test die Batterie zwangsweise, setzt das Limit auf die Mitte zwischen dem, was das Haus dann bezieht, und dem, was es ohne die Ladung beziehen würde, prüft, dass der Netzbezug darauf sinkt, und setzt dein Limit zurück. Danach schreibt er drei Limits an den Enden des Bereichs je einmal, um festzuhalten, welche der Wechselrichter ablehnt. Die Batterie lädt etwa zwei Minuten, aus dem Netz, wenn keine Sonne scheint.\n\nDieses Register steht nicht in Sungrows Dokumentation, weshalb es nur als Messwert angeboten wird. Ein Lauf auf deiner ist der Beleg, dass Schreiben darauf tut, was es soll."
             }
           }
         }

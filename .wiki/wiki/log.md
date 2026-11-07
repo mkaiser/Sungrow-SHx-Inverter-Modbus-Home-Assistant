@@ -466,3 +466,32 @@ Two diagnostics downloads ten minutes apart, both with the control test and a re
 read back and whose refusal proves nothing there; the RS485 run found it holding its original
 value. RS485 through a Waveshare converter
 answers 6100, so it reads as direct. The first SBR192 read on a direct link.
+
+## [2026-11-07] ingested | the site import power limit, register 32998 (discussion #546)
+
+Three owners on the undocumented register iSolarCloud calls "Site import power limit". Jam3s97
+wrote 1300 on an SH10RS and the meter held 13.00 kW, through a WiNet-S and over RS485, and the
+device refused 5001 with an exception: the unit is 0.01 kW, which Korsberg's 9.5 kW and ulfben's
+11.00 kW readbacks fit. On ulfben's SH10RT-V112 the battery force-charges at full power whatever
+the limit says, before and after an update to 95.14; that is open. New: the register's page and
+the query; the pages that called its unit unknown now give it.
+
+## [2026-11-07] ingested | mkaiser: the site import limit under a forced charge, on P020
+
+A watched write at night, over the cable, with leave: under a 4500 W forced charge through 13050
+and 13051, register 32998 at 200 held import at 1978 W median against 5088 W before, by cutting
+the charge to ~1500 W, within one ~5 s sample each way. Every word was restored and read back.
+The query is narrowed, not answered: ulfben's SH10RT-V112 is reported to ignore it.
+
+## [2026-11-07] ingested | mkaiser-import-limit-pv-2026-11-07
+
+A watched write of register 32998 on mkaiser's SH10RT (P020) with ~1.1 kW PV:
+under a forced charge the cap is on grid import alone, 1 (0.01 kW) charges from PV
+only, and 0 and 5001 are refused with exception 0x04. Updated register-32998, the
+forced-charge query, P020 and installation-mkaiser.
+
+## [2026-11-07] updated | register-32998, control-test
+
+The integration reads register 32998 as the diagnostic sensor Grid import limit, and the
+control test gained `--import-limit` (survey leave, integration option). Not yet run in the
+engine on hardware.

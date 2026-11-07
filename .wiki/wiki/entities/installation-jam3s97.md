@@ -15,6 +15,8 @@ owner's other pollers running. One reading, with a control test.
   `CONFIRMED_ON_FIRMWARE`.
 - **13074 stores a written word as handed**, the second firmware after
   [01011.95.03](firmware-sapphire-h-01011-95-03.md) to do so. See [register 13074](register-13074.md).
+- **[Register 32998](register-32998.md) limits grid import**, at 0.01 kW, by the owner's own meter
+  trace ([discussion #546](../sources/discussion-546-site-import-power-limit-summary.md)).
 - The stop was refused with an exception, so no restart time.
 
 ## Surveys

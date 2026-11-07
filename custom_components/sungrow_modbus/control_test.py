@@ -36,6 +36,7 @@ from .const import (
     CONF_CONTROL_TEST_CHARGE_WINDOW,
     CONF_CONTROL_TEST_DISCHARGE_WINDOW,
     CONF_CONTROL_TEST_EXPORT,
+    CONF_CONTROL_TEST_IMPORT_LIMIT,
     CONF_CONTROL_TEST_PV_CUT,
     CONF_CONTROL_TEST_RESTART,
     CONTROL_TEST_PERMISSION_DEFAULT,
@@ -136,6 +137,11 @@ class ControlTestRunner:
             discharge_window=bool(
                 options.get(
                     CONF_CONTROL_TEST_DISCHARGE_WINDOW, CONTROL_TEST_PERMISSION_DEFAULT
+                )
+            ),
+            import_limit=bool(
+                options.get(
+                    CONF_CONTROL_TEST_IMPORT_LIMIT, CONTROL_TEST_PERMISSION_DEFAULT
                 )
             ),
         )

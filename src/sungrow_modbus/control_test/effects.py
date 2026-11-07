@@ -7,7 +7,7 @@ from datetime import datetime
 import logging
 import math
 
-from modbus_connection import ModbusError
+from modbus_connection import ModbusError, ModbusExceptionError
 
 from ..addresses import reg
 from ..hybrid_inverter.capabilities import Capability
@@ -36,6 +36,9 @@ from .procedure import (
     FORCE_STOP,
     FORCED_CMD,
     FORCED_EFFECT_W,
+    IMPORT_LIMIT,
+    IMPORT_LIMIT_MIN_W,
+    IMPORT_LIMIT_PROBE_WORDS,
     INCONCLUSIVE,
     MIN_EXPORT_W,
     MODE_ON,
@@ -419,6 +422,10 @@ class EffectSteps(ReadbackSteps):
         """Export power, positive when exporting."""
         return None if sample.export is None else float(sample.export)
 
+    def _importing(self, sample: Sample) -> float | None:
+        """Grid import power, positive when importing: 13010's export, negated."""
+        return None if sample.export is None else -float(sample.export)
+
     async def _forced(
         self, direction: int, power: float, *, allow_clamp: bool = False
     ) -> str | None:
@@ -603,6 +610,7 @@ class EffectSteps(ReadbackSteps):
         results.extend(await self._pv_cut_effect())
         results.extend(await self._charge_window_effect())
         results.extend(await self._discharge_window_effect())
+        results.extend(await self._import_limit_effect())
         if self._expired("effect"):
             self._worst(3)
             self._note("the behavioural phase ran out of time before every check ran")
@@ -958,6 +966,181 @@ class EffectSteps(ReadbackSteps):
                 recovery=WINDOW_RECOVERY,
             )
         ]
+
+    # -- the site import limit ----------------------------------------------
+
+    async def _import_limit_effect(self) -> list[EffectResult]:
+        """Cap grid import under a forced charge and watch import meet the cap.
+
+        Register 32998 is outside Sungrow's document (discussion #546), so
+        this is the write that would let the integration offer it as a
+        control. A forced charge makes the house import; a cap halfway
+        between that import and what the house imports with no charge at all
+        (load less PV) is one the inverter can only meet by cutting the
+        charge, which is what it did on the maintainer's SH10RT (P020). Judged
+        as a cap: import during, against the cap commanded, bracketed by the
+        house under the same forced charge before and after. A decade off is
+        a wrong scale, the finding a slider would otherwise ship with.
+
+        Then, with the charge stopped, the words around the register's range
+        (`IMPORT_LIMIT_PROBE_WORDS`) once each, to record which the device
+        refuses. Every write is followed by the snapshot's word, and the
+        ordinary restore puts it back again. Needs leave
+        (`Options.import_limit`), a battery with room to charge, and the
+        forced charge power.
+        """
+        if not self.options.import_limit:
+            return []
+        if not self._snapshotted((IMPORT_LIMIT,)):
+            self._note(
+                "no import limit check: register 32998 did not answer or could "
+                "not be read before the run"
+            )
+            return []
+        original = self.snapshot.raw[IMPORT_LIMIT.field]
+        if original == 0:
+            # A dongle's 0 for a register it does not forward is no limit,
+            # and 0 is not a word the device takes (`IMPORT_LIMIT_PROBE_WORDS`).
+            self._note(
+                "no import limit check: register 32998 read 0, which is not a "
+                "limit the inverter takes"
+            )
+            return []
+        power = self._forced_power()
+        if power is None:
+            self._note(
+                "no import limit check: the forced charge power could not be "
+                "resolved, so no charge could be commanded to cap"
+            )
+            return []
+        charge = self._under_cap("battery_max_charge_power", power, "charge")
+        if charge is None:
+            return []
+        soc = self.conditions.get("soc_percent")
+        if soc is None or float(soc) >= SOC_CHARGE_CEILING:
+            self._note(
+                "no import limit check: "
+                + (
+                    "the battery's state of charge did not read"
+                    if soc is None
+                    else "the battery is too full for a forced charge to cap"
+                )
+            )
+            return []
+        if self._expired("effect"):
+            return []
+        self._step("site import limit")
+        if self.options.dry_run:
+            return [
+                await self._bracket(
+                    "site import limit",
+                    self._importing,
+                    "grid import power",
+                    None,
+                    self._nothing,
+                    self._nothing_undone,
+                    setpoint=False,
+                )
+            ]
+        results: list[EffectResult] = []
+        failure = await self._forced(FORCE_CHARGE, charge)
+        try:
+            if failure is not None:
+                self._worst(3)
+                self._note(f"no import limit check: the forced charge {failure}")
+                return []
+            await self.clock.sleep(SETTLE)
+            sizing = await self._window(self._importing)
+            cap = None if not sizing else self._import_cap(median(sizing), charge)
+            if cap is None:
+                return []
+            word = round(cap / 1000 / IMPORT_LIMIT.spec_units_per_count)
+
+            async def apply() -> str | None:
+                return await self._write(
+                    IMPORT_LIMIT, word * IMPORT_LIMIT.spec_units_per_count
+                )
+
+            async def undo() -> None:
+                await self._write_word(IMPORT_LIMIT, original)
+
+            results.append(
+                await self._bracket(
+                    "site import limit",
+                    self._importing,
+                    "grid import power",
+                    cap,
+                    apply,
+                    undo,
+                    setpoint=False,
+                )
+            )
+        finally:
+            await self._unforce()
+        await self._import_limit_words(original)
+        return results
+
+    async def _nothing(self) -> str | None:
+        """Change nothing: the apply of a dry run, which `_bracket` never calls."""
+        return None
+
+    async def _nothing_undone(self) -> None:
+        """Undo nothing: the undo of a dry run, which `_bracket` never calls."""
+
+    def _import_cap(self, importing: float, charge: float) -> float | None:
+        """Return the cap, in W, the check commands, or None with a note.
+
+        Halfway between the import under the forced charge and the import the
+        house needs with no charge at all, so a cap obeyed moves import by
+        half the charge either way. Rounded down to the register's 10 W.
+        """
+        accepted = self.accepted_forced_w or charge
+        floor = max(0.0, importing - accepted)
+        cap = max(IMPORT_LIMIT_MIN_W, floor + (importing - floor) / 2)
+        cap = math.floor(cap / 10) * 10
+        self.conditions["import_limit_sizing_w"] = round(importing)
+        if importing - cap < 2 * EFFECT_FLOOR_W:
+            self._worst(3)
+            self._note(
+                f"no import limit check: the forced charge drew only "
+                f"{importing:.0f} W from the grid, too little for a cap under it "
+                "to be told from the house moving; PV was covering it, and a run "
+                "after dark measures it"
+            )
+            return None
+        return float(cap)
+
+    async def _import_limit_words(self, original: int) -> None:
+        """Write each of `IMPORT_LIMIT_PROBE_WORDS` once and record the answer.
+
+        Three answers, in `conditions`: taken, refused with the exception the
+        device came back with (0x04 is the device saying the word is out of
+        range), or not answered -- a lost link or a timeout, which says
+        nothing about the register. Each is followed by the snapshot's word,
+        so a 0 that is taken caps import for one write's time. Through a
+        WiNet-S a refusal is not proof the word did not land, which the
+        report's transport says.
+        """
+        if self.options.dry_run or self._expired("effect"):
+            return
+        address = (
+            self.inverter.component(IMPORT_LIMIT.component)
+            .resolved_fields[IMPORT_LIMIT.field]
+            .address
+        )
+        answers: dict[str, str] = {}
+        for word in IMPORT_LIMIT_PROBE_WORDS:
+            await self._touch(IMPORT_LIMIT.field)
+            try:
+                await self.inverter.async_write_word(address, word)
+            except ModbusExceptionError as err:
+                answers[str(word)] = f"refused: {type(err).__name__}: {err}"
+            except (ModbusError, TimeoutError, OSError) as err:
+                answers[str(word)] = f"not answered: {type(err).__name__}: {err}"
+            else:
+                answers[str(word)] = "taken"
+            await self._write_word(IMPORT_LIMIT, original)
+        self.conditions["import_limit_words"] = answers
 
     async def _force_export(self, sample: Sample) -> float | None:
         """Make the house export by discharging the battery, or say why not.

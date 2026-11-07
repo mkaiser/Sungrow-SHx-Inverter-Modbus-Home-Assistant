@@ -16,6 +16,9 @@ SH-RT firmware in the B001 numbering ([SH-RT](device-sh-rt.md)). Version strings
   ([mkaiser](../sources/mkaiser-discharge-window-2026-11-04-summary.md)).
 - The history block (inputs 6101-6826) answers whole over the cable, on the SH10RT-V112 and on
   [robbensonmio](installation-robbensonmio.md)'s SH10RT.
+- **[Register 32998](register-32998.md), the site import limit, holds during a forced charge**: set to
+  2.00 kW under a 4500 W forced charge, import held at 1978 W by cutting the charge; [the run](../sources/mkaiser-import-limit-2026-11-07-summary.md). With PV it caps
+  grid import alone, 1 (0.01 kW) charges from PV only, and 0 and 5001 are refused; [the PV run](../sources/mkaiser-import-limit-pv-2026-11-07-summary.md).
 
 ## Surveys
 

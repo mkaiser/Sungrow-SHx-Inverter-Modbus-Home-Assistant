@@ -139,6 +139,20 @@ The check needs the battery discharging at least 500 W: a first mkaiser run at 4
 naming the floor, and a run with the house load raised passed. The snapshot's windows were 00:00
 to 24:00 at mkaiser, so the stop is the window leaving "now", not a switch.
 
+## Import limit
+
+`--import-limit` writes [register 32998](../entities/register-32998.md), the site import limit,
+under a forced charge it commands itself. It sizes a cap halfway between the import under the
+charge and the import with no charge (load less PV), and judges import against that cap,
+bracketed by the same forced charge before and after. A decade off would show as the wrong
+scale. With the charge stopped, it then writes 0, 5001 and 5000 once each and records which
+the inverter refuses, by exception type; a lost link is recorded as not answered. Every write
+is followed by the snapshot's word, and the ordinary restore puts it back again. It skips
+itself when PV covers most of the charge, so it measures best after dark. It has not yet run
+in the engine; two runs by script on P020 found it obeyed
+([night](../sources/mkaiser-import-limit-2026-11-07-summary.md),
+[PV](../sources/mkaiser-import-limit-pv-2026-11-07-summary.md)).
+
 ## Drivers
 
 The engine is the package `src/sungrow_modbus/control_test/`, one module per

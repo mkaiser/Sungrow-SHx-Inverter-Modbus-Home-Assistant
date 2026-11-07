@@ -805,6 +805,14 @@ def _parser() -> argparse.ArgumentParser:
         help="move the weekday and weekend discharge windows away from now and "
         "watch the battery stop discharging; every word is put back afterwards",
     )
+    parser.add_argument(
+        "--import-limit",
+        action="store_true",
+        help="cap grid import through register 32998 during a short forced "
+        "charge, from the grid if there is no sun, and watch import meet the "
+        "cap; then record which limits the inverter refuses. The limit is put "
+        "back afterwards",
+    )
     restart = parser.add_mutually_exclusive_group()
     restart.add_argument(
         "--restart",
@@ -924,15 +932,16 @@ async def async_main(args: argparse.Namespace, drops: probe.LinkDrops) -> int:
 
 
 def _window_leave(args: argparse.Namespace) -> dict[str, bool]:
-    """Return the timed-window leave this library can act on.
+    """Return the leave for the newer checks this library can act on.
 
     The survey runs on the pinned release, whose `Options` may predate the
-    window checks. Asked of a library without them, the leave is dropped with
-    a line saying so -- never a crash halfway into a run that writes.
+    timed windows and the import limit. Asked of a library without them, the
+    leave is dropped with a line saying so -- never a crash halfway into a
+    run that writes.
     """
     known = {field.name for field in dataclasses.fields(Options)}
     leave = {}
-    for name in ("charge_window", "discharge_window"):
+    for name in ("charge_window", "discharge_window", "import_limit"):
         if not getattr(args, name, False):
             continue
         if name in known:

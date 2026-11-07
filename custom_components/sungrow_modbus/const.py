@@ -167,6 +167,13 @@ CONF_CONTROL_TEST_CHARGE_WINDOW = "control_test_charge_window"
 #: write the integration needs before it offers them as controls.
 CONF_CONTROL_TEST_DISCHARGE_WINDOW = "control_test_discharge_window"
 
+#: Let the control test cap grid import through register 32998 (#546).
+#:
+#: A forced charge for about two minutes, from the grid if there is no sun.
+#: The register is outside Sungrow's document: a run with this on is the
+#: watched write the integration needs before it offers it as a control.
+CONF_CONTROL_TEST_IMPORT_LIMIT = "control_test_import_limit"
+
 #: Which slot of a multi-inverter YAML install this entry's device was.
 #:
 #: `""` for a single-inverter package, `"_inv_2"` for the second inverter of a

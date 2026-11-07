@@ -184,6 +184,24 @@ Structure:
    refreshes the catalog every 6 hours and a repository added from a link
    every 48 hours.
 
+5. **The site import limit (32998): what the PV runs left open, at the
+   maintainer's SH10RT.** Settled on P020 over the cable (2026-11-07, wiki:
+   mkaiser-import-limit-2026-11-07 and mkaiser-import-limit-pv-2026-11-07):
+   under a forced charge the cap is on grid import alone, with PV counted;
+   at 1 (0.01 kW) the charge comes only from PV; it settles in ~4-6 s and
+   holds 0-3 % above the cap; 0 and 5001 are refused with exception 0x04,
+   and 5000 is accepted. Still open:
+   - **PV surplus exporting, limit 200, self-consumption** (needs export:
+     a full battery or PV above load plus charge power). Export, PV and the
+     battery must not change.
+   - **House load above the cap that the battery cannot cover** (battery
+     discharge held at 0, or at minimum SoC): does import exceed the cap?
+   - **The engine's `--import-limit` check, on hardware.** Written
+     (uncommitted, 2026-11-07): the survey's leave and the integration's
+     control-test option turn it on. First run: the maintainer's SH10RT after
+     dark, then a P023 house. Then answer discussion #546 (the drafted reply
+     has both script runs).
+
 # Open decisions
 
 1. **When to offer the ordinary setup**, targeted for December 2026 (the
@@ -299,10 +317,17 @@ Structure:
     no Sungrow document. The schedules read as diagnostic entities
     (`Capability.DISCHARGE_SCHEDULE`); writing them needs a watched write, as
     31211 did (wiki: firmware gating), from a control test run with leave. The
-    site import power limit Korsberg uses at register 32998 reads 950 and
-    990 at peter-sm, 2000 at two P020 houses and 4347 on an SH20T, with no
-    unit or scale on record: it needs a known value (what an owner set it
-    to) before it can be an entity.
+    site import power limit, register 32998, is in 0.01 kW (discussion #546;
+    wiki: register 32998): it holds a meter-measured cap on an SH10RS, refuses
+    a word above 5000, and on the maintainer's SH10RT (P020) held import at
+    2.00 kW under a 4500 W forced charge by cutting the charge (2026-11-07,
+    night, cable; wiki: mkaiser-import-limit-2026-11-07). On one SH10RT-V112
+    it is reported ignored during a forced charge (wiki query). An entity
+    needs a watched write per firmware. P020 has two (night and PV, 2026-11-07):
+    the cap is on import alone, and 1-5000 is the accepted range. The
+    integration reads it as the diagnostic sensor Grid import limit, and the
+    control test's `--import-limit` check is written for P023 owners to run;
+    the control waits on those runs (Next steps item 5).
 
 14. **The discharge window on P023** (#785). It has run on P022 and P020,
     and the device pages and log say so; no P023 or SBR house has run it

@@ -17,6 +17,7 @@ from ..model import SETTLES_NOTHING
 from .procedure import (
     DROPPED,
     EFFECT_BUDGET,
+    IMPORT_LIMIT_BUDGET,
     PREFLIGHT_BUDGET,
     PV_CUT_BUDGET,
     READBACK_BUDGET,
@@ -155,6 +156,7 @@ class ControlTestBase:
         effect += WINDOW_BUDGET * (
             self.options.charge_window + self.options.discharge_window
         )
+        effect += IMPORT_LIMIT_BUDGET if self.options.import_limit else 0.0
         for name, budget in (
             ("preflight", PREFLIGHT_BUDGET),
             ("readback", READBACK_BUDGET),
@@ -337,7 +339,13 @@ class ControlTestBase:
             return None
         await self._touch(probe.field)
         if probe.raw_only:
-            failure = await self._write_word(probe, round(value))
+            # A value, like every other write: the register's own counts are
+            # `spec_units_per_count`, which is 1 for the discharge windows and
+            # 0.01 kW for the import limit. A restore's fallback writes the
+            # snapshot's value through here, so a value taken as a word would
+            # put 20.00 kW back as 0.20.
+            word = round(value / probe.spec_units_per_count)
+            failure = await self._write_word(probe, word)
             if failure is not None:
                 self.refusals[probe.field] = f"the raw write {failure}"
                 self._last_refused = probe.field

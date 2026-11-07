@@ -55,7 +55,8 @@ read inconsistently. See [contention](../concepts/contention.md).
 - The forced-charging schedule answers (33208 = 0x55, off), as do the discharge schedules,
   with the SH-RT's layout (weekend discharge 0xAA).
 - Holding 5000-5005 hold the inverter's clock, as on the SH-RT.
-- Register 32998 reads 1300, where peter-sm's SH-RT reads 950: still no unit or scale on record.
+- [Register 32998](../entities/register-32998.md) reads 1300, where peter-sm's SH-RT reads 950: 13.00 kW, at the
+  0.01 kW the owner later measured ([discussion #546](discussion-546-site-import-power-limit-summary.md)).
 
 ## Control test
 

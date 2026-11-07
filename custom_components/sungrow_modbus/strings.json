@@ -1068,6 +1068,9 @@
       "sg_work_state": {
         "name": "Running state"
       },
+      "site_import_power_limit": {
+        "name": "Grid import limit"
+      },
       "sungrow_arm_software": {
         "name": "ARM software version"
       },
@@ -1485,20 +1488,22 @@
           },
           "control_test": {
             "name": "What the control write test may do",
-            "description": "Run complete diagnosis and tests on the device page writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The five switches below go further, and each is on until you switch it off: pressing the button is your consent. What you switch off stays off.",
+            "description": "Run complete diagnosis and tests on the device page writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The six switches below go further, and each is on until you switch it off: pressing the button is your consent. What you switch off stays off.",
             "data": {
               "control_test_restart": "May it stop and restart the inverter?",
               "control_test_export_limit": "May it switch feed-in limitation on?",
               "control_test_pv_cut": "May it cut PV generation for about a minute?",
               "control_test_charge_window": "May it set a forced-charging window around now?",
-              "control_test_discharge_window": "May it move the discharge windows away from now?"
+              "control_test_discharge_window": "May it move the discharge windows away from now?",
+              "control_test_import_limit": "May it cap grid import during a short forced charge?"
             },
             "data_description": {
               "control_test_restart": "On unless you switch it off. With this on, the test writes the stop register, waits for the inverter to report itself stopped, starts it again and times all three transitions, so each model's figures are on record.\n\nWhile it is stopped you generate nothing, the battery neither charges nor discharges, and anything on a backup circuit loses power. Measured so far: stopped within about 2 seconds, running again after 3 to 4 minutes in daylight and over 6 at night, generating up to 20 seconds later. The inverter is never left stopped: the start is retried on fresh connections, it is started again if Home Assistant shuts down mid-test, and if all of that fails you get a repair that starts it.",
               "control_test_export_limit": "On unless you switch it off. Where you already limit feed-in, the test uses that and this changes nothing. With this on it may also switch the limit on for about a minute where you do not.\n\nIt is the one setting whose failed restore costs you something ongoing rather than just accuracy: an export limit that did not get switched back means you feed in less than you could. If that happens you get a repair here that switches it back.",
               "control_test_pv_cut": "On unless you switch it off. With this on, and where your inverter answers register 31211, the test writes the code that stops PV generation, checks that DC power falls to zero, and allows PV again. Generation stops for about half a minute and takes up to a minute more to come back while the inverter searches for its operating point again; the battery and the grid cover the house meanwhile.\n\nThis register is not in Sungrow's documentation, which is why the **Cut PV generation** switch is offered only on firmware where this check has passed. A run on yours is how your firmware gets on that list.",
               "control_test_charge_window": "On unless you switch it off. With this on, and where your inverter has the forced-charging schedule and it is off, the test writes a window around the inverter's own clock with a target a few percent above the battery, switches the schedule on, checks that the battery starts charging, and switches it off again. The battery charges for a minute or two, from the grid if there is no sun. Every word of the schedule is put back afterwards. Skipped where your own schedule is on.",
-              "control_test_discharge_window": "On unless you switch it off. With this on, and where your inverter answers the discharge schedules (registers 33151-33187), the test moves every weekday and weekend discharge window away from now, checks that the battery stops discharging, and puts every window back. For a minute or two the house imports instead of using the battery.\n\nThese registers are not in Sungrow's documentation, which is why they are offered only as readings. A run on yours is the evidence that writing them does what it should."
+              "control_test_discharge_window": "On unless you switch it off. With this on, and where your inverter answers the discharge schedules (registers 33151-33187), the test moves every weekday and weekend discharge window away from now, checks that the battery stops discharging, and puts every window back. For a minute or two the house imports instead of using the battery.\n\nThese registers are not in Sungrow's documentation, which is why they are offered only as readings. A run on yours is the evidence that writing them does what it should.",
+              "control_test_import_limit": "On unless you switch it off. With this on, and where your inverter answers register 32998, the grid import limit, the test force-charges the battery, sets the limit halfway between what the house then imports and what it would import without the charge, checks that grid import comes down to it, and puts your limit back. It then writes three limits at the ends of the range once each, to record which ones the inverter refuses. The battery charges for about two minutes, from the grid if there is no sun.\n\nThis register is not in Sungrow's documentation, which is why it is offered only as a reading. A run on yours is the evidence that writing it does what it should."
             }
           }
         }

@@ -108,6 +108,18 @@ Four charge windows on 2026-11-01 rose to a flat 3.6-4.5 kW, and two were
 called inconclusive because the house moved after the window closed: 772 ->
 4499 -> -245.5 W at mkaiser (P020), 2218 -> 4399.5 -> 1875 W at gerd (P022)."""
 
+#: The import limit check (`Options.import_limit`): a forced charge, a window
+#: to size the cap, then the bracket. The maintainer's SH10RT (P020,
+#: 2026-11-07) held a new cap within 4-6 s both ways, 0-3 % above it.
+IMPORT_LIMIT_BUDGET = 180.0
+IMPORT_LIMIT_MIN_W = 300.0
+"""The lowest cap the check commands. Meter noise is ~20 W, so the 25 %
+tolerance around a cap this size still stands well clear of it."""
+IMPORT_LIMIT_PROBE_WORDS = (0, 5001, 5000)
+"""Words written once each, outside the forced charge, to record the range
+the register takes: the SH10RS and the maintainer's SH10RT refuse 0 and 5001
+with 0x04 and take 5000 (50.00 kW). Each is followed by the snapshot word."""
+
 EFFECT_FLOOR_W = 200.0
 SIGNIFICANCE = 3.0
 
@@ -583,7 +595,24 @@ DISCHARGE_WINDOW: tuple[Probe, ...] = tuple(
     )
 )
 
-#: Every enumeration the run snapshots, restores and never walks.
+#: Register 32998, the site import power limit (discussion #546), outside
+#: Sungrow's document: a cap on grid import, 0.01 kW per count. Read only in
+#: the library, so written and put back by raw word, and only by the import
+#: limit check, under a forced charge it commands itself.
+IMPORT_LIMIT = Probe(
+    field="site_import_power_limit",
+    component="site_import_limit",
+    spec_register=32998,
+    spec_units_per_count=0.01,
+    unit="kW",
+    requires=Capability.BATTERY,
+    raw_only=True,
+    leave="import_limit",
+)
+
+#: Every enumeration the run snapshots, restores and never walks. The import
+#: limit is not one, but it is snapshotted, restored and never walked the same
+#: way.
 ENUMERATIONS: tuple[Probe, ...] = (
     EMS_MODE,
     FORCED_CMD,
@@ -591,6 +620,7 @@ ENUMERATIONS: tuple[Probe, ...] = (
     PV_CUT,
     *CHARGE_WINDOW,
     *DISCHARGE_WINDOW,
+    IMPORT_LIMIT,
 )
 
 EMS_FORCED = 2
@@ -1019,6 +1049,15 @@ class Options:
     Off by default because the house imports from the grid while the battery
     is held. The registers are outside Sungrow's document, so this is the
     watched write that would let the integration offer them as controls."""
+
+    import_limit: bool = False
+    """Cap grid import through register 32998 during a short forced charge,
+    watch import come down to the cap, and put the limit back.
+
+    Off by default because it is a charge the house did not ask for, from the
+    grid where there is no sun: the forced charge check's power, for about two
+    minutes. The register is outside Sungrow's document, so this is the
+    watched write that would let the integration offer it as a control."""
 
     simulated: bool = False
     """Stamp the result as evidence about nothing. A simulator stores raw words

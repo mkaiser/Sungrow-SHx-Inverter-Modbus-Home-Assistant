@@ -52,8 +52,9 @@ third reading, and 2629 and 13265, which were then, are not now.
 - **The discharge schedules** as in the earlier readings: weekday window 1 00:00-24:00, window 2
   00:00-00:00 (registers 33151-33158); weekend discharge 0xAA (on, register 33179), window 1
   00:00-24:00, window 2 00:00-00:00 (registers 33180-33187).
-- Register 32998, which the owner uses as a site import power limit, holds **950**. No Sungrow
-  document describes it, so its unit and scale are not known.
+- [Register 32998](../entities/register-32998.md), which the owner uses as a site import power limit, holds **950**. No Sungrow
+  document describes it; owners measure it in 0.01 kW, so 9.50 kW
+  ([discussion #546](discussion-546-site-import-power-limit-summary.md)).
 
 ## Contention
 

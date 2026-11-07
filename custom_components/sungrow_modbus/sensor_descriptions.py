@@ -1174,6 +1174,16 @@ SENSOR_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         legacy_only=True,
     ),
     SungrowSensorDescription(
+        key="site_import_power_limit",
+        component="site_import_limit",
+        field="site_import_power_limit",
+        translation_key="site_import_power_limit",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement="kW",
+        suggested_display_precision=2,
+    ),
+    SungrowSensorDescription(
         key="reactive_power",
         component="fast_input",
         field="reactive_power",

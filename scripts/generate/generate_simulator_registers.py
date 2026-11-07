@@ -78,6 +78,9 @@ OVERRIDES: dict[int, int | list[int]] = {
     33152: 24,
     33178: 0xAA,
     33181: 24,
+    # The site import limit, holding 32998: 20.00 kW, what every SH-RT dump
+    # reads where the owner has not set it.
+    32997: 2000,
 }
 
 #: The energy history, input 6227-6637, as peter-sm's cable read it on

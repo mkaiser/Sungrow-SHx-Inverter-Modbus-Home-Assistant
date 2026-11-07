@@ -38,6 +38,8 @@ in ten minutes: through a [WiNet-S](../sources/sh60rs-b000v001p066-1p-icefest-an
   0 W, 3092 W) and the stop was refused with an exception. On P057 the restart took 4 s to stop
   and 291 s to run again; the forced checks moved the battery but the house moved more.
 - [13074](register-13074.md) **stores a written word as handed** on P065, P057 and P066.
+- **[Register 32998](register-32998.md) limits grid import**, at 0.01 kW, on Jam3s97's SH10RS by
+  the owner's meter trace; every SH-RS surveyed reads 1300 (13.00 kW).
 - **On P066 the forced-charging window cannot be written**: its days word, holding 33209,
   refuses with 0x04 over RS485 and through the dongle alike. A restart there: 2 s to stop,
   150-165 s to run.

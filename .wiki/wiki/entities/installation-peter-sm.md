@@ -29,8 +29,8 @@ published as `anonymous`; the later seven are signed `peter_sm`. All carry the s
   third readings have 10000 W, so neither could move the battery.
 
 - **The history block and the schedules**, in the fourth reading's dump: inputs 6101-6826 all
-  answer over the cable, and the forced-charging schedule (33208-33219) is off. Register 32998, which
-  the owner uses as a site import power limit, holds 950, in no documented unit.
+  answer over the cable, and the forced-charging schedule (33208-33219) is off. [Register 32998](register-32998.md),
+  which the owner uses as a site import power limit, holds 950 (9.50 kW, at 0.01 kW).
 
 ## Surveys
 

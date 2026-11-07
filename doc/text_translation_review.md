@@ -1,6 +1,6 @@
 # The texts, for review
 
-**290 texts**: everything in `strings.json` that is not an entity name, by its
+**292 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -1219,7 +1219,7 @@ and bold are kept.
 > **Prüfe, ob dein Wechselrichter läuft.** Diese Reparatur bleibt offen, damit du es erneut versuchen kannst.
 
 
-## Options flow (87)
+## Options flow (89)
 
 ### `options.step.init.title`
 
@@ -1569,9 +1569,9 @@ and bold are kept.
 
 ### `options.step.init.sections.control_test.description`
 
-> **EN** Run complete diagnosis and tests on the device page writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The five switches below go further, and each is on until you switch it off: pressing the button is your consent. What you switch off stays off.
+> **EN** Run complete diagnosis and tests on the device page writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The six switches below go further, and each is on until you switch it off: pressing the button is your consent. What you switch off stays off.
 
-> **DE** Vollständige Diagnose und Tests ausführen auf der Geräteseite schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die fünf Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Das Drücken der Schaltfläche ist deine Zustimmung. Was du ausschaltest, bleibt aus.
+> **DE** Vollständige Diagnose und Tests ausführen auf der Geräteseite schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die sechs Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Das Drücken der Schaltfläche ist deine Zustimmung. Was du ausschaltest, bleibt aus.
 
 ### `options.step.init.sections.control_test.data.control_test_restart`
 
@@ -1602,6 +1602,12 @@ and bold are kept.
 > **EN** May it move the discharge windows away from now?
 
 > **DE** Darf er die Entladefenster von jetzt weg verschieben?
+
+### `options.step.init.sections.control_test.data.control_test_import_limit`
+
+> **EN** May it cap grid import during a short forced charge?
+
+> **DE** Darf er den Netzbezug während einer kurzen Zwangsladung begrenzen?
 
 ### `options.step.init.sections.control_test.data_description.control_test_restart`
 
@@ -1648,6 +1654,16 @@ and bold are kept.
 > **DE** An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter die Entladezeitpläne beantwortet (Register 33151–33187), verschiebt der Test jedes Entladefenster an Werktagen und am Wochenende von jetzt weg, prüft, dass die Batterie nicht mehr entlädt, und setzt jedes Fenster zurück. Ein bis zwei Minuten bezieht das Haus Strom, statt die Batterie zu nutzen.
 >
 > Diese Register stehen nicht in Sungrows Dokumentation, weshalb sie nur als Messwerte angeboten werden. Ein Lauf auf deiner ist der Beleg, dass Schreiben darauf tut, was es soll.
+
+### `options.step.init.sections.control_test.data_description.control_test_import_limit`
+
+> **EN** On unless you switch it off. With this on, and where your inverter answers register 32998, the grid import limit, the test force-charges the battery, sets the limit halfway between what the house then imports and what it would import without the charge, checks that grid import comes down to it, and puts your limit back. It then writes three limits at the ends of the range once each, to record which ones the inverter refuses. The battery charges for about two minutes, from the grid if there is no sun.
+>
+> This register is not in Sungrow's documentation, which is why it is offered only as a reading. A run on yours is the evidence that writing it does what it should.
+
+> **DE** An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter Register 32998 beantwortet, das Netzbezugslimit, lädt der Test die Batterie zwangsweise, setzt das Limit auf die Mitte zwischen dem, was das Haus dann bezieht, und dem, was es ohne die Ladung beziehen würde, prüft, dass der Netzbezug darauf sinkt, und setzt dein Limit zurück. Danach schreibt er drei Limits an den Enden des Bereichs je einmal, um festzuhalten, welche der Wechselrichter ablehnt. Die Batterie lädt etwa zwei Minuten, aus dem Netz, wenn keine Sonne scheint.
+>
+> Dieses Register steht nicht in Sungrows Dokumentation, weshalb es nur als Messwert angeboten wird. Ein Lauf auf deiner ist der Beleg, dass Schreiben darauf tut, was es soll.
 
 ### `options.step.promote.title`
 

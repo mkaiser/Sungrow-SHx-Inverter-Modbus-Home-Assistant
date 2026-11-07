@@ -46,6 +46,7 @@
 - [Register 31211 \(PV generation cut\)](entities/register-31211.md) — Undocumented PV generation cut, gated by firmware #register #holding #pv-cut #firmware-gated #undocumented
 - [Register 31213 \(shutdown at a 0 % power limit\)](entities/register-31213.md) — Undocumented: 0xAA stops the inverter at a 0 % active power limit; 0xAA on SH-RS and SH-T, 0x55 on SH-RT #register #holding #active-power-limit #undocumented
 - [Registers 33042 and 33274](entities/register-33042-and-33274.md) — Two specification registers not read: 33042 is 0xFFFF and 33274 is 0 on every survey #register #holding #specification #unread
+- [Register 32998 \(site import power limit\)](entities/register-32998.md) — Undocumented import cap in 0.01 kW; holds on an SH10RS and on P020 under a forced charge (grid import alone, PV counted), reported ignored on an SH10RT-V112 #register #holding #import-limit #undocumented
 - [Register 6100 \(transport probe\)](entities/register-6100.md) — Answers on a cable, refused through a dongle: the transport question #register #input #transport
 
 ## Concepts
@@ -70,6 +71,7 @@
 
 - [ac22e01-gerd-anon-41346964423-wallbox-tls.json](sources/ac22e01-gerd-anon-41346964423-wallbox-tls-summary.md) — AC22E-01 wallbox, gerd, at its own address over TLS #survey #wallbox #ac22e-01 #gerd #tls
 - [ac22e01-gerd-anon-41346964423-wallbox-tls-2.json](sources/ac22e01-gerd-anon-41346964423-wallbox-tls-2-summary.md) — AC22E-01 wallbox, gerd, over TLS while a car charged; 21320 holds the time of reading during a session #survey #wallbox #ac22e-01 #gerd #tls
+- [discussion-546-site-import-power-limit.md](sources/discussion-546-site-import-power-limit-summary.md) — Three owners on register 32998: 0.01 kW, a meter-held cap and a refused 5001 on an SH10RS, ignored in a forced charge on an SH10RT-V112 #register-32998 #import-limit #sh-rs #sh-rt #write
 - [bleughb-sg-power-limitation-registers-786.md](sources/bleughb-sg-power-limitation-registers-786-summary.md) — bleughb curtails two SG5.0RS with holding 5007 (switch, 0xAA/0x55) and 5008 (0.1 %); not watched here #string-inverter #sg5-0rs #bleughb #power-limitation
 - [cross-reference-evcc.md](sources/cross-reference-evcc-summary.md) — evcc's Sungrow templates and wallbox driver compared; the first iHomeManager readings (8028 as 0x55/0xAA, phase voltages at 4358-4362) #cross-reference #ihomemanager #wallbox #licences
 - [cross-reference-shcshc76.md](sources/cross-reference-shcshc76-summary.md) — an ioBroker user's AC011E-01 tables, read again: agrees with the map; a WiNet-S faults polled faster than 10 s #cross-reference #wallbox #winet-s #licences
@@ -82,6 +84,8 @@
 - [hybrid-protocol-v1-1-17.md](sources/hybrid-protocol-v1-1-17-summary.md) — Sungrow's hybrid protocol V1.1.17: no registers since V1.1.11, five MG..TL types, 13017 grid-connected only #specification #hybrid #device-types #naming
 - [logger-communication-protocol.md](sources/logger-communication-protocol-summary.md) — Sungrow's Logger protocol 1.0.2.9 and 1.0.2.5 and its manuals: the whole map, port 516 with TLS by default, forwarding addresses #logger #specification #ports #tls
 - [mkaiser-charge-window-trace-2026-11-01.md](sources/mkaiser-charge-window-trace-2026-11-01-summary.md) — A forced-charging window sampled every 2 s at mkaiser: starts in 4 s, stops in 2 s, no rebound #control-test #charge-window #mkaiser #sapphire-h-b001-v000-p020
+- [mkaiser-import-limit-2026-11-07.md](sources/mkaiser-import-limit-2026-11-07-summary.md) — mkaiser's SH10RT on P020: register 32998 at 2.00 kW holds import to 1978 W under a 4500 W forced charge, by cutting the charge #register-32998 #import-limit #forced-charge #sh10rt #sapphire-h-b001-v000-p020 #mkaiser #write
+- [mkaiser-import-limit-pv-2026-11-07.md](sources/mkaiser-import-limit-pv-2026-11-07-summary.md) — mkaiser's SH10RT on P020 with ~1.1 kW PV: register 32998 caps grid import alone, 0.01 kW charges from PV only, 0 and 5001 refused #register-32998 #import-limit #forced-charge #pv #sh10rt #sapphire-h-b001-v000-p020 #mkaiser #write
 - [mkaiser-discharge-window-2026-11-04.md](sources/mkaiser-discharge-window-2026-11-04-summary.md) — The discharge window check at mkaiser: 722.5 W stops to 0 W when the windows leave now, and returns #control-test #discharge-window #mkaiser #sapphire-h-b001-v000-p020
 - [issue-554-active-power-limit-registers.md](sources/issue-554-active-power-limit-registers-summary.md) — iSolarCloud's active power limit registers 31204/31205 and the 0 % shutdown flag 31213 #issue #active-power-limit #register-31213
 - [robbensonmio-sbr-cell-registers-788.md](sources/robbensonmio-sbr-cell-registers-788-summary.md) — Issue #788: 10765-10780 are per-module highest and lowest cells, not 16 cells; the corpus agrees #sbr #battery #robbensonmio #sapphire-h-b001-v000-p020
@@ -154,6 +158,7 @@
 - [Does a wallbox answer unit 248 on RS485?](queries/does-a-wallbox-answer-unit-248-on-rs485.md) — Open: reported by others, never measured #wallbox #rs485 #open
 - [Does a busy WiNet-S refuse with 0x04?](queries/does-a-busy-winet-s-refuse-with-0x04.md) — Answered: yes, reproduced at gerd with three clients #winet-s #contention #answered
 - [Do models on one firmware answer alike?](queries/do-models-on-one-firmware-answer-alike.md) — Answered so far: yes, for inverters and battery packs, in every column that pools two models #firmware #capability #battery #answered
+- [Does the site import limit hold during a forced charge on an SH-RT?](queries/does-the-import-limit-hold-during-a-forced-charge.md) — Open: holds on an SH10RS and under a forced charge on P020, reported ignored on an SH10RT-V112 #register-32998 #import-limit #forced-charge #open
 - [Does the PV cut work on P022 and P071?](queries/does-the-pv-cut-work-on-p022-and-p071.md) — Answered: yes on both, P022 at gerd, P071 at ra1k-0 #pv-cut #register-31211 #answered
 - [Does writing 33213 drop the link at peter-sm?](queries/does-writing-33213-drop-the-link-at-peter-sm.md) — Open: the charge window's write lost the connection twice, at one house only #contention #charge-window #peter-sm #open
 - [What does an iHomeManager answer?](queries/what-does-an-ihomemanager-answer.md) — Open: never surveyed #ihomemanager #open #survey-wanted

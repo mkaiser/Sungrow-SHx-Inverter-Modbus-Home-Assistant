@@ -521,6 +521,27 @@ class InverterPvGenerationCut(Component):
     """PV generation cut raw."""
 
 
+class InverterSiteImportLimit(Component):
+    """1 holding field, polled every 60s, read only.
+
+    Register 32998, the site import power limit iSolarCloud offers: a cap on
+    grid import in 0.01 kW. **Not in Sungrow's protocol document.** Owners
+    found it (discussion #546); on an SH10RS it holds a meter-measured cap
+    and refuses a word above 5000, and on an SH10RT on P020 a watched write
+    held import under a forced charge by cutting the charge, and refused 0
+    and 5001. Its own component, as 31211 is, so a firmware without it costs
+    one refused read. Read only: the control test writes it by raw word, with
+    leave, and a control waits on that check per firmware.
+    """
+
+    register_space = "holding"
+
+    site_import_power_limit = gauge(
+        reg(32998), 0.01, signed=False, nan=65535, unit="kW"
+    )
+    """Site import power limit."""
+
+
 class InverterForcedCharging(Component):
     """12 holding fields, polled every 60s.
 
@@ -967,6 +988,7 @@ COMPONENTS: dict[str, type[Component]] = {
     "medium_input": InverterMediumInput,
     "pv_generation_cut": InverterPvGenerationCut,
     "forced_charging": InverterForcedCharging,
+    "site_import_limit": InverterSiteImportLimit,
     "discharge_weekday": InverterDischargeWeekday,
     "discharge_weekend": InverterDischargeWeekend,
     "slowest_input": InverterSlowestInput,
@@ -996,6 +1018,7 @@ TIER_COMPONENTS: dict[str, tuple[str, ...]] = {
         "medium_input",
         "pv_generation_cut",
         "forced_charging",
+        "site_import_limit",
         "discharge_weekday",
         "discharge_weekend",
     ),

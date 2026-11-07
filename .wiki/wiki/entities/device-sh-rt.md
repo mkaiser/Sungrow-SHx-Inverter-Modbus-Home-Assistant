@@ -36,6 +36,10 @@ the integration knows was measured on these.
   `0x0040 Running` in daylight and over six at night, then up to 20 s to
   generate; see [register 13000](register-13000.md) and the
   [control test](../concepts/control-test.md).
+- **The site import limit, [register 32998](register-32998.md), reads 2000 (20.00 kW)** on every
+  SH-RT surveyed but one, where the owner sets it. On P020 it holds during a forced charge
+  ([the run](../sources/mkaiser-import-limit-2026-11-07-summary.md)); on one SH10RT-V112 it does not, by its owner's report;
+  [open](../queries/does-the-import-limit-hold-during-a-forced-charge.md).
 - **Inverter-reported load misses another generator.** `load_power` is the
   inverter's own output plus grid import; see
   [external generator](../concepts/external-generator.md).

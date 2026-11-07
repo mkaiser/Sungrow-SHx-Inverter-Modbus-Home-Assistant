@@ -300,6 +300,7 @@ OVERRIDES: dict[str, str] = {
     "export_power_limit_max": "Feed-in limit maximum",
     "export_power_limit_min": "Feed-in limit minimum",
     "feed_in_limitation_ratio": "Feed-in limit ratio",
+    "site_import_power_limit": "Grid import limit",
     # Sungrow's "Load Control Mode" (13002) and its enable (13011): "load
     # control" is the document's word, and says what the feature does, which
     # "load adjustment" never did. The select owns the longer name; the
@@ -571,6 +572,7 @@ DIAGNOSTIC: frozenset[str] = frozenset(
         "bms_alarm_2",
         # A configured limit rather than a measurement, like the ones above it.
         "feed_in_limitation_ratio",
+        "site_import_power_limit",
         # Identity and firmware.
         "sungrow_inverter_serial",
         "sungrow_device_type",
@@ -690,6 +692,7 @@ GERMAN: dict[str, str] = {
     "export_power_limit_max": "Einspeiselimit Maximum",
     "export_power_limit_min": "Einspeiselimit Minimum",
     "feed_in_limitation_ratio": "Einspeiselimit prozentual",
+    "site_import_power_limit": "Netzbezugslimit",
     # -- the inverter's own readings --------------------------------------
     "backup_frequency": "Backup Frequenz",
     "bdc_rated_power": "BDC-Nennleistung",
