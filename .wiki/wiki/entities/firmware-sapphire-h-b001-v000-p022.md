@@ -13,6 +13,9 @@ SH-RT firmware in the B001 numbering ([SH-RT](device-sh-rt.md)).
 - [Register 31211](register-31211.md) answers 0x55, and the cut is **confirmed** by a capability test at [gerd](installation-gerd.md) over the cable (2938 W, 0 W, 1913 W), so P022 is in `CONFIRMED_ON_FIRMWARE`.
 - The cut did as told again on 2026-11-03, over the cable (2381, 0, 1976 W) and through the dongle (1208.5, 0, 1466 W).
 - A Modbus restart in daylight took 181 s from stop to Running, at three runs at gerd.
+- [Register 32998](register-32998.md), the site import limit, **holds under a forced charge**: at
+  1.00 kW, import 1002 W over the cable and 956-1009 W written through the dongle, at gerd
+  ([the run](../sources/gerd-import-limit-2026-11-08-summary.md)).
 
 ## Diagnoses
 

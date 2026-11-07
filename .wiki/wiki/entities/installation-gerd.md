@@ -11,7 +11,10 @@ An [SH8.0RT-V112](device-sh-rt.md) on [P022](firmware-sapphire-h-b001-v000-p022.
 [SBR096](device-sbr-battery.md) and an AC22E-01 [wallbox](device-wallbox.md). The owner reports the
 wiring: a LAN cable into the inverter, the WiNet-S on WLAN, and the wallbox on a LAN cable of its own.
 The wallbox answers at unit 3 through the dongle and at unit 248 at its own address over TLS.
-The only wallbox measured.
+The only wallbox measured. [Register 32998](register-32998.md) capped a forced charge over the cable
+and through the dongle; a run through the dongle while the house's Home Assistant polled lost the
+dongle mid-restore, and the cable closed every session for minutes
+([the run](../sources/gerd-import-limit-2026-11-08-summary.md)).
 
 ## Diagnoses
 

@@ -38,7 +38,12 @@ limit** in kW, and offers no control; the diagnosis's register dump reads it too
   cable and written through a [WiNet-S](device-winet-s.md): at [bar12](installation-bar12.md) a
   1.00 kW cap cut a 1250 W charge to ~550-730 W and held import at 942 W and ~960 W, slightly
   under the cap. With the battery empty in normal operation a 0.10 kW cap left the whole load
-  imported ([the bar12 runs](../sources/bar12-import-limit-2026-11-07-summary.md)).
+  imported ([the bar12 runs](../sources/bar12-import-limit-2026-11-07-summary.md)). It holds a
+  charge commanded by the forced-charging schedule (33208-33219) as well: 4099 W cut to ~510-690 W,
+  import 947-964 W against 1.00 kW, following the load ([the schedule run](../sources/bar12-import-limit-schedule-2026-11-07-summary.md)).
+- **On [P022](firmware-sapphire-h-b001-v000-p022.md) it holds under a forced charge**, over the cable
+  (import 1002 W against 1.00 kW) and written through a WiNet-S (956-1009 W), at
+  [gerd](installation-gerd.md) ([the run](../sources/gerd-import-limit-2026-11-08-summary.md)).
 - **On one SH10RT-V112 it does not hold during a forced charge**, by its owner's report, with
   how the charge was commanded and the B001 firmware unknown;
   [open](../queries/does-the-import-limit-hold-during-a-forced-charge.md).
@@ -59,7 +64,7 @@ the cable and a WiNet-S alike where a house has both.
 ## For the integration
 
 A control needs a write watched by this repository, per firmware
-([firmware gating](../concepts/firmware-gating.md)): P023 has two (bar12), P020 has three, the last by the
+([firmware gating](../concepts/firmware-gating.md)): P022 has two (gerd), P023 three (bar12), P020 three, the last by the
 [capability test](../concepts/capability-test.md)'s `--import-limit` check, which is how other
 firmware gets one. A number entity would range over 1-5000 (0.01-50.00 kW), the words the
 SH10RT and the SH10RS accept. `Todo.md` holds the plan.

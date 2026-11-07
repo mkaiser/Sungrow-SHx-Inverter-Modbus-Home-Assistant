@@ -20,7 +20,8 @@ The most-measured firmware in the corpus.
   [open](../queries/does-writing-33213-drop-the-link-at-peter-sm.md).
 - [Register 32998](register-32998.md), the site import limit, **holds under a forced charge**, over
   the cable and through a WiNet-S, at [bar12](installation-bar12.md); it does not cap the load with
-  the battery empty ([the runs](../sources/bar12-import-limit-2026-11-07-summary.md)).
+  the battery empty ([the runs](../sources/bar12-import-limit-2026-11-07-summary.md)). It holds a
+  scheduled charge too ([the schedule run](../sources/bar12-import-limit-schedule-2026-11-07-summary.md)).
 - [Register 13017](register-13017.md) is a **switch**: `0xAA` wakes a low-SoC standby inverter and
   keeps it running, `0x55` returns it to Standby, any other word is refused
   ([the run](../sources/bar12-forced-startup-2026-11-07-summary.md)). A forced charge, EMS or

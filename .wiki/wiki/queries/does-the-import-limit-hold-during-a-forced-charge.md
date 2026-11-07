@@ -4,7 +4,7 @@ title: "Does the site import limit hold during a forced charge on an SH-RT?"
 tags: [register-32998, import-limit, sh-rt, forced-charge, open]
 created: '2026-11-07'
 query: "Does register 32998 cap grid import while an SH-RT force-charges its battery, and does it depend on how the charge is commanded?"
-results_count: 4
+results_count: 6
 ---
 
 # Does the site import limit hold during a forced charge on an SH-RT?
@@ -34,6 +34,11 @@ a 1250 W forced charge to ~950 W of import, over the cable and written through a
 transport ([the bar12 runs](../sources/bar12-import-limit-2026-11-07-summary.md)). So neither the
 firmware nor the dongle explains the report.
 
-What would answer it: a forced charge commanded by the forced-charging schedule (33208-33219)
-under a cap, on either firmware (at bar12 the scheduled charge began only after the cap was
-lifted), and how ulfben commands his.
+A scheduled charge is capped too: at bar12 the forced-charging schedule's 4099 W charge was cut to
+~510-690 W under a 1.00 kW cap ([the schedule run](../sources/bar12-import-limit-schedule-2026-11-07-summary.md)).
+And P022 obeys, over the cable and through a WiNet-S
+([gerd](../sources/gerd-import-limit-2026-11-08-summary.md)). So on P020, P022 and P023, cable and
+dongle, EMS and schedule, the cap has held every charge this repository commanded.
+
+What would answer it: how ulfben's charge is commanded (iSolarCloud's own forced charge is not
+among those tried), his B001 firmware, and whether a cap was set at all when it charged.
