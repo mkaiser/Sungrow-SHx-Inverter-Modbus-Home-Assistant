@@ -31,8 +31,8 @@ Two ways to run it:
 
    <img src="images/HA-settings-configure-integration.png" width="400" alt="The first screen, offering Perform the device diagnosis">
 
-4. On the device page, press **Run read only diagnosis**, or **Run complete
-   diagnosis and tests** to add the
+4. On the device page, press **Run read-only diagnosis**, or **Run diagnosis
+   with capability tests** to add the
    [capability test](#it-reads-and-writes-only-if-you-say-yes). Then download
    the document from the notification or with **Download diagnostics**.
 
@@ -82,8 +82,8 @@ refused*, *inconclusive*, *readable* (it answered, and nothing wrote to it),
 *not available* or *not read*. A read-only diagnosis can say no more than
 *readable*.
 
-You get the **capability test** only if you ask for it: in Home Assistant by pressing **Run complete diagnosis
-and tests**, in a terminal by answering yes to the last question. That test
+You get the **capability test** only if you ask for it: in Home Assistant by pressing **Run diagnosis with
+capability tests**, in a terminal by answering yes to the last question. That test
 checks that the integration writes each setting at the right scale, and to do
 it, after the reading is finished, it:
 

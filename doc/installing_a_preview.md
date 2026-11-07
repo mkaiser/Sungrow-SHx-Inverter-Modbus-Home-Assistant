@@ -97,10 +97,10 @@ device):
 
 ![Device page with the two diagnosis buttons](../device-diagnosis/images/HA-settings-device-start-diagnosis.png)
 
-- **Run read only diagnosis** reads and never writes. The sensors beside it
+- **Run read-only diagnosis** reads and never writes. The sensors beside it
   show progress; when it finishes, a notification links the document for an
   hour, and **Download diagnostics** carries the same document for good.
-- **Run complete diagnosis and tests** adds the capability test, which writes
+- **Run diagnosis with capability tests** adds the capability test, which writes
   settings and puts them back. Read
   [what it does, and how to opt out](../device-diagnosis/README.md#it-reads-and-writes-only-if-you-say-yes)
   first.

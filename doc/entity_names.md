@@ -45,8 +45,8 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
-|  |  | Run complete diagnosis and tests | Vollständige Diagnose und Tests ausführen | `button.sh10rt_run_complete_diagnosis_and_tests` |  |  |
-|  |  | Run read only diagnosis | Diagnose ausführen (nur lesend) | `button.sh10rt_run_read_only_diagnosis` |  |  |
+|  |  | Run diagnosis with capability tests | Diagnose mit Funktionstests ausführen | `button.sh10rt_run_diagnosis_with_capability_tests` |  |  |
+|  |  | Run read-only diagnosis | Diagnose ausführen (nur lesend) | `button.sh10rt_run_read_only_diagnosis` |  |  |
 
 ### Backup power (12)
 
@@ -461,7 +461,7 @@ An entry of its own, never beside a hybrid. Trackers and phases exist only where
 | Power limitation setting (5008) |  | Power limit | Leistungsgrenze | `sensor.sg5_0rs_power_limit` |  | % |
 |  |  | Power limit active | Leistungsgrenze aktiv | `sensor.sg5_0rs_power_limit_active` |  |  |
 | Total reactive power (5033) |  | Reactive power | Blindleistung | `sensor.sg5_0rs_reactive_power` |  | var |
-|  |  | Run read only diagnosis | Diagnose ausführen (nur lesend) | `button.sg5_0rs_run_read_only_diagnosis` |  |  |
+|  |  | Run read-only diagnosis | Diagnose ausführen (nur lesend) | `button.sg5_0rs_run_read_only_diagnosis` |  |  |
 |  |  | Running state | Betriebszustand | `sensor.sg5_0rs_running_state` |  |  |
 | Total power yields (5144) |  | Total PV generation | Gesamte PV-Erzeugung | `sensor.sg5_0rs_total_pv_generation` |  | kWh |
 | Total DC power (5017) |  | Total PV input power | Gesamte PV-Eingangsleistung | `sensor.sg5_0rs_total_pv_input_power` |  | W |

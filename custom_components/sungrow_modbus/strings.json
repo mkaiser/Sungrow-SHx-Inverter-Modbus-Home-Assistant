@@ -233,10 +233,10 @@
     },
     "button": {
       "run_capability_test": {
-        "name": "Run complete diagnosis and tests"
+        "name": "Run diagnosis with capability tests"
       },
       "run_diagnosis": {
-        "name": "Run read only diagnosis"
+        "name": "Run read-only diagnosis"
       }
     },
     "number": {

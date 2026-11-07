@@ -44,7 +44,7 @@ from .conftest import SERIAL
 ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
 DIAGNOSIS_BUTTON = "button.sh10rt_run_read_only_diagnosis"
-CONTROL_BUTTON = "button.sh10rt_run_complete_diagnosis_and_tests"
+CONTROL_BUTTON = "button.sh10rt_run_diagnosis_with_capability_tests"
 
 
 class InstantClock:

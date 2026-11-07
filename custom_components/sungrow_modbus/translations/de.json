@@ -233,7 +233,7 @@
     },
     "button": {
       "run_capability_test": {
-        "name": "Vollständige Diagnose und Tests ausführen"
+        "name": "Diagnose mit Funktionstests ausführen"
       },
       "run_diagnosis": {
         "name": "Diagnose ausführen (nur lesend)"
@@ -1489,7 +1489,7 @@
           },
           "capability_test": {
             "name": "Was der Funktionstest darf",
-            "description": "Vollständige Diagnose und Tests ausführen auf der Geräteseite schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die sechs Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Das Drücken der Schaltfläche ist deine Zustimmung. Was du ausschaltest, bleibt aus.",
+            "description": "Diagnose mit Funktionstests ausführen auf der Geräteseite schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die sechs Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Das Drücken der Schaltfläche ist deine Zustimmung. Was du ausschaltest, bleibt aus.",
             "data": {
               "capability_test_restart": "Darf er den Wechselrichter stoppen und neu starten?",
               "capability_test_export_limit": "Darf er die Einspeisebegrenzung einschalten?",
@@ -1554,7 +1554,7 @@
   },
   "services": {
     "run_capability_test": {
-      "name": "Vollständige Diagnose und Tests ausführen",
+      "name": "Diagnose mit Funktionstests ausführen",
       "description": "Schreibt in jede Steuerung, in die diese Integration schreiben kann, prüft jede auf drei Arten und setzt sie zurück. Anders als die Diagnose ÄNDERT dies EINSTELLUNGEN am Wechselrichter: Es begrenzt die Batterie und die Einspeisung und erzwingt kurz ein Laden und ein Entladen. Alles wird vor dem ersten Schreiben festgehalten und danach wiederhergestellt, und der Lauf meldet alles, was er nicht zurücksetzen konnte. Es gibt sie, weil ein falscher Skalierungsfaktor für ein Zurücklesen unsichtbar ist – 700 W schreiben, 700 W zurückbekommen – und nur Schreiben ihn finden kann. Die Berechtigungen für Neustart und Einspeisebegrenzung werden in den Optionen der Integration gesetzt und sind standardmäßig aus.",
       "fields": {
         "device_id": {

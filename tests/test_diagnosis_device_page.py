@@ -56,7 +56,7 @@ DIAGNOSTIC_ENTITIES = {
     # Part B, which writes. Present in this mode too: the contributor who set
     # an entry up to send a reading is exactly the person whose hardware this
     # project needs a write measurement from.
-    "button.sh10rt_run_complete_diagnosis_and_tests",
+    "button.sh10rt_run_diagnosis_with_capability_tests",
     "sensor.sh10rt_diagnosis_progress",
     "sensor.sh10rt_diagnosis_step",
     "sensor.sh10rt_diagnosis_finished",

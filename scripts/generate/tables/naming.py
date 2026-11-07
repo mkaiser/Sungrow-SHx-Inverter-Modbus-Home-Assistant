@@ -100,8 +100,8 @@ OVERRIDES: dict[str, str] = {
     # The two buttons are named as a pair a contributor chooses between:
     # "read only" on the one that never writes, so that the other one, which
     # adds the capability test's writes, is the one without that promise.
-    "run_diagnosis": "Run read only diagnosis",
-    "run_capability_test": "Run complete diagnosis and tests",
+    "run_diagnosis": "Run read-only diagnosis",
+    "run_capability_test": "Run diagnosis with capability tests",
     "diagnosis_progress": "Diagnosis progress",
     "diagnosis_step": "Diagnosis step",
     "diagnosis_finished": "Diagnosis finished",
@@ -639,7 +639,7 @@ GERMAN: dict[str, str] = {
     "wallbox_enabled": "Ladestation aktiviert",
     "weekend_discharge": "Entladung am Wochenende",
     # -- the diagnosis -------------------------------------------------------
-    "run_capability_test": "Vollständige Diagnose und Tests ausführen",
+    "run_capability_test": "Diagnose mit Funktionstests ausführen",
     "run_diagnosis": "Diagnose ausführen (nur lesend)",
     "diagnosis_finished": "Diagnose beendet",
     "diagnosis_progress": "Diagnosefortschritt",

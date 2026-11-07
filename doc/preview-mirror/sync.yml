@@ -392,7 +392,7 @@ jobs:
           The most useful thing you can do with it is send a reading. The
           integration can produce one for you: add it with **Perform the device
           diagnosis**, fill in
-          **Options → Contribute a capability diagnosis**, press **Run read only
+          **Options → Contribute a capability diagnosis**, press **Run read-only
           diagnosis** on the device page, and download the document it offers.
 
           ## When this repository goes away

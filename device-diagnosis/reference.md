@@ -259,7 +259,7 @@ section, saying whether that entry's own polling was held off during the run.
 
 Almost none do, and that is not a gap in the evidence — it is the difference
 between reading an inverter and writing to one. The block is produced by
-**Run complete diagnosis and tests** on the device page, or by the diagnosis with leave
+**Run diagnosis with capability tests** on the device page, or by the diagnosis with leave
 (or `sungrow_capability_test.py --merge-into`), and both change settings on a
 real installation and change them back.
 

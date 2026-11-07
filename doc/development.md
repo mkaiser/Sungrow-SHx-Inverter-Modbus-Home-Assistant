@@ -445,7 +445,7 @@ diagnostic sensors beside them; a contributor without it runs
 | Entity | What it is for |
 | --- | --- |
 | `button.<name>_run_read_only_diagnosis` | Starts one. Unavailable while a run is in flight; the runner refuses a second anyway |
-| `button.<name>_run_complete_diagnosis_and_tests` | Part B: the same diagnosis, and then it **writes** to every control and puts each one back. See below |
+| `button.<name>_run_diagnosis_with_capability_tests` | Part B: the same diagnosis, and then it **writes** to every control and puts each one back. See below |
 | `sensor.<name>_diagnosis_progress` | Percent complete. Counted reads, not elapsed time — the same diagnosis is under a second on a cable and minutes over a VPN |
 | `sensor.<name>_diagnosis_step` | What is being read right now. **Its recorded history is the point**: 19 probes, the block read test's reads and one assembly step in order — plus 52 band sweeps when a dump was asked for — which is what says *where* a slow link stalls rather than that it did |
 | `sensor.<name>_diagnosis_finished` | When the last run ended, with `fields_read` and `has_document` as attributes |
