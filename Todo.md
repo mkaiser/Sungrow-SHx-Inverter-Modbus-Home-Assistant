@@ -461,12 +461,17 @@ catalog submission on release, not before (item 3), and
    **There is no one-click switch.** The Marketplace refuses to install an
    integration whose domain another installed repository owns ("The
    sungrow_modbus directory belongs to ...-preview", `async_pre_install` in
-   `repositories/integration.py`). The switch is: **Remove** the preview in
-   the Marketplace (it deletes `custom_components/sungrow_modbus`; the config
-   entry, its entities and their history are Home Assistant's and stay),
-   **Download** from this repository, restart. A restart between the two
-   leaves the entry failing to load until the download. Two more routes
-   that do not help:
+   `repositories/integration.py`), and refuses to remove one while a config
+   entry of its domain exists ("still set up ... Delete it under Settings >
+   Devices & services before uninstalling it", `repository_in_use` in
+   `websocket/repository.py`). So the switch is five steps: **delete the
+   entry**, **Remove** the preview, **Download** from this repository,
+   restart, and **set the integration up again**. Home Assistant restores a
+   deleted entity's id when the same platform and unique id come back within
+   30 days (`ORPHANED_ENTITY_KEEP_SECONDS` in `entity_registry.py`), so the
+   ids, and with them the history, should come back; the options are asked
+   again. Not tried: that the restore and the legacy-id claim agree on a
+   migrated install. Two more routes that do not help:
    - The catalog's `removed` feed raises a repair for an installed
      repository it lists (`async_handle_removed_repositories` in `base.py`),
      but that repair is not fixable: it only links the repository's page.
@@ -490,12 +495,12 @@ catalog submission on release, not before (item 3), and
       API (`marketplace/repository/install`) from a custom integration: not
       worth the fragility.
 
-   Proposal: 1 at the release, with 2 alongside it, then archive the mirror
-   once few installs use it. Before deciding, on `make marketplace`: the
-   remove-then-download order keeps the entry, its entities and history; and
-   whether a commit-tracked install switches to versions once the mirror
-   publishes a release. Then update `doc/installing_a_preview.md`'s last
-   paragraph.
+   Proposal: 1 at the release, since the switch costs a new setup, with 2
+   alongside it for whoever wants the main repository; archive the mirror
+   once few installs use it. To check on `make marketplace` once `main`
+   carries the integration: the five steps keep the ids and history on a
+   migrated install, and a commit-tracked install switches to versions once
+   the mirror publishes a release.
 
 8. **Deprecating and retiring the YAML package, after the release.** Once
    the integration is complete (parity with the YAML package, merged into

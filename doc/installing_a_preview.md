@@ -128,6 +128,7 @@ entities and their history survive.
 If you took over the YAML package's entity ids, returning to the package needs
 the reverse migration in [integration_migration.md](integration_migration.md).
 
-Once the integration reaches `main`, **remove the preview channel from HACS
-before installing from this repository**: both install the same integration
-at the same path.
+Once the integration reaches `main`, do not install it from this repository
+beside the preview: both install the same integration at the same path, and
+HACS (the Marketplace) refuses the second. Nor will it remove an integration
+that is still set up. How to move over comes with the release.
