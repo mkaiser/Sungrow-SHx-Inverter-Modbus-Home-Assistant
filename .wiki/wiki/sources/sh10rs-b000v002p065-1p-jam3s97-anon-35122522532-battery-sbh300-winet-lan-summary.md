@@ -1,25 +1,25 @@
 ---
 type: source
 title: sh10rs-b000v002p065-1p-jam3s97-anon-35122522532-battery-sbh300-winet-lan.json
-source_path: ../device-survey/results/inverter/sh10rs-b000v002p065-1p-jam3s97-anon-35122522532-battery-sbh300-winet-lan.json
+source_path: ../device-diagnosis/results/inverter/sh10rs-b000v002p065-1p-jam3s97-anon-35122522532-battery-sbh300-winet-lan.json
 ingested: '2026-11-01'
 created: '2026-11-01'
 tags:
-  - survey
+  - diagnosis
   - sh10rs
   - sunstone-h-b000-v002-p065
   - jam3s97
   - winet
-  - control-test
+  - capability-test
 ---
 
-# SH10RS, B000.V002.P065, Jam3s97, a WiNet-S on Ethernet, with a control test
+# SH10RS, B000.V002.P065, Jam3s97, a WiNet-S on Ethernet, with a capability test
 
-Capability survey of one inverter, read 2026-11-01 in the morning from the terminal survey, issue
-#786, with the control test (`--control-test yes`) and the owner's other pollers running
-(`--pollers yes`). The contributor also attached the control test as a file of its own; it is
-identical to the document's `control_test` block, so only the survey is committed. Source:
-`device-survey/results/inverter/sh10rs-b000v002p065-1p-jam3s97-anon-35122522532-battery-sbh300-winet-lan.json`.
+Capability diagnosis of one inverter, read 2026-11-01 in the morning from the terminal diagnosis, issue
+#786, with the capability test (`--capability-test yes`) and the owner's other pollers running
+(`--pollers yes`). The contributor also attached the capability test as a file of its own; it is
+identical to the document's `capability_test` block, so only the diagnosis is committed. Source:
+`device-diagnosis/results/inverter/sh10rs-b000v002p065-1p-jam3s97-anon-35122522532-battery-sbh300-winet-lan.json`.
 
 | | |
 | --- | --- |
@@ -58,10 +58,10 @@ read inconsistently. See [contention](../concepts/contention.md).
 - [Register 32998](../entities/register-32998.md) reads 1300, where peter-sm's SH-RT reads 950: 13.00 kW, at the
   0.01 kW the owner later measured ([discussion #546](discussion-546-site-import-power-limit-summary.md)).
 
-## Control test
+## Capability test
 
 Outcome **3**: ran, with checks skipped or inconclusive. Through a WiNet-S only leg C is
-evidence. See [the control test](../concepts/control-test.md). PV 4052 W, SoC 100 %.
+evidence. See [the capability test](../concepts/capability-test.md). PV 4052 W, SoC 100 %.
 
 | Field | Register | Verdict |
 | --- | --- | --- |

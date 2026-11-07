@@ -59,7 +59,7 @@ class Capability(StrEnum):
 
     Not probed by `resolve`: it needs a second unit. `with_sungrow_battery`
     grants it once a pack has answered on its own unit **and** register 5639's
-    capacity names an **SBR**. An SBH is not granted yet: every SBH surveyed
+    capacity names an **SBR**. An SBH is not granted yet: every SBH diagnosed
     was read through a WiNet-S, so its own-unit reading on a direct link is
     unmeasured. Granting it moves write bounds, from BMS current times voltage
     to the datasheet's conservative power (`battery.ceiling`).
@@ -179,7 +179,7 @@ class Capability(StrEnum):
 
     PV generation, direct consumption from PV and export from PV. V1.1.16
     marks the block "WiNet-S/S2 and Logger is not supported", and every
-    dongle survey refuses it, so in practice this is a cable connection.
+    dongle diagnosis refuses it, so in practice this is a cable connection.
     Probed on the twelve monthly PV values and denied when all are zero
     (`ZERO_MEANS_ABSENT`): a model outside the block's "applicable types"
     must not get six sensors reporting zero forever. A house that has
@@ -360,7 +360,7 @@ ABSENT_IN: dict[Capability, frozenset[Family]] = {
     # a real MG gets the right answer from the device. What changes is the
     # claim `doc/compatibility.md` publishes for a model nobody has read, and
     # asserting single-phase there on no evidence was the weaker of the two
-    # options. One MG survey settles it.
+    # options. One MG diagnosis settles it.
     #
     # SH*RL stays, and is why RL is a separate family from MG.
     Capability.THREE_PHASE: frozenset({Family.RS, Family.RL, Family.K}),
@@ -371,11 +371,11 @@ ABSENT_IN: dict[Capability, frozenset[Family]] = {
 #: firmware update changes, as opposed to the hardware strings beside it.
 #:
 #: The firmware twin of `ABSENT_IN`, with a stricter rule for getting in:
-#: **a committed survey, not a bug report.** Issue reports name firmware
+#: **a committed diagnosis, not a bug report.** Issue reports name firmware
 #: that is wrong as often as right -- #756 blames 95.14 for refusing the meter
 #: phase registers, and bar12 reads them on 95.14 -- and a gate keyed on a
 #: version string hides entities from everyone on that version. So an entry
-#: names the surveys it rests on, and a version is matched **exactly**:
+#: names the diagnoses it rests on, and a version is matched **exactly**:
 #: the neighbouring versions are unmeasured, not implied.
 #:
 #: Unlike the family table this also stops the **read**, through
@@ -396,7 +396,7 @@ ABSENT_ON_FIRMWARE: dict[str, frozenset[Capability]] = {
     # SH10RT on 95.12 and an SH10RT-20 on 95.14, so it is the firmware.
     #
     # The YAML package's reports go further -- 13250-13280 missing on 51.0x
-    # (#660, #673) -- but nothing on 51.0x has been surveyed, so it stays out.
+    # (#660, #673) -- but nothing on 51.0x has been diagnosed, so it stays out.
     "SAPPHIRE-H_01011.95.03": frozenset(
         {Capability.FIRMWARE_VERSIONS, Capability.METER_CHANNEL_2}
     ),
@@ -422,7 +422,7 @@ OUTPUT_TYPES: dict[int, str] = {0: "single phase", 1: "3P4L", 2: "3P3L"}
 #: and no `phase_a_power` computed from one, on an inverter reporting this
 #: type (`SungrowRuntimeData.serves`): under a phase name they would be line
 #: quantities. Nobody has 3P3L hardware to test against, so what to create
-#: instead waits for a survey from such a system.
+#: instead waits for a diagnosis from such a system.
 LINE_VOLTAGE_OUTPUT_TYPE = 2
 
 
@@ -464,7 +464,7 @@ def known_absent(
 
     An unknown code returns nothing from the family table, which is
     deliberate: a model nobody has written down should be probed rather than
-    assumed crippled. The same goes for firmware nobody has surveyed.
+    assumed crippled. The same goes for firmware nobody has diagnosed.
     """
     by_firmware = absent_on_firmware(firmware)
     family = family_for(device_type_code)
@@ -481,12 +481,12 @@ def known_absent(
 #: table. Absence is something the device says by answering 0xFFFF; permission
 #: to write a register Sungrow never documented is not something any read can
 #: establish. So a capability here is granted from evidence about the write --
-#: the control test's behavioural check, on that exact firmware -- and not from
+#: the capability test's behavioural check, on that exact firmware -- and not from
 #: the register merely answering.
 #:
 #: The same rules as the absence table: a version is matched **exactly**,
 #: against either firmware string (`firmware_strings`), and every entry names
-#: the survey whose `control_test` block carries the passing check. An
+#: the diagnosis whose `capability_test` block carries the passing check. An
 #: empty set means the entity waits; the read-only state still ships.
 CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
     # fwitten's SH10RT-V112 master over its own LAN port, 2026-10-29: DC power
@@ -510,7 +510,7 @@ CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
             "SUNSTONE-H_B000.V002.P065",
         }
     ),
-    # Nothing yet: no survey has watched a standby inverter start on 0xAA.
+    # Nothing yet: no diagnosis has watched a standby inverter start on 0xAA.
     Capability.FORCED_STARTUP_CONTROL: frozenset(),
 }
 

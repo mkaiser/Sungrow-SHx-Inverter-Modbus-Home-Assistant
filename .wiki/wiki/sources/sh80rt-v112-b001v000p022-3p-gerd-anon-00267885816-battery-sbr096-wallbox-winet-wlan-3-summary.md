@@ -1,26 +1,26 @@
 ---
 type: source
 title: sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-3.json
-source_path: ../device-survey/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-3.json
+source_path: ../device-diagnosis/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-3.json
 ingested: '2026-11-03'
 created: '2026-11-03'
 tags:
-  - survey
+  - diagnosis
   - sh80rt-v112
   - sapphire-h-b001-v000-p022
   - gerd
   - winet
   - wallbox
-  - control-test
+  - capability-test
 ---
 
 # SH8.0RT-V112, B001.V000.P022, gerd, a WiNet-S on WiFi, third reading
 
 Read by the maintainer over a VPN on 2026-11-03, right after the
 [cable reading](sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-3-summary.md),
-the owner's Home Assistant stopped, with the full control test, while a car charged. Read on the
+the owner's Home Assistant stopped, with the full capability test, while a car charged. Read on the
 library at commit `85c9784`. Source:
-`device-survey/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-3.json`.
+`device-diagnosis/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-3.json`.
 
 | | |
 | --- | --- |
@@ -41,11 +41,11 @@ with no session. Every value the
 [TLS reading](ac22e01-gerd-anon-41346964423-wallbox-tls-2-summary.md) 26 minutes earlier shares
 with this one agrees, apart from the counters (energy, and the time at 21320).
 
-## Control test
+## Capability test
 
 Outcome **3**. Through a WiNet-S only leg C is evidence: three readbacks reported the old word
 (13058, 33047, 33048), the dongle's [stale readback](../entities/device-winet-s.md). See
-[the control test](../concepts/control-test.md).
+[the capability test](../concepts/capability-test.md).
 
 - [13074](../entities/register-13074.md): not asked; feed-in limitation was off.
 - Behaviour: forced charge (-3800, 1249, -3800 W) and the **PV cut** (1208.5, 0, 1466 W) did as
@@ -56,4 +56,4 @@ Outcome **3**. Through a WiNet-S only leg C is evidence: three readbacks reporte
   a 10 % floor (the car drew it down); 13100 was not written, every admissible value being too
   close to the battery's level.
 - Every restore row reads "already holding its original value", read through the dongle's cache.
-  That is the restore behaviour [the restore](../concepts/control-test-restore.md) no longer has.
+  That is the restore behaviour [the restore](../concepts/capability-test-restore.md) no longer has.

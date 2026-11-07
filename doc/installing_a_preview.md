@@ -8,7 +8,7 @@ its name in *Add integration*, and by a notice under **Settings → Repairs**.
 > project. A preview is for people who want to help find what is broken.
 
 **A preview sets up diagnostics only.** It identifies your inverter, works out
-which registers it answers and gives you a survey to send back. It creates
+which registers it answers and gives you a diagnosis to send back. It creates
 **no sensors for the readings**. The full setup is built; it waits because
 choosing whether to take over `modbus_sungrow.yaml`'s entity ids decides
 where years of history attach, and that is not a thing to hand somebody in
@@ -27,7 +27,7 @@ YAML package. Four steps; the third is the one people forget.
 | Repository | `https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview` |
 | Type | **Integration** |
 
-![HACS custom repositories dialog with the preview repository added as an Integration](../device-survey/images/HACS-add-custom-repository.png)
+![HACS custom repositories dialog with the preview repository added as an Integration](../device-diagnosis/images/HACS-add-custom-repository.png)
 
 HACS itself needs a GitHub account (it asks for a device code at
 <https://github.com/login/device>). Any account works; it is not tied to this
@@ -65,11 +65,11 @@ a network problem, not a bug.
 **Settings → Devices & services → Add integration →** search for
 **Sungrow Modbus (preview)**.
 
-![Add integration searching for Sungrow modbus, showing Sungrow Modbus (preview)](../device-survey/images/HACS-add-integration-sungrow-modbus.png)
+![Add integration searching for Sungrow modbus, showing Sungrow Modbus (preview)](../device-diagnosis/images/HACS-add-integration-sungrow-modbus.png)
 
-Choose **Perform the device survey**.
+Choose **Perform the device diagnosis**.
 
-![The first screen, offering Perform the device survey](../device-survey/images/HA-settings-configure-integration.png)
+![The first screen, offering Perform the device diagnosis](../device-diagnosis/images/HA-settings-configure-integration.png)
 
 **Search my network** probes the range you confirm and identifies what
 answers; or type the address (behind a WiNet-S, the dongle's). Where more than
@@ -90,23 +90,23 @@ that polls it (the YAML package, another Home Assistant, another tool)
 before adding the integration, or the first read fails with *could not
 reach*.
 
-## Running the survey
+## Running the diagnosis
 
 On the device page (Settings → Devices & services → Sungrow Modbus → the
 device):
 
-![Device page with the two diagnosis buttons](../device-survey/images/HA-settings-device-start-survey.png)
+![Device page with the two diagnosis buttons](../device-diagnosis/images/HA-settings-device-start-diagnosis.png)
 
 - **Run read only diagnosis** reads and never writes. The sensors beside it
   show progress; when it finishes, a notification links the document for an
   hour, and **Download diagnostics** carries the same document for good.
-- **Run complete diagnosis and tests** adds the control test, which writes
+- **Run complete diagnosis and tests** adds the capability test, which writes
   settings and puts them back. Read
-  [what it does, and how to opt out](../device-survey/README.md#it-reads-and-writes-only-if-you-say-yes)
+  [what it does, and how to opt out](../device-diagnosis/README.md#it-reads-and-writes-only-if-you-say-yes)
   first.
 
 Send the document to
-[the survey issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786).
+[the diagnosis issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786).
 For a bug, see [troubleshooting](integration_help.md#troubleshooting) first,
 then open an issue with **Download diagnostics** (serial and address removed)
 and the commit hash HACS shows.

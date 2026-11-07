@@ -95,4 +95,4 @@ is not the house's total.
   upgrade.
 
 Tell us what you see at your house in
-[the survey thread](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786).
+[the diagnosis thread](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786).

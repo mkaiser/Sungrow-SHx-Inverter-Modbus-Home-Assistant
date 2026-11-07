@@ -1,7 +1,7 @@
 """What an SG string inverter puts into a published document.
 
 A document of its own kind (`"document": "string_inverter"`), as a wallbox's
-and an iHomeManager's are: the inverter documents in `device-survey/results/`
+and an iHomeManager's are: the inverter documents in `device-diagnosis/results/`
 are read as hybrids by everything that reads them, and an SG answers none of
 the hybrid map past 5035.
 
@@ -130,7 +130,7 @@ def mask(dump: Mapping[str, Any]) -> dict[str, Any]:
 
 def device_block(dump: Mapping[str, Any], serial: str | None) -> dict[str, Any]:
     """Return what the inverter is: code, model, phases, stand-in serial."""
-    from ..survey_document import stand_in
+    from ..diagnosis_document import stand_in
 
     values = dump.get("input") if isinstance(dump.get("input"), Mapping) else {}
     code = values.get("4999") if isinstance(values, Mapping) else None
@@ -165,7 +165,7 @@ def document(
     string_inverter: Mapping[str, object],
 ) -> dict[str, object]:
     """Build the document for an SG, from an already masked section."""
-    from ..survey_document import SCHEMA
+    from ..diagnosis_document import SCHEMA
 
     return {
         "schema": SCHEMA,

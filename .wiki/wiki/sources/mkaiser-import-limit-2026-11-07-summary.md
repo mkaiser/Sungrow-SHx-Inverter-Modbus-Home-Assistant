@@ -22,6 +22,6 @@ over the cable, at night with no PV, during a forced charge of 4500 W through 13
 | It acts within one ~5 s sample, both ways | import 5088 to 1975 W, and 1978 to 5084 W | one run |
 | The cable reads back what was written | 200, then 2000 | one run |
 
-The run used a script outside the control test's engine, with its rules kept: stand-in checked,
+The run used a script outside the capability test's engine, with its rules kept: stand-in checked,
 snapshot flushed before the first write, a restore of raw words checked by raw read. Every word
 was restored. It was through the cable, so it says nothing about a WiNet-S.

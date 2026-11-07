@@ -1,11 +1,11 @@
 ---
 type: source
 title: sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-wlan.json
-source_path: ../device-survey/results/inverter/sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-wlan.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-wlan.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
-  - survey
+  - diagnosis
   - sh10rt-20
   - sapphire-h-b001-v000-p023
   - sisu70
@@ -14,7 +14,7 @@ tags:
 
 # SH10RT-20, B001.V000.P023, sisu70, a WiNet-S on WiFi
 
-Capability survey of one inverter, read 2026-10-25. Source: `device-survey/results/inverter/sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-wlan.json`.
+Capability diagnosis of one inverter, read 2026-10-25. Source: `device-diagnosis/results/inverter/sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-wlan.json`.
 
 | | |
 | --- | --- |
@@ -40,4 +40,4 @@ Of the battery pack (unit 2): `sbr_battery_cells (IllegalDataAddressError)`, `sb
 
 ## Contention
 
-Polled by this Home Assistant, throughout (14 components); block read test: not run: it reads every block of the poll three times plus narrowing, which the survey button affords and a diagnostics download does not. See [contention](../concepts/contention.md).
+Polled by this Home Assistant, throughout (14 components); block read test: not run: it reads every block of the poll three times plus narrowing, which the diagnosis button affords and a diagnostics download does not. See [contention](../concepts/contention.md).

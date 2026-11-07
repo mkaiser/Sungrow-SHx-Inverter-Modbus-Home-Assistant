@@ -8,14 +8,14 @@ a whole tier of entities, and only a block read test says which register it
 is.
 
 The integration runs it from the device page and
-`device-survey/scripts/python/blocks.py` from a terminal, both through
+`device-diagnosis/scripts/python/blocks.py` from a terminal, both through
 this module. Two callers, one measurement:
 
 * **The outcome words are the tool's**, `OK` to `UNNARROWED`, because they are
   quoted in `src/sungrow_modbus/hybrid_inverter/layout.py` and a
   measurement's phrasing is part of it.
-* **The published shape is `sungrow_survey.py`'s**, key for key, so one reader handles
-  a document from either. `tests/test_block_test.py` holds the two together.
+* **The published shape is `sungrow_diagnosis.py`'s**, key for key, so one reader
+  handles a document from either. `tests/test_block_test.py` holds the two together.
 * **The blocks are recorded, not computed** -- `inverter_blocks` drives every
   polled component against a recorder and keeps what it asked for, and the
   terminal tool takes its plan from the same function. So both test exactly
@@ -80,7 +80,8 @@ INCONSISTENT = "inconsistent"
 #: it -- not as small as it goes. `layout.py` takes an exact register.
 UNNARROWED = "not narrowed"
 
-#: Rounds over the whole plan and attempts per read, as `sungrow_survey.py` runs them.
+#: Rounds over the whole plan and attempts per read, as `sungrow_diagnosis.py`
+#: runs them.
 #: Two different measurements: three back-to-back reads of one block can all
 #: land in one busy moment, where three rounds with the other blocks between
 #: them cannot. A register fault fails in every round.
@@ -100,7 +101,7 @@ ATTEMPTS = 2
 #:
 #: A *per-block* budget does not fix that: it bounds each block and leaves the
 #: phase unbounded, so a device that fails eight blocks costs eight times as
-#: much as one that fails one. Dividing a total is what makes the survey's
+#: much as one that fails one. Dividing a total is what makes the diagnosis's
 #: length predictable -- one failing block gets the whole budget and is
 #: narrowed to a register, eight get a minute each and are narrowed to a half.
 #: 480 seconds is eight minutes, against a dump that is allowed 600.
@@ -191,7 +192,7 @@ async def inverter_blocks() -> list[Block]:
     at setup, and a device that refuses it never gets that far. Components on
     another unit -- the SBR pack, the wallbox -- are not: read at the
     inverter's unit they answer 0xFFFF or refuse whatever the pack is doing,
-    which would put guaranteed failures into every survey.
+    which would put guaranteed failures into every diagnosis.
     """
     blocks: list[Block] = []
     for name, klass in {**COMPONENTS, "identity": InverterIdentity}.items():
@@ -255,7 +256,7 @@ async def attempt(
 
     With `reconnects`, a read that answered only after the client reconnected
     is a failure: the raw client reconnects and retries, which is right for
-    a survey and would report "ok (3/3)" for a block the integration,
+    a diagnosis and would report "ok (3/3)" for a block the integration,
     which has no mid-block retry, cannot read at all.
     """
     outcomes: list[tuple[str, str]] = []
@@ -584,14 +585,14 @@ def document(
     client: str | None = CLIENT,
     reconnects: int = 0,
 ) -> dict[str, Any]:
-    """Render a block read test as a survey publishes it.
+    """Render a block read test as a diagnosis publishes it.
 
-    The one renderer: the integration and `sungrow_survey.py` both publish
-    through it, the survey saying which of its clients measured and how often
+    The one renderer: the integration and `sungrow_diagnosis.py` both publish
+    through it, the diagnosis saying which of its clients measured and how often
     its raw socket reconnected. Register numbers as Sungrow's document prints
     them, one above the protocol address. Carries no host and no serial: block
     numbers and outcome words only, so it publishes the way the rest of a
-    survey does.
+    diagnosis does.
     """
 
     def where(block: Block) -> dict[str, Any]:

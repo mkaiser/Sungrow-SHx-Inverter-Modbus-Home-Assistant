@@ -168,10 +168,10 @@ async def test_the_register_dump_is_included_when_enabled(
     )
 
 
-async def test_the_block_read_test_is_carried_from_the_last_survey(
+async def test_the_block_read_test_is_carried_from_the_last_diagnosis(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """The download hands on the survey's measurement rather than running one.
+    """The download hands on the diagnosis's measurement rather than running one.
 
     The test reads every block several times -- minutes through a dongle --
     and a download is something somebody waits on.
@@ -181,7 +181,7 @@ async def test_the_block_read_test_is_carried_from_the_last_survey(
     assert report["block_read_test"] == NO_BLOCK_READ_TEST
 
     measured = {"rounds": 3, "blocks": []}
-    entry.runtime_data.survey._set(
+    entry.runtime_data.diagnosis._set(
         document={"block_read_test": measured},
         finished=datetime(2026, 10, 17, 12, 0, tzinfo=UTC),
     )
@@ -193,21 +193,21 @@ async def test_the_block_read_test_is_carried_from_the_last_survey(
     }
 
 
-async def test_the_control_test_is_carried_into_the_survey(
+async def test_the_capability_test_is_carried_into_the_diagnosis(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
     """The download is the link that never lapses, so it holds part B too.
 
     The notification says Download diagnostics carries the same document. A
-    download only reads, so the last run's control test has to be carried,
+    download only reads, so the last run's capability test has to be carried,
     or that promise fails for the run that is hardest to repeat.
     """
     entry = await _setup(hass, sungrow_unit)
     report = await async_get_config_entry_diagnostics(hass, entry)
-    assert "control_test" not in report["survey"]
+    assert "capability_test" not in report["diagnosis"]
 
     block = {"verdict": "pass", "controls": []}
-    entry.runtime_data.survey._set(control_test=block)
+    entry.runtime_data.diagnosis._set(capability_test=block)
     report = await async_get_config_entry_diagnostics(hass, entry)
 
-    assert report["survey"]["control_test"] == block
+    assert report["diagnosis"]["capability_test"] == block

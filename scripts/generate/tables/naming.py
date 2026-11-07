@@ -91,20 +91,20 @@ OVERRIDES: dict[str, str] = {
     # inverter reports "Battery voltage" as *its* view of the pack, and this
     # is the pack's own BMS reporting itself. A user comparing the two should
     # be able to tell which is which from the name.
-    # -- the survey, which is tooling rather than a reading ---------------
+    # -- the diagnosis, which is tooling rather than a reading ---------------
     #
     # Also without a legacy name: these describe what the integration is
-    # doing, not what the inverter reports. "Survey" leads every one of them
+    # doing, not what the inverter reports. "Diagnosis" leads every one of them
     # so they sort together on a device page among entities that are
     # otherwise all readings.
     # The two buttons are named as a pair a contributor chooses between:
     # "read only" on the one that never writes, so that the other one, which
-    # adds the control test's writes, is the one without that promise.
-    "run_survey": "Run read only diagnosis",
-    "run_control_test": "Run complete diagnosis and tests",
-    "survey_progress": "Survey progress",
-    "survey_step": "Survey step",
-    "survey_finished": "Survey finished",
+    # adds the capability test's writes, is the one without that promise.
+    "run_diagnosis": "Run read only diagnosis",
+    "run_capability_test": "Run complete diagnosis and tests",
+    "diagnosis_progress": "Diagnosis progress",
+    "diagnosis_step": "Diagnosis step",
+    "diagnosis_finished": "Diagnosis finished",
     # -- the SBR pack, which is its own device on its own unit ------------
     "battery_pack_voltage": "Pack voltage",
     "battery_pack_current": "Pack current",
@@ -344,7 +344,7 @@ OVERRIDES: dict[str, str] = {
     # of the phases.
     "total_dc_power": "Total PV input power",
     # Not raw at all: register 13090 has a scale of 0.1 and a unit, and reads
-    # 100.0 % on every machine surveyed. The YAML called it "raw" because it
+    # 100.0 % on every machine diagnosed. The YAML called it "raw" because it
     # sits beside the mode register, and the word has been describing the
     # neighbour ever since.
     "active_power_limitation_ratio_raw": "Active power limitation ratio",
@@ -352,7 +352,7 @@ OVERRIDES: dict[str, str] = {
     # by watching iSolarCloud, as "Shutdown at active power limit ratio of
     # 0%". Named for what it decides -- whether a 0 % active power limit
     # stops the inverter or holds it running at 0 W -- in words that need no
-    # knowledge of "active power". The surveys read both 0x55 and 0xAA on it,
+    # knowledge of "active power". The diagnoses read both 0x55 and 0xAA on it,
     # so the binary sensor decodes it and the number is a code.
     "apl_shutdown_at_zero": "Shutdown inverter when limited to 0 % power",
     "apl_shutdown_at_zero_raw": "Shutdown inverter when limited to 0 % power code",
@@ -638,12 +638,12 @@ GERMAN: dict[str, str] = {
     "wallbox_charging": "Lädt",
     "wallbox_enabled": "Ladestation aktiviert",
     "weekend_discharge": "Entladung am Wochenende",
-    # -- the survey -------------------------------------------------------
-    "run_control_test": "Vollständige Diagnose und Tests ausführen",
-    "run_survey": "Diagnose ausführen (nur lesend)",
-    "survey_finished": "Diagnose beendet",
-    "survey_progress": "Diagnosefortschritt",
-    "survey_step": "Diagnoseschritt",
+    # -- the diagnosis -------------------------------------------------------
+    "run_capability_test": "Vollständige Diagnose und Tests ausführen",
+    "run_diagnosis": "Diagnose ausführen (nur lesend)",
+    "diagnosis_finished": "Diagnose beendet",
+    "diagnosis_progress": "Diagnosefortschritt",
+    "diagnosis_step": "Diagnoseschritt",
     # -- settings: numbers, selects, switches, times ----------------------
     "backup_mode": "Backup-Modus",
     "battery_charging_start_power": "Batterie Ladestartleistung",

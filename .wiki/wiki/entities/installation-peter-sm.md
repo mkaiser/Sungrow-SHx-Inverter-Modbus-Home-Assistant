@@ -9,7 +9,7 @@ created: '2026-10-29'
 
 An [SH10RT-V112](device-sh-rt.md) on [P023](firmware-sapphire-h-b001-v000-p023.md) with an
 [SBR160](device-sbr-battery.md), read on the inverter's own LAN port, with a WiNet-S fitted but not
-in the path. Ten readings, all from Home Assistant, eight with a control test. The first was
+in the path. Ten readings, all from Home Assistant, eight with a capability test. The first was
 published as `anonymous`; the later nine are signed `peter_sm`. All carry the stand-in
 `anon-91477823483`, so they are one installation.
 
@@ -27,7 +27,7 @@ published as `anonymous`; the later nine are signed `peter_sm`. All carry the st
   269 s after the start command, in daylight.
 - The tenth reading's file is named `battery-thirdparty`, though the pack is the SBR160: its
   document lost the pack's own section (see [the page](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan-summary.md)).
-- The fifth reading's control test did not run: the inverter was in Standby that evening.
+- The fifth reading's capability test did not run: the inverter was in Standby that evening.
 - **The second reading's forced checks are not evidence**: the house held
   `battery_max_charge_power` and `battery_max_discharge_power` at 10 W then, where the first and
   third readings have 10000 W, so neither could move the battery.
@@ -36,7 +36,7 @@ published as `anonymous`; the later nine are signed `peter_sm`. All carry the st
   answer over the cable, and the forced-charging schedule (33208-33219) is off. [Register 32998](register-32998.md),
   which the owner uses as a site import power limit, holds 950 (9.50 kW, at 0.01 kW).
 
-## Surveys
+## Diagnoses
 
 - [SH10RT-V112, B001.V000.P023, anonymous, the inverter's own LAN port](../sources/sh10rt-v112-b001v000p023-3p-anonymous-anon-91477823483-battery-sbr160-meter-direct-lan-summary.md)
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-summary.md)
@@ -47,4 +47,4 @@ published as `anonymous`; the later nine are signed `peter_sm`. All carry the st
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, seventh reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-6-summary.md)
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, eighth reading, a diagnostics download](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-7-summary.md)
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, ninth reading, a diagnostics download](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-8-summary.md)
-- [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, tenth reading, with a control test](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan-summary.md)
+- [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, tenth reading, with a capability test](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan-summary.md)

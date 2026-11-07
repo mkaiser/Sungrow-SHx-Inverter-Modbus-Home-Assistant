@@ -8,13 +8,13 @@ tags:
   - wallbox
   - ac22e-01
   - gerd
-  - control-test
+  - capability-test
   - tls
 ---
 
-# gerd's wallbox, the control test's dry run, 2026-11-06
+# gerd's wallbox, the capability test's dry run, 2026-11-06
 
-The wallbox [control test](../concepts/control-test.md)'s first run on hardware, as a dry run
+The wallbox [capability test](../concepts/capability-test.md)'s first run on hardware, as a dry run
 (read only) at [gerd](../entities/installation-gerd.md)'s [wallbox](../entities/device-wallbox.md)
 over TLS, with no car connected. Source: `raw/gerd-wallbox-dry-run-2026-11-06.md`.
 

@@ -13,7 +13,7 @@ wiring: a LAN cable into the inverter, the WiNet-S on WLAN, and the wallbox on a
 The wallbox answers at unit 3 through the dongle and at unit 248 at its own address over TLS.
 The only wallbox measured.
 
-## Surveys
+## Diagnoses
 
 - [The wallbox beside Sungrow's portal](../sources/gerd-wallbox-isolarcloud-2026-10-30-summary.md), 2026-10-30
 
@@ -27,4 +27,4 @@ The only wallbox measured.
 - [The wallbox through a charging session](../sources/gerd-wallbox-charging-session-2026-11-03-summary.md), 2026-11-03
 - [AC22E-01 wallbox, gerd, TLS, while charging](../sources/ac22e01-gerd-anon-41346964423-wallbox-tls-2-summary.md), 2026-11-03
 - [The TLS certificate of the WiNet-S and the wallbox](../sources/gerd-tls-certificate-2026-11-06-summary.md), 2026-11-06, one certificate
-- [The wallbox control test's dry run](../sources/gerd-wallbox-dry-run-2026-11-06-summary.md), 2026-11-06, no car
+- [The wallbox capability test's dry run](../sources/gerd-wallbox-dry-run-2026-11-06-summary.md), 2026-11-06, no car

@@ -82,6 +82,7 @@ from .coordinator import (
     SungrowStringInverterCoordinator,
     SungrowWallboxCoordinator,
 )
+from .diagnosis import DiagnosisRunner
 from .download import async_register as async_register_download
 from .external_descriptions import EXTERNAL_SENSORS
 from .links import wallbox_tls_params
@@ -92,7 +93,6 @@ from .migration import (
     stored_legacy_slot,
 )
 from .services import async_setup_services
-from .survey import SurveyRunner
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -106,21 +106,21 @@ PLATFORMS: list[Platform] = [
     Platform.TIME,
 ]
 
-#: What a diagnostics-only entry sets up: the survey and control test buttons
+#: What a diagnostics-only entry sets up: the diagnosis and capability test buttons
 #: and the three sensors that watch a run, and nothing else.
 #:
-#: Not nothing, because the survey lives on the device page, and a device
+#: Not nothing, because the diagnosis lives on the device page, and a device
 #: reaches the registry only when an entity carrying its `device_info` is
 #: added -- an entry with no entities has no page to put a button on. The
 #: platforms themselves decide what to build in this mode -- `sensor.py` adds
-#: the survey's three and returns.
+#: the diagnosis's three and returns.
 #:
-#: And **only** this mode. An ordinary entry gets no survey entities: its
+#: And **only** this mode. An ordinary entry gets no diagnosis entities: its
 #: owner installed this for solar readings and should not carry diagnostic
 #: tooling they never asked for, in their registry, their history or their
-#: entity pickers. They help through the `run_survey` action instead, which
+#: entity pickers. They help through the `run_diagnosis` action instead, which
 #: leaves nothing behind at all. Deleting an entry removes its entities
-#: either way -- asserted in `test_survey_device_page.py` -- but the cleanest
+#: either way -- asserted in `test_diagnosis_device_page.py` -- but the cleanest
 #: cleanup is still the one that was never needed.
 DIAGNOSTIC_PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SENSOR]
 
@@ -375,9 +375,9 @@ async def _async_setup_string_inverter(
     """Set up an SG: its own map, read only, and none of the hybrid's machinery.
 
     No firmware gate, no capability table, no battery or wallbox probe, no
-    YAML package ids and no control test: each is built on the hybrid's map
+    YAML package ids and no capability test: each is built on the hybrid's map
     and means nothing here. What it shares with a hybrid entry is the link,
-    the device page, the tiers' intervals and the survey.
+    the device page, the tiers' intervals and the diagnosis.
     """
     unit = async_get_unit(
         hass,
@@ -417,13 +417,20 @@ async def _async_setup_string_inverter(
         inverter_device_id=_async_register_inverter(hass, entry, coordinators),
         string_inverter=coordinators,
     )
-    entry.runtime_data.survey = SurveyRunner(hass, entry)
-    entry.async_on_unload(entry.runtime_data.survey.async_shutdown)
+    entry.runtime_data.diagnosis = DiagnosisRunner(hass, entry)
+    entry.async_on_unload(entry.runtime_data.diagnosis.async_shutdown)
     _async_preview_notice(hass)
     entry.async_on_unload(entry.add_update_listener(_async_options_changed))
     entry.runtime_data.built_from = _built_from(entry)
     await hass.config_entries.async_forward_entry_setups(entry, _platforms(entry))
     return True
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> bool:
+    """Bring an entry an older version stored up to this version's names."""
+    from .entry_migration import async_migrate_entry as migrate
+
+    return await migrate(hass, entry)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> bool:
@@ -481,11 +488,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
         ),
     )
 
-    # The survey's own state, and the view that hands the finished document
+    # The diagnosis's own state, and the view that hands the finished document
     # to whoever ran it. Both in every mode: a diagnostics entry is the one
     # that exists *for* this.
-    entry.runtime_data.survey = SurveyRunner(hass, entry)
-    entry.async_on_unload(entry.runtime_data.survey.async_shutdown)
+    entry.runtime_data.diagnosis = DiagnosisRunner(hass, entry)
+    entry.async_on_unload(entry.runtime_data.diagnosis.async_shutdown)
 
     _async_drop_unused_corrections(hass, entry, serial)
 
@@ -499,20 +506,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
     entry.async_on_unload(entry.add_update_listener(_async_options_changed))
     entry.runtime_data.built_from = _built_from(entry)
 
-    # Did a control test stop halfway through putting things back? Checked
+    # Did a capability test stop halfway through putting things back? Checked
     # here rather than fixed here: writing a register during setup is exactly
     # what this integration does not do, so this raises a repair and the owner
     # confirming it is the explicit action that does the writing.
-    await _async_check_control_test(hass, entry)
+    await _async_check_capability_test(hass, entry)
 
-    # A diagnostics entry gets the survey's buttons and sensors and no
-    # readings. Everything above is what a survey needs; the value platforms
+    # A diagnostics entry gets the diagnosis's buttons and sensors and no
+    # readings. Everything above is what a diagnosis needs; the value platforms
     # are the part a contributor did not ask for. It is promoted from the
     # options flow, which is where the entity-ids question gets put.
     if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
         _LOGGER.info(
             "%s set up for diagnostics only: %d components polling, "
-            "the survey and control test buttons, three sensors, and no readings",
+            "the diagnosis and capability test buttons, three sensors, and no readings",
             entry.title,
             len(coordinators),
         )
@@ -546,10 +553,10 @@ def _async_register_inverter(
     )
 
 
-async def _async_check_control_test(
+async def _async_check_capability_test(
     hass: HomeAssistant, entry: SungrowConfigEntry
 ) -> None:
-    """Raise a repair when a control test left registers changed.
+    """Raise a repair when a capability test left registers changed.
 
     A snapshot outlives the run that took it precisely so that this can happen:
     it is written before the first write and removed only once everything in it
@@ -562,7 +569,7 @@ async def _async_check_control_test(
     only on an explicit user action -- and a setup that silently wrote to an
     inverter would be a worse thing to have built than the problem it fixed.
     """
-    from .control_test import async_leftover
+    from .capability_test import async_leftover
     from .repairs import async_clear, async_raise
 
     snapshot = await async_leftover(hass, entry)
@@ -570,7 +577,7 @@ async def _async_check_control_test(
         async_clear(hass, entry)
         return
     _LOGGER.warning(
-        "%s: a control test did not finish putting things back. %d register(s) "
+        "%s: a capability test did not finish putting things back. %d register(s) "
         "may still hold its values%s. See Settings -> Repairs.",
         entry.title,
         len(snapshot.values),
@@ -876,7 +883,7 @@ async def async_remove_config_entry_device(
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> None:
-    """Clean up what outlives the entry, which is the control test's snapshot.
+    """Clean up what outlives the entry, which is the capability test's snapshot.
 
     Everything else this integration owns is either in the entry or in the
     registries, and Home Assistant removes those itself. The snapshot is not:
@@ -891,10 +898,10 @@ async def async_remove_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> 
     act on it.
     """
     # Imported here rather than at module level, matching
-    # `_async_check_control_test` above: `check_pinned_library.py` reads this
-    # module's `sungrow_modbus` imports, and `control_test` pulls in the
-    # library's own `control_test`, which only a released wheel provides.
-    from .control_test import async_forget
+    # `_async_check_capability_test` above: `check_pinned_library.py` reads this
+    # module's `sungrow_modbus` imports, and `capability_test` pulls in the
+    # library's own `capability_test`, which only a released wheel provides.
+    from .capability_test import async_forget
 
     await async_forget(hass, entry)
 

@@ -79,7 +79,7 @@ class SungrowInverter:
         """Every field name this device can be asked for, by `field()`.
 
         Public because callers outside the library need to enumerate what a
-        device offers -- the survey publishes one value per field, and the
+        device offers -- the diagnosis publishes one value per field, and the
         diagnostics download does the same. Reading `_fields` instead would be
         worse here than it usually is: this library is pinned by version in
         the integration's manifest, so renaming a private attribute would ship
@@ -190,10 +190,10 @@ class SungrowInverter:
             return None
 
     async def async_read_words(self, space: str, address: int, count: int) -> list[int]:
-        """Read raw words at one address, for a survey probe.
+        """Read raw words at one address, for a diagnosis probe.
 
-        The seam a capability survey needs and the components cannot give it:
-        `survey_document.PROBES` asks about addresses chosen to answer a
+        The seam a capability diagnosis needs and the components cannot give it:
+        `diagnosis_document.PROBES` asks about addresses chosen to answer a
         *question* -- is there a third tracker, does this path forward the
         6100 block -- and several of them are not in any component this
         library maps. Raises, because only the caller can tell a refusal from
@@ -210,7 +210,7 @@ class SungrowInverter:
     async def async_write_word(self, address: int, word: int) -> None:
         """Write one raw holding word, bypassing every field's scale.
 
-        The control test's restore needs it: putting back the word a register
+        The capability test's restore needs it: putting back the word a register
         held is the one write whose correctness does not depend on the scale
         under test. Raises, like `async_read_words`.
         """

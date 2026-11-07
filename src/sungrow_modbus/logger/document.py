@@ -51,7 +51,7 @@ def document(
     logger: Mapping[str, object],
 ) -> dict[str, object]:
     """Build the document for a Logger, from an already masked section."""
-    from ..survey_document import SCHEMA
+    from ..diagnosis_document import SCHEMA
 
     return {
         "schema": SCHEMA,

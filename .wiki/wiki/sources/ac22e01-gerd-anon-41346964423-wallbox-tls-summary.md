@@ -1,11 +1,11 @@
 ---
 type: source
 title: ac22e01-gerd-anon-41346964423-wallbox-tls.json
-source_path: ../device-survey/results/wallbox/ac22e01-gerd-anon-41346964423-wallbox-tls.json
+source_path: ../device-diagnosis/results/wallbox/ac22e01-gerd-anon-41346964423-wallbox-tls.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
-  - survey
+  - diagnosis
   - wallbox
   - ac22e-01
   - gerd
@@ -14,7 +14,7 @@ tags:
 
 # AC22E-01 wallbox, gerd, at its own address over TLS
 
-Wallbox document, read 2026-10-15. Source: `device-survey/results/wallbox/ac22e01-gerd-anon-41346964423-wallbox-tls.json`.
+Wallbox document, read 2026-10-15. Source: `device-diagnosis/results/wallbox/ac22e01-gerd-anon-41346964423-wallbox-tls.json`.
 
 | | |
 | --- | --- |

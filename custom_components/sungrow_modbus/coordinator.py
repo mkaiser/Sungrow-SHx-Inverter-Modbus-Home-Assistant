@@ -55,7 +55,7 @@ COMPONENT_TIERS: dict[str, str] = {
 
 
 class PausableCoordinator:
-    """Lets a survey or control test have the link to itself for a while.
+    """Lets a diagnosis or capability test have the link to itself for a while.
 
     A mixin rather than a base class because the inverter's tier coordinator
     and `SungrowSubDeviceCoordinator` share nothing else: each subclasses Home
@@ -139,7 +139,7 @@ class InverterCoordinator[DeviceT: Inverter](
         )
 
     async def _async_update_data(self) -> UpdateReport:
-        """Poll the inverter, unless a survey has asked for the link."""
+        """Poll the inverter, unless a diagnosis has asked for the link."""
         if (paused := self._skip_while_paused()) is not None:
             return paused
         try:
@@ -361,7 +361,7 @@ class SungrowSubDeviceCoordinator(
 
         Identified by the **inverter's** serial with a suffix, for both. An
         SBR reports no serial anywhere in the 10740-10789 band, which the
-        survey reads whole. A wallbox does report one, at input registers
+        diagnosis reads whole. A wallbox does report one, at input registers
         21201-21206, and shows it as its `serial_number` -- but the identifier
         stays the inverter's, so the devices users already have keep theirs.
         """
@@ -488,7 +488,7 @@ class SungrowWallboxCoordinator(SungrowSubDeviceCoordinator):
 
         Once, because it cannot change. A failed read leaves the device
         without one rather than failing the wallbox: it is shown, never used
-        to identify anything. Kept off every published document -- a survey
+        to identify anything. Kept off every published document -- a diagnosis
         carries only its stand-in, and diagnostics redact `serial_number`.
         """
         try:
@@ -618,8 +618,8 @@ class SungrowRuntimeData:
     created for an entry carrying that history and for nothing else.
     """
 
-    survey: Any = None
-    """The `SurveyRunner` for this entry, or None before setup finishes.
+    diagnosis: Any = None
+    """The `DiagnosisRunner` for this entry, or None before setup finishes.
 
     **After every field callers pass, and it has to be.** Setup and the tests
     build this positionally -- `SungrowRuntimeData(coordinators,
@@ -627,7 +627,7 @@ class SungrowRuntimeData:
     three shifts them silently: `intervals` lands in `capabilities`, and the
     failure is a `KeyError` naming a component, a long way from the cause.
 
-    Typed loosely on purpose: `survey.py` imports this module for the entry
+    Typed loosely on purpose: `diagnosis.py` imports this module for the entry
     type, so naming the class here would close the circle. The platforms
     that use it import the real type.
     """
@@ -635,7 +635,7 @@ class SungrowRuntimeData:
     built_from: Any = None
     """The entry's data and options as setup last read them.
 
-    After `survey`, for the reason `survey` gives. Compared by the update
+    After `diagnosis`, for the reason `diagnosis` gives. Compared by the update
     listener, so a change setup never reads -- the export limit's measured
     write scale -- does not reload the entry under the entity storing it.
     """
@@ -646,8 +646,8 @@ class SungrowRuntimeData:
     """An SG's coordinators by component, where this entry's inverter is one.
 
     Then `coordinators` is empty: everything keyed on it -- the hybrid's
-    entities, capabilities, battery, wallbox, control test -- has nothing to
-    find, which is the gate. After `survey`, for the reason `survey` gives.
+    entities, capabilities, battery, wallbox, capability test -- has nothing to
+    find, which is the gate. After `diagnosis`, for the reason `diagnosis` gives.
     """
 
     @property
@@ -660,7 +660,7 @@ class SungrowRuntimeData:
         """Return a coordinator of the entry's own inverter, whichever kind.
 
         For what both kinds answer alike: the serial, the model, the device
-        registry entry, raw reads for a survey.
+        registry entry, raw reads for a diagnosis.
         """
         polled: dict[str, Any] = self.coordinators or self.string_inverter
         return next(iter(polled.values()))
@@ -675,13 +675,13 @@ class SungrowRuntimeData:
         return self.coordinators[component]
 
     polling_paused: bool = False
-    """True while a survey or control test wants the link to itself.
+    """True while a diagnosis or capability test wants the link to itself.
 
-    **Declared last on purpose**, for the reason `survey` gives.
+    **Declared last on purpose**, for the reason `diagnosis` gives.
 
     Read by every coordinator on this entry before it polls. Everything here
-    shares one serialized connection, so a survey taken while the tiers keep
-    firing is a survey taken under contention, and the document says whether
+    shares one serialized connection, so a diagnosis taken while the tiers keep
+    firing is a diagnosis taken under contention, and the document says whether
     the coordinators were paused.
 
     Paused at the *poll* rather than by clearing `update_interval`, which
@@ -695,7 +695,7 @@ class SungrowRuntimeData:
     async def async_paused(self) -> AsyncIterator[None]:
         """Hold every coordinator on this entry off the link for the duration.
 
-        Restored in a `finally`, so a survey that raises, times out or is
+        Restored in a `finally`, so a diagnosis that raises, times out or is
         cancelled cannot leave an entry that has silently stopped polling --
         which would look exactly like the integration having died.
 
@@ -704,7 +704,7 @@ class SungrowRuntimeData:
         paid for, and everything after it waits.
         """
         self.polling_paused = True
-        _LOGGER.debug("Polling paused: a survey or control test has the link")
+        _LOGGER.debug("Polling paused: a diagnosis or capability test has the link")
         try:
             yield
         finally:
@@ -728,7 +728,7 @@ class SungrowRuntimeData:
         # voltages (Sungrow's table: "2: line voltage"), so a "Phase A
         # voltage", and a phase power computed from one, would be a different
         # quantity under the wrong name for good. Not created until a 3P3L
-        # survey shows what to create instead.
+        # diagnosis shows what to create instead.
         if self.output_type == LINE_VOLTAGE_OUTPUT_TYPE and PHASE_VOLTAGES & {
             getattr(description, "field", None),
             *depends,

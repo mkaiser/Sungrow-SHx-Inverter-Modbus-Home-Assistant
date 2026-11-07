@@ -16,7 +16,7 @@ serial number or address**.
   (`firmware-sapphire-h-b001-v000-p023`), or an installation under its
   owner's handle (`installation-fwitten`).
 - **concept**: something the measurements taught, which code and tests
-  depend on (`contention`, `control-test`, `legacy-id-adoption`).
+  depend on (`contention`, `capability-test`, `legacy-id-adoption`).
 - **source**: one raw source, summarized, with its facts in a table.
 - **summary**: not used here. A source page already is the summary.
 - **query**: an **open question**, or a saved answer to one. A claim with no
@@ -39,15 +39,15 @@ human document staying as it was:
 
 | Source | Where | Written by |
 | --- | --- | --- |
-| inverter surveys | `device-survey/results/inverter/*.json` | `sungrow_survey.py --save`, a contributor's upload |
-| wallbox documents | `device-survey/results/wallbox/*.json` | the same |
+| inverter diagnoses | `device-diagnosis/results/inverter/*.json` | `sungrow_diagnosis.py --save`, a contributor's upload |
+| wallbox documents | `device-diagnosis/results/wallbox/*.json` | the same |
 | the YAML package's entity record | `doc/legacy_entity_map.json` | by hand; tests read it |
 | register documents, issue findings, portal readings | `raw/*.md` | copied in at ingest; `doc/` keeps the living copy |
 
 A source page's `source_path` is relative to `.wiki/`, as llmwiki's ingest
-writes it, for example `../device-survey/results/inverter/<file>.json`.
+writes it, for example `../device-diagnosis/results/inverter/<file>.json`.
 
-**Never a source:** a survey transcript (`sungrow-scan-*.log`), a snapshot,
+**Never a source:** a diagnosis transcript (`sungrow-scan-*.log`), a snapshot,
 or any gitignored file. These carry real serials and addresses.
 
 ### Frontmatter Schema
@@ -86,7 +86,7 @@ keep reading the pages.
 - Entity pages: `entities/{device|register|firmware|installation}-{slug}.md`.
 - Concept pages: `concepts/{slug}.md`, named for the claim where possible
   (`failed-read-is-not-refusal`).
-- Installations go by the handle in the survey's `user_inputs.reporter`.
+- Installations go by the handle in the diagnosis's `user_inputs.reporter`.
   An owner who published as `anonymous` stays anonymous: never connect a
   stand-in serial to a name the document does not carry.
 
@@ -110,7 +110,7 @@ Ingest is part of the change that brings the source in, the way a generated
 file is regenerated in the commit that changes its input.
 
 1. Write `sources/{slug}-summary.md`: frontmatter, the facts table, what did
-   not answer, any `export_scale` and `control_test` block.
+   not answer, any `export_scale` and `capability_test` block.
 2. Update every entity and concept page that the source touches: its
    installation, model, firmware, and any register it measures. **Where it
    contradicts a page, say so on the page**, and decide which is right from
@@ -135,7 +135,7 @@ needed:
 And this project's additions:
 
 - **source-exists**: every `source_path` resolves to a tracked file.
-- **survey-ingested**: every committed survey has its source page.
+- **diagnosis-ingested**: every committed diagnosis has its source page.
 - **repo-paths-exist**: a backticked repository path (`src/...`, `doc/...`,
   `tests/...`, ...) names a file or directory that exists.
 

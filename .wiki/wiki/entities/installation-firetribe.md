@@ -11,10 +11,10 @@ An [SH6.0RT-V112](device-sh-rt.md) on [P023](firmware-sapphire-h-b001-v000-p023.
 [SBR096](device-sbr-battery.md), read from Home Assistant on the cable and through the
 [WiNet-S](device-winet-s.md) on Ethernet, issue #784. Both paths are in use at once: a
 WARP3 wallbox and a second Home Assistant poll the WiNet-S, and this Home Assistant the
-inverter's own port. Each path was surveyed twice; the second reading, with a control
+inverter's own port. Each path was diagnosed twice; the second reading, with a capability
 test, is the committed one.
 
-## Surveys
+## Diagnoses
 
 - [SH6.0RT-V112, B001.V000.P023, firetribe, the inverter's own LAN port](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan-summary.md)
 - [SH6.0RT-V112, B001.V000.P023, firetribe, a WiNet-S on Ethernet](../sources/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan-summary.md)

@@ -19,9 +19,9 @@ need:
 * **per-component poll health**, because a poll losing one block is normal
   operation here and the interesting part is *which* block and for how long;
 * **which entity ids are in use**, so a migration that half-worked is visible;
-* the **block read test** the survey button last ran, with its time. Not run
+* the **block read test** the diagnosis button last ran, with its time. Not run
   here: it takes minutes through a dongle, and a download is waited on.
-  The **control test** the last run carried goes into the `survey` section
+  The **capability test** the last run carried goes into the `diagnosis` section
   for the same reason, and because this download is the link that does not
   expire.
 
@@ -32,13 +32,13 @@ The raw register dump is **off by default** and enabled in the integration's
 options. It performs a full extra read of every mapped address, which through
 a WiNet-S is slow enough to disturb polling, so it is opt-in rather than free.
 
-It also carries a **`survey`** section: a complete capability survey in
-the same format `device-survey/scripts/python/sungrow_survey.py` writes, so
+It also carries a **`diagnosis`** section: a complete capability diagnosis in
+the same format `device-diagnosis/scripts/python/sungrow_diagnosis.py` writes, so
 a user who has the integration running can contribute one by clicking a button
 instead of running Python. Everything else in this file answers "what is wrong
 with mine"; that section answers "what does this model and this firmware
 actually do", which is the question `doc/compatibility.md` exists for. See
-`survey_document.py`, including what it deliberately does not do.
+`diagnosis_document.py`, including what it deliberately does not do.
 """
 
 from __future__ import annotations
@@ -66,8 +66,8 @@ from .const import (
     DOMAIN,
 )
 from .coordinator import COMPONENT_TIERS, SungrowConfigEntry
+from .diagnosis_document import async_build, attach_capability_test
 from .migration import DESCRIPTIONS, legacy_entity_id
-from .survey_document import async_build, attach_control_test
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -113,7 +113,7 @@ async def async_get_config_entry_diagnostics(
         "readings": async_redact_data(_readings(device), TO_REDACT),
     }
 
-    # A publishable capability survey, in the same format the standalone
+    # A publishable capability diagnosis, in the same format the standalone
     # scanner writes. This is the part worth sending on: everything above
     # answers "what is wrong with mine", and this answers "what does this
     # model and firmware actually do", which is the question
@@ -121,12 +121,12 @@ async def async_get_config_entry_diagnostics(
     #
     # Wrapped, and that is not caution for its own sake: diagnostics is what
     # somebody downloads when the integration is *already* misbehaving, so a
-    # survey that raised would take away the report they came for. It costs
+    # diagnosis that raised would take away the report they came for. It costs
     # 19 probe reads, which is small beside the
     # register dump and not free -- an inverter grants very few sessions.
     try:
-        report["survey"] = await async_build(hass, entry)
-        _carry_control_test(report["survey"], runtime, device)
+        report["diagnosis"] = await async_build(hass, entry)
+        _carry_capability_test(report["diagnosis"], runtime, device)
     # Deliberately broad: the report a user came for matters more than any one
     # section of it.
     except Exception as err:  # and deliberately logged, see below
@@ -134,8 +134,8 @@ async def async_get_config_entry_diagnostics(
         # carries the traceback because somebody has to fix it. The person
         # holding a downloaded JSON file is rarely the person who can act on
         # it.
-        _LOGGER.exception("Could not build the survey for %s", entry.title)
-        report["survey"] = {"error": f"{type(err).__name__}: {err}"}
+        _LOGGER.exception("Could not build the diagnosis for %s", entry.title)
+        report["diagnosis"] = {"error": f"{type(err).__name__}: {err}"}
 
     report["block_read_test"] = _last_block_read_test(runtime)
 
@@ -150,8 +150,8 @@ async def _async_string_inverter_diagnostics(
 ) -> dict[str, Any]:
     """Return an SG entry's report: the same shape, less the hybrid's parts.
 
-    No capabilities, entity gates, block read test or control test: each is
-    the hybrid's. The survey is the SG's own document, as the button builds.
+    No capabilities, entity gates, block read test or capability test: each is
+    the hybrid's. The diagnosis is the SG's own document, as the button builds.
     """
     runtime = entry.runtime_data
     device = runtime.inverter_coordinator.device
@@ -186,14 +186,14 @@ async def _async_string_inverter_diagnostics(
         "readings": async_redact_data(_readings(device), TO_REDACT),
     }
     try:
-        report["survey"] = await async_build(hass, entry)
+        report["diagnosis"] = await async_build(hass, entry)
     except Exception as err:  # the report matters more than one section of it
-        _LOGGER.exception("Could not build the survey for %s", entry.title)
-        report["survey"] = {"error": f"{type(err).__name__}: {err}"}
+        _LOGGER.exception("Could not build the diagnosis for %s", entry.title)
+        report["diagnosis"] = {"error": f"{type(err).__name__}: {err}"}
     return report
 
 
-#: What the download says when no survey has measured the blocks since start.
+#: What the download says when no diagnosis has measured the blocks since start.
 NO_BLOCK_READ_TEST = (
     "not run since Home Assistant started. Press Run read only diagnosis on the "
     "device page; it measures the blocks and this download then carries the "
@@ -202,30 +202,30 @@ NO_BLOCK_READ_TEST = (
 
 
 def _last_block_read_test(runtime: Any) -> dict[str, Any] | str:
-    """Return the block read test the survey button last ran, and when.
+    """Return the block read test the diagnosis button last ran, and when.
 
     Carried rather than run: the test reads every block several times, which
     is minutes through a dongle, and a download is something somebody waits
-    on. The survey runs it behind a progress bar, so the download hands on
+    on. The diagnosis runs it behind a progress bar, so the download hands on
     that measurement with its time -- a padded frame or a refusing block
     does not move between one afternoon and the next, and when it might
     have, the time says so.
     """
-    survey = getattr(runtime, "survey", None)
-    if survey is None:
+    diagnosis = getattr(runtime, "diagnosis", None)
+    if diagnosis is None:
         return NO_BLOCK_READ_TEST
-    measured = (survey.state.document or {}).get("block_read_test")
+    measured = (diagnosis.state.document or {}).get("block_read_test")
     if not measured:
         return NO_BLOCK_READ_TEST
-    finished = survey.state.finished
+    finished = diagnosis.state.finished
     return {
         "measured_at": finished.isoformat() if finished else None,
         **measured,
     }
 
 
-def _carry_control_test(document: dict[str, Any], runtime: Any, device: Any) -> None:
-    """Put the last run's control test into a freshly built survey document.
+def _carry_capability_test(document: dict[str, Any], runtime: Any, device: Any) -> None:
+    """Put the last run's capability test into a freshly built diagnosis document.
 
     The download builds part A again but never writes, so part B can only be
     carried. Without it the notification's promise -- that Download
@@ -233,10 +233,10 @@ def _carry_control_test(document: dict[str, Any], runtime: Any, device: Any) -> 
     hardest to repeat. Through the same door as the runner, so the serial
     check applies here too.
     """
-    survey = getattr(runtime, "survey", None)
-    block = survey.state.control_test if survey is not None else None
+    diagnosis = getattr(runtime, "diagnosis", None)
+    block = diagnosis.state.capability_test if diagnosis is not None else None
     if block:
-        attach_control_test(document, block, device)
+        attach_capability_test(document, block, device)
 
 
 async def async_get_device_diagnostics(
@@ -246,7 +246,7 @@ async def async_get_device_diagnostics(
 
     The battery and the wallbox are devices of their own under the same
     entry, and they get the entry's whole report too: it already carries
-    their sections in `survey`. A per-device split would belong here.
+    their sections in `diagnosis`. A per-device split would belong here.
     """
     return await async_get_config_entry_diagnostics(hass, entry)
 

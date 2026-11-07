@@ -1,11 +1,11 @@
 ---
 type: source
 title: sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-meter-direct-lan.json
-source_path: ../device-survey/results/inverter/sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-meter-direct-lan.json
+source_path: ../device-diagnosis/results/inverter/sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-meter-direct-lan.json
 ingested: '2026-11-04'
 created: '2026-11-04'
 tags:
-  - survey
+  - diagnosis
   - sh5.0rt-v112
   - sapphire-h-b001-v000-p023
   - mahagon
@@ -14,10 +14,10 @@ tags:
 
 # SH5.0RT-V112, B001.V000.P023, mahagon, the inverter's own LAN port
 
-Capability survey of one inverter, read 2026-11-04 around 10:15 UTC, read only (no control
+Capability diagnosis of one inverter, read 2026-11-04 around 10:15 UTC, read only (no capability
 test), issue #786, with the owner's YAML package polling during the run. **The first SH5.0RT-V112
 in the corpus**, and the first 5 kW machine on `.95.14`. Source:
-`device-survey/results/inverter/sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-meter-direct-lan.json`.
+`device-diagnosis/results/inverter/sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-meter-direct-lan.json`.
 
 | | |
 | --- | --- |
@@ -39,7 +39,7 @@ Nothing was refused or lost for good. In three rounds 30 blocks were read **inco
 one round and fine in another (among them 13000, 5011, 13002, 33047, 31213, 33208), and 5242
 and 31211 only in the inconsistent outcome; the owner's YAML package was polling. See
 [contention](../concepts/contention.md). MPPT3 and MPPT4 and 13018 read the specification's
-unavailable value, as on every SH-RT cable survey.
+unavailable value, as on every SH-RT cable diagnosis.
 
 ## Settings and readings
 
@@ -60,4 +60,4 @@ The one-write probe ([register 13074](../entities/register-13074.md)) was **refu
 exception 0x04 three times**: this firmware multiplies a written word, so writing the held 6020
 back would be 60200 W. The refusal separates "stored as handed" from "multiplied", **not ten
 from another factor**: 0.1 % of the 5000 W rating, a step of 5 W, would give 30100 W, also above
-the 6020 W maximum, so it is refused too. That distinction waits for a control test on this size.
+the 6020 W maximum, so it is refused too. That distinction waits for a capability test on this size.

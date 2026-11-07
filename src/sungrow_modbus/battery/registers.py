@@ -157,7 +157,7 @@ class SbrBatteryCells(Component):
     # -- the position words, unpacked -------------------------------------
     #
     # The four fields above are the registers as the device sends them, kept
-    # because they are what is read and what the survey publishes. These
+    # because they are what is read and what the diagnosis publishes. These
     # eight are what a person can use. See the class docstring for the
     # evidence; in short, `(module << 8) | index`.
 

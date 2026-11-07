@@ -108,7 +108,7 @@ class SungrowNumber(SungrowEntity, NumberEntity):
         """Return the lower of the inverter's rating and the pack's limit.
 
         The ladder itself lives in the library, in `battery.ceiling`, because
-        the control test needs the same answer and an entity that disagreed
+        the capability test needs the same answer and an entity that disagreed
         with it would refuse values the test had just written -- or accept ones
         it would not. One home for the arithmetic; this decides only what to
         feed it, which is the part that needs a config entry.

@@ -6,7 +6,7 @@ should not mean scrolling past them. So the data lives here and the decisions
 live in `config_flow.py`. The split is along that
 line rather than along size -- anything that asks *what happens next* stayed
 behind. `_alpha_placeholders` is the case worth naming: it reads
-`ONLY_SURVEY_MODE` at call time precisely so a test can patch the flag on
+`ONLY_DIAGNOSIS_MODE` at call time precisely so a test can patch the flag on
 `config_flow`, and moving it here would quietly put it beyond that patch's
 reach while every test still passed.
 """
@@ -32,29 +32,29 @@ from homeassistant.helpers.selector import (
     TextSelector,
     TextSelectorConfig,
 )
-from sungrow_modbus.survey_document import (
+from sungrow_modbus.diagnosis_document import (
     OTHER_INVERTER_CLAIMS,
     PROXY_CLAIMS,
     TRANSPORT_CLAIMS,
 )
 
 from .const import (
+    CONF_DIAGNOSIS_BATTERY,
+    CONF_DIAGNOSIS_COMMENT,
+    CONF_DIAGNOSIS_DUMP,
+    CONF_DIAGNOSIS_OTHER_INVERTER,
+    CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL,
+    CONF_DIAGNOSIS_POLLERS,
+    CONF_DIAGNOSIS_PROXY,
+    CONF_DIAGNOSIS_TRANSPORT,
     CONF_ENTITY_IDS,
     CONF_NETWORK,
     CONF_PUBLISH_ADDRESS,
     CONF_REPORTER,
-    CONF_SURVEY_BATTERY,
-    CONF_SURVEY_COMMENT,
-    CONF_SURVEY_DUMP,
-    CONF_SURVEY_OTHER_INVERTER,
-    CONF_SURVEY_OTHER_INVERTER_DETAIL,
-    CONF_SURVEY_POLLERS,
-    CONF_SURVEY_PROXY,
-    CONF_SURVEY_TRANSPORT,
     CONF_UNIT_ID,
+    DEFAULT_DIAGNOSIS_DUMP,
     DEFAULT_NAME,
     DEFAULT_PORT,
-    DEFAULT_SURVEY_DUMP,
     DEFAULT_UNIT_ID,
     ENTITY_IDS_MIGRATE,
     ENTITY_IDS_NEW,
@@ -232,14 +232,14 @@ def _other_inverter_schema(default: str) -> probatio.Schema:
     return probatio.Schema(
         {
             probatio.Optional(
-                CONF_SURVEY_OTHER_INVERTER_DETAIL, default=default
+                CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL, default=default
             ): TextSelector(),
         }
     )
 
 
 def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> probatio.Schema:
-    """Return the questions a survey needs and no register can answer.
+    """Return the questions a diagnosis needs and no register can answer.
 
     Shared by the diagnostics setup step and the options page's section:
     the same questions in both places, because they produce the same fields
@@ -256,29 +256,31 @@ def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> probatio.S
                 CONF_REPORTER, default=options.get(CONF_REPORTER, "")
             ): TextSelector(),
             probatio.Optional(
-                CONF_SURVEY_TRANSPORT,
+                CONF_DIAGNOSIS_TRANSPORT,
                 description={
-                    "suggested_value": options.get(CONF_SURVEY_TRANSPORT) or None
+                    "suggested_value": options.get(CONF_DIAGNOSIS_TRANSPORT) or None
                 },
             ): SelectSelector(
                 SelectSelectorConfig(
                     mode=SelectSelectorMode.DROPDOWN,
-                    translation_key="survey_transport",
+                    translation_key="diagnosis_transport",
                     options=list(TRANSPORT_CLAIMS),
                 )
             ),
             probatio.Optional(
-                CONF_SURVEY_PROXY,
-                description={"suggested_value": options.get(CONF_SURVEY_PROXY) or None},
+                CONF_DIAGNOSIS_PROXY,
+                description={
+                    "suggested_value": options.get(CONF_DIAGNOSIS_PROXY) or None
+                },
             ): SelectSelector(
                 SelectSelectorConfig(
                     mode=SelectSelectorMode.DROPDOWN,
-                    translation_key="survey_proxy",
+                    translation_key="diagnosis_proxy",
                     options=list(PROXY_CLAIMS),
                 )
             ),
             probatio.Optional(
-                CONF_SURVEY_POLLERS, default=options.get(CONF_SURVEY_POLLERS, "")
+                CONF_DIAGNOSIS_POLLERS, default=options.get(CONF_DIAGNOSIS_POLLERS, "")
             ): TextSelector(),
             # Yes or no here, and *what it is* only after a yes, on a step of
             # its own. A config flow form cannot show a field conditionally --
@@ -288,22 +290,23 @@ def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> probatio.S
             # for the few who have two. The second step is the better trade:
             # it costs a click to the people the question is actually about.
             probatio.Optional(
-                CONF_SURVEY_OTHER_INVERTER,
+                CONF_DIAGNOSIS_OTHER_INVERTER,
                 description={
-                    "suggested_value": options.get(CONF_SURVEY_OTHER_INVERTER) or None
+                    "suggested_value": options.get(CONF_DIAGNOSIS_OTHER_INVERTER)
+                    or None
                 },
             ): SelectSelector(
                 SelectSelectorConfig(
                     mode=SelectSelectorMode.DROPDOWN,
-                    translation_key="survey_other_inverter",
+                    translation_key="diagnosis_other_inverter",
                     options=list(OTHER_INVERTER_CLAIMS),
                 )
             ),
             probatio.Optional(
-                CONF_SURVEY_BATTERY, default=options.get(CONF_SURVEY_BATTERY, "")
+                CONF_DIAGNOSIS_BATTERY, default=options.get(CONF_DIAGNOSIS_BATTERY, "")
             ): TextSelector(),
             probatio.Optional(
-                CONF_SURVEY_COMMENT, default=options.get(CONF_SURVEY_COMMENT, "")
+                CONF_DIAGNOSIS_COMMENT, default=options.get(CONF_DIAGNOSIS_COMMENT, "")
             ): TextSelector(TextSelectorConfig(multiline=True)),
             # **On by default, and still a question.** Only the last two
             # octets ever reach a document -- the third is what separates one
@@ -319,7 +322,7 @@ def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> probatio.S
                 CONF_PUBLISH_ADDRESS,
                 default=options.get(CONF_PUBLISH_ADDRESS, True),
             ): BooleanSelector(),
-            # Last, because it is the expensive one: the survey is two
+            # Last, because it is the expensive one: the diagnosis is two
             # seconds without it and about five minutes with it. On by
             # default all the same -- the sweep is how every undocumented
             # register was found -- and the description says so. Asked
@@ -328,8 +331,8 @@ def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> probatio.S
             # because a contributor who has been asked for a dump by name
             # should find it where they were already answering questions.
             probatio.Required(
-                CONF_SURVEY_DUMP,
-                default=options.get(CONF_SURVEY_DUMP, DEFAULT_SURVEY_DUMP),
+                CONF_DIAGNOSIS_DUMP,
+                default=options.get(CONF_DIAGNOSIS_DUMP, DEFAULT_DIAGNOSIS_DUMP),
             ): BooleanSelector(),
         }
     )

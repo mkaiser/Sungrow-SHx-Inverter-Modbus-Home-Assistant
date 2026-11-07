@@ -1,6 +1,6 @@
 """The first alpha offers only diagnostics mode, and says so rather than hiding it.
 
-`ONLY_SURVEY_MODE` shuts the two doors that create a devices entry: the
+`ONLY_DIAGNOSIS_MODE` shuts the two doors that create a devices entry: the
 question the config flow opens with, and the promotion toggle on a diagnostics
 entry's options page. Everything behind those doors stays built and stays
 tested -- `tests/conftest.py`'s `devices_mode_offered` fixture is what keeps
@@ -11,7 +11,7 @@ in an alpha is the thing being avoided. Open, because the flag's whole promise
 is that flipping it restores exactly what was there before, and a promise
 nothing checks is a promise that quietly stops being kept.
 
-While the gate is shut the opening menu offers only the survey, and its
+While the gate is shut the opening menu offers only the diagnosis, and its
 description says why the ordinary setup is not there.
 """
 
@@ -29,11 +29,11 @@ from custom_components.sungrow_modbus.const import (
     MODE_DEVICES,
     MODE_DIAGNOSTICS,
     SECTION_ADVANCED,
-    SECTION_CONTROL_TEST,
+    SECTION_CAPABILITY_TEST,
+    SECTION_DIAGNOSIS,
     SECTION_EXTERNAL,
     SECTION_PERMISSIONS,
     SECTION_POLLING,
-    SECTION_SURVEY,
 )
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
@@ -97,8 +97,8 @@ def _options(**sections: dict) -> dict:
         SECTION_PERMISSIONS: {},
         SECTION_EXTERNAL: {},
         SECTION_ADVANCED: {},
-        SECTION_SURVEY: {},
-        SECTION_CONTROL_TEST: {},
+        SECTION_DIAGNOSIS: {},
+        SECTION_CAPABILITY_TEST: {},
     }
     payload.update(sections)
     return payload
@@ -107,7 +107,7 @@ def _options(**sections: dict) -> dict:
 # -- the door at setup ---------------------------------------------------------
 
 
-async def test_only_the_survey_is_offered(
+async def test_only_the_diagnosis_is_offered(
     hass: HomeAssistant,
 ) -> None:
     """An answer that cannot be taken is not put on the menu, nor introduced."""

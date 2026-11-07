@@ -22,7 +22,7 @@ repeats it per field, because a name is worth exactly what its evidence is:
 * **open** -- nobody, including this measurement, can name it.
 
 That last mark applies to exactly one register, 21313, and it is declared
-here anyway: the survey then carries it for whoever recognises it, and it
+here anyway: the diagnosis then carries it for whoever recognises it, and it
 gets no entity, because inventing a meaning is worse than admitting there
 isn't one.
 
@@ -251,7 +251,7 @@ class WallboxLive(Component):
 
     Named for its address on purpose. Three independent measurements of this
     wallbox family exist and none of them knows what this is, so it is
-    carried in the survey for whoever recognises it and gets no entity --
+    carried in the diagnosis for whoever recognises it and gets no entity --
     inventing a meaning would be worse than the gap.
     """
 
@@ -326,7 +326,7 @@ class WallboxSettings(Component):
 
     Read, not written. The integration never writes to a wallbox: the write
     table in `scripts/generate/tables/writes.py` is the only place a writable register
-    is declared, and no wallbox register is in it. `control_test` writes three of
+    is declared, and no wallbox register is in it. `capability_test` writes three of
     these, through a port, with leave, to measure the output current's scale.
     Starting somebody's car charging from a stale automation is not a thing to
     enable on one measurement of one unit.
@@ -393,7 +393,7 @@ COMPONENTS: dict[str, type[Component]] = {
 #: How strongly each field is held, as `doc/wallbox_registers.md`'s
 #: Confidence column marks it, by the name a document publishes it under --
 #: a coded field without its `_raw`. Travels with every published value, so a
-#: reader of one survey need not find that document to know how much to
+#: reader of one diagnosis need not find that document to know how much to
 #: trust a line. The marks are the five the module docstring defines.
 CONFIDENCE: dict[str, str] = {
     "model_name": "two sources",

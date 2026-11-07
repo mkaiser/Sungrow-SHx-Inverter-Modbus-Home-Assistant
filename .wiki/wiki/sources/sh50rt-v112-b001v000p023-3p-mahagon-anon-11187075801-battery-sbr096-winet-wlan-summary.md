@@ -1,11 +1,11 @@
 ---
 type: source
 title: sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-winet-wlan.json
-source_path: ../device-survey/results/inverter/sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-winet-wlan.json
+source_path: ../device-diagnosis/results/inverter/sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-winet-wlan.json
 ingested: '2026-11-04'
 created: '2026-11-04'
 tags:
-  - survey
+  - diagnosis
   - sh5.0rt-v112
   - sapphire-h-b001-v000-p023
   - mahagon
@@ -17,7 +17,7 @@ tags:
 The same inverter as the [cable reading](sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-meter-direct-lan-summary.md),
 read through its WiNet-S2 (`WINET-SV200.001.00.P038`) eight minutes later, 2026-11-04 around
 10:23 UTC, read only, issue #786, the owner's YAML package polling the cable meanwhile. Source:
-`device-survey/results/inverter/sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-winet-wlan.json`.
+`device-diagnosis/results/inverter/sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-winet-wlan.json`.
 
 | | |
 | --- | --- |

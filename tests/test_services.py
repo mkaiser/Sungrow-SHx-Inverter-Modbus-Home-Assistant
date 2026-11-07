@@ -72,7 +72,7 @@ async def test_neither_start_nor_stop_is_an_entity(
     one press away from anybody browsing a picker -- so start and stop are
     actions, which Home Assistant gates by user group.
 
-    There is a survey button in this integration, and it is not here: it
+    There is a diagnosis button in this integration, and it is not here: it
     belongs to a **diagnostics-only** entry, which somebody sets up in order
     to produce a reading. An ordinary entry like this one has no buttons at
     all, so the original assertion holds unchanged -- and that is the point
@@ -207,7 +207,7 @@ async def test_a_shutdown_is_logged_where_somebody_will_find_it(
 def test_every_action_has_a_name_and_a_description_in_both_files():
     """An action with no strings shows in the UI as a slug and a bare field.
 
-    `run_control_test` shipped that way: it was in `services.yaml`, it was
+    `run_capability_test` shipped that way: it was in `services.yaml`, it was
     registered, it worked -- and `strings.json` had no entry for it, so the one
     action that **writes to somebody's inverter** would have appeared in the
     action picker with no description of what it does, and its device field

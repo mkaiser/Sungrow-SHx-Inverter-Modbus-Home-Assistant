@@ -1,18 +1,18 @@
 """A document from the button is named the way this repository names one.
 
 Two tools write this format:
-`device-survey/scripts/python/sungrow_survey.py` from a
-terminal, and the survey button inside Home Assistant. They already agree on
+`device-diagnosis/scripts/python/sungrow_diagnosis.py` from a
+terminal, and the diagnosis button inside Home Assistant. They already agree on
 the schema, the probe table, the stand-in and the vocabulary. The filename was
 the last thing they did not agree on, and it is the one a maintainer sees
 first — twenty documents in a downloads folder sort by name or they do not
-sort at all, and `device-survey/` should be able to take one without
+sort at all, and `device-diagnosis/` should be able to take one without
 renaming it.
 
-`survey_document.label_for` derives that name from the **published document
+`diagnosis_document.label_for` derives that name from the **published document
 alone**, where the scanner derives it from the structures it holds before
 publishing. The proof that the two arrive at the same answer is not a pair of
-unit tests: it is the corpus. Every survey this repository has committed
+unit tests: it is the corpus. Every diagnosis this repository has committed
 was named by the scanner, so re-deriving each name from its own file is a
 check against nine real readings from four houses, including the awkward ones
 — a slave with no battery of its own, a third-party pack, a dongle read twice.
@@ -23,7 +23,7 @@ from pathlib import Path
 
 import pytest
 
-from sungrow_modbus.survey_document import label_for
+from sungrow_modbus.diagnosis_document import label_for
 
 from .corpus import INVERTER_DOCUMENTS
 

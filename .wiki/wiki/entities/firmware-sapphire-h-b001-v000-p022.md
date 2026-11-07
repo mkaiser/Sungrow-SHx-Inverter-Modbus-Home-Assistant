@@ -10,11 +10,11 @@ created: '2026-10-29'
 SH-RT firmware in the B001 numbering ([SH-RT](device-sh-rt.md)).
 
 - [Register 13074](register-13074.md) writes **times ten** (probed at [gerd](installation-gerd.md), cable and dongle).
-- [Register 31211](register-31211.md) answers 0x55, and the cut is **confirmed** by a control test at [gerd](installation-gerd.md) over the cable (2938 W, 0 W, 1913 W), so P022 is in `CONFIRMED_ON_FIRMWARE`.
+- [Register 31211](register-31211.md) answers 0x55, and the cut is **confirmed** by a capability test at [gerd](installation-gerd.md) over the cable (2938 W, 0 W, 1913 W), so P022 is in `CONFIRMED_ON_FIRMWARE`.
 - The cut did as told again on 2026-11-03, over the cable (2381, 0, 1976 W) and through the dongle (1208.5, 0, 1466 W).
 - A Modbus restart in daylight took 181 s from stop to Running, at three runs at gerd.
 
-## Surveys
+## Diagnoses
 
 - [SH6.0RT-20, B001.V000.P022, anonymous, through a Modbus proxy, SBR128](../sources/sh60rt-20-b001v000p022-3p-anonymous-anon-45132049665-battery-sbr128-meter-direct-lan-summary.md)
 - [SH8.0RT-V112, B001.V000.P022, gerd, the inverter's own LAN port](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-summary.md)

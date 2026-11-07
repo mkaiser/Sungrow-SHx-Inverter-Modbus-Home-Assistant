@@ -39,7 +39,7 @@ rules:
     comment: The integration provides no triggers.
   entity-event-setup:
     status: done
-    comment: The survey entities subscribe in async_added_to_hass through async_on_remove.
+    comment: The diagnosis entities subscribe in async_added_to_hass through async_on_remove.
   entity-unique-id: done
   has-entity-name: done
   runtime-data: done
@@ -117,7 +117,7 @@ rules:
   exception-translations: done
   icon-translations:
     status: done
-    comment: icons.json for the actions and the survey entities; the register entities show their device class's icon.
+    comment: icons.json for the actions and the diagnosis entities; the register entities show their device class's icon.
   reconfiguration-flow: done
   repair-issues: done
   stale-devices:

@@ -115,7 +115,7 @@ async def test_the_address_form_says_what_the_inverter_answered(
 async def test_the_testimony_page_reports_the_measured_route(
     hass: HomeAssistant, direct: bool | None, says: str
 ) -> None:
-    """A guess here would be published as `survey_transport`; a question is not."""
+    """A guess here would be published as `diagnosis_transport`; a question is not."""
     result = await _submit(hass, {"return_value": (_inverter(), direct, None)})
 
     assert result["step_id"] == "testimony"

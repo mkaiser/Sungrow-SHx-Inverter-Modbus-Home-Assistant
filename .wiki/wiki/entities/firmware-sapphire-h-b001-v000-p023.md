@@ -13,7 +13,7 @@ The most-measured firmware in the corpus.
 - [Register 13074](register-13074.md) writes **times ten**, on SH10RT-20 and SH10RT-V112, cable and dongle.
 - Forced charge, forced discharge and the export limit **act as commanded** on an SH10RT-V112,
   over the cable, all in one run at [peter-sm](installation-peter-sm.md).
-- [Register 31211](register-31211.md) answers 0x55, and the cut is **confirmed** by a control test
+- [Register 31211](register-31211.md) answers 0x55, and the cut is **confirmed** by a capability test
   on [fwitten](installation-fwitten.md)'s master: P023 is in `CONFIRMED_ON_FIRMWARE`.
 - At [peter-sm](installation-peter-sm.md) the charge window's write of 33213 lost the connection
   three times, in three runs on two days, where fwitten's window did as it was told;
@@ -33,7 +33,7 @@ The most-measured firmware in the corpus.
   13074 was refused three times: it multiplies. The factor is not separated from 0.1 % of the
   rating, which a refusal cannot show.
 
-## Surveys
+## Diagnoses
 
 - [SH5.0RT-V112, B001.V000.P023, mahagon, the inverter's own LAN port](../sources/sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-meter-direct-lan-summary.md)
 - [SH5.0RT-V112, B001.V000.P023, mahagon, a WiNet-S2 on WiFi](../sources/sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-winet-wlan-summary.md)
@@ -57,6 +57,6 @@ The most-measured firmware in the corpus.
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, seventh reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-6-summary.md)
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, eighth reading, a diagnostics download](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-7-summary.md)
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, ninth reading, a diagnostics download](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-8-summary.md)
-- [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, tenth reading, with a control test](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan-summary.md)
+- [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, tenth reading, with a capability test](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan-summary.md)
 - [SH10RT-V112, B001.V000.P023, anonymous, the inverter's own LAN port, SBR224](../sources/sh10rt-v112-b001v000p023-3p-anonymous-anon-40315531061-battery-sbr224-meter-direct-lan-summary.md)
 - [SH6.0RT-20, B001.V000.P023, anonymous, through a Modbus proxy, SBR064](../sources/sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan-summary.md)

@@ -77,7 +77,7 @@ sim-logger-bg: ## A hand-written Logger1000 (unit 247) on :5022, in the backgrou
 	@echo "Logger simulator starting on :5022 -- tail -f /tmp/sim-logger.log"
 .PHONY: sim-logger-bg
 
-sim-sg-bg: ## An SG5.0RS (unit 1) from a real survey on :5023, in the background
+sim-sg-bg: ## An SG5.0RS (unit 1) from a real diagnosis on :5023, in the background
 	nohup $(PY) scripts/dev/simulator.py --port 5023 --unit-id 1 \
 		--seed scripts/dev/simulator_sg.json > /tmp/sim-sg.log 2>&1 &
 	@echo "SG simulator starting on :5023 -- tail -f /tmp/sim-sg.log"
@@ -153,34 +153,34 @@ version-check: ## Verify pyproject.toml and manifest.json agree
 
 ##@ Scan
 
-scan: ## Survey an installation and write a document; asks before the control test (HOST=a.b.c.d optional)
-	$(PY) device-survey/scripts/python/sungrow_survey.py $(HOST) $(ARGS)
+scan: ## Diagnosis an installation and write a document; asks before the capability test (HOST=a.b.c.d optional)
+	$(PY) device-diagnosis/scripts/python/sungrow_diagnosis.py $(HOST) $(ARGS)
 .PHONY: scan
 
 probe: ## Probe for devices, e.g. make probe ARGS="sweep 192.168.178.0/24"
-	$(PY) device-survey/scripts/python/probe.py $(ARGS)
+	$(PY) device-diagnosis/scripts/python/probe.py $(ARGS)
 .PHONY: probe
 
 blocks: ## The block read test -- which read inside a component fails, and why
-	$(PY) device-survey/scripts/python/blocks.py $(ARGS)
+	$(PY) device-diagnosis/scripts/python/blocks.py $(ARGS)
 .PHONY: blocks
 
-scan-sim: ## Run the whole survey against the simulator -- needs `make sim-bg`
-	$(PY) device-survey/scripts/python/sungrow_survey.py 127.0.0.1 --port 5020 --simulated $(ARGS)
+scan-sim: ## Run the whole diagnosis against the simulator -- needs `make sim-bg`
+	$(PY) device-diagnosis/scripts/python/sungrow_diagnosis.py 127.0.0.1 --port 5020 --simulated $(ARGS)
 .PHONY: scan-sim
 
-scan-sim-ihm: ## The survey against the iHomeManager simulator -- needs `make sim-ihm-bg`
-	$(PY) device-survey/scripts/python/sungrow_survey.py 127.0.0.1 --port 5021 \
+scan-sim-ihm: ## The diagnosis against the iHomeManager simulator -- needs `make sim-ihm-bg`
+	$(PY) device-diagnosis/scripts/python/sungrow_diagnosis.py 127.0.0.1 --port 5021 \
 		--address hidden --reporter simulator --comment '' --timeout 2 $(ARGS)
 .PHONY: scan-sim-ihm
 
-scan-sim-logger: ## The survey against the Logger simulator -- needs `make sim-logger-bg`
-	$(PY) device-survey/scripts/python/sungrow_survey.py 127.0.0.1 --port 5022 \
+scan-sim-logger: ## The diagnosis against the Logger simulator -- needs `make sim-logger-bg`
+	$(PY) device-diagnosis/scripts/python/sungrow_diagnosis.py 127.0.0.1 --port 5022 \
 		--address hidden --reporter simulator --comment '' --timeout 2 $(ARGS)
 .PHONY: scan-sim-logger
 
-scan-sim-sg: ## The survey against the SG simulator -- needs `make sim-sg-bg`
-	$(PY) device-survey/scripts/python/sungrow_survey.py 127.0.0.1 --port 5023 \
+scan-sim-sg: ## The diagnosis against the SG simulator -- needs `make sim-sg-bg`
+	$(PY) device-diagnosis/scripts/python/sungrow_diagnosis.py 127.0.0.1 --port 5023 \
 		--address hidden --reporter simulator --comment '' --timeout 2 $(ARGS)
 .PHONY: scan-sim-sg
 
@@ -189,33 +189,33 @@ scan-sim-sg: ## The survey against the SG simulator -- needs `make sim-sg-bg`
 # SUNGROW_MODBUS_LIBRARY lays this tree's library -- or a wheel of it -- over
 # the pinned one. `scan` above skips both the launcher and the header.
 scan-local: ## The launcher, as a contributor runs it, on this tree's library (HOST=a.b.c.d)
-	SUNGROW_MODBUS_LIBRARY=$(CURDIR) device-survey/scripts/survey.sh $(HOST) $(ARGS)
+	SUNGROW_MODBUS_LIBRARY=$(CURDIR) device-diagnosis/scripts/diagnosis.sh $(HOST) $(ARGS)
 .PHONY: scan-local
 
 scan-wheel: wheel ## The same on a freshly built wheel -- what a release would publish
-	SUNGROW_MODBUS_LIBRARY=$(LIBRARY_WHEEL) device-survey/scripts/survey.sh $(HOST) $(ARGS)
+	SUNGROW_MODBUS_LIBRARY=$(LIBRARY_WHEEL) device-diagnosis/scripts/diagnosis.sh $(HOST) $(ARGS)
 .PHONY: scan-wheel
 
-##@ Control test (writes to the inverter)
+##@ Capability test (writes to the inverter)
 
-controltest-dry: ## Show what the control test would write, and write nothing (HOST=a.b.c.d)
-	$(PY) device-survey/scripts/python/sungrow_control_test.py $(HOST) --dry-run $(ARGS)
+controltest-dry: ## Show what the capability test would write, and write nothing (HOST=a.b.c.d)
+	$(PY) device-diagnosis/scripts/python/sungrow_capability_test.py $(HOST) --dry-run $(ARGS)
 .PHONY: controltest-dry
 
 controltest: ## Write each control, read it back, and put it back (HOST=a.b.c.d)
-	$(PY) device-survey/scripts/python/sungrow_control_test.py $(HOST) $(ARGS)
+	$(PY) device-diagnosis/scripts/python/sungrow_capability_test.py $(HOST) $(ARGS)
 .PHONY: controltest
 
 controltest-sim: ## Run it against the simulator -- needs `make sim-bg`
-	$(PY) device-survey/scripts/python/sungrow_control_test.py 127.0.0.1 --port 5020 --simulated --no-restart
+	$(PY) device-diagnosis/scripts/python/sungrow_capability_test.py 127.0.0.1 --port 5020 --simulated --no-restart
 .PHONY: controltest-sim
 
 controltest-local: ## The launcher on this tree's library; add ARGS=--dry-run first (HOST=a.b.c.d)
-	SUNGROW_MODBUS_LIBRARY=$(CURDIR) device-survey/scripts/survey.sh control $(HOST) $(ARGS)
+	SUNGROW_MODBUS_LIBRARY=$(CURDIR) device-diagnosis/scripts/diagnosis.sh tests $(HOST) $(ARGS)
 .PHONY: controltest-local
 
-controltest-restore: ## Put a saved snapshot back (HOST=a.b.c.d FILE=device-survey/<stamp>-snapshot.json)
-	$(PY) device-survey/scripts/python/sungrow_control_test.py $(HOST) --restore $(FILE)
+controltest-restore: ## Put a saved snapshot back (HOST=a.b.c.d FILE=device-diagnosis/<stamp>-snapshot.json)
+	$(PY) device-diagnosis/scripts/python/sungrow_capability_test.py $(HOST) --restore $(FILE)
 .PHONY: controltest-restore
 
 ##@ Release

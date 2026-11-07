@@ -1,7 +1,7 @@
-"""Holding this entry's polling off while a survey or control test runs.
+"""Holding this entry's polling off while a diagnosis or capability test runs.
 
 Everything on one config entry shares one serialized connection to one
-endpoint, and a Sungrow grants very few sessions. So a survey taken while the
+endpoint, and a Sungrow grants very few sessions. So a diagnosis taken while the
 tiers keep firing measures the inverter *and* the contention it is causing --
 which every document published from a device page before 2026-09-18 admitted,
 in a field that said `coordinators_paused: false` because it was hardcoded.
@@ -90,7 +90,7 @@ async def test_polling_resumes_when_the_run_raises(
 ) -> None:
     """The failure mode that would be worse than the problem.
 
-    A survey that raises must not leave the entry permanently quiet, so the
+    A diagnosis that raises must not leave the entry permanently quiet, so the
     flag is cleared in a `finally` rather than after the body.
     """
     runtime = entry.runtime_data
@@ -98,7 +98,7 @@ async def test_polling_resumes_when_the_run_raises(
     with pytest.raises(RuntimeError):
         async with runtime.async_paused():
             assert runtime.polling_paused
-            raise RuntimeError("the survey fell over")
+            raise RuntimeError("the diagnosis fell over")
 
     assert not runtime.polling_paused
 
@@ -150,7 +150,7 @@ async def test_the_document_says_whether_it_was_paused(
     The field existed before the pause did, saying `false`, which was true.
     A reader of an old document must still be able to trust it.
     """
-    from custom_components.sungrow_modbus.survey_document import async_build
+    from custom_components.sungrow_modbus.diagnosis_document import async_build
 
     runtime = entry.runtime_data
 

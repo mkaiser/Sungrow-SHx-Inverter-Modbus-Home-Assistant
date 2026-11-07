@@ -6,10 +6,10 @@ names every bit. The table below is that appendix, transcribed by script
 from the published document rather than typed, with the bits it calls
 "Reserved" left out -- a reserved bit that reads set is not a fault anybody
 can name, and the high word of BMS alarm 2 reads 0xFFFF on every cable
-surveyed, which would otherwise be sixteen alarms that do not exist.
+diagnosed, which would otherwise be sixteen alarms that do not exist.
 
 The words are sent low word first, like every other 32-bit value here, and
-one survey shows it rather than assumes it: fwitten's slave inverter, which
+one diagnosis shows it rather than assumes it: fwitten's slave inverter, which
 has no meter of its own, reads 0x4000 in the **high** word of the inverter
 alarm on both its cable and its dongle -- bit 30, "Meter Communication
 Alarm".

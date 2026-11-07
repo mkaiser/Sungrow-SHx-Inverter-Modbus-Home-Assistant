@@ -44,7 +44,7 @@ high caps nothing, so switching it on curtails nobody.
 The register is read once more afterwards, and if it moved -- which the
 construction says it cannot -- it is put back, checked by reading, and the
 result says so. A probe that a wrong model could leave a house changed by is the
-thing the control test's restore rules exist to prevent.
+thing the capability test's restore rules exist to prevent.
 """
 
 from __future__ import annotations
@@ -146,8 +146,8 @@ ANSWERS: dict[int | None, str] = {
 def document(result: Result) -> dict[str, Any]:
     """Return the publishable block: the answer, and the one write behind it.
 
-    Anonymous by construction, like the control test's block: the held limit
-    in watts, the word written, the inverter's reply. The survey it is
+    Anonymous by construction, like the capability test's block: the held limit
+    in watts, the word written, the inverter's reply. The diagnosis it is
     merged into already says which transport carried it, which matters less
     here than anywhere: the answer is the refusal, and a WiNet-S forwards that.
     """

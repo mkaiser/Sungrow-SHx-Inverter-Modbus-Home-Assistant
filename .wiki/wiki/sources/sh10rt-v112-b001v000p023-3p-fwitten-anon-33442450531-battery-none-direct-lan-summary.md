@@ -1,21 +1,21 @@
 ---
 type: source
 title: sh10rt-v112-b001v000p023-3p-fwitten-anon-33442450531-battery-none-direct-lan.json
-source_path: ../device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-fwitten-anon-33442450531-battery-none-direct-lan.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-fwitten-anon-33442450531-battery-none-direct-lan.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
-  - survey
+  - diagnosis
   - sh10rt-v112
   - sapphire-h-b001-v000-p023
   - fwitten
   - direct_lan
-  - control-test
+  - capability-test
 ---
 
 # SH10RT-V112, B001.V000.P023, fwitten slave, the inverter's own LAN port
 
-Capability survey of one inverter, read 2026-10-29. Source: `device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-fwitten-anon-33442450531-battery-none-direct-lan.json`.
+Capability diagnosis of one inverter, read 2026-10-29. Source: `device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-fwitten-anon-33442450531-battery-none-direct-lan.json`.
 
 | | |
 | --- | --- |
@@ -37,9 +37,9 @@ Capability survey of one inverter, read 2026-10-29. Source: `device-survey/resul
 
 Every component answered.
 
-## Control test
+## Capability test
 
-Outcome **3**: ran, but checks were skipped or inconclusive. See [the control test](../concepts/control-test.md).
+Outcome **3**: ran, but checks were skipped or inconclusive. See [the capability test](../concepts/capability-test.md).
 
 | Field | Register | Verdict |
 | --- | --- | --- |

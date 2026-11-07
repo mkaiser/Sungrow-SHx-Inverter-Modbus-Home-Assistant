@@ -10,10 +10,10 @@ created: '2026-11-04'
 An [SH5.0RT-V112](device-sh-rt.md) on [P023](firmware-sapphire-h-b001-v000-p023.md), version 1
 `SAPPHIRE-H_01011.95.14`, with a three-module [SBR096](device-sbr-battery.md), read from Home
 Assistant on 2026-11-04 over the inverter's own LAN port and, minutes later, through its
-WiNet-S2 (P038) on WiFi, issue #786. Both read only: the owner skipped the control test. The
+WiNet-S2 (P038) on WiFi, issue #786. Both read only: the owner skipped the capability test. The
 owner's YAML package was polling the LAN port during both runs.
 
-## Surveys
+## Diagnoses
 
 - [SH5.0RT-V112, B001.V000.P023, mahagon, the inverter's own LAN port](../sources/sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-meter-direct-lan-summary.md)
 - [SH5.0RT-V112, B001.V000.P023, mahagon, a WiNet-S2 on WiFi](../sources/sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-winet-wlan-summary.md)

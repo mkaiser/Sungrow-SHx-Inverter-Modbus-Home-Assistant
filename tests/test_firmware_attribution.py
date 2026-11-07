@@ -1,7 +1,7 @@
 """Which capabilities can be pinned on a firmware version, and which cannot.
 
-The question the survey collection exists to answer, asked by the
-maintainer in the plan: *collect as many device surveys as possible to
+The question the diagnosis collection exists to answer, asked by the
+maintainer in the plan: *collect as many device diagnoses as possible to
 be able to identify firmware-related capabilities.* Sungrow publishes no
 release notes and its register specification has been proven unreliable in
 both directions, so the only way to know is to compare readings.
@@ -27,7 +27,7 @@ from .corpus import INVERTER_DOCUMENTS
 
 
 def _document(**overrides) -> dict:
-    """Return a minimal survey, with the fields this analysis reads."""
+    """Return a minimal diagnosis, with the fields this analysis reads."""
     document = {
         "device": {"device_type_code": "0x0E03"},
         "user_inputs": {"transport": "direct_lan"},
@@ -182,7 +182,7 @@ def test_the_committed_documents_are_analysed_without_error() -> None:
     # And the marks helper reads real documents.
     for _label, document in reports:
         marks = _capability_marks(document)
-        assert marks, "a committed survey carries curated probes"
+        assert marks, "a committed diagnosis carries curated probes"
 
 
 def test_what_a_house_has_fitted_is_not_the_firmware() -> None:

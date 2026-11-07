@@ -138,7 +138,7 @@ async def async_mdns_services(seconds: float = 2.0) -> dict[str, dict[str, objec
 #:
 #: Only inverter-shaped units: a battery at 200 and a wallbox at 3 are found
 #: behind an endpoint that has already answered. The config flow and the
-#: survey's `identify()` both sweep this list.
+#: diagnosis's `identify()` both sweep this list.
 IDENTIFY_UNITS: tuple[int, ...] = (1, 2, 3, 4, 5)
 IHOMEMANAGER_UNIT = 247
 

@@ -2,7 +2,7 @@
   "config": {
     "abort": {
       "already_configured": "Device is already configured",
-      "devices_mode_not_offered": "Devices mode is not available in this preview. This build sets the integration up for diagnostics only -- it polls the inverter and can run the capability survey, but creates no sensors. Promotion will be offered in a later release, and the entry does not need to be removed and added again when it is.",
+      "devices_mode_not_offered": "Devices mode is not available in this preview. This build sets the integration up for diagnostics only -- it polls the inverter and can run the capability diagnosis, but creates no sensors. Promotion will be offered in a later release, and the entry does not need to be removed and added again when it is.",
       "wrong_device": "That address answers as a different inverter ({model}), not the one behind “{title}”. Nothing was changed. Each inverter keeps its own entry; to add that one, use Add integration.",
       "connection_unchanged": "That is the connection this entry already uses. Nothing was changed.",
       "connection_moved": "“{title}” now uses the new connection. It has been reloaded; its entities, their history and its settings are unchanged."
@@ -75,7 +75,7 @@
         "title": "What is the other inverter?",
         "description": "The make, and its size if you know it — *Fronius Symo 8.2*, or *5 kW string inverter on the south roof*. The size is the useful part: it says how large the gap in the load figures is.\n\nThis goes into the document, so leave out serial numbers, addresses and names. You can leave it blank.",
         "data": {
-          "survey_other_inverter_detail": "The other inverter"
+          "diagnosis_other_inverter_detail": "The other inverter"
         }
       },
       "pick": {
@@ -100,33 +100,33 @@
         "description": "You chose diagnostics only, which means this entry exists to produce a reading — so these are the questions that reading needs and no register can answer.\n\n{measured}\n\nEverything here is optional, and leaving a field empty is honest: it records that the question was not answered, which is different from answering \"I don't know\". You can change any of it later under the integration's options.\n\nAfterwards, press **Run read only diagnosis** on the device page.",
         "data": {
           "reporter": "Your name or handle",
-          "survey_transport": "How this inverter is connected",
-          "survey_proxy": "Is a Modbus proxy in the path?",
-          "survey_pollers": "Anything else polling this inverter?",
-          "survey_other_inverter": "Is there another inverter here that is not a Sungrow?",
-          "survey_battery": "Battery make and model",
-          "survey_comment": "Anything else worth knowing",
+          "diagnosis_transport": "How this inverter is connected",
+          "diagnosis_proxy": "Is a Modbus proxy in the path?",
+          "diagnosis_pollers": "Anything else polling this inverter?",
+          "diagnosis_other_inverter": "Is there another inverter here that is not a Sungrow?",
+          "diagnosis_battery": "Battery make and model",
+          "diagnosis_comment": "Anything else worth knowing",
           "publish_address": "May the last two octets of the address be published?",
-          "survey_register_dump": "Also sweep the raw register bands (about five minutes)"
+          "diagnosis_register_dump": "Also sweep the raw register bands (about five minutes)"
         },
         "data_description": {
           "reporter": "Credited in the published reading, and who gets asked if a row raises a question. Leave empty to contribute anonymously.",
-          "survey_transport": "Cable against dongle is measured already. What only you know is whether a dongle is on its Ethernet socket or its WiFi — a WiNet-S answers identically either way, so \"not sure\" is a real answer and better than a guess.",
-          "survey_proxy": "modbus-proxy, evcc's proxy, a Home Assistant add-on. A proxy holds one connection and lends it out, so it changes what a dropped register means — and it rebuilds every frame, which can hide or create the frame quirks this project tracks.",
-          "survey_pollers": "This Home Assistant is recorded automatically. What matters here is anything else: another Home Assistant, the YAML package, evcc, a logger. An inverter grants very few connections, and two clients competing for one looks exactly like a broken register.",
-          "survey_other_inverter": "Your Sungrow does not measure how much your house is using — it works it out from its own output plus what the grid meter says is coming in. A second inverter feeding the same meter therefore makes every load figure too low, by exactly what that inverter is producing, while everything else reads normally. No register can tell us: the Sungrow cannot see it. Say yes and we will ask what it is.",
-          "survey_battery": "No register reports it. \"SBR096\" or \"Pylontech Force H1, 14.4 kWh\" is more useful than a capacity the inverter already reports.",
-          "survey_comment": "Anything unusual about the installation — a cluster, a second inverter, a wallbox, a firmware update you remember.",
+          "diagnosis_transport": "Cable against dongle is measured already. What only you know is whether a dongle is on its Ethernet socket or its WiFi — a WiNet-S answers identically either way, so \"not sure\" is a real answer and better than a guess.",
+          "diagnosis_proxy": "modbus-proxy, evcc's proxy, a Home Assistant add-on. A proxy holds one connection and lends it out, so it changes what a dropped register means — and it rebuilds every frame, which can hide or create the frame quirks this project tracks.",
+          "diagnosis_pollers": "This Home Assistant is recorded automatically. What matters here is anything else: another Home Assistant, the YAML package, evcc, a logger. An inverter grants very few connections, and two clients competing for one looks exactly like a broken register.",
+          "diagnosis_other_inverter": "Your Sungrow does not measure how much your house is using — it works it out from its own output plus what the grid meter says is coming in. A second inverter feeding the same meter therefore makes every load figure too low, by exactly what that inverter is producing, while everything else reads normally. No register can tell us: the Sungrow cannot see it. Say yes and we will ask what it is.",
+          "diagnosis_battery": "No register reports it. \"SBR096\" or \"Pylontech Force H1, 14.4 kWh\" is more useful than a capacity the inverter already reports.",
+          "diagnosis_comment": "Anything unusual about the installation — a cluster, a second inverter, a wallbox, a firmware update you remember.",
           "publish_address": "On, and yours to turn off before you submit. Only the last two octets ever reach the document — never the third, which is what would identify your network — and clear this and it reads xxx.xxx instead. What it buys is telling several readings from one house apart: a master, a slave and two dongles otherwise produce four files that look alike.",
-          "survey_register_dump": "On, and worth turning off if you are in a hurry. Without it a survey reads the registers this integration already knows about and takes a couple of seconds. With it, it also sweeps 2181 addresses across sixteen bands, including the ones no specification documents — which is how every undocumented register this project knows was found. That is slow because an address with nothing behind it goes quiet rather than refusing, so each empty one costs a full timeout: about five minutes on a direct cable, and considerably longer through a WiNet-S or a VPN. Your inverter keeps being polled throughout, and the survey button on the device page shows how far along it is."
+          "diagnosis_register_dump": "On, and worth turning off if you are in a hurry. Without it a diagnosis reads the registers this integration already knows about and takes a couple of seconds. With it, it also sweeps 2181 addresses across sixteen bands, including the ones no specification documents — which is how every undocumented register this project knows was found. That is slow because an address with nothing behind it goes quiet rather than refusing, so each empty one costs a full timeout: about five minutes on a direct cable, and considerably longer through a WiNet-S or a VPN. Your inverter keeps being polled throughout, and the diagnosis button on the device page shows how far along it is."
         }
       },
       "user": {
         "title": "What is this for?",
-        "description": "{mode_intro}**The device survey** connects to the inverter, works out what it is and what it answers, and creates **no entities at all**. It exists because this project has to *measure* which registers each model and firmware supports — Sungrow's own specification has been wrong in both directions — and today that evidence comes from the few houses that have sent a reading.{mode_choice}",
+        "description": "{mode_intro}**The device diagnosis** connects to the inverter, works out what it is and what it answers, and creates **no entities at all**. It exists because this project has to *measure* which registers each model and firmware supports — Sungrow's own specification has been wrong in both directions — and today that evidence comes from the few houses that have sent a reading.{mode_choice}",
         "menu_options": {
           "setup_devices": "Set up my inverter — sensors, controls, the lot",
-          "setup_diagnostics": "Perform the device survey — help this project, create no entities"
+          "setup_diagnostics": "Perform the device diagnosis — help this project, create no entities"
         }
       },
       "reconfigure": {
@@ -145,7 +145,7 @@
       },
       "move": {
         "title": "Use the new connection?",
-        "description": "This inverter is already set up as **{title}**, reached at **{old}**. It also answers at **{new}**.\n\n**Submit** switches the entry to **{new}** and reloads it. Its entity IDs, their history and its settings stay as they are; the battery and wallbox are looked for again on the new connection. Your answer about how the survey reaches the inverter is cleared, because it described the old connection.{wallbox}\n\nTo keep the current connection, close this dialog."
+        "description": "This inverter is already set up as **{title}**, reached at **{old}**. It also answers at **{new}**.\n\n**Submit** switches the entry to **{new}** and reloads it. Its entity IDs, their history and its settings stay as they are; the battery and wallbox are looked for again on the new connection. Your answer about how the diagnosis reaches the inverter is cleared, because it described the old connection.{wallbox}\n\nTo keep the current connection, close this dialog."
       }
     },
     "progress": {
@@ -153,7 +153,7 @@
     },
     "create_entry": {
       "default": "**You are set up.** The inverter's entities appear on its device page as their first readings arrive.\n\nTo see it in the Energy dashboard (**Settings → Dashboards → Energy**), pick the sensors [the Energy dashboard guide]({energy_dashboard_url}) names: several energy sensors have names that look right and are not.",
-      "diagnostics": "**You are set up, and nothing has been read yet.** Two more steps, both on the device page this dialog is about to show you:\n\n1. Press **Run read only diagnosis**, under *Diagnostic*. It reads and never writes. On a cable it is over in a couple of minutes with the register sweep on; over a VPN it can take considerably longer, and the three sensors beside the button say how far along it is and what it is reading.\n2. When it finishes, open **Notifications** in the sidebar — the badge at the bottom left. The notification there carries a summary and a **Download the document** link. That link is the JSON file to send us, and it stops working after an hour.\n\nMissed it, or came back the next day? **Download diagnostics** on the same device page carries the same document and never expires. Send either to [the survey issue]({survey_issue_url}).\n\nThe file names your inverter by a stand-in rather than its serial number, and carries the last two octets of its address only while that box is ticked."
+      "diagnostics": "**You are set up, and nothing has been read yet.** Two more steps, both on the device page this dialog is about to show you:\n\n1. Press **Run read only diagnosis**, under *Diagnostic*. It reads and never writes. On a cable it is over in a couple of minutes with the register sweep on; over a VPN it can take considerably longer, and the three sensors beside the button say how far along it is and what it is reading.\n2. When it finishes, open **Notifications** in the sidebar — the badge at the bottom left. The notification there carries a summary and a **Download the document** link. That link is the JSON file to send us, and it stops working after an hour.\n\nMissed it, or came back the next day? **Download diagnostics** on the same device page carries the same document and never expires. Send either to [the diagnosis issue]({diagnosis_issue_url}).\n\nThe file names your inverter by a stand-in rather than its serial number, and carries the last two octets of its address only while that box is ticked."
     }
   },
   "entity": {
@@ -235,10 +235,10 @@
       "force_startup": {
         "name": "Force startup"
       },
-      "run_control_test": {
+      "run_capability_test": {
         "name": "Run complete diagnosis and tests"
       },
-      "run_survey": {
+      "run_diagnosis": {
         "name": "Run read only diagnosis"
       }
     },
@@ -609,6 +609,15 @@
       },
       "dc_side_fault": {
         "name": "DC-side fault"
+      },
+      "diagnosis_finished": {
+        "name": "Diagnosis finished"
+      },
+      "diagnosis_progress": {
+        "name": "Diagnosis progress"
+      },
+      "diagnosis_step": {
+        "name": "Diagnosis step"
       },
       "direct_consumption_this_month": {
         "name": "Direct consumption this month"
@@ -1105,15 +1114,6 @@
       "sungrow_version_4_sungrow_battery": {
         "name": "Firmware version part 4 (Sungrow battery)"
       },
-      "survey_finished": {
-        "name": "Survey finished"
-      },
-      "survey_progress": {
-        "name": "Survey progress"
-      },
-      "survey_step": {
-        "name": "Survey step"
-      },
       "system_fault_1": {
         "name": "System fault 1"
       },
@@ -1283,7 +1283,7 @@
         "separately_metered": "On its own supply — none of it passes this inverter's meter"
       }
     },
-    "survey_transport": {
+    "diagnosis_transport": {
       "options": {
         "direct_lan": "A cable straight into the inverter's own LAN port",
         "winet_lan": "A WiNet-S dongle, on its Ethernet socket",
@@ -1293,14 +1293,14 @@
         "unsure": "Not sure"
       }
     },
-    "survey_proxy": {
+    "diagnosis_proxy": {
       "options": {
         "yes": "Yes — modbus-proxy, evcc's proxy, or a Home Assistant add-on",
         "no": "No, this talks straight to the inverter",
         "unknown": "I do not know what that is"
       }
     },
-    "survey_other_inverter": {
+    "diagnosis_other_inverter": {
       "options": {
         "yes": "Yes — there is another inverter that is not a Sungrow",
         "no": "No — the Sungrow is the only inverter here"
@@ -1315,7 +1315,7 @@
     "flow_text": {
       "options": {
         "devices_mode_coming": "⚠️ **Sensors and controls are not in this release.** This is an early alpha, and it exists to gather readings: it connects to your inverter, works out what it is and which registers it answers, and creates no entities for the values. Setting up the inverter properly -- including taking over the entity IDs of the YAML package, which decides where years of history continue -- comes in a later release, and an entry made now can be upgraded to it then without being deleted.",
-        "devices_mode_open": "Both answers are fine, and you can change your mind later: picking **the device survey** skips the weightiest question in this dialog, about which entity IDs to take over, because a reading does not need it.",
+        "devices_mode_open": "Both answers are fine, and you can change your mind later: picking **the device diagnosis** skips the weightiest question in this dialog, about which entity IDs to take over, because a reading does not need it.",
         "devices_mode_intro": "**Set up my inverter** is what you want if you came here to see your solar production in Home Assistant.",
         "package_loaded": "⚠️ **The YAML package is still running.** {live} of its entities are live on this instance right now and are holding their entity IDs, so migrating cannot work yet.\n\nTo migrate: remove `modbus_sungrow.yaml` from your configuration — or comment out the line that includes it — then **restart Home Assistant** and add this integration again. Until then only starting fresh will work.",
         "package_not_loaded": "✅ **The YAML package is not running**, so its entity IDs are free to take over. Both answers below will work.",
@@ -1337,11 +1337,11 @@
         "load_none": "The inverter has not reported a load figure yet.",
         "load_negative": "Right now this inverter reports a house load of {load} W. A negative load is what an unmetered generator looks like: the house appears to be using less than nothing because something is producing that the inverter cannot see.",
         "load_positive": "Right now this inverter reports a house load of {load} W, which does not include anything it cannot see.",
-        "survey_offline": "The inverter is not connected, so nothing has been measured yet.",
-        "survey_direct": "Already measured, so you do not need to tell us: this is {model}, reached through its own LAN port — register 6100 answers, which no communication module forwards.",
-        "survey_dongle": "Already measured, so you do not need to tell us: this is {model}, reached through a communication module, so a WiNet-S, WiNet-S2 or Logger is in the path — register 6100 was refused. Whether it is using its Ethernet socket or its WiFi is not determinable over Modbus, and that is the part only you can tell us.",
-        "survey_unknown": "Already measured, so you do not need to tell us: this is {model}, and the route could not be measured — register 6100 neither answered nor was refused, which is what a busy link looks like. A cable answers it and a dongle refuses it, so this one is for you to tell us.",
-        "survey_fitted": "A communication module is fitted and names itself {module}, which is a different question from which path this endpoint is: a house can have a dongle and a cable at once.",
+        "diagnosis_offline": "The inverter is not connected, so nothing has been measured yet.",
+        "diagnosis_direct": "Already measured, so you do not need to tell us: this is {model}, reached through its own LAN port — register 6100 answers, which no communication module forwards.",
+        "diagnosis_dongle": "Already measured, so you do not need to tell us: this is {model}, reached through a communication module, so a WiNet-S, WiNet-S2 or Logger is in the path — register 6100 was refused. Whether it is using its Ethernet socket or its WiFi is not determinable over Modbus, and that is the part only you can tell us.",
+        "diagnosis_unknown": "Already measured, so you do not need to tell us: this is {model}, and the route could not be measured — register 6100 neither answered nor was refused, which is what a busy link looks like. A cable answers it and a dongle refuses it, so this one is for you to tell us.",
+        "diagnosis_fitted": "A communication module is fitted and names itself {module}, which is a different question from which path this endpoint is: a house can have a dongle and a cable at once.",
         "battery_offline": "The inverter is not connected, so nothing can be read from it.",
         "battery_none": "No battery is connected, so this setting does nothing.",
         "battery_reports_capacity": "Your battery reports {capacity} kWh",
@@ -1364,7 +1364,7 @@
       "title": "Sungrow Modbus is a preview",
       "description": "This integration is a preview release, for testers rather than for a system you depend on.\n\n**Entity names may still change.** A name supplies an entity id when the entity is first created, so a change does not move the ids you already have -- your history and dashboards are safe. What it does mean is that your ids can end up differing from somebody who installs later. Where that matters, a rename will ship with a migration that moves yours across and carries the history with it.\n\n**What is not in flux:** readings, units, and the migration from the YAML package. If you chose to keep the YAML package's entity ids, those are reproduced exactly and none of this touches them.\n\nPlease report anything that looks wrong -- that is what a preview is for."
     },
-    "control_test_unfinished": {
+    "capability_test_unfinished": {
       "title": "A control write test on {name} did not finish",
       "fix_flow": {
         "step": {
@@ -1378,7 +1378,7 @@
         }
       }
     },
-    "control_test_left_stopped": {
+    "capability_test_left_stopped": {
       "title": "{name} may still be stopped after a control write test",
       "fix_flow": {
         "step": {
@@ -1428,11 +1428,11 @@
             "description": "Who may call the start and stop actions, and who may press the control write test's button. Administrators only is the default: a stopped inverter stays stopped until somebody starts it. Users means users who can already change this device; read-only logins never can, and automations and scripts are not affected. Every other setting is an entity, and Home Assistant decides who may change it: make an account read-only under Settings → People to keep a person from changing any of them.",
             "data": {
               "start_stop": "Start and stop the inverter",
-              "control_test": "Run the control write test"
+              "capability_test": "Run the control write test"
             },
             "data_description": {
               "start_stop": "Who may call the start and stop actions on this inverter.",
-              "control_test": "Administrators only by default. The control write test changes settings on the inverter and puts them back, and — where you have allowed it above — stops and restarts it. Opening it to users means users who can already change this device; a read-only login still cannot."
+              "capability_test": "Administrators only by default. The control write test changes settings on the inverter and puts them back, and — where you have allowed it above — stops and restarts it. Opening it to users means users who can already change this device; a read-only login still cannot."
             }
           },
           "external": {
@@ -1461,50 +1461,50 @@
               "wallbox_host": "Only for a Sungrow wallbox with a network cable or WiFi of its own. Without this, the integration finds a wallbox behind a WiNet-S by itself, and that is all most installations need. With it, the wallbox is read at its own address instead -- encrypted, on port 516 -- which also works when this entry is on the inverter's own LAN port, where a wallbox cannot otherwise be seen. Its entities and their history stay as they are. Leave empty to go back to the WiNet-S."
             }
           },
-          "survey": {
-            "name": "Contribute a capability survey",
-            "description": "Which registers an inverter answers is measured, not looked up, and a reading from yours is what improves support for it. {measured} Everything below is optional and answers what no register can; an empty field records that the question was not answered. Saving keeps your answers. To run the survey, press Run read only diagnosis on the device page: it reads and never writes, and replaces the serial number with a stand-in.",
+          "diagnosis": {
+            "name": "Contribute a capability diagnosis",
+            "description": "Which registers an inverter answers is measured, not looked up, and a reading from yours is what improves support for it. {measured} Everything below is optional and answers what no register can; an empty field records that the question was not answered. Saving keeps your answers. To run the diagnosis, press Run read only diagnosis on the device page: it reads and never writes, and replaces the serial number with a stand-in.",
             "data": {
               "reporter": "Your name or handle",
-              "survey_transport": "How this inverter is connected",
-              "survey_proxy": "Is a Modbus proxy in the path?",
-              "survey_pollers": "Anything else polling this inverter?",
-              "survey_other_inverter": "Is there another inverter here that is not a Sungrow?",
-              "survey_battery": "Battery make and model",
-              "survey_comment": "Anything else worth knowing",
+              "diagnosis_transport": "How this inverter is connected",
+              "diagnosis_proxy": "Is a Modbus proxy in the path?",
+              "diagnosis_pollers": "Anything else polling this inverter?",
+              "diagnosis_other_inverter": "Is there another inverter here that is not a Sungrow?",
+              "diagnosis_battery": "Battery make and model",
+              "diagnosis_comment": "Anything else worth knowing",
               "publish_address": "May the last two octets of the address be published?",
-              "survey_register_dump": "Also sweep the raw register bands (about five minutes)"
+              "diagnosis_register_dump": "Also sweep the raw register bands (about five minutes)"
             },
             "data_description": {
               "reporter": "Credited in the published reading, and who gets asked if a row raises a question. Leave empty to contribute anonymously.",
-              "survey_transport": "Cable against dongle is measured already. What only you know is whether a dongle is on its Ethernet socket or its WiFi — a WiNet-S answers identically either way, so \"not sure\" is a real answer and better than a guess.",
-              "survey_proxy": "modbus-proxy, evcc's proxy, a Home Assistant add-on. A proxy holds one connection and lends it out, so it changes what a dropped register means — and it rebuilds every frame, which can hide or create the frame quirks this project tracks.",
-              "survey_pollers": "This Home Assistant is recorded automatically. What matters here is anything else: another Home Assistant, the YAML package, evcc, a logger. An inverter grants very few connections, and two clients competing for one looks exactly like a broken register.",
-              "survey_other_inverter": "Your Sungrow does not measure how much your house is using — it works it out from its own output plus what the grid meter says is coming in. A second inverter feeding the same meter therefore makes every load figure too low, by exactly what that inverter is producing, while everything else reads normally. No register can tell us: the Sungrow cannot see it. Say yes and we will ask what it is.",
-              "survey_battery": "No register reports it. \"SBR096\" or \"Pylontech Force H1, 14.4 kWh\" is more useful than a capacity the inverter already reports.",
-              "survey_comment": "Anything unusual about the installation — a cluster, a second inverter, a wallbox, a firmware update you remember.",
+              "diagnosis_transport": "Cable against dongle is measured already. What only you know is whether a dongle is on its Ethernet socket or its WiFi — a WiNet-S answers identically either way, so \"not sure\" is a real answer and better than a guess.",
+              "diagnosis_proxy": "modbus-proxy, evcc's proxy, a Home Assistant add-on. A proxy holds one connection and lends it out, so it changes what a dropped register means — and it rebuilds every frame, which can hide or create the frame quirks this project tracks.",
+              "diagnosis_pollers": "This Home Assistant is recorded automatically. What matters here is anything else: another Home Assistant, the YAML package, evcc, a logger. An inverter grants very few connections, and two clients competing for one looks exactly like a broken register.",
+              "diagnosis_other_inverter": "Your Sungrow does not measure how much your house is using — it works it out from its own output plus what the grid meter says is coming in. A second inverter feeding the same meter therefore makes every load figure too low, by exactly what that inverter is producing, while everything else reads normally. No register can tell us: the Sungrow cannot see it. Say yes and we will ask what it is.",
+              "diagnosis_battery": "No register reports it. \"SBR096\" or \"Pylontech Force H1, 14.4 kWh\" is more useful than a capacity the inverter already reports.",
+              "diagnosis_comment": "Anything unusual about the installation — a cluster, a second inverter, a wallbox, a firmware update you remember.",
               "publish_address": "On, and yours to turn off before you submit. Only the last two octets ever reach the document — never the third, which is what would identify your network — and clear this and it reads xxx.xxx instead. What it buys is telling several readings from one house apart: a master, a slave and two dongles otherwise produce four files that look alike.",
-              "survey_register_dump": "On, and worth turning off if you are in a hurry. Without it a survey reads the registers this integration already knows about and takes a couple of seconds. With it, it also sweeps 2181 addresses across sixteen bands, including the ones no specification documents — which is how every undocumented register this project knows was found. That is slow because an address with nothing behind it goes quiet rather than refusing, so each empty one costs a full timeout: about five minutes on a direct cable, and considerably longer through a WiNet-S or a VPN. Your inverter keeps being polled throughout, and the survey button on the device page shows how far along it is."
+              "diagnosis_register_dump": "On, and worth turning off if you are in a hurry. Without it a diagnosis reads the registers this integration already knows about and takes a couple of seconds. With it, it also sweeps 2181 addresses across sixteen bands, including the ones no specification documents — which is how every undocumented register this project knows was found. That is slow because an address with nothing behind it goes quiet rather than refusing, so each empty one costs a full timeout: about five minutes on a direct cable, and considerably longer through a WiNet-S or a VPN. Your inverter keeps being polled throughout, and the diagnosis button on the device page shows how far along it is."
             }
           },
-          "control_test": {
+          "capability_test": {
             "name": "What the control write test may do",
             "description": "Run complete diagnosis and tests on the device page writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The six switches below go further, and each is on until you switch it off: pressing the button is your consent. What you switch off stays off.",
             "data": {
-              "control_test_restart": "May it stop and restart the inverter?",
-              "control_test_export_limit": "May it switch feed-in limitation on?",
-              "control_test_pv_cut": "May it cut PV generation for about a minute?",
-              "control_test_charge_window": "May it set a forced-charging window around now?",
-              "control_test_discharge_window": "May it move the discharge windows away from now?",
-              "control_test_import_limit": "May it cap grid import during a short forced charge?"
+              "capability_test_restart": "May it stop and restart the inverter?",
+              "capability_test_export_limit": "May it switch feed-in limitation on?",
+              "capability_test_pv_cut": "May it cut PV generation for about a minute?",
+              "capability_test_charge_window": "May it set a forced-charging window around now?",
+              "capability_test_discharge_window": "May it move the discharge windows away from now?",
+              "capability_test_import_limit": "May it cap grid import during a short forced charge?"
             },
             "data_description": {
-              "control_test_restart": "On unless you switch it off. With this on, the test writes the stop register, waits for the inverter to report itself stopped, starts it again and times all three transitions, so each model's figures are on record.\n\nWhile it is stopped you generate nothing, the battery neither charges nor discharges, and anything on a backup circuit loses power. Measured so far: stopped within about 2 seconds, running again after 3 to 4 minutes in daylight and over 6 at night, generating up to 20 seconds later. The inverter is never left stopped: the start is retried on fresh connections, it is started again if Home Assistant shuts down mid-test, and if all of that fails you get a repair that starts it.",
-              "control_test_export_limit": "On unless you switch it off. Where you already limit feed-in, the test uses that and this changes nothing. With this on it may also switch the limit on for about a minute where you do not.\n\nIt is the one setting whose failed restore costs you something ongoing rather than just accuracy: an export limit that did not get switched back means you feed in less than you could. If that happens you get a repair here that switches it back.",
-              "control_test_pv_cut": "On unless you switch it off. With this on, and where your inverter answers register 31211, the test writes the code that stops PV generation, checks that DC power falls to zero, and allows PV again. Generation stops for about half a minute and takes up to a minute more to come back while the inverter searches for its operating point again; the battery and the grid cover the house meanwhile.\n\nThis register is not in Sungrow's documentation, which is why the **Cut PV generation** switch is offered only on firmware where this check has passed. A run on yours is how your firmware gets on that list.",
-              "control_test_charge_window": "On unless you switch it off. With this on, and where your inverter has the forced-charging schedule and it is off, the test writes a window around the inverter's own clock with a target a few percent above the battery, switches the schedule on, checks that the battery starts charging, and switches it off again. The battery charges for a minute or two, from the grid if there is no sun. Every word of the schedule is put back afterwards. Skipped where your own schedule is on.",
-              "control_test_discharge_window": "On unless you switch it off. With this on, and where your inverter answers the discharge schedules (registers 33151-33187), the test moves every weekday and weekend discharge window away from now, checks that the battery stops discharging, and puts every window back. For a minute or two the house imports instead of using the battery.\n\nThese registers are not in Sungrow's documentation, which is why they are offered only as readings. A run on yours is the evidence that writing them does what it should.",
-              "control_test_import_limit": "On unless you switch it off. With this on, and where your inverter answers register 32998, the grid import limit, the test force-charges the battery, sets the limit halfway between what the house then imports and what it would import without the charge, checks that grid import comes down to it, and puts your limit back. It then writes three limits at the ends of the range once each, to record which ones the inverter refuses. The battery charges for about two minutes, from the grid if there is no sun.\n\nThis register is not in Sungrow's documentation, which is why it is offered only as a reading. A run on yours is the evidence that writing it does what it should."
+              "capability_test_restart": "On unless you switch it off. With this on, the test writes the stop register, waits for the inverter to report itself stopped, starts it again and times all three transitions, so each model's figures are on record.\n\nWhile it is stopped you generate nothing, the battery neither charges nor discharges, and anything on a backup circuit loses power. Measured so far: stopped within about 2 seconds, running again after 3 to 4 minutes in daylight and over 6 at night, generating up to 20 seconds later. The inverter is never left stopped: the start is retried on fresh connections, it is started again if Home Assistant shuts down mid-test, and if all of that fails you get a repair that starts it.",
+              "capability_test_export_limit": "On unless you switch it off. Where you already limit feed-in, the test uses that and this changes nothing. With this on it may also switch the limit on for about a minute where you do not.\n\nIt is the one setting whose failed restore costs you something ongoing rather than just accuracy: an export limit that did not get switched back means you feed in less than you could. If that happens you get a repair here that switches it back.",
+              "capability_test_pv_cut": "On unless you switch it off. With this on, and where your inverter answers register 31211, the test writes the code that stops PV generation, checks that DC power falls to zero, and allows PV again. Generation stops for about half a minute and takes up to a minute more to come back while the inverter searches for its operating point again; the battery and the grid cover the house meanwhile.\n\nThis register is not in Sungrow's documentation, which is why the **Cut PV generation** switch is offered only on firmware where this check has passed. A run on yours is how your firmware gets on that list.",
+              "capability_test_charge_window": "On unless you switch it off. With this on, and where your inverter has the forced-charging schedule and it is off, the test writes a window around the inverter's own clock with a target a few percent above the battery, switches the schedule on, checks that the battery starts charging, and switches it off again. The battery charges for a minute or two, from the grid if there is no sun. Every word of the schedule is put back afterwards. Skipped where your own schedule is on.",
+              "capability_test_discharge_window": "On unless you switch it off. With this on, and where your inverter answers the discharge schedules (registers 33151-33187), the test moves every weekday and weekend discharge window away from now, checks that the battery stops discharging, and puts every window back. For a minute or two the house imports instead of using the battery.\n\nThese registers are not in Sungrow's documentation, which is why they are offered only as readings. A run on yours is the evidence that writing them does what it should.",
+              "capability_test_import_limit": "On unless you switch it off. With this on, and where your inverter answers register 32998, the grid import limit, the test force-charges the battery, sets the limit halfway between what the house then imports and what it would import without the charge, checks that grid import comes down to it, and puts your limit back. It then writes three limits at the ends of the range once each, to record which ones the inverter refuses. The battery charges for about two minutes, from the grid if there is no sun.\n\nThis register is not in Sungrow's documentation, which is why it is offered only as a reading. A run on yours is the evidence that writing it does what it should."
             }
           }
         }
@@ -1527,7 +1527,7 @@
         "title": "What is the other inverter?",
         "description": "The make, and its size if you know it — *Fronius Symo 8.2*, or *5 kW string inverter on the south roof*. The size is the useful part: it says how large the gap in the load figures is.\n\nThis goes into the document, so leave out serial numbers, addresses and names. You can leave it blank.",
         "data": {
-          "survey_other_inverter_detail": "The other inverter"
+          "diagnosis_other_inverter_detail": "The other inverter"
         }
       },
       "entity_ids_legacy": {
@@ -1546,16 +1546,16 @@
       "legacy_slot_unknown": "This house ran the YAML package for more than one inverter, and Home Assistant cannot tell which of them this one was, so the old IDs could be another inverter's. Put the YAML package back for one restart, so this inverter's serial is recorded, then remove it, restart again and come back here."
     },
     "progress": {
-      "running_survey": "Reading your inverter: 19 capability probes. Through a WiNet-S this can take a minute."
+      "running_diagnosis": "Reading your inverter: 19 capability probes. Through a WiNet-S this can take a minute."
     },
     "abort": {
-      "devices_mode_not_offered": "Setting up sensors and controls is not in this release. This alpha creates diagnostics-only entries; start again and choose **Perform the device survey**."
+      "devices_mode_not_offered": "Setting up sensors and controls is not in this release. This alpha creates diagnostics-only entries; start again and choose **Perform the device diagnosis**."
     }
   },
   "services": {
-    "run_control_test": {
+    "run_capability_test": {
       "name": "Run complete diagnosis and tests",
-      "description": "Writes to every control this integration can write to, checks each one three ways and puts it back. Unlike the capability survey, this CHANGES SETTINGS on the inverter: it limits the battery and the export, and it briefly forces a charge and a discharge. Everything is recorded before the first write and restored afterwards, and the run reports anything it could not put back. It exists because a wrong scale is invisible to a readback -- write 700 W, get 700 W back -- and only writing can find it. The restart and export-limit permissions are set in the integration's options and are off by default.",
+      "description": "Writes to every control this integration can write to, checks each one three ways and puts it back. Unlike the capability diagnosis, this CHANGES SETTINGS on the inverter: it limits the battery and the export, and it briefly forces a charge and a discharge. Everything is recorded before the first write and restored afterwards, and the run reports anything it could not put back. It exists because a wrong scale is invisible to a readback -- write 700 W, get 700 W back -- and only writing can find it. The restart and export-limit permissions are set in the integration's options and are off by default.",
       "fields": {
         "device_id": {
           "name": "Device",
@@ -1563,13 +1563,13 @@
         }
       }
     },
-    "run_survey": {
+    "run_diagnosis": {
       "name": "Run read only diagnosis",
       "description": "Reads this installation's registers and produces a document describing what answered, so support for it can be measured rather than guessed. Reads only; nothing is written to the inverter, and the serial number is replaced by a stand-in. The finished document arrives as a notification with a download link.",
       "fields": {
         "device_id": {
           "name": "Device",
-          "description": "The Sungrow device to survey."
+          "description": "The Sungrow device to diagnose."
         }
       }
     },
@@ -1604,8 +1604,8 @@
     "not_a_sungrow_device": {
       "message": "{name} is not a Sungrow Modbus device."
     },
-    "survey_already_running": {
-      "message": "A survey is already running on this inverter. Two at once would compete for one of its very few Modbus connections."
+    "diagnosis_already_running": {
+      "message": "A diagnosis is already running on this inverter. Two at once would compete for one of its very few Modbus connections."
     },
     "not_on_string_inverter": {
       "message": "{title} is a string inverter. This action writes to a hybrid inverter's registers, and nothing in this integration writes to a string inverter."

@@ -19,11 +19,13 @@ import pytest
 from sungrow_modbus import logger
 from sungrow_modbus.dump import LOGGER_BANDS
 
-SURVEY = Path(__file__).resolve().parents[1] / "device-survey" / "scripts" / "python"
-sys.path.insert(0, str(SURVEY))
+DIAGNOSIS = (
+    Path(__file__).resolve().parents[1] / "device-diagnosis" / "scripts" / "python"
+)
+sys.path.insert(0, str(DIAGNOSIS))
 
 import ihomemanager_direct  # noqa: E402
-import sungrow_survey  # noqa: E402
+import sungrow_diagnosis  # noqa: E402
 
 from .corpus import LOGGER_DOCUMENTS  # noqa: E402
 
@@ -163,7 +165,7 @@ def test_every_documented_field_is_inside_a_band() -> None:
 
 
 def test_the_documented_bands_come_before_the_gaps() -> None:
-    """A survey that runs out of time still has every documented register."""
+    """A diagnosis that runs out of time still has every documented register."""
     kinds = [why.startswith("undocumented") for *_rest, why in LOGGER_BANDS]
     assert kinds == sorted(kinds)
 
@@ -210,14 +212,14 @@ async def _no_sleep(_seconds):
     return None
 
 
-async def test_a_logger_survey_writes_a_logger_document(tmp_path) -> None:
+async def test_a_logger_diagnosis_writes_a_logger_document(tmp_path) -> None:
     found = ihomemanager_direct.Found("192.0.2.60", 502, "a Logger1000", "logger")
     answers = SimpleNamespace(timeout=1, reporter="tester", comment="")
     with (
         patch.object(ihomemanager_direct, "ModbusConnection", _connection(_device())),
         patch("sungrow_modbus.dump.asyncio.sleep", _no_sleep),
     ):
-        reading = await ihomemanager_direct.async_survey(
+        reading = await ihomemanager_direct.async_diagnosis(
             found, answers, tmp_path, lambda _text: None, address_tail="000.060"
         )
 
@@ -263,7 +265,7 @@ async def test_a_logger_read_over_tls_says_so_in_its_document(tmp_path) -> None:
         ),
         patch("sungrow_modbus.dump.asyncio.sleep", _no_sleep),
     ):
-        reading = await ihomemanager_direct.async_survey(
+        reading = await ihomemanager_direct.async_diagnosis(
             found, answers, tmp_path, lambda _text: None, address_tail="000.064"
         )
 
@@ -291,22 +293,22 @@ async def test_a_host_with_only_516_open_is_asked_for_a_logger_over_tls() -> Non
 
     args = SimpleNamespace(host=["192.0.2.65"], port=502, unit=None)
     with (
-        patch.object(sungrow_survey.wallbox_direct, "async_identify", no_wallbox),
-        patch.object(sungrow_survey.probe, "identify", nothing_on_502),
+        patch.object(sungrow_diagnosis.wallbox_direct, "async_identify", no_wallbox),
+        patch.object(sungrow_diagnosis.probe, "identify", nothing_on_502),
         patch.object(ihomemanager_direct, "async_identify_tls", logger_over_tls),
     ):
-        found = await sungrow_survey._find(args, lambda *_a: None)
+        found = await sungrow_diagnosis._find(args, lambda *_a: None)
 
     assert found == []
-    assert [tls] == sungrow_survey._MANAGERS
-    sungrow_survey._MANAGERS.clear()
+    assert [tls] == sungrow_diagnosis._MANAGERS
+    sungrow_diagnosis._MANAGERS.clear()
 
 
 async def test_a_logger_behind_an_inverter_is_found_when_the_owner_says_so() -> None:
     """`identify` stops at the inverter; unit 247 is asked only on that answer."""
-    sungrow_survey._MANAGERS.clear()
-    found = sungrow_survey.Found("192.0.2.61", 502, 1, None)
-    outcome = sungrow_survey.Outcome(
+    sungrow_diagnosis._MANAGERS.clear()
+    found = sungrow_diagnosis.Found("192.0.2.61", 502, 1, None)
+    outcome = sungrow_diagnosis.Outcome(
         found=found,
         unit=1,
         document={},
@@ -323,18 +325,18 @@ async def test_a_logger_behind_an_inverter_is_found_when_the_owner_says_so() -> 
         return SimpleNamespace(kind="logger", model="a Logger1000", unit=247)
 
     with (
-        patch.object(sungrow_survey, "async_identify_unit_247", identify_247),
-        patch.object(sungrow_survey.probe, "described", lambda who: who.model),
+        patch.object(sungrow_diagnosis, "async_identify_unit_247", identify_247),
+        patch.object(sungrow_diagnosis.probe, "described", lambda who: who.model),
     ):
-        await sungrow_survey._find_loggers_behind([outcome], lambda *_a: None)
+        await sungrow_diagnosis._find_loggers_behind([outcome], lambda *_a: None)
         not_said = outcome._replace(reported_transport="winet_lan")
-        await sungrow_survey._find_loggers_behind([not_said], lambda *_a: None)
+        await sungrow_diagnosis._find_loggers_behind([not_said], lambda *_a: None)
 
     assert asked == [("192.0.2.61", 502)]
     assert [
         ihomemanager_direct.Found("192.0.2.61", 502, "a Logger1000", "logger")
-    ] == sungrow_survey._MANAGERS
-    sungrow_survey._MANAGERS.clear()
+    ] == sungrow_diagnosis._MANAGERS
+    sungrow_diagnosis._MANAGERS.clear()
 
 
 def test_the_simulator_seed_decodes_as_a_logger() -> None:

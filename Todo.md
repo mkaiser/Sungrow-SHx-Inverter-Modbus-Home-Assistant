@@ -50,7 +50,7 @@ stays unique.
    'Standby'"), though a forced charge wakes one by itself in ~2 min (EMS
    or schedule, bar12). Whether the import-limit check should command its
    charge and wait for the start instead of refusing: decide with the
-   survey's rework.
+   diagnosis's rework.
 
    **Register 13017 is a switch, not a command** (wiki:
    bar12-forced-startup-2026-11-07, P023): 0xAA wakes a low-SoC standby
@@ -77,8 +77,8 @@ Nothing can start now (blocker 14).
    run settles it.
 
    Built and tested (59 tests, 99 % of the procedure): the procedure,
-   `src/sungrow_modbus/wallbox/control_test.py`, and its terminal driver,
-   `device-survey/scripts/python/sungrow_wallbox_control_test.py` (TLS 516,
+   `src/sungrow_modbus/wallbox/capability_test.py`, and its terminal driver,
+   `device-diagnosis/scripts/python/sungrow_wallbox_capability_test.py` (TLS 516,
    unit 248 only; no `--leave` is a dry run; `--enable`, `--phase`,
    `--start-stop`, `--max-amps`, `--restore`). It offers 6, 8 and 10 A, safe at
    either scale; flushes a snapshot before the first write; reads the raw word
@@ -110,7 +110,7 @@ Nothing can start now (blocker 14).
       fallback in mind.
 
    Not to copy: evcc's `sungrow.go` reserves all rights. Inverter work at
-   gerd's waits until his Home Assistant is stopped: a read-only survey
+   gerd's waits until his Home Assistant is stopped: a read-only diagnosis
    on 2026-11-06 ran into it and is not evidence.
 
 ## Logger
@@ -123,24 +123,24 @@ Nothing can start now (blocker 18).
 
 ## Integration and tooling
 
-3. **Home Assistant 2026.11: the survey's headers.** The
+3. **Home Assistant 2026.11: the diagnosis's headers.** The
    dev environment and CI run 2026.11.0 with modbus-connection 4.12.7 and
    tmodbus 1.1.0, tested with core's own `pytest-homeassistant` (2026.11.0),
    which replaced `pytest-homeassistant-custom-component` (that one stops at
    2026.10.4 and is declared broken upstream). The integration keeps
    supporting 2026.9 (`requirements_dev.txt` says why). Left:
-   1. **The survey's PEP 723 headers** (`sungrow_survey.py`,
-      `sungrow_control_test.py`, `sungrow_wallbox_control_test.py`) still pin
+   1. **The diagnosis's PEP 723 headers** (`sungrow_diagnosis.py`,
+      `sungrow_capability_test.py`, `sungrow_wallbox_capability_test.py`) still pin
       `modbus-connection[tmodbus]==4.12.4`; to 4.12.7 with tmodbus 1.1.0, a
-      new transport for contributors' runs, so after one survey on hardware
-      with it (`device-survey/reference.md` first).
-4. **The survey becomes the diagnosis** (in progress). Done: `doc/firmware_support.md` has a *Survey* column (read, written,
-   watched, from `control_test/coverage.py`) and a table of what the control
+      new transport for contributors' runs, so after one diagnosis on hardware
+      with it (`device-diagnosis/reference.md` first).
+4. **The diagnosis becomes the diagnosis** (in progress). Done: `doc/firmware_support.md` has a *Diagnosis* column (read, written,
+   watched, from `capability_test/coverage.py`) and a table of what the capability
    test measured (13074's write scale, readbacks, restart, behaviour).
    Left, in order:
-   1. **The renames**: survey to diagnosis and control test to capability
+   1. **The renames**: diagnosis to diagnose and capability test to capability
       test, everywhere, stored option keys included, by a config entry
-      migration. Waits until no session is running a control test on
+      migration. Waits until no session is running a capability test on
       hardware, because a restore line names the script's path.
    2. **Two modes and a feature report**: *read-only diagnosis* and
       *diagnosis with capability tests*, and a `features` section (schema 25).
@@ -170,7 +170,7 @@ Nothing can start now (blocker 18).
    `--import-limit` check on P023, and ulfben's exact hardware. Its
    addresses did not answer on 2026-11-07 (nothing on 502 at the master,
    its WiNet-S or the slave). How: from this checkout,
-   `sungrow_control_test.py <host> --import-limit --allow-dark --no-restart`,
+   `sungrow_capability_test.py <host> --import-limit --allow-dark --no-restart`,
    a dry run first, the stand-in read before any write; their Home
    Assistant stays connected, so expect retries. After dark, a battery
    under 90 % and not in Standby. Then ingest, and the reply to #546
@@ -186,7 +186,7 @@ Nothing can start now (blocker 18).
    COM2 terminal, no LAN terminal: the manual's contents page, read through a
    search; its text was not fetched). So the T has **no cable path** to ask
    for, and what a dongle run can settle is its behavioural leg only. One run
-   with the control test (`--enable-export-limit`) settles:
+   with the capability test (`--enable-export-limit`) settles:
    - **13074 on P071.** The dongle reported a word written with feed-in
      limitation off as handed, where B001 ignores it. Readbacks through a
      dongle are stale, so only the export check (the house must export) can
@@ -201,30 +201,30 @@ Nothing can start now (blocker 18).
      every WiNet-S refuses anyway; ra1k_0 has one.
    Still open on the T besides: whether 13018 acts as 31211 does.
 
-2. **firetribe, once more (#784).** A cable control test while the
+2. **firetribe, once more (#784).** A cable capability test while the
    inverter is running (it was `Starting`) gives the first SH6.0RT-V112
    readbacks and its 13074 write scale. Their WiNet-S 0x04s are contention,
    reproduced at gerd's.
 
 3. **A fault seen on hardware.** The fifteen words are decoded from V1.1.11's
-   Appendix 4; one survey has a flag set (bit 30 of the inverter alarm, a
+   Appendix 4; one diagnosis has a flag set (bit 30 of the inverter alarm, a
    slave with no meter), which confirms the word order. Wanted: a reading
    during a real grid or battery fault, and the battery words through a
    dongle. V1.1.17's Appendix 4 is word for word V1.1.11's.
 
 4. **Meter phase voltage/current (5741-5746) on dongle houses.** Read zero
     through every WiNet-S measured and are gated on a non-zero voltage.
-    Whether they need reading on their own (#756) needs a survey from an
+    Whether they need reading on their own (#756) needs a diagnosis from an
     affected owner; `layout.py` changes only on measurement.
 
 5. **T-series energy counters.** One SH20T reads 13045 (daily export) as 0
    while exporting, and 5003/5004-5005 duplicating the export counters. A
-   second T survey, ideally on a cable, before `registers.py` changes.
+   second T diagnosis, ideally on a cable, before `registers.py` changes.
 
 6. **Writing the discharge schedules, and the import limit** (#785), in
    no Sungrow document. The schedules read as diagnostic entities
    (`Capability.DISCHARGE_SCHEDULE`); writing them needs a watched write, as
-   31211 did (wiki: firmware gating), from a control test run with leave. The
+   31211 did (wiki: firmware gating), from a capability test run with leave. The
    site import power limit, register 32998, is in 0.01 kW (discussion #546;
    wiki: register 32998): it holds a meter-measured cap on an SH10RS, refuses
    a word above 5000, and on the maintainer's SH10RT (P020) held import at
@@ -232,7 +232,7 @@ Nothing can start now (blocker 18).
    night, cable; wiki: mkaiser-import-limit-2026-11-07). On one SH10RT-V112
    it is reported ignored during a forced charge (wiki query). An entity
    needs a watched write per firmware. P020 has three (night and PV by
-   script, then the control test's `--import-limit` check, 2026-11-07): the
+   script, then the capability test's `--import-limit` check, 2026-11-07): the
    cap is on import alone, and 1-5000 is the accepted range. The integration
    reads it as the diagnostic sensor Grid import limit; the control waits on
    the P023 and WiNet-S runs (Planned tests item 1).
@@ -253,15 +253,15 @@ Nothing can start now (blocker 18).
    the first. Watch whether it recurs.
 
 10. **The SG's tracker counts beyond the SG5.0RS.** `MPPT_COUNTS` is the
-    source's model table, many entries unverified; a survey of any other SG
-    checks its row (wanted in `device-survey/devices-wanted.md`, row 10).
+    source's model table, many entries unverified; a diagnosis of any other SG
+    checks its row (wanted in `device-diagnosis/devices-wanted.md`, row 10).
 
 11. **A watched forced startup (13017).** The *Force startup* button exists
     only on firmware in `CONFIRMED_ON_FIRMWARE`, and nothing can put one
-    there: the control test has no check for it. One needs an inverter in
+    there: the capability test has no check for it. One needs an inverter in
     low-SoC standby with no PV (an evening, the battery at its minimum SoC),
     writes 0xAA and watches the running state leave standby. Building that
-    check is a control-test change, so it waits for a house that can give
+    check is a capability-test change, so it waits for a house that can give
     such an evening.
 
 12. **The PV cut (31211, #738), beyond the four confirmed firmwares.**
@@ -269,15 +269,15 @@ Nothing can start now (blocker 18).
     reads 0xFFFF there) can answer it.
     - More firmware confirmed: 31211 answers 0x55 but no cut has been
       watched on `SUNSTONE-H_B000.V001.P068`, `B000.V002.P067`,
-      `B000.V002.P059` and `B000.V002.P057`. The survey's control test
+      `B000.V002.P059` and `B000.V002.P057`. The diagnosis's capability test
       watches the cut, so it is asked for in the "Most wanted" table of
-      `device-survey/devices-wanted.md`, never from one person.
+      `device-diagnosis/devices-wanted.md`, never from one person.
     - One evening's watch on a confirmed device (P022, P023, P071 or P065):
       does a cut survive a night or a restart, or does iSolarCloud rewrite
       it?
 
 13. **What register 13080 counts.** Documented as the external EMS
-    heartbeat (0-1000 s, default 20 s), it reads 0 on 42 surveys, 330 on two
+    heartbeat (0-1000 s, default 20 s), it reads 0 on 42 diagnoses, 330 on two
     houses in EMS mode 0, and 875 then 961 on ra1k_0's SH20T in EMS mode 3
     (`.wiki/wiki/queries/what-do-the-v1-1-17-only-registers-read.md`). Two
     reads of it a minute apart at that house would show whether it counts
@@ -295,7 +295,7 @@ Nothing can start now (blocker 18).
     charging ends, not power) and input 21365 (-71 to -63, flat). A wallbox
     restart would show whether 21267 falls to near zero.
 
-16. **A second wallbox's survey.** Settles whether 21211-21214 identify the
+16. **A second wallbox's diagnosis.** Settles whether 21211-21214 identify the
     unit. The wallbox reports its own serial (input 21201-21206, 11 ASCII
     characters, as Sungrow's portal shows it); the
     integration shows it on the device page, identifies the device by the
@@ -309,27 +309,27 @@ Nothing can start now (blocker 18).
 
 ## Logger
 
-17. **A first Sungrow Logger survey** (#786). Unblocks Logger entities.
+17. **A first Sungrow Logger diagnosis** (#786). Unblocks Logger entities.
     The map is done from Sungrow's protocol 1.0.2.9
     (`sungrow_modbus.logger`, every field `spec`; where every document is:
     `.wiki/wiki/queries/where-are-sungrows-documents.md`); what a first
-    survey settles is on `.wiki/wiki/queries/what-does-a-logger-answer.md`.
-    It reached surveys with 0.1.0a26, which the survey pins. Missing:
+    diagnosis settles is on `.wiki/wiki/queries/what-does-a-logger-answer.md`.
+    It reached diagnoses with 0.1.0a26, which the diagnosis pins. Missing:
 
-    1. **Its TLS port, untried.** The survey asks unit 247 over TLS on 516
+    1. **Its TLS port, untried.** The diagnosis asks unit 247 over TLS on 516
        (a current Logger1000 opens only that port); no Logger has answered
        there yet, so that path is held to fakes only (`tests/test_logger.py`).
     2. **What sits behind it.** Each inverter and meter answers at its
        forwarding address (the Logger's Device List page), not at a unit the
-       survey guesses; `identify` looks at units 1-5 only. A DTSU666 is a
+       diagnosis guesses; `identify` looks at units 1-5 only. A DTSU666 is a
        device nothing maps.
     3. **A contributor with one.** Nobody has offered; the #262 participants
        (RafAustralia, purcell-lab, NBS23) are the leads.
 
 ## iHomeManager
 
-18. **A first iHomeManager survey** (#786). Unblocks building its entities.
-    The survey reads one (unit 247, port 502, 503 or 504, one
+18. **A first iHomeManager diagnosis** (#786). Unblocks building its entities.
+    The diagnosis reads one (unit 247, port 502, 503 or 504, one
     connection each); the integration does not, and its config flow fails such
     an endpoint with `no_serial_number`. Wait for a measured reading before
     building entities on `sungrow_modbus.ihomemanager`. Sungrow's protocol PDF:
@@ -340,8 +340,8 @@ Nothing can start now (blocker 18).
 19. **Does a WiNet-S advertise over mDNS?** Needs a house with a dongle and
     a run on the host, not in the container.
 
-20. **The control test's restore through a WiNet-S, on hardware.** A
-    dongle-only control test at gerd on the current tree, with the battery
+20. **The capability test's restore through a WiNet-S, on hardware.** A
+    dongle-only capability test at gerd on the current tree, with the battery
     above 30 % and no car charging, then a cable read of every snapshot
     register. Left open in the code: a touched register goes back to the
     dongle's word, wrong only if changed over another path since the dongle
@@ -351,13 +351,13 @@ Nothing can start now (blocker 18).
 
 The maintainer targets a stable release in December 2026 (said
 2026-11-06). It needs: the ordinary setup switched on (item 1,
-`ONLY_SURVEY_MODE`), a stable `0.1.0` rather than an alpha (item 2), the
+`ONLY_DIAGNOSIS_MODE`), a stable `0.1.0` rather than an alpha (item 2), the
 production-database run or a decision to go without it (item 4), the
 catalog submission on release, not before (item 2), and
 `doc/integration_migration.md` made current.
 
 1. **When to offer the ordinary setup**, targeted for December 2026 (the
-   maintainer, 2026-11-06) (`ONLY_SURVEY_MODE` in `const.py`;
+   maintainer, 2026-11-06) (`ONLY_DIAGNOSIS_MODE` in `const.py`;
    turning it off is the whole re-enablement, `tests/test_alpha_gate.py`),
    and **when to merge into `main`.** The merge retires the preview channel
    and opens the HACS default store, which also needs the brand in
@@ -571,12 +571,12 @@ Each inverter is its own config entry, so nothing adds them up. Today the
 answer is documented helpers: `doc/energy_dashboard.md` (*Several
 inverters*) says what to sum with a Sum helper, what to take from the master
 only and what never to sum, from fwitten's master and slave (committed
-surveys, 2026-10-29, P023 cables; the slave has no meter and no battery).
+diagnoses, 2026-10-29, P023 cables; the slave has no meter and no battery).
 
 Open: entities of the integration's own, **only if users ask**. They need
 something above the one-entry-per-inverter rule (`doc/architecture.md`): the
 entry that is the cluster's master owns a "Site" device, found by the roles
-the survey already measures (*measured* or *inferred*), and the sensors are
+the diagnosis already measures (*measured* or *inferred*), and the sensors are
 unavailable, not 0, when a member is. `total_site_pv_power` already exists
 for the inverter that has a second one on its supply, so the Site wording
 has a precedent.
@@ -629,15 +629,15 @@ firmware, its key is on every unit, and verifying it gains nothing.
   need not open a Modbus session of its own. To find out: does evcc have
   a standard configuration for that?
 
-## Recurrent: new surveys to ingest (daily, after noon)
+## Recurrent: new diagnoses to ingest (daily, after noon)
 
-Every day after noon, read the general survey thread
+Every day after noon, read the general diagnosis thread
 ([#786](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786))
-and any issue a survey was posted to since the last check. Comments older than
+and any issue a diagnosis was posted to since the last check. Comments older than
 the last check are done; read only what is newer. Ingest each new
-survey as `.wiki/AGENTS.md` describes (raw file, source page, entity pages,
+diagnosis as `.wiki/AGENTS.md` describes (raw file, source page, entity pages,
 index, log), and name the contributor (without `@`) and the issue number in
-the commit; a survey signed `anonymous` stays unnamed. Then move the date
+the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash

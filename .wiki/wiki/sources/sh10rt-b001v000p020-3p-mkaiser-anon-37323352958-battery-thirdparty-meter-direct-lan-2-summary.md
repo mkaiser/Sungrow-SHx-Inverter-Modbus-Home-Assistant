@@ -1,23 +1,23 @@
 ---
 type: source
 title: sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-2.json
-source_path: ../device-survey/results/inverter/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-2.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-2.json
 ingested: '2026-11-01'
 created: '2026-11-01'
 tags:
-  - survey
+  - diagnosis
   - sh10rt
   - sapphire-h-b001-v000-p020
   - mkaiser
   - direct_lan
-  - control-test
+  - capability-test
 ---
 
 # SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port, second reading
 
 Read by the maintainer on 2026-11-01 around noon, the house's Home Assistant stopped, with the full
-control test on this tree's library (timed windows included). Source:
-`device-survey/results/inverter/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-2.json`.
+capability test on this tree's library (timed windows included). Source:
+`device-diagnosis/results/inverter/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-2.json`.
 
 | | |
 | --- | --- |
@@ -38,9 +38,9 @@ inverter, where 2025 reads 12550.6 kWh. Unexplained; see [energy history](../con
 
 Register 32998 reads 2000.
 
-## Control test
+## Capability test
 
-Outcome **3**. See [the control test](../concepts/control-test.md).
+Outcome **3**. See [the capability test](../concepts/capability-test.md).
 
 - Readback: 7 matched (`battery_max_soc`, both battery power limits, 13074, 13052, both start
   powers); `battery_min_soc` and the backup reserve not written, the battery being too close to

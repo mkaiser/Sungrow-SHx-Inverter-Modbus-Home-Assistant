@@ -11,7 +11,7 @@ twice, once per protocol, rather than gated per family.
 
 **Every address here comes from ha-modbus-manager's
 `sungrow_sg_dynamic.yaml`** (MIT, TCzerny, commit `4a1e662`), which is built
-from V1.1.53. Two SG5.0RS surveys (`device-survey/results/string_inverter/`)
+from V1.1.53. Two SG5.0RS diagnoses (`device-diagnosis/results/string_inverter/`)
 read every block through a WiNet-S; a value there is measured only on that
 model. A field's docstring says which models the source says answer it, and
 the entity layer creates an entity only for a field that read a value.

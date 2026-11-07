@@ -36,7 +36,7 @@ ignores writes on B001: no exception, no change. That is most houses.
 **SH-T on [P071](firmware-pearl-h-b000-v000-p071.md): not determined.** At
 [ra1k-0](installation-ra1k-0.md) the register held 20000 W, its maximum, and
 ten times that wraps to 3392 W in sixteen bits, inside the bounds, so the
-probe had no word that changes nothing on both firmwares. The control test then
+probe had no word that changes nothing on both firmwares. The capability test then
 wrote word 60 for 600 W with feed-in limitation off, and the WiNet-S reported
 60 back, where B001 would have kept its old value. **This contradicts "ignores
 writes" for P071 if the register really took it**, and would mean P071 stores
@@ -66,20 +66,20 @@ never asked, and the export check's write was refused too.
   feed-in limitation off, it needs leave to lift the mode.
   `tests/test_export_scale.py` sweeps both firmwares and asserts that the
   register never moves. From a terminal,
-  `device-survey/scripts/python/sungrow_control_test.py --export-scale`
+  `device-diagnosis/scripts/python/sungrow_capability_test.py --export-scale`
   asks it and does nothing else. With `--merge-into <document>` it adds the
-  `export_scale` block to a survey, and a full control test run then
+  `export_scale` block to a diagnosis, and a full capability test run then
   writes 13074 at the factor the probe answered.
 - `number.SungrowExportLimitNumber` probes on the first write. It stores the
   factor in entry data (`CONF_EXPORT_WRITE_SCALE`) together with the firmware
   it was measured on, re-measures after a firmware change, and writes the raw
   word itself, and keeps the probe's publishable record beside them
-  (`CONF_EXPORT_WRITE_SCALE_PROBE`), which the integration's survey document
+  (`CONF_EXPORT_WRITE_SCALE_PROBE`), which the integration's diagnosis document
   carries as its `export_scale` block. An unanswered probe falls back to ten
   and is not stored. The
   update listener skips the reload when that key is all that changed
   (`_built_from`).
-- In the [control test](../concepts/control-test.md), leg B on 13074 needs
+- In the [capability test](../concepts/capability-test.md), leg B on 13074 needs
   the mode lifted. `_lift_export_mode` switches it on for that probe alone,
   and back to the snapshot's word the moment the register is restored.
   It does so only with `--enable-export-limit`, because it curtails a real
@@ -90,5 +90,5 @@ never asked, and the export check's write was refused too.
 
 ## Evidence
 
-The `export_scale` blocks in the fwitten and gerd surveys (indexed under
-Sources), and the control-test readbacks.
+The `export_scale` blocks in the fwitten and gerd diagnoses (indexed under
+Sources), and the capability-test readbacks.

@@ -14,7 +14,7 @@ capability varies by transport as well as by model.
 - **Measure it with [register 6100](../entities/register-6100.md)**: it
   answers on a cable and is refused through a dongle. **It also answers over
   RS485** (icefest's SH6.0RS through a Waveshare converter,
-  [the survey](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-summary.md)), so "direct"
+  [the diagnosis](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-summary.md)), so "direct"
   means *no communication module in the path*, LAN port or RS485 alike, and
   only the owner's answer tells the two apart.
 - **A Logger refuses 6100 too**: two inverters read through a Logger1000A
@@ -24,7 +24,7 @@ capability varies by transport as well as by model.
 - **Not with round-trip time**, which times the reader's path.
 - **WiFi versus Ethernet is not determinable** over Modbus.
   `user_inputs.transport` is the only source.
-- The survey's verdict (`connection.verdict`) compares the owner's answer
+- The diagnosis's verdict (`connection.verdict`) compares the owner's answer
   with the measurement. Exit 4 means they still disagree, and that document
   is not published until it is settled.
 

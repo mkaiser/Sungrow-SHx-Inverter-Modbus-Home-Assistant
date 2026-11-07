@@ -4,12 +4,12 @@ title: mkaiser-charge-window-trace-2026-11-01.md
 source_path: raw/mkaiser-charge-window-trace-2026-11-01.md
 ingested: '2026-11-01'
 created: '2026-11-01'
-tags: [control-test, charge-window, mkaiser, sapphire-h-b001-v000-p020]
+tags: [capability-test, charge-window, mkaiser, sapphire-h-b001-v000-p020]
 ---
 
 # The maintainer's SH10RT: a forced-charging window, sampled every 2 s
 
-`.wiki/raw/mkaiser-charge-window-trace-2026-11-01.md`: two runs of the control test's charge
+`.wiki/raw/mkaiser-charge-window-trace-2026-11-01.md`: two runs of the capability test's charge
 window check alone at [mkaiser](../entities/installation-mkaiser.md), on
 [P020](../entities/firmware-sapphire-h-b001-v000-p020.md), over the inverter's own LAN port,
 Home Assistant stopped, every sample and write logged with its time.
@@ -25,5 +25,5 @@ Home Assistant stopped, every sample and write logged with its time.
 | SoC does not move in 80 s at 4.5 kW | 7.7 % throughout: about 0.1 kWh on a 14.4 kWh pack |
 
 What it changed: `WINDOW_RECOVERY` (60 s to 20 s) and the start bracket in `_verdict`
-(`src/sungrow_modbus/control_test/procedure.py`, `src/sungrow_modbus/control_test/effects.py`,
-`tests/test_control_test_windows.py`). See [the control test](../concepts/control-test.md).
+(`src/sungrow_modbus/capability_test/procedure.py`, `src/sungrow_modbus/capability_test/effects.py`,
+`tests/test_capability_test_windows.py`). See [the capability test](../concepts/capability-test.md).

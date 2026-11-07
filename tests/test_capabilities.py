@@ -1,6 +1,6 @@
 """What a device exposes, resolved from model, register and probe.
 
-The reference survey is the anchor: an SH10RT that reports three phases,
+The reference diagnosis is the anchor: an SH10RT that reports three phases,
 answers MPPT1 and MPPT2, returns 0xFFFF for MPPT3 and MPPT4, has a meter
 directly wired and a third-party battery. If the model says one thing and that
 machine says another, the machine wins.
@@ -274,7 +274,7 @@ def test_a_tracker_at_zero_volts_is_denied_and_then_granted_at_sunrise() -> None
 
 
 def test_the_meter_phase_registers_read_zero_through_a_dongle() -> None:
-    """Every WiNet-S path in the committed surveys, five houses.
+    """Every WiNet-S path in the committed diagnoses, five houses.
 
     Read alone, 5741 and 5744 are refused; inside the pooled block the library
     actually reads, they answer zero -- six entities at 0 V and 0 A forever.
@@ -288,7 +288,7 @@ def test_the_meter_phase_registers_read_zero_through_a_dongle() -> None:
 
 
 def test_firmware_absence_is_an_exact_measured_version() -> None:
-    """Keyed exactly: 95.13 is not 95.03, and unsurveyed firmware is not gated.
+    """Keyed exactly: 95.13 is not 95.03, and undiagnosed firmware is not gated.
 
     #756 blames 95.14 for the meter phase registers, and bar12 reads them on
     95.14 -- the reason a bug report alone does not make an entry.
@@ -312,7 +312,7 @@ def test_every_firmware_entry_names_a_committed_document() -> None:
         Path(__file__).resolve().parent.parent
         / "src/sungrow_modbus/hybrid_inverter/capabilities.py"
     ).read_text(encoding="utf-8")
-    surveys = Path(__file__).resolve().parent.parent / "device-survey" / "results"
+    diagnoses = Path(__file__).resolve().parent.parent / "device-diagnosis" / "results"
     block = source.split("ABSENT_ON_FIRMWARE: dict", 1)[1].split("\n}\n", 1)[0]
     for version in ABSENT_ON_FIRMWARE:
         cited = [
@@ -320,16 +320,16 @@ def test_every_firmware_entry_names_a_committed_document() -> None:
             for line in block.splitlines()
             if line.strip().startswith("#") and line.strip().endswith(".json")
         ]
-        assert cited, f"{version} cites no survey"
+        assert cited, f"{version} cites no diagnosis"
         for name in cited:
             assert any(
-                (surveys / directory / name).exists()
+                (diagnoses / directory / name).exists()
                 for directory in ("inverter", "wallbox")
             ), name
             path = next(
-                surveys / directory / name
+                diagnoses / directory / name
                 for directory in ("inverter", "wallbox")
-                if (surveys / directory / name).exists()
+                if (diagnoses / directory / name).exists()
             )
             assert version in path.read_text(encoding="utf-8"), name
 

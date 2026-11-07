@@ -17,14 +17,14 @@ on:
       - "hacs.json"
       - "legacy/modbus_sungrow.yaml"
       - "doc/legacy_entity_map.json"
-      # Every script, generators, tables, the survey and the pin guard
+      # Every script, generators, tables, the diagnosis and the pin guard
       # alike, so a new one is covered without being listed here.
       - "scripts/**"
       # The preview channel's workflow: the drift check compares this file
       # to the copy running in that repository, so editing it must run the
       # comparison.
       - "doc/preview-mirror/sync.yml"
-      - "device-survey/**"
+      - "device-diagnosis/**"
       - "LICENSE"
       - "README.md"
       - ".github/workflows/validate.yml"
@@ -80,9 +80,9 @@ jobs:
         run: python scripts/generate/descriptions.py strings --check
       - name: The German translation matches the German tables
         run: python scripts/generate/descriptions.py german --check
-      - name: The compatibility page matches the surveys
+      - name: The compatibility page matches the diagnoses
         run: python scripts/generate/generate_compatibility.py --check
-      - name: The firmware support table matches the surveys
+      - name: The firmware support table matches the diagnoses
         run: python scripts/generate/generate_firmware_support.py --check
       - name: The simulator seed matches the YAML package and the entity map
         run: python scripts/generate/generate_simulator_registers.py --check

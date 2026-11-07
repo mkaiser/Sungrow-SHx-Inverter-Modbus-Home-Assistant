@@ -22,5 +22,5 @@ running and stopped sets are derived from its labels.
   `is_starting` recognises it.
 - **A start can take several `0xCF` commands** before the state moves, so
   `async_ensure_running` re-sends while the state still reads stopped, and
-  every control-test driver calls it on the way out. See the
-  [control test](../concepts/control-test.md).
+  every capability-test driver calls it on the way out. See the
+  [capability test](../concepts/capability-test.md).

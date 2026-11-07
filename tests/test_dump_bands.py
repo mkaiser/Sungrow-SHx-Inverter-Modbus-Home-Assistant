@@ -1,4 +1,4 @@
-"""The register dump's bands and its mask, which the survey and the integration share.
+"""The register dump's bands and its mask, shared by the diagnosis and the integration.
 
 Both producers read `sungrow_modbus.dump.DUMP_BANDS`, so a document's
 `register_dump` means the same addresses whichever tool wrote it. What is left
@@ -33,7 +33,7 @@ def test_the_block_count_matches_what_the_bands_ask_for() -> None:
     """The progress denominator is computed before a single read is made.
 
     A bar whose total grows halfway through is worse than no bar, so this is
-    the one number the survey commits to in advance.
+    the one number the diagnosis commits to in advance.
     """
     assert block_count() == sum(
         len(range(0, count, 32)) for _space, _start, count, _why in DUMP_BANDS

@@ -18,7 +18,7 @@ Read on [01011.95.03](firmware-sapphire-h-01011-95-03.md) and again on
 The PV cut and the forced-charging window were confirmed on the master, which answered every
 block with the owner's Home Assistant polling.
 
-## Surveys
+## Diagnoses
 
 - [SH10RT-V112, pre-B001 firmware, fwitten slave, the inverter's own LAN port](../sources/sh10rt-v112-3p-fwitten-anon-33442450531-battery-none-direct-lan-summary.md)
 - [SH10RT-V112, pre-B001 firmware, fwitten slave, a WiNet-S (medium not reported)](../sources/sh10rt-v112-3p-fwitten-anon-33442450531-battery-none-winet-summary.md)

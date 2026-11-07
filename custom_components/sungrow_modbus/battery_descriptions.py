@@ -17,7 +17,7 @@ copy-paste rather than by including a file. A user who did copy it in has ids
 like `sensor.sg_battery_1_max_voltage_of_cell`, and those are **not**
 adopted here. Recorded in `Todo.md` as an open decision with
 its cost: this integration would be taking over entities it never generated,
-whose names it does not control, on evidence no survey carries. Doing
+whose names it does not control, on evidence no diagnosis carries. Doing
 that silently is worse than not doing it.
 
 Eighteen entities from seventeen registers. Eleven fields become eleven
@@ -269,7 +269,7 @@ MODULE_DESCRIPTIONS: dict[int, tuple[SungrowSensorDescription, ...]] = {
 #: across every sample known, and "sensor 2 of module 3" is an inference
 #: about what that byte counts -- see `SbrBatteryCells`. A number whose
 #: meaning is a guess should not become an entity somebody builds an
-#: automation on; the library decodes it and the survey records it, which is
+#: automation on; the library decodes it and the diagnosis records it, which is
 #: where a guess belongs until it is not one.
 BATTERY_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
     *PACK_DESCRIPTIONS,

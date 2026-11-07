@@ -135,7 +135,7 @@ async def test_a_quiet_address_is_waited_on_once_in_a_run() -> None:
 
     fwitten's master goes quiet at four registers instead of refusing them, and
     every read that touched one waited out the whole timeout: about 39 minutes
-    a survey. A refusal is still asked each time, because it costs nothing.
+    a diagnosis. A refusal is still asked each time, because it costs nothing.
     """
     from sungrow_modbus.model import Silent
 

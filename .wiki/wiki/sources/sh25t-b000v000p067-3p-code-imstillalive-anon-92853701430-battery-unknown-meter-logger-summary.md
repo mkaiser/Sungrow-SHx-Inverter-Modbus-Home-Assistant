@@ -1,11 +1,11 @@
 ---
 type: source
 title: sh25t-b000v000p067-3p-code-imstillalive-anon-92853701430-battery-unknown-meter-logger.json
-source_path: ../device-survey/results/inverter/sh25t-b000v000p067-3p-code-imstillalive-anon-92853701430-battery-unknown-meter-logger.json
+source_path: ../device-diagnosis/results/inverter/sh25t-b000v000p067-3p-code-imstillalive-anon-92853701430-battery-unknown-meter-logger.json
 ingested: '2026-11-07'
 created: '2026-11-07'
 tags:
-  - survey
+  - diagnosis
   - sh25t
   - pearl-h-b000-v000-p067
   - code-imstillalive
@@ -14,11 +14,11 @@ tags:
 
 # SH25T, B000.V000.P067, code-imstillalive, through a Logger1000A
 
-Capability survey of one inverter, read 2026-11-07 around 00:43 UTC with the survey button of the
-integration, posted by code-imstillalive to issue #791 (announced on #786). Read only; no control
+Capability diagnosis of one inverter, read 2026-11-07 around 00:43 UTC with the diagnosis button of the
+integration, posted by code-imstillalive to issue #791 (announced on #786). Read only; no capability
 test. The first SH25T, and the first reading of any inverter through a
 [Sungrow Logger](../entities/device-logger.md). Source:
-`device-survey/results/inverter/sh25t-b000v000p067-3p-code-imstillalive-anon-92853701430-battery-unknown-meter-logger.json`.
+`device-diagnosis/results/inverter/sh25t-b000v000p067-3p-code-imstillalive-anon-92853701430-battery-unknown-meter-logger.json`.
 
 | | |
 | --- | --- |

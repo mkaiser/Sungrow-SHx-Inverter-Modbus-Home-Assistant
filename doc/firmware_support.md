@@ -1,9 +1,9 @@
 # Entities by firmware
 
 **Generated — do not edit.** `scripts/generate/generate_firmware_support.py`
-builds this from the surveys in
-[device-survey/results/](../device-survey/results/), and CI checks that it
-matches. [compatibility.md](compatibility.md) has the surveys themselves,
+builds this from the diagnoses in
+[device-diagnosis/results/](../device-diagnosis/results/), and CI checks that it
+matches. [compatibility.md](compatibility.md) has the diagnoses themselves,
 one row each.
 
 The question: **do devices on the same firmware support the same
@@ -18,20 +18,20 @@ The wallbox and SG string inverters are not in this page.
 | Mark | Means |
 | --- | --- |
 | ✓ | Answered with a value. |
-| ✓ W | Answered, and a write was confirmed on this firmware: read back over a cable by the [control test](../.wiki/wiki/concepts/control-test.md), or its effect watched (`CONFIRMED_ON_FIRMWARE`). A writable entity without the W has not had its write confirmed here. |
+| ✓ W | Answered, and a write was confirmed on this firmware: read back over a cable by the [capability test](../.wiki/wiki/concepts/capability-test.md), or its effect watched (`CONFIRMED_ON_FIRMWARE`). A writable entity without the W has not had its write confirmed here. |
 | ✗ | Answered "unavailable", refused, or did not answer. |
 | 0? | Answered only zeros where the integration reads zero as absent (MPPT3 at night, a dongle's stand-in for "unavailable"): cannot tell. |
 | – | Not fitted: needs a part (battery, meter, dual-channel meter, communication module, Sungrow pack, a pack module) none of these houses has. |
-| *(empty)* | Untested: no survey reached these registers, or none can read them (the masked serial; the padded firmware strings at 2613 and 2629). |
+| *(empty)* | Untested: no diagnosis reached these registers, or none can read them (the masked serial; the padded firmware strings at 2613 and 2629). |
 
-The **Survey** column says how far a survey can test the entity on any inverter, before a column says what one did:
+The **Diagnosis** column says how far a diagnosis can test the entity on any inverter, before a column says what one did:
 
-| Survey | Means |
+| Diagnosis | Means |
 | --- | --- |
 | read | The raw register dump reaches its registers, so the columns can answer for it. |
-| written | The control test writes it and checks the raw word it reads back against the specification's scale. |
-| watched | A behavioural check of the control test writes it and watches what the inverter does. |
-| *(empty)* | No part of the survey reaches it: a column can only be empty there. |
+| written | The capability test writes it and checks the raw word it reads back against the specification's scale. |
+| watched | A behavioural check of the capability test writes it and watches what the inverter does. |
+| *(empty)* | No part of the diagnosis reaches it: a column can only be empty there. |
 
 A **dongle** column was read through a WiNet-S or Logger, which refuses
 some blocks and answers 0 where the inverter answers "unavailable";
@@ -39,11 +39,11 @@ compare a dongle column with a dongle column.
 
 ## Inverters
 
-Each survey's raw register dump is replayed through the integration's
+Each diagnosis's raw register dump is replayed through the integration's
 own decoding and capability probe, so a cell is what the inverter
 answered for the registers that entity reads.
 
-### What the surveys say so far
+### What the diagnoses say so far
 
 **4 cell(s) split**: models on one firmware disagree.
 
@@ -81,7 +81,7 @@ What moves between firmware versions of one platform, over one kind of link:
 
 ### Columns
 
-| Column | Platform | Firmware | Link | Models | Surveys |
+| Column | Platform | Firmware | Link | Models | Diagnoses |
 | --- | --- | --- | --- | --- | --- |
 | 1 | PEARL-H | B000.V000.P067 | dongle | SH15T, SH25T | 2 |
 | 2 | PEARL-H | B000.V000.P071 | dongle | SH15T, SH20T | 5 |
@@ -112,10 +112,10 @@ Left out, with no register dump, no firmware or no way to tell the link:
 - `sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-winet-lan`
 - `sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan`
 
-### What the control test measured
+### What the capability test measured
 
 Findings about the firmware rather than about one entity, from every
-survey whose run had the control test, in the columns above. The
+diagnosis whose run had the capability test, in the columns above. The
 13074 write scale is asked by a write the device refuses or accepts,
 so it holds through a dongle too; a readback counts over a cable only,
 because a WiNet-S answers a written register stale. A behaviour cell
@@ -137,7 +137,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 
 ### Backup power
 
-| Entity | Survey | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+| Entity | Diagnosis | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Backup frequency | read | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Backup mode *(switch)* | read | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -155,7 +155,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 
 ### Control
 
-| Entity | Survey | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+| Entity | Diagnosis | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Active power limitation *(binary_sensor)* | read | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Active power limitation code | read | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -179,7 +179,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 
 ### Everything else
 
-| Entity | Survey | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+| Entity | Diagnosis | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Power factor | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Power flow code | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -190,7 +190,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 
 ### Faults and alarms
 
-| Entity | Survey | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+| Entity | Diagnosis | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Any alarm *(binary_sensor)* | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | BDC-side fault | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -204,7 +204,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 
 ### Identity and firmware
 
-| Entity | Survey | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+| Entity | Diagnosis | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | ARM software version | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Communication module firmware version | read | ✗ | ✓ | – | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -220,7 +220,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 
 ### Per phase
 
-| Entity | Survey | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+| Entity | Diagnosis | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Phase A current | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Phase A power | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -234,7 +234,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 
 ### Power
 
-| Entity | Survey | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+| Entity | Diagnosis | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | BDC rated power | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Rated output power | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -244,13 +244,13 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 
 ### Temperatures
 
-| Entity | Survey | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+| Entity | Diagnosis | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Device temperature | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 ### The PV trackers
 
-| Entity | Survey | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+| Entity | Diagnosis | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Cut PV generation *(switch)* | read + watched | ✓ | ✓ W |  | ✗ | ✗ | ✗ | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ W | ✓ |
 | Daily PV generation | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -287,7 +287,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 
 ### The battery
 
-| Entity | Survey | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+| Entity | Diagnosis | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | BMS alarm | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | BMS alarm 2 | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -348,7 +348,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 
 ### The grid
 
-| Entity | Survey | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+| Entity | Diagnosis | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Daily exported energy | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Daily imported energy | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -373,7 +373,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 
 ### The house
 
-| Entity | Survey | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+| Entity | Diagnosis | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Corrected load power | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Daily consumed energy | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -396,7 +396,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 
 ### The meter
 
-| Entity | Survey | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+| Entity | Diagnosis | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Meter active power | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Meter channel 2 phase A active power | read | – | – | – | – | – | – | – | – | – | – | – | – | – | – |
@@ -419,14 +419,14 @@ A pack is a device on its own unit with firmware of its own, so a column
 is its **BCU firmware**, the battery firmware string the inverter reports
 at register 13280. Over the inverter's LAN port the pack answers on unit
 200; through a WiNet-S, on unit 2. The model is the one the inverter's
-capacity register (5639) matches. A cell is the survey's own decoded
+capacity register (5639) matches. A cell is the diagnosis's own decoded
 reading of the pack: a component the pack refused with an exception is
 absent, one lost to the link is untested.
 
-### What the surveys say so far
+### What the diagnoses say so far
 
 **No cell is split.** Wherever two pack models on one firmware were both
-surveyed, they answered every entity's registers alike, once what a
+diagnosed, they answered every entity's registers alike, once what a
 house has fitted is set aside. The assumption holds on this evidence;
 it is tested only where a column pools more than one of the pack models.
 
@@ -438,7 +438,7 @@ What moves between firmware versions of one platform, over one kind of link:
 
 ### Columns
 
-| Column | Platform | Firmware | Link | Models | Surveys |
+| Column | Platform | Firmware | Link | Models | Diagnoses |
 | --- | --- | --- | --- | --- | --- |
 | B1 | SBHBCU-S | 22011.04.07 | unit 2 (dongle) | 25.34 kWh, no single model | 1 |
 | B2 | SBHBCU-S | 22011.04.08 32 | unit 2 (dongle) | SBH300 | 1 |
@@ -465,7 +465,7 @@ Left out, with a battery firmware but no pack reading, or no battery firmware:
 
 ### Entities
 
-| Entity | Survey | B1 | B2 | B3 | B4 | B5 | B6 | B7 | B8 | B9 | B10 | B11 |
+| Entity | Diagnosis | B1 | B2 | B3 | B4 | B5 | B6 | B7 | B8 | B9 | B10 | B11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Pack voltage | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Pack current | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |

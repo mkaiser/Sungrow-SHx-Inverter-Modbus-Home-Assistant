@@ -22,24 +22,24 @@ from modbus_connection.mock import MockModbusUnit
 from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.sungrow_modbus.const import (
+    CONF_DIAGNOSIS_OTHER_INVERTER,
+    CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL,
     CONF_MODE,
-    CONF_SURVEY_OTHER_INVERTER,
-    CONF_SURVEY_OTHER_INVERTER_DETAIL,
     CONF_UNIT_ID,
     DOMAIN,
     MODE_DIAGNOSTICS,
     SECTION_ADVANCED,
-    SECTION_CONTROL_TEST,
+    SECTION_CAPABILITY_TEST,
+    SECTION_DIAGNOSIS,
     SECTION_EXTERNAL,
     SECTION_PERMISSIONS,
     SECTION_POLLING,
-    SECTION_SURVEY,
 )
-from custom_components.sungrow_modbus.survey_document import async_build, summarise
+from custom_components.sungrow_modbus.diagnosis_document import async_build, summarise
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
-from sungrow_modbus.survey_document import OTHER_INVERTER_CLAIMS, OTHER_INVERTER_YES
+from sungrow_modbus.diagnosis_document import OTHER_INVERTER_CLAIMS, OTHER_INVERTER_YES
 
 from .conftest import SERIAL
 
@@ -63,8 +63,8 @@ def _options(**sections: dict) -> dict:
         SECTION_PERMISSIONS: {},
         SECTION_EXTERNAL: {},
         SECTION_ADVANCED: {},
-        SECTION_SURVEY: {},
-        SECTION_CONTROL_TEST: {},
+        SECTION_DIAGNOSIS: {},
+        SECTION_CAPABILITY_TEST: {},
     }
     payload.update(sections)
     return payload
@@ -134,13 +134,13 @@ async def test_saying_no_does_not_ask_what_it_is(
         "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
     ):
         result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {CONF_SURVEY_OTHER_INVERTER: "no"}
+            result["flow_id"], {CONF_DIAGNOSIS_OTHER_INVERTER: "no"}
         )
         await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["options"][CONF_SURVEY_OTHER_INVERTER] == "no"
-    assert not result["options"].get(CONF_SURVEY_OTHER_INVERTER_DETAIL)
+    assert result["options"][CONF_DIAGNOSIS_OTHER_INVERTER] == "no"
+    assert not result["options"].get(CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL)
 
 
 async def test_saying_yes_asks_what_it_is(
@@ -150,7 +150,7 @@ async def test_saying_yes_asks_what_it_is(
     result = await _to_testimony(hass, sungrow_unit)
 
     result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {CONF_SURVEY_OTHER_INVERTER: OTHER_INVERTER_YES}
+        result["flow_id"], {CONF_DIAGNOSIS_OTHER_INVERTER: OTHER_INVERTER_YES}
     )
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "other_inverter"
@@ -160,13 +160,13 @@ async def test_saying_yes_asks_what_it_is(
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
-            {CONF_SURVEY_OTHER_INVERTER_DETAIL: "Fronius Symo 8.2"},
+            {CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL: "Fronius Symo 8.2"},
         )
         await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["options"][CONF_SURVEY_OTHER_INVERTER] == OTHER_INVERTER_YES
-    assert result["options"][CONF_SURVEY_OTHER_INVERTER_DETAIL] == "Fronius Symo 8.2"
+    assert result["options"][CONF_DIAGNOSIS_OTHER_INVERTER] == OTHER_INVERTER_YES
+    assert result["options"][CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL] == "Fronius Symo 8.2"
 
 
 async def test_leaving_the_question_alone_records_nothing(
@@ -186,7 +186,7 @@ async def test_leaving_the_question_alone_records_nothing(
         await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert not result["options"].get(CONF_SURVEY_OTHER_INVERTER)
+    assert not result["options"].get(CONF_DIAGNOSIS_OTHER_INVERTER)
 
 
 # -- on the options page -------------------------------------------------------
@@ -211,8 +211,8 @@ async def test_the_options_page_asks_the_follow_up_too(
             result["flow_id"],
             _options(
                 **{
-                    SECTION_SURVEY: {
-                        CONF_SURVEY_OTHER_INVERTER: OTHER_INVERTER_YES,
+                    SECTION_DIAGNOSIS: {
+                        CONF_DIAGNOSIS_OTHER_INVERTER: OTHER_INVERTER_YES,
                         "reporter": "martin",
                     }
                 }
@@ -222,12 +222,14 @@ async def test_the_options_page_asks_the_follow_up_too(
 
         result = await hass.config_entries.options.async_configure(
             result["flow_id"],
-            {CONF_SURVEY_OTHER_INVERTER_DETAIL: "5 kW on the south roof"},
+            {CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL: "5 kW on the south roof"},
         )
         await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert entry.options[CONF_SURVEY_OTHER_INVERTER_DETAIL] == "5 kW on the south roof"
+    assert (
+        entry.options[CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL] == "5 kW on the south roof"
+    )
     # The rest of the page was not lost on the way through the question.
     assert entry.options["reporter"] == "martin"
 
@@ -240,8 +242,8 @@ async def test_an_answer_already_given_is_not_asked_for_again(
         hass,
         sungrow_unit,
         {
-            CONF_SURVEY_OTHER_INVERTER: OTHER_INVERTER_YES,
-            CONF_SURVEY_OTHER_INVERTER_DETAIL: "Fronius Symo 8.2",
+            CONF_DIAGNOSIS_OTHER_INVERTER: OTHER_INVERTER_YES,
+            CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL: "Fronius Symo 8.2",
         },
     )
 
@@ -252,13 +254,17 @@ async def test_an_answer_already_given_is_not_asked_for_again(
         result = await hass.config_entries.options.async_configure(
             result["flow_id"],
             _options(
-                **{SECTION_SURVEY: {CONF_SURVEY_OTHER_INVERTER: OTHER_INVERTER_YES}}
+                **{
+                    SECTION_DIAGNOSIS: {
+                        CONF_DIAGNOSIS_OTHER_INVERTER: OTHER_INVERTER_YES
+                    }
+                }
             ),
         )
         await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert entry.options[CONF_SURVEY_OTHER_INVERTER_DETAIL] == "Fronius Symo 8.2"
+    assert entry.options[CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL] == "Fronius Symo 8.2"
 
 
 # -- and into the file ---------------------------------------------------------
@@ -272,8 +278,8 @@ async def test_the_document_carries_the_answer(
         hass,
         sungrow_unit,
         {
-            CONF_SURVEY_OTHER_INVERTER: OTHER_INVERTER_YES,
-            CONF_SURVEY_OTHER_INVERTER_DETAIL: "Fronius Symo 8.2",
+            CONF_DIAGNOSIS_OTHER_INVERTER: OTHER_INVERTER_YES,
+            CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL: "Fronius Symo 8.2",
         },
     )
 
@@ -299,8 +305,8 @@ async def test_the_summary_says_so_where_a_contributor_will_see_it(
         hass,
         sungrow_unit,
         {
-            CONF_SURVEY_OTHER_INVERTER: OTHER_INVERTER_YES,
-            CONF_SURVEY_OTHER_INVERTER_DETAIL: "Fronius Symo 8.2",
+            CONF_DIAGNOSIS_OTHER_INVERTER: OTHER_INVERTER_YES,
+            CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL: "Fronius Symo 8.2",
         },
     )
 
@@ -318,10 +324,10 @@ async def test_the_last_screen_says_where_the_file_will_be(
 ) -> None:
     """The wizard ends having read nothing, and has to say so.
 
-    A diagnostics entry is created and then does nothing: the survey is a
+    A diagnostics entry is created and then does nothing: the diagnosis is a
     button somebody has to find, and its document arrives in a notification
     they have no reason to be watching. Both were reported by a contributor
-    who ran the survey and then asked where the file had gone. The success
+    who ran the diagnosis and then asked where the file had gone. The success
     dialog is the last place left to answer that before they close it.
     """
     result = await _to_testimony(hass, sungrow_unit)

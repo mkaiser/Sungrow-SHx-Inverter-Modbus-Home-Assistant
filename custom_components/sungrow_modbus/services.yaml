@@ -29,10 +29,10 @@ stop_inverter:
         device:
           integration: sungrow_modbus
 
-# Producing a capability survey. Read-only, and the counterpart of the button
+# Producing a capability diagnosis. Read-only, and the counterpart of the button
 # a diagnostics-only entry gets on its device page -- an ordinary entry has
-# no survey entities, so this is how its owner helps if they choose to.
-run_survey:
+# no diagnosis entities, so this is how its owner helps if they choose to.
+run_diagnosis:
   fields:
     device_id:
       required: true
@@ -44,7 +44,7 @@ run_survey:
 # it sets each control the integration can set, reads the register back, and
 # puts it back. Behind an audience setting of its own, administrators only by
 # default, checked the way start and stop are.
-run_control_test:
+run_capability_test:
   fields:
     device_id:
       required: true

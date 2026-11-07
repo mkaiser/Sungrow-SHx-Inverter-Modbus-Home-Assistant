@@ -1,8 +1,8 @@
-"""An SG string inverter as a Home Assistant entry: set up, read, surveyed.
+"""An SG string inverter as a Home Assistant entry: set up, read, diagnosed.
 
-Read only, by decision: no control test button, and both writing actions
+Read only, by decision: no capability test button, and both writing actions
 refuse. Its sensors exist only where its field read a value, because tracker
-and phase counts differ by model. No SG has been surveyed, so the words are
+and phase counts differ by model. No SG has been diagnosed, so the words are
 Sungrow's string-inverter protocol V1.1.53 as an SG5.0RS would answer it.
 """
 
@@ -214,21 +214,21 @@ async def test_an_sg5_0rs_gets_no_phase_or_tracker_it_lacks_from_their_zeros(
     assert f"{SERIAL}_sg_mppt3_voltage" not in ids, "an SG5.0RS has two trackers"
 
 
-async def test_a_diagnostics_entry_surveys_an_sg_into_its_own_document(
+async def test_a_diagnostics_entry_diagnoses_an_sg_into_its_own_document(
     hass: HomeAssistant,
 ) -> None:
     entry = await _setup(hass, MODE_DIAGNOSTICS)
     ids = _unique_ids(hass, entry)
-    assert f"{SERIAL}_run_survey" in ids
-    assert f"{SERIAL}_run_control_test" not in ids, "nothing here writes to an SG"
+    assert f"{SERIAL}_run_diagnosis" in ids
+    assert f"{SERIAL}_run_capability_test" not in ids, "nothing here writes to an SG"
 
     device = dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)[0]
     await hass.services.async_call(
-        DOMAIN, "run_survey", {"device_id": device.id}, blocking=True
+        DOMAIN, "run_diagnosis", {"device_id": device.id}, blocking=True
     )
     await hass.async_block_till_done()
 
-    state = entry.runtime_data.survey.state
+    state = entry.runtime_data.diagnosis.state
     assert state.error is None
     document = state.document
     assert document["document"] == "string_inverter"
@@ -240,7 +240,7 @@ async def test_a_diagnostics_entry_surveys_an_sg_into_its_own_document(
     assert state.fields_read == len(document["string_inverter"]["readings"]) > 0
 
 
-@pytest.mark.parametrize("action", ["run_control_test", "start_inverter"])
+@pytest.mark.parametrize("action", ["run_capability_test", "start_inverter"])
 async def test_a_writing_action_refuses_an_sg(hass: HomeAssistant, action) -> None:
     entry = await _setup(hass, MODE_DIAGNOSTICS)
     device = dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)[0]
@@ -260,7 +260,7 @@ async def test_the_diagnostics_download_carries_the_sg_document(
 
     assert report["entry"]["kind"] == KIND_STRING_INVERTER
     assert report["device"]["model"] == "SG5.0RS"
-    assert report["survey"]["document"] == "string_inverter"
+    assert report["diagnosis"]["document"] == "string_inverter"
     assert SERIAL not in str(report)
 
 

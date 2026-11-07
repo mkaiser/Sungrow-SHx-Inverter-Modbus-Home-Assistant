@@ -13,7 +13,7 @@ A Sungrow accepts **very few simultaneous sessions**, and the recovery is
 - **The signature is progressive**: each retry dies a little further into the
   poll. A bad block fails at the same address every time. Repetition tells
   them apart.
-- **A short retry is not a retry.** The control test's opening reads back off
+- **A short retry is not a retry.** The capability test's opening reads back off
   for **5, 20, 45 and 90** seconds.
 - **The contention is often self-inflicted**: probes and runs opened back to
   back, on top of a polling YAML package.
@@ -32,10 +32,10 @@ A Sungrow accepts **very few simultaneous sessions**, and the recovery is
   [direct](../sources/sh10rt-v112-b001v000p020-3p-anonymous-anon-33472554127-battery-thirdparty-meter-direct-lan-2-summary.md)).
   Register 6100 answered through it, so transport detection still sees the cable.
 - **One write lost the connection at the same place twice**: the charge window's write of
-  register 33213 at [peter-sm](../entities/installation-peter-sm.md), in both control tests of
+  register 33213 at [peter-sm](../entities/installation-peter-sm.md), in both capability tests of
   2026-11-02, over the cable. Whether that is the register or the link is
   [open](../queries/does-writing-33213-drop-the-link-at-peter-sm.md).
 
-Surveys read while Home Assistant polled carry a `contention` block
+Diagnoses read while Home Assistant polled carry a `contention` block
 saying who polled and whether the block read test ran; for example
 [sisu70](../entities/installation-sisu70.md).

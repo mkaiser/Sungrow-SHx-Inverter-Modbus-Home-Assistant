@@ -1,7 +1,7 @@
 ---
 type: concept
 title: Serial anonymization
-tags: [privacy, serial, survey]
+tags: [privacy, serial, diagnosis]
 created: '2026-10-29'
 ---
 
@@ -10,7 +10,7 @@ created: '2026-10-29'
 **No real device serial goes into anything this repository tracks**,
 including this wiki. A serial is a device's identity: Sungrow's support uses
 it to identify an installation, it is printed on the case, and it is the one
-field in a survey that could tie a published reading to a household.
+field in a diagnosis that could tie a published reading to a household.
 The rule is in `AGENTS.md`; this page is how it is carried out.
 
 - **Every published document carries a stand-in**, in a field named for what
@@ -20,9 +20,9 @@ The rule is in `AGENTS.md`; this page is how it is carried out.
   stand-ins (`anon-...`).
 - **The real serial and the full address reach only the transcript**, which
   is written beside the script and gitignored there by name.
-  `tests/test_survey_dependencies.py` holds every name a run writes to that.
+  `tests/test_diagnosis_dependencies.py` holds every name a run writes to that.
   No un-redacted copy of the document is written, so `--save
-  device-survey` cannot put a real serial there whatever it is asked.
+  device-diagnosis` cannot put a real serial there whatever it is asked.
   **A transcript is never a wiki source.**
 - `NEVER_PUBLISH = ("serial",)` filters anything whose *name* mentions a
   serial, both values and key lists.
@@ -36,7 +36,7 @@ The rule is in `AGENTS.md`; this page is how it is carried out.
   the [cross-reference](../sources/cross-reference-modbus-manager-summary.md)
   lists them) are never read: no band and no field covers them.
 - **An iHomeManager documents no serial**, so it has no fixed mask. The
-  survey reads the gaps between its documented registers, and any text found
+  diagnosis reads the gaps between its documented registers, and any text found
   there is masked and published only as a stand-in, with its register and
   length (`ihomemanager.masked_text`, held by `tests/test_ihomemanager.py`).
 - **The tree is checked.** `tests/test_no_real_serials.py` matches the

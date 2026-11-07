@@ -31,7 +31,7 @@ SOURCE = "\n".join(path.read_text(encoding="utf-8") for path in COMPONENT.glob("
 CALLED = set(re.findall(r'texts\(\s*"(\w+)"', SOURCE))
 
 #: Every table key the code names anywhere, which also counts a key chosen
-#: through a variable (`key = "survey_direct"`) or called on the table
+#: through a variable (`key = "diagnosis_direct"`) or called on the table
 #: directly (the repair's `(await async_texts(hass))("...")`).
 USED = {key for key in TABLE if f'"{key}"' in SOURCE}
 

@@ -14,7 +14,7 @@ import pytest
 from sungrow_modbus.hybrid_inverter.registers import InverterFirmwareBlockBattery
 from sungrow_modbus.model import TextField, string, words_text
 
-#: The SH6.0RS's answer, as its survey (#786) recorded it.
+#: The SH6.0RS's answer, as its diagnosis (#786) recorded it.
 SBR_WITH_LEFTOVER = [
     *(0x5342, 0x5242, 0x4355, 0x2D53, 0x5F32, 0x3230, 0x3131, 0x2E30),
     *(0x312E, 0x3330, 0x0034, 0x3400, 0, 0, 0),

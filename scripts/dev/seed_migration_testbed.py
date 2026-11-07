@@ -19,7 +19,7 @@ database directly.
     scripts/dev/develop.sh                        # and now migrate in the UI
 
 The entity id question is asked only in devices mode, which this release
-does not offer (`ONLY_SURVEY_MODE` in the integration's `const.py`). Set
+does not offer (`ONLY_DIAGNOSIS_MODE` in the integration's `const.py`). Set
 it to False locally to review the migration, and do not commit it.
 
 By default the entities come from `doc/legacy_entity_map.json`, the

@@ -9,7 +9,7 @@ created: '2026-11-01'
 
 An [SH10RS](device-sh-rs.md) on [P065](firmware-sunstone-h-b000-v002-p065.md) with an
 [SBH](device-sbh-battery.md) pack, through a [WiNet-S](device-winet-s.md) on Ethernet, with the
-owner's other pollers running. One reading, with a control test.
+owner's other pollers running. One reading, with a capability test.
 
 - **The PV cut through a dongle, on an SH-RS**: 3465 W, 0 W, 3092 W. It puts P065 in
   `CONFIRMED_ON_FIRMWARE`.
@@ -19,6 +19,6 @@ owner's other pollers running. One reading, with a control test.
   trace ([discussion #546](../sources/discussion-546-site-import-power-limit-summary.md)).
 - The stop was refused with an exception, so no restart time.
 
-## Surveys
+## Diagnoses
 
-- [SH10RS, B000.V002.P065, Jam3s97, a WiNet-S on Ethernet, with a control test](../sources/sh10rs-b000v002p065-1p-jam3s97-anon-35122522532-battery-sbh300-winet-lan-summary.md)
+- [SH10RS, B000.V002.P065, Jam3s97, a WiNet-S on Ethernet, with a capability test](../sources/sh10rs-b000v002p065-1p-jam3s97-anon-35122522532-battery-sbh300-winet-lan-summary.md)

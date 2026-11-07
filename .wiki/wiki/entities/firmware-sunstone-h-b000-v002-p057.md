@@ -16,6 +16,6 @@ created: '2026-11-02'
   acceptance, as on [P065](firmware-sunstone-h-b000-v002-p065.md).
 - A restart: stopped in 4 s, running 291 s after the start command.
 
-## Surveys
+## Diagnoses
 
-- [SH10RS, B000.V002.P057, bleughb, a WiNet-S on WiFi, with a control test](../sources/sh10rs-b000v002p057-1p-bleughb-anon-92100523190-battery-sungrow-winet-wlan-summary.md)
+- [SH10RS, B000.V002.P057, bleughb, a WiNet-S on WiFi, with a capability test](../sources/sh10rs-b000v002p057-1p-bleughb-anon-92100523190-battery-sungrow-winet-wlan-summary.md)

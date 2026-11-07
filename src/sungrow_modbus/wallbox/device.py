@@ -13,7 +13,7 @@ Sungrow inverter grants very few sessions on.
 
 **Nothing here writes.** The write table in `scripts/generate/tables/writes.py` is the
 only place a writable register is declared and no wallbox register is in it. The
-one thing that writes to a wallbox is `control_test`, through a port its driver
+one thing that writes to a wallbox is `capability_test`, through a port its driver
 supplies, only with leave and only to measure a scale. That is a decision, not an
 omission: the registers that would start and stop a
 charge are known -- holding 21211 and 21212 -- and starting somebody's car
@@ -90,7 +90,7 @@ class SungrowWallbox(MappedDevice):
 
         The serial sits at input registers 21201-21206, just below the name
         the identity probe reads at 21216. `async_read_serial` reads it for
-        the device registry; a survey publishes only its stand-in.
+        the device registry; a diagnosis publishes only its stand-in.
         """
         return None
 
@@ -98,7 +98,7 @@ class SungrowWallbox(MappedDevice):
         """Read the wallbox's own serial, or None where it does not read as text.
 
         For the device registry, which shows it to the owner. Never for a
-        document: a survey masks these words and carries
+        document: a diagnosis masks these words and carries
         `wallbox.serial_stand_in` instead. Raises on a failed read, because
         only the caller can tell a refusal from a timeout.
         """

@@ -9,7 +9,7 @@ results_count: 3
 
 # Does writing 33213 drop the link at peter-sm?
 
-**Open.** Both control tests at [peter-sm](../entities/installation-peter-sm.md) on 2026-11-02,
+**Open.** Both capability tests at [peter-sm](../entities/installation-peter-sm.md) on 2026-11-02,
 13 minutes apart over the inverter's own LAN port on
 [P023](../entities/firmware-sapphire-h-b001-v000-p023.md), lost the connection on the same write:
 window 1's end minute, register 33213, after the start hour, start minute and end hour
@@ -23,7 +23,7 @@ word 36, and restored every word
 
 Against the register: the same window, 33213 included, was written over the cable on P023 at
 [fwitten](../entities/installation-fwitten.md), and the window did as it was told
-([the survey](../sources/sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan-2-summary.md)).
+([the diagnosis](../sources/sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan-2-summary.md)).
 For it: the same write three times, on two days, where [contention](../concepts/contention.md) dies a little
 further into a run each time.
 

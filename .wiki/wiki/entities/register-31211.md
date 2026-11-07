@@ -41,15 +41,15 @@ decides is 13250, not 2582.
 | 0x55 or 0xAA | binary sensor **PV generation cut** |
 | ...and its firmware is in `CONFIRMED_ON_FIRMWARE` | switch **Cut PV generation** |
 
-`CONFIRMED_ON_FIRMWARE` holds P022 and P023 on the SH-RT, each confirmed by a control test
+`CONFIRMED_ON_FIRMWARE` holds P022 and P023 on the SH-RT, each confirmed by a capability test
 over the inverter's own LAN port: P023 on fwitten's master (1213 W, 0 W,
 1199 W), P022 on [gerd's](installation-gerd.md) SH8.0RT-V112 (2938 W, 0 W,
-1913 W; [the survey](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-summary.md)).
+1913 W; [the diagnosis](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-summary.md)).
 It also holds the SH-RS's P065, confirmed through a WiNet-S at
 [Jam3s97](installation-jam3s97.md)'s (3465 W, 0 W, 3092 W): the dongle forwards the write, and
 the behaviour is the evidence a dongle cannot spoil. And the SH-T's P071, confirmed the same way
 at [ra1k-0](installation-ra1k-0.md)'s SH20T (20421 W, 28 W, 20395 W;
-[the survey](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2-summary.md)). The cut stops all PV, whatever the house draws. See [firmware gating](../concepts/firmware-gating.md).
+[the diagnosis](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2-summary.md)). The cut stops all PV, whatever the house draws. See [firmware gating](../concepts/firmware-gating.md).
 
 **The cut is a ramp.** After `0xAA`, DC power holds for about 6 s and reaches
 0 W about 20 s after the write. After `0x55` it returns about 8 s later and is

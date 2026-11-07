@@ -47,7 +47,7 @@ GitHub's own generator would list every commit since 2022.
 Before tagging:
 
 - `make ci` runs what CI runs, including the build and the gate that the
-  built wheel provides every import the integration and the survey make.
+  built wheel provides every import the integration and the diagnosis make.
 - Run hassfest locally: `make refs`, then `make hassfest`
   (`scripts/dev/hassfest.sh`). Current core's hassfest needs the Home Assistant
   of the same month, so it runs in `.venv-marketplace/` (2026.11, created on
@@ -64,7 +64,7 @@ Before tagging:
   green before anyone is told to install something.
 
 **Versioning.** One version, in `pyproject.toml`, mirrored into the
-manifest and the survey scripts by `scripts/release/sync_version.py` and
+manifest and the diagnosis scripts by `scripts/release/sync_version.py` and
 checked in CI, pytest and at release. It accepts only the normalised PEP 440
 spellings (`0.1.0a1`, `b1`, `rc1`), which `release.yml` marks pre-release.
 `v*` tags are the integration; the YAML package keeps its dated scheme.
@@ -94,11 +94,11 @@ The host is genuinely better for two things:
 - **Any site the container cannot route to**, though in practice it follows the
   host's routing already.
 
-[device-survey/scripts/survey.sh](../device-survey/scripts/survey.sh)
-(`survey.cmd` on Windows) is built for this: it runs the survey through `uv`,
+[device-diagnosis/scripts/diagnosis.sh](../device-diagnosis/scripts/diagnosis.sh)
+(`diagnosis.cmd` on Windows) is built for this: it runs the diagnosis through `uv`,
 which fetches Python and the pinned library itself, so it runs on the host
 with nothing set up. It writes its document and transcript beside itself, in
-`device-survey/`; when the workspace is a bind mount from the host
+`device-diagnosis/`; when the workspace is a bind mount from the host
 folder, that is visible on both sides.
 
 ### The mDNS question
@@ -108,7 +108,7 @@ and a run **on the host**, not in the container:
 
 ```bash
 pip install "sungrow-modbus[discovery]"     # zeroconf, for this check only
-python device-survey/scripts/python/probe.py mdns
+python device-diagnosis/scripts/python/probe.py mdns
 ```
 
 If the dongle advertises its serial and model, host discovery becomes free and
@@ -120,19 +120,19 @@ answer it.
 
 | Command | Runs | Because |
 | --- | --- | --- |
-| `python device-survey/scripts/python/probe.py mdns` | **host only** | Multicast does not cross the Docker bridge; needs the `discovery` extra |
-| `make scan HOST=…`, `probe.py sweep/units/capabilities/dump`, `blocks.py` | either | They run on the device library: the editable install in the container, or the version `survey.sh` fetches through uv on the host |
+| `python device-diagnosis/scripts/python/probe.py mdns` | **host only** | Multicast does not cross the Docker bridge; needs the `discovery` extra |
+| `make scan HOST=…`, `probe.py sweep/units/capabilities/dump`, `blocks.py` | either | They run on the device library: the editable install in the container, or the version `diagnosis.sh` fetches through uv on the host |
 
 ## 3. Capturing a system
 
 ```bash
-make scan HOST=<host>          # or device-survey/scripts/survey.sh <host>
+make scan HOST=<host>          # or device-diagnosis/scripts/diagnosis.sh <host>
 make scan-local HOST=<host>    # the same on this tree's library
 ```
 
-What the survey does and writes is in
-[device-survey/README.md](../device-survey/README.md). To publish a
-document, move it into `device-survey/results/inverter/` (or `wallbox/`),
+What the diagnosis does and writes is in
+[device-diagnosis/README.md](../device-diagnosis/README.md). To publish a
+document, move it into `device-diagnosis/results/inverter/` (or `wallbox/`),
 run `make gen` for `doc/compatibility.md`, and ingest it into the wiki
 (`.wiki/AGENTS.md`). Never the `sungrow-scan-*.log` transcript: it carries
 the real serial and addresses. **Ask an owner before publishing their
@@ -220,7 +220,7 @@ anything committed is public and stays in the history even if deleted later.
 The protections in place:
 
 - `.testdata/` is gitignored and holds the production database copy and
-  anything else from a real installation. The survey and the control test
+  anything else from a real installation. The diagnosis and the capability test
   write beside themselves instead, and `.gitignore` names each file they
   write.
 - Every published document carries a hashed stand-in for the serial, and the

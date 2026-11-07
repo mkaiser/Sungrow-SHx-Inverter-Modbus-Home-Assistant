@@ -1,24 +1,24 @@
 ---
 type: source
 title: sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-2.json
-source_path: ../device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-2.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-2.json
 ingested: '2026-10-31'
 created: '2026-10-31'
 tags:
-  - survey
+  - diagnosis
   - sh10rt-v112
   - sapphire-h-b001-v000-p023
   - peter-sm
   - direct_lan
-  - control-test
+  - capability-test
 ---
 
 # SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, third reading
 
-Capability survey of one inverter, read 2026-10-30 from Home Assistant on 0.1.0a19, issue #785,
-with a control test. The survey derives the same name as this installation's second reading, so
-the file carries the survey's number for a taken name, `-2`. Source:
-`device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-2.json`.
+Capability diagnosis of one inverter, read 2026-10-30 from Home Assistant on 0.1.0a19, issue #785,
+with a capability test. The diagnosis derives the same name as this installation's second reading, so
+the file carries the diagnosis's number for a taken name, `-2`. Source:
+`device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-2.json`.
 
 The issue carried a second run 14 minutes earlier, from an older release (14 components, no PV
 cut capability), not committed: same readbacks, 13074 times ten, forced discharge and export
@@ -54,10 +54,10 @@ New against the second reading: [31211](../entities/register-31211.md) is read (
 Polled by this Home Assistant, held off for the run (15 components). No other client reported.
 See [contention](../concepts/contention.md).
 
-## Control test
+## Capability test
 
 Outcome **0**: every planned check ran and every readback matched. Over the cable, so leg B is
-evidence. See [the control test](../concepts/control-test.md).
+evidence. See [the capability test](../concepts/capability-test.md).
 
 | Field | Register | Verdict |
 | --- | --- | --- |

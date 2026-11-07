@@ -16,9 +16,9 @@ from modbus_connection.mock import MockModbusUnit
 from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.sungrow_modbus.const import (
-    CONF_CONTROL_TEST_EXPORT,
-    CONF_CONTROL_TEST_PV_CUT,
-    CONF_CONTROL_TEST_RESTART,
+    CONF_CAPABILITY_TEST_EXPORT,
+    CONF_CAPABILITY_TEST_PV_CUT,
+    CONF_CAPABILITY_TEST_RESTART,
     CONF_UNIT_ID,
     DOMAIN,
 )
@@ -52,9 +52,9 @@ SCHEDULE: dict[int, int] = {
 
 async def _setup(hass: HomeAssistant, unit: MockModbusUnit) -> MockConfigEntry:
     options: dict[str, Any] = {
-        CONF_CONTROL_TEST_RESTART: False,
-        CONF_CONTROL_TEST_EXPORT: False,
-        CONF_CONTROL_TEST_PV_CUT: False,
+        CONF_CAPABILITY_TEST_RESTART: False,
+        CONF_CAPABILITY_TEST_EXPORT: False,
+        CONF_CAPABILITY_TEST_PV_CUT: False,
     }
     entry = MockConfigEntry(
         domain=DOMAIN,

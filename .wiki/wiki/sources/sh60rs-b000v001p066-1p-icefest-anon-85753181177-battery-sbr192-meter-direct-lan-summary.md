@@ -1,16 +1,16 @@
 ---
 type: source
 title: sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan.json
-source_path: ../device-survey/results/inverter/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan.json
+source_path: ../device-diagnosis/results/inverter/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan.json
 ingested: '2026-11-06'
 created: '2026-11-06'
 tags:
-  - survey
+  - diagnosis
   - sh60rs
   - sunstone-h-b000-v001-p066
   - icefest
   - rs485
-  - control-test
+  - capability-test
 ---
 
 # SH6.0RS, B000.V001.P066, icefest, RS485 through a Waveshare converter
@@ -18,8 +18,8 @@ tags:
 The same inverter as [the WiNet-S reading](sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-winet-lan-summary.md), read ten minutes later, around
 20:17 UTC, **over its RS485 port through a Waveshare RS485-to-Ethernet converter**, as the owner
 wrote in issue #786. A diagnostics download from Home Assistant 2026.11.0 and 0.1.0a27, with the
-control test and a restart, committed as it was. Source:
-`device-survey/results/inverter/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan.json`.
+capability test and a restart, committed as it was. Source:
+`device-diagnosis/results/inverter/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan.json`.
 
 | | |
 | --- | --- |
@@ -39,7 +39,7 @@ battery firmware, the sub-controller and the history included, as on a cable.
 **The first SBR192 read on a direct link**: its cell and module blocks answer at unit 200, which
 no dongle reading of an SBR192 could show.
 
-## Control test
+## Capability test
 
 Outcome **3**: ran, with checks skipped. Over a direct link, so the readbacks are evidence.
 

@@ -155,7 +155,7 @@ def ceiling(
     is the weakest, because it is current times whatever voltage the pack
     happens to be sitting at, which reads high on a full battery.
 
-    Lifted out of the number entity so the entity and the control test cannot
+    Lifted out of the number entity so the entity and the capability test cannot
     disagree about what a battery will take -- a disagreement that would show
     up as the test writing a value the entity would have refused.
     """

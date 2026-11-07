@@ -12,8 +12,8 @@ created: '2026-10-31'
 - [Register 31211](register-31211.md) answers 0x55.
 - The battery firmware string (13280) carries bytes after its NUL terminator, which the library
   now drops.
-- Writes are unmeasured: no control test on this firmware.
+- Writes are unmeasured: no capability test on this firmware.
 
-## Surveys
+## Diagnoses
 
 - [SH6.0RS, B000.V001.P068, anonymous, a WiNet-S](../sources/sh60rs-b000v001p068-1p-anonymous-anon-17579213881-battery-sbr192-winet-summary.md)

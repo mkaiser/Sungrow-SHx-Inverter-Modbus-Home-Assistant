@@ -1,10 +1,10 @@
 """What the options page says the integration has already measured.
 
-The survey section tells an owner which path this endpoint is, so that nobody
+The diagnosis section tells an owner which path this endpoint is, so that nobody
 answers a question that has been measured. Register 6100 decides it, and it
 has three answers, not two: answered is a cable, refused is a communication
 module, and a busy or lost read is neither -- it is the one case the owner is
-asked about, because a guess here is published in `survey_transport`.
+asked about, because a guess here is published in `diagnosis_transport`.
 """
 
 from __future__ import annotations

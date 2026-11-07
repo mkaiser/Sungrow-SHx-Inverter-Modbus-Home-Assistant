@@ -1,7 +1,7 @@
 # Moving from the YAML package to the integration
 
 > **Not in the preview releases yet.** The preview releases set an entry up
-> for diagnostics only: it identifies the inverter and runs the survey, and
+> for diagnostics only: it identifies the inverter and runs the diagnosis, and
 > creates no readings, so nothing described below happens and your YAML
 > package keeps running untouched. This guide describes the ordinary setup,
 > which comes in a later release.

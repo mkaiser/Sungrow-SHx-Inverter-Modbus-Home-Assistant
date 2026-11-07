@@ -1,11 +1,11 @@
 ---
 type: source
 title: sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan.json
-source_path: ../device-survey/results/inverter/sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan.json
+source_path: ../device-diagnosis/results/inverter/sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
-  - survey
+  - diagnosis
   - sh15t
   - pearl-h-b000-v000-p071
   - fullhd23
@@ -14,7 +14,7 @@ tags:
 
 # SH15T, B000.V000.P071, FullHD23, a WiNet-S on Ethernet
 
-Capability survey of one inverter, read 2026-10-27. Source: `device-survey/results/inverter/sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan.json`.
+Capability diagnosis of one inverter, read 2026-10-27. Source: `device-diagnosis/results/inverter/sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan.json`.
 
 | | |
 | --- | --- |

@@ -1,23 +1,23 @@
 ---
 type: source
 title: sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan.json
-source_path: ../device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan.json
 ingested: '2026-10-30'
 created: '2026-10-30'
 tags:
-  - survey
+  - diagnosis
   - sh10rt-v112
   - sapphire-h-b001-v000-p023
   - peter-sm
   - direct_lan
-  - control-test
+  - capability-test
 ---
 
 # SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port
 
-Capability survey of one inverter, read 2026-10-29 from Home Assistant, issue #785, with a
-control test. The issue carried two files a minute apart; this is the second, which holds the
-first's reading plus the control test. Source: `device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan.json`.
+Capability diagnosis of one inverter, read 2026-10-29 from Home Assistant, issue #785, with a
+capability test. The issue carried two files a minute apart; this is the second, which holds the
+first's reading plus the capability test. Source: `device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan.json`.
 
 | | |
 | --- | --- |
@@ -44,10 +44,10 @@ Every component answered, 25 of 25 blocks. **Intermittent**, over three rounds: 
 Polled by this Home Assistant, held off for the run (14 components). No other client reported.
 See [contention](../concepts/contention.md).
 
-## Control test
+## Capability test
 
 Outcome **3**: ran, but checks were skipped or inconclusive. Over the cable, so leg B is
-evidence. See [the control test](../concepts/control-test.md).
+evidence. See [the capability test](../concepts/capability-test.md).
 
 | Field | Register | Verdict |
 | --- | --- | --- |
@@ -67,9 +67,9 @@ evidence. See [the control test](../concepts/control-test.md).
 - Behaviour, forced charge and forced discharge: **nothing measurable happened**, 0 W before,
   during and after. Not evidence about the inverter: before the run the house held
   `battery_max_charge_power` and `battery_max_discharge_power` at **10 W** (the first reading had
-  10000 W), and the forced checks commanded 1250 W under those caps. PV was 0 W. The control
+  10000 W), and the forced checks commanded 1250 W under those caps. PV was 0 W. The capability
   test now skips such a check and names the limit
-  ([the control test](../concepts/control-test.md)).
+  ([the capability test](../concepts/capability-test.md)).
 - Export limit and charge ceiling: not checked (SoC 26.3 %, and a 3010 W discharge still
   imported 328 W, short of the 1812 W a cap needs to bind against).
 - Restore: every register back and read back.

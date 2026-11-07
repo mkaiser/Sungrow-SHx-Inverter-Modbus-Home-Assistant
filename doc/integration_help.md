@@ -18,7 +18,7 @@ does not work.
   can set, for example to charge from the grid at a cheap tariff or to cap
   export where the grid operator requires it.
 - **Stopping at a negative price**: the actions below.
-- **Telling the project what your installation can do**: the survey reads
+- **Telling the project what your installation can do**: the diagnosis reads
   it and writes a document, so support for your model is measured rather
   than guessed.
 
@@ -31,15 +31,15 @@ Sungrow device to act on.
 | --- | --- |
 | `sungrow_modbus.start_inverter` | Boots an inverter that has been shut down |
 | `sungrow_modbus.stop_inverter` | Shuts it down: no generation, no charging, no discharging, until started again |
-| `sungrow_modbus.run_survey` | Reads the installation and produces the survey document; writes nothing. Same as the **Run read only diagnosis** button |
-| `sungrow_modbus.run_control_test` | Writes each control, checks it and puts it back. **Changes settings while it runs**; same as **Run complete diagnosis and tests**. Read [what it does](../device-survey/README.md#it-reads-and-writes-only-if-you-say-yes) first |
+| `sungrow_modbus.run_diagnosis` | Reads the installation and produces the diagnosis document; writes nothing. Same as the **Run read only diagnosis** button |
+| `sungrow_modbus.run_capability_test` | Writes each control, checks it and puts it back. **Changes settings while it runs**; same as **Run complete diagnosis and tests**. Read [what it does](../device-diagnosis/README.md#it-reads-and-writes-only-if-you-say-yes) first |
 
 Start and stop are actions rather than buttons on purpose: a button has no
-confirmation dialog. Who may call them, and who may run the control test, is
+confirmation dialog. Who may call them, and who may run the capability test, is
 under **Configure → Permissions**; both default to administrators.
 
 An action that cannot be carried out says why: the device is not loaded, a
-survey is already running, or the inverter did not take the write.
+diagnosis is already running, or the inverter did not take the write.
 
 An automation that stops the inverter when the price of export goes negative,
 and starts it again when it recovers:
@@ -82,23 +82,23 @@ automation:
   - an SBR battery's cell and module details.
 
   A dongle also answers *0* for hardware the inverter does not have, and
-  reads back a written setting from a stale cache, so the control test
+  reads back a written setting from a stale cache, so the capability test
   through a dongle can only judge what the inverter visibly does.
 - **WiFi or Ethernet** on a dongle cannot be told apart over Modbus; the
-  survey asks you.
+  diagnosis asks you.
 - **On a three-wire grid (3P3L, no neutral)** the inverter reports the
   voltages *between* phases (A-B, B-C, C-A, about 400 V) where a four-wire
   one reports each phase against neutral (about 230 V). The integration
   reads which one it is from the inverter and, on 3P3L, creates no *Phase A/B/C
   voltage* or *Phase A/B/C power*, rather than show line voltages under a
   phase name and powers about 1.7 times too high. The phase currents are
-  created as usual. No 3P3L inverter has been surveyed yet.
+  created as usual. No 3P3L inverter has been diagnosed yet.
 - **Not supported yet:** the iHomeManager, the Sungrow Logger, SBH batteries,
   writing to the wallbox, and writing to an SG string inverter.
 - **The preview sets up diagnostics only**: it identifies the inverter and
-  runs the survey, and creates no sensors for the readings.
+  runs the diagnosis, and creates no sensors for the readings.
 
-[compatibility.md](compatibility.md) lists every surveyed model and firmware.
+[compatibility.md](compatibility.md) lists every diagnosed model and firmware.
 
 ## An SG string inverter
 

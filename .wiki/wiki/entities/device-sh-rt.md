@@ -8,7 +8,7 @@ created: '2026-10-29'
 # SH-RT hybrid inverters
 
 Sungrow's three-phase residential hybrids: SH10RT, SH10RT-20, SH10RT-V112,
-SH8.0RT-V112, SH6.0RT-V112 (`0x0E0D`), SH5.0RT-V112 (`0x0E0C`, [one house](installation-mahagon.md)) and SH6.0RT-20 (`0x0E11`, [two surveys](../sources/sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan-summary.md), [the other on P022](../sources/sh60rt-20-b001v000p022-3p-anonymous-anon-45132049665-battery-sbr128-meter-direct-lan-summary.md)) in this corpus. The firmware family is `SAPPHIRE-H`. Most of what
+SH8.0RT-V112, SH6.0RT-V112 (`0x0E0D`), SH5.0RT-V112 (`0x0E0C`, [one house](installation-mahagon.md)) and SH6.0RT-20 (`0x0E11`, [two diagnoses](../sources/sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan-summary.md), [the other on P022](../sources/sh60rt-20-b001v000p022-3p-anonymous-anon-45132049665-battery-sbr128-meter-direct-lan-summary.md)) in this corpus. The firmware family is `SAPPHIRE-H`. Most of what
 the integration knows was measured on these.
 
 ## What is established
@@ -35,19 +35,19 @@ the integration knows was measured on these.
 - **A Modbus stop and start.** About 2 s to stopped. 3 to 4 minutes back to
   `0x0040 Running` in daylight and over six at night, then up to 20 s to
   generate; see [register 13000](register-13000.md) and the
-  [control test](../concepts/control-test.md).
+  [capability test](../concepts/capability-test.md).
 - **The site import limit, [register 32998](register-32998.md), reads 2000 (20.00 kW)** on every
-  SH-RT surveyed but one, where the owner sets it. On P020 it holds during a forced charge
+  SH-RT diagnosed but one, where the owner sets it. On P020 it holds during a forced charge
   ([the run](../sources/mkaiser-import-limit-2026-11-07-summary.md)); on one SH10RT-V112 it does not, by its owner's report;
   [open](../queries/does-the-import-limit-hold-during-a-forced-charge.md).
 - **Inverter-reported load misses another generator.** `load_power` is the
   inverter's own output plus grid import; see
   [external generator](../concepts/external-generator.md).
 
-## Surveys
+## Diagnoses
 
-Every SH-RT survey is listed in the [index](../index.md) under Sources.
-The ones with a control test:
+Every SH-RT diagnosis is listed in the [index](../index.md) under Sources.
+The ones with a capability test:
 [mkaiser](installation-mkaiser.md), [gerd](installation-gerd.md),
 [bar12](installation-bar12.md), [fwitten](installation-fwitten.md),
 [peter-sm](installation-peter-sm.md) and [firetribe](installation-firetribe.md). Read only:

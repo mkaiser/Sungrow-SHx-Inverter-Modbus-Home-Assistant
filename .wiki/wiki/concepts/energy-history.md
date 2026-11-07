@@ -38,7 +38,7 @@ is [not evidence](zero-means-absent.md). See [transport detection](transport-det
 
 - gerd's yearly PV and export slots exceed their months by the same 1610.3 kWh in 2026, and
   read 21429.6 and 28914.4 kWh of PV for 2024 and 2025 from an 8 kW inverter
-  ([the survey](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-2-summary.md)).
+  ([the diagnosis](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-2-summary.md)).
 - mkaiser's 2024 slots read 37461.2 kWh of PV and 32834.6 kWh of export, about three times any
   other year from a 10 kW inverter.
 - fwitten's master reads more export from PV than PV generation, and 0 direct consumption since

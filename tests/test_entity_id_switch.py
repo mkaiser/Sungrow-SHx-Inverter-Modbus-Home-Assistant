@@ -35,11 +35,11 @@ from custom_components.sungrow_modbus.const import (
     ENTITY_IDS_MIGRATE,
     ENTITY_IDS_NEW,
     SECTION_ADVANCED,
-    SECTION_CONTROL_TEST,
+    SECTION_CAPABILITY_TEST,
+    SECTION_DIAGNOSIS,
     SECTION_EXTERNAL,
     SECTION_PERMISSIONS,
     SECTION_POLLING,
-    SECTION_SURVEY,
 )
 from custom_components.sungrow_modbus.sensor_descriptions import SENSOR_DESCRIPTIONS
 from homeassistant.components.recorder import Recorder, history
@@ -114,8 +114,8 @@ def _submission(entity_ids: str) -> dict:
         SECTION_PERMISSIONS: {},
         SECTION_EXTERNAL: {},
         SECTION_ADVANCED: {},
-        SECTION_SURVEY: {},
-        SECTION_CONTROL_TEST: {},
+        SECTION_DIAGNOSIS: {},
+        SECTION_CAPABILITY_TEST: {},
     }
 
 

@@ -11,7 +11,7 @@ entity the integration can create on the inverter. Where the models in one
 column disagree, the cell says **split** and names them: that is the
 assumption failing, and the place to look.
 
-Each survey's raw `register_dump` is replayed through the integration's own
+Each diagnosis's raw `register_dump` is replayed through the integration's own
 decoding -- the field's address, word count and `nan` -- and its own
 `capabilities.probe` and `resolve`, so a cell says what that device answered
 for the registers the entity reads, not what a hand-kept list claims. A
@@ -25,7 +25,7 @@ firmware that lacks it.
 
 An SBR or SBH pack gets a table of its own, columned by its BCU firmware: it
 is a device on its own unit, with firmware of its own. Its evidence is the
-survey's `battery_pack` block, which the library already decoded, rather than
+diagnosis's `battery_pack` block, which the library already decoded, rather than
 the inverter's dump.
 """
 
@@ -54,16 +54,16 @@ import review_names  # noqa: E402
 from sungrow_modbus import Capability  # noqa: E402
 from sungrow_modbus.battery.device import PUBLISHED_NAMES  # noqa: E402
 from sungrow_modbus.battery.power import model_for_capacity  # noqa: E402
-from sungrow_modbus.control_test import coverage, procedure  # noqa: E402
+from sungrow_modbus.capability_test import coverage, procedure  # noqa: E402
+from sungrow_modbus.diagnosis_document import OUTPUT_TYPES, capability_test_block  # noqa: E402
 from sungrow_modbus.dump import DUMP_BANDS, DUMP_MASKED  # noqa: E402
 from sungrow_modbus.hybrid_inverter import capabilities, components, layout, registers  # noqa: E402
 from sungrow_modbus.model import SETTLES_NOTHING, present  # noqa: E402
-from sungrow_modbus.survey_document import OUTPUT_TYPES  # noqa: E402
 
 OUTPUT = REPO / "doc" / "firmware_support.md"
 
 #: Capabilities that say what a house has fitted rather than what the
-#: firmware can do. A survey without one marks the entities needing it *not
+#: firmware can do. A diagnosis without one marks the entities needing it *not
 #: fitted*: a house without a battery is no evidence about battery registers.
 WIRING = frozenset(
     {
@@ -74,7 +74,7 @@ WIRING = frozenset(
     }
 )
 
-#: Registers that report a part of the installation, by part. Where a survey
+#: Registers that report a part of the installation, by part. Where a diagnosis
 #: lacks the part, a register that does not answer is *not fitted* rather
 #: than absent; one that does answer is still evidence. The meter registers
 #: carry no `requires` -- the integration creates them everywhere -- so this
@@ -98,7 +98,7 @@ PART_FIELDS: dict[str, frozenset[str]] = {
 #: The domains an owner writes to, where a confirmed write is worth a mark.
 WRITABLE = frozenset({"number", "switch", "select", "time"})
 
-#: One survey's answer for one entity, best first: how a column's surveys
+#: One diagnosis's answer for one entity, best first: how a column's diagnoses
 #: combine is decided by `_cell`.
 YES, ZERO, NO, NOT_FITTED, UNTESTED = "yes", "zero", "no", "not fitted", "untested"
 
@@ -113,7 +113,7 @@ MARKS = {
 
 @dataclass(frozen=True)
 class Reading:
-    """One survey, reduced to what the table needs."""
+    """One diagnosis, reduced to what the table needs."""
 
     label: str
     model: str
@@ -124,10 +124,10 @@ class Reading:
     capabilities: frozenset[Capability]
     #: The parts of `PART_FIELDS` this house has.
     parts: frozenset[str]
-    #: Fields whose write the control test read back as written, over a cable.
+    #: Fields whose write the capability test read back as written, over a cable.
     written: frozenset[str]
-    #: The document's control test block, empty where the run only read.
-    control_test: dict[str, Any] = dataclass_field(default_factory=dict)
+    #: The document's capability test block, empty where the run only read.
+    capability_test: dict[str, Any] = dataclass_field(default_factory=dict)
     #: The document's `export_scale` block, empty where it was not asked.
     export_scale: dict[str, Any] = dataclass_field(default_factory=dict)
 
@@ -165,7 +165,7 @@ FIELDS = _fields()
 
 
 class NotRead(Exception):
-    """An address the survey's dump never reached: no evidence either way."""
+    """An address the diagnosis's dump never reached: no evidence either way."""
 
 
 def _masked(space: str, address: int) -> bool:
@@ -297,12 +297,12 @@ def _parts(
 
 
 def _written(document: dict, dongle: bool) -> frozenset[str]:
-    """Return the fields the control test wrote and read back as written.
+    """Return the fields the capability test wrote and read back as written.
 
     Over a cable only: through a WiNet-S a read-back can be stale, so only
     the behavioural leg is evidence there, and that is `CONFIRMED_ON_FIRMWARE`.
     """
-    test = document.get("control_test") or {}
+    test = capability_test_block(document) or {}
     conditions = test.get("conditions") or {}
     if dongle or conditions.get("simulated") or conditions.get("dry_run"):
         return frozenset()
@@ -314,7 +314,7 @@ def _written(document: dict, dongle: bool) -> frozenset[str]:
 
 
 def _readings() -> tuple[list[Reading], list[str]]:
-    """Return every survey that can be placed, and the labels of those that cannot."""
+    """Return every diagnosis that can be placed, and the labels of the rest."""
     readings: list[Reading] = []
     skipped: list[str] = []
     for label, document in _reports():
@@ -337,7 +337,7 @@ def _readings() -> tuple[list[Reading], list[str]]:
                 capabilities=granted,
                 parts=_parts(document, dongle, granted),
                 written=_written(document, dongle),
-                control_test=document.get("control_test") or {},
+                capability_test=dict(capability_test_block(document) or {}),
                 export_scale=document.get("export_scale") or {},
             )
         )
@@ -357,7 +357,7 @@ def _reads(description: object) -> tuple[str, ...]:
 
 
 def _capability_answer(reading: Reading, capability: Capability) -> str:
-    """Return what a survey says about a capability the integration probes.
+    """Return what a diagnosis says about a capability the integration probes.
 
     YES where the integration granted it. Otherwise the probe's own registers
     decide between absent and *cannot tell*: an all-zero answer is absent to
@@ -380,7 +380,7 @@ def _capability_answer(reading: Reading, capability: Capability) -> str:
 
 
 def _answer(reading: Reading, description: object) -> str:
-    """Return what one survey says about one entity."""
+    """Return what one diagnosis says about one entity."""
     fields = _reads(description)
     if not fields:
         return UNTESTED
@@ -419,7 +419,7 @@ def _confirmed(column: Column, readings: list[Reading], description: object) -> 
     return any(field in reading.written for reading in readings)
 
 
-#: How far the survey tests an entity, weakest first.
+#: How far the diagnosis tests an entity, weakest first.
 READ, WRITTEN, WATCHED = "read", "written", "watched"
 
 
@@ -439,10 +439,10 @@ def _dumped(name: str) -> bool:
 
 
 def _coverage(domain: str, description: object) -> str:
-    """Return how far the survey tests an entity, whatever any one house did.
+    """Return how far the diagnosis tests an entity, whatever any one house did.
 
     *read* where the raw dump reaches its registers, so a column can answer
-    for it; *written* where the control test's readback walk writes it and
+    for it; *written* where the capability test's readback walk writes it and
     checks the raw word; *watched* where a behavioural check writes it and
     judges what the inverter did. Empty where none of them reaches it.
     """
@@ -463,7 +463,7 @@ def _coverage(domain: str, description: object) -> str:
 
 
 def _cell(answers: list[tuple[Any, str]], write: bool) -> str:
-    """Combine one column's surveys into a cell.
+    """Combine one column's diagnoses into a cell.
 
     Untested and not-fitted readings say nothing about the firmware, so they
     drop out first; what remains either agrees or is a **split**.
@@ -562,9 +562,9 @@ def _exception_names(klass: type) -> set[str]:
     return names
 
 
-#: The exception names a survey records that are the device declining, and so
+#: The exception names a diagnosis records that are the device declining, and so
 #: evidence the register is not there. Anything else -- a link failure, a busy
-#: device, or an older survey that did not record the type -- settles nothing
+#: device, or an older diagnosis that did not record the type -- settles nothing
 #: (`.wiki/wiki/concepts/failed-read-is-not-refusal.md`).
 REFUSALS = frozenset(
     _exception_names(ModbusExceptionError)
@@ -578,7 +578,7 @@ MODULE_FIELD = re.compile(r"_module_(\d+)$")
 
 @dataclass(frozen=True)
 class PackReading:
-    """One survey's reading of a battery pack, on the pack's own unit."""
+    """One diagnosis's reading of a battery pack, on the pack's own unit."""
 
     label: str
     model: str
@@ -587,7 +587,7 @@ class PackReading:
     dongle: bool
     values: dict[str, object]
     #: Published component name to the exception it failed with, None where
-    #: the survey recorded no type.
+    #: the diagnosis recorded no type.
     silent: dict[str, str | None]
 
 
@@ -611,7 +611,7 @@ def _silent(readings: dict) -> dict[str, str | None]:
 def _pack_readings() -> tuple[list[PackReading], list[str]]:
     """Return the pack readings that can be placed, and the labels of the rest.
 
-    The firmware is the BCU string the inverter reports at 13280. A survey that
+    The firmware is the BCU string the inverter reports at 13280. A diagnosis that
     names a pack firmware but read no pack is left out, and one with neither
     is a house without a Sungrow pack.
     """
@@ -646,7 +646,7 @@ def _pack_readings() -> tuple[list[PackReading], list[str]]:
 
 
 def _pack_answer(reading: PackReading, description: object) -> str:
-    """Return what one survey says about one pack entity."""
+    """Return what one diagnosis says about one pack entity."""
     field = str(getattr(description, "field", ""))
     component = PUBLISHED_NAMES[str(getattr(description, "component", ""))]
     if component in reading.silent:
@@ -731,7 +731,7 @@ def _summary(
         for i, cell in enumerate(cells)
         if cell.startswith("**split**")
     ]
-    lines = ["### What the surveys say so far", ""]
+    lines = ["### What the diagnoses say so far", ""]
     if splits:
         lines += [
             f"**{len(splits)} cell(s) split**: {what} on one firmware disagree.",
@@ -744,7 +744,7 @@ def _summary(
     else:
         lines += [
             f"**No cell is split.** Wherever two {what} on one firmware were both",
-            "surveyed, they answered every entity's registers alike, once what a",
+            "diagnosed, they answered every entity's registers alike, once what a",
             "house has fitted is set aside. The assumption holds on this evidence;",
             f"it is tested only where a column pools more than one of the {what}.",
         ]
@@ -764,11 +764,11 @@ def _column_key(
     skipped: list[str],
     why: str,
 ) -> list[str]:
-    """Return a part's column key, and the surveys it could not place."""
+    """Return a part's column key, and the diagnoses it could not place."""
     lines = [
         "### Columns",
         "",
-        "| Column | Platform | Firmware | Link | Models | Surveys |",
+        "| Column | Platform | Firmware | Link | Models | Diagnoses |",
         "| --- | --- | --- | --- | --- | --- |",
     ]
     for index, (column, members) in enumerate(columns.items(), 1):
@@ -790,7 +790,7 @@ def _tables(
 ) -> list[str]:
     """Return the part's tables, one per topic where the rows carry one."""
     header = (
-        "| Entity | Survey | "
+        "| Entity | Diagnosis | "
         + " | ".join(f"{prefix}{i}" for i in range(1, count + 1))
         + " |"
     )
@@ -824,7 +824,7 @@ EFFECT_MARKS = {
 
 def _export_factor(reading: Reading) -> int | None:
     """Return how this firmware writes 13074 (10 or 1), None if never asked."""
-    conditions = reading.control_test.get("conditions") or {}
+    conditions = reading.capability_test.get("conditions") or {}
     for block in (reading.export_scale, conditions.get("export_write_scale") or {}):
         factor = block.get("write_units_per_count")
         if factor in (1, 10):
@@ -833,7 +833,7 @@ def _export_factor(reading: Reading) -> int | None:
 
 
 def _agreed(values: list[tuple[Reading, str]]) -> str:
-    """Return one cell from per-survey marks: the mark, or a split by model."""
+    """Return one cell from per-diagnosis marks: the mark, or a split by model."""
     if not values:
         return ""
     marks = {mark for _, mark in values}
@@ -859,18 +859,18 @@ def _tally(verdicts: list[str]) -> str:
 
 def _cable_readback(reading: Reading) -> list[dict[str, Any]]:
     """Return the readback rows that are evidence: over a cable, on hardware."""
-    conditions = reading.control_test.get("conditions") or {}
+    conditions = reading.capability_test.get("conditions") or {}
     if reading.dongle or conditions.get("simulated") or conditions.get("dry_run"):
         return []
     return [
         row
-        for row in reading.control_test.get("readback") or []
+        for row in reading.capability_test.get("readback") or []
         if row.get("verdict") not in (None, procedure.SKIPPED)
     ]
 
 
 def _measured(columns: dict[Column, list[Reading]]) -> list[str]:
-    """Return the section of what the control test measured, per column."""
+    """Return the section of what the capability test measured, per column."""
     count = len(columns)
     header = "| Measurement | " + " | ".join(str(i) for i in range(1, count + 1)) + " |"
     rows: list[tuple[str, list[str]]] = []
@@ -901,7 +901,7 @@ def _measured(columns: dict[Column, list[Reading]]) -> list[str]:
         seconds = [
             float(restart["running_after"])
             for r in members
-            if (restart := r.control_test.get("restart") or {}).get("verdict")
+            if (restart := r.capability_test.get("restart") or {}).get("verdict")
             == procedure.CONFIRMED
             and isinstance(restart.get("running_after"), int | float)
         ]
@@ -921,7 +921,7 @@ def _measured(columns: dict[Column, list[Reading]]) -> list[str]:
                         [
                             str(effect.get("verdict"))
                             for r in members
-                            for effect in r.control_test.get("effects") or []
+                            for effect in r.capability_test.get("effects") or []
                             if effect.get("check") == check
                         ]
                     )
@@ -939,10 +939,10 @@ def _measured(columns: dict[Column, list[Reading]]) -> list[str]:
         }
     )
     lines = [
-        "### What the control test measured",
+        "### What the capability test measured",
         "",
         "Findings about the firmware rather than about one entity, from every",
-        "survey whose run had the control test, in the columns above. The",
+        "diagnosis whose run had the capability test, in the columns above. The",
         "13074 write scale is asked by a write the device refuses or accepts,",
         "so it holds through a dongle too; a readback counts over a cable only,",
         "because a WiNet-S answers a written register stale. A behaviour cell",
@@ -980,9 +980,10 @@ def render() -> str:
         "# Entities by firmware",
         "",
         "**Generated — do not edit.** `scripts/generate/generate_firmware_support.py`",
-        "builds this from the surveys in",
-        "[device-survey/results/](../device-survey/results/), and CI checks that it",
-        "matches. [compatibility.md](compatibility.md) has the surveys themselves,",
+        "builds this from the diagnoses in",
+        "[device-diagnosis/results/](../device-diagnosis/results/),"
+        " and CI checks that it",
+        "matches. [compatibility.md](compatibility.md) has the diagnoses themselves,",
         "one row each.",
         "",
         "The question: **do devices on the same firmware support the same",
@@ -998,7 +999,8 @@ def render() -> str:
         "| --- | --- |",
         "| ✓ | Answered with a value. |",
         "| ✓ W | Answered, and a write was confirmed on this firmware: read back"
-        " over a cable by the [control test](../.wiki/wiki/concepts/control-test.md),"
+        " over a cable by the [capability test]"
+        "(../.wiki/wiki/concepts/capability-test.md),"
         " or its effect watched (`CONFIRMED_ON_FIRMWARE`). A writable entity"
         " without the W has not had its write confirmed here. |",
         '| ✗ | Answered "unavailable", refused, or did not answer. |',
@@ -1007,22 +1009,22 @@ def render() -> str:
         f"| {MARKS[NOT_FITTED]} | Not fitted: needs a part (battery, meter,"
         " dual-channel meter, communication module, Sungrow pack, a pack module)"
         " none of these houses has. |",
-        "| *(empty)* | Untested: no survey reached these registers, or none can"
+        "| *(empty)* | Untested: no diagnosis reached these registers, or none can"
         " read them (the masked serial; the padded firmware strings at 2613 and"
         " 2629). |",
         "",
-        "The **Survey** column says how far a survey can test the entity on"
+        "The **Diagnosis** column says how far a diagnosis can test the entity on"
         " any inverter, before a column says what one did:",
         "",
-        "| Survey | Means |",
+        "| Diagnosis | Means |",
         "| --- | --- |",
         f"| {READ} | The raw register dump reaches its registers, so the columns"
         " can answer for it. |",
-        f"| {WRITTEN} | The control test writes it and checks the raw word it"
+        f"| {WRITTEN} | The capability test writes it and checks the raw word it"
         " reads back against the specification's scale. |",
-        f"| {WATCHED} | A behavioural check of the control test writes it and"
+        f"| {WATCHED} | A behavioural check of the capability test writes it and"
         " watches what the inverter does. |",
-        "| *(empty)* | No part of the survey reaches it: a column can only be"
+        "| *(empty)* | No part of the diagnosis reaches it: a column can only be"
         " empty there. |",
         "",
         "A **dongle** column was read through a WiNet-S or Logger, which refuses",
@@ -1031,7 +1033,7 @@ def render() -> str:
         "",
         "## Inverters",
         "",
-        "Each survey's raw register dump is replayed through the integration's",
+        "Each diagnosis's raw register dump is replayed through the integration's",
         "own decoding and capability probe, so a cell is what the inverter",
         "answered for the registers that entity reads.",
         "",
@@ -1056,7 +1058,7 @@ def render() -> str:
         "is its **BCU firmware**, the battery firmware string the inverter reports",
         "at register 13280. Over the inverter's LAN port the pack answers on unit",
         "200; through a WiNet-S, on unit 2. The model is the one the inverter's",
-        "capacity register (5639) matches. A cell is the survey's own decoded",
+        "capacity register (5639) matches. A cell is the diagnosis's own decoded",
         "reading of the pack: a component the pack refused with an exception is",
         "absent, one lost to the link is untested.",
         "",
@@ -1090,7 +1092,7 @@ def main() -> int:
                 file=sys.stderr,
             )
             return 1
-        print(f"{OUTPUT.relative_to(REPO)} matches the surveys")
+        print(f"{OUTPUT.relative_to(REPO)} matches the diagnoses")
         return 0
 
     OUTPUT.write_text(rendered, encoding="utf-8")

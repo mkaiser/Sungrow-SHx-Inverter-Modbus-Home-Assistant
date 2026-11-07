@@ -1,25 +1,25 @@
 ---
 type: source
 title: sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-3.json
-source_path: ../device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-3.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-3.json
 ingested: '2026-10-31'
 created: '2026-10-31'
 tags:
-  - survey
+  - diagnosis
   - sh10rt-v112
   - sapphire-h-b001-v000-p023
   - peter-sm
   - direct_lan
-  - control-test
+  - capability-test
 ---
 
 # SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, fourth reading
 
-Capability survey of one inverter, read 2026-10-31 from Home Assistant on 0.1.0a23 (the owner's
-note in issue #785), with a control test. The first reading of this installation whose register
-dump covers the whole history block and the forced-charging schedule. The survey derives the same
+Capability diagnosis of one inverter, read 2026-10-31 from Home Assistant on 0.1.0a23 (the owner's
+note in issue #785), with a capability test. The first reading of this installation whose register
+dump covers the whole history block and the forced-charging schedule. The diagnosis derives the same
 name as the second and third readings, so the file carries the next number, `-3`. Source:
-`device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-3.json`.
+`device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-3.json`.
 
 | | |
 | --- | --- |
@@ -61,10 +61,10 @@ third reading, and 2629 and 13265, which were then, are not now.
 Polled by this Home Assistant, held off for the run (16 components). No other client reported.
 See [contention](../concepts/contention.md).
 
-## Control test
+## Capability test
 
 Outcome **3**: ran, with checks skipped. Over the cable, so leg B is evidence. See
-[the control test](../concepts/control-test.md).
+[the capability test](../concepts/capability-test.md).
 
 | Field | Register | Verdict |
 | --- | --- | --- |

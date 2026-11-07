@@ -8,7 +8,7 @@ created: '2026-10-29'
 # Register 6100 (transport probe)
 
 Input 6100 **answers on a cable and is refused through a dongle**. That makes
-it the question that decides transport, and every survey's
+it the question that decides transport, and every diagnosis's
 `connection.winet_restricted_block_6100` records the answer.
 
 Register 13265 is not a substitute. It names the module that is *fitted*,

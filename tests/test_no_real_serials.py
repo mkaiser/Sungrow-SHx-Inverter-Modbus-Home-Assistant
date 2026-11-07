@@ -1,6 +1,6 @@
 """No real device serial may reach the tracked tree.
 
-The survey documents were designed around this: every published one
+The diagnosis documents were designed around this: every published one
 carries a **stand-in**, `serial_anonymized_hashed`, and no un-redacted copy
 is written at all: the real serial reaches only the run's transcript, which
 stays in the gitignored `.testdata/`.
@@ -89,7 +89,7 @@ def test_no_unrecognised_serial_shaped_string_is_tracked(path: Path) -> None:
         "like a device serial and is not on the fabricated list in "
         "tests/test_no_real_serials.py.\n\n"
         "If it came off real hardware it must not be committed: the real "
-        "serial belongs in .testdata/, and a survey publishes the "
+        "serial belongs in .testdata/, and a diagnosis publishes the "
         "stand-in instead. If you invented it, add it to FABRICATED with a "
         "note saying what it is for."
     )
@@ -195,19 +195,19 @@ def test_the_fabricated_list_has_no_dead_entries() -> None:
 def test_the_published_documents_carry_stand_ins_and_nothing_else() -> None:
     """The documents' own rule, restated where the tree-wide one lives.
 
-    `test_survey_document_label.py` asserts this per document as part of the
+    `test_diagnosis_document_label.py` asserts this per document as part of the
     publishing gate. Repeated here because this file is where somebody will
     look after a near-miss, and the two halves belong together: a stand-in in
     the document, and nothing serial-shaped in the source.
     """
-    root = REPO / "device-survey" / "results"
+    root = REPO / "device-diagnosis" / "results"
     documents = sorted(
         [
             *root.joinpath("inverter").glob("*.json"),
             *root.joinpath("wallbox").glob("*.json"),
         ]
     )
-    assert documents, "there should be committed surveys to check"
+    assert documents, "there should be committed diagnoses to check"
     for path in documents:
         text = path.read_text(encoding="utf-8")
         assert "serial_anonymized_hashed" in text, path.name

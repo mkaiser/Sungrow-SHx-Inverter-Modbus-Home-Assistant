@@ -6,9 +6,9 @@ register document for one. `doc/wallbox_registers.md` is the whole source,
 and it is what three independent measurements agree on -- one reading taken
 here plus the two community projects.
 
-So the guard is the reading itself. `device-survey/` holds a
-committed survey carrying the raw words an AC22E-01 answered **and** the
-readings an independent decoder -- the survey's own, before it moved into the
+So the guard is the reading itself. `device-diagnosis/` holds a
+committed diagnosis carrying the raw words an AC22E-01 answered **and** the
+readings an independent decoder -- the diagnosis's own, before it moved into the
 library -- made of them. This file holds the library to both: its document
 decoder must reproduce the committed readings exactly, and its components must
 read the same values from the same words.
@@ -67,13 +67,13 @@ def _component(klass):
 SECTION = json.loads(SESSION_DOCUMENT.read_text(encoding="utf-8"))["wallbox"]
 
 #: What the independent decoder published from those words, by field name.
-SURVEY = {name: entry["value"] for name, entry in SECTION["readings"].items()}
+DIAGNOSIS = {name: entry["value"] for name, entry in SECTION["readings"].items()}
 
 
 def test_the_committed_dump_decodes_to_the_committed_readings() -> None:
     """The golden test: byte for byte, from the masked words.
 
-    The committed readings were made by the survey's own decoder before it
+    The committed readings were made by the diagnosis's own decoder before it
     moved into the library, so this is the move's proof as well as a guard
     against a later change to a scale, a code table or a confidence mark.
     """
@@ -102,7 +102,7 @@ def test_the_committed_dump_decodes_to_the_committed_readings() -> None:
         "phase_a_current",
     ],
 )
-def test_every_value_matches_what_the_survey_decoded(field: str) -> None:
+def test_every_value_matches_what_the_diagnosis_decoded(field: str) -> None:
     """The components and the published readings agree on every scale.
 
     A transposed scale reads a plausible number: 22080 W at the wrong scale
@@ -117,7 +117,7 @@ def test_every_value_matches_what_the_survey_decoded(field: str) -> None:
     else:
         pytest.fail(f"no component declares {field}")
 
-    expected = SURVEY[field]
+    expected = DIAGNOSIS[field]
     if isinstance(expected, str):
         assert value == expected
     else:

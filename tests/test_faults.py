@@ -2,7 +2,7 @@
 
 Appendix 4 names about two hundred flags across fifteen U32s. These tests hold
 the table to the shape the specification gives it, hold the decoding to the
-one reading with a flag set that the surveys contain, and check that the
+one reading with a flag set that the diagnoses contain, and check that the
 entities say what is set rather than a number nobody can read.
 """
 
@@ -61,7 +61,7 @@ def test_the_reading_with_a_flag_set_decodes_to_the_meter_alarm() -> None:
 
 
 def test_reserved_bits_set_are_not_reported() -> None:
-    """The high word of BMS alarm 2 reads 0xFFFF on every cable surveyed."""
+    """The high word of BMS alarm 2 reads 0xFFFF on every cable diagnosed."""
     assert active("bms_alarm_2", 0xFFFF0000) == ()
     assert reported("alarm", {"bms_alarm_2": 0xFFFF0000}) is False
 

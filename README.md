@@ -31,7 +31,7 @@ under *Configure*, and [doc/integration_help.md](doc/integration_help.md) the
 actions, the known limitations and what to try when something fails.
 
 **The preview sets up diagnostics only**: it identifies the inverter and runs
-the survey, and creates no sensors for the readings. Everything below is
+the diagnosis, and creates no sensors for the readings. Everything below is
 built and tested, and switched on in a later release.
 
 ## What this is
@@ -64,20 +64,20 @@ dashboards when they switch ([doc/integration_migration.md](doc/integration_migr
   Assistant's language; entity ids stay English on every system, so one id
   means the same entity everywhere.
 - **Diagnostics** to attach to a bug report, serial and host removed.
-- **The survey**, which reads what your installation answers, and the
-  **control test**, which writes each control, checks the inverter acted on
+- **The diagnosis**, which reads what your installation answers, and the
+  **capability test**, which writes each control, checks the inverter acted on
   it and puts everything back
-  ([device-survey/README.md](device-survey/README.md)).
+  ([device-diagnosis/README.md](device-diagnosis/README.md)).
 
 **Not yet:** the iHomeManager and the Sungrow Logger (never measured; see
-[devices-wanted.md](device-survey/devices-wanted.md)), SBH batteries, the
+[devices-wanted.md](device-diagnosis/devices-wanted.md)), SBH batteries, the
 SBR's per-module entities, and writing to the wallbox.
 
 [doc/energy_dashboard.md](doc/energy_dashboard.md) says which sensors to pick
 for Home Assistant's Energy dashboard,
 [doc/architecture.md](doc/architecture.md) is how it is built and why,
 [Todo.md](Todo.md) what is open, and
-[doc/compatibility.md](doc/compatibility.md) which setups have been surveyed.
+[doc/compatibility.md](doc/compatibility.md) which setups have been diagnosed.
 
 ## Developing
 
@@ -123,9 +123,9 @@ have a newer version, say so in the [discussions](../../discussions).
   [Discord](https://discord.gg/ZvYBejFkm2).
 - [GitHub issues](../../issues) for bugs; attach a **diagnostics download**,
   which carries no serial and no address.
-- **A survey of your installation** is the most useful contribution, one that
+- **A diagnosis of your installation** is the most useful contribution, one that
   says everything works included: send it to
-  [the survey issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786).
+  [the diagnosis issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786).
 
 ## Related work
 

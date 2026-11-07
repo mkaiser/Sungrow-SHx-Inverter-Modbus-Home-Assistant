@@ -315,7 +315,7 @@ SWITCHES: tuple[Switch, ...] = (
     # Register 31211, outside the specification (#554, #738): on cuts PV
     # generation, off lets it run. No YAML entity, so no legacy id. Gated by
     # a capability no probe grants: `resolve` adds it only on firmware in
-    # `capabilities.CONFIRMED_ON_FIRMWARE`, where the control test saw a
+    # `capabilities.CONFIRMED_ON_FIRMWARE`, where the capability test saw a
     # write take DC power to zero -- a register answering 0x55 says it is
     # there, not what writing it does.
     #

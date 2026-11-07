@@ -92,7 +92,7 @@ def sungrow_unit() -> MockModbusUnit:
     off. Modelling that would turn every write in the suite into a silent
     no-op, because the mode register is unseeded here -- so the multiply is
     unconditional and the mode-dependence is tested where it belongs, against
-    hardware and in the control test's `UNCHANGED` verdict.
+    hardware and in the capability test's `UNCHANGED` verdict.
     """
     unit = MockModbusConnection().for_unit(1)
     unit.input = dict(SH10RT_INPUT_REGISTERS)
@@ -118,7 +118,7 @@ def auto_enable_custom_integrations(
 def devices_mode_offered() -> Generator[None]:
     """Open the alpha gate, so a test can reach devices mode at all.
 
-    `ONLY_SURVEY_MODE` is on for the first release: the config flow's
+    `ONLY_DIAGNOSIS_MODE` is on for the first release: the config flow's
     opening step and the options page's promotion toggle both refuse to
     create a devices entry. That is a decision about the **door**, and every
     test that walks through it into migration, entity ids, polling or
@@ -129,7 +129,9 @@ def devices_mode_offered() -> Generator[None]:
     `tests/test_alpha_gate.py` is the one place that tests the door itself,
     from both sides.
     """
-    with patch("custom_components.sungrow_modbus.config_flow.ONLY_SURVEY_MODE", False):
+    with patch(
+        "custom_components.sungrow_modbus.config_flow.ONLY_DIAGNOSIS_MODE", False
+    ):
         yield
 
 

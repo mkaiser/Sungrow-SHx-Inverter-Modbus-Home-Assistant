@@ -1,11 +1,11 @@
 ---
 type: source
 title: sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-8.json
-source_path: ../device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-8.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-8.json
 ingested: '2026-11-07'
 created: '2026-11-07'
 tags:
-  - survey
+  - diagnosis
   - sh10rt-v112
   - sapphire-h-b001-v000-p023
   - peter-sm
@@ -14,12 +14,12 @@ tags:
 
 # SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, ninth reading
 
-Capability survey of one inverter, read 2026-11-07 around 08:10 UTC from Home Assistant 2026.11.0
+Capability diagnosis of one inverter, read 2026-11-07 around 08:10 UTC from Home Assistant 2026.11.0
 with integration 0.1.0a27, posted by Korsberg to issue #786. **Taken from a diagnostics
-download**: its `survey` section is committed as it was, under the library's own name for it
+download**: its `diagnosis` section is committed as it was, under the library's own name for it
 (`custom_components/sungrow_modbus/diagnostics.py`). No register dump, no block read test, no
-control test. Source:
-`device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-8.json`.
+capability test. Source:
+`device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-8.json`.
 
 | | |
 | --- | --- |

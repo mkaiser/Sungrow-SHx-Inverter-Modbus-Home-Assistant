@@ -45,13 +45,13 @@ OVERRIDES: dict[int, int | list[int]] = {
     # Running, on both sides of register 13000. The address is in two of
     # Sungrow's tables -- read-only over 0x04 where it is the running state,
     # read/write over 0x03/0x06/0x10 where it is Start/Stop. A stopped input
-    # side makes the control test refuse to run at all.
+    # side makes the capability test refuse to run at all.
     #
     # Note the value: **0x0000 means Running**, not stopped, per the map in
     # `hybrid_inverter.derived.RUNNING_STATES`. The obvious guess is wrong.
     12999: 0x0000,
     # Bounds the inverter is supposed to state about itself. Without them the
-    # control test correctly declines to guess, which is worth seeing once but
+    # capability test correctly declines to guess, which is worth seeing once but
     # not worth having as the only thing the simulator can show.
     5621: 0,  # export power limit minimum, 10 W per count
     5622: 1000,  # export power limit maximum -> 10 kW
@@ -105,7 +105,7 @@ HISTORY: dict[int, tuple[tuple[int, ...], tuple[int, ...]]] = {
 HISTORY_YEARS_AT = {6226: 6249, 6416: 6428, 6595: 6607}
 
 #: The fault and alarm words, input 13050-13079: no flag set, which is what
-#: every surveyed inverter read. The default's 1 would be bit 0 -- a fan alarm
+#: every diagnosed inverter read. The default's 1 would be bit 0 -- a fan alarm
 #: on the simulator for ever. Input only: the same addresses on the holding
 #: side are the EMS mode and the battery limits.
 FAULT_WORDS: dict[int, list[int]] = {
@@ -172,7 +172,7 @@ def _apply_fixtures(spaces: dict[str, dict[int, list[int]]]) -> None:
     `STRINGS` gives the text fields something readable, `OVERRIDES` pins
     individual registers a probe would otherwise misread, `HISTORY` fills the
     energy history, `HOLDING_ONLY` adds words that exist on the holding side
-    alone -- 12999 among them, which is what makes the control test's restart
+    alone -- 12999 among them, which is what makes the capability test's restart
     phase exercisable offline -- and `FAULT_WORDS` clears the input-side fault
     and alarm words.
     """

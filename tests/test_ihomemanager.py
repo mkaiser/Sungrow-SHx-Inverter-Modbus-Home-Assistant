@@ -1,4 +1,4 @@
-"""The iHomeManager: its map, the text it must not publish, and its survey.
+"""The iHomeManager: its map, the text it must not publish, and its diagnosis.
 
 No iHomeManager has been read here, so the fixtures are Sungrow's own
 document -- the type code, the protocol number and the version example of
@@ -24,12 +24,14 @@ from sungrow_modbus import ihomemanager
 from sungrow_modbus.dump import IHOMEMANAGER_BANDS, block_count
 from sungrow_modbus.ihomemanager.registers import TEXT_FIELDS
 
-SURVEY = Path(__file__).resolve().parents[1] / "device-survey" / "scripts" / "python"
-sys.path.insert(0, str(SURVEY))
+DIAGNOSIS = (
+    Path(__file__).resolve().parents[1] / "device-diagnosis" / "scripts" / "python"
+)
+sys.path.insert(0, str(DIAGNOSIS))
 
 import ihomemanager_direct  # noqa: E402
 import probe  # noqa: E402
-import sungrow_survey  # noqa: E402
+import sungrow_diagnosis  # noqa: E402
 
 from .corpus import IHOMEMANAGER_DOCUMENTS  # noqa: E402
 
@@ -248,14 +250,14 @@ def _documented_device() -> dict[str, dict[int, int]]:
     return device
 
 
-async def _survey(tmp_path, device):
+async def _diagnosis(tmp_path, device):
     found = ihomemanager_direct.Found("192.0.2.40", 503, "iHomeManager")
     answers = SimpleNamespace(timeout=1, reporter="tester", comment="")
     with (
         patch.object(ihomemanager_direct, "ModbusConnection", _connection(device)),
         patch("sungrow_modbus.dump.asyncio.sleep", _no_sleep),
     ):
-        return await ihomemanager_direct.async_survey(
+        return await ihomemanager_direct.async_diagnosis(
             found, answers, tmp_path, lambda _text: None, address_tail="000.040"
         )
 
@@ -264,8 +266,8 @@ async def _no_sleep(_seconds):
     return None
 
 
-async def test_a_survey_writes_an_ihomemanager_document(tmp_path) -> None:
-    reading = await _survey(tmp_path, _documented_device())
+async def test_a_diagnosis_writes_an_ihomemanager_document(tmp_path) -> None:
+    reading = await _diagnosis(tmp_path, _documented_device())
 
     assert reading.code == 0
     document = reading.document
@@ -280,7 +282,7 @@ async def test_a_survey_writes_an_ihomemanager_document(tmp_path) -> None:
 
 
 async def test_a_refused_gap_is_recorded_as_asked_and_not_answered(tmp_path) -> None:
-    reading = await _survey(tmp_path, _documented_device())
+    reading = await _diagnosis(tmp_path, _documented_device())
 
     dump = reading.document["ihomemanager"]["register_dump"]
     assert dump["input"]["8100"] is None  # 8101, undocumented and refused
@@ -288,7 +290,7 @@ async def test_a_refused_gap_is_recorded_as_asked_and_not_answered(tmp_path) -> 
 
 
 async def test_a_serial_in_a_gap_never_reaches_the_file(tmp_path) -> None:
-    reading = await _survey(tmp_path, _documented_device())
+    reading = await _diagnosis(tmp_path, _documented_device())
 
     text = reading.written.read_text()
     assert "A123456789" not in text
@@ -298,7 +300,7 @@ async def test_a_serial_in_a_gap_never_reaches_the_file(tmp_path) -> None:
 
 
 async def test_an_ihomemanager_that_answers_nothing_writes_nothing(tmp_path) -> None:
-    reading = await _survey(tmp_path, None)
+    reading = await _diagnosis(tmp_path, None)
 
     assert reading.code == 1
     assert reading.written is None
@@ -308,18 +310,18 @@ async def test_an_ihomemanager_that_answers_nothing_writes_nothing(tmp_path) -> 
 async def test_a_second_reading_from_another_address_does_not_overwrite(
     tmp_path,
 ) -> None:
-    first = await _survey(tmp_path, _documented_device())
+    first = await _diagnosis(tmp_path, _documented_device())
     data = json.loads(first.written.read_text())
     data["ip_address_last_two_octets"] = "000.041"
     first.written.write_text(json.dumps(data))
 
-    second = await _survey(tmp_path, _documented_device())
+    second = await _diagnosis(tmp_path, _documented_device())
 
     assert second.written != first.written
     assert second.written.name.endswith("-000-040.json")
 
 
-async def test_the_survey_reads_an_ihomemanager_instead_of_skipping_it() -> None:
+async def test_the_diagnosis_reads_an_ihomemanager_instead_of_skipping_it() -> None:
     """Found by `identify`, it is collected for reading, not reported and dropped."""
     args = argparse.Namespace(host=["192.0.2.40"], port=503, unit=None)
     who = SimpleNamespace(
@@ -335,14 +337,14 @@ async def test_the_survey_reads_an_ihomemanager_instead_of_skipping_it() -> None
     with (
         patch.object(probe, "identify", identify),
         patch.object(probe, "described", lambda _who: "an iHomeManager"),
-        patch.object(sungrow_survey.wallbox_direct, "async_identify", no_wallbox),
+        patch.object(sungrow_diagnosis.wallbox_direct, "async_identify", no_wallbox),
     ):
-        inverters = await sungrow_survey._find(args, lambda *_a: None)
+        inverters = await sungrow_diagnosis._find(args, lambda *_a: None)
 
     assert inverters == []
     assert [
         ihomemanager_direct.Found("192.0.2.40", 503, "iHomeManager")
-    ] == sungrow_survey._MANAGERS
+    ] == sungrow_diagnosis._MANAGERS
 
 
 @pytest.mark.parametrize("path", IHOMEMANAGER_DOCUMENTS, ids=lambda p: p.stem)
@@ -387,12 +389,14 @@ async def test_a_unit_247_device_that_is_not_an_ihomemanager_is_not_read() -> No
     with (
         patch.object(probe, "identify", identify),
         patch.object(probe, "described", lambda _who: "a device at unit 247"),
-        patch.object(sungrow_survey.wallbox_direct, "async_identify", no_wallbox),
+        patch.object(sungrow_diagnosis.wallbox_direct, "async_identify", no_wallbox),
     ):
-        inverters = await sungrow_survey._find(args, lambda text="": said.append(text))
+        inverters = await sungrow_diagnosis._find(
+            args, lambda text="": said.append(text)
+        )
 
     assert inverters == []
-    assert sungrow_survey._MANAGERS == []
+    assert sungrow_diagnosis._MANAGERS == []
     assert any("0x0130" in line for line in said)
 
 
@@ -401,7 +405,7 @@ def test_the_replay_line_keeps_the_ihomemanagers_port() -> None:
     asked = argparse.Namespace(
         port=504, timeout=10.0, address="hidden", reporter="tester", comment=""
     )
-    line = sungrow_survey.replay_command(asked)
+    line = sungrow_diagnosis.replay_command(asked)
     assert "--port 504" in line
     assert "--timeout" not in line
 

@@ -1,22 +1,22 @@
 ---
 type: source
 title: sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan.json
-source_path: ../device-survey/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan.json
+source_path: ../device-diagnosis/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
-  - survey
+  - diagnosis
   - sh8-0rt-v112
   - sapphire-h-b001-v000-p022
   - gerd
   - direct_lan
-  - control-test
+  - capability-test
   - export-scale
 ---
 
 # SH8.0RT-V112, B001.V000.P022, gerd, the inverter's own LAN port
 
-Capability survey of one inverter, read 2026-10-13. Source: `device-survey/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan.json`.
+Capability diagnosis of one inverter, read 2026-10-13. Source: `device-diagnosis/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan.json`.
 
 | | |
 | --- | --- |
@@ -43,9 +43,9 @@ Every component answered.
 
 Register 13074 multiplies a written word by ten: `write_units_per_count` = **10**, probed at a held 8000 W. See [register 13074](../entities/register-13074.md).
 
-## Control test
+## Capability test
 
-Run 2026-10-30 in daylight, over the cable, with the PV cut, feed-in limitation and the restart allowed. Outcome **0**: every planned check ran and every readback matched. See [the control test](../concepts/control-test.md).
+Run 2026-10-30 in daylight, over the cable, with the PV cut, feed-in limitation and the restart allowed. Outcome **0**: every planned check ran and every readback matched. See [the capability test](../concepts/capability-test.md).
 
 | Field | Register | Verdict |
 | --- | --- | --- |

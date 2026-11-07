@@ -19,7 +19,7 @@ out its full timeout. A measured SH10RT takes about 300 seconds to read these
 bounded by a budget, reports which bands it never reached rather than
 pretending it covered them, and belongs behind a switch that is off.
 
-The standalone survey imports these bands, and the wallbox's, from here.
+The standalone diagnosis imports these bands, and the wallbox's, from here.
 """
 
 from __future__ import annotations
@@ -169,7 +169,7 @@ IHOMEMANAGER_BANDS: tuple[tuple[str, int, int, str], ...] = (
 #: *Logger Communication Protocol* 1.0.2.9 (`logger.registers`) and never
 #: measured here. The documented blocks come first, so a run out of time
 #: still has them; the words between and above them follow, holding included
-#: (read with function code 3, never written), and the survey's text guard
+#: (read with function code 3, never written), and the diagnosis's text guard
 #: masks anything shaped like a serial.
 LOGGER_BANDS: tuple[tuple[str, int, int, str], ...] = (
     ("input", 7999, 7, "identity: type code, protocol, devices"),

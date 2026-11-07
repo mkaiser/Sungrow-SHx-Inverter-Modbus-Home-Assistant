@@ -232,7 +232,7 @@ def test_it_asks_at_the_settings_most_houses_have() -> None:
 async def test_an_unreadable_register_after_the_write_counts_as_changed() -> None:
     """Once it has written, a failed read means the state is not known.
 
-    Raised, the caller saw an error and no `left_changed`, and a control test
+    Raised, the caller saw an error and no `left_changed`, and a capability test
     carried on as if the house were as it found it.
     """
 

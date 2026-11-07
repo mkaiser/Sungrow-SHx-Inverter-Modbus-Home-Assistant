@@ -532,3 +532,13 @@ the load. A forced charge, EMS or scheduled, woke the inverter in ~2 min. The fi
 13017: a switch, 0xAA on and 0x55 off, every other word refused, so the factory 0 cannot be put
 back. Updated register-13017 (overturned: it reads back what is written), register-32998,
 register-13000, device-winet-s, P023, installation-bar12, the forced-charge query.
+
+## [2026-11-07] renamed | the survey is the diagnosis, the control test the capability test
+
+`device-survey/` is now `device-diagnosis/`, its launchers `diagnosis.sh`, `.cmd` and `.ps1`
+(`tests` in place of `control`), and the scripts `sungrow_diagnosis.py`,
+`sungrow_capability_test.py` and `sungrow_wallbox_capability_test.py`. The library modules are
+`sungrow_modbus.diagnosis`, `diagnosis_document` and `capability_test`; the concept pages are
+`capability-test` and `capability-test-restore`. Schema 25 puts part B's block under
+`capability_test`; the committed documents keep `control_test` at their own numbers and are
+unchanged. Entries above this one use the names of their day.

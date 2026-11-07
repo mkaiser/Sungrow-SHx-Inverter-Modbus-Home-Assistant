@@ -9,7 +9,7 @@ created: '2026-10-29'
 
 The high-voltage pack for the [SH-T](device-sh-t.md), and on an [SH-RS](device-sh-rs.md):
 SBH200, SBH300 and SBH400 in this corpus, all read through a [WiNet-S](device-winet-s.md). The
-survey reads it with the [SBR](device-sbr-battery.md)'s map, so its components carry
+diagnosis reads it with the [SBR](device-sbr-battery.md)'s map, so its components carry
 `sbr_battery_*` names.
 
 - At [ra1k-0](installation-ra1k-0.md) the SBH400 answered at unit **2**

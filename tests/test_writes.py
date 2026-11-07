@@ -128,7 +128,7 @@ def test_a_number_the_yaml_never_had_follows_the_specification() -> None:
     """The forced-charging targets: V1.1.16 regs 33214 and 33219, 0~100 %.
 
     No YAML template to compare against, so the range is pinned to the
-    specification here, by hand, as the control test's scales are.
+    specification here, by hand, as the capability test's scales are.
     """
     spec = {
         "forced_charging_target_soc_1": (0, 100, 1, "%"),

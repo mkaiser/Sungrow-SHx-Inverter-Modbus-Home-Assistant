@@ -150,7 +150,7 @@ class Derived:
 
         Documented in Sungrow's protocol V1.1.10 as a mode and not a power --
         `0xAA` limit, `0x55` allow -- and "Only SHT are supported", which is
-        why all three surveyed SH inverters answer `0xFFFF` and this reads
+        why all three diagnosed SH inverters answer `0xFFFF` and this reads
         None on every one of them.
         """
         return self._mode_flag("pv_power_limitation_raw")
@@ -172,7 +172,7 @@ class Derived:
 
         Outside Sungrow's protocol document; iSolarCloud writes it as
         "Shutdown at active power limit ratio of 0%" (#554), `0xAA` stopping
-        the inverter and `0x55` holding it at 0 W. The surveys read both.
+        the inverter and `0x55` holding it at 0 W. The diagnoses read both.
         """
         return self._mode_flag("apl_shutdown_at_zero_raw")
 

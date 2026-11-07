@@ -16,9 +16,9 @@ import pytest
 from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.sungrow_modbus.const import (
-    CONF_CONTROL_TEST_EXPORT,
-    CONF_CONTROL_TEST_PV_CUT,
-    CONF_CONTROL_TEST_RESTART,
+    CONF_CAPABILITY_TEST_EXPORT,
+    CONF_CAPABILITY_TEST_PV_CUT,
+    CONF_CAPABILITY_TEST_RESTART,
     CONF_UNIT_ID,
     DOMAIN,
 )
@@ -41,7 +41,7 @@ WEEKDAY = 33150
 WEEKEND_ENABLE = 33178
 WEEKEND = 33179
 
-#: peter-sm's schedule as its survey reads it: the first window 00:00-24:00
+#: peter-sm's schedule as its diagnosis reads it: the first window 00:00-24:00
 #: on both days, the second unused, the weekend on.
 SCHEDULE: dict[int, int] = {
     **dict(zip(range(WEEKDAY, WEEKDAY + 8), (0, 0, 24, 0, 0, 0, 0, 0), strict=True)),
@@ -106,9 +106,9 @@ def test_only_a_mode_code_grants_the_schedule() -> None:
 
 async def _setup(hass: HomeAssistant, unit: MockModbusUnit) -> MockConfigEntry:
     options: dict[str, Any] = {
-        CONF_CONTROL_TEST_RESTART: False,
-        CONF_CONTROL_TEST_EXPORT: False,
-        CONF_CONTROL_TEST_PV_CUT: False,
+        CONF_CAPABILITY_TEST_RESTART: False,
+        CONF_CAPABILITY_TEST_EXPORT: False,
+        CONF_CAPABILITY_TEST_PV_CUT: False,
     }
     entry = MockConfigEntry(
         domain=DOMAIN,

@@ -53,7 +53,7 @@ from ..model import string
 #:
 #: `battery_capacity_high_precision`: the same slave answers 0xFFFF at 5639,
 #: which decoded to 655.35 kWh and fed `battery_charge`. The largest pack in
-#: the surveys reads 4055 (40.55 kWh).
+#: the diagnoses reads 4055 (40.55 kWh).
 NAN_BEYOND_YAML: dict[str, int] = {
     "battery_level": 65535,
     "battery_capacity_high_precision": 65535,
@@ -82,12 +82,12 @@ class AsymmetricNumberField(NumberField[int]):
 
     So this is a device quirk rather than a second scale: `scale` stays 1
     because that is what the register *contains*, and only the write side is
-    divided. The control test's `spec_units_per_count` stays 1 for the same
+    divided. The capability test's `spec_units_per_count` stays 1 for the same
     reason, and its leg B is what checks this on hardware.
 
     **Not every firmware multiplies**: fwitten's SH10RT-V112 pair stores the
     word as handed. This field carries the common case; `export_scale` asks a
-    device which one it is, and the integration and the control test write the
+    device which one it is, and the integration and the capability test write the
     raw word at the factor it answers.
     """
 
@@ -337,7 +337,7 @@ class InverterFaults(Component):
 
     Fifteen U32 bit fields from Appendix 4. Read as numbers here and decoded
     by `faults.active`, which knows which bits are named. Answered on every
-    inverter surveyed, over a cable and through a dongle alike.
+    inverter diagnosed, over a cable and through a dongle alike.
     """
 
     register_space = "input"
@@ -492,7 +492,7 @@ class InverterAplShutdownAtZero(Component):
     measured firmware on the inverter's own LAN port. Not in Sungrow's
     protocol document: found by watching what iSolarCloud writes, in issue
     #554 ("Shutdown at active power limit ratio of 0%"). On (`0xAA`), a limit
-    ratio of 0 % stops the inverter instead of holding it at 0 W. The surveys
+    ratio of 0 % stops the inverter instead of holding it at 0 W. The diagnoses
     read `0x55` on most inverters and `0xAA` on some SH-RS and SH-T, so it is a
     configured value; nobody here has written it.
     """
@@ -510,7 +510,7 @@ class InverterPvGenerationCut(Component):
     **Not in Sungrow's protocol document.** theunknown86 found it in #554 by
     watching what iSolarCloud writes, and the owner of an SH10RT confirmed
     both values by their effect (#738). Whether it exists depends on the
-    firmware, not the model: every committed survey on
+    firmware, not the model: every committed diagnosis on
     `SAPPHIRE-H_B001.V000.P020` or `01011.95.03` reads 0xFFFF, every one on
     P022, P023 and `PEARL-H_B000.V000.P071` reads 0x55. Its own component
     because nothing else is near it, and so that an inverter without it costs
@@ -532,7 +532,7 @@ class InverterSiteImportLimit(Component):
     and refuses a word above 5000, and on an SH10RT on P020 a watched write
     held import under a forced charge by cutting the charge, and refused 0
     and 5001. Its own component, as 31211 is, so a firmware without it costs
-    one refused read. Read only: the control test writes it by raw word, with
+    one refused read. Read only: the capability test writes it by raw word, with
     leave, and a control waits on that check per firmware.
     """
 
@@ -696,7 +696,7 @@ class InverterSlowestInput(Component):
     """Sungrow Version 2.
 
     YAML package: refused on SHxRS and through some WiNet-S (#654, #674, #678).
-    Reported, not measured: every survey so far reads it.
+    Reported, not measured: every diagnosis so far reads it.
     """
     sungrow_protocol_version = uint32(reg(4952), word_order="little")
     """Sungrow Protocol Version."""

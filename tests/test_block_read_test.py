@@ -6,7 +6,7 @@ competing for the inverter -- and its answers get written into
 `src/sungrow_modbus/hybrid_inverter/layout.py`, which is only ever added to from a
 measurement. So a wrong answer here becomes a permanent wrong fix.
 
-The terminal tool, `device-survey/scripts/python/blocks.py`, shipped
+The terminal tool, `device-diagnosis/scripts/python/blocks.py`, shipped
 with no test once, and the cost was exactly what that predicts: with the
 library client a refused register raised a class nothing caught, and the
 tool crashed on the first refusal rather than recording it.
@@ -45,7 +45,7 @@ from sungrow_modbus.block_test import (
 )
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "device-survey" / "scripts" / "python"))
+sys.path.insert(0, str(REPO / "device-diagnosis" / "scripts" / "python"))
 
 import blocks  # noqa: E402
 
@@ -135,7 +135,7 @@ def test_a_read_that_only_worked_after_a_reconnect_is_a_failure() -> None:
     """The hazard this tool once hid completely.
 
     The raw client reconnects and tries again, which is right for a
-    survey. It reported "ok (3/3)" for a one-register read of gerd's
+    diagnosis. It reported "ok (3/3)" for a one-register read of gerd's
     5242 -- a read the integration cannot make, because a `Component` has no
     mid-block retry, so one drop loses every field in the block.
     """
@@ -243,9 +243,9 @@ def _clocked(monkeypatch, client: _Slow) -> None:
 def test_narrowing_stops_at_its_budget_and_says_which_ranges_it_left(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The bound that keeps the cheapest phase from costing the whole survey.
+    """The bound that keeps the cheapest phase from costing the whole diagnosis.
 
-    Four blocks like this one outran a survey's 25-minute cap and the run was
+    Four blocks like this one outran a diagnosis's 25-minute cap and the run was
     killed before it wrote a document -- so an un-narrowed range has to come
     back marked, not dropped and not narrowed. The alternative that was
     considered and rejected is in `block_test.NARROW_BUDGET`: a per-block
@@ -338,7 +338,7 @@ def test_no_budget_narrows_the_whole_way() -> None:
 
 
 def test_the_block_test_reads_only_the_inverters_own_components() -> None:
-    """A regression that happened, and would have corrupted every survey.
+    """A regression that happened, and would have corrupted every diagnosis.
 
     Adding the SBR's and the wallbox's components to the plan added eight
     blocks to the test, on unit ids the test does not use: input 10740 and
@@ -396,7 +396,7 @@ def test_a_failing_address_is_named_by_the_field_that_declares_it() -> None:
 def test_the_terminal_prints_each_read_where_the_caller_sends_it() -> None:
     """`echo` all the way down, narrowing included.
 
-    `sungrow_survey.py` passes its transcript's `echo`; a line that went to
+    `sungrow_diagnosis.py` passes its transcript's `echo`; a line that went to
     stdout instead would be missing from the file a contributor keeps.
     """
     stub = Stub(IllegalDataAddressError(2))
@@ -422,7 +422,7 @@ async def _no_close() -> None:
 
 
 def test_the_raw_client_only_knows_read_function_codes() -> None:
-    """The survey's promise is that nothing it runs can write.
+    """The diagnosis's promise is that nothing it runs can write.
 
     `raw_client` builds its own frames, so the promise is checked on its
     source: the function codes it knows are 3 and 4, and nothing else.

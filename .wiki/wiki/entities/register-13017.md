@@ -16,9 +16,9 @@ an empty battery from the grid at night, which a sleeping inverter will not do.
 Not to be confused with **input** 13017, *Daily direct energy consumption*: the two spaces are
 separate ([protocol addresses](../concepts/protocol-addresses.md)).
 
-## What the surveys read
+## What the diagnoses read
 
-From the committed surveys under `device-survey/results/inverter/`, **never `0xAA`**:
+From the committed diagnoses under `device-diagnosis/results/inverter/`, **never `0xAA`**:
 
 | Value | Where |
 | --- | --- |

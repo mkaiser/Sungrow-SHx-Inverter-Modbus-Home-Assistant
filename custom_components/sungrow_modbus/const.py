@@ -111,68 +111,68 @@ AUDIENCE_USERS = "users"
 #: house is on the grid until somebody makes it.
 PERMISSION_START_STOP = "start_stop"
 
-#: Running the control test, which writes to every control and puts it back.
+#: Running the capability test, which writes to every control and puts it back.
 #:
-#: Admins only by default, for a reason the survey button does not share: this
+#: Admins only by default, for a reason the diagnosis button does not share: this
 #: one commands a charge, limits an export and moves the state-of-charge
 #: limits. It restores all of it and re-reads to prove it did, but for the
 #: minute it is running the house is doing what the test says rather than what
 #: its owner set.
-PERMISSION_CONTROL_TEST = "control_test"
+PERMISSION_CAPABILITY_TEST = "capability_test"
 
 #: The safe end of every choice. Changing one is a deliberate act by an
 #: administrator, and an absent key reads as the default rather than as
 #: permission.
 DEFAULT_PERMISSIONS: dict[str, str] = {
     PERMISSION_START_STOP: AUDIENCE_ADMINS,
-    PERMISSION_CONTROL_TEST: AUDIENCE_ADMINS,
+    PERMISSION_CAPABILITY_TEST: AUDIENCE_ADMINS,
 }
 
-#: Whether each control test permission below is granted until its owner says no.
+#: Whether each capability test permission below is granted until its owner says no.
 #:
 #: Opt-out: pressing **Run complete diagnosis and tests** is the leave, and a
 #: run that skips its restart, export limit and PV cut leaves the checks only
-#: hardware can answer unanswered. Each switch is in the options' control
+#: hardware can answer unanswered. Each switch is in the options' capability
 #: test section, with its consequences spelled out there; one switched off is
 #: stored and stays off.
-CONTROL_TEST_PERMISSION_DEFAULT = True
+CAPABILITY_TEST_PERMISSION_DEFAULT = True
 
-#: Let the control test stop and start the inverter, and time how long it takes.
+#: Let the capability test stop and start the inverter, and time how long it takes.
 #:
 #: Takes the house off its own generation for as long as the inverter takes to
 #: boot -- 3 to 4 minutes on the models measured so far.
-CONF_CONTROL_TEST_RESTART = "control_test_restart"
+CONF_CAPABILITY_TEST_RESTART = "capability_test_restart"
 
-#: Let the control test switch feed-in limitation on for the duration.
+#: Let the capability test switch feed-in limitation on for the duration.
 #:
 #: The one setting whose failed restore leaves the house generating less than
 #: it could; where it is already on, the test uses it and this changes nothing.
-CONF_CONTROL_TEST_EXPORT = "control_test_export_limit"
+CONF_CAPABILITY_TEST_EXPORT = "capability_test_export_limit"
 
-#: Let the control test cut PV generation for about a minute (register 31211).
+#: Let the capability test cut PV generation for about a minute (register 31211).
 #:
 #: The one check that takes generation away on purpose. It is also the only
 #: evidence that writing 31211 does what it should, which
 #: is what the `Cut PV generation` switch waits for on each firmware.
-CONF_CONTROL_TEST_PV_CUT = "control_test_pv_cut"
+CONF_CAPABILITY_TEST_PV_CUT = "capability_test_pv_cut"
 
-#: Let the control test write a forced-charging window around now (#785).
+#: Let the capability test write a forced-charging window around now (#785).
 #:
 #: The battery charges a few percent, from the grid if there is no sun.
-CONF_CONTROL_TEST_CHARGE_WINDOW = "control_test_charge_window"
+CONF_CAPABILITY_TEST_CHARGE_WINDOW = "capability_test_charge_window"
 
-#: Let the control test move the discharge windows away from now (#785).
+#: Let the capability test move the discharge windows away from now (#785).
 #:
 #: Registers outside Sungrow's document: a run with this on is the watched
 #: write the integration needs before it offers them as controls.
-CONF_CONTROL_TEST_DISCHARGE_WINDOW = "control_test_discharge_window"
+CONF_CAPABILITY_TEST_DISCHARGE_WINDOW = "capability_test_discharge_window"
 
-#: Let the control test cap grid import through register 32998 (#546).
+#: Let the capability test cap grid import through register 32998 (#546).
 #:
 #: A forced charge for about two minutes, from the grid if there is no sun.
 #: The register is outside Sungrow's document: a run with this on is the
 #: watched write the integration needs before it offers it as a control.
-CONF_CONTROL_TEST_IMPORT_LIMIT = "control_test_import_limit"
+CONF_CAPABILITY_TEST_IMPORT_LIMIT = "capability_test_import_limit"
 
 #: Which slot of a multi-inverter YAML install this entry's device was.
 #:
@@ -210,7 +210,7 @@ CONF_EXPORT_WRITE_SCALE_FIRMWARE = "export_write_scale_firmware"
 
 #: The publishable record of the write that measured `CONF_EXPORT_WRITE_SCALE`:
 #: `export_scale.document` plus the day it was asked. The factor alone is what
-#: writing needs; a survey document carries this, as the terminal's
+#: writing needs; a diagnosis document carries this, as the terminal's
 #: `--export-scale --merge-into` does, so a reading from Home Assistant says
 #: how its firmware writes 13074 and shows the one write behind the answer.
 #: Stored and discarded together with the factor.
@@ -243,17 +243,17 @@ PLACEMENT_SEPARATE = "separately_metered"
 #: load figure looks wrong, which is the behind-the-meter symptom.
 DEFAULT_EXTERNAL_PLACEMENT = PLACEMENT_BEHIND_METER
 
-#: The testimony a survey needs and no register can answer.
+#: The testimony a diagnosis needs and no register can answer.
 #:
 #: All optional, and all default to empty. **Empty means the question was not
 #: put**, which the document format has always kept distinct from an answer of
 #: "unknown" -- so leaving these alone produces an honest document rather than
 #: an incomplete one.
 CONF_REPORTER = "reporter"
-CONF_SURVEY_COMMENT = "survey_comment"
-CONF_SURVEY_BATTERY = "survey_battery"
-CONF_SURVEY_TRANSPORT = "survey_transport"
-CONF_SURVEY_PROXY = "survey_proxy"
+CONF_DIAGNOSIS_COMMENT = "diagnosis_comment"
+CONF_DIAGNOSIS_BATTERY = "diagnosis_battery"
+CONF_DIAGNOSIS_TRANSPORT = "diagnosis_transport"
+CONF_DIAGNOSIS_PROXY = "diagnosis_proxy"
 
 #: What the owner says about anything *else* polling this inverter.
 #:
@@ -262,7 +262,7 @@ CONF_SURVEY_PROXY = "survey_proxy"
 #: on the same machine -- and that is exactly what decides whether a dropped
 #: block is a register fault or two clients competing for one of the very few
 #: sessions a Sungrow grants.
-CONF_SURVEY_POLLERS = "survey_pollers"
+CONF_DIAGNOSIS_POLLERS = "diagnosis_pollers"
 
 #: Whether a **non-Sungrow** inverter shares the installation, and what it is.
 #:
@@ -281,8 +281,8 @@ CONF_SURVEY_POLLERS = "survey_pollers"
 #: `external.py` already corrects for this from entities another integration
 #: owns, which makes the answer useful twice: it explains a document, and it
 #: says who should be told that the correction exists.
-CONF_SURVEY_OTHER_INVERTER = "survey_other_inverter"
-CONF_SURVEY_OTHER_INVERTER_DETAIL = "survey_other_inverter_detail"
+CONF_DIAGNOSIS_OTHER_INVERTER = "diagnosis_other_inverter"
+CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL = "diagnosis_other_inverter_detail"
 
 #: Whether the last two octets of the address may be published.
 #:
@@ -295,10 +295,10 @@ CONF_SURVEY_OTHER_INVERTER_DETAIL = "survey_other_inverter_detail"
 #: cleared it reads `xxx.xxx` and is complete rather than damaged.
 CONF_PUBLISH_ADDRESS = "publish_address"
 
-#: Whether a survey also sweeps the twelve raw address bands.
+#: Whether a diagnosis also sweeps the twelve raw address bands.
 #:
 #: On by default, and the only answer in this section that is not testimony:
-#: it changes what the survey *does* rather than describing what the owner
+#: it changes what the diagnosis *does* rather than describing what the owner
 #: knows. It lives here anyway because it belongs to the same decision --
 #: somebody who has decided to contribute a reading is the only person this
 #: is for.
@@ -313,12 +313,12 @@ CONF_PUBLISH_ADDRESS = "publish_address"
 #: minutes of reading behind it would look like a hang. `CONF_REGISTER_DUMP`
 #: is the separate, much cheaper switch for that file -- it re-reads the
 #: addresses this library already maps, and discovers nothing new by design.
-CONF_SURVEY_DUMP = "survey_register_dump"
+CONF_DIAGNOSIS_DUMP = "diagnosis_register_dump"
 
 #: On unless the user turned it off. One value for the form and for every
-#: reader of the option, so the form cannot show it ticked while a survey
+#: reader of the option, so the form cannot show it ticked while a diagnosis
 #: reading an entry whose options were never saved runs without it.
-DEFAULT_SURVEY_DUMP = True
+DEFAULT_DIAGNOSIS_DUMP = True
 
 #: What an entry is for, chosen at setup and changeable afterwards.
 #:
@@ -342,7 +342,7 @@ MODE_DEVICES = "devices"
 """The ordinary integration: entities, migration, the whole thing."""
 
 MODE_DIAGNOSTICS = "diagnostics"
-"""Connect, identify, poll, and create only the survey's entities.
+"""Connect, identify, poll, and create only the diagnosis's entities.
 
 Two buttons and three sensors, which give the entry a device page; no
 readings, no controls, no migration.
@@ -353,7 +353,7 @@ Promoted to a full entry later from the options flow, which is when the
 entity-ids question gets asked.
 """
 
-#: Whether the UI offers only the survey, so nobody can *choose* devices
+#: Whether the UI offers only the diagnosis, so nobody can *choose* devices
 #: mode. On during the alpha.
 #:
 #: This gates the door, not the room. Every line of devices mode stays built
@@ -368,7 +368,7 @@ entity-ids question gets asked.
 #: in front of a stranger running an alpha, and an alpha's job here is to
 #: gather readings anyway.
 #:
-#: The opening menu offers only the survey and says the ordinary setup comes
+#: The opening menu offers only the diagnosis and says the ordinary setup comes
 #: later; the promotion toggle is greyed. `setup_devices` and `promote`
 #: refuse too, so a hand-written request cannot get round the screen.
 #:
@@ -379,11 +379,11 @@ entity-ids question gets asked.
 #: It does not touch an entry that already exists. A devices entry -- from a
 #: backup, or made while the gate was open -- loads, polls and configures
 #: normally.
-ONLY_SURVEY_MODE = True
+ONLY_DIAGNOSIS_MODE = True
 
-#: Where a contributed reading goes: the one pinned survey issue, so every
-#: survey is a comment in one place rather than an issue of its own.
-SURVEY_ISSUE_URL = (
+#: Where a contributed reading goes: the one pinned diagnosis issue, so every
+#: diagnosis is a comment in one place rather than an issue of its own.
+DIAGNOSIS_ISSUE_URL = (
     "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786"
 )
 
@@ -395,13 +395,13 @@ ENERGY_DASHBOARD_GUIDE_URL = (
     "/blob/proper-ha-integration/doc/energy_dashboard.md"
 )
 
-#: How long a signed survey download link stays valid. Long enough to
+#: How long a signed diagnosis download link stays valid. Long enough to
 #: notice the notification and press it, short enough that a copied URL in
 #: a chat window is not a standing grant. A fresh link comes with every
-#: survey.
+#: diagnosis.
 #:
 #: Here rather than in `download.py` because two modules need it and only
-#: one of them can afford to import the HTTP stack: `survey.py` names the
+#: one of them can afford to import the HTTP stack: `diagnosis.py` names the
 #: time in its notification and schedules the rewrite for when it passes,
 #: and a link whose text and timer disagreed would be worse than either.
 LINK_VALID = timedelta(hours=1)
@@ -417,12 +417,12 @@ SECTION_POLLING = "polling"
 SECTION_PERMISSIONS = "permissions"
 SECTION_EXTERNAL = "external"
 SECTION_ADVANCED = "advanced"
-SECTION_SURVEY = "survey"
+SECTION_DIAGNOSIS = "diagnosis"
 
 #: The two consents part B needs, on their own so their description can say
 #: what they cost. Collapsed by default, like every section whose settings most
 #: people never touch.
-SECTION_CONTROL_TEST = "control_test"
+SECTION_CAPABILITY_TEST = "capability_test"
 
 #: The one checkbox outside every section: a diagnostics-only entry offering
 #: to become an ordinary one. Not a section, because ticking it leads to a

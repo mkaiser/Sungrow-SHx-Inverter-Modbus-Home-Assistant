@@ -1,6 +1,6 @@
-"""Putting back what an interrupted control test left behind.
+"""Putting back what an interrupted capability test left behind.
 
-The control test writes to every control it can, checks it, and puts it back,
+The capability test writes to every control it can, checks it, and puts it back,
 and the restore is the one part of it that is never budgeted, never deadlined
 and never skipped. That covers everything except the cases where the code
 itself stops running: Home Assistant restarted, the entry was reloaded, the
@@ -36,7 +36,7 @@ from homeassistant.components.repairs import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import issue_registry as ir
-from sungrow_modbus.control_test import Snapshot
+from sungrow_modbus.capability_test import Snapshot
 
 from .const import DOMAIN
 from .texts import async_texts
@@ -45,7 +45,7 @@ _LOGGER = logging.getLogger(__name__)
 
 #: One issue per config entry, because one entry is one endpoint and a house
 #: may have two of them with two different things left behind.
-ISSUE_PREFIX = "control_test_unfinished"
+ISSUE_PREFIX = "capability_test_unfinished"
 
 
 def issue_id(entry: ConfigEntry) -> str:
@@ -54,7 +54,7 @@ def issue_id(entry: ConfigEntry) -> str:
 
 
 def async_raise(hass: HomeAssistant, entry: ConfigEntry, snapshot: Snapshot) -> None:
-    """Tell the owner that a control test did not finish putting things back.
+    """Tell the owner that a capability test did not finish putting things back.
 
     Not fixable by ignoring: the placeholders name real registers on a real
     inverter that are holding a test's values, and an issue somebody dismisses
@@ -77,7 +77,7 @@ def async_raise(hass: HomeAssistant, entry: ConfigEntry, snapshot: Snapshot) -> 
         is_fixable=True,
         severity=ir.IssueSeverity.ERROR if stopped else ir.IssueSeverity.WARNING,
         translation_key=(
-            "control_test_left_stopped" if stopped else "control_test_unfinished"
+            "capability_test_left_stopped" if stopped else "capability_test_unfinished"
         ),
         translation_placeholders={"name": entry.title, "registers": registers},
         data={"entry_id": entry.entry_id},
@@ -89,7 +89,7 @@ def async_clear(hass: HomeAssistant, entry: ConfigEntry) -> None:
     ir.async_delete_issue(hass, DOMAIN, issue_id(entry))
 
 
-class ControlTestRepairFlow(RepairsFlow):
+class CapabilityTestRepairFlow(RepairsFlow):
     """Show what is still changed, and put it back on confirmation."""
 
     def __init__(self, entry: ConfigEntry, snapshot: Snapshot) -> None:
@@ -124,9 +124,9 @@ class ControlTestRepairFlow(RepairsFlow):
                 },
             )
 
-        from .control_test import ControlTestRunner
+        from .capability_test import CapabilityTestRunner
 
-        runner = ControlTestRunner(self.hass, self.entry)
+        runner = CapabilityTestRunner(self.hass, self.entry)
         try:
             restored = await runner.async_restore(self.snapshot)
         except Exception as err:  # a failed restore must not also crash the flow
@@ -156,7 +156,7 @@ async def async_create_fix_flow(
     data: dict[str, str | int | float | None] | None,
 ) -> RepairsFlow:
     """Return the flow that fixes one of this integration's issues."""
-    from .control_test import async_leftover
+    from .capability_test import async_leftover
 
     entry_id = str((data or {}).get("entry_id", ""))
     entry = hass.config_entries.async_get_entry(entry_id)
@@ -167,4 +167,4 @@ async def async_create_fix_flow(
         # Already put back, by a later run or by hand. Confirming is then just
         # a way of taking the issue down, which is exactly what it should do.
         return ConfirmRepairFlow()
-    return ControlTestRepairFlow(entry, snapshot)
+    return CapabilityTestRepairFlow(entry, snapshot)

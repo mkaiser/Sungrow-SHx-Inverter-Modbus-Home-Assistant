@@ -4,13 +4,13 @@ title: mkaiser-import-limit-engine-2026-11-07.md
 source_path: raw/mkaiser-import-limit-engine-2026-11-07.md
 ingested: '2026-11-07'
 created: '2026-11-07'
-tags: [register-32998, import-limit, control-test, sh10rt, sapphire-h-b001-v000-p020, mkaiser, write, standby]
+tags: [register-32998, import-limit, capability-test, sh10rt, sapphire-h-b001-v000-p020, mkaiser, write, standby]
 ---
 
-# The control test's import limit check, mkaiser, 2026-11-07
+# The capability test's import limit check, mkaiser, 2026-11-07
 
 `.wiki/raw/mkaiser-import-limit-engine-2026-11-07.md` records the first run of the
-[control test](../concepts/control-test.md)'s `--import-limit` check on hardware: at
+[capability test](../concepts/capability-test.md)'s `--import-limit` check on hardware: at
 [mkaiser](../entities/installation-mkaiser.md)'s [SH10RT](../entities/device-sh-rt.md) on
 [P020](../entities/firmware-sapphire-h-b001-v000-p020.md), over the cable, with the PV isolator
 open.

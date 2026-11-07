@@ -13,7 +13,7 @@ which is **Reconfigure** on the same page.
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| *Add this endpoint's devices now* | off | Only on an entry set up for the survey. Upgrades it to a full one with entities, after asking whether to take over the YAML package's entity ids. Not offered while the preview is survey-only |
+| *Add this endpoint's devices now* | off | Only on an entry set up for the diagnosis. Upgrades it to a full one with entities, after asking whether to take over the YAML package's entity ids. Not offered while the preview is diagnosis-only |
 | *Entity IDs* | as chosen at setup | Moves the entities between the YAML package's ids and device-scoped ids, history and statistics included. The next page lists what moves before anything does. See [integration_migration.md](integration_migration.md) |
 
 ## Polling
@@ -47,10 +47,10 @@ which is **Reconfigure** on the same page.
 | *Include a raw register dump in diagnostics* | off | Adds every mapped register's raw value to **Download diagnostics**. A second full read, slow through a WiNet-S |
 | *Wallbox address* | empty | Only for a wallbox with its own network connection: read it there, encrypted, instead of through the WiNet-S |
 
-## Contribute a capability survey
+## Contribute a capability diagnosis
 
-Answers no register can give, written into the survey document. Every field
-is optional; an empty one records that it was not answered. The survey
+Answers no register can give, written into the diagnosis document. Every field
+is optional; an empty one records that it was not answered. The diagnosis
 itself is the **Run read only diagnosis** button on the device page.
 
 | Option | Default | What it does |
@@ -74,7 +74,7 @@ your consent; the six switches below are the parts that go further, and
 *before* pressing the button; what you switch off stays off. With all six
 off, the test still forces the battery and checks every setting's scale.
 
-<img src="../device-survey/images/HA-settings-configure-control-test.png" width="450" alt="The control write test section of the options dialog, with all six switches on">
+<img src="../device-diagnosis/images/HA-settings-configure-capability-test.png" width="450" alt="The control write test section of the options dialog, with all six switches on">
 
 | Option | Default | What it does |
 | --- | --- | --- |
@@ -86,5 +86,5 @@ off, the test still forces the battery and checks every setting's scale.
 | *May it cap grid import during a short forced charge?* | on | Where the inverter answers register 32998 (the **Grid import limit** reading): force-charges the battery for about two minutes, sets the limit halfway between the import that causes and the import without it, checks grid import comes down to it, and puts your limit back. Then writes 0, 5001 and 5000 once each to record which the inverter refuses. Skips itself when PV covers most of the charge, or the battery is full |
 
 Anything the test could not put back becomes a repair under **Settings →
-Repairs** that restores it. The terminal survey has no such switches: it
+Repairs** that restores it. The terminal diagnosis has no such switches: it
 asks before writing anything, and the default is no.

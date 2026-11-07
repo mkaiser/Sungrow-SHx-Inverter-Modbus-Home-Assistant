@@ -21,7 +21,7 @@ and bold are kept.
 
 ### `config.abort.devices_mode_not_offered`
 
-> **EN** Devices mode is not available in this preview. This build sets the integration up for diagnostics only -- it polls the inverter and can run the capability survey, but creates no sensors. Promotion will be offered in a later release, and the entry does not need to be removed and added again when it is.
+> **EN** Devices mode is not available in this preview. This build sets the integration up for diagnostics only -- it polls the inverter and can run the capability diagnosis, but creates no sensors. Promotion will be offered in a later release, and the entry does not need to be removed and added again when it is.
 
 > **DE** Der Geräte-Modus ist in dieser Vorschau nicht verfügbar. Diese Version richtet die Integration nur für die Diagnose ein: Sie fragt den Wechselrichter ab und kann die Diagnose ausführen, legt aber keine Sensoren an. Die Freischaltung folgt in einer späteren Version; der Eintrag muss dafür nicht entfernt und neu hinzugefügt werden.
 
@@ -307,7 +307,7 @@ and bold are kept.
 >
 > Das gelangt in das Dokument, lass deshalb Seriennummern, Adressen und Namen weg. Du kannst es leer lassen.
 
-### `config.step.other_inverter.data.survey_other_inverter_detail`
+### `config.step.other_inverter.data.diagnosis_other_inverter_detail`
 
 > **EN** The other inverter
 
@@ -401,37 +401,37 @@ and bold are kept.
 
 > **DE** Dein Name oder Pseudonym
 
-### `config.step.testimony.data.survey_transport`
+### `config.step.testimony.data.diagnosis_transport`
 
 > **EN** How this inverter is connected
 
 > **DE** Wie dieser Wechselrichter angebunden ist
 
-### `config.step.testimony.data.survey_proxy`
+### `config.step.testimony.data.diagnosis_proxy`
 
 > **EN** Is a Modbus proxy in the path?
 
 > **DE** Befindet sich ein Modbus-Proxy im Pfad?
 
-### `config.step.testimony.data.survey_pollers`
+### `config.step.testimony.data.diagnosis_pollers`
 
 > **EN** Anything else polling this inverter?
 
 > **DE** Fragt noch etwas anderes diesen Wechselrichter ab?
 
-### `config.step.testimony.data.survey_other_inverter`
+### `config.step.testimony.data.diagnosis_other_inverter`
 
 > **EN** Is there another inverter here that is not a Sungrow?
 
 > **DE** Gibt es hier einen weiteren Wechselrichter, der kein Sungrow ist?
 
-### `config.step.testimony.data.survey_battery`
+### `config.step.testimony.data.diagnosis_battery`
 
 > **EN** Battery make and model
 
 > **DE** Hersteller und Modell der Batterie
 
-### `config.step.testimony.data.survey_comment`
+### `config.step.testimony.data.diagnosis_comment`
 
 > **EN** Anything else worth knowing
 
@@ -443,7 +443,7 @@ and bold are kept.
 
 > **DE** Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?
 
-### `config.step.testimony.data.survey_register_dump`
+### `config.step.testimony.data.diagnosis_register_dump`
 
 > **EN** Also sweep the raw register bands (about five minutes)
 
@@ -455,37 +455,37 @@ and bold are kept.
 
 > **DE** Wird in der veröffentlichten Messung genannt und gefragt, wenn eine Zeile Fragen aufwirft. Leer lassen, um anonym beizutragen.
 
-### `config.step.testimony.data_description.survey_transport`
+### `config.step.testimony.data_description.diagnosis_transport`
 
 > **EN** Cable against dongle is measured already. What only you know is whether a dongle is on its Ethernet socket or its WiFi — a WiNet-S answers identically either way, so "not sure" is a real answer and better than a guess.
 
 > **DE** Kabel gegenüber Dongle ist bereits gemessen. Nur du weißt, ob ein Dongle an seiner Ethernet-Buchse oder per WLAN hängt – ein WiNet-S antwortet in beiden Fällen gleich, daher ist "nicht sicher" eine echte Antwort und besser als eine Vermutung.
 
-### `config.step.testimony.data_description.survey_proxy`
+### `config.step.testimony.data_description.diagnosis_proxy`
 
 > **EN** modbus-proxy, evcc's proxy, a Home Assistant add-on. A proxy holds one connection and lends it out, so it changes what a dropped register means — and it rebuilds every frame, which can hide or create the frame quirks this project tracks.
 
 > **DE** modbus-proxy, der Proxy von evcc, ein Home-Assistant-Add-on. Ein Proxy hält eine Verbindung und verleiht sie weiter, was die Bedeutung eines ausgefallenen Registers verändert – und er baut jeden Frame neu auf, was die Frame-Eigenheiten, die dieses Projekt verfolgt, verbergen oder erzeugen kann.
 
-### `config.step.testimony.data_description.survey_pollers`
+### `config.step.testimony.data_description.diagnosis_pollers`
 
 > **EN** This Home Assistant is recorded automatically. What matters here is anything else: another Home Assistant, the YAML package, evcc, a logger. An inverter grants very few connections, and two clients competing for one looks exactly like a broken register.
 
 > **DE** Dieses Home Assistant wird automatisch erfasst. Wichtig ist hier alles andere: ein anderes Home Assistant, das YAML-Paket, evcc, ein Logger. Ein Wechselrichter gewährt sehr wenige Verbindungen, und zwei Clients, die um eine konkurrieren, sehen genau wie ein defektes Register aus.
 
-### `config.step.testimony.data_description.survey_other_inverter`
+### `config.step.testimony.data_description.diagnosis_other_inverter`
 
 > **EN** Your Sungrow does not measure how much your house is using — it works it out from its own output plus what the grid meter says is coming in. A second inverter feeding the same meter therefore makes every load figure too low, by exactly what that inverter is producing, while everything else reads normally. No register can tell us: the Sungrow cannot see it. Say yes and we will ask what it is.
 
 > **DE** Dein Sungrow misst nicht, wie viel dein Haus verbraucht – er errechnet es aus seiner eigenen Leistung plus dem, was der Netzzähler als Bezug meldet. Ein zweiter Wechselrichter am selben Zähler macht daher jeden Lastwert um genau dessen Erzeugung zu niedrig, während alles andere normal aussieht. Kein Register kann uns das sagen: Der Sungrow sieht ihn nicht. Antworte mit Ja, dann fragen wir, was es ist.
 
-### `config.step.testimony.data_description.survey_battery`
+### `config.step.testimony.data_description.diagnosis_battery`
 
 > **EN** No register reports it. "SBR096" or "Pylontech Force H1, 14.4 kWh" is more useful than a capacity the inverter already reports.
 
 > **DE** Kein Register meldet das. "SBR096" oder "Pylontech Force H1, 14,4 kWh" ist nützlicher als eine Kapazität, die der Wechselrichter ohnehin meldet.
 
-### `config.step.testimony.data_description.survey_comment`
+### `config.step.testimony.data_description.diagnosis_comment`
 
 > **EN** Anything unusual about the installation — a cluster, a second inverter, a wallbox, a firmware update you remember.
 
@@ -497,9 +497,9 @@ and bold are kept.
 
 > **DE** An, und du kannst es vor dem Absenden ausschalten. Nur die letzten zwei Oktette gelangen je in das Dokument – nie das dritte, das dein Netzwerk identifizieren würde –, und wenn du das deaktivierst, steht stattdessen xxx.xxx. Der Nutzen: Mehrere Messungen aus einem Haus lassen sich unterscheiden – ein Master, ein Slave und zwei Dongles ergeben sonst vier gleich aussehende Dateien.
 
-### `config.step.testimony.data_description.survey_register_dump`
+### `config.step.testimony.data_description.diagnosis_register_dump`
 
-> **EN** On, and worth turning off if you are in a hurry. Without it a survey reads the registers this integration already knows about and takes a couple of seconds. With it, it also sweeps 2181 addresses across sixteen bands, including the ones no specification documents — which is how every undocumented register this project knows was found. That is slow because an address with nothing behind it goes quiet rather than refusing, so each empty one costs a full timeout: about five minutes on a direct cable, and considerably longer through a WiNet-S or a VPN. Your inverter keeps being polled throughout, and the survey button on the device page shows how far along it is.
+> **EN** On, and worth turning off if you are in a hurry. Without it a diagnosis reads the registers this integration already knows about and takes a couple of seconds. With it, it also sweeps 2181 addresses across sixteen bands, including the ones no specification documents — which is how every undocumented register this project knows was found. That is slow because an address with nothing behind it goes quiet rather than refusing, so each empty one costs a full timeout: about five minutes on a direct cable, and considerably longer through a WiNet-S or a VPN. Your inverter keeps being polled throughout, and the diagnosis button on the device page shows how far along it is.
 
 > **DE** An, und besser auszuschalten, wenn du es eilig hast. Ohne sie liest die Diagnose die Register, die diese Integration bereits kennt, und braucht ein paar Sekunden. Mit ihr durchsucht sie zusätzlich 2181 Adressen in sechzehn Bereichen, auch die, die keine Spezifikation dokumentiert – so wurde jedes undokumentierte Register gefunden, das dieses Projekt kennt. Das ist langsam, weil eine Adresse ohne Inhalt verstummt statt abzulehnen, sodass jede leere ein volles Timeout kostet: etwa fünf Minuten am direkten Kabel und deutlich länger über ein WiNet-S oder ein VPN. Dein Wechselrichter wird die ganze Zeit weiter abgefragt, und die Diagnose-Schaltfläche auf der Geräteseite zeigt den Fortschritt.
 
@@ -511,7 +511,7 @@ and bold are kept.
 
 ### `config.step.user.description`
 
-> **EN** {mode_intro}**The device survey** connects to the inverter, works out what it is and what it answers, and creates **no entities at all**. It exists because this project has to *measure* which registers each model and firmware supports — Sungrow's own specification has been wrong in both directions — and today that evidence comes from the few houses that have sent a reading.{mode_choice}
+> **EN** {mode_intro}**The device diagnosis** connects to the inverter, works out what it is and what it answers, and creates **no entities at all**. It exists because this project has to *measure* which registers each model and firmware supports — Sungrow's own specification has been wrong in both directions — and today that evidence comes from the few houses that have sent a reading.{mode_choice}
 
 > **DE** {mode_intro}**Die Geräte-Diagnose** verbindet sich mit dem Wechselrichter, ermittelt, was er ist und was er beantwortet, und legt **überhaupt keine Entitäten an**. Es gibt sie, weil dieses Projekt *messen* muss, welche Register jedes Modell und jede Firmware unterstützt – Sungrows eigene Spezifikation lag in beide Richtungen falsch – und dieser Nachweis stammt heute von den wenigen Haushalten, die eine Messung eingesandt haben.{mode_choice}
 
@@ -523,7 +523,7 @@ and bold are kept.
 
 ### `config.step.user.menu_options.setup_diagnostics`
 
-> **EN** Perform the device survey — help this project, create no entities
+> **EN** Perform the device diagnosis — help this project, create no entities
 
 > **DE** Geräte-Diagnose durchführen – dem Projekt helfen, keine Entitäten anlegen
 
@@ -589,7 +589,7 @@ and bold are kept.
 
 > **EN** This inverter is already set up as **{title}**, reached at **{old}**. It also answers at **{new}**.
 >
-> **Submit** switches the entry to **{new}** and reloads it. Its entity IDs, their history and its settings stay as they are; the battery and wallbox are looked for again on the new connection. Your answer about how the survey reaches the inverter is cleared, because it described the old connection.{wallbox}
+> **Submit** switches the entry to **{new}** and reloads it. Its entity IDs, their history and its settings stay as they are; the battery and wallbox are looked for again on the new connection. Your answer about how the diagnosis reaches the inverter is cleared, because it described the old connection.{wallbox}
 >
 > To keep the current connection, close this dialog.
 
@@ -630,7 +630,7 @@ and bold are kept.
 > 1. Press **Run read only diagnosis**, under *Diagnostic*. It reads and never writes. On a cable it is over in a couple of minutes with the register sweep on; over a VPN it can take considerably longer, and the three sensors beside the button say how far along it is and what it is reading.
 > 2. When it finishes, open **Notifications** in the sidebar — the badge at the bottom left. The notification there carries a summary and a **Download the document** link. That link is the JSON file to send us, and it stops working after an hour.
 >
-> Missed it, or came back the next day? **Download diagnostics** on the same device page carries the same document and never expires. Send either to [the survey issue]({survey_issue_url}).
+> Missed it, or came back the next day? **Download diagnostics** on the same device page carries the same document and never expires. Send either to [the diagnosis issue]({diagnosis_issue_url}).
 >
 > The file names your inverter by a stand-in rather than its serial number, and carries the last two octets of its address only while that box is ticked.
 
@@ -639,7 +639,7 @@ and bold are kept.
 > 1. Drücke **Diagnose ausführen (nur lesend)** unter *Diagnose*. Sie liest und schreibt nie. Am Kabel ist sie mit dem Registerdurchlauf in ein paar Minuten fertig; über ein VPN kann es deutlich länger dauern, und die drei Sensoren neben der Schaltfläche zeigen, wie weit sie ist und was sie liest.
 > 2. Öffne danach **Benachrichtigungen** in der Seitenleiste – das Abzeichen unten links. Die Benachrichtigung dort enthält eine Zusammenfassung und einen Link **Dokument herunterladen**. Dieser Link ist die JSON-Datei, die du uns schicken sollst, und er funktioniert nach einer Stunde nicht mehr.
 >
-> Verpasst, oder erst am nächsten Tag zurück? **Diagnose herunterladen** auf derselben Geräteseite enthält dasselbe Dokument und läuft nie ab. Schicke eines davon an [das Diagnose-Issue]({survey_issue_url}).
+> Verpasst, oder erst am nächsten Tag zurück? **Diagnose herunterladen** auf derselben Geräteseite enthält dasselbe Dokument und läuft nie ab. Schicke eines davon an [das Diagnose-Issue]({diagnosis_issue_url}).
 >
 > Die Datei benennt deinen Wechselrichter mit einem Platzhalter statt der Seriennummer und enthält die letzten zwei Oktette seiner Adresse nur, solange dieses Feld angehakt ist.
 
@@ -763,67 +763,67 @@ and bold are kept.
 
 > **DE** An einem eigenen Anschluss – nichts davon passiert den Zähler dieses Wechselrichters
 
-### `selector.survey_transport.options.direct_lan`
+### `selector.diagnosis_transport.options.direct_lan`
 
 > **EN** A cable straight into the inverter's own LAN port
 
 > **DE** Ein Kabel direkt am eigenen LAN-Port des Wechselrichters
 
-### `selector.survey_transport.options.winet_lan`
+### `selector.diagnosis_transport.options.winet_lan`
 
 > **EN** A WiNet-S dongle, on its Ethernet socket
 
 > **DE** Ein WiNet-S-Dongle an seiner Ethernet-Buchse
 
-### `selector.survey_transport.options.winet_wlan`
+### `selector.diagnosis_transport.options.winet_wlan`
 
 > **EN** A WiNet-S dongle, over WiFi
 
 > **DE** Ein WiNet-S-Dongle über WLAN
 
-### `selector.survey_transport.options.winet`
+### `selector.diagnosis_transport.options.winet`
 
 > **EN** A WiNet-S dongle, but I am not sure which medium
 
 > **DE** Ein WiNet-S-Dongle, aber ich bin nicht sicher, über welches Medium
 
-### `selector.survey_transport.options.logger`
+### `selector.diagnosis_transport.options.logger`
 
 > **EN** A Logger1000 or Logger3000
 
 > **DE** Ein Logger1000 oder Logger3000
 
-### `selector.survey_transport.options.unsure`
+### `selector.diagnosis_transport.options.unsure`
 
 > **EN** Not sure
 
 > **DE** Nicht sicher
 
-### `selector.survey_proxy.options.yes`
+### `selector.diagnosis_proxy.options.yes`
 
 > **EN** Yes — modbus-proxy, evcc's proxy, or a Home Assistant add-on
 
 > **DE** Ja – modbus-proxy, der Proxy von evcc oder ein Home-Assistant-Add-on
 
-### `selector.survey_proxy.options.no`
+### `selector.diagnosis_proxy.options.no`
 
 > **EN** No, this talks straight to the inverter
 
 > **DE** Nein, er spricht direkt mit dem Wechselrichter
 
-### `selector.survey_proxy.options.unknown`
+### `selector.diagnosis_proxy.options.unknown`
 
 > **EN** I do not know what that is
 
 > **DE** Ich weiß nicht, was das ist
 
-### `selector.survey_other_inverter.options.yes`
+### `selector.diagnosis_other_inverter.options.yes`
 
 > **EN** Yes — there is another inverter that is not a Sungrow
 
 > **DE** Ja – es gibt einen weiteren Wechselrichter, der kein Sungrow ist
 
-### `selector.survey_other_inverter.options.no`
+### `selector.diagnosis_other_inverter.options.no`
 
 > **EN** No — the Sungrow is the only inverter here
 
@@ -849,7 +849,7 @@ and bold are kept.
 
 ### `selector.flow_text.options.devices_mode_open`
 
-> **EN** Both answers are fine, and you can change your mind later: picking **the device survey** skips the weightiest question in this dialog, about which entity IDs to take over, because a reading does not need it.
+> **EN** Both answers are fine, and you can change your mind later: picking **the device diagnosis** skips the weightiest question in this dialog, about which entity IDs to take over, because a reading does not need it.
 
 > **DE** Beide Antworten sind in Ordnung, und du kannst es dir später anders überlegen: **Die Geräteerfassung** überspringt die gewichtigste Frage in diesem Dialog, welche Entitäts-IDs übernommen werden, weil eine Messung sie nicht braucht.
 
@@ -987,31 +987,31 @@ and bold are kept.
 
 > **DE** Gerade meldet dieser Wechselrichter einen Hausverbrauch von {load} W, und darin ist nichts enthalten, was er nicht sieht.
 
-### `selector.flow_text.options.survey_offline`
+### `selector.flow_text.options.diagnosis_offline`
 
 > **EN** The inverter is not connected, so nothing has been measured yet.
 
 > **DE** Der Wechselrichter ist nicht verbunden, deshalb wurde noch nichts gemessen.
 
-### `selector.flow_text.options.survey_direct`
+### `selector.flow_text.options.diagnosis_direct`
 
 > **EN** Already measured, so you do not need to tell us: this is {model}, reached through its own LAN port — register 6100 answers, which no communication module forwards.
 
 > **DE** Schon gemessen, du musst es uns also nicht sagen: Das ist {model}, erreicht über seinen eigenen LAN-Anschluss — Register 6100 antwortet, und das leitet kein Kommunikationsmodul weiter.
 
-### `selector.flow_text.options.survey_dongle`
+### `selector.flow_text.options.diagnosis_dongle`
 
 > **EN** Already measured, so you do not need to tell us: this is {model}, reached through a communication module, so a WiNet-S, WiNet-S2 or Logger is in the path — register 6100 was refused. Whether it is using its Ethernet socket or its WiFi is not determinable over Modbus, and that is the part only you can tell us.
 
 > **DE** Schon gemessen, du musst es uns also nicht sagen: Das ist {model}, erreicht über ein Kommunikationsmodul, also ist ein WiNet-S, WiNet-S2 oder Logger im Weg — Register 6100 wurde abgelehnt. Ob es seine Ethernet-Buchse oder sein WLAN nutzt, ist über Modbus nicht feststellbar, und das ist der Teil, den nur du uns sagen kannst.
 
-### `selector.flow_text.options.survey_unknown`
+### `selector.flow_text.options.diagnosis_unknown`
 
 > **EN** Already measured, so you do not need to tell us: this is {model}, and the route could not be measured — register 6100 neither answered nor was refused, which is what a busy link looks like. A cable answers it and a dongle refuses it, so this one is for you to tell us.
 
 > **DE** Schon gemessen, du musst es uns also nicht sagen: Das ist {model}, und der Weg ließ sich nicht messen — Register 6100 hat weder geantwortet noch abgelehnt, und so sieht eine ausgelastete Verbindung aus. Ein Kabel beantwortet es, ein Dongle lehnt es ab, also ist das eine Frage für dich.
 
-### `selector.flow_text.options.survey_fitted`
+### `selector.flow_text.options.diagnosis_fitted`
 
 > **EN** A communication module is fitted and names itself {module}, which is a different question from which path this endpoint is: a house can have a dongle and a cable at once.
 
@@ -1128,19 +1128,19 @@ and bold are kept.
 >
 > Bitte melde alles, was falsch aussieht – dafür ist eine Vorschau da.
 
-### `issues.control_test_unfinished.title`
+### `issues.capability_test_unfinished.title`
 
 > **EN** A control write test on {name} did not finish
 
-> **DE** Ein Steuerungs-Schreibtest an {name} wurde nicht abgeschlossen
+> **DE** Ein Funktionstest an {name} wurde nicht abgeschlossen
 
-### `issues.control_test_unfinished.fix_flow.step.confirm.title`
+### `issues.capability_test_unfinished.fix_flow.step.confirm.title`
 
 > **EN** Put these settings back
 
 > **DE** Diese Einstellungen zurücksetzen
 
-### `issues.control_test_unfinished.fix_flow.step.confirm.description`
+### `issues.capability_test_unfinished.fix_flow.step.confirm.description`
 
 > **EN** The control write test changes a setting, checks it, and changes it back. This one did not get to the changing-back part — Home Assistant was restarted, the entry was reloaded, or the inverter stopped answering partway through.
 >
@@ -1156,7 +1156,7 @@ and bold are kept.
 >
 > If anything refuses the write, nothing is hidden — you will be told which and this will stay here. The usual cause is something else polling the inverter at the same time.
 
-> **DE** Der Steuerungs-Schreibtest ändert eine Einstellung, prüft sie und ändert sie zurück. Dieser kam nicht bis zum Zurückändern – Home Assistant wurde neu gestartet, der Eintrag neu geladen oder der Wechselrichter hörte mittendrin auf zu antworten.
+> **DE** Der Funktionstest ändert eine Einstellung, prüft sie und ändert sie zurück. Dieser kam nicht bis zum Zurückändern – Home Assistant wurde neu gestartet, der Eintrag neu geladen oder der Wechselrichter hörte mittendrin auf zu antworten.
 >
 > Diese Einstellungen enthalten womöglich noch die Werte des Tests statt deiner:
 >
@@ -1170,7 +1170,7 @@ and bold are kept.
 >
 > Verweigert etwas das Schreiben, wird nichts verschwiegen – du erfährst, was, und die Reparatur bleibt bestehen. Die übliche Ursache ist, dass gleichzeitig etwas anderes den Wechselrichter abfragt.
 
-### `issues.control_test_unfinished.fix_flow.abort.restore_failed`
+### `issues.capability_test_unfinished.fix_flow.abort.restore_failed`
 
 > **EN** Could not put everything back: {error}
 >
@@ -1180,19 +1180,19 @@ and bold are kept.
 >
 > Diese Reparatur bleibt offen, damit du es erneut versuchen kannst.
 
-### `issues.control_test_left_stopped.title`
+### `issues.capability_test_left_stopped.title`
 
 > **EN** {name} may still be stopped after a control write test
 
-> **DE** {name} ist nach einem Steuerungs-Schreibtest womöglich noch gestoppt
+> **DE** {name} ist nach einem Funktionstest womöglich noch gestoppt
 
-### `issues.control_test_left_stopped.fix_flow.step.confirm.title`
+### `issues.capability_test_left_stopped.fix_flow.step.confirm.title`
 
 > **EN** Start the inverter and put these settings back
 
 > **DE** Den Wechselrichter starten und diese Einstellungen zurücksetzen
 
-### `issues.control_test_left_stopped.fix_flow.step.confirm.description`
+### `issues.capability_test_left_stopped.fix_flow.step.confirm.description`
 
 > **EN** **Check whether your inverter is generating.** A control write test was given permission to stop and restart it, and did not get to the restart — Home Assistant was restarted, the entry was reloaded, or the inverter stopped answering partway through.
 >
@@ -1206,7 +1206,7 @@ and bold are kept.
 >
 > If anything refuses, you will be told which and this will stay here.
 
-> **DE** **Prüfe, ob dein Wechselrichter erzeugt.** Ein Steuerungs-Schreibtest durfte ihn stoppen und neu starten und kam nicht bis zum Neustart – Home Assistant wurde neu gestartet, der Eintrag neu geladen oder der Wechselrichter hörte mittendrin auf zu antworten.
+> **DE** **Prüfe, ob dein Wechselrichter erzeugt.** Ein Funktionstest durfte ihn stoppen und neu starten und kam nicht bis zum Neustart – Home Assistant wurde neu gestartet, der Eintrag neu geladen oder der Wechselrichter hörte mittendrin auf zu antworten.
 >
 > Die Behebung startet den Wechselrichter, setzt dann diese Einstellungen zurück und liest jede erneut, um zu prüfen, dass es geklappt hat:
 >
@@ -1218,7 +1218,7 @@ and bold are kept.
 >
 > Verweigert etwas, erfährst du, was, und die Reparatur bleibt bestehen.
 
-### `issues.control_test_left_stopped.fix_flow.abort.restore_failed`
+### `issues.capability_test_left_stopped.fix_flow.abort.restore_failed`
 
 > **EN** Could not finish: {error}
 >
@@ -1341,7 +1341,7 @@ and bold are kept.
 
 > **EN** Who may call the start and stop actions, and who may press the control write test's button. Administrators only is the default: a stopped inverter stays stopped until somebody starts it. Users means users who can already change this device; read-only logins never can, and automations and scripts are not affected. Every other setting is an entity, and Home Assistant decides who may change it: make an account read-only under Settings → People to keep a person from changing any of them.
 
-> **DE** Wer die Aktionen Start und Stopp aufrufen darf und wer die Schaltfläche des Steuerungs-Schreibtests drücken darf. Standard ist nur Administratoren: Ein gestoppter Wechselrichter bleibt gestoppt, bis ihn jemand startet. Benutzer bedeutet Benutzer, die dieses Gerät bereits ändern dürfen; Konten mit reinem Lesezugriff können das nie, und Automationen und Skripte sind nicht betroffen. Jede andere Einstellung ist eine Entität, und Home Assistant entscheidet, wer sie ändern darf: Mache ein Konto unter Einstellungen → Personen schreibgeschützt, um einer Person jede Änderung zu verwehren.
+> **DE** Wer die Aktionen Start und Stopp aufrufen darf und wer die Schaltfläche des Funktionstests drücken darf. Standard ist nur Administratoren: Ein gestoppter Wechselrichter bleibt gestoppt, bis ihn jemand startet. Benutzer bedeutet Benutzer, die dieses Gerät bereits ändern dürfen; Konten mit reinem Lesezugriff können das nie, und Automationen und Skripte sind nicht betroffen. Jede andere Einstellung ist eine Entität, und Home Assistant entscheidet, wer sie ändern darf: Mache ein Konto unter Einstellungen → Personen schreibgeschützt, um einer Person jede Änderung zu verwehren.
 
 ### `options.step.init.sections.permissions.data.start_stop`
 
@@ -1349,11 +1349,11 @@ and bold are kept.
 
 > **DE** Den Wechselrichter starten und stoppen
 
-### `options.step.init.sections.permissions.data.control_test`
+### `options.step.init.sections.permissions.data.capability_test`
 
 > **EN** Run the control write test
 
-> **DE** Den Steuerungs-Schreibtest ausführen
+> **DE** Den Funktionstest ausführen
 
 ### `options.step.init.sections.permissions.data_description.start_stop`
 
@@ -1361,11 +1361,11 @@ and bold are kept.
 
 > **DE** Wer die Aktionen Start und Stopp für diesen Wechselrichter aufrufen darf.
 
-### `options.step.init.sections.permissions.data_description.control_test`
+### `options.step.init.sections.permissions.data_description.capability_test`
 
 > **EN** Administrators only by default. The control write test changes settings on the inverter and puts them back, and — where you have allowed it above — stops and restarts it. Opening it to users means users who can already change this device; a read-only login still cannot.
 
-> **DE** Standardmäßig nur Administratoren. Der Steuerungs-Schreibtest ändert Einstellungen am Wechselrichter und setzt sie zurück und – wo du es oben erlaubt hast – stoppt und startet ihn neu. Ihn für Benutzer zu öffnen bedeutet Benutzer, die dieses Gerät bereits ändern dürfen; ein Konto mit reinem Lesezugriff kann es weiterhin nicht.
+> **DE** Standardmäßig nur Administratoren. Der Funktionstest ändert Einstellungen am Wechselrichter und setzt sie zurück und – wo du es oben erlaubt hast – stoppt und startet ihn neu. Ihn für Benutzer zu öffnen bedeutet Benutzer, die dieses Gerät bereits ändern dürfen; ein Konto mit reinem Lesezugriff kann es weiterhin nicht.
 
 ### `options.step.init.sections.external.name`
 
@@ -1451,175 +1451,175 @@ and bold are kept.
 
 > **DE** Nur für eine Sungrow-Wallbox mit eigenem Netzwerkkabel oder WLAN. Ohne dies findet die Integration eine Wallbox hinter einem WiNet-S selbst, und das ist alles, was die meisten Installationen brauchen. Mit dieser Angabe wird die Wallbox stattdessen an ihrer eigenen Adresse gelesen – verschlüsselt, auf Port 516 –, was auch funktioniert, wenn dieser Eintrag am eigenen LAN-Port des Wechselrichters hängt, wo eine Wallbox sonst nicht zu sehen ist. Ihre Entitäten und deren Verlauf bleiben, wie sie sind. Leer lassen, um zum WiNet-S zurückzukehren.
 
-### `options.step.init.sections.survey.name`
+### `options.step.init.sections.diagnosis.name`
 
-> **EN** Contribute a capability survey
+> **EN** Contribute a capability diagnosis
 
 > **DE** Eine Funktionsdiagnose beisteuern
 
-### `options.step.init.sections.survey.description`
+### `options.step.init.sections.diagnosis.description`
 
-> **EN** Which registers an inverter answers is measured, not looked up, and a reading from yours is what improves support for it. {measured} Everything below is optional and answers what no register can; an empty field records that the question was not answered. Saving keeps your answers. To run the survey, press Run read only diagnosis on the device page: it reads and never writes, and replaces the serial number with a stand-in.
+> **EN** Which registers an inverter answers is measured, not looked up, and a reading from yours is what improves support for it. {measured} Everything below is optional and answers what no register can; an empty field records that the question was not answered. Saving keeps your answers. To run the diagnosis, press Run read only diagnosis on the device page: it reads and never writes, and replaces the serial number with a stand-in.
 
 > **DE** Welche Register ein Wechselrichter beantwortet, wird gemessen, nicht nachgeschlagen, und eine Messung von deinem verbessert die Unterstützung dafür. {measured} Alles unten ist optional und beantwortet, was kein Register kann; ein leeres Feld hält fest, dass die Frage nicht beantwortet wurde. Speichern behält deine Antworten. Um die Diagnose auszuführen, drücke auf der Geräteseite Diagnose ausführen (nur lesend): Sie liest und schreibt nie und ersetzt die Seriennummer durch einen Platzhalter.
 
-### `options.step.init.sections.survey.data.reporter`
+### `options.step.init.sections.diagnosis.data.reporter`
 
 > **EN** Your name or handle
 
 > **DE** Dein Name oder Pseudonym
 
-### `options.step.init.sections.survey.data.survey_transport`
+### `options.step.init.sections.diagnosis.data.diagnosis_transport`
 
 > **EN** How this inverter is connected
 
 > **DE** Wie dieser Wechselrichter angebunden ist
 
-### `options.step.init.sections.survey.data.survey_proxy`
+### `options.step.init.sections.diagnosis.data.diagnosis_proxy`
 
 > **EN** Is a Modbus proxy in the path?
 
 > **DE** Befindet sich ein Modbus-Proxy im Pfad?
 
-### `options.step.init.sections.survey.data.survey_pollers`
+### `options.step.init.sections.diagnosis.data.diagnosis_pollers`
 
 > **EN** Anything else polling this inverter?
 
 > **DE** Fragt noch etwas anderes diesen Wechselrichter ab?
 
-### `options.step.init.sections.survey.data.survey_other_inverter`
+### `options.step.init.sections.diagnosis.data.diagnosis_other_inverter`
 
 > **EN** Is there another inverter here that is not a Sungrow?
 
 > **DE** Gibt es hier einen weiteren Wechselrichter, der kein Sungrow ist?
 
-### `options.step.init.sections.survey.data.survey_battery`
+### `options.step.init.sections.diagnosis.data.diagnosis_battery`
 
 > **EN** Battery make and model
 
 > **DE** Hersteller und Modell der Batterie
 
-### `options.step.init.sections.survey.data.survey_comment`
+### `options.step.init.sections.diagnosis.data.diagnosis_comment`
 
 > **EN** Anything else worth knowing
 
 > **DE** Sonst noch etwas Wissenswertes
 
-### `options.step.init.sections.survey.data.publish_address`
+### `options.step.init.sections.diagnosis.data.publish_address`
 
 > **EN** May the last two octets of the address be published?
 
 > **DE** Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?
 
-### `options.step.init.sections.survey.data.survey_register_dump`
+### `options.step.init.sections.diagnosis.data.diagnosis_register_dump`
 
 > **EN** Also sweep the raw register bands (about five minutes)
 
 > **DE** Auch die rohen Registerbereiche durchsuchen (etwa fünf Minuten)
 
-### `options.step.init.sections.survey.data_description.reporter`
+### `options.step.init.sections.diagnosis.data_description.reporter`
 
 > **EN** Credited in the published reading, and who gets asked if a row raises a question. Leave empty to contribute anonymously.
 
 > **DE** Wird in der veröffentlichten Messung genannt und gefragt, wenn eine Zeile Fragen aufwirft. Leer lassen, um anonym beizutragen.
 
-### `options.step.init.sections.survey.data_description.survey_transport`
+### `options.step.init.sections.diagnosis.data_description.diagnosis_transport`
 
 > **EN** Cable against dongle is measured already. What only you know is whether a dongle is on its Ethernet socket or its WiFi — a WiNet-S answers identically either way, so "not sure" is a real answer and better than a guess.
 
 > **DE** Kabel gegenüber Dongle ist bereits gemessen. Nur du weißt, ob ein Dongle an seiner Ethernet-Buchse oder per WLAN hängt – ein WiNet-S antwortet in beiden Fällen gleich, daher ist "nicht sicher" eine echte Antwort und besser als eine Vermutung.
 
-### `options.step.init.sections.survey.data_description.survey_proxy`
+### `options.step.init.sections.diagnosis.data_description.diagnosis_proxy`
 
 > **EN** modbus-proxy, evcc's proxy, a Home Assistant add-on. A proxy holds one connection and lends it out, so it changes what a dropped register means — and it rebuilds every frame, which can hide or create the frame quirks this project tracks.
 
 > **DE** modbus-proxy, der Proxy von evcc, ein Home-Assistant-Add-on. Ein Proxy hält eine Verbindung und verleiht sie weiter, was die Bedeutung eines ausgefallenen Registers verändert – und er baut jeden Frame neu auf, was die Frame-Eigenheiten, die dieses Projekt verfolgt, verbergen oder erzeugen kann.
 
-### `options.step.init.sections.survey.data_description.survey_pollers`
+### `options.step.init.sections.diagnosis.data_description.diagnosis_pollers`
 
 > **EN** This Home Assistant is recorded automatically. What matters here is anything else: another Home Assistant, the YAML package, evcc, a logger. An inverter grants very few connections, and two clients competing for one looks exactly like a broken register.
 
 > **DE** Dieses Home Assistant wird automatisch erfasst. Wichtig ist hier alles andere: ein anderes Home Assistant, das YAML-Paket, evcc, ein Logger. Ein Wechselrichter gewährt sehr wenige Verbindungen, und zwei Clients, die um eine konkurrieren, sehen genau wie ein defektes Register aus.
 
-### `options.step.init.sections.survey.data_description.survey_other_inverter`
+### `options.step.init.sections.diagnosis.data_description.diagnosis_other_inverter`
 
 > **EN** Your Sungrow does not measure how much your house is using — it works it out from its own output plus what the grid meter says is coming in. A second inverter feeding the same meter therefore makes every load figure too low, by exactly what that inverter is producing, while everything else reads normally. No register can tell us: the Sungrow cannot see it. Say yes and we will ask what it is.
 
 > **DE** Dein Sungrow misst nicht, wie viel dein Haus verbraucht – er errechnet es aus seiner eigenen Leistung plus dem, was der Netzzähler als Bezug meldet. Ein zweiter Wechselrichter am selben Zähler macht daher jeden Lastwert um genau dessen Erzeugung zu niedrig, während alles andere normal aussieht. Kein Register kann uns das sagen: Der Sungrow sieht ihn nicht. Antworte mit Ja, dann fragen wir, was es ist.
 
-### `options.step.init.sections.survey.data_description.survey_battery`
+### `options.step.init.sections.diagnosis.data_description.diagnosis_battery`
 
 > **EN** No register reports it. "SBR096" or "Pylontech Force H1, 14.4 kWh" is more useful than a capacity the inverter already reports.
 
 > **DE** Kein Register meldet das. "SBR096" oder "Pylontech Force H1, 14,4 kWh" ist nützlicher als eine Kapazität, die der Wechselrichter ohnehin meldet.
 
-### `options.step.init.sections.survey.data_description.survey_comment`
+### `options.step.init.sections.diagnosis.data_description.diagnosis_comment`
 
 > **EN** Anything unusual about the installation — a cluster, a second inverter, a wallbox, a firmware update you remember.
 
 > **DE** Alles Ungewöhnliche an der Anlage – ein Verbund, ein zweiter Wechselrichter, eine Wallbox, ein Firmware-Update, an das du dich erinnerst.
 
-### `options.step.init.sections.survey.data_description.publish_address`
+### `options.step.init.sections.diagnosis.data_description.publish_address`
 
 > **EN** On, and yours to turn off before you submit. Only the last two octets ever reach the document — never the third, which is what would identify your network — and clear this and it reads xxx.xxx instead. What it buys is telling several readings from one house apart: a master, a slave and two dongles otherwise produce four files that look alike.
 
 > **DE** An, und du kannst es vor dem Absenden ausschalten. Nur die letzten zwei Oktette gelangen je in das Dokument – nie das dritte, das dein Netzwerk identifizieren würde –, und wenn du das deaktivierst, steht stattdessen xxx.xxx. Der Nutzen: Mehrere Messungen aus einem Haus lassen sich unterscheiden – ein Master, ein Slave und zwei Dongles ergeben sonst vier gleich aussehende Dateien.
 
-### `options.step.init.sections.survey.data_description.survey_register_dump`
+### `options.step.init.sections.diagnosis.data_description.diagnosis_register_dump`
 
-> **EN** On, and worth turning off if you are in a hurry. Without it a survey reads the registers this integration already knows about and takes a couple of seconds. With it, it also sweeps 2181 addresses across sixteen bands, including the ones no specification documents — which is how every undocumented register this project knows was found. That is slow because an address with nothing behind it goes quiet rather than refusing, so each empty one costs a full timeout: about five minutes on a direct cable, and considerably longer through a WiNet-S or a VPN. Your inverter keeps being polled throughout, and the survey button on the device page shows how far along it is.
+> **EN** On, and worth turning off if you are in a hurry. Without it a diagnosis reads the registers this integration already knows about and takes a couple of seconds. With it, it also sweeps 2181 addresses across sixteen bands, including the ones no specification documents — which is how every undocumented register this project knows was found. That is slow because an address with nothing behind it goes quiet rather than refusing, so each empty one costs a full timeout: about five minutes on a direct cable, and considerably longer through a WiNet-S or a VPN. Your inverter keeps being polled throughout, and the diagnosis button on the device page shows how far along it is.
 
 > **DE** An, und besser auszuschalten, wenn du es eilig hast. Ohne sie liest die Diagnose die Register, die diese Integration bereits kennt, und braucht ein paar Sekunden. Mit ihr durchsucht sie zusätzlich 2181 Adressen in sechzehn Bereichen, auch die, die keine Spezifikation dokumentiert – so wurde jedes undokumentierte Register gefunden, das dieses Projekt kennt. Das ist langsam, weil eine Adresse ohne Inhalt verstummt statt abzulehnen, sodass jede leere ein volles Timeout kostet: etwa fünf Minuten am direkten Kabel und deutlich länger über ein WiNet-S oder ein VPN. Dein Wechselrichter wird die ganze Zeit weiter abgefragt, und die Diagnose-Schaltfläche auf der Geräteseite zeigt den Fortschritt.
 
-### `options.step.init.sections.control_test.name`
+### `options.step.init.sections.capability_test.name`
 
 > **EN** What the control write test may do
 
-> **DE** Was der Steuerungs-Schreibtest darf
+> **DE** Was der Funktionstest darf
 
-### `options.step.init.sections.control_test.description`
+### `options.step.init.sections.capability_test.description`
 
 > **EN** Run complete diagnosis and tests on the device page writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The six switches below go further, and each is on until you switch it off: pressing the button is your consent. What you switch off stays off.
 
 > **DE** Vollständige Diagnose und Tests ausführen auf der Geräteseite schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die sechs Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Das Drücken der Schaltfläche ist deine Zustimmung. Was du ausschaltest, bleibt aus.
 
-### `options.step.init.sections.control_test.data.control_test_restart`
+### `options.step.init.sections.capability_test.data.capability_test_restart`
 
 > **EN** May it stop and restart the inverter?
 
 > **DE** Darf er den Wechselrichter stoppen und neu starten?
 
-### `options.step.init.sections.control_test.data.control_test_export_limit`
+### `options.step.init.sections.capability_test.data.capability_test_export_limit`
 
 > **EN** May it switch feed-in limitation on?
 
 > **DE** Darf er die Einspeisebegrenzung einschalten?
 
-### `options.step.init.sections.control_test.data.control_test_pv_cut`
+### `options.step.init.sections.capability_test.data.capability_test_pv_cut`
 
 > **EN** May it cut PV generation for about a minute?
 
 > **DE** Darf er die PV-Erzeugung für etwa eine Minute abschalten?
 
-### `options.step.init.sections.control_test.data.control_test_charge_window`
+### `options.step.init.sections.capability_test.data.capability_test_charge_window`
 
 > **EN** May it set a forced-charging window around now?
 
 > **DE** Darf er ein Zwangslade-Fenster um jetzt herum setzen?
 
-### `options.step.init.sections.control_test.data.control_test_discharge_window`
+### `options.step.init.sections.capability_test.data.capability_test_discharge_window`
 
 > **EN** May it move the discharge windows away from now?
 
 > **DE** Darf er die Entladefenster von jetzt weg verschieben?
 
-### `options.step.init.sections.control_test.data.control_test_import_limit`
+### `options.step.init.sections.capability_test.data.capability_test_import_limit`
 
 > **EN** May it cap grid import during a short forced charge?
 
 > **DE** Darf er den Netzbezug während einer kurzen Zwangsladung begrenzen?
 
-### `options.step.init.sections.control_test.data_description.control_test_restart`
+### `options.step.init.sections.capability_test.data_description.capability_test_restart`
 
 > **EN** On unless you switch it off. With this on, the test writes the stop register, waits for the inverter to report itself stopped, starts it again and times all three transitions, so each model's figures are on record.
 >
@@ -1629,7 +1629,7 @@ and bold are kept.
 >
 > Während er gestoppt ist, erzeugst du nichts, die Batterie lädt und entlädt nicht, und alles am Backup-Ausgang verliert die Versorgung. Bisher gemessen: gestoppt nach etwa 2 Sekunden, wieder in Betrieb nach 3 bis 4 Minuten bei Tageslicht und über 6 nachts, Erzeugung bis zu 20 Sekunden später. Der Wechselrichter bleibt nie gestoppt: Der Start wird über frische Verbindungen wiederholt, er wird erneut gestartet, wenn Home Assistant mitten im Test herunterfährt, und schlägt all das fehl, bekommst du eine Reparatur, die ihn startet.
 
-### `options.step.init.sections.control_test.data_description.control_test_export_limit`
+### `options.step.init.sections.capability_test.data_description.capability_test_export_limit`
 
 > **EN** On unless you switch it off. Where you already limit feed-in, the test uses that and this changes nothing. With this on it may also switch the limit on for about a minute where you do not.
 >
@@ -1639,7 +1639,7 @@ and bold are kept.
 >
 > Es ist die eine Einstellung, deren fehlgeschlagene Wiederherstellung dich etwas Dauerhaftes kostet statt nur Genauigkeit: Eine nicht zurückgeschaltete Einspeisebegrenzung heißt, du speist weniger ein, als du könntest. Passiert das, bekommst du hier eine Reparatur, die sie zurückschaltet.
 
-### `options.step.init.sections.control_test.data_description.control_test_pv_cut`
+### `options.step.init.sections.capability_test.data_description.capability_test_pv_cut`
 
 > **EN** On unless you switch it off. With this on, and where your inverter answers register 31211, the test writes the code that stops PV generation, checks that DC power falls to zero, and allows PV again. Generation stops for about half a minute and takes up to a minute more to come back while the inverter searches for its operating point again; the battery and the grid cover the house meanwhile.
 >
@@ -1649,13 +1649,13 @@ and bold are kept.
 >
 > Dieses Register steht nicht in Sungrows Dokumentation, weshalb der Schalter **PV-Erzeugung abschalten** nur für Firmware angeboten wird, auf der diese Prüfung bestanden wurde. Ein Lauf auf deiner ist der Weg, wie deine Firmware auf diese Liste kommt.
 
-### `options.step.init.sections.control_test.data_description.control_test_charge_window`
+### `options.step.init.sections.capability_test.data_description.capability_test_charge_window`
 
 > **EN** On unless you switch it off. With this on, and where your inverter has the forced-charging schedule and it is off, the test writes a window around the inverter's own clock with a target a few percent above the battery, switches the schedule on, checks that the battery starts charging, and switches it off again. The battery charges for a minute or two, from the grid if there is no sun. Every word of the schedule is put back afterwards. Skipped where your own schedule is on.
 
 > **DE** An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter den Zwangslade-Zeitplan hat und dieser aus ist, schreibt der Test ein Fenster um die eigene Uhr des Wechselrichters mit einem Ziel einige Prozent über der Batterie, schaltet den Zeitplan ein, prüft, dass die Batterie zu laden beginnt, und schaltet ihn wieder aus. Die Batterie lädt ein bis zwei Minuten, aus dem Netz, wenn keine Sonne scheint. Jedes Wort des Zeitplans wird danach zurückgesetzt. Übersprungen, wo dein eigener Zeitplan an ist.
 
-### `options.step.init.sections.control_test.data_description.control_test_discharge_window`
+### `options.step.init.sections.capability_test.data_description.capability_test_discharge_window`
 
 > **EN** On unless you switch it off. With this on, and where your inverter answers the discharge schedules (registers 33151-33187), the test moves every weekday and weekend discharge window away from now, checks that the battery stops discharging, and puts every window back. For a minute or two the house imports instead of using the battery.
 >
@@ -1665,7 +1665,7 @@ and bold are kept.
 >
 > Diese Register stehen nicht in Sungrows Dokumentation, weshalb sie nur als Messwerte angeboten werden. Ein Lauf auf deiner ist der Beleg, dass Schreiben darauf tut, was es soll.
 
-### `options.step.init.sections.control_test.data_description.control_test_import_limit`
+### `options.step.init.sections.capability_test.data_description.capability_test_import_limit`
 
 > **EN** On unless you switch it off. With this on, and where your inverter answers register 32998, the grid import limit, the test force-charges the battery, sets the limit halfway between what the house then imports and what it would import without the charge, checks that grid import comes down to it, and puts your limit back. It then writes three limits at the ends of the range once each, to record which ones the inverter refuses. The battery charges for about two minutes, from the grid if there is no sun.
 >
@@ -1751,7 +1751,7 @@ and bold are kept.
 >
 > Das gelangt in das Dokument, lass deshalb Seriennummern, Adressen und Namen weg. Du kannst es leer lassen.
 
-### `options.step.other_inverter.data.survey_other_inverter_detail`
+### `options.step.other_inverter.data.diagnosis_other_inverter_detail`
 
 > **EN** The other inverter
 
@@ -1825,7 +1825,7 @@ and bold are kept.
 
 > **DE** In diesem Haus lief das YAML-Paket für mehr als einen Wechselrichter, und Home Assistant kann nicht erkennen, welcher davon dieser war, die alten IDs könnten also die eines anderen Wechselrichters sein. Aktiviere das YAML-Paket für einen Neustart wieder, damit die Seriennummer dieses Wechselrichters aufgezeichnet wird, entferne es dann, starte erneut und komm hierher zurück.
 
-### `options.progress.running_survey`
+### `options.progress.running_diagnosis`
 
 > **EN** Reading your inverter: 19 capability probes. Through a WiNet-S this can take a minute.
 
@@ -1833,58 +1833,58 @@ and bold are kept.
 
 ### `options.abort.devices_mode_not_offered`
 
-> **EN** Setting up sensors and controls is not in this release. This alpha creates diagnostics-only entries; start again and choose **Perform the device survey**.
+> **EN** Setting up sensors and controls is not in this release. This alpha creates diagnostics-only entries; start again and choose **Perform the device diagnosis**.
 
 > **DE** Sensoren und Steuerungen einzurichten ist in dieser Version nicht enthalten. Diese Alpha legt nur Einträge für die Diagnose an; beginne erneut und wähle **Geräte-Diagnose durchführen**.
 
 
 ## Actions (16)
 
-### `services.run_control_test.name`
+### `services.run_capability_test.name`
 
 > **EN** Run complete diagnosis and tests
 
 > **DE** Vollständige Diagnose und Tests ausführen
 
-### `services.run_control_test.description`
+### `services.run_capability_test.description`
 
-> **EN** Writes to every control this integration can write to, checks each one three ways and puts it back. Unlike the capability survey, this CHANGES SETTINGS on the inverter: it limits the battery and the export, and it briefly forces a charge and a discharge. Everything is recorded before the first write and restored afterwards, and the run reports anything it could not put back. It exists because a wrong scale is invisible to a readback -- write 700 W, get 700 W back -- and only writing can find it. The restart and export-limit permissions are set in the integration's options and are off by default.
+> **EN** Writes to every control this integration can write to, checks each one three ways and puts it back. Unlike the capability diagnosis, this CHANGES SETTINGS on the inverter: it limits the battery and the export, and it briefly forces a charge and a discharge. Everything is recorded before the first write and restored afterwards, and the run reports anything it could not put back. It exists because a wrong scale is invisible to a readback -- write 700 W, get 700 W back -- and only writing can find it. The restart and export-limit permissions are set in the integration's options and are off by default.
 
 > **DE** Schreibt in jede Steuerung, in die diese Integration schreiben kann, prüft jede auf drei Arten und setzt sie zurück. Anders als die Diagnose ÄNDERT dies EINSTELLUNGEN am Wechselrichter: Es begrenzt die Batterie und die Einspeisung und erzwingt kurz ein Laden und ein Entladen. Alles wird vor dem ersten Schreiben festgehalten und danach wiederhergestellt, und der Lauf meldet alles, was er nicht zurücksetzen konnte. Es gibt sie, weil ein falscher Skalierungsfaktor für ein Zurücklesen unsichtbar ist – 700 W schreiben, 700 W zurückbekommen – und nur Schreiben ihn finden kann. Die Berechtigungen für Neustart und Einspeisebegrenzung werden in den Optionen der Integration gesetzt und sind standardmäßig aus.
 
-### `services.run_control_test.fields.device_id.name`
+### `services.run_capability_test.fields.device_id.name`
 
 > **EN** Device
 
 > **DE** Gerät
 
-### `services.run_control_test.fields.device_id.description`
+### `services.run_capability_test.fields.device_id.description`
 
 > **EN** The Sungrow device to write to, and put back.
 
 > **DE** Das Sungrow-Gerät, in das geschrieben wird und das zurückgesetzt wird.
 
-### `services.run_survey.name`
+### `services.run_diagnosis.name`
 
 > **EN** Run read only diagnosis
 
 > **DE** Diagnose ausführen (nur lesend)
 
-### `services.run_survey.description`
+### `services.run_diagnosis.description`
 
 > **EN** Reads this installation's registers and produces a document describing what answered, so support for it can be measured rather than guessed. Reads only; nothing is written to the inverter, and the serial number is replaced by a stand-in. The finished document arrives as a notification with a download link.
 
 > **DE** Liest die Register dieser Installation und erzeugt ein Dokument, das beschreibt, was geantwortet hat, damit die Unterstützung dafür gemessen statt geraten werden kann. Nur Lesen; es wird nichts in den Wechselrichter geschrieben, und die Seriennummer wird durch einen Platzhalter ersetzt. Das fertige Dokument kommt als Benachrichtigung mit Download-Link.
 
-### `services.run_survey.fields.device_id.name`
+### `services.run_diagnosis.fields.device_id.name`
 
 > **EN** Device
 
 > **DE** Gerät
 
-### `services.run_survey.fields.device_id.description`
+### `services.run_diagnosis.fields.device_id.description`
 
-> **EN** The Sungrow device to survey.
+> **EN** The Sungrow device to diagnose.
 
 > **DE** Das Sungrow-Gerät, das diagnostiziert wird.
 
@@ -1957,9 +1957,9 @@ and bold are kept.
 
 > **DE** {name} ist kein Sungrow-Modbus-Gerät.
 
-### `exceptions.survey_already_running.message`
+### `exceptions.diagnosis_already_running.message`
 
-> **EN** A survey is already running on this inverter. Two at once would compete for one of its very few Modbus connections.
+> **EN** A diagnosis is already running on this inverter. Two at once would compete for one of its very few Modbus connections.
 
 > **DE** Auf diesem Wechselrichter läuft bereits eine Diagnose. Zwei gleichzeitig würden um eine seiner sehr wenigen Modbus-Verbindungen konkurrieren.
 

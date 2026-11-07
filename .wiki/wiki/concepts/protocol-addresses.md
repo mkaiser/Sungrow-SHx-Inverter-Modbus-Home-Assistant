@@ -16,7 +16,7 @@ Sungrow's document and in the YAML comments (`address: 4989 # reg 4990`).
   with `addresses.field_address(name, device)`. The few registers that no
   component maps are named constants in `addresses.py` (`DIRECT_ONLY_PROBE`,
   ...), and `Address.register` gives the document's number beside the
-  protocol one. The survey scripts import the same names.
+  protocol one. The diagnosis scripts import the same names.
 - `tests/test_addresses.py` fails on a field declared any other way, and on
   a new literal. **Tests are exempt on purpose**: a fixture carries the
   specification's numbers, not the code's.

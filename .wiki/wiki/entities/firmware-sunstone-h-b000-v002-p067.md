@@ -13,10 +13,10 @@ created: '2026-11-05'
 - [Register 31211](register-31211.md) answers 0x55; the PV cut is not confirmed here, so the
   switch waits (`CONFIRMED_ON_FIRMWARE` holds [P065](firmware-sunstone-h-b000-v002-p065.md), not
   this one).
-- Writes are unmeasured: the one control test was refused because the inverter was key-stopped.
+- Writes are unmeasured: the one capability test was refused because the inverter was key-stopped.
 - The battery firmware string (13280) carries bytes after its NUL, as on
   [P065](firmware-sunstone-h-b000-v002-p065.md).
 
-## Surveys
+## Diagnoses
 
-- [SH10RS, B000.V002.P067, brendan, a WiNet-S on Ethernet, control test refused](../sources/sh10rs-b000v002p067-1p-brendan-anon-01362170354-battery-sungrow-winet-lan-summary.md)
+- [SH10RS, B000.V002.P067, brendan, a WiNet-S on Ethernet, capability test refused](../sources/sh10rs-b000v002p067-1p-brendan-anon-01362170354-battery-sungrow-winet-lan-summary.md)

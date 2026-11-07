@@ -171,7 +171,7 @@ real_hardware:
   what_does_not_work:
     - >-
       Multicast, so mDNS discovery finds nothing from in here -- a Docker
-      bridge does not carry it. Run `device-survey/scripts/python/probe.py mdns` on the
+      bridge does not carry it. Run `device-diagnosis/scripts/python/probe.py mdns` on the
       host instead (it needs `pip install sungrow-modbus[discovery]`).
     - >-
       Inbound. Reaching the container's Home Assistant from another machine is
@@ -207,7 +207,7 @@ real_hardware:
       seconds of quiet everything works again. The same pattern makes slower
       pacing look worse in an experiment, which it is not.
     - >-
-      Waiting is the cure, not retrying harder, which is why the control
+      Waiting is the cure, not retrying harder, which is why the capability
       test's opening reads back off 5, 20, 45 and 90 seconds: a short retry
       spends every attempt inside the window where nothing can work. And the
       contention is often self-inflicted -- probes and runs opened back to
@@ -230,7 +230,7 @@ real_hardware:
     verify real-hardware behaviour.
 
 # ---------------------------------------------------------------------------
-# The control test -- the one thing here that WRITES to an inverter.
+# The capability test -- the one thing here that WRITES to an inverter.
 #
 # Everything else in this file reads. This writes each control, reads the
 # register straight back against the scale the specification states, watches
@@ -238,7 +238,7 @@ real_hardware:
 # a wrong scale factor in registers.py is invisible to a readback through the
 # library: encode and decode share the factor, so the value returns intact and
 # every test stays green while the inverter does something ten times too big.
-control_test:
+capability_test:
   first: >-
     make controltest-dry HOST=192.168.x.y
     Reads only. Resolves every bound from the device, picks every probe value
@@ -257,14 +257,14 @@ control_test:
     was not put back, which is the only code that means the house is left
     changed.
 
-  from_a_survey: >-
-    make scan HOST=192.168.x.y asks, as its last question, whether the control
-    test may run, and one yes runs it into the survey's own document with
+  from_a_diagnosis: >-
+    make scan HOST=192.168.x.y asks, as its last question, whether the capability
+    test may run, and one yes runs it into the diagnosis's own document with
     --restart --enable-export-limit --allow-dark --yes. That is how a
     contributor runs it; this section is the same test on its own.
 
   if_it_dies_halfway: >-
-    make controltest-restore HOST=192.168.x.y FILE=device-survey/<stamp>-snapshot.json
+    make controltest-restore HOST=192.168.x.y FILE=device-diagnosis/<stamp>-snapshot.json
     The snapshot is flushed to disk before the first write and removed only
     once every register is back AND has been read back. So a snapshot left on
     disk is the list of what may still be changed, and this puts it back. It
@@ -353,7 +353,7 @@ control_test:
     common times-ten case; sungrow_modbus.hybrid_inverter.export_scale asks the
     inverter with one write that changes nothing on either firmware, and the
     export limit number stores the answer per entry and firmware. From a
-    terminal, `survey.sh control <host> --export-scale` asks the same
+    terminal, `diagnosis.sh tests <host> --export-scale` asks the same
     question and does nothing else. The YAML package writes the word as
     typed, so on times-ten firmware it sets ten times what was asked.
 
@@ -436,7 +436,7 @@ reviewing_the_migration:
   # continuous afterwards.
   gate: >-
     The entity id question is asked only in devices mode, which this release
-    does not offer. Set ONLY_SURVEY_MODE = False in
+    does not offer. Set ONLY_DIAGNOSIS_MODE = False in
     custom_components/sungrow_modbus/const.py locally first, and do not
     commit it.
   steps:
@@ -506,9 +506,9 @@ version:
   single_source: scripts/release/sync_version.py
   why: >-
     pyproject.toml, custom_components/sungrow_modbus/manifest.json and the
-    PEP 723 headers of the survey and the control test must agree. Home
+    PEP 723 headers of the diagnosis and the capability test must agree. Home
     Assistant checks the installed version on every start and will try to
-    pip-install the package if they differ; the survey's header is the
+    pip-install the package if they differ; the diagnosis's header is the
     library a contributor's run fetches.
   commands:
     - python scripts/release/sync_version.py --check       # CI, and pytest
@@ -523,7 +523,7 @@ packaging:
   what_ci_does: >-
     validate.yml builds the sdist and wheel, runs `twine check --strict`, and
     asks the built wheel whether it provides every import the integration,
-    the survey and the control test make (check_pinned_library.py --wheel),
+    the diagnosis and the capability test make (check_pinned_library.py --wheel),
     so a package that will not serve is caught on push rather than at tag
     time, when the upload is immutable. It does NOT verify trusted
     publishing -- only an upload does that.

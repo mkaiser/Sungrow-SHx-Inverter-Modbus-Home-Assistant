@@ -1,6 +1,6 @@
 """Every form a person can see has words on it.
 
-Two of these shipped without, and neither failed anything. `run_control_test`
+Two of these shipped without, and neither failed anything. `run_capability_test`
 was a registered action with no entry in `strings.json`, so the one action that
 **writes to somebody's inverter** would have appeared in the picker as a slug
 with no description. `async_step_manual` showed a real form with no title, no

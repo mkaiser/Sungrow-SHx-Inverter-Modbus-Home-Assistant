@@ -1,11 +1,11 @@
 ---
 type: source
 title: sh15t-b000v000p067-3p-code-imstillalive-anon-07241574740-battery-unknown-meter-logger.json
-source_path: ../device-survey/results/inverter/sh15t-b000v000p067-3p-code-imstillalive-anon-07241574740-battery-unknown-meter-logger.json
+source_path: ../device-diagnosis/results/inverter/sh15t-b000v000p067-3p-code-imstillalive-anon-07241574740-battery-unknown-meter-logger.json
 ingested: '2026-11-07'
 created: '2026-11-07'
 tags:
-  - survey
+  - diagnosis
   - sh15t
   - pearl-h-b000-v000-p067
   - code-imstillalive
@@ -14,13 +14,13 @@ tags:
 
 # SH15T, B000.V000.P067, code-imstillalive, through a Logger1000A
 
-Capability survey of one inverter, read 2026-11-07 around 00:47 UTC with the survey button of the
-integration, posted by code-imstillalive to issue #791 (announced on #786). Read only; no control
+Capability diagnosis of one inverter, read 2026-11-07 around 00:47 UTC with the diagnosis button of the
+integration, posted by code-imstillalive to issue #791 (announced on #786). Read only; no capability
 test. The second inverter of the same house, behind the same
 [Logger](../entities/device-logger.md) as the
 [SH25T](sh25t-b000v000p067-3p-code-imstillalive-anon-92853701430-battery-unknown-meter-logger-summary.md).
 Source:
-`device-survey/results/inverter/sh15t-b000v000p067-3p-code-imstillalive-anon-07241574740-battery-unknown-meter-logger.json`.
+`device-diagnosis/results/inverter/sh15t-b000v000p067-3p-code-imstillalive-anon-07241574740-battery-unknown-meter-logger.json`.
 
 | | |
 | --- | --- |

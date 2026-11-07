@@ -1,6 +1,6 @@
-"""Handing the finished survey document to the person who ran it.
+"""Handing the finished diagnosis document to the person who ran it.
 
-A config flow has no download button, which is most of why the survey runs
+A config flow has no download button, which is most of why the diagnosis runs
 from the device page. Home Assistant's own answer to "let the user save this
 file" is an authenticated HTTP view plus a **signed path**: a URL carrying a
 short-lived signature, so a plain link in a notification works without the
@@ -14,7 +14,7 @@ carries a stand-in serial rather than a real one, but it is still a
 description of somebody's house.
 
 So: the document stays in memory on the runner, this view serves it to a
-signed request, and the notification that appears when a survey finishes
+signed request, and the notification that appears when a diagnosis finishes
 carries the link.
 """
 
@@ -31,7 +31,7 @@ from homeassistant.components.http import HomeAssistantView
 from homeassistant.components.http.auth import async_sign_path
 from homeassistant.core import HomeAssistant, callback
 from sungrow_modbus import string_inverter
-from sungrow_modbus.survey_document import label_for
+from sungrow_modbus.diagnosis_document import label_for
 
 if TYPE_CHECKING:
     from .coordinator import SungrowConfigEntry
@@ -40,14 +40,14 @@ from .const import DOMAIN, LINK_VALID
 
 _LOGGER = logging.getLogger(__name__)
 
-URL = "/api/sungrow_modbus/survey/{entry_id}"
+URL = "/api/sungrow_modbus/diagnosis/{entry_id}"
 
 
-class SurveyDownloadView(HomeAssistantView):
-    """Serve one entry's most recent survey document as a file."""
+class DiagnosisDownloadView(HomeAssistantView):
+    """Serve one entry's most recent diagnosis document as a file."""
 
     url = URL
-    name = "api:sungrow_modbus:survey"
+    name = "api:sungrow_modbus:diagnosis"
 
     # `requires_auth` stays at its default, True, and the signature is what
     # satisfies it: Home Assistant's auth middleware validates the `authSig`
@@ -58,7 +58,7 @@ class SurveyDownloadView(HomeAssistantView):
     #
     # Not `@require_admin`, unlike core's diagnostics download: that link is
     # signed by the frontend on behalf of the admin who clicked it, while
-    # this one is signed by a background task finishing a survey, which
+    # this one is signed by a background task finishing a diagnosis, which
     # `async_sign_path` attributes to the content user. Requiring admin would
     # reject the very link this integration hands out.
 
@@ -70,14 +70,14 @@ class SurveyDownloadView(HomeAssistantView):
             return web.Response(status=HTTPStatus.NOT_FOUND)
 
         runtime = getattr(entry, "runtime_data", None)
-        document = getattr(getattr(runtime, "survey", None), "state", None)
+        document = getattr(getattr(runtime, "diagnosis", None), "state", None)
         document = getattr(document, "document", None)
         if document is None:
             # Not an error: the ordinary state of an entry whose owner has
             # never pressed the button.
             return web.Response(
                 status=HTTPStatus.NOT_FOUND,
-                text="No survey has been run on this entry yet.",
+                text="No diagnosis has been run on this entry yet.",
             )
 
         filename = _filename(document)
@@ -89,19 +89,19 @@ class SurveyDownloadView(HomeAssistantView):
 
 
 def _filename(document: dict[str, Any]) -> str:
-    """Name the file the way this repository names a survey.
+    """Name the file the way this repository names a diagnosis.
 
     Not a naming scheme of its own, and that is the point: a document from this
-    button and one from `device-survey/scripts/python/sungrow_survey.py`
+    button and one from `device-diagnosis/scripts/python/sungrow_diagnosis.py`
     describe the same thing in the same format, so they should arrive under the
     same name. A maintainer receiving twenty of these sorts them together, and
-    `device-survey/` can take one without renaming it.
+    `device-diagnosis/` can take one without renaming it.
 
     `label_for` lives in the library so both producers derive it identically,
     and `tests/test_document_filenames.py` checks it against every
-    survey this repository has committed.
+    diagnosis this repository has committed.
 
-    The standalone survey appends the address tail when a name is already
+    The standalone diagnosis appends the address tail when a name is already
     taken by a different reading; nothing here does, because a download is
     one file and the collision it guards against is a directory's problem.
     An SG's document is its own kind, and is named as the terminal names it.
@@ -133,9 +133,9 @@ def async_register(hass: HomeAssistant) -> None:
     if getattr(hass, "http", None) is None:
         # `http` is a manifest dependency, so a real Home Assistant has set
         # it up before this runs. A test that drives setup against a bare
-        # `hass` has not, and the survey does not need a download link to be
+        # `hass` has not, and the diagnosis does not need a download link to be
         # tested -- so this declines rather than raising and taking the whole
         # integration down with it.
-        _LOGGER.debug("No HTTP component; the survey download link is unavailable")
+        _LOGGER.debug("No HTTP component; the diagnosis download link is unavailable")
         return
-    hass.http.register_view(SurveyDownloadView())
+    hass.http.register_view(DiagnosisDownloadView())

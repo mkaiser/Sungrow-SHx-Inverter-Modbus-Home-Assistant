@@ -56,7 +56,7 @@ from .const import (
     CONF_PERMISSIONS,
     DEFAULT_PERMISSIONS,
     DOMAIN,
-    PERMISSION_CONTROL_TEST,
+    PERMISSION_CAPABILITY_TEST,
     PERMISSION_START_STOP,
 )
 from .coordinator import SungrowConfigEntry
@@ -66,9 +66,9 @@ _LOGGER = logging.getLogger(__name__)
 SERVICE_START_INVERTER = "start_inverter"
 SERVICE_STOP_INVERTER = "stop_inverter"
 
-#: Running a capability survey without a button to press.
+#: Running a capability diagnosis without a button to press.
 #:
-#: An ordinary entry has no survey entities -- somebody who installed this for
+#: An ordinary entry has no diagnosis entities -- somebody who installed this for
 #: solar sensors should not carry diagnostic tooling they never asked for --
 #: so this is how they help if they decide to. A diagnostics-only entry has
 #: the button as well, because producing a reading is the whole reason that
@@ -76,10 +76,10 @@ SERVICE_STOP_INVERTER = "stop_inverter"
 #:
 #: An action rather than an entity leaves nothing behind: no registry row, no
 #: recorded history, nothing to remove afterwards.
-SERVICE_RUN_SURVEY = "run_survey"
+SERVICE_RUN_DIAGNOSIS = "run_diagnosis"
 
 #: Part A and then part B, which writes to every control and puts it back.
-SERVICE_RUN_CONTROL_TEST = "run_control_test"
+SERVICE_RUN_CAPABILITY_TEST = "run_capability_test"
 
 #: Register 13000, from V1.1.11: "0xCF: Boot, 0xCE: Shutdown".
 START = 0xCF
@@ -118,41 +118,41 @@ def async_setup_services(hass: HomeAssistant) -> None:
         DOMAIN, SERVICE_STOP_INVERTER, _async_stop, schema=SCHEMA
     )
     # Not authorised the way start and stop are: this writes nothing, and the
-    # worst a stray call can do is occupy the connection for one survey.
+    # worst a stray call can do is occupy the connection for one diagnosis.
     hass.services.async_register(
-        DOMAIN, SERVICE_RUN_SURVEY, _async_run_survey, schema=SCHEMA
+        DOMAIN, SERVICE_RUN_DIAGNOSIS, _async_run_diagnosis, schema=SCHEMA
     )
     # Authorised the way start and stop are, under its own permission, and for
     # the same reason: it writes. A diagnostics-only entry also has a button
     # for it; this is the route an ordinary entry has, and the one a script
     # can take.
     hass.services.async_register(
-        DOMAIN, SERVICE_RUN_CONTROL_TEST, _async_run_control_test, schema=SCHEMA
+        DOMAIN, SERVICE_RUN_CAPABILITY_TEST, _async_run_capability_test, schema=SCHEMA
     )
 
 
-async def _async_run_control_test(call: ServiceCall) -> None:
-    """Run the survey and then the control test.
+async def _async_run_capability_test(call: ServiceCall) -> None:
+    """Run the diagnosis and then the capability test.
 
-    Refuses when a run is already in flight, as the survey action does -- but
+    Refuses when a run is already in flight, as the diagnosis action does -- but
     here the reason is stronger than a session count: two runs writing at once
     would restore each other's probe values, and each would then report the
     other's leftovers as a finding.
     """
     entry = _async_entry_for(call.hass, call.data[ATTR_DEVICE_ID])
     _refuse_on_string_inverter(entry)
-    await _async_authorize(call, entry, PERMISSION_CONTROL_TEST)
+    await _async_authorize(call, entry, PERMISSION_CAPABILITY_TEST)
     _LOGGER.warning(
-        "%s: control test requested through the %s.%s action by %s. It writes to "
+        "%s: capability test requested through the %s.%s action by %s. It writes to "
         "every control this integration can write to, and puts each one back.",
         entry.title,
         DOMAIN,
-        SERVICE_RUN_CONTROL_TEST,
+        SERVICE_RUN_CAPABILITY_TEST,
         call.context.user_id or "an automation or script",
     )
-    if not entry.runtime_data.survey.async_start(control_test=True):
+    if not entry.runtime_data.diagnosis.async_start(capability_test=True):
         raise HomeAssistantError(
-            translation_domain=DOMAIN, translation_key="survey_already_running"
+            translation_domain=DOMAIN, translation_key="diagnosis_already_running"
         )
 
 
@@ -166,17 +166,17 @@ async def _async_stop(call: ServiceCall) -> None:
     await _async_write(call, STOP, "stop")
 
 
-async def _async_run_survey(call: ServiceCall) -> None:
+async def _async_run_diagnosis(call: ServiceCall) -> None:
     """Read the inverter and offer the document, as the button does.
 
-    Refuses politely when one is already running: two surveys interleaving
+    Refuses politely when one is already running: two diagnoses interleaving
     their reads on one serialized connection is what a Sungrow's very small
     session count cannot take.
     """
     entry = _async_entry_for(call.hass, call.data[ATTR_DEVICE_ID])
-    if not entry.runtime_data.survey.async_start():
+    if not entry.runtime_data.diagnosis.async_start():
         raise HomeAssistantError(
-            translation_domain=DOMAIN, translation_key="survey_already_running"
+            translation_domain=DOMAIN, translation_key="diagnosis_already_running"
         )
 
 
@@ -197,7 +197,7 @@ async def async_authorize(
 ) -> None:
     """Raise unless whoever is behind `context` may do this to *this* inverter.
 
-    Public because an action is not the only door: the control test's button
+    Public because an action is not the only door: the capability test's button
     reaches the same writes, and a button press carries the presser's context
     the way a service call does.
 

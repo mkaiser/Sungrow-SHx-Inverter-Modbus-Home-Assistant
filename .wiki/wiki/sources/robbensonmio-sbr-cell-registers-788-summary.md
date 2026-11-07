@@ -27,7 +27,7 @@ protocol addresses; the registers below are one higher.
 carries the module words, 16 of them from three to eight modules, the pack's highest cell equals
 `max_cell_voltage_module_n` of the module its position word names, and the lowest equals
 `min_cell_voltage_module_n`, on every one. The same holds in this owner's
-[survey](sh10rt-b001v000p020-3p-robbensonmio-anon-21004123443-battery-sbr256-direct-lan-summary.md).
+[diagnosis](sh10rt-b001v000p020-3p-robbensonmio-anon-21004123443-battery-sbr256-direct-lan-summary.md).
 
 **10781-10788 are not a presence flag everywhere.** On this pack they read 1; every other cable
 SBR reading has 66, 68, 75 or 76 in its fitted slots and 0 in the empty ones. Zero for an empty

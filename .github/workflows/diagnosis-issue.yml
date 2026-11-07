@@ -1,0 +1,39 @@
+# Writes the call for diagnoses and the wanted list into the one pinned
+# diagnosis issue (#786).
+# A GitHub issue cannot embed a repository file, so the file is copied in
+# whenever it changes. Set the repository variable SURVEY_ISSUE to the
+# issue's number; until then this does nothing.
+name: Diagnosis issue
+
+on:
+  push:
+    branches: [proper-ha-integration]
+    paths:
+      - "device-diagnosis/devices-wanted.md"
+      - "device-diagnosis/diagnosis-issue.md"
+      - "scripts/helpers/diagnosis_issue_body.py"
+      - ".github/workflows/diagnosis-issue.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  update:
+    if: vars.SURVEY_ISSUE != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Build the body
+        run: >
+          python scripts/helpers/diagnosis_issue_body.py
+          --repo "${{ github.repository }}" --ref "${{ github.ref_name }}"
+          > body.md
+      - name: Write it into the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue edit "${{ vars.SURVEY_ISSUE }}" --body-file body.md

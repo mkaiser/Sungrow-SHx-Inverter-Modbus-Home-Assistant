@@ -5,7 +5,7 @@ rewrites, a wiki compiled from them, and a schema in `.wiki/AGENTS.md`. The
 extension's `@wiki /lint` checks the format, but only for whoever has the
 extension open, so these are its rules in plain Python and in CI -- plus the
 three this project adds, which are what keep the wiki from going stale:
-every source resolves to a tracked file, every committed survey has a
+every source resolves to a tracked file, every committed diagnosis has a
 page, and every repository path a page names still exists.
 
 The format is llmwiki's own (`@llmwiki/core` 0.1.2): frontmatter parsed as
@@ -57,17 +57,17 @@ INDEX_ENTRY = re.compile(r"^-\s+\[((?:[^\]\\]|\\.)+)\]\(((?:[^)\\]|\\.)+)\)(.*)$
 
 #: A repository path in backticks, which is how a page cites a file.
 REPO_PATH = re.compile(
-    r"`((?:src|custom_components|doc|device-survey|tests|scripts|legacy|plans|\.wiki)"
+    r"`((?:src|custom_components|doc|device-diagnosis|tests|scripts|legacy|plans|\.wiki)"
     r"/[^`\s]+)`"
 )
 
-#: Where surveys are committed, each of which must have a source page.
+#: Where diagnoses are committed, each of which must have a source page.
 DOCUMENT_DIRS = (
-    "device-survey/results/inverter",
-    "device-survey/results/wallbox",
-    "device-survey/results/ihomemanager",
-    "device-survey/results/logger",
-    "device-survey/results/string_inverter",
+    "device-diagnosis/results/inverter",
+    "device-diagnosis/results/wallbox",
+    "device-diagnosis/results/ihomemanager",
+    "device-diagnosis/results/logger",
+    "device-diagnosis/results/string_inverter",
 )
 
 
@@ -205,7 +205,7 @@ def test_a_source_is_a_tracked_file(page: Path) -> None:
 
 
 def test_every_document_has_a_source_page() -> None:
-    """survey-ingested: a document lands with its page, in one commit."""
+    """diagnosis-ingested: a document lands with its page, in one commit."""
     missing = [
         name
         for name in sorted(_tracked())
@@ -214,13 +214,13 @@ def test_every_document_has_a_source_page() -> None:
         and not (WIKI / "sources" / f"{_slugify(Path(name).name)}-summary.md").is_file()
     ]
     assert not missing, (
-        "surveys with no wiki page (see the ingest workflow in "
+        "diagnoses with no wiki page (see the ingest workflow in "
         f".wiki/AGENTS.md): {missing}"
     )
 
 
 def test_no_published_address_reaches_the_wiki() -> None:
-    """A survey's address octets are its owner's to publish, not the wiki's.
+    """A diagnosis's address octets are its owner's to publish, not the wiki's.
 
     The owner agreed to `ip_address_last_two_octets` in one document. An
     owner's free-text comment can repeat them, and an ingest that quotes the

@@ -4,7 +4,7 @@ Sungrow's *Logger Communication Protocol* AW0 1.0.2.9 (2022-06-14, marked
 public, for the Logger1000, Logger3000 and Logger4000) is the source of
 every field here; 1.0.2.5 lists the same input registers and the holding
 registers up to 8016 (`.wiki/raw/logger-communication-protocol.md`). No
-Logger has been measured here, so all of it is **spec**, and the first survey
+Logger has been measured here, so all of it is **spec**, and the first diagnose
 of one is what turns a mark into a measurement.
 
 * input 8000-8006, the identity: type code (`MODELS`), protocol, devices;

@@ -1,21 +1,21 @@
 ---
 type: source
 title: sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-wlan.json
-source_path: ../device-survey/results/inverter/sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-wlan.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-wlan.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
-  - survey
+  - diagnosis
   - sh10rt-20
   - sapphire-h-b001-v000-p020
   - bar12
   - winet_wlan
-  - control-test
+  - capability-test
 ---
 
 # SH10RT-20, B001.V000.P020, bar12, a WiNet-S on WiFi
 
-Capability survey of one inverter, read 2026-09-08. Source: `device-survey/results/inverter/sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-wlan.json`.
+Capability diagnosis of one inverter, read 2026-09-08. Source: `device-diagnosis/results/inverter/sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-wlan.json`.
 
 | | |
 | --- | --- |
@@ -39,9 +39,9 @@ Capability survey of one inverter, read 2026-09-08. Source: `device-survey/resul
 - `battery_firmware`
 - `sub_controller_firmware`
 
-## Control test
+## Capability test
 
-Outcome **3**: ran, but checks were skipped or inconclusive. See [the control test](../concepts/control-test.md).
+Outcome **3**: ran, but checks were skipped or inconclusive. See [the capability test](../concepts/capability-test.md).
 
 | Field | Register | Verdict |
 | --- | --- | --- |

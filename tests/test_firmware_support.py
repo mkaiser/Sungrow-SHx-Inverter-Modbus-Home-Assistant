@@ -1,9 +1,9 @@
-"""How `doc/firmware_support.md` turns a survey into a mark.
+"""How `doc/firmware_support.md` turns a diagnosis into a mark.
 
 The table pools every model on one firmware, so a wrong judgement for one
-survey shows up as a **split** -- a claim that the models disagree. Each case
+diagnosis shows up as a **split** -- a claim that the models disagree. Each case
 here is one that produced a false split, or would have, when the table was
-first generated from the committed surveys.
+first generated from the committed diagnoses.
 """
 
 from __future__ import annotations
@@ -45,8 +45,8 @@ from generate_firmware_support import (
 )
 
 from sungrow_modbus import Capability
-from sungrow_modbus.control_test import coverage
-from sungrow_modbus.control_test.procedure import NOT_PROBED
+from sungrow_modbus.capability_test import coverage
+from sungrow_modbus.capability_test.procedure import NOT_PROBED
 
 
 def _dump(**words: list[int | None]) -> dict[str, dict[str, int | None]]:
@@ -102,7 +102,7 @@ def test_an_answer_from_a_part_the_house_lacks_still_counts() -> None:
 
 
 def test_a_single_phase_output_type_withdraws_three_phase() -> None:
-    """Surveys publish 5002 as words; `resolve` needs the code.
+    """Diagnoses publish 5002 as words; `resolve` needs the code.
 
     Read as anything else, an SH-RS's phase B and C -- which answer 0 -- were
     granted by the probe and marked supported.
@@ -159,7 +159,7 @@ def test_a_cell_splits_only_on_evidence() -> None:
 def test_a_dongle_read_back_confirms_no_write() -> None:
     """Through a WiNet-S a read-back can be stale; only the effect is evidence."""
     document = {
-        "control_test": {
+        "capability_test": {
             "conditions": {},
             "readback": [{"field": "battery_min_soc", "verdict": "matched"}],
         }
@@ -183,7 +183,7 @@ def _pack(values: dict[str, object], silent: list[str] | None = None) -> PackRea
 def test_a_pack_refusal_is_absent_and_a_lost_link_is_untested() -> None:
     """A dongle's unit 2 refuses the cell block with an exception: an answer.
 
-    A connection lost, or an older survey that recorded no exception type,
+    A connection lost, or an older diagnosis that recorded no exception type,
     says nothing about the register.
     """
     cell = SimpleNamespace(component="cells", field="max_cell_voltage")
@@ -242,7 +242,7 @@ def test_the_diagnosis_column_follows_the_capability_tests_own_tables() -> None:
 
 def test_every_behavioural_check_named_is_one_the_procedure_runs() -> None:
     """`EFFECT_FIELDS` is keyed by `EffectResult.check`; a typo would hide a row."""
-    source = (REPO / "src/sungrow_modbus/control_test/effects.py").read_text(
+    source = (REPO / "src/sungrow_modbus/capability_test/effects.py").read_text(
         encoding="utf-8"
     )
     for check in coverage.EFFECT_FIELDS:
@@ -261,7 +261,7 @@ def test_the_export_write_scale_is_taken_from_either_block() -> None:
     carried = Reading(
         **{
             **vars(reading),
-            "control_test": {
+            "capability_test": {
                 "conditions": {"export_write_scale": {"write_units_per_count": 1}}
             },
         }
@@ -287,7 +287,7 @@ def test_a_behaviour_cell_counts_each_verdict() -> None:
 
 
 def test_13074_writes_x10_on_b001_and_as_handed_on_the_older_firmware() -> None:
-    """The measurement the page carries, against the published surveys.
+    """The measurement the page carries, against the published diagnoses.
 
     `.wiki/wiki/entities/register-13074.md`: x10 on B001 firmware, 1:1 on
     `SAPPHIRE-H_01011.95.03`.

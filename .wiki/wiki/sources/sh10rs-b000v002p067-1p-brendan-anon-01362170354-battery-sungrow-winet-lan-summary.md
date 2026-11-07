@@ -1,31 +1,31 @@
 ---
 type: source
 title: sh10rs-b000v002p067-1p-brendan-anon-01362170354-battery-sungrow-winet-lan.json
-source_path: ../device-survey/results/inverter/sh10rs-b000v002p067-1p-brendan-anon-01362170354-battery-sungrow-winet-lan.json
+source_path: ../device-diagnosis/results/inverter/sh10rs-b000v002p067-1p-brendan-anon-01362170354-battery-sungrow-winet-lan.json
 ingested: '2026-11-05'
 created: '2026-11-05'
 tags:
-  - survey
+  - diagnosis
   - sh10rs
   - sunstone-h-b000-v002-p067
   - brendan
   - winet
-  - control-test
+  - capability-test
 ---
 
-# SH10RS, B000.V002.P067, brendan, a WiNet-S on Ethernet, control test refused
+# SH10RS, B000.V002.P067, brendan, a WiNet-S on Ethernet, capability test refused
 
-Capability survey of one inverter, read 2026-11-05 at 05:24 UTC from the terminal survey, issue
-#786, with the control test requested (`--control-test yes`) and the owner's other pollers running
+Capability diagnosis of one inverter, read 2026-11-05 at 05:24 UTC from the terminal diagnosis, issue
+#786, with the capability test requested (`--capability-test yes`) and the owner's other pollers running
 (`--pollers yes`). The owner says two SBR224 packs. Source:
-`device-survey/results/inverter/sh10rs-b000v002p067-1p-brendan-anon-01362170354-battery-sungrow-winet-lan.json`.
+`device-diagnosis/results/inverter/sh10rs-b000v002p067-1p-brendan-anon-01362170354-battery-sungrow-winet-lan.json`.
 
 | | |
 | --- | --- |
 | Installation | [brendan](../entities/installation-brendan.md) |
 | Model | [SH10RS](../entities/device-sh-rs.md), type code `0x0D1B`, single phase |
 | Stand-in serial | `anon-01362170354` |
-| Inverter firmware | [`SUNSTONE-H_B000.V002.P067`](../entities/firmware-sunstone-h-b000-v002-p067.md), the first survey on it |
+| Inverter firmware | [`SUNSTONE-H_B000.V002.P067`](../entities/firmware-sunstone-h-b000-v002-p067.md), the first diagnose on it |
 | ARM / DSP firmware | `ARM_SUNSTONE-H_V11_V01_A` / `MDSP_SUNSTONE-H_V11_V01_A` |
 | Version 1 / 2 | `SUNSTONE-H_01011.02.67` / `SUNSTONE-H_03021.01.15` |
 | Battery firmware | `SBRBCU-S_22011.01.30`, with bytes after its NUL |
@@ -55,14 +55,14 @@ unavailable value. Link drops: 0.
 5639 reads **44.8 kWh** (4480), twice an SBR224's 22.4 kWh, and the pack reports 488.8 V, 100 %
 SoC, health 99 (97 in the readings block). The owner has two SBR224. So the capacity register
 sums the packs while the voltage is one stack's, which is the reading the anonymous
-[P059 survey](sh10rs-b000v002p059-1p-anonymous-anon-27241675299-battery-sungrow-winet-lan-summary.md)
+[P059 diagnosis](sh10rs-b000v002p059-1p-anonymous-anon-27241675299-battery-sungrow-winet-lan-summary.md)
 left open (32.0 kWh at 331.9 V): a sum of packs is the likelier cause there too, though that
 owner did not name a pack.
 
-## Control test
+## Capability test
 
 Outcome **2**: it did not run. The inverter reported "Key stop" rather than running, so every
 leg was refused before a write; `readback`, `effects` and `restored` are empty, so nothing was
 written and nothing needed restoring. This is a stopped inverter (the owner's key stop), not a
 finding about the firmware. The PV cut on P067 stays unconfirmed; see
-[the control test](../concepts/control-test.md).
+[the capability test](../concepts/capability-test.md).

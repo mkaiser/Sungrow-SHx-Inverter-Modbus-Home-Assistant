@@ -1,11 +1,11 @@
 ---
 type: source
 title: sh10rs-b000v002p059-1p-anonymous-anon-27241675299-battery-sungrow-winet-lan.json
-source_path: ../device-survey/results/inverter/sh10rs-b000v002p059-1p-anonymous-anon-27241675299-battery-sungrow-winet-lan.json
+source_path: ../device-diagnosis/results/inverter/sh10rs-b000v002p059-1p-anonymous-anon-27241675299-battery-sungrow-winet-lan.json
 ingested: '2026-11-01'
 created: '2026-11-01'
 tags:
-  - survey
+  - diagnosis
   - sh10rs
   - sunstone-h-b000-v002-p059
   - anonymous
@@ -14,9 +14,9 @@ tags:
 
 # SH10RS, B000.V002.P059, anonymous, a WiNet-S on Ethernet
 
-Capability survey of one inverter, read 2026-11-01 from the terminal survey, issue #786, reads
-only (`--control-test no`), with the owner's other pollers running. Published as `anonymous`.
-Source: `device-survey/results/inverter/sh10rs-b000v002p059-1p-anonymous-anon-27241675299-battery-sungrow-winet-lan.json`.
+Capability diagnosis of one inverter, read 2026-11-01 from the terminal diagnosis, issue #786, reads
+only (`--capability-test no`), with the owner's other pollers running. Published as `anonymous`.
+Source: `device-diagnosis/results/inverter/sh10rs-b000v002p059-1p-anonymous-anon-27241675299-battery-sungrow-winet-lan.json`.
 
 | | |
 | --- | --- |

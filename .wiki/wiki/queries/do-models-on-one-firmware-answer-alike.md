@@ -9,11 +9,11 @@ results_count: 9
 
 # Do models on one firmware answer alike?
 
-**Answered, so far: yes.** `doc/firmware_support.md` pools every survey by
+**Answered, so far: yes.** `doc/firmware_support.md` pools every diagnosis by
 platform and firmware, split by link, and replays each one's register dump
 through the integration's decoding and capability probe
 (`scripts/generate/generate_firmware_support.py`). No cell is split: wherever
-two models on one firmware were both surveyed, they answered every inverter
+two models on one firmware were both diagnosed, they answered every inverter
 entity's registers alike, once what a house has fitted is set aside.
 
 Five columns pool more than one model, and only these test the question:

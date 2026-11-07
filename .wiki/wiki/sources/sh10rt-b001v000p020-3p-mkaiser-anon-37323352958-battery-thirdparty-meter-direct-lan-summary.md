@@ -1,21 +1,21 @@
 ---
 type: source
 title: sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan.json
-source_path: ../device-survey/results/inverter/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
-  - survey
+  - diagnosis
   - sh10rt
   - sapphire-h-b001-v000-p020
   - mkaiser
   - direct_lan
-  - control-test
+  - capability-test
 ---
 
 # SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port
 
-Capability survey of one inverter, read 2026-10-16. Source: `device-survey/results/inverter/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan.json`.
+Capability diagnosis of one inverter, read 2026-10-16. Source: `device-diagnosis/results/inverter/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan.json`.
 
 | | |
 | --- | --- |
@@ -34,9 +34,9 @@ Capability survey of one inverter, read 2026-10-16. Source: `device-survey/resul
 
 Every component answered.
 
-## Control test
+## Capability test
 
-Outcome **0**: every planned check ran and every readback matched. See [the control test](../concepts/control-test.md).
+Outcome **0**: every planned check ran and every readback matched. See [the capability test](../concepts/capability-test.md).
 
 | Field | Register | Verdict |
 | --- | --- | --- |

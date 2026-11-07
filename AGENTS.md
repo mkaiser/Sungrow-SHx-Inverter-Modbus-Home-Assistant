@@ -9,10 +9,10 @@ document, the wiki included.
 | Dev loop, every script, environment pitfalls | `doc/development.md` (`doc/development.yaml` is the copy-paste runbook) |
 | How the integration is cut up, and why | `doc/architecture.md` |
 | Releasing, hassfest, HACS and the preview channel | `doc/maintainer_setup.md` |
-| Running the survey / its document, scripts and pinned library | `device-survey/README.md` / `device-survey/reference.md` |
+| Running the diagnosis / its document, scripts and pinned library | `device-diagnosis/README.md` / `device-diagnosis/reference.md` |
 | What is next, open decisions, what waits on hardware | `Todo.md` |
 | Goals, decisions, register sources and licences | `doc/architecture.md` |
-| Recurring procedures (ingest new surveys, release) | `.claude/skills/`, each pointing at the document it follows |
+| Recurring procedures (ingest new diagnoses, release) | `.claude/skills/`, each pointing at the document it follows |
 | Where the integration stands on Home Assistant's quality scale | `custom_components/sungrow_modbus/quality_scale.yaml`, held to the code by `tests/test_quality_scale.py` |
 
 ## Two tracks
@@ -39,7 +39,7 @@ Home Assistant 2026.9's `modbus` integration hands a device integration a
 *unit* (`async_get_unit(...)`), and everything on one host/port shares one
 serialized connection: a Sungrow accepts few sessions. The library has **no
 Home Assistant imports**, one subpackage per device (`hybrid_inverter/`,
-`string_inverter/`, `battery/`, `wallbox/`, ...), and anything that must run without HA (the control test's
+`string_inverter/`, `battery/`, `wallbox/`, ...), and anything that must run without HA (the capability test's
 engine included) lives there. Core's `sofar` integration is the reference
 implementation; read its real source (`make refs`), not blog posts.
 
@@ -73,7 +73,7 @@ Edit the source, not the output:
   `strings.json`, `translations/{en,de}.json` -- `scripts/generate/descriptions.py`,
   from `sungrow_modbus.hybrid_inverter.derived` and `scripts/generate/tables/`;
 - `doc/compatibility.md` and `doc/firmware_support.md` --
-  `generate_compatibility.py` and `generate_firmware_support.py`, from the surveys;
+  `generate_compatibility.py` and `generate_firmware_support.py`, from the diagnoses;
 - `scripts/dev/simulator_registers.json` -- `generate_simulator_registers.py`;
 - `doc/entity_names.md` and `doc/text_translation_review.md` --
   `scripts/helpers/review_names.py --markdown` and `--texts`;
@@ -102,7 +102,7 @@ source too.
 | `make quick` | The same without pytest, in seconds; `make hooks` runs it before every commit |
 | `make gen` | Rewrite every generated file |
 | `make dev` / `make sim` | HA on :8123 (login `dev`/`dev`) / the simulator on :5020 |
-| `make scan-local HOST=...` | The survey on this tree's library instead of the PyPI pin |
+| `make scan-local HOST=...` | The diagnosis on this tree's library instead of the PyPI pin |
 | `pytest` · `ruff check . && ruff format .` · `mypy` | Tests (no network), lint, `--strict` over the library and the integration |
 
 `doc/development.md` lists every script.
@@ -113,41 +113,41 @@ The wiki is the repository's device knowledge, after
 [microsoft/llmwiki](https://github.com/microsoft/llmwiki). Before working on a
 device question, read `.wiki/wiki/index.md` and the pages it points to.
 
-- **Raw sources are immutable**: `device-survey/results/`,
+- **Raw sources are immutable**: `device-diagnosis/results/`,
   `doc/legacy_entity_map.json` and `.wiki/raw/`. Read, cite, never rewrite.
-  A survey transcript is never one. The `doc/` pages are for people and are
+  A diagnosis transcript is never one. The `doc/` pages are for people and are
   edited like any doc; the wiki cites its own frozen copy of one.
 - **Every claim cites its source.** One with none goes into `queries/`.
-- **Ingest is part of the work**: a new survey, control test or hardware
+- **Ingest is part of the work**: a new diagnosis, capability test or hardware
   finding updates its pages, the index and `log.md` in the same change.
   `.wiki/AGENTS.md` has the workflow.
 - **`log.md` is the only place history goes.** Pages state what is true now.
 - **Generated files and code are not wiki pages**; the wiki links to them.
 
-## The control test writes
+## The capability test writes
 
-Part A of the survey only reads. Part B, the
-[control test](.wiki/wiki/concepts/control-test.md), writes each control,
+Part A of the diagnosis only reads. Part B, the
+[capability test](.wiki/wiki/concepts/capability-test.md), writes each control,
 reads it back against the specification's scale, watches what the inverter
 does, and puts everything back. Non-negotiable:
 
-- **The [restore](.wiki/wiki/concepts/control-test-restore.md) is never
+- **The [restore](.wiki/wiki/concepts/capability-test-restore.md) is never
   budgeted, never deadlined and never skipped**, and it writes the snapshot's
   raw word, checked by raw read. The snapshot is flushed before the first
   write. **No snapshot file for a day means no writes that day.** Exit 5 is
   the one code that means a house is left changed.
 - **Leg B's scale is hand-typed from V1.1.11, never read from
-  `field.scale`.** `tests/test_control_test.py` makes the two meet.
+  `field.scale`.** `tests/test_capability_test.py` makes the two meet.
 - **A simulator cannot produce a finding**, and through a WiNet-S only the
   behavioural leg is evidence.
-- **The survey writes only with leave**: its last question defaults to no,
+- **The diagnosis writes only with leave**: its last question defaults to no,
   and a run with nobody at a terminal is a no.
 - **[Register 13074](.wiki/wiki/entities/register-13074.md)'s write scale is
   probed per device, never assumed** (×10 on B001 firmware, 1:1 on
   `SAPPHIRE-H_01011.95.03`).
 
-Before touching `device-survey/scripts/`, read
-`device-survey/reference.md`: the PEP 723 header is the survey's whole install,
+Before touching `device-diagnosis/scripts/`, read
+`device-diagnosis/reference.md`: the PEP 723 header is the diagnosis's whole install,
 and it can use only what the pinned wheel has.
 
 ## Things that will bite you
@@ -207,7 +207,7 @@ is `doc/integration_migration.md`.
 ## Hard constraint: a real serial number is never published
 
 **No real device serial or address goes into anything this repository
-tracks**: not a survey, a fixture, a docstring, a commit message, a comment or
+tracks**: not a diagnosis, a fixture, a docstring, a commit message, a comment or
 a wiki page. Most of them belong to other people.
 
 - Published documents carry the stand-in `serial_anonymized_hashed`; the
@@ -215,7 +215,7 @@ a wiki page. Most of them belong to other people.
 - `tests/test_no_real_serials.py` matches the shape of a serial over every
   tracked file, `.wiki/` included. In tests use `A123456789` (and
   `A987654321` where two must differ); in prose, the stand-in a device's
-  surveys publish. A serial can also hide as register words in a fixture,
+  diagnoses publish. A serial can also hide as register words in a fixture,
   which the shape test misses.
 - A document carries `ip_address_last_two_octets` only with its owner's
   consent; the wiki carries no address (`tests/test_wiki.py`).

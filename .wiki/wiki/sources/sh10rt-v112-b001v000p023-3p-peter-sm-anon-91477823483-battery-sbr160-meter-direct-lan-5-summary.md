@@ -1,24 +1,24 @@
 ---
 type: source
 title: sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-5.json
-source_path: ../device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-5.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-5.json
 ingested: '2026-11-02'
 created: '2026-11-02'
 tags:
-  - survey
+  - diagnosis
   - sh10rt-v112
   - sapphire-h-b001-v000-p023
   - peter-sm
   - direct_lan
-  - control-test
+  - capability-test
 ---
 
 # SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, sixth reading
 
-Capability survey of one inverter, read 2026-11-02 around 12:25 UTC from Home Assistant, issue #786,
-with the full control test. Two readings of this installation were posted together that day; by
+Capability diagnosis of one inverter, read 2026-11-02 around 12:25 UTC from Home Assistant, issue #786,
+with the full capability test. Two readings of this installation were posted together that day; by
 their read times this is the sixth (`-5`). Source:
-`device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-5.json`.
+`device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-5.json`.
 
 | | |
 | --- | --- |
@@ -41,10 +41,10 @@ No block failed in every round. **Intermittent**, over three rounds: 5601 (8), 5
 Polled by this Home Assistant, held off for the run (22 components). See
 [contention](../concepts/contention.md).
 
-## Control test
+## Capability test
 
 Outcome **3**: ran, with checks skipped. Over the cable, so leg B is evidence. See
-[the control test](../concepts/control-test.md).
+[the capability test](../concepts/capability-test.md).
 
 All nine readbacks **matched**: 13059, 13058, 13100, 33047, 33048, 13074, 13052, 33149 and 33150.
 

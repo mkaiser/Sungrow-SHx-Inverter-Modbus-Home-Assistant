@@ -21,4 +21,4 @@ PV production at negative prices.
 | The active power gradient control makes a new limit take minutes | the reporter's observation | not measured here |
 
 **No write has been watched by this repository.** The register's meaning is the reporter's, and
-the surveys' values for it are on the register page.
+the diagnoses' values for it are on the register page.

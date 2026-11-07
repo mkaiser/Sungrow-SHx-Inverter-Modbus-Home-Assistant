@@ -1,23 +1,23 @@
 ---
 type: source
 title: sh10rt-20-b001v000p023-3p-bar12-anon-81257679535-battery-sbr096-meter-direct-lan-2.json
-source_path: ../device-survey/results/inverter/sh10rt-20-b001v000p023-3p-bar12-anon-81257679535-battery-sbr096-meter-direct-lan-2.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-20-b001v000p023-3p-bar12-anon-81257679535-battery-sbr096-meter-direct-lan-2.json
 ingested: '2026-11-01'
 created: '2026-11-01'
 tags:
-  - survey
+  - diagnosis
   - sh10rt-20
   - sapphire-h-b001-v000-p023
   - bar12
   - direct_lan
-  - control-test
+  - capability-test
 ---
 
 # SH10RT-20, B001.V000.P023, bar12, the inverter's own LAN port, second reading
 
 Read by the maintainer over a VPN on 2026-11-01 in the early afternoon, nothing else polling, with
-the full control test on this tree's library (timed windows included). Source:
-`device-survey/results/inverter/sh10rt-20-b001v000p023-3p-bar12-anon-81257679535-battery-sbr096-meter-direct-lan-2.json`.
+the full capability test on this tree's library (timed windows included). Source:
+`device-diagnosis/results/inverter/sh10rt-20-b001v000p023-3p-bar12-anon-81257679535-battery-sbr096-meter-direct-lan-2.json`.
 
 | | |
 | --- | --- |
@@ -36,9 +36,9 @@ non-zero. See [energy history](../concepts/energy-history.md).
 
 Register 32998 reads 2000.
 
-## Control test
+## Capability test
 
-Outcome **3**, 9 of 9 readbacks matched. See [the control test](../concepts/control-test.md).
+Outcome **3**, 9 of 9 readbacks matched. See [the capability test](../concepts/capability-test.md).
 
 - [13074](../entities/register-13074.md): the probe was refused three times, **times ten**; 600 W
   went out as raw 600.

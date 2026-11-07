@@ -3,8 +3,8 @@
 Hybrid, string inverter, battery and wallbox are separate packages because no
 address means the same thing on two of them. What they share is how they are
 asked: a set of components on one Modbus unit, each refreshed on its own, a
-value by field name, and raw words for a survey's dump. `Device` is that
-seam, which the entity layer and the survey type against; `MappedDevice` is
+value by field name, and raw words for a diagnosis's dump. `Device` is that
+seam, which the entity layer and the diagnosis type against; `MappedDevice` is
 the implementation the SG, the battery and the wallbox are built on. The
 hybrid meets `Device` on its own: its tiers skip what firmware rules out and
 retry a lost connection, which no other device needs.
@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 @runtime_checkable
 class Device(Protocol):
-    """What every device offers the entity layer and the survey."""
+    """What every device offers the entity layer and the diagnosis."""
 
     def component(self, attribute: str) -> Component:
         """Return one component by the name descriptions refer to it by."""
@@ -116,7 +116,7 @@ class MappedDevice:
         """Every field name this device can be asked for, by `field()`.
 
         Public because callers outside the library need to enumerate what a
-        device offers -- the survey publishes one value per field, and the
+        device offers -- the diagnosis publishes one value per field, and the
         diagnostics download does the same. Reading `_fields` instead would
         be worse here than it usually is: this library is pinned by version in
         the integration's manifest, so renaming a private attribute would ship
@@ -127,7 +127,7 @@ class MappedDevice:
     def fields_of(self, attributes: Iterable[str]) -> frozenset[str]:
         """Every field name that lives in the named components.
 
-        A survey leaves a failed component's fields out of its report rather
+        A diagnosis leaves a failed component's fields out of its report rather
         than publishing them as None: a None says the device reported the
         point unavailable, which a block that never answered did not.
         """
@@ -144,7 +144,7 @@ class MappedDevice:
         return present(getattr(self.component(attribute), name))
 
     async def async_read_words(self, space: str, address: int, count: int) -> list[int]:
-        """Read raw words at one protocol address, for a survey's dump.
+        """Read raw words at one protocol address, for a diagnosis's dump.
 
         Raises, because only the caller can tell a refusal from a timeout.
         """

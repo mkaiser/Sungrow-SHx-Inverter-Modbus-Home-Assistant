@@ -1,24 +1,24 @@
 ---
 type: source
 title: sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-4.json
-source_path: ../device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-4.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-4.json
 ingested: '2026-11-02'
 created: '2026-11-02'
 tags:
-  - survey
+  - diagnosis
   - sh10rt-v112
   - sapphire-h-b001-v000-p023
   - peter-sm
   - direct_lan
-  - control-test
+  - capability-test
 ---
 
 # SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, fifth reading
 
-Capability survey of one inverter, read 2026-11-01 in the evening from Home Assistant on
-0.1.0a24 (the owner's note in issue #786), with a control test that declined to run. The survey
+Capability diagnosis of one inverter, read 2026-11-01 in the evening from Home Assistant on
+0.1.0a24 (the owner's note in issue #786), with a capability test that declined to run. The diagnosis
 derives the same name as the earlier readings, so the file carries the next number, `-4`.
-Source: `device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-4.json`.
+Source: `device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-4.json`.
 
 | | |
 | --- | --- |
@@ -53,7 +53,7 @@ schedule off, weekday discharge window 1 00:00-24:00, weekend discharge on with 
 Polled by this Home Assistant, held off for the run (22 components). See
 [contention](../concepts/contention.md).
 
-## Control test
+## Capability test
 
 Outcome **2**: it did not run. The inverter reported Standby, and every check is about what it
-does while it works. Nothing was written. See [the control test](../concepts/control-test.md).
+does while it works. Nothing was written. See [the capability test](../concepts/capability-test.md).

@@ -15,7 +15,7 @@ kinds of thing are deliberately left out:
   Their decoded properties are the entities, exactly as modern mode treats
   every other `_raw` value.
 * **register 21313**, which nobody can name. It is read, carried in the
-  survey, and given no entity, because inventing a meaning is worse than
+  diagnosis, and given no entity, because inventing a meaning is worse than
   admitting there isn't one.
 * the two **session timestamps**. They are epoch-shaped numbers holding the
   wallbox's *local* time rather than UTC -- decoded as UTC they read two hours

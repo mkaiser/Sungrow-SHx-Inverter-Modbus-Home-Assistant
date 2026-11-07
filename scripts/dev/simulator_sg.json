@@ -1,5 +1,5 @@
 {
-  "_comment": "An SG5.0RS for the dev loop, protocol addresses: bleughb's survey sg5-0rs-1p-bleughb-anon-85541281016 (device-survey/results/string_inverter/), every word as measured through a WiNet-S, with the placeholder serial A123456789 at 4989 where the survey masked the real one. Holding 5019 did not answer there; the simulator fills the gap with 0. Not generated.",
+  "_comment": "An SG5.0RS for the dev loop, protocol addresses: bleughb's diagnosis sg5-0rs-1p-bleughb-anon-85541281016 (device-diagnosis/results/string_inverter/), every word as measured through a WiNet-S, with the placeholder serial A123456789 at 4989 where the diagnosis masked the real one. Holding 5019 did not answer there; the simulator fills the gap with 0. Not generated.",
   "input": {
     "4949": [
       12544,

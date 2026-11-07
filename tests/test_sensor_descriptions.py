@@ -233,12 +233,12 @@ def test_the_register_with_nothing_better_is_kept() -> None:
 
     Three of the four became something better and are therefore dropped:
     13089 and 13018 are Sungrow mode registers, and 31213 holds the same
-    0xAA/0x55 pair -- undocumented, but the surveys read both codes on it
+    0xAA/0x55 pair -- undocumented, but the diagnoses read both codes on it
     (issue #554's pair, wiki: register 31213) -- so a binary sensor decodes
     each.
 
     **13090 was never raw**: it has a scale and a unit and reads 100.0 % on
-    every machine surveyed, so it only needed the word taken out of its name.
+    every machine diagnosed, so it only needed the word taken out of its name.
     """
     kept = {
         description.translation_key

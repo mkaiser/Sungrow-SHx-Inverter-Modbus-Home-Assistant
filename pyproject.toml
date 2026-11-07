@@ -61,7 +61,7 @@ ignore = ["ASYNC109", "D203", "D213"]
 [tool.ruff.lint.per-file-ignores]
 # Blocking file reads in a test or a command-line script stall nothing else.
 "tests/*" = ["ASYNC240", "D100", "D103"]
-"device-survey/scripts/*" = ["ASYNC240"]
+"device-diagnosis/scripts/*" = ["ASYNC240"]
 # E402 here rather than as a `# noqa` on the import: with the comment the line
 # sits exactly where ruff 0.16 and 0.17 disagree about wrapping it, so each
 # version's isort rejects the other's output and CI fails on a ruff upgrade.

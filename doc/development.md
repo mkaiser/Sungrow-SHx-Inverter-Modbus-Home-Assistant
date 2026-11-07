@@ -94,7 +94,7 @@ the second, point it at either:
 The flow identifies what answers rather than trusting the address: it sweeps
 units 1-5 for the inverter and finds a battery or wallbox behind it. This
 release sets every new entry up as **diagnostics only** -- the entity id
-question that devices mode asks is gated behind `ONLY_SURVEY_MODE` in
+question that devices mode asks is gated behind `ONLY_DIAGNOSIS_MODE` in
 `const.py` (see [Reviewing the migration by hand](#reviewing-the-migration-by-hand)).
 
 **A real inverter on your LAN is reachable from the container without any
@@ -119,26 +119,26 @@ gen-check` fails when it is stale.
 A few registers carry hand-picked values so the simulator looks like an
 SH10RT on a sunny afternoon rather than zeroes everywhere: `STRINGS` for the
 text fields, `OVERRIDES` for identity, power and bounds, `HOLDING_ONLY` for
-the Start/Stop word the control test's restart needs, and `FAULT_WORDS` with
+the Start/Stop word the capability test's restart needs, and `FAULT_WORDS` with
 no fault set.
 
-A simulator stores raw words with no scale, so it can exercise the survey
-(`make scan-sim`) and the control test (`make controltest-sim`) end to end
+A simulator stores raw words with no scale, so it can exercise the diagnosis
+(`make scan-sim`) and the capability test (`make controltest-sim`) end to end
 but never produce a finding about a real register.
 
 **An iHomeManager** has its own seed, `scripts/dev/simulator_ihomemanager.json`,
 hand-written from Sungrow's V1.0.2 document because no reading of one exists
 to generate it from. `make sim-ihm-bg` serves it as unit 247 on :5021, and
-`make scan-sim-ihm` runs the survey against it. It plants the placeholder
+`make scan-sim-ihm` runs the diagnosis against it. It plants the placeholder
 serial in an undocumented gap, so the masking runs end to end;
 `tests/test_ihomemanager.py` holds the seed to the map. **A Logger1000**
 likewise: `scripts/dev/simulator_logger.json`, `make sim-logger-bg` on :5022
 and `make scan-sim-logger`, held by `tests/test_logger.py`. **An SG5.0RS**
 is the one seed taken from a real reading: `scripts/dev/simulator_sg.json`
-is bleughb's SG survey word for word, with the placeholder serial where the
-survey masked the real one. `make sim-sg-bg` serves it as unit 1 on :5023,
-`make scan-sim-sg` surveys it, and `tests/test_string_inverter.py` holds it
-to the survey.
+is bleughb's SG diagnosis word for word, with the placeholder serial where the
+diagnosis masked the real one. `make sim-sg-bg` serves it as unit 1 on :5023,
+`make scan-sim-sg` diagnoses it, and `tests/test_string_inverter.py` holds it
+to the diagnosis.
 
 ## Layout
 
@@ -146,15 +146,15 @@ to the survey.
 custom_components/sungrow_modbus/   Home Assistant integration
 src/sungrow_modbus/                 device library (no Home Assistant imports)
   inverter/, battery/, wallbox/       one subpackage per device: registers, device
-  ihomemanager/, logger/              registers and document only: read by the survey
-  addresses, discovery, survey_document,  what spans devices
-  survey, block_test, control_test, dump
+  ihomemanager/, logger/              registers and document only: read by the diagnosis
+  addresses, discovery, diagnosis_document,  what spans devices
+  diagnosis, block_test, capability_test, dump
 tests/                              library and integration tests
 scripts/dev/                        dev loop: setup, boot, simulator, HACS testbed
 scripts/generate/                   everything that writes a committed file
 scripts/release/                    version lockstep and the pinned-library gate
 scripts/helpers/                    one-off tools
-device-survey/                      published survey documents, and the survey itself
+device-diagnosis/                      published diagnosis documents, and the diagnosis itself
 ```
 
 [architecture.md](architecture.md) has the reasoning. `make version
@@ -183,20 +183,20 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `tables/naming.py` | **Input table**: the entity-name convention, and the German name for every key (`GERMAN`). Feeds `strings.json`, `translations/de.json`, `review_names.py` and the Influx helper |
 | `tables/german_texts.json` | **Input table**: German for every `strings.json` text that is not an entity name, by path; read through `naming.GERMAN_TEXTS`. Feeds `translations/de.json` and `review_names.py --texts` (`doc/text_translation_review.md`) |
 | `tables/datasheet_names.json` | **Input table**: Sungrow's own name for every register an entity reads, as the hybrid's V1.1.11 and the SG's V1.1.58 datasheets print it, by `space:register`. Feeds the **Datasheet** column of `review_names.py` |
-| `generate_compatibility.py` | Build `doc/compatibility.md` from the committed surveys |
-| `generate_firmware_support.py` | Build `doc/firmware_support.md`: every inverter entity against every platform and firmware the surveys cover, each survey's register dump replayed through the integration's decoding and capability probe; then every SBR/SBH pack entity against every BCU firmware, from the surveys' decoded pack readings |
+| `generate_compatibility.py` | Build `doc/compatibility.md` from the committed diagnoses |
+| `generate_firmware_support.py` | Build `doc/firmware_support.md`: every inverter entity against every platform and firmware the diagnoses cover, each diagnosis's register dump replayed through the integration's decoding and capability probe; then every SBR/SBH pack entity against every BCU firmware, from the diagnoses' decoded pack readings |
 | `generate_simulator_registers.py` | The simulator's seed, from the entity map |
 | `generate_second_inverter_config.py` | The `legacy/` multi-inverter YAML files; run by CI on a change to the YAML package |
 | **`scripts/release/`** | **Release gates** |
-| `sync_version.py` | Single source of truth for the version: moves it into `manifest.json` and into the PEP 723 header of the survey and the control test; `--check` in CI, `--set X.Y.Z` to release |
+| `sync_version.py` | Single source of truth for the version: moves it into `manifest.json` and into the PEP 723 header of the diagnosis and the capability test; `--check` in CI, `--set X.Y.Z` to release |
 | `check_pinned_library.py` | Do the integration's `sungrow_modbus` imports resolve against the library version `manifest.json` pins? `--wheel dist/*.whl` asks it of a local build and gates CI; with no argument it asks it of **PyPI**, which is legitimately red between releases |
 | **`scripts/helpers/`** | **One-off tools** |
 | `influx_migration.py` | Print Grafana regexes and rewrite recipes for InfluxDB users; connects to nothing |
 | `review_names.py` | Lay the entity names out for the open naming decision -- grouped by subject, each with the entity id it produces and its legacy name. `--markdown` prints the name table (redirect it into `doc/entity_names.md`), `--texts` the other texts of `strings.json` in English and German (into `doc/text_translation_review.md`); `--check` fails when either file has drifted |
 | `make_brand_icon.py` | Regenerate the integration's `brand/` icons and wide logos, light and dark (`--preview` renders a check sheet of the icons) |
 
-What a contributor is handed, `device-survey/scripts/`, is described in
-[device-survey/README.md](../device-survey/README.md#what-is-in-scripts).
+What a contributor is handed, `device-diagnosis/scripts/`, is described in
+[device-diagnosis/README.md](../device-diagnosis/README.md#what-is-in-scripts).
 `make scan HOST=...`, `make scan-sim`, `make scan-local`, `make scan-wheel`,
 `make controltest-dry HOST=...` and `make controltest-local` drive it from this
 tree.
@@ -301,7 +301,7 @@ $ scripts/dev/develop.sh
 ```
 
 The entity id question is asked only in devices mode, which this release
-does not offer: set `ONLY_SURVEY_MODE` in
+does not offer: set `ONLY_DIAGNOSIS_MODE` in
 `custom_components/sungrow_modbus/const.py` to `False` locally first, and do
 not commit it.
 
@@ -381,7 +381,7 @@ touched. In the Marketplace, **Connect GitHub** (the same device code) and
 
 ## Screenshots for the docs
 
-The images in `device-survey/images/` are taken headless, against the
+The images in `device-diagnosis/images/` are taken headless, against the
 simulator, from a **second** Home Assistant. Never the one on :8123: its entry
 may point at real hardware, and a screenshot session clicks through flows.
 
@@ -402,11 +402,11 @@ may point at real hardware, and a screenshot session clicks through flows.
    port `5020`, in the browser or through the config flow's REST API
    (`POST /api/config/config_entries/flow`, then each step's form).
 4. **The shot.** `scripts/dev/screenshot.py` logs in as `dev` / `dev`, clicks
-   to the page and writes the PNG into `device-survey/images/`:
+   to the page and writes the PNG into `device-diagnosis/images/`:
 
    ```bash
    ~/.local/share/sungrow-screenshots/bin/python scripts/dev/screenshot.py \
-       options-control-test --url http://127.0.0.1:8125
+       options-capability-test --url http://127.0.0.1:8125
    ```
 
    Each shot is one function in its `SHOTS` table; a new one is a new
@@ -435,41 +435,41 @@ plain text, so markdown in it arrives as literal asterisks and pipes. Both
 are now tests (`tests/test_config_flow_connection.py`,
 `tests/test_polling_options.py`).
 
-## The survey on the device page
+## The diagnosis on the device page
 
-A capability survey is what this project learns from. A tester with the
+A capability diagnosis is what this project learns from. A tester with the
 integration runs it from a pair of buttons on the device page, with three
 diagnostic sensors beside them; a contributor without it runs
-`device-survey/scripts/survey.sh` instead:
+`device-diagnosis/scripts/diagnosis.sh` instead:
 
 | Entity | What it is for |
 | --- | --- |
 | `button.<name>_run_read_only_diagnosis` | Starts one. Unavailable while a run is in flight; the runner refuses a second anyway |
-| `button.<name>_run_complete_diagnosis_and_tests` | Part B: the same survey, and then it **writes** to every control and puts each one back. See below |
-| `sensor.<name>_survey_progress` | Percent complete. Counted reads, not elapsed time — the same survey is under a second on a cable and minutes over a VPN |
-| `sensor.<name>_survey_step` | What is being read right now. **Its recorded history is the point**: 19 probes, the block read test's reads and one assembly step in order — plus 52 band sweeps when a dump was asked for — which is what says *where* a slow link stalls rather than that it did |
-| `sensor.<name>_survey_finished` | When the last run ended, with `fields_read` and `has_document` as attributes |
+| `button.<name>_run_complete_diagnosis_and_tests` | Part B: the same diagnosis, and then it **writes** to every control and puts each one back. See below |
+| `sensor.<name>_diagnosis_progress` | Percent complete. Counted reads, not elapsed time — the same diagnosis is under a second on a cable and minutes over a VPN |
+| `sensor.<name>_diagnosis_step` | What is being read right now. **Its recorded history is the point**: 19 probes, the block read test's reads and one assembly step in order — plus 52 band sweeps when a dump was asked for — which is what says *where* a slow link stalls rather than that it did |
+| `sensor.<name>_diagnosis_finished` | When the last run ended, with `fields_read` and `has_document` as attributes |
 
 They exist in both setup modes. A *Diagnostics only* entry has no readings at
 all, and these five are the entirety of its device page — which is also why
 it has one: Home Assistant registers a device only as a side effect of an
-entity carrying its `device_info`. The control test is there too: that mode is
+entity carrying its `device_info`. The capability test is there too: that mode is
 for the contributor who has hardware and offered to help, which is exactly whose
 inverter this project needs a write measurement from.
 
 ### Part B, which writes
 
-The control test writes each control and checks it against the raw word,
+The capability test writes each control and checks it against the raw word,
 with a scale typed by hand from the specification, and against what the
-inverter does. How and why: the wiki's [control test](../.wiki/wiki/concepts/control-test.md)
-and [restore](../.wiki/wiki/concepts/control-test-restore.md) pages; the rules
-are in `AGENTS.md`; `doc/development.yaml`'s `control_test` section is the
+inverter does. How and why: the wiki's [capability test](../.wiki/wiki/concepts/capability-test.md)
+and [restore](../.wiki/wiki/concepts/capability-test-restore.md) pages; the rules
+are in `AGENTS.md`; `doc/development.yaml`'s `capability_test` section is the
 terminal runbook (`make controltest-dry HOST=…` writes nothing).
 
-`survey.py` owns both parts and holds the state; `survey_document.py` reads
-and reports progress; `control_test.py` writes into the tail of the same
-progress bar; `survey_entities.py` turns that into states over one dispatcher
-signal per entry. Nothing in `survey.py` talks Modbus.
+`diagnosis.py` owns both parts and holds the state; `diagnosis_document.py` reads
+and reports progress; `capability_test.py` writes into the tail of the same
+progress bar; `diagnosis_entities.py` turns that into states over one dispatcher
+signal per entry. Nothing in `diagnosis.py` talks Modbus.
 
 **Three things that are easy to get wrong here.**
 
@@ -495,19 +495,19 @@ The route that does not expire is **Download diagnostics** on the same page.
 reading the saved testimony from `entry.options`. Treat the notification as
 the convenience and that button as the guarantee.
 
-The raw band sweep is gated **twice, on purpose**. `survey_register_dump` in
+The raw band sweep is gated **twice, on purpose**. `diagnosis_register_dump` in
 the options says the owner is willing to spend the time; `allow_dump=True` on
-`async_build` says the caller can afford to wait for it. Only the survey
+`async_build` says the caller can afford to wait for it. Only the diagnosis
 runner behind the two buttons passes the second, because only it is a
 background task with a progress bar. `diagnostics.py` builds the same document and
 leaves it off — five minutes of reading behind a download button reads as a
 hang, and an owner who enabled the option was answering a question about
-surveys. Reading the option directly inside `async_build` would be the
+diagnoses. Reading the option directly inside `async_build` would be the
 obvious simplification and would break exactly that.
 
 Two options are called a register dump: `CONF_REGISTER_DUMP` re-reads the
-mapped addresses into diagnostics, in seconds; `CONF_SURVEY_DUMP` sweeps
-`sungrow_modbus.dump.DUMP_BANDS` (2181 addresses) into the survey, in about
+mapped addresses into diagnostics, in seconds; `CONF_DIAGNOSIS_DUMP` sweeps
+`sungrow_modbus.dump.DUMP_BANDS` (2181 addresses) into the diagnosis, in about
 five minutes, and only it can discover a register.
 
 To see any of this against a real run, the recorder is the fastest way in —
@@ -517,12 +517,12 @@ the dev instance keeps it:
 $ sqlite3 config/home-assistant_v2.db \
     "select m.entity_id, s.state, datetime(s.last_updated_ts,'unixepoch','localtime')
      from states s join states_meta m on s.metadata_id = m.metadata_id
-     where m.entity_id like '%survey%' order by s.last_updated_ts"
+     where m.entity_id like '%diagnosis%' order by s.last_updated_ts"
 ```
 
 Persistent notifications are **not** states — they live in memory behind the
 websocket command
-`persistent_notification/get`, so a survey that "produced no notification" is
+`persistent_notification/get`, so a diagnosis that "produced no notification" is
 worth checking there before believing it.
 
 ## Naming entities

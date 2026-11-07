@@ -1,11 +1,11 @@
 ---
 type: source
 title: sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan.json
-source_path: ../device-survey/results/inverter/sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan.json
+source_path: ../device-diagnosis/results/inverter/sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan.json
 ingested: '2026-11-04'
 created: '2026-11-04'
 tags:
-  - survey
+  - diagnosis
   - sh60rt-20
   - sapphire-h-b001-v000-p023
   - anonymous
@@ -15,9 +15,9 @@ tags:
 
 # SH6.0RT-20, B001.V000.P023, anonymous, through a Modbus proxy, SBR064
 
-Capability survey of one inverter, read 2026-11-04 from Home Assistant's survey button, issue
-#786, reads only (no control test). Published as `anonymous`. **The first SH6.0RT-20 in the
-corpus.** Source: `device-survey/results/inverter/sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan.json`.
+Capability diagnosis of one inverter, read 2026-11-04 from Home Assistant's diagnosis button, issue
+#786, reads only (no capability test). Published as `anonymous`. **The first SH6.0RT-20 in the
+corpus.** Source: `device-diagnosis/results/inverter/sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan.json`.
 
 | | |
 | --- | --- |

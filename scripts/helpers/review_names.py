@@ -57,7 +57,7 @@ DATASHEET = REPO / "scripts" / "generate" / "tables" / "datasheet_names.json"
 LEGACY_MAP = REPO / "doc" / "legacy_entity_map.json"
 
 #: The entity map's layers that are the YAML package itself. The others are
-#: what the specification and the surveys added, which the YAML never had.
+#: what the specification and the diagnoses added, which the YAML never had.
 YAML_LAYERS = frozenset({"modbus", "template", "filter"})
 
 
@@ -194,12 +194,12 @@ def _names() -> dict[tuple[str, str], str]:
     return names
 
 
-#: The buttons have no descriptions, only a translation key each: the survey
-#: on every entry, the control test on a hybrid only (`button.py`).
+#: The buttons have no descriptions, only a translation key each: the diagnosis
+#: on every entry, the capability test on a hybrid only (`button.py`).
 BUTTONS: tuple[tuple[Device, str], ...] = (
-    (INVERTER, "run_survey"),
-    (INVERTER, "run_control_test"),
-    (STRING_INVERTER, "run_survey"),
+    (INVERTER, "run_diagnosis"),
+    (INVERTER, "run_capability_test"),
+    (STRING_INVERTER, "run_diagnosis"),
 )
 
 

@@ -1,11 +1,11 @@
 ---
 type: source
 title: sh15t-b000v000p071-3p-jm493-anon-00578206904-battery-sbh200-winet-lan.json
-source_path: ../device-survey/results/inverter/sh15t-b000v000p071-3p-jm493-anon-00578206904-battery-sbh200-winet-lan.json
+source_path: ../device-diagnosis/results/inverter/sh15t-b000v000p071-3p-jm493-anon-00578206904-battery-sbh200-winet-lan.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
-  - survey
+  - diagnosis
   - sh15t
   - pearl-h-b000-v000-p071
   - jm493
@@ -14,7 +14,7 @@ tags:
 
 # SH15T, B000.V000.P071, jm493, a WiNet-S on Ethernet
 
-Capability survey of one inverter, read 2026-10-07. Source: `device-survey/results/inverter/sh15t-b000v000p071-3p-jm493-anon-00578206904-battery-sbh200-winet-lan.json`.
+Capability diagnosis of one inverter, read 2026-10-07. Source: `device-diagnosis/results/inverter/sh15t-b000v000p071-3p-jm493-anon-00578206904-battery-sbh200-winet-lan.json`.
 
 | | |
 | --- | --- |

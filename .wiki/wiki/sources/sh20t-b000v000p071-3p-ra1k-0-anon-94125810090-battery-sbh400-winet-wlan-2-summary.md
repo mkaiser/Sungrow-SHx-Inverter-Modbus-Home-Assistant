@@ -1,24 +1,24 @@
 ---
 type: source
 title: sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2.json
-source_path: ../device-survey/results/inverter/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2.json
+source_path: ../device-diagnosis/results/inverter/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2.json
 ingested: '2026-11-02'
 created: '2026-11-02'
 tags:
-  - survey
+  - diagnosis
   - sh20t
   - pearl-h-b000-v000-p071
   - ra1k-0
   - winet_wlan
-  - control-test
+  - capability-test
 ---
 
 # SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi, the PV cut confirmed
 
-Capability survey of one inverter, read 2026-11-01 at 23:54 UTC (in daylight, PV about 20 kW)
-from Home Assistant, issue #772, with the full control test including the PV cut and a restart.
-The survey derives the same name as the first reading, so the file carries `-2`. Source:
-`device-survey/results/inverter/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2.json`.
+Capability diagnosis of one inverter, read 2026-11-01 at 23:54 UTC (in daylight, PV about 20 kW)
+from Home Assistant, issue #772, with the full capability test including the PV cut and a restart.
+The diagnosis derives the same name as the first reading, so the file carries `-2`. Source:
+`device-diagnosis/results/inverter/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2.json`.
 
 | | |
 | --- | --- |
@@ -56,10 +56,10 @@ Through the dongle the SBH's cells and modules components are refused with
 Polled by this Home Assistant, held off for the run (22 components); the iHomeManager polls too.
 See [contention](../concepts/contention.md).
 
-## Control test
+## Capability test
 
 Outcome **4**, a scale finding, from one readback. Through a WiNet-S, so only the behavioural leg
-is evidence. See [the control test](../concepts/control-test.md).
+is evidence. See [the capability test](../concepts/capability-test.md).
 
 | Field | Register | Verdict (as the dongle reported it) |
 | --- | --- | --- |
@@ -74,7 +74,7 @@ is evidence. See [the control test](../concepts/control-test.md).
 - **The outcome 4 is not evidence.** [13074](../entities/register-13074.md)'s write scale was not
   determined (20000 W held, no safe probe word), so 600 W was written as word 60, the fallback of
   ten; the dongle reported 60 back, where the check expected 600. With feed-in limitation off, as
-  in the first control test here, the same lead again: through a dongle, the word forwarded.
+  in the first capability test here, the same lead again: through a dongle, the word forwarded.
 - **The PV cut did as it was told**: total DC power 20421 W before, 28 W during, 20395 W after.
   The first watched cut on an SH-T and on P071. It stops all PV, as 0xAA is meant to: there is
   no load following while the cut is on.

@@ -20,7 +20,7 @@ from .addresses import reg
 from .model import string
 
 #: The two kinds of inverter, as `inverter_kind` and `discovery.Identity`
-#: name them. `string_inverter` is also the `document` key of an SG's survey.
+#: name them. `string_inverter` is also the `document` key of an SG's diagnosis.
 HYBRID = "hybrid"
 STRING_INVERTER = "string_inverter"
 

@@ -15,14 +15,14 @@ shut down when set to 0 % ([issue #554](../sources/issue-554-active-power-limit-
 The limit it reacts to acts at the inverter's AC output (holding 13089/13090), not at the grid
 connection point as the feed-in limit does.
 
-## What the surveys read
+## What the diagnoses read
 
-From the committed surveys under `device-survey/results/inverter/`:
+From the committed diagnoses under `device-diagnosis/results/inverter/`:
 
 | Value | Where |
 | --- | --- |
 | `0x55` | every [SH-RT](device-sh-rt.md), over cable and through a WiNet-S alike; [Jam3s97's](installation-jam3s97.md) SH10RS on P065; [fullhd23's](installation-fullhd23.md) SH15T; one of [ra1k-0's](installation-ra1k-0.md) three SH20T runs |
-| `0xAA` | the [SH-RS](device-sh-rs.md) of [bleughb](installation-bleughb.md) (P057), [brendan](installation-brendan.md) (P067), an anonymous P059 and an anonymous SH6.0RS on P068 ([the survey](../sources/sh60rs-b000v001p068-1p-anonymous-anon-17579213881-battery-sbr192-winet-summary.md)); the SH15T of [GalKar](installation-galkar.md) and [jm493](installation-jm493.md) |
+| `0xAA` | the [SH-RS](device-sh-rs.md) of [bleughb](installation-bleughb.md) (P057), [brendan](installation-brendan.md) (P067), an anonymous P059 and an anonymous SH6.0RS on P068 ([the diagnosis](../sources/sh60rs-b000v001p068-1p-anonymous-anon-17579213881-battery-sbr192-winet-summary.md)); the SH15T of [GalKar](installation-galkar.md) and [jm493](installation-jm493.md) |
 | 0 | two of ra1k-0's SH20T runs |
 
 **Both values of the pair exist**, and inverters of one model differ (SH10RS, SH15T), so it is a

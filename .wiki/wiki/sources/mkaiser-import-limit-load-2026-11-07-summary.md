@@ -28,7 +28,7 @@ the house draws past it. Whether the battery would discharge to meet the cap in
 self-consumption, with a load above what the battery's own limits let it cover, was not tried:
 here the battery covered the whole load.
 
-The run used a script outside the control test's engine, with its rules kept: the stand-in was
+The run used a script outside the capability test's engine, with its rules kept: the stand-in was
 checked, the snapshot was flushed before the first write, and the restore wrote raw words and
 checked them by raw read. Every word was restored. Over the cable, so it says nothing about a
 WiNet-S.

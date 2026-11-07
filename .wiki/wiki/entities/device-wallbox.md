@@ -54,9 +54,9 @@ so the defaults sit on that edge and a shorter fast tier would cross it.
   the document is published, and replaced by `wallbox.serial_anonymized_hashed`;
   see [serial anonymization](../concepts/serial-anonymization.md).
 
-`sungrow_survey.py` sweeps port 516. A wallbox found there is read by
-`device-survey/scripts/python/wallbox_direct.py` into a **wallbox
-document** of its own, published in `device-survey/results/wallbox/` beside
+`sungrow_diagnosis.py` sweeps port 516. A wallbox found there is read by
+`device-diagnosis/scripts/python/wallbox_direct.py` into a **wallbox
+document** of its own, published in `device-diagnosis/results/wallbox/` beside
 `results/inverter/`.
 
 The register map, with how strongly each row is held:
@@ -65,7 +65,7 @@ The register map, with how strongly each row is held:
 ## Measured
 
 One AC22E-01 at [gerd](installation-gerd.md): through the dongle in the
-[WiNet-S survey](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-summary.md),
+[WiNet-S diagnosis](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-summary.md),
 and at its own address in the
 [wallbox document](../sources/ac22e01-gerd-anon-41346964423-wallbox-tls-summary.md).
 Read directly again on 2026-10-29: holding 21250-21259 is a constant
@@ -92,7 +92,7 @@ What is fixed and what moves is in
 RS485 at unit 248 is reported by others and never measured here; see
 [the open query](../queries/does-a-wallbox-answer-unit-248-on-rs485.md).
 
-The [control test's dry run](../sources/gerd-wallbox-dry-run-2026-11-06-summary.md) on
+The [capability test's dry run](../sources/gerd-wallbox-dry-run-2026-11-06-summary.md) on
 2026-11-06, with no car: the output current setting (holding 21203) read **0**, against 160
 and 151 while charging, and input 21322 read 161 beside it, so 21322 is not the setting
-echoed. Nothing is written to a wallbox outside a control test with leave.
+echoed. Nothing is written to a wallbox outside a capability test with leave.

@@ -1,16 +1,16 @@
 ---
 type: source
 title: sg5-0rs-1p-bleughb-anon-85541281016.json
-source_path: ../device-survey/results/string_inverter/sg5-0rs-1p-bleughb-anon-85541281016.json
+source_path: ../device-diagnosis/results/string_inverter/sg5-0rs-1p-bleughb-anon-85541281016.json
 ingested: '2026-11-04'
 created: '2026-11-04'
-tags: [survey, string-inverter, sg5-0rs, bleughb, winet_wlan]
+tags: [diagnosis, string-inverter, sg5-0rs, bleughb, winet_wlan]
 ---
 
 # SG5.0RS, bleughb, "South", a WiNet-S on WiFi
 
-The first string-inverter survey. A Home Assistant diagnostics download of 0.1.0a25, issue #786,
-read 2026-11-04, its `data.survey` section committed unchanged. The first of
+The first string-inverter diagnosis. A Home Assistant diagnostics download of 0.1.0a25, issue #786,
+read 2026-11-04, its `data.diagnosis` section committed unchanged. The first of
 [bleughb](../entities/installation-bleughb.md)'s two [SG5.0RS](../entities/device-sg-rs.md); the
 second is [anon-91627862515](sg5-0rs-1p-bleughb-anon-91627862515-summary.md).
 

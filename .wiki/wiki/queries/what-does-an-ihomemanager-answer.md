@@ -1,7 +1,7 @@
 ---
 type: query
 title: "What does an iHomeManager answer?"
-tags: [ihomemanager, open, survey-wanted]
+tags: [ihomemanager, open, diagnosis-wanted]
 created: '2026-10-29'
 query: "Which of the 53 mapped iHomeManager registers answer on a real unit, on which port?"
 results_count: 0
@@ -12,13 +12,13 @@ results_count: 0
 **Open: never measured here.** The map is the 53 registers in the
 [cross-reference](../sources/cross-reference-modbus-manager-summary.md). Two units elsewhere
 have answered 8028 (as 0x55/0xAA), 8031, 8155-8163, 8176-8179, 8559-8564 and the undocumented
-4358-4362 ([evcc cross-reference](../sources/cross-reference-evcc-summary.md)); a survey here
+4358-4362 ([evcc cross-reference](../sources/cross-reference-evcc-summary.md)); a diagnosis here
 would say which of the rest answer, and whether 4358-4362 are U32. What
 is known about the device is on [iHomeManager](../entities/device-ihomemanager.md).
 
-What answers it: a survey of one, at slave 247 on port 502 or 503.
+What answers it: a diagnosis of one, at slave 247 on port 502 or 503.
 [ra1k-0](../entities/installation-ra1k-0.md) reports one installed, and polling
-the inverter. `sungrow_survey.py` now reads one into a publishable document,
+the inverter. `sungrow_diagnosis.py` now reads one into a publishable document,
 from the first release that carries `sungrow_modbus.ihomemanager`; the
 question waits on somebody running it.
 

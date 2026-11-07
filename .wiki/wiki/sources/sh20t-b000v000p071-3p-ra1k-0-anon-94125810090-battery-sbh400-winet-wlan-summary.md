@@ -1,11 +1,11 @@
 ---
 type: source
 title: sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan.json
-source_path: ../device-survey/results/inverter/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan.json
+source_path: ../device-diagnosis/results/inverter/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
-  - survey
+  - diagnosis
   - sh20t
   - pearl-h-b000-v000-p071
   - ra1k-0
@@ -14,7 +14,7 @@ tags:
 
 # SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi
 
-Capability survey of one inverter, read 2026-09-16. Source: `device-survey/results/inverter/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan.json`.
+Capability diagnosis of one inverter, read 2026-09-16. Source: `device-diagnosis/results/inverter/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan.json`.
 
 | | |
 | --- | --- |

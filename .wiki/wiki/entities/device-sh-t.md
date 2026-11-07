@@ -15,7 +15,7 @@ with the [SBH](device-sbh-battery.md) high-voltage battery, and with an
 
 ## What is established
 
-- **Only read through a module.** No T-series survey was taken at an inverter's own LAN port:
+- **Only read through a module.** No T-series diagnosis was taken at an inverter's own LAN port:
   every one went through a [WiNet-S](device-winet-s.md), except two through a Logger1000A at
   [code-imstillalive](installation-code-imstillalive.md), which refused the same blocks a
   WiNet-S does (6100, 2613, 2629, the history). Nothing here separates the machine from the
@@ -24,7 +24,7 @@ with the [SBH](device-sbh-battery.md) high-voltage battery, and with an
 - **31211 answers 0x55** on P071 and on P067, as on SH-RT P022/P023, and **the PV cut acts**: 20421 W,
   28 W, 20395 W at [ra1k-0](installation-ra1k-0.md), through a WiNet-S; see
   [register 31211](register-31211.md). The T also has 13018, which is unwritten.
-- **Three control tests**, two at [ra1k-0](installation-ra1k-0.md) and one at
+- **Three capability tests**, two at [ra1k-0](installation-ra1k-0.md) and one at
   [GalKar](installation-galkar.md), all through a WiNet-S, so only their behavioural legs are
   evidence: the forced discharge did as it was told (1252 W and 1245.5 W for 1250 W), and so did
   the forced charge (1248 W for 1250 W) and the PV cut. Two restarts: stopped in 2 s, running
@@ -40,7 +40,7 @@ the numbering restarts with it, so `.01.45` is not older than `.95.03`.
 Anything gated on Version 1 matches the whole string, platform included, and
 never compares the numeric tail across platforms.
 
-## Surveys
+## Diagnoses
 
 [fullhd23](installation-fullhd23.md), [GalKar](installation-galkar.md),
 [jm493](installation-jm493.md) and [ra1k-0](installation-ra1k-0.md), all through a WiNet-S;

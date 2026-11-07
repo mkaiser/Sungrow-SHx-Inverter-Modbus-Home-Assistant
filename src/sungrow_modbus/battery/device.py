@@ -37,12 +37,12 @@ COMPONENTS: dict[str, type] = {
     "cells": SbrBatteryCells,
 }
 
-#: Components a survey always reads and a poll only when asked to.
+#: Components a diagnosis always reads and a poll only when asked to.
 #:
 #: The per-module block's entities are disabled by default, so polling it
 #: for nobody would spend the shared link's session time on nothing:
 #: `poll_modules` turns it on once somebody has enabled one.
-SURVEY_COMPONENTS: dict[str, type] = {
+DIAGNOSIS_COMPONENTS: dict[str, type] = {
     "modules": SbrBatteryModules,
 }
 
@@ -70,16 +70,16 @@ class SungrowBattery(MappedDevice):
     cells: SbrBatteryCells
     modules: SbrBatteryModules
 
-    #: Whether a poll reads the per-module block too. A survey always does.
+    #: Whether a poll reads the per-module block too. A diagnosis always does.
     poll_modules = False
 
     def __init__(self, unit: ModbusUnit, unit_id: int) -> None:
-        """Bind every component, the survey's too, remembering which id it is.
+        """Bind every component, the diagnosis's too, remembering which id it is.
 
         The id is worth reporting: the same pack is 200 on a cable and 2
         through a dongle.
         """
-        super().__init__(unit, {**COMPONENTS, **SURVEY_COMPONENTS}, unit_id)
+        super().__init__(unit, {**COMPONENTS, **DIAGNOSIS_COMPONENTS}, unit_id)
 
     @property
     def capacity_kwh(self) -> float | None:
@@ -119,14 +119,14 @@ class SungrowBattery(MappedDevice):
         ]
         return any(value for value in readings)
 
-    async def async_update(self, *, survey: bool = False) -> UpdateReport:
+    async def async_update(self, *, diagnosis: bool = False) -> UpdateReport:
         """Refresh the components, tolerating any one failing alone.
 
-        `survey` adds `SURVEY_COMPONENTS`, which a poll reads only with
-        `poll_modules` set: otherwise their fields read None until a survey
+        `diagnosis` adds `DIAGNOSIS_COMPONENTS`, which a poll reads only with
+        `poll_modules` set: otherwise their fields read None until a diagnosis
         has asked.
         """
-        extra = survey or self.poll_modules
+        extra = diagnosis or self.poll_modules
         return await self._async_update_components(
-            {**COMPONENTS, **(SURVEY_COMPONENTS if extra else {})}
+            {**COMPONENTS, **(DIAGNOSIS_COMPONENTS if extra else {})}
         )

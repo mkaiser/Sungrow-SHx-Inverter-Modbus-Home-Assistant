@@ -37,11 +37,11 @@ from custom_components.sungrow_modbus.const import (
     MODE_DEVICES,
     MODE_DIAGNOSTICS,
     SECTION_ADVANCED,
-    SECTION_CONTROL_TEST,
+    SECTION_CAPABILITY_TEST,
+    SECTION_DIAGNOSIS,
     SECTION_EXTERNAL,
     SECTION_PERMISSIONS,
     SECTION_POLLING,
-    SECTION_SURVEY,
 )
 from homeassistant.components.recorder import Recorder
 from homeassistant.const import CONF_HOST, CONF_PORT
@@ -118,8 +118,8 @@ async def _promote(hass: HomeAssistant, entry: MockConfigEntry) -> dict:
             SECTION_PERMISSIONS: {},
             SECTION_EXTERNAL: {},
             SECTION_ADVANCED: {},
-            SECTION_SURVEY: {},
-            SECTION_CONTROL_TEST: {},
+            SECTION_DIAGNOSIS: {},
+            SECTION_CAPABILITY_TEST: {},
         },
     )
 

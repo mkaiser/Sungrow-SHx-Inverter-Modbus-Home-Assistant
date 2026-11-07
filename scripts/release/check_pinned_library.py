@@ -49,10 +49,10 @@ INTEGRATION = REPO / "custom_components" / "sungrow_modbus"
 MANIFEST = INTEGRATION / "manifest.json"
 
 #: The scripts that run on the published library rather than on a checkout:
-#: the survey, fetched by its launchers through `uv`, and the control test.
+#: the diagnosis, fetched by its launchers through `uv`, and the capability test.
 #: Both pin the same version the manifest does, so the same wheel has to serve
 #: their imports too.
-SCRIPT_DIRECTORIES = (REPO / "device-survey" / "scripts" / "python",)
+SCRIPT_DIRECTORIES = (REPO / "device-diagnosis" / "scripts" / "python",)
 
 
 def sources() -> list[Path]:
@@ -388,11 +388,11 @@ def report(wheel: Path, label: str) -> int:
             gaps.append(f"module {module} is not in the wheel")
             continue
         for name in sorted(wanted[module] - modules[module]):
-            # `from sungrow_modbus import survey_document` names a *submodule*,
+            # `from sungrow_modbus import diagnosis_document` names a *submodule*,
             # which resolves at runtime without appearing anywhere in the
             # package's `__init__.py`. Checking only module-level names calls
             # that a missing symbol -- and it is how this integration reaches
-            # the survey tables, so getting it wrong would have made the
+            # the diagnosis tables, so getting it wrong would have made the
             # script cry wolf on a correct tree.
             if f"{module}.{name}" in modules:
                 continue
@@ -423,7 +423,7 @@ def report(wheel: Path, label: str) -> int:
         print(f"  {gap}")
     print()
     print("A copy of this integration installed against that version will fail")
-    print("to start, or to read a device, and so will a survey or control test")
+    print("to start, or to read a device, and so will a diagnosis or capability test")
     print("fetched through uv. Either release a version that has it,")
     print("or do not use it yet: `python scripts/release/sync_version.py --set X.Y.Z`")
     print("moves every pin.")

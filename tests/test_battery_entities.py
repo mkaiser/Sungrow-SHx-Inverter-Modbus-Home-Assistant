@@ -288,7 +288,7 @@ async def test_a_pack_whose_size_the_inverter_does_not_report_is_still_a_device(
     The model name comes from register 5639 on the *inverter*, so a pack is
     nameable only where that reads a capacity matching the datasheet table --
     and a third-party pack reports 0 there, which is how `battery-thirdparty`
-    is told from `battery-sbr096` in a survey's filename. What must not
+    is told from `battery-sbr096` in a diagnosis's filename. What must not
     happen is the readings being withheld because the name could not be
     derived: these are the pack's own registers, and they read the same
     whatever the table says.
@@ -311,17 +311,17 @@ async def test_a_pack_whose_size_the_inverter_does_not_report_is_still_a_device(
     )
 
 
-async def test_a_survey_reads_the_module_block_the_poll_leaves_alone(
+async def test_a_diagnosis_reads_the_module_block_the_poll_leaves_alone(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """The document's pack section is the terminal survey's, modules included.
+    """The document's pack section is the terminal diagnosis's, modules included.
 
     The poll leaves the per-module block alone while none of its entities is
     enabled -- here no cell type is non-zero, so there are none at all; setup
-    reads it once to count the modules. A survey reads it too, and the
-    section it publishes is the one `sungrow_survey.py` writes.
+    reads it once to count the modules. A diagnosis reads it too, and the
+    section it publishes is the one `sungrow_diagnosis.py` writes.
     """
-    from custom_components.sungrow_modbus.survey_document import async_build
+    from custom_components.sungrow_modbus.diagnosis_document import async_build
 
     # Protocol addresses, one below the register numbers 10765 and 10766.
     module_words = {10764: 33507, 10765: 33484}

@@ -1,11 +1,11 @@
 ---
 type: source
 title: sh10rt-v112-b001v000p020-3p-anonymous-anon-33472554127-battery-thirdparty-meter-direct-lan.json
-source_path: ../device-survey/results/inverter/sh10rt-v112-b001v000p020-3p-anonymous-anon-33472554127-battery-thirdparty-meter-direct-lan.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-v112-b001v000p020-3p-anonymous-anon-33472554127-battery-thirdparty-meter-direct-lan.json
 ingested: '2026-11-02'
 created: '2026-11-02'
 tags:
-  - survey
+  - diagnosis
   - sh10rt-v112
   - sapphire-h-b001-v000-p020
   - anonymous
@@ -15,13 +15,13 @@ tags:
 
 # SH10RT-V112, B001.V000.P020, anonymous, through a Modbus proxy to the inverter's own LAN port
 
-Capability survey of one inverter, read 2026-11-01 from the terminal survey, issue #786, reads
-only. Published as `anonymous`. **The first survey through a Modbus proxy**: the owner's note
+Capability diagnosis of one inverter, read 2026-11-01 from the terminal diagnosis, issue #786, reads
+only. Published as `anonymous`. **The first diagnose through a Modbus proxy**: the owner's note
 says a Home Assistant add-on (modbus-proxy 1.1.0) listened on the Home Assistant host with the
 inverter as its upstream, and Home Assistant's YAML package polled through it during the run
 (`--proxy yes --pollers yes`). A second run minutes later went straight to the inverter:
 [the second reading](sh10rt-v112-b001v000p020-3p-anonymous-anon-33472554127-battery-thirdparty-meter-direct-lan-2-summary.md).
-Source: `device-survey/results/inverter/sh10rt-v112-b001v000p020-3p-anonymous-anon-33472554127-battery-thirdparty-meter-direct-lan.json`.
+Source: `device-diagnosis/results/inverter/sh10rt-v112-b001v000p020-3p-anonymous-anon-33472554127-battery-thirdparty-meter-direct-lan.json`.
 
 | | |
 | --- | --- |
@@ -44,7 +44,7 @@ unavailable value. No SBR at unit 200 or 2, no wallbox at unit 3 or 248. 233 of 
 decoded, the same count as the direct run.
 
 **A proxy is transparent to transport detection**: register 6100, the block a
-[WiNet-S](../entities/device-winet-s.md) does not forward, answered through it, so the survey
+[WiNet-S](../entities/device-winet-s.md) does not forward, answered through it, so the diagnosis
 still saw the inverter's own port. See [transport detection](../concepts/transport-detection.md).
 
 ## What the dump adds

@@ -38,7 +38,7 @@ PLATFORM_MODULES = (
     "number",
     "select",
     "sensor",
-    "survey_entities",
+    "diagnosis_entities",
     "switch",
     "time",
 )

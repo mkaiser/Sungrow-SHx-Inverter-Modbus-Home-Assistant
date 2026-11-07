@@ -5,7 +5,7 @@ Runs on the Playwright venv `scripts/dev/setup.sh` makes, not on the dev
 environment's Python, so its pins never meet Home Assistant's:
 
     ~/.local/share/sungrow-screenshots/bin/python scripts/dev/screenshot.py \
-        options-control-test --url http://127.0.0.1:8125
+        options-capability-test --url http://127.0.0.1:8125
 
 The instance must be a **scratch** one with a Sungrow entry on the simulator
 (`doc/development.md`, "Screenshots for the docs"): a shot clicks through
@@ -13,7 +13,7 @@ flows, and never belongs on an instance whose entry reaches real hardware.
 So, like `ha_onboard.py`, this refuses a non-loopback URL and logs in as the
 public `dev` / `dev`.
 
-Each shot writes its file into `device-survey/images/`; look at it before
+Each shot writes its file into `device-diagnosis/images/`; look at it before
 committing it.
 """
 
@@ -28,7 +28,7 @@ from urllib.parse import urlparse
 from playwright.sync_api import Page, sync_playwright
 
 REPO = Path(__file__).resolve().parents[2]
-IMAGES = REPO / "device-survey" / "images"
+IMAGES = REPO / "device-diagnosis" / "images"
 LOOPBACK = {"127.0.0.1", "localhost", "::1"}
 
 
@@ -56,21 +56,21 @@ def open_options(page: Page, url: str) -> None:
     page.wait_for_timeout(1_000)
 
 
-def options_control_test(page: Page, url: str) -> Path:
-    """Shoot the options dialog's control test section, expanded."""
+def options_capability_test(page: Page, url: str) -> Path:
+    """Shoot the options dialog's capability test section, expanded."""
     open_options(page, url)
     section = page.locator("ha-expansion-panel").filter(
         has_text="What the control write test may do"
     )
     section.locator("[slot=header], .summary, .top").first.click()
     page.wait_for_timeout(1_000)
-    target = IMAGES / "HA-settings-configure-control-test.png"
+    target = IMAGES / "HA-settings-configure-capability-test.png"
     section.screenshot(path=str(target))
     return target
 
 
 SHOTS: dict[str, Callable[[Page, str], Path]] = {
-    "options-control-test": options_control_test,
+    "options-capability-test": options_capability_test,
 }
 
 

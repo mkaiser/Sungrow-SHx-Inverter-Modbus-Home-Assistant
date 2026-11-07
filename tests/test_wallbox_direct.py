@@ -21,11 +21,11 @@ from custom_components.sungrow_modbus.const import (
     CONF_WALLBOX_HOST,
     DOMAIN,
     SECTION_ADVANCED,
-    SECTION_CONTROL_TEST,
+    SECTION_CAPABILITY_TEST,
+    SECTION_DIAGNOSIS,
     SECTION_EXTERNAL,
     SECTION_PERMISSIONS,
     SECTION_POLLING,
-    SECTION_SURVEY,
 )
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
@@ -46,8 +46,8 @@ def _submission(**advanced) -> dict:
         SECTION_PERMISSIONS: {},
         SECTION_EXTERNAL: {},
         SECTION_ADVANCED: advanced,
-        SECTION_SURVEY: {},
-        SECTION_CONTROL_TEST: {},
+        SECTION_DIAGNOSIS: {},
+        SECTION_CAPABILITY_TEST: {},
     }
 
 

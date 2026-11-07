@@ -1,11 +1,11 @@
 ---
 type: source
 title: ac22e01-gerd-anon-41346964423-wallbox-tls-2.json
-source_path: ../device-survey/results/wallbox/ac22e01-gerd-anon-41346964423-wallbox-tls-2.json
+source_path: ../device-diagnosis/results/wallbox/ac22e01-gerd-anon-41346964423-wallbox-tls-2.json
 ingested: '2026-11-03'
 created: '2026-11-03'
 tags:
-  - survey
+  - diagnosis
   - wallbox
   - ac22e-01
   - gerd
@@ -15,7 +15,7 @@ tags:
 # AC22E-01 wallbox, gerd, at its own address over TLS, while charging
 
 Wallbox document, read 2026-11-03 at 11:53 UTC by the maintainer over a VPN while a car charged.
-Source: `device-survey/results/wallbox/ac22e01-gerd-anon-41346964423-wallbox-tls-2.json`.
+Source: `device-diagnosis/results/wallbox/ac22e01-gerd-anon-41346964423-wallbox-tls-2.json`.
 
 | | |
 | --- | --- |

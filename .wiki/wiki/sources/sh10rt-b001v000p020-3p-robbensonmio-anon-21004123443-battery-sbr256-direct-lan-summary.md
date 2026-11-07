@@ -1,11 +1,11 @@
 ---
 type: source
 title: sh10rt-b001v000p020-3p-robbensonmio-anon-21004123443-battery-sbr256-direct-lan.json
-source_path: ../device-survey/results/inverter/sh10rt-b001v000p020-3p-robbensonmio-anon-21004123443-battery-sbr256-direct-lan.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-b001v000p020-3p-robbensonmio-anon-21004123443-battery-sbr256-direct-lan.json
 ingested: '2026-11-02'
 created: '2026-11-02'
 tags:
-  - survey
+  - diagnosis
   - sh10rt
   - sapphire-h-b001-v000-p020
   - robbensonmio
@@ -15,10 +15,10 @@ tags:
 
 # SH10RT, B001.V000.P020, robbensonmio, the inverter's own LAN port, SBR256
 
-Capability survey of one inverter, read 2026-11-02 from the terminal survey, issue #786, reads
+Capability diagnosis of one inverter, read 2026-11-02 from the terminal diagnosis, issue #786, reads
 only. Home Assistant's Modbus hub was stopped for the run. The owner's direct BMS registers are
 [issue #788](robbensonmio-sbr-cell-registers-788-summary.md). Source:
-`device-survey/results/inverter/sh10rt-b001v000p020-3p-robbensonmio-anon-21004123443-battery-sbr256-direct-lan.json`.
+`device-diagnosis/results/inverter/sh10rt-b001v000p020-3p-robbensonmio-anon-21004123443-battery-sbr256-direct-lan.json`.
 
 | | |
 | --- | --- |
@@ -39,7 +39,7 @@ only. Home Assistant's Modbus hub was stopped for the run. The owner's direct BM
 Nothing: 36 of 36 blocks in all three rounds, none intermittent, no reconnects in the block read
 test. MPPT3, MPPT4 and 13018 read the specification's unavailable value, and so do the meter's
 phase registers 5741 and 5744 (0xFFFF, 0x7FFF): no meter phase measurements here. No wallbox at
-unit 3 or 248, nothing at unit 2. The owner reports twelve dropped connections in the survey's
+unit 3 or 248, nothing at unit 2. The owner reports twelve dropped connections in the diagnosis's
 terminal log with nothing else polling; the document does not carry them, and the block read test
 it does carry saw none.
 

@@ -28,7 +28,7 @@ from custom_components.sungrow_modbus.const import (
     CONF_UNIT_ID,
     DOMAIN,
 )
-from custom_components.sungrow_modbus.survey_document import async_build
+from custom_components.sungrow_modbus.diagnosis_document import async_build
 from homeassistant.components.number import (
     ATTR_VALUE,
     DOMAIN as NUMBER_DOMAIN,
@@ -353,7 +353,7 @@ async def test_a_factor_stored_before_firmware_was_recorded_is_adopted(
     reload.assert_not_called()
 
 
-async def test_a_survey_document_carries_the_write_that_measured_the_scale(
+async def test_a_diagnosis_document_carries_the_write_that_measured_the_scale(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
     """The block the terminal merges with `--export-scale`, from the entry."""
@@ -380,7 +380,7 @@ async def test_a_survey_document_carries_the_write_that_measured_the_scale(
     assert "read_on" in block
 
 
-async def test_a_survey_document_leaves_out_a_scale_measured_on_other_firmware(
+async def test_a_diagnosis_document_leaves_out_a_scale_measured_on_other_firmware(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
     """A firmware update is what changes the answer; the block would mislead."""

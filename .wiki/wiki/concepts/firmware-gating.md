@@ -12,7 +12,7 @@ The firmware decides what is read at all and what may be written, so it is
 (`async_update_firmware`) before the first poll.
 
 - `ABSENT_ON_FIRMWARE` comes from what the device **refused**.
-- `CONFIRMED_ON_FIRMWARE` comes from a [control test](control-test.md) that
+- `CONFIRMED_ON_FIRMWARE` comes from a [capability test](capability-test.md) that
   **watched a write work**, never from a register merely answering.
   `test_nothing_is_confirmed_without_a_document_that_shows_it` refuses an
   entry without such a document.

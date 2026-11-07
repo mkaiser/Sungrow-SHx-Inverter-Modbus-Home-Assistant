@@ -1,5 +1,5 @@
 {
- "_comment": "A hand-written iHomeManager for the dev loop: protocol addresses, values invented from Sungrow's V1.0.2 document and shaped like the readings evcc's users published (8028 as 0x55, the phase voltages at 4358-4362). 8401 carries the placeholder serial, so the survey's masking runs end to end. Not generated, and not a measurement.",
+ "_comment": "A hand-written iHomeManager for the dev loop: protocol addresses, values invented from Sungrow's V1.0.2 document and shaped like the readings evcc's users published (8028 as 0x55, the phase voltages at 4358-4362). 8401 carries the placeholder serial, so the diagnosis's masking runs end to end. Not generated, and not a measurement.",
  "input": {
   "4356": [
    0,

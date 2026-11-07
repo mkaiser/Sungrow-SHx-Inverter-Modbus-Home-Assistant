@@ -46,9 +46,9 @@ Platinum's `strict-typing`. Run as
 the integration is `custom_components.sungrow_modbus` and does not shadow the
 library), there are 65 errors in 19 files; 25 go with item 1. The rest:
 
-- annotations that disagree with the code: the survey's `step` callback is
+- annotations that disagree with the code: the diagnosis's `step` callback is
   typed `Progress` (`(float, str)`) but is `(str, bool)`
-  (`survey_document.py`); `RepairsFlowResult` returned as `FlowResult`
+  (`diagnosis_document.py`); `RepairsFlowResult` returned as `FlowResult`
   (`repairs.py`); `DeviceInfo.via_device_id` given `str | None`
   (`coordinator.py`); `SungrowSubDeviceCoordinator` passed where the entity
   base expects `DataUpdateCoordinator[dict]` (`entity.py`);
@@ -69,7 +69,7 @@ Silver's `test-coverage` (above 95 %) and Bronze's
 `config-flow-test-coverage` (every flow path). `pytest-cov` is installed but
 not run. The full suite (3966 tests, ~10 min with coverage) covers 94 % of
 the integration. Below 95 %: `download.py` 64 %, `__init__.py` 89 %,
-`config_flow.py` 91 %, `coordinator.py` 91 %, `control_test.py`,
+`config_flow.py` 91 %, `coordinator.py` 91 %, `capability_test.py`,
 `repairs.py` and `time.py` 92 %, `diagnostics.py` and `migration.py` 93 %,
 `number.py` 94 %.
 
@@ -87,7 +87,7 @@ per family core also enables:
 | PT (pytest style) | 36 | tests only |
 | TRY | 97 | |
 | SLF (private access) | 214 | mostly tests |
-| T20 (print) | 215 | the survey and CLI scripts print by design; per-file ignore |
+| T20 (print) | 215 | the diagnosis and CLI scripts print by design; per-file ignore |
 | PL, S | 673, 2708 | core enables subsets only; not worth taking wholesale |
 | G, LOG, PIE, RSE | 0 | free to enable |
 
@@ -116,7 +116,7 @@ say whether the data can be missing.
 
 1. Migrate voluptuous to probatio. `make check`.
 2. Make `mypy --strict` pass over the integration, fixing the real
-   mismatches first (survey `step`, `except` variable, `float(object)`),
+   mismatches first (diagnosis `step`, `except` variable, `float(object)`),
    then add it to `make check` and CI.
 3. Add `--cov` for the integration to CI and report; tests for uncovered
    config-flow paths; a floor once the number is known.
@@ -163,8 +163,8 @@ A prompt names one rule, one scope and its check. For example:
 (`files`, `mypy_path = "src"`, `explicit_package_bases`), with
 `implicit_reexport` for `homeassistant.*` as core allows. Findings and fixes:
 
-- The survey's per-read callback was annotated `Progress` (`(float, str)`);
-  it is `(str)`. New alias `Step` in `survey_document.py`.
+- The diagnosis's per-read callback was annotated `Progress` (`(float, str)`);
+  it is `(str)`. New alias `Step` in `diagnosis_document.py`.
 - The setup's firmware read reused the `except` variable `err` as a loop
   variable. Renamed.
 - `_async_connect` now returns the serial it has already checked, so the
@@ -177,7 +177,7 @@ A prompt names one rule, one scope and its check. For example:
 - A sub-device's `DeviceInfo` sets `via_device_id` only when there is one.
 - `RepairsFlowResult` for the repair flow; `SungrowDeviceEntity` is
   `CoordinatorEntity[SungrowSubDeviceCoordinator]`.
-- `runtime_data.survey` stays `Any`: typing it `SurveyRunner | None` adds a
+- `runtime_data.diagnosis` stays `Any`: typing it `DiagnosisRunner | None` adds a
   `None` check at four call sites for a state that cannot occur after setup.
 
 Risk to watch: `requirements_dev.txt` pins `homeassistant>=2026.9`, not
@@ -186,17 +186,17 @@ Risk to watch: `requirements_dev.txt` pins `homeassistant>=2026.9`, not
 **Step 4.** ruff now also selects A, ASYNC, BLE, C4, DTZ, G, LOG, PIE, RET
 and RSE. The integration had no hits in any of them. Findings elsewhere:
 
-- `sungrow_survey.py` paused between devices with `time.sleep(10)` inside a
+- `sungrow_diagnosis.py` paused between devices with `time.sleep(10)` inside a
   coroutine. That froze the event loop for the pause whose purpose is to let
   the previous session close, so asyncio could not run the close. Now
   `await asyncio.sleep(10)`.
 - `probe.py` caught bare `Exception` in three places; narrowed to
   `(OSError, TimeoutError)`, `ValueError` (`hosts_in`, whose
   `NetworkTooLarge` is a `ValueError`) and `(OSError, ValueError)`.
-- Naive `datetime.now()` in two survey scripts: `.astimezone()` added, which
+- Naive `datetime.now()` in two diagnosis scripts: `.astimezone()` added, which
   keeps local time, so file stamps and `read_on` do not change.
 - Ignored with reasons: `ASYNC109` (the discovery API's `timeout` goes to
-  `wait_for` by design), `ASYNC240` in tests and the survey scripts,
+  `wait_for` by design), `ASYNC240` in tests and the diagnosis scripts,
   `A001` on `review_names.py`'s deliberate `print` capture, `BLE001` on
   `ha_onboard.py`'s one-line failure message.
 - Not enabled: PERF (its one hit reads worse as a comprehension), TRY, SLF,
@@ -232,7 +232,7 @@ How it stays true:
   text. Six identical "could not write" raises share `entity.write_failed`.
   The quality-scale test's AST check covers all of these classes, the way
   `sofar` translates its `UpdateFailed` and `ConfigEntryError`.
-- **icon-translations.** `icons.json` for the four actions and the survey's
+- **icon-translations.** `icons.json` for the four actions and the diagnosis's
   button and sensor entities; a test keeps it to keys that exist. The
   register entities keep their device-class icons: giving several hundred
   entities icons is a design task, not a rule.
@@ -252,11 +252,11 @@ helpers. Home Assistant needs only the `ConfigFlow` subclass in
 | --- | --- | --- |
 | `config_flow.py` | `SungrowConfigFlow`: user, setup modes, reconfigure, move, manual, name, create | ~900 |
 | `config_flow_search.py` | search, searching, sweep, pick, nothing found, identify, default network (the search steps as a mixin, since they share the flow's state) | ~450 |
-| `options_flow.py` | `SungrowOptionsFlow` and its section builders, polling tiers, survey measurement | ~800 |
+| `options_flow.py` | `SungrowOptionsFlow` and its section builders, polling tiers, diagnosis measurement | ~800 |
 
 Cost: tests patch `config_flow.async_sweep` (15 places),
 `async_hostname` (10), `async_get_temporary_unit` (7), `network` (5) and
-`ONLY_SURVEY_MODE` (1); each moves with its user. Worth doing as its own
+`ONLY_DIAGNOSIS_MODE` (1); each moves with its user. Worth doing as its own
 change, with the full config-flow tests before and after.
 
 **16:30 — step 3, and the final run.** The full suite passes: 3981 passed,
@@ -297,7 +297,7 @@ Finding: the config flow classified the 6100 read twice, and the copies had
 drifted -- the setup probe let a `TimeoutError` or `OSError` escape, which
 the manual step does not catch, so a timed-out 6100 read would end the flow
 with an unknown error instead of "could not be measured". Both now use
-`_async_direct`. The library's control test keeps its own copy: the
+`_async_direct`. The library's capability test keeps its own copy: the
 integration can use only what the pinned PyPI release has.
 
 **17:17 — documentation, the download view, and a claim corrected.**
@@ -308,8 +308,8 @@ integration can use only what the pinned PyPI release has.
   `doc/installing_a_preview.md` explains host, port and device address in
   the form's own words. Six documentation rules move to done; only
   `docs-use-cases` stays.
-- `tests/test_survey_download.py`: the signed link serves the document under
-  its survey name, an unsigned request without a login gets 401, no survey
+- `tests/test_diagnosis_download.py`: the signed link serves the document under
+  its diagnosis name, an unsigned request without a login gets 401, no diagnosis
   is a 404 that says so, another integration's entry is not served.
   `download.py` 64 % → 95 %.
 - Correction: `quality_scale.yaml` said a WiNet-S announces itself over
@@ -330,7 +330,7 @@ the names match, but the config flow's create the entry and the options
 flow's carry the page's pending options and write them. That leaves the
 split as moving code between files, which costs an import cycle between
 `config_flow.py` and `options_flow.py` and a second patch target for the
-alpha gate (`ONLY_SURVEY_MODE` is read by both flows and patched in one
+alpha gate (`ONLY_DIAGNOSIS_MODE` is read by both flows and patched in one
 module by `tests/conftest.py`). Not done: worth it only if the maintainer
 finds the file hard to work in.
 
@@ -351,7 +351,7 @@ Coverage 92 % → 93.1 % (floor raised to 93): `config_flow.py` 91 → 94 %,
 
 No defects found in these paths; they behave as their docstrings say.
 
-**17:44 — the control test's restart.** `async_ensure_running` is what a
+**17:44 — the capability test's restart.** `async_ensure_running` is what a
 shutdown hook and the repair flow call to make sure an inverter is never
 left stopped; its failure paths had no test. Now covered: a start still
 stopped after `RESTART_RESEND_AFTER` is sent once more (and only once); an
@@ -363,12 +363,12 @@ reset (`DROPPED`), and a dry run writes nothing. All behave as written.
 
 **17:58 — final run.** 4040 passed, 2 skipped; `make quick` clean.
 Coverage 93.1 % → 93.5 %; `config_flow.py` 94 → 96 %, the library's
-`control_test.py` 87 → 88 %. `docs-use-cases` is done (`doc/integration_help.md`,
+`capability_test.py` 87 → 88 %. `docs-use-cases` is done (`doc/integration_help.md`,
 "What people use it for"), so every documentation rule is.
 
 Not pursued: the last 1.5 % to Silver's 95 %. Most of it is the optional mDNS
 browser (needs the `zeroconf` extra, and whether a WiNet-S advertises is
-unmeasured) and the identification of devices nobody has surveyed; tests
+unmeasured) and the identification of devices nobody has diagnosed; tests
 there would raise the number without protecting a house.
 
 Remaining quality-scale todos: `config-flow-test-coverage` (alpha-gate

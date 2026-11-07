@@ -17,9 +17,9 @@ from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.sungrow_modbus.config_flow import _loses_wallbox
 from custom_components.sungrow_modbus.const import (
+    CONF_DIAGNOSIS_COMMENT,
+    CONF_DIAGNOSIS_TRANSPORT,
     CONF_MODE,
-    CONF_SURVEY_COMMENT,
-    CONF_SURVEY_TRANSPORT,
     CONF_UNIT_ID,
     CONF_WALLBOX_HOST,
     DOMAIN,
@@ -57,7 +57,7 @@ def _entry(hass: HomeAssistant) -> MockConfigEntry:
             CONF_UNIT_ID: 1,
             CONF_MODE: MODE_DEVICES,
         },
-        options={CONF_SURVEY_TRANSPORT: "winet_lan", CONF_SURVEY_COMMENT: "kept"},
+        options={CONF_DIAGNOSIS_TRANSPORT: "winet_lan", CONF_DIAGNOSIS_COMMENT: "kept"},
         unique_id=SERIAL_A,
         title="SH10RT",
     )
@@ -89,8 +89,8 @@ async def test_reconfigure_moves_the_entry_to_a_cable(hass: HomeAssistant) -> No
     assert entry.data[CONF_MODE] == MODE_DEVICES
     assert entry.unique_id == SERIAL_A
     # The testimony about the old path goes; everything else stays.
-    assert CONF_SURVEY_TRANSPORT not in entry.options
-    assert entry.options[CONF_SURVEY_COMMENT] == "kept"
+    assert CONF_DIAGNOSIS_TRANSPORT not in entry.options
+    assert entry.options[CONF_DIAGNOSIS_COMMENT] == "kept"
 
 
 async def test_reconfigure_never_moves_to_another_inverter(hass: HomeAssistant) -> None:

@@ -2,12 +2,12 @@
 
 `sungrow_modbus.addresses` is where a register's location is decided: a field
 the map knows is looked up in the map, and the few it does not know are
-constants there. The survey scripts import both from the library. This file
+constants there. The diagnosis scripts import both from the library. This file
 keeps new literal addresses out of the code.
 
 Tests are the exception, deliberately. A fixture that models a device should
 carry the specification's numbers, not borrow the code's, or it tests the code
-against itself -- the same reason the control test's leg B scale is typed by
+against itself -- the same reason the capability test's leg B scale is typed by
 hand.
 """
 

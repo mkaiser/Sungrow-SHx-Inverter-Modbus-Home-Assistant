@@ -1,25 +1,25 @@
 ---
 type: source
 title: sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-2.json
-source_path: ../device-survey/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-2.json
+source_path: ../device-diagnosis/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-2.json
 ingested: '2026-11-01'
 created: '2026-11-01'
 tags:
-  - survey
+  - diagnosis
   - sh80rt-v112
   - sapphire-h-b001-v000-p022
   - gerd
   - winet
   - wallbox
-  - control-test
+  - capability-test
 ---
 
 # SH8.0RT-V112, B001.V000.P022, gerd, a WiNet-S on WiFi, second reading
 
 Read by the maintainer over a VPN on 2026-11-01 around noon, right after the
 [cable reading](sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-2-summary.md),
-the owner's Home Assistant stopped, with the full control test on this tree's library. Source:
-`device-survey/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-2.json`.
+the owner's Home Assistant stopped, with the full capability test on this tree's library. Source:
+`device-diagnosis/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-2.json`.
 
 | | |
 | --- | --- |
@@ -38,11 +38,11 @@ answer how 21313 behaves during one; it reads 0 here, as it did before any sessi
 mode (input 21314) reads 3 where the earlier dongle reading had 0, and holding 21312 reads 2
 where it had 0.
 
-## Control test
+## Capability test
 
 Outcome **3**. Through a WiNet-S only leg C is evidence: three readbacks reported the old word
 (13058, 33047, 33048), which is the dongle's [stale readback](../entities/device-winet-s.md).
-See [the control test](../concepts/control-test.md).
+See [the capability test](../concepts/capability-test.md).
 
 - [13074](../entities/register-13074.md): not asked; feed-in limitation was off, and the run had
   no leave to lift it through this path.

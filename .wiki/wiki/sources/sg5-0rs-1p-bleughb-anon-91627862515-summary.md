@@ -1,10 +1,10 @@
 ---
 type: source
 title: sg5-0rs-1p-bleughb-anon-91627862515.json
-source_path: ../device-survey/results/string_inverter/sg5-0rs-1p-bleughb-anon-91627862515.json
+source_path: ../device-diagnosis/results/string_inverter/sg5-0rs-1p-bleughb-anon-91627862515.json
 ingested: '2026-11-04'
 created: '2026-11-04'
-tags: [survey, string-inverter, sg5-0rs, bleughb, winet_wlan]
+tags: [diagnosis, string-inverter, sg5-0rs, bleughb, winet_wlan]
 ---
 
 # SG5.0RS, bleughb, "North", a WiNet-S on WiFi

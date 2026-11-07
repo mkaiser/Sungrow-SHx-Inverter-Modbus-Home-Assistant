@@ -19,7 +19,7 @@ an SH25T and an SH15T at [code-imstillalive](installation-code-imstillalive.md),
 - 13018 answers 85 on both (the SH15T's probe had no answer; its dump read it).
 - The write scale of [register 13074](register-13074.md) is not measured.
 
-## Surveys
+## Diagnoses
 
 - [SH25T, B000.V000.P067, code-imstillalive, through a Logger1000A](../sources/sh25t-b000v000p067-3p-code-imstillalive-anon-92853701430-battery-unknown-meter-logger-summary.md)
 - [SH15T, B000.V000.P067, code-imstillalive, through a Logger1000A](../sources/sh15t-b000v000p067-3p-code-imstillalive-anon-07241574740-battery-unknown-meter-logger-summary.md)

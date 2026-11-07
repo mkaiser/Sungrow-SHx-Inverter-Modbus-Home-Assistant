@@ -25,7 +25,7 @@ in self-consumption. It follows [the night run](mkaiser-import-limit-2026-11-07-
 | 0 and 5001 are refused, 5000 accepted | exception 0x04 (server device failure) for both; 5000 read back 5000 | one run |
 | In self-consumption with no import, 200 changes nothing | meter, battery and PV unchanged | one run; export not seen |
 
-The run used a script outside the control test's engine, and it kept the engine's rules: the
+The run used a script outside the capability test's engine, and it kept the engine's rules: the
 stand-in was checked, the snapshot was flushed before the first write, and the restore wrote
 raw words and checked them by raw read. Every word was restored. The run went over the cable,
 so it says nothing about a WiNet-S.

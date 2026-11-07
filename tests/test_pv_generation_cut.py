@@ -5,7 +5,7 @@ be cut through a register Sungrow never documented, and whether it answers is
 a matter of firmware -- so the firmware has to be known before anything
 decides what an inverter has. And because a register answering says nothing
 about what writing it does, the switch waits for firmware on which the
-control test watched a write take DC power to zero.
+capability test watched a write take DC power to zero.
 """
 
 from __future__ import annotations
@@ -21,9 +21,9 @@ import pytest
 from pytest_homeassistant.common import MockConfigEntry, async_fire_time_changed
 
 from custom_components.sungrow_modbus.const import (
-    CONF_CONTROL_TEST_EXPORT,
-    CONF_CONTROL_TEST_PV_CUT,
-    CONF_CONTROL_TEST_RESTART,
+    CONF_CAPABILITY_TEST_EXPORT,
+    CONF_CAPABILITY_TEST_PV_CUT,
+    CONF_CAPABILITY_TEST_RESTART,
     CONF_UNIT_ID,
     DOMAIN,
 )
@@ -32,16 +32,17 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 from sungrow_modbus import SungrowInverter
-from sungrow_modbus.control_test import (
+from sungrow_modbus.capability_test import (
     CONFIRMED,
     INCONCLUSIVE,
     PV_CUT,
     PV_CUT_SETTLE,
     PV_RECOVERY,
-    ControlTest,
+    CapabilityTest,
     Options,
     Sample,
 )
+from sungrow_modbus.diagnosis_document import capability_test_block
 from sungrow_modbus.hybrid_inverter import capabilities
 from sungrow_modbus.hybrid_inverter.capabilities import (
     Capability,
@@ -65,7 +66,7 @@ INVERTER_FIRMWARE_ADDRESS = 13249
 METER_CHANNEL_2_ADDRESS = 13199
 ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
-#: The firmware strings committed surveys answer 0x55 on, at 13250.
+#: The firmware strings committed diagnoses answer 0x55 on, at 13250.
 ANSWERING = {
     "SAPPHIRE-H_B001.V000.P022",
     "SAPPHIRE-H_B001.V000.P023",
@@ -104,7 +105,7 @@ def test_the_control_is_never_probed() -> None:
     """A register answering says it is there, not what writing it does."""
     found = probe(_reads({"pv_generation_cut_raw": 0x55}))
     assert Capability.PV_GENERATION_CUT_CONTROL not in found
-    # On a firmware no control test has confirmed, the answer alone grants
+    # On a firmware no capability test has confirmed, the answer alone grants
     # nothing. P068 reads 0x55 as P023 does, and nobody has watched it cut.
     assert Capability.PV_GENERATION_CUT_CONTROL not in resolve(
         SH10RT, 1, found, ("SUNSTONE-H_B000.V001.P068",)
@@ -139,7 +140,7 @@ def test_confirmed_firmware_grants_the_control_where_the_register_answers(
 def test_nothing_is_confirmed_without_a_document_that_shows_it() -> None:
     """The rule for getting in, as for the absence table: evidence, cited.
 
-    A firmware here must be named by a committed survey whose control
+    A firmware here must be named by a committed diagnosis whose capability
     test confirmed the cut on exactly that firmware.
     """
     for capability, versions in capabilities.CONFIRMED_ON_FIRMWARE.items():
@@ -149,7 +150,9 @@ def test_nothing_is_confirmed_without_a_document_that_shows_it() -> None:
                 and any(
                     row.get("check") == "PV generation cut"
                     and row.get("verdict") == CONFIRMED
-                    for row in (document.get("control_test") or {}).get("effects", [])
+                    for row in (capability_test_block(document) or {}).get(
+                        "effects", []
+                    )
                 )
                 for _, document in DOCUMENTS
             ), f"{capability.value} on {version} cites no passing run"
@@ -257,11 +260,11 @@ async def test_firmware_that_hangs_up_on_13250_is_never_asked_for_it(
 # -- the integration ------------------------------------------------------------
 
 
-#: The control test's permissions, each switched off.
+#: The capability test's permissions, each switched off.
 REFUSED: dict[str, bool] = {
-    CONF_CONTROL_TEST_RESTART: False,
-    CONF_CONTROL_TEST_EXPORT: False,
-    CONF_CONTROL_TEST_PV_CUT: False,
+    CONF_CAPABILITY_TEST_RESTART: False,
+    CONF_CAPABILITY_TEST_EXPORT: False,
+    CONF_CAPABILITY_TEST_PV_CUT: False,
 }
 
 
@@ -409,17 +412,17 @@ async def test_the_switch_appears_on_confirmed_firmware_and_cuts_pv(
     assert hass.states.get(switch_id).state == "on"
 
 
-async def test_the_control_test_leave_reaches_the_runner(
+async def test_the_capability_test_leave_reaches_the_runner(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    from custom_components.sungrow_modbus.control_test import ControlTestRunner
+    from custom_components.sungrow_modbus.capability_test import CapabilityTestRunner
 
-    entry = await _setup(hass, sungrow_unit, **{CONF_CONTROL_TEST_PV_CUT: True})
+    entry = await _setup(hass, sungrow_unit, **{CONF_CAPABILITY_TEST_PV_CUT: True})
 
-    assert ControlTestRunner(hass, entry)._options().cut_pv is True
+    assert CapabilityTestRunner(hass, entry)._options().cut_pv is True
 
 
-# -- the control test's check ---------------------------------------------------
+# -- the capability test's check ---------------------------------------------------
 
 
 class _Clock:
@@ -435,7 +438,7 @@ class _Clock:
         self.now += seconds
 
 
-def _pv_script(run: ControlTest, *windows: list[float]) -> None:
+def _pv_script(run: CapabilityTest, *windows: list[float]) -> None:
     values = iter([value for window in windows for value in window])
     last = windows[-1][-1]
 
@@ -452,11 +455,11 @@ def _pv_script(run: ControlTest, *windows: list[float]) -> None:
     run._sample = sample  # type: ignore[method-assign]
 
 
-async def _prepared(unit: MockModbusUnit, **options: Any) -> ControlTest:
+async def _prepared(unit: MockModbusUnit, **options: Any) -> CapabilityTest:
     unit.holding[PV_CUT_ADDRESS] = 0x55
     inverter = SungrowInverter(unit)
     await inverter.async_update()
-    run = ControlTest(inverter, options=Options(**options), clock=_Clock())
+    run = CapabilityTest(inverter, options=Options(**options), clock=_Clock())
     await run._preflight()
     return run
 
@@ -566,11 +569,11 @@ async def test_a_cut_register_is_restored_from_the_snapshot(
     assert sungrow_unit.holding[PV_CUT_ADDRESS] == 0x55
 
 
-def test_the_survey_names_the_cut_and_passes_it_under_its_one_yes() -> None:
+def test_the_diagnosis_names_the_cut_and_passes_it_under_its_one_yes() -> None:
     """A yes covers what the question named, so the question must name it."""
     script = (
         Path(__file__).resolve().parents[1]
-        / "device-survey/scripts/python/sungrow_survey.py"
+        / "device-diagnosis/scripts/python/sungrow_diagnosis.py"
     ).read_text(encoding="utf-8")
     assert '"--cut-pv"' in script
     assert "PV generation cut for about half a minute" in script

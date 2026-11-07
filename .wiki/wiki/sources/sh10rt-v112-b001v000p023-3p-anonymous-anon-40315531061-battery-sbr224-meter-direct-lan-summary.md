@@ -1,11 +1,11 @@
 ---
 type: source
 title: sh10rt-v112-b001v000p023-3p-anonymous-anon-40315531061-battery-sbr224-meter-direct-lan.json
-source_path: ../device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-anonymous-anon-40315531061-battery-sbr224-meter-direct-lan.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-anonymous-anon-40315531061-battery-sbr224-meter-direct-lan.json
 ingested: '2026-10-31'
 created: '2026-10-31'
 tags:
-  - survey
+  - diagnosis
   - sh10rt-v112
   - sapphire-h-b001-v000-p023
   - anonymous
@@ -14,9 +14,9 @@ tags:
 
 # SH10RT-V112, B001.V000.P023, anonymous, the inverter's own LAN port, SBR224
 
-Capability survey of one inverter, read 2026-10-31 at night from the terminal survey, issue #786,
-reads only (`--control-test no`). Published as `anonymous`. Source:
-`device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-anonymous-anon-40315531061-battery-sbr224-meter-direct-lan.json`.
+Capability diagnosis of one inverter, read 2026-10-31 at night from the terminal diagnosis, issue #786,
+reads only (`--capability-test no`). Published as `anonymous`. Source:
+`device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-anonymous-anon-40315531061-battery-sbr224-meter-direct-lan.json`.
 
 | | |
 | --- | --- |

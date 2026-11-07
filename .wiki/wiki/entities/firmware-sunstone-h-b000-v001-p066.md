@@ -17,7 +17,7 @@ created: '2026-11-06'
 - The forced charge acts as commanded; a restart takes about 2 s to stop and 150-165 s to run.
 - The charging start powers do not answer.
 
-## Surveys
+## Diagnoses
 
 - [SH6.0RS, B000.V001.P066, icefest, a WiNet-S on Ethernet](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-winet-lan-summary.md)
 - [SH6.0RS, B000.V001.P066, icefest, RS485 through a Waveshare converter](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-summary.md)

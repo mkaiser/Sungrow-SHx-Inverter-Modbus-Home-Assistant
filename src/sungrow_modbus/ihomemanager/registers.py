@@ -18,7 +18,7 @@ the reading wins. `CONFIDENCE` names the source of each field:
 What the document fixes, and this map follows:
 
 * **Unit 247**, and Modbus TCP on **502, 503 or 504, one connection each**
-  (V1.0.2, table 2). So a survey that holds one port shuts out any other
+  (V1.0.2, table 2). So a diagnosis that holds one port shuts out any other
   client on it until it closes.
 * **A U32 sends its low word first** ("little-endian for double-word data"),
   as the inverter does. The protocol version's example -- V1.0.2 sent as
@@ -31,7 +31,7 @@ What the document fixes, and this map follows:
   An undocumented register could still hold one, which is why
   `ihomemanager.document` masks text it finds outside the documented strings.
 
-**Read only.** The holding registers are its controls, and the survey reads
+**Read only.** The holding registers are its controls, and the diagnosis reads
 them with function code 3 to record their settings. Nothing here writes.
 """
 

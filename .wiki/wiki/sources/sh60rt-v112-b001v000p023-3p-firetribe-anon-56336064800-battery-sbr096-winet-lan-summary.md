@@ -1,21 +1,21 @@
 ---
 type: source
 title: sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan.json
-source_path: ../device-survey/results/inverter/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan.json
+source_path: ../device-diagnosis/results/inverter/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
-  - survey
+  - diagnosis
   - sh6.0rt-v112
   - sapphire-h-b001-v000-p023
   - firetribe
   - winet_lan
-  - control-test
+  - capability-test
 ---
 
 # SH6.0RT-V112, B001.V000.P023, firetribe, a WiNet-S on Ethernet
 
-Capability survey of one inverter, read 2026-10-29 from Home Assistant, issue #784. Source: `device-survey/results/inverter/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan.json`.
+Capability diagnosis of one inverter, read 2026-10-29 from Home Assistant, issue #784. Source: `device-diagnosis/results/inverter/sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan.json`.
 
 | | |
 | --- | --- |
@@ -51,10 +51,10 @@ reports two other clients on this WiNet-S throughout: a WARP3 wallbox and a
 second Home Assistant. See [contention](../concepts/contention.md) and
 [busy WiNet-S](../queries/does-a-busy-winet-s-refuse-with-0x04.md).
 
-## Control test
+## Capability test
 
 Outcome **3**: ran, but checks were skipped or inconclusive. Through a
-WiNet-S only leg C is evidence. See [the control test](../concepts/control-test.md).
+WiNet-S only leg C is evidence. See [the capability test](../concepts/capability-test.md).
 
 | Field | Register | Verdict |
 | --- | --- | --- |

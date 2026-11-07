@@ -20,5 +20,5 @@ one by one, with TCzerny/ha-modbus-manager, read at commit `1faff77`.
   only other implementation is GPL-3.0.
 - **It ships Sungrow protocol PDFs**, including the hybrid protocol
   V1.1.16 (2026-07-03). This project's audit is pinned to **V1.1.11**, which
-  is also the specification behind the control test's hand-typed scales
-  ([control test](../concepts/control-test.md)).
+  is also the specification behind the capability test's hand-typed scales
+  ([capability test](../concepts/capability-test.md)).

@@ -1,25 +1,25 @@
 ---
 type: source
 title: sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan.json
-source_path: ../device-survey/results/inverter/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan.json
+source_path: ../device-diagnosis/results/inverter/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan.json
 ingested: '2026-10-31'
 created: '2026-10-31'
 tags:
-  - survey
+  - diagnosis
   - sh15t
   - pearl-h-b000-v000-p071
   - galkar
   - winet_lan
-  - control-test
+  - capability-test
 ---
 
-# SH15T, B000.V000.P071, GalKar, a WiNet-S on Ethernet, with a control test
+# SH15T, B000.V000.P071, GalKar, a WiNet-S on Ethernet, with a capability test
 
-Capability survey of one inverter, read 2026-10-31 from Home Assistant, issue #786, with a
-control test. The owner sent a Home Assistant diagnostics download; this document is its `survey`
-section, which carries the control test of the diagnosis run before it. Everything else in the
-download (the entry, the device, the readings) is redacted or not a survey, and is not committed.
-Source: `device-survey/results/inverter/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan.json`.
+Capability diagnosis of one inverter, read 2026-10-31 from Home Assistant, issue #786, with a
+capability test. The owner sent a Home Assistant diagnostics download; this document is its `diagnosis`
+section, which carries the capability test of the diagnosis run before it. Everything else in the
+download (the entry, the device, the readings) is redacted or not a diagnosis, and is not committed.
+Source: `device-diagnosis/results/inverter/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan.json`.
 
 | | |
 | --- | --- |
@@ -48,7 +48,7 @@ registers a [busy WiNet-S](../queries/does-a-busy-winet-s-refuse-with-0x04.md) r
 The owner named no other poller.
 
 **33149 answered.** The capability table marks `battery_start_power` absent on the SH-T, and
-[ra1k-0](../entities/installation-ra1k-0.md)'s control test recorded 33149 as not answering. Here a
+[ra1k-0](../entities/installation-ra1k-0.md)'s capability test recorded 33149 as not answering. Here a
 two-word read of 33149-33150 succeeded in at least one round. Through a dongle that settles
 neither way: a busy WiNet-S refuses registers that exist, and
 [invents answers](../concepts/zero-means-absent.md) for some that do not. See
@@ -59,10 +59,10 @@ neither way: a busy WiNet-S refuses registers that exist, and
 The reading was rebuilt at download, with this Home Assistant polling throughout (16
 components). See [contention](../concepts/contention.md).
 
-## Control test
+## Capability test
 
 Outcome **3**: ran, with checks skipped or inconclusive. Through a WiNet-S only leg C is
-evidence. See [the control test](../concepts/control-test.md).
+evidence. See [the capability test](../concepts/capability-test.md).
 
 | Field | Register | Verdict |
 | --- | --- | --- |

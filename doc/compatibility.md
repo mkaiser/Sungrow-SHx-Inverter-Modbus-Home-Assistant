@@ -1,15 +1,15 @@
 # Compatibility
 
 **Generated — do not edit.** `scripts/generate/generate_compatibility.py` builds
-this from the surveys in
-[device-survey/results/](../device-survey/results/), and CI checks that it
+this from the diagnoses in
+[device-diagnosis/results/](../device-diagnosis/results/), and CI checks that it
 matches.
 
 Which parts of the register map a device answers varies by model, phase
 count, wiring, transport and firmware. The specification says what
 *exists*, not what a particular machine does with it — so every row
-below comes from a survey taken off real hardware, and a model with
-no survey is listed as **untested** rather than assumed to work.
+below comes from a diagnosis taken off real hardware, and a model with
+no diagnosis is listed as **untested** rather than assumed to work.
 
 ## Reported setups
 
@@ -93,15 +93,15 @@ the pack is a Sungrow one — the SBR/SBH per-module block at unit
 200 answers or it does not — and, when it is, *which* model: the
 capacity it reports matches one entry in the datasheet table, and
 the filename carries that model. For a third-party pack the make
-is whatever the person who sent the survey wrote down.
+is whatever the person who sent the diagnosis wrote down.
 
 **By** is whoever provided it, and defaults to anonymous: a
-survey is worth having either way, and nobody should have to
+diagnosis is worth having either way, and nobody should have to
 attach their name to contribute one.
 
 Firmware is in the table because it decides more than the model
 does: which registers a device answers moves between versions, so
-two surveys are only comparable if both say which firmware
+two diagnoses are only comparable if both say which firmware
 they were taken on.
 
 **Connection** is marked _(reported)_ where the contributor told
@@ -116,19 +116,19 @@ field, even the TLS certificate — so only the person who plugged
 the cable in can say which was which, and that is what _(reported)_
 carries.
 **WiFi versus Ethernet on a WiNet-S is not determinable over
-Modbus** — nothing in the protocol reports it — so the survey
+Modbus** — nothing in the protocol reports it — so the diagnosis
 records what the contributor said and draws no conclusion.
 
 ## What can be attributed to firmware
 
-The question these surveys exist to answer: **which**
+The question these diagnoses exist to answer: **which**
 capabilities move between firmware versions, as opposed to between
 models or between transports? Sungrow publishes no release notes, so
 the only way to know is to compare two readings that agree on model
 and transport and differ only in firmware.
 
 [firmware_support.md](firmware_support.md) asks the same question
-entity by entity, from each survey's raw register dump, and pools
+entity by entity, from each diagnosis's raw register dump, and pools
 every model on one firmware to ask whether they agree.
 
 ### SH10RS, winet_lan
@@ -212,7 +212,7 @@ that has only one would make the next pair.
 ## Models this library knows, and whether anybody has tested one
 
 Every model in Appendix 1 of the protocol document. **Untested** means
-nobody has sent a survey — not that it does not work. What the
+nobody has sent a diagnosis — not that it does not work. What the
 library will do on an untested model is decided by its family, and the
 last column says what that rules out before anything is even read.
 
@@ -348,21 +348,21 @@ public without any private channel needing to exist.
 1. **From the integration** — Settings → Devices & Services → Sungrow
    Modbus → the three-dot menu → *Download diagnostics*.
 2. **Before installing anything** —
-   [`device-survey/scripts/python/sungrow_survey.py`](../device-survey/scripts/python/sungrow_survey.py),
+   [`device-diagnosis/scripts/python/sungrow_diagnosis.py`](../device-diagnosis/scripts/python/sungrow_diagnosis.py),
    run from that folder, which needs nothing but Python.
 
 ### Then send it
 
-- **[The survey issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786)**:
-  attach the file as a comment, where every survey is collected.
+- **[The diagnosis issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786)**:
+  attach the file as a comment, where every diagnosis is collected.
 - **A pull request** adding your file to
-  [device-survey/results/](../device-survey/results/), if you are comfortable
+  [device-diagnosis/results/](../device-diagnosis/results/), if you are comfortable
   with git. This is the format the capability model already reads, so
   it is the shortest path from your hardware to working code.
 
 The capability model in
 [`capabilities.py`](../src/sungrow_modbus/hybrid_inverter/capabilities.py)
-is built from these, so a survey from an untested model is the
+is built from these, so a diagnosis from an untested model is the
 single most useful thing anybody can contribute — including one that
 says everything works.
 

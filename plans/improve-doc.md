@@ -24,12 +24,12 @@ lean on them.
 | `doc/integration_help.md`, `doc/integration_options.md`, `doc/installing_a_preview.md`, `doc/energy_dashboard.md` | `config_flow.py`, `config_flow_schemas.py`, `strings.json` (the words a user sees on screen), `services.yaml`, `services.py`, the entity descriptions |
 | `doc/integration_migration.md` | `migration.py`, `tests/test_recorder_migration.py` |
 | `doc/wallbox_registers.md` | `src/sungrow_modbus/wallbox/`, `wallbox_descriptions.py` |
-| `device-survey/README.md`, `device-survey/reference.md` | `device-survey/scripts/` and the pinned wheel in its PEP 723 header |
+| `device-diagnosis/README.md`, `device-diagnosis/reference.md` | `device-diagnosis/scripts/` and the pinned wheel in its PEP 723 header |
 | `custom_components/sungrow_modbus/quality_scale.yaml` | the code it cites; `tests/test_quality_scale.py` already checks part of it |
 | `Todo.md` | only its claims about what exists ("done", "added", file names); its plans are not code |
 | `.claude/skills/*/SKILL.md` | the scripts and documents each one points at |
 | docstrings and module comments in the library and the integration | the function or module they sit on |
-| wiki pages that describe the code (`.wiki/wiki/concepts/` such as `legacy-id-adoption`, `legacy-slot`, `control-test-restore`, `protocol-addresses`) | the code they name |
+| wiki pages that describe the code (`.wiki/wiki/concepts/` such as `legacy-id-adoption`, `legacy-slot`, `capability-test-restore`, `protocol-addresses`) | the code they name |
 
 ### What is out of scope
 
@@ -37,7 +37,7 @@ lean on them.
   `doc/entity_names.md`, `doc/text_translation_review.md`. If one is stale,
   run `make gen`; if its content is wrong, fix the generator or its input.
   Never hand-edit (`make gen-check` fails).
-- **Raw sources**, which are immutable: `device-survey/results/`,
+- **Raw sources**, which are immutable: `device-diagnosis/results/`,
   `doc/legacy_entity_map.json`, `.wiki/raw/`.
 - **The YAML package's documents**: `legacy/` and everything under it. Its
   truth is `legacy/modbus_sungrow.yaml`, which is not being changed.
@@ -52,7 +52,7 @@ constraints. Do **not** change the document, and list the case under
 "Code that looks wrong" instead, when:
 
 - the document states a hardware-verified fact (the AGENTS.md table, a wiki
-  page with a cited survey or control test) and the code contradicts it;
+  page with a cited diagnosis or capability test) and the code contradicts it;
 - the code would break a hard constraint the document states (legacy
   `entity_id` claims, `state_class`, the restore, 13074's probed scale, no
   real serials);
@@ -63,7 +63,7 @@ Fix no code in this task. Report these; the maintainer decides.
 ### How to work
 
 Per document, in this order: `architecture.md`, `development.md`,
-`README.md`, the user pages, `maintainer_setup.md`, the survey documents,
+`README.md`, the user pages, `maintainer_setup.md`, the diagnosis documents,
 the wiki concept pages, `Todo.md`, the skills, docstrings last.
 
 1. **List the checkable claims.** Every file path, module, class, function,
@@ -86,9 +86,9 @@ the wiki concept pages, `Todo.md`, the skills, docstrings last.
 
 A known example to start from: `doc/architecture.md`'s runtime diagram
 calls the library's inverter package `inverter/` (it is `hybrid_inverter/`),
-lists `control_test` as a module (it is a package), and leaves out
+lists `capability_test` as a module (it is a package), and leaves out
 `string_inverter/`, `ihomemanager/` and `logger/`; the integration box lacks
-`button`, `survey_entities` and `string_inverter_descriptions`. The same
+`button`, `diagnosis_entities` and `string_inverter_descriptions`. The same
 file's prose, further down, already has the right names.
 
 ### Rules for the text
@@ -113,7 +113,7 @@ cheap, add it to the test suite, the way `tests/test_wiki.py`'s
 `test_repository_paths_exist` already holds the wiki to the tree:
 
 - every repository path in backticks or a link in `doc/*.md`, `README.md`,
-  `AGENTS.md`, `device-survey/*.md` and the skills exists;
+  `AGENTS.md`, `device-diagnosis/*.md` and the skills exists;
 - every `make <target>` named in a document is a target in the `Makefile`;
 - every script under `scripts/` appears in `doc/development.md`'s "Every
   script", and every script listed there exists;
@@ -147,7 +147,7 @@ less mechanical (counts, behaviour) in the report instead of testing it.
 | `doc/integration_migration.md` | | | |
 | `doc/maintainer_setup.md` | | | |
 | `doc/wallbox_registers.md` | | | |
-| `device-survey/README.md`, `reference.md` | | | |
+| `device-diagnosis/README.md`, `reference.md` | | | |
 | wiki concept pages | | | |
 | `quality_scale.yaml` | | | |
 | `Todo.md` | | | |

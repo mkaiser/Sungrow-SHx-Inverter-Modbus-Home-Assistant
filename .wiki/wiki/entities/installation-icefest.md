@@ -9,7 +9,7 @@ created: '2026-11-06'
 
 An [SH6.0RS](device-sh-rs.md) on [P066](firmware-sunstone-h-b000-v001-p066.md) with an
 [SBR192](device-sbr-battery.md), read two ways on 2026-11-06, ten minutes apart, both from Home
-Assistant's diagnostics with the control test and a restart: through a
+Assistant's diagnostics with the capability test and a restart: through a
 [WiNet-S](device-winet-s.md) on Ethernet, and over the inverter's RS485 port through a Waveshare
 converter.
 
@@ -23,7 +23,7 @@ converter.
   from the LAN port.
 - The first SBR192 read on a direct link.
 
-## Surveys
+## Diagnoses
 
 - [SH6.0RS, B000.V001.P066, icefest, a WiNet-S on Ethernet](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-winet-lan-summary.md)
 - [SH6.0RS, B000.V001.P066, icefest, RS485 through a Waveshare converter](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-summary.md)

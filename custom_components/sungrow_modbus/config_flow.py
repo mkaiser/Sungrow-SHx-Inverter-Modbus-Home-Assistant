@@ -64,10 +64,10 @@ from sungrow_modbus import (
     power_from_bms,
 )
 from sungrow_modbus.addresses import DIRECT_ONLY_PROBE, field_address, read
+from sungrow_modbus.diagnosis_document import OTHER_INVERTER_YES
 from sungrow_modbus.discovery import CONCURRENCY, TIMEOUT
 from sungrow_modbus.identity import STRING_INVERTER
 from sungrow_modbus.string_inverter import model_for as string_inverter_model_for
-from sungrow_modbus.survey_document import OTHER_INVERTER_YES
 from sungrow_modbus.wallbox import probe_units as wallbox_probe_units
 
 from .config_flow_schemas import (
@@ -84,14 +84,18 @@ from .config_flow_schemas import (
 from .const import (
     AUDIENCE_ADMINS,
     AUDIENCE_USERS,
+    CAPABILITY_TEST_PERMISSION_DEFAULT,
     CONF_ADD_DEVICES,
     CONF_BATTERY_MAX_POWER,
-    CONF_CONTROL_TEST_CHARGE_WINDOW,
-    CONF_CONTROL_TEST_DISCHARGE_WINDOW,
-    CONF_CONTROL_TEST_EXPORT,
-    CONF_CONTROL_TEST_IMPORT_LIMIT,
-    CONF_CONTROL_TEST_PV_CUT,
-    CONF_CONTROL_TEST_RESTART,
+    CONF_CAPABILITY_TEST_CHARGE_WINDOW,
+    CONF_CAPABILITY_TEST_DISCHARGE_WINDOW,
+    CONF_CAPABILITY_TEST_EXPORT,
+    CONF_CAPABILITY_TEST_IMPORT_LIMIT,
+    CONF_CAPABILITY_TEST_PV_CUT,
+    CONF_CAPABILITY_TEST_RESTART,
+    CONF_DIAGNOSIS_OTHER_INVERTER,
+    CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL,
+    CONF_DIAGNOSIS_TRANSPORT,
     CONF_ENTITY_IDS,
     CONF_EXTERNAL_PLACEMENT,
     CONF_EXTERNAL_SOURCES,
@@ -102,15 +106,12 @@ from .const import (
     CONF_NETWORK,
     CONF_PERMISSIONS,
     CONF_REGISTER_DUMP,
-    CONF_SURVEY_OTHER_INVERTER,
-    CONF_SURVEY_OTHER_INVERTER_DETAIL,
-    CONF_SURVEY_TRANSPORT,
     CONF_UNIT_ID,
     CONF_WALLBOX_HOST,
-    CONTROL_TEST_PERMISSION_DEFAULT,
     DEFAULT_EXTERNAL_PLACEMENT,
     DEFAULT_NAME,
     DEFAULT_PERMISSIONS,
+    DIAGNOSIS_ISSUE_URL,
     DOMAIN,
     ENERGY_DASHBOARD_GUIDE_URL,
     ENTITY_IDS_MIGRATE,
@@ -121,19 +122,18 @@ from .const import (
     KIND_STRING_INVERTER,
     MODE_DEVICES,
     MODE_DIAGNOSTICS,
-    ONLY_SURVEY_MODE,
+    ONLY_DIAGNOSIS_MODE,
     PLACEMENT_BEHIND_METER,
     PLACEMENT_SEPARATE,
     ROLE_MASTER,
     ROLE_SLAVE,
     SCAN_PORTS,
     SECTION_ADVANCED,
-    SECTION_CONTROL_TEST,
+    SECTION_CAPABILITY_TEST,
+    SECTION_DIAGNOSIS,
     SECTION_EXTERNAL,
     SECTION_PERMISSIONS,
     SECTION_POLLING,
-    SECTION_SURVEY,
-    SURVEY_ISSUE_URL,
     WALLBOX_TLS_UNIT,
 )
 from .links import wallbox_tls_params
@@ -154,7 +154,7 @@ _LOGGER = logging.getLogger(__name__)
 def _alpha_placeholders(texts: Texts) -> dict[str, str]:
     """Return what the two gated dialogs should say about the gate.
 
-    A function rather than a constant because `ONLY_SURVEY_MODE` is read
+    A function rather than a constant because `ONLY_DIAGNOSIS_MODE` is read
     at call time: a module-level dict would freeze the answer at import and
     quietly ignore the flag it exists to report.
 
@@ -171,11 +171,13 @@ def _alpha_placeholders(texts: Texts) -> dict[str, str]:
     """
     coming = "\n\n" + texts("devices_mode_coming")
     return {
-        "mode_intro": "" if ONLY_SURVEY_MODE else texts("devices_mode_intro") + "\n\n",
+        "mode_intro": ""
+        if ONLY_DIAGNOSIS_MODE
+        else texts("devices_mode_intro") + "\n\n",
         "mode_choice": (
-            coming if ONLY_SURVEY_MODE else "\n\n" + texts("devices_mode_open")
+            coming if ONLY_DIAGNOSIS_MODE else "\n\n" + texts("devices_mode_open")
         ),
-        "devices_mode": coming if ONLY_SURVEY_MODE else "",
+        "devices_mode": coming if ONLY_DIAGNOSIS_MODE else "",
     }
 
 
@@ -347,6 +349,8 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a Sungrow Modbus config flow."""
 
     VERSION = 1
+    #: 2 names the diagnosis and the capability test: `entry_migration.py`.
+    MINOR_VERSION = 2
 
     @staticmethod
     @callback
@@ -476,7 +480,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         SBR follows by itself -- unit 200 on a cable, 2 through a dongle --
         but a wallbox the dongle was carrying is not reachable through the
         inverter's own LAN port, so that is said before, not discovered
-        after. The owner's transport answer for the survey described the old
+        after. The owner's transport answer for the diagnosis described the old
         path, so it goes.
         """
         assert self._move is not None
@@ -485,7 +489,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             options = {
                 key: value
                 for key, value in entry.options.items()
-                if key != CONF_SURVEY_TRANSPORT
+                if key != CONF_DIAGNOSIS_TRANSPORT
             }
             loaded = entry.state is ConfigEntryState.LOADED
             self.hass.config_entries.async_update_entry(
@@ -527,15 +531,15 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         weighty and beside the point.
 
         So it is asked first, and cheaply: a diagnostics entry connects,
-        identifies the hardware, creates only the survey's buttons and
+        identifies the hardware, creates only the diagnosis's buttons and
         sensors, and never mentions migration. It can be promoted to a full
         entry afterwards, which is when the id question is put.
 
-        While `ONLY_SURVEY_MODE` is on the menu offers only the survey,
+        While `ONLY_DIAGNOSIS_MODE` is on the menu offers only the diagnosis,
         and its description says why.
         """
         options = ["setup_diagnostics"]
-        if not ONLY_SURVEY_MODE:
+        if not ONLY_DIAGNOSIS_MODE:
             options.insert(0, "setup_devices")
         return self.async_show_menu(
             step_id="user",
@@ -555,7 +559,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         id the menu did not offer; the fallback to diagnostics is the rule
         behind that, in case it ever lets one through.
         """
-        if ONLY_SURVEY_MODE:
+        if ONLY_DIAGNOSIS_MODE:
             return await self.async_step_setup_diagnostics()
         self._mode = MODE_DEVICES
         return await self.async_step_find()
@@ -1054,7 +1058,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                     # `_found` is what `_async_measured` reads to tell the
                     # testimony step what has already been measured, so a
                     # typed address gets the probe's findings as a searched
-                    # one does. It steers `survey_transport`, which is
+                    # one does. It steers `diagnosis_transport`, which is
                     # published.
                     self._found = {
                         user_input[CONF_HOST]: {
@@ -1247,13 +1251,13 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             return texts("measured_dongle", model=model)
         # Neither answered nor refused: the read failed on the link. A guess
         # here is worse than a question, because this steers the
-        # `survey_transport` answer and that is published.
+        # `diagnosis_transport` answer and that is published.
         return texts("measured_unknown", model=model)
 
     async def async_step_testimony(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Ask the few things a survey needs and no register can answer.
+        """Ask the few things a diagnosis needs and no register can answer.
 
         Only on the diagnostics path, and at setup rather than later, because
         this is the entry that exists **in order** to produce a document --
@@ -1271,7 +1275,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         """
         if user_input is not None:
             self._testimony = dict(user_input)
-            if self._testimony.get(CONF_SURVEY_OTHER_INVERTER) == OTHER_INVERTER_YES:
+            if self._testimony.get(CONF_DIAGNOSIS_OTHER_INVERTER) == OTHER_INVERTER_YES:
                 return await self.async_step_other_inverter()
             return self._async_create(ENTITY_IDS_NEW)
 
@@ -1320,14 +1324,14 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_create_entry(
             title=self._title,
             data=data,
-            # Straight into the options, which is where the survey reads
+            # Straight into the options, which is where the diagnosis reads
             # them from and where the same questions are editable
             # afterwards. Two places to store one answer would be one too
             # many.
             options=self._testimony or None,
             # The last screen of the wizard, and the only place left to say
             # what happens next. A diagnostics entry has just been created
-            # and has done nothing yet -- the survey is a button somebody has
+            # and has done nothing yet -- the diagnosis is a button somebody has
             # to find and press, and the document arrives in a notification
             # they have no reason to be watching. `async_create_entry`
             # renders this as markdown on the
@@ -1337,7 +1341,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             ),
             # hassfest refuses a URL inside a translation string.
             description_placeholders={
-                "survey_issue_url": SURVEY_ISSUE_URL,
+                "diagnosis_issue_url": DIAGNOSIS_ISSUE_URL,
                 "energy_dashboard_url": ENERGY_DASHBOARD_GUIDE_URL,
             },
         )
@@ -1461,8 +1465,8 @@ class SungrowOptionsFlow(OptionsFlow):
                     },
                     CONF_EXTERNAL_SOURCES: external.get(CONF_EXTERNAL_SOURCES, []),
                     CONF_EXTERNAL_PLACEMENT: external[CONF_EXTERNAL_PLACEMENT],
-                    **user_input[SECTION_SURVEY],
-                    **user_input[SECTION_CONTROL_TEST],
+                    **user_input[SECTION_DIAGNOSIS],
+                    **user_input[SECTION_CAPABILITY_TEST],
                     **user_input[SECTION_ADVANCED],
                 }
                 host = (options.get(CONF_WALLBOX_HOST) or "").strip()
@@ -1496,9 +1500,9 @@ class SungrowOptionsFlow(OptionsFlow):
                         {"to": user_input[CONF_ENTITY_IDS]}
                     )
                 elif options.get(
-                    CONF_SURVEY_OTHER_INVERTER
+                    CONF_DIAGNOSIS_OTHER_INVERTER
                 ) == OTHER_INVERTER_YES and not options.get(
-                    CONF_SURVEY_OTHER_INVERTER_DETAIL
+                    CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL
                 ):
                     # Only when the answer is yes *and* nothing has been said
                     # about it yet. Asking again on every visit would punish
@@ -1510,7 +1514,7 @@ class SungrowOptionsFlow(OptionsFlow):
                 # The flag is checked as well as the value: a disabled
                 # control is a frontend courtesy, and the payload arrives over
                 # a websocket anybody with a token can write by hand.
-                elif not ONLY_SURVEY_MODE and user_input.get(CONF_ADD_DEVICES):
+                elif not ONLY_DIAGNOSIS_MODE and user_input.get(CONF_ADD_DEVICES):
                     # The promotion question is asked on its own page, and
                     # that is deliberate: it decides where years of history
                     # continue, and it does not belong folded into a section
@@ -1536,7 +1540,7 @@ class SungrowOptionsFlow(OptionsFlow):
                     }
                 ),
                 "reported_load": self._async_load_now(texts),
-                "measured": await self._async_survey_measured(texts),
+                "measured": await self._async_diagnosis_measured(texts),
                 "battery_status": self._async_battery_status(texts),
                 # Why the promotion toggle above is greyed, in the same words
                 # the config flow uses for the same gate.
@@ -1549,7 +1553,7 @@ class SungrowOptionsFlow(OptionsFlow):
         """Build the one form, in the order somebody reads it.
 
         Polling first because it is what people come here for, and the
-        survey last because it is an offer rather than a setting. Everything
+        diagnosis last because it is an offer rather than a setting. Everything
         except polling starts collapsed: an open section is a claim that you
         probably want to change this, and three of the four are things most
         owners will never touch.
@@ -1569,7 +1573,7 @@ class SungrowOptionsFlow(OptionsFlow):
             schema[probatio.Required(CONF_ADD_DEVICES, default=False)] = (
                 BooleanSelector(
                     BooleanSelectorConfig(read_only=True)
-                    if ONLY_SURVEY_MODE
+                    if ONLY_DIAGNOSIS_MODE
                     else BooleanSelectorConfig()
                 )
             )
@@ -1588,8 +1592,10 @@ class SungrowOptionsFlow(OptionsFlow):
         schema[probatio.Required(SECTION_PERMISSIONS)] = self._permissions_section()
         schema[probatio.Required(SECTION_EXTERNAL)] = self._external_section()
         schema[probatio.Required(SECTION_ADVANCED)] = self._advanced_section()
-        schema[probatio.Required(SECTION_SURVEY)] = self._survey_section()
-        schema[probatio.Required(SECTION_CONTROL_TEST)] = self._control_test_section()
+        schema[probatio.Required(SECTION_DIAGNOSIS)] = self._diagnosis_section()
+        schema[probatio.Required(SECTION_CAPABILITY_TEST)] = (
+            self._capability_test_section()
+        )
         return probatio.Schema(schema)
 
     def _permissions_section(self) -> Any:
@@ -1703,15 +1709,15 @@ class SungrowOptionsFlow(OptionsFlow):
             {"collapsed": True},
         )
 
-    # The testimony a survey needs and no register can answer, plus the
+    # The testimony a diagnosis needs and no register can answer, plus the
     # one switch that changes what it reads. Saved here; *run* from the
-    # button on the device page, or the `run_survey` action, which is
+    # button on the device page, or the `run_diagnosis` action, which is
     # where a progress bar and a download link can exist and a modal
     # dialog cannot. Same questions as the diagnostics setup step asks,
     # from one schema, so the two cannot drift.
 
-    def _survey_section(self) -> Any:
-        """Return the survey's questions, which are an offer rather than a setting.
+    def _diagnosis_section(self) -> Any:
+        """Return the diagnosis's questions, which are an offer rather than a setting.
 
         Last on the page for that reason: nothing here changes how the
         integration behaves, and a person who never opens it loses nothing.
@@ -1719,14 +1725,14 @@ class SungrowOptionsFlow(OptionsFlow):
         options = self.config_entry.options
         return section(_testimony_schema(options), {"collapsed": True})
 
-    # What the control test is allowed to do, which is a different question
+    # What the capability test is allowed to do, which is a different question
     # from whether to run it. Running it is a button; these three decide how
     # far it may go when somebody presses that button. Each is granted until
-    # switched off (`CONTROL_TEST_PERMISSION_DEFAULT`). Their descriptions
+    # switched off (`CAPABILITY_TEST_PERMISSION_DEFAULT`). Their descriptions
     # carry the consequences, because a checkbox label has no room for them
     # and this is the only place any is explained.
 
-    def _control_test_section(self) -> Any:
+    def _capability_test_section(self) -> Any:
         """Return the permissions part B needs, each on until switched off.
 
         They are separate flags rather than one level because they are not
@@ -1738,42 +1744,45 @@ class SungrowOptionsFlow(OptionsFlow):
             probatio.Schema(
                 {
                     probatio.Required(
-                        CONF_CONTROL_TEST_RESTART,
+                        CONF_CAPABILITY_TEST_RESTART,
                         default=options.get(
-                            CONF_CONTROL_TEST_RESTART, CONTROL_TEST_PERMISSION_DEFAULT
+                            CONF_CAPABILITY_TEST_RESTART,
+                            CAPABILITY_TEST_PERMISSION_DEFAULT,
                         ),
                     ): BooleanSelector(),
                     probatio.Required(
-                        CONF_CONTROL_TEST_EXPORT,
+                        CONF_CAPABILITY_TEST_EXPORT,
                         default=options.get(
-                            CONF_CONTROL_TEST_EXPORT, CONTROL_TEST_PERMISSION_DEFAULT
+                            CONF_CAPABILITY_TEST_EXPORT,
+                            CAPABILITY_TEST_PERMISSION_DEFAULT,
                         ),
                     ): BooleanSelector(),
                     probatio.Required(
-                        CONF_CONTROL_TEST_PV_CUT,
+                        CONF_CAPABILITY_TEST_PV_CUT,
                         default=options.get(
-                            CONF_CONTROL_TEST_PV_CUT, CONTROL_TEST_PERMISSION_DEFAULT
+                            CONF_CAPABILITY_TEST_PV_CUT,
+                            CAPABILITY_TEST_PERMISSION_DEFAULT,
                         ),
                     ): BooleanSelector(),
                     probatio.Required(
-                        CONF_CONTROL_TEST_CHARGE_WINDOW,
+                        CONF_CAPABILITY_TEST_CHARGE_WINDOW,
                         default=options.get(
-                            CONF_CONTROL_TEST_CHARGE_WINDOW,
-                            CONTROL_TEST_PERMISSION_DEFAULT,
+                            CONF_CAPABILITY_TEST_CHARGE_WINDOW,
+                            CAPABILITY_TEST_PERMISSION_DEFAULT,
                         ),
                     ): BooleanSelector(),
                     probatio.Required(
-                        CONF_CONTROL_TEST_DISCHARGE_WINDOW,
+                        CONF_CAPABILITY_TEST_DISCHARGE_WINDOW,
                         default=options.get(
-                            CONF_CONTROL_TEST_DISCHARGE_WINDOW,
-                            CONTROL_TEST_PERMISSION_DEFAULT,
+                            CONF_CAPABILITY_TEST_DISCHARGE_WINDOW,
+                            CAPABILITY_TEST_PERMISSION_DEFAULT,
                         ),
                     ): BooleanSelector(),
                     probatio.Required(
-                        CONF_CONTROL_TEST_IMPORT_LIMIT,
+                        CONF_CAPABILITY_TEST_IMPORT_LIMIT,
                         default=options.get(
-                            CONF_CONTROL_TEST_IMPORT_LIMIT,
-                            CONTROL_TEST_PERMISSION_DEFAULT,
+                            CONF_CAPABILITY_TEST_IMPORT_LIMIT,
+                            CAPABILITY_TEST_PERMISSION_DEFAULT,
                         ),
                     ): BooleanSelector(),
                 }
@@ -1897,7 +1906,7 @@ class SungrowOptionsFlow(OptionsFlow):
         return self.async_show_form(
             step_id="other_inverter",
             data_schema=_other_inverter_schema(
-                options.get(CONF_SURVEY_OTHER_INVERTER_DETAIL, "")
+                options.get(CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL, "")
             ),
         )
 
@@ -1916,7 +1925,7 @@ class SungrowOptionsFlow(OptionsFlow):
         ran `modbus_sungrow.yaml` has no history and no decision, so the
         entry is simply promoted.
         """
-        if ONLY_SURVEY_MODE:
+        if ONLY_DIAGNOSIS_MODE:
             return self.async_abort(reason="devices_mode_not_offered")
         # The YAML package reads only hybrids, so an SG has no history there.
         if self.config_entry.data.get(CONF_KIND) == KIND_STRING_INVERTER:
@@ -2078,7 +2087,7 @@ class SungrowOptionsFlow(OptionsFlow):
             return texts("load_negative", load=f"{reported:.0f}")
         return texts("load_positive", load=f"{reported:.0f}")
 
-    async def _async_survey_measured(self, texts: Texts) -> str:
+    async def _async_diagnosis_measured(self, texts: Texts) -> str:
         """Say what the integration has already worked out for itself.
 
         So that nobody answers a question that has been measured. The
@@ -2092,17 +2101,17 @@ class SungrowOptionsFlow(OptionsFlow):
         because Sungrow does not forward the 6100 block through a dongle. A
         house can have both: a cable in the inverter's LAN port and a WiNet-S
         fitted. Keyed on 13265, such a house would be told it is behind a
-        dongle, and this steers `survey_transport`, which is published and
+        dongle, and this steers `diagnosis_transport`, which is published and
         feeds `doc/compatibility.md`.
 
         Three answers, not two, on the same reasoning as
-        `control_test._detect_transport`: a refusal is the transport
+        `capability_test._detect_transport`: a refusal is the transport
         answering, a lost read is not, and a guess is worse than a question
         because this prose exists to stop people answering from guesswork.
         """
         runtime = getattr(self.config_entry, "runtime_data", None)
         if runtime is None:
-            return texts("survey_offline")
+            return texts("diagnosis_offline")
 
         device = runtime.inverter_coordinator.device
         model = device.model or texts("model_unidentified")
@@ -2110,11 +2119,11 @@ class SungrowOptionsFlow(OptionsFlow):
         direct = await _async_direct(device.async_read(DIRECT_ONLY_PROBE))
 
         if direct is True:
-            key = "survey_direct"
+            key = "diagnosis_direct"
         elif direct is False:
-            key = "survey_dongle"
+            key = "diagnosis_dongle"
         else:
-            key = "survey_unknown"
+            key = "diagnosis_unknown"
         fitted = ""
         try:
             module = device.field("communication_module_firmware_version")
@@ -2124,7 +2133,7 @@ class SungrowOptionsFlow(OptionsFlow):
             # Worth saying, and worth saying separately: an owner who knows a
             # dongle is screwed to the wall needs to see that we know too,
             # or a correct "its own LAN port" reads as a mistake.
-            fitted = " " + texts("survey_fitted", module=module)
+            fitted = " " + texts("diagnosis_fitted", module=module)
         return texts(key, model=model) + fitted
 
     @callback

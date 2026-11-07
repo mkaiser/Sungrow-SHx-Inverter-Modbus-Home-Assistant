@@ -1,7 +1,7 @@
 ---
 type: query
 title: "What does a Sungrow Logger answer?"
-tags: [logger, open, survey-wanted]
+tags: [logger, open, diagnosis-wanted]
 created: '2026-10-30'
 query: "Does a real Logger answer what its protocol document lists, at unit 247, and at which unit ids are the devices behind it?"
 results_count: 0
@@ -13,10 +13,10 @@ results_count: 0
 a Logger should answer
 ([Logger documents](../sources/logger-communication-protocol-summary.md)),
 and [Sungrow Logger](../entities/device-logger.md) holds it as `spec`. A
-survey of one turns that into a measurement; the participants of discussion
+diagnosis of one turns that into a measurement; the participants of discussion
 #262 own Loggers.
 
-What a first survey settles:
+What a first diagnose settles:
 
 - **Whether the 64-bit values send their high word first**, as the document
   says, while the 32-bit ones send their low word first.

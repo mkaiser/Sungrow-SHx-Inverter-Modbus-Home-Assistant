@@ -1,32 +1,32 @@
 ---
 type: source
 title: sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan.json
-source_path: ../device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan.json
 ingested: '2026-11-07'
 created: '2026-11-07'
 tags:
-  - survey
+  - diagnosis
   - sh10rt-v112
   - sapphire-h-b001-v000-p023
   - peter-sm
   - direct_lan
-  - control-test
+  - capability-test
 ---
 
-# SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, tenth reading, with a control test
+# SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, tenth reading, with a capability test
 
-Capability survey of one inverter, read 2026-11-07 around 08:24 UTC from Home Assistant 2026.11.0
+Capability diagnosis of one inverter, read 2026-11-07 around 08:24 UTC from Home Assistant 2026.11.0
 with integration 0.1.0a27, posted by Korsberg to issue #786 with the
 [ninth reading](sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-8-summary.md).
-**Taken from a diagnostics download** whose `survey` section carries the control test the last
+**Taken from a diagnostics download** whose `diagnosis` section carries the capability test the last
 run made; that section is committed as it was, under the library's own name for it. Source:
-`device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan.json`.
+`device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan.json`.
 
 **The name says `battery-thirdparty`, and the battery is the SBR160.** The section has no
 `battery_pack`, so `label_for` falls back to the battery registers answering on a direct path,
 which is how it names a third-party pack. The BCU firmware `SBRBCU-S_22011.01.30` and the
 installation's other nine readings say otherwise. Why the pack's section is missing is not in the
-document: the survey publishes without a step it lost, and records no failure.
+document: the diagnosis publishes without a step it lost, and records no failure.
 
 | | |
 | --- | --- |
@@ -48,10 +48,10 @@ Every component answered.
 
 Polled by this Home Assistant throughout the download. See [contention](../concepts/contention.md).
 
-## Control test
+## Capability test
 
 Outcome **3**: ran, with checks skipped or inconclusive. Over the cable, so leg B is evidence.
-PV 440 W, SoC 82.6 %. See [the control test](../concepts/control-test.md).
+PV 440 W, SoC 82.6 %. See [the capability test](../concepts/capability-test.md).
 
 All nine readbacks **matched**: 13059, 13058, 13100, 33047, 33048, 13074, 13052, 33149 and 33150.
 

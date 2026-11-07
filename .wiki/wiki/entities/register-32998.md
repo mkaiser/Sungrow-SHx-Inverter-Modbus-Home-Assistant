@@ -9,7 +9,7 @@ created: '2026-11-07'
 
 A holding register in no Sungrow document here, which iSolarCloud shows as "Site import power
 limit". Protocol address 32997. The integration reads it as a diagnostic sensor, **Grid import
-limit** in kW, and offers no control; the survey's register dump reads it too.
+limit** in kW, and offers no control; the diagnosis's register dump reads it too.
 
 ## What is established
 
@@ -27,7 +27,7 @@ limit** in kW, and offers no control; the survey's register dump reads it too.
   PV + 2.00 kW - load, and it followed a load step from 1810 W to 615 W within ~4 s. At 1 (0.01 kW) a
   forced charge drew only on PV (import ~15 W). It settles within ~4-6 s and holds 0-3 % above the
   cap. The device refuses 0 and 5001 with exception 0x04 and accepts 5000
-  ([the PV run](../sources/mkaiser-import-limit-pv-2026-11-07-summary.md)). The control test's
+  ([the PV run](../sources/mkaiser-import-limit-pv-2026-11-07-summary.md)). The capability test's
   `--import-limit` check confirmed it there too ([the run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md)).
 - **There it does not hold against house load the battery does not cover.** With the battery
   held idle by a forced stop and ~2.2 kW of load, import ran at the whole load against a
@@ -43,7 +43,7 @@ limit** in kW, and offers no control; the survey's register dump reads it too.
   how the charge was commanded and the B001 firmware unknown;
   [open](../queries/does-the-import-limit-hold-during-a-forced-charge.md).
 
-## What the surveys read
+## What the diagnoses read
 
 | Value | kW | Where |
 | --- | --- | --- |
@@ -60,6 +60,6 @@ the cable and a WiNet-S alike where a house has both.
 
 A control needs a write watched by this repository, per firmware
 ([firmware gating](../concepts/firmware-gating.md)): P023 has two (bar12), P020 has three, the last by the
-[control test](../concepts/control-test.md)'s `--import-limit` check, which is how other
+[capability test](../concepts/capability-test.md)'s `--import-limit` check, which is how other
 firmware gets one. A number entity would range over 1-5000 (0.01-50.00 kW), the words the
 SH10RT and the SH10RS accept. `Todo.md` holds the plan.

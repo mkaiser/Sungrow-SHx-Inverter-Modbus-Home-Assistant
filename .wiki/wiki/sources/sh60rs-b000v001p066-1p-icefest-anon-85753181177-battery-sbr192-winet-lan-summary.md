@@ -1,25 +1,25 @@
 ---
 type: source
 title: sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-winet-lan.json
-source_path: ../device-survey/results/inverter/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-winet-lan.json
+source_path: ../device-diagnosis/results/inverter/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-winet-lan.json
 ingested: '2026-11-06'
 created: '2026-11-06'
 tags:
-  - survey
+  - diagnosis
   - sh60rs
   - sunstone-h-b000-v001-p066
   - icefest
   - winet_lan
-  - control-test
+  - capability-test
 ---
 
 # SH6.0RS, B000.V001.P066, icefest, a WiNet-S on Ethernet
 
-Capability survey of one inverter, read 2026-11-06 around 20:07 UTC from Home Assistant 2026.11.0
-with integration 0.1.0a27, issue #786, with the control test and a restart. **Taken from a
-diagnostics download**: the `survey` section of the integration's diagnostics
+Capability diagnosis of one inverter, read 2026-11-06 around 20:07 UTC from Home Assistant 2026.11.0
+with integration 0.1.0a27, issue #786, with the capability test and a restart. **Taken from a
+diagnostics download**: the `diagnosis` section of the integration's diagnostics
 (`custom_components/sungrow_modbus/diagnostics.py`), committed as it was, under the library's
-own name for it. Source: `device-survey/results/inverter/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-winet-lan.json`.
+own name for it. Source: `device-diagnosis/results/inverter/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-winet-lan.json`.
 
 | | |
 | --- | --- |
@@ -43,7 +43,7 @@ history blocks from 6196, as on every WiNet-S ([WiNet-S](../entities/device-wine
 Polled by this Home Assistant throughout, coordinators not paused (22 components); no block read
 test, which a diagnostics download does not take.
 
-## Control test
+## Capability test
 
 Outcome **5**: one register could not be shown to be back. PV about 230 W, the battery at 3 %.
 
@@ -56,7 +56,7 @@ Outcome **5**: one register could not be shown to be back. PV about 230 W, the b
   read a register back (the dongle's cache is stale), so it reported the word as not restored:
   code 5. That is the procedure being right to doubt: a refusal through a dongle is not proof the
   register stayed put (a window write refused with 0x04 through gerd's WiNet-S had landed;
-  [the restore](../concepts/control-test-restore.md)). Here the reading over RS485 ten minutes later
+  [the restore](../concepts/capability-test-restore.md)). Here the reading over RS485 ten minutes later
   found it **already holding its original value**
   ([that reading](sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-summary.md)),
   so the house was not left changed.

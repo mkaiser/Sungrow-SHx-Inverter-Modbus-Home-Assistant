@@ -1,11 +1,11 @@
 ---
 type: source
 title: sh60rt-20-b001v000p022-3p-anonymous-anon-45132049665-battery-sbr128-meter-direct-lan.json
-source_path: ../device-survey/results/inverter/sh60rt-20-b001v000p022-3p-anonymous-anon-45132049665-battery-sbr128-meter-direct-lan.json
+source_path: ../device-diagnosis/results/inverter/sh60rt-20-b001v000p022-3p-anonymous-anon-45132049665-battery-sbr128-meter-direct-lan.json
 ingested: '2026-11-05'
 created: '2026-11-05'
 tags:
-  - survey
+  - diagnosis
   - sh60rt-20
   - sapphire-h-b001-v000-p022
   - anonymous
@@ -15,10 +15,10 @@ tags:
 
 # SH6.0RT-20, B001.V000.P022, anonymous, through a Modbus proxy, SBR128
 
-Capability survey of one inverter, read 2026-11-05 at 11:16 UTC from Home Assistant's survey (the
+Capability diagnosis of one inverter, read 2026-11-05 at 11:16 UTC from Home Assistant's diagnosis (the
 preview integration's diagnostics, `command_line` "home assistant diagnostics"), issue #786, reads
 only. Published as `anonymous`. The second SH6.0RT-20 in the corpus, and the first on P022. Source:
-`device-survey/results/inverter/sh60rt-20-b001v000p022-3p-anonymous-anon-45132049665-battery-sbr128-meter-direct-lan.json`.
+`device-diagnosis/results/inverter/sh60rt-20-b001v000p022-3p-anonymous-anon-45132049665-battery-sbr128-meter-direct-lan.json`.
 
 | | |
 | --- | --- |
@@ -41,7 +41,7 @@ reconnects, with this entry's polling held off. MPPT3, MPPT4 and 13018 read the 
 
 ## What the dump adds
 
-- [Register 31211](../entities/register-31211.md) answers **0x55**, as on the other P022 surveys.
+- [Register 31211](../entities/register-31211.md) answers **0x55**, as on the other P022 diagnoses.
 - Export limit is **off** (13087 = 0x55), with the limit word 13074 at raw 7600 and maximum 7600 W;
   no write was made, so its [write scale](../entities/register-13074.md) is unmeasured here.
 - Forced-charging schedule (33208) off; weekend discharge (33179) reads 0xAA (on).
@@ -55,4 +55,4 @@ Pack state of charge 51.8 % against the inverter's battery level 49.0 %, health 
 (`max_cell_position` 261 = `0x105`, module 1 cell 5; `min_cell_position` 513 = `0x201`, module 2
 cell 1). Register 5639 reads 12.8 kWh for four modules.
 
-No control test, so the PV cut and the 13074 scale stay as measured on P022 at [gerd](../entities/installation-gerd.md).
+No capability test, so the PV cut and the 13074 scale stay as measured on P022 at [gerd](../entities/installation-gerd.md).

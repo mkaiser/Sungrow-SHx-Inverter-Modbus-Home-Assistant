@@ -1,4 +1,4 @@
-"""Every device meets the one seam the entity layer and the survey type against.
+"""Every device meets the one seam the entity layer and the diagnosis type against.
 
 `device.Device` for all of them, `device.Inverter` for the two that can be an
 entry's own inverter. Checked on instances, because a Protocol checks only

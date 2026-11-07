@@ -75,7 +75,7 @@
         "title": "Welcher ist der andere Wechselrichter?",
         "description": "Der Hersteller und, falls bekannt, die Größe – *Fronius Symo 8.2* oder *5-kW-String-Wechselrichter auf dem Süddach*. Die Größe ist der nützliche Teil: Sie sagt, wie groß die Lücke in den Lastwerten ist.\n\nDas gelangt in das Dokument, lass deshalb Seriennummern, Adressen und Namen weg. Du kannst es leer lassen.",
         "data": {
-          "survey_other_inverter_detail": "Der andere Wechselrichter"
+          "diagnosis_other_inverter_detail": "Der andere Wechselrichter"
         }
       },
       "pick": {
@@ -100,25 +100,25 @@
         "description": "Du hast „nur Diagnose“ gewählt, das heißt, dieser Eintrag existiert, um eine Messung zu erzeugen – dies sind also die Fragen, die diese Messung braucht und die kein Register beantworten kann.\n\n{measured}\n\nAlles hier ist optional, und ein leeres Feld ist ehrlich: Es hält fest, dass die Frage nicht beantwortet wurde, was etwas anderes ist, als mit „Ich weiß es nicht“ zu antworten. Du kannst alles später unter den Optionen der Integration ändern.\n\nDrücke danach auf der Geräteseite **Diagnose ausführen (nur lesend)**.",
         "data": {
           "reporter": "Dein Name oder Pseudonym",
-          "survey_transport": "Wie dieser Wechselrichter angebunden ist",
-          "survey_proxy": "Befindet sich ein Modbus-Proxy im Pfad?",
-          "survey_pollers": "Fragt noch etwas anderes diesen Wechselrichter ab?",
-          "survey_other_inverter": "Gibt es hier einen weiteren Wechselrichter, der kein Sungrow ist?",
-          "survey_battery": "Hersteller und Modell der Batterie",
-          "survey_comment": "Sonst noch etwas Wissenswertes",
+          "diagnosis_transport": "Wie dieser Wechselrichter angebunden ist",
+          "diagnosis_proxy": "Befindet sich ein Modbus-Proxy im Pfad?",
+          "diagnosis_pollers": "Fragt noch etwas anderes diesen Wechselrichter ab?",
+          "diagnosis_other_inverter": "Gibt es hier einen weiteren Wechselrichter, der kein Sungrow ist?",
+          "diagnosis_battery": "Hersteller und Modell der Batterie",
+          "diagnosis_comment": "Sonst noch etwas Wissenswertes",
           "publish_address": "Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?",
-          "survey_register_dump": "Auch die rohen Registerbereiche durchsuchen (etwa fünf Minuten)"
+          "diagnosis_register_dump": "Auch die rohen Registerbereiche durchsuchen (etwa fünf Minuten)"
         },
         "data_description": {
           "reporter": "Wird in der veröffentlichten Messung genannt und gefragt, wenn eine Zeile Fragen aufwirft. Leer lassen, um anonym beizutragen.",
-          "survey_transport": "Kabel gegenüber Dongle ist bereits gemessen. Nur du weißt, ob ein Dongle an seiner Ethernet-Buchse oder per WLAN hängt – ein WiNet-S antwortet in beiden Fällen gleich, daher ist \"nicht sicher\" eine echte Antwort und besser als eine Vermutung.",
-          "survey_proxy": "modbus-proxy, der Proxy von evcc, ein Home-Assistant-Add-on. Ein Proxy hält eine Verbindung und verleiht sie weiter, was die Bedeutung eines ausgefallenen Registers verändert – und er baut jeden Frame neu auf, was die Frame-Eigenheiten, die dieses Projekt verfolgt, verbergen oder erzeugen kann.",
-          "survey_pollers": "Dieses Home Assistant wird automatisch erfasst. Wichtig ist hier alles andere: ein anderes Home Assistant, das YAML-Paket, evcc, ein Logger. Ein Wechselrichter gewährt sehr wenige Verbindungen, und zwei Clients, die um eine konkurrieren, sehen genau wie ein defektes Register aus.",
-          "survey_other_inverter": "Dein Sungrow misst nicht, wie viel dein Haus verbraucht – er errechnet es aus seiner eigenen Leistung plus dem, was der Netzzähler als Bezug meldet. Ein zweiter Wechselrichter am selben Zähler macht daher jeden Lastwert um genau dessen Erzeugung zu niedrig, während alles andere normal aussieht. Kein Register kann uns das sagen: Der Sungrow sieht ihn nicht. Antworte mit Ja, dann fragen wir, was es ist.",
-          "survey_battery": "Kein Register meldet das. \"SBR096\" oder \"Pylontech Force H1, 14,4 kWh\" ist nützlicher als eine Kapazität, die der Wechselrichter ohnehin meldet.",
-          "survey_comment": "Alles Ungewöhnliche an der Anlage – ein Verbund, ein zweiter Wechselrichter, eine Wallbox, ein Firmware-Update, an das du dich erinnerst.",
+          "diagnosis_transport": "Kabel gegenüber Dongle ist bereits gemessen. Nur du weißt, ob ein Dongle an seiner Ethernet-Buchse oder per WLAN hängt – ein WiNet-S antwortet in beiden Fällen gleich, daher ist \"nicht sicher\" eine echte Antwort und besser als eine Vermutung.",
+          "diagnosis_proxy": "modbus-proxy, der Proxy von evcc, ein Home-Assistant-Add-on. Ein Proxy hält eine Verbindung und verleiht sie weiter, was die Bedeutung eines ausgefallenen Registers verändert – und er baut jeden Frame neu auf, was die Frame-Eigenheiten, die dieses Projekt verfolgt, verbergen oder erzeugen kann.",
+          "diagnosis_pollers": "Dieses Home Assistant wird automatisch erfasst. Wichtig ist hier alles andere: ein anderes Home Assistant, das YAML-Paket, evcc, ein Logger. Ein Wechselrichter gewährt sehr wenige Verbindungen, und zwei Clients, die um eine konkurrieren, sehen genau wie ein defektes Register aus.",
+          "diagnosis_other_inverter": "Dein Sungrow misst nicht, wie viel dein Haus verbraucht – er errechnet es aus seiner eigenen Leistung plus dem, was der Netzzähler als Bezug meldet. Ein zweiter Wechselrichter am selben Zähler macht daher jeden Lastwert um genau dessen Erzeugung zu niedrig, während alles andere normal aussieht. Kein Register kann uns das sagen: Der Sungrow sieht ihn nicht. Antworte mit Ja, dann fragen wir, was es ist.",
+          "diagnosis_battery": "Kein Register meldet das. \"SBR096\" oder \"Pylontech Force H1, 14,4 kWh\" ist nützlicher als eine Kapazität, die der Wechselrichter ohnehin meldet.",
+          "diagnosis_comment": "Alles Ungewöhnliche an der Anlage – ein Verbund, ein zweiter Wechselrichter, eine Wallbox, ein Firmware-Update, an das du dich erinnerst.",
           "publish_address": "An, und du kannst es vor dem Absenden ausschalten. Nur die letzten zwei Oktette gelangen je in das Dokument – nie das dritte, das dein Netzwerk identifizieren würde –, und wenn du das deaktivierst, steht stattdessen xxx.xxx. Der Nutzen: Mehrere Messungen aus einem Haus lassen sich unterscheiden – ein Master, ein Slave und zwei Dongles ergeben sonst vier gleich aussehende Dateien.",
-          "survey_register_dump": "An, und besser auszuschalten, wenn du es eilig hast. Ohne sie liest die Diagnose die Register, die diese Integration bereits kennt, und braucht ein paar Sekunden. Mit ihr durchsucht sie zusätzlich 2181 Adressen in sechzehn Bereichen, auch die, die keine Spezifikation dokumentiert – so wurde jedes undokumentierte Register gefunden, das dieses Projekt kennt. Das ist langsam, weil eine Adresse ohne Inhalt verstummt statt abzulehnen, sodass jede leere ein volles Timeout kostet: etwa fünf Minuten am direkten Kabel und deutlich länger über ein WiNet-S oder ein VPN. Dein Wechselrichter wird die ganze Zeit weiter abgefragt, und die Diagnose-Schaltfläche auf der Geräteseite zeigt den Fortschritt."
+          "diagnosis_register_dump": "An, und besser auszuschalten, wenn du es eilig hast. Ohne sie liest die Diagnose die Register, die diese Integration bereits kennt, und braucht ein paar Sekunden. Mit ihr durchsucht sie zusätzlich 2181 Adressen in sechzehn Bereichen, auch die, die keine Spezifikation dokumentiert – so wurde jedes undokumentierte Register gefunden, das dieses Projekt kennt. Das ist langsam, weil eine Adresse ohne Inhalt verstummt statt abzulehnen, sodass jede leere ein volles Timeout kostet: etwa fünf Minuten am direkten Kabel und deutlich länger über ein WiNet-S oder ein VPN. Dein Wechselrichter wird die ganze Zeit weiter abgefragt, und die Diagnose-Schaltfläche auf der Geräteseite zeigt den Fortschritt."
         }
       },
       "user": {
@@ -153,7 +153,7 @@
     },
     "create_entry": {
       "default": "**Die Einrichtung ist abgeschlossen.** Die Entitäten des Wechselrichters erscheinen auf seiner Geräteseite, sobald ihre ersten Messwerte eintreffen.\n\nUm ihn im Energie-Dashboard zu sehen (**Einstellungen → Dashboards → Energie**), wähle die Sensoren, die [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt: Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.",
-      "diagnostics": "**Die Einrichtung ist abgeschlossen, und es wurde noch nichts gelesen.** Zwei weitere Schritte, beide auf der Geräteseite, die dieser Dialog gleich anzeigt:\n\n1. Drücke **Diagnose ausführen (nur lesend)** unter *Diagnose*. Sie liest und schreibt nie. Am Kabel ist sie mit dem Registerdurchlauf in ein paar Minuten fertig; über ein VPN kann es deutlich länger dauern, und die drei Sensoren neben der Schaltfläche zeigen, wie weit sie ist und was sie liest.\n2. Öffne danach **Benachrichtigungen** in der Seitenleiste – das Abzeichen unten links. Die Benachrichtigung dort enthält eine Zusammenfassung und einen Link **Dokument herunterladen**. Dieser Link ist die JSON-Datei, die du uns schicken sollst, und er funktioniert nach einer Stunde nicht mehr.\n\nVerpasst, oder erst am nächsten Tag zurück? **Diagnose herunterladen** auf derselben Geräteseite enthält dasselbe Dokument und läuft nie ab. Schicke eines davon an [das Diagnose-Issue]({survey_issue_url}).\n\nDie Datei benennt deinen Wechselrichter mit einem Platzhalter statt der Seriennummer und enthält die letzten zwei Oktette seiner Adresse nur, solange dieses Feld angehakt ist."
+      "diagnostics": "**Die Einrichtung ist abgeschlossen, und es wurde noch nichts gelesen.** Zwei weitere Schritte, beide auf der Geräteseite, die dieser Dialog gleich anzeigt:\n\n1. Drücke **Diagnose ausführen (nur lesend)** unter *Diagnose*. Sie liest und schreibt nie. Am Kabel ist sie mit dem Registerdurchlauf in ein paar Minuten fertig; über ein VPN kann es deutlich länger dauern, und die drei Sensoren neben der Schaltfläche zeigen, wie weit sie ist und was sie liest.\n2. Öffne danach **Benachrichtigungen** in der Seitenleiste – das Abzeichen unten links. Die Benachrichtigung dort enthält eine Zusammenfassung und einen Link **Dokument herunterladen**. Dieser Link ist die JSON-Datei, die du uns schicken sollst, und er funktioniert nach einer Stunde nicht mehr.\n\nVerpasst, oder erst am nächsten Tag zurück? **Diagnose herunterladen** auf derselben Geräteseite enthält dasselbe Dokument und läuft nie ab. Schicke eines davon an [das Diagnose-Issue]({diagnosis_issue_url}).\n\nDie Datei benennt deinen Wechselrichter mit einem Platzhalter statt der Seriennummer und enthält die letzten zwei Oktette seiner Adresse nur, solange dieses Feld angehakt ist."
     }
   },
   "entity": {
@@ -235,10 +235,10 @@
       "force_startup": {
         "name": "Zwangsstart"
       },
-      "run_control_test": {
+      "run_capability_test": {
         "name": "Vollständige Diagnose und Tests ausführen"
       },
-      "run_survey": {
+      "run_diagnosis": {
         "name": "Diagnose ausführen (nur lesend)"
       }
     },
@@ -609,6 +609,15 @@
       },
       "dc_side_fault": {
         "name": "DC-seitiger Fehler"
+      },
+      "diagnosis_finished": {
+        "name": "Diagnose beendet"
+      },
+      "diagnosis_progress": {
+        "name": "Diagnosefortschritt"
+      },
+      "diagnosis_step": {
+        "name": "Diagnoseschritt"
       },
       "direct_consumption_this_month": {
         "name": "Direktverbrauch diesen Monat"
@@ -1105,15 +1114,6 @@
       "sungrow_version_4_sungrow_battery": {
         "name": "Firmware-Version Teil 4 (Sungrow-Batterie)"
       },
-      "survey_finished": {
-        "name": "Diagnose beendet"
-      },
-      "survey_progress": {
-        "name": "Diagnosefortschritt"
-      },
-      "survey_step": {
-        "name": "Diagnoseschritt"
-      },
       "system_fault_1": {
         "name": "Systemfehler 1"
       },
@@ -1283,7 +1283,7 @@
         "separately_metered": "An einem eigenen Anschluss – nichts davon passiert den Zähler dieses Wechselrichters"
       }
     },
-    "survey_transport": {
+    "diagnosis_transport": {
       "options": {
         "direct_lan": "Ein Kabel direkt am eigenen LAN-Port des Wechselrichters",
         "winet_lan": "Ein WiNet-S-Dongle an seiner Ethernet-Buchse",
@@ -1293,14 +1293,14 @@
         "unsure": "Nicht sicher"
       }
     },
-    "survey_proxy": {
+    "diagnosis_proxy": {
       "options": {
         "yes": "Ja – modbus-proxy, der Proxy von evcc oder ein Home-Assistant-Add-on",
         "no": "Nein, er spricht direkt mit dem Wechselrichter",
         "unknown": "Ich weiß nicht, was das ist"
       }
     },
-    "survey_other_inverter": {
+    "diagnosis_other_inverter": {
       "options": {
         "yes": "Ja – es gibt einen weiteren Wechselrichter, der kein Sungrow ist",
         "no": "Nein – der Sungrow ist hier der einzige Wechselrichter"
@@ -1337,11 +1337,11 @@
         "load_none": "Der Wechselrichter hat noch keinen Lastwert gemeldet.",
         "load_negative": "Gerade meldet dieser Wechselrichter einen Hausverbrauch von {load} W. Eine negative Last ist das, wonach ein ungemessener Generator aussieht: Das Haus scheint weniger als nichts zu verbrauchen, weil etwas erzeugt, das der Wechselrichter nicht sieht.",
         "load_positive": "Gerade meldet dieser Wechselrichter einen Hausverbrauch von {load} W, und darin ist nichts enthalten, was er nicht sieht.",
-        "survey_offline": "Der Wechselrichter ist nicht verbunden, deshalb wurde noch nichts gemessen.",
-        "survey_direct": "Schon gemessen, du musst es uns also nicht sagen: Das ist {model}, erreicht über seinen eigenen LAN-Anschluss — Register 6100 antwortet, und das leitet kein Kommunikationsmodul weiter.",
-        "survey_dongle": "Schon gemessen, du musst es uns also nicht sagen: Das ist {model}, erreicht über ein Kommunikationsmodul, also ist ein WiNet-S, WiNet-S2 oder Logger im Weg — Register 6100 wurde abgelehnt. Ob es seine Ethernet-Buchse oder sein WLAN nutzt, ist über Modbus nicht feststellbar, und das ist der Teil, den nur du uns sagen kannst.",
-        "survey_unknown": "Schon gemessen, du musst es uns also nicht sagen: Das ist {model}, und der Weg ließ sich nicht messen — Register 6100 hat weder geantwortet noch abgelehnt, und so sieht eine ausgelastete Verbindung aus. Ein Kabel beantwortet es, ein Dongle lehnt es ab, also ist das eine Frage für dich.",
-        "survey_fitted": "Ein Kommunikationsmodul ist eingebaut und nennt sich {module}, und das ist eine andere Frage als die, welcher Weg dieser Endpunkt ist: Ein Haus kann einen Dongle und ein Kabel gleichzeitig haben.",
+        "diagnosis_offline": "Der Wechselrichter ist nicht verbunden, deshalb wurde noch nichts gemessen.",
+        "diagnosis_direct": "Schon gemessen, du musst es uns also nicht sagen: Das ist {model}, erreicht über seinen eigenen LAN-Anschluss — Register 6100 antwortet, und das leitet kein Kommunikationsmodul weiter.",
+        "diagnosis_dongle": "Schon gemessen, du musst es uns also nicht sagen: Das ist {model}, erreicht über ein Kommunikationsmodul, also ist ein WiNet-S, WiNet-S2 oder Logger im Weg — Register 6100 wurde abgelehnt. Ob es seine Ethernet-Buchse oder sein WLAN nutzt, ist über Modbus nicht feststellbar, und das ist der Teil, den nur du uns sagen kannst.",
+        "diagnosis_unknown": "Schon gemessen, du musst es uns also nicht sagen: Das ist {model}, und der Weg ließ sich nicht messen — Register 6100 hat weder geantwortet noch abgelehnt, und so sieht eine ausgelastete Verbindung aus. Ein Kabel beantwortet es, ein Dongle lehnt es ab, also ist das eine Frage für dich.",
+        "diagnosis_fitted": "Ein Kommunikationsmodul ist eingebaut und nennt sich {module}, und das ist eine andere Frage als die, welcher Weg dieser Endpunkt ist: Ein Haus kann einen Dongle und ein Kabel gleichzeitig haben.",
         "battery_offline": "Der Wechselrichter ist nicht verbunden, deshalb lässt sich nichts von ihm lesen.",
         "battery_none": "Es ist kein Akku angeschlossen, diese Einstellung bewirkt also nichts.",
         "battery_reports_capacity": "Dein Akku meldet {capacity} kWh",
@@ -1364,13 +1364,13 @@
       "title": "Sungrow Modbus ist eine Vorschau",
       "description": "Diese Integration ist eine Vorschauversion, für Tester und nicht für ein System, auf das du dich verlässt.\n\n**Entitätsnamen können sich noch ändern.** Ein Name liefert eine Entitäts-ID, wenn die Entität erstmals angelegt wird, eine Änderung verschiebt also die vorhandenen IDs nicht – dein Verlauf und deine Dashboards sind sicher. Es bedeutet aber, dass deine IDs von denen eines später Installierenden abweichen können. Wo das eine Rolle spielt, kommt eine Umbenennung mit einer Migration, die deine IDs mitzieht und den Verlauf mitnimmt.\n\n**Was nicht im Fluss ist:** Messwerte, Einheiten und die Migration vom YAML-Paket. Wenn du dich für die Entitäts-IDs des YAML-Pakets entschieden hast, werden diese genau reproduziert, und nichts davon berührt sie.\n\nBitte melde alles, was falsch aussieht – dafür ist eine Vorschau da."
     },
-    "control_test_unfinished": {
-      "title": "Ein Steuerungs-Schreibtest an {name} wurde nicht abgeschlossen",
+    "capability_test_unfinished": {
+      "title": "Ein Funktionstest an {name} wurde nicht abgeschlossen",
       "fix_flow": {
         "step": {
           "confirm": {
             "title": "Diese Einstellungen zurücksetzen",
-            "description": "Der Steuerungs-Schreibtest ändert eine Einstellung, prüft sie und ändert sie zurück. Dieser kam nicht bis zum Zurückändern – Home Assistant wurde neu gestartet, der Eintrag neu geladen oder der Wechselrichter hörte mittendrin auf zu antworten.\n\nDiese Einstellungen enthalten womöglich noch die Werte des Tests statt deiner:\n\n{registers}\n\nDie Behebung schreibt jede davon zurück und liest sie erneut, um zu prüfen, dass es geklappt hat.\n\nFolgendes wird an deinen Wechselrichter zurückgeschrieben und zur Bestätigung erneut gelesen:\n\n{registers}\n\nVerweigert etwas das Schreiben, wird nichts verschwiegen – du erfährst, was, und die Reparatur bleibt bestehen. Die übliche Ursache ist, dass gleichzeitig etwas anderes den Wechselrichter abfragt."
+            "description": "Der Funktionstest ändert eine Einstellung, prüft sie und ändert sie zurück. Dieser kam nicht bis zum Zurückändern – Home Assistant wurde neu gestartet, der Eintrag neu geladen oder der Wechselrichter hörte mittendrin auf zu antworten.\n\nDiese Einstellungen enthalten womöglich noch die Werte des Tests statt deiner:\n\n{registers}\n\nDie Behebung schreibt jede davon zurück und liest sie erneut, um zu prüfen, dass es geklappt hat.\n\nFolgendes wird an deinen Wechselrichter zurückgeschrieben und zur Bestätigung erneut gelesen:\n\n{registers}\n\nVerweigert etwas das Schreiben, wird nichts verschwiegen – du erfährst, was, und die Reparatur bleibt bestehen. Die übliche Ursache ist, dass gleichzeitig etwas anderes den Wechselrichter abfragt."
           }
         },
         "abort": {
@@ -1378,13 +1378,13 @@
         }
       }
     },
-    "control_test_left_stopped": {
-      "title": "{name} ist nach einem Steuerungs-Schreibtest womöglich noch gestoppt",
+    "capability_test_left_stopped": {
+      "title": "{name} ist nach einem Funktionstest womöglich noch gestoppt",
       "fix_flow": {
         "step": {
           "confirm": {
             "title": "Den Wechselrichter starten und diese Einstellungen zurücksetzen",
-            "description": "**Prüfe, ob dein Wechselrichter erzeugt.** Ein Steuerungs-Schreibtest durfte ihn stoppen und neu starten und kam nicht bis zum Neustart – Home Assistant wurde neu gestartet, der Eintrag neu geladen oder der Wechselrichter hörte mittendrin auf zu antworten.\n\nDie Behebung startet den Wechselrichter, setzt dann diese Einstellungen zurück und liest jede erneut, um zu prüfen, dass es geklappt hat:\n\n{registers}\n\nDer Wechselrichter wird zuerst gestartet, dann wird Folgendes zurückgeschrieben und zur Bestätigung erneut gelesen:\n\n{registers}\n\nVerweigert etwas, erfährst du, was, und die Reparatur bleibt bestehen."
+            "description": "**Prüfe, ob dein Wechselrichter erzeugt.** Ein Funktionstest durfte ihn stoppen und neu starten und kam nicht bis zum Neustart – Home Assistant wurde neu gestartet, der Eintrag neu geladen oder der Wechselrichter hörte mittendrin auf zu antworten.\n\nDie Behebung startet den Wechselrichter, setzt dann diese Einstellungen zurück und liest jede erneut, um zu prüfen, dass es geklappt hat:\n\n{registers}\n\nDer Wechselrichter wird zuerst gestartet, dann wird Folgendes zurückgeschrieben und zur Bestätigung erneut gelesen:\n\n{registers}\n\nVerweigert etwas, erfährst du, was, und die Reparatur bleibt bestehen."
           }
         },
         "abort": {
@@ -1425,14 +1425,14 @@
           },
           "permissions": {
             "name": "Berechtigungen",
-            "description": "Wer die Aktionen Start und Stopp aufrufen darf und wer die Schaltfläche des Steuerungs-Schreibtests drücken darf. Standard ist nur Administratoren: Ein gestoppter Wechselrichter bleibt gestoppt, bis ihn jemand startet. Benutzer bedeutet Benutzer, die dieses Gerät bereits ändern dürfen; Konten mit reinem Lesezugriff können das nie, und Automationen und Skripte sind nicht betroffen. Jede andere Einstellung ist eine Entität, und Home Assistant entscheidet, wer sie ändern darf: Mache ein Konto unter Einstellungen → Personen schreibgeschützt, um einer Person jede Änderung zu verwehren.",
+            "description": "Wer die Aktionen Start und Stopp aufrufen darf und wer die Schaltfläche des Funktionstests drücken darf. Standard ist nur Administratoren: Ein gestoppter Wechselrichter bleibt gestoppt, bis ihn jemand startet. Benutzer bedeutet Benutzer, die dieses Gerät bereits ändern dürfen; Konten mit reinem Lesezugriff können das nie, und Automationen und Skripte sind nicht betroffen. Jede andere Einstellung ist eine Entität, und Home Assistant entscheidet, wer sie ändern darf: Mache ein Konto unter Einstellungen → Personen schreibgeschützt, um einer Person jede Änderung zu verwehren.",
             "data": {
               "start_stop": "Den Wechselrichter starten und stoppen",
-              "control_test": "Den Steuerungs-Schreibtest ausführen"
+              "capability_test": "Den Funktionstest ausführen"
             },
             "data_description": {
               "start_stop": "Wer die Aktionen Start und Stopp für diesen Wechselrichter aufrufen darf.",
-              "control_test": "Standardmäßig nur Administratoren. Der Steuerungs-Schreibtest ändert Einstellungen am Wechselrichter und setzt sie zurück und – wo du es oben erlaubt hast – stoppt und startet ihn neu. Ihn für Benutzer zu öffnen bedeutet Benutzer, die dieses Gerät bereits ändern dürfen; ein Konto mit reinem Lesezugriff kann es weiterhin nicht."
+              "capability_test": "Standardmäßig nur Administratoren. Der Funktionstest ändert Einstellungen am Wechselrichter und setzt sie zurück und – wo du es oben erlaubt hast – stoppt und startet ihn neu. Ihn für Benutzer zu öffnen bedeutet Benutzer, die dieses Gerät bereits ändern dürfen; ein Konto mit reinem Lesezugriff kann es weiterhin nicht."
             }
           },
           "external": {
@@ -1461,50 +1461,50 @@
               "wallbox_host": "Nur für eine Sungrow-Wallbox mit eigenem Netzwerkkabel oder WLAN. Ohne dies findet die Integration eine Wallbox hinter einem WiNet-S selbst, und das ist alles, was die meisten Installationen brauchen. Mit dieser Angabe wird die Wallbox stattdessen an ihrer eigenen Adresse gelesen – verschlüsselt, auf Port 516 –, was auch funktioniert, wenn dieser Eintrag am eigenen LAN-Port des Wechselrichters hängt, wo eine Wallbox sonst nicht zu sehen ist. Ihre Entitäten und deren Verlauf bleiben, wie sie sind. Leer lassen, um zum WiNet-S zurückzukehren."
             }
           },
-          "survey": {
+          "diagnosis": {
             "name": "Eine Funktionsdiagnose beisteuern",
             "description": "Welche Register ein Wechselrichter beantwortet, wird gemessen, nicht nachgeschlagen, und eine Messung von deinem verbessert die Unterstützung dafür. {measured} Alles unten ist optional und beantwortet, was kein Register kann; ein leeres Feld hält fest, dass die Frage nicht beantwortet wurde. Speichern behält deine Antworten. Um die Diagnose auszuführen, drücke auf der Geräteseite Diagnose ausführen (nur lesend): Sie liest und schreibt nie und ersetzt die Seriennummer durch einen Platzhalter.",
             "data": {
               "reporter": "Dein Name oder Pseudonym",
-              "survey_transport": "Wie dieser Wechselrichter angebunden ist",
-              "survey_proxy": "Befindet sich ein Modbus-Proxy im Pfad?",
-              "survey_pollers": "Fragt noch etwas anderes diesen Wechselrichter ab?",
-              "survey_other_inverter": "Gibt es hier einen weiteren Wechselrichter, der kein Sungrow ist?",
-              "survey_battery": "Hersteller und Modell der Batterie",
-              "survey_comment": "Sonst noch etwas Wissenswertes",
+              "diagnosis_transport": "Wie dieser Wechselrichter angebunden ist",
+              "diagnosis_proxy": "Befindet sich ein Modbus-Proxy im Pfad?",
+              "diagnosis_pollers": "Fragt noch etwas anderes diesen Wechselrichter ab?",
+              "diagnosis_other_inverter": "Gibt es hier einen weiteren Wechselrichter, der kein Sungrow ist?",
+              "diagnosis_battery": "Hersteller und Modell der Batterie",
+              "diagnosis_comment": "Sonst noch etwas Wissenswertes",
               "publish_address": "Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?",
-              "survey_register_dump": "Auch die rohen Registerbereiche durchsuchen (etwa fünf Minuten)"
+              "diagnosis_register_dump": "Auch die rohen Registerbereiche durchsuchen (etwa fünf Minuten)"
             },
             "data_description": {
               "reporter": "Wird in der veröffentlichten Messung genannt und gefragt, wenn eine Zeile Fragen aufwirft. Leer lassen, um anonym beizutragen.",
-              "survey_transport": "Kabel gegenüber Dongle ist bereits gemessen. Nur du weißt, ob ein Dongle an seiner Ethernet-Buchse oder per WLAN hängt – ein WiNet-S antwortet in beiden Fällen gleich, daher ist \"nicht sicher\" eine echte Antwort und besser als eine Vermutung.",
-              "survey_proxy": "modbus-proxy, der Proxy von evcc, ein Home-Assistant-Add-on. Ein Proxy hält eine Verbindung und verleiht sie weiter, was die Bedeutung eines ausgefallenen Registers verändert – und er baut jeden Frame neu auf, was die Frame-Eigenheiten, die dieses Projekt verfolgt, verbergen oder erzeugen kann.",
-              "survey_pollers": "Dieses Home Assistant wird automatisch erfasst. Wichtig ist hier alles andere: ein anderes Home Assistant, das YAML-Paket, evcc, ein Logger. Ein Wechselrichter gewährt sehr wenige Verbindungen, und zwei Clients, die um eine konkurrieren, sehen genau wie ein defektes Register aus.",
-              "survey_other_inverter": "Dein Sungrow misst nicht, wie viel dein Haus verbraucht – er errechnet es aus seiner eigenen Leistung plus dem, was der Netzzähler als Bezug meldet. Ein zweiter Wechselrichter am selben Zähler macht daher jeden Lastwert um genau dessen Erzeugung zu niedrig, während alles andere normal aussieht. Kein Register kann uns das sagen: Der Sungrow sieht ihn nicht. Antworte mit Ja, dann fragen wir, was es ist.",
-              "survey_battery": "Kein Register meldet das. \"SBR096\" oder \"Pylontech Force H1, 14,4 kWh\" ist nützlicher als eine Kapazität, die der Wechselrichter ohnehin meldet.",
-              "survey_comment": "Alles Ungewöhnliche an der Anlage – ein Verbund, ein zweiter Wechselrichter, eine Wallbox, ein Firmware-Update, an das du dich erinnerst.",
+              "diagnosis_transport": "Kabel gegenüber Dongle ist bereits gemessen. Nur du weißt, ob ein Dongle an seiner Ethernet-Buchse oder per WLAN hängt – ein WiNet-S antwortet in beiden Fällen gleich, daher ist \"nicht sicher\" eine echte Antwort und besser als eine Vermutung.",
+              "diagnosis_proxy": "modbus-proxy, der Proxy von evcc, ein Home-Assistant-Add-on. Ein Proxy hält eine Verbindung und verleiht sie weiter, was die Bedeutung eines ausgefallenen Registers verändert – und er baut jeden Frame neu auf, was die Frame-Eigenheiten, die dieses Projekt verfolgt, verbergen oder erzeugen kann.",
+              "diagnosis_pollers": "Dieses Home Assistant wird automatisch erfasst. Wichtig ist hier alles andere: ein anderes Home Assistant, das YAML-Paket, evcc, ein Logger. Ein Wechselrichter gewährt sehr wenige Verbindungen, und zwei Clients, die um eine konkurrieren, sehen genau wie ein defektes Register aus.",
+              "diagnosis_other_inverter": "Dein Sungrow misst nicht, wie viel dein Haus verbraucht – er errechnet es aus seiner eigenen Leistung plus dem, was der Netzzähler als Bezug meldet. Ein zweiter Wechselrichter am selben Zähler macht daher jeden Lastwert um genau dessen Erzeugung zu niedrig, während alles andere normal aussieht. Kein Register kann uns das sagen: Der Sungrow sieht ihn nicht. Antworte mit Ja, dann fragen wir, was es ist.",
+              "diagnosis_battery": "Kein Register meldet das. \"SBR096\" oder \"Pylontech Force H1, 14,4 kWh\" ist nützlicher als eine Kapazität, die der Wechselrichter ohnehin meldet.",
+              "diagnosis_comment": "Alles Ungewöhnliche an der Anlage – ein Verbund, ein zweiter Wechselrichter, eine Wallbox, ein Firmware-Update, an das du dich erinnerst.",
               "publish_address": "An, und du kannst es vor dem Absenden ausschalten. Nur die letzten zwei Oktette gelangen je in das Dokument – nie das dritte, das dein Netzwerk identifizieren würde –, und wenn du das deaktivierst, steht stattdessen xxx.xxx. Der Nutzen: Mehrere Messungen aus einem Haus lassen sich unterscheiden – ein Master, ein Slave und zwei Dongles ergeben sonst vier gleich aussehende Dateien.",
-              "survey_register_dump": "An, und besser auszuschalten, wenn du es eilig hast. Ohne sie liest die Diagnose die Register, die diese Integration bereits kennt, und braucht ein paar Sekunden. Mit ihr durchsucht sie zusätzlich 2181 Adressen in sechzehn Bereichen, auch die, die keine Spezifikation dokumentiert – so wurde jedes undokumentierte Register gefunden, das dieses Projekt kennt. Das ist langsam, weil eine Adresse ohne Inhalt verstummt statt abzulehnen, sodass jede leere ein volles Timeout kostet: etwa fünf Minuten am direkten Kabel und deutlich länger über ein WiNet-S oder ein VPN. Dein Wechselrichter wird die ganze Zeit weiter abgefragt, und die Diagnose-Schaltfläche auf der Geräteseite zeigt den Fortschritt."
+              "diagnosis_register_dump": "An, und besser auszuschalten, wenn du es eilig hast. Ohne sie liest die Diagnose die Register, die diese Integration bereits kennt, und braucht ein paar Sekunden. Mit ihr durchsucht sie zusätzlich 2181 Adressen in sechzehn Bereichen, auch die, die keine Spezifikation dokumentiert – so wurde jedes undokumentierte Register gefunden, das dieses Projekt kennt. Das ist langsam, weil eine Adresse ohne Inhalt verstummt statt abzulehnen, sodass jede leere ein volles Timeout kostet: etwa fünf Minuten am direkten Kabel und deutlich länger über ein WiNet-S oder ein VPN. Dein Wechselrichter wird die ganze Zeit weiter abgefragt, und die Diagnose-Schaltfläche auf der Geräteseite zeigt den Fortschritt."
             }
           },
-          "control_test": {
-            "name": "Was der Steuerungs-Schreibtest darf",
+          "capability_test": {
+            "name": "Was der Funktionstest darf",
             "description": "Vollständige Diagnose und Tests ausführen auf der Geräteseite schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die sechs Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Das Drücken der Schaltfläche ist deine Zustimmung. Was du ausschaltest, bleibt aus.",
             "data": {
-              "control_test_restart": "Darf er den Wechselrichter stoppen und neu starten?",
-              "control_test_export_limit": "Darf er die Einspeisebegrenzung einschalten?",
-              "control_test_pv_cut": "Darf er die PV-Erzeugung für etwa eine Minute abschalten?",
-              "control_test_charge_window": "Darf er ein Zwangslade-Fenster um jetzt herum setzen?",
-              "control_test_discharge_window": "Darf er die Entladefenster von jetzt weg verschieben?",
-              "control_test_import_limit": "Darf er den Netzbezug während einer kurzen Zwangsladung begrenzen?"
+              "capability_test_restart": "Darf er den Wechselrichter stoppen und neu starten?",
+              "capability_test_export_limit": "Darf er die Einspeisebegrenzung einschalten?",
+              "capability_test_pv_cut": "Darf er die PV-Erzeugung für etwa eine Minute abschalten?",
+              "capability_test_charge_window": "Darf er ein Zwangslade-Fenster um jetzt herum setzen?",
+              "capability_test_discharge_window": "Darf er die Entladefenster von jetzt weg verschieben?",
+              "capability_test_import_limit": "Darf er den Netzbezug während einer kurzen Zwangsladung begrenzen?"
             },
             "data_description": {
-              "control_test_restart": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung schreibt der Test das Stoppregister, wartet, bis sich der Wechselrichter als gestoppt meldet, startet ihn wieder und misst alle drei Übergänge, damit die Zahlen jedes Modells festgehalten sind.\n\nWährend er gestoppt ist, erzeugst du nichts, die Batterie lädt und entlädt nicht, und alles am Backup-Ausgang verliert die Versorgung. Bisher gemessen: gestoppt nach etwa 2 Sekunden, wieder in Betrieb nach 3 bis 4 Minuten bei Tageslicht und über 6 nachts, Erzeugung bis zu 20 Sekunden später. Der Wechselrichter bleibt nie gestoppt: Der Start wird über frische Verbindungen wiederholt, er wird erneut gestartet, wenn Home Assistant mitten im Test herunterfährt, und schlägt all das fehl, bekommst du eine Reparatur, die ihn startet.",
-              "control_test_export_limit": "An, sofern du es nicht ausschaltest. Wo du die Einspeisung bereits begrenzt, nutzt der Test diese Begrenzung und das ändert nichts. Mit dieser Einstellung darf er die Begrenzung dort, wo du keine hast, für etwa eine Minute einschalten.\n\nEs ist die eine Einstellung, deren fehlgeschlagene Wiederherstellung dich etwas Dauerhaftes kostet statt nur Genauigkeit: Eine nicht zurückgeschaltete Einspeisebegrenzung heißt, du speist weniger ein, als du könntest. Passiert das, bekommst du hier eine Reparatur, die sie zurückschaltet.",
-              "control_test_pv_cut": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter Register 31211 beantwortet, schreibt der Test den Code, der die PV-Erzeugung stoppt, prüft, dass die DC-Leistung auf null fällt, und erlaubt PV wieder. Die Erzeugung stoppt für etwa eine halbe Minute und braucht bis zu eine Minute mehr, um zurückzukommen, während der Wechselrichter seinen Arbeitspunkt neu sucht; Batterie und Netz versorgen das Haus in der Zwischenzeit.\n\nDieses Register steht nicht in Sungrows Dokumentation, weshalb der Schalter **PV-Erzeugung abschalten** nur für Firmware angeboten wird, auf der diese Prüfung bestanden wurde. Ein Lauf auf deiner ist der Weg, wie deine Firmware auf diese Liste kommt.",
-              "control_test_charge_window": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter den Zwangslade-Zeitplan hat und dieser aus ist, schreibt der Test ein Fenster um die eigene Uhr des Wechselrichters mit einem Ziel einige Prozent über der Batterie, schaltet den Zeitplan ein, prüft, dass die Batterie zu laden beginnt, und schaltet ihn wieder aus. Die Batterie lädt ein bis zwei Minuten, aus dem Netz, wenn keine Sonne scheint. Jedes Wort des Zeitplans wird danach zurückgesetzt. Übersprungen, wo dein eigener Zeitplan an ist.",
-              "control_test_discharge_window": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter die Entladezeitpläne beantwortet (Register 33151–33187), verschiebt der Test jedes Entladefenster an Werktagen und am Wochenende von jetzt weg, prüft, dass die Batterie nicht mehr entlädt, und setzt jedes Fenster zurück. Ein bis zwei Minuten bezieht das Haus Strom, statt die Batterie zu nutzen.\n\nDiese Register stehen nicht in Sungrows Dokumentation, weshalb sie nur als Messwerte angeboten werden. Ein Lauf auf deiner ist der Beleg, dass Schreiben darauf tut, was es soll.",
-              "control_test_import_limit": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter Register 32998 beantwortet, das Netzbezugslimit, lädt der Test die Batterie zwangsweise, setzt das Limit auf die Mitte zwischen dem, was das Haus dann bezieht, und dem, was es ohne die Ladung beziehen würde, prüft, dass der Netzbezug darauf sinkt, und setzt dein Limit zurück. Danach schreibt er drei Limits an den Enden des Bereichs je einmal, um festzuhalten, welche der Wechselrichter ablehnt. Die Batterie lädt etwa zwei Minuten, aus dem Netz, wenn keine Sonne scheint.\n\nDieses Register steht nicht in Sungrows Dokumentation, weshalb es nur als Messwert angeboten wird. Ein Lauf auf deiner ist der Beleg, dass Schreiben darauf tut, was es soll."
+              "capability_test_restart": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung schreibt der Test das Stoppregister, wartet, bis sich der Wechselrichter als gestoppt meldet, startet ihn wieder und misst alle drei Übergänge, damit die Zahlen jedes Modells festgehalten sind.\n\nWährend er gestoppt ist, erzeugst du nichts, die Batterie lädt und entlädt nicht, und alles am Backup-Ausgang verliert die Versorgung. Bisher gemessen: gestoppt nach etwa 2 Sekunden, wieder in Betrieb nach 3 bis 4 Minuten bei Tageslicht und über 6 nachts, Erzeugung bis zu 20 Sekunden später. Der Wechselrichter bleibt nie gestoppt: Der Start wird über frische Verbindungen wiederholt, er wird erneut gestartet, wenn Home Assistant mitten im Test herunterfährt, und schlägt all das fehl, bekommst du eine Reparatur, die ihn startet.",
+              "capability_test_export_limit": "An, sofern du es nicht ausschaltest. Wo du die Einspeisung bereits begrenzt, nutzt der Test diese Begrenzung und das ändert nichts. Mit dieser Einstellung darf er die Begrenzung dort, wo du keine hast, für etwa eine Minute einschalten.\n\nEs ist die eine Einstellung, deren fehlgeschlagene Wiederherstellung dich etwas Dauerhaftes kostet statt nur Genauigkeit: Eine nicht zurückgeschaltete Einspeisebegrenzung heißt, du speist weniger ein, als du könntest. Passiert das, bekommst du hier eine Reparatur, die sie zurückschaltet.",
+              "capability_test_pv_cut": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter Register 31211 beantwortet, schreibt der Test den Code, der die PV-Erzeugung stoppt, prüft, dass die DC-Leistung auf null fällt, und erlaubt PV wieder. Die Erzeugung stoppt für etwa eine halbe Minute und braucht bis zu eine Minute mehr, um zurückzukommen, während der Wechselrichter seinen Arbeitspunkt neu sucht; Batterie und Netz versorgen das Haus in der Zwischenzeit.\n\nDieses Register steht nicht in Sungrows Dokumentation, weshalb der Schalter **PV-Erzeugung abschalten** nur für Firmware angeboten wird, auf der diese Prüfung bestanden wurde. Ein Lauf auf deiner ist der Weg, wie deine Firmware auf diese Liste kommt.",
+              "capability_test_charge_window": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter den Zwangslade-Zeitplan hat und dieser aus ist, schreibt der Test ein Fenster um die eigene Uhr des Wechselrichters mit einem Ziel einige Prozent über der Batterie, schaltet den Zeitplan ein, prüft, dass die Batterie zu laden beginnt, und schaltet ihn wieder aus. Die Batterie lädt ein bis zwei Minuten, aus dem Netz, wenn keine Sonne scheint. Jedes Wort des Zeitplans wird danach zurückgesetzt. Übersprungen, wo dein eigener Zeitplan an ist.",
+              "capability_test_discharge_window": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter die Entladezeitpläne beantwortet (Register 33151–33187), verschiebt der Test jedes Entladefenster an Werktagen und am Wochenende von jetzt weg, prüft, dass die Batterie nicht mehr entlädt, und setzt jedes Fenster zurück. Ein bis zwei Minuten bezieht das Haus Strom, statt die Batterie zu nutzen.\n\nDiese Register stehen nicht in Sungrows Dokumentation, weshalb sie nur als Messwerte angeboten werden. Ein Lauf auf deiner ist der Beleg, dass Schreiben darauf tut, was es soll.",
+              "capability_test_import_limit": "An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter Register 32998 beantwortet, das Netzbezugslimit, lädt der Test die Batterie zwangsweise, setzt das Limit auf die Mitte zwischen dem, was das Haus dann bezieht, und dem, was es ohne die Ladung beziehen würde, prüft, dass der Netzbezug darauf sinkt, und setzt dein Limit zurück. Danach schreibt er drei Limits an den Enden des Bereichs je einmal, um festzuhalten, welche der Wechselrichter ablehnt. Die Batterie lädt etwa zwei Minuten, aus dem Netz, wenn keine Sonne scheint.\n\nDieses Register steht nicht in Sungrows Dokumentation, weshalb es nur als Messwert angeboten wird. Ein Lauf auf deiner ist der Beleg, dass Schreiben darauf tut, was es soll."
             }
           }
         }
@@ -1527,7 +1527,7 @@
         "title": "Welcher ist der andere Wechselrichter?",
         "description": "Der Hersteller und, falls bekannt, die Größe – *Fronius Symo 8.2* oder *5-kW-String-Wechselrichter auf dem Süddach*. Die Größe ist der nützliche Teil: Sie sagt, wie groß die Lücke in den Lastwerten ist.\n\nDas gelangt in das Dokument, lass deshalb Seriennummern, Adressen und Namen weg. Du kannst es leer lassen.",
         "data": {
-          "survey_other_inverter_detail": "Der andere Wechselrichter"
+          "diagnosis_other_inverter_detail": "Der andere Wechselrichter"
         }
       },
       "entity_ids_legacy": {
@@ -1546,14 +1546,14 @@
       "legacy_slot_unknown": "In diesem Haus lief das YAML-Paket für mehr als einen Wechselrichter, und Home Assistant kann nicht erkennen, welcher davon dieser war, die alten IDs könnten also die eines anderen Wechselrichters sein. Aktiviere das YAML-Paket für einen Neustart wieder, damit die Seriennummer dieses Wechselrichters aufgezeichnet wird, entferne es dann, starte erneut und komm hierher zurück."
     },
     "progress": {
-      "running_survey": "Dein Wechselrichter wird gelesen: 19 Funktionsprüfungen. Über ein WiNet-S kann das eine Minute dauern."
+      "running_diagnosis": "Dein Wechselrichter wird gelesen: 19 Funktionsprüfungen. Über ein WiNet-S kann das eine Minute dauern."
     },
     "abort": {
       "devices_mode_not_offered": "Sensoren und Steuerungen einzurichten ist in dieser Version nicht enthalten. Diese Alpha legt nur Einträge für die Diagnose an; beginne erneut und wähle **Geräte-Diagnose durchführen**."
     }
   },
   "services": {
-    "run_control_test": {
+    "run_capability_test": {
       "name": "Vollständige Diagnose und Tests ausführen",
       "description": "Schreibt in jede Steuerung, in die diese Integration schreiben kann, prüft jede auf drei Arten und setzt sie zurück. Anders als die Diagnose ÄNDERT dies EINSTELLUNGEN am Wechselrichter: Es begrenzt die Batterie und die Einspeisung und erzwingt kurz ein Laden und ein Entladen. Alles wird vor dem ersten Schreiben festgehalten und danach wiederhergestellt, und der Lauf meldet alles, was er nicht zurücksetzen konnte. Es gibt sie, weil ein falscher Skalierungsfaktor für ein Zurücklesen unsichtbar ist – 700 W schreiben, 700 W zurückbekommen – und nur Schreiben ihn finden kann. Die Berechtigungen für Neustart und Einspeisebegrenzung werden in den Optionen der Integration gesetzt und sind standardmäßig aus.",
       "fields": {
@@ -1563,7 +1563,7 @@
         }
       }
     },
-    "run_survey": {
+    "run_diagnosis": {
       "name": "Diagnose ausführen (nur lesend)",
       "description": "Liest die Register dieser Installation und erzeugt ein Dokument, das beschreibt, was geantwortet hat, damit die Unterstützung dafür gemessen statt geraten werden kann. Nur Lesen; es wird nichts in den Wechselrichter geschrieben, und die Seriennummer wird durch einen Platzhalter ersetzt. Das fertige Dokument kommt als Benachrichtigung mit Download-Link.",
       "fields": {
@@ -1604,7 +1604,7 @@
     "not_a_sungrow_device": {
       "message": "{name} ist kein Sungrow-Modbus-Gerät."
     },
-    "survey_already_running": {
+    "diagnosis_already_running": {
       "message": "Auf diesem Wechselrichter läuft bereits eine Diagnose. Zwei gleichzeitig würden um eine seiner sehr wenigen Modbus-Verbindungen konkurrieren."
     },
     "not_on_string_inverter": {

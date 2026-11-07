@@ -1,21 +1,21 @@
 ---
 type: source
 title: sh10rt-v112-b001v000p023-3p-anonymous-anon-91477823483-battery-sbr160-meter-direct-lan.json
-source_path: ../device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-anonymous-anon-91477823483-battery-sbr160-meter-direct-lan.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-anonymous-anon-91477823483-battery-sbr160-meter-direct-lan.json
 ingested: '2026-10-29'
 created: '2026-10-29'
 tags:
-  - survey
+  - diagnosis
   - sh10rt-v112
   - sapphire-h-b001-v000-p023
   - anonymous
   - direct_lan
-  - control-test
+  - capability-test
 ---
 
 # SH10RT-V112, B001.V000.P023, anonymous, the inverter's own LAN port
 
-Capability survey of one inverter, read 2026-10-16. Source: `device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-anonymous-anon-91477823483-battery-sbr160-meter-direct-lan.json`.
+Capability diagnosis of one inverter, read 2026-10-16. Source: `device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-anonymous-anon-91477823483-battery-sbr160-meter-direct-lan.json`.
 
 | | |
 | --- | --- |
@@ -40,9 +40,9 @@ Every component answered.
 
 Polled by this Home Assistant, throughout (13 components); block read test: run, before the probes, with this entry's polling held off; see block_read_test. See [contention](../concepts/contention.md).
 
-## Control test
+## Capability test
 
-Outcome **3**: ran, but checks were skipped or inconclusive. See [the control test](../concepts/control-test.md).
+Outcome **3**: ran, but checks were skipped or inconclusive. See [the capability test](../concepts/capability-test.md).
 
 | Field | Register | Verdict |
 | --- | --- | --- |

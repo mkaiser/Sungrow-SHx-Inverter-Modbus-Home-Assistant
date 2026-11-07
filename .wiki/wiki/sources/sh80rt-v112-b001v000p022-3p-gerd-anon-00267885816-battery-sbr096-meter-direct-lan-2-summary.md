@@ -1,23 +1,23 @@
 ---
 type: source
 title: sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-2.json
-source_path: ../device-survey/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-2.json
+source_path: ../device-diagnosis/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-2.json
 ingested: '2026-11-01'
 created: '2026-11-01'
 tags:
-  - survey
+  - diagnosis
   - sh80rt-v112
   - sapphire-h-b001-v000-p022
   - gerd
   - direct_lan
-  - control-test
+  - capability-test
 ---
 
 # SH8.0RT-V112, B001.V000.P022, gerd, the inverter's own LAN port, second reading
 
 Read by the maintainer over a VPN on 2026-11-01 around noon, the owner's Home Assistant stopped,
-with the full control test on this tree's library (timed windows included). Source:
-`device-survey/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-2.json`.
+with the full capability test on this tree's library (timed windows included). Source:
+`device-diagnosis/results/inverter/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-meter-direct-lan-2.json`.
 
 | | |
 | --- | --- |
@@ -38,9 +38,9 @@ See [energy history](../concepts/energy-history.md).
 
 Register 32998 reads 2000.
 
-## Control test
+## Capability test
 
-Outcome **3**, 9 of 9 readbacks matched. See [the control test](../concepts/control-test.md).
+Outcome **3**, 9 of 9 readbacks matched. See [the capability test](../concepts/capability-test.md).
 
 - [13074](../entities/register-13074.md): the probe was refused three times, **times ten**; 600 W
   went out as raw 600.

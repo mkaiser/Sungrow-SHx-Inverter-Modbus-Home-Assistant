@@ -3,7 +3,7 @@
 The package never covered a wallbox, so there is no entity map entry to test
 these descriptions against. This file is their guard instead.
 
-The fixture is the raw dump in the committed survey, which is the only
+The fixture is the raw dump in the committed diagnosis, which is the only
 wallbox reading this project has. Nothing here is invented: every number came
 off an AC22E-01 through a WiNet-S at unit 3.
 """
@@ -27,7 +27,7 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
-from sungrow_modbus.survey_document import stand_in
+from sungrow_modbus.diagnosis_document import stand_in
 from sungrow_modbus.wallbox.registers import COMPONENTS
 
 from .conftest import SERIAL
@@ -146,7 +146,7 @@ def test_no_raw_code_and_no_unnamed_register_becomes_an_entity() -> None:
     )
     assert "unnamed_register_21313" not in fields
     assert not {"charging_started", "charging_ended"} & fields
-    # But the library still reads all of them, so the survey carries them.
+    # But the library still reads all of them, so the diagnosis carries them.
     read = {name for klass in COMPONENTS.values() for name in klass.declared_fields}
     assert "unnamed_register_21313" in read
     assert {"charging_started", "charging_ended"} <= read
@@ -294,22 +294,22 @@ async def test_a_device_answering_zeros_is_not_taken_for_a_wallbox(
     assert _entities(hass, entry.entry_id) == []
 
 
-# -- the survey's wallbox section, from the device page ----------------------
+# -- the diagnosis's wallbox section, from the device page ----------------------
 
 
 @pytest.mark.parametrize("dumping", [False, True], ids=["readings", "with dump"])
-async def test_the_device_page_publishes_the_surveys_wallbox_section(
+async def test_the_device_page_publishes_the_diagnoses_wallbox_section(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit, dumping: bool
 ) -> None:
-    """Same key, same per-field shape, as `sungrow_survey.py` writes.
+    """Same key, same per-field shape, as `sungrow_diagnosis.py` writes.
 
-    The committed document is the survey's, so its readings are the expected
+    The committed document is the diagnosis's, so its readings are the expected
     ones; with the dump option the section also carries the masked words, and
     the serial -- answered here, two registers below the model name -- is in
     neither half.
     """
-    from custom_components.sungrow_modbus.const import CONF_SURVEY_DUMP
-    from custom_components.sungrow_modbus.survey_document import async_build
+    from custom_components.sungrow_modbus.const import CONF_DIAGNOSIS_DUMP
+    from custom_components.sungrow_modbus.diagnosis_document import async_build
 
     serial_words = [0x4139, 0x3837, 0x3635, 0x3433, 0x3231, 0x0000]
     words = {
@@ -323,7 +323,7 @@ async def test_the_device_page_publishes_the_surveys_wallbox_section(
     committed = json.loads(SESSION_DOCUMENT.read_text(encoding="utf-8"))["wallbox"]
 
     document = await async_build(
-        hass, entry, options={CONF_SURVEY_DUMP: dumping}, allow_dump=True
+        hass, entry, options={CONF_DIAGNOSIS_DUMP: dumping}, allow_dump=True
     )
 
     section = document["wallbox"]
@@ -422,7 +422,7 @@ async def test_a_wallbox_address_that_answers_nothing_does_not_fail_the_entry(
     assert entry.runtime_data.wallbox is None
 
 
-async def test_a_survey_of_the_direct_path_dumps_where_tls_answers(
+async def test_a_diagnosis_of_the_direct_path_dumps_where_tls_answers(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
     """At its own address the wallbox is dumped with the TLS bands, and says so.
@@ -431,14 +431,14 @@ async def test_a_survey_of_the_direct_path_dumps_where_tls_answers(
     nothing; the document's `path` says which reading it is, because the two
     differ in more than speed.
     """
-    from custom_components.sungrow_modbus.const import CONF_SURVEY_DUMP
-    from custom_components.sungrow_modbus.survey_document import async_build
+    from custom_components.sungrow_modbus.const import CONF_DIAGNOSIS_DUMP
+    from custom_components.sungrow_modbus.diagnosis_document import async_build
     from sungrow_modbus.dump import WALLBOX_TLS_BANDS
 
     entry, _asked = await _setup_direct(hass, sungrow_unit)
 
     document = await async_build(
-        hass, entry, options={CONF_SURVEY_DUMP: True}, allow_dump=True
+        hass, entry, options={CONF_DIAGNOSIS_DUMP: True}, allow_dump=True
     )
 
     section = document["wallbox"]
@@ -470,8 +470,8 @@ async def test_the_wallbox_shows_its_own_serial_and_publishes_only_its_hash(
         get_diagnostics_for_config_entry,
     )
 
-    from custom_components.sungrow_modbus.survey_document import async_build
-    from sungrow_modbus.survey_document import stand_in
+    from custom_components.sungrow_modbus.diagnosis_document import async_build
+    from sungrow_modbus.diagnosis_document import stand_in
 
     serial_words = [0x4139, 0x3837, 0x3635, 0x3433, 0x3231, 0x0000]
     words = {

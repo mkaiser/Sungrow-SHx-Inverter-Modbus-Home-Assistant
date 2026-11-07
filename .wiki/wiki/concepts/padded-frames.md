@@ -15,7 +15,7 @@ whole pooled block with it (`src/sungrow_modbus/hybrid_inverter/layout.py`).
 
 **A lenient client says the register is fine.** A raw socket trusts
 `byte_count` and reads the padded frames perfectly, while the shipping stack
-cannot. `device-survey/scripts/python/blocks.py` is as strict as the
+cannot. `device-diagnosis/scripts/python/blocks.py` is as strict as the
 shipping stack. It reports both numbers and the count that reconciles them.
 Add to `layout.py` only from *its* measurement.
 

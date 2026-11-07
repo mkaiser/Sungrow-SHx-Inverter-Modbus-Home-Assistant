@@ -50,6 +50,7 @@ from custom_components.sungrow_modbus.derived_descriptions import (
     DERIVED_BINARY_SENSORS,
     DERIVED_SENSORS,
 )
+from custom_components.sungrow_modbus.diagnosis_entities import DIAGNOSIS_ENTITIES
 from custom_components.sungrow_modbus.external_descriptions import EXTERNAL_SENSORS
 from custom_components.sungrow_modbus.number_descriptions import NUMBER_DESCRIPTIONS
 from custom_components.sungrow_modbus.select_descriptions import SELECT_DESCRIPTIONS
@@ -58,7 +59,6 @@ from custom_components.sungrow_modbus.string_inverter_descriptions import (
     STRING_INVERTER_BINARY_DESCRIPTIONS,
     STRING_INVERTER_DESCRIPTIONS,
 )
-from custom_components.sungrow_modbus.survey_entities import SURVEY_ENTITIES
 from custom_components.sungrow_modbus.switch_descriptions import SWITCH_DESCRIPTIONS
 from custom_components.sungrow_modbus.wallbox_descriptions import (
     WALLBOX_BINARY_DESCRIPTIONS,
@@ -139,7 +139,7 @@ def test_every_entity_has_a_name_and_no_name_is_orphaned() -> None:
     A missing entry shows in the interface as the raw translation key; an
     extra one is a rename that left its old name behind.
 
-    The survey's own entities are the exception, and are subtracted rather
+    The diagnosis's own entities are the exception, and are subtracted rather
     than exempted: they have no `EntityDescription` because there is no
     register behind them -- they report what the integration is doing. They
     are still named through the same generator and the same `OVERRIDES`
@@ -147,14 +147,14 @@ def test_every_entity_has_a_name_and_no_name_is_orphaned() -> None:
     """
     for domain, group in DESCRIPTIONS.items():
         named = set(NAMES[domain]) - {
-            key for section, key in SURVEY_ENTITIES if section == domain
+            key for section, key in DIAGNOSIS_ENTITIES if section == domain
         }
         assert {d.key for d in group} == named, domain
 
 
-def test_the_surveys_own_entities_are_named_too() -> None:
+def test_the_diagnoses_own_entities_are_named_too() -> None:
     """The other half, for the entities the loop above subtracts."""
-    for domain, key in SURVEY_ENTITIES:
+    for domain, key in DIAGNOSIS_ENTITIES:
         assert key in NAMES[domain], f"{domain}.{key} has no name"
         assert NAMES[domain][key], f"{domain}.{key} is named with an empty string"
 
@@ -527,7 +527,7 @@ def test_a_german_text_keeps_what_the_english_text_carries(path: str) -> None:
 def test_one_english_text_has_one_german_text() -> None:
     """The setup flow and the options flow say some things twice, and agree.
 
-    The survey's questions, the entity-id explanation and the unknown-slot
+    The diagnosis's questions, the entity-id explanation and the unknown-slot
     text are each shown in both. Two translations of one sentence would be
     two things to keep in step.
     """

@@ -9,7 +9,7 @@ point of the masking these tests also check.
 The reason this file exists rather than trusting the table: a wallbox is the
 rarest device this project sees, so the decode is exercised about once per
 contributor. A scale that is wrong by a factor of ten would sit in a
-survey unnoticed and be read as evidence about somebody's hardware.
+diagnosis unnoticed and be read as evidence about somebody's hardware.
 """
 
 from __future__ import annotations
@@ -19,8 +19,8 @@ from pathlib import Path
 
 import pytest
 
+from sungrow_modbus.diagnosis_document import stand_in
 from sungrow_modbus.dump import WALLBOX_MASKED, masked
-from sungrow_modbus.survey_document import stand_in
 from sungrow_modbus.wallbox import readings as decode, serial_stand_in
 from sungrow_modbus.wallbox.registers import CODES, COMPONENTS, CONFIDENCE
 
@@ -189,7 +189,7 @@ def test_a_field_that_did_not_answer_is_absent_rather_than_zero() -> None:
     """An absent register is not a reading of nothing.
 
     Holding 21263 did not answer on this unit though a project names it. A
-    survey that published it as 0 would say the wallbox is in "network"
+    diagnosis that published it as 0 would say the wallbox is in "network"
     working mode, which is a claim about somebody's configuration.
     """
     thin = {"input": {"21316": 3}}
@@ -234,7 +234,7 @@ def test_the_field_table_never_reads_the_serial() -> None:
 REPO = Path(__file__).resolve().parent.parent
 RECORDED = sorted(
     [
-        *(REPO / "doc" / "device-survey").glob("*wallbox*.json"),
+        *(REPO / "doc" / "device-diagnosis").glob("*wallbox*.json"),
         REPO / "tests" / "data" / "wallbox_ac22e01_completed_session.json",
     ]
 )

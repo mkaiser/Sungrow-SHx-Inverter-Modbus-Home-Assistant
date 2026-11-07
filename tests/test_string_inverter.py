@@ -1,7 +1,7 @@
 """The SG string inverters' own map, read only.
 
 The addresses are ha-modbus-manager's, from Sungrow's string-inverter protocol
-V1.1.53; no SG has been surveyed. What is asserted here is that the map
+V1.1.53; no SG has been diagnosed. What is asserted here is that the map
 decodes as the protocol says, that an SG is told from a hybrid by input 5000
 alone, and that nothing in it can write.
 """
@@ -22,6 +22,7 @@ import pytest
 
 from sungrow_modbus import string_inverter
 from sungrow_modbus.const import DEVICE_TYPES
+from sungrow_modbus.diagnosis_document import stand_in
 from sungrow_modbus.discovery import async_identify
 from sungrow_modbus.identity import STRING_INVERTER
 from sungrow_modbus.model import words_text
@@ -32,14 +33,15 @@ from sungrow_modbus.string_inverter import (
     is_string_inverter,
     model_for,
 )
-from sungrow_modbus.survey_document import stand_in
 
-SURVEY = Path(__file__).resolve().parents[1] / "device-survey" / "scripts" / "python"
-sys.path.insert(0, str(SURVEY))
+DIAGNOSIS = (
+    Path(__file__).resolve().parents[1] / "device-diagnosis" / "scripts" / "python"
+)
+sys.path.insert(0, str(DIAGNOSIS))
 
 import probe  # noqa: E402
 import string_inverter_direct  # noqa: E402
-import sungrow_survey  # noqa: E402
+import sungrow_diagnosis  # noqa: E402
 
 from .corpus import STRING_INVERTER_DOCUMENTS  # noqa: E402
 
@@ -186,20 +188,20 @@ async def _no_sleep(_seconds: float) -> None:
     return None
 
 
-async def _survey(tmp_path: Path, device: dict[str, dict[int, int]] | None):
+async def _diagnosis(tmp_path: Path, device: dict[str, dict[int, int]] | None):
     found = string_inverter_direct.Found("192.0.2.50", 502, 1, "SG5.0RS")
     answers = SimpleNamespace(timeout=1, reporter="tester", comment="")
     with (
         patch.object(string_inverter_direct, "ModbusConnection", _connection(device)),
         patch("sungrow_modbus.dump.asyncio.sleep", _no_sleep),
     ):
-        return await string_inverter_direct.async_survey(
+        return await string_inverter_direct.async_diagnosis(
             found, answers, tmp_path, lambda _text: None, address_tail="000.050"
         )
 
 
 async def test_identify_names_an_sg_by_its_kind() -> None:
-    """The config flow ignores `kind`; the survey routes on it."""
+    """The config flow ignores `kind`; the diagnosis routes on it."""
 
     class Unit:
         async def read_input_registers(self, address: int, count: int) -> list[int]:
@@ -221,8 +223,8 @@ async def test_identify_names_an_sg_by_its_kind() -> None:
     assert identity.serial == "A123456789"
 
 
-async def test_a_survey_writes_an_sg_document_without_its_serial(tmp_path) -> None:
-    reading = await _survey(tmp_path, _sg())
+async def test_a_diagnosis_writes_an_sg_document_without_its_serial(tmp_path) -> None:
+    reading = await _diagnosis(tmp_path, _sg())
 
     assert reading.code == 0
     document = reading.document
@@ -251,17 +253,17 @@ async def test_a_survey_writes_an_sg_document_without_its_serial(tmp_path) -> No
 
 
 async def test_an_sg_that_answers_nothing_writes_nothing(tmp_path) -> None:
-    reading = await _survey(tmp_path, None)
+    reading = await _diagnosis(tmp_path, None)
 
     assert reading.code == 1
     assert reading.written is None
     assert not list(tmp_path.iterdir())
 
 
-async def test_the_survey_never_reads_an_sg_as_a_hybrid() -> None:
-    """An SG is collected for its own reader, never for `_survey`.
+async def test_the_diagnosis_never_reads_an_sg_as_a_hybrid() -> None:
+    """An SG is collected for its own reader, never for `_diagnosis`.
 
-    So neither the block test nor the control test can reach it.
+    So neither the block test nor the capability test can reach it.
     """
     args = argparse.Namespace(host=["192.0.2.50"], port=502, unit=None)
     who = SimpleNamespace(kind="string_inverter", model="SG5.0RS", unit=1, error=None)
@@ -275,14 +277,14 @@ async def test_the_survey_never_reads_an_sg_as_a_hybrid() -> None:
     with (
         patch.object(probe, "identify", identify),
         patch.object(probe, "described", lambda _who: "an SG"),
-        patch.object(sungrow_survey.wallbox_direct, "async_identify", no_wallbox),
+        patch.object(sungrow_diagnosis.wallbox_direct, "async_identify", no_wallbox),
     ):
-        inverters = await sungrow_survey._find(args, lambda *_a: None)
+        inverters = await sungrow_diagnosis._find(args, lambda *_a: None)
 
     assert inverters == []
     assert [
         string_inverter_direct.Found("192.0.2.50", 502, 1, "SG5.0RS")
-    ] == sungrow_survey._STRING_INVERTERS
+    ] == sungrow_diagnosis._STRING_INVERTERS
 
 
 @pytest.mark.parametrize("path", STRING_INVERTER_DOCUMENTS, ids=lambda p: p.stem)
@@ -331,18 +333,18 @@ async def test_a_lost_link_once_is_retried() -> None:
     assert device.field("total_dc_power") == 1890
 
 
-def test_the_simulator_seed_is_the_survey_it_came_from() -> None:
+def test_the_simulator_seed_is_the_diagnosis_it_came_from() -> None:
     """`scripts/dev/simulator_sg.json` is bleughb's dump, word for word.
 
-    Only the serial differs: the survey masked it, the seed carries the
+    Only the serial differs: the diagnosis masked it, the seed carries the
     placeholder, so the masking runs end to end against the simulator.
     """
     repo = Path(__file__).resolve().parents[1]
     seed = json.loads((repo / "scripts/dev/simulator_sg.json").read_text())
-    survey = json.loads(
+    diagnosis = json.loads(
         (
             repo
-            / "device-survey/results/string_inverter"
+            / "device-diagnosis/results/string_inverter"
             / "sg5-0rs-1p-bleughb-anon-85541281016.json"
         ).read_text()
     )["string_inverter"]["register_dump"]
@@ -353,7 +355,7 @@ def test_the_simulator_seed_is_the_survey_it_came_from() -> None:
             for start, words in seed[space].items()
             for offset, word in enumerate(words)
         }
-        measured = {int(a): w for a, w in survey[space].items() if w is not None}
+        measured = {int(a): w for a, w in diagnosis[space].items() if w is not None}
         serial = range(4989, 4999) if space == "input" else range(0)
         assert {a: w for a, w in served.items() if a not in serial} == measured
     assert (

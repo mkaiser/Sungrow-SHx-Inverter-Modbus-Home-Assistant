@@ -17,7 +17,7 @@ held a meter-measured import cap
 commanded through 13050 and 13051: 1978 W of import against a 2.00 kW cap, the charge cut from
 4500 W to ~1500 W ([the run](../sources/mkaiser-import-limit-2026-11-07-summary.md)). With PV it
 caps grid import alone. At 1 (0.01 kW) the forced charge drew only on PV
-([the PV run](../sources/mkaiser-import-limit-pv-2026-11-07-summary.md)), and the control test's
+([the PV run](../sources/mkaiser-import-limit-pv-2026-11-07-summary.md)), and the capability test's
 check confirmed it ([the engine run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md)). On ulfben's [SH10RT-V112](../entities/device-sh-rt.md) the battery
 force-charges at full power whatever it is set to, by the owner's report, before and after a
 firmware update.

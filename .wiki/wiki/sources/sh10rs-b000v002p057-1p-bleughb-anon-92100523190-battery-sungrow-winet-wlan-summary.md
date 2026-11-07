@@ -1,27 +1,27 @@
 ---
 type: source
 title: sh10rs-b000v002p057-1p-bleughb-anon-92100523190-battery-sungrow-winet-wlan.json
-source_path: ../device-survey/results/inverter/sh10rs-b000v002p057-1p-bleughb-anon-92100523190-battery-sungrow-winet-wlan.json
+source_path: ../device-diagnosis/results/inverter/sh10rs-b000v002p057-1p-bleughb-anon-92100523190-battery-sungrow-winet-wlan.json
 ingested: '2026-11-02'
 created: '2026-11-02'
 tags:
-  - survey
+  - diagnosis
   - sh10rs
   - sunstone-h-b000-v002-p057
   - bleughb
   - winet_wlan
-  - control-test
+  - capability-test
 ---
 
-# SH10RS, B000.V002.P057, bleughb, a WiNet-S on WiFi, with a control test
+# SH10RS, B000.V002.P057, bleughb, a WiNet-S on WiFi, with a capability test
 
-Capability survey of one inverter, read 2026-11-02 in the evening from Home Assistant on
-0.1.0a24, issue #789, with the control test. **Taken from a diagnostics download**: the owner
-attached the integration's diagnostics, whose `survey` section is the publishable survey
+Capability diagnosis of one inverter, read 2026-11-02 in the evening from Home Assistant on
+0.1.0a24, issue #789, with the capability test. **Taken from a diagnostics download**: the owner
+attached the integration's diagnostics, whose `diagnosis` section is the publishable diagnosis
 (`custom_components/sungrow_modbus/diagnostics.py`); that section is committed as it was
-written, under the name the library derives for it (`survey_document.label_for`). A diagnostics
+written, under the name the library derives for it (`diagnosis_document.label_for`). A diagnostics
 download carries no register dump and runs no block read test, so this document has neither.
-Source: `device-survey/results/inverter/sh10rs-b000v002p057-1p-bleughb-anon-92100523190-battery-sungrow-winet-wlan.json`.
+Source: `device-diagnosis/results/inverter/sh10rs-b000v002p057-1p-bleughb-anon-92100523190-battery-sungrow-winet-wlan.json`.
 
 | | |
 | --- | --- |
@@ -54,10 +54,10 @@ cells and modules are refused with `IllegalDataAddressError`; the summary block 
 Polled by this Home Assistant throughout (22 components, not paused), and an energy meter polls
 too, by the owner's note. See [contention](../concepts/contention.md).
 
-## Control test
+## Capability test
 
 Outcome **3**: ran, with checks skipped. Through a WiNet-S, so only the behavioural leg is
-evidence. See [the control test](../concepts/control-test.md).
+evidence. See [the capability test](../concepts/capability-test.md).
 
 | Field | Register | Verdict (as the dongle reported it) |
 | --- | --- | --- |

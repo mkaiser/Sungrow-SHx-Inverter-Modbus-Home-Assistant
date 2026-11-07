@@ -1,7 +1,7 @@
 """The block read test from the device page, held to the terminal tool's.
 
 `sungrow_modbus.block_test` is the second producer of a measurement that
-`device-survey/scripts/python/blocks.py` and `sungrow_survey.py` already make,
+`device-diagnosis/scripts/python/blocks.py` and `sungrow_diagnosis.py` already make,
 and its answers end up in the same place: a published document, read by a
 maintainer deciding what goes in
 `src/sungrow_modbus/hybrid_inverter/layout.py`. So most of what is asserted
@@ -44,10 +44,10 @@ from sungrow_modbus.block_test import (
 )
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "device-survey" / "scripts" / "python"))
+sys.path.insert(0, str(REPO / "device-diagnosis" / "scripts" / "python"))
 
 import blocks as terminal  # noqa: E402
-import sungrow_survey  # noqa: E402
+import sungrow_diagnosis  # noqa: E402
 
 Reader = Callable[[str, int, int], object]
 
@@ -89,8 +89,8 @@ def test_the_outcome_words_and_the_budget_are_the_terminal_tools() -> None:
     assert block_test.UNNARROWED == terminal.UNNARROWED
     assert block_test.NARROW_BUDGET == terminal.NARROW_BUDGET
     assert (block_test.ROUNDS, block_test.ATTEMPTS) == (
-        sungrow_survey.ROUNDS,
-        sungrow_survey.ATTEMPTS,
+        sungrow_diagnosis.ROUNDS,
+        sungrow_diagnosis.ATTEMPTS,
     )
 
 
@@ -121,7 +121,7 @@ async def test_the_terminal_tool_measures_through_the_library() -> None:
     )
 
     assert theirs == mine
-    assert sungrow_survey._block_document(
+    assert sungrow_diagnosis._block_document(
         block_test.Outcome(), "raw"
     ) == block_test.document(block_test.Outcome(), client="raw")
 

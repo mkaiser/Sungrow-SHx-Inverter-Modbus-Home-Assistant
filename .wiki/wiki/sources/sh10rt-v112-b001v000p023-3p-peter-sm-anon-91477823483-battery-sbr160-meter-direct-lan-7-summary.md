@@ -1,11 +1,11 @@
 ---
 type: source
 title: sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-7.json
-source_path: ../device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-7.json
+source_path: ../device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-7.json
 ingested: '2026-11-06'
 created: '2026-11-06'
 tags:
-  - survey
+  - diagnosis
   - sh10rt-v112
   - sapphire-h-b001-v000-p023
   - peter-sm
@@ -14,13 +14,13 @@ tags:
 
 # SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, eighth reading
 
-Capability survey of one inverter, read 2026-11-06 around 17:44 UTC from Home Assistant 2026.11.0
+Capability diagnosis of one inverter, read 2026-11-06 around 17:44 UTC from Home Assistant 2026.11.0
 (Home Assistant OS) with integration 0.1.0a26, posted by Korsberg to issue #786. **Taken from a
-diagnostics download**: the owner attached the integration's diagnostics, whose `survey` section
-is the publishable survey (`custom_components/sungrow_modbus/diagnostics.py`); that section is
+diagnostics download**: the owner attached the integration's diagnostics, whose `diagnosis` section
+is the publishable diagnosis (`custom_components/sungrow_modbus/diagnostics.py`); that section is
 committed as it was, under the library's own name for it. A diagnostics download takes no
-register dump, no block read test and no control test. Source:
-`device-survey/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-7.json`.
+register dump, no block read test and no capability test. Source:
+`device-diagnosis/results/inverter/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-7.json`.
 
 | | |
 | --- | --- |
@@ -49,6 +49,6 @@ Nothing new about the device: the type code, firmware, capability probes (every 
 same state as the [seventh reading](sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-6-summary.md))
 and answering components are the same, and only the live values differ. It is the installation's
 first reading from a diagnostics download, and the first on Home Assistant 2026.11.0 and
-integration 0.1.0a26; nothing in it differs on that account. No control test ran, so
+integration 0.1.0a26; nothing in it differs on that account. No capability test ran, so
 [13074](../entities/register-13074.md)'s scale and the charge window's write of 33213 are not
 measured here.

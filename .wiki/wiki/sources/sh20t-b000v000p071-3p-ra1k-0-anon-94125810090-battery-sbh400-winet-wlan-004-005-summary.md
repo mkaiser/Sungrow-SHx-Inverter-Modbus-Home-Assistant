@@ -1,25 +1,25 @@
 ---
 type: source
 title: sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005.json
-source_path: ../device-survey/results/inverter/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005.json
+source_path: ../device-diagnosis/results/inverter/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005.json
 ingested: '2026-10-30'
 created: '2026-10-30'
 tags:
-  - survey
+  - diagnosis
   - sh20t
   - pearl-h-b000-v000-p071
   - ra1k-0
   - winet_wlan
-  - control-test
+  - capability-test
 ---
 
-# SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi, with a control test
+# SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi, with a capability test
 
-Capability survey of one inverter, read 2026-10-30 from Home Assistant, issue #772, with a
-control test: the first on any [SH-T](../entities/device-sh-t.md). The issue carried two files
-a minute apart; this is the second, which holds the first's reading plus the control test. The
+Capability diagnosis of one inverter, read 2026-10-30 from Home Assistant, issue #772, with a
+capability test: the first on any [SH-T](../entities/device-sh-t.md). The issue carried two files
+a minute apart; this is the second, which holds the first's reading plus the capability test. The
 filename carries the address tail because this installation's September reading, under the same
-label, came from a different one. Source: `device-survey/results/inverter/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005.json`.
+label, came from a different one. Source: `device-diagnosis/results/inverter/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005.json`.
 
 | | |
 | --- | --- |
@@ -51,10 +51,10 @@ Polled by this Home Assistant, held off for the run (14 components). The owner n
 [iHomeManager](../entities/device-ihomemanager.md) as another poller. Nothing in the block read
 test shows it: no reconnects, nothing intermittent. See [contention](../concepts/contention.md).
 
-## Control test
+## Capability test
 
 Outcome **4**: a scale finding. Through a WiNet-S only leg C is evidence, so the finding is a
-lead, not a measurement. See [the control test](../concepts/control-test.md).
+lead, not a measurement. See [the capability test](../concepts/capability-test.md).
 
 | Field | Register | Verdict |
 | --- | --- | --- |

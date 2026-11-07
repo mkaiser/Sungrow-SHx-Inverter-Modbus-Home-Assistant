@@ -18,6 +18,6 @@ created: '2026-11-01'
 - The battery firmware string (13280) carries bytes after its NUL, as on
   [P068](firmware-sunstone-h-b000-v001-p068.md).
 
-## Surveys
+## Diagnoses
 
-- [SH10RS, B000.V002.P065, Jam3s97, a WiNet-S on Ethernet, with a control test](../sources/sh10rs-b000v002p065-1p-jam3s97-anon-35122522532-battery-sbh300-winet-lan-summary.md)
+- [SH10RS, B000.V002.P065, Jam3s97, a WiNet-S on Ethernet, with a capability test](../sources/sh10rs-b000v002p065-1p-jam3s97-anon-35122522532-battery-sbh300-winet-lan-summary.md)

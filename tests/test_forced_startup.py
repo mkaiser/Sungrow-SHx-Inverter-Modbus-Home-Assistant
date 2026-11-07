@@ -3,7 +3,7 @@
 13017 is a command: 0xAA wakes an inverter in low-SoC standby, and it never
 reads 0xAA back. So it is a button, created only on firmware where a start
 was watched -- none yet. 31213 holds a setting both ways round in the
-surveys, so it is decoded, and its number stays only for legacy history.
+diagnoses, so it is decoded, and its number stays only for legacy history.
 """
 
 from __future__ import annotations

@@ -1,11 +1,11 @@
 ---
 type: source
 title: sh60rs-b000v001p068-1p-anonymous-anon-17579213881-battery-sbr192-winet.json
-source_path: ../device-survey/results/inverter/sh60rs-b000v001p068-1p-anonymous-anon-17579213881-battery-sbr192-winet.json
+source_path: ../device-diagnosis/results/inverter/sh60rs-b000v001p068-1p-anonymous-anon-17579213881-battery-sbr192-winet.json
 ingested: '2026-10-31'
 created: '2026-10-31'
 tags:
-  - survey
+  - diagnosis
   - sh60rs
   - sunstone-h-b000-v001-p068
   - anonymous
@@ -14,12 +14,12 @@ tags:
 
 # SH6.0RS, B000.V001.P068, anonymous, a WiNet-S
 
-Capability survey of one inverter, read 2026-10-31 from the terminal survey, issue #786, reads
-only (`--control-test no`). Published as `anonymous`. The first [SH-RS](../entities/device-sh-rs.md)
-in the corpus. The contributor's file carried `-2`, the survey's number for its own second run
+Capability diagnosis of one inverter, read 2026-10-31 from the terminal diagnosis, issue #786, reads
+only (`--capability-test no`). Published as `anonymous`. The first [SH-RS](../entities/device-sh-rs.md)
+in the corpus. The contributor's file carried `-2`, the diagnosis's number for its own second run
 ("Repeat with Home Assistant and Node-RED Modbus polling stopped"); the first was not sent, so
 this one is committed under the plain name. Source:
-`device-survey/results/inverter/sh60rs-b000v001p068-1p-anonymous-anon-17579213881-battery-sbr192-winet.json`.
+`device-diagnosis/results/inverter/sh60rs-b000v001p068-1p-anonymous-anon-17579213881-battery-sbr192-winet.json`.
 
 | | |
 | --- | --- |
@@ -52,7 +52,7 @@ See [contention](../concepts/contention.md).
 Input 13280-13294 holds `SBRBCU-S_22011.01.30`, a NUL, and then `44` left over from a longer
 string. `modbus_connection` strips only trailing NULs, so the reading kept the leftover; the
 library now ends a string at its first NUL (`src/sungrow_modbus/model.py`,
-`tests/test_text_field.py`). The committed document is as the survey wrote it.
+`tests/test_text_field.py`). The committed document is as the diagnosis wrote it.
 
 ## What the dump adds
 

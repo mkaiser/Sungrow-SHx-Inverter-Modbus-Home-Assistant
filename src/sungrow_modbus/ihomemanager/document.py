@@ -2,7 +2,7 @@
 
 **It has no documented serial**, so there is no fixed mask as the inverter
 and the wallbox have. What it may still have is an undocumented one: the
-survey reads the gaps between documented registers, because that is where
+diagnosis reads the gaps between documented registers, because that is where
 anything Sungrow left out would be. So any **text** in a gap is treated as a
 serial until somebody shows otherwise: masked out of the dump, and recorded
 only as where it was, how long, and a stand-in. A stand-in for text that
@@ -93,9 +93,9 @@ def masked_text(
     `MIN_ALNUM` letters or digits in it. Each record carries the register
     number, the count and `stand_in` of the text -- never the words.
     """
-    # Imported here: `survey_document` reads the battery package, whose
+    # Imported here: `diagnosis_document` reads the battery package, whose
     # addresses load every device's registers.
-    from ..survey_document import stand_in
+    from ..diagnosis_document import stand_in
 
     declared = _declared(components)
     out: dict[str, Any] = {
@@ -197,7 +197,7 @@ def document(
     ihomemanager: Mapping[str, object],
 ) -> dict[str, object]:
     """Build the document for an iHomeManager, from an already masked section."""
-    from ..survey_document import SCHEMA
+    from ..diagnosis_document import SCHEMA
 
     return {
         "schema": SCHEMA,

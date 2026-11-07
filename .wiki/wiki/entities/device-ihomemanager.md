@@ -40,8 +40,8 @@ theirs ([evcc cross-reference](../sources/cross-reference-evcc-summary.md)).
   answers a type code there too, with its device counts at 8005-8006, by the
   map posted in discussion #262; any other code is reported by its number
   and not read (`discovery.UNIT_247_DEVICE`).
-- **How it is read:** `sungrow_survey.py` reads it with
-  `device-survey/scripts/python/ihomemanager_direct.py`, into a document of
+- **How it is read:** `sungrow_diagnosis.py` reads it with
+  `device-diagnosis/scripts/python/ihomemanager_direct.py`, into a document of
   its own (`"document": "ihomemanager"`): every register the document defines,
   then the gaps between them. Any text in a gap is masked and published only
   as a stand-in, since an undocumented serial would sit there; see
@@ -53,6 +53,6 @@ theirs ([evcc cross-reference](../sources/cross-reference-evcc-summary.md)).
   [cross-reference](../sources/cross-reference-modbus-manager-summary.md).
 
 [ra1k-0](installation-ra1k-0.md) reports an iHomeManager installed, and names it
-as a poller of the inverter, but it was not read: a Home Assistant survey reads
+as a poller of the inverter, but it was not read: a Home Assistant diagnosis reads
 the one endpoint the entry is configured against. Next step:
-[survey one](../queries/what-does-an-ihomemanager-answer.md).
+[diagnose one](../queries/what-does-an-ihomemanager-answer.md).

@@ -41,12 +41,16 @@ MANIFEST = REPO / "custom_components" / "sungrow_modbus" / "manifest.json"
 REQUIREMENT_NAME = "sungrow-modbus"
 
 #: Scripts that declare their dependencies inline (PEP 723), so `uv run
-#: --script` and the survey's launchers can fetch the library for somebody who
+#: --script` and the diagnosis's launchers can fetch the library for somebody who
 #: has no checkout. Each pins the library exactly, as the manifest does.
 SCRIPTS = (
-    REPO / "device-survey" / "scripts" / "python" / "sungrow_survey.py",
-    REPO / "device-survey" / "scripts" / "python" / "sungrow_control_test.py",
-    REPO / "device-survey" / "scripts" / "python" / "sungrow_wallbox_control_test.py",
+    REPO / "device-diagnosis" / "scripts" / "python" / "sungrow_diagnosis.py",
+    REPO / "device-diagnosis" / "scripts" / "python" / "sungrow_capability_test.py",
+    REPO
+    / "device-diagnosis"
+    / "scripts"
+    / "python"
+    / "sungrow_wallbox_capability_test.py",
 )
 
 #: The pin inside a script's `# /// script` block, where the dependency list

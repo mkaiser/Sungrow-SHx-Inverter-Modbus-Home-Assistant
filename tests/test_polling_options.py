@@ -26,11 +26,11 @@ from custom_components.sungrow_modbus.const import (
     INTERVAL_NEVER,
     PERMISSION_START_STOP,
     SECTION_ADVANCED,
-    SECTION_CONTROL_TEST,
+    SECTION_CAPABILITY_TEST,
+    SECTION_DIAGNOSIS,
     SECTION_EXTERNAL,
     SECTION_PERMISSIONS,
     SECTION_POLLING,
-    SECTION_SURVEY,
 )
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_PORT
@@ -56,8 +56,8 @@ def _submission(**sections: dict) -> dict:
         SECTION_PERMISSIONS: {},
         SECTION_EXTERNAL: {},
         SECTION_ADVANCED: {},
-        SECTION_SURVEY: {},
-        SECTION_CONTROL_TEST: {},
+        SECTION_DIAGNOSIS: {},
+        SECTION_CAPABILITY_TEST: {},
     }
     payload.update(sections)
     return payload
@@ -313,8 +313,8 @@ async def test_the_permissions_step_leaves_the_other_options_alone(
                 SECTION_PERMISSIONS: {PERMISSION_START_STOP: AUDIENCE_USERS},
                 SECTION_EXTERNAL: {},
                 SECTION_ADVANCED: {},
-                SECTION_SURVEY: {},
-                SECTION_CONTROL_TEST: {},
+                SECTION_DIAGNOSIS: {},
+                SECTION_CAPABILITY_TEST: {},
             },
         )
         await hass.async_block_till_done()

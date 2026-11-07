@@ -72,7 +72,7 @@ async def read(unit: ModbusUnit, where: Address) -> list[int]:
 
 #: Input register 6100, "PV power of today". Sungrow documents 6100-6195 as
 #: **not forwarded by a WiNet-S, WiNet-S2 or Logger**, so an answer means
-#: nothing of the kind is in the path. Counted over ten surveys it agrees
+#: nothing of the kind is in the path. Counted over ten diagnoses it agrees
 #: with the owner's own account every time; see the wiki's transport detection
 #: page (`.wiki/wiki/concepts/transport-detection.md`) on why register
 #: 13265 cannot stand in for it.
@@ -89,7 +89,7 @@ IHOMEMANAGER_PROTOCOL = Address("input", reg(8001), 2)
 #: Input registers 21201-21206, a wallbox's serial number. **Deliberately not
 #: mapped**: no component reads it, so no entity or capability probe can carry
 #: it -- see `wallbox.MODEL_NAME` for what identifies a wallbox instead. Named
-#: here only so the survey can say *that* something answers at a wallbox unit;
+#: here only so the diagnosis can say *that* something answers at a wallbox unit;
 #: every published document masks what it answered.
 WALLBOX_SERIAL = Address("input", reg(21201), 6)
 
@@ -100,9 +100,9 @@ Device = Literal["inverter", "battery", "wallbox"]
 def device_components() -> dict[Device, dict[str, type[Component]]]:
     """Every component this library maps, by the device it lives on.
 
-    The one list of them. The survey's plan generator records the same set,
+    The one list of them. The diagnosis's plan generator records the same set,
     and a name lookup that searched a different one would find a field the
-    survey cannot, or the other way round.
+    diagnosis cannot, or the other way round.
     """
     from .battery.registers import SbrBatteryCells, SbrBatteryModules, SbrBatteryPack
     from .hybrid_inverter.components import InverterControl

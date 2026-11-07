@@ -218,7 +218,7 @@ FLAGS: dict[str, str] = {
 #: leaving the reader to know which is which.
 #:
 #: `apl_shutdown_at_zero` is outside Sungrow's datasheet: its pair is the
-#: convention issue #554 found iSolarCloud writing, and the surveys read both
+#: convention issue #554 found iSolarCloud writing, and the diagnoses read both
 #: codes on it. It is decoded, never written.
 MODE_FLAGS: dict[str, tuple[str, str]] = {
     # key: (the boolean on `Derived`, the register it decodes)
@@ -943,16 +943,16 @@ def descriptions() -> list[tuple[str, str, str]]:
 
 def names() -> dict[str, dict[str, str]]:
     """Return the modern name of every entity, by domain and translation key."""
-    from custom_components.sungrow_modbus.survey_entities import SURVEY_ENTITIES
+    from custom_components.sungrow_modbus.diagnosis_entities import DIAGNOSIS_ENTITIES
 
     result: dict[str, dict[str, str]] = {}
     for domain, key, legacy in descriptions():
         result.setdefault(domain, {})[key] = modern_name(key, legacy)
 
-    # The survey's own entities. They carry no `EntityDescription` -- there is
+    # The diagnosis's own entities. They carry no `EntityDescription` -- there is
     # no register behind them -- so they are listed rather than discovered,
     # and `modern_name` finds each one in `naming.OVERRIDES`.
-    for domain, key in SURVEY_ENTITIES:
+    for domain, key in DIAGNOSIS_ENTITIES:
         result.setdefault(domain, {})[key] = modern_name(key, "")
     return result
 

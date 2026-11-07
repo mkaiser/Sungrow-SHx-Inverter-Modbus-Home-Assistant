@@ -2,7 +2,7 @@
 
 Its documented registers are decoded (`registers`); every word is published
 raw too, with any text no field reads masked (`document`). `BANDS` is what
-the survey reads.
+the diagnosis reads.
 """
 
 from ..dump import LOGGER_BANDS as BANDS
