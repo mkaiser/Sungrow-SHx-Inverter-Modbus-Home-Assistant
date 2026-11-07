@@ -326,9 +326,9 @@ Nothing can start now (blocker 18).
 
 The maintainer targets a stable release in December 2026 (said
 2026-11-06). It needs: the ordinary setup switched on (item 1,
-`ONLY_SURVEY_MODE`), a stable `0.1.0` rather than an alpha (item 3), the
-production-database run or a decision to go without it (item 5), the
-catalog submission on release, not before (item 3), and
+`ONLY_SURVEY_MODE`), a stable `0.1.0` rather than an alpha (item 2), the
+production-database run or a decision to go without it (item 4), the
+catalog submission on release, not before (item 2), and
 `doc/integration_migration.md` made current.
 
 1. **When to offer the ordinary setup**, targeted for December 2026 (the
@@ -341,38 +341,7 @@ catalog submission on release, not before (item 3), and
    to `main` (`grep -rn proper-ha-integration custom_components`: the Energy
    dashboard guide and the preview repair's entity names).
 
-2. **Spoil the December release at the top of `main`'s README.** The
-   maintainer targets a release in December 2026 (said 2026-11-06). `main`'s
-   README opens with dated news headings that the YAML package's users read;
-   a teaser there tells them what is coming before it does. It is a commit on
-   `main`, which AGENTS.md keeps production: the YAML package is not touched,
-   only its README, and only when the maintainer says. Draft, to approve:
-
-   > # 2026-11-06 "A real Home Assistant integration is coming"
-   >
-   > A Home Assistant integration to replace this YAML package is being built
-   > on the `proper-ha-integration` branch, and is targeted for **December
-   > 2026**. It keeps your entity ids, so your recorder history, statistics
-   > and dashboards carry on across the switch. **Nothing changes for you now:**
-   > this package keeps working and is maintained until the integration has
-   > everything it has.
-   > The integration will support multiple inverters, meters, wallboxes, logger
-   > and iHomeManager units.
-   > A guide for the move comes with the release.
-   > If you are new, you can still install it like described in the README and
-   > quickly migrate later.
-   > Own a Sungrow device and want to help? Run the survey
-   > ([#786](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786)).
-
-   Wording to decide: "targeted" and not "will", the month or a date, and
-   whether the preview's own README (this branch) says it too. The line on
-   multiple inverters, meters, wallboxes, Logger and iHomeManager promises
-   more than December may hold: Logger and iHomeManager entities wait on a
-   first survey (blockers 17 and 18), a second wallbox has never been seen
-   (blocker 16), and the wallbox is read only (next step 2). "Is built to
-   support", or naming what ships, keeps it true.
-
-3. **Submitting to the catalog, when the merge is decided.** Read
+2. **Submitting to the catalog, when the merge is decided.** Read
    2026-11-06 (a subagent's reading of hacs.xyz and
    contributors.home-assistant.io/marketplace; not checked against
    `hacs/default` itself): the route is unchanged. The catalog is still
@@ -398,7 +367,7 @@ catalog submission on release, not before (item 3), and
    Marketplace refreshes the catalog every 6 hours and a repository added from
    a link every 48 hours.
 
-4. **The preview channel under the Marketplace.** In Home Assistant 2026.11
+3. **The preview channel under the Marketplace.** In Home Assistant 2026.11
    HACS is built in as Settings → Marketplace, and the HACS installer stops
    at 2026.11. The Marketplace offers stable releases only, unless the user
    turns on a repository's *Pre-release* switch. The preview channel
@@ -430,7 +399,7 @@ catalog submission on release, not before (item 3), and
    what the Marketplace's page says). Keep the HACS path while `hacs.json`
    allows 2026.9 and 2026.10. Nothing here waits on next step 3.
 
-5. **The production database.** The migration is verified at real scale
+4. **The production database.** The migration is verified at real scale
    only against the maintainer's years-old YAML install; what to collect and
    how is in `doc/maintainer_setup.md`, section 8. Two routes: a copy of the
    instance's files (preferred: the migration can be run and rolled back, in
@@ -442,7 +411,7 @@ catalog submission on release, not before (item 3), and
    from here until Docker gets IPv6 or an IPv4 address is given. Counts and
    mismatches are reported, no serial or address.
 
-6. **The YAML track's documentation, for the integration.** The four pages
+5. **The YAML track's documentation, for the integration.** The four pages
    below open with a note that they are for the YAML package, pointing at
    `doc/installing_a_preview.md` and `doc/integration_migration.md`; the
    first-line documentation of the integration is `strings.json`. At the
@@ -454,7 +423,7 @@ catalog submission on release, not before (item 3), and
    | `legacy/doc/dashboard.md` | A generated dashboard (Future work) |
    | `legacy/doc/faq.md` | The iHomeManager answer, once its entities ship |
 
-7. **Handing the preview channel's users over to the release.** Read in
+6. **Handing the preview channel's users over to the release.** Read in
    core 2026.11.0's Marketplace source (`.venv-marketplace`,
    `components/marketplace`), 2026-11-07; nothing tried on the testbed yet.
 
@@ -502,7 +471,7 @@ catalog submission on release, not before (item 3), and
    migrated install, and a commit-tracked install switches to versions once
    the mirror publishes a release.
 
-8. **Deprecating and retiring the YAML package, after the release.** Once
+7. **Deprecating and retiring the YAML package, after the release.** Once
    the integration is complete (parity with the YAML package, merged into
    `main`, in the HACS default store), deprecate `legacy/modbus_sungrow.yaml`
    and the generated multi-inverter files, then retire them: announce it,
@@ -617,7 +586,7 @@ Open: what the integration should do when an id does change (a repair that
 names the affected entities and links the recipe; a list of old and new ids
 a user can export), how a rename after release is announced, and whether a
 real InfluxDB with the migrated data is worth testing once the production
-copy (Release item 5, `doc/maintainer_setup.md` §8)
+copy (Release item 4, `doc/maintainer_setup.md` §8)
 exists.
 
 ## Modbus over TLS on a WiNet-S's 516
