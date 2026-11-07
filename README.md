@@ -1,6 +1,21 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="doc/images/dark_logo.png">
+    <img src="doc/images/logo.png" alt="A PV array, an inverter, a battery and a car" width="480">
+  </picture>
+</p>
+
 An *easy-to-use YAML-based integration* for several Sungrow inverters for Home Assistant. 
 
 [![Discord Chat](https://img.shields.io/discord/1127341524770898062.svg)](https://discord.gg/ZvYBejFkm2)
+
+# 2026-11-07 "A real Home Assistant integration is coming"
+
+A Home Assistant integration to replace this YAML package is being built on the [`proper-ha-integration`](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/tree/proper-ha-integration) branch, and is targeted for **December 2026**. It keeps your entity ids, so your recorder history, statistics and dashboards carry on across the switch. **Nothing changes for you now:** this package keeps working and is maintained until the integration has everything it has.
+The integration will support multiple inverters, meters, wallboxes, logger and iHomeManager units.
+A guide for the move comes with the release.
+If you are new, you can still install it like described in the README and quickly migrate later.
+Own a Sungrow device and want to help? Run the survey ([#786](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786)).
 
 # 2026-10-30 "A proper Home Assistant integration is coming: help with a device survey"
 
