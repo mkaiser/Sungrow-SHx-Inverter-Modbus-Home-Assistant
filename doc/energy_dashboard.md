@@ -72,6 +72,20 @@ the Energy dashboard: a sum of counters falls when one inverter is unavailable
 and then jumps back, which the statistics read as negative and then
 enormous generation.
 
+The same goes for other totals of the whole house, each a Sum helper over one
+sensor per inverter:
+
+| Sum it | Take it from the master only | Never sum it |
+| --- | --- | --- |
+| *Total PV input power*, the *MPPTn power* sensors, *Total active power* (AC output), *Daily PV generation* (for a card) | the meter's readings, *Load power*, *Total imported energy*, *Total exported energy* | *Battery level*, any setting, any state such as the running state |
+
+The meter and load readings belong to the inverter the meter is wired to. In a
+master/slave pair the slave reads 0 for them, so a sum would come out right,
+but only for that wiring.
+A Sum helper is unavailable while one of its sensors is (unless you tick
+*Ignore non-numeric*), which is the honest answer: a total missing an inverter
+is not the house's total.
+
 ## What is not yet checked
 
 - Whether *Total imported energy* and *Total exported energy* need a meter
