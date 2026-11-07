@@ -7,17 +7,21 @@ created: '2026-10-29'
 
 # SH-T hybrid inverters
 
-The larger three-phase hybrids: SH15T and SH20T in this corpus, on firmware
-family `PEARL-H`, here always [`PEARL-H_B000.V000.P071`](firmware-pearl-h-b000-v000-p071.md).
-They pair with the [SBH](device-sbh-battery.md) high-voltage battery.
+The larger three-phase hybrids: SH15T, SH20T and SH25T in this corpus, on firmware
+family `PEARL-H`: [`P071`](firmware-pearl-h-b000-v000-p071.md) through a WiNet-S, and
+[`P067`](firmware-pearl-h-b000-v000-p067.md) through a [Logger](device-logger.md). They pair
+with the [SBH](device-sbh-battery.md) high-voltage battery, and with an
+[SBR](device-sbr-battery.md) at FullHD23 and code-imstillalive.
 
 ## What is established
 
-- **Only read through a WiNet-S.** No T-series survey was taken at an
-  inverter's own LAN port, so nothing here separates the machine from the
-  [dongle](device-winet-s.md). ra1k-0's owner says the SH20T has no LAN port of its own
+- **Only read through a module.** No T-series survey was taken at an inverter's own LAN port:
+  every one went through a [WiNet-S](device-winet-s.md), except two through a Logger1000A at
+  [code-imstillalive](installation-code-imstillalive.md), which refused the same blocks a
+  WiNet-S does (6100, 2613, 2629, the history). Nothing here separates the machine from the
+  module. ra1k-0's owner says the SH20T has no LAN port of its own
   (issue #772).
-- **31211 answers 0x55** on P071, as on SH-RT P022/P023, and **the PV cut acts**: 20421 W,
+- **31211 answers 0x55** on P071 and on P067, as on SH-RT P022/P023, and **the PV cut acts**: 20421 W,
   28 W, 20395 W at [ra1k-0](installation-ra1k-0.md), through a WiNet-S; see
   [register 31211](register-31211.md). The T also has 13018, which is unwritten.
 - **Three control tests**, two at [ra1k-0](installation-ra1k-0.md) and one at
@@ -39,4 +43,5 @@ never compares the numeric tail across platforms.
 ## Surveys
 
 [fullhd23](installation-fullhd23.md), [GalKar](installation-galkar.md),
-[jm493](installation-jm493.md) and [ra1k-0](installation-ra1k-0.md), all through a WiNet-S.
+[jm493](installation-jm493.md) and [ra1k-0](installation-ra1k-0.md), all through a WiNet-S;
+[code-imstillalive](installation-code-imstillalive.md), an SH25T and an SH15T through a Logger.

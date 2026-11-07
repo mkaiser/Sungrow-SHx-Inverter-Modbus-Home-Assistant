@@ -9,8 +9,8 @@ created: '2026-10-29'
 
 An [SH10RT-V112](device-sh-rt.md) on [P023](firmware-sapphire-h-b001-v000-p023.md) with an
 [SBR160](device-sbr-battery.md), read on the inverter's own LAN port, with a WiNet-S fitted but not
-in the path. Eight readings, all from Home Assistant, seven with a control test. The first was
-published as `anonymous`; the later seven are signed `peter_sm`. All carry the stand-in
+in the path. Ten readings, all from Home Assistant, eight with a control test. The first was
+published as `anonymous`; the later nine are signed `peter_sm`. All carry the stand-in
 `anon-91477823483`, so they are one installation.
 
 - **[13074](register-13074.md) writes times ten.** The probe answered it by refusal in every
@@ -20,9 +20,13 @@ published as `anonymous`; the later seven are signed `peter_sm`. All carry the s
   in the third reading (outcome 0): 1248 W, 1250 W and an export held at 1250 W against 1250 W
   commanded. The first P023 SH10RT-V112 with all three confirmed. The sixth and seventh readings
   confirm all three again, with nine of nine readbacks matched.
-- **The charge window's write of 33213 lost the connection** in both the sixth and the seventh
-  reading, so the window was never measured here;
+- **The charge window's write of 33213 lost the connection** in the sixth, the seventh and the
+  tenth reading (2026-11-02 and 2026-11-07), so the window was never measured here;
   [open](../queries/does-writing-33213-drop-the-link-at-peter-sm.md).
+- **A Modbus restart did as it was told** in the tenth reading: stopped in 2.0 s, running again
+  269 s after the start command, in daylight.
+- The tenth reading's file is named `battery-thirdparty`, though the pack is the SBR160: its
+  document lost the pack's own section (see [the page](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan-summary.md)).
 - The fifth reading's control test did not run: the inverter was in Standby that evening.
 - **The second reading's forced checks are not evidence**: the house held
   `battery_max_charge_power` and `battery_max_discharge_power` at 10 W then, where the first and
@@ -42,3 +46,5 @@ published as `anonymous`; the later seven are signed `peter_sm`. All carry the s
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, sixth reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-5-summary.md)
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, seventh reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-6-summary.md)
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, eighth reading, a diagnostics download](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-7-summary.md)
+- [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, ninth reading, a diagnostics download](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-8-summary.md)
+- [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, tenth reading, with a control test](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan-summary.md)

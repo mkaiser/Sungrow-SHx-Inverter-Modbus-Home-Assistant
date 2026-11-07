@@ -495,3 +495,19 @@ forced-charge query, P020 and installation-mkaiser.
 The integration reads register 32998 as the diagnostic sensor Grid import limit, and the
 control test gained `--import-limit` (survey leave, integration option). Not yet run in the
 engine on hardware.
+
+## [2026-11-07] ingested | code-imstillalive: an SH25T and an SH15T through a Logger1000A (#791)
+
+Two read-only surveys from the integration's button, four minutes apart, both on
+`PEARL-H_B000.V000.P067`: the first SH25T, the first P067 on the T, and the first inverters read
+through a Logger. Each answered on a Logger port of its own and refused what a WiNet-S refuses
+(6100, 2613, 2629, the history). 31211 answers 0x55 on P067, which joins `ANSWERING`; 33149 and
+33150 answer 0xFFFF. Another Home Assistant polled throughout. New: the installation and P067
+pages; the SH-T, Logger, 31211 and transport detection pages and the Logger query updated.
+
+## [2026-11-07] ingested | peter_sm's ninth and tenth readings, diagnostics downloads (#786)
+
+Posted by Korsberg on 0.1.0a27. The ninth adds nothing new. The tenth carries a control test:
+nine readbacks matched, 13074 times ten by refusal, a Modbus restart in 269 s, and the charge
+window's write of 33213 lost the connection a third time. Its file is named `battery-thirdparty`
+because its document lost the `battery_pack` section; the pack is the SBR160.

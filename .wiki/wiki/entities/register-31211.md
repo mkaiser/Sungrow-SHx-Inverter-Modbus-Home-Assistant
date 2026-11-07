@@ -21,6 +21,7 @@ By the committed register dumps (asserted in `tests/test_pv_generation_cut.py`):
 | 13250 refused, 2582 = [01011.95.03](firmware-sapphire-h-01011-95-03.md) | 0xFFFF |
 | [B001.V000.P022](firmware-sapphire-h-b001-v000-p022.md) | 0x55 |
 | [B001.V000.P023](firmware-sapphire-h-b001-v000-p023.md) | 0x55 |
+| [PEARL-H_B000.V000.P067](firmware-pearl-h-b000-v000-p067.md) | 0x55 |
 | [PEARL-H_B000.V000.P071](firmware-pearl-h-b000-v000-p071.md) | 0x55 |
 | [SUNSTONE-H_B000.V001.P068](firmware-sunstone-h-b000-v001-p068.md) | 0x55 |
 | [SUNSTONE-H_B000.V001.P066](firmware-sunstone-h-b000-v001-p066.md) | 0x55 |

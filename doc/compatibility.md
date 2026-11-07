@@ -50,13 +50,17 @@ no survey is listed as **untested** rather than assumed to work.
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-5` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-6` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-7` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-8` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh15t-b000v000p067-3p-code-imstillalive-anon-07241574740-battery-unknown-meter-logger` | code-imstillalive | SH15T (`0x0E25`) | Logger (reported) | — | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | yes?[^dongle] | yes | — |
 | `sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan` | FullHD23 | SH15T (`0x0E25`) | WiNet-S, wired (reported), **via a Modbus proxy** | Sungrow SBR128 | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan` | GalKar | SH15T (`0x0E25`) | WiNet-S, wired (reported) | — | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh15t-b000v000p071-3p-jm493-anon-00578206904-battery-sbh200-winet-lan` | jm493 | SH15T (`0x0E25`) | WiNet-S, wired (reported) | — | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005` | ra1k_0 | SH20T (`0x0E26`) | WiNet-S, WiFi (reported) | SBH400-V11 | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2` | ra1k_0 | SH20T (`0x0E26`) | WiNet-S, WiFi (reported) | SBH400-V11 | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan` | ra1k_0 | SH20T (`0x0E26`) | WiNet-S, WiFi (reported) | SBH400-V11 | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
+| `sh25t-b000v000p067-3p-code-imstillalive-anon-92853701430-battery-unknown-meter-logger` | code-imstillalive | SH25T (`0x0E28`) | Logger (reported) | — | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | yes?[^dongle] | yes | yes |
 | `sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-meter-direct-lan` | Mahagon | SH5.0RT-V112 (`0x0E0C`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | yes | yes | yes | no |
 | `sh50rt-v112-b001v000p023-3p-mahagon-anon-11187075801-battery-sbr096-winet-wlan` | Mahagon | SH5.0RT-V112 (`0x0E0C`) | WiNet-S, WiFi (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
 | `sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan` | icefest | SH6.0RS (`0x0D10`) | direct LAN port | SBR192 | `ARM_SUNSTONE-H_V11_V01_A` | single phase | no | no | yes | — | yes | yes | no |
@@ -185,12 +189,14 @@ that has only one would make the next pair.
 | SH10RT-20 | winet_wlan | B001.V000.P020 (1 reading) |
 | SH10RT-20 | winet_wlan | B001.V000.P023 (3 readings) |
 | SH10RT-V112 | direct_lan | B001.V000.P020 (2 readings) |
-| SH10RT-V112 | direct_lan | B001.V000.P023 (12 readings) |
+| SH10RT-V112 | direct_lan | B001.V000.P023 (14 readings) |
 | SH10RT-V112 | direct_lan | unknown (2 readings) |
 | SH10RT-V112 | winet | B001.V000.P023 (2 readings) |
 | SH10RT-V112 | winet | unknown (2 readings) |
+| SH15T | logger | B000.V000.P067 (1 reading) |
 | SH15T | winet_lan | B000.V000.P071 (3 readings) |
 | SH20T | winet_wlan | B000.V000.P071 (3 readings) |
+| SH25T | logger | B000.V000.P067 (1 reading) |
 | SH5.0RT-V112 | direct_lan | B001.V000.P023 (1 reading) |
 | SH5.0RT-V112 | winet_wlan | B001.V000.P023 (1 reading) |
 | SH6.0RS | unstated | B000.V001.P066 (1 reading) |
@@ -262,7 +268,7 @@ last column says what that rules out before anything is even read.
 | `0x0E24` | SH12T | T | untested | battery_start_power, mppt4 |
 | `0x0E25` | SH15T | T | **yes** | battery_start_power, mppt4 |
 | `0x0E26` | SH20T | T | **yes** | battery_start_power, mppt4 |
-| `0x0E28` | SH25T | T | untested | battery_start_power, mppt4 |
+| `0x0E28` | SH25T | T | **yes** | battery_start_power, mppt4 |
 | `0x0E39` | SH100CX | CX | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, forced_charging, forced_startup, meter_channel_2, pv_power_limitation |
 | `0x0E3A` | SH110CX | CX | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, forced_charging, forced_startup, meter_channel_2, pv_power_limitation |
 | `0x0E3D` | SH125CX | CX | untested | active_power_limit, feed_in_limitation_ratio, firmware_versions, forced_charging, forced_startup, meter_channel_2, pv_power_limitation |

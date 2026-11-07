@@ -17,6 +17,9 @@ capability varies by transport as well as by model.
   [the survey](../sources/sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-meter-direct-lan-summary.md)), so "direct"
   means *no communication module in the path*, LAN port or RS485 alike, and
   only the owner's answer tells the two apart.
+- **A Logger refuses 6100 too**: two inverters read through a Logger1000A
+  ([code-imstillalive](../entities/installation-code-imstillalive.md)) refused it, and the
+  verdict is "through a communication module". Which module is the owner's answer.
 - **Not with 13265**, which names the fitted module, not the one in the path.
 - **Not with round-trip time**, which times the reader's path.
 - **WiFi versus Ethernet is not determinable** over Modbus.

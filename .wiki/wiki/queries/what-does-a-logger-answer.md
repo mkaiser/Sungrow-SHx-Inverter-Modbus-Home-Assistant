@@ -9,7 +9,7 @@ results_count: 0
 
 # What does a Sungrow Logger answer?
 
-**Open: documented, never measured.** Sungrow's protocol 1.0.2.9 lists what
+**Open: the Logger itself never measured; inverters behind one have been.** Sungrow's protocol 1.0.2.9 lists what
 a Logger should answer
 ([Logger documents](../sources/logger-communication-protocol-summary.md)),
 and [Sungrow Logger](../entities/device-logger.md) holds it as `spec`. A
@@ -27,7 +27,14 @@ What a first survey settles:
 - **Whether port 502 answers at all**: a current Logger1000 opens only 516,
   with TLS.
 - **At which unit ids the inverters behind it answer**, against the
-  forwarding addresses its web page lists.
+  forwarding addresses its web page lists. *Partly answered*: at
+  [code-imstillalive](../entities/installation-code-imstillalive.md) two inverters
+  answered, each on a Logger port of its own at the unit the owner gives
+  (502 at 1, 503 at 2), and refused what a WiNet-S refuses
+  ([the SH25T](../sources/sh25t-b000v000p067-3p-code-imstillalive-anon-92853701430-battery-unknown-meter-logger-summary.md)). The
+  owner's Logger refuses input 4951 at unit 247 with exception 2 (by the
+  owner, issue #791), so the
+  integration cannot be set up on it; `ihomemanager_direct.py` reads it.
 
 Reports, none measured here:
 

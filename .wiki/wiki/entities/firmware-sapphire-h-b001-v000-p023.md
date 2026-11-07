@@ -16,7 +16,7 @@ The most-measured firmware in the corpus.
 - [Register 31211](register-31211.md) answers 0x55, and the cut is **confirmed** by a control test
   on [fwitten](installation-fwitten.md)'s master: P023 is in `CONFIRMED_ON_FIRMWARE`.
 - At [peter-sm](installation-peter-sm.md) the charge window's write of 33213 lost the connection
-  twice, where fwitten's window did as it was told;
+  three times, in three runs on two days, where fwitten's window did as it was told;
   [open](../queries/does-writing-33213-drop-the-link-at-peter-sm.md).
 
 - On an SH6.0RT-V112 ([firetribe](installation-firetribe.md)) the 13074 write scale is not
@@ -49,5 +49,7 @@ The most-measured firmware in the corpus.
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, sixth reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-5-summary.md)
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, seventh reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-6-summary.md)
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, eighth reading, a diagnostics download](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-7-summary.md)
+- [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, ninth reading, a diagnostics download](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-8-summary.md)
+- [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, tenth reading, with a control test](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan-summary.md)
 - [SH10RT-V112, B001.V000.P023, anonymous, the inverter's own LAN port, SBR224](../sources/sh10rt-v112-b001v000p023-3p-anonymous-anon-40315531061-battery-sbr224-meter-direct-lan-summary.md)
 - [SH6.0RT-20, B001.V000.P023, anonymous, through a Modbus proxy, SBR064](../sources/sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan-summary.md)

@@ -14,8 +14,8 @@ details are under [Why each one](#why-each-one).
 | --- | --- | --- |
 | 1 | **A single-phase inverter of the K or MG family** (SH*K, MG*) | Single phase is read on the SH-RS and on an SG5.0RS; nothing from the K or MG family has been, so every capability those two families are given today is an inference |
 | 2 | **An iHomeManager** (unit 247, port 502, 503 or 504) | The first reading of the device at all. Its Modbus TCP must be opened in the app first, see [item 2](#2-an-ihomemanager) |
-| 3 | **An SH-T (SH15T, SH20T…) through its WiNet-S**, with the control test and feed-in limitation allowed, in daylight with export | Every T so far was read through a WiNet-S, and the T seems to have no LAN port of its own. Settles the export limit's write scale (register 13074) on P071 by what the inverter does, and the PV cut on P071 |
-| 4 | **A Sungrow Logger1000, 3000 or 4000** | The first reading. Answer *a Logger* to the transport question so the survey also reads the Logger itself |
+| 3 | **An SH-T (SH15T, SH20T…) through its WiNet-S**, with the control test and feed-in limitation allowed, in daylight with export | Every T so far was read through a WiNet-S or a Logger, and the T seems to have no LAN port of its own. Settles the export limit's write scale (register 13074) on P071 by what the inverter does, and the PV cut on P071 |
+| 4 | **A Sungrow Logger1000, 3000 or 4000** | The first reading of the Logger itself: inverters have been read through one, the Logger not. Answer *a Logger* to the transport question so the survey also reads the Logger itself |
 | 5 | **A wallbox other than the one already read**, an AC011E-01 above all | Which of its registers identify a unit and which are a model constant, and a scale another source reads differently |
 | 6 | **A charging car**, at any house with a Sungrow wallbox | What input 21313 does over a session, and whether 21308/21310 are signed. Two runs a few minutes apart while charging |
 | 7 | **Version 1 between `.95.03` and `.95.12`, or a `.95.14` that is not 10 kW** | Where the export limit's write scale changes ([#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)) |
@@ -58,7 +58,7 @@ control test, and one wallbox read at its own address.
 | Transport | direct LAN, WiNet-S and WiNet-S2, wired and WiFi | a Logger, a Modbus proxy, **a T on a cable, if one exists** |
 | Wallbox | AC22E-01 | AC011E-01, AC007-00 |
 | iHomeManager | none | any |
-| Sungrow Logger | none | any |
+| Sungrow Logger | two inverters read through a Logger1000A; the Logger itself unread | the Logger's own registers |
 
 ## Why each one
 
@@ -83,7 +83,7 @@ inverter registers 5741-5746 (#647, #651). See
 
 ### 3. An SH-T through its WiNet-S, in daylight, with export
 
-Every T so far was read through a WiNet-S, and the T seems to have no LAN
+Every T so far was read through a WiNet-S or a Logger, and the T seems to have no LAN
 port of its own (an SH20T owner says so; Sungrow's SH5T-SH25T manual lists a
 WiNet-S2 and a COM2 terminal). Run it with the control test, feed-in
 limitation and PV cut allowed, while the house exports: through a dongle only
@@ -93,7 +93,8 @@ cut on P071. An SBH pack's cell layout, which a dongle refuses, stays unread. Se
 
 ### 4. A Sungrow Logger1000, 3000 or 4000
 
-Never measured; it fronts a whole installation, the shape the
+The Logger itself never measured: two inverters have been read through a Logger1000A, each on a
+port of its own, but the Logger refused the integration's identity read. It fronts a whole installation, the shape the
 one-entry-per-endpoint design was built for. **Answer "a Logger" to the
 transport question** so the survey also reads it at unit 247, and say which
 unit ids it lists. A current Logger1000 opens only port 516 with TLS; the

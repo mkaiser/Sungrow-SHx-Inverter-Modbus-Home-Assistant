@@ -9,7 +9,8 @@ updated: '2026-11-06'
 # Sungrow Logger
 
 Sungrow's Logger1000, Logger3000 and Logger4000: a plant controller that
-fronts inverters and meters. **Documented, never measured here.**
+fronts inverters and meters. **Documented; the Logger itself never measured here.** Two
+inverters have been read *through* one ([code-imstillalive](installation-code-imstillalive.md)).
 
 - **The document:** Sungrow's *Logger Communication Protocol* 1.0.2.9,
   marked public, with 1.0.2.5 beside it
@@ -33,7 +34,12 @@ fronts inverters and meters. **Documented, never measured here.**
   (`device-survey/scripts/python/ihomemanager_direct.py`, `tests/test_logger.py`).
 - **What sits behind it:** each inverter and meter answers on the Logger's
   endpoint at its **forwarding address**, which the Logger's web page lists
-  under Device List. The survey's `identify` stops at the first inverter on
+  under Device List. At code-imstillalive's Logger1000A each device is also on
+  a port of its own, by the owner (SH25T on 502 at unit 1, SH15T on 503 at
+  unit 2, the meter on 504, the Logger on 505 at unit 247, each battery tower
+  on another), and **an inverter reached that way reads like one behind a
+  WiNet-S**: 6100, 2613, 2629 and the history blocks refused
+  ([the SH25T](../sources/sh25t-b000v000p067-3p-code-imstillalive-anon-92853701430-battery-unknown-meter-logger-summary.md)). The survey's `identify` stops at the first inverter on
   units 1-5, so it asks unit 247 only when the owner answers `logger` for the
   transport.
 - **Writes:** a command to unit 0 reaches every inverter behind it, and a
