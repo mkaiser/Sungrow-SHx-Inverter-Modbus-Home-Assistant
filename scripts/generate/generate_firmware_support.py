@@ -34,7 +34,7 @@ from __future__ import annotations
 import argparse
 from collections import defaultdict
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field as dataclass_field
 import inspect
 from pathlib import Path
 import re
@@ -54,7 +54,8 @@ import review_names  # noqa: E402
 from sungrow_modbus import Capability  # noqa: E402
 from sungrow_modbus.battery.device import PUBLISHED_NAMES  # noqa: E402
 from sungrow_modbus.battery.power import model_for_capacity  # noqa: E402
-from sungrow_modbus.dump import DUMP_MASKED  # noqa: E402
+from sungrow_modbus.control_test import coverage, procedure  # noqa: E402
+from sungrow_modbus.dump import DUMP_BANDS, DUMP_MASKED  # noqa: E402
 from sungrow_modbus.hybrid_inverter import capabilities, components, layout, registers  # noqa: E402
 from sungrow_modbus.model import SETTLES_NOTHING, present  # noqa: E402
 from sungrow_modbus.survey_document import OUTPUT_TYPES  # noqa: E402
@@ -125,6 +126,10 @@ class Reading:
     parts: frozenset[str]
     #: Fields whose write the control test read back as written, over a cable.
     written: frozenset[str]
+    #: The document's control test block, empty where the run only read.
+    control_test: dict[str, Any] = dataclass_field(default_factory=dict)
+    #: The document's `export_scale` block, empty where it was not asked.
+    export_scale: dict[str, Any] = dataclass_field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -332,6 +337,8 @@ def _readings() -> tuple[list[Reading], list[str]]:
                 capabilities=granted,
                 parts=_parts(document, dongle, granted),
                 written=_written(document, dongle),
+                control_test=document.get("control_test") or {},
+                export_scale=document.get("export_scale") or {},
             )
         )
     return readings, skipped
@@ -410,6 +417,49 @@ def _confirmed(column: Column, readings: list[Reading], description: object) -> 
         return True
     field = getattr(description, "field", None)
     return any(field in reading.written for reading in readings)
+
+
+#: How far the survey tests an entity, weakest first.
+READ, WRITTEN, WATCHED = "read", "written", "watched"
+
+
+def _dumped(name: str) -> bool:
+    """Whether the raw dump reaches every word of a field and can decode it."""
+    if name not in FIELDS or name in layout.COUNTS:
+        return False
+    space, field = FIELDS[name]
+    return all(
+        any(
+            band_space == space and start <= address < start + count
+            for band_space, start, count, _why in DUMP_BANDS
+        )
+        and not _masked(space, address)
+        for address in range(field.address, field.address + field.count)
+    )
+
+
+def _coverage(domain: str, description: object) -> str:
+    """Return how far the survey tests an entity, whatever any one house did.
+
+    *read* where the raw dump reaches its registers, so a column can answer
+    for it; *written* where the control test's readback walk writes it and
+    checks the raw word; *watched* where a behavioural check writes it and
+    judges what the inverter did. Empty where none of them reaches it.
+    """
+    fields = _reads(description)
+    levels = []
+    if fields and all(_dumped(name) for name in fields):
+        levels.append(READ)
+    if domain in WRITABLE:
+        own = {
+            getattr(description, "field", None),
+            getattr(description, "minute_field", None),
+        }
+        if own & coverage.WRITTEN:
+            levels.append(WRITTEN)
+        if own & coverage.WATCHED:
+            levels.append(WATCHED)
+    return " + ".join(levels)
 
 
 def _cell(answers: list[tuple[Any, str]], write: bool) -> str:
@@ -492,6 +542,16 @@ def _matrix(
         label = name if domain == "sensor" else f"{name} *({domain})*"
         matrix.append((topic, label, cells))
     return sorted(matrix, key=lambda row: (row[0], row[1]))
+
+
+def _coverage_by_row() -> dict[tuple[str, str], str]:
+    """Return {(topic, row label): coverage} for every inverter entity."""
+    return {
+        (topic, name if domain == "sensor" else f"{name} *({domain})*"): _coverage(
+            domain, description
+        )
+        for topic, domain, name, description in _rows()
+    }
 
 
 def _exception_names(klass: type) -> set[str]:
@@ -723,20 +783,187 @@ def _column_key(
 
 
 def _tables(
-    matrix: list[tuple[str, str, list[str]]], count: int, prefix: str
+    matrix: list[tuple[str, str, list[str]]],
+    count: int,
+    prefix: str,
+    covered: Callable[[str, str], str],
 ) -> list[str]:
     """Return the part's tables, one per topic where the rows carry one."""
     header = (
-        "| Entity | " + " | ".join(f"{prefix}{i}" for i in range(1, count + 1)) + " |"
+        "| Entity | Survey | "
+        + " | ".join(f"{prefix}{i}" for i in range(1, count + 1))
+        + " |"
     )
-    rule = "| --- |" + " --- |" * count
+    rule = "| --- | --- |" + " --- |" * count
     lines: list[str] = []
     current = None
     for topic, label, cells in matrix:
         if topic != current or not lines:
             lines += ["", f"### {topic or 'Entities'}", "", header, rule]
             current = topic
-        lines.append(f"| {_escape(label)} | " + " | ".join(cells) + " |")
+        lines.append(
+            f"| {_escape(label)} | {covered(topic, label)} | "
+            + " | ".join(cells)
+            + " |"
+        )
+    return lines
+
+
+#: A tenfold factor, as the measurements table writes it.
+TIMES_TEN = "\N{MULTIPLICATION SIGN}10"
+
+#: An effect verdict's mark in the measurements table, in the order shown.
+EFFECT_MARKS = {
+    procedure.CONFIRMED: "✓",
+    procedure.EFFECT_SCALED: TIMES_TEN,
+    procedure.SIGN_INVERTED: "±",
+    procedure.NO_EFFECT: "✗",
+    procedure.INCONCLUSIVE: "?",
+}
+
+
+def _export_factor(reading: Reading) -> int | None:
+    """Return how this firmware writes 13074 (10 or 1), None if never asked."""
+    conditions = reading.control_test.get("conditions") or {}
+    for block in (reading.export_scale, conditions.get("export_write_scale") or {}):
+        factor = block.get("write_units_per_count")
+        if factor in (1, 10):
+            return int(factor)
+    return None
+
+
+def _agreed(values: list[tuple[Reading, str]]) -> str:
+    """Return one cell from per-survey marks: the mark, or a split by model."""
+    if not values:
+        return ""
+    marks = {mark for _, mark in values}
+    if len(marks) == 1:
+        return marks.pop()
+    by_mark: dict[str, set[str]] = defaultdict(set)
+    for reading, mark in values:
+        by_mark[mark].add(reading.model)
+    return "**split**: " + "; ".join(
+        f"{mark} {', '.join(sorted(models))}"
+        for mark, models in sorted(by_mark.items())
+    )
+
+
+def _tally(verdicts: list[str]) -> str:
+    """Return a count per effect verdict, `✓ 3, ? 1`, best first."""
+    counts = dict.fromkeys(EFFECT_MARKS.values(), 0)
+    for verdict in verdicts:
+        if verdict in EFFECT_MARKS:
+            counts[EFFECT_MARKS[verdict]] += 1
+    return ", ".join(f"{mark} {n}" for mark, n in counts.items() if n)
+
+
+def _cable_readback(reading: Reading) -> list[dict[str, Any]]:
+    """Return the readback rows that are evidence: over a cable, on hardware."""
+    conditions = reading.control_test.get("conditions") or {}
+    if reading.dongle or conditions.get("simulated") or conditions.get("dry_run"):
+        return []
+    return [
+        row
+        for row in reading.control_test.get("readback") or []
+        if row.get("verdict") not in (None, procedure.SKIPPED)
+    ]
+
+
+def _measured(columns: dict[Column, list[Reading]]) -> list[str]:
+    """Return the section of what the control test measured, per column."""
+    count = len(columns)
+    header = "| Measurement | " + " | ".join(str(i) for i in range(1, count + 1)) + " |"
+    rows: list[tuple[str, list[str]]] = []
+    marks = {10: TIMES_TEN, 1: "1:1"}
+    rows.append(
+        (
+            "Export power limit write scale (13074)",
+            [
+                _agreed(
+                    [
+                        (r, marks[factor])
+                        for r in members
+                        if (factor := _export_factor(r)) is not None
+                    ]
+                )
+                for members in columns.values()
+            ],
+        )
+    )
+    cells = []
+    for members in columns.values():
+        rows_read = [row for r in members for row in _cable_readback(r)]
+        matched = sum(row.get("verdict") == procedure.MATCH for row in rows_read)
+        cells.append(f"{matched}/{len(rows_read)}" if rows_read else "")
+    rows.append(("Settings read back as written, over a cable", cells))
+    cells = []
+    for members in columns.values():
+        seconds = [
+            float(restart["running_after"])
+            for r in members
+            if (restart := r.control_test.get("restart") or {}).get("verdict")
+            == procedure.CONFIRMED
+            and isinstance(restart.get("running_after"), int | float)
+        ]
+        if not seconds:
+            cells.append("")
+        elif round(min(seconds)) == round(max(seconds)):
+            cells.append(f"{min(seconds):.0f} s")
+        else:
+            cells.append(f"{min(seconds):.0f}\u2013{max(seconds):.0f} s")
+    rows.append(("Restart: running again after", cells))
+    for check in coverage.EFFECT_FIELDS:
+        rows.append(
+            (
+                f"Behaviour: {check}",
+                [
+                    _tally(
+                        [
+                            str(effect.get("verdict"))
+                            for r in members
+                            for effect in r.control_test.get("effects") or []
+                            if effect.get("check") == check
+                        ]
+                    )
+                    for members in columns.values()
+                ],
+            )
+        )
+    findings = sorted(
+        {
+            (index, str(row.get("field")), str(row.get("verdict")))
+            for index, members in enumerate(columns.values(), 1)
+            for r in members
+            for row in _cable_readback(r)
+            if row.get("verdict") != procedure.MATCH
+        }
+    )
+    lines = [
+        "### What the control test measured",
+        "",
+        "Findings about the firmware rather than about one entity, from every",
+        "survey whose run had the control test, in the columns above. The",
+        "13074 write scale is asked by a write the device refuses or accepts,",
+        "so it holds through a dongle too; a readback counts over a cable only,",
+        "because a WiNet-S answers a written register stale. A behaviour cell",
+        "counts that check's runs: "
+        + ", ".join(f"{mark} {verdict}" for verdict, mark in EFFECT_MARKS.items())
+        + ". An empty cell is a column no run measured.",
+        "",
+        header,
+        "| --- |" + " --- |" * count,
+        *(f"| {label} | " + " | ".join(cells) + " |" for label, cells in rows),
+    ]
+    if findings:
+        lines += [
+            "",
+            "Readbacks over a cable that did not match:",
+            "",
+            *(
+                f"- column {index}: `{field}`, {verdict}"
+                for index, field, verdict in findings
+            ),
+        ]
     return lines
 
 
@@ -745,6 +972,7 @@ def render() -> str:
     readings, skipped = _readings()
     columns = _columns(readings)
     matrix = _matrix(columns)
+    covered = _coverage_by_row()
     packs, packs_skipped = _pack_readings()
     pack_columns = _columns(packs)
     pack_matrix = _pack_matrix(pack_columns)
@@ -783,6 +1011,20 @@ def render() -> str:
         " read them (the masked serial; the padded firmware strings at 2613 and"
         " 2629). |",
         "",
+        "The **Survey** column says how far a survey can test the entity on"
+        " any inverter, before a column says what one did:",
+        "",
+        "| Survey | Means |",
+        "| --- | --- |",
+        f"| {READ} | The raw register dump reaches its registers, so the columns"
+        " can answer for it. |",
+        f"| {WRITTEN} | The control test writes it and checks the raw word it"
+        " reads back against the specification's scale. |",
+        f"| {WATCHED} | A behavioural check of the control test writes it and"
+        " watches what the inverter does. |",
+        "| *(empty)* | No part of the survey reaches it: a column can only be"
+        " empty there. |",
+        "",
         "A **dongle** column was read through a WiNet-S or Logger, which refuses",
         'some blocks and answers 0 where the inverter answers "unavailable";',
         "compare a dongle column with a dongle column.",
@@ -802,7 +1044,11 @@ def render() -> str:
             skipped,
             "with no register dump, no firmware or no way to tell the link",
         ),
-        *_tables(matrix, len(columns), ""),
+        "",
+        *_measured(columns),
+        *_tables(
+            matrix, len(columns), "", lambda topic, label: covered[(topic, label)]
+        ),
         "",
         "## Battery packs",
         "",
@@ -823,7 +1069,7 @@ def render() -> str:
             packs_skipped,
             "with a battery firmware but no pack reading, or no battery firmware",
         ),
-        *_tables(pack_matrix, len(pack_columns), "B"),
+        *_tables(pack_matrix, len(pack_columns), "B", lambda _topic, _label: READ),
     ]
     return "\n".join(lines) + "\n"
 

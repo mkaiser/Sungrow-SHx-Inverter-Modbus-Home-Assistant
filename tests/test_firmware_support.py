@@ -19,20 +19,34 @@ from generate_firmware_support import (
     FIELDS,
     NO,
     NOT_FITTED,
+    READ,
+    TIMES_TEN,
     UNTESTED,
+    WATCHED,
+    WRITABLE,
+    WRITTEN,
     YES,
     ZERO,
     PackReading,
     Reading,
+    _agreed,
     _answer,
     _capabilities,
     _cell,
+    _columns,
+    _coverage,
+    _export_factor,
     _pack_answer,
+    _readings,
+    _rows,
     _silent,
+    _tally,
     _written,
 )
 
 from sungrow_modbus import Capability
+from sungrow_modbus.control_test import coverage
+from sungrow_modbus.control_test.procedure import NOT_PROBED
 
 
 def _dump(**words: list[int | None]) -> dict[str, dict[str, int | None]]:
@@ -202,3 +216,90 @@ def test_an_empty_module_slot_is_not_fitted() -> None:
     assert _pack_answer(_pack(values), slot(3)) == YES
     assert _pack_answer(_pack(values), slot(4)) == NOT_FITTED
     assert _pack_answer(_pack(values), slot(5)) == UNTESTED
+
+
+def test_the_diagnosis_column_follows_the_capability_tests_own_tables() -> None:
+    """A writable entity is written, watched, or deliberately left out.
+
+    The column reads `PROBES` and `EFFECT_FIELDS` themselves, so a control the
+    procedure starts writing shows up here without anybody editing the page.
+    """
+    by_field = {
+        getattr(description, "field", None): (domain, description)
+        for _topic, domain, _name, description in _rows()
+        if domain in WRITABLE
+    }
+    for field in coverage.WRITTEN:
+        domain, description = by_field[field]
+        assert WRITTEN in _coverage(domain, description).split(" + "), field
+    for field, (domain, description) in by_field.items():
+        levels = _coverage(domain, description).split(" + ")
+        assert levels[0] == READ, field
+        if field in coverage.WATCHED:
+            assert WATCHED in levels, field
+        assert field in coverage.WRITTEN | coverage.WATCHED | set(NOT_PROBED), field
+
+
+def test_every_behavioural_check_named_is_one_the_procedure_runs() -> None:
+    """`EFFECT_FIELDS` is keyed by `EffectResult.check`; a typo would hide a row."""
+    source = (REPO / "src/sungrow_modbus/control_test/effects.py").read_text(
+        encoding="utf-8"
+    )
+    for check in coverage.EFFECT_FIELDS:
+        assert f'"{check}"' in source, check
+
+
+def test_a_padded_or_masked_field_is_not_read_by_the_dump() -> None:
+    assert _coverage("sensor", _entity("sungrow_version_3")) == ""
+    assert _coverage("sensor", _entity("sungrow_inverter_serial")) == ""
+    assert _coverage("sensor", _entity("battery_min_soc")) == READ
+
+
+def test_the_export_write_scale_is_taken_from_either_block() -> None:
+    reading = _reading(_dump())
+    asked = Reading(**{**vars(reading), "export_scale": {"write_units_per_count": 10}})
+    carried = Reading(
+        **{
+            **vars(reading),
+            "control_test": {
+                "conditions": {"export_write_scale": {"write_units_per_count": 1}}
+            },
+        }
+    )
+    unknown = Reading(
+        **{**vars(reading), "export_scale": {"write_units_per_count": None}}
+    )
+    assert _export_factor(asked) == 10
+    assert _export_factor(carried) == 1
+    assert _export_factor(unknown) is None
+    assert _agreed([(asked, TIMES_TEN), (carried, TIMES_TEN)]) == TIMES_TEN
+    assert _agreed([]) == ""
+
+
+def test_a_behaviour_cell_counts_each_verdict() -> None:
+    verdicts = [
+        "the inverter did as it was told",
+        "could not tell",
+        "the inverter did as it was told",
+    ]
+    assert _tally(verdicts) == "✓ 2, ? 1"
+    assert _tally([]) == ""
+
+
+def test_13074_writes_x10_on_b001_and_as_handed_on_the_older_firmware() -> None:
+    """The measurement the page carries, against the published surveys.
+
+    `.wiki/wiki/entities/register-13074.md`: x10 on B001 firmware, 1:1 on
+    `SAPPHIRE-H_01011.95.03`.
+    """
+    readings, _skipped = _readings()
+    factors: dict[str, set[int]] = {}
+    for column, members in _columns(readings).items():
+        if column.platform != "SAPPHIRE-H":
+            continue
+        found = {f for r in members if (f := _export_factor(r)) is not None}
+        if found:
+            factors.setdefault(column.firmware, set()).update(found)
+    assert factors["01011.95.03"] == {1}
+    for firmware in ("B001.V000.P020", "B001.V000.P022", "B001.V000.P023"):
+        assert factors[firmware] == {10}, firmware

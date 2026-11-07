@@ -114,6 +114,20 @@ Nothing can start now (blocker 18).
       `modbus-connection[tmodbus]==4.12.4`; to 4.12.7 with tmodbus 1.1.0, a
       new transport for contributors' runs, so after one survey on hardware
       with it (`device-survey/reference.md` first).
+4. **The survey becomes the diagnosis** (in progress). Done: `doc/firmware_support.md` has a *Survey* column (read, written,
+   watched, from `control_test/coverage.py`) and a table of what the control
+   test measured (13074's write scale, readbacks, restart, behaviour).
+   Left, in order:
+   1. **The renames**: survey to diagnosis and control test to capability
+      test, everywhere, stored option keys included, by a config entry
+      migration. Waits until no session is running a control test on
+      hardware, because a restore line names the script's path.
+   2. **Two modes and a feature report**: *read-only diagnosis* and
+      *diagnosis with capability tests*, and a `features` section (schema 25).
+   3. **New capability tests, for the maintainer to pick**: a no-op write of
+      the mode flags; out-of-range refusal probes for the bounds; the second
+      forced-charging window read back with the schedule off; the wallbox in
+      the feature report; the EMS mode codes.
 
 # Open decisions
 
