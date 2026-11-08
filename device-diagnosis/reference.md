@@ -298,6 +298,11 @@ Runs fold only when they share the transport and are all real, or all
 simulated. A run on the other path, or a new firmware, starts the collection
 again. A read-only diagnosis made while runs are kept carries them, dated.
 
+The terminal folds the same way: `sungrow_capability_test.py --merge-into`
+adds its run to the runs the document carries, dating a schema-2 block found
+there by the document's `read_at`, and refuses a run on the other transport
+unless `--replace` puts it in their place.
+
 What is in it: for each control, the value the run chose, the raw register
 word that came back, the word the specification says should have been there,
 and a verdict. Then what the inverter did while limits were applied, what

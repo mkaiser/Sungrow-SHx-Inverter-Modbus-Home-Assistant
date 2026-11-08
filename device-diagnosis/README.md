@@ -134,6 +134,12 @@ command that runs it later, into the document just written:
 scripts/diagnosis.sh tests <host> --port 502 --unit 1 --merge-into <diagnosis-file>.json
 ```
 
+Run it again into the same file at another moment of the day, and both runs
+are kept: some checks need sun, some need the dark (the site import limit,
+for one), and one document then carries them all, each dated. `--replace`
+puts a run in place of the ones already there; a run through the WiNet-S is
+never kept beside one over the cable, so moving to the other path asks for it.
+
 `diagnosis.sh tests ...` hands everything after `tests` to
 `sungrow_capability_test.py`: `--dry-run` resolves the whole plan and writes
 nothing, `--restore <snapshot>` puts back a run that died halfway,

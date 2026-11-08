@@ -152,21 +152,18 @@ Nothing can start now (blocker 18).
       (`capability_test/ledger.py`; the *Capability test status* sensor, a
       notification rewritten per run, *Clear capability test history*), and
       *Continuous capability test mode* starts runs when a missing check is
-      due (`continuous.py`).
+      due (`continuous.py`). The terminal's `--merge-into` folds a run into
+      the runs a document carries (`--replace` puts it in their place).
       Left:
-      1. **The CLI's `--merge-into` appends** through `ledger.fold`
-         rather than replacing the block (`--replace` for the old way).
-         Waits on a release: the PEP 723 header pins a wheel without
-         `ledger`.
-      2. **Continuous mode for an ordinary entry.** The switch exists on a
-         diagnostics-only entry; an ordinary entry has no diagnosis
-         entities, so it would need an action pair (start / stop), with
-         its `services` strings and German.
-      3. **One hardware day** at the maintainer's SH10RT with the switch
+      1. **A release.** The PyPI pin (0.1.0a29) has no `ledger`, so until
+         one ships the integration fails to start from a preview and a
+         diagnosis fetched through uv fails to import
+         (`check_pinned_library.py` says so). Then `sync_version.py --set`.
+      2. **One hardware day** at the maintainer's SH10RT with the switch
          on: the import limit established at night, the PV cut in sun,
          ingested as one document. Also tells whether `NEEDS`' margins
          start runs that the checks then skip.
-      4. **Translate** the status line and the notification once their
+      3. **Translate** the status line and the notification once their
          wording settles; English for now.
 
 # Open decisions

@@ -259,3 +259,27 @@ def test_with_nothing_kept_a_first_run_is_due() -> None:
 
 def test_every_behavioural_check_says_what_it_needs() -> None:
     assert set(ledger.NEEDS) == set(EFFECT_FIELDS) - ledger.MODES
+
+
+def test_unfold_gives_back_what_fold_took() -> None:
+    runs = [
+        _run(
+            "t1",
+            _block(effects=[_effect("forced charge", CONFIRMED)]),
+            readings={"soc": 40},
+        ),
+        _run("t2", _block(), readings={"soc": 75}),
+    ]
+    folded = ledger.fold(runs, readings={"soc": 75})
+
+    again = ledger.unfold(folded, read_at=None, readings={"soc": 75})
+
+    assert [run["read_at"] for run in again] == ["t1", "t2"]
+    assert [run["readings"] for run in again] == [{"soc": 40}, {"soc": 75}]
+    assert ledger.fold(again, readings={"soc": 75}) == folded
+
+
+def test_unfold_dates_a_single_run_by_the_document() -> None:
+    assert ledger.unfold(_block(), read_at="t0") == [
+        {"read_at": "t0", "block": _block()}
+    ]

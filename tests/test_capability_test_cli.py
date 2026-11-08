@@ -119,6 +119,87 @@ def test_a_block_carrying_the_serial_is_never_written(cli, tmp_path):
     assert "A123456789" not in path.read_text()
 
 
+def _run_block(direct: bool = True, check: str = "forced charge") -> dict:
+    return {
+        "schema": 2,
+        "outcome": 0,
+        "conditions": {"direct_connection": direct},
+        "readback": [],
+        "effects": [{"check": check, "verdict": "the inverter did as it was told"}],
+        "restored": [],
+        "not_established": [],
+    }
+
+
+def test_a_second_run_is_folded_beside_the_first(cli, tmp_path):
+    """A run at noon and one after dark, merged into one file, are both kept."""
+    path = _document(tmp_path, SCHEMA - 1)
+    document = json.loads(path.read_text())
+    document["read_at"] = "2026-11-08T11:00:00+00:00"
+    document["capability_test"] = _run_block()
+    path.write_text(json.dumps(document))
+
+    cli._merge(
+        path,
+        "capability_test",
+        _run_block(check="site import limit"),
+        "A123456789",
+        "192.0.2.10",
+    )
+    cli._merge(path, "capability_test", _run_block(), "A123456789", "192.0.2.10")
+
+    block = json.loads(path.read_text())["capability_test"]
+    assert block["schema"] == 3
+    assert len(block["runs"]) == 3
+    # The block that was there has no date of its own; the reading's is used.
+    assert block["runs"][0]["read_at"] == "2026-11-08T11:00:00+00:00"
+    assert {row["check"] for row in block["effects"]} == {
+        "forced charge",
+        "site import limit",
+    }
+
+
+def test_a_run_on_another_path_is_refused_unless_replaced(cli, tmp_path):
+    """A dongle's readback is its cache; it never folds beside a cable's."""
+    path = _document(tmp_path, SCHEMA - 1)
+    cli._merge(path, "capability_test", _run_block(), "A123456789", "192.0.2.10")
+    before = path.read_text()
+
+    with pytest.raises(ValueError, match="--replace"):
+        cli._merge(
+            path,
+            "capability_test",
+            _run_block(direct=False),
+            "A123456789",
+            "192.0.2.10",
+        )
+    assert path.read_text() == before
+
+    cli._merge(
+        path,
+        "capability_test",
+        _run_block(direct=False),
+        "A123456789",
+        "192.0.2.10",
+        replace=True,
+    )
+    assert json.loads(path.read_text())["capability_test"]["schema"] == 2
+
+
+def test_a_block_under_the_old_key_is_folded_and_not_left_behind(cli, tmp_path):
+    """Before schema 25 the block was `control_test`."""
+    path = _document(tmp_path, 24)
+    document = json.loads(path.read_text())
+    document["control_test"] = _run_block()
+    path.write_text(json.dumps(document))
+
+    cli._merge(path, "capability_test", _run_block(), "A123456789", "192.0.2.10")
+
+    document = json.loads(path.read_text())
+    assert "control_test" not in document
+    assert len(document["capability_test"]["runs"]) == 2
+
+
 # -- the two prompts before the first write ----------------------------------
 
 
@@ -225,6 +306,7 @@ def _args(**overrides) -> argparse.Namespace:
         "simulated": True,
         "restore": None,
         "merge_into": None,
+        "replace": False,
         "yes": False,
     }
     return argparse.Namespace(**{**values, **overrides})

@@ -66,8 +66,13 @@ from sungrow_modbus.capability_test import (
     Outcome,
     Snapshot,
     document,
+    ledger,
 )
-from sungrow_modbus.diagnosis_document import attach_features, stand_in
+from sungrow_modbus.diagnosis_document import (
+    attach_features,
+    capability_test_block,
+    stand_in,
+)
 from sungrow_modbus.hybrid_inverter import export_scale
 
 _LOGGER = logging.getLogger("capability_test")
@@ -677,7 +682,12 @@ async def _run(args: argparse.Namespace) -> int:
         try:
             paths.append(
                 _merge(
-                    Path(args.merge_into), "capability_test", block, serial, args.host
+                    Path(args.merge_into),
+                    "capability_test",
+                    block,
+                    serial,
+                    args.host,
+                    replace=args.replace,
                 )
             )
         except (OSError, ValueError) as err:
@@ -720,8 +730,42 @@ def _caller_path(value: str) -> Path:
     return Path(os.environ.get("SUNGROW_CALLER_DIR", os.getcwd())) / path
 
 
+def _fold_capability_test(
+    document_data: dict[str, Any], block: dict[str, Any]
+) -> dict[str, Any]:
+    """Fold this run into the document's kept runs, and return the result.
+
+    One run answers only what its moment allowed, so a run at noon and one
+    after dark merged into the same file are both kept, each dated
+    (`sungrow_modbus.capability_test.ledger`). A block already there with no
+    date of its own is dated by the document's `read_at`. Runs that cannot
+    fold -- another transport, a simulator beside a house -- raise
+    ValueError, which `--replace` answers.
+    """
+    readings = (document_data.get("readings") or {}).get("values")
+    runs = []
+    existing = capability_test_block(document_data)
+    if existing is not None:
+        runs = ledger.unfold(
+            existing, read_at=document_data.get("read_at"), readings=readings
+        )
+    runs.append({"read_at": datetime.now(UTC).isoformat(), "block": block})
+    try:
+        return ledger.fold(runs, readings=readings)
+    except ValueError as err:
+        raise ValueError(
+            f"{err}; pass --replace to put this run in place of the kept ones"
+        ) from err
+
+
 def _merge(
-    target: Path, key: str, block: dict[str, Any], serial: str | None, host: str
+    target: Path,
+    key: str,
+    block: dict[str, Any],
+    serial: str | None,
+    host: str,
+    *,
+    replace: bool = False,
 ) -> Path:
     """Fold the block into an existing diagnosis document, and refuse to leak.
 
@@ -755,6 +799,11 @@ def _merge(
                 f"{document_data.get('schema')}, too old to be stamped {admitted}"
             )
         document_data["schema"] = admitted
+    if key == "capability_test" and not replace:
+        block = _fold_capability_test(document_data, block)
+        # A document from before 25 kept the block under its old key; the
+        # fold carried it, so it is not left behind as a second block.
+        document_data.pop("control_test", None)
     document_data[key] = block
     if document_data.get("schema", 0) >= FEATURES_SCHEMA:
         # The report summarises the blocks, so a new block means a new report.
@@ -879,7 +928,14 @@ def _parser() -> argparse.ArgumentParser:
         "--restore", help="put a saved snapshot back, and do nothing else"
     )
     parser.add_argument(
-        "--merge-into", help="fold the result into an existing diagnosis document"
+        "--merge-into",
+        help="fold the result into an existing diagnosis document, beside the "
+        "runs it already carries",
+    )
+    parser.add_argument(
+        "--replace",
+        action="store_true",
+        help="with --merge-into: put this run in place of the runs already there",
     )
     parser.add_argument(
         "--yes",

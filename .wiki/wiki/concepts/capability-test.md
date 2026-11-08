@@ -180,8 +180,12 @@ each run show the progress; **Download diagnostics** carries every run.
 Runs on different transports are never folded: through a
 [WiNet-S](../entities/device-winet-s.md) a readback is the dongle's cache.
 
-**Continuous capability test mode** does the coming back. A switch on the device
-page is the leave: on until a person switches it off, and off after every
+The terminal's `--merge-into` folds a run into a document's runs the same way.
+
+**Continuous capability test mode** does the coming back, on a diagnostics-only
+entry only: an ordinary entry has no diagnosis entities, and its owner reaches
+the capability test through the action. A switch on the device page is the
+leave: on until a person switches it off, and off after every
 restart. Once a minute it compares the polled readings with what each missing
 check needs (`ledger.NEEDS`: the import limit needs PV under 200 W and room in
 the battery, the PV cut needs PV above 700 W) and starts the ordinary run when

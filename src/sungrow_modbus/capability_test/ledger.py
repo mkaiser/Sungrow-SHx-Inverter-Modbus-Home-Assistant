@@ -308,6 +308,36 @@ def fold(
     }
 
 
+def unfold(
+    block: Mapping[str, Any],
+    *,
+    read_at: str | None,
+    readings: Mapping[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Return a block's runs, in the shape `fold` takes, to fold one more in.
+
+    A folded block (schema 3) gives its runs back, each with the readings it
+    had where `readings_changed` says what moved. A single run's block has no
+    date of its own; it is given `read_at`, which a caller takes from the
+    document it sits in -- the reading's date, which the block may be older
+    than, and no later.
+    """
+    if block.get("schema") != LEDGER_SCHEMA:
+        return [{"read_at": read_at, "block": dict(block)}]
+    runs = []
+    for entry in block.get("runs") or []:
+        run_block = {
+            key: value
+            for key, value in entry.items()
+            if key not in ("read_at", "readings_changed")
+        }
+        run: dict[str, Any] = {"read_at": entry.get("read_at"), "block": run_block}
+        if readings is not None and "readings_changed" in entry:
+            run["readings"] = {**readings, **entry["readings_changed"]}
+        runs.append(run)
+    return runs
+
+
 def progress(folded: Mapping[str, Any]) -> tuple[int, int]:
     """Return (established, total) over a folded block's summary."""
     summary = folded.get("summary") or {}

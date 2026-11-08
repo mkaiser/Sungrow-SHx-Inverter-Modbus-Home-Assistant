@@ -588,3 +588,9 @@ capability-test and the ingest workflow.
 A switch whose on is the leave for runs that start on their own, until switched off or a restart:
 it starts a run when the polled readings match what a missing check needs. AGENTS.md's leave rule
 names it. Updated capability-test.
+
+## [2026-11-08] changed | the terminal's --merge-into folds runs
+
+`sungrow_capability_test.py --merge-into` keeps the runs a document carries and adds its own;
+`--replace` puts it in their place. Continuous mode stays on diagnostics-only entries, by decision.
+Updated capability-test.
