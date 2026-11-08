@@ -97,7 +97,7 @@
       },
       "testimony": {
         "title": "What do you want to tell us?",
-        "description": "You chose diagnostics only, which means this entry exists to produce a reading — so these are the questions that reading needs and no register can answer.\n\n{measured}\n\nEverything here is optional, and leaving a field empty is honest: it records that the question was not answered, which is different from answering \"I don't know\". You can change any of it later under the integration's options.\n\nAfterwards, press **Diagnosis: run read-only** on the device page.",
+        "description": "You chose diagnostics only, which means this entry exists to produce a reading — so these are the questions that reading needs and no register can answer.\n\n{measured}\n\nEverything here is optional, and leaving a field empty is honest: it records that the question was not answered, which is different from answering \"I don't know\". You can change any of it later under the integration's options.\n\nAfterwards, on the device page, choose what to run in **Diagnosis: mode** and press **Diagnosis: start**.",
         "data": {
           "reporter": "Your name or handle",
           "diagnosis_transport": "How this inverter is connected",
@@ -106,8 +106,7 @@
           "diagnosis_other_inverter": "Is there another inverter here that is not a Sungrow?",
           "diagnosis_battery": "Battery make and model",
           "diagnosis_comment": "Anything else worth knowing",
-          "publish_address": "May the last two octets of the address be published?",
-          "diagnosis_register_dump": "Also sweep the raw register bands (about five minutes)"
+          "publish_address": "May the last two octets of the address be published?"
         },
         "data_description": {
           "reporter": "Credited in the published reading, and who gets asked if a row raises a question. Leave empty to contribute anonymously.",
@@ -117,8 +116,7 @@
           "diagnosis_other_inverter": "Your Sungrow does not measure how much your house is using — it works it out from its own output plus what the grid meter says is coming in. A second inverter feeding the same meter therefore makes every load figure too low, by exactly what that inverter is producing, while everything else reads normally. No register can tell us: the Sungrow cannot see it. Say yes and we will ask what it is.",
           "diagnosis_battery": "No register reports it. \"SBR096\" or \"Pylontech Force H1, 14.4 kWh\" is more useful than a capacity the inverter already reports.",
           "diagnosis_comment": "Anything unusual about the installation — a cluster, a second inverter, a wallbox, a firmware update you remember.",
-          "publish_address": "On, and yours to turn off before you submit. Only the last two octets ever reach the document — never the third, which is what would identify your network — and clear this and it reads xxx.xxx instead. What it buys is telling several readings from one house apart: a master, a slave and two dongles otherwise produce four files that look alike.",
-          "diagnosis_register_dump": "On, and worth turning off if you are in a hurry. Without it a diagnosis reads the registers this integration already knows about and takes a couple of seconds. With it, it also sweeps 2181 addresses across sixteen bands, including the ones no specification documents — which is how every undocumented register this project knows was found. That is slow because an address with nothing behind it goes quiet rather than refusing, so each empty one costs a full timeout: about five minutes on a direct cable, and considerably longer through a WiNet-S or a VPN. Your inverter keeps being polled throughout, and the diagnosis button on the device page shows how far along it is."
+          "publish_address": "On, and yours to turn off before you submit. Only the last two octets ever reach the document — never the third, which is what would identify your network — and clear this and it reads xxx.xxx instead. What it buys is telling several readings from one house apart: a master, a slave and two dongles otherwise produce four files that look alike."
         }
       },
       "user": {
@@ -153,7 +151,7 @@
     },
     "create_entry": {
       "default": "**You are set up.** The inverter's entities appear on its device page as their first readings arrive.\n\nTo see it in the Energy dashboard (**Settings → Dashboards → Energy**), pick the sensors [the Energy dashboard guide]({energy_dashboard_url}) names: several energy sensors have names that look right and are not.",
-      "diagnostics": "**You are set up, and nothing has been read yet.** Two more steps, both on the device page this dialog is about to show you:\n\n1. Press **Diagnosis: run read-only**, under *Diagnostic*. It reads and never writes. On a cable it is over in a couple of minutes with the register sweep on; over a VPN it can take considerably longer, and the three sensors beside the button say how far along it is and what it is reading.\n2. When it finishes, open **Notifications** in the sidebar — the badge at the bottom left. The notification there carries a summary and a **Download the document** link. That link is the JSON file to send us, and it stops working after an hour.\n\nMissed it, or came back the next day? **Download diagnostics** on the same device page carries the same document and never expires. Send either to [the diagnosis issue]({diagnosis_issue_url}).\n\nThe file names your inverter by a stand-in rather than its serial number, and carries the last two octets of its address only while that box is ticked."
+      "diagnostics": "**You are set up, and nothing has been read yet.** Two more steps, both on the device page this dialog is about to show you:\n\n1. Under *Diagnostic*, leave **Diagnosis: mode** on *Read-only* and press **Diagnosis: start**. Read-only reads and never writes. It runs in the background, so you can leave the page; on a cable it is over in a couple of minutes with the register sweep on, over a VPN it can take considerably longer, and the sensors beside the button say how far along it is and what it is reading. Please do not restart Home Assistant while it runs.\n2. A notification in the sidebar — the badge at the bottom left — tells you when it has finished. Then press **Download diagnostics** on the same device page: that is the JSON file to send to [the diagnosis issue]({diagnosis_issue_url}), and it never expires.\n\nThe file names your inverter by a stand-in rather than its serial number, and carries the last two octets of its address only while that box is ticked."
     }
   },
   "entity": {
@@ -235,11 +233,11 @@
       "clear_capability_test_history": {
         "name": "Diagnosis: tests, clear history"
       },
-      "run_capability_test": {
-        "name": "Diagnosis: run extended"
+      "diagnosis_start": {
+        "name": "Diagnosis: start"
       },
-      "run_diagnosis": {
-        "name": "Diagnosis: run read-only"
+      "diagnosis_stop": {
+        "name": "Diagnosis: stop"
       }
     },
     "number": {
@@ -287,6 +285,14 @@
           "stop": "Stop",
           "charge": "Forced charge",
           "discharge": "Forced discharge"
+        }
+      },
+      "diagnosis_mode": {
+        "name": "Diagnosis: mode",
+        "state": {
+          "read_only": "Read-only",
+          "extended": "Extended test (single run)",
+          "extended_auto_repeat": "Extended test (auto repeat)"
         }
       },
       "ems_mode": {
@@ -617,13 +623,19 @@
         "name": "DC-side fault"
       },
       "diagnosis_finished": {
-        "name": "Diagnosis: finished"
+        "name": "Diagnosis: last finished"
+      },
+      "diagnosis_next_start": {
+        "name": "Diagnosis: next start"
       },
       "diagnosis_progress": {
         "name": "Diagnosis: progress"
       },
       "diagnosis_step": {
         "name": "Diagnosis: current step"
+      },
+      "diagnosis_test_runs": {
+        "name": "Diagnosis: test runs"
       },
       "diagnosis_tests_failed": {
         "name": "Diagnosis: tests failed"
@@ -1257,9 +1269,6 @@
       "backup_mode": {
         "name": "Backup mode"
       },
-      "continuous_capability_test": {
-        "name": "Diagnosis: run extended, continuous"
-      },
       "cut_pv_generation": {
         "name": "Cut PV generation"
       },
@@ -1274,6 +1283,9 @@
       },
       "load_adjustment_mode_enable": {
         "name": "Load control"
+      },
+      "skip_established_capability_tests": {
+        "name": "Diagnosis: extended test, skip established"
       }
     },
     "time": {
@@ -1490,7 +1502,7 @@
           },
           "diagnosis": {
             "name": "Contribute a capability diagnosis",
-            "description": "Which registers an inverter answers is measured, not looked up, and a reading from yours is what improves support for it. {measured} Everything below is optional and answers what no register can; an empty field records that the question was not answered. Saving keeps your answers. To run the diagnosis, press \"Diagnosis: run read-only\" on the device page: it reads and never writes, and replaces the serial number with a stand-in.",
+            "description": "Which registers an inverter answers is measured, not looked up, and a reading from yours is what improves support for it. {measured} Everything below is optional and answers what no register can; an empty field records that the question was not answered. Saving keeps your answers. To run the diagnosis, choose \"Read-only\" in \"Diagnosis: mode\" on the device page and press \"Diagnosis: start\": it reads and never writes, and replaces the serial number with a stand-in.",
             "data": {
               "reporter": "Your name or handle",
               "diagnosis_transport": "How this inverter is connected",
@@ -1516,7 +1528,7 @@
           },
           "capability_test": {
             "name": "What the capability test may do",
-            "description": "\"Diagnosis: run extended\" on the device page writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The six switches below go further, and each is on until you switch it off: pressing the button is your consent. What you switch off stays off.",
+            "description": "An extended test, started on the device page with \"Diagnosis: start\", writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The six switches below go further, and each is on until you switch it off: pressing Start in an extended mode is your consent. What you switch off stays off.",
             "data": {
               "capability_test_restart": "May it stop and restart the inverter?",
               "capability_test_export_limit": "May it switch feed-in limitation on?",

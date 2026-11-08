@@ -259,6 +259,7 @@ INCONCLUSIVE = "could not tell"
 
 #: Why something was skipped. A skip is a recorded non-result, never a pass.
 OUT_OF_TIME = "out of time"
+STOPPED = "stopped by the owner"
 NOT_CAPABLE = "the device does not have it"
 UNSAFE_STATE = "the house was in no state for it"
 USER_DECLINED = "not asked for"
@@ -1129,6 +1130,19 @@ class Options:
     Preflight still runs, because the snapshot is what answers whether the
     settings survived the restart.
     """
+
+    skip: frozenset[str] = frozenset()
+    """Checks this run leaves out, by name: a readback field (`Probe.field`) or
+    a behavioural check (`coverage.EFFECT_FIELDS`' keys).
+
+    For a house whose earlier runs have already established them
+    (`ledger.established`): a run started for the one check still missing then
+    writes only what that check needs, rather than every control again. A
+    skipped check produces no row and no note, so a fold keeps the earlier
+    run's verdict; the names go into `conditions.skipped_established`, so the
+    run's own block says what it did not look at. Preflight, the snapshot and
+    the restore are never skipped, and neither is the export limit's write
+    scale while anything here still writes 13074."""
 
     run_budget: float = RUN_BUDGET
 

@@ -81,14 +81,14 @@ def options_capability_test(page: Page, url: str) -> Path:
 
 
 def device_diagnosis(page: Page, url: str) -> Path:
-    """Shoot the device page's card with the two diagnosis buttons."""
+    """Shoot the device page's card with the diagnosis mode, Start and Stop."""
     settle(page)
     page.goto(f"{url}/config/devices/dashboard")
     page.wait_for_load_state("networkidle")
     page.get_by_text("SH10RT", exact=True).first.click()
     page.wait_for_url(lambda now: "/config/devices/device/" in now, timeout=30_000)
     page.wait_for_load_state("networkidle")
-    card = page.locator("ha-card").filter(has_text="Diagnosis: run read-only").last
+    card = page.locator("ha-card").filter(has_text="Diagnosis: start").last
     card.wait_for()
     page.wait_for_timeout(1_000)
     target = IMAGES / "HA-settings-device-start-diagnosis.png"

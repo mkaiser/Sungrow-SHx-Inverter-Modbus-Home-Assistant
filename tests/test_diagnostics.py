@@ -98,9 +98,8 @@ async def test_it_says_why_an_entity_does_not_exist(
     entry = await _setup(hass, sungrow_unit)
     report = await async_get_config_entry_diagnostics(hass, entry)
 
-    reasons = {row["key"]: row["reason"] for row in report["entities"]["not_created"]}
-    assert reasons["mppt3_voltage"] == "requires mppt3"
-    assert reasons["mppt3_power"] == "requires mppt3"
+    not_created = report["entities"]["not_created"]
+    assert {"mppt3_voltage", "mppt3_power"} <= set(not_created["requires mppt3"])
     assert report["entities"]["created"] > 100
 
 
@@ -129,10 +128,31 @@ async def test_it_separates_unavailable_registers_from_failed_blocks(
     assert "mppt3_voltage" in report["readings"]["reported_unavailable"]
     assert report["readings"]["values"]["total_dc_power"] is not None
 
-    polling = {row["component"]: row for row in report["polling"]}
-    assert polling["fast_input"]["last_poll_succeeded"] is True
-    assert polling["fast_input"]["error"] is None
-    assert polling["fast_input"]["interval_seconds"] == 10
+    polling = report["polling"]
+    assert polling["healthy"] == polling["of"] > 0
+    assert polling["problems"] == []
+    assert polling["interval_seconds"]["fast"] == 10
+
+
+async def test_poll_health_lists_only_what_did_not_answer(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """A healthy component is a count; one that failed keeps its whole row.
+
+    The components of one tier share a coordinator, so a failed poll is every
+    component of that tier.
+    """
+    entry = await _setup(hass, sungrow_unit)
+    coordinators = entry.runtime_data.coordinators
+    failed = coordinators["fast_input"]
+    failed.last_update_success = False
+    tier = sorted(name for name, c in coordinators.items() if c is failed)
+
+    polling = (await async_get_config_entry_diagnostics(hass, entry))["polling"]
+
+    assert polling["healthy"] == polling["of"] - len(tier)
+    assert [row["component"] for row in polling["problems"]] == tier
+    assert all(row["last_poll_succeeded"] is False for row in polling["problems"])
 
 
 async def test_the_register_dump_is_off_unless_asked_for(

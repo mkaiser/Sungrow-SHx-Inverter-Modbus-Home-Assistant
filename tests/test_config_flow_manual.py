@@ -20,7 +20,9 @@ from modbus_connection import ModbusConnectionError
 import pytest
 from pytest_homeassistant.common import MockConfigEntry
 
+from custom_components.sungrow_modbus.config_flow_schemas import _testimony_schema
 from custom_components.sungrow_modbus.const import (
+    CONF_DIAGNOSIS_DUMP,
     CONF_MODE,
     CONF_UNIT_ID,
     DOMAIN,
@@ -122,6 +124,19 @@ async def test_the_testimony_page_reports_the_measured_route(
     measured = result["description_placeholders"]["measured"]
     assert "SH10RT" in measured
     assert says in measured
+
+
+async def test_the_testimony_page_does_not_ask_for_the_sweep(
+    hass: HomeAssistant,
+) -> None:
+    """Sweeping is a choice about a run; setup asks only what the owner knows."""
+    result = await _submit(hass, {"return_value": (_inverter(), True, None)})
+
+    assert result["step_id"] == "testimony"
+    assert CONF_DIAGNOSIS_DUMP not in {str(key) for key in result["data_schema"].schema}
+    assert CONF_DIAGNOSIS_DUMP in {str(key) for key in _testimony_schema({}).schema}, (
+        "the options page still asks it"
+    )
 
 
 async def test_reconfigure_refuses_an_inverter_without_a_serial(

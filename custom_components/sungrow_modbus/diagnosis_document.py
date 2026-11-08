@@ -12,7 +12,7 @@ so one generator keeps building `doc/compatibility.md` from both and a reading
 from somebody who only ever clicked a button counts the same as one from a
 terminal.
 
-Two callers build it. The **Diagnosis: run read-only** button (`diagnosis.py`)
+Two callers build it. The **Diagnosis: start** button (`diagnosis.py`)
 builds the full document in the background and offers it as a signed
 download. The **diagnostics download** builds a cheaper one in its
 `diagnosis` section: Home Assistant already has a button that produces a

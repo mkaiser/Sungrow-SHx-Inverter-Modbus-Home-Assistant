@@ -238,7 +238,9 @@ def _other_inverter_schema(default: str) -> probatio.Schema:
     )
 
 
-def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> probatio.Schema:
+def _testimony_schema(
+    options: dict[str, Any] | Mapping[str, Any], *, include_dump: bool = True
+) -> probatio.Schema:
     """Return the questions a diagnosis needs and no register can answer.
 
     Shared by the diagnostics setup step and the options page's section:
@@ -246,11 +248,15 @@ def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> probatio.S
     of the same document and a contributor who answers one should not find
     the other asking something else.
 
+    `include_dump` is False at setup: whether to sweep the raw bands is a
+    choice about a run, made on the device page or the options page, not
+    testimony. Left unasked it stays at `DEFAULT_DIAGNOSIS_DUMP`.
+
     `suggested_value` rather than `default` on the dropdowns -- a default of
     "" is injected when the field is left alone and "" is not one of the
     choices, which would fail validation for anybody who had never answered.
     """
-    return probatio.Schema(
+    schema = probatio.Schema(
         {
             probatio.Optional(
                 CONF_REPORTER, default=options.get(CONF_REPORTER, "")
@@ -322,14 +328,17 @@ def _testimony_schema(options: dict[str, Any] | Mapping[str, Any]) -> probatio.S
                 CONF_PUBLISH_ADDRESS,
                 default=options.get(CONF_PUBLISH_ADDRESS, True),
             ): BooleanSelector(),
-            # Last, because it is the expensive one: the diagnosis is two
-            # seconds without it and about five minutes with it. On by
-            # default all the same -- the sweep is how every undocumented
-            # register was found -- and the description says so. Asked
-            # in the same breath as the testimony because it is the same
-            # decision -- whether to spend something on this project -- and
-            # because a contributor who has been asked for a dump by name
-            # should find it where they were already answering questions.
+        }
+    )
+    if not include_dump:
+        return schema
+    # Last, because it is the expensive one: the diagnosis is two seconds
+    # without it and about five minutes with it. On by default all the same
+    # -- the sweep is how every undocumented register was found -- and the
+    # description says so. Only on the options page: at setup nobody has
+    # chosen a run yet.
+    return schema.extend(
+        {
             probatio.Required(
                 CONF_DIAGNOSIS_DUMP,
                 default=options.get(CONF_DIAGNOSIS_DUMP, DEFAULT_DIAGNOSIS_DUMP),

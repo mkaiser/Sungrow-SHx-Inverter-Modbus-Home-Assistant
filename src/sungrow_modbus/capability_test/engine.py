@@ -94,6 +94,11 @@ class CapabilityTest(EffectSteps):
             # Its own mode: the inverter was asleep, and a restart would
             # measure nothing the check did not.
             pass
+        elif self.stopped:
+            self.conditions["stopped"] = True
+            self._note("no restart: the run was stopped by the owner")
+        elif self.options.restart and self._skips("restart"):
+            self._note("no restart: an earlier run measured it already")
         elif (
             self.options.restart
             and self.options.dry_run

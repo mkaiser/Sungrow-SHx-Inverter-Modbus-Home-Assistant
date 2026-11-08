@@ -23,9 +23,11 @@ from .derived_descriptions import DERIVED_SENSORS
 from .diagnosis_entities import (
     CapabilityTestCountSensor,
     CapabilityTestStatusSensor,
+    DiagnosisNextStartSensor,
     DiagnosisProgressSensor,
     DiagnosisResultSensor,
     DiagnosisStepSensor,
+    DiagnosisTestRunsSensor,
 )
 from .entity import (
     SungrowBatteryEntity,
@@ -73,6 +75,8 @@ async def async_setup_entry(
         if not runtime_data.is_string_inverter:
             async_add_entities(
                 [
+                    DiagnosisNextStartSensor(runtime_data),
+                    DiagnosisTestRunsSensor(runtime_data),
                     CapabilityTestStatusSensor(runtime_data),
                     *(
                         CapabilityTestCountSensor(runtime_data, bucket)

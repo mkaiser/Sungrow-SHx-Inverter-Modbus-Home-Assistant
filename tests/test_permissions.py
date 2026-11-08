@@ -368,7 +368,8 @@ def _second_device_id(hass: HomeAssistant, entry: MockConfigEntry) -> str:
     return device.id
 
 
-CONTROL_BUTTON = "button.sh10rt_diagnosis_run_extended"
+START = "button.sh10rt_diagnosis_start"
+MODE = "select.sh10rt_diagnosis_mode"
 
 
 async def _diagnostics_entry(
@@ -393,15 +394,20 @@ async def _diagnostics_entry(
     return entry
 
 
-async def _press_capability_test(hass: HomeAssistant, entry, user) -> bool:
-    """Press the capability test's button as `user`; return whether a run started."""
+async def _press_capability_test(
+    hass: HomeAssistant, entry, user, mode: str = "extended"
+) -> bool:
+    """Press Start in `mode` as `user`; return whether a run started."""
+    await hass.services.async_call(
+        "select", "select_option", {ATTR_ENTITY_ID: MODE, "option": mode}, blocking=True
+    )
     with patch.object(
         type(entry.runtime_data.diagnosis), "async_start", return_value=True
     ) as start:
         await hass.services.async_call(
             "button",
             "press",
-            {ATTR_ENTITY_ID: CONTROL_BUTTON},
+            {ATTR_ENTITY_ID: START},
             blocking=True,
             context=Context(user_id=user.id),
         )
@@ -439,3 +445,13 @@ async def test_an_admin_may_press_the_capability_test_button(
     entry = await _diagnostics_entry(hass, sungrow_unit)
 
     assert await _press_capability_test(hass, entry, hass_admin_user)
+
+
+async def test_a_normal_user_may_start_a_read_only_diagnosis(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """Read-only writes nothing, so Start asks no permission in that mode."""
+    entry = await _diagnostics_entry(hass, sungrow_unit)
+    user = await _user(hass, GROUP_ID_USER)
+
+    assert await _press_capability_test(hass, entry, user, mode="read_only")

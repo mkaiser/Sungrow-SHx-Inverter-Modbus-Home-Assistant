@@ -170,17 +170,31 @@ class CapabilityTestRunner:
         entry: SungrowConfigEntry,
         *,
         forced_startup: bool = False,
+        skip: frozenset[str] = frozenset(),
     ) -> None:
         """Prepare a runner. Nothing is read or written until `async_run`.
 
         `forced_startup` runs the forced startup check alone, the mode that
-        needs the inverter in low-SoC standby.
+        needs the inverter in low-SoC standby. `skip` names the checks this run
+        leaves out (`Options.skip`), the ones earlier runs established.
         """
         self.hass = hass
         self.entry = entry
         self.forced_startup = forced_startup
+        self.skip = skip
         self._remove_shutdown_job: Any = None
         self._test: CapabilityTest | None = None
+        self._stop_requested = False
+
+    def request_stop(self) -> None:
+        """End the run at its next check; everything is still put back.
+
+        Kept when no run has been built yet, so a stop pressed while part B
+        is still reading its snapshot is not lost.
+        """
+        self._stop_requested = True
+        if self._test is not None:
+            self._test.request_stop()
 
     def _options(self) -> Options:
         """Read what this run has leave to do, from the entry's options.
@@ -206,6 +220,7 @@ class CapabilityTestRunner:
         return Options(
             allow_dark=True,
             forced_startup=self.forced_startup,
+            skip=self.skip,
             restart=bool(
                 options.get(
                     CONF_CAPABILITY_TEST_RESTART, CAPABILITY_TEST_PERMISSION_DEFAULT
@@ -300,6 +315,8 @@ class CapabilityTestRunner:
             on_snapshot=keep,
             sungrow_pack=self.entry.runtime_data.battery is not None,
         )
+        if self._stop_requested:
+            self._test.request_stop()
         _LOGGER.warning(
             "%s: running the capability test. It writes to every control this "
             "integration can write to, and puts each one back.",

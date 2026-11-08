@@ -130,7 +130,7 @@ DEFAULT_PERMISSIONS: dict[str, str] = {
 
 #: Whether each capability test permission below is granted until its owner says no.
 #:
-#: Opt-out: pressing **Diagnosis: run extended** is the leave, and a
+#: Opt-out: pressing **Diagnosis: start** in an extended mode is the leave, and a
 #: run that skips its restart, export limit and PV cut leaves the checks only
 #: hardware can answer unanswered. Each switch is in the options' capability
 #: test section, with its consequences spelled out there; one switched off is
@@ -295,13 +295,12 @@ CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL = "diagnosis_other_inverter_detail"
 #: cleared it reads `xxx.xxx` and is complete rather than damaged.
 CONF_PUBLISH_ADDRESS = "publish_address"
 
-#: Whether a diagnosis also sweeps the twelve raw address bands.
+#: Whether a diagnosis also sweeps the sixteen raw address bands.
 #:
 #: On by default, and the only answer in this section that is not testimony:
 #: it changes what the diagnosis *does* rather than describing what the owner
-#: knows. It lives here anyway because it belongs to the same decision --
-#: somebody who has decided to contribute a reading is the only person this
-#: is for.
+#: knows. So the diagnostics setup step does not ask it -- nobody has chosen a
+#: run at that point -- and only the options page's diagnosis section does.
 #:
 #: Not free, which is why it stays a question. The dump reads
 #: 2181 addresses, most of which nothing maps, and on a Sungrow an address with no
@@ -444,3 +443,17 @@ CONF_ADD_DEVICES = "add_devices"
 #: Not a question in the form: somebody whose next question would be "which
 #: number?" is better served by trying the two that are known.
 SCAN_PORTS: tuple[int, ...] = (502, 503)
+
+
+#: What *Diagnosis: start* runs, chosen in the *Diagnosis: mode* select.
+#: Read-only reads; extended adds one capability test, which writes and puts
+#: everything back; auto repeat gives the leave for capability tests that
+#: start on their own until Stop or a restart (`continuous.py`).
+DIAGNOSIS_MODE_READ_ONLY = "read_only"
+DIAGNOSIS_MODE_EXTENDED = "extended"
+DIAGNOSIS_MODE_AUTO_REPEAT = "extended_auto_repeat"
+DIAGNOSIS_MODES: tuple[str, ...] = (
+    DIAGNOSIS_MODE_READ_ONLY,
+    DIAGNOSIS_MODE_EXTENDED,
+    DIAGNOSIS_MODE_AUTO_REPEAT,
+)

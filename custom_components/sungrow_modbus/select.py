@@ -20,7 +20,9 @@ from homeassistant.components.select import SelectEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
+from .const import CONF_MODE, MODE_DEVICES, MODE_DIAGNOSTICS
 from .coordinator import SungrowConfigEntry
+from .diagnosis_entities import DiagnosisModeSelect
 from .entity import SungrowEntity, SungrowSelectDescription
 from .select_descriptions import SELECT_DESCRIPTIONS
 
@@ -44,6 +46,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up the modes this device actually has."""
     runtime_data = entry.runtime_data
+    if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
+        # A diagnostics-only entry has no settings; its one select is what
+        # *Diagnosis: start* runs.
+        async_add_entities([DiagnosisModeSelect(runtime_data)])
+        return
     async_add_entities(
         SungrowSelect(runtime_data, description)
         for description in SELECT_DESCRIPTIONS

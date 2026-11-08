@@ -30,9 +30,9 @@ from .button_descriptions import BUTTON_DESCRIPTIONS
 from .const import CONF_MODE, MODE_DEVICES, MODE_DIAGNOSTICS
 from .coordinator import SungrowConfigEntry
 from .diagnosis_entities import (
-    CapabilityTestButton,
     ClearCapabilityTestHistoryButton,
-    DiagnosisButton,
+    DiagnosisStartButton,
+    DiagnosisStopButton,
 )
 from .entity import SungrowButtonDescription, SungrowEntity
 
@@ -62,12 +62,14 @@ async def async_setup_entry(
         )
         return
     if runtime_data.is_string_inverter:
-        async_add_entities([DiagnosisButton(runtime_data)])
+        async_add_entities(
+            [DiagnosisStartButton(runtime_data), DiagnosisStopButton(runtime_data)]
+        )
         return
     async_add_entities(
         [
-            DiagnosisButton(runtime_data),
-            CapabilityTestButton(runtime_data),
+            DiagnosisStartButton(runtime_data),
+            DiagnosisStopButton(runtime_data),
             ClearCapabilityTestHistoryButton(runtime_data),
         ]
     )

@@ -98,15 +98,17 @@ OVERRIDES: dict[str, str] = {
     # them, buttons and switch included, because the device page's
     # *Diagnostic* card sorts by name: one shared prefix keeps them together
     # among entities that are otherwise all readings, in both languages.
-    # The two buttons are named as a pair a contributor chooses between:
-    # "read-only" on the one that never writes, so that the other one, which
-    # adds the capability test's writes, is the one without that promise.
-    "run_diagnosis": "Diagnosis: run read-only",
-    "run_capability_test": "Diagnosis: run extended",
-    "continuous_capability_test": "Diagnosis: run extended, continuous",
+    # One select chooses what runs, one button starts it, one stops it: the
+    # mode names say plainly which of them write (`DIAGNOSIS_MODE_LABELS`).
+    "diagnosis_mode": "Diagnosis: mode",
+    "diagnosis_start": "Diagnosis: start",
+    "diagnosis_stop": "Diagnosis: stop",
+    "skip_established_capability_tests": ("Diagnosis: extended test, skip established"),
     "diagnosis_progress": "Diagnosis: progress",
     "diagnosis_step": "Diagnosis: current step",
-    "diagnosis_finished": "Diagnosis: finished",
+    "diagnosis_finished": "Diagnosis: last finished",
+    "diagnosis_next_start": "Diagnosis: next start",
+    "diagnosis_test_runs": "Diagnosis: test runs",
     "clear_capability_test_history": "Diagnosis: tests, clear history",
     "capability_test_status": "Diagnosis: test summary",
     # The capability test's checks, counted by outcome (`ledger.BUCKETS`).
@@ -496,6 +498,14 @@ LEGACY_ONLY_SENSORS: dict[str, str] = {
 #: among the readings: raw enumeration codes, identity and firmware strings,
 #: and nameplate constants. `_raw` entities are all here by rule — a raw code
 #: has a decoded counterpart, and that is the one a dashboard wants.
+#: The options of *Diagnosis: mode*, by `const.DIAGNOSIS_MODES` slug. No
+#: tooltip exists for a select option, so each label says what it does.
+DIAGNOSIS_MODE_LABELS: dict[str, str] = {
+    "read_only": "Read-only",
+    "extended": "Extended test (single run)",
+    "extended_auto_repeat": "Extended test (auto repeat)",
+}
+
 DIAGNOSTIC: frozenset[str] = frozenset(
     {
         "active_power_limitation_ratio_raw",
@@ -649,12 +659,17 @@ GERMAN: dict[str, str] = {
     "wallbox_enabled": "Ladestation aktiviert",
     "weekend_discharge": "Entladung am Wochenende",
     # -- the diagnosis -------------------------------------------------------
-    "run_diagnosis": "Diagnose: nur lesend ausführen",
-    "run_capability_test": "Diagnose: erweitert ausführen",
-    "continuous_capability_test": "Diagnose: erweitert, fortlaufend",
+    "diagnosis_mode": "Diagnose: Modus",
+    "diagnosis_start": "Diagnose: starten",
+    "diagnosis_stop": "Diagnose: stoppen",
+    "skip_established_capability_tests": (
+        "Diagnose: erweiterter Test, Ermitteltes überspringen"
+    ),
     "diagnosis_progress": "Diagnose: Fortschritt",
     "diagnosis_step": "Diagnose: aktueller Schritt",
-    "diagnosis_finished": "Diagnose: beendet",
+    "diagnosis_finished": "Diagnose: zuletzt beendet",
+    "diagnosis_next_start": "Diagnose: nächster Start",
+    "diagnosis_test_runs": "Diagnose: Testläufe",
     "clear_capability_test_history": "Diagnose: Testverlauf löschen",
     "capability_test_status": "Diagnose: Testübersicht",
     "diagnosis_tests_passed": "Diagnose: Tests bestanden",

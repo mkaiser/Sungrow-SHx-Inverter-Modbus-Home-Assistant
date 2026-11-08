@@ -97,7 +97,7 @@
       },
       "testimony": {
         "title": "Was möchtest du uns mitteilen?",
-        "description": "Du hast „nur Diagnose“ gewählt, das heißt, dieser Eintrag existiert, um eine Messung zu erzeugen – dies sind also die Fragen, die diese Messung braucht und die kein Register beantworten kann.\n\n{measured}\n\nAlles hier ist optional, und ein leeres Feld ist ehrlich: Es hält fest, dass die Frage nicht beantwortet wurde, was etwas anderes ist, als mit „Ich weiß es nicht“ zu antworten. Du kannst alles später unter den Optionen der Integration ändern.\n\nDrücke danach auf der Geräteseite **Diagnose: nur lesend ausführen**.",
+        "description": "Du hast „nur Diagnose“ gewählt, das heißt, dieser Eintrag existiert, um eine Messung zu erzeugen – dies sind also die Fragen, die diese Messung braucht und die kein Register beantworten kann.\n\n{measured}\n\nAlles hier ist optional, und ein leeres Feld ist ehrlich: Es hält fest, dass die Frage nicht beantwortet wurde, was etwas anderes ist, als mit „Ich weiß es nicht“ zu antworten. Du kannst alles später unter den Optionen der Integration ändern.\n\nWähle danach auf der Geräteseite in **Diagnose: Modus**, was laufen soll, und drücke **Diagnose: starten**.",
         "data": {
           "reporter": "Dein Name oder Pseudonym",
           "diagnosis_transport": "Wie dieser Wechselrichter angebunden ist",
@@ -106,8 +106,7 @@
           "diagnosis_other_inverter": "Gibt es hier einen weiteren Wechselrichter, der kein Sungrow ist?",
           "diagnosis_battery": "Hersteller und Modell der Batterie",
           "diagnosis_comment": "Sonst noch etwas Wissenswertes",
-          "publish_address": "Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?",
-          "diagnosis_register_dump": "Auch die rohen Registerbereiche durchsuchen (etwa fünf Minuten)"
+          "publish_address": "Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?"
         },
         "data_description": {
           "reporter": "Wird in der veröffentlichten Messung genannt und gefragt, wenn eine Zeile Fragen aufwirft. Leer lassen, um anonym beizutragen.",
@@ -117,8 +116,7 @@
           "diagnosis_other_inverter": "Dein Sungrow misst nicht, wie viel dein Haus verbraucht – er errechnet es aus seiner eigenen Leistung plus dem, was der Netzzähler als Bezug meldet. Ein zweiter Wechselrichter am selben Zähler macht daher jeden Lastwert um genau dessen Erzeugung zu niedrig, während alles andere normal aussieht. Kein Register kann uns das sagen: Der Sungrow sieht ihn nicht. Antworte mit Ja, dann fragen wir, was es ist.",
           "diagnosis_battery": "Kein Register meldet das. \"SBR096\" oder \"Pylontech Force H1, 14,4 kWh\" ist nützlicher als eine Kapazität, die der Wechselrichter ohnehin meldet.",
           "diagnosis_comment": "Alles Ungewöhnliche an der Anlage – ein Verbund, ein zweiter Wechselrichter, eine Wallbox, ein Firmware-Update, an das du dich erinnerst.",
-          "publish_address": "An, und du kannst es vor dem Absenden ausschalten. Nur die letzten zwei Oktette gelangen je in das Dokument – nie das dritte, das dein Netzwerk identifizieren würde –, und wenn du das deaktivierst, steht stattdessen xxx.xxx. Der Nutzen: Mehrere Messungen aus einem Haus lassen sich unterscheiden – ein Master, ein Slave und zwei Dongles ergeben sonst vier gleich aussehende Dateien.",
-          "diagnosis_register_dump": "An, und besser auszuschalten, wenn du es eilig hast. Ohne sie liest die Diagnose die Register, die diese Integration bereits kennt, und braucht ein paar Sekunden. Mit ihr durchsucht sie zusätzlich 2181 Adressen in sechzehn Bereichen, auch die, die keine Spezifikation dokumentiert – so wurde jedes undokumentierte Register gefunden, das dieses Projekt kennt. Das ist langsam, weil eine Adresse ohne Inhalt verstummt statt abzulehnen, sodass jede leere ein volles Timeout kostet: etwa fünf Minuten am direkten Kabel und deutlich länger über ein WiNet-S oder ein VPN. Dein Wechselrichter wird die ganze Zeit weiter abgefragt, und die Diagnose-Schaltfläche auf der Geräteseite zeigt den Fortschritt."
+          "publish_address": "An, und du kannst es vor dem Absenden ausschalten. Nur die letzten zwei Oktette gelangen je in das Dokument – nie das dritte, das dein Netzwerk identifizieren würde –, und wenn du das deaktivierst, steht stattdessen xxx.xxx. Der Nutzen: Mehrere Messungen aus einem Haus lassen sich unterscheiden – ein Master, ein Slave und zwei Dongles ergeben sonst vier gleich aussehende Dateien."
         }
       },
       "user": {
@@ -153,7 +151,7 @@
     },
     "create_entry": {
       "default": "**Die Einrichtung ist abgeschlossen.** Die Entitäten des Wechselrichters erscheinen auf seiner Geräteseite, sobald ihre ersten Messwerte eintreffen.\n\nUm ihn im Energie-Dashboard zu sehen (**Einstellungen → Dashboards → Energie**), wähle die Sensoren, die [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt: Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.",
-      "diagnostics": "**Die Einrichtung ist abgeschlossen, und es wurde noch nichts gelesen.** Zwei weitere Schritte, beide auf der Geräteseite, die dieser Dialog gleich anzeigt:\n\n1. Drücke **Diagnose: nur lesend ausführen** unter *Diagnose*. Sie liest und schreibt nie. Am Kabel ist sie mit dem Registerdurchlauf in ein paar Minuten fertig; über ein VPN kann es deutlich länger dauern, und die drei Sensoren neben der Schaltfläche zeigen, wie weit sie ist und was sie liest.\n2. Öffne danach **Benachrichtigungen** in der Seitenleiste – das Abzeichen unten links. Die Benachrichtigung dort enthält eine Zusammenfassung und einen Link **Dokument herunterladen**. Dieser Link ist die JSON-Datei, die du uns schicken sollst, und er funktioniert nach einer Stunde nicht mehr.\n\nVerpasst, oder erst am nächsten Tag zurück? **Diagnose herunterladen** auf derselben Geräteseite enthält dasselbe Dokument und läuft nie ab. Schicke eines davon an [das Diagnose-Issue]({diagnosis_issue_url}).\n\nDie Datei benennt deinen Wechselrichter mit einem Platzhalter statt der Seriennummer und enthält die letzten zwei Oktette seiner Adresse nur, solange dieses Feld angehakt ist."
+      "diagnostics": "**Die Einrichtung ist abgeschlossen, und es wurde noch nichts gelesen.** Zwei weitere Schritte, beide auf der Geräteseite, die dieser Dialog gleich anzeigt:\n\n1. Lass unter *Diagnose* **Diagnose: Modus** auf *Nur lesend* und drücke **Diagnose: starten**. Nur lesend liest und schreibt nie. Die Diagnose läuft im Hintergrund, du kannst die Seite also verlassen; am Kabel ist sie mit dem Registerdurchlauf in ein paar Minuten fertig, über ein VPN kann es deutlich länger dauern, und die Sensoren neben der Schaltfläche zeigen, wie weit sie ist und was sie liest. Bitte starte Home Assistant währenddessen nicht neu.\n2. Eine Benachrichtigung in der Seitenleiste – das Abzeichen unten links – sagt dir, wann sie fertig ist. Drücke dann **Diagnose herunterladen** auf derselben Geräteseite: Das ist die JSON-Datei für [das Diagnose-Issue]({diagnosis_issue_url}), und sie läuft nie ab.\n\nDie Datei benennt deinen Wechselrichter mit einem Platzhalter statt der Seriennummer und enthält die letzten zwei Oktette seiner Adresse nur, solange dieses Feld angehakt ist."
     }
   },
   "entity": {
@@ -235,11 +233,11 @@
       "clear_capability_test_history": {
         "name": "Diagnose: Testverlauf löschen"
       },
-      "run_capability_test": {
-        "name": "Diagnose: erweitert ausführen"
+      "diagnosis_start": {
+        "name": "Diagnose: starten"
       },
-      "run_diagnosis": {
-        "name": "Diagnose: nur lesend ausführen"
+      "diagnosis_stop": {
+        "name": "Diagnose: stoppen"
       }
     },
     "number": {
@@ -287,6 +285,14 @@
           "stop": "Stopp",
           "charge": "Zwangsladung",
           "discharge": "Zwangsentladung"
+        }
+      },
+      "diagnosis_mode": {
+        "name": "Diagnose: Modus",
+        "state": {
+          "read_only": "Nur lesend",
+          "extended": "Erweiterter Test (einmalig)",
+          "extended_auto_repeat": "Erweiterter Test (automatisch wiederholen)"
         }
       },
       "ems_mode": {
@@ -617,13 +623,19 @@
         "name": "DC-seitiger Fehler"
       },
       "diagnosis_finished": {
-        "name": "Diagnose: beendet"
+        "name": "Diagnose: zuletzt beendet"
+      },
+      "diagnosis_next_start": {
+        "name": "Diagnose: nächster Start"
       },
       "diagnosis_progress": {
         "name": "Diagnose: Fortschritt"
       },
       "diagnosis_step": {
         "name": "Diagnose: aktueller Schritt"
+      },
+      "diagnosis_test_runs": {
+        "name": "Diagnose: Testläufe"
       },
       "diagnosis_tests_failed": {
         "name": "Diagnose: Tests fehlgeschlagen"
@@ -1257,9 +1269,6 @@
       "backup_mode": {
         "name": "Backup-Modus"
       },
-      "continuous_capability_test": {
-        "name": "Diagnose: erweitert, fortlaufend"
-      },
       "cut_pv_generation": {
         "name": "PV-Erzeugung abschalten"
       },
@@ -1274,6 +1283,9 @@
       },
       "load_adjustment_mode_enable": {
         "name": "Laststeuerung"
+      },
+      "skip_established_capability_tests": {
+        "name": "Diagnose: erweiterter Test, Ermitteltes überspringen"
       }
     },
     "time": {
@@ -1490,7 +1502,7 @@
           },
           "diagnosis": {
             "name": "Eine Funktionsdiagnose beisteuern",
-            "description": "Welche Register ein Wechselrichter beantwortet, wird gemessen, nicht nachgeschlagen, und eine Messung von deinem verbessert die Unterstützung dafür. {measured} Alles unten ist optional und beantwortet, was kein Register kann; ein leeres Feld hält fest, dass die Frage nicht beantwortet wurde. Speichern behält deine Antworten. Um die Diagnose auszuführen, drücke auf der Geräteseite „Diagnose: nur lesend ausführen“: Sie liest und schreibt nie und ersetzt die Seriennummer durch einen Platzhalter.",
+            "description": "Welche Register ein Wechselrichter beantwortet, wird gemessen, nicht nachgeschlagen, und eine Messung von deinem verbessert die Unterstützung dafür. {measured} Alles unten ist optional und beantwortet, was kein Register kann; ein leeres Feld hält fest, dass die Frage nicht beantwortet wurde. Speichern behält deine Antworten. Um die Diagnose auszuführen, wähle auf der Geräteseite in „Diagnose: Modus“ „Nur lesend“ und drücke „Diagnose: starten“: Sie liest und schreibt nie und ersetzt die Seriennummer durch einen Platzhalter.",
             "data": {
               "reporter": "Dein Name oder Pseudonym",
               "diagnosis_transport": "Wie dieser Wechselrichter angebunden ist",
@@ -1516,7 +1528,7 @@
           },
           "capability_test": {
             "name": "Was der Funktionstest darf",
-            "description": "„Diagnose: erweitert ausführen“ auf der Geräteseite schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die sechs Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Das Drücken der Schaltfläche ist deine Zustimmung. Was du ausschaltest, bleibt aus.",
+            "description": "Ein erweiterter Test, auf der Geräteseite mit „Diagnose: starten“ gestartet, schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die sechs Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Starten in einem erweiterten Modus ist deine Zustimmung. Was du ausschaltest, bleibt aus.",
             "data": {
               "capability_test_restart": "Darf er den Wechselrichter stoppen und neu starten?",
               "capability_test_export_limit": "Darf er die Einspeisebegrenzung einschalten?",

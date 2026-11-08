@@ -131,8 +131,9 @@ Nothing can start now (blocker 17).
       `modbus-connection[tmodbus]==4.12.4`; to 4.12.7 with tmodbus 1.1.0, a
       new transport for contributors' runs, so after one diagnosis on hardware
       with it (`device-diagnosis/reference.md` first).
-4. **The diagnosis and its capability tests.** In the code: two modes
-   (*Diagnosis: run read-only*, *Diagnosis: run extended*), a
+4. **The diagnosis and its capability tests.** In the code: three modes in
+   *Diagnosis: mode* (read-only, extended test single run and auto repeat),
+   started by *Diagnosis: start* and ended early by *Diagnosis: stop*, a
    `features` section in every document (schema 25), the *Diagnosis* column
    and the measured findings in `doc/firmware_support.md`, and the forced
    startup mode (`diagnosis.sh tests <host> --forced-startup`). What each
@@ -154,18 +155,22 @@ Nothing can start now (blocker 17).
       firmware and folds them into one schema-3 block
       (`capability_test/ledger.py`; the *Diagnosis: test summary* sensor
       with a run's elapsed time, five counters by outcome, a notification
-      rewritten per run, *Diagnosis: tests, clear history*), and
-      *Diagnosis: run extended, continuous* starts runs when a missing check is
-      due (`continuous.py`). The terminal's `--merge-into` folds a run into
+      rewritten per run, *Diagnosis: tests, clear history*), and the mode
+      *Extended test (auto repeat)* starts runs when a missing check is due
+      (`continuous.py`), leaving out what is established, the restart
+      included. The terminal's `--merge-into` folds a run into
       the runs a document carries (`--replace` puts it in their place).
       Released in 0.1.0a30. Left:
-      1. **One hardware day** at the maintainer's SH10RT with the switch
-         on: the import limit established at night, the PV cut in sun,
+      1. **One hardware day** at the maintainer's SH10RT in auto repeat: the import limit established at night, the PV cut in sun,
          ingested as one document. Also tells whether `NEEDS`' margins
          start runs that the checks then skip.
-      2. **Translate** the status line and the notification once their
-         wording settles; English for now.
-      3. **The *Diagnosis:* names on a real device page**, in English and
+      2. **Translate** the status line, the step sensor's states (*waiting
+         for changed test conditions*, *stopped*) and the notifications once
+         their wording settles; English for now.
+      3. **Diagnosis: stop on hardware**, mid part B: that the restore reads
+         every word back and no restart starts. Only the simulator has seen
+         it.
+      4. **The *Diagnosis:* names on a real device page**, in English and
          German, once released: that the *Diagnostic* card keeps them
          together in the order `doc/entity_names.md` shows (the frontend's
          collation was not checked in the container), and that the

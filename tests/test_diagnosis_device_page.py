@@ -52,19 +52,24 @@ ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
 #: What a diagnostics-only entry creates, and the whole of it.
 DIAGNOSTIC_ENTITIES = {
-    "button.sh10rt_diagnosis_run_read_only",
-    # Part B, which writes. Present in this mode too: the contributor who set
-    # an entry up to send a reading is exactly the person whose hardware this
-    # project needs a write measurement from.
-    "button.sh10rt_diagnosis_run_extended",
+    # What Start runs: read-only, or with part B, which writes. Offered in
+    # this mode too: the contributor who set an entry up to send a reading is
+    # exactly the person whose hardware this project needs a write
+    # measurement from.
+    "select.sh10rt_diagnosis_mode",
+    "button.sh10rt_diagnosis_start",
+    "button.sh10rt_diagnosis_stop",
     "sensor.sh10rt_diagnosis_progress",
     "sensor.sh10rt_diagnosis_current_step",
-    "sensor.sh10rt_diagnosis_finished",
+    "sensor.sh10rt_diagnosis_last_finished",
+    # When auto repeat may start next, and how many runs are kept.
+    "sensor.sh10rt_diagnosis_next_start",
+    "sensor.sh10rt_diagnosis_test_runs",
     # The capability test runs kept over a day, and the way to start again.
     "button.sh10rt_diagnosis_tests_clear_history",
     "sensor.sh10rt_diagnosis_test_summary",
-    # The leave for runs that start on their own; off after every restart.
-    "switch.sh10rt_diagnosis_run_extended_continuous",
+    # Whether a single run leaves out what earlier runs established; kept.
+    "switch.sh10rt_diagnosis_extended_test_skip_established",
     # The kept runs' checks, counted by outcome; the five add up to the total.
     "sensor.sh10rt_diagnosis_tests_passed",
     "sensor.sh10rt_diagnosis_tests_failed",
@@ -109,7 +114,7 @@ async def _setup(
 async def test_a_diagnostics_entry_has_the_diagnosis_and_nothing_else(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """Eight entities: three buttons, a switch, and the four that watch the runs.
+    """The mode, start, stop and history controls, a switch, and what watches the runs.
 
     The promise of this mode is that somebody who offered to send a reading
     does not get their house filled with entities. That still holds -- there
@@ -122,7 +127,7 @@ async def test_a_diagnostics_entry_has_the_diagnosis_and_nothing_else(
         state.entity_id
         for state in hass.states.async_all()
         if state.entity_id.startswith(
-            ("sensor.sh10rt", "button.sh10rt", "switch.sh10rt")
+            ("sensor.sh10rt", "button.sh10rt", "switch.sh10rt", "select.sh10rt")
         )
     }
     assert entities == DIAGNOSTIC_ENTITIES
@@ -229,7 +234,7 @@ async def test_the_button_runs_a_diagnosis_and_the_sensors_follow(
     await hass.services.async_call(
         "button",
         "press",
-        {"entity_id": "button.sh10rt_diagnosis_run_read_only"},
+        {"entity_id": "button.sh10rt_diagnosis_start"},
         blocking=True,
     )
     await hass.async_block_till_done()
@@ -265,7 +270,7 @@ async def test_the_button_runs_the_block_read_test_first(
     await hass.services.async_call(
         "button",
         "press",
-        {"entity_id": "button.sh10rt_diagnosis_run_read_only"},
+        {"entity_id": "button.sh10rt_diagnosis_start"},
         blocking=True,
     )
     await hass.async_block_till_done()
@@ -344,7 +349,7 @@ async def test_a_second_press_while_one_runs_is_refused(
         assert runner.state.running is True
         assert runner.async_start() is False
         # And the button says so, rather than looking pressable.
-        assert hass.states.get("button.sh10rt_diagnosis_run_read_only").state == (
+        assert hass.states.get("button.sh10rt_diagnosis_start").state == (
             STATE_UNAVAILABLE
         )
 
@@ -623,3 +628,37 @@ async def test_the_answers_reach_the_document(
     said = entry.runtime_data.diagnosis.state.document["user_inputs"]
     assert said["reporter"] == "gerd"
     assert said["modbus_proxy"] == "no"
+
+
+async def test_the_retired_diagnosis_controls_are_removed(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The two run buttons and the continuous switch the mode select replaced."""
+    registry = er.async_get(hass)
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={**ENTRY_DATA, CONF_MODE: MODE_DIAGNOSTICS},
+        unique_id=SERIAL,
+        title="SH10RT",
+    )
+    entry.add_to_hass(hass)
+    for domain, key in (
+        ("button", "run_diagnosis"),
+        ("button", "run_capability_test"),
+        ("switch", "continuous_capability_test"),
+    ):
+        registry.async_get_or_create(
+            domain, DOMAIN, f"{SERIAL}_{key}", config_entry=entry
+        )
+    with patch(
+        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    for domain, key in (
+        ("button", "run_diagnosis"),
+        ("button", "run_capability_test"),
+        ("switch", "continuous_capability_test"),
+    ):
+        assert registry.async_get_entity_id(domain, DOMAIN, f"{SERIAL}_{key}") is None

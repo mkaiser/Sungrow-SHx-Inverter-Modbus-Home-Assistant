@@ -439,22 +439,25 @@ are now tests (`tests/test_config_flow_connection.py`,
 ## The diagnosis on the device page
 
 A capability diagnosis is what this project learns from. A tester with the
-integration runs it from a pair of buttons on the device page, with the
-diagnostic sensors beside them, every name starting *Diagnosis:* so the
+integration runs it from a mode select and a Start and a Stop button on the
+device page, with the diagnostic sensors beside them, every name starting *Diagnosis:* so the
 *Diagnostic* card, sorted by name, keeps them together; a contributor without it runs
 `device-diagnosis/scripts/diagnosis.sh` instead:
 
 | Entity | What it is for |
 | --- | --- |
-| `button.<name>_diagnosis_run_read_only` | Starts one. Unavailable while a run is in flight; the runner refuses a second anyway |
-| `button.<name>_diagnosis_run_extended` | Part B: the same diagnosis, and then it **writes** to every control and puts each one back. See below |
+| `select.<name>_diagnosis_mode` | What Start runs: `read_only`, `extended` (part B once: it **writes** to every control and puts each one back, see below) or `extended_auto_repeat`. Restored; choosing starts nothing |
+| `button.<name>_diagnosis_start` | Starts the chosen mode and posts a notice saying what to expect. Unavailable while a run is in flight or auto repeat is on; the runner refuses a second run anyway |
+| `button.<name>_diagnosis_stop` | Ends auto repeat and the run in flight. Part A is cancelled; part B ends at its next check (`CapabilityTest.request_stop`), keeps what it measured, restores in full and starts no restart |
 | `sensor.<name>_diagnosis_progress` | Percent complete. Counted reads, not elapsed time — the same diagnosis is under a second on a cable and minutes over a VPN |
 | `sensor.<name>_diagnosis_current_step` | What is being read right now. **Its recorded history is the point**: 19 probes, the block read test's reads and one assembly step in order — plus 52 band sweeps when a dump was asked for — which is what says *where* a slow link stalls rather than that it did |
-| `sensor.<name>_diagnosis_finished` | When the last run ended, with `fields_read` and `has_document` as attributes |
+| `sensor.<name>_diagnosis_last_finished` | When the last run ended, with `fields_read` and `has_document` as attributes |
+| `sensor.<name>_diagnosis_next_start` | When auto repeat may start next, where the clock decides (`continuous.next_start`): the 30-minute gap, or tomorrow once twelve runs are used; unknown while the house decides, with `waiting_for` |
+| `sensor.<name>_diagnosis_test_runs` | How many capability test runs are kept, with `runs_today` |
 | `sensor.<name>_diagnosis_test_summary` | The capability test runs kept for this firmware, folded: `running 12 min · 41/58 established · 3 runs · waiting for: …`. The time counts from the press of an extended run and moves on every minute (`running_since` as an attribute) |
 | `sensor.<name>_diagnosis_tests_passed`, `_failed`, `_not_supported`, `_inconclusive`, `_not_run_yet` | The summary's checks by outcome (`ledger.BUCKETS`), each `n/total`; the five add up to the total, which differs by model and firmware. `checks` names them |
 | `button.<name>_diagnosis_tests_clear_history` | Forgets the kept runs |
-| `switch.<name>_diagnosis_run_extended_continuous` | Starts extended runs on its own while a missing check is due; off after every restart |
+| `switch.<name>_diagnosis_extended_test_skip_established` | On, a single extended run and the action leave out the checks the kept runs established (`ledger.established`, the restart included) and write only for what is missing; a check two runs contradict is never left out. Off, the full test. Auto repeat always leaves them out. Kept over a restart: it narrows writes, it grants none |
 
 They exist in both setup modes. A *Diagnostics only* entry has no readings at
 all, and these are the entirety of its device page — which is also why

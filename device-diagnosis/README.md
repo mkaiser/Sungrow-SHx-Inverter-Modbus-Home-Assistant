@@ -31,12 +31,27 @@ Two ways to run it:
 
    <img src="images/HA-settings-configure-integration.png" width="400" alt="The first screen, offering Perform the device diagnosis">
 
-4. On the device page, press **Diagnosis: run read-only**, or **Diagnosis:
-   run extended** to add the
-   [capability test](#it-reads-and-writes-only-if-you-say-yes). Then download
-   the document from the notification or with **Download diagnostics**.
+4. On the device page, choose what to run in **Diagnosis: mode** and press
+   **Diagnosis: start**:
 
-   <img src="images/HA-settings-device-start-diagnosis.png" width="300" alt="Device page with the two diagnosis buttons">
+   - *Read-only* only reads;
+   - *Extended test (single run)* adds the
+     [capability test](#it-reads-and-writes-only-if-you-say-yes), which writes
+     each setting and puts your original value back, checked by reading it
+     again;
+   - *Extended test (auto repeat)* repeats the capability test on its own
+     whenever the house can answer a check still missing, until you press
+     **Diagnosis: stop**.
+
+   The run is in the background: you can leave the page, and a notification
+   tells you when it has finished. Please do not restart Home Assistant while
+   it runs. **Diagnosis: stop** ends a run early and still puts everything
+   back.
+
+   <img src="images/HA-settings-device-start-diagnosis.png" width="300" alt="Device page with the diagnosis mode, Start and Stop">
+
+5. When it has finished, press **Download diagnostics** on the same device
+   page, and send that file.
 
 ### 2. From a terminal
 
@@ -84,8 +99,9 @@ refused*, *inconclusive*, *readable* (it answered, and nothing wrote to it),
 [What the diagnosis can test](../doc/capability_tests.md) lists every
 capability, what each mode does with it, and what is still untested.
 
-You get the **capability test** only if you ask for it: in Home Assistant by pressing **Diagnosis: run
-extended**, in a terminal by answering yes to the last question. That test
+You get the **capability test** only if you ask for it: in Home Assistant by
+pressing **Diagnosis: start** in an *Extended test* mode, in a terminal by
+answering yes to the last question. That test
 checks that the integration writes each setting at the right scale, and to do
 it, after the reading is finished, it:
 

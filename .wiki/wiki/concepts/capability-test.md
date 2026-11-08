@@ -185,11 +185,13 @@ Runs on different transports are never folded: through a
 
 The terminal's `--merge-into` folds a run into a document's runs the same way.
 
-**Diagnosis: run extended, continuous** does the coming back, on a diagnostics-only
+The mode *Extended test (auto repeat)* does the coming back, on a diagnostics-only
 entry only: an ordinary entry has no diagnosis entities, and its owner reaches
-the capability test through the action. A switch on the device page is the
-leave: on until a person switches it off, and off after every
-restart. Once a minute it compares the polled readings with what each missing
+the capability test through the action. Pressing *Diagnosis: start* in that
+mode is the leave: it lasts until *Diagnosis: stop*, and ends at every
+restart. Every run it starts leaves out what the kept runs established, the
+inverter restart included, so a restart is measured once per collection.
+*Diagnosis: current step* says what it waits for. Once a minute it compares the polled readings with what each missing
 check needs (`ledger.NEEDS`: the import limit needs PV under 200 W and room in
 the battery, the PV cut needs PV above 700 W) and starts the ordinary run when
 one is due: its own snapshot, its own restore, the entry's options as for the
@@ -205,7 +207,7 @@ phase (`preflight`, `readback`, `effects`, `restore`) put together in
 
 - `device-diagnosis/scripts/python/sungrow_capability_test.py`, through the
   diagnosis;
-- the **Diagnosis: run extended** button on the device page, and
+- **Diagnosis: start** on the device page, in an extended mode, and
   the `run_capability_test` action.
 
 Both publish into one diagnosis document (the `capability_test` block; up to

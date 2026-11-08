@@ -1,6 +1,6 @@
 # The texts, for review
 
-**295 texts**: everything in `strings.json` that is not an entity name, by its
+**296 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -11,7 +11,7 @@ A `{placeholder}` is filled in by the integration and stays as written; backtick
 and bold are kept.
 
 
-## Setup flow (85)
+## Setup flow (83)
 
 ### `config.abort.already_configured`
 
@@ -385,7 +385,7 @@ and bold are kept.
 >
 > Everything here is optional, and leaving a field empty is honest: it records that the question was not answered, which is different from answering "I don't know". You can change any of it later under the integration's options.
 >
-> Afterwards, press **Diagnosis: run read-only** on the device page.
+> Afterwards, on the device page, choose what to run in **Diagnosis: mode** and press **Diagnosis: start**.
 
 > **DE** Du hast „nur Diagnose“ gewählt, das heißt, dieser Eintrag existiert, um eine Messung zu erzeugen – dies sind also die Fragen, die diese Messung braucht und die kein Register beantworten kann.
 >
@@ -393,7 +393,7 @@ and bold are kept.
 >
 > Alles hier ist optional, und ein leeres Feld ist ehrlich: Es hält fest, dass die Frage nicht beantwortet wurde, was etwas anderes ist, als mit „Ich weiß es nicht“ zu antworten. Du kannst alles später unter den Optionen der Integration ändern.
 >
-> Drücke danach auf der Geräteseite **Diagnose: nur lesend ausführen**.
+> Wähle danach auf der Geräteseite in **Diagnose: Modus**, was laufen soll, und drücke **Diagnose: starten**.
 
 ### `config.step.testimony.data.reporter`
 
@@ -443,12 +443,6 @@ and bold are kept.
 
 > **DE** Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?
 
-### `config.step.testimony.data.diagnosis_register_dump`
-
-> **EN** Also sweep the raw register bands (about five minutes)
-
-> **DE** Auch die rohen Registerbereiche durchsuchen (etwa fünf Minuten)
-
 ### `config.step.testimony.data_description.reporter`
 
 > **EN** Credited in the published reading, and who gets asked if a row raises a question. Leave empty to contribute anonymously.
@@ -496,12 +490,6 @@ and bold are kept.
 > **EN** On, and yours to turn off before you submit. Only the last two octets ever reach the document — never the third, which is what would identify your network — and clear this and it reads xxx.xxx instead. What it buys is telling several readings from one house apart: a master, a slave and two dongles otherwise produce four files that look alike.
 
 > **DE** An, und du kannst es vor dem Absenden ausschalten. Nur die letzten zwei Oktette gelangen je in das Dokument – nie das dritte, das dein Netzwerk identifizieren würde –, und wenn du das deaktivierst, steht stattdessen xxx.xxx. Der Nutzen: Mehrere Messungen aus einem Haus lassen sich unterscheiden – ein Master, ein Slave und zwei Dongles ergeben sonst vier gleich aussehende Dateien.
-
-### `config.step.testimony.data_description.diagnosis_register_dump`
-
-> **EN** On, and worth turning off if you are in a hurry. Without it a diagnosis reads the registers this integration already knows about and takes a couple of seconds. With it, it also sweeps 2181 addresses across sixteen bands, including the ones no specification documents — which is how every undocumented register this project knows was found. That is slow because an address with nothing behind it goes quiet rather than refusing, so each empty one costs a full timeout: about five minutes on a direct cable, and considerably longer through a WiNet-S or a VPN. Your inverter keeps being polled throughout, and the diagnosis button on the device page shows how far along it is.
-
-> **DE** An, und besser auszuschalten, wenn du es eilig hast. Ohne sie liest die Diagnose die Register, die diese Integration bereits kennt, und braucht ein paar Sekunden. Mit ihr durchsucht sie zusätzlich 2181 Adressen in sechzehn Bereichen, auch die, die keine Spezifikation dokumentiert – so wurde jedes undokumentierte Register gefunden, das dieses Projekt kennt. Das ist langsam, weil eine Adresse ohne Inhalt verstummt statt abzulehnen, sodass jede leere ein volles Timeout kostet: etwa fünf Minuten am direkten Kabel und deutlich länger über ein WiNet-S oder ein VPN. Dein Wechselrichter wird die ganze Zeit weiter abgefragt, und die Diagnose-Schaltfläche auf der Geräteseite zeigt den Fortschritt.
 
 ### `config.step.user.title`
 
@@ -627,24 +615,20 @@ and bold are kept.
 
 > **EN** **You are set up, and nothing has been read yet.** Two more steps, both on the device page this dialog is about to show you:
 >
-> 1. Press **Diagnosis: run read-only**, under *Diagnostic*. It reads and never writes. On a cable it is over in a couple of minutes with the register sweep on; over a VPN it can take considerably longer, and the three sensors beside the button say how far along it is and what it is reading.
-> 2. When it finishes, open **Notifications** in the sidebar — the badge at the bottom left. The notification there carries a summary and a **Download the document** link. That link is the JSON file to send us, and it stops working after an hour.
->
-> Missed it, or came back the next day? **Download diagnostics** on the same device page carries the same document and never expires. Send either to [the diagnosis issue]({diagnosis_issue_url}).
+> 1. Under *Diagnostic*, leave **Diagnosis: mode** on *Read-only* and press **Diagnosis: start**. Read-only reads and never writes. It runs in the background, so you can leave the page; on a cable it is over in a couple of minutes with the register sweep on, over a VPN it can take considerably longer, and the sensors beside the button say how far along it is and what it is reading. Please do not restart Home Assistant while it runs.
+> 2. A notification in the sidebar — the badge at the bottom left — tells you when it has finished. Then press **Download diagnostics** on the same device page: that is the JSON file to send to [the diagnosis issue]({diagnosis_issue_url}), and it never expires.
 >
 > The file names your inverter by a stand-in rather than its serial number, and carries the last two octets of its address only while that box is ticked.
 
 > **DE** **Die Einrichtung ist abgeschlossen, und es wurde noch nichts gelesen.** Zwei weitere Schritte, beide auf der Geräteseite, die dieser Dialog gleich anzeigt:
 >
-> 1. Drücke **Diagnose: nur lesend ausführen** unter *Diagnose*. Sie liest und schreibt nie. Am Kabel ist sie mit dem Registerdurchlauf in ein paar Minuten fertig; über ein VPN kann es deutlich länger dauern, und die drei Sensoren neben der Schaltfläche zeigen, wie weit sie ist und was sie liest.
-> 2. Öffne danach **Benachrichtigungen** in der Seitenleiste – das Abzeichen unten links. Die Benachrichtigung dort enthält eine Zusammenfassung und einen Link **Dokument herunterladen**. Dieser Link ist die JSON-Datei, die du uns schicken sollst, und er funktioniert nach einer Stunde nicht mehr.
->
-> Verpasst, oder erst am nächsten Tag zurück? **Diagnose herunterladen** auf derselben Geräteseite enthält dasselbe Dokument und läuft nie ab. Schicke eines davon an [das Diagnose-Issue]({diagnosis_issue_url}).
+> 1. Lass unter *Diagnose* **Diagnose: Modus** auf *Nur lesend* und drücke **Diagnose: starten**. Nur lesend liest und schreibt nie. Die Diagnose läuft im Hintergrund, du kannst die Seite also verlassen; am Kabel ist sie mit dem Registerdurchlauf in ein paar Minuten fertig, über ein VPN kann es deutlich länger dauern, und die Sensoren neben der Schaltfläche zeigen, wie weit sie ist und was sie liest. Bitte starte Home Assistant währenddessen nicht neu.
+> 2. Eine Benachrichtigung in der Seitenleiste – das Abzeichen unten links – sagt dir, wann sie fertig ist. Drücke dann **Diagnose herunterladen** auf derselben Geräteseite: Das ist die JSON-Datei für [das Diagnose-Issue]({diagnosis_issue_url}), und sie läuft nie ab.
 >
 > Die Datei benennt deinen Wechselrichter mit einem Platzhalter statt der Seriennummer und enthält die letzten zwei Oktette seiner Adresse nur, solange dieses Feld angehakt ist.
 
 
-## Select states (13)
+## Select states (16)
 
 ### `entity.select.battery_forced_charge_discharge.state.stop`
 
@@ -663,6 +647,24 @@ and bold are kept.
 > **EN** Forced discharge
 
 > **DE** Zwangsentladung
+
+### `entity.select.diagnosis_mode.state.read_only`
+
+> **EN** Read-only
+
+> **DE** Nur lesend
+
+### `entity.select.diagnosis_mode.state.extended`
+
+> **EN** Extended test (single run)
+
+> **DE** Erweiterter Test (einmalig)
+
+### `entity.select.diagnosis_mode.state.extended_auto_repeat`
+
+> **EN** Extended test (auto repeat)
+
+> **DE** Erweiterter Test (automatisch wiederholen)
 
 ### `entity.select.ems_mode.state.self_consumption`
 
@@ -1459,9 +1461,9 @@ and bold are kept.
 
 ### `options.step.init.sections.diagnosis.description`
 
-> **EN** Which registers an inverter answers is measured, not looked up, and a reading from yours is what improves support for it. {measured} Everything below is optional and answers what no register can; an empty field records that the question was not answered. Saving keeps your answers. To run the diagnosis, press "Diagnosis: run read-only" on the device page: it reads and never writes, and replaces the serial number with a stand-in.
+> **EN** Which registers an inverter answers is measured, not looked up, and a reading from yours is what improves support for it. {measured} Everything below is optional and answers what no register can; an empty field records that the question was not answered. Saving keeps your answers. To run the diagnosis, choose "Read-only" in "Diagnosis: mode" on the device page and press "Diagnosis: start": it reads and never writes, and replaces the serial number with a stand-in.
 
-> **DE** Welche Register ein Wechselrichter beantwortet, wird gemessen, nicht nachgeschlagen, und eine Messung von deinem verbessert die Unterstützung dafür. {measured} Alles unten ist optional und beantwortet, was kein Register kann; ein leeres Feld hält fest, dass die Frage nicht beantwortet wurde. Speichern behält deine Antworten. Um die Diagnose auszuführen, drücke auf der Geräteseite „Diagnose: nur lesend ausführen“: Sie liest und schreibt nie und ersetzt die Seriennummer durch einen Platzhalter.
+> **DE** Welche Register ein Wechselrichter beantwortet, wird gemessen, nicht nachgeschlagen, und eine Messung von deinem verbessert die Unterstützung dafür. {measured} Alles unten ist optional und beantwortet, was kein Register kann; ein leeres Feld hält fest, dass die Frage nicht beantwortet wurde. Speichern behält deine Antworten. Um die Diagnose auszuführen, wähle auf der Geräteseite in „Diagnose: Modus“ „Nur lesend“ und drücke „Diagnose: starten“: Sie liest und schreibt nie und ersetzt die Seriennummer durch einen Platzhalter.
 
 ### `options.step.init.sections.diagnosis.data.reporter`
 
@@ -1579,9 +1581,9 @@ and bold are kept.
 
 ### `options.step.init.sections.capability_test.description`
 
-> **EN** "Diagnosis: run extended" on the device page writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The six switches below go further, and each is on until you switch it off: pressing the button is your consent. What you switch off stays off.
+> **EN** An extended test, started on the device page with "Diagnosis: start", writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The six switches below go further, and each is on until you switch it off: pressing Start in an extended mode is your consent. What you switch off stays off.
 
-> **DE** „Diagnose: erweitert ausführen“ auf der Geräteseite schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die sechs Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Das Drücken der Schaltfläche ist deine Zustimmung. Was du ausschaltest, bleibt aus.
+> **DE** Ein erweiterter Test, auf der Geräteseite mit „Diagnose: starten“ gestartet, schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die sechs Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Starten in einem erweiterten Modus ist deine Zustimmung. Was du ausschaltest, bleibt aus.
 
 ### `options.step.init.sections.capability_test.data.capability_test_restart`
 

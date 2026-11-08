@@ -559,13 +559,21 @@ class EffectSteps(ReadbackSteps):
         power = self._forced_power()
         minimum = self.snapshot.values.get("battery_min_soc")
 
-        if power is None:
+        skip_charge = self._skips("forced charge")
+        skip_discharge = self._skips("forced discharge")
+        if skip_charge and skip_discharge:
+            pass
+        elif power is None:
             self._note(
                 "no behavioural check of the battery: its forced charge power could "
                 "not be resolved, so nothing could be commanded"
             )
         else:
-            charge = self._under_cap("battery_max_charge_power", power, "charge")
+            charge = (
+                None
+                if skip_charge
+                else self._under_cap("battery_max_charge_power", power, "charge")
+            )
             if charge is None:
                 pass
             elif soc is not None and float(soc) < SOC_CHARGE_CEILING:
@@ -588,8 +596,10 @@ class EffectSteps(ReadbackSteps):
                     "to measure the setting rather than the pack's own taper"
                 )
             floor = float(minimum) if minimum is not None else 0.0
-            discharge = self._under_cap(
-                "battery_max_discharge_power", power, "discharge"
+            discharge = (
+                None
+                if skip_discharge
+                else self._under_cap("battery_max_discharge_power", power, "discharge")
             )
             if discharge is None:
                 pass
@@ -678,6 +688,8 @@ class EffectSteps(ReadbackSteps):
         (nothing to stop otherwise), the state of charge must leave room above
         the register's own 50 % floor, and `battery_max_soc` must be in the plan.
         """
+        if self._skips("charge ceiling"):
+            return []
         probe = next((row for row in self.plan if row.field == "battery_max_soc"), None)
         if probe is None:
             return []
@@ -744,6 +756,8 @@ class EffectSteps(ReadbackSteps):
         "allowed". Needs leave (`Options.cut_pv`), the register, and enough
         PV for a stop to be told from a cloud.
         """
+        if self._skips("PV generation cut"):
+            return []
         original = self.snapshot.values.get(PV_CUT.field)
         if original is None:
             # Not capable, or not readable: preflight has already said which.
@@ -931,6 +945,8 @@ class EffectSteps(ReadbackSteps):
         Needs leave (`Options.charge_window`) and the schedule, and is skipped
         where the owner's own schedule is on, so it is never disturbed.
         """
+        if self._skips("forced-charging window"):
+            return []
         if not self.options.charge_window:
             return []
         if not self._snapshotted(CHARGE_WINDOW):
@@ -1024,6 +1040,8 @@ class EffectSteps(ReadbackSteps):
         back by their snapshot words. Needs leave (`Options.discharge_window`),
         the schedule, and a battery discharging enough for a stop to show.
         """
+        if self._skips("discharge windows away from now"):
+            return []
         if not self.options.discharge_window:
             return []
         if not self._snapshotted(DISCHARGE_WINDOW):
@@ -1101,6 +1119,8 @@ class EffectSteps(ReadbackSteps):
         (`Options.import_limit`), a battery with room to charge, and the
         forced charge power.
         """
+        if self._skips("site import limit"):
+            return []
         if not self.options.import_limit:
             return []
         if not self._snapshotted((IMPORT_LIMIT,)):
@@ -1370,6 +1390,8 @@ class EffectSteps(ReadbackSteps):
         and from a cloud. This check can catch a limit applied a decade too
         *small*; the decade too large is leg B's to find, and only leg B's.
         """
+        if self._skips("export power limit"):
+            return []
         probe = next(
             (row for row in self.plan if row.field == "export_power_limit"), None
         )

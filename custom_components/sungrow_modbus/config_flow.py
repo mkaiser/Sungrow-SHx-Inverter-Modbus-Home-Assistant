@@ -1281,7 +1281,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="testimony",
-            data_schema=_testimony_schema({}),
+            data_schema=_testimony_schema({}, include_dump=False),
             description_placeholders={
                 "measured": self._async_measured(await _flow_texts(self))
             },

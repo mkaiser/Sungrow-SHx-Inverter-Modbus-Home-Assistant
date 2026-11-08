@@ -125,6 +125,7 @@ PLATFORMS: list[Platform] = [
 #: cleanup is still the one that was never needed.
 DIAGNOSTIC_PLATFORMS: list[Platform] = [
     Platform.BUTTON,
+    Platform.SELECT,
     Platform.SENSOR,
     Platform.SWITCH,
 ]
@@ -527,11 +528,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
     if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
         _LOGGER.info(
             "%s set up for diagnostics only: %d components polling, "
-            "the diagnosis, capability test and history buttons, a switch, "
-            "four sensors, and no readings",
+            "the diagnosis mode, start, stop and history controls, and no "
+            "readings",
             entry.title,
             len(coordinators),
         )
+        _async_remove_retired_diagnosis_entities(hass, entry)
         await hass.config_entries.async_forward_entry_setups(
             entry, DIAGNOSTIC_PLATFORMS
         )
@@ -539,6 +541,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
+
+
+@callback
+def _async_remove_retired_diagnosis_entities(
+    hass: HomeAssistant, entry: SungrowConfigEntry
+) -> None:
+    """Drop the diagnosis buttons and switch the mode select replaced.
+
+    Diagnostic entities with no history worth keeping; left in the registry
+    they would sit on the device page as unavailable controls.
+    """
+    from .diagnosis_entities import RETIRED_ENTITIES
+
+    serial = entry.runtime_data.inverter_coordinator.device.serial_number
+    registry = er.async_get(hass)
+    for domain, key in RETIRED_ENTITIES:
+        entity_id = registry.async_get_entity_id(domain, DOMAIN, f"{serial}_{key}")
+        if entity_id is not None:
+            registry.async_remove(entity_id)
 
 
 @callback

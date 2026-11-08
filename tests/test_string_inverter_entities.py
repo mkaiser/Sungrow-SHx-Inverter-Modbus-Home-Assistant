@@ -219,8 +219,13 @@ async def test_a_diagnostics_entry_diagnoses_an_sg_into_its_own_document(
 ) -> None:
     entry = await _setup(hass, MODE_DIAGNOSTICS)
     ids = _unique_ids(hass, entry)
-    assert f"{SERIAL}_run_diagnosis" in ids
-    assert f"{SERIAL}_run_capability_test" not in ids, "nothing here writes to an SG"
+    assert f"{SERIAL}_diagnosis_start" in ids
+    assert f"{SERIAL}_skip_established_capability_tests" not in ids, (
+        "nothing here writes to an SG"
+    )
+    mode = hass.states.get("select.sg5_0rs_diagnosis_mode")
+    assert mode is not None
+    assert mode.attributes["options"] == ["read_only"]
 
     device = dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)[0]
     await hass.services.async_call(

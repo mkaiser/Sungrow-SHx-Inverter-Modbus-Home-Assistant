@@ -619,3 +619,10 @@ extended runs, everything restored. The forced-charging window did as it was tol
 on P020. Writes lost the connection at four protocol addresses with Home Assistant polling, and
 the engine reported such a loss as "refused with an exception", which folds as established; it now
 reports a drop. Updated installation-mkaiser, P020, the 33213 query, the index.
+
+## [2026-11-09] changed | the diagnosis mode select, Start and Stop
+
+The device page now chooses what runs in *Diagnosis: mode* (read-only, extended test single run,
+extended test auto repeat) and starts it with *Diagnosis: start*; *Diagnosis: stop* ends a run at
+its next check, keeps what it measured, restores in full and starts no restart. Auto repeat leaves
+out what the kept runs established, the inverter restart included. Updated capability-test.

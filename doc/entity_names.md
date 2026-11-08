@@ -1,6 +1,6 @@
 # The entity names
 
-**335 entities** that modern mode can create (Hybrid inverter 196, SBR battery 34, Wallbox 21, SG string inverter 84).
+**336 entities** that modern mode can create (Hybrid inverter 196, SBR battery 34, Wallbox 21, SG string inverter 85).
 
 The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
@@ -41,13 +41,6 @@ carries on, and modern mode replaces each with something better.
 
 The inverter's own device, named after the model unless the owner named it. Ids shown for `SH10RT`.
 
-### Actions (2)
-
-| Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
-| --- | --- | --- | --- | --- | --- | --- |
-|  |  | Diagnosis: run extended | Diagnose: erweitert ausführen | `button.sh10rt_diagnosis_run_extended` |  |  |
-|  |  | Diagnosis: run read-only | Diagnose: nur lesend ausführen | `button.sh10rt_diagnosis_run_read_only` |  |  |
-
 ### Backup power (12)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
@@ -87,10 +80,12 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 |  |  | Weekend discharge window 1 | Entladefenster Wochenende 1 | `sensor.sh10rt_weekend_discharge_window_1` |  |  |
 |  |  | Weekend discharge window 2 | Entladefenster Wochenende 2 | `sensor.sh10rt_weekend_discharge_window_2` |  |  |
 
-### Everything else (5)
+### Everything else (7)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
+|  |  | Diagnosis: start | Diagnose: starten | `button.sh10rt_diagnosis_start` |  |  |
+|  |  | Diagnosis: stop | Diagnose: stoppen | `button.sh10rt_diagnosis_stop` |  |  |
 | Forced Startup Under Low SOC Standby (13017) |  | Forced startup under low SoC | Zwangsstart bei niedrigem Ladezustand | `switch.sh10rt_forced_startup_under_low_soc` |  |  |
 | Power factor (5035) | Power factor | Power factor | Leistungsfaktor | `sensor.sh10rt_power_factor` | `sensor.power_factor` |  |
 | Power Flow Status (13001) | Power Flow Status **←** | Power flow code | Leistungsfluss Code | `sensor.sh10rt_power_flow_code` | `sensor.power_flow_status` |  |
@@ -380,11 +375,11 @@ A device of its own under the inverter, named after the model it reports, `Wallb
 |  |  | Start mode | Startmodus | `sensor.ac22e_01_start_mode` |  |  |
 |  |  | Total charged energy | Gesamte Ladeenergie | `sensor.ac22e_01_total_charged_energy` |  | Wh |
 
-## SG string inverter (84)
+## SG string inverter (85)
 
 An entry of its own, never beside a hybrid. Trackers and phases exist only where the model serves them, so this is every one a model can have. Ids shown for `SG5.0RS`.
 
-### Everything (84)
+### Everything (85)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -395,7 +390,8 @@ An entry of its own, never beside a hybrid. Trackers and phases exist only where
 | Daily import energy (5097) |  | Daily imported energy | Täglich bezogene Energie | `sensor.sg5_0rs_daily_imported_energy` |  | kWh |
 | Daily running time (5113) |  | Daily running time | Tägliche Laufzeit | `sensor.sg5_0rs_daily_running_time` |  | min |
 | Internal temperature (5008) |  | Device temperature | Gerätetemperatur | `sensor.sg5_0rs_device_temperature` |  | °C |
-|  |  | Diagnosis: run read-only | Diagnose: nur lesend ausführen | `button.sg5_0rs_diagnosis_run_read_only` |  |  |
+|  |  | Diagnosis: start | Diagnose: starten | `button.sg5_0rs_diagnosis_start` |  |  |
+|  |  | Diagnosis: stop | Diagnose: stoppen | `button.sg5_0rs_diagnosis_stop` |  |  |
 |  |  | Fault reported | Fehler gemeldet | `binary_sensor.sg5_0rs_fault_reported` |  |  |
 | Grid frequency (5036) |  | Grid frequency | Netzfrequenz | `sensor.sg5_0rs_grid_frequency` |  | Hz |
 | Load power (5091) |  | Load power | Leistungsaufnahme Verbraucher | `sensor.sg5_0rs_load_power` |  | W |

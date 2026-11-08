@@ -124,7 +124,14 @@ class InverterCoordinator[DeviceT: Inverter](
             manufacturer=MANUFACTURER,
             model=self.device.model,
             serial_number=serial,
-            sw_version=identity.arm_software or None,
+            # The version that moves with an update: 13250
+            # (`SAPPHIRE-H_B001.V000.P020`), then 2582 where 13250 is not
+            # read. 4954's ARM string stays put across updates, so it is only
+            # the last resort, and all an SG offers.
+            sw_version=getattr(self.device, "inverter_firmware", None)
+            or getattr(self.device, "firmware", None)
+            or identity.arm_software
+            or None,
             # Only where the user chose one. Absent, Home Assistant falls
             # back to the entry title, which is the model -- and two SH10RTs
             # then produce one id and one `..._2`, the suffix recording click

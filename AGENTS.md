@@ -144,8 +144,9 @@ does, and puts everything back. Non-negotiable:
   behavioural leg is evidence.
 - **The diagnosis writes only with leave**: its last question defaults to no,
   and a run with nobody at a terminal is a no. In Home Assistant the leave is
-  a button press, or the *Diagnosis: run extended, continuous* switch: on until a
-  person switches it off, and off after every restart, never restored.
+  a press of *Diagnosis: start* in an extended mode. In *Extended test (auto
+  repeat)* it lasts until *Diagnosis: stop*, nothing is left to wait for, or a
+  restart: it is never resumed, though the mode select keeps its choice.
 - **[Register 13074](.wiki/wiki/entities/register-13074.md)'s write scale is
   probed per device, never assumed** (×10 on B001 firmware, 1:1 on
   `SAPPHIRE-H_01011.95.03`).

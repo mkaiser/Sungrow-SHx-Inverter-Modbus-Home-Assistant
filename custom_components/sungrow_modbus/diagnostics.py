@@ -16,8 +16,9 @@ need:
 * **why an entity does not exist.** "MPPT3 is missing" is the single most
   common report, and the answer is almost always that the inverter reported
   the specification's 0xFFFF sentinel. That is stated rather than inferred;
-* **per-component poll health**, because a poll losing one block is normal
-  operation here and the interesting part is *which* block and for how long;
+* **poll health**: a count, and every component that did not answer, because
+  a poll losing one block is normal operation here and the interesting part
+  is *which* block and for how long;
 * **which entity ids are in use**, so a migration that half-worked is visible;
 * the **block read test** the diagnosis button last ran, with its time. Not run
   here: it takes minutes through a dongle, and a download is waited on.
@@ -172,17 +173,19 @@ async def _async_string_inverter_diagnostics(
             TO_REDACT,
         ),
         "device": async_redact_data(_device(device), TO_REDACT),
-        "polling": [
-            {
-                "component": component,
-                "tier": tiers.get(component),
-                "interval_seconds": runtime.intervals.get(tiers.get(component, "")),
-                "last_poll_succeeded": coordinator.last_update_success,
-                "answered_last_poll": coordinator.data is not None
-                and component in coordinator.data.updated,
-            }
-            for component, coordinator in sorted(runtime.string_inverter.items())
-        ],
+        "polling": _poll_summary(
+            [
+                {
+                    "component": component,
+                    "tier": tiers.get(component),
+                    "interval_seconds": runtime.intervals.get(tiers.get(component, "")),
+                    "last_poll_succeeded": coordinator.last_update_success,
+                    "answered_last_poll": coordinator.data is not None
+                    and component in coordinator.data.updated,
+                }
+                for component, coordinator in sorted(runtime.string_inverter.items())
+            ]
+        ),
         "readings": async_redact_data(_readings(device), TO_REDACT),
     }
     try:
@@ -195,9 +198,8 @@ async def _async_string_inverter_diagnostics(
 
 #: What the download says when no diagnosis has measured the blocks since start.
 NO_BLOCK_READ_TEST = (
-    "not run since Home Assistant started. Press Diagnosis: run read-only on the "
-    "device page; it measures the blocks and this download then carries the "
-    "result"
+    "not run since Home Assistant started. Press Diagnosis: start on the device "
+    "page; it measures the blocks and this download then carries the result"
 )
 
 
@@ -284,8 +286,37 @@ def _capabilities(device: Any, resolved: frozenset[Capability]) -> dict[str, Any
     }
 
 
-def _polling(runtime: Any) -> list[dict[str, Any]]:
-    """Report each poll tier, and which of its blocks answered."""
+def _poll_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Count the healthy components, and list only the ones that are not.
+
+    A healthy row says nothing a count does not, and on a working house that is
+    every row: the problems are what a reader opens this section for. Each
+    tier's interval is kept once, because the options can change it.
+    """
+    problems = [
+        row
+        for row in rows
+        if not (
+            row["last_poll_succeeded"]
+            and row["answered_last_poll"]
+            and row.get("error") is None
+        )
+    ]
+    intervals = {
+        str(row["tier"]): row["interval_seconds"]
+        for row in rows
+        if row["tier"] is not None
+    }
+    return {
+        "healthy": len(rows) - len(problems),
+        "of": len(rows),
+        "interval_seconds": dict(sorted(intervals.items())),
+        "problems": problems,
+    }
+
+
+def _polling(runtime: Any) -> dict[str, Any]:
+    """Report poll health: how many components answered, and which did not."""
     rows: list[dict[str, Any]] = []
     for component, coordinator in sorted(runtime.coordinators.items()):
         data = coordinator.data
@@ -303,7 +334,7 @@ def _polling(runtime: Any) -> list[dict[str, Any]]:
                 ),
             }
         )
-    return rows
+    return _poll_summary(rows)
 
 
 def _entities(hass: HomeAssistant, runtime: Any) -> dict[str, Any]:
@@ -318,20 +349,16 @@ def _entities(hass: HomeAssistant, runtime: Any) -> dict[str, Any]:
 
     created: list[str] = []
     legacy_ids = 0
-    skipped: list[dict[str, str]] = []
+    skipped: dict[str, list[str]] = {}
 
     for platform, description in DESCRIPTIONS:
         if not runtime.serves(description):
-            skipped.append(
-                {
-                    "key": description.key,
-                    "reason": (
-                        f"requires {description.requires.value}"
-                        if description.requires is not None
-                        else "component not polled"
-                    ),
-                }
+            reason = (
+                f"requires {description.requires.value}"
+                if description.requires is not None
+                else "component not polled"
             )
+            skipped.setdefault(reason, []).append(description.key)
             continue
         entity_id = registry.async_get_entity_id(
             platform, DOMAIN, f"{serial}_{description.key}"
@@ -346,7 +373,11 @@ def _entities(hass: HomeAssistant, runtime: Any) -> dict[str, Any]:
         "created": len(created),
         "on_legacy_entity_ids": legacy_ids,
         "on_device_scoped_entity_ids": len(created) - legacy_ids,
-        "not_created": skipped,
+        # Grouped by reason: the reason is the answer, and one capability
+        # (mppt3, a battery) takes a handful of entities with it.
+        "not_created": {
+            reason: sorted(keys) for reason, keys in sorted(skipped.items())
+        },
     }
 
 

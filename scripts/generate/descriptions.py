@@ -37,7 +37,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "tables"))
 # `strings` imports the integration's descriptions to name them.
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from naming import DIAGNOSTIC, GERMAN, GERMAN_TEXTS, modern_name
+from naming import DIAGNOSIS_MODE_LABELS, DIAGNOSTIC, GERMAN, GERMAN_TEXTS, modern_name
 from writes import BUTTONS, NUMBERS, SELECTS, SWITCHES, TIMES
 
 from sungrow_modbus.hybrid_inverter.faults import FAULT_WORDS
@@ -973,8 +973,11 @@ def option_labels() -> dict[str, dict[str, str]]:
     strings.json by hand.
     """
     return {
-        row["key"]: {option["slug"]: option["label"] for option in row["options"]}
-        for row in SELECTS
+        **{
+            row["key"]: {option["slug"]: option["label"] for option in row["options"]}
+            for row in SELECTS
+        },
+        "diagnosis_mode": dict(DIAGNOSIS_MODE_LABELS),
     }
 
 

@@ -19,6 +19,7 @@ from sungrow_modbus.capability_test.procedure import (
     OUT_OF_TIME,
     REFUSED,
     SCALED,
+    STOPPED,
 )
 
 EFFECTS = Path(ledger.__file__).with_name("effects.py")
@@ -330,3 +331,71 @@ def test_unfold_dates_a_single_run_by_the_document() -> None:
     assert ledger.unfold(_block(), read_at="t0") == [
         {"read_at": "t0", "block": _block()}
     ]
+
+
+def test_established_names_what_a_run_may_leave_out() -> None:
+    """Established checks, and never one two runs disagree on."""
+    first = _block(
+        readback=[
+            _probe("battery_max_soc", MATCH),
+            _probe("battery_min_soc", SCALED),
+            _probe("export_power_limit", OUT_OF_TIME),
+        ],
+        effects=[_effect("forced charge", CONFIRMED)],
+    )
+    second = _block(readback=[_probe("battery_min_soc", MATCH)])
+    folded = ledger.fold(
+        [_run("2026-11-08T10:00Z", first), _run("2026-11-08T22:00Z", second)]
+    )
+
+    assert ledger.established(folded) == {"battery_max_soc", "forced charge"}
+    assert ledger.established(None) == frozenset()
+
+
+def test_a_restart_measured_once_is_established() -> None:
+    """Auto repeat must not stop the inverter again for an answer it has."""
+    block = _block(readback=[_probe("battery_max_soc", MATCH)])
+    block["restart"] = {"running_after": 41.0, "verdict": "measured"}
+    folded = ledger.fold([_run("2026-11-08T10:00Z", block)])
+
+    assert ledger.RESTART in ledger.established(folded)
+
+    block["restart"] = {"running_after": None, "verdict": "never came back"}
+    folded = ledger.fold([_run("2026-11-08T10:00Z", block)])
+    assert ledger.RESTART not in ledger.established(folded)
+
+
+def test_a_stopped_check_still_waits() -> None:
+    """Stopped is not answered: it counts as not run, and a later run is due."""
+    folded = ledger.fold(
+        [
+            _run(
+                "2026-11-08T10:00Z",
+                _block(readback=[_probe("battery_max_soc", STOPPED)]),
+            )
+        ]
+    )
+
+    assert ledger.bucket(STOPPED) == "not_run"
+    assert "battery_max_soc" not in ledger.established(folded)
+
+
+def test_the_fold_lists_only_restores_that_did_something() -> None:
+    """Already original is a count; written back or not put back is a row.
+
+    Every run in `runs` keeps every row, so `unfold` gives them back whole.
+    """
+    block = _block()
+    block["restored"] = [
+        {"field": "a", "restored": True, "attempts": 0, "detail": "already holding"},
+        {"field": "b", "restored": True, "attempts": 1, "detail": None},
+        {"field": "c", "restored": False, "attempts": 3, "detail": "refused"},
+    ]
+    folded = ledger.fold([_run("2026-11-08T10:00Z", block)])
+
+    assert [row["field"] for row in folded["restored"]] == ["b", "c"]
+    assert folded["restored_already_original"] == 1
+    assert len(folded["runs"][0]["restored"]) == 3
+    assert (
+        ledger.unfold(folded, read_at=None)[0]["block"]["restored"] == block["restored"]
+    )

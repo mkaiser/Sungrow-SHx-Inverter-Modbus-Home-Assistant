@@ -39,17 +39,24 @@ from custom_components.sungrow_modbus.const import (
 from custom_components.sungrow_modbus.diagnosis import PART_A, PART_B
 from custom_components.sungrow_modbus.diagnosis_entities import elapsed
 from homeassistant.components import persistent_notification
-from homeassistant.const import CONF_HOST, CONF_PORT
+from homeassistant.const import CONF_HOST, CONF_PORT, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, issue_registry as ir
 from homeassistant.util import dt as dt_util
+from sungrow_modbus.capability_test import ledger
 
 from .conftest import SERIAL
 
 ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
-DIAGNOSIS_BUTTON = "button.sh10rt_diagnosis_run_read_only"
-CONTROL_BUTTON = "button.sh10rt_diagnosis_run_extended"
+#: The modes *Diagnosis: start* runs, chosen in *Diagnosis: mode*; `_press`
+#: takes one of these as well as a button's entity id.
+DIAGNOSIS_BUTTON = "read_only"
+CONTROL_BUTTON = "extended"
+MODE = "select.sh10rt_diagnosis_mode"
+START = "button.sh10rt_diagnosis_start"
+STOP = "button.sh10rt_diagnosis_stop"
+STEP = "sensor.sh10rt_diagnosis_current_step"
 
 
 class InstantClock:
@@ -125,6 +132,13 @@ async def _setup(
     return entry
 
 
+async def _choose(hass: HomeAssistant, mode: str) -> None:
+    """Choose what *Diagnosis: start* runs."""
+    await hass.services.async_call(
+        "select", "select_option", {"entity_id": MODE, "option": mode}, blocking=True
+    )
+
+
 async def _press(hass: HomeAssistant, entity_id: str) -> None:
     """Press a button and wait for the run it starts to finish.
 
@@ -135,6 +149,9 @@ async def _press(hass: HomeAssistant, entity_id: str) -> None:
     the next test.
     """
     entry = next(iter(hass.config_entries.async_entries(DOMAIN)))
+    if "." not in entity_id:
+        await _choose(hass, entity_id)
+        entity_id = START
     await hass.services.async_call(
         "button", "press", {"entity_id": entity_id}, blocking=True
     )
@@ -597,15 +614,16 @@ async def test_the_clear_button_forgets_every_run(
     assert entry.runtime_data.diagnosis.state.capability_test is None
 
 
-# -- continuous capability testing ------------------------------------------
-
-CONTINUOUS = "switch.sh10rt_diagnosis_run_extended_continuous"
+# -- auto repeat ---------------------------------------------------------------
 
 
-async def _switch(hass: HomeAssistant, service: str) -> None:
+async def _auto_repeat(hass: HomeAssistant, on: bool) -> None:
+    """Start auto repeat from the mode select, or stop it."""
     entry = next(iter(hass.config_entries.async_entries(DOMAIN)))
+    if on:
+        await _choose(hass, "extended_auto_repeat")
     await hass.services.async_call(
-        "switch", service, {"entity_id": CONTINUOUS}, blocking=True
+        "button", "press", {"entity_id": START if on else STOP}, blocking=True
     )
     task = entry.runtime_data.diagnosis._task
     if task is not None:
@@ -613,35 +631,72 @@ async def _switch(hass: HomeAssistant, service: str) -> None:
     await hass.async_block_till_done()
 
 
-async def test_continuous_mode_runs_at_once_then_waits_out_the_gap(
+async def test_auto_repeat_runs_at_once_then_waits_out_the_gap(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:
-    """On is the leave: a first run starts, and the next waits 30 minutes."""
+    """Start is the leave: a first run starts, and the next waits 30 minutes."""
     entry = await _setup(hass, ready_unit)
-    assert hass.states.get(CONTINUOUS).state == "off"
-
-    await _switch(hass, "turn_on")
-
     runner = entry.runtime_data.diagnosis
-    assert hass.states.get(CONTINUOUS).state == "on"
+    assert not runner.continuous.active
+
+    await _auto_repeat(hass, True)
+
+    assert runner.continuous.active
     assert len(runner.state.capability_test["runs"]) == 1
     assert runner.continuous.runs_today == 1
+    assert hass.states.get("sensor.sh10rt_diagnosis_test_runs").state == "1"
+    assert hass.states.get(START).state == STATE_UNAVAILABLE
 
     runner.continuous._async_tick(dt_util.utcnow())
+    await hass.async_block_till_done()
     assert runner._task.done()
     assert len(runner.state.capability_test["runs"]) == 1
     assert "at the earliest" in hass.states.get(STATUS).attributes["continuous_waiting"]
+    # Waiting is visible where a person looks, and the clock says when.
+    assert hass.states.get(STEP).state.startswith(
+        "waiting for changed test conditions: "
+    )
+    next_start = hass.states.get("sensor.sh10rt_diagnosis_next_start").state
+    assert next_start not in ("unknown", "unavailable")
 
-    await _switch(hass, "turn_off")
-    assert hass.states.get(CONTINUOUS).state == "off"
+    await _auto_repeat(hass, False)
+    assert not runner.continuous.active
+    assert hass.states.get("sensor.sh10rt_diagnosis_next_start").state == "unknown"
 
 
-async def test_continuous_mode_is_off_after_a_reload(
+async def test_auto_repeat_leaves_out_what_is_established_and_the_restart(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:
-    """A restart never resumes writing by itself."""
+    """A second auto run writes only for what is missing, and never restarts again."""
     entry = await _setup(hass, ready_unit)
-    await _switch(hass, "turn_on")
+    runner = entry.runtime_data.diagnosis
+    await _auto_repeat(hass, True)
+    established = ledger.established(runner.state.capability_test)
+    assert established
+
+    runner.continuous.last_start = None
+    with patch(
+        "custom_components.sungrow_modbus.continuous.ledger.due",
+        return_value=["another run"],
+    ):
+        runner.continuous._async_tick(dt_util.utcnow())
+    await runner._task
+    await hass.async_block_till_done()
+
+    _first, second = runner.state.capability_test["runs"]
+    assert set(second["conditions"]["skipped_established"]) == established
+    assert not {row["field"] for row in second["readback"]} & established
+    if ledger.RESTART in established:
+        assert not second.get("restart")
+    await _auto_repeat(hass, False)
+
+
+async def test_auto_repeat_is_off_after_a_reload(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """A restart never resumes writing by itself; the chosen mode is kept."""
+    entry = await _setup(hass, ready_unit)
+    await _auto_repeat(hass, True)
 
     with patch(
         "custom_components.sungrow_modbus.async_get_unit", return_value=ready_unit
@@ -649,16 +704,17 @@ async def test_continuous_mode_is_off_after_a_reload(
         assert await hass.config_entries.async_reload(entry.entry_id)
         await hass.async_block_till_done()
 
-    assert hass.states.get(CONTINUOUS).state == "off"
     assert not entry.runtime_data.diagnosis.continuous.active
+    assert hass.states.get(MODE).state == "extended_auto_repeat"
+    assert entry.runtime_data.diagnosis.state.running is False
 
 
-async def test_continuous_mode_stops_when_nothing_is_left_to_wait_for(
+async def test_auto_repeat_stops_when_nothing_is_left_to_wait_for(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:
     """Once every check a moment can answer is answered, it switches itself off."""
     entry = await _setup(hass, ready_unit)
-    await _switch(hass, "turn_on")
+    await _auto_repeat(hass, True)
     runner = entry.runtime_data.diagnosis
 
     with patch(
@@ -667,5 +723,167 @@ async def test_continuous_mode_stops_when_nothing_is_left_to_wait_for(
         runner.continuous._async_tick(dt_util.utcnow())
     await hass.async_block_till_done()
 
-    assert hass.states.get(CONTINUOUS).state == "off"
+    assert not runner.continuous.active
     assert "nothing left" in hass.states.get(STATUS).attributes["continuous_waiting"]
+
+
+# -- stopping a run -------------------------------------------------------------
+
+
+async def test_stop_during_the_capability_test_puts_everything_back(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """Stop ends part B at its next check, keeps the run and restores every word."""
+    entry = await _setup(hass, ready_unit)
+    runner = entry.runtime_data.diagnosis
+    before = dict(ready_unit.holding)
+    stopped = False
+
+    original = runner._on_progress
+
+    def stop_in_part_b(fraction: float, step: str) -> None:
+        nonlocal stopped
+        original(fraction, step)
+        if (
+            not stopped
+            and runner._capability_runner is not None
+            and ", writing " in step
+        ):
+            stopped = True
+            runner.async_stop()
+
+    with patch.object(runner, "_on_progress", stop_in_part_b):
+        await _press(hass, CONTROL_BUTTON)
+
+    assert stopped
+    assert runner.state.stopped is True
+    assert runner.state.error is None
+    run = runner.state.capability_test["runs"][-1]
+    assert run["conditions"].get("stopped") is True
+    assert not run.get("restart")
+    # An unseeded address reads 0 on the mock, so a 0 written back is the word
+    # the snapshot read.
+    assert {
+        address: word
+        for address, word in ready_unit.holding.items()
+        if before.get(address, 0) != word
+    } == {}, "every word is back"
+    assert hass.states.get(STEP).state == "stopped"
+
+
+async def test_stop_during_the_reading_part_cancels_it(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """Part A only reads, so Stop simply ends it, with no document."""
+    entry = await _setup(hass, ready_unit)
+    runner = entry.runtime_data.diagnosis
+    holding = asyncio.Event()
+
+    async def _slow(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+        await holding.wait()
+        raise AssertionError("never reached")
+
+    with patch(
+        "custom_components.sungrow_modbus.diagnosis_document.async_build", _slow
+    ):
+        assert runner.async_start() is True
+        await hass.async_block_till_done()
+        assert hass.states.get(STOP).state != STATE_UNAVAILABLE
+        await hass.services.async_call(
+            "button", "press", {"entity_id": STOP}, blocking=True
+        )
+        await asyncio.wait([runner._task])
+        await hass.async_block_till_done()
+
+    assert runner.state.running is False
+    assert runner.state.stopped is True
+    assert runner.state.document is None
+    assert hass.states.get(STEP).state == "stopped"
+
+
+async def test_start_announces_the_run_in_a_notification(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """A button shows no text, so Start says what to expect where it can."""
+    await _setup(hass, ready_unit)
+    shown: list[str] = []
+    with patch(
+        "custom_components.sungrow_modbus.diagnosis.persistent_notification.async_create",
+        side_effect=lambda _hass, message, **_kw: shown.append(message),
+    ):
+        await _press(hass, CONTROL_BUTTON)
+    assert any("you can leave this page" in text for text in shown)
+    assert any("do not restart Home Assistant" in text for text in shown)
+
+
+# -- leaving out established checks ------------------------------------------
+
+SKIP = "switch.sh10rt_diagnosis_extended_test_skip_established"
+
+
+async def test_skipping_established_checks_narrows_the_next_run(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """Off, a run is the full test; on, it writes only for what is missing."""
+    entry = await _setup(hass, ready_unit)
+    runner = entry.runtime_data.diagnosis
+    assert hass.states.get(SKIP).state == "off"
+
+    await _press(hass, CONTROL_BUTTON)
+    established = ledger.established(runner.state.capability_test)
+    assert established
+
+    await hass.services.async_call(
+        "switch", "turn_on", {"entity_id": SKIP}, blocking=True
+    )
+    assert hass.states.get(SKIP).state == "on"
+    await _press(hass, CONTROL_BUTTON)
+
+    _first, second = runner.state.capability_test["runs"]
+    assert set(second["conditions"]["skipped_established"]) == established
+    assert not {row["field"] for row in second["readback"]} & established
+    assert not {row["check"] for row in second["effects"]} & established
+    # The fold keeps what the first run established.
+    assert ledger.established(runner.state.capability_test) >= established
+
+
+async def test_skipping_established_checks_survives_a_reload(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """It gives no leave to write, so unlike auto repeat it is kept."""
+    entry = await _setup(hass, ready_unit)
+    await hass.services.async_call(
+        "switch", "turn_on", {"entity_id": SKIP}, blocking=True
+    )
+
+    with patch(
+        "custom_components.sungrow_modbus.async_get_unit", return_value=ready_unit
+    ):
+        assert await hass.config_entries.async_reload(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert hass.states.get(SKIP).state == "on"
+    assert entry.runtime_data.diagnosis.skip_established
+
+
+async def test_next_start_is_tomorrow_once_the_day_is_used_up(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """The day's cap names a time; waiting on the house names none."""
+    from custom_components.sungrow_modbus.continuous import MAX_RUNS_PER_DAY
+
+    entry = await _setup(hass, ready_unit)
+    continuous = entry.runtime_data.diagnosis.continuous
+    now = dt_util.utcnow()
+    assert continuous.next_start(now) is None, "off"
+
+    await _auto_repeat(hass, True)
+    continuous.last_start = None
+    assert continuous.next_start(now) is None, "the house decides, not the clock"
+
+    continuous.runs_today = MAX_RUNS_PER_DAY
+    continuous._day = dt_util.as_local(now).date().isoformat()
+    assert continuous.next_start(now) == dt_util.start_of_local_day(
+        dt_util.as_local(now) + timedelta(days=1)
+    )
+    await _auto_repeat(hass, False)

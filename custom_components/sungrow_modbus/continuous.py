@@ -158,6 +158,24 @@ class ContinuousCapabilityTest:
             self.waiting = waiting
             self.runner.async_notify()
 
+    def next_start(self, now: datetime) -> datetime | None:
+        """Return the earliest a run may start on its own, when time decides it.
+
+        `last_start + MIN_GAP` while that gap runs, the next local midnight
+        once the day's runs are used up, and None when it is off, a run is in
+        flight, or what decides is the house rather than the clock.
+        """
+        if not self.active or self.runner.state.running:
+            return None
+        local = dt_util.as_local(now)
+        if self._day == local.date().isoformat() and (
+            self.runs_today >= MAX_RUNS_PER_DAY
+        ):
+            return dt_util.start_of_local_day(local + timedelta(days=1))
+        if self.last_start is not None and now - self.last_start < MIN_GAP:
+            return self.last_start + MIN_GAP
+        return None
+
     def attributes(self) -> dict[str, Any]:
         """Return what the status sensor shows about this scheduler."""
         return {

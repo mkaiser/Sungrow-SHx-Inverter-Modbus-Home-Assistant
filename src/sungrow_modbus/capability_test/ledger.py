@@ -62,6 +62,7 @@ from .procedure import (
     SLOPE_WRONG,
     SOC_CEILING_FLOOR,
     SOC_CHARGE_CEILING,
+    STOPPED,
     UNCHANGED,
     UNSAFE_STATE,
     USER_DECLINED,
@@ -99,6 +100,7 @@ RANK: dict[str, int] = {
     # not answered: the moment, the link or the leave was missing
     INCONCLUSIVE: 2,
     OUT_OF_TIME: 1,
+    STOPPED: 1,
     DROPPED: 1,
     UNSAFE_STATE: 1,
     NO_BOUNDS: 1,
@@ -207,6 +209,7 @@ def fold(
     general: list[str] = []
     out_runs: list[dict[str, Any]] = []
     restored: list[dict[str, Any]] = []
+    already_original = 0
     for index, run in enumerate(runs):
         block = run["block"]
         for row in block.get("readback") or []:
@@ -214,7 +217,14 @@ def fold(
         for row in block.get("effects") or []:
             effects.setdefault(str(row.get("check")), []).append((index, row))
         for row in block.get("restored") or []:
-            restored.append({**row, "run": index})
+            # A register the restore found holding its original word needed
+            # nothing, and on a whole run that is most of them: counted, so
+            # what was written back, or could not be, is what the list shows.
+            # Each run in `runs` keeps every row.
+            if row.get("restored") and not row.get("attempts"):
+                already_original += 1
+            else:
+                restored.append({**row, "run": index})
         for note in block.get("not_established") or []:
             check = note_check(note)
             if check is not None:
@@ -292,6 +302,7 @@ def fold(
         "readback": [dict(_strongest(rows)[1]) for rows in readback.values()],
         "effects": [dict(_strongest(rows)[1]) for rows in effects.values()],
         "restored": restored,
+        "restored_already_original": already_original,
         "restart": next(
             (
                 run["block"]["restart"]
@@ -336,6 +347,32 @@ def unfold(
             run["readings"] = {**readings, **entry["readings_changed"]}
         runs.append(run)
     return runs
+
+
+#: The name `Options.skip` leaves the restart out by.
+RESTART = "restart"
+
+
+def established(folded: Mapping[str, Any] | None) -> frozenset[str]:
+    """Return the checks a run may leave out (`Options.skip`): every established one.
+
+    A check two runs disagree on is not among them, however strong its best
+    verdict: `contradictions` wants another run, not fewer.
+    """
+    if folded is None:
+        return frozenset()
+    contradicted = {item.get("name") for item in folded.get("contradictions") or []}
+    names = {
+        name
+        for name, row in (folded.get("summary") or {}).items()
+        if row.get("established") and name not in contradicted
+    }
+    # A restart measured once, back to running, is not worth stopping the
+    # house again for; clearing the history measures it afresh.
+    restart = folded.get("restart") or {}
+    if restart.get("running_after") is not None:
+        names.add(RESTART)
+    return frozenset(names)
 
 
 def progress(folded: Mapping[str, Any]) -> tuple[int, int]:

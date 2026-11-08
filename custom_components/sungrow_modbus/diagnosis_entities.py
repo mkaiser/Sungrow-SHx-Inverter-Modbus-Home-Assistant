@@ -21,6 +21,10 @@ They exist in a diagnostics-only entry, and only there: it has no other
 entities at all, and these are the reason it was set up. An ordinary entry
 reaches the same runs through the `run_diagnosis` and `run_capability_test`
 actions, which leave no entities behind.
+
+What runs is chosen in *Diagnosis: mode* and started by *Diagnosis: start*;
+*Diagnosis: stop* ends a run, and auto repeat, early -- everything a run
+changed is still put back.
 """
 
 from __future__ import annotations
@@ -29,6 +33,7 @@ from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.button import ButtonEntity
+from homeassistant.components.select import SelectEntity
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import PERCENTAGE, EntityCategory
@@ -36,10 +41,17 @@ from homeassistant.core import CALLBACK_TYPE, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import dt as dt_util
 from sungrow_modbus.capability_test import ledger
 
-from .const import PERMISSION_CAPABILITY_TEST
+from .const import (
+    DIAGNOSIS_MODE_AUTO_REPEAT,
+    DIAGNOSIS_MODE_EXTENDED,
+    DIAGNOSIS_MODE_READ_ONLY,
+    DIAGNOSIS_MODES,
+    PERMISSION_CAPABILITY_TEST,
+)
 from .entity import EnglishEntityId
 from .services import async_authorize
 
@@ -54,16 +66,31 @@ if TYPE_CHECKING:
 #: legacy name to derive from -- they are named in `naming.OVERRIDES` like the SBR
 #: pack's, which are hand-written for the same reason.
 DIAGNOSIS_ENTITIES: tuple[tuple[str, str], ...] = (
-    ("button", "run_diagnosis"),
-    ("button", "run_capability_test"),
+    ("select", "diagnosis_mode"),
+    ("button", "diagnosis_start"),
+    ("button", "diagnosis_stop"),
     ("button", "clear_capability_test_history"),
     ("sensor", "diagnosis_progress"),
     ("sensor", "diagnosis_step"),
     ("sensor", "diagnosis_finished"),
+    ("sensor", "diagnosis_next_start"),
+    ("sensor", "diagnosis_test_runs"),
     ("sensor", "capability_test_status"),
     *(("sensor", f"diagnosis_tests_{bucket}") for bucket in ledger.BUCKETS),
+    ("switch", "skip_established_capability_tests"),
+)
+
+#: The unique-id suffixes of entities this module no longer makes. Setup
+#: removes them from the registry; they were diagnostic, so no history is
+#: worth keeping, and a stale "unavailable" button only confuses.
+RETIRED_ENTITIES: tuple[tuple[str, str], ...] = (
+    ("button", "run_diagnosis"),
+    ("button", "run_capability_test"),
     ("switch", "continuous_capability_test"),
 )
+
+#: What *Diagnosis: current step* starts with while auto repeat waits.
+WAITING = "waiting for changed test conditions"
 
 #: How many log lines the status sensor's attribute carries. The whole log is
 #: in the ledger and in Download diagnostics; this is the tail worth a glance.
@@ -147,75 +174,119 @@ class DiagnosisEntity(EnglishEntityId):
         self.async_write_ha_state()
 
 
-class DiagnosisButton(DiagnosisEntity, ButtonEntity):
-    """Start a capability diagnosis."""
+class DiagnosisModeSelect(DiagnosisEntity, SelectEntity, RestoreEntity):
+    """What *Diagnosis: start* runs: read-only, one extended test, or auto repeat.
+
+    Restored, because it is a choice rather than a leave: choosing a mode
+    starts nothing, and after a restart auto repeat runs only once a person
+    presses Start again. A string inverter has no capability test, so it is
+    offered read-only alone.
+    """
 
     def __init__(self, runtime_data: SungrowRuntimeData) -> None:
-        """Name it for what pressing it does."""
-        super().__init__(runtime_data, "run_diagnosis")
+        """Offer the modes this inverter has."""
+        super().__init__(runtime_data, "diagnosis_mode")
+        self._attr_options = (
+            [DIAGNOSIS_MODE_READ_ONLY]
+            if runtime_data.is_string_inverter
+            else list(DIAGNOSIS_MODES)
+        )
+        self._attr_current_option = DIAGNOSIS_MODE_READ_ONLY
 
-    @property
-    def available(self) -> bool:
-        """Unavailable while one is running, so it cannot be pressed twice.
+    async def async_added_to_hass(self) -> None:
+        """Take the last choice back, then listen like every diagnosis entity."""
+        await super().async_added_to_hass()
+        last = await self.async_get_last_state()
+        if last is not None and last.state in self.options:
+            self._attr_current_option = last.state
+        self._runner.mode = self.current_option or DIAGNOSIS_MODE_READ_ONLY
 
-        The runner refuses a second run anyway. This is the half of that
-        which the person can see: a button that looks pressable and does
-        nothing is worse than one that is visibly busy.
+    @callback
+    def async_entity_id_changed(self, old_entity_id: str) -> None:
+        """Take a new entity id in place: the choice is not keyed on it.
+
+        Declared beside the add hook above, for the reason
+        `CapabilityTestStatusSensor.async_entity_id_changed` gives.
         """
-        return not self._runner.state.running
+        super().async_entity_id_changed(old_entity_id)
 
-    async def async_press(self) -> None:
-        """Run the diagnosis with the testimony already saved in the options."""
-        self._runner.async_start()
+    async def async_select_option(self, option: str) -> None:
+        """Remember the mode; nothing starts until Start is pressed."""
+        self._attr_current_option = option
+        self._runner.mode = option
+        self.async_write_ha_state()
 
 
-class CapabilityTestButton(DiagnosisEntity, ButtonEntity):
-    """Run the diagnosis and then the capability test, which **writes** registers.
-
-    A separate button rather than an option on the first one, so that nothing a
-    person presses expecting a diagnosis can write to their inverter.
+class DiagnosisStartButton(DiagnosisEntity, ButtonEntity):
+    """Start what *Diagnosis: mode* names.
 
     Worth stating plainly, because Home Assistant gives a button no
-    confirmation dialog: pressing this changes settings on the device. It moves
-    the state-of-charge limits, commands a charge and a discharge at a power
-    derived from the battery's own rating, and -- where the entry's options say
-    it may -- limits export and restarts the inverter. Every one of those is
-    put back and read back before the run reports success, and anything that
-    could not be put back becomes a repair on the next start rather than a line
-    in a log.
+    confirmation dialog: in an extended mode, pressing this changes settings on
+    the device. It moves the state-of-charge limits, commands a charge and a
+    discharge at a power derived from the battery's own rating, and -- where
+    the entry's options say it may -- limits export and restarts the
+    inverter. Every one of those is put back and read back before the run
+    reports success, and anything that could not be put back becomes a repair
+    on the next start rather than a line in a log.
 
     What protects it is therefore not a dialog but the guard list in
     `sungrow_modbus.capability_test`, which refuses the run outright when the
-    inverter is not running, when there is no sun, when another client is
-    polling, or when the battery is at a state of charge that would make a
-    probe value unsafe.
+    inverter is not running, when another client is polling, or when the
+    battery is at a state of charge that would make a probe value unsafe --
+    and the permission below, held exactly as the `run_capability_test`
+    action holds it.
     """
 
     def __init__(self, runtime_data: SungrowRuntimeData) -> None:
         """Name it for what pressing it does."""
-        super().__init__(runtime_data, "run_capability_test")
+        super().__init__(runtime_data, "diagnosis_start")
 
     @property
     def available(self) -> bool:
-        """Unavailable while either part is running.
+        """Unavailable while a run is in flight or auto repeat is on.
 
-        One runner owns both parts and refuses a second run, because they share
-        a serialized connection. With writes in the picture that stops being a
-        politeness: two runs at once would restore each other's probe values.
+        The runner refuses a second run anyway: two at once would interleave
+        on one serialized connection, and their writes would restore each
+        other's probe values. This is the half of that a person can see.
         """
-        return not self._runner.state.running
+        return not self._runner.state.running and not self._runner.continuous.active
 
     async def async_press(self) -> None:
-        """Run part A and then part B, if the presser may write to this inverter.
+        """Start the chosen mode, if the presser may write where it writes."""
+        mode = self._runner.mode
+        if mode != DIAGNOSIS_MODE_READ_ONLY:
+            await async_authorize(
+                self.hass,
+                self._context,
+                self._runner.entry,
+                PERMISSION_CAPABILITY_TEST,
+            )
+        if mode == DIAGNOSIS_MODE_AUTO_REPEAT:
+            self._runner.async_announce_start(mode)
+            self._runner.continuous.async_turn_on()
+        elif self._runner.async_start(capability_test=mode == DIAGNOSIS_MODE_EXTENDED):
+            self._runner.async_announce_start(mode)
+        self.async_write_ha_state()
 
-        Held to `PERMISSION_CAPABILITY_TEST` exactly as the `run_capability_test`
-        action is: the button reaches the same writes, and Home Assistant only
-        asks of a button that its presser may control *some* entity.
-        """
-        await async_authorize(
-            self.hass, self._context, self._runner.entry, PERMISSION_CAPABILITY_TEST
-        )
-        self._runner.async_start(capability_test=True)
+
+class DiagnosisStopButton(DiagnosisEntity, ButtonEntity):
+    """End the run in flight, and auto repeat, putting everything back.
+
+    No permission: stopping writes is never something to be refused.
+    """
+
+    def __init__(self, runtime_data: SungrowRuntimeData) -> None:
+        """Name it for what pressing it does."""
+        super().__init__(runtime_data, "diagnosis_stop")
+
+    @property
+    def available(self) -> bool:
+        """Available while there is something to stop."""
+        return self._runner.state.running or self._runner.continuous.active
+
+    async def async_press(self) -> None:
+        """Ask the runner to stop."""
+        self._runner.async_stop()
 
 
 class DiagnosisProgressSensor(DiagnosisEntity, SensorEntity):
@@ -259,12 +330,17 @@ class DiagnosisStepSensor(DiagnosisEntity, SensorEntity):
 
     @property
     def native_value(self) -> str | None:
-        """The current step, the last failure, or idle."""
+        """The current step, what auto repeat waits for, the last failure, or idle."""
         state = self._runner.state
         if state.running:
             return (state.step or f"starting the {state.part or 'diagnosis'}")[
                 :MAX_STATE
             ]
+        continuous = self._runner.continuous
+        if continuous.active:
+            return f"{WAITING}: {continuous.waiting}"[:MAX_STATE]
+        if state.stopped:
+            return "stopped"
         if state.error:
             return f"failed: {state.error}"[:MAX_STATE]
         if state.finished:
@@ -300,6 +376,54 @@ class DiagnosisResultSensor(DiagnosisEntity, SensorEntity):
             "capability_test_outcome": capability_test.get("outcome_means"),
             "capability_test_findings": _findings(capability_test),
         }
+
+
+class DiagnosisNextStartSensor(DiagnosisEntity, SensorEntity):
+    """When auto repeat may start its next run, where the clock decides it.
+
+    Unknown while it is off, while a run is in flight, and while what decides
+    is the house rather than the clock -- `waiting_for` then says what for,
+    as *Diagnosis: current step* does.
+    """
+
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    def __init__(self, runtime_data: SungrowRuntimeData) -> None:
+        """Name it for the start it reports."""
+        super().__init__(runtime_data, "diagnosis_next_start")
+
+    @property
+    def native_value(self) -> datetime | None:
+        """The earliest next start, or None."""
+        return self._runner.continuous.next_start(dt_util.utcnow())
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """What auto repeat waits for."""
+        continuous = self._runner.continuous
+        return {"waiting_for": continuous.waiting if continuous.active else None}
+
+
+class DiagnosisTestRunsSensor(DiagnosisEntity, SensorEntity):
+    """How many capability test runs are kept, with how many started today.
+
+    No `state_class`, for the reason `DiagnosisProgressSensor` gives.
+    """
+
+    def __init__(self, runtime_data: SungrowRuntimeData) -> None:
+        """Name it for the runs it counts."""
+        super().__init__(runtime_data, "diagnosis_test_runs")
+
+    @property
+    def native_value(self) -> int:
+        """The number of kept runs."""
+        folded = self._runner.state.capability_test or {}
+        return len(folded.get("runs") or [])
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Runs auto repeat started today."""
+        return {"runs_today": self._runner.continuous.runs_today}
 
 
 class ClearCapabilityTestHistoryButton(DiagnosisEntity, ButtonEntity):
@@ -402,6 +526,8 @@ class CapabilityTestStatusSensor(DiagnosisEntity, SensorEntity):
         if self._timing():
             assert state.started is not None
             prefix = f"running {elapsed(state.started, dt_util.now())} · "
+        elif self._runner.continuous.active:
+            prefix = f"{WAITING} · "
         else:
             prefix = ""
         if not folded or "summary" not in folded:
@@ -481,34 +607,54 @@ class CapabilityTestCountSensor(DiagnosisEntity, SensorEntity):
         }
 
 
-class ContinuousCapabilityTestSwitch(DiagnosisEntity, SwitchEntity):
-    """The leave for capability test runs that start on their own.
+class SkipEstablishedCapabilityTestsSwitch(
+    DiagnosisEntity, SwitchEntity, RestoreEntity
+):
+    """Whether a capability test leaves out what earlier runs established.
 
-    On, `continuous.ContinuousCapabilityTest` starts the ordinary run whenever
-    the house can answer a check still missing. Never restored: after a
-    restart it is off, so writing never resumes without a person deciding
-    again. Held to the capability test's permission, because it reaches the
-    same writes as the button.
+    On, a single extended run and the action write only for the checks the
+    ledger still misses (`ledger.established`), the restart included, so a
+    run started at night for the import limit does not write every control
+    again. Auto repeat always does, whatever this says. Off, a single run is
+    the full test, which is also what can turn up a contradiction between two
+    runs. A check two runs disagree on is never left
+    out.
+
+    Restored, unlike the continuous switch: it gives no leave to write, it
+    only narrows what a run that has leave writes. No permission either way,
+    for the same reason.
     """
 
     def __init__(self, runtime_data: SungrowRuntimeData) -> None:
-        """Name it for the leave it gives."""
-        super().__init__(runtime_data, "continuous_capability_test")
+        """Name it for what a run leaves out."""
+        super().__init__(runtime_data, "skip_established_capability_tests")
+
+    async def async_added_to_hass(self) -> None:
+        """Take the last state back, then listen like every diagnosis entity."""
+        await super().async_added_to_hass()
+        if (last := await self.async_get_last_state()) is not None:
+            self._runner.skip_established = last.state == "on"
+
+    @callback
+    def async_entity_id_changed(self, old_entity_id: str) -> None:
+        """Take a new entity id in place: the setting is not keyed on it.
+
+        Declared beside the add hook above, for the reason
+        `CapabilityTestStatusSensor.async_entity_id_changed` gives.
+        """
+        super().async_entity_id_changed(old_entity_id)
 
     @property
     def is_on(self) -> bool:
-        """Whether runs may start on their own."""
-        return self._runner.continuous.active
+        """Whether runs leave out established checks."""
+        return self._runner.skip_established
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        """Give the leave, if the person may write to this inverter."""
-        await async_authorize(
-            self.hass, self._context, self._runner.entry, PERMISSION_CAPABILITY_TEST
-        )
-        self._runner.continuous.async_turn_on()
+        """Leave established checks out of the next runs."""
+        self._runner.skip_established = True
         self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Take it back. Anybody may: stopping writes needs no permission."""
-        self._runner.continuous.async_turn_off("switched off")
+        """Run the full test again."""
+        self._runner.skip_established = False
         self.async_write_ha_state()

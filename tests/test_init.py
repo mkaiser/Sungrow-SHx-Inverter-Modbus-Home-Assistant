@@ -19,7 +19,7 @@ from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.util import dt as dt_util
 from sungrow_modbus import Capability
 
-from .conftest import SERIAL
+from .conftest import SERIAL, encode_string
 
 ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
@@ -52,6 +52,45 @@ async def test_entry_loads(hass: HomeAssistant, sungrow_unit: MockModbusUnit) ->
     assert device.manufacturer == "Sungrow"
     assert device.model == "SH10RT"
     assert device.serial_number == SERIAL
+
+
+@pytest.mark.parametrize(
+    ("seeded", "shown"),
+    [
+        ({}, "SAPPHIRE-H_01011.95.12"),
+        ({2581: "SAPPHIRE-H_01011.95.14"}, "SAPPHIRE-H_01011.95.14"),
+        (
+            {
+                2581: "SAPPHIRE-H_01011.95.14",
+                13249: "SAPPHIRE-H_B001.V000.P020",
+            },
+            "SAPPHIRE-H_B001.V000.P020",
+        ),
+    ],
+    ids=["arm-only", "2582", "13250"],
+)
+async def test_device_card_shows_the_firmware_that_moves(
+    hass: HomeAssistant,
+    sungrow_unit: MockModbusUnit,
+    seeded: dict[int, str],
+    shown: str,
+) -> None:
+    """13250 first, then 2582; 4954's ARM string only where neither answers.
+
+    The ARM string does not change across an update, so it says nothing about
+    which firmware the inverter runs.
+    """
+    for address, text in seeded.items():
+        sungrow_unit.input[address] = encode_string(
+            text, 15 if address == 13249 else 11
+        )
+    entry = await _setup(hass, sungrow_unit)
+
+    device = dr.async_get(hass).async_get_device_by_identifier(
+        (DOMAIN, SERIAL), entry.entry_id
+    )
+    assert device is not None
+    assert device.sw_version == shown
 
 
 async def test_total_dc_power_sensor(

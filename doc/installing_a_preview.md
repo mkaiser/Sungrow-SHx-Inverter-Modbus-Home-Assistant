@@ -95,15 +95,30 @@ reach*.
 On the device page (Settings → Devices & services → Sungrow Modbus → the
 device):
 
-![Device page with the two diagnosis buttons](../device-diagnosis/images/HA-settings-device-start-diagnosis.png)
+![Device page with the diagnosis mode, Start and Stop](../device-diagnosis/images/HA-settings-device-start-diagnosis.png)
 
-- **Diagnosis: run read-only** reads and never writes. The sensors beside it
-  show progress; when it finishes, a notification links the document for an
-  hour, and **Download diagnostics** carries the same document for good.
-- **Diagnosis: run extended** adds the capability test, which writes
-  settings and puts them back. Read
+Choose what to run in **Diagnosis: mode**, then press **Diagnosis: start**.
+The run is in the background: you can leave the page, a notification says
+when it has finished, and **Download diagnostics** then carries the document.
+Please do not restart Home Assistant while a run is going.
+
+- *Read-only* reads and never writes. The sensors beside it show progress.
+- *Extended test (single run)* adds the capability test, which writes
+  settings and puts every one back, checked by reading it again. Read
   [what it does, and how to opt out](../device-diagnosis/README.md#it-reads-and-writes-only-if-you-say-yes)
   first.
+- *Extended test (auto repeat)* starts a capability test on its own whenever
+  the house can answer a check still missing, at most every 30 minutes and
+  twelve times a day, leaving out what earlier runs established, the
+  inverter restart included. **Diagnosis: current step** says what it waits
+  for and **Diagnosis: next start** when the clock allows the next one. It
+  ends with **Diagnosis: stop**, when nothing is left to wait for, or at a
+  restart.
+- **Diagnosis: stop** ends a run early. What it measured is kept, and every
+  value it changed is still put back; no restart is started.
+- **Diagnosis: extended test, skip established** decides what a single
+  extended run does: on, it tests only what earlier runs have not answered
+  yet; off, it is the full test again.
 
 Send the document to
 [the diagnosis issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786).

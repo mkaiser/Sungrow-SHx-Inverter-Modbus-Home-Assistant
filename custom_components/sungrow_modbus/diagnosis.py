@@ -66,6 +66,9 @@ from .const import (
     CONF_DIAGNOSIS_DUMP,
     DEFAULT_DIAGNOSIS_DUMP,
     DIAGNOSIS_ISSUE_URL,
+    DIAGNOSIS_MODE_AUTO_REPEAT,
+    DIAGNOSIS_MODE_EXTENDED,
+    DIAGNOSIS_MODE_READ_ONLY,
     DOMAIN,
     LINK_VALID,
 )
@@ -139,6 +142,9 @@ class DiagnosisState:
     them without reading the label carefully.
     """
 
+    stopped: bool = False
+    """Whether the last run was ended early by its owner (`async_stop`)."""
+
     capability_test: dict[str, Any] | None = field(default=None, repr=False)
     """Part B's result, or None when the last run only read."""
 
@@ -175,6 +181,16 @@ class DiagnosisRunner:
         self._folded: dict[str, Any] | None = None
         #: Runs started on their own while a person has switched it on.
         self.continuous = ContinuousCapabilityTest(hass, entry, self)
+        #: Whether a capability test leaves out the checks earlier runs
+        #: established, for single runs and the action. Set by its switch,
+        #: which restores it. Auto-repeat runs always leave them out.
+        self.skip_established = False
+        #: What *Diagnosis: start* runs; set by the mode select.
+        self.mode = DIAGNOSIS_MODE_READ_ONLY
+        #: Whether the owner asked the run in flight to end (`async_stop`).
+        self._stop_requested = False
+        #: Part B's runner while it is in flight, so a stop can reach it.
+        self._capability_runner: Any = None
 
     @property
     def signal(self) -> str:
@@ -232,6 +248,7 @@ class DiagnosisRunner:
         # has expired", on a link that is minutes old.
         self._async_cancel_lapse()
         self._forced_startup = capability_test and forced_startup
+        self._stop_requested = False
 
         self._set(
             running=True,
@@ -243,11 +260,12 @@ class DiagnosisRunner:
             error=None,
             fields_read=None,
             part=PART_A,
+            stopped=False,
             capability_test=self._folded,
         )
         self._task = self.entry.async_create_background_task(
             self.hass,
-            self._async_run(capability_test),
+            self._async_run_stoppable(capability_test),
             name=f"sungrow diagnosis {self.entry.entry_id}",
         )
         return True
@@ -298,13 +316,49 @@ class DiagnosisRunner:
 
         self._set(part=PART_B, step="starting the capability test")
         runner = CapabilityTestRunner(
-            self.hass, self.entry, forced_startup=self._forced_startup
+            self.hass,
+            self.entry,
+            forced_startup=self._forced_startup,
+            # Auto repeat always leaves out what is established, the restart
+            # included: a run every half hour must not stop the inverter or
+            # write every control again for answers already kept.
+            skip=(
+                ledger.established(self._folded)
+                if self.skip_established or self.continuous.active
+                else frozenset()
+            ),
         )
-        return await runner.async_run(
-            on_progress=lambda fraction, label: self._on_progress(
-                share + fraction * (1.0 - share), f"{PART_B}: {label}"
+        self._capability_runner = runner
+        try:
+            return await runner.async_run(
+                on_progress=lambda fraction, label: self._on_progress(
+                    share + fraction * (1.0 - share), f"{PART_B}: {label}"
+                )
             )
-        )
+        finally:
+            self._capability_runner = None
+
+    @callback
+    def async_stop(self) -> None:
+        """End auto repeat, and the run in flight, putting everything back.
+
+        Part A only reads, so it is simply cancelled. Part B is asked to end
+        at its next check: what it measured so far is kept, every check left
+        is recorded as stopped, the restore runs in full as always, and no
+        restart is started. A cancel would skip the restart's own recovery.
+        """
+        self.continuous.async_turn_off("stopped by the owner")
+        if not self.state.running:
+            return
+        self._stop_requested = True
+        if self._capability_runner is not None:
+            self._capability_runner.request_stop()
+            self._set(step=f"{PART_B}: stopping, putting everything back")
+        elif self._task is not None and not self._task.done():
+            # The task starts eagerly, so it is only missing here while its
+            # first synchronous stretch runs -- which part A cannot be in when
+            # a person presses a button.
+            self._task.cancel()
 
     def _control_options(self) -> ControlOptions:
         """Return what part B has leave to do, from this entry's options."""
@@ -344,6 +398,29 @@ class DiagnosisRunner:
                 )
             ),
         )
+
+    async def _async_run_stoppable(self, capability_test: bool) -> None:
+        """Run, and end in the stopped state when the owner cancelled part A.
+
+        Any other cancellation -- an unload, a shutdown -- propagates as
+        before; part B's restore is shielded against it either way.
+        """
+        try:
+            await self._async_run(capability_test)
+        except asyncio.CancelledError:
+            if not self._stop_requested:
+                raise
+            # Stopped in part A, which only reads: nothing to put back and
+            # no document worth offering.
+            self._set(
+                running=False,
+                step=None,
+                fraction=None,
+                finished=dt_util.now(),
+                error=None,
+                part=None,
+                stopped=True,
+            )
 
     async def _async_run(self, capability_test: bool = False) -> None:
         """Build the document, and end in a state either way.
@@ -440,6 +517,7 @@ class DiagnosisRunner:
             error=None,
             document=document,
             part=None,
+            stopped=self._stop_requested,
             capability_test=document.get("capability_test"),
         )
         try:
@@ -587,7 +665,7 @@ class DiagnosisRunner:
                 f'<a href="{url}" target="_blank">Download the document</a>'
                 " — this link stops working at "
                 f"{lapses.strftime('%H:%M')}. After that, press "
-                "**Diagnosis: run read-only** again for a fresh one, or use "
+                "**Diagnosis: start** again for a fresh one, or use "
                 "**Download diagnostics** on the device page, which carries "
                 "the same document and never expires.\n\n"
                 "It carries a stand-in serial rather than the real one, and "
@@ -596,10 +674,52 @@ class DiagnosisRunner:
                 "installations is the thing no specification has told this "
                 "project reliably."
             ),
-            title=f"Diagnosis finished: {self.entry.title}",
+            title=(
+                f"Diagnosis {'stopped' if self.state.stopped else 'finished'}: "
+                f"{self.entry.title}"
+            ),
             notification_id=self._notification_id,
         )
         self._lapsed = async_call_later(self.hass, LINK_VALID, self._async_mark_lapsed)
+
+    @callback
+    def async_announce_start(self, mode: str) -> None:
+        """Say what was started and what to expect, until the result replaces it.
+
+        Under the finished notice's id, so the document's notice takes its
+        place rather than stacking. A button shows no text of its own, so this
+        is where somebody who pressed Start learns that they may leave.
+        """
+        what = {
+            DIAGNOSIS_MODE_READ_ONLY: (
+                "A read-only diagnosis is running. It only reads; nothing on "
+                "the inverter changes."
+            ),
+            DIAGNOSIS_MODE_EXTENDED: (
+                "An extended test is running: the diagnosis, then one "
+                "capability test. It writes each setting, reads it back and "
+                "puts your original value back, checked by reading it again."
+            ),
+            DIAGNOSIS_MODE_AUTO_REPEAT: (
+                "The extended test repeats on its own: whenever the house can "
+                "answer a check still missing, a capability test starts, at "
+                "most every 30 minutes, and leaves out what earlier runs "
+                "established. Each writes its settings and puts your original "
+                "values back. **Diagnosis: current step** shows what it waits "
+                "for; **Diagnosis: stop** ends it, and so does a restart."
+            ),
+        }[mode]
+        persistent_notification.async_create(
+            self.hass,
+            f"{what}\n\n"
+            "It runs in the background: you can leave this page. A "
+            "notification tells you when it has finished. **Please do not "
+            "restart Home Assistant meanwhile** — the test would still put "
+            "everything back, but the run is lost. **Diagnosis: stop** ends a "
+            "run early; every value it changed is still put back.",
+            title=f"Diagnosis started: {self.entry.title}",
+            notification_id=self._notification_id,
+        )
 
     @property
     def _notification_id(self) -> str:
@@ -645,7 +765,7 @@ class DiagnosisRunner:
             (
                 f"{summarise(document)}\n\n"
                 "The download link in this notification has expired. Press "
-                "**Diagnosis: run read-only** again for a fresh one, or use "
+                "**Diagnosis: start** again for a fresh one, or use "
                 "**Download diagnostics** on the device page — that carries "
                 "the same document and never expires.\n\n"
                 "It carries a stand-in serial rather than the real one, and "

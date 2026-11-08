@@ -60,6 +60,7 @@ from sungrow_modbus.capability_test import (
     SEVERITY,
     SKIPPED,
     START_WORD_PROBE,
+    STOPPED,
     TWO_SIDED,
     CapabilityTest,
     Options,
@@ -1396,6 +1397,55 @@ async def test_a_restart_is_measured_and_the_inverter_comes_back(
     assert run.snapshot.stopped_at is None
 
 
+async def test_a_stopped_run_records_the_rest_and_never_restarts(
+    restartable: MockModbusUnit,
+) -> None:
+    """Stop: every check left is recorded as stopped, and the inverter stays on."""
+    inverter = SungrowInverter(restartable)
+    await inverter.async_update()
+
+    def stop_after_the_first_write(_fraction: float, label: str) -> None:
+        if ", writing " in label:
+            run.request_stop()
+
+    run = CapabilityTest(
+        inverter,
+        options=Options(restart=True),
+        clock=FakeClock(),
+        on_progress=stop_after_the_first_write,
+    )
+
+    outcome = await run.async_run()
+
+    assert outcome.restart is None
+    assert restartable.holding.get(12999) is None, "no stop command went out"
+    assert run.conditions["stopped"] is True
+    first, *rest = outcome.probes
+    assert first.detail != STOPPED, "what was measured is kept"
+    assert rest
+    # A skip carries its reason as the detail, as "out of time" does.
+    assert {probe.detail for probe in rest} == {STOPPED}
+
+
+async def test_a_restart_already_measured_is_left_out(
+    restartable: MockModbusUnit,
+) -> None:
+    """`Options.skip` names the restart once a kept run measured it."""
+    inverter = SungrowInverter(restartable)
+    await inverter.async_update()
+    run = CapabilityTest(
+        inverter,
+        options=Options(restart=True, skip=frozenset({"restart"})),
+        clock=FakeClock(),
+    )
+
+    outcome = await run.async_run()
+
+    assert outcome.restart is None
+    assert restartable.holding.get(12999) is None
+    assert "restart" in run.conditions["skipped_established"]
+
+
 async def test_the_inverter_is_never_left_stopped(restartable: MockModbusUnit) -> None:
     """`async_ensure_running` is what a shutdown hook and a repair flow both call.
 
@@ -2536,3 +2586,61 @@ async def test_a_dry_run_restore_writes_nothing(full_unit: MockModbusUnit) -> No
 
     assert await run._write_word(_probe(), 500) is None
     assert writes == []
+
+
+# -- leaving out what earlier runs established -------------------------------
+
+
+async def test_a_skipped_check_is_neither_written_nor_reported(
+    full_unit: MockModbusUnit,
+) -> None:
+    """A run told to skip writes nothing for it, says so, and still restores.
+
+    No row and no note, so a fold keeps the earlier run's verdict rather than
+    reading this run as a check that could not be established.
+    """
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    before = dict(full_unit.holding)
+    skip = frozenset({"battery_min_soc", "battery_max_soc", "forced charge"})
+    run = CapabilityTest(inverter, options=Options(skip=skip), clock=FakeClock())
+
+    outcome = await run.async_run()
+
+    assert not {row.field for row in outcome.probes} & skip
+    assert "forced charge" not in {row.check for row in outcome.effects}
+    assert "battery_max_charge_power" in {row.field for row in outcome.probes}
+    assert set(outcome.conditions["skipped_established"]) == skip
+    assert not [note for note in outcome.unestablished if "forced charge" in note]
+    assert outcome.not_restored == ()
+    assert _same(full_unit.holding, before)
+
+
+async def test_the_export_scale_is_asked_while_the_export_check_still_writes(
+    full_unit: MockModbusUnit,
+) -> None:
+    """The readback of 13074 left out and its behavioural check not: still asked.
+
+    Written at the wrong factor, the check would land a decade off on half the
+    firmwares.
+    """
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    run = CapabilityTest(
+        inverter,
+        options=Options(skip=frozenset({"export_power_limit"})),
+        clock=FakeClock(),
+    )
+    asked: list[bool] = []
+    original = run._measure_export_scale
+
+    async def measure() -> None:
+        asked.append(True)
+        await original()
+
+    run._measure_export_scale = measure  # type: ignore[method-assign]
+
+    outcome = await run.async_run()
+
+    assert "export_power_limit" not in {row.field for row in outcome.probes}
+    assert asked == [True]

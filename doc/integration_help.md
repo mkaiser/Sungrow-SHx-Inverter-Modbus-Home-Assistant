@@ -31,8 +31,8 @@ Sungrow device to act on.
 | --- | --- |
 | `sungrow_modbus.start_inverter` | Boots an inverter that has been shut down |
 | `sungrow_modbus.stop_inverter` | Shuts it down: no generation, no charging, no discharging, until started again |
-| `sungrow_modbus.run_diagnosis` | Reads the installation and produces the diagnosis document; writes nothing. Same as the **Diagnosis: run read-only** button |
-| `sungrow_modbus.run_capability_test` | Writes each control, checks it and puts it back. **Changes settings while it runs**; same as the **Diagnosis: run extended** button. Read [what it does](../device-diagnosis/README.md#it-reads-and-writes-only-if-you-say-yes) first |
+| `sungrow_modbus.run_diagnosis` | Reads the installation and produces the diagnosis document; writes nothing. Same as **Diagnosis: start** in mode *Read-only* |
+| `sungrow_modbus.run_capability_test` | Writes each control, checks it and puts it back. **Changes settings while it runs**; same as **Diagnosis: start** in mode *Extended test (single run)*. Read [what it does](../device-diagnosis/README.md#it-reads-and-writes-only-if-you-say-yes) first |
 
 Start and stop are actions rather than buttons on purpose: a button has no
 confirmation dialog. Who may call them, and who may run the capability test, is

@@ -4,10 +4,15 @@
       "clear_capability_test_history": {
         "default": "mdi:history"
       },
-      "run_capability_test": {
-        "default": "mdi:tune-variant"
+      "diagnosis_start": {
+        "default": "mdi:play-circle-outline"
       },
-      "run_diagnosis": {
+      "diagnosis_stop": {
+        "default": "mdi:stop-circle-outline"
+      }
+    },
+    "select": {
+      "diagnosis_mode": {
         "default": "mdi:clipboard-search-outline"
       }
     },
@@ -15,16 +20,22 @@
       "capability_test_status": {
         "default": "mdi:clipboard-check-multiple-outline"
       },
+      "diagnosis_next_start": {
+        "default": "mdi:calendar-clock"
+      },
       "diagnosis_progress": {
         "default": "mdi:progress-clock"
       },
       "diagnosis_step": {
         "default": "mdi:format-list-checks"
+      },
+      "diagnosis_test_runs": {
+        "default": "mdi:counter"
       }
     },
     "switch": {
-      "continuous_capability_test": {
-        "default": "mdi:calendar-sync"
+      "skip_established_capability_tests": {
+        "default": "mdi:debug-step-over"
       }
     }
   },

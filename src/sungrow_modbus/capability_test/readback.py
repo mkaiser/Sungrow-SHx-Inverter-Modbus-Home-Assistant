@@ -23,6 +23,7 @@ from .procedure import (
     SCALED,
     SKIPPED,
     SLOPE_WRONG,
+    STOPPED,
     UNCHANGED,
     UNSAFE_STATE,
     Probe,
@@ -165,8 +166,12 @@ class ReadbackSteps(PreflightSteps):
         results: list[ProbeResult] = []
         taken = self._taken
         for probe in self.plan:
+            if self._skips(probe.field):
+                continue
             if self._expired("readback"):
-                results.append(self._skipped(probe, OUT_OF_TIME))
+                results.append(
+                    self._skipped(probe, STOPPED if self.stopped else OUT_OF_TIME)
+                )
                 self._worst(3)
                 continue
             # Unpacked rather than `tuple(...)`, which gives `tuple[float, ...]`
@@ -219,6 +224,15 @@ class ReadbackSteps(PreflightSteps):
                 was = self.snapshot.values.get(EXPORT_MODE.field)
                 if was is not None:
                     await self._write(EXPORT_MODE, float(was))
+        if (
+            "export_power_limit" in self.options.skip
+            and "export power limit" not in self.options.skip
+            and any(probe.field == "export_power_limit" for probe in self.plan)
+        ):
+            # The export check still writes 13074, and at the wrong factor it
+            # lands a decade off: the scale is asked whether or not the
+            # readback of the same register was left out.
+            await self._measure_export_scale()
         return results
 
     async def _slope(

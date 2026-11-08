@@ -131,6 +131,7 @@ class CapabilityTestBase:
         figure the device already declined would report the clamp as a finding.
         """
         self._deadlines: dict[str, float] = {}
+        self._stopped = False
         self._done = 0
         self._total = 1
         self._codes: set[int] = {0}
@@ -179,9 +180,37 @@ class CapabilityTestBase:
             self._deadlines[name] = running
         self._deadlines["restart"] = running + RESTART_BUDGET
 
+    def request_stop(self) -> None:
+        """Ask the run to end at its next check, then put everything back.
+
+        Every phase counts as out of time from here on, so each check left
+        is recorded rather than run, and no restart is started. The restore
+        never consults a deadline, so it runs in full as always.
+        """
+        self._stopped = True
+
+    @property
+    def stopped(self) -> bool:
+        """Whether somebody asked this run to end early."""
+        return self._stopped
+
     def _expired(self, phase: str) -> bool:
-        """Whether this phase is out of time. Never consulted by the restore."""
+        """Whether this phase is out of time, or the run was asked to stop.
+
+        Never consulted by the restore.
+        """
+        if self._stopped:
+            return True
         return self.clock.monotonic() >= self._deadlines.get(phase, math.inf)
+
+    def _skips(self, name: str) -> bool:
+        """Whether `Options.skip` leaves this check out, recording it if so."""
+        if name not in self.options.skip:
+            return False
+        skipped = self.conditions.setdefault("skipped_established", [])
+        if name not in skipped:
+            skipped.append(name)
+        return True
 
     def _note(self, sentence: str) -> None:
         """Record something this run could not establish."""
