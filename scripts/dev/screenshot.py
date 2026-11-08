@@ -41,12 +41,23 @@ def log_in(page: Page, url: str, username: str, password: str) -> None:
     page.wait_for_url(lambda now: "/auth/" not in now, timeout=30_000)
 
 
+def settle(page: Page) -> None:
+    """Let the login finish storing its session before navigating away.
+
+    The session is stored once the first page after the login has loaded; a
+    navigation before that lands back on the login form.
+    """
+    page.wait_for_load_state("networkidle")
+    page.wait_for_timeout(2_000)
+
+
 def open_options(page: Page, url: str) -> None:
     """Open the Sungrow entry's options dialog from its integration page.
 
     The entry's cog is an `ha-icon-button` with no label of its own; the
     `button` inside it carries "Configure", which is what the role finds.
     """
+    settle(page)
     page.goto(f"{url}/config/integrations/integration/sungrow_modbus")
     page.wait_for_load_state("networkidle")
     page.locator("ha-config-entry-row").get_by_role("button", name="Configure").click()
@@ -69,7 +80,69 @@ def options_capability_test(page: Page, url: str) -> Path:
     return target
 
 
+def device_diagnosis(page: Page, url: str) -> Path:
+    """Shoot the device page's card with the two diagnosis buttons."""
+    settle(page)
+    page.goto(f"{url}/config/devices/dashboard")
+    page.wait_for_load_state("networkidle")
+    page.get_by_text("SH10RT", exact=True).first.click()
+    page.wait_for_url(lambda now: "/config/devices/device/" in now, timeout=30_000)
+    page.wait_for_load_state("networkidle")
+    card = page.locator("ha-card").filter(has_text="Run read-only diagnosis").last
+    card.wait_for()
+    page.wait_for_timeout(1_000)
+    target = IMAGES / "HA-settings-device-start-diagnosis.png"
+    card.screenshot(path=str(target))
+    return target
+
+
+def setup_menu(page: Page, url: str) -> Path:
+    """Shoot the first screen of Add integration.
+
+    The dialog's host has no box of its own, so the shot is clipped to the
+    first ancestor of the menu item the size of a dialog's surface.
+    """
+    settle(page)
+    page.goto(f"{url}/config/integrations/dashboard")
+    page.wait_for_load_state("networkidle")
+    page.get_by_role("button", name="Add integration").click()
+    page.wait_for_timeout(2_000)
+    page.keyboard.type("Sungrow")
+    page.wait_for_timeout(2_000)
+    page.locator("dialog-add-integration").get_by_text("Sungrow Modbus").first.click()
+    item = page.get_by_text("Perform the device diagnosis").first
+    item.wait_for()
+    page.wait_for_timeout(1_000)
+    box = item.evaluate(
+        """item => {
+            let node = item;
+            while (node && node.nodeType !== 9) {
+                if (node.nodeType === 11) {
+                    node = node.host;
+                    continue;
+                }
+                const r = node.getBoundingClientRect();
+                const wide = r.width >= 500 && r.width <= 900;
+                if (wide && r.height >= 350 && r.height <= 800) {
+                    return {x: r.x, y: r.y, width: r.width, height: r.height};
+                }
+                // Slotted content climbs through its slot, into the shadow
+                // tree that draws the surface, not straight to its host.
+                node = node.assignedSlot || node.parentNode;
+            }
+            return null;
+        }"""
+    )
+    if box is None:
+        raise RuntimeError("the dialog's surface was not found")
+    target = IMAGES / "HA-settings-configure-integration.png"
+    page.screenshot(path=str(target), clip=box)
+    return target
+
+
 SHOTS: dict[str, Callable[[Page, str], Path]] = {
+    "setup-menu": setup_menu,
+    "device-diagnosis": device_diagnosis,
     "options-capability-test": options_capability_test,
 }
 
