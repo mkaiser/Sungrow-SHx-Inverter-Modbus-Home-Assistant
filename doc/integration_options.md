@@ -30,7 +30,7 @@ which is **Reconfigure** on the same page.
 | Option | Default | What it does |
 | --- | --- | --- |
 | *Start and stop the inverter* | administrators | Who may call the start and stop actions |
-| *Run the control write test* | administrators | Who may press **Run diagnosis with capability tests** |
+| *Run the capability test* | administrators | Who may press **Run diagnosis with capability tests** |
 
 ## Another inverter on the same supply
 
@@ -65,7 +65,7 @@ itself is the **Run read-only diagnosis** button on the device page.
 | *May the last two octets of the address be published?* | on | Only the last two octets, never the third. Off writes `xxx.xxx` |
 | *Also sweep the raw register bands* | on | Also reads 2181 addresses across sixteen bands, including undocumented ones: about five minutes on a cable, longer through a WiNet-S. Off reads only the known registers, in seconds |
 
-## What the control write test may do
+## What the capability test may do
 
 **Run diagnosis with capability tests** writes each setting, reads it back
 against Sungrow's specification, and puts your value back. Pressing it is
@@ -74,7 +74,7 @@ your consent; the six switches below are the parts that go further, and
 *before* pressing the button; what you switch off stays off. With all six
 off, the test still forces the battery and checks every setting's scale.
 
-<img src="../device-diagnosis/images/HA-settings-configure-capability-test.png" width="450" alt="The control write test section of the options dialog, with all six switches on">
+<img src="../device-diagnosis/images/HA-settings-configure-capability-test.png" width="450" alt="The capability test section of the options dialog, with all six switches on">
 
 | Option | Default | What it does |
 | --- | --- | --- |

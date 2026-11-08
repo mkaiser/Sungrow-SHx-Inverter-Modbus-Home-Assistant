@@ -1365,12 +1365,12 @@
       "description": "This integration is a preview release, for testers rather than for a system you depend on.\n\n**Entity names may still change.** A name supplies an entity id when the entity is first created, so a change does not move the ids you already have -- your history and dashboards are safe. What it does mean is that your ids can end up differing from somebody who installs later. Where that matters, a rename will ship with a migration that moves yours across and carries the history with it.\n\n**What is not in flux:** readings, units, and the migration from the YAML package. If you chose to keep the YAML package's entity ids, those are reproduced exactly and none of this touches them.\n\nPlease report anything that looks wrong -- that is what a preview is for."
     },
     "capability_test_unfinished": {
-      "title": "A control write test on {name} did not finish",
+      "title": "A capability test on {name} did not finish",
       "fix_flow": {
         "step": {
           "confirm": {
             "title": "Put these settings back",
-            "description": "The control write test changes a setting, checks it, and changes it back. This one did not get to the changing-back part — Home Assistant was restarted, the entry was reloaded, or the inverter stopped answering partway through.\n\nThese settings may still be holding the test's values rather than yours:\n\n{registers}\n\nFixing this writes each of them back and reads it again to check it took.\n\nThe following will be written back to your inverter and then read again to confirm:\n\n{registers}\n\nIf anything refuses the write, nothing is hidden — you will be told which and this will stay here. The usual cause is something else polling the inverter at the same time."
+            "description": "The capability test changes a setting, checks it, and changes it back. This one did not get to the changing-back part — Home Assistant was restarted, the entry was reloaded, or the inverter stopped answering partway through.\n\nThese settings may still be holding the test's values rather than yours:\n\n{registers}\n\nFixing this writes each of them back and reads it again to check it took.\n\nThe following will be written back to your inverter and then read again to confirm:\n\n{registers}\n\nIf anything refuses the write, nothing is hidden — you will be told which and this will stay here. The usual cause is something else polling the inverter at the same time."
           }
         },
         "abort": {
@@ -1379,12 +1379,12 @@
       }
     },
     "capability_test_left_stopped": {
-      "title": "{name} may still be stopped after a control write test",
+      "title": "{name} may still be stopped after a capability test",
       "fix_flow": {
         "step": {
           "confirm": {
             "title": "Start the inverter and put these settings back",
-            "description": "**Check whether your inverter is generating.** A control write test was given permission to stop and restart it, and did not get to the restart — Home Assistant was restarted, the entry was reloaded, or the inverter stopped answering partway through.\n\nFixing this starts the inverter, then puts these settings back and reads each one again to check it took:\n\n{registers}\n\nThe inverter will be started first, then the following written back and read again to confirm:\n\n{registers}\n\nIf anything refuses, you will be told which and this will stay here."
+            "description": "**Check whether your inverter is generating.** A capability test was given permission to stop and restart it, and did not get to the restart — Home Assistant was restarted, the entry was reloaded, or the inverter stopped answering partway through.\n\nFixing this starts the inverter, then puts these settings back and reads each one again to check it took:\n\n{registers}\n\nThe inverter will be started first, then the following written back and read again to confirm:\n\n{registers}\n\nIf anything refuses, you will be told which and this will stay here."
           }
         },
         "abort": {
@@ -1425,14 +1425,14 @@
           },
           "permissions": {
             "name": "Permissions",
-            "description": "Who may call the start and stop actions, and who may press the control write test's button. Administrators only is the default: a stopped inverter stays stopped until somebody starts it. Users means users who can already change this device; read-only logins never can, and automations and scripts are not affected. Every other setting is an entity, and Home Assistant decides who may change it: make an account read-only under Settings → People to keep a person from changing any of them.",
+            "description": "Who may call the start and stop actions, and who may press the capability test's button. Administrators only is the default: a stopped inverter stays stopped until somebody starts it. Users means users who can already change this device; read-only logins never can, and automations and scripts are not affected. Every other setting is an entity, and Home Assistant decides who may change it: make an account read-only under Settings → People to keep a person from changing any of them.",
             "data": {
               "start_stop": "Start and stop the inverter",
-              "capability_test": "Run the control write test"
+              "capability_test": "Run the capability test"
             },
             "data_description": {
               "start_stop": "Who may call the start and stop actions on this inverter.",
-              "capability_test": "Administrators only by default. The control write test changes settings on the inverter and puts them back, and — where you have allowed it above — stops and restarts it. Opening it to users means users who can already change this device; a read-only login still cannot."
+              "capability_test": "Administrators only by default. The capability test changes settings on the inverter and puts them back, and — where you have allowed it above — stops and restarts it. Opening it to users means users who can already change this device; a read-only login still cannot."
             }
           },
           "external": {
@@ -1488,7 +1488,7 @@
             }
           },
           "capability_test": {
-            "name": "What the control write test may do",
+            "name": "What the capability test may do",
             "description": "Run diagnosis with capability tests on the device page writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The six switches below go further, and each is on until you switch it off: pressing the button is your consent. What you switch off stays off.",
             "data": {
               "capability_test_restart": "May it stop and restart the inverter?",

@@ -110,7 +110,7 @@ scripts/diagnosis.sh tests 192.168.1.50 --restore <the file it names>
 
 The button is your yes. The restart, the feed-in limitation, the PV cut and
 the two timed windows are each **on unless you switch them off**, under *Settings → Devices &
-services → Sungrow Modbus (preview) → Configure → What the control write test
+services → Sungrow Modbus (preview) → Configure → What the capability test
 may do* ([every option there](../doc/integration_options.md)). Switch them
 off **before** pressing the button; what you switch off stays off. With all
 five off, the test still forces the battery and checks every setting's

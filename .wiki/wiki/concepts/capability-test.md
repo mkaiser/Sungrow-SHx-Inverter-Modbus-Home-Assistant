@@ -168,8 +168,17 @@ phase (`preflight`, `readback`, `effects`, `restore`) put together in
 
 - `device-diagnosis/scripts/python/sungrow_capability_test.py`, through the
   diagnosis;
-- the **Run control write test** button on the device page.
+- the **Run diagnosis with capability tests** button on the device page, and
+  the `run_capability_test` action.
 
-Both publish into one diagnosis document (the `capability_test` block).
+Both publish into one diagnosis document (the `capability_test` block; up to
+schema 24 `control_test`), and the document's `features` section says per
+feature set how far the run tested it. `doc/capability_tests.md` lists, per
+capability, what each mode can establish and what is still untested.
+
+The **forced startup** check is a mode of its own (`--forced-startup`, or the
+action's `forced_startup: true`), because it needs the inverter in low-SoC
+standby, the state every other check refuses: see
+[register 13017](../entities/register-13017.md).
 Every diagnosis with such a block is tagged `capability-test` in the
 [index](../index.md).

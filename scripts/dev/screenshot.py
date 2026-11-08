@@ -60,7 +60,7 @@ def options_capability_test(page: Page, url: str) -> Path:
     """Shoot the options dialog's capability test section, expanded."""
     open_options(page, url)
     section = page.locator("ha-expansion-panel").filter(
-        has_text="What the control write test may do"
+        has_text="What the capability test may do"
     )
     section.locator("[slot=header], .summary, .top").first.click()
     page.wait_for_timeout(1_000)

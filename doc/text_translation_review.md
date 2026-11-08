@@ -1130,7 +1130,7 @@ and bold are kept.
 
 ### `issues.capability_test_unfinished.title`
 
-> **EN** A control write test on {name} did not finish
+> **EN** A capability test on {name} did not finish
 
 > **DE** Ein Funktionstest an {name} wurde nicht abgeschlossen
 
@@ -1142,7 +1142,7 @@ and bold are kept.
 
 ### `issues.capability_test_unfinished.fix_flow.step.confirm.description`
 
-> **EN** The control write test changes a setting, checks it, and changes it back. This one did not get to the changing-back part — Home Assistant was restarted, the entry was reloaded, or the inverter stopped answering partway through.
+> **EN** The capability test changes a setting, checks it, and changes it back. This one did not get to the changing-back part — Home Assistant was restarted, the entry was reloaded, or the inverter stopped answering partway through.
 >
 > These settings may still be holding the test's values rather than yours:
 >
@@ -1182,7 +1182,7 @@ and bold are kept.
 
 ### `issues.capability_test_left_stopped.title`
 
-> **EN** {name} may still be stopped after a control write test
+> **EN** {name} may still be stopped after a capability test
 
 > **DE** {name} ist nach einem Funktionstest womöglich noch gestoppt
 
@@ -1194,7 +1194,7 @@ and bold are kept.
 
 ### `issues.capability_test_left_stopped.fix_flow.step.confirm.description`
 
-> **EN** **Check whether your inverter is generating.** A control write test was given permission to stop and restart it, and did not get to the restart — Home Assistant was restarted, the entry was reloaded, or the inverter stopped answering partway through.
+> **EN** **Check whether your inverter is generating.** A capability test was given permission to stop and restart it, and did not get to the restart — Home Assistant was restarted, the entry was reloaded, or the inverter stopped answering partway through.
 >
 > Fixing this starts the inverter, then puts these settings back and reads each one again to check it took:
 >
@@ -1339,7 +1339,7 @@ and bold are kept.
 
 ### `options.step.init.sections.permissions.description`
 
-> **EN** Who may call the start and stop actions, and who may press the control write test's button. Administrators only is the default: a stopped inverter stays stopped until somebody starts it. Users means users who can already change this device; read-only logins never can, and automations and scripts are not affected. Every other setting is an entity, and Home Assistant decides who may change it: make an account read-only under Settings → People to keep a person from changing any of them.
+> **EN** Who may call the start and stop actions, and who may press the capability test's button. Administrators only is the default: a stopped inverter stays stopped until somebody starts it. Users means users who can already change this device; read-only logins never can, and automations and scripts are not affected. Every other setting is an entity, and Home Assistant decides who may change it: make an account read-only under Settings → People to keep a person from changing any of them.
 
 > **DE** Wer die Aktionen Start und Stopp aufrufen darf und wer die Schaltfläche des Funktionstests drücken darf. Standard ist nur Administratoren: Ein gestoppter Wechselrichter bleibt gestoppt, bis ihn jemand startet. Benutzer bedeutet Benutzer, die dieses Gerät bereits ändern dürfen; Konten mit reinem Lesezugriff können das nie, und Automationen und Skripte sind nicht betroffen. Jede andere Einstellung ist eine Entität, und Home Assistant entscheidet, wer sie ändern darf: Mache ein Konto unter Einstellungen → Personen schreibgeschützt, um einer Person jede Änderung zu verwehren.
 
@@ -1351,7 +1351,7 @@ and bold are kept.
 
 ### `options.step.init.sections.permissions.data.capability_test`
 
-> **EN** Run the control write test
+> **EN** Run the capability test
 
 > **DE** Den Funktionstest ausführen
 
@@ -1363,7 +1363,7 @@ and bold are kept.
 
 ### `options.step.init.sections.permissions.data_description.capability_test`
 
-> **EN** Administrators only by default. The control write test changes settings on the inverter and puts them back, and — where you have allowed it above — stops and restarts it. Opening it to users means users who can already change this device; a read-only login still cannot.
+> **EN** Administrators only by default. The capability test changes settings on the inverter and puts them back, and — where you have allowed it above — stops and restarts it. Opening it to users means users who can already change this device; a read-only login still cannot.
 
 > **DE** Standardmäßig nur Administratoren. Der Funktionstest ändert Einstellungen am Wechselrichter und setzt sie zurück und – wo du es oben erlaubt hast – stoppt und startet ihn neu. Ihn für Benutzer zu öffnen bedeutet Benutzer, die dieses Gerät bereits ändern dürfen; ein Konto mit reinem Lesezugriff kann es weiterhin nicht.
 
@@ -1573,7 +1573,7 @@ and bold are kept.
 
 ### `options.step.init.sections.capability_test.name`
 
-> **EN** What the control write test may do
+> **EN** What the capability test may do
 
 > **DE** Was der Funktionstest darf
 
