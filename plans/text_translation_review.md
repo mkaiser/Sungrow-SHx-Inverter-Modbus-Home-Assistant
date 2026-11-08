@@ -5,7 +5,7 @@ path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
 `translations/de.json`. The entity names are in
-[entity_names.md](entity_names.md).
+[entity_names.md](../doc/entity_names.md).
 
 A `{placeholder}` is filled in by the integration and stays as written; backticks
 and bold are kept.

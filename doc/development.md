@@ -182,7 +182,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `descriptions.py` | The entity descriptions and names: `derived`, `numbers`, `switches`, `selects`, `times`, `buttons`, `strings`, `german`, or all eight with no argument (`strings` and `german` last, since they read the others) |
 | `tables/writes.py` | **Input table**: which registers the integration may write and within what bounds. Feeds the number/switch/select/time/button descriptions; `tests/test_writes.py` holds `registers.py`'s writable set to it |
 | `tables/naming.py` | **Input table**: the entity-name convention, and the German name for every key (`GERMAN`). Feeds `strings.json`, `translations/de.json`, `review_names.py` and the Influx helper |
-| `tables/german_texts.json` | **Input table**: German for every `strings.json` text that is not an entity name, by path; read through `naming.GERMAN_TEXTS`. Feeds `translations/de.json` and `review_names.py --texts` (`doc/text_translation_review.md`) |
+| `tables/german_texts.json` | **Input table**: German for every `strings.json` text that is not an entity name, by path; read through `naming.GERMAN_TEXTS`. Feeds `translations/de.json` and `review_names.py --texts` (`plans/text_translation_review.md`) |
 | `tables/datasheet_names.json` | **Input table**: Sungrow's own name for every register an entity reads, as the hybrid's V1.1.11 and the SG's V1.1.58 datasheets print it, by `space:register`. Feeds the **Datasheet** column of `review_names.py` |
 | `generate_compatibility.py` | Build `doc/compatibility.md` from the committed diagnoses |
 | `generate_firmware_support.py` | Build `doc/firmware_support.md`: every inverter entity against every platform and firmware the diagnoses cover, each diagnosis's register dump replayed through the integration's decoding and capability probe; then every SBR/SBH pack entity against every BCU firmware, from the diagnoses' decoded pack readings |
@@ -193,7 +193,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `check_pinned_library.py` | Do the integration's `sungrow_modbus` imports resolve against the library version `manifest.json` pins? `--wheel dist/*.whl` asks it of a local build and gates CI; with no argument it asks it of **PyPI**, which is legitimately red between releases |
 | **`scripts/helpers/`** | **One-off tools** |
 | `influx_migration.py` | Print Grafana regexes and rewrite recipes for InfluxDB users; connects to nothing |
-| `review_names.py` | Lay the entity names out for the open naming decision -- grouped by subject, each with the entity id it produces and its legacy name. `--markdown` prints the name table (redirect it into `doc/entity_names.md`), `--texts` the other texts of `strings.json` in English and German (into `doc/text_translation_review.md`); `--check` fails when either file has drifted |
+| `review_names.py` | Lay the entity names out for the open naming decision -- grouped by subject, each with the entity id it produces and its legacy name. `--markdown` prints the name table (redirect it into `doc/entity_names.md`), `--texts` the other texts of `strings.json` in English and German (into `plans/text_translation_review.md`); `--check` fails when either file has drifted |
 | `make_brand_icon.py` | Regenerate the integration's `brand/` icons and wide logos, light and dark (`--preview` renders a check sheet of the icons) |
 
 What a contributor is handed, `device-diagnosis/scripts/`, is described in

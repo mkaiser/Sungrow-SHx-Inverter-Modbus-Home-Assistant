@@ -152,7 +152,7 @@ Nothing can start now (blocker 18).
 # Open decisions
 
 1. **Are the entity names final?** They are reviewed and decided, English
-   and German (`doc/entity_names.md`, `doc/text_translation_review.md`,
+   and German (`doc/entity_names.md`, `plans/text_translation_review.md`,
    `scripts/generate/tables/naming.py`); both ship, German as
    `translations/de.json`, and entity ids stay English in every language
    (`doc/architecture.md`). A rename later leaves existing ids alone and

@@ -34,7 +34,7 @@ lean on them.
 ### What is out of scope
 
 - **Generated documents**: `doc/compatibility.md`, `doc/firmware_support.md`,
-  `doc/entity_names.md`, `doc/text_translation_review.md`. If one is stale,
+  `doc/entity_names.md`, `plans/text_translation_review.md`. If one is stale,
   run `make gen`; if its content is wrong, fix the generator or its input.
   Never hand-edit (`make gen-check` fails).
 - **Raw sources**, which are immutable: `device-diagnosis/results/`,

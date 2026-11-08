@@ -75,7 +75,7 @@ Edit the source, not the output:
 - `doc/compatibility.md` and `doc/firmware_support.md` --
   `generate_compatibility.py` and `generate_firmware_support.py`, from the diagnoses;
 - `scripts/dev/simulator_registers.json` -- `generate_simulator_registers.py`;
-- `doc/entity_names.md` and `doc/text_translation_review.md` --
+- `doc/entity_names.md` and `plans/text_translation_review.md` --
   `scripts/helpers/review_names.py --markdown` and `--texts`;
 - `legacy/modbus_sungrow_multiple_inverters_{1,2,3}.yaml` --
   `generate_second_inverter_config.py`; CI regenerates and commits it,

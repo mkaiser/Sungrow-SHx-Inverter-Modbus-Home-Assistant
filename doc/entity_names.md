@@ -27,7 +27,7 @@ language. The names live in `GERMAN` in
 `scripts/generate/tables/naming.py`, with the German word each recurring idea
 must use (`GERMAN_TERMS`). Every other text in `strings.json` -- the setup and
 options flows, repairs, actions and error messages -- is in
-[text_translation_review.md](text_translation_review.md), English above German.
+[text_translation_review.md](../plans/text_translation_review.md), English above German.
 
 A name with an open question has it **To discuss** under its table: what the
 entity is and the names to choose from (`NAME_DISCUSSION` in `naming.py`).

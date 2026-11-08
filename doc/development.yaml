@@ -491,7 +491,7 @@ generated_files:
     - script: scripts/helpers/review_names.py --markdown
       writes: doc/entity_names.md                     # --check is in gen-check
     - script: scripts/helpers/review_names.py --texts
-      writes: doc/text_translation_review.md          # --check is in gen-check
+      writes: plans/text_translation_review.md          # --check is in gen-check
   check_all: make gen-check
   # The list lives in the Makefile, next to the one in
   # .github/workflows/validate.yml it has to match; tests/test_makefile.py
