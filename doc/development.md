@@ -148,7 +148,8 @@ src/sungrow_modbus/                 device library (no Home Assistant imports)
   inverter/, battery/, wallbox/       one subpackage per device: registers, device
   ihomemanager/, logger/              registers and document only: read by the diagnosis
   addresses, discovery, diagnosis_document,  what spans devices
-  diagnosis, block_test, capability_test, dump
+  diagnosis, features, block_test,
+  capability_test, dump
 tests/                              library and integration tests
 scripts/dev/                        dev loop: setup, boot, simulator, HACS testbed
 scripts/generate/                   everything that writes a committed file

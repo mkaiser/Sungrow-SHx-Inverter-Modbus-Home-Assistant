@@ -31,7 +31,7 @@ flowchart TD
         links["links<br/>the wallbox's own address:<br/>Modbus inside TLS, unverified"]
     end
 
-    lib["sungrow_modbus &mdash; the library, installed from PyPI<br/>no Home Assistant imports anywhere<br/><br/>hybrid_inverter/: the SH &mdash; device, registers, components<br/>(block reads, per tier), layout (registers read alone),<br/>capabilities, faults, derived and smoothing, export_scale<br/>string_inverter/: the SG &mdash; device, registers, document<br/>battery/: the SBR pack &mdash; device, registers, discovery, power<br/>wallbox/: the charge point &mdash; device, registers, discovery,<br/>document, capability_test<br/>ihomemanager/, logger/: unit 247, identified and diagnosed,<br/>no entities &mdash; registers, document<br/>capability_test/: the engine &mdash; preflight, procedure,<br/>readback, effects, restore<br/>top level: device and identity (the seams every device shares),<br/>addresses, discovery (identify, LAN sweep, reverse DNS),<br/>energy_integral, dump, diagnosis_document, diagnosis,<br/>block_test with raw_client"]
+    lib["sungrow_modbus &mdash; the library, installed from PyPI<br/>no Home Assistant imports anywhere<br/><br/>hybrid_inverter/: the SH &mdash; device, registers, components<br/>(block reads, per tier), layout (registers read alone),<br/>capabilities, faults, derived and smoothing, export_scale<br/>string_inverter/: the SG &mdash; device, registers, document<br/>battery/: the SBR pack &mdash; device, registers, discovery, power<br/>wallbox/: the charge point &mdash; device, registers, discovery,<br/>document, capability_test<br/>ihomemanager/, logger/: unit 247, identified and diagnosed,<br/>no entities &mdash; registers, document<br/>capability_test/: the engine &mdash; preflight, procedure,<br/>readback, effects, restore<br/>top level: device and identity (the seams every device shares),<br/>addresses, discovery (identify, LAN sweep, reverse DNS),<br/>energy_integral, dump, diagnosis_document, diagnosis,<br/>features, block_test with raw_client"]
 
     subgraph modbus["homeassistant.components.modbus &mdash; owns the connection"]
         direction TB
@@ -251,7 +251,7 @@ reads it (`device`) and whatever only that device needs: how it is found on a
 unit, its capabilities, its derived values. What spans devices sits at the
 top: `device` (the seam every device offers, and `MappedDevice`, the base
 most are built on), `identity` (the block both inverters answer, and which
-map a type code calls for), `addresses`, `discovery`, `dump`, the diagnosis (`diagnosis_document`, `diagnosis`)
+map a type code calls for), `addresses`, `discovery`, `dump`, the diagnosis (`diagnosis_document`, `diagnosis`, `features`)
 and the two tests (`block_test`, `capability_test`). A change that concerns one
 device belongs in its subpackage; a second device that needs it is the cue to
 move it up.
@@ -263,7 +263,8 @@ anywhere in the process.
 The diagnosis is cut the same way. The library holds everything a capability
 document is made of -- the probes, the decoded-readings algorithm, each
 section's shape and the privacy rules that apply to it (`diagnosis_document.py`,
-`diagnosis.py`) -- and prints, prompts and writes nothing. It also holds the **order** a diagnosis
+`diagnosis.py`), and the feature report every document ends with
+(`features.py`, computed from the document itself) -- and prints, prompts and writes nothing. It also holds the **order** a diagnosis
 reads in, `diagnosis.async_capability_diagnosis`: each producer hands it a source
 that knows how to collect each step -- raw from a terminal, from what the
 coordinators already polled in Home Assistant -- and the library takes the
