@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "sungrow-modbus==0.1.0a30",
+#     "sungrow-modbus==0.1.0a31",
 #     "modbus-connection[tmodbus]==4.12.4",
 #     "tzdata",
 # ]
