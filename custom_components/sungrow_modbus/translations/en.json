@@ -232,6 +232,9 @@
       }
     },
     "button": {
+      "clear_capability_test_history": {
+        "name": "Clear capability test history"
+      },
       "run_capability_test": {
         "name": "Run diagnosis with capability tests"
       },
@@ -564,6 +567,9 @@
       },
       "bms_protection": {
         "name": "BMS protection"
+      },
+      "capability_test_status": {
+        "name": "Capability test status"
       },
       "communication_module_firmware_version": {
         "name": "Communication module firmware version"
@@ -1232,6 +1238,9 @@
     "switch": {
       "backup_mode": {
         "name": "Backup mode"
+      },
+      "continuous_capability_test": {
+        "name": "Continuous capability test mode"
       },
       "cut_pv_generation": {
         "name": "Cut PV generation"

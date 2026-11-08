@@ -9,7 +9,7 @@ button.
 The fourth is the one that reshaped the integration. A device reaches the
 registry only when an entity carrying its `device_info` is added -- so a
 diagnostics-only entry, which deliberately had no entities at all, had no
-device page to put any of this on. It has five entities now, and nothing
+device page to put any of this on. It has eight entities now, and nothing
 else: that set is what these tests pin.
 """
 
@@ -60,6 +60,11 @@ DIAGNOSTIC_ENTITIES = {
     "sensor.sh10rt_diagnosis_progress",
     "sensor.sh10rt_diagnosis_step",
     "sensor.sh10rt_diagnosis_finished",
+    # The capability test runs kept over a day, and the way to start again.
+    "button.sh10rt_clear_capability_test_history",
+    "sensor.sh10rt_capability_test_status",
+    # The leave for runs that start on their own; off after every restart.
+    "switch.sh10rt_continuous_capability_test_mode",
 }
 
 
@@ -98,7 +103,7 @@ async def _setup(
 async def test_a_diagnostics_entry_has_the_diagnosis_and_nothing_else(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """Five entities: the two buttons, and the three that watch them.
+    """Eight entities: three buttons, a switch, and the four that watch the runs.
 
     The promise of this mode is that somebody who offered to send a reading
     does not get their house filled with entities. That still holds -- there
@@ -110,7 +115,9 @@ async def test_a_diagnostics_entry_has_the_diagnosis_and_nothing_else(
     entities = {
         state.entity_id
         for state in hass.states.async_all()
-        if state.entity_id.startswith(("sensor.sh10rt", "button.sh10rt"))
+        if state.entity_id.startswith(
+            ("sensor.sh10rt", "button.sh10rt", "switch.sh10rt")
+        )
     }
     assert entities == DIAGNOSTIC_ENTITIES
 

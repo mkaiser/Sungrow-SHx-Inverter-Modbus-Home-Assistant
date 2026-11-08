@@ -106,8 +106,9 @@ PLATFORMS: list[Platform] = [
     Platform.TIME,
 ]
 
-#: What a diagnostics-only entry sets up: the diagnosis and capability test buttons
-#: and the three sensors that watch a run, and nothing else.
+#: What a diagnostics-only entry sets up: the diagnosis, capability test and
+#: history buttons, the continuous switch and the four sensors that watch the
+#: runs, and nothing else.
 #:
 #: Not nothing, because the diagnosis lives on the device page, and a device
 #: reaches the registry only when an entity carrying its `device_info` is
@@ -122,7 +123,11 @@ PLATFORMS: list[Platform] = [
 #: leaves nothing behind at all. Deleting an entry removes its entities
 #: either way -- asserted in `test_diagnosis_device_page.py` -- but the cleanest
 #: cleanup is still the one that was never needed.
-DIAGNOSTIC_PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SENSOR]
+DIAGNOSTIC_PLATFORMS: list[Platform] = [
+    Platform.BUTTON,
+    Platform.SENSOR,
+    Platform.SWITCH,
+]
 
 #: What an ordinary SG entry sets up: its readings, and nothing that writes.
 #: Read only by decision, until a write has been watched on one.
@@ -493,6 +498,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
     # that exists *for* this.
     entry.runtime_data.diagnosis = DiagnosisRunner(hass, entry)
     entry.async_on_unload(entry.runtime_data.diagnosis.async_shutdown)
+    # Capability test runs kept from before a restart fold back in, so a
+    # collection over a day survives one.
+    await entry.runtime_data.diagnosis.async_load_ledger()
 
     _async_drop_unused_corrections(hass, entry, serial)
 
@@ -519,7 +527,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
     if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
         _LOGGER.info(
             "%s set up for diagnostics only: %d components polling, "
-            "the diagnosis and capability test buttons, three sensors, and no readings",
+            "the diagnosis, capability test and history buttons, a switch, "
+            "four sensors, and no readings",
             entry.title,
             len(coordinators),
         )

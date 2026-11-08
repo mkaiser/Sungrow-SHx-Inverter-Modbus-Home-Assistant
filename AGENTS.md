@@ -143,7 +143,9 @@ does, and puts everything back. Non-negotiable:
 - **A simulator cannot produce a finding**, and through a WiNet-S only the
   behavioural leg is evidence.
 - **The diagnosis writes only with leave**: its last question defaults to no,
-  and a run with nobody at a terminal is a no.
+  and a run with nobody at a terminal is a no. In Home Assistant the leave is
+  a button press, or the *Continuous capability test mode* switch: on until a
+  person switches it off, and off after every restart, never restored.
 - **[Register 13074](.wiki/wiki/entities/register-13074.md)'s write scale is
   probed per device, never assumed** (×10 on B001 firmware, 1:1 on
   `SAPPHIRE-H_01011.95.03`).

@@ -105,6 +105,9 @@ OVERRIDES: dict[str, str] = {
     "diagnosis_progress": "Diagnosis progress",
     "diagnosis_step": "Diagnosis step",
     "diagnosis_finished": "Diagnosis finished",
+    "clear_capability_test_history": "Clear capability test history",
+    "capability_test_status": "Capability test status",
+    "continuous_capability_test": "Continuous capability test mode",
     # -- the SBR pack, which is its own device on its own unit ------------
     "battery_pack_voltage": "Pack voltage",
     "battery_pack_current": "Pack current",
@@ -644,6 +647,9 @@ GERMAN: dict[str, str] = {
     "diagnosis_finished": "Diagnose beendet",
     "diagnosis_progress": "Diagnosefortschritt",
     "diagnosis_step": "Diagnoseschritt",
+    "clear_capability_test_history": "Funktionstest-Verlauf löschen",
+    "capability_test_status": "Funktionstest-Status",
+    "continuous_capability_test": "Modus fortlaufende Funktionstests",
     # -- settings: numbers, selects, switches, times ----------------------
     "backup_mode": "Backup-Modus",
     "battery_charging_start_power": "Batterie Ladestartleistung",

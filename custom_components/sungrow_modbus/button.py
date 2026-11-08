@@ -9,7 +9,7 @@ else.
 **A diagnostics-only entry** gets the diagnosis and capability test buttons, and
 nothing else. Such an entry has no readings, no controls and no numbers -- it
 was set up by somebody who offered to send a reading and did not want their
-house filled with entities -- so these buttons and the three sensors beside
+house filled with entities -- so these buttons and the four sensors beside
 them are the entirety of its device page, and the reason it has one. An
 ordinary entry reaches the same runs through the `run_diagnosis` and
 `run_capability_test` actions, which leave no entity behind.
@@ -29,7 +29,11 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from .button_descriptions import BUTTON_DESCRIPTIONS
 from .const import CONF_MODE, MODE_DEVICES, MODE_DIAGNOSTICS
 from .coordinator import SungrowConfigEntry
-from .diagnosis_entities import CapabilityTestButton, DiagnosisButton
+from .diagnosis_entities import (
+    CapabilityTestButton,
+    ClearCapabilityTestHistoryButton,
+    DiagnosisButton,
+)
 from .entity import SungrowButtonDescription, SungrowEntity
 
 # One at a time, as on every platform that writes: everything on this endpoint
@@ -61,7 +65,11 @@ async def async_setup_entry(
         async_add_entities([DiagnosisButton(runtime_data)])
         return
     async_add_entities(
-        [DiagnosisButton(runtime_data), CapabilityTestButton(runtime_data)]
+        [
+            DiagnosisButton(runtime_data),
+            CapabilityTestButton(runtime_data),
+            ClearCapabilityTestHistoryButton(runtime_data),
+        ]
     )
 
 

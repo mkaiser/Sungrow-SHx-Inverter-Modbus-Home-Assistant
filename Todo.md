@@ -147,6 +147,27 @@ Nothing can start now (blocker 18).
       wallbox's current scale in the feature report; the EMS mode codes.
    3. **Outside the repository**: issue #786's title still says survey, and
       the repository variable `SURVEY_ISSUE` keeps its name.
+   4. **Capability test runs over a day.** Home Assistant keeps every run per
+      firmware and folds them into one schema-3 block
+      (`capability_test/ledger.py`; the *Capability test status* sensor, a
+      notification rewritten per run, *Clear capability test history*), and
+      *Continuous capability test mode* starts runs when a missing check is
+      due (`continuous.py`).
+      Left:
+      1. **The CLI's `--merge-into` appends** through `ledger.fold`
+         rather than replacing the block (`--replace` for the old way).
+         Waits on a release: the PEP 723 header pins a wheel without
+         `ledger`.
+      2. **Continuous mode for an ordinary entry.** The switch exists on a
+         diagnostics-only entry; an ordinary entry has no diagnosis
+         entities, so it would need an action pair (start / stop), with
+         its `services` strings and German.
+      3. **One hardware day** at the maintainer's SH10RT with the switch
+         on: the import limit established at night, the PV cut in sun,
+         ingested as one document. Also tells whether `NEEDS`' margins
+         start runs that the checks then skip.
+      4. **Translate** the status line and the notification once their
+         wording settles; English for now.
 
 # Open decisions
 

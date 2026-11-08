@@ -232,6 +232,9 @@
       }
     },
     "button": {
+      "clear_capability_test_history": {
+        "name": "Funktionstest-Verlauf löschen"
+      },
       "run_capability_test": {
         "name": "Diagnose mit Funktionstests ausführen"
       },
@@ -564,6 +567,9 @@
       },
       "bms_protection": {
         "name": "BMS-Schutz"
+      },
+      "capability_test_status": {
+        "name": "Funktionstest-Status"
       },
       "communication_module_firmware_version": {
         "name": "Firmware-Version Kommunikationsmodul"
@@ -1232,6 +1238,9 @@
     "switch": {
       "backup_mode": {
         "name": "Backup-Modus"
+      },
+      "continuous_capability_test": {
+        "name": "Modus fortlaufende Funktionstests"
       },
       "cut_pv_generation": {
         "name": "PV-Erzeugung abschalten"

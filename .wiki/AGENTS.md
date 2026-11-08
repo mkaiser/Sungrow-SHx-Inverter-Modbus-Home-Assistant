@@ -110,7 +110,9 @@ Ingest is part of the change that brings the source in, the way a generated
 file is regenerated in the commit that changes its input.
 
 1. Write `sources/{slug}-summary.md`: frontmatter, the facts table, what did
-   not answer, any `export_scale` and `capability_test` block.
+   not answer, any `export_scale` and `capability_test` block. A schema-3
+   block is several runs: **one** summary, its runs listed by situation
+   (`read_at` and `conditions`), not one source per run.
 2. Update every entity and concept page that the source touches: its
    installation, model, firmware, and any register it measures. **Where it
    contradicts a page, say so on the page**, and decide which is right from

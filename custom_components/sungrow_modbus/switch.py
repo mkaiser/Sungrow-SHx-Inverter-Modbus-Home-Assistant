@@ -21,7 +21,9 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
+from .const import CONF_MODE, MODE_DEVICES, MODE_DIAGNOSTICS
 from .coordinator import SungrowConfigEntry
+from .diagnosis_entities import ContinuousCapabilityTestSwitch
 from .entity import SungrowEntity, SungrowSwitchDescription
 from .switch_descriptions import SWITCH_DESCRIPTIONS
 
@@ -45,6 +47,12 @@ async def async_setup_entry(
 ) -> None:
     """Set up the mode flags this device actually has."""
     runtime_data = entry.runtime_data
+    if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
+        # A diagnostics-only entry has no controls; its one switch is the
+        # leave for runs that start on their own, and only a hybrid has those.
+        if not runtime_data.is_string_inverter:
+            async_add_entities([ContinuousCapabilityTestSwitch(runtime_data)])
+        return
     async_add_entities(
         SungrowSwitch(runtime_data, description)
         for description in SWITCH_DESCRIPTIONS

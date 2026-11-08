@@ -21,7 +21,7 @@ flowchart TD
         flow["config_flow<br/>probe, identify, scan the LAN,<br/>ask about entity ids<br/><br/>config_flow_schemas: the forms it shows,<br/>separated from the decisions about showing them"]
         diagnosis["diagnosis &mdash; both parts, one progress bar<br/><br/>part A: probe every capability,<br/>publish a document that carries a<br/>stand-in serial and at most two octets<br/><br/>part B capability_test (in the library): write each<br/>control, check the raw word against a hand-typed<br/>scale, watch what the inverter does, put it back<br/><br/>repairs: a run that did not finish restoring<br/>becomes a fix flow somebody can click<br/>download: a signed, short-lived link"]
         coord["coordinator<br/>four for the inverter, one per tier:<br/>realtime 5s, fast 10s, medium 60s, slowest 600s<br/><br/>one more per extra device that answered:<br/>the SBR pack on medium, the wallbox on fast<br/>with its slow blocks every 30th poll<br/><br/>an SG string inverter: the same four tiers,<br/>its own coordinator class"]
-        ent["entity<br/>sensor, binary_sensor, button,<br/>number, switch, select, time<br/>an SG entry: sensor and binary_sensor only<br/><br/>diagnosis_entities: a diagnostics-only entry's<br/>diagnosis and capability test buttons and three sensors"]
+        ent["entity<br/>sensor, binary_sensor, button,<br/>number, switch, select, time<br/>an SG entry: sensor and binary_sensor only<br/><br/>diagnosis_entities: a diagnostics-only entry's<br/>diagnosis, capability test and history buttons,<br/>a continuous switch and four sensors"]
         mig["migration<br/>claim the YAML entity_id,<br/>or take a modern id then rename"]
         svc["services<br/>start_inverter, stop_inverter,<br/>run_capability_test: audience set per entry,<br/>admins only by default<br/>run_diagnosis: anyone"]
         diag["diagnostics<br/>the downloadable report"]
@@ -106,7 +106,7 @@ inverter's device so a sub-device can hang off it
 drop correction entities the options no longer ask for; claim the legacy ids
 (`_async_take_over_legacy_ids`); raise a repair if a capability test left
 registers changed (`_async_check_capability_test`); and forward the platforms --
-all five for an ordinary entry, button and sensor for a diagnostics-only one.
+all five for an ordinary entry; button, sensor and switch for a diagnostics-only one.
 Each step is a named function that can be read on its own, which is the only
 way a setup path stays reviewable as it grows.
 

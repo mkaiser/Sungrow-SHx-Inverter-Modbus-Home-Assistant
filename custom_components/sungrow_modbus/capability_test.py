@@ -25,12 +25,15 @@ click.
 
 from __future__ import annotations
 
+from datetime import timedelta
 import logging
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.core import HassJob, HomeAssistant, callback
 from homeassistant.helpers.storage import Store
+from homeassistant.util import dt as dt_util
 from sungrow_modbus.capability_test import CapabilityTest, Options, Snapshot, document
+from sungrow_modbus.capability_test.ledger import fold_key
 
 from .const import (
     CAPABILITY_TEST_PERMISSION_DEFAULT,
@@ -79,6 +82,77 @@ async def async_leftover(
 async def async_forget(hass: HomeAssistant, entry: SungrowConfigEntry) -> None:
     """Drop the snapshot, once everything in it is known to be back."""
     await _store(hass, entry).async_remove()
+
+
+#: The ledger: every finished run's block, so runs at different moments of a
+#: day fold into one document (`sungrow_modbus.capability_test.ledger`). Its
+#: own store, because the snapshot's is removed after every clean restore.
+LEDGER_VERSION = 1
+LEDGER_KEY = f"{DOMAIN}.capability_ledger"
+
+#: How much the ledger keeps. A day's collection is a handful of runs; the
+#: bounds only stop a forgotten automation from growing it without end.
+LEDGER_MAX_RUNS = 50
+LEDGER_MAX_AGE = timedelta(days=30)
+
+
+def _ledger_store(
+    hass: HomeAssistant, entry: SungrowConfigEntry
+) -> Store[dict[str, Any]]:
+    """Return this entry's ledger store."""
+    return Store(hass, LEDGER_VERSION, f"{LEDGER_KEY}.{entry.entry_id}")
+
+
+def firmware_of(device: Any) -> str:
+    """Return the firmware a ledger is kept for: evidence is per firmware."""
+    identity = device.identity
+    return f"{identity.arm_software or ''}|{identity.dsp_software or ''}"
+
+
+async def async_ledger_runs(
+    hass: HomeAssistant, entry: SungrowConfigEntry, firmware: str
+) -> list[dict[str, Any]]:
+    """Return the runs kept for this firmware, oldest first, within the bounds."""
+    data = await _ledger_store(hass, entry).async_load()
+    if not data or data.get("firmware") != firmware:
+        return []
+    cutoff = dt_util.utcnow() - LEDGER_MAX_AGE
+    runs = [
+        run
+        for run in data.get("runs") or []
+        if (when := dt_util.parse_datetime(str(run.get("read_at")))) is not None
+        and when >= cutoff
+    ]
+    return runs[-LEDGER_MAX_RUNS:]
+
+
+async def async_ledger_add(
+    hass: HomeAssistant,
+    entry: SungrowConfigEntry,
+    firmware: str,
+    run: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Add a finished run and return the runs that fold with it.
+
+    A run that cannot fold with the kept ones -- another transport, or a
+    simulated run beside real ones -- starts the ledger again rather than
+    being dropped: the newest run is the one somebody just asked for. A dry
+    run is never kept; it wrote nothing.
+    """
+    block = run["block"]
+    if (block.get("conditions") or {}).get("dry_run"):
+        return [run]
+    runs = await async_ledger_runs(hass, entry, firmware)
+    if runs and fold_key(runs[-1]["block"]) != fold_key(block):
+        runs = []
+    runs = [*runs, run][-LEDGER_MAX_RUNS:]
+    await _ledger_store(hass, entry).async_save({"firmware": firmware, "runs": runs})
+    return runs
+
+
+async def async_ledger_clear(hass: HomeAssistant, entry: SungrowConfigEntry) -> None:
+    """Forget every kept run."""
+    await _ledger_store(hass, entry).async_remove()
 
 
 class CapabilityTestRunner:

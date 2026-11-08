@@ -28,10 +28,12 @@ from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import PERCENTAGE, EntityCategory
 from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from sungrow_modbus.capability_test import ledger
 
 from .const import PERMISSION_CAPABILITY_TEST
 from .entity import EnglishEntityId
@@ -50,10 +52,17 @@ if TYPE_CHECKING:
 DIAGNOSIS_ENTITIES: tuple[tuple[str, str], ...] = (
     ("button", "run_diagnosis"),
     ("button", "run_capability_test"),
+    ("button", "clear_capability_test_history"),
     ("sensor", "diagnosis_progress"),
     ("sensor", "diagnosis_step"),
     ("sensor", "diagnosis_finished"),
+    ("sensor", "capability_test_status"),
+    ("switch", "continuous_capability_test"),
 )
+
+#: How many log lines the status sensor's attribute carries. The whole log is
+#: in the ledger and in Download diagnostics; this is the tail worth a glance.
+LOG_LINES = 30
 
 #: The longest a step label may be. Home Assistant refuses to record a state
 #: over 255 characters, and a probe label is nowhere near that -- but a
@@ -272,3 +281,118 @@ class DiagnosisResultSensor(DiagnosisEntity, SensorEntity):
             "capability_test_outcome": capability_test.get("outcome_means"),
             "capability_test_findings": _findings(capability_test),
         }
+
+
+class ClearCapabilityTestHistoryButton(DiagnosisEntity, ButtonEntity):
+    """Forget every kept capability test run, to start a collection afresh.
+
+    Writes nothing to the inverter; it empties this entry's ledger. Held to
+    the capability test's permission all the same, because what it removes is
+    evidence somebody may have spent a day collecting.
+    """
+
+    def __init__(self, runtime_data: SungrowRuntimeData) -> None:
+        """Name it for what pressing it does."""
+        super().__init__(runtime_data, "clear_capability_test_history")
+
+    @property
+    def available(self) -> bool:
+        """Unavailable while a run is in flight; it is about to add to it."""
+        return not self._runner.state.running
+
+    async def async_press(self) -> None:
+        """Empty the ledger."""
+        await async_authorize(
+            self.hass, self._context, self._runner.entry, PERMISSION_CAPABILITY_TEST
+        )
+        await self._runner.async_clear_ledger()
+
+
+class CapabilityTestStatusSensor(DiagnosisEntity, SensorEntity):
+    """How far a collection of capability test runs has got, and what it awaits.
+
+    The state is one line -- `14/49 established · 5 runs · waiting for: site
+    import limit, PV generation cut` -- because a state stops at 255
+    characters. The tail of the log and each missing check's reason are
+    attributes, kept out of the recorder: they grow with every run, and the
+    recorded history of the state is already the log over time. The long form
+    is the notification the runner rewrites after every run.
+    """
+
+    _unrecorded_attributes = frozenset({"still_missing", "log"})
+
+    def __init__(self, runtime_data: SungrowRuntimeData) -> None:
+        """Name it for the collection it reports."""
+        super().__init__(runtime_data, "capability_test_status")
+
+    @property
+    def native_value(self) -> str:
+        """The one-line progress, or that nothing has been kept."""
+        state = self._runner.state
+        folded = state.capability_test
+        if state.running and state.part is not None and "capability" in state.part:
+            prefix = "running · "
+        else:
+            prefix = ""
+        if not folded or "summary" not in folded:
+            return f"{prefix}no runs kept"
+        return prefix + ledger.status_line(folded, limit=MAX_STATE - len(prefix))
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """The counts, what is missing and why, and the tail of the log."""
+        folded = self._runner.state.capability_test or {}
+        if "summary" not in folded:
+            return {
+                **self._runner.continuous.attributes(),
+                "established": None,
+                "total": None,
+                "runs": 0,
+            }
+        established, total = ledger.progress(folded)
+        runs = folded.get("runs") or []
+        return {
+            **self._runner.continuous.attributes(),
+            "established": established,
+            "total": total,
+            "runs": len(runs),
+            "last_run_at": runs[-1].get("read_at") if runs else None,
+            "contradictions": [
+                item["name"] for item in folded.get("contradictions") or []
+            ],
+            "still_missing": folded.get("still_missing") or [],
+            "log": ledger.run_lines(folded)[-LOG_LINES:],
+        }
+
+
+class ContinuousCapabilityTestSwitch(DiagnosisEntity, SwitchEntity):
+    """The leave for capability test runs that start on their own.
+
+    On, `continuous.ContinuousCapabilityTest` starts the ordinary run whenever
+    the house can answer a check still missing. Never restored: after a
+    restart it is off, so writing never resumes without a person deciding
+    again. Held to the capability test's permission, because it reaches the
+    same writes as the button.
+    """
+
+    def __init__(self, runtime_data: SungrowRuntimeData) -> None:
+        """Name it for the leave it gives."""
+        super().__init__(runtime_data, "continuous_capability_test")
+
+    @property
+    def is_on(self) -> bool:
+        """Whether runs may start on their own."""
+        return self._runner.continuous.active
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Give the leave, if the person may write to this inverter."""
+        await async_authorize(
+            self.hass, self._context, self._runner.entry, PERMISSION_CAPABILITY_TEST
+        )
+        self._runner.continuous.async_turn_on()
+        self.async_write_ha_state()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Take it back. Anybody may: stopping writes needs no permission."""
+        self._runner.continuous.async_turn_off("switched off")
+        self.async_write_ha_state()

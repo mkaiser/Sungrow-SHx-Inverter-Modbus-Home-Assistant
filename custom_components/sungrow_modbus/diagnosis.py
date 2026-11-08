@@ -51,6 +51,7 @@ from homeassistant.util import dt as dt_util
 from sungrow_modbus import block_test, string_inverter
 from sungrow_modbus.capability_test import (
     Options as ControlOptions,
+    ledger,
     planned_steps as capability_test_steps,
 )
 
@@ -68,6 +69,7 @@ from .const import (
     DOMAIN,
     LINK_VALID,
 )
+from .continuous import ContinuousCapabilityTest
 
 if TYPE_CHECKING:
     from .coordinator import SungrowConfigEntry
@@ -160,11 +162,21 @@ class DiagnosisRunner:
         #: Whether this run's part B is the forced startup check alone.
         self._forced_startup = False
         self._lapsed: CALLBACK_TYPE | None = None
+        #: Every kept capability test run, folded into one block, or None.
+        #: Survives a read-only run and a restart (`capability_test.LEDGER_KEY`).
+        self._folded: dict[str, Any] | None = None
+        #: Runs started on their own while a person has switched it on.
+        self.continuous = ContinuousCapabilityTest(hass, entry, self)
 
     @property
     def signal(self) -> str:
         """The dispatcher signal this runner's entities listen on."""
         return SIGNAL_DIAGNOSIS.format(self.entry.entry_id)
+
+    @callback
+    def async_notify(self) -> None:
+        """Tell the entities something changed that is not in the state."""
+        async_dispatcher_send(self.hass, self.signal)
 
     @callback
     def _set(self, **changes: Any) -> None:
@@ -222,7 +234,7 @@ class DiagnosisRunner:
             error=None,
             fields_read=None,
             part=PART_A,
-            capability_test=None,
+            capability_test=self._folded,
         )
         self._task = self.entry.async_create_background_task(
             self.hass,
@@ -376,7 +388,12 @@ class DiagnosisRunner:
                 )
                 if capability_test:
                     block = await self._async_capability_test(share)
+                    # Checked through the door on its own first, then kept
+                    # and folded with the runs before it.
                     attach_capability_test(document, block, self._device())
+                    self._folded = await self._async_record(block, document)
+                if self._folded is not None:
+                    attach_capability_test(document, self._folded, self._device())
         except Exception as err:  # a button press must not be able to crash the loop
             # `exception`, not `warning`: this catches everything, so the type
             # alone is often useless -- a bare `KeyError: 'realtime'` says
@@ -429,6 +446,79 @@ class DiagnosisRunner:
                 "diagnostics",
                 self.entry.title,
             )
+
+    async def async_load_ledger(self) -> None:
+        """Fold the runs kept from before a restart, for this firmware."""
+        from .capability_test import async_ledger_runs, firmware_of
+
+        runs = await async_ledger_runs(
+            self.hass, self.entry, firmware_of(self._device())
+        )
+        self._folded = self._fold(runs)
+        self._set(capability_test=self._folded)
+
+    async def async_clear_ledger(self) -> None:
+        """Forget every kept run, and the notification that showed them."""
+        from .capability_test import async_ledger_clear
+
+        await async_ledger_clear(self.hass, self.entry)
+        self._folded = None
+        self._set(capability_test=None)
+        persistent_notification.async_dismiss(self.hass, self._ledger_notification_id)
+
+    @staticmethod
+    def _fold(runs: list[dict[str, Any]]) -> dict[str, Any] | None:
+        """Fold kept runs, or None when there are none."""
+        if not runs:
+            return None
+        return ledger.fold(runs, readings=runs[-1].get("readings"))
+
+    async def _async_record(
+        self, block: dict[str, Any], document: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Keep this run's block and return every kept run, folded."""
+        from .capability_test import async_ledger_add, firmware_of
+
+        run = {
+            "read_at": dt_util.utcnow().isoformat(),
+            "block": block,
+            "readings": dict((document.get("readings") or {}).get("values") or {}),
+        }
+        runs = await async_ledger_add(
+            self.hass, self.entry, firmware_of(self._device()), run
+        )
+        folded = self._fold(runs)
+        assert folded is not None
+        try:
+            self._async_announce_ledger(folded)
+        except Exception:  # the run succeeded; losing its summary must not fail it
+            _LOGGER.exception(
+                "%s: the capability test history could not be announced",
+                self.entry.title,
+            )
+        return folded
+
+    @property
+    def _ledger_notification_id(self) -> str:
+        """One id per entry, so each run rewrites the summary in place."""
+        return f"{DOMAIN}_capability_ledger_{self.entry.entry_id}"
+
+    @callback
+    def _async_announce_ledger(self, folded: dict[str, Any]) -> None:
+        """Show every kept run in one notification, rewritten after each run.
+
+        A notification because a sensor state stops at 255 characters, and
+        what an owner collecting runs over a day needs is the list of checks
+        still waiting and for what. English for now, like the document.
+        """
+        persistent_notification.async_create(
+            self.hass,
+            ledger.markdown(folded)
+            + "\n\n**Download diagnostics** on the device page carries every "
+            "run in one document.",
+            title=f"Capability tests so far: {self.entry.title}",
+            notification_id=self._ledger_notification_id,
+        )
 
     @callback
     def _async_offer_the_document(self, document: dict[str, Any]) -> None:
@@ -516,6 +606,7 @@ class DiagnosisRunner:
         what Home Assistant's own test harness calls a lingering timer.
         """
         self._async_cancel_lapse()
+        self.continuous.async_turn_off("the entry was unloaded")
 
     @callback
     def _async_cancel_lapse(self) -> None:

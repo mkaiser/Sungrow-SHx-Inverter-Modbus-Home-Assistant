@@ -35,9 +35,11 @@ from custom_components.sungrow_modbus.const import (
     MODE_DIAGNOSTICS,
 )
 from custom_components.sungrow_modbus.diagnosis import PART_A, PART_B
+from homeassistant.components import persistent_notification
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, issue_registry as ir
+from homeassistant.util import dt as dt_util
 
 from .conftest import SERIAL
 
@@ -454,3 +456,157 @@ async def test_the_action_can_ask_for_forced_startup_alone(
             blocking=True,
         )
     start.assert_called_once_with(capability_test=True, forced_startup=True)
+
+
+# -- runs kept over a day ---------------------------------------------------
+
+STATUS = "sensor.sh10rt_capability_test_status"
+CLEAR_BUTTON = "button.sh10rt_clear_capability_test_history"
+
+
+async def test_runs_are_kept_folded_and_survive_a_reload(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """Two runs at two moments are one document, and a restart keeps them.
+
+    A situation-dependent check -- the import limit needs a charge drawn from
+    the grid -- is answered by one run of several, so the runs are kept
+    rather than each replacing the last.
+    """
+    entry = await _setup(hass, ready_unit)
+
+    await _press(hass, CONTROL_BUTTON)
+    await _press(hass, CONTROL_BUTTON)
+
+    block = entry.runtime_data.diagnosis.state.document["capability_test"]
+    assert block["schema"] == 3
+    assert len(block["runs"]) == 2
+    assert all(run["read_at"] for run in block["runs"])
+    assert block["readback"]
+    state = hass.states.get(STATUS)
+    assert state is not None
+    assert " · 2 runs" in state.state
+    assert len(state.state) <= 255
+    assert state.attributes["runs"] == 2
+    assert state.attributes["log"]
+    notifications = persistent_notification._async_get_or_create_notifications(hass)
+    assert f"{DOMAIN}_capability_ledger_{entry.entry_id}" in notifications
+
+    with patch(
+        "custom_components.sungrow_modbus.async_get_unit", return_value=ready_unit
+    ):
+        assert await hass.config_entries.async_reload(entry.entry_id)
+        await hass.async_block_till_done()
+
+    kept = entry.runtime_data.diagnosis.state.capability_test
+    assert kept is not None
+    assert len(kept["runs"]) == 2
+    assert hass.states.get(STATUS).attributes["runs"] == 2
+
+
+async def test_a_read_only_run_carries_the_kept_runs_forward(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """A new reading does not throw away a day's writes; they are dated."""
+    entry = await _setup(hass, ready_unit)
+    await _press(hass, CONTROL_BUTTON)
+    before = dict(ready_unit.holding)
+
+    await _press(hass, DIAGNOSIS_BUTTON)
+
+    assert ready_unit.holding == before
+    document = entry.runtime_data.diagnosis.state.document
+    assert len(document["capability_test"]["runs"]) == 1
+
+
+async def test_the_clear_button_forgets_every_run(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """And a reload afterwards finds nothing to fold back in."""
+    entry = await _setup(hass, ready_unit)
+    await _press(hass, CONTROL_BUTTON)
+
+    await _press(hass, CLEAR_BUTTON)
+
+    assert entry.runtime_data.diagnosis.state.capability_test is None
+    assert hass.states.get(STATUS).state == "no runs kept"
+    with patch(
+        "custom_components.sungrow_modbus.async_get_unit", return_value=ready_unit
+    ):
+        assert await hass.config_entries.async_reload(entry.entry_id)
+        await hass.async_block_till_done()
+    assert entry.runtime_data.diagnosis.state.capability_test is None
+
+
+# -- continuous capability testing ------------------------------------------
+
+CONTINUOUS = "switch.sh10rt_continuous_capability_test_mode"
+
+
+async def _switch(hass: HomeAssistant, service: str) -> None:
+    entry = next(iter(hass.config_entries.async_entries(DOMAIN)))
+    await hass.services.async_call(
+        "switch", service, {"entity_id": CONTINUOUS}, blocking=True
+    )
+    task = entry.runtime_data.diagnosis._task
+    if task is not None:
+        await task
+    await hass.async_block_till_done()
+
+
+async def test_continuous_mode_runs_at_once_then_waits_out_the_gap(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """On is the leave: a first run starts, and the next waits 30 minutes."""
+    entry = await _setup(hass, ready_unit)
+    assert hass.states.get(CONTINUOUS).state == "off"
+
+    await _switch(hass, "turn_on")
+
+    runner = entry.runtime_data.diagnosis
+    assert hass.states.get(CONTINUOUS).state == "on"
+    assert len(runner.state.capability_test["runs"]) == 1
+    assert runner.continuous.runs_today == 1
+
+    runner.continuous._async_tick(dt_util.utcnow())
+    assert runner._task.done()
+    assert len(runner.state.capability_test["runs"]) == 1
+    assert "at the earliest" in hass.states.get(STATUS).attributes["continuous_waiting"]
+
+    await _switch(hass, "turn_off")
+    assert hass.states.get(CONTINUOUS).state == "off"
+
+
+async def test_continuous_mode_is_off_after_a_reload(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """A restart never resumes writing by itself."""
+    entry = await _setup(hass, ready_unit)
+    await _switch(hass, "turn_on")
+
+    with patch(
+        "custom_components.sungrow_modbus.async_get_unit", return_value=ready_unit
+    ):
+        assert await hass.config_entries.async_reload(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert hass.states.get(CONTINUOUS).state == "off"
+    assert not entry.runtime_data.diagnosis.continuous.active
+
+
+async def test_continuous_mode_stops_when_nothing_is_left_to_wait_for(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """Once every check a moment can answer is answered, it switches itself off."""
+    entry = await _setup(hass, ready_unit)
+    await _switch(hass, "turn_on")
+    runner = entry.runtime_data.diagnosis
+
+    with patch(
+        "custom_components.sungrow_modbus.continuous.ledger.awaited", return_value=[]
+    ):
+        runner.continuous._async_tick(dt_util.utcnow())
+    await hass.async_block_till_done()
+
+    assert hass.states.get(CONTINUOUS).state == "off"
+    assert "nothing left" in hass.states.get(STATUS).attributes["continuous_waiting"]

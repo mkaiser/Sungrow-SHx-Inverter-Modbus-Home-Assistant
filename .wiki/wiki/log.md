@@ -575,3 +575,16 @@ device-winet-s, the forced-charge query.
 mkaiser's SH10RT (P020) with ~1 kW of PV above the load: a 0.01 kW cap left a charge from PV
 alone, and with the charge limited to 100 W (which stopped it), export and PV went on unchanged.
 Updated register-32998, P020, installation-mkaiser.
+
+## [2026-11-08] added | several capability test runs fold into one block
+
+Home Assistant keeps every capability test run per firmware and folds them into a schema-3 block
+with dated runs, `summary`, `still_missing` and `contradictions`, so checks that need different
+moments (the import limit after dark, the PV cut in sun) reach one document. Updated
+capability-test and the ingest workflow.
+
+## [2026-11-08] added | continuous capability testing
+
+A switch whose on is the leave for runs that start on their own, until switched off or a restart:
+it starts a run when the polled readings match what a missing check needs. AGENTS.md's leave rule
+names it. Updated capability-test.

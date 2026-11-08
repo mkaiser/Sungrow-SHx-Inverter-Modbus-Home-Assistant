@@ -344,7 +344,7 @@ MODE_DEVICES = "devices"
 MODE_DIAGNOSTICS = "diagnostics"
 """Connect, identify, poll, and create only the diagnosis's entities.
 
-Two buttons and three sensors, which give the entry a device page; no
+Three buttons, a switch and four sensors, which give the entry a device page; no
 readings, no controls, no migration.
 
 Still opens a Modbus connection -- so it still spends one of the very few

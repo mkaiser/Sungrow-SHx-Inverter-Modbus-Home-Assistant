@@ -1,6 +1,9 @@
 {
   "entity": {
     "button": {
+      "clear_capability_test_history": {
+        "default": "mdi:history"
+      },
       "run_capability_test": {
         "default": "mdi:tune-variant"
       },
@@ -9,11 +12,19 @@
       }
     },
     "sensor": {
+      "capability_test_status": {
+        "default": "mdi:clipboard-check-multiple-outline"
+      },
       "diagnosis_progress": {
         "default": "mdi:progress-clock"
       },
       "diagnosis_step": {
         "default": "mdi:format-list-checks"
+      }
+    },
+    "switch": {
+      "continuous_capability_test": {
+        "default": "mdi:calendar-sync"
       }
     }
   },

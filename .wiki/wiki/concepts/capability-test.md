@@ -160,6 +160,36 @@ itself when PV covers most of the charge, so it measures best after dark.
 Standby with the battery idle, and the run refused to start. Minutes later it was Running on the
 battery and the next run went through ([the run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md)).
 
+## Several runs, one document
+
+One run answers only what its moment allowed: every behavioural check looks at
+the house first and skips itself with a note. The import limit needs a charge
+drawn from the grid, which PV covers at noon; the PV cut needs PV; the charge
+ceiling needs a charging battery. Collected as separate notes, one situation
+each, the import limit alone took five raw sources at
+[mkaiser](../entities/installation-mkaiser.md).
+
+So Home Assistant keeps every finished run per inverter firmware and folds
+them into one schema-3 block (`sungrow_modbus.capability_test.ledger`;
+`device-diagnosis/reference.md` has the shape). The strongest verdict per check
+is shown, a decade finding outranks a later match and is listed as a
+contradiction, and `still_missing` names what is still to come and why. The
+device's **Capability test status** sensor and a notification rewritten after
+each run show the progress; **Download diagnostics** carries every run.
+
+Runs on different transports are never folded: through a
+[WiNet-S](../entities/device-winet-s.md) a readback is the dongle's cache.
+
+**Continuous capability test mode** does the coming back. A switch on the device
+page is the leave: on until a person switches it off, and off after every
+restart. Once a minute it compares the polled readings with what each missing
+check needs (`ledger.NEEDS`: the import limit needs PV under 200 W and room in
+the battery, the PV cut needs PV above 700 W) and starts the ordinary run when
+one is due: its own snapshot, its own restore, the entry's options as for the
+button. At least 30 minutes between starts, at most 12 a day, and it switches
+itself off when nothing a moment can answer is left. A check the options
+refuse is never waited for.
+
 ## Drivers
 
 The engine is the package `src/sungrow_modbus/capability_test/`, one module per

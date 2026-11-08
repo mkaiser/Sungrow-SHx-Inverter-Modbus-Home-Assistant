@@ -263,15 +263,40 @@ between reading an inverter and writing to one. The block is produced by
 (or `sungrow_capability_test.py --merge-into`), and both change settings on a
 real installation and change them back.
 
-So **the absence of the block means "this run only read"**, never "the writes
-failed". That is why schema 19 is a bump rather than a key that quietly
-appeared. The block has a `schema` of its own, currently 2.
+So **the absence of the block means "no write test was kept"**, never "the
+writes failed". That is why schema 19 is a bump rather than a key that quietly
+appeared. The block has a `schema` of its own: 2 for one run, 3 for several
+runs folded together.
 
 **The block can be older than the document.** A new diagnosis replaces the
 reading and carries the `capability_test` block forward unchanged, because a
-write test is not repeated just to refresh a reading. The block carries no
-date of its own, so the document's `read_at` dates the reading, not the
+write test is not repeated just to refresh a reading. A schema-2 block carries
+no date of its own, so the document's `read_at` dates the reading, not the
 writes; the commit that added the block dates those.
+
+**A schema-3 block is several runs, each dated.** One run answers only the
+checks its moment allowed: the site import limit needs a charge drawn from the
+grid, which PV covers at noon; the PV cut needs PV; the charge ceiling needs a
+charging battery. Home Assistant keeps every finished run for the inverter's
+firmware (up to 50, for 30 days; **Clear capability test history** empties
+it) and folds them (`sungrow_modbus.capability_test.ledger`):
+
+- `runs`: every run's schema-2 block whole, each with its `read_at`, and
+  `readings_changed`, the readings that differed from the document's own;
+- `readback`, `effects`, `conditions`, `outcome`, `not_established`: the
+  schema-2 keys, holding the strongest row per field and per check, so a
+  reader of a schema-2 block reads this one unchanged. `outcome` is the worst
+  of any run: a 5 in any run is a 5 here;
+- `summary`: per field and check, the verdict shown, which run gave it, and
+  whether it is established;
+- `still_missing`: what no run has established yet, with what the latest run
+  said about why;
+- `contradictions`: a field or check one run found off by a decade and
+  another found right. Read every run of it; the fold does not choose.
+
+Runs fold only when they share the transport and are all real, or all
+simulated. A run on the other path, or a new firmware, starts the collection
+again. A read-only diagnosis made while runs are kept carries them, dated.
 
 What is in it: for each control, the value the run chose, the raw register
 word that came back, the word the specification says should have been there,

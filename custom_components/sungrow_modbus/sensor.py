@@ -20,6 +20,7 @@ from .const import CONF_MODE, MODE_DEVICES, MODE_DIAGNOSTICS
 from .coordinator import SungrowConfigEntry, SungrowRuntimeData
 from .derived_descriptions import DERIVED_SENSORS
 from .diagnosis_entities import (
+    CapabilityTestStatusSensor,
     DiagnosisProgressSensor,
     DiagnosisResultSensor,
     DiagnosisStepSensor,
@@ -67,6 +68,8 @@ async def async_setup_entry(
                 DiagnosisResultSensor(runtime_data),
             ]
         )
+        if not runtime_data.is_string_inverter:
+            async_add_entities([CapabilityTestStatusSensor(runtime_data)])
         return
 
     # An SG: its own map, and nothing else on this entry. An entity only for
