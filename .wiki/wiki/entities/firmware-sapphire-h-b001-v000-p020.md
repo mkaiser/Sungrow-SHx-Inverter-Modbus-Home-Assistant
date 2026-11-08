@@ -22,6 +22,8 @@ SH-RT firmware in the B001 numbering ([SH-RT](device-sh-rt.md)). Version strings
   The capability test's `--import-limit` check confirmed it; [the engine run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md).
   It does not hold against house load with the battery idle: import ran at the whole ~2.2 kW
   load against a 2.00 kW cap; [the load run](../sources/mkaiser-import-limit-load-2026-11-07-summary.md).
+  With PV above the load it disturbs neither a charge from PV nor export;
+  [the export run](../sources/mkaiser-import-limit-export-2026-11-08-summary.md).
 
 ## Diagnoses
 

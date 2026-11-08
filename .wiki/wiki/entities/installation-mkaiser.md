@@ -16,7 +16,8 @@ it came back ([the check](../sources/mkaiser-discharge-window-2026-11-04-summary
 ([the PV run](../sources/mkaiser-import-limit-pv-2026-11-07-summary.md)); the capability test's check
 confirmed it, and with the PV isolator open the inverter first went to Standby
 ([the engine run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md)); with the battery
-held idle it did not cap the house's own load ([the load run](../sources/mkaiser-import-limit-load-2026-11-07-summary.md)). Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
+held idle it did not cap the house's own load ([the load run](../sources/mkaiser-import-limit-load-2026-11-07-summary.md)), and with
+PV above the load it left export alone ([the export run](../sources/mkaiser-import-limit-export-2026-11-08-summary.md)). Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
 
 ## Diagnoses
 

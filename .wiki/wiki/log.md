@@ -569,3 +569,9 @@ gerd (P022), through the WiNet-S while the house's Home Assistant held the cable
 charge commanded by the forced-charging schedule (4399 → 862 W, import 994 W against 1.00 kW).
 The dongle read 33208 back current and 33210-33214 as 0 throughout. Updated register-32998, P022,
 device-winet-s, the forced-charge query.
+
+## [2026-11-08] ingested | mkaiser-import-limit-export-2026-11-08
+
+mkaiser's SH10RT (P020) with ~1 kW of PV above the load: a 0.01 kW cap left a charge from PV
+alone, and with the charge limited to 100 W (which stopped it), export and PV went on unchanged.
+Updated register-32998, P020, installation-mkaiser.

@@ -35,12 +35,12 @@ stays unique.
    on P022, ~5 % under on P023; 0 and 5001 are refused.
    It does not cap house load: not with the battery held idle by a forced
    stop (P020), and not with the battery empty in normal operation (P023).
+   With PV above the load it disturbs neither a charge from PV nor export
+   (P020, wiki: mkaiser-import-limit-export-2026-11-08).
 
    | # | PV | Battery | Command | Question | How, where |
    | --- | --- | --- | --- | --- | --- |
    | a | none | part full | normal operation, load above the battery's discharge limit (33048 lowered) | does the cap draw on the battery past its limit? expected no | script, the maintainer's SH10RT, any evening |
-   | c | above the load | not full | normal operation, cap 200 | does the cap disturb export or the charge? expected no | script, a bright day |
-   | d | above the load | full | normal operation, cap 200 | the same with export | script, a bright day, battery full |
    | e | above the load | part full | forced charge above the surplus | the grid's share capped, PV counted | the engine check, daylight |
 
    Not worth a run: a full battery at night, a forced charge into a full

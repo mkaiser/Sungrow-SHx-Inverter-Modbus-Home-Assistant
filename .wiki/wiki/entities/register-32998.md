@@ -33,7 +33,9 @@ limit** in kW, and offers no control; the diagnosis's register dump reads it too
   held idle by a forced stop and ~2.2 kW of load, import ran at the whole load against a
   2.00 kW cap, as at 20.00 kW; the inverter neither shed load nor discharged
   ([the load run](../sources/mkaiser-import-limit-load-2026-11-07-summary.md)). The cap limits
-  what the inverter draws, a charge, not the house past it.
+  what the inverter draws, a charge, not the house past it. In self-consumption with PV above the
+  load it changes nothing: a 0.01 kW cap left a charge from PV, export and PV as they were
+  ([the export run](../sources/mkaiser-import-limit-export-2026-11-08-summary.md)).
 - **On [P023](firmware-sapphire-h-b001-v000-p023.md) it holds under a forced charge too**, over the
   cable and written through a [WiNet-S](device-winet-s.md): at [bar12](installation-bar12.md) a
   1.00 kW cap cut a 1250 W charge to ~550-730 W and held import at 942 W and ~960 W, slightly
