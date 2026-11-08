@@ -439,20 +439,25 @@ are now tests (`tests/test_config_flow_connection.py`,
 ## The diagnosis on the device page
 
 A capability diagnosis is what this project learns from. A tester with the
-integration runs it from a pair of buttons on the device page, with three
-diagnostic sensors beside them; a contributor without it runs
+integration runs it from a pair of buttons on the device page, with the
+diagnostic sensors beside them, every name starting *Diagnosis:* so the
+*Diagnostic* card, sorted by name, keeps them together; a contributor without it runs
 `device-diagnosis/scripts/diagnosis.sh` instead:
 
 | Entity | What it is for |
 | --- | --- |
-| `button.<name>_run_read_only_diagnosis` | Starts one. Unavailable while a run is in flight; the runner refuses a second anyway |
-| `button.<name>_run_diagnosis_with_capability_tests` | Part B: the same diagnosis, and then it **writes** to every control and puts each one back. See below |
+| `button.<name>_diagnosis_run_read_only` | Starts one. Unavailable while a run is in flight; the runner refuses a second anyway |
+| `button.<name>_diagnosis_run_extended` | Part B: the same diagnosis, and then it **writes** to every control and puts each one back. See below |
 | `sensor.<name>_diagnosis_progress` | Percent complete. Counted reads, not elapsed time — the same diagnosis is under a second on a cable and minutes over a VPN |
-| `sensor.<name>_diagnosis_step` | What is being read right now. **Its recorded history is the point**: 19 probes, the block read test's reads and one assembly step in order — plus 52 band sweeps when a dump was asked for — which is what says *where* a slow link stalls rather than that it did |
+| `sensor.<name>_diagnosis_current_step` | What is being read right now. **Its recorded history is the point**: 19 probes, the block read test's reads and one assembly step in order — plus 52 band sweeps when a dump was asked for — which is what says *where* a slow link stalls rather than that it did |
 | `sensor.<name>_diagnosis_finished` | When the last run ended, with `fields_read` and `has_document` as attributes |
+| `sensor.<name>_diagnosis_test_summary` | The capability test runs kept for this firmware, folded: `running 12 min · 41/58 established · 3 runs · waiting for: …`. The time counts from the press of an extended run and moves on every minute (`running_since` as an attribute) |
+| `sensor.<name>_diagnosis_tests_passed`, `_failed`, `_not_supported`, `_inconclusive`, `_not_run_yet` | The summary's checks by outcome (`ledger.BUCKETS`), each `n/total`; the five add up to the total, which differs by model and firmware. `checks` names them |
+| `button.<name>_diagnosis_tests_clear_history` | Forgets the kept runs |
+| `switch.<name>_diagnosis_run_extended_continuous` | Starts extended runs on its own while a missing check is due; off after every restart |
 
 They exist in both setup modes. A *Diagnostics only* entry has no readings at
-all, and these five are the entirety of its device page — which is also why
+all, and these are the entirety of its device page — which is also why
 it has one: Home Assistant registers a device only as a side effect of an
 entity carrying its `device_info`. The capability test is there too: that mode is
 for the contributor who has hardware and offered to help, which is exactly whose

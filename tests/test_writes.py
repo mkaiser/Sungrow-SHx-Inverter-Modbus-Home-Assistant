@@ -124,27 +124,36 @@ def test_it_writes_the_register_the_yaml_wrote(row: dict) -> None:
     assert written == [address]
 
 
-def test_a_number_the_yaml_never_had_follows_the_specification() -> None:
-    """The forced-charging targets: V1.1.16 regs 33214 and 33219, 0~100 %.
+def test_a_number_the_yaml_never_had_follows_its_source() -> None:
+    """Pinned by hand, as the capability test's scales are.
 
-    No YAML template to compare against, so the range is pinned to the
-    specification here, by hand, as the capability test's scales are.
+    The forced-charging targets are V1.1.16 regs 33214 and 33219, 0~100 %.
+    The site import limit, 32998, is in no Sungrow document: 1-5000 counts of
+    0.01 kW were accepted and 0 and 5001 refused on P020, P022 and P023
+    (wiki: register-32998), so 10-50000 W in steps of one count.
     """
-    spec = {
-        "forced_charging_target_soc_1": (0, 100, 1, "%"),
-        "forced_charging_target_soc_2": (0, 100, 1, "%"),
+    source = {
+        "forced_charging_target_soc_1": (0, 100, 1, "%", "FORCED_CHARGING"),
+        "forced_charging_target_soc_2": (0, 100, 1, "%", "FORCED_CHARGING"),
+        "site_import_power_limit": (
+            10,
+            50000,
+            10,
+            "W",
+            "SITE_IMPORT_LIMIT_CONTROL",
+        ),
     }
     rows = {row["field"]: row for row in NUMBERS if not row.get("legacy_unique_id")}
-    assert set(rows) == set(spec)
-    for field, (minimum, maximum, step, unit) in spec.items():
+    assert set(rows) == set(source)
+    for field, expected in source.items():
         row = rows[field]
-        assert (row["minimum"], row["maximum"], row["step"], row["unit"]) == (
-            minimum,
-            maximum,
-            step,
-            unit,
-        ), field
-        assert row["requires"] == "FORCED_CHARGING", field
+        assert (
+            row["minimum"],
+            row["maximum"],
+            row["step"],
+            row["unit"],
+            row["requires"],
+        ) == expected, field
 
 
 def test_only_declared_fields_are_writable() -> None:

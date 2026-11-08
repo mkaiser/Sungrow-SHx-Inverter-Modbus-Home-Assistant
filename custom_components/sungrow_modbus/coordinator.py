@@ -723,6 +723,9 @@ class SungrowRuntimeData:
         required = getattr(description, "requires", None)
         if required is not None and required not in self.capabilities:
             return False
+        replaced = getattr(description, "replaced_by", None)
+        if replaced is not None and replaced in self.capabilities:
+            return False
         depends = getattr(description, "depends_on", ())
         # On a 3P3L inverter there is no neutral, and 5019-5021 report line
         # voltages (Sungrow's table: "2: line voltage"), so a "Phase A

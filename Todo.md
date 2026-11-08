@@ -18,7 +18,7 @@ Structure:
 Next steps and blockers are grouped by device: Inverter (hybrid and
 string, with the meter read through it), Battery, Wallbox, Logger,
 iHomeManager, and Integration and tooling for what belongs to none.
-Numbers run on across the groups, so a reference such as "blocker 17"
+Numbers run on across the groups, so a reference such as "blocker 16"
 stays unique.
 
 
@@ -36,11 +36,14 @@ stays unique.
    It does not cap house load: not with the battery held idle by a forced
    stop (P020), and not with the battery empty in normal operation (P023).
    With PV above the load it disturbs neither a charge from PV nor export
-   (P020, wiki: mkaiser-import-limit-export-2026-11-08).
+   (P020, wiki: mkaiser-import-limit-export-2026-11-08), and with the
+   discharge limit below the load it does not draw on the battery past it
+   (P020, wiki: mkaiser-import-limit-discharge-2026-11-08). It is the
+   number *Grid import limit* (W, 10 W step) on P020, P022 and P023, where it
+   replaces the read-only sensor.
 
    | # | PV | Battery | Command | Question | How, where |
    | --- | --- | --- | --- | --- | --- |
-   | a | none | part full | normal operation, load above the battery's discharge limit (33048 lowered) | does the cap draw on the battery past its limit? expected no | script, the maintainer's SH10RT, any evening |
    | e | above the load | part full | forced charge above the surplus | the grid's share capped, PV counted | the engine check, daylight |
 
    Not worth a run: a full battery at night, a forced charge into a full
@@ -53,17 +56,17 @@ stays unique.
    diagnosis's rework.
 
    **Register 13017 is a switch, not a command** (wiki:
-   bar12-forced-startup-2026-11-07, P023): 0xAA wakes a low-SoC standby
-   inverter and keeps it running, 0x55 sends it back, both read back,
-   every other word is refused, and the factory 0 cannot be written back.
-   It is now the switch *Forced startup under low SoC*, on P023 only.
-   Still unmeasured: whether the inverter resets it by itself
-   later or on PV (#444 reports 0xAA to 0x55 after ~20 min), and any other
-   firmware (the maintainer's SH10RT on P020, with its battery at minimum).
+   bar12-forced-startup-2026-11-07 on P023, mkaiser-forced-startup-2026-11-08
+   on P020): 0xAA wakes a low-SoC standby inverter and keeps it running,
+   0x55 sends it back, both read back, every other word is refused, and the
+   factory 0 cannot be written back. It is the switch *Forced startup under
+   low SoC*, on P020 and P023. Still unmeasured: whether the inverter resets
+   it by itself later or on PV (#444 reports 0xAA to 0x55 after ~20 min),
+   and P022 or any other firmware.
 
 ## Battery
 
-Nothing can start now (blocker 14).
+Nothing can start now (blocker 13).
 
 ## Wallbox
 
@@ -90,18 +93,15 @@ Nothing can start now (blocker 14).
    separate the two scales and the meaning of 0 is not known. Input 21322 is
    not the setting's echo.
 
-   Left, in order:
+   Released (0.1.0a30's wheel has the procedure). Left, in order:
 
-   1. **A release that contains the procedure**, so the driver's pinned wheel
-      has it (until then it says so and exits 2). Or run it from a checkout,
-      as the dry run was.
-   2. **One window with gerd and a car charging**, so the setting holds a
+   1. **One window with gerd and a car charging**, so the setting holds a
       real current: his Home Assistant and evcc off, one TLS session, the
       lowest current first, never above his installation's limit, no phase
       switch with the car charging. His consent covers any test; ask again
       for writes with a car attached. A car drawing more than a tenth of the
       setting already rules out 0.01 A per count before the first write.
-   3. **Then entities**: a charging current number and an enable switch, on
+   2. **Then entities**: a charging current number and an enable switch, on
       what was measured, through the write table
       (`scripts/generate/tables/writes.py`), with the wallbox's 60 s
       fallback in mind.
@@ -112,11 +112,11 @@ Nothing can start now (blocker 14).
 
 ## Logger
 
-Nothing can start now (blocker 17).
+Nothing can start now (blocker 16).
 
 ## iHomeManager
 
-Nothing can start now (blocker 18).
+Nothing can start now (blocker 17).
 
 ## Integration and tooling
 
@@ -132,14 +132,17 @@ Nothing can start now (blocker 18).
       new transport for contributors' runs, so after one diagnosis on hardware
       with it (`device-diagnosis/reference.md` first).
 4. **The diagnosis and its capability tests.** In the code: two modes
-   (*Run read-only diagnosis*, *Run diagnosis with capability tests*), a
+   (*Diagnosis: run read-only*, *Diagnosis: run extended*), a
    `features` section in every document (schema 25), the *Diagnosis* column
    and the measured findings in `doc/firmware_support.md`, and the forced
    startup mode (`diagnosis.sh tests <host> --forced-startup`). What each
    capability can be tested with is `doc/capability_tests.md`. Left:
-   1. **A first forced startup run on hardware**: an inverter in low-SoC
-      standby, at night with an empty battery. The SH-RT's factory 0 goes
-      back as 0x55, the one `RESTORE_EQUIVALENT` (AGENTS.md).
+   1. **A first run of the forced startup mode on hardware.** The start is
+      watched by one-off scripts on P020 and P023 (wiki: register-13017);
+      the engine's own mode (`--forced-startup`, or the action's
+      `forced_startup: true`) has not run on an inverter yet: one in
+      low-SoC standby, after dark. The SH-RT's factory 0 goes back as
+      0x55, the one `RESTORE_EQUIVALENT` (AGENTS.md).
    2. **New capability tests, for the maintainer to pick**
       (`doc/capability_tests.md`, *Could still test*): a no-op write of
       backup mode and load control; out-of-range refusal probes for the
@@ -149,22 +152,24 @@ Nothing can start now (blocker 18).
       the repository variable `SURVEY_ISSUE` keeps its name.
    4. **Capability test runs over a day.** Home Assistant keeps every run per
       firmware and folds them into one schema-3 block
-      (`capability_test/ledger.py`; the *Capability test status* sensor, a
-      notification rewritten per run, *Clear capability test history*), and
-      *Continuous capability test mode* starts runs when a missing check is
+      (`capability_test/ledger.py`; the *Diagnosis: test summary* sensor
+      with a run's elapsed time, five counters by outcome, a notification
+      rewritten per run, *Diagnosis: tests, clear history*), and
+      *Diagnosis: run extended, continuous* starts runs when a missing check is
       due (`continuous.py`). The terminal's `--merge-into` folds a run into
       the runs a document carries (`--replace` puts it in their place).
-      Left:
-      1. **A release.** The PyPI pin (0.1.0a29) has no `ledger`, so until
-         one ships the integration fails to start from a preview and a
-         diagnosis fetched through uv fails to import
-         (`check_pinned_library.py` says so). Then `sync_version.py --set`.
-      2. **One hardware day** at the maintainer's SH10RT with the switch
+      Released in 0.1.0a30. Left:
+      1. **One hardware day** at the maintainer's SH10RT with the switch
          on: the import limit established at night, the PV cut in sun,
          ingested as one document. Also tells whether `NEEDS`' margins
          start runs that the checks then skip.
-      3. **Translate** the status line and the notification once their
+      2. **Translate** the status line and the notification once their
          wording settles; English for now.
+      3. **The *Diagnosis:* names on a real device page**, in English and
+         German, once released: that the *Diagnostic* card keeps them
+         together in the order `doc/entity_names.md` shows (the frontend's
+         collation was not checked in the container), and that the
+         counters read sensibly after a day's runs.
 
 # Open decisions
 
@@ -192,44 +197,6 @@ Nothing can start now (blocker 18).
    battery under 90 % and not in Standby. Then ingest, and the reply to
    #546 (drafted in the session of 2026-11-07; its table is in the wiki's
    register 32998 page).
-
-2. **Tonight, 2026-11-08: 13017 and Todo row a at the maintainer's SH10RT
-   (P020, cable).** Run as `/sh10rt-tonight` (a personal command in
-   `~/.claude/commands/`, which carries the address; the scripts are in
-   `~/.claude/sungrow-scripts/`). The prompt, without the address:
-
-   > Run tonight's two hardware tests at the maintainer's own SH10RT, then
-   > ingest them. Read `AGENTS.md` and the wiki pages register-13017,
-   > register-32998 and capability-test-restore first. The inverter: the
-   > maintainer's own (address in their `secrets.yaml`), unit 1, stand-in
-   > `anon-37323352958`, `SAPPHIRE-H_B001.V000.P020`; the VPN off, the
-   > stand-in checked before any write; the house's Home Assistant stays
-   > connected, so retry lost reads. Changed on purpose on 2026-11-08: the
-   > minimum SoC 13059 = 250 (25 %, was 100), so the battery reaches its
-   > minimum tonight. 13017 reads 0 and P020 refuses a write of 0.
-   >
-   > 1. **13017**, with PV < 30 W and the inverter in low-SoC Standby
-   >    (0x0008; wait up to an hour, else skip): 0xAA watched 10 min
-   >    (expect Starting, then Running, battery idle); 0x55 watched 3 min
-   >    (expect Standby); 0x01 (expect refused), then 0x55. 13017 stays at
-   >    0x55.
-   > 2. **Charge** with an EMS forced charge of 4500 W in 15-minute chunks,
-   >    each restored, until the SoC reads 30 % or more; wait ~2 min.
-   > 3. **Row a**, with PV < 30 W and the battery discharging into the
-   >    house: 33048 lowered to about half the load (e.g. 25 = 250 W),
-   >    90 s; then 32998 = 5 (0.05 kW), 90 s; then 2000; restore 32998 and
-   >    33048. Does the battery discharge past its limit to meet the cap
-   >    (expected no)? If the lowered limit stops the discharge, retry once
-   >    with a larger one.
-   >
-   > Afterwards: 13059 back to 100 (10 %) unless told to keep 25 %; ingest
-   > (raw mkaiser-forced-startup-2026-11-08 and
-   > mkaiser-import-limit-discharge-2026-11-08, their source pages,
-   > register-13017, register-32998, P020, installation-mkaiser, index,
-   > log; no address anywhere); if the start was watched, P020 into
-   > `CONFIRMED_ON_FIRMWARE` for `FORCED_STARTUP_CONTROL` with
-   > `tests/test_forced_startup.py`, `make gen`, `make check`; this item
-   > and row a out of Todo.md; commit only your files; ask before pushing.
 
 # Blockers
 
@@ -276,26 +243,9 @@ Nothing can start now (blocker 18).
    while exporting, and 5003/5004-5005 duplicating the export counters. A
    second T diagnosis, ideally on a cable, before `registers.py` changes.
 
-6. **Writing the discharge schedules, and the import limit** (#785), in
-   no Sungrow document. The schedules read as diagnostic entities
+6. **Writing the discharge schedules** (#785), in no Sungrow document. The schedules read as diagnostic entities
    (`Capability.DISCHARGE_SCHEDULE`); writing them needs a watched write, as
    31211 did (wiki: firmware gating), from a capability test run with leave.
-
-   **The import limit, register 32998, can become a control now.** Watched
-   writes exist on P020 (three runs, the maintainer's SH10RT), P022 (gerd,
-   cable and WiNet-S) and P023 (bar12, cable and WiNet-S, EMS and
-   schedule); everywhere the cap held every charge commanded, on grid
-   import alone, and 1-5000 (0.01-50.00 kW) is the accepted range (wiki:
-   register 32998). The one contrary report (ulfben, #546) is unexplained;
-   the reply is drafted. To decide before building:
-   - a number in **kW** (0.01 step), which the number generator does not
-     offer yet (`%` and `W` only), or in W with a 10 W step;
-   - the read-only sensor *Grid import limit* beside it, or replaced by it
-     (the number shows the same value);
-   - a new `IMPORT_LIMIT` capability (does 32998 answer) and
-     `IMPORT_LIMIT_CONTROL` in `CONFIRMED_ON_FIRMWARE` for P020, P022 and
-     P023, as 31211's cut is gated;
-   - the help text: it caps a charge from the grid, never the house load.
 
 7. **The discharge window on P023** (#785). It has run on P022 and P020,
    and the device pages and log say so; no P023 or SBR house has run it
@@ -316,15 +266,7 @@ Nothing can start now (blocker 18).
     source's model table, many entries unverified; a diagnosis of any other SG
     checks its row (wanted in `device-diagnosis/devices-wanted.md`, row 10).
 
-11. **A watched forced startup (13017).** The *Force startup* button exists
-    only on firmware in `CONFIRMED_ON_FIRMWARE`, and nothing can put one
-    there: the capability test has no check for it. One needs an inverter in
-    low-SoC standby with no PV (an evening, the battery at its minimum SoC),
-    writes 0xAA and watches the running state leave standby. Building that
-    check is a capability-test change, so it waits for a house that can give
-    such an evening.
-
-12. **The PV cut (31211, #738), beyond the four confirmed firmwares.**
+11. **The PV cut (31211, #738), beyond the four confirmed firmwares.**
     Waits on contributors; nothing here or at the maintainer's P020 (31211
     reads 0xFFFF there) can answer it.
     - More firmware confirmed: 31211 answers 0x55 but no cut has been
@@ -336,7 +278,7 @@ Nothing can start now (blocker 18).
       does a cut survive a night or a restart, or does iSolarCloud rewrite
       it?
 
-13. **What register 13080 counts.** Documented as the external EMS
+12. **What register 13080 counts.** Documented as the external EMS
     heartbeat (0-1000 s, default 20 s), it reads 0 on 42 diagnoses, 330 on two
     houses in EMS mode 0, and 875 then 961 on ra1k_0's SH20T in EMS mode 3
     (`.wiki/wiki/queries/what-do-the-v1-1-17-only-registers-read.md`). Two
@@ -345,17 +287,17 @@ Nothing can start now (blocker 18).
 
 ## Battery
 
-14. **SBH.** Answers the SBR's common block at unit 2 with the SBR's scales;
+13. **SBH.** Answers the SBR's common block at unit 2 with the SBR's scales;
      per-module arrays unread. Needs the register document.
 
 ## Wallbox
 
-15. **A wallbox charging negative, or past 32.7 kW.** Settles whether
+14. **A wallbox charging negative, or past 32.7 kW.** Settles whether
     21308/21310 are signed. Still unnamed: input 21313 (falls to 0 when
     charging ends, not power) and input 21365 (-71 to -63, flat). A wallbox
     restart would show whether 21267 falls to near zero.
 
-16. **A second wallbox's diagnosis.** Settles whether 21211-21214 identify the
+15. **A second wallbox's diagnosis.** Settles whether 21211-21214 identify the
     unit. The wallbox reports its own serial (input 21201-21206, 11 ASCII
     characters, as Sungrow's portal shows it); the
     integration shows it on the device page, identifies the device by the
@@ -369,7 +311,7 @@ Nothing can start now (blocker 18).
 
 ## Logger
 
-17. **A first Sungrow Logger diagnosis** (#786). Unblocks Logger entities.
+16. **A first Sungrow Logger diagnosis** (#786). Unblocks Logger entities.
     The map is done from Sungrow's protocol 1.0.2.9
     (`sungrow_modbus.logger`, every field `spec`; where every document is:
     `.wiki/wiki/queries/where-are-sungrows-documents.md`); what a first
@@ -388,7 +330,7 @@ Nothing can start now (blocker 18).
 
 ## iHomeManager
 
-18. **A first iHomeManager diagnosis** (#786). Unblocks building its entities.
+17. **A first iHomeManager diagnosis** (#786). Unblocks building its entities.
     The diagnosis reads one (unit 247, port 502, 503 or 504, one
     connection each); the integration does not, and its config flow fails such
     an endpoint with `no_serial_number`. Wait for a measured reading before
@@ -397,10 +339,10 @@ Nothing can start now (blocker 18).
 
 ## Integration and tooling
 
-19. **Does a WiNet-S advertise over mDNS?** Needs a house with a dongle and
+18. **Does a WiNet-S advertise over mDNS?** Needs a house with a dongle and
     a run on the host, not in the container.
 
-20. **The capability test's restore through a WiNet-S, on hardware.** A
+19. **The capability test's restore through a WiNet-S, on hardware.** A
     dongle-only capability test at gerd on the current tree, with the battery
     above 30 % and no car charging, then a cable read of every snapshot
     register. Left open in the code: a touched register goes back to the
@@ -474,15 +416,22 @@ catalog submission on release, not before (item 2), and
    loaded (the copied entry then failed only to reach its old inverter
    address). The stored `hacs/integration` entry was gone after the restart.
 
-   Open, needing the maintainer to connect GitHub on :8126 (a device code,
-   read-only): does *Add from link* install the channel from a fresh
-   `make marketplace ARGS=--reset`, and at a commit hash? Only that is left
-   of the three questions.
-
-   Then correct `doc/installing_a_preview.md` and `doc/maintainer_setup.md`
-   §5 (done for the takeover and the update; *Add from link* still states only
-   what the Marketplace's page says). Keep the HACS path while `hacs.json`
-   allows 2026.9 and 2026.10. Nothing here waits on next step 3.
+   Verified on 2026.11.0, 2026-11-08, from a fresh `make marketplace
+   ARGS=--reset`: with GitHub connected, *Add from link* (the preview
+   repository's URL, type *Integration*) added and downloaded the channel at
+   commit `d0fbbee`, its HEAD, with no *Pre-release* switch turned on
+   (`switch.sungrow_modbus_preview_pre_release` exists, off). Home Assistant
+   then pip-installed `sungrow-modbus==0.1.0a30` from PyPI, and the
+   maintainer's SH10RT was found, added and diagnosed. All three questions
+   are answered. Left:
+   1. Correct `doc/installing_a_preview.md` and `doc/maintainer_setup.md`
+      §5 (*Add from link* still "to be tried"). Keep the HACS path while
+      `hacs.json` allows 2026.9 and 2026.10.
+   2. **Two testbed faults** in `hacs_testbed.sh`: a `--reset` testbed's
+      first boot serves :8123, not its port, because `ha_http_port.py` has
+      no `.storage/http` to pin yet (with `make dev` up, the two collide);
+      and *Restart* in the UI ends the testbed, because `hass` exits 100
+      and nothing starts it again.
 
 4. **The production database.** The migration is verified at real scale
    only against the maintainer's years-old YAML install; what to collect and

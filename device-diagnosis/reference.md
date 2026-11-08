@@ -259,7 +259,7 @@ section, saying whether that entry's own polling was held off during the run.
 
 Almost none do, and that is not a gap in the evidence — it is the difference
 between reading an inverter and writing to one. The block is produced by
-**Run diagnosis with capability tests** on the device page, or by the diagnosis with leave
+**Diagnosis: run extended** on the device page, or by the diagnosis with leave
 (or `sungrow_capability_test.py --merge-into`), and both change settings on a
 real installation and change them back.
 
@@ -278,7 +278,7 @@ writes; the commit that added the block dates those.
 checks its moment allowed: the site import limit needs a charge drawn from the
 grid, which PV covers at noon; the PV cut needs PV; the charge ceiling needs a
 charging battery. Home Assistant keeps every finished run for the inverter's
-firmware (up to 50, for 30 days; **Clear capability test history** empties
+firmware (up to 50, for 30 days; **Diagnosis: tests, clear history** empties
 it) and folds them (`sungrow_modbus.capability_test.ledger`):
 
 - `runs`: every run's schema-2 block whole, each with its `read_at`, and

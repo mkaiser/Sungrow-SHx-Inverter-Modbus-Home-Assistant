@@ -52,19 +52,25 @@ ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
 #: What a diagnostics-only entry creates, and the whole of it.
 DIAGNOSTIC_ENTITIES = {
-    "button.sh10rt_run_read_only_diagnosis",
+    "button.sh10rt_diagnosis_run_read_only",
     # Part B, which writes. Present in this mode too: the contributor who set
     # an entry up to send a reading is exactly the person whose hardware this
     # project needs a write measurement from.
-    "button.sh10rt_run_diagnosis_with_capability_tests",
+    "button.sh10rt_diagnosis_run_extended",
     "sensor.sh10rt_diagnosis_progress",
-    "sensor.sh10rt_diagnosis_step",
+    "sensor.sh10rt_diagnosis_current_step",
     "sensor.sh10rt_diagnosis_finished",
     # The capability test runs kept over a day, and the way to start again.
-    "button.sh10rt_clear_capability_test_history",
-    "sensor.sh10rt_capability_test_status",
+    "button.sh10rt_diagnosis_tests_clear_history",
+    "sensor.sh10rt_diagnosis_test_summary",
     # The leave for runs that start on their own; off after every restart.
-    "switch.sh10rt_continuous_capability_test_mode",
+    "switch.sh10rt_diagnosis_run_extended_continuous",
+    # The kept runs' checks, counted by outcome; the five add up to the total.
+    "sensor.sh10rt_diagnosis_tests_passed",
+    "sensor.sh10rt_diagnosis_tests_failed",
+    "sensor.sh10rt_diagnosis_tests_not_supported",
+    "sensor.sh10rt_diagnosis_tests_inconclusive",
+    "sensor.sh10rt_diagnosis_tests_not_run_yet",
 }
 
 
@@ -223,7 +229,7 @@ async def test_the_button_runs_a_diagnosis_and_the_sensors_follow(
     await hass.services.async_call(
         "button",
         "press",
-        {"entity_id": "button.sh10rt_run_read_only_diagnosis"},
+        {"entity_id": "button.sh10rt_diagnosis_run_read_only"},
         blocking=True,
     )
     await hass.async_block_till_done()
@@ -233,7 +239,7 @@ async def test_the_button_runs_a_diagnosis_and_the_sensors_follow(
     assert state.document is not None
     assert state.fields_read
     assert hass.states.get("sensor.sh10rt_diagnosis_progress").state == "100"
-    assert hass.states.get("sensor.sh10rt_diagnosis_step").state == "finished"
+    assert hass.states.get("sensor.sh10rt_diagnosis_current_step").state == "finished"
 
 
 async def test_the_button_runs_the_block_read_test_first(
@@ -250,7 +256,7 @@ async def test_the_button_runs_the_block_read_test_first(
     seen: list[str] = []
 
     def _watch(event) -> None:
-        if event.data["entity_id"] == "sensor.sh10rt_diagnosis_step":
+        if event.data["entity_id"] == "sensor.sh10rt_diagnosis_current_step":
             new = event.data["new_state"]
             if new is not None:
                 seen.append(new.state)
@@ -259,7 +265,7 @@ async def test_the_button_runs_the_block_read_test_first(
     await hass.services.async_call(
         "button",
         "press",
-        {"entity_id": "button.sh10rt_run_read_only_diagnosis"},
+        {"entity_id": "button.sh10rt_diagnosis_run_read_only"},
         blocking=True,
     )
     await hass.async_block_till_done()
@@ -291,7 +297,7 @@ async def test_the_step_sensor_records_what_is_being_read(
     seen: list[str] = []
 
     def _watch(event) -> None:
-        if event.data["entity_id"] == "sensor.sh10rt_diagnosis_step":
+        if event.data["entity_id"] == "sensor.sh10rt_diagnosis_current_step":
             new = event.data["new_state"]
             if new is not None:
                 seen.append(new.state)
@@ -338,7 +344,7 @@ async def test_a_second_press_while_one_runs_is_refused(
         assert runner.state.running is True
         assert runner.async_start() is False
         # And the button says so, rather than looking pressable.
-        assert hass.states.get("button.sh10rt_run_read_only_diagnosis").state == (
+        assert hass.states.get("button.sh10rt_diagnosis_run_read_only").state == (
             STATE_UNAVAILABLE
         )
 
@@ -367,7 +373,7 @@ async def test_a_failed_diagnosis_is_reported_rather_than_swallowed(
     state = entry.runtime_data.diagnosis.state
     assert state.running is False
     assert "timeout" in state.error
-    assert "failed" in hass.states.get("sensor.sh10rt_diagnosis_step").state
+    assert "failed" in hass.states.get("sensor.sh10rt_diagnosis_current_step").state
 
 
 async def test_the_finished_diagnosis_offers_the_document(

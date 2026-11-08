@@ -18,12 +18,14 @@ than a feature:
 from __future__ import annotations
 
 import asyncio
+from datetime import timedelta
 from typing import Any
 from unittest.mock import patch
 
+from freezegun.api import FrozenDateTimeFactory
 from modbus_connection.mock import MockModbusUnit
 import pytest
-from pytest_homeassistant.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry, async_fire_time_changed
 
 from custom_components.sungrow_modbus.const import (
     CONF_CAPABILITY_TEST_EXPORT,
@@ -35,6 +37,7 @@ from custom_components.sungrow_modbus.const import (
     MODE_DIAGNOSTICS,
 )
 from custom_components.sungrow_modbus.diagnosis import PART_A, PART_B
+from custom_components.sungrow_modbus.diagnosis_entities import elapsed
 from homeassistant.components import persistent_notification
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
@@ -45,8 +48,8 @@ from .conftest import SERIAL
 
 ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
-DIAGNOSIS_BUTTON = "button.sh10rt_run_read_only_diagnosis"
-CONTROL_BUTTON = "button.sh10rt_run_diagnosis_with_capability_tests"
+DIAGNOSIS_BUTTON = "button.sh10rt_diagnosis_run_read_only"
+CONTROL_BUTTON = "button.sh10rt_diagnosis_run_extended"
 
 
 class InstantClock:
@@ -460,8 +463,10 @@ async def test_the_action_can_ask_for_forced_startup_alone(
 
 # -- runs kept over a day ---------------------------------------------------
 
-STATUS = "sensor.sh10rt_capability_test_status"
-CLEAR_BUTTON = "button.sh10rt_clear_capability_test_history"
+STATUS = "sensor.sh10rt_diagnosis_test_summary"
+CLEAR_BUTTON = "button.sh10rt_diagnosis_tests_clear_history"
+#: The counters' entity-id endings, one per `ledger.BUCKETS` entry.
+COUNTS = ("passed", "failed", "not_supported", "inconclusive", "not_run_yet")
 
 
 async def test_runs_are_kept_folded_and_survive_a_reload(
@@ -489,6 +494,17 @@ async def test_runs_are_kept_folded_and_survive_a_reload(
     assert len(state.state) <= 255
     assert state.attributes["runs"] == 2
     assert state.attributes["log"]
+    assert state.attributes["running_since"] is None
+    total = state.attributes["total"]
+    counted = 0
+    for bucket in COUNTS:
+        count = hass.states.get(f"sensor.sh10rt_diagnosis_tests_{bucket}")
+        assert count is not None
+        number, of = count.state.split("/")
+        assert int(of) == total
+        assert len(count.attributes["checks"]) == int(number)
+        counted += int(number)
+    assert counted == total
     notifications = persistent_notification._async_get_or_create_notifications(hass)
     assert f"{DOMAIN}_capability_ledger_{entry.entry_id}" in notifications
 
@@ -502,6 +518,49 @@ async def test_runs_are_kept_folded_and_survive_a_reload(
     assert kept is not None
     assert len(kept["runs"]) == 2
     assert hass.states.get(STATUS).attributes["runs"] == 2
+
+
+def test_the_elapsed_time_reads_in_minutes_and_hours() -> None:
+    start = dt_util.now()
+    assert elapsed(start, start + timedelta(seconds=59)) == "<1 min"
+    assert elapsed(start, start + timedelta(minutes=12, seconds=30)) == "12 min"
+    assert elapsed(start, start + timedelta(minutes=65)) == "1 h 05 min"
+    assert elapsed(start, start - timedelta(minutes=1)) == "<1 min"
+
+
+async def test_the_summary_says_how_long_an_extended_run_is_running(
+    hass: HomeAssistant, ready_unit: MockModbusUnit, freezer: FrozenDateTimeFactory
+) -> None:
+    """Counted from the press, moved on every minute, and gone when it ends.
+
+    A read-only run is not a test run: the summary does not time it.
+    """
+    entry = await _setup(hass, ready_unit)
+    runner = entry.runtime_data.diagnosis
+
+    runner._set(running=True, extended=False, started=dt_util.now())
+    await hass.async_block_till_done()
+    assert not hass.states.get(STATUS).state.startswith("running")
+
+    runner._set(running=True, extended=True, started=dt_util.now())
+    await hass.async_block_till_done()
+    state = hass.states.get(STATUS)
+    assert state.state == "running <1 min · no runs kept"
+    assert state.attributes["running_since"] == runner.state.started.isoformat()
+
+    freezer.tick(timedelta(minutes=12))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert hass.states.get(STATUS).state == "running 12 min · no runs kept"
+
+    runner._set(running=False)
+    await hass.async_block_till_done()
+    assert hass.states.get(STATUS).state == "no runs kept"
+    assert hass.states.get(STATUS).attributes["running_since"] is None
+    for bucket in COUNTS:
+        assert hass.states.get(f"sensor.sh10rt_diagnosis_tests_{bucket}").state == (
+            "unknown"
+        )
 
 
 async def test_a_read_only_run_carries_the_kept_runs_forward(
@@ -540,7 +599,7 @@ async def test_the_clear_button_forgets_every_run(
 
 # -- continuous capability testing ------------------------------------------
 
-CONTINUOUS = "switch.sh10rt_continuous_capability_test_mode"
+CONTINUOUS = "switch.sh10rt_diagnosis_run_extended_continuous"
 
 
 async def _switch(hass: HomeAssistant, service: str) -> None:

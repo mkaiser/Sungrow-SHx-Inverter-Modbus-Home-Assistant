@@ -55,6 +55,11 @@ _LOGGER = logging.getLogger(__name__)
 #: The one setting whose write scale differs between firmwares.
 EXPORT_LIMIT = "export_power_limit"
 
+#: An entity's unit against its field's, where the two differ on purpose.
+#: Register 32998 is kept in kW, as the YAML-era map records it
+#: (`tests/test_registers.py`), and shown in W like every other power setting.
+UNIT_FACTORS: dict[tuple[str | None, str | None], float] = {("kW", "W"): 1000.0}
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -140,10 +145,24 @@ class SungrowNumber(SungrowEntity, NumberEntity):
         return None if value is None else float(value)
 
     @property
+    def _per_field_unit(self) -> float:
+        """Return how many of this entity's units make one of the field's."""
+        description = self.entity_description
+        field = getattr(
+            type(self.coordinator.device.component(description.component)),
+            description.field,
+            None,
+        )
+        return UNIT_FACTORS.get(
+            (getattr(field, "unit", None), description.native_unit_of_measurement),
+            1.0,
+        )
+
+    @property
     def native_value(self) -> float | None:
-        """Return what the register currently holds."""
+        """Return what the register currently holds, in this entity's unit."""
         value = self.native_value_source
-        return None if value is None else float(value)
+        return None if value is None else float(value) * self._per_field_unit
 
     async def async_set_native_value(self, value: float) -> None:
         """Write the register, then read it back.
@@ -151,8 +170,11 @@ class SungrowNumber(SungrowEntity, NumberEntity):
         The engineering value goes to the library, which applies the register's
         scale: 20.5 % becomes the raw 205 that a 0.1 %-per-count register
         expects. Doing that arithmetic here is how a template gets it wrong.
+        Only a unit is converted here (W to the field's kW), never a scale.
         """
-        await self._async_write((self.entity_description.field, value))
+        await self._async_write(
+            (self.entity_description.field, value / self._per_field_unit)
+        )
 
 
 class SungrowExportLimitNumber(SungrowNumber):

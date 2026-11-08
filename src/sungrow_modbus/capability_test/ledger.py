@@ -345,6 +345,52 @@ def progress(folded: Mapping[str, Any]) -> tuple[int, int]:
     return established, len(summary)
 
 
+#: The outcome buckets a folded block's checks are counted in, in the order a
+#: person reads them. Every check lands in exactly one, so they add up to the
+#: total; which one is decided by its strongest verdict's `RANK` alone.
+#:
+#: - `passed`: the specification held (a match, or an effect confirmed);
+#: - `failed`: the specification is wrong for this device (a finding: off by
+#:   a decade, scaled, sign inverted). A contradiction counts here, because
+#:   the finding is the row a fold shows;
+#: - `not_supported`: the device answered, otherwise than documented
+#:   (refused, clamped, unchanged, no effect, not capable);
+#: - `inconclusive`: it ran, and could not tell;
+#: - `not_run`: the moment, the link or the leave was missing, or no run
+#:   reached it at all.
+BUCKETS: tuple[str, ...] = (
+    "passed",
+    "failed",
+    "not_supported",
+    "inconclusive",
+    "not_run",
+)
+
+
+def bucket(verdict: str | None) -> str:
+    """Return the outcome bucket of one check's strongest verdict."""
+    if verdict is None:
+        return "not_run"
+    rank = RANK.get(verdict)
+    if rank == FINDING:
+        return "failed"
+    if rank == ANSWERED:
+        return "passed"
+    if rank == ESTABLISHED:
+        return "not_supported"
+    if verdict == INCONCLUSIVE:
+        return "inconclusive"
+    return "not_run"
+
+
+def counts(folded: Mapping[str, Any]) -> dict[str, int]:
+    """Count a folded block's checks per bucket; they sum to `progress`'s total."""
+    out = dict.fromkeys(BUCKETS, 0)
+    for row in (folded.get("summary") or {}).values():
+        out[bucket(row.get("verdict"))] += 1
+    return out
+
+
 def status_line(folded: Mapping[str, Any], *, limit: int = 255) -> str:
     """One line for a sensor state: how far, how many runs, what is awaited."""
     established, total = progress(folded)

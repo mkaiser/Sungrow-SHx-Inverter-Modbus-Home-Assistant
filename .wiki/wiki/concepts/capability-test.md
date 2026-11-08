@@ -174,15 +174,18 @@ them into one schema-3 block (`sungrow_modbus.capability_test.ledger`;
 `device-diagnosis/reference.md` has the shape). The strongest verdict per check
 is shown, a decade finding outranks a later match and is listed as a
 contradiction, and `still_missing` names what is still to come and why. The
-device's **Capability test status** sensor and a notification rewritten after
-each run show the progress; **Download diagnostics** carries every run.
+device's **Diagnosis: test summary** sensor (with how long a run in flight has
+taken) and a notification rewritten after each run show the progress; five
+counters (**Diagnosis: tests passed**, *failed*, *not supported*,
+*inconclusive*, *not run yet*, from `ledger.counts`) split the checks by
+outcome as `n/total`; **Download diagnostics** carries every run.
 
 Runs on different transports are never folded: through a
 [WiNet-S](../entities/device-winet-s.md) a readback is the dongle's cache.
 
 The terminal's `--merge-into` folds a run into a document's runs the same way.
 
-**Continuous capability test mode** does the coming back, on a diagnostics-only
+**Diagnosis: run extended, continuous** does the coming back, on a diagnostics-only
 entry only: an ordinary entry has no diagnosis entities, and its owner reaches
 the capability test through the action. A switch on the device page is the
 leave: on until a person switches it off, and off after every
@@ -202,7 +205,7 @@ phase (`preflight`, `readback`, `effects`, `restore`) put together in
 
 - `device-diagnosis/scripts/python/sungrow_capability_test.py`, through the
   diagnosis;
-- the **Run diagnosis with capability tests** button on the device page, and
+- the **Diagnosis: run extended** button on the device page, and
   the `run_capability_test` action.
 
 Both publish into one diagnosis document (the `capability_test` block; up to

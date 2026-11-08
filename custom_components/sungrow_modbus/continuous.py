@@ -1,4 +1,4 @@
-"""Continuous capability test mode: run again whenever the house allows a missing check.
+"""Continuous capability testing: run again whenever the house allows a missing check.
 
 One run answers only the checks its moment allowed (`ledger` says why), so an
 owner who wants every check answered would have to come back at noon, in the

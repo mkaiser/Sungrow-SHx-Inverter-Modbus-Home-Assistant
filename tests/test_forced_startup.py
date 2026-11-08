@@ -1,7 +1,8 @@
 """Register 13017 as a switch, and register 31213 as an on/off sensor.
 
-13017 is a switch, watched on P023 (bar12): 0xAA wakes an inverter in
-low-SoC standby and keeps it running, 0x55 sends it back, and every other
+13017 is a switch, watched on P023 (bar12) and P020 (the maintainer's):
+0xAA wakes an inverter in low-SoC standby and keeps it running, 0x55 sends
+it back, and every other
 word is refused -- the factory 0 included, which reads as off. The switch is
 created only on firmware where a start was watched. 31213 holds a setting
 both ways round in the diagnoses, so it is decoded, and its number stays only
@@ -55,12 +56,12 @@ def _entity_id(hass: HomeAssistant, domain: str, key: str) -> str | None:
 
 
 KEY = "forced_startup_under_low_soc"
-UNCONFIRMED = "SAPPHIRE-H_B001.V000.P020"
+UNCONFIRMED = "SAPPHIRE-H_B001.V000.P022"
 
 
-def test_p023_is_confirmed_to_start_on_13017() -> None:
+def test_p020_and_p023_are_confirmed_to_start_on_13017() -> None:
     assert capabilities.CONFIRMED_ON_FIRMWARE[Capability.FORCED_STARTUP_CONTROL] == (
-        frozenset({FIRMWARE})
+        frozenset({"SAPPHIRE-H_B001.V000.P020", FIRMWARE})
     )
 
 

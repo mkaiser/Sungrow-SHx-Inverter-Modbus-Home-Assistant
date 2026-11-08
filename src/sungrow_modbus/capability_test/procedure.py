@@ -630,9 +630,10 @@ DISCHARGE_WINDOW: tuple[Probe, ...] = tuple(
 )
 
 #: Register 32998, the site import power limit (discussion #546), outside
-#: Sungrow's document: a cap on grid import, 0.01 kW per count. Read only in
-#: the library, so written and put back by raw word, and only by the import
-#: limit check, under a forced charge it commands itself.
+#: Sungrow's document: a cap on grid import, 0.01 kW per count. Written and
+#: put back by raw word, and only by the import limit check, under a forced
+#: charge it commands itself; the integration's number is gated per watched
+#: firmware (`Capability.SITE_IMPORT_LIMIT_CONTROL`).
 IMPORT_LIMIT = Probe(
     field="site_import_power_limit",
     component="site_import_limit",
@@ -703,6 +704,12 @@ NOT_PROBED: dict[str, str] = {
     "forced_startup_under_low_soc_raw": (
         "a switch with no scale to get wrong, written only by the forced startup "
         "check, with leave, which judges it by whether the inverter wakes"
+    ),
+    # Register 32998: a readback cannot show its scale wrong, because a cap
+    # written as 10x is still accepted up to 5000 -- only what import does can.
+    "site_import_power_limit": (
+        "written only by the site import limit check, with leave, by raw word, "
+        "under a forced charge it commands itself and judges by grid import"
     ),
     # The forced-charging schedule (V1.1.16 33208-33219). Every register in it
     # counts in ones, hours, minutes or whole percent, so there is no scale

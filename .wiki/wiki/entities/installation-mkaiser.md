@@ -17,9 +17,15 @@ it came back ([the check](../sources/mkaiser-discharge-window-2026-11-04-summary
 confirmed it, and with the PV isolator open the inverter first went to Standby
 ([the engine run](../sources/mkaiser-import-limit-engine-2026-11-07-summary.md)); with the battery
 held idle it did not cap the house's own load ([the load run](../sources/mkaiser-import-limit-load-2026-11-07-summary.md)), and with
-PV above the load it left export alone ([the export run](../sources/mkaiser-import-limit-export-2026-11-08-summary.md)). Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
+PV above the load it left export alone ([the export run](../sources/mkaiser-import-limit-export-2026-11-08-summary.md)); with the
+discharge limit below the load it did not draw on the battery past it ([the discharge run](../sources/mkaiser-import-limit-discharge-2026-11-08-summary.md)).
+[Register 13017](register-13017.md)'s 0xAA woke it from low-SoC Standby and 0x55 sent it back; 13017
+is left at 0x55 ([the forced startup run](../sources/mkaiser-forced-startup-2026-11-08-summary.md)).
+The forced-charging window took charging from -633 W to 4499 W and back, did as it was told
+([third reading](../sources/sh10rt-b001v000p020-3p-anonymous-anon-37323352958-battery-unknown-meter-summary.md)). Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
 
 ## Diagnoses
 
 - [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-summary.md)
 - [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port, second reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-2-summary.md)
+- [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port, third reading](../sources/sh10rt-b001v000p020-3p-anonymous-anon-37323352958-battery-unknown-meter-summary.md)

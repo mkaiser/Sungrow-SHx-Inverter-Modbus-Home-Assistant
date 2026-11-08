@@ -197,6 +197,26 @@ class Capability(StrEnum):
     This is the *read*; writing it is `PV_GENERATION_CUT_CONTROL`.
     """
 
+    SITE_IMPORT_LIMIT = "site_import_limit"
+    """Register 32998 answers: the site import limit, a cap on grid import.
+
+    Outside Sungrow's document (#546, #785); iSolarCloud sets it. Every SH-RT
+    and SH-RS diagnosis reads a value, through a cable and a WiNet-S alike.
+    Denied by 0 (`ZERO_MEANS_ABSENT`): the register refuses a write of 0, so
+    a 0 is a dongle answering for something that is not there. This is the
+    *read*; writing it is `SITE_IMPORT_LIMIT_CONTROL`.
+    """
+
+    SITE_IMPORT_LIMIT_CONTROL = "site_import_limit_control"
+    """Register 32998 may be written, because a write was watched here.
+
+    The cap holds a charge the inverter draws from the grid (EMS forced
+    charge or the forced-charging schedule) to the limit, counting PV, and
+    leaves PV, export, a charge from PV and the house load alone. Never
+    probed; granted by `resolve` only where `SITE_IMPORT_LIMIT` answered
+    **and** the firmware is in `CONFIRMED_ON_FIRMWARE`.
+    """
+
     PV_GENERATION_CUT_CONTROL = "pv_generation_cut_control"
     """Register 31211 may be written, because a write was confirmed here.
 
@@ -510,9 +530,23 @@ CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
             "SUNSTONE-H_B000.V002.P065",
         }
     ),
-    # Watched at bar12 (SH10RT-20), over the cable and through a WiNet-S:
-    # 0xAA woke the standby inverter, 0x55 put it back.
-    Capability.FORCED_STARTUP_CONTROL: frozenset({"SAPPHIRE-H_B001.V000.P023"}),
+    # Watched at bar12 (SH10RT-20, P023), over the cable and through a
+    # WiNet-S, and at the maintainer's SH10RT (P020) over the cable: 0xAA woke
+    # the standby inverter, 0x55 put it back.
+    Capability.FORCED_STARTUP_CONTROL: frozenset(
+        {"SAPPHIRE-H_B001.V000.P020", "SAPPHIRE-H_B001.V000.P023"}
+    ),
+    # Watched writes of 32998 under a charge from the grid: the maintainer's
+    # SH10RT on P020 (cable), gerd's SH8.0RT on P022 (cable and WiNet-S) and
+    # bar12's SH10RT-20 on P023 (cable and WiNet-S, EMS and schedule); the
+    # cap held each time (wiki: register-32998).
+    Capability.SITE_IMPORT_LIMIT_CONTROL: frozenset(
+        {
+            "SAPPHIRE-H_B001.V000.P020",
+            "SAPPHIRE-H_B001.V000.P022",
+            "SAPPHIRE-H_B001.V000.P023",
+        }
+    ),
 }
 
 #: The read a confirmed write also needs, so a firmware entry can never grant
@@ -520,6 +554,7 @@ CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
 CONTROL_REQUIRES: dict[Capability, Capability] = {
     Capability.PV_GENERATION_CUT_CONTROL: Capability.PV_GENERATION_CUT,
     Capability.FORCED_STARTUP_CONTROL: Capability.FORCED_STARTUP,
+    Capability.SITE_IMPORT_LIMIT_CONTROL: Capability.SITE_IMPORT_LIMIT,
 }
 
 
@@ -584,6 +619,7 @@ PROBES: dict[Capability, tuple[str, ...]] = {
     Capability.PV_POWER_LIMITATION: ("pv_power_limitation_raw",),
     Capability.FORCED_STARTUP: ("forced_startup_under_low_soc_raw",),
     Capability.PV_GENERATION_CUT: ("pv_generation_cut_raw",),
+    Capability.SITE_IMPORT_LIMIT: ("site_import_power_limit",),
     Capability.FORCED_CHARGING: ("forced_charging_raw",),
     Capability.DISCHARGE_SCHEDULE: ("weekend_discharge_raw",),
     Capability.ENERGY_HISTORY: tuple(
@@ -659,6 +695,8 @@ ZERO_MEANS_ABSENT: frozenset[Capability] = frozenset(
         Capability.METER_PHASE_MEASUREMENTS,
         # Every month of this year at 0 kWh is a block that is not there.
         Capability.ENERGY_HISTORY,
+        # 32998 refuses 0, so a 0 never came from the inverter.
+        Capability.SITE_IMPORT_LIMIT,
     }
 )
 

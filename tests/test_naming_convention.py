@@ -67,6 +67,12 @@ from custom_components.sungrow_modbus.wallbox_descriptions import (
 from homeassistant.const import EntityCategory
 from homeassistant.util import slugify
 
+#: Sensors not created where the number for the same register is: the two
+#: never share a device page, so they may share a name (`replaced_by`).
+REPLACED_SENSORS = frozenset(
+    d.key for d in SENSOR_DESCRIPTIONS if d.replaced_by is not None
+)
+
 REPO = Path(__file__).resolve().parent.parent
 COMPONENT = REPO / "custom_components" / "sungrow_modbus"
 ENTITY_MAP = REPO / "doc" / "legacy_entity_map.json"
@@ -351,7 +357,9 @@ def test_no_two_entities_a_user_sees_share_a_name() -> None:
 
     seen: dict[tuple[str, str], str] = {}
     for domain, key, name in EVERY_NAME:
-        if domain == "sensor" and key in LEGACY_ONLY_SENSORS:
+        if domain == "sensor" and (
+            key in LEGACY_ONLY_SENSORS or key in REPLACED_SENSORS
+        ):
             continue
         where = (_device(key, domain), name)
         assert where not in seen, (
@@ -469,7 +477,9 @@ def test_no_two_german_names_share_a_device_page() -> None:
     """The English rule, in German: one label, one entity, per device."""
     seen: dict[tuple[str, str], str] = {}
     for domain, key, _name in EVERY_NAME:
-        if domain == "sensor" and key in LEGACY_ONLY_SENSORS:
+        if domain == "sensor" and (
+            key in LEGACY_ONLY_SENSORS or key in REPLACED_SENSORS
+        ):
             continue
         where = (_device(key, domain), GERMAN[key])
         assert where not in seen, (

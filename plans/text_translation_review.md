@@ -385,7 +385,7 @@ and bold are kept.
 >
 > Everything here is optional, and leaving a field empty is honest: it records that the question was not answered, which is different from answering "I don't know". You can change any of it later under the integration's options.
 >
-> Afterwards, press **Run read-only diagnosis** on the device page.
+> Afterwards, press **Diagnosis: run read-only** on the device page.
 
 > **DE** Du hast „nur Diagnose“ gewählt, das heißt, dieser Eintrag existiert, um eine Messung zu erzeugen – dies sind also die Fragen, die diese Messung braucht und die kein Register beantworten kann.
 >
@@ -393,7 +393,7 @@ and bold are kept.
 >
 > Alles hier ist optional, und ein leeres Feld ist ehrlich: Es hält fest, dass die Frage nicht beantwortet wurde, was etwas anderes ist, als mit „Ich weiß es nicht“ zu antworten. Du kannst alles später unter den Optionen der Integration ändern.
 >
-> Drücke danach auf der Geräteseite **Diagnose ausführen (nur lesend)**.
+> Drücke danach auf der Geräteseite **Diagnose: nur lesend ausführen**.
 
 ### `config.step.testimony.data.reporter`
 
@@ -627,7 +627,7 @@ and bold are kept.
 
 > **EN** **You are set up, and nothing has been read yet.** Two more steps, both on the device page this dialog is about to show you:
 >
-> 1. Press **Run read-only diagnosis**, under *Diagnostic*. It reads and never writes. On a cable it is over in a couple of minutes with the register sweep on; over a VPN it can take considerably longer, and the three sensors beside the button say how far along it is and what it is reading.
+> 1. Press **Diagnosis: run read-only**, under *Diagnostic*. It reads and never writes. On a cable it is over in a couple of minutes with the register sweep on; over a VPN it can take considerably longer, and the three sensors beside the button say how far along it is and what it is reading.
 > 2. When it finishes, open **Notifications** in the sidebar — the badge at the bottom left. The notification there carries a summary and a **Download the document** link. That link is the JSON file to send us, and it stops working after an hour.
 >
 > Missed it, or came back the next day? **Download diagnostics** on the same device page carries the same document and never expires. Send either to [the diagnosis issue]({diagnosis_issue_url}).
@@ -636,7 +636,7 @@ and bold are kept.
 
 > **DE** **Die Einrichtung ist abgeschlossen, und es wurde noch nichts gelesen.** Zwei weitere Schritte, beide auf der Geräteseite, die dieser Dialog gleich anzeigt:
 >
-> 1. Drücke **Diagnose ausführen (nur lesend)** unter *Diagnose*. Sie liest und schreibt nie. Am Kabel ist sie mit dem Registerdurchlauf in ein paar Minuten fertig; über ein VPN kann es deutlich länger dauern, und die drei Sensoren neben der Schaltfläche zeigen, wie weit sie ist und was sie liest.
+> 1. Drücke **Diagnose: nur lesend ausführen** unter *Diagnose*. Sie liest und schreibt nie. Am Kabel ist sie mit dem Registerdurchlauf in ein paar Minuten fertig; über ein VPN kann es deutlich länger dauern, und die drei Sensoren neben der Schaltfläche zeigen, wie weit sie ist und was sie liest.
 > 2. Öffne danach **Benachrichtigungen** in der Seitenleiste – das Abzeichen unten links. Die Benachrichtigung dort enthält eine Zusammenfassung und einen Link **Dokument herunterladen**. Dieser Link ist die JSON-Datei, die du uns schicken sollst, und er funktioniert nach einer Stunde nicht mehr.
 >
 > Verpasst, oder erst am nächsten Tag zurück? **Diagnose herunterladen** auf derselben Geräteseite enthält dasselbe Dokument und läuft nie ab. Schicke eines davon an [das Diagnose-Issue]({diagnosis_issue_url}).
@@ -1459,9 +1459,9 @@ and bold are kept.
 
 ### `options.step.init.sections.diagnosis.description`
 
-> **EN** Which registers an inverter answers is measured, not looked up, and a reading from yours is what improves support for it. {measured} Everything below is optional and answers what no register can; an empty field records that the question was not answered. Saving keeps your answers. To run the diagnosis, press Run read-only diagnosis on the device page: it reads and never writes, and replaces the serial number with a stand-in.
+> **EN** Which registers an inverter answers is measured, not looked up, and a reading from yours is what improves support for it. {measured} Everything below is optional and answers what no register can; an empty field records that the question was not answered. Saving keeps your answers. To run the diagnosis, press "Diagnosis: run read-only" on the device page: it reads and never writes, and replaces the serial number with a stand-in.
 
-> **DE** Welche Register ein Wechselrichter beantwortet, wird gemessen, nicht nachgeschlagen, und eine Messung von deinem verbessert die Unterstützung dafür. {measured} Alles unten ist optional und beantwortet, was kein Register kann; ein leeres Feld hält fest, dass die Frage nicht beantwortet wurde. Speichern behält deine Antworten. Um die Diagnose auszuführen, drücke auf der Geräteseite Diagnose ausführen (nur lesend): Sie liest und schreibt nie und ersetzt die Seriennummer durch einen Platzhalter.
+> **DE** Welche Register ein Wechselrichter beantwortet, wird gemessen, nicht nachgeschlagen, und eine Messung von deinem verbessert die Unterstützung dafür. {measured} Alles unten ist optional und beantwortet, was kein Register kann; ein leeres Feld hält fest, dass die Frage nicht beantwortet wurde. Speichern behält deine Antworten. Um die Diagnose auszuführen, drücke auf der Geräteseite „Diagnose: nur lesend ausführen“: Sie liest und schreibt nie und ersetzt die Seriennummer durch einen Platzhalter.
 
 ### `options.step.init.sections.diagnosis.data.reporter`
 
@@ -1579,9 +1579,9 @@ and bold are kept.
 
 ### `options.step.init.sections.capability_test.description`
 
-> **EN** Run diagnosis with capability tests on the device page writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The six switches below go further, and each is on until you switch it off: pressing the button is your consent. What you switch off stays off.
+> **EN** "Diagnosis: run extended" on the device page writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The six switches below go further, and each is on until you switch it off: pressing the button is your consent. What you switch off stays off.
 
-> **DE** Diagnose mit Funktionstests ausführen auf der Geräteseite schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die sechs Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Das Drücken der Schaltfläche ist deine Zustimmung. Was du ausschaltest, bleibt aus.
+> **DE** „Diagnose: erweitert ausführen“ auf der Geräteseite schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die sechs Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Das Drücken der Schaltfläche ist deine Zustimmung. Was du ausschaltest, bleibt aus.
 
 ### `options.step.init.sections.capability_test.data.capability_test_restart`
 
@@ -1842,9 +1842,9 @@ and bold are kept.
 
 ### `services.run_capability_test.name`
 
-> **EN** Run diagnosis with capability tests
+> **EN** Run extended diagnosis
 
-> **DE** Diagnose mit Funktionstests ausführen
+> **DE** Erweiterte Diagnose ausführen
 
 ### `services.run_capability_test.description`
 

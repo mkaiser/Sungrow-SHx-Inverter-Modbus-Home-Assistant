@@ -89,6 +89,10 @@ NUMBERS: tuple[Number, ...] = (
     # Spec reg 13059, U16, 0.0~50.0, 0.1%, Read-Write. The register's
     # resolution is 0.1% but the step stays 1, as the YAML has it: tenths of a
     # percent of state of charge are not a setting anybody wants to make.
+    # Set above the battery's charge it buys electricity: on P020 the inverter
+    # charged from the grid at the charge limit (33047, 4500 W) and reported
+    # 0x8000 Stop until set back (wiki: mkaiser-forced-startup-2026-11-08,
+    # doc/integration_help.md, Known limitations).
     {
         "field": "battery_min_soc",
         "requires": "BATTERY",
@@ -241,6 +245,25 @@ NUMBERS += (
         "maximum": 1000,
         "step": 10,
         "unit": "W",
+    },
+)
+
+#: Register 32998, the site import limit (#546, #785), outside Sungrow's
+#: document: 0.01 kW per count, 1-5000 accepted, 0 and 5001 refused (P020,
+#: P022, P023). Shown in W with a 10 W step, one count, like the other power
+#: settings; the entity converts from the field's kW. It caps only a charge
+#: the inverter draws from the grid, counting PV, and never the house load:
+#: watched, it left PV, export, a charge from PV and a battery held at its
+#: discharge limit alone. Gated by `SITE_IMPORT_LIMIT_CONTROL`, granted per
+#: watched firmware in `capabilities.CONFIRMED_ON_FIRMWARE`.
+NUMBERS += (
+    {
+        "field": "site_import_power_limit",
+        "requires": "SITE_IMPORT_LIMIT_CONTROL",
+        "unit": "W",
+        "minimum": 10,
+        "maximum": 50000,
+        "step": 10,
     },
 )
 

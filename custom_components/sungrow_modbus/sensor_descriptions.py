@@ -1178,6 +1178,9 @@ SENSOR_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         component="site_import_limit",
         field="site_import_power_limit",
         translation_key="site_import_power_limit",
+        requires=Capability.SITE_IMPORT_LIMIT,
+        # Where a write was watched the number *Grid import limit* shows it.
+        replaced_by=Capability.SITE_IMPORT_LIMIT_CONTROL,
         entity_category=EntityCategory.DIAGNOSTIC,
         device_class=SensorDeviceClass.POWER,
         native_unit_of_measurement="kW",

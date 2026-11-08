@@ -75,6 +75,14 @@ class SungrowEntityDescription(EntityDescription):
     entities legacy/doc/cleanup_entities.md exists to help people delete.
     """
 
+    replaced_by: Capability | None = None
+    """A capability under which another entity shows this value, or None.
+
+    A read-only sensor of a register that becomes a `number` on confirmed
+    firmware: there the number shows the value, and one entity per register
+    is the rule outside the YAML package's own duplicates (`legacy_only`).
+    """
+
     depends_on: tuple[str, ...] = ()
     """Register fields a derived value reads.
 

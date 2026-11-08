@@ -130,7 +130,7 @@ DEFAULT_PERMISSIONS: dict[str, str] = {
 
 #: Whether each capability test permission below is granted until its owner says no.
 #:
-#: Opt-out: pressing **Run diagnosis with capability tests** is the leave, and a
+#: Opt-out: pressing **Diagnosis: run extended** is the leave, and a
 #: run that skips its restart, export limit and PV cut leaves the checks only
 #: hardware can answer unanswered. Each switch is in the options' capability
 #: test section, with its consequences spelled out there; one switched off is

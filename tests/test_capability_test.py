@@ -23,7 +23,12 @@ from pathlib import Path
 import sys
 from typing import Any
 
-from modbus_connection import IllegalDataValueError, ModbusConnectionError
+from modbus_connection import (
+    IllegalDataValueError,
+    ModbusConnectionError,
+    ServerDeviceBusyError,
+    ServerDeviceFailureError,
+)
 from modbus_connection.mock import MockModbusUnit
 import pytest
 
@@ -386,14 +391,14 @@ async def test_a_register_already_holding_its_value_is_restored_without_writing(
     probe write, so there was nothing to undo, and then refused the write of the
     original, so the restore called itself failed.
     """
-    from modbus_connection import ModbusError
-
     inverter = SungrowInverter(full_unit)
     await inverter.async_update()
     run = CapabilityTest(inverter, clock=FakeClock())
     await run._preflight()
     # Refuses every write, and does not need to take one.
-    full_unit.fail_write(13073, ModbusError("this register is not writable now"))
+    full_unit.fail_write(
+        13073, IllegalDataValueError("this register is not writable now")
+    )
 
     restores = await run.async_restore()
 
@@ -1183,13 +1188,11 @@ async def test_a_dongle_that_refuses_the_restore_is_not_believed(
     The run's own write was refused too, and still counts as touched: at gerd
     a window write refused with 0x04 through the dongle had landed.
     """
-    from modbus_connection import ModbusError
-
     full_unit.holding[CHARGE_ADDRESS] = 500
     run = await _preflighted(full_unit)
     run.direct = False
     _stale(full_unit, monkeypatch)
-    full_unit.fail_write(CHARGE_ADDRESS, ModbusError("refused"))
+    full_unit.fail_write(CHARGE_ADDRESS, IllegalDataValueError("refused"))
     await run._write(_probe(), 400.0)
 
     restores = await run.async_restore()
@@ -1605,18 +1608,41 @@ async def test_a_refused_write_records_which_exception_came_back(
     is a fact about the register, or *busy*, which on a link the YAML package
     was also polling is a fact about the afternoon.
     """
-    from modbus_connection import ModbusError
-
     inverter = SungrowInverter(full_unit)
     await inverter.async_update()
     run = _runner(full_unit)
-    full_unit.fail_write(CHARGE_ADDRESS, ModbusError("exception 0x04: out of range"))
+    full_unit.fail_write(
+        CHARGE_ADDRESS, ServerDeviceFailureError("exception 0x04: out of range")
+    )
 
     result = await run._probe_once(_probe(), 700.0, (10.0, 10000.0))
 
     assert result.verdict == REFUSED
     assert "0x04" in result.detail
     assert "out of range" in run.refusals[CHARGE_POWER]
+
+
+async def test_a_write_that_loses_the_link_is_not_a_refusal(
+    full_unit: MockModbusUnit,
+) -> None:
+    """A lost connection is not the device's answer, and must not rank as one.
+
+    At mkaiser's SH10RT on 2026-11-08 the writes of 13073 and 33213 lost the
+    connection, and the discharge window check reported "refused with an
+    exception"; a refusal is folded as established, a drop is not.
+    """
+    inverter = SungrowInverter(full_unit)
+    await inverter.async_update()
+    run = _runner(full_unit)
+    full_unit.fail_write(
+        CHARGE_ADDRESS,
+        ModbusConnectionError("Connection lost before response was received"),
+    )
+
+    result = await run._probe_once(_probe(), 700.0, (10.0, 10000.0))
+
+    assert result.verdict == DROPPED
+    assert "Connection lost" in run.refusals[CHARGE_POWER]
 
 
 def test_a_commanded_state_of_charge_is_not_reported_as_watts() -> None:
@@ -1652,13 +1678,13 @@ async def test_a_refused_behavioural_write_names_the_exception_too(
     is a fact about the register. Fixing the readback path and not this one
     left exactly the question the fix existed to answer.
     """
-    from modbus_connection import ModbusError
-
     inverter = SungrowInverter(full_unit)
     await inverter.async_update()
     run = _runner(full_unit)
     _scripted(run, [3000.0] * 12)
-    full_unit.fail_write(CHARGE_ADDRESS, ModbusError("exception 0x04: out of range"))
+    full_unit.fail_write(
+        CHARGE_ADDRESS, ServerDeviceFailureError("exception 0x04: out of range")
+    )
     probe = _probe()
 
     async def apply() -> str | None:
@@ -1692,8 +1718,6 @@ async def test_the_reported_exception_is_the_one_from_the_failed_write(
     hardware, where the export limit's refusal came back naming the *original*
     value rather than the cap under test.
     """
-    from modbus_connection import ModbusError
-
     inverter = SungrowInverter(full_unit)
     await inverter.async_update()
     run = _runner(full_unit)
@@ -1701,11 +1725,15 @@ async def test_the_reported_exception_is_the_one_from_the_failed_write(
     probe = _probe()
 
     async def apply() -> str | None:
-        full_unit.fail_write(CHARGE_ADDRESS, ModbusError("0x04 while setting the cap"))
+        full_unit.fail_write(
+            CHARGE_ADDRESS, ServerDeviceFailureError("0x04 while setting the cap")
+        )
         return await run._write(probe, 700.0)
 
     async def undo() -> None:
-        full_unit.fail_write(CHARGE_ADDRESS, ModbusError("0x04 while putting it back"))
+        full_unit.fail_write(
+            CHARGE_ADDRESS, ServerDeviceFailureError("0x04 while putting it back")
+        )
         await run._write(probe, 5000.0)
 
     result = await run._bracket(
@@ -2481,10 +2509,15 @@ async def test_a_refused_start_command_is_still_watched_for(
     ("error", "expected"),
     [
         (IllegalDataValueError("refused"), REFUSED),
+        (
+            ModbusConnectionError("Connection lost before response was received"),
+            DROPPED,
+        ),
+        (ServerDeviceBusyError("busy"), DROPPED),
         (TimeoutError("no answer"), DROPPED),
         (OSError("reset"), DROPPED),
     ],
-    ids=["refused", "timeout", "reset"],
+    ids=["refused", "connection-lost", "busy", "timeout", "reset"],
 )
 async def test_a_restore_write_says_whether_it_was_refused_or_lost(
     full_unit: MockModbusUnit, error: Exception, expected: str

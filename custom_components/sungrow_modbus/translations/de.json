@@ -97,7 +97,7 @@
       },
       "testimony": {
         "title": "Was möchtest du uns mitteilen?",
-        "description": "Du hast „nur Diagnose“ gewählt, das heißt, dieser Eintrag existiert, um eine Messung zu erzeugen – dies sind also die Fragen, die diese Messung braucht und die kein Register beantworten kann.\n\n{measured}\n\nAlles hier ist optional, und ein leeres Feld ist ehrlich: Es hält fest, dass die Frage nicht beantwortet wurde, was etwas anderes ist, als mit „Ich weiß es nicht“ zu antworten. Du kannst alles später unter den Optionen der Integration ändern.\n\nDrücke danach auf der Geräteseite **Diagnose ausführen (nur lesend)**.",
+        "description": "Du hast „nur Diagnose“ gewählt, das heißt, dieser Eintrag existiert, um eine Messung zu erzeugen – dies sind also die Fragen, die diese Messung braucht und die kein Register beantworten kann.\n\n{measured}\n\nAlles hier ist optional, und ein leeres Feld ist ehrlich: Es hält fest, dass die Frage nicht beantwortet wurde, was etwas anderes ist, als mit „Ich weiß es nicht“ zu antworten. Du kannst alles später unter den Optionen der Integration ändern.\n\nDrücke danach auf der Geräteseite **Diagnose: nur lesend ausführen**.",
         "data": {
           "reporter": "Dein Name oder Pseudonym",
           "diagnosis_transport": "Wie dieser Wechselrichter angebunden ist",
@@ -153,7 +153,7 @@
     },
     "create_entry": {
       "default": "**Die Einrichtung ist abgeschlossen.** Die Entitäten des Wechselrichters erscheinen auf seiner Geräteseite, sobald ihre ersten Messwerte eintreffen.\n\nUm ihn im Energie-Dashboard zu sehen (**Einstellungen → Dashboards → Energie**), wähle die Sensoren, die [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt: Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.",
-      "diagnostics": "**Die Einrichtung ist abgeschlossen, und es wurde noch nichts gelesen.** Zwei weitere Schritte, beide auf der Geräteseite, die dieser Dialog gleich anzeigt:\n\n1. Drücke **Diagnose ausführen (nur lesend)** unter *Diagnose*. Sie liest und schreibt nie. Am Kabel ist sie mit dem Registerdurchlauf in ein paar Minuten fertig; über ein VPN kann es deutlich länger dauern, und die drei Sensoren neben der Schaltfläche zeigen, wie weit sie ist und was sie liest.\n2. Öffne danach **Benachrichtigungen** in der Seitenleiste – das Abzeichen unten links. Die Benachrichtigung dort enthält eine Zusammenfassung und einen Link **Dokument herunterladen**. Dieser Link ist die JSON-Datei, die du uns schicken sollst, und er funktioniert nach einer Stunde nicht mehr.\n\nVerpasst, oder erst am nächsten Tag zurück? **Diagnose herunterladen** auf derselben Geräteseite enthält dasselbe Dokument und läuft nie ab. Schicke eines davon an [das Diagnose-Issue]({diagnosis_issue_url}).\n\nDie Datei benennt deinen Wechselrichter mit einem Platzhalter statt der Seriennummer und enthält die letzten zwei Oktette seiner Adresse nur, solange dieses Feld angehakt ist."
+      "diagnostics": "**Die Einrichtung ist abgeschlossen, und es wurde noch nichts gelesen.** Zwei weitere Schritte, beide auf der Geräteseite, die dieser Dialog gleich anzeigt:\n\n1. Drücke **Diagnose: nur lesend ausführen** unter *Diagnose*. Sie liest und schreibt nie. Am Kabel ist sie mit dem Registerdurchlauf in ein paar Minuten fertig; über ein VPN kann es deutlich länger dauern, und die drei Sensoren neben der Schaltfläche zeigen, wie weit sie ist und was sie liest.\n2. Öffne danach **Benachrichtigungen** in der Seitenleiste – das Abzeichen unten links. Die Benachrichtigung dort enthält eine Zusammenfassung und einen Link **Dokument herunterladen**. Dieser Link ist die JSON-Datei, die du uns schicken sollst, und er funktioniert nach einer Stunde nicht mehr.\n\nVerpasst, oder erst am nächsten Tag zurück? **Diagnose herunterladen** auf derselben Geräteseite enthält dasselbe Dokument und läuft nie ab. Schicke eines davon an [das Diagnose-Issue]({diagnosis_issue_url}).\n\nDie Datei benennt deinen Wechselrichter mit einem Platzhalter statt der Seriennummer und enthält die letzten zwei Oktette seiner Adresse nur, solange dieses Feld angehakt ist."
     }
   },
   "entity": {
@@ -233,13 +233,13 @@
     },
     "button": {
       "clear_capability_test_history": {
-        "name": "Funktionstest-Verlauf löschen"
+        "name": "Diagnose: Testverlauf löschen"
       },
       "run_capability_test": {
-        "name": "Diagnose mit Funktionstests ausführen"
+        "name": "Diagnose: erweitert ausführen"
       },
       "run_diagnosis": {
-        "name": "Diagnose ausführen (nur lesend)"
+        "name": "Diagnose: nur lesend ausführen"
       }
     },
     "number": {
@@ -275,6 +275,9 @@
       },
       "forced_charging_target_soc_2": {
         "name": "Zwangsladung Ziel-Ladezustand 2"
+      },
+      "site_import_power_limit": {
+        "name": "Netzbezugslimit"
       }
     },
     "select": {
@@ -569,7 +572,7 @@
         "name": "BMS-Schutz"
       },
       "capability_test_status": {
-        "name": "Funktionstest-Status"
+        "name": "Diagnose: Testübersicht"
       },
       "communication_module_firmware_version": {
         "name": "Firmware-Version Kommunikationsmodul"
@@ -614,13 +617,28 @@
         "name": "DC-seitiger Fehler"
       },
       "diagnosis_finished": {
-        "name": "Diagnose beendet"
+        "name": "Diagnose: beendet"
       },
       "diagnosis_progress": {
-        "name": "Diagnosefortschritt"
+        "name": "Diagnose: Fortschritt"
       },
       "diagnosis_step": {
-        "name": "Diagnoseschritt"
+        "name": "Diagnose: aktueller Schritt"
+      },
+      "diagnosis_tests_failed": {
+        "name": "Diagnose: Tests fehlgeschlagen"
+      },
+      "diagnosis_tests_inconclusive": {
+        "name": "Diagnose: Tests nicht eindeutig"
+      },
+      "diagnosis_tests_not_run": {
+        "name": "Diagnose: Tests noch nicht gelaufen"
+      },
+      "diagnosis_tests_not_supported": {
+        "name": "Diagnose: Tests nicht unterstützt"
+      },
+      "diagnosis_tests_passed": {
+        "name": "Diagnose: Tests bestanden"
       },
       "direct_consumption_this_month": {
         "name": "Direktverbrauch diesen Monat"
@@ -1240,7 +1258,7 @@
         "name": "Backup-Modus"
       },
       "continuous_capability_test": {
-        "name": "Modus fortlaufende Funktionstests"
+        "name": "Diagnose: erweitert, fortlaufend"
       },
       "cut_pv_generation": {
         "name": "PV-Erzeugung abschalten"
@@ -1472,7 +1490,7 @@
           },
           "diagnosis": {
             "name": "Eine Funktionsdiagnose beisteuern",
-            "description": "Welche Register ein Wechselrichter beantwortet, wird gemessen, nicht nachgeschlagen, und eine Messung von deinem verbessert die Unterstützung dafür. {measured} Alles unten ist optional und beantwortet, was kein Register kann; ein leeres Feld hält fest, dass die Frage nicht beantwortet wurde. Speichern behält deine Antworten. Um die Diagnose auszuführen, drücke auf der Geräteseite Diagnose ausführen (nur lesend): Sie liest und schreibt nie und ersetzt die Seriennummer durch einen Platzhalter.",
+            "description": "Welche Register ein Wechselrichter beantwortet, wird gemessen, nicht nachgeschlagen, und eine Messung von deinem verbessert die Unterstützung dafür. {measured} Alles unten ist optional und beantwortet, was kein Register kann; ein leeres Feld hält fest, dass die Frage nicht beantwortet wurde. Speichern behält deine Antworten. Um die Diagnose auszuführen, drücke auf der Geräteseite „Diagnose: nur lesend ausführen“: Sie liest und schreibt nie und ersetzt die Seriennummer durch einen Platzhalter.",
             "data": {
               "reporter": "Dein Name oder Pseudonym",
               "diagnosis_transport": "Wie dieser Wechselrichter angebunden ist",
@@ -1498,7 +1516,7 @@
           },
           "capability_test": {
             "name": "Was der Funktionstest darf",
-            "description": "Diagnose mit Funktionstests ausführen auf der Geräteseite schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die sechs Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Das Drücken der Schaltfläche ist deine Zustimmung. Was du ausschaltest, bleibt aus.",
+            "description": "„Diagnose: erweitert ausführen“ auf der Geräteseite schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die sechs Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Das Drücken der Schaltfläche ist deine Zustimmung. Was du ausschaltest, bleibt aus.",
             "data": {
               "capability_test_restart": "Darf er den Wechselrichter stoppen und neu starten?",
               "capability_test_export_limit": "Darf er die Einspeisebegrenzung einschalten?",
@@ -1563,7 +1581,7 @@
   },
   "services": {
     "run_capability_test": {
-      "name": "Diagnose mit Funktionstests ausführen",
+      "name": "Erweiterte Diagnose ausführen",
       "description": "Schreibt in jede Steuerung, in die diese Integration schreiben kann, prüft jede auf drei Arten und setzt sie zurück. Anders als die Diagnose ÄNDERT dies EINSTELLUNGEN am Wechselrichter: Es begrenzt die Batterie und die Einspeisung und erzwingt kurz ein Laden und ein Entladen. Alles wird vor dem ersten Schreiben festgehalten und danach wiederhergestellt, und der Lauf meldet alles, was er nicht zurücksetzen konnte. Es gibt sie, weil ein falscher Skalierungsfaktor für ein Zurücklesen unsichtbar ist – 700 W schreiben, 700 W zurückbekommen – und nur Schreiben ihn finden kann. Die Berechtigungen für Neustart und Einspeisebegrenzung werden in den Optionen der Integration gesetzt und sind standardmäßig aus.",
       "fields": {
         "device_id": {

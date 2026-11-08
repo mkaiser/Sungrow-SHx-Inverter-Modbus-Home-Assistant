@@ -594,3 +594,28 @@ names it. Updated capability-test.
 `sungrow_capability_test.py --merge-into` keeps the runs a document carries and adds its own;
 `--replace` puts it in their place. Continuous mode stays on diagnostics-only entries, by decision.
 Updated capability-test.
+
+## [2026-11-08] changed | the diagnosis entities renamed, and the checks counted
+
+Every diagnosis entity is named *Diagnosis: ...* so the device page's *Diagnostic* card keeps
+them together; *Capability test status* is *Diagnosis: test summary* and shows how long an
+extended run has taken; five counters split the folded checks by outcome (`ledger.counts`).
+Updated capability-test.
+
+## [2026-11-08] ingested | mkaiser-import-limit-discharge-2026-11-08 and mkaiser-forced-startup-2026-11-08
+
+mkaiser's SH10RT (P020), cable, after dark. With the battery's discharge limit at 500 W under a
+~1.1 kW load, a 0.05 kW cap on 32998 left the battery at 499 W and import at ~700 W. 13017's 0xAA
+woke the inverter from low-SoC Standby (Running after 3 min 35 s), 0x55 sent it back within ~21 s,
+0x01 is refused; 13017 is left at 0x55. A minimum SoC raised above the SoC made it charge from the
+grid at its charge limit, reporting 0x8000. So P020 is confirmed for the forced startup switch, and
+32998 is the number *Grid import limit* on P020, P022 and P023. Updated register-32998,
+register-13017, P020, installation-mkaiser, the index.
+
+## [2026-11-08] ingested | sh10rt-b001v000p020-3p-anonymous-anon-37323352958-battery-unknown-meter
+
+mkaiser's SH10RT (P020) from the Marketplace testbed (preview 0.1.0a30, this tree's library), two
+extended runs, everything restored. The forced-charging window did as it was told, now established
+on P020. Writes lost the connection at four protocol addresses with Home Assistant polling, and
+the engine reported such a loss as "refused with an exception", which folds as established; it now
+reports a drop. Updated installation-mkaiser, P020, the 33213 query, the index.

@@ -524,7 +524,7 @@ class InverterPvGenerationCut(Component):
 
 
 class InverterSiteImportLimit(Component):
-    """1 holding field, polled every 60s, read only.
+    """1 holding field, polled every 60s.
 
     Register 32998, the site import power limit iSolarCloud offers: a cap on
     grid import in 0.01 kW. **Not in Sungrow's protocol document.** Owners
@@ -532,14 +532,14 @@ class InverterSiteImportLimit(Component):
     and refuses a word above 5000, and on an SH10RT on P020 a watched write
     held import under a forced charge by cutting the charge, and refused 0
     and 5001. Its own component, as 31211 is, so a firmware without it costs
-    one refused read. Read only: the capability test writes it by raw word, with
-    leave, and a control waits on that check per firmware.
+    one refused read. Writable, and written by the integration only where
+    `Capability.SITE_IMPORT_LIMIT_CONTROL` is granted per watched firmware.
     """
 
     register_space = "holding"
 
     site_import_power_limit = gauge(
-        reg(32998), 0.01, signed=False, nan=65535, unit="kW"
+        reg(32998), 0.01, signed=False, nan=65535, unit="kW", writable=True
     )
     """Site import power limit."""
 

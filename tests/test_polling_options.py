@@ -344,7 +344,7 @@ async def test_the_options_sections_carry_no_markdown(
     import custom_components.sungrow_modbus as component
 
     strings = json.loads((Path(component.__file__).parent / "strings.json").read_text())
-    marks = ("**", "`", "|", "\n", "---")
+    marks = ("*", "`", "|", "\n", "---")
     for name, section in strings["options"]["step"]["init"]["sections"].items():
         for mark in marks:
             assert mark not in section["description"], (name, mark)

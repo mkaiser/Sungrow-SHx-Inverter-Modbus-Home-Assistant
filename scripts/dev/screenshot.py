@@ -88,7 +88,7 @@ def device_diagnosis(page: Page, url: str) -> Path:
     page.get_by_text("SH10RT", exact=True).first.click()
     page.wait_for_url(lambda now: "/config/devices/device/" in now, timeout=30_000)
     page.wait_for_load_state("networkidle")
-    card = page.locator("ha-card").filter(has_text="Run read-only diagnosis").last
+    card = page.locator("ha-card").filter(has_text="Diagnosis: run read-only").last
     card.wait_for()
     page.wait_for_timeout(1_000)
     target = IMAGES / "HA-settings-device-start-diagnosis.png"

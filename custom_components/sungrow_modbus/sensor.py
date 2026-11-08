@@ -7,6 +7,7 @@ from datetime import timedelta
 from homeassistant.components.sensor import RestoreSensor, SensorEntity
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from sungrow_modbus.capability_test import ledger
 from sungrow_modbus.energy_integral import EnergyIntegral
 from sungrow_modbus.hybrid_inverter.faults import active
 from sungrow_modbus.hybrid_inverter.smoothing import TimeWeightedAverage
@@ -20,6 +21,7 @@ from .const import CONF_MODE, MODE_DEVICES, MODE_DIAGNOSTICS
 from .coordinator import SungrowConfigEntry, SungrowRuntimeData
 from .derived_descriptions import DERIVED_SENSORS
 from .diagnosis_entities import (
+    CapabilityTestCountSensor,
     CapabilityTestStatusSensor,
     DiagnosisProgressSensor,
     DiagnosisResultSensor,
@@ -69,7 +71,15 @@ async def async_setup_entry(
             ]
         )
         if not runtime_data.is_string_inverter:
-            async_add_entities([CapabilityTestStatusSensor(runtime_data)])
+            async_add_entities(
+                [
+                    CapabilityTestStatusSensor(runtime_data),
+                    *(
+                        CapabilityTestCountSensor(runtime_data, bucket)
+                        for bucket in ledger.BUCKETS
+                    ),
+                ]
+            )
         return
 
     # An SG: its own map, and nothing else on this entry. An entity only for

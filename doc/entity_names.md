@@ -1,6 +1,6 @@
 # The entity names
 
-**334 entities** that modern mode can create (Hybrid inverter 195, SBR battery 34, Wallbox 21, SG string inverter 84).
+**335 entities** that modern mode can create (Hybrid inverter 196, SBR battery 34, Wallbox 21, SG string inverter 84).
 
 The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
@@ -37,7 +37,7 @@ end. Their ids are the YAML package's, kept so that history keyed to them
 carries on, and modern mode replaces each with something better.
 
 
-## Hybrid inverter (195)
+## Hybrid inverter (196)
 
 The inverter's own device, named after the model unless the owner named it. Ids shown for `SH10RT`.
 
@@ -45,8 +45,8 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
-|  |  | Run diagnosis with capability tests | Diagnose mit Funktionstests ausführen | `button.sh10rt_run_diagnosis_with_capability_tests` |  |  |
-|  |  | Run read-only diagnosis | Diagnose ausführen (nur lesend) | `button.sh10rt_run_read_only_diagnosis` |  |  |
+|  |  | Diagnosis: run extended | Diagnose: erweitert ausführen | `button.sh10rt_diagnosis_run_extended` |  |  |
+|  |  | Diagnosis: run read-only | Diagnose: nur lesend ausführen | `button.sh10rt_diagnosis_run_read_only` |  |  |
 
 ### Backup power (12)
 
@@ -244,7 +244,7 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 | Total battery charge energy from PV (13013) | Total battery charge from PV **←** | Total battery charge energy from PV | Gesamte Batterie-Ladeenergie aus PV | `sensor.sh10rt_total_battery_charge_energy_from_pv` | `sensor.total_battery_charge_from_pv` | kWh |
 | Total battery discharge energy (13027) | Total battery discharge **←** | Total battery discharge energy | Gesamte Batterie-Entladeenergie | `sensor.sh10rt_total_battery_discharge_energy` | `sensor.total_battery_discharge` | kWh |
 
-### The grid (17)
+### The grid (18)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -258,6 +258,7 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 | Min. Feed-in Power Limitation Value (5622) | Export power limit min **←** | Feed-in limit minimum | Einspeiselimit Minimum | `sensor.sh10rt_feed_in_limit_minimum` | `sensor.export_power_limit_min` | W |
 | Feed-in Limitation (13087) | Export power limit **←** | Feed-in limit mode | Einspeiselimit-Modus | `switch.sh10rt_feed_in_limit_mode` | `switch.export_power_limit` |  |
 | Grid Frequency (5242) | Grid frequency | Grid frequency | Netzfrequenz | `sensor.sh10rt_grid_frequency` | `sensor.grid_frequency` | Hz |
+| *not in the datasheet* (32998) |  | Grid import limit | Netzbezugslimit | `number.sh10rt_grid_import_limit` |  | W |
 | *not in the datasheet* (32998) |  | Grid import limit | Netzbezugslimit | `sensor.sh10rt_grid_import_limit` |  | kW |
 | Grid-side fault (13052) |  | Grid-side fault | Netzseitiger Fehler | `sensor.sh10rt_grid_side_fault` |  |  |
 |  | Import power | Import power | Bezugsleistung | `sensor.sh10rt_import_power` | `sensor.import_power` | W |
@@ -394,6 +395,7 @@ An entry of its own, never beside a hybrid. Trackers and phases exist only where
 | Daily import energy (5097) |  | Daily imported energy | Täglich bezogene Energie | `sensor.sg5_0rs_daily_imported_energy` |  | kWh |
 | Daily running time (5113) |  | Daily running time | Tägliche Laufzeit | `sensor.sg5_0rs_daily_running_time` |  | min |
 | Internal temperature (5008) |  | Device temperature | Gerätetemperatur | `sensor.sg5_0rs_device_temperature` |  | °C |
+|  |  | Diagnosis: run read-only | Diagnose: nur lesend ausführen | `button.sg5_0rs_diagnosis_run_read_only` |  |  |
 |  |  | Fault reported | Fehler gemeldet | `binary_sensor.sg5_0rs_fault_reported` |  |  |
 | Grid frequency (5036) |  | Grid frequency | Netzfrequenz | `sensor.sg5_0rs_grid_frequency` |  | Hz |
 | Load power (5091) |  | Load power | Leistungsaufnahme Verbraucher | `sensor.sg5_0rs_load_power` |  | W |
@@ -461,7 +463,6 @@ An entry of its own, never beside a hybrid. Trackers and phases exist only where
 | Power limitation setting (5008) |  | Power limit | Leistungsgrenze | `sensor.sg5_0rs_power_limit` |  | % |
 |  |  | Power limit active | Leistungsgrenze aktiv | `sensor.sg5_0rs_power_limit_active` |  |  |
 | Total reactive power (5033) |  | Reactive power | Blindleistung | `sensor.sg5_0rs_reactive_power` |  | var |
-|  |  | Run read-only diagnosis | Diagnose ausführen (nur lesend) | `button.sg5_0rs_run_read_only_diagnosis` |  |  |
 |  |  | Running state | Betriebszustand | `sensor.sg5_0rs_running_state` |  |  |
 | Total power yields (5144) |  | Total PV generation | Gesamte PV-Erzeugung | `sensor.sg5_0rs_total_pv_generation` |  | kWh |
 | Total DC power (5017) |  | Total PV input power | Gesamte PV-Eingangsleistung | `sensor.sg5_0rs_total_pv_input_power` |  | W |

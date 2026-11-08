@@ -35,7 +35,10 @@ in off-grid scenarios". So a watch of the write needs a grid-connected inverter.
 
 Watched at [bar12](installation-bar12.md) on [P023](firmware-sapphire-h-b001-v000-p023.md), over
 the cable and through a [WiNet-S](device-winet-s.md), with the battery below its minimum SoC
-([the run](../sources/bar12-forced-startup-2026-11-07-summary.md)):
+([the run](../sources/bar12-forced-startup-2026-11-07-summary.md)), and the same at
+[mkaiser](installation-mkaiser.md) on [P020](firmware-sapphire-h-b001-v000-p020.md) over the cable:
+Starting after 2 min 1 s, Running after 3 min 35 s, Standby again ~21 s after 0x55, and 0x01 and 0
+refused ([the run](../sources/mkaiser-forced-startup-2026-11-08-summary.md)):
 
 - **It is a switch, not a pulse.** `0xAA` wakes an inverter in low-SoC Standby with no other
   command (Starting after 2.5-4 min, Running after ~5 min, battery idle), reads back `0xAA`, and
@@ -68,5 +71,6 @@ A switch, *Forced startup under low SoC* / *Zwangsstart bei niedrigem Ladezustan
 `Capability.FORCED_STARTUP` answered (SH-CX excluded) **and** the firmware is in
 `CONFIRMED_ON_FIRMWARE` for `Capability.FORCED_STARTUP_CONTROL`
 ([firmware gating](../concepts/firmware-gating.md)): P023, from
-[the bar12 run](../sources/bar12-forced-startup-2026-11-07-summary.md). Other firmware gets it
+[the bar12 run](../sources/bar12-forced-startup-2026-11-07-summary.md), and P020, from
+[the mkaiser run](../sources/mkaiser-forced-startup-2026-11-08-summary.md). Other firmware gets it
 from a watched start.

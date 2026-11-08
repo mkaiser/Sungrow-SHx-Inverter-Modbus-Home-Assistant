@@ -30,7 +30,7 @@ which is **Reconfigure** on the same page.
 | Option | Default | What it does |
 | --- | --- | --- |
 | *Start and stop the inverter* | administrators | Who may call the start and stop actions |
-| *Run the capability test* | administrators | Who may press **Run diagnosis with capability tests** |
+| *Run the capability test* | administrators | Who may press **Diagnosis: run extended** |
 
 ## Another inverter on the same supply
 
@@ -51,7 +51,7 @@ which is **Reconfigure** on the same page.
 
 Answers no register can give, written into the diagnosis document. Every field
 is optional; an empty one records that it was not answered. The diagnosis
-itself is the **Run read-only diagnosis** button on the device page.
+itself is the **Diagnosis: run read-only** button on the device page.
 
 | Option | Default | What it does |
 | --- | --- | --- |
@@ -67,7 +67,7 @@ itself is the **Run read-only diagnosis** button on the device page.
 
 ## What the capability test may do
 
-**Run diagnosis with capability tests** writes each setting, reads it back
+**Diagnosis: run extended** writes each setting, reads it back
 against Sungrow's specification, and puts your value back. Pressing it is
 your consent; the six switches below are the parts that go further, and
 **each is on until you switch it off**. Switch off what you do not want

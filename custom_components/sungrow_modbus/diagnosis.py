@@ -115,6 +115,14 @@ class DiagnosisState:
     started: datetime | None = None
     finished: datetime | None = None
 
+    extended: bool = False
+    """Whether the run started (or last started) includes part B.
+
+    Set at the start rather than read from `part`, because part A runs first
+    in an extended run too, and the test summary counts its time from the
+    press, not from the first write.
+    """
+
     fields_read: int | None = None
     """Decoded fields in the finished document, for the summary line."""
 
@@ -231,6 +239,7 @@ class DiagnosisRunner:
             step=None,
             started=dt_util.now(),
             finished=None,
+            extended=capability_test,
             error=None,
             fields_read=None,
             part=PART_A,
@@ -578,7 +587,7 @@ class DiagnosisRunner:
                 f'<a href="{url}" target="_blank">Download the document</a>'
                 " — this link stops working at "
                 f"{lapses.strftime('%H:%M')}. After that, press "
-                "**Run read-only diagnosis** again for a fresh one, or use "
+                "**Diagnosis: run read-only** again for a fresh one, or use "
                 "**Download diagnostics** on the device page, which carries "
                 "the same document and never expires.\n\n"
                 "It carries a stand-in serial rather than the real one, and "
@@ -636,7 +645,7 @@ class DiagnosisRunner:
             (
                 f"{summarise(document)}\n\n"
                 "The download link in this notification has expired. Press "
-                "**Run read-only diagnosis** again for a fresh one, or use "
+                "**Diagnosis: run read-only** again for a fresh one, or use "
                 "**Download diagnostics** on the device page — that carries "
                 "the same document and never expires.\n\n"
                 "It carries a stand-in serial rather than the real one, and "

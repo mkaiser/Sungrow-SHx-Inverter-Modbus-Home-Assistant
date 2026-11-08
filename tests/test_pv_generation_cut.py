@@ -137,25 +137,47 @@ def test_confirmed_firmware_grants_the_control_where_the_register_answers(
     assert Capability.PV_GENERATION_CUT_CONTROL not in resolved
 
 
+#: Where a watched write of each other control is recorded: the wiki's raw
+#: notes of one-off runs, by the word in their names. A note counts for a
+#: firmware only where it names that exact firmware string.
+WATCHED_IN_RAW_NOTES: dict[Capability, str] = {
+    Capability.FORCED_STARTUP_CONTROL: "forced-startup",
+    Capability.SITE_IMPORT_LIMIT_CONTROL: "import-limit",
+}
+RAW_NOTES = Path(__file__).resolve().parent.parent / ".wiki" / "raw"
+
+
 def test_nothing_is_confirmed_without_a_document_that_shows_it() -> None:
     """The rule for getting in, as for the absence table: evidence, cited.
 
-    A firmware here must be named by a committed diagnosis whose capability
-    test confirmed the cut on exactly that firmware.
+    For the cut, a firmware must be named by a committed diagnosis whose
+    capability test confirmed the cut on exactly that firmware. For a control
+    whose watched write was a one-off run, by a raw note of that run.
     """
-    for capability, versions in capabilities.CONFIRMED_ON_FIRMWARE.items():
-        for version in versions:
-            assert any(
-                version in json.dumps(document.get("firmware"))
-                and any(
-                    row.get("check") == "PV generation cut"
-                    and row.get("verdict") == CONFIRMED
-                    for row in (capability_test_block(document) or {}).get(
-                        "effects", []
-                    )
-                )
-                for _, document in DOCUMENTS
-            ), f"{capability.value} on {version} cites no passing run"
+    for version in capabilities.CONFIRMED_ON_FIRMWARE[
+        Capability.PV_GENERATION_CUT_CONTROL
+    ]:
+        assert any(
+            version in json.dumps(document.get("firmware"))
+            and any(
+                row.get("check") == "PV generation cut"
+                and row.get("verdict") == CONFIRMED
+                for row in (capability_test_block(document) or {}).get("effects", [])
+            )
+            for _, document in DOCUMENTS
+        ), f"pv_generation_cut_control on {version} cites no passing run"
+    others = set(capabilities.CONFIRMED_ON_FIRMWARE) - {
+        Capability.PV_GENERATION_CUT_CONTROL
+    }
+    assert others == set(WATCHED_IN_RAW_NOTES), "say where the evidence is"
+    for capability, topic in WATCHED_IN_RAW_NOTES.items():
+        notes = [
+            path.read_text(encoding="utf-8") for path in RAW_NOTES.glob(f"*{topic}*.md")
+        ]
+        for version in capabilities.CONFIRMED_ON_FIRMWARE[capability]:
+            assert any(version in note for note in notes), (
+                f"{capability.value} on {version} cites no watched write"
+            )
 
 
 def test_absence_matches_either_firmware_string(

@@ -97,7 +97,7 @@
       },
       "testimony": {
         "title": "What do you want to tell us?",
-        "description": "You chose diagnostics only, which means this entry exists to produce a reading — so these are the questions that reading needs and no register can answer.\n\n{measured}\n\nEverything here is optional, and leaving a field empty is honest: it records that the question was not answered, which is different from answering \"I don't know\". You can change any of it later under the integration's options.\n\nAfterwards, press **Run read-only diagnosis** on the device page.",
+        "description": "You chose diagnostics only, which means this entry exists to produce a reading — so these are the questions that reading needs and no register can answer.\n\n{measured}\n\nEverything here is optional, and leaving a field empty is honest: it records that the question was not answered, which is different from answering \"I don't know\". You can change any of it later under the integration's options.\n\nAfterwards, press **Diagnosis: run read-only** on the device page.",
         "data": {
           "reporter": "Your name or handle",
           "diagnosis_transport": "How this inverter is connected",
@@ -153,7 +153,7 @@
     },
     "create_entry": {
       "default": "**You are set up.** The inverter's entities appear on its device page as their first readings arrive.\n\nTo see it in the Energy dashboard (**Settings → Dashboards → Energy**), pick the sensors [the Energy dashboard guide]({energy_dashboard_url}) names: several energy sensors have names that look right and are not.",
-      "diagnostics": "**You are set up, and nothing has been read yet.** Two more steps, both on the device page this dialog is about to show you:\n\n1. Press **Run read-only diagnosis**, under *Diagnostic*. It reads and never writes. On a cable it is over in a couple of minutes with the register sweep on; over a VPN it can take considerably longer, and the three sensors beside the button say how far along it is and what it is reading.\n2. When it finishes, open **Notifications** in the sidebar — the badge at the bottom left. The notification there carries a summary and a **Download the document** link. That link is the JSON file to send us, and it stops working after an hour.\n\nMissed it, or came back the next day? **Download diagnostics** on the same device page carries the same document and never expires. Send either to [the diagnosis issue]({diagnosis_issue_url}).\n\nThe file names your inverter by a stand-in rather than its serial number, and carries the last two octets of its address only while that box is ticked."
+      "diagnostics": "**You are set up, and nothing has been read yet.** Two more steps, both on the device page this dialog is about to show you:\n\n1. Press **Diagnosis: run read-only**, under *Diagnostic*. It reads and never writes. On a cable it is over in a couple of minutes with the register sweep on; over a VPN it can take considerably longer, and the three sensors beside the button say how far along it is and what it is reading.\n2. When it finishes, open **Notifications** in the sidebar — the badge at the bottom left. The notification there carries a summary and a **Download the document** link. That link is the JSON file to send us, and it stops working after an hour.\n\nMissed it, or came back the next day? **Download diagnostics** on the same device page carries the same document and never expires. Send either to [the diagnosis issue]({diagnosis_issue_url}).\n\nThe file names your inverter by a stand-in rather than its serial number, and carries the last two octets of its address only while that box is ticked."
     }
   },
   "entity": {
@@ -233,13 +233,13 @@
     },
     "button": {
       "clear_capability_test_history": {
-        "name": "Clear capability test history"
+        "name": "Diagnosis: tests, clear history"
       },
       "run_capability_test": {
-        "name": "Run diagnosis with capability tests"
+        "name": "Diagnosis: run extended"
       },
       "run_diagnosis": {
-        "name": "Run read-only diagnosis"
+        "name": "Diagnosis: run read-only"
       }
     },
     "number": {
@@ -275,6 +275,9 @@
       },
       "forced_charging_target_soc_2": {
         "name": "Forced charging target SoC 2"
+      },
+      "site_import_power_limit": {
+        "name": "Grid import limit"
       }
     },
     "select": {
@@ -569,7 +572,7 @@
         "name": "BMS protection"
       },
       "capability_test_status": {
-        "name": "Capability test status"
+        "name": "Diagnosis: test summary"
       },
       "communication_module_firmware_version": {
         "name": "Communication module firmware version"
@@ -614,13 +617,28 @@
         "name": "DC-side fault"
       },
       "diagnosis_finished": {
-        "name": "Diagnosis finished"
+        "name": "Diagnosis: finished"
       },
       "diagnosis_progress": {
-        "name": "Diagnosis progress"
+        "name": "Diagnosis: progress"
       },
       "diagnosis_step": {
-        "name": "Diagnosis step"
+        "name": "Diagnosis: current step"
+      },
+      "diagnosis_tests_failed": {
+        "name": "Diagnosis: tests failed"
+      },
+      "diagnosis_tests_inconclusive": {
+        "name": "Diagnosis: tests inconclusive"
+      },
+      "diagnosis_tests_not_run": {
+        "name": "Diagnosis: tests not run yet"
+      },
+      "diagnosis_tests_not_supported": {
+        "name": "Diagnosis: tests not supported"
+      },
+      "diagnosis_tests_passed": {
+        "name": "Diagnosis: tests passed"
       },
       "direct_consumption_this_month": {
         "name": "Direct consumption this month"
@@ -1240,7 +1258,7 @@
         "name": "Backup mode"
       },
       "continuous_capability_test": {
-        "name": "Continuous capability test mode"
+        "name": "Diagnosis: run extended, continuous"
       },
       "cut_pv_generation": {
         "name": "Cut PV generation"
@@ -1472,7 +1490,7 @@
           },
           "diagnosis": {
             "name": "Contribute a capability diagnosis",
-            "description": "Which registers an inverter answers is measured, not looked up, and a reading from yours is what improves support for it. {measured} Everything below is optional and answers what no register can; an empty field records that the question was not answered. Saving keeps your answers. To run the diagnosis, press Run read-only diagnosis on the device page: it reads and never writes, and replaces the serial number with a stand-in.",
+            "description": "Which registers an inverter answers is measured, not looked up, and a reading from yours is what improves support for it. {measured} Everything below is optional and answers what no register can; an empty field records that the question was not answered. Saving keeps your answers. To run the diagnosis, press \"Diagnosis: run read-only\" on the device page: it reads and never writes, and replaces the serial number with a stand-in.",
             "data": {
               "reporter": "Your name or handle",
               "diagnosis_transport": "How this inverter is connected",
@@ -1498,7 +1516,7 @@
           },
           "capability_test": {
             "name": "What the capability test may do",
-            "description": "Run diagnosis with capability tests on the device page writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The six switches below go further, and each is on until you switch it off: pressing the button is your consent. What you switch off stays off.",
+            "description": "\"Diagnosis: run extended\" on the device page writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The six switches below go further, and each is on until you switch it off: pressing the button is your consent. What you switch off stays off.",
             "data": {
               "capability_test_restart": "May it stop and restart the inverter?",
               "capability_test_export_limit": "May it switch feed-in limitation on?",
@@ -1563,7 +1581,7 @@
   },
   "services": {
     "run_capability_test": {
-      "name": "Run diagnosis with capability tests",
+      "name": "Run extended diagnosis",
       "description": "Writes to every control this integration can write to, checks each one three ways and puts it back. Unlike the capability diagnosis, this CHANGES SETTINGS on the inverter: it limits the battery and the export, and it briefly forces a charge and a discharge. Everything is recorded before the first write and restored afterwards, and the run reports anything it could not put back. It exists because a wrong scale is invisible to a readback -- write 700 W, get 700 W back -- and only writing can find it. The restart and export-limit permissions are set in the integration's options and are off by default.",
       "fields": {
         "device_id": {

@@ -1,4 +1,4 @@
-"""The device page's diagnosis controls: two buttons, and three things to watch.
+"""The device page's diagnosis controls: the buttons, and the things to watch.
 
 These are the entities that replace the options flow's spinner. They are
 deliberately ordinary Home Assistant entities rather than anything clever,
@@ -12,9 +12,10 @@ because that is what buys the things a modal dialog could not do:
 - a button can be pressed by a script, so a maintainer walking somebody
   through a problem can say "run this" rather than "click through there".
 
-All five are `EntityCategory.DIAGNOSTIC`: they describe the integration
+Every one is `EntityCategory.DIAGNOSTIC`: they describe the integration
 rather than the inverter, and they belong under the diagnostic heading of
-the device page rather than among the readings.
+the device page rather than among the readings. Every name starts
+*Diagnosis:* (`naming.py`), because that card sorts by name.
 
 They exist in a diagnostics-only entry, and only there: it has no other
 entities at all, and these are the reason it was set up. An ordinary entry
@@ -24,15 +25,18 @@ actions, which leave no entities behind.
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import PERCENTAGE, EntityCategory
-from homeassistant.core import callback
+from homeassistant.core import CALLBACK_TYPE, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.util import dt as dt_util
 from sungrow_modbus.capability_test import ledger
 
 from .const import PERMISSION_CAPABILITY_TEST
@@ -57,6 +61,7 @@ DIAGNOSIS_ENTITIES: tuple[tuple[str, str], ...] = (
     ("sensor", "diagnosis_step"),
     ("sensor", "diagnosis_finished"),
     ("sensor", "capability_test_status"),
+    *(("sensor", f"diagnosis_tests_{bucket}") for bucket in ledger.BUCKETS),
     ("switch", "continuous_capability_test"),
 )
 
@@ -69,6 +74,20 @@ LOG_LINES = 30
 #: failure message inherited from the stack can be, and a diagnosis that
 #: silently stopped being recorded is worse than a truncated line.
 MAX_STATE = 255
+
+#: How often the test summary rewrites its state while an extended run is in
+#: flight, so the time it shows moves on between the run's own updates.
+ELAPSED_TICK = timedelta(minutes=1)
+
+
+def elapsed(started: datetime, now: datetime) -> str:
+    """Return how long a run has taken, in whole minutes: `1 h 05 min`."""
+    minutes = max(0, int((now - started).total_seconds()) // 60)
+    if minutes < 1:
+        return "<1 min"
+    if minutes < 60:
+        return f"{minutes} min"
+    return f"{minutes // 60} h {minutes % 60:02d} min"
 
 
 def _findings(capability_test: dict[str, Any]) -> int | None:
@@ -311,12 +330,14 @@ class ClearCapabilityTestHistoryButton(DiagnosisEntity, ButtonEntity):
 class CapabilityTestStatusSensor(DiagnosisEntity, SensorEntity):
     """How far a collection of capability test runs has got, and what it awaits.
 
-    The state is one line -- `14/49 established · 5 runs · waiting for: site
-    import limit, PV generation cut` -- because a state stops at 255
-    characters. The tail of the log and each missing check's reason are
-    attributes, kept out of the recorder: they grow with every run, and the
-    recorded history of the state is already the log over time. The long form
-    is the notification the runner rewrites after every run.
+    The state is one line -- `running 12 min · 14/49 established · 5 runs ·
+    waiting for: site import limit, PV generation cut` -- because a state
+    stops at 255 characters. The time is counted from the press of an
+    extended run, and rewritten every minute while it lasts. The tail of the
+    log and each missing check's reason are attributes, kept out of the
+    recorder: they grow with every run, and the recorded history of the
+    state is already the log over time. The long form is the notification
+    the runner rewrites after every run.
     """
 
     _unrecorded_attributes = frozenset({"still_missing", "log"})
@@ -324,14 +345,63 @@ class CapabilityTestStatusSensor(DiagnosisEntity, SensorEntity):
     def __init__(self, runtime_data: SungrowRuntimeData) -> None:
         """Name it for the collection it reports."""
         super().__init__(runtime_data, "capability_test_status")
+        self._tick: CALLBACK_TYPE | None = None
+
+    def _timing(self) -> bool:
+        """Whether an extended run is in flight, which is when time is shown."""
+        state = self._runner.state
+        return state.running and state.extended and state.started is not None
+
+    async def async_added_to_hass(self) -> None:
+        """Listen, start the clock if a run is already going, stop it at removal."""
+        await super().async_added_to_hass()
+        self.async_on_remove(self._stop_tick)
+        self._sync_tick()
+
+    @callback
+    def async_entity_id_changed(self, old_entity_id: str) -> None:
+        """Take a new entity id in place: the minute clock is not keyed on it.
+
+        Declared here, beside the add hook above, because Home Assistant
+        (2026.11 to 2027.11) re-adds a class whose own add hook no
+        `async_entity_id_changed` of the same class or a subclass covers.
+        """
+        super().async_entity_id_changed(old_entity_id)
+
+    @callback
+    def _handle_update(self) -> None:
+        self._sync_tick()
+        super()._handle_update()
+
+    @callback
+    def _sync_tick(self) -> None:
+        """Run the minute clock exactly while an extended run is in flight."""
+        if self._timing():
+            if self._tick is None:
+                self._tick = async_track_time_interval(
+                    self.hass, self._async_minute, ELAPSED_TICK
+                )
+        else:
+            self._stop_tick()
+
+    @callback
+    def _stop_tick(self) -> None:
+        if self._tick is not None:
+            self._tick()
+            self._tick = None
+
+    @callback
+    def _async_minute(self, _now: datetime) -> None:
+        self.async_write_ha_state()
 
     @property
     def native_value(self) -> str:
         """The one-line progress, or that nothing has been kept."""
         state = self._runner.state
         folded = state.capability_test
-        if state.running and state.part is not None and "capability" in state.part:
-            prefix = "running · "
+        if self._timing():
+            assert state.started is not None
+            prefix = f"running {elapsed(state.started, dt_util.now())} · "
         else:
             prefix = ""
         if not folded or "summary" not in folded:
@@ -341,10 +411,17 @@ class CapabilityTestStatusSensor(DiagnosisEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """The counts, what is missing and why, and the tail of the log."""
-        folded = self._runner.state.capability_test or {}
+        state = self._runner.state
+        folded = state.capability_test or {}
+        running_since = (
+            state.started.isoformat()
+            if self._timing() and state.started is not None
+            else None
+        )
         if "summary" not in folded:
             return {
                 **self._runner.continuous.attributes(),
+                "running_since": running_since,
                 "established": None,
                 "total": None,
                 "runs": 0,
@@ -353,6 +430,7 @@ class CapabilityTestStatusSensor(DiagnosisEntity, SensorEntity):
         runs = folded.get("runs") or []
         return {
             **self._runner.continuous.attributes(),
+            "running_since": running_since,
             "established": established,
             "total": total,
             "runs": len(runs),
@@ -362,6 +440,44 @@ class CapabilityTestStatusSensor(DiagnosisEntity, SensorEntity):
             ],
             "still_missing": folded.get("still_missing") or [],
             "log": ledger.run_lines(folded)[-LOG_LINES:],
+        }
+
+
+class CapabilityTestCountSensor(DiagnosisEntity, SensorEntity):
+    """How many of the kept runs' checks ended one way: `17/58`.
+
+    One per bucket of `ledger.BUCKETS`; the five add up to the total. Text
+    rather than a number, because the total belongs beside the count and
+    differs by model and firmware. The checks themselves are an attribute,
+    unrecorded, so the count can be read without opening the summary.
+    """
+
+    _unrecorded_attributes = frozenset({"checks"})
+
+    def __init__(self, runtime_data: SungrowRuntimeData, bucket: str) -> None:
+        """Name it for the bucket it counts."""
+        super().__init__(runtime_data, f"diagnosis_tests_{bucket}")
+        self._bucket = bucket
+
+    @property
+    def native_value(self) -> str | None:
+        """`count/total`, or None while no run is kept."""
+        folded = self._runner.state.capability_test or {}
+        if "summary" not in folded:
+            return None
+        _, total = ledger.progress(folded)
+        return f"{ledger.counts(folded)[self._bucket]}/{total}"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """The checks in this bucket, by name."""
+        summary = (self._runner.state.capability_test or {}).get("summary") or {}
+        return {
+            "checks": sorted(
+                name
+                for name, row in summary.items()
+                if ledger.bucket(row.get("verdict")) == self._bucket
+            )
         }
 
 

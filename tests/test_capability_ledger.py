@@ -16,6 +16,8 @@ from sungrow_modbus.capability_test.procedure import (
     EFFECT_SCALED,
     INCONCLUSIVE,
     MATCH,
+    OUT_OF_TIME,
+    REFUSED,
     SCALED,
 )
 
@@ -175,6 +177,51 @@ def test_a_note_that_stops_every_behavioural_check_marks_them_all() -> None:
     )
     missing = {item["name"] for item in folded["still_missing"]}
     assert missing == set(EFFECT_FIELDS) - ledger.MODES
+
+
+@pytest.mark.parametrize("verdict", sorted(ledger.RANK))
+def test_every_verdict_lands_in_the_bucket_its_rank_says(verdict: str) -> None:
+    """A new verdict is counted by its rank, never left out of every count."""
+    rank = ledger.RANK[verdict]
+    expected = {
+        ledger.FINDING: "failed",
+        ledger.ANSWERED: "passed",
+        ledger.ESTABLISHED: "not_supported",
+    }.get(rank, "inconclusive" if verdict == INCONCLUSIVE else "not_run")
+    assert ledger.bucket(verdict) == expected
+    assert ledger.bucket(verdict) in ledger.BUCKETS
+
+
+def test_the_counts_add_up_to_the_total() -> None:
+    """Each check once, by its strongest verdict; a check never reached is not run."""
+    folded = ledger.fold(
+        [
+            _run(
+                "t1",
+                _block(
+                    readback=[
+                        _probe("export_power_limit", MATCH),
+                        _probe("battery_max_soc", SCALED),
+                        _probe("battery_min_soc", REFUSED),
+                        _probe("backup_reserve", OUT_OF_TIME),
+                    ],
+                    effects=[_effect("forced charge", INCONCLUSIVE)],
+                    notes=[SUNNY_NOON_NOTE],
+                ),
+            ),
+            _run("t2", _block(readback=[_probe("battery_min_soc", MATCH)])),
+        ]
+    )
+    counts = ledger.counts(folded)
+    assert counts == {
+        "passed": 2,
+        "failed": 1,
+        "not_supported": 0,
+        "inconclusive": 1,
+        "not_run": 2,
+    }
+    assert sum(counts.values()) == ledger.progress(folded)[1]
+    assert ledger.counts({}) == dict.fromkeys(ledger.BUCKETS, 0)
 
 
 def test_the_status_line_fits_a_state() -> None:

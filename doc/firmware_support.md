@@ -105,6 +105,7 @@ Left out, with no register dump, no firmware or no way to tell the link:
 - `sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-meter-direct-lan`
 - `sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-lan`
 - `sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-wlan`
+- `sh10rt-b001v000p020-3p-anonymous-anon-37323352958-battery-unknown-meter`
 - `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-7`
 - `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-8`
 - `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan`
@@ -183,7 +184,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 
 | Entity | Diagnosis | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Forced startup under low SoC *(switch)* | read + watched | ✓ | ✓ |  | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ W | ✓ W | ✗ | ✗ | ✗ | ✗ |
+| Forced startup under low SoC *(switch)* | read + watched | ✓ | ✓ |  | ✗ | ✓ W | ✓ W | ✓ | ✓ | ✓ W | ✓ W | ✗ | ✗ | ✗ | ✗ |
 | Power factor | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Power flow code | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Running state | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -367,6 +368,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | Feed-in limit mode code | read + watched | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Grid frequency | read | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Grid import limit | read + watched | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Grid import limit *(number)* | read + watched | ✓ | ✓ |  |  | ✓ W |  | ✓ W | ✓ W | ✓ W | ✓ W | ✓ | ✓ | ✓ | ✓ |
 | Grid-side fault | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Import power | read | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Importing power (delayed) *(binary_sensor)* | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |

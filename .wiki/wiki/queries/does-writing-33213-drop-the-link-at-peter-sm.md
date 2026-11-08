@@ -4,7 +4,7 @@ title: "Does writing 33213 drop the link at peter-sm?"
 tags: [contention, charge-window, peter-sm, sapphire-h-b001-v000-p023, open]
 created: '2026-11-02'
 query: "Is the connection lost on the charge window's write of 33213 at peter-sm the register's doing or the link's?"
-results_count: 3
+results_count: 4
 ---
 
 # Does writing 33213 drop the link at peter-sm?
@@ -20,6 +20,10 @@ the restore put every word back
 A third run, on 2026-11-07 with integration 0.1.0a27, lost it on the same write again, with
 word 36, and restored every word
 ([tenth reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan-summary.md)).
+
+The same write lost the connection once at [mkaiser](../entities/installation-mkaiser.md) on
+[P020](../entities/firmware-sapphire-h-b001-v000-p020.md), and went through on the next run
+that evening, among losses at three other addresses ([third reading](../sources/sh10rt-b001v000p020-3p-anonymous-anon-37323352958-battery-unknown-meter-summary.md)).
 
 Against the register: the same window, 33213 included, was written over the cable on P023 at
 [fwitten](../entities/installation-fwitten.md), and the window did as it was told

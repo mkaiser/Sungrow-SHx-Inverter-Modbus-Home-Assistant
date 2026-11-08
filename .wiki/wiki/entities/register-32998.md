@@ -8,8 +8,9 @@ created: '2026-11-07'
 # Register 32998 (site import power limit)
 
 A holding register in no Sungrow document here, which iSolarCloud shows as "Site import power
-limit". Protocol address 32997. The integration reads it as a diagnostic sensor, **Grid import
-limit** in kW, and offers no control; the diagnosis's register dump reads it too.
+limit". Protocol address 32997. On firmware with a watched write the integration offers it as a
+number, **Grid import limit** in W; elsewhere it reads it as a diagnostic sensor of the same name
+in kW. The diagnosis's register dump reads it too.
 
 ## What is established
 
@@ -36,6 +37,9 @@ limit** in kW, and offers no control; the diagnosis's register dump reads it too
   what the inverter draws, a charge, not the house past it. In self-consumption with PV above the
   load it changes nothing: a 0.01 kW cap left a charge from PV, export and PV as they were
   ([the export run](../sources/mkaiser-import-limit-export-2026-11-08-summary.md)).
+  Nor does it draw on the battery past its own limit: with the discharge limit at 500 W under a
+  ~1.1 kW load after dark, a 0.05 kW cap left import at ~700 W and the battery at 499 W
+  ([the discharge run](../sources/mkaiser-import-limit-discharge-2026-11-08-summary.md)).
 - **On [P023](firmware-sapphire-h-b001-v000-p023.md) it holds under a forced charge too**, over the
   cable and written through a [WiNet-S](device-winet-s.md): at [bar12](installation-bar12.md) a
   1.00 kW cap cut a 1250 W charge to ~550-730 W and held import at 942 W and ~960 W, slightly
@@ -70,5 +74,10 @@ the cable and a WiNet-S alike where a house has both.
 A control needs a write watched by this repository, per firmware
 ([firmware gating](../concepts/firmware-gating.md)): P022 has two (gerd), P023 three (bar12), P020 three, the last by the
 [capability test](../concepts/capability-test.md)'s `--import-limit` check, which is how other
-firmware gets one. A number entity would range over 1-5000 (0.01-50.00 kW), the words the
-SH10RT and the SH10RS accept. `Todo.md` holds the plan.
+firmware gets one.
+
+So on P020, P022 and P023 it is the number *Grid import limit* (`Capability.SITE_IMPORT_LIMIT_CONTROL`
+in `CONFIRMED_ON_FIRMWARE`), 10-50000 W in steps of 10 W, one count each: the words 1-5000 the
+SH10RT and the SH10RS accept. There the read-only sensor is not created. Elsewhere the sensor
+stays, and where 32998 reads 0 or 0xFFFF neither exists (`Capability.SITE_IMPORT_LIMIT`; the
+register refuses 0, so a 0 is a dongle answering for nothing).

@@ -368,7 +368,7 @@ def _second_device_id(hass: HomeAssistant, entry: MockConfigEntry) -> str:
     return device.id
 
 
-CONTROL_BUTTON = "button.sh10rt_run_diagnosis_with_capability_tests"
+CONTROL_BUTTON = "button.sh10rt_diagnosis_run_extended"
 
 
 async def _diagnostics_entry(

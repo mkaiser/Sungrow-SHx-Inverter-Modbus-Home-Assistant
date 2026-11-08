@@ -7,7 +7,7 @@ import logging
 import math
 from typing import Any
 
-from modbus_connection import ModbusError, ModbusExceptionError
+from modbus_connection import ModbusError, ModbusExceptionError, ServerDeviceBusyError
 
 from ..addresses import DIRECT_ONLY_PROBE
 from ..hybrid_inverter import export_scale
@@ -39,6 +39,18 @@ from .procedure import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def refused(err: BaseException) -> bool:
+    """Whether a failed write is the device refusing it.
+
+    Only an exception response is: a lost connection, a timeout or a busy
+    answer (0x06, ask me later) says nothing about the register, and a
+    refusal is recorded as established where a drop is not.
+    """
+    return isinstance(err, ModbusExceptionError) and not isinstance(
+        err, ServerDeviceBusyError
+    )
 
 
 class CapabilityTestBase:
@@ -365,17 +377,17 @@ class CapabilityTestBase:
                 )
             else:
                 await self.inverter.component(probe.component).write(probe.field, value)
-        except ModbusError as err:
-            _LOGGER.debug("capability test: %s refused %s: %s", probe.field, value, err)
+        except (ModbusError, TimeoutError, OSError) as err:
             self.refusals[probe.field] = f"{type(err).__name__}: {err}"
             self._last_refused = probe.field
-            return REFUSED
-        except (TimeoutError, OSError) as err:
+            if refused(err):
+                _LOGGER.debug(
+                    "capability test: %s refused %s: %s", probe.field, value, err
+                )
+                return REFUSED
             _LOGGER.debug(
                 "capability test: %s dropped on %s: %s", probe.field, value, err
             )
-            self.refusals[probe.field] = f"{type(err).__name__}: {err}"
-            self._last_refused = probe.field
             return DROPPED
         self._written[probe.field] = value
         return None
@@ -396,12 +408,12 @@ class CapabilityTestBase:
             return REFUSED
         try:
             await self.inverter.async_write_word(resolved.address, word)
-        except ModbusError as err:
-            _LOGGER.debug(
-                "capability test: %s refused word %s: %s", probe.field, word, err
-            )
-            return REFUSED
-        except (TimeoutError, OSError) as err:
+        except (ModbusError, TimeoutError, OSError) as err:
+            if refused(err):
+                _LOGGER.debug(
+                    "capability test: %s refused word %s: %s", probe.field, word, err
+                )
+                return REFUSED
             _LOGGER.debug(
                 "capability test: %s dropped word %s: %s", probe.field, word, err
             )

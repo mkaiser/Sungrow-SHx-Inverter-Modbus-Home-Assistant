@@ -195,7 +195,7 @@ async def _async_string_inverter_diagnostics(
 
 #: What the download says when no diagnosis has measured the blocks since start.
 NO_BLOCK_READ_TEST = (
-    "not run since Home Assistant started. Press Run read-only diagnosis on the "
+    "not run since Home Assistant started. Press Diagnosis: run read-only on the "
     "device page; it measures the blocks and this download then carries the "
     "result"
 )

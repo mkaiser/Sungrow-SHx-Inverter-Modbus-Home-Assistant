@@ -94,20 +94,27 @@ OVERRIDES: dict[str, str] = {
     # -- the diagnosis, which is tooling rather than a reading ---------------
     #
     # Also without a legacy name: these describe what the integration is
-    # doing, not what the inverter reports. "Diagnosis" leads every one of them
-    # so they sort together on a device page among entities that are
-    # otherwise all readings.
+    # doing, not what the inverter reports. "Diagnosis: " leads every one of
+    # them, buttons and switch included, because the device page's
+    # *Diagnostic* card sorts by name: one shared prefix keeps them together
+    # among entities that are otherwise all readings, in both languages.
     # The two buttons are named as a pair a contributor chooses between:
-    # "read only" on the one that never writes, so that the other one, which
+    # "read-only" on the one that never writes, so that the other one, which
     # adds the capability test's writes, is the one without that promise.
-    "run_diagnosis": "Run read-only diagnosis",
-    "run_capability_test": "Run diagnosis with capability tests",
-    "diagnosis_progress": "Diagnosis progress",
-    "diagnosis_step": "Diagnosis step",
-    "diagnosis_finished": "Diagnosis finished",
-    "clear_capability_test_history": "Clear capability test history",
-    "capability_test_status": "Capability test status",
-    "continuous_capability_test": "Continuous capability test mode",
+    "run_diagnosis": "Diagnosis: run read-only",
+    "run_capability_test": "Diagnosis: run extended",
+    "continuous_capability_test": "Diagnosis: run extended, continuous",
+    "diagnosis_progress": "Diagnosis: progress",
+    "diagnosis_step": "Diagnosis: current step",
+    "diagnosis_finished": "Diagnosis: finished",
+    "clear_capability_test_history": "Diagnosis: tests, clear history",
+    "capability_test_status": "Diagnosis: test summary",
+    # The capability test's checks, counted by outcome (`ledger.BUCKETS`).
+    "diagnosis_tests_passed": "Diagnosis: tests passed",
+    "diagnosis_tests_failed": "Diagnosis: tests failed",
+    "diagnosis_tests_not_supported": "Diagnosis: tests not supported",
+    "diagnosis_tests_inconclusive": "Diagnosis: tests inconclusive",
+    "diagnosis_tests_not_run": "Diagnosis: tests not run yet",
     # -- the SBR pack, which is its own device on its own unit ------------
     "battery_pack_voltage": "Pack voltage",
     "battery_pack_current": "Pack current",
@@ -642,14 +649,19 @@ GERMAN: dict[str, str] = {
     "wallbox_enabled": "Ladestation aktiviert",
     "weekend_discharge": "Entladung am Wochenende",
     # -- the diagnosis -------------------------------------------------------
-    "run_capability_test": "Diagnose mit Funktionstests ausführen",
-    "run_diagnosis": "Diagnose ausführen (nur lesend)",
-    "diagnosis_finished": "Diagnose beendet",
-    "diagnosis_progress": "Diagnosefortschritt",
-    "diagnosis_step": "Diagnoseschritt",
-    "clear_capability_test_history": "Funktionstest-Verlauf löschen",
-    "capability_test_status": "Funktionstest-Status",
-    "continuous_capability_test": "Modus fortlaufende Funktionstests",
+    "run_diagnosis": "Diagnose: nur lesend ausführen",
+    "run_capability_test": "Diagnose: erweitert ausführen",
+    "continuous_capability_test": "Diagnose: erweitert, fortlaufend",
+    "diagnosis_progress": "Diagnose: Fortschritt",
+    "diagnosis_step": "Diagnose: aktueller Schritt",
+    "diagnosis_finished": "Diagnose: beendet",
+    "clear_capability_test_history": "Diagnose: Testverlauf löschen",
+    "capability_test_status": "Diagnose: Testübersicht",
+    "diagnosis_tests_passed": "Diagnose: Tests bestanden",
+    "diagnosis_tests_failed": "Diagnose: Tests fehlgeschlagen",
+    "diagnosis_tests_not_supported": "Diagnose: Tests nicht unterstützt",
+    "diagnosis_tests_inconclusive": "Diagnose: Tests nicht eindeutig",
+    "diagnosis_tests_not_run": "Diagnose: Tests noch nicht gelaufen",
     # -- settings: numbers, selects, switches, times ----------------------
     "backup_mode": "Backup-Modus",
     "battery_charging_start_power": "Batterie Ladestartleistung",
@@ -991,6 +1003,8 @@ GERMAN_EXEMPT: dict[str, frozenset[str]] = {
             "sg_total_direct_energy_consumption",
         }
     ),
+    # "Current" as in "now", not an electric current: "aktuell".
+    "current": frozenset({"diagnosis_step"}),
 }
 
 #: **Open questions on a name**, by translation key, shown under its table in
