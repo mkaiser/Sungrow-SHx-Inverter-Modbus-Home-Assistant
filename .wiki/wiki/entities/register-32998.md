@@ -43,7 +43,9 @@ limit** in kW, and offers no control; the diagnosis's register dump reads it too
   import 947-964 W against 1.00 kW, following the load ([the schedule run](../sources/bar12-import-limit-schedule-2026-11-07-summary.md)).
 - **On [P022](firmware-sapphire-h-b001-v000-p022.md) it holds under a forced charge**, over the cable
   (import 1002 W against 1.00 kW) and written through a WiNet-S (956-1009 W), at
-  [gerd](installation-gerd.md) ([the run](../sources/gerd-import-limit-2026-11-08-summary.md)).
+  [gerd](installation-gerd.md) ([the run](../sources/gerd-import-limit-2026-11-08-summary.md)), and a
+  scheduled charge through the dongle: 4399 W cut to 862 W, import 994 W
+  ([the schedule run](../sources/gerd-import-limit-schedule-2026-11-08-summary.md)).
 - **On one SH10RT-V112 it does not hold during a forced charge**, by its owner's report, with
   how the charge was commanded and the B001 firmware unknown;
   [open](../queries/does-the-import-limit-hold-during-a-forced-charge.md).

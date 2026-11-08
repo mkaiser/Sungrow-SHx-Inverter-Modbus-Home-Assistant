@@ -15,7 +15,8 @@ SH-RT firmware in the B001 numbering ([SH-RT](device-sh-rt.md)).
 - A Modbus restart in daylight took 181 s from stop to Running, at three runs at gerd.
 - [Register 32998](register-32998.md), the site import limit, **holds under a forced charge**: at
   1.00 kW, import 1002 W over the cable and 956-1009 W written through the dongle, at gerd
-  ([the run](../sources/gerd-import-limit-2026-11-08-summary.md)).
+  ([the run](../sources/gerd-import-limit-2026-11-08-summary.md)). It holds a scheduled charge too,
+  through the dongle ([the schedule run](../sources/gerd-import-limit-schedule-2026-11-08-summary.md)).
 
 ## Diagnoses
 

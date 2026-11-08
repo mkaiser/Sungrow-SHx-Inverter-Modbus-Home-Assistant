@@ -562,3 +562,10 @@ following the load. gerd (P022): it capped an EMS forced charge over the cable a
 WiNet-S. Under gerd's polling Home Assistant the dongle stopped answering mid-restore and the cable
 closed every session for most of an hour; the restore was read back over the other path. Updated
 register-32998, P022, P023, installation-gerd, device-winet-s, the forced-charge query.
+
+## [2026-11-08] ingested | gerd-import-limit-schedule-2026-11-08
+
+gerd (P022), through the WiNet-S while the house's Home Assistant held the cable: 32998 capped a
+charge commanded by the forced-charging schedule (4399 → 862 W, import 994 W against 1.00 kW).
+The dongle read 33208 back current and 33210-33214 as 0 throughout. Updated register-32998, P022,
+device-winet-s, the forced-charge query.

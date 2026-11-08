@@ -27,11 +27,11 @@ stays unique.
 ## Inverter
 
 1. **The site import limit (32998): the cases still open.** Measured
-   (wiki: mkaiser-import-limit-*, bar12-import-limit-*, gerd-import-limit-
-   2026-11-08): under a charge the cap is on grid import alone, PV counted,
+   (wiki: mkaiser-import-limit-*, bar12-import-limit-*, gerd-import-limit-*): under a charge the cap is on grid import alone, PV counted,
    on P020, P022 and P023, over the cable and through a WiNet-S, whether
    the charge is commanded by the EMS registers or the forced-charging
-   schedule; it settles within ~2-6 s, 0-3 % over the cap on P020, at it
+   schedule (on P022 the schedule only through the dongle, wiki:
+   gerd-import-limit-schedule-2026-11-08); it settles within ~2-6 s, 0-3 % over the cap on P020, at it
    on P022, ~5 % under on P023; 0 and 5001 are refused.
    It does not cap house load: not with the battery held idle by a forced
    stop (P020), and not with the battery empty in normal operation (P023).
@@ -42,7 +42,6 @@ stays unique.
    | c | above the load | not full | normal operation, cap 200 | does the cap disturb export or the charge? expected no | script, a bright day |
    | d | above the load | full | normal operation, cap 200 | the same with export | script, a bright day, battery full |
    | e | above the load | part full | forced charge above the surplus | the grid's share capped, PV counted | the engine check, daylight |
-   | f | any | part full | the forced-charging schedule under a cap, on P022 | the schedule on a second firmware | gerd, with his Home Assistant stopped: on 2026-11-08 it held the cable for an hour, and the dongle stopped answering mid-restore |
 
    Not worth a run: a full battery at night, a forced charge into a full
    battery (the engine skips at 90 %), a forced discharge.
