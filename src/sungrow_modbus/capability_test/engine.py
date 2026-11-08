@@ -73,7 +73,9 @@ class CapabilityTest(EffectSteps):
 
         try:
             await self._preflight()
-            if not self.options.restart_only:
+            if self.options.forced_startup:
+                effects = await self._forced_startup_effect()
+            elif not self.options.restart_only:
                 probes = await self._readback()
                 effects = await self._effects()
         except Guard as guard:
@@ -88,7 +90,11 @@ class CapabilityTest(EffectSteps):
             if self.snapshot.values:
                 restores = await self._shielded(self.async_restore())
 
-        if (
+        if self.options.forced_startup:
+            # Its own mode: the inverter was asleep, and a restart would
+            # measure nothing the check did not.
+            pass
+        elif (
             self.options.restart
             and self.options.dry_run
             and "refused" not in self.conditions
@@ -164,6 +170,9 @@ def planned_steps(options: Options) -> int:
     steps += options.charge_window + options.discharge_window
     # And one for the import limit check.
     steps += options.import_limit
+    if options.forced_startup:
+        # The mode alone: reading, the snapshot, the check and its two waits.
+        return 5
     return steps
 
 

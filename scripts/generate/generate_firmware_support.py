@@ -450,15 +450,17 @@ def _coverage(domain: str, description: object) -> str:
     levels = []
     if fields and all(_dumped(name) for name in fields):
         levels.append(READ)
-    if domain in WRITABLE:
-        own = {
-            getattr(description, "field", None),
-            getattr(description, "minute_field", None),
-        }
-        if own & coverage.WRITTEN:
-            levels.append(WRITTEN)
-        if own & coverage.WATCHED:
-            levels.append(WATCHED)
+    # Any entity whose own register the test writes, a read-only sensor
+    # included: the site import limit is a sensor here, and the check that
+    # writes 32998 is what would make it a control.
+    own = {
+        getattr(description, "field", None),
+        getattr(description, "minute_field", None),
+    }
+    if own & coverage.WRITTEN:
+        levels.append(WRITTEN)
+    if own & coverage.WATCHED:
+        levels.append(WATCHED)
     return " + ".join(levels)
 
 

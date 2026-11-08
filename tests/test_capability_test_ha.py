@@ -429,3 +429,28 @@ async def test_a_permission_switched_off_stays_off(
     assert options.restart is False
     assert options.enable_export_limit is False
     assert options.cut_pv is False
+
+
+async def test_the_action_can_ask_for_forced_startup_alone(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """`forced_startup` reaches part B's options, and nothing else asks for it."""
+    from custom_components.sungrow_modbus.capability_test import CapabilityTestRunner
+
+    entry = await _setup(hass, ready_unit)
+    assert CapabilityTestRunner(hass, entry)._options().forced_startup is False
+    assert (
+        CapabilityTestRunner(hass, entry, forced_startup=True)._options().forced_startup
+        is True
+    )
+
+    runner = entry.runtime_data.diagnosis
+    device = dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)[0]
+    with patch.object(runner, "async_start", return_value=True) as start:
+        await hass.services.async_call(
+            DOMAIN,
+            "run_capability_test",
+            {"device_id": device.id, "forced_startup": True},
+            blocking=True,
+        )
+    start.assert_called_once_with(capability_test=True, forced_startup=True)

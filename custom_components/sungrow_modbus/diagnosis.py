@@ -157,6 +157,8 @@ class DiagnosisRunner:
         self.entry = entry
         self.state = DiagnosisState()
         self._task: asyncio.Task[None] | None = None
+        #: Whether this run's part B is the forced startup check alone.
+        self._forced_startup = False
         self._lapsed: CALLBACK_TYPE | None = None
 
     @property
@@ -171,7 +173,9 @@ class DiagnosisRunner:
         async_dispatcher_send(self.hass, self.signal)
 
     @callback
-    def async_start(self, *, capability_test: bool = False) -> bool:
+    def async_start(
+        self, *, capability_test: bool = False, forced_startup: bool = False
+    ) -> bool:
         """Begin a run. Returns False when one is already running.
 
         `capability_test` adds part B, which **writes** to every control the
@@ -185,6 +189,9 @@ class DiagnosisRunner:
         serialized connection, and a Sungrow grants few sessions. With part B
         in the picture that stops being a politeness -- interleaved *writes*
         are how two runs would restore each other's probe values.
+
+        `forced_startup` makes part B the forced startup check alone, which
+        runs only on an inverter in low-SoC standby.
         """
         if self._task is not None and not self._task.done():
             _LOGGER.debug("Diagnosis already running for %s", self.entry.title)
@@ -204,6 +211,7 @@ class DiagnosisRunner:
         # notification -- same `notification_id` -- with the words "the link
         # has expired", on a link that is minutes old.
         self._async_cancel_lapse()
+        self._forced_startup = capability_test and forced_startup
 
         self._set(
             running=True,
@@ -268,7 +276,9 @@ class DiagnosisRunner:
         from .capability_test import CapabilityTestRunner
 
         self._set(part=PART_B, step="starting the capability test")
-        runner = CapabilityTestRunner(self.hass, self.entry)
+        runner = CapabilityTestRunner(
+            self.hass, self.entry, forced_startup=self._forced_startup
+        )
         return await runner.async_run(
             on_progress=lambda fraction, label: self._on_progress(
                 share + fraction * (1.0 - share), f"{PART_B}: {label}"
@@ -278,6 +288,7 @@ class DiagnosisRunner:
     def _control_options(self) -> ControlOptions:
         """Return what part B has leave to do, from this entry's options."""
         return ControlOptions(
+            forced_startup=self._forced_startup,
             restart=bool(
                 self.entry.options.get(
                     CONF_CAPABILITY_TEST_RESTART, CAPABILITY_TEST_PERMISSION_DEFAULT

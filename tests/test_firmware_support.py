@@ -252,7 +252,10 @@ def test_every_behavioural_check_named_is_one_the_procedure_runs() -> None:
 def test_a_padded_or_masked_field_is_not_read_by_the_dump() -> None:
     assert _coverage("sensor", _entity("sungrow_version_3")) == ""
     assert _coverage("sensor", _entity("sungrow_inverter_serial")) == ""
-    assert _coverage("sensor", _entity("battery_min_soc")) == READ
+    assert _coverage("sensor", _entity("meter_active_power")) == READ
+    assert (
+        _coverage("sensor", _entity("site_import_power_limit")) == f"{READ} + {WATCHED}"
+    )
 
 
 def test_the_export_write_scale_is_taken_from_either_block() -> None:

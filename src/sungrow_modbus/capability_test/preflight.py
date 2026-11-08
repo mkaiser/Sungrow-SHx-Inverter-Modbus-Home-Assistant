@@ -9,6 +9,7 @@ from ..hybrid_inverter.capabilities import Capability, with_sungrow_battery
 from ..hybrid_inverter.derived import RUNNING_STATES
 from .procedure import (
     ENUMERATIONS,
+    FORCED_STARTUP,
     MIN_PV_W,
     NO_BOUNDS,
     NO_SNAPSHOT,
@@ -83,6 +84,9 @@ class PreflightSteps(RestoreSteps):
         as the whole explanation rather than as a code, and every one of them
         is checked *before* the snapshot is spent.
         """
+        if self.options.forced_startup:
+            self._standby_guards()
+            return
         state = self._value("running_state_raw")
         if state is None:
             raise Guard(
@@ -113,6 +117,52 @@ class PreflightSteps(RestoreSteps):
             raise Guard(
                 "This inverter has a battery but did not report its state of "
                 "charge, and every battery guard here is computed from it."
+            )
+
+    def _standby_guards(self) -> None:
+        """Refuse the forced startup check anywhere but low-SoC standby.
+
+        The register does one thing -- wake an inverter that went to sleep
+        because the battery reached its minimum with no PV -- so a run in any
+        other state would watch nothing, and one with PV would watch the sun
+        wake it. Grid-connected only, by the specification; an off-grid
+        inverter reports a running state of its own and is refused here.
+        """
+        if Capability.FORCED_STARTUP not in self.capabilities:
+            raise Guard(
+                "This inverter does not answer register 13017, so it has no "
+                "forced startup to test."
+            )
+        state = self._value("running_state_raw")
+        label = None if state is None else RUNNING_STATES.get(int(state))
+        if label is None or label.lower() != "standby":
+            shown = label or ("no state" if state is None else f"0x{int(state):04X}")
+            raise Guard(
+                f"The inverter reports {shown!r} rather than standby. Forced "
+                "startup wakes an inverter waiting in standby with its battery "
+                "at the minimum and no PV, so run it then -- usually at night "
+                "with an empty battery."
+            )
+        soc = self._value("battery_level")
+        minimum = self._value("battery_min_soc")
+        self.conditions["soc_percent"] = soc
+        if soc is None or minimum is None:
+            raise Guard(
+                "The battery's state of charge or its minimum did not read, and "
+                "low-SoC standby is decided from the two."
+            )
+        if float(soc) > float(minimum) + SOC_MARGIN:
+            raise Guard(
+                f"The battery is at {float(soc):.0f} %, above its "
+                f"{float(minimum):.0f} % minimum, so this standby is not the "
+                "low-SoC one register 13017 is for."
+            )
+        pv = self._value("total_dc_power")
+        self.conditions["pv_w"] = pv
+        if pv is not None and pv >= MIN_PV_W:
+            raise Guard(
+                f"{pv:.0f} W of PV: the sun would wake the inverter by itself, so "
+                "a start could not be put down to the register."
             )
 
     async def _snapshot_read(
@@ -203,7 +253,10 @@ class PreflightSteps(RestoreSteps):
         self.conditions["battery_ceiling_w"] = snapshot.battery_ceiling
 
         plan: list[Probe] = []
-        for probe in (*PROBES, *ENUMERATIONS):
+        candidates: tuple[Probe, ...] = (*PROBES, *ENUMERATIONS)
+        if self.options.forced_startup:
+            candidates = (FORCED_STARTUP,)
+        for probe in candidates:
             if probe.leave is not None and not getattr(self.options, probe.leave):
                 continue
             if probe.requires is not None and probe.requires not in self.capabilities:

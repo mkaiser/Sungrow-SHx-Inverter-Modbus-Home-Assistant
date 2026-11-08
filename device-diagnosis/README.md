@@ -81,6 +81,8 @@ each with how far this run tested it: *confirmed*, *wrong scale*, *write
 refused*, *inconclusive*, *readable* (it answered, and nothing wrote to it),
 *not available* or *not read*. A read-only diagnosis can say no more than
 *readable*.
+[What the diagnosis can test](../doc/capability_tests.md) lists every
+capability, what each mode does with it, and what is still untested.
 
 You get the **capability test** only if you ask for it: in Home Assistant by pressing **Run diagnosis with
 capability tests**, in a terminal by answering yes to the last question. That test
@@ -136,7 +138,11 @@ scripts/diagnosis.sh tests <host> --port 502 --unit 1 --merge-into <diagnosis-fi
 `sungrow_capability_test.py`: `--dry-run` resolves the whole plan and writes
 nothing, `--restore <snapshot>` puts back a run that died halfway,
 `--start-only` starts a stopped inverter, `--export-scale` asks how this
-firmware writes register 13074 with one write that changes nothing.
+firmware writes register 13074 with one write that changes nothing, and
+`--forced-startup` tests register 13017: run it with the inverter in standby
+because its battery is at the minimum and there is no PV, usually at night,
+and it writes 0xAA, watches the inverter start, writes 0x55, watches it go
+back to standby, and restores the register.
 
 ### What a run writes, and what to send
 

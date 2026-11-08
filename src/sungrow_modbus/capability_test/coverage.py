@@ -15,6 +15,7 @@ from .procedure import (
     EMS_MODE,
     EXPORT_MODE,
     FORCED_CMD,
+    FORCED_STARTUP,
     IMPORT_LIMIT,
     PROBES,
     PV_CUT,
@@ -38,6 +39,7 @@ EFFECT_FIELDS: dict[str, tuple[str, ...]] = {
     "forced-charging window": tuple(probe.field for probe in CHARGE_WINDOW),
     "discharge windows away from now": tuple(probe.field for probe in DISCHARGE_WINDOW),
     "site import limit": (*_FORCED, IMPORT_LIMIT.field),
+    "forced startup under low SoC": (FORCED_STARTUP.field,),
 }
 
 #: Every field the readback walk writes and checks by raw word.

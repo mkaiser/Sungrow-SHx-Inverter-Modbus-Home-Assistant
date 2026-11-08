@@ -90,10 +90,21 @@ class CapabilityTestRunner:
     writes, and the writes are the half where that matters.
     """
 
-    def __init__(self, hass: HomeAssistant, entry: SungrowConfigEntry) -> None:
-        """Prepare a runner. Nothing is read or written until `async_run`."""
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: SungrowConfigEntry,
+        *,
+        forced_startup: bool = False,
+    ) -> None:
+        """Prepare a runner. Nothing is read or written until `async_run`.
+
+        `forced_startup` runs the forced startup check alone, the mode that
+        needs the inverter in low-SoC standby.
+        """
         self.hass = hass
         self.entry = entry
+        self.forced_startup = forced_startup
         self._remove_shutdown_job: Any = None
         self._test: CapabilityTest | None = None
 
@@ -120,6 +131,7 @@ class CapabilityTestRunner:
         options = self.entry.options
         return Options(
             allow_dark=True,
+            forced_startup=self.forced_startup,
             restart=bool(
                 options.get(
                     CONF_CAPABILITY_TEST_RESTART, CAPABILITY_TEST_PERMISSION_DEFAULT

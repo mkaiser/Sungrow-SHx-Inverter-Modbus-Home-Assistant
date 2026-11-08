@@ -1560,6 +1560,10 @@
         "device_id": {
           "name": "Gerät",
           "description": "Das Sungrow-Gerät, in das geschrieben wird und das zurückgesetzt wird."
+        },
+        "forced_startup": {
+          "name": "Nur Zwangsstart",
+          "description": "Statt des Funktionstests den Zwangsstart bei niedrigem Ladezustand testen: Steht der Wechselrichter im Standby, weil die Batterie am Minimum ist und kein PV anliegt, wird 0xAA in Register 13017 geschrieben, der Start beobachtet, 0x55 geschrieben, die Rückkehr in den Standby beobachtet und das Register zurückgesetzt. In jedem anderen Zustand verweigert."
         }
       }
     },

@@ -291,5 +291,7 @@
  "selector.flow_text.options.switch_dropped": "**{count}** Rohsensoren gibt es nur unter alten IDs; sie werden entfernt, ihr Verlauf bleibt, wo er ist.",
  "selector.flow_text.options.switch_nothing": "Nichts umzuziehen: Jede Entität ist schon dort oder hat eine selbst gewählte ID, die unangetastet bleibt.",
  "selector.flow_text.options.endpoint": "{host}:{port}, Unit {unit}",
- "config.create_entry.default": "**Die Einrichtung ist abgeschlossen.** Die Entitäten des Wechselrichters erscheinen auf seiner Geräteseite, sobald ihre ersten Messwerte eintreffen.\n\nUm ihn im Energie-Dashboard zu sehen (**Einstellungen → Dashboards → Energie**), wähle die Sensoren, die [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt: Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind."
+ "config.create_entry.default": "**Die Einrichtung ist abgeschlossen.** Die Entitäten des Wechselrichters erscheinen auf seiner Geräteseite, sobald ihre ersten Messwerte eintreffen.\n\nUm ihn im Energie-Dashboard zu sehen (**Einstellungen → Dashboards → Energie**), wähle die Sensoren, die [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt: Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.",
+ "services.run_capability_test.fields.forced_startup.name": "Nur Zwangsstart",
+ "services.run_capability_test.fields.forced_startup.description": "Statt des Funktionstests den Zwangsstart bei niedrigem Ladezustand testen: Steht der Wechselrichter im Standby, weil die Batterie am Minimum ist und kein PV anliegt, wird 0xAA in Register 13017 geschrieben, der Start beobachtet, 0x55 geschrieben, die Rückkehr in den Standby beobachtet und das Register zurückgesetzt. In jedem anderen Zustand verweigert."
 }

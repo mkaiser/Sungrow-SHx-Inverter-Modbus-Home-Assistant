@@ -51,3 +51,7 @@ run_capability_test:
       selector:
         device:
           integration: sungrow_modbus
+    forced_startup:
+      default: false
+      selector:
+        boolean:

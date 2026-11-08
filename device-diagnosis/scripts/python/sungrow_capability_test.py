@@ -595,7 +595,9 @@ async def _run(args: argparse.Namespace) -> int:
         if args.export_scale:
             return await _export_scale_mode(inverter, args, serial)
 
-        restart = _ask_restart(args.restart)
+        # The forced startup mode starts from standby and restarts nothing.
+        forced_startup = getattr(args, "forced_startup", False)
+        restart = False if forced_startup else _ask_restart(args.restart)
         # A simulator has no house to protect, and `make controltest-sim` is
         # run from a terminal; waiting there for Enter would only be in the way.
         # `--yes` is consent given before the run: the diagnosis asks it among its
@@ -615,6 +617,7 @@ async def _run(args: argparse.Namespace) -> int:
             # than quietly measuring nothing when the question is declined.
             restart=restart or args.restart_only,
             restart_only=args.restart_only,
+            forced_startup=forced_startup,
             simulated=args.simulated,
             dry_run=args.dry_run,
         )
@@ -853,6 +856,13 @@ def _parser() -> argparse.ArgumentParser:
         "--restart-only",
         action="store_true",
         help="measure the stop and start and nothing else; writes no control",
+    )
+    parser.add_argument(
+        "--forced-startup",
+        action="store_true",
+        help="with the inverter in low-SoC standby (battery at its minimum, no "
+        "PV), write 0xAA to 13017 and watch it start, then 0x55 and watch it "
+        "sleep, and do nothing else",
     )
     parser.add_argument(
         "--export-scale",

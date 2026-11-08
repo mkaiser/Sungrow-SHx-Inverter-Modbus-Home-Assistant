@@ -547,3 +547,10 @@ the factory 0 read as off), confirmed on P023 from the bar12 run.
 `capability-test` and `capability-test-restore`. Schema 25 puts part B's block under
 `capability_test`; the committed documents keep `control_test` at their own numbers and are
 unchanged. Entries above this one use the names of their day.
+
+## [2026-11-08] added | the forced startup check (register 13017)
+
+The capability test gains `--forced-startup`: from low-SoC standby it writes 0xAA, watches the
+inverter start, writes 0x55, watches it sleep, and restores the register. The restore's one
+equivalence, 13017's factory 0 put back as 0x55, is on capability-test-restore. Updated
+register-13017. No hardware run yet.

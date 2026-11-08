@@ -163,6 +163,13 @@ FEATURE_SETS: tuple[FeatureSet, ...] = (
         Capability.BATTERY,
         ("site import limit",),
     ),
+    FeatureSet(
+        "forced_startup",
+        "Forced startup under low SoC",
+        (procedure.FORCED_STARTUP.field,),
+        Capability.FORCED_STARTUP,
+        ("forced startup under low SoC",),
+    ),
     FeatureSet("backup_mode", "Backup mode", ("backup_mode_raw",)),
     FeatureSet(
         "load_adjustment",

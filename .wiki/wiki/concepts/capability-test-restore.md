@@ -22,6 +22,11 @@ exist so that a house is never left changed without anyone knowing.
   Writing the *value* back goes through the scale under test, which can leave
   a register a decade off. The scaled write is only the fallback, for
   firmware that multiplies the raw word too ([register 13074](../entities/register-13074.md)).
+- **One word goes back as its equivalent.** [Register 13017](../entities/register-13017.md)
+  holds 0 from the factory on every SH-RT, refuses 0 with exception 0x04, and treats 0 as off;
+  the restore writes `0x55` (off), checks it by raw read, and says so in its row. The pair is
+  `RESTORE_EQUIVALENT` in `capability_test/procedure.py`, and nothing else is restored as
+  anything but the snapshot's word.
 - **A restore is a statement about where the register is**, not about
   whether a write succeeded. **Over a confirmed cable** it reads before it
   writes, so a register that held its value throughout is never reported

@@ -133,7 +133,9 @@ does, and puts everything back. Non-negotiable:
 
 - **The [restore](.wiki/wiki/concepts/capability-test-restore.md) is never
   budgeted, never deadlined and never skipped**, and it writes the snapshot's
-  raw word, checked by raw read. The snapshot is flushed before the first
+  raw word, checked by raw read. The one exception is listed in
+  `RESTORE_EQUIVALENT`: 13017's factory 0, which the register refuses, goes
+  back as `0x55`, which behaves the same. The snapshot is flushed before the first
   write. **No snapshot file for a day means no writes that day.** Exit 5 is
   the one code that means a house is left changed.
 - **Leg B's scale is hand-typed from V1.1.11, never read from

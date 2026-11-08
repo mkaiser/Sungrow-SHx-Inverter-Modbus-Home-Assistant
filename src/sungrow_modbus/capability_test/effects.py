@@ -36,6 +36,11 @@ from .procedure import (
     FORCE_STOP,
     FORCED_CMD,
     FORCED_EFFECT_W,
+    FORCED_STARTUP,
+    FORCED_STARTUP_OFF,
+    FORCED_STARTUP_ON,
+    FORCED_STARTUP_SLEEP,
+    FORCED_STARTUP_WAKE,
     IMPORT_LIMIT,
     IMPORT_LIMIT_MIN_W,
     IMPORT_LIMIT_PROBE_WORDS,
@@ -49,6 +54,7 @@ from .procedure import (
     PV_CUT_ON,
     PV_CUT_SETTLE,
     PV_RECOVERY,
+    RUNNING_STATES_STOPPED,
     SAMPLE_INTERVAL,
     SCALED,
     SETTLE,
@@ -72,6 +78,8 @@ from .procedure import (
     classify_ratio,
     export_cap,
     inverter_clock,
+    is_running,
+    is_starting,
     mad,
     median,
     window_around,
@@ -792,6 +800,106 @@ class EffectSteps(ReadbackSteps):
 
     def _pv(self, sample: Sample) -> float | None:
         return sample.pv
+
+    async def _forced_startup_effect(self) -> list[EffectResult]:
+        """Wake an inverter in low-SoC standby through register 13017.
+
+        The whole of the forced startup mode: preflight has already refused
+        anything but standby with the battery at its minimum and no PV. Write
+        0xAA and watch the running state, through Starting, reach Running;
+        then write 0x55 and watch it go back to standby. The restore puts the
+        register back afterwards. Judged by the running state alone, which no
+        dongle caches.
+        """
+        if FORCED_STARTUP.field not in self.snapshot.raw:
+            return []
+        self._step("forced startup under low SoC")
+        before = await self._running_word()
+        detail: list[str] = []
+        failure = await self._write(FORCED_STARTUP, FORCED_STARTUP_ON)
+        if failure is not None:
+            return [
+                self._state_result(
+                    before, None, None, None, NO_EFFECT, f"0xAA was {failure}"
+                )
+            ]
+        starting, _word, _ = await self._await_state(
+            FORCED_STARTUP_WAKE, lambda word: is_starting(word) or is_running(word)
+        )
+        running, during, _ = await self._await_state(
+            FORCED_STARTUP_WAKE - (starting or 0.0), is_running
+        )
+        if starting is not None:
+            detail.append(f"left standby after {starting:.0f} s")
+        if running is None:
+            await self._write(FORCED_STARTUP, FORCED_STARTUP_OFF)
+            verdict = NO_EFFECT if starting is None else INCONCLUSIVE
+            detail.append(
+                f"not running {FORCED_STARTUP_WAKE:.0f} s after 0xAA"
+                if starting is not None
+                else f"still in standby {FORCED_STARTUP_WAKE:.0f} s after 0xAA"
+            )
+            return [
+                self._state_result(
+                    before, during, None, starting, verdict, "; ".join(detail)
+                )
+            ]
+        detail.append(f"running after {(starting or 0.0) + running:.0f} s")
+        failure = await self._write(FORCED_STARTUP, FORCED_STARTUP_OFF)
+        if failure is not None:
+            detail.append(f"0x55 was {failure}")
+            return [
+                self._state_result(
+                    before, during, None, running, INCONCLUSIVE, "; ".join(detail)
+                )
+            ]
+        asleep, after, _ = await self._await_state(
+            FORCED_STARTUP_SLEEP, lambda word: word in RUNNING_STATES_STOPPED
+        )
+        if asleep is None:
+            detail.append(f"still awake {FORCED_STARTUP_SLEEP:.0f} s after 0x55")
+            verdict = INCONCLUSIVE
+        else:
+            detail.append(f"back in standby {asleep:.0f} s after 0x55")
+            verdict = CONFIRMED
+        return [
+            self._state_result(
+                before,
+                during,
+                after,
+                (starting or 0.0) + running,
+                verdict,
+                "; ".join(detail),
+            )
+        ]
+
+    def _state_result(
+        self,
+        before: int | None,
+        during: int | None,
+        after: int | None,
+        seconds: float | None,
+        verdict: str,
+        detail: str,
+    ) -> EffectResult:
+        """Report the forced startup check: running-state words, and the wait."""
+        return EffectResult(
+            check="forced startup under low SoC",
+            observable="running state word",
+            commanded=float(FORCED_STARTUP_ON),
+            commanded_unit="",
+            before=None if before is None else float(before),
+            during=None if during is None else float(during),
+            after=None if after is None else float(after),
+            before_mad=None,
+            during_mad=None,
+            after_mad=None,
+            drift=None,
+            delta=seconds,
+            ratio=None,
+            verdict=verdict,
+            detail=detail,
+        )
 
     # -- the timed windows ----------------------------------------------------
 

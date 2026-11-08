@@ -100,6 +100,15 @@ FIELD = "start_stop"
 STATE_COMPONENT = "realtime_input"
 
 SCHEMA = probatio.Schema({probatio.Required(ATTR_DEVICE_ID): cv.string})
+#: The capability test's: `forced_startup` runs the forced startup check
+#: alone, on an inverter in low-SoC standby.
+ATTR_FORCED_STARTUP = "forced_startup"
+CAPABILITY_TEST_SCHEMA = probatio.Schema(
+    {
+        probatio.Required(ATTR_DEVICE_ID): cv.string,
+        probatio.Optional(ATTR_FORCED_STARTUP, default=False): cv.boolean,
+    }
+)
 
 
 @callback
@@ -127,7 +136,10 @@ def async_setup_services(hass: HomeAssistant) -> None:
     # for it; this is the route an ordinary entry has, and the one a script
     # can take.
     hass.services.async_register(
-        DOMAIN, SERVICE_RUN_CAPABILITY_TEST, _async_run_capability_test, schema=SCHEMA
+        DOMAIN,
+        SERVICE_RUN_CAPABILITY_TEST,
+        _async_run_capability_test,
+        schema=CAPABILITY_TEST_SCHEMA,
     )
 
 
@@ -150,7 +162,9 @@ async def _async_run_capability_test(call: ServiceCall) -> None:
         SERVICE_RUN_CAPABILITY_TEST,
         call.context.user_id or "an automation or script",
     )
-    if not entry.runtime_data.diagnosis.async_start(capability_test=True):
+    if not entry.runtime_data.diagnosis.async_start(
+        capability_test=True, forced_startup=call.data.get(ATTR_FORCED_STARTUP, False)
+    ):
         raise HomeAssistantError(
             translation_domain=DOMAIN, translation_key="diagnosis_already_running"
         )

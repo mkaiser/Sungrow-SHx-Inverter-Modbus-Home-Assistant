@@ -537,6 +537,40 @@ PV_CUT = Probe(
     requires=Capability.PV_GENERATION_CUT,
 )
 
+#: Register 13017, V1.1.7's "Forced Startup Under Low SOC Standby": `0xAA`
+#: wakes an inverter waiting in standby with the battery at its minimum and no
+#: PV, `0x55` sends it back, and nothing else is taken (bar12, P023). Written
+#: only by the forced startup check, a mode of its own because it needs the
+#: one state every other check refuses to start in.
+FORCED_STARTUP = Probe(
+    field="forced_startup_under_low_soc_raw",
+    component="fast_holding",
+    spec_register=13017,
+    spec_units_per_count=1,
+    unit="",
+    exact=(0x55, 0xAA),
+    requires=Capability.FORCED_STARTUP,
+    leave="forced_startup",
+)
+FORCED_STARTUP_ON = 0xAA
+FORCED_STARTUP_OFF = 0x55
+
+#: How long a woken inverter may take to report Running: Starting after
+#: 2.5-4 min and Running after ~5 min at bar12, so twice the slower.
+FORCED_STARTUP_WAKE = 600.0
+#: How long it may take to go back to standby once 0x55 is written: ~20 s.
+FORCED_STARTUP_SLEEP = 120.0
+
+#: Snapshot words a register refuses to take back, and the word that restores
+#: the same behaviour. **The one exception to restoring the snapshot's own
+#: word**, and kept to exactly this: every SH-RT holds 13017 at 0 from the
+#: factory, the register refuses 0 with exception 0x04, and 0 behaves as off,
+#: which is `0x55`. The restore writes `0x55`, checks it by raw read, and says
+#: so in its row; a word not listed here is restored as found or not at all.
+RESTORE_EQUIVALENT: dict[str, dict[int, int]] = {
+    FORCED_STARTUP.field: {0: FORCED_STARTUP_OFF},
+}
+
 #: The forced-charging schedule's registers the charge window check writes
 #: (V1.1.16 33208-33214): the enable, the days, the first window and its
 #: target. Counted in ones, so no scale question; snapshotted only with leave.
@@ -621,6 +655,7 @@ ENUMERATIONS: tuple[Probe, ...] = (
     *CHARGE_WINDOW,
     *DISCHARGE_WINDOW,
     IMPORT_LIMIT,
+    FORCED_STARTUP,
 )
 
 EMS_FORCED = 2
@@ -666,9 +701,8 @@ NOT_PROBED: dict[str, str] = {
         "check, which judges it by what PV does"
     ),
     "forced_startup_under_low_soc_raw": (
-        "a command with no state to read back: it never reads 0xAA, and writing "
-        "it wakes an inverter in low-SoC standby, so only a watched start can "
-        "judge it"
+        "a switch with no scale to get wrong, written only by the forced startup "
+        "check, with leave, which judges it by whether the inverter wakes"
     ),
     # The forced-charging schedule (V1.1.16 33208-33219). Every register in it
     # counts in ones, hours, minutes or whole percent, so there is no scale
@@ -1058,6 +1092,16 @@ class Options:
     grid where there is no sun: the forced charge check's power, for about two
     minutes. The register is outside Sungrow's document, so this is the
     watched write that would let the integration offer it as a control."""
+
+    forced_startup: bool = False
+    """Run **only** the forced startup check: write 0xAA to register 13017 and
+    watch an inverter in low-SoC standby start, then write 0x55 and watch it go
+    back, and restore the register.
+
+    A mode rather than one more check, because it needs the inverter in
+    standby with the battery at its minimum and no PV -- the state every other
+    check refuses to start in. Off by default because it wakes the inverter,
+    which then draws its own consumption from the grid until it sleeps again."""
 
     simulated: bool = False
     """Stamp the result as evidence about nothing. A simulator stores raw words

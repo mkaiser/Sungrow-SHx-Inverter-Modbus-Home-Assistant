@@ -1,6 +1,6 @@
 # The texts, for review
 
-**293 texts**: everything in `strings.json` that is not an entity name, by its
+**295 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -385,7 +385,7 @@ and bold are kept.
 >
 > Everything here is optional, and leaving a field empty is honest: it records that the question was not answered, which is different from answering "I don't know". You can change any of it later under the integration's options.
 >
-> Afterwards, press **Run read only diagnosis** on the device page.
+> Afterwards, press **Run read-only diagnosis** on the device page.
 
 > **DE** Du hast „nur Diagnose“ gewählt, das heißt, dieser Eintrag existiert, um eine Messung zu erzeugen – dies sind also die Fragen, die diese Messung braucht und die kein Register beantworten kann.
 >
@@ -627,7 +627,7 @@ and bold are kept.
 
 > **EN** **You are set up, and nothing has been read yet.** Two more steps, both on the device page this dialog is about to show you:
 >
-> 1. Press **Run read only diagnosis**, under *Diagnostic*. It reads and never writes. On a cable it is over in a couple of minutes with the register sweep on; over a VPN it can take considerably longer, and the three sensors beside the button say how far along it is and what it is reading.
+> 1. Press **Run read-only diagnosis**, under *Diagnostic*. It reads and never writes. On a cable it is over in a couple of minutes with the register sweep on; over a VPN it can take considerably longer, and the three sensors beside the button say how far along it is and what it is reading.
 > 2. When it finishes, open **Notifications** in the sidebar — the badge at the bottom left. The notification there carries a summary and a **Download the document** link. That link is the JSON file to send us, and it stops working after an hour.
 >
 > Missed it, or came back the next day? **Download diagnostics** on the same device page carries the same document and never expires. Send either to [the diagnosis issue]({diagnosis_issue_url}).
@@ -1459,7 +1459,7 @@ and bold are kept.
 
 ### `options.step.init.sections.diagnosis.description`
 
-> **EN** Which registers an inverter answers is measured, not looked up, and a reading from yours is what improves support for it. {measured} Everything below is optional and answers what no register can; an empty field records that the question was not answered. Saving keeps your answers. To run the diagnosis, press Run read only diagnosis on the device page: it reads and never writes, and replaces the serial number with a stand-in.
+> **EN** Which registers an inverter answers is measured, not looked up, and a reading from yours is what improves support for it. {measured} Everything below is optional and answers what no register can; an empty field records that the question was not answered. Saving keeps your answers. To run the diagnosis, press Run read-only diagnosis on the device page: it reads and never writes, and replaces the serial number with a stand-in.
 
 > **DE** Welche Register ein Wechselrichter beantwortet, wird gemessen, nicht nachgeschlagen, und eine Messung von deinem verbessert die Unterstützung dafür. {measured} Alles unten ist optional und beantwortet, was kein Register kann; ein leeres Feld hält fest, dass die Frage nicht beantwortet wurde. Speichern behält deine Antworten. Um die Diagnose auszuführen, drücke auf der Geräteseite Diagnose ausführen (nur lesend): Sie liest und schreibt nie und ersetzt die Seriennummer durch einen Platzhalter.
 
@@ -1579,7 +1579,7 @@ and bold are kept.
 
 ### `options.step.init.sections.capability_test.description`
 
-> **EN** Run complete diagnosis and tests on the device page writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The six switches below go further, and each is on until you switch it off: pressing the button is your consent. What you switch off stays off.
+> **EN** Run diagnosis with capability tests on the device page writes each setting, reads it straight back against Sungrow's specification and puts your value back: the only way to catch a value written at ten times what you asked. Anything that could not be put back becomes a repair that restores it. The six switches below go further, and each is on until you switch it off: pressing the button is your consent. What you switch off stays off.
 
 > **DE** Diagnose mit Funktionstests ausführen auf der Geräteseite schreibt jede Einstellung, liest sie sofort gegen Sungrows Spezifikation zurück und setzt deinen Wert wieder ein: die einzige Möglichkeit, einen Wert zu finden, der mit dem Zehnfachen des Gewünschten geschrieben wurde. Alles, was nicht zurückgesetzt werden konnte, wird zu einer Reparatur, die es wiederherstellt. Die sechs Schalter unten gehen weiter, und jeder ist an, bis du ihn ausschaltest: Das Drücken der Schaltfläche ist deine Zustimmung. Was du ausschaltest, bleibt aus.
 
@@ -1838,11 +1838,11 @@ and bold are kept.
 > **DE** Sensoren und Steuerungen einzurichten ist in dieser Version nicht enthalten. Diese Alpha legt nur Einträge für die Diagnose an; beginne erneut und wähle **Geräte-Diagnose durchführen**.
 
 
-## Actions (16)
+## Actions (18)
 
 ### `services.run_capability_test.name`
 
-> **EN** Run complete diagnosis and tests
+> **EN** Run diagnosis with capability tests
 
 > **DE** Diagnose mit Funktionstests ausführen
 
@@ -1864,9 +1864,21 @@ and bold are kept.
 
 > **DE** Das Sungrow-Gerät, in das geschrieben wird und das zurückgesetzt wird.
 
+### `services.run_capability_test.fields.forced_startup.name`
+
+> **EN** Forced startup only
+
+> **DE** Nur Zwangsstart
+
+### `services.run_capability_test.fields.forced_startup.description`
+
+> **EN** Instead of the capability test, test forced startup under low SoC: with the inverter in standby because its battery is at the minimum and there is no PV, write 0xAA to register 13017, watch the inverter start, write 0x55, watch it go back to standby, and restore the register. Refused in any other state.
+
+> **DE** Statt des Funktionstests den Zwangsstart bei niedrigem Ladezustand testen: Steht der Wechselrichter im Standby, weil die Batterie am Minimum ist und kein PV anliegt, wird 0xAA in Register 13017 geschrieben, der Start beobachtet, 0x55 geschrieben, die Rückkehr in den Standby beobachtet und das Register zurückgesetzt. In jedem anderen Zustand verweigert.
+
 ### `services.run_diagnosis.name`
 
-> **EN** Run read only diagnosis
+> **EN** Run read-only diagnosis
 
 > **DE** Diagnose ausführen (nur lesend)
 

@@ -50,6 +50,16 @@ the cable and through a [WiNet-S](device-winet-s.md), with the battery below its
 One owner reports the inverter flipping `0xAA` to `0x55` by itself ~20 minutes after the write
 (issue #444, firmware not stated); at bar12 it had not after 23 minutes.
 
+## In the capability test
+
+`diagnosis.sh tests <host> --forced-startup` is a mode of its own, because it needs the one state
+every other check refuses: low-SoC standby, the battery within 5 % of its minimum and no PV. It
+writes `0xAA`, waits up to 10 minutes for Running, writes `0x55`, waits up to 2 minutes for
+Standby, and restores the register, the factory 0 as `0x55`
+([the restore](../concepts/capability-test-restore.md)). Its row is the check *forced startup
+under low SoC*, judged by the running state alone. In Home Assistant it is the
+`run_capability_test` action with `forced_startup: true`. No run is on record yet.
+
 ## In the integration
 
 A switch, *Forced startup under low SoC* / *Zwangsstart bei niedrigem Ladezustand*: on writes

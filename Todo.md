@@ -131,20 +131,22 @@ Nothing can start now (blocker 18).
       `modbus-connection[tmodbus]==4.12.4`; to 4.12.7 with tmodbus 1.1.0, a
       new transport for contributors' runs, so after one diagnosis on hardware
       with it (`device-diagnosis/reference.md` first).
-4. **The diagnosis becomes the diagnosis** (in progress). Done: `doc/firmware_support.md` has a *Diagnosis* column (read, written,
-   watched, from `capability_test/coverage.py`) and a table of what the capability
-   test measured (13074's write scale, readbacks, restart, behaviour).
-   Left, in order:
-   1. **The renames**: diagnosis to diagnose and capability test to capability
-      test, everywhere, stored option keys included, by a config entry
-      migration. Waits until no session is running a capability test on
-      hardware, because a restore line names the script's path.
-   2. **Two modes and a feature report**: *read-only diagnosis* and
-      *diagnosis with capability tests*, and a `features` section (schema 25).
-   3. **New capability tests, for the maintainer to pick**: a no-op write of
-      the mode flags; out-of-range refusal probes for the bounds; the second
-      forced-charging window read back with the schedule off; the wallbox in
-      the feature report; the EMS mode codes.
+4. **The diagnosis and its capability tests.** In the code: two modes
+   (*Run read-only diagnosis*, *Run diagnosis with capability tests*), a
+   `features` section in every document (schema 25), the *Diagnosis* column
+   and the measured findings in `doc/firmware_support.md`, and the forced
+   startup mode (`diagnosis.sh tests <host> --forced-startup`). What each
+   capability can be tested with is `doc/capability_tests.md`. Left:
+   1. **A first forced startup run on hardware**: an inverter in low-SoC
+      standby, at night with an empty battery. The SH-RT's factory 0 goes
+      back as 0x55, the one `RESTORE_EQUIVALENT` (AGENTS.md).
+   2. **New capability tests, for the maintainer to pick**
+      (`doc/capability_tests.md`, *Could still test*): a no-op write of
+      backup mode and load control; out-of-range refusal probes for the
+      `number` bounds; window 2 read back with the schedule off; the
+      wallbox's current scale in the feature report; the EMS mode codes.
+   3. **Outside the repository**: issue #786's title still says survey, and
+      the repository variable `SURVEY_ISSUE` keeps its name.
 
 # Open decisions
 

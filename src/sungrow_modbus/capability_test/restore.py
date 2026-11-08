@@ -25,6 +25,7 @@ from .procedure import (
     RESTART_RUNNING_DEADLINE,
     RESTART_STOP_DEADLINE,
     RESTORE_ATTEMPTS,
+    RESTORE_EQUIVALENT,
     RESTORE_PAUSE,
     RUNNING_STATES_STOPPED,
     SKIPPED,
@@ -119,9 +120,27 @@ class RestoreSteps(CapabilityTestBase):
                     )
                 )
                 continue
-            results.append(
-                await self._restore_one(probe, float(original), snapshot.raw.get(name))
+            word = snapshot.raw.get(name)
+            equivalent = (
+                None if word is None else RESTORE_EQUIVALENT.get(name, {}).get(word)
             )
+            if equivalent is not None:
+                # The register refuses the word the snapshot found; put back
+                # the one that behaves the same, and say so in the row.
+                result = await self._restore_one(probe, float(equivalent), equivalent)
+                results.append(
+                    result._replace(
+                        original=float(original),
+                        detail=(
+                            f"the snapshot's word 0x{word:04X} is refused by the "
+                            f"register, so 0x{equivalent:04X}, which behaves the "
+                            "same, was put back"
+                            + (f"; {result.detail}" if result.detail else "")
+                        ),
+                    )
+                )
+                continue
+            results.append(await self._restore_one(probe, float(original), word))
         if any(not row.restored for row in results):
             self._worst(5)
         return results
