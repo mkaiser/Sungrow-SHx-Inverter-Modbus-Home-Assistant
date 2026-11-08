@@ -175,6 +175,44 @@ Nothing can start now (blocker 18).
    #546 (drafted in the session of 2026-11-07; its table is in the wiki's
    register 32998 page).
 
+2. **Tonight, 2026-11-08: 13017 and Todo row a at the maintainer's SH10RT
+   (P020, cable).** Run as `/sh10rt-tonight` (a personal command in
+   `~/.claude/commands/`, which carries the address; the scripts are in
+   `~/.claude/sungrow-scripts/`). The prompt, without the address:
+
+   > Run tonight's two hardware tests at the maintainer's own SH10RT, then
+   > ingest them. Read `AGENTS.md` and the wiki pages register-13017,
+   > register-32998 and capability-test-restore first. The inverter: the
+   > maintainer's own (address in their `secrets.yaml`), unit 1, stand-in
+   > `anon-37323352958`, `SAPPHIRE-H_B001.V000.P020`; the VPN off, the
+   > stand-in checked before any write; the house's Home Assistant stays
+   > connected, so retry lost reads. Changed on purpose on 2026-11-08: the
+   > minimum SoC 13059 = 250 (25 %, was 100), so the battery reaches its
+   > minimum tonight. 13017 reads 0 and P020 refuses a write of 0.
+   >
+   > 1. **13017**, with PV < 30 W and the inverter in low-SoC Standby
+   >    (0x0008; wait up to an hour, else skip): 0xAA watched 10 min
+   >    (expect Starting, then Running, battery idle); 0x55 watched 3 min
+   >    (expect Standby); 0x01 (expect refused), then 0x55. 13017 stays at
+   >    0x55.
+   > 2. **Charge** with an EMS forced charge of 4500 W in 15-minute chunks,
+   >    each restored, until the SoC reads 30 % or more; wait ~2 min.
+   > 3. **Row a**, with PV < 30 W and the battery discharging into the
+   >    house: 33048 lowered to about half the load (e.g. 25 = 250 W),
+   >    90 s; then 32998 = 5 (0.05 kW), 90 s; then 2000; restore 32998 and
+   >    33048. Does the battery discharge past its limit to meet the cap
+   >    (expected no)? If the lowered limit stops the discharge, retry once
+   >    with a larger one.
+   >
+   > Afterwards: 13059 back to 100 (10 %) unless told to keep 25 %; ingest
+   > (raw mkaiser-forced-startup-2026-11-08 and
+   > mkaiser-import-limit-discharge-2026-11-08, their source pages,
+   > register-13017, register-32998, P020, installation-mkaiser, index,
+   > log; no address anywhere); if the start was watched, P020 into
+   > `CONFIRMED_ON_FIRMWARE` for `FORCED_STARTUP_CONTROL` with
+   > `tests/test_forced_startup.py`, `make gen`, `make check`; this item
+   > and row a out of Todo.md; commit only your files; ask before pushing.
+
 # Blockers
 
 ## Inverter
