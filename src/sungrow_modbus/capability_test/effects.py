@@ -826,9 +826,13 @@ class EffectSteps(ReadbackSteps):
         starting, _word, _ = await self._await_state(
             FORCED_STARTUP_WAKE, lambda word: is_starting(word) or is_running(word)
         )
-        running, during, _ = await self._await_state(
-            FORCED_STARTUP_WAKE - (starting or 0.0), is_running
-        )
+        # One deadline for the whole wake: an inverter that never left standby
+        # has already had it, and is not given a second one to reach Running.
+        running, during = None, None
+        if starting is not None:
+            running, during, _ = await self._await_state(
+                FORCED_STARTUP_WAKE - starting, is_running
+            )
         if starting is not None:
             detail.append(f"left standby after {starting:.0f} s")
         if running is None:

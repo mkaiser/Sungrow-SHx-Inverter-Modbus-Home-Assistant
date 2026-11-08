@@ -125,6 +125,23 @@ class RestoreSteps(CapabilityTestBase):
                 None if word is None else RESTORE_EQUIVALENT.get(name, {}).get(word)
             )
             if equivalent is not None:
+                await self._refresh(probe.component)
+                if self.direct is True and await self._holds(
+                    probe, float(original), word
+                ):
+                    # Never changed, so nothing to put back: writing the
+                    # equivalent would be a write this run did not need.
+                    results.append(
+                        RestoreResult(
+                            field=name,
+                            original=float(original),
+                            readback=self._value(name),
+                            restored=True,
+                            attempts=0,
+                            detail="already holding its original value",
+                        )
+                    )
+                    continue
                 # The register refuses the word the snapshot found; put back
                 # the one that behaves the same, and say so in the row.
                 result = await self._restore_one(probe, float(equivalent), equivalent)

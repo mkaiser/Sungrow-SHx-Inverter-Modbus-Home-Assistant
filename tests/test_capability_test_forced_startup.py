@@ -20,6 +20,7 @@ from sungrow_modbus.capability_test.procedure import (
     FORCED_STARTUP,
     FORCED_STARTUP_OFF,
     FORCED_STARTUP_ON,
+    FORCED_STARTUP_WAKE,
     NO_EFFECT,
 )
 
@@ -104,10 +105,12 @@ async def test_a_word_the_register_takes_is_put_back_as_found(
 async def test_an_inverter_that_never_wakes_is_reported_as_no_effect(
     asleep: MockModbusUnit,
 ) -> None:
-    _run_unused, outcome = await _run(asleep, wakes=False)
+    run, outcome = await _run(asleep, wakes=False)
 
     (effect,) = outcome.effects
     assert effect.verdict == NO_EFFECT
+    # One wake deadline, not one for Starting and another for Running.
+    assert run.clock.now < FORCED_STARTUP_WAKE + 60
     address = field_address(FORCED_STARTUP.field).address
     assert asleep.holding[address] == FORCED_STARTUP_OFF
 
@@ -132,3 +135,20 @@ async def test_anything_but_low_soc_standby_is_refused_before_a_write(
     assert said in run.conditions["refused"]
     assert outcome.effects == ()
     assert asleep.holding == before
+
+
+async def test_a_register_the_run_never_changed_is_left_holding_its_zero(
+    asleep: MockModbusUnit,
+) -> None:
+    """A refused 0xAA leaves the factory 0, and 0x55 would be a needless write."""
+    from modbus_connection import IllegalDataValueError
+
+    address = field_address(FORCED_STARTUP.field).address
+
+    asleep.fail_write(address, IllegalDataValueError("refused"))
+    _run_unused, outcome = await _run(asleep)
+
+    (restored,) = outcome.restores
+    assert restored.restored
+    assert restored.attempts == 0
+    assert asleep.holding[address] == 0
