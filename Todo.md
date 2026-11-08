@@ -27,21 +27,22 @@ stays unique.
 ## Inverter
 
 1. **The site import limit (32998): the cases still open.** Measured
-   (wiki: mkaiser-import-limit-*, bar12-import-limit-2026-11-07): under a
-   forced charge the cap is on grid import alone, PV counted, on P020 and
-   P023, over the cable and through a WiNet-S; it settles in ~4-6 s, 0-3 %
-   over the cap on P020 and ~5 % under on P023; 0 and 5001 are refused.
+   (wiki: mkaiser-import-limit-*, bar12-import-limit-*, gerd-import-limit-
+   2026-11-08): under a charge the cap is on grid import alone, PV counted,
+   on P020, P022 and P023, over the cable and through a WiNet-S, whether
+   the charge is commanded by the EMS registers or the forced-charging
+   schedule; it settles within ~2-6 s, 0-3 % over the cap on P020, at it
+   on P022, ~5 % under on P023; 0 and 5001 are refused.
    It does not cap house load: not with the battery held idle by a forced
    stop (P020), and not with the battery empty in normal operation (P023).
 
    | # | PV | Battery | Command | Question | How, where |
    | --- | --- | --- | --- | --- | --- |
    | a | none | part full | normal operation, load above the battery's discharge limit (33048 lowered) | does the cap draw on the battery past its limit? expected no | script, the maintainer's SH10RT, any evening |
-   | b | any | part full | **the forced-charging schedule** (33208-33219) under a cap | does the cap hold a scheduled charge? the one way left to explain ulfben (#546) | script, either site, any evening; at bar12 the charge began only after the cap was lifted |
    | c | above the load | not full | normal operation, cap 200 | does the cap disturb export or the charge? expected no | script, a bright day |
    | d | above the load | full | normal operation, cap 200 | the same with export | script, a bright day, battery full |
    | e | above the load | part full | forced charge above the surplus | the grid's share capped, PV counted | the engine check, daylight |
-   | f | none | empty | forced charge, through a WiNet-S on P022 | the transport on other firmware | gerd |
+   | f | any | part full | the forced-charging schedule under a cap, on P022 | the schedule on a second firmware | gerd, with his Home Assistant stopped: on 2026-11-08 it held the cable for an hour, and the dongle stopped answering mid-restore |
 
    Not worth a run: a full battery at night, a forced charge into a full
    battery (the engine skips at 90 %), a forced discharge.
@@ -163,17 +164,17 @@ Nothing can start now (blocker 18).
 
 1. **The site import limit (32998) at fwitten's master, when it is
    reachable** (SH10RT-V112, P023, SBR096, cable): the same model,
-   firmware and battery as ulfben's (#546). bar12 settled P023 and the
-   WiNet-S on 2026-11-07 by script (wiki: bar12-import-limit-2026-11-07):
-   the cap held both ways. What fwitten adds is the engine's own
+   firmware and battery as ulfben's (#546). P020, P022 and P023 obeyed,
+   cable and WiNet-S, EMS and schedule (wiki: gerd-import-limit-2026-11-08,
+   bar12-import-limit-*); what fwitten adds is the engine's own
    `--import-limit` check on P023, and ulfben's exact hardware. Its
-   addresses did not answer on 2026-11-07 (nothing on 502 at the master,
-   its WiNet-S or the slave). How: from this checkout,
-   `sungrow_capability_test.py <host> --import-limit --allow-dark --no-restart`,
-   a dry run first, the stand-in read before any write; their Home
-   Assistant stays connected, so expect retries. After dark, a battery
-   under 90 % and not in Standby. Then ingest, and the reply to #546
-   (drafted), which can already say P023 and the WiNet-S obey.
+   addresses did not answer on 2026-11-07. How: from this checkout,
+   `sungrow_capability_test.py <host> --import-limit --allow-dark
+   --no-restart`, a dry run first, the stand-in read before any write;
+   their Home Assistant stays connected, so expect retries. After dark, a
+   battery under 90 % and not in Standby. Then ingest, and the reply to
+   #546 (drafted in the session of 2026-11-07; its table is in the wiki's
+   register 32998 page).
 
 # Blockers
 
@@ -223,18 +224,23 @@ Nothing can start now (blocker 18).
 6. **Writing the discharge schedules, and the import limit** (#785), in
    no Sungrow document. The schedules read as diagnostic entities
    (`Capability.DISCHARGE_SCHEDULE`); writing them needs a watched write, as
-   31211 did (wiki: firmware gating), from a capability test run with leave. The
-   site import power limit, register 32998, is in 0.01 kW (discussion #546;
-   wiki: register 32998): it holds a meter-measured cap on an SH10RS, refuses
-   a word above 5000, and on the maintainer's SH10RT (P020) held import at
-   2.00 kW under a 4500 W forced charge by cutting the charge (2026-11-07,
-   night, cable; wiki: mkaiser-import-limit-2026-11-07). On one SH10RT-V112
-   it is reported ignored during a forced charge (wiki query). An entity
-   needs a watched write per firmware. P020 has three (night and PV by
-   script, then the capability test's `--import-limit` check, 2026-11-07): the
-   cap is on import alone, and 1-5000 is the accepted range. The integration
-   reads it as the diagnostic sensor Grid import limit; the control waits on
-   the P023 and WiNet-S runs (Planned tests item 1).
+   31211 did (wiki: firmware gating), from a capability test run with leave.
+
+   **The import limit, register 32998, can become a control now.** Watched
+   writes exist on P020 (three runs, the maintainer's SH10RT), P022 (gerd,
+   cable and WiNet-S) and P023 (bar12, cable and WiNet-S, EMS and
+   schedule); everywhere the cap held every charge commanded, on grid
+   import alone, and 1-5000 (0.01-50.00 kW) is the accepted range (wiki:
+   register 32998). The one contrary report (ulfben, #546) is unexplained;
+   the reply is drafted. To decide before building:
+   - a number in **kW** (0.01 step), which the number generator does not
+     offer yet (`%` and `W` only), or in W with a 10 W step;
+   - the read-only sensor *Grid import limit* beside it, or replaced by it
+     (the number shows the same value);
+   - a new `IMPORT_LIMIT` capability (does 32998 answer) and
+     `IMPORT_LIMIT_CONTROL` in `CONFIRMED_ON_FIRMWARE` for P020, P022 and
+     P023, as 31211's cut is gated;
+   - the help text: it caps a charge from the grid, never the house load.
 
 7. **The discharge window on P023** (#785). It has run on P022 and P020,
    and the device pages and log say so; no P023 or SBR house has run it

@@ -554,3 +554,11 @@ The capability test gains `--forced-startup`: from low-SoC standby it writes 0xA
 inverter start, writes 0x55, watches it sleep, and restores the register. The restore's one
 equivalence, 13017's factory 0 put back as 0x55, is on capability-test-restore. Updated
 register-13017. No hardware run yet.
+
+## [2026-11-08] ingested | bar12-import-limit-schedule-2026-11-07 and gerd-import-limit-2026-11-08
+
+bar12 (P023): 32998 capped a charge commanded by the forced-charging schedule, within one sample,
+following the load. gerd (P022): it capped an EMS forced charge over the cable and through the
+WiNet-S. Under gerd's polling Home Assistant the dongle stopped answering mid-restore and the cable
+closed every session for most of an hour; the restore was read back over the other path. Updated
+register-32998, P022, P023, installation-gerd, device-winet-s, the forced-charge query.
