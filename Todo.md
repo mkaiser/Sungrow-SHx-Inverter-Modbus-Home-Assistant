@@ -173,24 +173,17 @@ Nothing can start now (blocker 17).
       included. The terminal's `--merge-into` folds a run into
       the runs a document carries (`--replace` puts it in their place).
       Released in 0.1.0a30. Left:
-      1. **Auto repeat starts runs into Standby.** A night at the
-         maintainer's SH10RT (19 runs, wiki: the fourth mkaiser reading)
-         established the import limit, the charge window and the charge
-         ceiling, but ten runs from 00:09 to 04:39 UTC were refused (outcome 2)
-         because the inverter sat in low-SoC Standby. Each one counted against
-         `MAX_RUNS_PER_DAY`. `continuous.py`'s `_live` has no running state, and
-         `ledger.due` cannot see one, so a Standby inverter looks due every
-         30 min. Fix: read 13000's running state into `ledger.Live` and wait
-         while the inverter is not running, without counting the wait as a run.
-         `continuous.py` has another agent's uncommitted edits.
-      2. **The charge window is judged without room to charge.** At
-         mkaiser's dev run the battery already charged 2747 W from PV against a
-         2835 W ceiling. The window could add about 90 W, it read
-         "nothing measurable happened", and the ledger folded that as
-         established. Fix in `effects.py`'s `_charge_window_effect`: skip with
-         a note when the charge power already sits within a margin of
-         `snapshot.battery_ceiling`, as the export check already sizes against
-         it. Until then, *Diagnosis: tests, clear history* re-opens it.
+      1. **The slot schedule on hardware**: one night at the maintainer's
+         SH10RT, to see that low-SoC Standby starts no run and *Diagnosis: next
+         start* names the next slot. Runs are kept with no cap, so a long
+         collection grows the stored ledger and the diagnostics download
+         (19 runs were 265 kB); clear the history between collections.
+      2. **The charge window with no room to charge** (revision 2 in
+         `coverage.CHECK_REVISIONS`, by another session): it is judged only
+         after the window was written, and the 300 W floor also skips a battery
+         charging a few hundred watts with kilowatts of headroom. A check of
+         the headroom against `snapshot.battery_ceiling` before writing would
+         do both.
       3. **Translate** the status line, the step sensor's states (*waiting
          for changed test conditions*, *stopped*) and the notifications once
          their wording settles; English for now.

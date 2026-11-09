@@ -107,9 +107,10 @@ Please do not restart Home Assistant while a run is going.
   settings and puts every one back, checked by reading it again. Read
   [what it does, and how to opt out](../device-diagnosis/README.md#it-reads-and-writes-only-if-you-say-yes)
   first.
-- *Extended test (auto repeat)* starts a capability test on its own whenever
-  the house can answer a check still missing, at most every 30 minutes and
-  twelve times a day, leaving out what earlier runs established, the
+- *Extended test (auto repeat)* starts a capability test on its own, at most
+  one in every 30 minutes counted from the press of **Diagnosis: start**,
+  whenever the inverter is running and the house can answer a check still
+  missing. It leaves out what earlier runs established, the
   inverter restart included. **Diagnosis: current step** says what it waits
   for and **Diagnosis: next start** when the clock allows the next one. It
   ends with **Diagnosis: stop**, when nothing is left to wait for, or at a

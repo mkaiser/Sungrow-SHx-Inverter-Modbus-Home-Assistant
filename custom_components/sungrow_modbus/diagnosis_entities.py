@@ -405,7 +405,7 @@ class DiagnosisNextStartSensor(DiagnosisEntity, SensorEntity):
 
 
 class DiagnosisTestRunsSensor(DiagnosisEntity, SensorEntity):
-    """How many capability test runs are kept, with how many started today.
+    """How many capability test runs are kept, with how many auto repeat started.
 
     No `state_class`, for the reason `DiagnosisProgressSensor` gives.
     """
@@ -422,8 +422,8 @@ class DiagnosisTestRunsSensor(DiagnosisEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Runs auto repeat started today."""
-        return {"runs_today": self._runner.continuous.runs_today}
+        """Runs auto repeat started since Start was pressed."""
+        return {"runs_started": self._runner.continuous.runs_started}
 
 
 class ClearCapabilityTestHistoryButton(DiagnosisEntity, ButtonEntity):

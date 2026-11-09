@@ -649,3 +649,9 @@ P020. Restarts took 367 s after dark and 186 s in daylight. The discharge window
 connection three times. The second, from `make dev`, repeated the ceiling; its charge window read
 "nothing measurable happened" with the battery already near its charge ceiling, and folded as
 established. Updated installation-mkaiser, P020, the index.
+
+## [2026-11-09] changed | auto repeat runs in 30-minute slots from Start, waits for Running
+
+Auto repeat starts at most one run in each 30-minute slot counted from the press of *Diagnosis:
+start*, no longer at most twelve a day, and none while the inverter is not running, after a night
+at mkaiser's spent ten runs refused in low-SoC Standby. Updated capability-test.

@@ -195,8 +195,13 @@ inverter restart included, so a restart is measured once per collection.
 check needs (`ledger.NEEDS`: the import limit needs PV under 200 W and room in
 the battery, the PV cut needs PV above 700 W) and starts the ordinary run when
 one is due: its own snapshot, its own restore, the entry's options as for the
-button. At least 30 minutes between starts, at most 12 a day, and it switches
-itself off when nothing a moment can answer is left. A check the options
+button. At most one run in each 30-minute slot counted from the press of
+*Diagnosis: start*, none while the inverter is not running, two minutes of
+quiet after a run, no daily cap, and it switches itself off when nothing a
+moment can answer is left (`custom_components/sungrow_modbus/continuous.py`).
+A night of runs at [mkaiser](../entities/installation-mkaiser.md) showed why it
+waits on the running state: ten runs started into low-SoC Standby, and each was
+refused (the [fourth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-3-summary.md)). A check the options
 refuse is never waited for.
 
 ## Drivers

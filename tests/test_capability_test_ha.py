@@ -18,6 +18,7 @@ than a feature:
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 from datetime import timedelta
 from typing import Any
 from unittest.mock import patch
@@ -634,7 +635,7 @@ async def _auto_repeat(hass: HomeAssistant, on: bool) -> None:
 async def test_auto_repeat_runs_at_once_then_waits_out_the_gap(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:
-    """Start is the leave: a first run starts, and the next waits 30 minutes."""
+    """Start is the leave: a first run starts, and the next waits for the next slot."""
     entry = await _setup(hass, ready_unit)
     runner = entry.runtime_data.diagnosis
     assert not runner.continuous.active
@@ -643,7 +644,7 @@ async def test_auto_repeat_runs_at_once_then_waits_out_the_gap(
 
     assert runner.continuous.active
     assert len(runner.state.capability_test["runs"]) == 1
-    assert runner.continuous.runs_today == 1
+    assert runner.continuous.runs_started == 1
     assert hass.states.get("sensor.sh10rt_diagnosis_test_runs").state == "1"
     assert hass.states.get(START).state == STATE_UNAVAILABLE
 
@@ -651,7 +652,7 @@ async def test_auto_repeat_runs_at_once_then_waits_out_the_gap(
     await hass.async_block_till_done()
     assert runner._task.done()
     assert len(runner.state.capability_test["runs"]) == 1
-    assert "at the earliest" in hass.states.get(STATUS).attributes["continuous_waiting"]
+    assert "the next run at" in hass.states.get(STATUS).attributes["continuous_waiting"]
     # Waiting is visible where a person looks, and the clock says when.
     assert hass.states.get(STEP).state.startswith(
         "waiting for changed test conditions: "
@@ -674,12 +675,12 @@ async def test_auto_repeat_leaves_out_what_is_established_and_the_restart(
     established = ledger.established(runner.state.capability_test)
     assert established
 
-    runner.continuous.last_start = None
+    later = dt_util.utcnow() + timedelta(minutes=30)
     with patch(
         "custom_components.sungrow_modbus.continuous.ledger.due",
         return_value=["another run"],
     ):
-        runner.continuous._async_tick(dt_util.utcnow())
+        runner.continuous._async_tick(later)
     await runner._task
     await hass.async_block_till_done()
 
@@ -866,24 +867,85 @@ async def test_skipping_established_checks_survives_a_reload(
     assert entry.runtime_data.diagnosis.skip_established
 
 
-async def test_next_start_is_tomorrow_once_the_day_is_used_up(
+async def test_next_start_is_the_next_slot_from_the_press(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:
-    """The day's cap names a time; waiting on the house names none."""
-    from custom_components.sungrow_modbus.continuous import MAX_RUNS_PER_DAY
+    """Slots run every 30 minutes from the press of Start, with no daily cap."""
+    from custom_components.sungrow_modbus.continuous import INTERVAL
 
     entry = await _setup(hass, ready_unit)
     continuous = entry.runtime_data.diagnosis.continuous
-    now = dt_util.utcnow()
-    assert continuous.next_start(now) is None, "off"
+    assert continuous.next_start(dt_util.utcnow()) is None, "off"
 
     await _auto_repeat(hass, True)
-    continuous.last_start = None
-    assert continuous.next_start(now) is None, "the house decides, not the clock"
+    pressed = continuous.started_at
+    assert pressed is not None
+    assert continuous.next_start(pressed) == pressed + INTERVAL
 
-    continuous.runs_today = MAX_RUNS_PER_DAY
-    continuous._day = dt_util.as_local(now).date().isoformat()
-    assert continuous.next_start(now) == dt_util.start_of_local_day(
-        dt_util.as_local(now) + timedelta(days=1)
+    # Late in the day, many slots on: still one run per slot, never a day's cap.
+    much_later = pressed + 40 * INTERVAL + timedelta(minutes=3)
+    with patch(
+        "custom_components.sungrow_modbus.continuous.ledger.due",
+        return_value=["another run"],
+    ):
+        continuous._async_tick(much_later)
+    await entry.runtime_data.diagnosis._task
+    await hass.async_block_till_done()
+    assert continuous.runs_started == 2
+    assert continuous.next_start(much_later) == pressed + 41 * INTERVAL
+
+    # A slot whose house never allows a run names no time: the house decides.
+    continuous._last_slot = None
+    assert continuous.next_start(much_later) is None
+    await _auto_repeat(hass, False)
+
+
+async def test_auto_repeat_waits_while_the_inverter_is_not_running(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """Low-SoC Standby at night starts no run, and spends no slot."""
+    entry = await _setup(hass, ready_unit)
+    continuous = entry.runtime_data.diagnosis.continuous
+    await _auto_repeat(hass, True)
+    assert continuous.started_at is not None
+    later = continuous.started_at + timedelta(minutes=31)
+
+    with (
+        patch.object(continuous, "_inverter_running", return_value=False),
+        patch(
+            "custom_components.sungrow_modbus.continuous.ledger.due",
+            return_value=["another run"],
+        ),
+    ):
+        continuous._async_tick(later)
+    await hass.async_block_till_done()
+
+    assert continuous.runs_started == 1
+    assert continuous.waiting == "waiting for the inverter to run"
+    await _auto_repeat(hass, False)
+
+
+async def test_auto_repeat_keeps_quiet_after_a_run(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """A slot that opens just as the last run ended waits for the link to settle."""
+    entry = await _setup(hass, ready_unit)
+    runner = entry.runtime_data.diagnosis
+    continuous = runner.continuous
+    await _auto_repeat(hass, True)
+    assert continuous.started_at is not None
+    slot = continuous.started_at + timedelta(minutes=30)
+    runner.state = dataclasses.replace(
+        runner.state, finished=slot - timedelta(seconds=30)
     )
+
+    with patch(
+        "custom_components.sungrow_modbus.continuous.ledger.due",
+        return_value=["another run"],
+    ):
+        continuous._async_tick(slot)
+    await hass.async_block_till_done()
+
+    assert continuous.runs_started == 1
+    assert "quiet" in continuous.waiting
     await _auto_repeat(hass, False)

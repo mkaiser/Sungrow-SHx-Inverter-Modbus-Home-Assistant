@@ -1,11 +1,13 @@
-"""Continuous capability testing: run again whenever the house allows a missing check.
+"""Continuous capability testing: a run every half hour from the press of Start.
 
 One run answers only the checks its moment allowed (`ledger` says why), so an
 owner who wants every check answered would have to come back at noon, in the
-evening and after dark. This does the coming back. While it is on it looks at
-the polled readings once a minute, and starts the ordinary run -- part A,
-then part B, with its own snapshot and its own restore -- when a check still
-missing needs what the house is doing now.
+evening and after dark. This does the coming back. The press of *Diagnosis:
+start* opens the first half-hour slot, and every `INTERVAL` after it opens the
+next. In each slot at most one run starts -- the ordinary run, part A then
+part B, with its own snapshot and its own restore -- at the first minute
+(`TICK`) the inverter is running and a check still missing needs what the
+house is doing now. A slot in which that never happens passes without a run.
 
 **The switch is the leave, and it ends at a restart.** Turning it on is a
 person deciding, once, that runs may start without them at a terminal. It
@@ -13,9 +15,10 @@ lasts until they turn it off or Home Assistant restarts or reloads the entry,
 and it is never restored on: a reboot never resumes writing by itself. What
 each run may do is still the entry's options, exactly as for the button.
 
-Bounded so a forgotten switch cannot become a nuisance: at least `MIN_GAP`
-between starts, at most `MAX_RUNS_PER_DAY`, and it switches itself off once
-nothing waiting can answer is left.
+Bounded so a forgotten switch cannot become a nuisance: one run per slot, never
+one while the inverter is not running (low-SoC Standby at night would refuse
+it anyway, after part A), at least `QUIET` after the last run ended, and it
+switches itself off once nothing waiting can answer is left.
 """
 
 from __future__ import annotations
@@ -27,7 +30,7 @@ from typing import TYPE_CHECKING, Any
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.util import dt as dt_util
-from sungrow_modbus.capability_test import ledger
+from sungrow_modbus.capability_test import is_running, ledger
 
 if TYPE_CHECKING:
     from .coordinator import SungrowConfigEntry
@@ -39,13 +42,15 @@ _LOGGER = logging.getLogger(__name__)
 #: this costs no Modbus read of its own.
 TICK = timedelta(minutes=1)
 
-#: The least time between two starts. A run pauses polling and writes for
-#: minutes; the house, and the link's few sessions, need the quiet after it
-#: (wiki: contention, 90 s to recover) and a moment that has actually changed.
-MIN_GAP = timedelta(minutes=30)
+#: The length of one slot, counted from the press of Start. A run pauses
+#: polling and writes for minutes, so a shorter one would leave the house's
+#: own readings stale for much of the time.
+INTERVAL = timedelta(minutes=30)
 
-#: The most runs started in one calendar day, local time.
-MAX_RUNS_PER_DAY = 12
+#: The least time from the end of one run to the start of the next, when a
+#: late run in one slot ends near the next slot's start: the link's few
+#: sessions need it (wiki: contention, 90 s to recover).
+QUIET = timedelta(minutes=2)
 
 
 class ContinuousCapabilityTest:
@@ -59,9 +64,10 @@ class ContinuousCapabilityTest:
         self.entry = entry
         self.runner = runner
         self._cancel: CALLBACK_TYPE | None = None
+        self.started_at: datetime | None = None
         self.last_start: datetime | None = None
-        self._day: str | None = None
-        self.runs_today = 0
+        self._last_slot: int | None = None
+        self.runs_started = 0
         self.waiting: str = "off"
 
     @property
@@ -80,8 +86,11 @@ class ContinuousCapabilityTest:
             "switched off or Home Assistant restarts.",
             self.entry.title,
         )
+        now = dt_util.utcnow()
+        self.started_at, self.last_start, self._last_slot = now, None, None
+        self.runs_started = 0
         self._cancel = async_track_time_interval(self.hass, self._async_tick, TICK)
-        self._async_tick(dt_util.utcnow())
+        self._async_tick(now)
 
     @callback
     def async_turn_off(self, why: str = "off") -> None:
@@ -113,6 +122,20 @@ class ContinuousCapabilityTest:
             soc=value("battery_level"),
         )
 
+    def _inverter_running(self) -> bool | None:
+        """Whether the last poll saw the inverter running; None if not polled."""
+        device = self.entry.runtime_data.inverter_coordinator.device
+        try:
+            word = device.field("running_state_raw")
+        except AttributeError:
+            return None
+        return None if word is None else is_running(int(word))
+
+    def _slot(self, now: datetime) -> int:
+        """Return the number of the slot `now` falls in, 0 from the press."""
+        assert self.started_at is not None
+        return max(0, int((now - self.started_at) / INTERVAL))
+
     @callback
     def _async_tick(self, now: datetime) -> None:
         """Start a run when one is allowed and something missing is due."""
@@ -124,15 +147,17 @@ class ContinuousCapabilityTest:
         if not waiting:
             self.async_turn_off("nothing left that a run at another moment can answer")
             return
-        day = dt_util.as_local(now).date().isoformat()
-        if day != self._day:
-            self._day, self.runs_today = day, 0
-        if self.runs_today >= MAX_RUNS_PER_DAY:
-            self._say(f"{MAX_RUNS_PER_DAY} runs today; again tomorrow")
+        if self._last_slot is not None and self._slot(now) <= self._last_slot:
+            ready_at = self.next_start(now)
+            if ready_at is not None:
+                self._say(f"the next run at {dt_util.as_local(ready_at):%H:%M}")
             return
-        if self.last_start is not None and now - self.last_start < MIN_GAP:
-            ready_at = dt_util.as_local(self.last_start + MIN_GAP)
-            self._say(f"the next run at {ready_at:%H:%M} at the earliest")
+        finished = self.runner.state.finished
+        if finished is not None and now - finished < QUIET:
+            self._say("a moment of quiet after the last run")
+            return
+        if self._inverter_running() is False:
+            self._say("waiting for the inverter to run")
             return
         due = ledger.due(folded, self._live())
         if not due:
@@ -142,11 +167,12 @@ class ContinuousCapabilityTest:
             return
         if self.runner.async_start(capability_test=True):
             self.last_start = now
-            self.runs_today += 1
+            self._last_slot = self._slot(now)
+            self.runs_started += 1
             _LOGGER.info(
-                "%s: continuous capability testing started run %d today, for %s",
+                "%s: continuous capability testing started run %d, for %s",
                 self.entry.title,
-                self.runs_today,
+                self.runs_started,
                 ", ".join(due),
             )
             self._say("running for " + ", ".join(due))
@@ -161,19 +187,14 @@ class ContinuousCapabilityTest:
     def next_start(self, now: datetime) -> datetime | None:
         """Return the earliest a run may start on its own, when time decides it.
 
-        `last_start + MIN_GAP` while that gap runs, the next local midnight
-        once the day's runs are used up, and None when it is off, a run is in
-        flight, or what decides is the house rather than the clock.
+        The start of the next slot once this slot has had its run, and None
+        when it is off, a run is in flight, or what decides is the house
+        rather than the clock.
         """
-        if not self.active or self.runner.state.running:
+        if not self.active or self.runner.state.running or self.started_at is None:
             return None
-        local = dt_util.as_local(now)
-        if self._day == local.date().isoformat() and (
-            self.runs_today >= MAX_RUNS_PER_DAY
-        ):
-            return dt_util.start_of_local_day(local + timedelta(days=1))
-        if self.last_start is not None and now - self.last_start < MIN_GAP:
-            return self.last_start + MIN_GAP
+        if self._last_slot is not None and self._slot(now) <= self._last_slot:
+            return self.started_at + (self._last_slot + 1) * INTERVAL
         return None
 
     def attributes(self) -> dict[str, Any]:
@@ -181,7 +202,7 @@ class ContinuousCapabilityTest:
         return {
             "continuous": self.active,
             "continuous_waiting": self.waiting,
-            "continuous_runs_today": self.runs_today,
+            "continuous_runs_started": self.runs_started,
             "continuous_last_start": (
                 self.last_start.isoformat() if self.last_start else None
             ),
