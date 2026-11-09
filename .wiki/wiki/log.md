@@ -680,3 +680,9 @@ its stand-in. The network search also asks unit 247 (ports 502-505, and TLS 516 
 answers) and offers an iHomeManager or a Logger as a diagnosis-only entry, the same document as
 `ihomemanager_direct.py`. Neither device has been read here. Updated device-wallbox,
 device-ihomemanager, device-logger.
+
+## [2026-11-09] checked | the wallbox entry's diagnosis, run from Home Assistant at gerd's
+
+*Diagnosis: start* on the standalone AC22E-01 entry in the dev Home Assistant read 32 values and
+published the stand-in the committed wallbox documents carry, address withheld. The wallbox was
+idle, so the document adds nothing to them and is not ingested. Updated nothing else.
