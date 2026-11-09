@@ -30,8 +30,12 @@ from aiohttp import web
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.components.http.auth import async_sign_path
 from homeassistant.core import HomeAssistant, callback
-from sungrow_modbus import string_inverter
-from sungrow_modbus.diagnosis_document import label_for
+from sungrow_modbus import ihomemanager, logger, string_inverter
+from sungrow_modbus.diagnosis_document import (
+    WALLBOX_DOCUMENT,
+    label_for,
+    wallbox_label_for,
+)
 
 if TYPE_CHECKING:
     from .coordinator import SungrowConfigEntry
@@ -108,6 +112,12 @@ def _filename(document: dict[str, Any]) -> str:
     """
     if document.get("document") == string_inverter.DOCUMENT:
         return f"{string_inverter.label_for(document)}.json"
+    if document.get("document") == WALLBOX_DOCUMENT:
+        return f"{wallbox_label_for(document)}.json"
+    if document.get("document") == ihomemanager.DOCUMENT:
+        return f"{ihomemanager.label_for(document)}.json"
+    if document.get("document") == logger.DOCUMENT:
+        return f"{logger.label_for(document)}.json"
     return f"{label_for(document)}.json"
 
 

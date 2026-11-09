@@ -333,10 +333,14 @@ class SungrowSubDeviceCoordinator(
         hass: HomeAssistant,
         entry: SungrowConfigEntry,
         device: Any,
-        inverter: SungrowInverter,
+        inverter: SungrowInverter | None,
         interval: timedelta,
     ) -> None:
-        """Initialize the coordinator."""
+        """Initialize the coordinator.
+
+        `inverter` is `None` for a wallbox that is an entry of its own: there
+        is no inverter to take an identity from or to hang the device on.
+        """
         super().__init__(
             hass,
             _LOGGER,
@@ -357,6 +361,12 @@ class SungrowSubDeviceCoordinator(
         project deliberately never reads. So the only stable identity either
         device has is the inverter it is reached through.
         """
+        if self._inverter is None:
+            # A wallbox that is an entry of its own: it has nothing to be
+            # identified by but its own serial, which setup reads before any
+            # entity exists and refuses to go on without.
+            assert self.own_serial is not None
+            return self.own_serial
         serial = self._inverter.serial_number
         assert serial is not None
         return serial
@@ -452,6 +462,7 @@ class SungrowBatteryCoordinator(SungrowSubDeviceCoordinator):
         at the model from a missing capacity would be a label nobody could
         correct.
         """
+        assert self._inverter is not None
         capacity = self._inverter.field("battery_capacity_high_precision")
         model: str | None = self.device.model(
             capacity if isinstance(capacity, float) else None
@@ -667,6 +678,38 @@ class SungrowRuntimeData:
     """
 
     @property
+    def is_device_only(self) -> bool:
+        """Whether this entry is a diagnosis of a device at unit 247, nothing else."""
+        return self.device is not None
+
+    @property
+    def diagnosis_device(self) -> tuple[str, dr.DeviceInfo]:
+        """Return the unique-id prefix and device the diagnosis entities sit on.
+
+        The inverter's, the wallbox's own where the entry is a wallbox, or the
+        unit 247 device's.
+        """
+        if self.device is not None:
+            prefix, info = self.device
+            return prefix, info
+        if self.is_wallbox_only:
+            assert self.wallbox is not None
+            return self.wallbox.inverter_serial, self.wallbox.device_info
+        coordinator = self.inverter_coordinator
+        serial = coordinator.device.serial_number
+        assert serial is not None
+        return serial, coordinator.device_info
+
+    @property
+    def is_wallbox_only(self) -> bool:
+        """Whether this entry is a wallbox at its own address and nothing else."""
+        return (
+            self.wallbox is not None
+            and not self.coordinators
+            and not self.string_inverter
+        )
+
+    @property
     def is_string_inverter(self) -> bool:
         """Whether this entry's inverter is an SG."""
         return bool(self.string_inverter)
@@ -689,6 +732,12 @@ class SungrowRuntimeData:
     def coordinator_for(self, component: str) -> SungrowDataUpdateCoordinator:
         """Return the coordinator that owns a component's data."""
         return self.coordinators[component]
+
+    device: Any = None
+    """`(unique-id prefix, DeviceInfo)` of an iHomeManager or Logger entry.
+
+    `None` on every other entry. After `diagnosis`, for the reason it gives.
+    """
 
     polling_paused: bool = False
     """True while a diagnosis or capability test wants the link to itself.

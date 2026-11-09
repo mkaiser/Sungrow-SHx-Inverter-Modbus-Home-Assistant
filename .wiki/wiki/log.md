@@ -664,3 +664,19 @@ charge window is written, and 13088 recorded during the export check. Auto repea
 polled readings to plausibility checks every minute and counts them with the runs; a check
 established by day is measured once more at night. Not run on hardware yet. Updated
 capability-test.
+
+## [2026-11-09] changed | the network search finds a wallbox at its own address
+
+The config flow's sweep also looks on port 516 and probes it over TLS at unit 248; a wallbox that
+names itself and gives a serial is offered in the picker and set up as an entry of its own (read
+only, identified by its own serial, no inverter). Dongle-carried wallboxes (unit 3) are not
+searched for. Not run on hardware yet. Updated device-wallbox.
+
+## [2026-11-09] changed | diagnoses for a wallbox, an iHomeManager and a Logger from Home Assistant
+
+A wallbox entry gets a read-only diagnosis that writes the same document as `wallbox_direct.py`;
+read at gerd's outside Home Assistant on the same code path, it answered 299 registers and kept
+its stand-in. The network search also asks unit 247 (ports 502-505, and TLS 516 where no wallbox
+answers) and offers an iHomeManager or a Logger as a diagnosis-only entry, the same document as
+`ihomemanager_direct.py`. Neither device has been read here. Updated device-wallbox,
+device-ihomemanager, device-logger.

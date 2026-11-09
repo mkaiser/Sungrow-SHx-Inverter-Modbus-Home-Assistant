@@ -362,7 +362,17 @@ async def _identify_ihomemanager(connection: Any) -> Identity | None:
     An iHomeManager only when the code is its documented 0x072A; any other
     code is `UNIT_247_DEVICE`, so a Logger is never read as one.
     """
-    unit = connection.for_unit(IHOMEMANAGER_UNIT)
+    return await async_identify_unit_247_on(connection.for_unit(IHOMEMANAGER_UNIT))
+
+
+async def async_identify_unit_247_on(unit: Any) -> Identity | None:
+    """Ask a unit 247 the caller already holds what it is, or None.
+
+    The same reads as `async_identify_unit_247`, for a caller that owns the
+    link -- Home Assistant shares one connection per endpoint, and opening a
+    second would cost an iHomeManager its one session per port. A failed read
+    is no answer, never a refusal: None either way.
+    """
     try:
         space, start, count = IHOMEMANAGER_TYPE
         values = await _read_words(unit, (space, start, count))

@@ -40,6 +40,12 @@ theirs ([evcc cross-reference](../sources/cross-reference-evcc-summary.md)).
   answers a type code there too, with its device counts at 8005-8006, by the
   map posted in discussion #262; any other code is reported by its number
   and not read (`discovery.UNIT_247_DEVICE`).
+- **In Home Assistant:** the network search asks unit 247 on every open
+  port 502-505 and offers an iHomeManager as an entry of its own that only
+  runs its diagnosis: no entities measure it. *Diagnosis: start* builds the
+  same document as the terminal (`custom_components/sungrow_modbus/device_diagnosis.py`,
+  from the library's `ihomemanager` package). Identified by kind, host and
+  port, since it documents no serial. Not run on a real unit yet.
 - **How it is read:** `sungrow_diagnosis.py` reads it with
   `device-diagnosis/scripts/python/ihomemanager_direct.py`, into a document of
   its own (`"document": "ihomemanager"`): every register the document defines,

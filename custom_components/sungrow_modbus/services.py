@@ -303,6 +303,12 @@ def _async_entry_for(hass: HomeAssistant, device_id: str) -> SungrowConfigEntry:
                     translation_key="entry_not_loaded",
                     translation_placeholders={"title": entry.title},
                 )
+            if entry.runtime_data.is_wallbox_only or entry.runtime_data.is_device_only:
+                raise ServiceValidationError(
+                    translation_domain=DOMAIN,
+                    translation_key="not_on_wallbox",
+                    translation_placeholders={"title": entry.title},
+                )
             return entry
 
     raise ServiceValidationError(

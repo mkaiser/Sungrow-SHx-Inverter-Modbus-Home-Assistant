@@ -54,6 +54,12 @@ async def async_setup_entry(
     one, and a button that can only refuse is worse than none.
     """
     runtime_data = entry.runtime_data
+    if runtime_data.is_wallbox_only or runtime_data.is_device_only:
+        # A read-only diagnosis, nothing else: a wallbox entry writes nothing.
+        async_add_entities(
+            [DiagnosisStartButton(runtime_data), DiagnosisStopButton(runtime_data)]
+        )
+        return
     if entry.data.get(CONF_MODE, MODE_DEVICES) != MODE_DIAGNOSTICS:
         async_add_entities(
             SungrowButton(runtime_data, description)

@@ -33,7 +33,12 @@ dongle, or at its own address with the `wallbox_host` option) and an
 One config entry is **one inverter behind one Modbus endpoint** (host + port),
 plus the devices found on it,
 [identified by what answers](.wiki/wiki/concepts/identify-by-what-answers.md),
-never by unit id.
+never by unit id. The one exception is a
+[wallbox](.wiki/wiki/entities/device-wallbox.md) found by the network search at
+its own address (TLS, port 516, unit 248): it is an entry of its own, read only,
+identified by its own serial, with no inverter beside it. The search also
+offers an iHomeManager or a Logger (unit 247) as an entry that is only its
+diagnosis: nothing on it is measured.
 
 Home Assistant 2026.9's `modbus` integration hands a device integration a
 *unit* (`async_get_unit(...)`), and everything on one host/port shares one

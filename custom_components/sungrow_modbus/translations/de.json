@@ -5,7 +5,9 @@
       "devices_mode_not_offered": "Der Geräte-Modus ist in dieser Vorschau nicht verfügbar. Diese Version richtet die Integration nur für die Diagnose ein: Sie fragt den Wechselrichter ab und kann die Diagnose ausführen, legt aber keine Sensoren an. Die Freischaltung folgt in einer späteren Version; der Eintrag muss dafür nicht entfernt und neu hinzugefügt werden.",
       "wrong_device": "Diese Adresse meldet sich als anderer Wechselrichter ({model}), nicht als der hinter „{title}“. Es wurde nichts geändert. Jeder Wechselrichter behält seinen eigenen Eintrag; um jenen hinzuzufügen, wähle „Integration hinzufügen“.",
       "connection_unchanged": "Das ist bereits die Verbindung dieses Eintrags. Es wurde nichts geändert.",
-      "connection_moved": "„{title}“ verwendet jetzt die neue Verbindung. Der Eintrag wurde neu geladen; seine Entitäten, deren Verlauf und seine Einstellungen sind unverändert."
+      "connection_moved": "„{title}“ verwendet jetzt die neue Verbindung. Der Eintrag wurde neu geladen; seine Entitäten, deren Verlauf und seine Einstellungen sind unverändert.",
+      "wallbox_entry": "Das ist eine Wallbox, die unter ihrer eigenen Adresse gelesen wird. Sie hat keine Einstellungen: Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer.",
+      "unit_247_entry": "Dieser Eintrag führt nur die Diagnose eines iHomeManagers oder eines Sungrow-Loggers aus. Er misst nichts und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu."
     },
     "error": {
       "cannot_connect": "Verbindung fehlgeschlagen: {error}",
@@ -79,10 +81,10 @@
         }
       },
       "pick": {
-        "title": "Wechselrichter gefunden",
-        "description": "{count} Gerät(e) haben geantwortet und sich zu erkennen gegeben. Namen stammen aus dem DNS deines Routers, sofern er welche liefert, sonst wird die Adresse angezeigt.\n\nGibt es mehr als einen Wechselrichter, nennt jeder seine Rolle im Verbund und woher man sie kennt: **gemessen** wurde vom Wechselrichter selbst gelesen, **abgeleitet** wird aus den Antworten der anderen geschlossen. Eine abgeleitete Rolle ist eine gute Vermutung, keine Messung.\n\nIst keiner davon der gemeinte Wechselrichter, wähle die letzte Option, dann kannst du seine Adresse selbst eingeben.{note}",
+        "title": "Geräte gefunden",
+        "description": "{count} Gerät(e) haben geantwortet und sich zu erkennen gegeben. Namen stammen aus dem DNS deines Routers, sofern er welche liefert, sonst wird die Adresse angezeigt.\n\nEine **Wallbox** wird unter ihrer eigenen Adresse gefunden und als eigenes Gerät eingerichtet. Sie wird nur gelesen und über ihre eigene Seriennummer erkannt. Ein **iHomeManager** oder ein **Sungrow-Logger** wird nur für seine Diagnose eingerichtet: Er misst nichts, und seine Schaltfläche *Diagnose: starten* liest ihn in ein Dokument, das du einsenden kannst. Ein iHomeManager nimmt pro Port nur eine Verbindung an, daher kann einer übersehen werden, den ein anderes Programm belegt.\n\nGibt es mehr als einen Wechselrichter, nennt jeder seine Rolle im Verbund und woher man sie kennt: **gemessen** wurde vom Wechselrichter selbst gelesen, **abgeleitet** wird aus den Antworten der anderen geschlossen. Eine abgeleitete Rolle ist eine gute Vermutung, keine Messung.\n\nIst keines davon das gemeinte Gerät, wähle die letzte Option, dann kannst du seine Adresse selbst eingeben.{note}",
         "data": {
-          "host": "Wechselrichter"
+          "host": "Gerät"
         }
       },
       "search": {
@@ -1600,7 +1602,9 @@
       "running_diagnosis": "Dein Wechselrichter wird gelesen: 19 Funktionsprüfungen. Über ein WiNet-S kann das eine Minute dauern."
     },
     "abort": {
-      "devices_mode_not_offered": "Sensoren und Steuerungen einzurichten ist in dieser Version nicht enthalten. Diese Alpha legt nur Einträge für die Diagnose an; beginne erneut und wähle **Geräte-Diagnose durchführen**."
+      "devices_mode_not_offered": "Sensoren und Steuerungen einzurichten ist in dieser Version nicht enthalten. Diese Alpha legt nur Einträge für die Diagnose an; beginne erneut und wähle **Geräte-Diagnose durchführen**.",
+      "wallbox_entry": "Das ist eine Wallbox, die unter ihrer eigenen Adresse gelesen wird. Sie hat keine Einstellungen: Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer.",
+      "unit_247_entry": "Dieser Eintrag führt nur die Diagnose eines iHomeManagers oder eines Sungrow-Loggers aus. Er misst nichts und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu."
     }
   },
   "services": {
@@ -1709,6 +1713,9 @@
     },
     "device_read_error": {
       "message": "Fehler beim Lesen von {device}: {error}"
+    },
+    "not_on_wallbox": {
+      "message": "{title} ist kein Wechselrichter. Diese Aktion arbeitet an einem Wechselrichter; ein Eintrag für eine Wallbox, einen iHomeManager oder einen Logger hat nur seine eigenen Diagnose-Schaltflächen, und nichts in dieser Integration schreibt in eines dieser Geräte."
     }
   }
 }

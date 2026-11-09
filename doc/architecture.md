@@ -133,8 +133,26 @@ shown on its device page but published only as a stand-in. So the wallbox's devi
 and moving it from the dongle to its own address keeps its history.
 
 A wallbox never answers through the inverter's own LAN port, and its own
-address speaks Modbus only inside TLS on 516, with no port 502 -- so the
-config flow's sweep of 502 and 503 does not find it. Sub-devices are probed
+address speaks Modbus only inside TLS on 516, with no port 502. The config
+flow's sweep therefore also looks on 516 and asks what answers there over TLS
+at unit 248 (`_async_probe_wallbox`: a model name, then its own serial). A
+wallbox found that way is an **entry of its own** (`CONF_KIND` is
+`KIND_WALLBOX`): one coordinator, the sensor and binary sensor platforms, no
+inverter, no diagnosis, no options. Its device and unique ids are built from the
+wallbox's **own** serial, so it is a different device from the same wallbox
+read through an inverter entry's `wallbox_host`; the search offers it either
+way, and found again at another address the entry follows it. It has a
+read-only diagnosis of its own (`device_diagnosis.py`).
+
+The sweep also asks **unit 247** on every open port 502-505, and over TLS on
+516 where no wallbox answered there: an iHomeManager (type code 0x072A) or a
+Sungrow Logger (`logger.MODELS`) is offered as an entry of kind `ihomemanager`
+or `logger`, which is **only its diagnosis**: no coordinator, no measured
+entity, the *Diagnosis: start/stop* buttons and three sensors, and the
+library's document for it. Neither documents a serial, so the entry's unique
+id is kind, host and port. `DeviceDiagnosisRunner` is the read-only runner
+these three entries share; the inverter's `DiagnosisRunner` is not used for
+them. Sub-devices are probed
 again whenever the entry's endpoint changes, so a move from a dongle to a
 cable keeps the pack and loses a dongle-carried wallbox unless `wallbox_host`
 points at it; the move step says so before it happens.

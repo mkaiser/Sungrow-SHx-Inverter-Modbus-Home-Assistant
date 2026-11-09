@@ -158,12 +158,10 @@ class DiagnosisEntity(EnglishEntityId):
     def __init__(self, runtime_data: SungrowRuntimeData, key: str) -> None:
         """Attach to the entry's inverter device."""
         self._runner: DiagnosisRunner = runtime_data.diagnosis
-        coordinator = runtime_data.inverter_coordinator
-        serial = coordinator.device.serial_number
-        assert serial is not None
+        serial, device_info = runtime_data.diagnosis_device
         self._attr_unique_id = f"{serial}_{key}"
         self._attr_translation_key = key
-        self._attr_device_info: DeviceInfo = coordinator.device_info
+        self._attr_device_info: DeviceInfo = device_info
 
     @callback
     def async_entity_id_changed(self, old_entity_id: str) -> None:

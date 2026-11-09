@@ -32,6 +32,12 @@ inverters have been read *through* one ([code-imstillalive](installation-code-im
   unit 247 over TLS on 516 wherever no wallbox answers there, and wherever a
   typed address answers nothing on its plain port
   (`device-diagnosis/scripts/python/ihomemanager_direct.py`, `tests/test_logger.py`).
+- **In Home Assistant:** the network search asks unit 247 on every open
+  port 502-505, and over TLS on 516 where no wallbox answered there, and
+  offers a Logger as an entry of its own that only runs its diagnosis
+  (`custom_components/sungrow_modbus/device_diagnosis.py`, from the library's
+  `logger` package): the same document as the terminal, nothing measured.
+  Not run on a real Logger yet.
 - **What sits behind it:** each inverter and meter answers on the Logger's
   endpoint at its **forwarding address**, which the Logger's web page lists
   under Device List. At code-imstillalive's Logger1000A each device is also on

@@ -59,10 +59,17 @@ from sungrow_modbus import (
 )
 from sungrow_modbus.addresses import DIRECT_ONLY_PROBE, field_address, read
 from sungrow_modbus.diagnosis_document import OTHER_INVERTER_YES
-from sungrow_modbus.discovery import CONCURRENCY, TIMEOUT
+from sungrow_modbus.discovery import (
+    CONCURRENCY,
+    IHOMEMANAGER_UNIT,
+    TIMEOUT,
+    Identity,
+    async_identify_unit_247_on,
+)
 from sungrow_modbus.identity import STRING_INVERTER
 from sungrow_modbus.string_inverter import model_for as string_inverter_model_for
 from sungrow_modbus.wallbox import probe_units as wallbox_probe_units
+from sungrow_modbus.wallbox.device import SungrowWallbox
 
 from .config_flow_schemas import (
     NOT_LISTED,
@@ -101,6 +108,7 @@ from .const import (
     CONF_NETWORK,
     CONF_PERMISSIONS,
     CONF_REGISTER_DUMP,
+    CONF_TLS,
     CONF_UNIT_ID,
     CONF_WALLBOX_HOST,
     CONF_WALLBOX_MAX_AMPS,
@@ -117,6 +125,7 @@ from .const import (
     INTERVAL_MINIMUM,
     INTERVAL_NEVER,
     KIND_STRING_INVERTER,
+    KIND_WALLBOX,
     MODE_DEVICES,
     MODE_DIAGNOSTICS,
     ONLY_DIAGNOSIS_MODE,
@@ -131,9 +140,12 @@ from .const import (
     SECTION_EXTERNAL,
     SECTION_PERMISSIONS,
     SECTION_POLLING,
+    UNIT_247_KINDS,
+    UNIT_247_PORTS,
+    WALLBOX_TLS_PORT,
     WALLBOX_TLS_UNIT,
 )
-from .links import wallbox_tls_params
+from .links import unit_247_params, wallbox_tls_params
 from .migration import (
     IdSwitch,
     async_legacy_ids_known,
@@ -321,6 +333,79 @@ def _loses_wallbox(entry: ConfigEntry, direct: bool | None) -> bool:
     return getattr(runtime, "wallbox", None) is not None
 
 
+#: Every port a sweep looks on: the inverter's two, the other two an
+#: iHomeManager or a Logger may serve unit 247 on, and 516, where a wallbox
+#: or a Logger speaks Modbus inside TLS. A port is only a TCP connect here;
+#: what answers is asked afterwards.
+SWEEP_PORTS: tuple[int, ...] = tuple(
+    sorted({*SCAN_PORTS, *UNIT_247_PORTS, WALLBOX_TLS_PORT})
+)
+
+#: The picker's value for a wallbox, so it cannot collide with an inverter's
+#: address.
+WALLBOX_PREFIX = "wallbox:"
+
+#: The picker's value for an iHomeManager or Logger: `unit247:<host>:<port>`.
+UNIT_247_PREFIX = "unit247:"
+
+
+async def _async_probe_unit_247(
+    hass: HomeAssistant, host: str, port: int, *, tls: bool
+) -> Identity | None:
+    """Return the iHomeManager or Logger answering unit 247 here, or None.
+
+    One read of the type code at input 8000 (two for an iHomeManager), through
+    a temporary unit: an iHomeManager takes one TCP connection per port, so
+    a shared one is the only polite way to ask. Anything else answering at
+    247 -- a type code nobody has documented -- is not offered: there is no
+    map to diagnose it with.
+    """
+    try:
+        async with async_get_temporary_unit(
+            hass, unit_247_params(host, port, tls=tls), IHOMEMANAGER_UNIT
+        ) as unit:
+            found = await async_identify_unit_247_on(unit)
+    except (ModbusError, TimeoutError, OSError, HomeAssistantError) as err:
+        _LOGGER.debug("nothing at unit 247 on %s:%s: %s", host, port, err)
+        return None
+    if found is None or found.kind not in UNIT_247_KINDS:
+        return None
+    return found
+
+
+async def _async_probe_wallbox(
+    hass: HomeAssistant, host: str
+) -> tuple[str, str] | None:
+    """Return a wallbox's model and own serial at this address, or None.
+
+    Over TLS at unit 248, the way setup reads it: a model *name* first, as
+    the options flow's check does, then the serial, because an entry of its
+    own is identified by nothing else. A wallbox that names itself and will
+    not give a serial is not offered. A failed read is no answer, never a
+    refusal.
+    """
+    try:
+        async with async_get_temporary_unit(
+            hass, wallbox_tls_params(host), WALLBOX_TLS_UNIT
+        ) as unit:
+            if (
+                await wallbox_probe_units(lambda _unit_id: unit, (WALLBOX_TLS_UNIT,))
+                is None
+            ):
+                return None
+            device = SungrowWallbox(unit, WALLBOX_TLS_UNIT)
+            await device.async_update(only=("wallbox_identity",))
+            serial = await device.async_read_serial()
+            model = device.model
+    except (ModbusError, TimeoutError, OSError, HomeAssistantError) as err:
+        _LOGGER.debug("no wallbox over TLS at %s: %s", host, err)
+        return None
+    if serial is None:
+        _LOGGER.debug("a wallbox at %s named itself but gave no serial", host)
+        return None
+    return model or "Sungrow wallbox", serial
+
+
 class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a Sungrow Modbus config flow."""
 
@@ -339,6 +424,12 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         self._data: dict[str, Any] = {}
         self._title = DEFAULT_NAME
         self._found: dict[str, dict[str, Any]] = {}
+        #: Wallboxes the sweep found at their own address, by host. Kept apart
+        #: from `_found`, which is inverters: a wallbox has no inverter
+        #: serial, no role and no path to describe.
+        self._wallboxes: dict[str, dict[str, Any]] = {}
+        #: iHomeManagers and Loggers the sweep found, by `host:port`.
+        self._unit_247: dict[str, dict[str, Any]] = {}
         self._searched = ""
         #: Every range swept in this flow, so the picker can stop offering
         #: one that already found nothing and the form can say what was
@@ -405,6 +496,12 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         inverter's entities, history and settings to a different one.
         """
         entry = self._get_reconfigure_entry()
+        if entry.data.get(CONF_KIND) == KIND_WALLBOX:
+            # Found again at another address, a wallbox's entry follows it
+            # by itself: the search updates the host of the same serial.
+            return self.async_abort(reason="wallbox_entry")
+        if entry.data.get(CONF_KIND) in UNIT_247_KINDS:
+            return self.async_abort(reason="unit_247_entry")
         errors: dict[str, str] = {}
         texts = await _flow_texts(self)
         placeholders: dict[str, str] = {
@@ -659,7 +756,11 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
 
         self._sweep_task = None
         return self.async_show_progress_done(
-            next_step_id="pick" if self._found else "nothing_found"
+            next_step_id=(
+                "pick"
+                if self._found or self._wallboxes or self._unit_247
+                else "nothing_found"
+            )
         )
 
     async def _async_sweep_and_identify(self) -> None:
@@ -689,9 +790,11 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         sweeping = 0.7
 
         def _sweep_progress(done: int, _of: int) -> None:
-            self.async_update_progress(sweeping * (settled + done) / (addresses * 2))
+            self.async_update_progress(
+                sweeping * (settled + done) / (addresses * len(SWEEP_PORTS))
+            )
 
-        for port in SCAN_PORTS:
+        for port in SWEEP_PORTS:
             found = await async_sweep(
                 self._searched, port=port, on_progress=_sweep_progress
             )
@@ -711,7 +814,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 texts(
                     "search_checked",
                     settled=settled,
-                    total=addresses * len(SCAN_PORTS),
+                    total=addresses * len(SWEEP_PORTS),
                     answered=len({host for host, _ in candidates}),
                 )
             )
@@ -738,7 +841,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         # same debug loop that failed three out of three at the defaults.
         if not candidates:
             self._set_stage(texts("search_retry"))
-            for port in SCAN_PORTS:
+            for port in SWEEP_PORTS:
                 found = await async_sweep(
                     self._searched,
                     port=port,
@@ -758,12 +861,70 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         # "2 answered but none was a Sungrow" when there is one box on their
         # wall is a worse lie than saying nothing.
         self._candidates = len({host for host, _ in candidates})
+        wallbox_hosts = sorted(
+            {host for host, port in candidates if port == WALLBOX_TLS_PORT}
+        )
+        unit_247_candidates = sorted(
+            (h, p) for h, p in candidates if p in UNIT_247_PORTS
+        )
+        candidates = [(h, p) for h, p in candidates if p in SCAN_PORTS]
 
         def _identifying(host: str, index: int, of: int) -> None:
             self.async_update_progress(sweeping + (1 - sweeping) * (index - 1) / of)
             self._set_stage(texts("search_asking", host=host, index=index, of=of))
 
         self._found = await self._async_identify(candidates, on_candidate=_identifying)
+        self._wallboxes = {}
+        for host in wallbox_hosts:
+            if (wallbox := await _async_probe_wallbox(self.hass, host)) is None:
+                continue
+            model, serial = wallbox
+            hostname = await async_hostname(host)
+            self._wallboxes[host] = {
+                CONF_HOST: host,
+                "model": model,
+                "serial": serial,
+                "label": f"{model} (wallbox) at {hostname or host}",
+            }
+        _LOGGER.debug(
+            "Identified %s wallbox(es) on %s: %s",
+            len(self._wallboxes),
+            self._searched,
+            ", ".join(sorted(self._wallboxes)) or "none",
+        )
+        # Unit 247 last: on a plain port wherever one was open, and over TLS
+        # on 516 wherever no wallbox answered there -- a current Logger1000
+        # opens only 516. One device per address: an iHomeManager may answer
+        # on more than one port, and the first is enough.
+        self._unit_247 = {}
+        tls_hosts = [h for h in wallbox_hosts if h not in self._wallboxes]
+        tried = [(h, p, False) for h, p in unit_247_candidates]
+        tried += [(h, WALLBOX_TLS_PORT, True) for h in tls_hosts]
+        seen: set[str] = set()
+        for host, port, tls in tried:
+            if host in seen:
+                continue
+            if (
+                who := await _async_probe_unit_247(self.hass, host, port, tls=tls)
+            ) is None:
+                continue
+            seen.add(host)
+            hostname = await async_hostname(host)
+            model = (who.model or str(who.kind)).removeprefix("a ")
+            self._unit_247[f"{host}:{port}"] = {
+                CONF_HOST: host,
+                CONF_PORT: port,
+                CONF_TLS: tls,
+                CONF_KIND: who.kind,
+                "model": model,
+                "label": f"{model} at {hostname or host}, port {port} (diagnosis only)",
+            }
+        _LOGGER.debug(
+            "Identified %s device(s) at unit 247 on %s: %s",
+            len(self._unit_247),
+            self._searched,
+            ", ".join(sorted(self._unit_247)) or "none",
+        )
         _LOGGER.debug(
             "Identified %s of %s candidate(s) on %s as Sungrow: %s",
             len(self._found),
@@ -830,6 +991,14 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             if user_input[CONF_HOST] == NOT_LISTED:
                 return await self.async_step_manual()
+            if user_input[CONF_HOST].startswith(UNIT_247_PREFIX):
+                return await self._async_add_unit_247(
+                    user_input[CONF_HOST].removeprefix(UNIT_247_PREFIX)
+                )
+            if user_input[CONF_HOST].startswith(WALLBOX_PREFIX):
+                return await self._async_add_wallbox(
+                    user_input[CONF_HOST].removeprefix(WALLBOX_PREFIX)
+                )
             found = self._found[user_input[CONF_HOST]]
             if (
                 claimed := await self._async_claim(
@@ -859,6 +1028,14 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             SelectOptionDict(value=host, label=found["label"])
             for host, found in self._found.items()
         ]
+        options.extend(
+            SelectOptionDict(value=f"{WALLBOX_PREFIX}{host}", label=wallbox["label"])
+            for host, wallbox in self._wallboxes.items()
+        )
+        options.extend(
+            SelectOptionDict(value=f"{UNIT_247_PREFIX}{key}", label=device["label"])
+            for key, device in self._unit_247.items()
+        )
         # The search can identify a real inverter that is not the one the user
         # meant -- a neighbour's, on a shared network, or the second of two.
         # Without this the only way out of the list is to abandon the flow.
@@ -880,7 +1057,9 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 }
             ),
             description_placeholders={
-                "count": str(len(self._found)),
+                "count": str(
+                    len(self._found) + len(self._wallboxes) + len(self._unit_247)
+                ),
                 "note": (
                     "\n\n" + texts("search_same_dongle")
                     if any(entry.get("same_dongle") for entry in self._found.values())
@@ -888,6 +1067,51 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 ),
             },
             last_step=False,
+        )
+
+    async def _async_add_wallbox(self, host: str) -> ConfigFlowResult:
+        """Create an entry for a wallbox found at its own address.
+
+        Identified by its **own** serial, because there is no inverter here
+        to borrow one from. Found again at another address it is the same
+        wallbox: the entry follows it. A wallbox an inverter entry already
+        reads through its `wallbox_host` is offered all the same, and is a
+        second, separate device.
+        """
+        wallbox = self._wallboxes[host]
+        await self.async_set_unique_id(wallbox["serial"])
+        self._abort_if_unique_id_configured(updates={CONF_HOST: host})
+        return self.async_create_entry(
+            title=wallbox["model"],
+            data={
+                CONF_HOST: host,
+                CONF_PORT: WALLBOX_TLS_PORT,
+                CONF_UNIT_ID: WALLBOX_TLS_UNIT,
+                CONF_KIND: KIND_WALLBOX,
+            },
+        )
+
+    async def _async_add_unit_247(self, key: str) -> ConfigFlowResult:
+        """Create a diagnosis-only entry for an iHomeManager or a Logger.
+
+        Neither documents a serial, so the entry is named by what it is and
+        where it answers: kind, host and port. Found again at the same place
+        it is the same entry. It measures nothing; its one use is a diagnosis
+        its owner can send in.
+        """
+        device = self._unit_247[key]
+        unique_id = f"{device[CONF_KIND]}-{device[CONF_HOST]}-{device[CONF_PORT]}"
+        await self.async_set_unique_id(unique_id)
+        self._abort_if_unique_id_configured()
+        return self.async_create_entry(
+            title=device["model"],
+            data={
+                CONF_HOST: device[CONF_HOST],
+                CONF_PORT: device[CONF_PORT],
+                CONF_UNIT_ID: IHOMEMANAGER_UNIT,
+                CONF_KIND: device[CONF_KIND],
+                CONF_TLS: device[CONF_TLS],
+            },
         )
 
     async def _async_default_network(self) -> str:
@@ -1420,6 +1644,10 @@ class SungrowOptionsFlow(OptionsFlow):
         Sections arrive nested, one dict per section key, which is why the
         merge below reads section by section rather than flattening.
         """
+        if self.config_entry.data.get(CONF_KIND) == KIND_WALLBOX:
+            return self.async_abort(reason="wallbox_entry")
+        if self.config_entry.data.get(CONF_KIND) in UNIT_247_KINDS:
+            return self.async_abort(reason="unit_247_entry")
         errors: dict[str, str] = {}
         if user_input is not None:
             intervals = {

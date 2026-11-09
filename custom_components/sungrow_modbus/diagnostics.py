@@ -92,6 +92,44 @@ async def async_get_config_entry_diagnostics(
 ) -> dict[str, Any]:
     """Return everything worth knowing about this entry."""
     runtime = entry.runtime_data
+    if runtime.is_device_only:
+        document = getattr(runtime.diagnosis, "state", None)
+        return {
+            "entry": async_redact_data(
+                {
+                    CONF_HOST: entry.data.get(CONF_HOST),
+                    CONF_PORT: entry.data.get(CONF_PORT),
+                    CONF_UNIT_ID: entry.data.get(CONF_UNIT_ID),
+                    "kind": entry.data.get(CONF_KIND),
+                    "options": dict(entry.options),
+                },
+                TO_REDACT,
+            ),
+            # The last diagnosis's document, already masked for publishing.
+            "diagnosis": getattr(document, "document", None),
+        }
+    if runtime.is_wallbox_only:
+        coordinator = runtime.wallbox
+        assert coordinator is not None
+        return {
+            "entry": async_redact_data(
+                {
+                    CONF_HOST: entry.data.get(CONF_HOST),
+                    CONF_PORT: entry.data.get(CONF_PORT),
+                    CONF_UNIT_ID: entry.data.get(CONF_UNIT_ID),
+                    "kind": entry.data.get(CONF_KIND),
+                    "options": dict(entry.options),
+                },
+                TO_REDACT,
+            ),
+            "device": async_redact_data(
+                {
+                    "model": coordinator.device.model,
+                    "serial_number": coordinator.own_serial,
+                },
+                TO_REDACT,
+            ),
+        }
     if runtime.is_string_inverter:
         return await _async_string_inverter_diagnostics(hass, entry)
     device = next(iter(runtime.coordinators.values())).device

@@ -62,15 +62,19 @@ from .const import (
     CONF_INTERVALS,
     CONF_KIND,
     CONF_MODE,
+    CONF_TLS,
     CONF_UNIT_ID,
     CONF_WALLBOX_HOST,
     DEFAULT_EXTERNAL_PLACEMENT,
     DOMAIN,
     ENTITY_IDS_MIGRATE,
     INTERVAL_NEVER,
+    KIND_IHOMEMANAGER,
     KIND_STRING_INVERTER,
+    KIND_WALLBOX,
     MODE_DEVICES,
     MODE_DIAGNOSTICS,
+    UNIT_247_KINDS,
     WALLBOX_TLS_PORT,
     WALLBOX_TLS_UNIT,
 )
@@ -136,13 +140,32 @@ DIAGNOSTIC_PLATFORMS: list[Platform] = [
 #: Read only by decision, until a write has been watched on one.
 STRING_INVERTER_PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR]
 
+#: What an iHomeManager or Logger entry sets up: its diagnosis's buttons and
+#: sensors, which are also what gives it a device page.
+UNIT_247_PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SENSOR]
+
+#: What a wallbox entry sets up: the readings its device carries. It is read
+#: only, so nothing here writes.
+WALLBOX_PLATFORMS: list[Platform] = [
+    Platform.BINARY_SENSOR,
+    Platform.BUTTON,
+    Platform.SENSOR,
+]
+
 
 def _platforms(entry: SungrowConfigEntry) -> list[Platform]:
     """Return what this entry forwards, so setup and unload cannot disagree."""
-    if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
+    if entry.data.get(CONF_KIND) in UNIT_247_KINDS:
+        return UNIT_247_PLATFORMS
+    if (
+        entry.data.get(CONF_KIND) != KIND_WALLBOX
+        and entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS
+    ):
         return DIAGNOSTIC_PLATFORMS
     if entry.data.get(CONF_KIND) == KIND_STRING_INVERTER:
         return STRING_INVERTER_PLATFORMS
+    if entry.data.get(CONF_KIND) == KIND_WALLBOX:
+        return WALLBOX_PLATFORMS
     return PLATFORMS
 
 
@@ -436,6 +459,111 @@ async def _async_setup_string_inverter(
     return True
 
 
+async def _async_setup_wallbox(hass: HomeAssistant, entry: SungrowConfigEntry) -> bool:
+    """Set up a wallbox that is an entry of its own, at its own address.
+
+    Modbus inside TLS on port 516, unit 248, read only. There is no inverter
+    here: no tiers, no capabilities, no diagnosis, no YAML package ids. The
+    device is identified by the wallbox's **own** serial, which is read before
+    anything else and without which nothing can be named.
+    """
+    host = entry.data[CONF_HOST]
+    unit = async_get_unit(hass, entry, wallbox_tls_params(host), WALLBOX_TLS_UNIT)
+    intervals = {**DEFAULT_INTERVALS, **entry.options.get(CONF_INTERVALS, {})}
+    coordinator = SungrowWallboxCoordinator(
+        hass,
+        entry,
+        SungrowWallbox(unit, WALLBOX_TLS_UNIT),
+        None,
+        timedelta(seconds=intervals.get("fast", DEFAULT_INTERVALS["fast"])),
+    )
+    await coordinator.async_config_entry_first_refresh()
+    if coordinator.own_serial is None:
+        raise ConfigEntryNotReady(
+            translation_domain=DOMAIN,
+            translation_key="identity_unread",
+            translation_placeholders={
+                "title": entry.title,
+                "error": "the wallbox serial did not read",
+            },
+        )
+    entry.runtime_data = SungrowRuntimeData(
+        {}, intervals=intervals, wallbox=coordinator
+    )
+    # A read-only diagnosis of its own, so a wallbox owner can report from here.
+    from .device_diagnosis import (
+        DeviceDiagnosisRunner,
+        wallbox_builder,
+        wallbox_summary,
+    )
+
+    runner = DeviceDiagnosisRunner(hass, entry, wallbox_builder(entry), wallbox_summary)
+    entry.runtime_data.diagnosis = runner
+    entry.async_on_unload(runner.async_shutdown)
+    _async_preview_notice(hass)
+    await hass.config_entries.async_forward_entry_setups(entry, WALLBOX_PLATFORMS)
+    return True
+
+
+async def _async_setup_unit_247(hass: HomeAssistant, entry: SungrowConfigEntry) -> bool:
+    """Set up an iHomeManager or a Logger: its diagnosis, and nothing measured.
+
+    Unit 247, on the port the search found it on, plain or inside TLS. Neither
+    device documents a serial, so the entry's unique id (kind, host and port)
+    names the device. Asked what it is once here, so an entry whose device no
+    longer answers waits rather than offering a diagnosis of nothing; a link
+    down is not a refusal, and is retried.
+    """
+    from sungrow_modbus import MANUFACTURER, ihomemanager, logger
+    from sungrow_modbus.discovery import IHOMEMANAGER_UNIT, async_identify_unit_247_on
+
+    from .device_diagnosis import (
+        DeviceDiagnosisRunner,
+        unit_247_builder,
+        unit_247_summary,
+    )
+    from .links import unit_247_params
+
+    kind = entry.data[CONF_KIND]
+    unit = async_get_unit(
+        hass,
+        entry,
+        unit_247_params(
+            entry.data[CONF_HOST],
+            entry.data[CONF_PORT],
+            tls=entry.data.get(CONF_TLS, False),
+        ),
+        IHOMEMANAGER_UNIT,
+    )
+    identity = await async_identify_unit_247_on(unit)
+    if identity is None or identity.kind != kind:
+        raise ConfigEntryNotReady(
+            translation_domain=DOMAIN,
+            translation_key="setup_unreachable",
+            translation_placeholders={
+                "title": entry.title,
+                "error": f"no {kind} answered at unit {IHOMEMANAGER_UNIT}",
+            },
+        )
+    assert entry.unique_id is not None
+    info = dr.DeviceInfo(
+        identifiers={(DOMAIN, entry.unique_id)},
+        manufacturer=MANUFACTURER,
+        model=identity.model,
+        name=entry.title,
+    )
+    entry.runtime_data = SungrowRuntimeData({}, device=(entry.unique_id, info))
+    package = ihomemanager if kind == KIND_IHOMEMANAGER else logger
+    runner = DeviceDiagnosisRunner(
+        hass, entry, unit_247_builder(entry, unit, package), unit_247_summary
+    )
+    entry.runtime_data.diagnosis = runner
+    entry.async_on_unload(runner.async_shutdown)
+    _async_preview_notice(hass)
+    await hass.config_entries.async_forward_entry_setups(entry, UNIT_247_PLATFORMS)
+    return True
+
+
 async def async_migrate_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> bool:
     """Bring an entry an older version stored up to this version's names."""
     from .entry_migration import async_migrate_entry as migrate
@@ -447,6 +575,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
     """Set up a Sungrow inverter from a config entry, hybrid or string."""
     if entry.data.get(CONF_KIND) == KIND_STRING_INVERTER:
         return await _async_setup_string_inverter(hass, entry)
+    if entry.data.get(CONF_KIND) == KIND_WALLBOX:
+        return await _async_setup_wallbox(hass, entry)
+    if entry.data.get(CONF_KIND) in UNIT_247_KINDS:
+        return await _async_setup_unit_247(hass, entry)
     _unit, inverter, serial = await _async_connect(hass, entry)
     firmware = await _async_read_firmware(entry, inverter)
 
@@ -929,7 +1061,13 @@ async def async_remove_config_entry_device(
     setup found refuse, because the next poll would recreate them.
     """
     runtime = entry.runtime_data
-    infos = [runtime.inverter_coordinator.device_info]
+    if runtime.is_device_only:
+        # An iHomeManager or Logger entry has its own device, and nothing else.
+        _prefix, info = runtime.device
+        return not device_entry.identifiers & info["identifiers"]
+    infos = (
+        [] if runtime.is_wallbox_only else [runtime.inverter_coordinator.device_info]
+    )
     infos += [
         c.device_info for c in (runtime.battery, runtime.wallbox) if c is not None
     ]

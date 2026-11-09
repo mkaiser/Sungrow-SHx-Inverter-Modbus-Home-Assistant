@@ -137,6 +137,14 @@ Nothing can start now (blocker 13).
       (`scripts/generate/tables/writes.py`), with the wallbox's 60 s
       fallback in mind.
 
+   **The search finds every device** (`plans/device_scan_and_diagnosis.md`,
+   its status log is current): a wallbox at its own address is an entry of
+   its own, read only, with a read-only diagnosis; it runs at gerd's in the
+   dev HA. An iHomeManager or a Logger (unit 247) is offered as a
+   diagnosis-only entry, untested on hardware: asked for in
+   `device-diagnosis/devices-wanted.md`. Not yet: the wallbox entry's own
+   capability test and options, and moving a `wallbox_host` entry onto one.
+
    Not to copy: evcc's `sungrow.go` reserves all rights. Inverter work at
    gerd's waits until his Home Assistant is stopped: a read-only diagnosis
    on 2026-11-06 ran into it and is not evidence.

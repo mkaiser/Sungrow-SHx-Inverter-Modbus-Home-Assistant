@@ -41,6 +41,13 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Sungrow binary sensors."""
     runtime_data = entry.runtime_data
+    if runtime_data.is_wallbox_only:
+        assert runtime_data.wallbox is not None
+        async_add_entities(
+            SungrowWallboxBinarySensor(runtime_data.wallbox, description)
+            for description in WALLBOX_BINARY_DESCRIPTIONS
+        )
+        return
 
     # An SG: its own two, and nothing of the hybrid's.
     if runtime_data.is_string_inverter:

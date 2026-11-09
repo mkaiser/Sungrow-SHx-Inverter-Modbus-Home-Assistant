@@ -1,6 +1,6 @@
 # The texts, for review
 
-**304 texts**: everything in `strings.json` that is not an entity name, by its
+**309 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -11,7 +11,7 @@ A `{placeholder}` is filled in by the integration and stays as written; backtick
 and bold are kept.
 
 
-## Setup flow (83)
+## Setup flow (85)
 
 ### `config.abort.already_configured`
 
@@ -42,6 +42,18 @@ and bold are kept.
 > **EN** “{title}” now uses the new connection. It has been reloaded; its entities, their history and its settings are unchanged.
 
 > **DE** „{title}“ verwendet jetzt die neue Verbindung. Der Eintrag wurde neu geladen; seine Entitäten, deren Verlauf und seine Einstellungen sind unverändert.
+
+### `config.abort.wallbox_entry`
+
+> **EN** This is a wallbox read at its own address. It has no settings: to follow it to a new address, search your network again and pick it; the entry finds it by its serial.
+
+> **DE** Das ist eine Wallbox, die unter ihrer eigenen Adresse gelesen wird. Sie hat keine Einstellungen: Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer.
+
+### `config.abort.unit_247_entry`
+
+> **EN** This entry only runs the diagnosis of an iHomeManager or a Sungrow Logger. It measures nothing and has no settings. If the device moves to another address or port, search your network again and add it there.
+
+> **DE** Dieser Eintrag führt nur die Diagnose eines iHomeManagers oder eines Sungrow-Loggers aus. Er misst nichts und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu.
 
 ### `config.error.cannot_connect`
 
@@ -315,29 +327,33 @@ and bold are kept.
 
 ### `config.step.pick.title`
 
-> **EN** Inverters found
+> **EN** Devices found
 
-> **DE** Wechselrichter gefunden
+> **DE** Geräte gefunden
 
 ### `config.step.pick.description`
 
 > **EN** {count} device(s) answered and identified themselves. Names come from your router's DNS where it provides them, otherwise the address is shown.
 >
+> A **wallbox** is found at its own address and set up as a device of its own. It is read only, and it is identified by its own serial. An **iHomeManager** or a **Sungrow Logger** is set up for its diagnosis only: it measures nothing, and its *Diagnosis: start* button reads it into a document you can send in. An iHomeManager accepts one connection per port, so one another program holds can be missed.
+>
 > Where there is more than one inverter, each says its part in the cluster and how that is known: **measured** is read from the inverter itself, **inferred** is worked out from what the others answered. An inferred role is a good guess, not a reading.
 >
-> If none of these is the inverter you meant, choose the last option and you can enter its address yourself.{note}
+> If none of these is the device you meant, choose the last option and you can enter its address yourself.{note}
 
 > **DE** {count} Gerät(e) haben geantwortet und sich zu erkennen gegeben. Namen stammen aus dem DNS deines Routers, sofern er welche liefert, sonst wird die Adresse angezeigt.
 >
+> Eine **Wallbox** wird unter ihrer eigenen Adresse gefunden und als eigenes Gerät eingerichtet. Sie wird nur gelesen und über ihre eigene Seriennummer erkannt. Ein **iHomeManager** oder ein **Sungrow-Logger** wird nur für seine Diagnose eingerichtet: Er misst nichts, und seine Schaltfläche *Diagnose: starten* liest ihn in ein Dokument, das du einsenden kannst. Ein iHomeManager nimmt pro Port nur eine Verbindung an, daher kann einer übersehen werden, den ein anderes Programm belegt.
+>
 > Gibt es mehr als einen Wechselrichter, nennt jeder seine Rolle im Verbund und woher man sie kennt: **gemessen** wurde vom Wechselrichter selbst gelesen, **abgeleitet** wird aus den Antworten der anderen geschlossen. Eine abgeleitete Rolle ist eine gute Vermutung, keine Messung.
 >
-> Ist keiner davon der gemeinte Wechselrichter, wähle die letzte Option, dann kannst du seine Adresse selbst eingeben.{note}
+> Ist keines davon das gemeinte Gerät, wähle die letzte Option, dann kannst du seine Adresse selbst eingeben.{note}
 
 ### `config.step.pick.data.host`
 
-> **EN** Inverter
+> **EN** Device
 
-> **DE** Wechselrichter
+> **DE** Gerät
 
 ### `config.step.search.title`
 
@@ -1249,7 +1265,7 @@ and bold are kept.
 > **Prüfe, ob dein Wechselrichter läuft.** Diese Reparatur bleibt offen, damit du es erneut versuchen kannst.
 
 
-## Options flow (93)
+## Options flow (95)
 
 ### `options.step.init.title`
 
@@ -1881,6 +1897,18 @@ and bold are kept.
 
 > **DE** Sensoren und Steuerungen einzurichten ist in dieser Version nicht enthalten. Diese Alpha legt nur Einträge für die Diagnose an; beginne erneut und wähle **Geräte-Diagnose durchführen**.
 
+### `options.abort.wallbox_entry`
+
+> **EN** This is a wallbox read at its own address. It has no settings: to follow it to a new address, search your network again and pick it; the entry finds it by its serial.
+
+> **DE** Das ist eine Wallbox, die unter ihrer eigenen Adresse gelesen wird. Sie hat keine Einstellungen: Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer.
+
+### `options.abort.unit_247_entry`
+
+> **EN** This entry only runs the diagnosis of an iHomeManager or a Sungrow Logger. It measures nothing and has no settings. If the device moves to another address or port, search your network again and add it there.
+
+> **DE** Dieser Eintrag führt nur die Diagnose eines iHomeManagers oder eines Sungrow-Loggers aus. Er misst nichts und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu.
+
 
 ## Actions (18)
 
@@ -1993,7 +2021,7 @@ and bold are kept.
 > **DE** Welcher Wechselrichter gestoppt werden soll.
 
 
-## Error messages (20)
+## Error messages (21)
 
 ### `exceptions.device_not_found.message`
 
@@ -2114,3 +2142,9 @@ and bold are kept.
 > **EN** Error reading the {device}: {error}
 
 > **DE** Fehler beim Lesen von {device}: {error}
+
+### `exceptions.not_on_wallbox.message`
+
+> **EN** {title} is not an inverter. This action works on an inverter; a wallbox, iHomeManager or Logger entry has only its own diagnosis buttons, and nothing in this integration writes to one.
+
+> **DE** {title} ist kein Wechselrichter. Diese Aktion arbeitet an einem Wechselrichter; ein Eintrag für eine Wallbox, einen iHomeManager oder einen Logger hat nur seine eigenen Diagnose-Schaltflächen, und nichts in dieser Integration schreibt in eines dieser Geräte.

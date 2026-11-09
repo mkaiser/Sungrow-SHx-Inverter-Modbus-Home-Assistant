@@ -64,6 +64,35 @@ async def async_setup_entry(
     """Set up the Sungrow sensors."""
     runtime_data = entry.runtime_data
 
+    # An iHomeManager or Logger entry is its diagnosis and nothing else.
+    if runtime_data.is_device_only:
+        async_add_entities(
+            [
+                DiagnosisProgressSensor(runtime_data),
+                DiagnosisStepSensor(runtime_data),
+                DiagnosisResultSensor(runtime_data),
+            ]
+        )
+        return
+
+    # A wallbox entry has the wallbox's readings and nothing else: no
+    # inverter to say how it is reached, no diagnosis.
+    if runtime_data.is_wallbox_only:
+        assert runtime_data.wallbox is not None
+        async_add_entities(
+            SungrowWallboxSensor(runtime_data.wallbox, description)
+            for description in WALLBOX_DESCRIPTIONS
+        )
+        # And the read-only diagnosis's three, so its owner can report it.
+        async_add_entities(
+            [
+                DiagnosisProgressSensor(runtime_data),
+                DiagnosisStepSensor(runtime_data),
+                DiagnosisResultSensor(runtime_data),
+            ]
+        )
+        return
+
     # Every entry, whatever its mode or kind: how this endpoint is reached.
     async_add_entities([SungrowConnectionSensor(entry)])
 

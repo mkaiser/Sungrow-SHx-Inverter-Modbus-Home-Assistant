@@ -5,7 +5,9 @@
       "devices_mode_not_offered": "Devices mode is not available in this preview. This build sets the integration up for diagnostics only -- it polls the inverter and can run the capability diagnosis, but creates no sensors. Promotion will be offered in a later release, and the entry does not need to be removed and added again when it is.",
       "wrong_device": "That address answers as a different inverter ({model}), not the one behind “{title}”. Nothing was changed. Each inverter keeps its own entry; to add that one, use Add integration.",
       "connection_unchanged": "That is the connection this entry already uses. Nothing was changed.",
-      "connection_moved": "“{title}” now uses the new connection. It has been reloaded; its entities, their history and its settings are unchanged."
+      "connection_moved": "“{title}” now uses the new connection. It has been reloaded; its entities, their history and its settings are unchanged.",
+      "wallbox_entry": "This is a wallbox read at its own address. It has no settings: to follow it to a new address, search your network again and pick it; the entry finds it by its serial.",
+      "unit_247_entry": "This entry only runs the diagnosis of an iHomeManager or a Sungrow Logger. It measures nothing and has no settings. If the device moves to another address or port, search your network again and add it there."
     },
     "error": {
       "cannot_connect": "Failed to connect: {error}",
@@ -79,10 +81,10 @@
         }
       },
       "pick": {
-        "title": "Inverters found",
-        "description": "{count} device(s) answered and identified themselves. Names come from your router's DNS where it provides them, otherwise the address is shown.\n\nWhere there is more than one inverter, each says its part in the cluster and how that is known: **measured** is read from the inverter itself, **inferred** is worked out from what the others answered. An inferred role is a good guess, not a reading.\n\nIf none of these is the inverter you meant, choose the last option and you can enter its address yourself.{note}",
+        "title": "Devices found",
+        "description": "{count} device(s) answered and identified themselves. Names come from your router's DNS where it provides them, otherwise the address is shown.\n\nA **wallbox** is found at its own address and set up as a device of its own. It is read only, and it is identified by its own serial. An **iHomeManager** or a **Sungrow Logger** is set up for its diagnosis only: it measures nothing, and its *Diagnosis: start* button reads it into a document you can send in. An iHomeManager accepts one connection per port, so one another program holds can be missed.\n\nWhere there is more than one inverter, each says its part in the cluster and how that is known: **measured** is read from the inverter itself, **inferred** is worked out from what the others answered. An inferred role is a good guess, not a reading.\n\nIf none of these is the device you meant, choose the last option and you can enter its address yourself.{note}",
         "data": {
-          "host": "Inverter"
+          "host": "Device"
         }
       },
       "search": {
@@ -1600,7 +1602,9 @@
       "running_diagnosis": "Reading your inverter: 19 capability probes. Through a WiNet-S this can take a minute."
     },
     "abort": {
-      "devices_mode_not_offered": "Setting up sensors and controls is not in this release. This alpha creates diagnostics-only entries; start again and choose **Perform the device diagnosis**."
+      "devices_mode_not_offered": "Setting up sensors and controls is not in this release. This alpha creates diagnostics-only entries; start again and choose **Perform the device diagnosis**.",
+      "wallbox_entry": "This is a wallbox read at its own address. It has no settings: to follow it to a new address, search your network again and pick it; the entry finds it by its serial.",
+      "unit_247_entry": "This entry only runs the diagnosis of an iHomeManager or a Sungrow Logger. It measures nothing and has no settings. If the device moves to another address or port, search your network again and add it there."
     }
   },
   "services": {
@@ -1709,6 +1713,9 @@
     },
     "device_read_error": {
       "message": "Error reading the {device}: {error}"
+    },
+    "not_on_wallbox": {
+      "message": "{title} is not an inverter. This action works on an inverter; a wallbox, iHomeManager or Logger entry has only its own diagnosis buttons, and nothing in this integration writes to one."
     }
   }
 }

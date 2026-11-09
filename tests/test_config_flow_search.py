@@ -19,13 +19,12 @@ from modbus_connection import ModbusError
 from modbus_connection.mock import MockModbusUnit
 import pytest
 
-from custom_components.sungrow_modbus.config_flow import NOT_LISTED
+from custom_components.sungrow_modbus.config_flow import NOT_LISTED, SWEEP_PORTS
 from custom_components.sungrow_modbus.const import (
     CONF_ENTITY_IDS,
     CONF_NETWORK,
     CONF_UNIT_ID,
     DOMAIN,
-    SCAN_PORTS,
 )
 from homeassistant.config_entries import SOURCE_USER
 from homeassistant.const import CONF_HOST, CONF_PORT
@@ -180,8 +179,9 @@ async def test_a_sweep_that_found_nothing_is_tried_again_more_slowly(
 
     fast = [call for call in calls if "concurrency" not in call]
     slow = [call for call in calls if "concurrency" in call]
-    assert len(fast) == len(SCAN_PORTS)
-    assert len(slow) == len(SCAN_PORTS)
+    # The inverter's ports, unit 247's and the TLS port 516.
+    assert len(fast) == len(SWEEP_PORTS)
+    assert len(slow) == len(SWEEP_PORTS)
     # Gentler on both axes, which is what made the difference when measured.
     assert all(call["concurrency"] < CONCURRENCY for call in slow)
     assert all(call["timeout"] > TIMEOUT for call in slow)

@@ -78,7 +78,9 @@ YAML package gave on the same machine is itself a finding.
 Never measured. **Open its Modbus TCP first**, in the iSolarCloud app:
 *iHomeManager settings → Forwarding channel settings*, port 502, 503 or 504,
 SSL off. Each port takes one connection, so stop other clients. The diagnosis
-finds it at unit 247 and writes a document of its own. It may also silence
+finds it at unit 247 and writes a document of its own. In Home Assistant,
+*Add integration* → *Search my network* offers it too; add it and press
+*Diagnosis: start*. It may also silence
 inverter registers 5741-5746 (#647, #651). See
 [iHomeManager](../.wiki/wiki/entities/device-ihomemanager.md).
 
@@ -99,7 +101,8 @@ port of its own, but the Logger refused the integration's identity read. It fron
 one-entry-per-endpoint design was built for. **Answer "a Logger" to the
 transport question** so the diagnosis also reads it at unit 247, and say which
 unit ids it lists. A current Logger1000 opens only port 516 with TLS; the
-diagnosis tries that too, so no setting needs changing. See
+diagnosis tries that too, so no setting needs changing. In Home Assistant,
+*Search my network* offers it too; add it and press *Diagnosis: start*. See
 [Logger](../.wiki/wiki/entities/device-logger.md).
 
 ### 5. A wallbox other than the AC22E-01

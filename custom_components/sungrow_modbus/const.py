@@ -344,6 +344,26 @@ CONF_KIND = "kind"
 KIND_STRING_INVERTER = "string_inverter"
 """An SG: its own map, read only, no battery, no YAML package ids."""
 
+KIND_IHOMEMANAGER = "ihomemanager"
+"""An iHomeManager at unit 247: a diagnosis and nothing measured."""
+
+KIND_LOGGER = "logger"
+"""A Sungrow Logger at unit 247: a diagnosis and nothing measured."""
+
+#: Every kind whose entry is only a diagnosis, found at unit 247.
+UNIT_247_KINDS = (KIND_IHOMEMANAGER, KIND_LOGGER)
+
+#: Entry data: the endpoint speaks Modbus inside TLS (a Logger on 516).
+CONF_TLS = "tls"
+
+#: Plain ports an iHomeManager or a Logger may serve unit 247 on: 502-504 by
+#: Sungrow's iHomeManager document, 505 by a Logger1000A measured through.
+UNIT_247_PORTS: tuple[int, ...] = (502, 503, 504, 505)
+
+KIND_WALLBOX = "wallbox"
+"""A wallbox at its own address (TLS, port 516, unit 248), with no inverter
+beside it: read only, identified by its own serial."""
+
 #: A contributor who wants to send a reading should not have to answer the
 #: migration question at all: it decides which entity ids years of recorder
 #: history attach to, and it has nothing whatever to do with producing a
