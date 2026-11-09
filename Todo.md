@@ -63,6 +63,18 @@ stays unique.
    low SoC*, on P020 and P023. Still unmeasured: whether the inverter resets
    it by itself later or on PV (#444 reports 0xAA to 0x55 after ~20 min),
    and P022 or any other firmware.
+2. **Inverter self consumption as a sensor.** What the inverter itself
+   uses and loses in conversion, by energy balance: PV + battery discharge
+   + grid import - house load - export - battery charge (W, `measurement`).
+   Tried as a template in the YAML package (#626, unique id
+   `sg_inverter_self_consumption`, with a one-minute mean beside it) and
+   never shipped there. Build it in `derived`, from the registers its inputs
+   come from rather than from other entities, with `depends_on` so a missing
+   input makes it unavailable, not a plausible number. Open: whether it
+   adopts the #626 id, which the maintainer's own recorder has statistics
+   for, though `doc/legacy_entity_map.json` does not list it; whether the
+   instantaneous value is too noisy to show without the mean (the inputs are
+   not read in one block); and its energy counterpart.
 
 ## Battery
 
@@ -70,7 +82,7 @@ Nothing can start now (blocker 13).
 
 ## Wallbox
 
-2. **Writing to the wallbox: measure the output current's scale at gerd's.**
+3. **Writing to the wallbox: measure the output current's scale at gerd's.**
    The wallbox is read only. Three sources disagree on the output current
    setting, holding 21203: 0.1 A per count here, 0.01 A in discussion #571, a
    factor ten on a mains charger. No wallbox control is built until a measured
@@ -120,7 +132,7 @@ Nothing can start now (blocker 17).
 
 ## Integration and tooling
 
-3. **Home Assistant 2026.11: the diagnosis's headers.** The
+4. **Home Assistant 2026.11: the diagnosis's headers.** The
    dev environment and CI run 2026.11.0 with modbus-connection 4.12.7 and
    tmodbus 1.1.0, tested with core's own `pytest-homeassistant` (2026.11.0),
    which replaced `pytest-homeassistant-custom-component` (that one stops at
@@ -131,7 +143,7 @@ Nothing can start now (blocker 17).
       `modbus-connection[tmodbus]==4.12.4`; to 4.12.7 with tmodbus 1.1.0, a
       new transport for contributors' runs, so after one diagnosis on hardware
       with it (`device-diagnosis/reference.md` first).
-4. **The diagnosis and its capability tests.** In the code: three modes in
+5. **The diagnosis and its capability tests.** In the code: three modes in
    *Diagnosis: mode* (read-only, extended test single run and auto repeat),
    started by *Diagnosis: start* and ended early by *Diagnosis: stop*, a
    `features` section in every document (schema 25), the *Diagnosis* column
@@ -618,15 +630,22 @@ words renames the helper, not the integration.
 How to deal with entity renames, the user-visible ones and the ones a
 future name change would cause, for the stores that do not follow the
 recorder: InfluxDB, and with it Grafana, Prometheus, MQTT statestream and
-Node-RED. Today they get advice and a print-only script
-(`scripts/helpers/influx_migration.py`, `doc/integration_migration.md`),
-and the legacy-id adoption keeps ids so most users never need either.
+Node-RED. They get the print-only script (`scripts/helpers/influx_migration.py`)
+and a step-by-step guide a user follows or hands to an AI assistant
+(`doc/influx_migration_llm_guide.md`, linked from
+`doc/integration_migration.md`). No built-in path: the integration cannot
+reach the user's InfluxDB, and versions, measurement settings and
+downsampling differ per installation. The legacy-id adoption keeps ids, so
+most users need neither. Checked against the maintainer's production
+registry (local only, never committed): every YAML statistic a description
+replaces keeps its unit class and sum/mean kind, and the YAML templates'
+values match `derived` over three days of history.
 Open: what the integration should do when an id does change (a repair that
-names the affected entities and links the recipe; a list of old and new ids
+names the affected entities and links the guide; a list of old and new ids
 a user can export), how a rename after release is announced, and whether a
 real InfluxDB with the migrated data is worth testing once the production
-copy (Release item 4, `doc/maintainer_setup.md` §8)
-exists.
+copy (Release item 4, `doc/maintainer_setup.md` §8) exists. The guide has
+not yet been run against a real InfluxDB.
 
 ## Modbus over TLS on a WiNet-S's 516
 

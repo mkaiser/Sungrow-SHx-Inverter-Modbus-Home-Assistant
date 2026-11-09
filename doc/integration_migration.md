@@ -120,7 +120,9 @@ Things that do **not** follow the entity IDs automatically:
 
 - **InfluxDB, and anything else writing to an external store.** Those keep
   their own copy keyed by entity ID, so a move to device-scoped IDs splits the
-  series there. See `scripts/helpers/influx_migration.py`.
+  series there. See `scripts/helpers/influx_migration.py`, and
+  [influx_migration_llm_guide.md](influx_migration_llm_guide.md) for a
+  step-by-step guide you can follow yourself or give to an AI assistant.
 - **Hand-built Lovelace cards that hard-code an entity ID**, if you chose
   device-scoped IDs.
 - **The label on a card that sets no name of its own.** Home Assistant
