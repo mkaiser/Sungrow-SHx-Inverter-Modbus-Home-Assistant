@@ -38,7 +38,7 @@ from custom_components.sungrow_modbus.const import (
     MODE_DIAGNOSTICS,
 )
 from custom_components.sungrow_modbus.diagnosis import PART_A, PART_B
-from custom_components.sungrow_modbus.diagnosis_entities import elapsed
+from custom_components.sungrow_modbus.diagnosis_entities import _last_outcome, elapsed
 from homeassistant.components import persistent_notification
 from homeassistant.const import CONF_HOST, CONF_PORT, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
@@ -545,6 +545,24 @@ def test_the_elapsed_time_reads_in_minutes_and_hours() -> None:
     assert elapsed(start, start + timedelta(minutes=12, seconds=30)) == "12 min"
     assert elapsed(start, start + timedelta(minutes=65)) == "1 h 05 min"
     assert elapsed(start, start - timedelta(minutes=1)) == "<1 min"
+
+
+def test_the_finished_sensor_reports_the_last_run_not_the_ledgers_worst() -> None:
+    # A night of Standby refusals (2) before an evening that measured (3): the
+    # ledger keeps the worst, the sensor says what the last run came to.
+    folded = ledger.fold(
+        [
+            {
+                "read_at": when,
+                "block": {"outcome": code, "outcome_means": ledger.CODES[code]},
+            }
+            for when, code in (("2026-11-09T00:09:43Z", 2), ("2026-11-09T20:38:55Z", 3))
+        ]
+    )
+
+    assert folded["outcome"] == 2
+    assert _last_outcome(folded) == ledger.CODES[3]
+    assert _last_outcome({}) is None
 
 
 async def test_the_summary_says_how_long_an_extended_run_is_running(

@@ -270,6 +270,23 @@ async def test_the_weekend_enable_is_never_written(discharges: MockModbusUnit) -
     assert set(writes) & set(WEEKDAY) and set(writes) & set(WEEKEND)
 
 
+async def test_a_dropped_window_write_names_its_register_and_exception(
+    discharges: MockModbusUnit,
+) -> None:
+    before = {a: discharges.holding[a] for a in (*WEEKDAY, *WEEKEND)}
+    discharges.fail_write(WEEKDAY[2], TimeoutError("no answer in 3 s"))
+    run = await _run(discharges, discharge_window=True)
+
+    [result] = await run._discharge_window_effect()
+    discharges.fail_write(WEEKDAY[2], None)
+    restored = await run.async_restore()
+
+    assert "weekday_discharge_end_1_hour (register 33153)" in str(result.detail)
+    assert "TimeoutError: no answer in 3 s" in str(result.detail)
+    assert all(row.restored for row in restored)
+    assert {a: discharges.holding[a] for a in (*WEEKDAY, *WEEKEND)} == before
+
+
 async def test_a_battery_not_discharging_is_not_written(house: MockModbusUnit) -> None:
     writes: list[int] = []
     house.on_write(lambda event: writes.append(event.address))

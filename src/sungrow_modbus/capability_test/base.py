@@ -104,6 +104,8 @@ class CapabilityTestBase:
         self.unestablished: list[str] = []
         self._written: dict[str, float] = {}
         self._last_refused: str | None = None
+        self._word_error: str | None = None
+        """The exception the last failed `_write_word` came back with."""
         self.refusals: dict[str, str] = {}
         """Field name to the exception a write came back with, verbatim.
 
@@ -390,7 +392,14 @@ class CapabilityTestBase:
             word = round(value / probe.spec_units_per_count)
             failure = await self._write_word(probe, word)
             if failure is not None:
-                self.refusals[probe.field] = f"the raw write {failure}"
+                # Which register, and what came back: a dropped link names
+                # neither on its own, and a check writing sixteen words is
+                # undiagnosable without both.
+                because = f" ({self._word_error})" if self._word_error else ""
+                self.refusals[probe.field] = (
+                    f"the raw write of {probe.field} (register "
+                    f"{probe.spec_register}) {failure}{because}"
+                )
                 self._last_refused = probe.field
                 return failure
             self._written[probe.field] = value
@@ -433,11 +442,13 @@ class CapabilityTestBase:
         await self._touch(probe.field)
         component = self.inverter.component(probe.component)
         resolved = component.resolved_fields.get(probe.field)
+        self._word_error = None
         if resolved is None or resolved.count != 1:
             return REFUSED
         try:
             await self.inverter.async_write_word(resolved.address, word)
         except (ModbusError, TimeoutError, OSError) as err:
+            self._word_error = f"{type(err).__name__}: {err}"
             if refused(err):
                 _LOGGER.debug(
                     "capability test: %s refused word %s: %s", probe.field, word, err

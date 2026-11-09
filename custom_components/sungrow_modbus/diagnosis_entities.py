@@ -119,6 +119,21 @@ def elapsed(started: datetime, now: datetime) -> str:
     return f"{minutes // 60} h {minutes % 60:02d} min"
 
 
+def _last_outcome(capability_test: dict[str, Any]) -> str | None:
+    """Return what the latest kept run came to, not the ledger's worst.
+
+    The folded ledger's own `outcome_means` is the worst code over every run
+    it keeps, so a night of Standby refusals would read "this cannot run here"
+    beside runs that measured. This sensor is about the last run.
+    """
+    runs = capability_test.get("runs")
+    if runs:
+        last: Any = runs[-1].get("outcome_means")
+        return str(last) if last is not None else None
+    means = capability_test.get("outcome_means")
+    return str(means) if means is not None else None
+
+
 def _findings(capability_test: dict[str, Any]) -> int | None:
     """Count the decade findings in part B's block, or None if it never ran."""
     readback = capability_test.get("readback")
@@ -375,7 +390,7 @@ class DiagnosisResultSensor(DiagnosisEntity, SensorEntity):
             "has_document": state.document is not None,
             # None rather than 0 when part B did not run, so a reader cannot
             # mistake "this run only read" for "the write test found nothing".
-            "capability_test_outcome": capability_test.get("outcome_means"),
+            "capability_test_outcome": _last_outcome(capability_test),
             "capability_test_findings": _findings(capability_test),
         }
 
