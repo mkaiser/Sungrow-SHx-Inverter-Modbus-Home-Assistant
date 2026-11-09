@@ -110,6 +110,13 @@ class InverterCoordinator[DeviceT: Inverter](
         )
         self.device = device
         self._poll = poll
+        #: The address, and the path register 6100 measured, shown under the
+        #: firmware on the device page. Set by setup before registration.
+        self.connection: str | None = None
+        #: What 6100 said of the path (`route.route_key`), or None.
+        self.route: str | None = None
+        #: The WiNet-S's web interface, the device page's *Visit* link.
+        self.web_interface: str | None = None
         self._failing: set[str] = set()
         self._reload_scheduled = False
 
@@ -132,6 +139,8 @@ class InverterCoordinator[DeviceT: Inverter](
             or getattr(self.device, "firmware", None)
             or identity.arm_software
             or None,
+            hw_version=self.connection,
+            configuration_url=self.web_interface,
             # Only where the user chose one. Absent, Home Assistant falls
             # back to the entry title, which is the model -- and two SH10RTs
             # then produce one id and one `..._2`, the suffix recording click

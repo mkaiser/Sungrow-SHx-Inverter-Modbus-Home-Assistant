@@ -21,6 +21,7 @@ from sungrow_modbus.capability_test import CONFIRMED, CapabilityTest, Options
 from sungrow_modbus.capability_test.procedure import (
     CHARGE_WINDOW,
     DISCHARGE_WINDOW,
+    NO_EFFECT,
     Sample,
     inverter_clock,
     window_around,
@@ -200,6 +201,24 @@ async def test_a_window_that_starts_nothing_is_no_effect(house: MockModbusUnit) 
 
     assert result.verdict != CONFIRMED
     assert "did not start" in (result.detail or "")
+
+
+async def test_a_battery_already_charging_is_not_measured(
+    house: MockModbusUnit,
+) -> None:
+    """Charging at its ceiling from PV, a window has nothing left to start.
+
+    The maintainer's SH10RT on 2026-11-09: 2747 W before, 2759 W during,
+    which read as "nothing measurable happened" and was kept as answered.
+    """
+    _battery(house, -2700)
+    run = await _run(house, charge_window=True)
+
+    [result] = await run._charge_window_effect()
+
+    assert result.verdict not in (CONFIRMED, NO_EFFECT)
+    assert result.detail == "it was already running"
+    assert any("nothing to start" in note for note in run.unestablished)
 
 
 # -- the discharge windows -------------------------------------------------------

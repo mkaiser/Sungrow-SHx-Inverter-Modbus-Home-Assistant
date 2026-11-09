@@ -3,18 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Awaitable, Callable, Mapping
+from collections.abc import Callable, Mapping
 from contextlib import suppress
 import logging
 from typing import Any
 
-from modbus_connection import (
-    ModbusError,
-    ModbusExceptionError,
-    ModbusTcpParams,
-    ServerDeviceBusyError,
-    ServerDeviceFailureError,
-)
+from modbus_connection import ModbusError, ModbusTcpParams
 import probatio
 
 from homeassistant.components import network
@@ -146,6 +140,7 @@ from .migration import (
     async_resolve_legacy_slot,
     async_switch_entity_ids,
 )
+from .route import async_direct
 from .texts import Texts, async_texts
 
 _LOGGER = logging.getLogger(__name__)
@@ -250,7 +245,7 @@ async def _async_probe(
         # No retry here, deliberately: this runs once per candidate address
         # in a /24 sweep, so a retry multiplies the search rather than the
         # certainty. `None` is the honest answer and the prose says so.
-        direct = await _async_direct(read(unit, DIRECT_ONLY_PROBE))
+        direct = await async_direct(read(unit, DIRECT_ONLY_PROBE))
         # 5639 is the hybrid's register; an SG has no battery to report.
         battery = (
             await _async_has_battery(unit)
@@ -275,28 +270,6 @@ def _kind_data(device_type_code: int | None) -> dict[str, str]:
     if inverter_kind(device_type_code) == STRING_INVERTER:
         return {CONF_KIND: KIND_STRING_INVERTER}
     return {}
-
-
-async def _async_direct(probe: Awaitable[object]) -> bool | None:
-    """Return whether register 6100 says this endpoint is the inverter's own port.
-
-    Three answers. Answered is a cable: no communication module forwards the
-    block. Refused is a module in the path -- a refusal is the transport
-    answering, and only a refusal is. Anything else is `None`: 0x06 says "ask
-    me later" rather than "no such register", and so does 0x04 from a WiNet-S
-    other clients are polling; and a lost, timed-out or desynced read is the
-    link not carrying the question. Reading either as a refusal would tell a
-    house with no module fitted that it has a dongle.
-    """
-    try:
-        await probe
-    except (ServerDeviceBusyError, ServerDeviceFailureError):
-        return None
-    except ModbusExceptionError:
-        return False
-    except (ModbusError, HomeAssistantError, TimeoutError, OSError):
-        return None
-    return True
 
 
 async def _async_has_battery(unit: Any) -> bool | None:
@@ -2116,7 +2089,7 @@ class SungrowOptionsFlow(OptionsFlow):
         device = runtime.inverter_coordinator.device
         model = device.model or texts("model_unidentified")
 
-        direct = await _async_direct(device.async_read(DIRECT_ONLY_PROBE))
+        direct = await async_direct(device.async_read(DIRECT_ONLY_PROBE))
 
         if direct is True:
             key = "diagnosis_direct"

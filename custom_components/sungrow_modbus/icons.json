@@ -20,6 +20,9 @@
       "capability_test_status": {
         "default": "mdi:clipboard-check-multiple-outline"
       },
+      "connection": {
+        "default": "mdi:lan-connect"
+      },
       "diagnosis_next_start": {
         "default": "mdi:calendar-clock"
       },

@@ -204,6 +204,27 @@ waits on the running state: ten runs started into low-SoC Standby, and each was
 refused (the [fourth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-3-summary.md)). A check the options
 refuse is never waited for.
 
+## Write paths and readings
+
+Two kinds of check settle what a scale readback and a watched effect cannot
+(`src/sungrow_modbus/capability_test/writepath.py`,
+`src/sungrow_modbus/capability_test/plausibility.py`;
+`doc/capability_tests.md` lists them):
+
+- **Write paths**, inside a run: backup mode, load control and the weekend
+  discharge enable written with their own word; the second forced-charging
+  window read back with the schedule off, over a cable; each EMS mode option
+  once, put back at once; and each number offered a step above its maximum,
+  so a refusal records the bound the firmware enforces.
+- **Readings checked against each other**, between runs while auto repeat is
+  on: power against voltage times current, daily counters against the power
+  that fills them, lifetime against daily counters, a meter's phases against
+  its total. Read only, and how a *sensor's* scale is tested; a median a
+  clean decade off is the finding, a ratio merely off is not. The rows count
+  in the same counters, and auto repeat stays on until each has an answer.
+
+Not measured on hardware yet.
+
 ## Drivers
 
 The engine is the package `src/sungrow_modbus/capability_test/`, one module per

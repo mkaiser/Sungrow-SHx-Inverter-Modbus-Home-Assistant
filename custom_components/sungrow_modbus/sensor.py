@@ -3,8 +3,14 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from typing import Any
 
-from homeassistant.components.sensor import RestoreSensor, SensorEntity
+from homeassistant.components.sensor import (
+    RestoreSensor,
+    SensorDeviceClass,
+    SensorEntity,
+)
+from homeassistant.const import CONF_HOST, CONF_PORT, EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from sungrow_modbus.capability_test import ledger
@@ -30,6 +36,7 @@ from .diagnosis_entities import (
     DiagnosisTestRunsSensor,
 )
 from .entity import (
+    EnglishEntityId,
     SungrowBatteryEntity,
     SungrowDeviceEntity,
     SungrowEntity,
@@ -40,6 +47,7 @@ from .entity import (
 )
 from .external import combined, external_power
 from .external_descriptions import EXTERNAL_SENSORS
+from .route import ROUTE_LABELS, address
 from .sensor_descriptions import SENSOR_DESCRIPTIONS
 from .string_inverter_descriptions import STRING_INVERTER_DESCRIPTIONS
 from .wallbox_descriptions import WALLBOX_DESCRIPTIONS
@@ -55,6 +63,9 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Sungrow sensors."""
     runtime_data = entry.runtime_data
+
+    # Every entry, whatever its mode or kind: how this endpoint is reached.
+    async_add_entities([SungrowConnectionSensor(entry)])
 
     # A diagnostics-only entry is made of the diagnosis and nothing else: three
     # sensors here and two buttons beside them, which between them give the
@@ -148,6 +159,37 @@ async def async_setup_entry(
             SungrowWallboxSensor(wallbox, description)
             for description in WALLBOX_DESCRIPTIONS
         )
+
+
+class SungrowConnectionSensor(EnglishEntityId, SensorEntity):
+    """How this endpoint is reached: directly, or through a module.
+
+    Measured once at setup by register 6100 (`route.py`), so it changes only
+    with a reload. Unknown where 6100 neither answered nor refused. WiFi
+    against cable behind a WiNet-S no register says, so it is not a state.
+    """
+
+    _attr_has_entity_name = True
+    _attr_should_poll = False
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_translation_key = "connection"
+
+    def __init__(self, entry: SungrowConfigEntry) -> None:
+        """Take what setup measured from the inverter's coordinator."""
+        coordinator = entry.runtime_data.inverter_coordinator
+        serial = coordinator.device.serial_number
+        assert serial is not None
+        self._attr_unique_id = f"{serial}_connection"
+        self._attr_options = list(ROUTE_LABELS)
+        self._attr_device_info = coordinator.device_info
+        self._attr_native_value = coordinator.route
+        self._attr_extra_state_attributes: dict[str, Any] = {
+            "address": address(entry),
+            CONF_HOST: entry.data.get(CONF_HOST),
+            CONF_PORT: entry.data.get(CONF_PORT),
+            "web_interface": coordinator.web_interface,
+        }
 
 
 def _sensor_class(

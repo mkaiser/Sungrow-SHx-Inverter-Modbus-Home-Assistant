@@ -46,7 +46,11 @@ from generate_firmware_support import (
 
 from sungrow_modbus import Capability
 from sungrow_modbus.capability_test import coverage
-from sungrow_modbus.capability_test.procedure import NOT_PROBED
+from sungrow_modbus.capability_test.procedure import (
+    NOT_PROBED,
+    bound_check,
+    bounded_probes,
+)
 
 
 def _dump(**words: list[int | None]) -> dict[str, dict[str, int | None]]:
@@ -242,10 +246,17 @@ def test_the_diagnosis_column_follows_the_capability_tests_own_tables() -> None:
 
 def test_every_behavioural_check_named_is_one_the_procedure_runs() -> None:
     """`EFFECT_FIELDS` is keyed by `EffectResult.check`; a typo would hide a row."""
-    source = (REPO / "src/sungrow_modbus/capability_test/effects.py").read_text(
-        encoding="utf-8"
+    source = "".join(
+        (REPO / f"src/sungrow_modbus/capability_test/{name}.py").read_text(
+            encoding="utf-8"
+        )
+        for name in ("effects", "writepath")
     )
+    # The bounds are named by `bound_check`, one per probed number.
+    bounds = {bound_check(probe.field) for probe in bounded_probes()}
     for check in coverage.EFFECT_FIELDS:
+        if check in bounds:
+            continue
         assert f'"{check}"' in source, check
 
 

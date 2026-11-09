@@ -9,7 +9,11 @@ from typing import Any
 import pytest
 
 from sungrow_modbus.capability_test import ledger
-from sungrow_modbus.capability_test.coverage import EFFECT_FIELDS
+from sungrow_modbus.capability_test.coverage import (
+    CHECK_REVISIONS,
+    EFFECT_FIELDS,
+    READBACK,
+)
 from sungrow_modbus.capability_test.procedure import (
     CODES,
     CONFIRMED,
@@ -238,7 +242,8 @@ def test_the_status_line_fits_a_state() -> None:
         ]
     )
     line = ledger.status_line(folded)
-    assert line.startswith("0/8 established · 1 run · waiting for: ")
+    total = len(set(EFFECT_FIELDS) - ledger.MODES)
+    assert line.startswith(f"0/{total} established · 1 run · waiting for: ")
     assert len(ledger.status_line(folded, limit=40)) == 40
     assert "Still waiting for" in ledger.markdown(folded)
 
@@ -363,6 +368,47 @@ def test_a_restart_measured_once_is_established() -> None:
     block["restart"] = {"running_after": None, "verdict": "never came back"}
     folded = ledger.fold([_run("2026-11-08T10:00Z", block)])
     assert ledger.RESTART not in ledger.established(folded)
+
+
+def test_every_check_has_a_revision() -> None:
+    """A check missing from the table would never be measured again."""
+    assert set(CHECK_REVISIONS) == {READBACK, ledger.RESTART, *EFFECT_FIELDS}
+
+
+def test_a_check_whose_logic_changed_is_measured_again(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A run from an older revision establishes nothing for that check."""
+    old = _block(
+        readback=[_probe("battery_max_soc", MATCH)],
+        effects=[
+            _effect("forced charge", CONFIRMED),
+            _effect("PV generation cut", EFFECT_SCALED),
+        ],
+    )
+    old["restart"] = {"running_after": 41.0, "verdict": "measured"}
+    runs = [_run("2026-11-08T10:00Z", old)]
+    assert {"forced charge", "battery_max_soc", ledger.RESTART} <= (
+        ledger.established(ledger.fold(runs))
+    )
+
+    monkeypatch.setitem(CHECK_REVISIONS, "PV generation cut", 2)
+    monkeypatch.setitem(CHECK_REVISIONS, "forced charge", 2)
+    monkeypatch.setitem(CHECK_REVISIONS, ledger.RESTART, 2)
+    folded = ledger.fold(runs)
+    assert ledger.established(folded) == {"battery_max_soc"}
+    assert folded["summary"]["forced charge"]["outdated"]
+    assert any("older revision" in item["why"] for item in folded["still_missing"])
+
+    # A run on the new logic answers it, and the old finding no longer
+    # contradicts it: it was measured by logic that has since changed.
+    new = _block(effects=[_effect("PV generation cut", CONFIRMED)])
+    new["revisions"] = dict(CHECK_REVISIONS)
+    folded = ledger.fold([*runs, _run("2026-11-09T10:00Z", new)])
+    assert "PV generation cut" in ledger.established(folded)
+    assert folded["summary"]["PV generation cut"]["verdict"] == CONFIRMED
+    assert not folded["contradictions"]
+    assert "forced charge" not in ledger.established(folded)
 
 
 def test_a_stopped_check_still_waits() -> None:

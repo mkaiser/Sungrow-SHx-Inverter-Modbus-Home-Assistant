@@ -239,6 +239,8 @@ def _carry_capability_test(document: dict[str, Any], runtime: Any, device: Any) 
     block = diagnosis.state.capability_test if diagnosis is not None else None
     if block:
         attach_capability_test(document, block, device)
+    if diagnosis is not None and diagnosis.plausibility.observations:
+        document["plausibility"] = diagnosis.plausibility.document()
 
 
 async def async_get_device_diagnostics(

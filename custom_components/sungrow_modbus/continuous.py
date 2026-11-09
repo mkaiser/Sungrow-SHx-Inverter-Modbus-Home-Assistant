@@ -15,6 +15,11 @@ lasts until they turn it off or Home Assistant restarts or reloads the entry,
 and it is never restored on: a reboot never resumes writing by itself. What
 each run may do is still the entry's options, exactly as for the button.
 
+Every tick between runs also feeds the polled readings to the plausibility
+checks (`sungrow_modbus.capability_test.plausibility`), which need days of
+readings rather than a moment; auto repeat stays on while any of them is
+still unsettled, and writes nothing for them.
+
 Bounded so a forgotten switch cannot become a nuisance: one run per slot, never
 one while the inverter is not running (low-SoC Standby at night would refuse
 it anyway, after part A), at least `QUIET` after the last run ended, and it
@@ -86,11 +91,15 @@ class ContinuousCapabilityTest:
             "switched off or Home Assistant restarts.",
             self.entry.title,
         )
+        # Auto repeat always leaves out what is established; the switch says
+        # so, and keeps saying it for the single runs after it.
+        self.runner.skip_established = True
         now = dt_util.utcnow()
         self.started_at, self.last_start, self._last_slot = now, None, None
         self.runs_started = 0
         self._cancel = async_track_time_interval(self.hass, self._async_tick, TICK)
         self._async_tick(now)
+        self.runner.async_notify()
 
     @callback
     def async_turn_off(self, why: str = "off") -> None:
@@ -104,7 +113,7 @@ class ContinuousCapabilityTest:
         self.waiting = why
         self.runner.async_notify()
 
-    def _live(self) -> ledger.Live:
+    def live(self) -> ledger.Live:
         """Return the house now, from what the coordinators last polled."""
         device = self.entry.runtime_data.inverter_coordinator.device
 
@@ -142,9 +151,19 @@ class ContinuousCapabilityTest:
         if self.runner.state.running:
             self._say("a run is in progress")
             return
+        # The readings' checks are fed every tick between runs: they cost no
+        # Modbus read and need days, not moments.
+        self.runner.async_observe(now)
         folded = self.runner.state.capability_test
         waiting = ledger.awaited(folded)
         if not waiting:
+            observing = self.runner.plausibility.unsettled()
+            if observing:
+                self._say(
+                    "watching the readings for "
+                    + "; ".join(f"{name}: {need}" for name, need in observing)
+                )
+                return
             self.async_turn_off("nothing left that a run at another moment can answer")
             return
         if self._last_slot is not None and self._slot(now) <= self._last_slot:
@@ -159,7 +178,7 @@ class ContinuousCapabilityTest:
         if self._inverter_running() is False:
             self._say("waiting for the inverter to run")
             return
-        due = ledger.due(folded, self._live())
+        due = ledger.due(folded, self.live())
         if not due:
             self._say(
                 "waiting for " + "; ".join(f"{name}: {need}" for name, need in waiting)

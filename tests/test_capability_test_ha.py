@@ -42,6 +42,7 @@ from custom_components.sungrow_modbus.diagnosis_entities import elapsed
 from homeassistant.components import persistent_notification
 from homeassistant.const import CONF_HOST, CONF_PORT, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import device_registry as dr, issue_registry as ir
 from homeassistant.util import dt as dt_util
 from sungrow_modbus.capability_test import ledger
@@ -657,12 +658,12 @@ async def test_auto_repeat_runs_at_once_then_waits_out_the_gap(
     assert hass.states.get(STEP).state.startswith(
         "waiting for changed test conditions: "
     )
-    next_start = hass.states.get("sensor.sh10rt_diagnosis_next_start").state
+    next_start = hass.states.get("sensor.sh10rt_diagnosis_next_attempt").state
     assert next_start not in ("unknown", "unavailable")
 
     await _auto_repeat(hass, False)
     assert not runner.continuous.active
-    assert hass.states.get("sensor.sh10rt_diagnosis_next_start").state == "unknown"
+    assert hass.states.get("sensor.sh10rt_diagnosis_next_attempt").state == "unknown"
 
 
 async def test_auto_repeat_leaves_out_what_is_established_and_the_restart(
@@ -692,6 +693,32 @@ async def test_auto_repeat_leaves_out_what_is_established_and_the_restart(
     await _auto_repeat(hass, False)
 
 
+async def test_auto_repeat_turns_skipping_completed_tests_on(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """Auto repeat always skips them, and the switch shows it."""
+    entry = await _setup(hass, ready_unit)
+    await hass.services.async_call(
+        "switch", "turn_off", {"entity_id": SKIP}, blocking=True
+    )
+    assert hass.states.get(SKIP).state == "off"
+
+    await _auto_repeat(hass, True)
+    await hass.async_block_till_done()
+
+    assert hass.states.get(SKIP).state == "on"
+    assert entry.runtime_data.diagnosis.skip_established
+
+    # Off would show something auto repeat does not do: refused, with why.
+    with pytest.raises(ServiceValidationError) as refused:
+        await hass.services.async_call(
+            "switch", "turn_off", {"entity_id": SKIP}, blocking=True
+        )
+    assert refused.value.translation_key == ("skip_completed_tests_during_auto_repeat")
+    assert hass.states.get(SKIP).state == "on"
+    await _auto_repeat(hass, False)
+
+
 async def test_auto_repeat_is_off_after_a_reload(
     hass: HomeAssistant, ready_unit: MockModbusUnit
 ) -> None:
@@ -718,14 +745,79 @@ async def test_auto_repeat_stops_when_nothing_is_left_to_wait_for(
     await _auto_repeat(hass, True)
     runner = entry.runtime_data.diagnosis
 
-    with patch(
-        "custom_components.sungrow_modbus.continuous.ledger.awaited", return_value=[]
+    with (
+        patch(
+            "custom_components.sungrow_modbus.continuous.ledger.awaited",
+            return_value=[],
+        ),
+        patch.object(runner.plausibility, "unsettled", return_value=[]),
     ):
         runner.continuous._async_tick(dt_util.utcnow())
     await hass.async_block_till_done()
 
     assert not runner.continuous.active
     assert "nothing left" in hass.states.get(STATUS).attributes["continuous_waiting"]
+
+
+async def test_auto_repeat_keeps_watching_the_readings(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """No run is awaited, but a plausibility check is unsettled: it stays on."""
+    entry = await _setup(hass, ready_unit)
+    await _auto_repeat(hass, True)
+    runner = entry.runtime_data.diagnosis
+
+    with (
+        patch(
+            "custom_components.sungrow_modbus.continuous.ledger.awaited",
+            return_value=[],
+        ),
+        patch.object(runner, "async_start") as start,
+    ):
+        runner.continuous._async_tick(dt_util.utcnow())
+    await hass.async_block_till_done()
+
+    assert runner.continuous.active
+    assert not start.called
+    waiting = hass.states.get(STATUS).attributes["continuous_waiting"]
+    assert waiting.startswith("watching the readings for ")
+
+
+async def test_the_tick_feeds_the_readings_and_the_counters_count_them(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """Each tick is an observation; its checks join the test counters."""
+    entry = await _setup(hass, ready_unit)
+    runner = entry.runtime_data.diagnosis
+    await _auto_repeat(hass, True)
+    observed = runner.plausibility.observations
+    assert observed >= 1
+
+    runner.continuous._async_tick(dt_util.utcnow())
+    await hass.async_block_till_done()
+    assert runner.plausibility.observations == observed + 1
+
+    rows = runner.plausibility.summary()
+    assert rows
+    view = runner.tests
+    assert view is not None
+    assert set(rows) <= set(view["summary"])
+    # The runs' own block is not touched: a run publishes it alone.
+    assert not set(rows) & set(
+        (runner.state.capability_test or {}).get("summary") or {}
+    )
+
+
+async def test_clearing_the_history_forgets_the_readings_too(
+    hass: HomeAssistant, ready_unit: MockModbusUnit
+) -> None:
+    """One button starts a collection afresh, readings included."""
+    entry = await _setup(hass, ready_unit)
+    runner = entry.runtime_data.diagnosis
+    await _auto_repeat(hass, True)
+    assert runner.plausibility.observations
+    await runner.async_clear_ledger()
+    assert runner.plausibility.observations == 0
 
 
 # -- stopping a run -------------------------------------------------------------
@@ -819,7 +911,7 @@ async def test_start_announces_the_run_in_a_notification(
 
 # -- leaving out established checks ------------------------------------------
 
-SKIP = "switch.sh10rt_diagnosis_extended_test_skip_established"
+SKIP = "switch.sh10rt_diagnosis_skip_completed_tests"
 
 
 async def test_skipping_established_checks_narrows_the_next_run(
@@ -828,7 +920,10 @@ async def test_skipping_established_checks_narrows_the_next_run(
     """Off, a run is the full test; on, it writes only for what is missing."""
     entry = await _setup(hass, ready_unit)
     runner = entry.runtime_data.diagnosis
-    assert hass.states.get(SKIP).state == "off"
+    assert hass.states.get(SKIP).state == "on"  # on by default
+    await hass.services.async_call(
+        "switch", "turn_off", {"entity_id": SKIP}, blocking=True
+    )
 
     await _press(hass, CONTROL_BUTTON)
     established = ledger.established(runner.state.capability_test)
@@ -854,7 +949,7 @@ async def test_skipping_established_checks_survives_a_reload(
     """It gives no leave to write, so unlike auto repeat it is kept."""
     entry = await _setup(hass, ready_unit)
     await hass.services.async_call(
-        "switch", "turn_on", {"entity_id": SKIP}, blocking=True
+        "switch", "turn_off", {"entity_id": SKIP}, blocking=True
     )
 
     with patch(
@@ -863,8 +958,8 @@ async def test_skipping_established_checks_survives_a_reload(
         assert await hass.config_entries.async_reload(entry.entry_id)
         await hass.async_block_till_done()
 
-    assert hass.states.get(SKIP).state == "on"
-    assert entry.runtime_data.diagnosis.skip_established
+    assert hass.states.get(SKIP).state == "off"
+    assert not entry.runtime_data.diagnosis.skip_established
 
 
 async def test_next_start_is_the_next_slot_from_the_press(

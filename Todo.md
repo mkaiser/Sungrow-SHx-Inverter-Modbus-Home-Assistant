@@ -156,11 +156,18 @@ Nothing can start now (blocker 17).
       `forced_startup: true`) has not run on an inverter yet: one in
       low-SoC standby, after dark. The SH-RT's factory 0 goes back as
       0x55, the one `RESTORE_EQUIVALENT` (AGENTS.md).
-   2. **New capability tests, for the maintainer to pick**
-      (`doc/capability_tests.md`, *Could still test*): a no-op write of
-      backup mode and load control; out-of-range refusal probes for the
-      `number` bounds; window 2 read back with the schedule off; the
-      wallbox's current scale in the feature report; the EMS mode codes.
+   2. **The new checks on hardware** (built, uncommitted on 2026-11-09, not
+      run on an inverter; `doc/capability_tests.md`): the write paths
+      (`capability_test/writepath.py`: no-op writes of backup mode, load
+      control and the weekend enable; window 2 read back with the schedule
+      off; each EMS option once; each number a step above its maximum), the
+      two start thresholds as behavioural checks, 13088 recorded during the
+      export check, a check established by day measured once more at night
+      (`ledger.TWO_MOMENTS`), and the readings' plausibility checks fed by
+      auto repeat (`capability_test/plausibility.py`, document schema 26).
+      One auto-repeat collection at the maintainer's SH10RT, a day and a
+      night, then ingest. The wallbox's tests are planned in
+      `plans/wallbox_capability_tests.md`.
    3. **Outside the repository**: issue #786's title still says survey, and
       the repository variable `SURVEY_ISSUE` keeps its name.
    4. **Capability test runs over a day.** Home Assistant keeps every run per
@@ -178,12 +185,11 @@ Nothing can start now (blocker 17).
          start* names the next slot. Runs are kept with no cap, so a long
          collection grows the stored ledger and the diagnostics download
          (19 runs were 265 kB); clear the history between collections.
-      2. **The charge window with no room to charge** (revision 2 in
-         `coverage.CHECK_REVISIONS`, by another session): it is judged only
-         after the window was written, and the 300 W floor also skips a battery
-         charging a few hundred watts with kilowatts of headroom. A check of
-         the headroom against `snapshot.battery_ceiling` before writing would
-         do both.
+      2. **The charge window with no room to charge**: the headroom under
+         `snapshot.battery_ceiling` is now looked at before the window is
+         written (2026-11-09); the 300 W floor after it still skips a battery
+         charging a few hundred watts with kilowatts of headroom, unless the
+         bracket confirms the start first.
       3. **Translate** the status line, the step sensor's states (*waiting
          for changed test conditions*, *stopped*) and the notifications once
          their wording settles; English for now.

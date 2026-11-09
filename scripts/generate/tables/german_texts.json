@@ -231,6 +231,7 @@
  "exceptions.device_not_found.message": "Es gibt kein Gerät mit der ID {device_id}. Stammt dieser Aufruf aus einem Skript, wurde das Gerät möglicherweise seit dessen Erstellung entfernt und neu hinzugefügt.",
  "exceptions.entry_not_loaded.message": "{title} ist nicht geladen und kann daher nicht gestartet oder gestoppt werden. Prüfe die Integrationsseite auf einen Einrichtungsfehler.",
  "exceptions.not_a_sungrow_device.message": "{name} ist kein Sungrow-Modbus-Gerät.",
+ "exceptions.skip_completed_tests_during_auto_repeat.message": "Die automatische Wiederholung überspringt abgeschlossene Tests immer. Erst mit Diagnose: stoppen beenden, dann lässt sich dieser Schalter ausschalten.",
  "exceptions.diagnosis_already_running.message": "Auf diesem Wechselrichter läuft bereits eine Diagnose. Zwei gleichzeitig würden um eine seiner sehr wenigen Modbus-Verbindungen konkurrieren.",
  "exceptions.not_on_string_inverter.message": "{title} ist ein String-Wechselrichter. Diese Aktion schreibt in die Register eines Hybrid-Wechselrichters, und nichts in dieser Integration schreibt in einen String-Wechselrichter.",
  "exceptions.write_failed.message": "{entity_id} konnte nicht geschrieben werden: {error}",
@@ -292,6 +293,9 @@
  "config.create_entry.default": "**Die Einrichtung ist abgeschlossen.** Die Entitäten des Wechselrichters erscheinen auf seiner Geräteseite, sobald ihre ersten Messwerte eintreffen.\n\nUm ihn im Energie-Dashboard zu sehen (**Einstellungen → Dashboards → Energie**), wähle die Sensoren, die [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt: Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.",
  "services.run_capability_test.fields.forced_startup.name": "Nur Zwangsstart",
  "services.run_capability_test.fields.forced_startup.description": "Statt des Funktionstests den Zwangsstart bei niedrigem Ladezustand testen: Steht der Wechselrichter im Standby, weil die Batterie am Minimum ist und kein PV anliegt, wird 0xAA in Register 13017 geschrieben, der Start beobachtet, 0x55 geschrieben, die Rückkehr in den Standby beobachtet und das Register zurückgesetzt. In jedem anderen Zustand verweigert.",
+ "entity.sensor.connection.state.direct": "Direkt, ohne Dongle",
+ "entity.sensor.connection.state.winet": "Über WiNet-S",
+ "entity.sensor.connection.state.module": "Über ein Kommunikationsmodul",
  "entity.select.diagnosis_mode.state.read_only": "Nur lesend",
  "entity.select.diagnosis_mode.state.extended": "Erweiterter Test (einmalig)",
  "entity.select.diagnosis_mode.state.extended_auto_repeat": "Erweiterter Test (automatisch wiederholen)"

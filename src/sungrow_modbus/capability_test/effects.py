@@ -378,6 +378,16 @@ class EffectSteps(ReadbackSteps):
             # So the question is only whether the quantity rose clearly while
             # the setting was in place and fell back once it was put back --
             # the second half is what the drift check above has already asked.
+            # `before` is the floor, as a stop's is: a battery already
+            # charging -- from PV, often at its ceiling -- has nothing for a
+            # window to start, and staying put then says nothing either way.
+            if before_mid >= WINDOW_START_W:
+                self._worst(3)
+                self._note(
+                    f"{check}: not measured -- {observable_label} was already "
+                    f"{before_mid:.0f} W, so there was nothing to start"
+                )
+                return measured._replace(detail="it was already running")
             if delta > max(SIGNIFICANCE * max(before_mad, after_mad_), WINDOW_START_W):
                 return measured._replace(verdict=CONFIRMED)
             self._worst(3)
@@ -628,6 +638,7 @@ class EffectSteps(ReadbackSteps):
         results.extend(await self._pv_cut_effect())
         results.extend(await self._charge_window_effect())
         results.extend(await self._discharge_window_effect())
+        results.extend(await self._start_power_effects())
         results.extend(await self._import_limit_effect())
         if self._expired("effect"):
             self._worst(3)
@@ -995,6 +1006,21 @@ class EffectSteps(ReadbackSteps):
         self.conditions["inverter_clock"] = now.isoformat()
         if self._expired("effect"):
             return []
+        # Looked at before anything is written: a battery charging near the
+        # pack's ceiling -- from PV, at noon -- leaves a window no room to
+        # start anything, and a window judged afterwards has already been
+        # written. A battery charging well under its ceiling still can: at
+        # mkaiser a window took 772 W to 4499 W.
+        pack = self.snapshot.battery_ceiling
+        if pack is not None:
+            charging = self._charging(await self._sample()) or 0.0
+            if pack - charging < WINDOW_START_W:
+                self._note(
+                    f"no charge window check: the battery already charges at "
+                    f"{charging:.0f} W of its {pack:.0f} W, so a window would "
+                    "have no room to start anything"
+                )
+                return []
         self._step("forced-charging window")
         start_hour, start_minute, end_hour, end_minute = window
         enable, days, *times, target_probe = CHARGE_WINDOW
@@ -1380,6 +1406,86 @@ class EffectSteps(ReadbackSteps):
         )
         return False
 
+    async def _feed_in_ratio(self) -> float | None:
+        """Read register 13088, the feed-in limitation ratio, now."""
+        await self._refresh("fast_holding")
+        value = self._value("feed_in_limitation_ratio")
+        return None if value is None else float(value)
+
+    async def _start_power_effects(self) -> list[EffectResult]:
+        """Raise a start threshold above the flow it gates, and watch it stop.
+
+        33149 and 33150 hold the surplus a battery needs before it starts
+        charging, and the deficit before it starts discharging. With the
+        battery moving a few hundred watts, a threshold at its maximum above
+        that flow should hold the battery still; a battery that carries on
+        says the threshold gates a start, not a flow already running, which
+        is recorded as such. Judged as a stop, bracketed like the discharge
+        windows'.
+        """
+        results: list[EffectResult] = []
+        for check, skip, field, flow, label, other in (
+            (
+                "charging start threshold",
+                "no charging threshold check",
+                "battery_charging_start_power",
+                self._charging,
+                "battery charge power",
+                self._exporting,
+            ),
+            (
+                "discharging start threshold",
+                "no discharging threshold check",
+                "battery_discharging_start_power",
+                self._discharging,
+                "battery discharge power",
+                self._importing,
+            ),
+        ):
+            if self._skips(check):
+                continue
+            probe = next((row for row in self.plan if row.field == field), None)
+            if probe is None:
+                continue
+            high = float(self.snapshot.bounds[field][1])
+            sample = await self._sample()
+            moving = flow(sample) or 0.0
+            spill = other(sample) or 0.0
+            if (
+                not STOPPED_W <= moving <= high - EFFECT_FLOOR_W
+                or spill >= EFFECT_FLOOR_W
+            ):
+                self._note(
+                    f"{skip}: {label} was {moving:.0f} W with "
+                    f"{spill:.0f} W past the battery; it needs {STOPPED_W:.0f} to "
+                    f"{high - EFFECT_FLOOR_W:.0f} W, all of it through the battery"
+                )
+                continue
+            if self._expired("effect"):
+                break
+            self._step(check)
+            original = self.snapshot.raw[field]
+
+            async def apply(probe: Probe = probe, high: float = high) -> str | None:
+                return await self._write(probe, high)
+
+            async def undo(probe: Probe = probe, original: int = original) -> None:
+                await self._write_word(probe, original)
+
+            results.append(
+                await self._bracket(
+                    check,
+                    flow,
+                    label,
+                    high,
+                    apply,
+                    undo,
+                    setpoint=False,
+                    expect_stop=True,
+                )
+            )
+        return results
+
     async def _export_effect(self) -> list[EffectResult]:
         """Limit the export, if the house is exporting and limiting is allowed.
 
@@ -1446,13 +1552,26 @@ class EffectSteps(ReadbackSteps):
             return []
         self._step(f"export limit at {target:g} W")
 
+        ratio_before = await self._feed_in_ratio()
+
         async def apply() -> str | None:
             if (
                 mode != MODE_ON
                 and (failure := await self._write(EXPORT_MODE, MODE_ON)) is not None
             ):
                 return failure
-            return await self._write(probe, target)
+            failure = await self._write(probe, target)
+            if failure is None:
+                await self.clock.sleep(self.WRITE_SETTLE)
+                # Register 13088 beside 13074: whether the inverter states the
+                # limit as a ratio of its rating too. Recorded, never judged.
+                self.conditions["feed_in_ratio"] = {
+                    "before_percent": ratio_before,
+                    "during_percent": await self._feed_in_ratio(),
+                    "limit_w": target,
+                    "rated_w": self._value("inverter_rated_output"),
+                }
+            return failure
 
         async def undo() -> None:
             original = self.snapshot.values.get(probe.field)

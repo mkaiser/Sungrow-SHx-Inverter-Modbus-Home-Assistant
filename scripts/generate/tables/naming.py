@@ -100,14 +100,15 @@ OVERRIDES: dict[str, str] = {
     # among entities that are otherwise all readings, in both languages.
     # One select chooses what runs, one button starts it, one stops it: the
     # mode names say plainly which of them write (`DIAGNOSIS_MODE_LABELS`).
+    "connection": "Connection",
     "diagnosis_mode": "Diagnosis: mode",
     "diagnosis_start": "Diagnosis: start",
     "diagnosis_stop": "Diagnosis: stop",
-    "skip_established_capability_tests": ("Diagnosis: extended test, skip established"),
+    "skip_established_capability_tests": "Diagnosis: skip completed tests",
     "diagnosis_progress": "Diagnosis: progress",
     "diagnosis_step": "Diagnosis: current step",
     "diagnosis_finished": "Diagnosis: last finished",
-    "diagnosis_next_start": "Diagnosis: next start",
+    "diagnosis_next_start": "Diagnosis: next attempt",
     "diagnosis_test_runs": "Diagnosis: test runs",
     "clear_capability_test_history": "Diagnosis: tests, clear history",
     "capability_test_status": "Diagnosis: test summary",
@@ -506,6 +507,13 @@ DIAGNOSIS_MODE_LABELS: dict[str, str] = {
     "extended_auto_repeat": "Extended test (auto repeat)",
 }
 
+#: The *Connection* sensor's states (`route.ROUTE_LABELS` keys).
+CONNECTION_LABELS: dict[str, str] = {
+    "direct": "Direct, no dongle",
+    "winet": "Via WiNet-S",
+    "module": "Via a communication module",
+}
+
 DIAGNOSTIC: frozenset[str] = frozenset(
     {
         "active_power_limitation_ratio_raw",
@@ -659,16 +667,17 @@ GERMAN: dict[str, str] = {
     "wallbox_enabled": "Ladestation aktiviert",
     "weekend_discharge": "Entladung am Wochenende",
     # -- the diagnosis -------------------------------------------------------
+    "connection": "Verbindung",
     "diagnosis_mode": "Diagnose: Modus",
     "diagnosis_start": "Diagnose: starten",
     "diagnosis_stop": "Diagnose: stoppen",
     "skip_established_capability_tests": (
-        "Diagnose: erweiterter Test, Ermitteltes überspringen"
+        "Diagnose: abgeschlossene Tests überspringen"
     ),
     "diagnosis_progress": "Diagnose: Fortschritt",
     "diagnosis_step": "Diagnose: aktueller Schritt",
     "diagnosis_finished": "Diagnose: zuletzt beendet",
-    "diagnosis_next_start": "Diagnose: nächster Start",
+    "diagnosis_next_start": "Diagnose: nächster Versuch",
     "diagnosis_test_runs": "Diagnose: Testläufe",
     "clear_capability_test_history": "Diagnose: Testverlauf löschen",
     "capability_test_status": "Diagnose: Testübersicht",

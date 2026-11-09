@@ -35,7 +35,13 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any, NamedTuple
 
-from .coverage import EFFECT_FIELDS
+from .coverage import (
+    CHECK_REVISIONS,
+    EFFECT_FIELDS,
+    READBACK,
+    RESTART,
+    WRITE_PATH_CHECKS,
+)
 from .procedure import (
     CLAMPED,
     CODES,
@@ -63,9 +69,13 @@ from .procedure import (
     SOC_CEILING_FLOOR,
     SOC_CHARGE_CEILING,
     STOPPED,
+    STOPPED_W,
     UNCHANGED,
+    UNCURABLE,
     UNSAFE_STATE,
     USER_DECLINED,
+    WINDOW_START_W,
+    bound_check,
 )
 
 #: The folded block's schema. A single run's block is `BLOCK_SCHEMA` (2); a
@@ -128,6 +138,10 @@ NOTE_PREFIXES: tuple[tuple[str, str], ...] = (
     ("no charge window check", "forced-charging window"),
     ("no discharge window check", "discharge windows away from now"),
     ("no import limit check", "site import limit"),
+    ("no charging threshold check", "charging start threshold"),
+    ("no discharging threshold check", "discharging start threshold"),
+    # The write-path checks start their notes with their own name.
+    *((name, name) for name in sorted(WRITE_PATH_CHECKS)),
 )
 
 #: A note that stops every behavioural check at once.
@@ -171,6 +185,20 @@ def _strongest(
 ) -> tuple[int, Mapping[str, Any]]:
     """Pick the strongest row; between equals, the latest run's."""
     return max(rows, key=lambda item: (_rank(item[1]), item[0]))
+
+
+def run_revision(block: Mapping[str, Any], name: str) -> int:
+    """Return the revision of check `name` a run's block was measured with.
+
+    `name` is a behavioural check, `READBACK` for every readback row, or
+    `RESTART`. A block from before `CHECK_REVISIONS` ran revision 1.
+    """
+    return int((block.get("revisions") or {}).get(name, 1))
+
+
+def _current(block: Mapping[str, Any], name: str) -> bool:
+    """Whether a run measured `name` with the logic this library runs."""
+    return run_revision(block, name) == CHECK_REVISIONS.get(name, 1)
 
 
 def _worst_code(codes: Sequence[int]) -> int:
@@ -247,14 +275,34 @@ def fold(
     contradictions: list[dict[str, Any]] = []
     for kind, table in (("readback", readback), ("effect", effects)):
         for name, rows in table.items():
+            # A run measured with an older revision of the check's logic
+            # speaks only until a run with the current one has: then it is
+            # left out here (it stays whole in `runs`), and until then it
+            # establishes nothing, so the check is measured again.
+            check = READBACK if kind == "readback" else name
+            fresh = [(i, r) for i, r in rows if _current(runs[i]["block"], check)]
+            stale = not fresh
+            rows = fresh or rows
+            table[name] = rows
             index, row = _strongest(rows)
             summary[name] = {
                 "kind": kind,
                 "verdict": row.get("verdict"),
                 "run": index,
                 "read_at": runs[index].get("read_at"),
-                "established": _rank(row) >= ESTABLISHED,
+                "established": _rank(row) >= ESTABLISHED and not stale,
             }
+            if stale:
+                summary[name]["outdated"] = True
+            if kind == "effect":
+                summary[name]["moments"] = sorted(
+                    {
+                        moment_of(runs[i]["block"].get("conditions") or {})
+                        for i, r in rows
+                        if _rank(r) >= ESTABLISHED
+                    }
+                    - {None}
+                )
             verdicts = {str(r.get("verdict")) for _, r in rows}
             if verdicts & _GOOD and any(RANK.get(v) == FINDING for v in verdicts):
                 contradictions.append(
@@ -284,7 +332,9 @@ def fold(
         if row["established"]:
             continue
         noted = notes.get(name)
-        if noted is not None and noted[0] >= row["run"]:
+        if row.get("outdated"):
+            why = f"{name}: measured with an older revision of the test"
+        elif noted is not None and noted[0] >= row["run"]:
             why = noted[1]
         else:
             source = (readback if row["kind"] == "readback" else effects)[name]
@@ -349,15 +399,50 @@ def unfold(
     return runs
 
 
-#: The name `Options.skip` leaves the restart out by.
-RESTART = "restart"
+#: Behavioural checks measured once more at the other moment of the day,
+#: once established at one: a firmware that obeys a forced charge in sun
+#: may not at night, where PV no longer covers the house around it. Never
+#: more than the two moments, so a collection still ends.
+TWO_MOMENTS = frozenset(
+    {"forced charge", "forced discharge", "charge ceiling", "export power limit"}
+)
 
 
-def established(folded: Mapping[str, Any] | None) -> frozenset[str]:
+def moment_of(conditions: Mapping[str, Any]) -> str | None:
+    """Return "day" or "night" for a run's conditions, by its PV; None unread."""
+    pv = conditions.get("pv_w")
+    if pv is None:
+        return None
+    return "day" if float(pv) >= MIN_PV_W else "night"
+
+
+def live_moment(live: Live) -> str | None:
+    """Return the moment the house is in now, as `moment_of` names it."""
+    return moment_of({"pv_w": live.pv})
+
+
+def _wants_moment(name: str, row: Mapping[str, Any], moment: str | None) -> bool:
+    """Whether an established check is worth measuring again at `moment`."""
+    moments = row.get("moments")
+    return (
+        moment is not None
+        and name in TWO_MOMENTS
+        and moments is not None
+        and moment not in moments
+        and len(moments) < 2
+    )
+
+
+def established(
+    folded: Mapping[str, Any] | None, moment: str | None = None
+) -> frozenset[str]:
     """Return the checks a run may leave out (`Options.skip`): every established one.
 
     A check two runs disagree on is not among them, however strong its best
-    verdict: `contradictions` wants another run, not fewer.
+    verdict: `contradictions` wants another run, not fewer. Given the moment
+    the run starts in, a check in `TWO_MOMENTS` established only at the other
+    one is not among them either, so a run that happens anyway measures it
+    there too; no run is started for that alone.
     """
     if folded is None:
         return frozenset()
@@ -365,12 +450,19 @@ def established(folded: Mapping[str, Any] | None) -> frozenset[str]:
     names = {
         name
         for name, row in (folded.get("summary") or {}).items()
-        if row.get("established") and name not in contradicted
+        if row.get("established")
+        and name not in contradicted
+        and row.get("kind") != PLAUSIBILITY
+        and not _wants_moment(name, row, moment)
     }
     # A restart measured once, back to running, is not worth stopping the
     # house again for; clearing the history measures it afresh.
     restart = folded.get("restart") or {}
-    if restart.get("running_after") is not None:
+    restarted_in: Mapping[str, Any] = next(
+        (run for run in reversed(folded.get("runs") or []) if run.get("restart")),
+        {},
+    )
+    if restart.get("running_after") is not None and _current(restarted_in, RESTART):
         names.add(RESTART)
     return frozenset(names)
 
@@ -460,6 +552,48 @@ def run_lines(folded: Mapping[str, Any]) -> list[str]:
     return lines
 
 
+def _source(row: Mapping[str, Any]) -> str:
+    """Name where a summary row's verdict came from, for a person."""
+    if row.get("kind") == PLAUSIBILITY:
+        return str(row.get("detail") or "readings")
+    return f"run {int(row['run']) + 1}"
+
+
+#: How a summary row from the readings, not from a run, is marked
+#: (`plausibility.KIND`).
+PLAUSIBILITY = "plausibility"
+
+
+def with_plausibility(
+    folded: Mapping[str, Any] | None, rows: Mapping[str, Mapping[str, Any]]
+) -> dict[str, Any] | None:
+    """Return the folded block with the readings' checks counted in it.
+
+    `rows` is `Plausibility.summary()`. Its rows join `summary`, so the
+    counters, `progress` and the notification count them with the writes;
+    the unsettled ones join `still_missing`, marked so that `awaited` never
+    starts a run for them -- a run cannot answer what only time can. The
+    block a run publishes is never this one: `fold` builds that.
+    """
+    if not rows:
+        return dict(folded) if folded is not None else None
+    out: dict[str, Any] = dict(folded or {})
+    out["summary"] = {**(out.get("summary") or {}), **rows}
+    out["still_missing"] = [
+        *(out.get("still_missing") or []),
+        *(
+            {
+                "name": name,
+                "kind": PLAUSIBILITY,
+                "why": f"{name}: waits for {row.get('needs')} ({row.get('detail')})",
+            }
+            for name, row in rows.items()
+            if not row.get("established")
+        ),
+    ]
+    return out
+
+
 def markdown(folded: Mapping[str, Any], *, log_lines: int = 30) -> str:
     """Render a folded block for a notification: progress, checks, the log."""
     established, total = progress(folded)
@@ -488,9 +622,7 @@ def markdown(folded: Mapping[str, Any], *, log_lines: int = 30) -> str:
     ]
     if done:
         out.append("**Established:**")
-        out.extend(
-            f"- {name}: {row['verdict']} (run {row['run'] + 1})" for name, row in done
-        )
+        out.extend(f"- {name}: {row['verdict']} ({_source(row)})" for name, row in done)
         out.append("")
     lines = run_lines(folded)[-log_lines:]
     if lines:
@@ -532,6 +664,15 @@ _ROOM = SOC_CHARGE_CEILING - 5.0
 #: Charge in the battery for a discharge, with margin over any minimum.
 _CHARGE = 30.0
 
+#: The most a battery may move for a start threshold at its 1000 W maximum
+#: to stand clear above it (`effects._start_power_effects`).
+_THRESHOLD_FLOW = 1000.0 - EFFECT_FLOOR_W
+
+#: Where the minimum state of charge's bound may be probed: its 50 % maximum,
+#: a step above it, and strictly more than the readback walk's margin under
+#: the battery (`preflight._safe_soc_probe`).
+_MIN_SOC_BOUND = 50.0 + 1.0 + 5.0 + 1.0
+
 #: What each behavioural check needs the house to be doing, in words for the
 #: owner and as a test on `Live`. Taken from the guards in `effects.py`, with
 #: margin, so a run started for a check does not refuse it at once; a run is
@@ -562,8 +703,26 @@ NEEDS: dict[str, tuple[str, Callable[[Live], bool]]] = {
         lambda live: _above(live.pv, PV_CUT_MIN_W + EFFECT_FLOOR_W),
     ),
     "forced-charging window": (
-        f"the battery under {_ROOM:.0f} %",
-        lambda live: _below(live.soc, _ROOM),
+        f"the battery under {_ROOM:.0f} % and not charging",
+        lambda live: _below(live.soc, _ROOM) and _above(live.battery, -WINDOW_START_W),
+    ),
+    "charging start threshold": (
+        f"the battery charging {STOPPED_W:.0f} to {_THRESHOLD_FLOW:.0f} W, "
+        "nothing exported",
+        lambda live: (
+            _above(live.battery, -_THRESHOLD_FLOW)
+            and _below(live.battery, -STOPPED_W + 1)
+            and _below(live.export, EFFECT_FLOOR_W)
+        ),
+    ),
+    "discharging start threshold": (
+        f"the battery discharging {STOPPED_W:.0f} to {_THRESHOLD_FLOW:.0f} W, "
+        "nothing imported",
+        lambda live: (
+            _above(live.battery, STOPPED_W)
+            and _below(live.battery, _THRESHOLD_FLOW + 1)
+            and _above(live.export, -EFFECT_FLOOR_W)
+        ),
     ),
     "discharge windows away from now": (
         "the battery discharging",
@@ -573,10 +732,17 @@ NEEDS: dict[str, tuple[str, Callable[[Live], bool]]] = {
         f"dark (PV under {MIN_PV_W:.0f} W), the battery under {_ROOM:.0f} %",
         lambda live: _below(live.pv, MIN_PV_W) and _below(live.soc, _ROOM),
     ),
+    **dict.fromkeys(WRITE_PATH_CHECKS, ("a run", lambda live: True)),
+    # A floor offered a step above its 50 % maximum, only under a battery
+    # well above it (`preflight._safe_soc_probe`).
+    bound_check("battery_min_soc"): (
+        f"the battery above {_MIN_SOC_BOUND:.0f} %",
+        lambda live: _above(live.soc, _MIN_SOC_BOUND),
+    ),
 }
 
 #: A skip note that waiting cannot cure: the owner's options refused it.
-NEEDS_LEAVE = ("not given leave", "not asked for")
+NEEDS_LEAVE = ("not given leave", "not asked for", UNCURABLE)
 
 
 def needs_leave(item: Mapping[str, Any]) -> bool:
@@ -595,7 +761,7 @@ def awaited(folded: Mapping[str, Any] | None) -> list[tuple[str, str]]:
     out = []
     for item in folded.get("still_missing") or []:
         name = str(item["name"])
-        if needs_leave(item) or name in MODES:
+        if needs_leave(item) or name in MODES or item.get("kind") == PLAUSIBILITY:
             continue
         need = NEEDS.get(name)
         out.append((name, need[0] if need else "another run"))

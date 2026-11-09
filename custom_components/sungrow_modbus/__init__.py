@@ -40,6 +40,7 @@ from sungrow_modbus import (
     SungrowInverter,
     SungrowStringInverter,
 )
+from sungrow_modbus.addresses import DIRECT_ONLY_PROBE
 from sungrow_modbus.battery import probe_units
 from sungrow_modbus.battery.device import SungrowBattery
 from sungrow_modbus.hybrid_inverter.capabilities import with_sungrow_battery
@@ -92,6 +93,7 @@ from .migration import (
     keys_for,
     stored_legacy_slot,
 )
+from .route import async_direct, connection_text, route_key, web_interface
 from .services import async_setup_services
 
 _LOGGER = logging.getLogger(__name__)
@@ -420,7 +422,9 @@ async def _async_setup_string_inverter(
     entry.runtime_data = SungrowRuntimeData(
         {},
         intervals=intervals,
-        inverter_device_id=_async_register_inverter(hass, entry, coordinators),
+        inverter_device_id=_async_register_inverter(
+            hass, entry, coordinators, await _async_route(inverter)
+        ),
         string_inverter=coordinators,
     )
     entry.runtime_data.diagnosis = DiagnosisRunner(hass, entry)
@@ -468,7 +472,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
         capacity_kwh=_capacity(inverter),
     )
     wallbox = await _async_wallbox(hass, entry, inverter, intervals)
-    inverter_device_id = _async_register_inverter(hass, entry, coordinators)
+    inverter_device_id = _async_register_inverter(
+        hass, entry, coordinators, await _async_route(inverter)
+    )
 
     legacy_ids = entry.data.get(CONF_ENTITY_IDS) == ENTITY_IDS_MIGRATE
     entry.runtime_data = SungrowRuntimeData(
@@ -567,6 +573,7 @@ def _async_register_inverter(
     hass: HomeAssistant,
     entry: SungrowConfigEntry,
     coordinators: Mapping[str, InverterCoordinator[Any]],
+    route: str | None = None,
 ) -> str:
     """Put the inverter in the device registry before any entity, and return its id.
 
@@ -575,12 +582,30 @@ def _async_register_inverter(
     inverter is registered. Left to the platforms, a sub-device's entities
     could be added before the inverter's. Core's `sofar` does the same.
     """
+    # The address, and the path 6100 measured, under the firmware on the
+    # device page; every coordinator carries it, so every entity agrees.
+    connection = connection_text(entry, route)
+    link = web_interface(entry, route)
+    for coordinator in coordinators.values():
+        coordinator.connection = connection
+        coordinator.route = route
+        coordinator.web_interface = link
     device_info = next(iter(coordinators.values())).device_info
     return (
         dr.async_get(hass)
         .async_get_or_create(config_entry_id=entry.entry_id, **device_info)
         .id
     )
+
+
+async def _async_route(inverter: Any) -> str | None:
+    """Measure the path once, at setup (`route.route_key`)."""
+    direct = await async_direct(inverter.async_read(DIRECT_ONLY_PROBE))
+    try:
+        module = inverter.field("communication_module_firmware_version")
+    except (AttributeError, KeyError):
+        module = None
+    return route_key(direct, module if isinstance(module, str) else None)
 
 
 async def _async_check_capability_test(

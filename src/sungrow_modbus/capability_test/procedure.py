@@ -267,6 +267,10 @@ NO_BOUNDS = "its bounds could not be resolved"
 NO_SNAPSHOT = "its current value could not be read"
 NO_WINDOW = "no probe value can show a decade error here"
 
+#: Ends a skip note that no moment of the day will change, so that auto
+#: repeat never waits for it (`ledger.NEEDS_LEAVE`).
+UNCURABLE = "which waiting cannot change"
+
 #: Which side a finding implicates, when it can be told.
 LIBRARY = "library"
 DEVICE = "device"
@@ -649,6 +653,104 @@ IMPORT_LIMIT = Probe(
 #: Every enumeration the run snapshots, restores and never walks. The import
 #: limit is not one, but it is snapshotted, restored and never walked the same
 #: way.
+#: The registers the write-path checks write (`writepath.py`): each written
+#: only with its own word, or, for the second window, while the schedule is
+#: off; never through the readback walk.
+BACKUP_MODE = Probe(
+    field="backup_mode_raw",
+    component="fast_holding",
+    spec_register=13075,
+    spec_units_per_count=1,
+    unit="",
+    exact=(0x55, 0xAA),
+)
+LOAD_ENABLE = Probe(
+    field="load_adjustment_mode_enable_raw",
+    component="fast_holding",
+    spec_register=13011,
+    spec_units_per_count=1,
+    unit="",
+    exact=(0x55, 0xAA),
+)
+LOAD_MODE = Probe(
+    field="load_adjustment_mode_selection_raw",
+    component="fast_holding",
+    spec_register=13002,
+    spec_units_per_count=1,
+    unit="",
+    exact=(0, 1, 2, 3),
+)
+#: Register 33179, outside Sungrow's document (#785): whether the weekend's
+#: discharge windows apply. Read only in the library, so written by raw word,
+#: and like the windows beside it only with their leave.
+WEEKEND_DISCHARGE = Probe(
+    field="weekend_discharge_raw",
+    component="discharge_weekend",
+    spec_register=33179,
+    spec_units_per_count=1,
+    unit="",
+    exact=(0x55, 0xAA),
+    requires=Capability.DISCHARGE_SCHEDULE,
+    raw_only=True,
+    leave="discharge_window",
+)
+#: The second forced-charging window, with the charge window's leave: the
+#: schedule is not read without it. Its check writes nothing unless the
+#: enable reads off, when no window can start a charge.
+WINDOW_2_ENABLE = CHARGE_ENABLE
+WINDOW_OFF = 0x55
+WINDOW_2: tuple[Probe, ...] = (
+    Probe(
+        field="forced_charging_days_raw",
+        component="forced_charging",
+        spec_register=33209,
+        spec_units_per_count=1,
+        unit="",
+        exact=(0, 1),
+        requires=Capability.FORCED_CHARGING,
+        leave="charge_window",
+    ),
+    *(
+        Probe(
+            field=field,
+            component="forced_charging",
+            spec_register=register,
+            spec_units_per_count=1,
+            unit=unit,
+            minimum=0,
+            maximum=maximum,
+            requires=Capability.FORCED_CHARGING,
+            leave="charge_window",
+        )
+        for field, register, unit, maximum in (
+            ("forced_charging_start_2_hour", 33215, "h", 23),
+            ("forced_charging_start_2_minute", 33216, "min", 59),
+            ("forced_charging_end_2_hour", 33217, "h", 23),
+            ("forced_charging_end_2_minute", 33218, "min", 59),
+            ("forced_charging_target_soc_2", 33219, "%", 100),
+        )
+    ),
+)
+#: The EMS mode's documented options (the integration's select).
+EMS_OPTIONS: tuple[int, ...] = EMS_MODE.exact
+
+#: Numbers whose upper bound is not probed. The backup reserve's maximum is
+#: 100 %, and a reserve a step above it is safe only under a battery above
+#: 100 %, which no house has; 13074's write scale differs by firmware and has
+#: its own refusal probe (`export_scale`).
+UNBOUNDED = frozenset({"battery_reserved_soc_for_backup", "export_power_limit"})
+
+
+def bounded_probes() -> tuple[Probe, ...]:
+    """Return the numbers whose upper bound the write-path checks probe."""
+    return tuple(probe for probe in PROBES if probe.field not in UNBOUNDED)
+
+
+def bound_check(field: str) -> str:
+    """Return the name of the upper-bound check of `field`."""
+    return f"upper bound of {field}"
+
+
 ENUMERATIONS: tuple[Probe, ...] = (
     EMS_MODE,
     FORCED_CMD,
@@ -658,6 +760,11 @@ ENUMERATIONS: tuple[Probe, ...] = (
     *DISCHARGE_WINDOW,
     IMPORT_LIMIT,
     FORCED_STARTUP,
+    BACKUP_MODE,
+    LOAD_ENABLE,
+    LOAD_MODE,
+    WEEKEND_DISCHARGE,
+    *WINDOW_2,
 )
 
 EMS_FORCED = 2
@@ -679,21 +786,24 @@ MODE_ON = 0xAA
 NOT_PROBED: dict[str, str] = {
     "backup_mode_raw": (
         "a mode flag with no scale to get wrong, and turning it on changes what "
-        "happens to the house in an outage"
+        "happens to the house in an outage; the backup mode write path check "
+        "writes it only with its own word"
     ),
     "load_adjustment_mode_enable_raw": (
-        "a mode flag with no scale to get wrong, and it switches a real load"
+        "a mode flag with no scale to get wrong, and it switches a real load; "
+        "the load control write path check writes it only with its own word"
     ),
     "load_adjustment_mode_selection_raw": (
         "an enumeration with no scale to get wrong, and each option changes what "
-        "the load output does"
+        "the load output does; written only with its own word"
     ),
     "export_power_limit_mode_raw": (
         "written only when the run was given leave to enable export limiting, "
         "and then only to put it back"
     ),
     "ems_mode_selection_raw": (
-        "written by the forced charge check, not by the readback walk"
+        "written by the forced charge check and, one option at a time put back "
+        "at once, by the EMS mode options check; not by the readback walk"
     ),
     "battery_forced_charge_discharge_cmd_raw": (
         "written by the forced charge check, not by the readback walk"
@@ -730,8 +840,9 @@ NOT_PROBED: dict[str, str] = {
             ),
         ),
         "part of the forced-charging schedule: counted in ones with no scale to "
-        "get wrong; written only by the charge window check, with leave, "
-        "because a window written into it can charge from the grid",
+        "get wrong; written only with the charge window's leave, by its check "
+        "or, while the schedule is off, the window 2 encoding check, because a "
+        "window written into it can charge from the grid",
     ),
 }
 
@@ -1110,6 +1221,17 @@ class Options:
     standby with the battery at its minimum and no PV -- the state every other
     check refuses to start in. Off by default because it wakes the inverter,
     which then draws its own consumption from the grid until it sleeps again."""
+
+    write_paths: bool = True
+    """Run the write-path checks (`writepath.py`): each control nothing else
+    writes, written back with its own word; the second charging window read
+    back while the schedule is off; each EMS option once, put back at once.
+    On by default: none of them changes how the house runs for longer than
+    one write."""
+
+    bounds: bool = True
+    """Offer each number a step above its maximum, once, and put it back at
+    once: the bound a firmware enforces. Part of the write-path checks."""
 
     simulated: bool = False
     """Stamp the result as evidence about nothing. A simulator stores raw words

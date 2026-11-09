@@ -634,6 +634,10 @@ def test_the_pack_extremes_are_the_module_extremes_in_every_reading() -> None:
         ) or {}
         if "max_cell_voltage_module_1" not in values:
             continue
+        if values.get("max_cell_voltage") is None:
+            # The pack's own block did not answer in that reading (peter-sm's
+            # ninth): a lost read is not evidence either way.
+            continue
         fitted = [n for n in range(1, 9) if values.get(f"cell_type_module_{n}")]
         if not fitted:
             # A dongle's zeros: no module is evidence of nothing.

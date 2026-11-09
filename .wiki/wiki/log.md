@@ -655,3 +655,12 @@ established. Updated installation-mkaiser, P020, the index.
 Auto repeat starts at most one run in each 30-minute slot counted from the press of *Diagnosis:
 start*, no longer at most twelve a day, and none while the inverter is not running, after a night
 at mkaiser's spent ten runs refused in low-SoC Standby. Updated capability-test.
+
+## [2026-11-09] changed | write paths, start thresholds and readings checked over days
+
+The capability test gains write-path checks (no-op writes, window 2 encoding, EMS options, each
+number's upper bound), the two start thresholds as behavioural checks, a headroom look before a
+charge window is written, and 13088 recorded during the export check. Auto repeat feeds the
+polled readings to plausibility checks every minute and counts them with the runs; a check
+established by day is measured once more at night. Not run on hardware yet. Updated
+capability-test.

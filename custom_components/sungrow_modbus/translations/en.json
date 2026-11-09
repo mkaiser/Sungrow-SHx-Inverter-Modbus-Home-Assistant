@@ -583,6 +583,14 @@
       "communication_module_firmware_version": {
         "name": "Communication module firmware version"
       },
+      "connection": {
+        "name": "Connection",
+        "state": {
+          "direct": "Direct, no dongle",
+          "winet": "Via WiNet-S",
+          "module": "Via a communication module"
+        }
+      },
       "corrected_load_power": {
         "name": "Corrected load power"
       },
@@ -626,7 +634,7 @@
         "name": "Diagnosis: last finished"
       },
       "diagnosis_next_start": {
-        "name": "Diagnosis: next start"
+        "name": "Diagnosis: next attempt"
       },
       "diagnosis_progress": {
         "name": "Diagnosis: progress"
@@ -1285,7 +1293,7 @@
         "name": "Load control"
       },
       "skip_established_capability_tests": {
-        "name": "Diagnosis: extended test, skip established"
+        "name": "Diagnosis: skip completed tests"
       }
     },
     "time": {
@@ -1646,6 +1654,9 @@
     },
     "not_a_sungrow_device": {
       "message": "{name} is not a Sungrow Modbus device."
+    },
+    "skip_completed_tests_during_auto_repeat": {
+      "message": "Auto repeat always skips completed tests. Stop it with Diagnosis: stop first, then this switch can be turned off."
     },
     "diagnosis_already_running": {
       "message": "A diagnosis is already running on this inverter. Two at once would compete for one of its very few Modbus connections."

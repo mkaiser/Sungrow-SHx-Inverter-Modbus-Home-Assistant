@@ -139,6 +139,11 @@ def test_every_name_follows_the_convention(domain: str, key: str, name: str) -> 
     assert not problems, "\n".join(problems)
 
 
+#: Entities every entry has, with no register behind them either: how the
+#: endpoint is reached (`sensor.SungrowConnectionSensor`).
+ENTRY_ENTITIES = (("sensor", "connection"),)
+
+
 def test_every_entity_has_a_name_and_no_name_is_orphaned() -> None:
     """Every described entity is named, and every name describes something.
 
@@ -153,7 +158,9 @@ def test_every_entity_has_a_name_and_no_name_is_orphaned() -> None:
     """
     for domain, group in DESCRIPTIONS.items():
         named = set(NAMES[domain]) - {
-            key for section, key in DIAGNOSIS_ENTITIES if section == domain
+            key
+            for section, key in (*DIAGNOSIS_ENTITIES, *ENTRY_ENTITIES)
+            if section == domain
         }
         assert {d.key for d in group} == named, domain
 

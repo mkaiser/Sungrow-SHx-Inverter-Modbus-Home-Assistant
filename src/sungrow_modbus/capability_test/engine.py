@@ -9,7 +9,7 @@ from typing import Any
 
 from modbus_connection import ModbusError
 
-from .effects import EffectSteps
+from .coverage import CHECK_REVISIONS
 from .procedure import (
     BLOCK_SCHEMA,
     CODES,
@@ -23,12 +23,14 @@ from .procedure import (
     ProbeResult,
     RestartResult,
     RestoreResult,
+    bounded_probes,
 )
+from .writepath import WRITE_PATHS, WritePathSteps
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class CapabilityTest(EffectSteps):
+class CapabilityTest(WritePathSteps):
     """One run: preflight, readback, effect, restore, and maybe a restart.
 
     Construct it with a connected `SungrowInverter` whose tiers have been read
@@ -78,6 +80,7 @@ class CapabilityTest(EffectSteps):
             elif not self.options.restart_only:
                 probes = await self._readback()
                 effects = await self._effects()
+                effects += await self._write_paths()
         except Guard as guard:
             self._worst(guard.code)
             self.conditions["refused"] = str(guard)
@@ -167,14 +170,19 @@ def planned_steps(options: Options) -> int:
     """
     # Two opening steps, one per probe, one more for each probe that gets a
     # second point a decade away, and one per behavioural check: forced charge,
-    # forced discharge, the charge ceiling and the export limit.
-    steps = 2 + len(PROBES) + len(CapabilityTest.TWO_POINT) + 4
+    # forced discharge, the charge ceiling, the export limit and the two start
+    # thresholds.
+    steps = 2 + len(PROBES) + len(CapabilityTest.TWO_POINT) + 6
     if options.restart:
         steps += 2
     # One more for each timed window the run was given leave to write.
     steps += options.charge_window + options.discharge_window
     # And one for the import limit check.
     steps += options.import_limit
+    if options.write_paths:
+        # Each no-op, the second window, the EMS options, and each bound.
+        steps += len(WRITE_PATHS) + 2
+        steps += len(bounded_probes()) if options.bounds else 0
     if options.forced_startup:
         # The mode alone: reading, the snapshot, the check and its two waits.
         return 5
@@ -209,4 +217,5 @@ def document(outcome: Outcome) -> dict[str, Any]:
         "restored": [row._asdict() for row in outcome.restores],
         "restart": outcome.restart._asdict() if outcome.restart else None,
         "not_established": list(outcome.unestablished),
+        "revisions": dict(CHECK_REVISIONS),
     }

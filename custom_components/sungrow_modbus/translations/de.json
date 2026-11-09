@@ -583,6 +583,14 @@
       "communication_module_firmware_version": {
         "name": "Firmware-Version Kommunikationsmodul"
       },
+      "connection": {
+        "name": "Verbindung",
+        "state": {
+          "direct": "Direkt, ohne Dongle",
+          "winet": "Über WiNet-S",
+          "module": "Über ein Kommunikationsmodul"
+        }
+      },
       "corrected_load_power": {
         "name": "Korrigierte Leistungsaufnahme Verbraucher"
       },
@@ -626,7 +634,7 @@
         "name": "Diagnose: zuletzt beendet"
       },
       "diagnosis_next_start": {
-        "name": "Diagnose: nächster Start"
+        "name": "Diagnose: nächster Versuch"
       },
       "diagnosis_progress": {
         "name": "Diagnose: Fortschritt"
@@ -1285,7 +1293,7 @@
         "name": "Laststeuerung"
       },
       "skip_established_capability_tests": {
-        "name": "Diagnose: erweiterter Test, Ermitteltes überspringen"
+        "name": "Diagnose: abgeschlossene Tests überspringen"
       }
     },
     "time": {
@@ -1646,6 +1654,9 @@
     },
     "not_a_sungrow_device": {
       "message": "{name} ist kein Sungrow-Modbus-Gerät."
+    },
+    "skip_completed_tests_during_auto_repeat": {
+      "message": "Die automatische Wiederholung überspringt abgeschlossene Tests immer. Erst mit Diagnose: stoppen beenden, dann lässt sich dieser Schalter ausschalten."
     },
     "diagnosis_already_running": {
       "message": "Auf diesem Wechselrichter läuft bereits eine Diagnose. Zwei gleichzeitig würden um eine seiner sehr wenigen Modbus-Verbindungen konkurrieren."

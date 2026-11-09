@@ -112,14 +112,15 @@ Please do not restart Home Assistant while a run is going.
   whenever the inverter is running and the house can answer a check still
   missing. It leaves out what earlier runs established, the
   inverter restart included. **Diagnosis: current step** says what it waits
-  for and **Diagnosis: next start** when the clock allows the next one. It
+  for and **Diagnosis: next attempt** when it looks again. It
   ends with **Diagnosis: stop**, when nothing is left to wait for, or at a
   restart.
 - **Diagnosis: stop** ends a run early. What it measured is kept, and every
   value it changed is still put back; no restart is started.
-- **Diagnosis: extended test, skip established** decides what a single
-  extended run does: on, it tests only what earlier runs have not answered
-  yet; off, it is the full test again.
+- **Diagnosis: skip completed tests** decides what a single extended run
+  does: on (the default), it tests only what earlier runs have not answered
+  yet; off, it is the full test again. Auto repeat switches it on. A test
+  whose logic an update changed counts as not answered, and runs again.
 
 Send the document to
 [the diagnosis issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786).

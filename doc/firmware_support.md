@@ -141,14 +141,28 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | Behaviour: discharge windows away from now |  |  |  |  |  |  |  | ✓ 1 |  | ? 4 |  |  |  |  |  |
 | Behaviour: site import limit |  |  |  |  |  |  |  |  |  | ✓ 1 |  |  |  |  |  |
 | Behaviour: forced startup under low SoC |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Behaviour: charging start threshold |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Behaviour: discharging start threshold |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Behaviour: backup mode write path |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Behaviour: load control write path |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Behaviour: weekend discharge enable write path |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Behaviour: forced-charging window 2 encoding |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Behaviour: EMS mode options |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Behaviour: upper bound of battery_min_soc |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Behaviour: upper bound of battery_max_soc |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Behaviour: upper bound of battery_max_charge_power |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Behaviour: upper bound of battery_max_discharge_power |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Behaviour: upper bound of battery_forced_charge_discharge_power |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Behaviour: upper bound of battery_charging_start_power |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Behaviour: upper bound of battery_discharging_start_power |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 
 ### Backup power
 
 | Entity | Diagnosis | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Backup frequency | read | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Backup mode *(switch)* | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Backup mode code | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Backup mode *(switch)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Backup mode code | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Backup phase A current | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Backup phase A power | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Backup phase A voltage | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -172,12 +186,12 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | Feed-in limit ratio | read | ✓ | ✓ | ✓ |  | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
 | Forced charging days *(select)* | read + watched | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Forced charging end 1 *(time)* | read + watched | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Forced charging end 2 *(time)* | read | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Forced charging end 2 *(time)* | read + watched | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Forced charging schedule *(switch)* | read + watched | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Forced charging start 1 *(time)* | read + watched | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Forced charging start 2 *(time)* | read | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Forced charging start 2 *(time)* | read + watched | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Forced charging target SoC 1 *(number)* | read + watched | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Forced charging target SoC 2 *(number)* | read | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Forced charging target SoC 2 *(number)* | read + watched | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Weekday discharge window 1 | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Weekday discharge window 2 | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Weekend discharge *(binary_sensor)* | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -313,15 +327,15 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | Battery charging *(binary_sensor)* | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Battery charging power | read | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Battery charging power signed | read | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Battery charging start power | read + written | ✗ | ✗ | ✗ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Battery charging start power *(number)* | read + written | ✗ | ✗ | ✗ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Battery charging start power | read + written + watched | ✗ | ✗ | ✗ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Battery charging start power *(number)* | read + written + watched | ✗ | ✗ | ✗ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✗ | ✗ | ✗ | ✗ |
 | Battery current | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Battery discharging (delayed) *(binary_sensor)* | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Battery discharging *(binary_sensor)* | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Battery discharging power | read | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Battery discharging power signed | read | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Battery discharging start power | read + written | ✗ | ✗ | ✗ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Battery discharging start power *(number)* | read + written | ✗ | ✗ | ✗ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Battery discharging start power | read + written + watched | ✗ | ✗ | ✗ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Battery discharging start power *(number)* | read + written + watched | ✗ | ✗ | ✗ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✗ | ✗ | ✗ | ✗ |
 | Battery fault | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Battery firmware version | read | ✓ | ✓ | ✓ | ✗ | – | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Battery forced charge/discharge *(select)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -332,12 +346,12 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | Battery level (nominal) | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Battery max SoC | read + written + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Battery max SoC *(number)* | read + written + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Battery max charging power | read + written | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Battery max charging power *(number)* | read + written | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Battery max discharging power | read + written | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Battery max discharging power *(number)* | read + written | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Battery min SoC | read + written | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Battery min SoC *(number)* | read + written | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery max charging power | read + written + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery max charging power *(number)* | read + written + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery max discharging power | read + written + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery max discharging power *(number)* | read + written + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery min SoC | read + written + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Battery min SoC *(number)* | read + written + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Battery power | read | ✓ | ✓ | ✓ |  |  | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Battery reserved SoC for backup | read + written | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Battery reserved SoC for backup *(number)* | read + written | ✓ | ✓ | ✓ |  | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ W | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -390,10 +404,10 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | Daily direct energy consumption | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Direct consumption this month | read | ✗ | ✗ | ✗ |  |  | ✓ |  | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Direct consumption this year | read | ✗ | ✗ | ✗ |  |  | ✓ |  | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Load control *(switch)* | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Load control mode *(select)* | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Load control mode enable code | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Load control mode selection code | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Load control *(switch)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Load control mode *(select)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Load control mode enable code | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Load control mode selection code | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Load power | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Negative load power (delayed) *(binary_sensor)* | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Negative load power *(binary_sensor)* | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |

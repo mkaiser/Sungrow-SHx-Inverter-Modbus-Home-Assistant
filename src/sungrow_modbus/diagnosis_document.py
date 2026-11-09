@@ -103,7 +103,13 @@ from .const import model_for
 #: and how far this document tested it (`sungrow_modbus.features`), computed
 #: from the document itself and recomputed whenever a block is attached, so a
 #: reader can always check it against the sections it summarises.
-SCHEMA = 25
+#:
+#: 26 admits **`plausibility`**: the readings checked against each other over
+#: the days auto repeat ran (`sungrow_modbus.capability_test.plausibility`),
+#: verdicts and counts only, with a `schema` of its own. Written by Home
+#: Assistant alone, and only once a reading was observed, so its absence
+#: means none was.
+SCHEMA = 26
 
 #: The key part B's block is under, by schema: `control_test` before 25.
 CAPABILITY_TEST_KEY = "capability_test"

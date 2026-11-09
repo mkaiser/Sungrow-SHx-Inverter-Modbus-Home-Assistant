@@ -75,14 +75,15 @@ Unset, the launchers behave exactly as a contributor's.
 
 ## The document
 
-The format is `sungrow_modbus.diagnosis_document.SCHEMA`, **25**; the comment beside
+The format is `sungrow_modbus.diagnosis_document.SCHEMA`, **26**; the comment beside
 it says what each number from 17 admits, and `probe.py` keeps the older ones.
 A document is read by its own number, which is often older. Sections in
 order: `schema`, `command_line`, `read_at`,
 `user_inputs`, `ip_address_last_two_octets`, `device`, `firmware`,
 `connection`, `readings`, `capability_probes`, then whichever of
 `steps_lost`, `contention`, `register_dump`, `wallbox`, `block_read_test`, `battery_pack`,
-`capability_test` and `export_scale` the run produced, and last `features`.
+`capability_test`, `plausibility` and `export_scale` the run produced, and last
+`features`.
 Up to schema 24 the `capability_test` block is called `control_test`.
 
 ### What a person typed, and what a wire said
@@ -288,7 +289,11 @@ it) and folds them (`sungrow_modbus.capability_test.ledger`):
   reader of a schema-2 block reads this one unchanged. `outcome` is the worst
   of any run: a 5 in any run is a 5 here;
 - `summary`: per field and check, the verdict shown, which run gave it, and
-  whether it is established;
+  whether it is established. A run carries `revisions`, the revision of each
+  check's logic it ran (`coverage.CHECK_REVISIONS`; none means 1). Once a
+  check's revision rises, rows from older runs are left out of the summary
+  for it as soon as a run on the new one answers it; until then the check is
+  `outdated` and not established, so Home Assistant measures it again;
 - `still_missing`: what no run has established yet, with what the latest run
   said about why;
 - `contradictions`: a field or check one run found off by a decade and
@@ -325,6 +330,32 @@ side is implicated: the library, if the register map's scale disagrees with
 the specification, or the device, if the two agree and the firmware stored
 something else anyway. The second is a finding about Sungrow and is the reason
 these are published.
+
+**Some rows in `effects` are judged by the register's answer, not by power**
+(`capability_test/writepath.py`): `... write path` (the register's own word
+written back to it), `forced-charging window 2 encoding` (written elsewhere and
+read back, only with the schedule off and over a cable), `EMS mode options`
+(each documented option once, `conditions.ems_mode_options` names each answer)
+and `upper bound of <field>` (a step above the maximum: `the inverter did as it
+was told` means refused, `the device clamped it` stored the maximum, `nothing
+measurable happened` stored the value above it). `conditions.feed_in_ratio`
+holds register 13088 before and during the export check, recorded and not
+judged.
+
+### A `plausibility` block, where a document has one
+
+From schema 26, written by Home Assistant while auto repeat runs: each minute
+between runs, the polled readings are checked against each other
+(`sungrow_modbus.capability_test.plausibility`). One row per check under
+`checks`, with its `verdict` (none yet, `matched`, `off by a clean decade`,
+`right magnitude, wrong direction`, `could not tell`, `off by something else`
+or, for a third or fourth tracker, `nothing measurable happened`), a `detail`
+with the median ratio or the events, and what it `needs`. `observations`,
+`first` and `last` date the collection. No reading is in it.
+
+A ratio that is merely off -- losses, reactive power -- is `could not tell`,
+never a finding: only a clean decade or an inverted sign is. Through a WiNet-S
+the checks still hold, because they compare readings, not writes.
 
 ### The `features` section
 

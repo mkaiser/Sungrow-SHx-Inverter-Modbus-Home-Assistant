@@ -155,6 +155,35 @@ async def async_ledger_clear(hass: HomeAssistant, entry: SungrowConfigEntry) -> 
     await _ledger_store(hass, entry).async_remove()
 
 
+#: The readings' plausibility checks (`sungrow_modbus.capability_test.plausibility`),
+#: kept per firmware like the ledger, in a store of their own: they are fed
+#: every minute and saved lazily, where the ledger is saved once per run.
+PLAUSIBILITY_VERSION = 1
+PLAUSIBILITY_KEY = f"{DOMAIN}.plausibility"
+
+#: How long a change to the plausibility state may wait before it is saved.
+#: A restart loses at most this much of a collection that runs for days.
+PLAUSIBILITY_SAVE_DELAY = 600
+
+
+def plausibility_store(
+    hass: HomeAssistant, entry: SungrowConfigEntry
+) -> Store[dict[str, Any]]:
+    """Return this entry's plausibility store."""
+    return Store(hass, PLAUSIBILITY_VERSION, f"{PLAUSIBILITY_KEY}.{entry.entry_id}")
+
+
+async def async_plausibility_load(
+    hass: HomeAssistant, entry: SungrowConfigEntry, firmware: str
+) -> dict[str, Any] | None:
+    """Return the kept plausibility state for this firmware, or None."""
+    data = await plausibility_store(hass, entry).async_load()
+    if not data or data.get("firmware") != firmware:
+        return None
+    state: dict[str, Any] | None = data.get("state")
+    return state
+
+
 class CapabilityTestRunner:
     """Drives one entry's capability test, and guarantees the inverter comes back.
 

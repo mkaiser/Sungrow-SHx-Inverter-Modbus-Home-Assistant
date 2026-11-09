@@ -37,7 +37,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "tables"))
 # `strings` imports the integration's descriptions to name them.
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from naming import DIAGNOSIS_MODE_LABELS, DIAGNOSTIC, GERMAN, GERMAN_TEXTS, modern_name
+from naming import (
+    CONNECTION_LABELS,
+    DIAGNOSIS_MODE_LABELS,
+    DIAGNOSTIC,
+    GERMAN,
+    GERMAN_TEXTS,
+    modern_name,
+)
 from writes import BUTTONS, NUMBERS, SELECTS, SWITCHES, TIMES
 
 from sungrow_modbus.hybrid_inverter.faults import FAULT_WORDS
@@ -952,6 +959,7 @@ def descriptions() -> list[tuple[str, str, str]]:
 def names() -> dict[str, dict[str, str]]:
     """Return the modern name of every entity, by domain and translation key."""
     from custom_components.sungrow_modbus.diagnosis_entities import DIAGNOSIS_ENTITIES
+    from custom_components.sungrow_modbus.route import ROUTE_ENTITIES
 
     result: dict[str, dict[str, str]] = {}
     for domain, key, legacy in descriptions():
@@ -960,7 +968,7 @@ def names() -> dict[str, dict[str, str]]:
     # The diagnosis's own entities. They carry no `EntityDescription` -- there is
     # no register behind them -- so they are listed rather than discovered,
     # and `modern_name` finds each one in `naming.OVERRIDES`.
-    for domain, key in DIAGNOSIS_ENTITIES:
+    for domain, key in (*DIAGNOSIS_ENTITIES, *ROUTE_ENTITIES):
         result.setdefault(domain, {})[key] = modern_name(key, "")
     return result
 
@@ -978,6 +986,7 @@ def option_labels() -> dict[str, dict[str, str]]:
             for row in SELECTS
         },
         "diagnosis_mode": dict(DIAGNOSIS_MODE_LABELS),
+        "connection": dict(CONNECTION_LABELS),
     }
 
 
@@ -990,7 +999,7 @@ def render_strings() -> str:
         entity[domain] = {}
         for key, name in sorted(entries.items()):
             block: dict[str, object] = {"name": name}
-            if domain == "select" and key in labels:
+            if domain in ("select", "sensor") and key in labels:
                 block["state"] = labels[key]
             entity[domain][key] = block
     document["entity"] = entity

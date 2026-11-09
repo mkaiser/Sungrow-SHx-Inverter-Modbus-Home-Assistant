@@ -6,7 +6,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from freezegun.api import FrozenDateTimeFactory
-from modbus_connection import ModbusConnectionError
+from modbus_connection import IllegalDataAddressError, ModbusConnectionError
 from modbus_connection.mock import MockModbusUnit
 import pytest
 from pytest_homeassistant.common import MockConfigEntry, async_fire_time_changed
@@ -91,6 +91,47 @@ async def test_device_card_shows_the_firmware_that_moves(
     )
     assert device is not None
     assert device.sw_version == shown
+
+
+async def test_device_card_shows_the_address_and_the_path(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """The address under the firmware, and what register 6100 said of the path."""
+    sungrow_unit.input[6099] = [0, 0]
+    entry = await _setup(hass, sungrow_unit)
+
+    device = dr.async_get(hass).async_get_device_by_identifier(
+        (DOMAIN, SERIAL), entry.entry_id
+    )
+    assert device is not None
+    assert device.hw_version == "127.0.0.1:5020 · direct, no dongle"
+    # No WiNet-S, so no web interface to link to.
+    assert device.configuration_url is None
+
+    state = hass.states.get("sensor.sh10rt_connection")
+    assert state is not None
+    assert state.state == "direct"
+    assert state.attributes["address"] == "127.0.0.1:5020"
+    assert state.attributes["web_interface"] is None
+
+
+async def test_through_a_winet_s_the_device_page_links_its_web_interface(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """6100 refused and a WiNet-S fitted: the *Visit* link opens the dongle."""
+    sungrow_unit.fail_read(
+        6099, IllegalDataAddressError("exception 0x02"), register_type="input"
+    )
+    sungrow_unit.input[13264] = encode_string("WINET-SV200.001.00.P045", 15)
+    entry = await _setup(hass, sungrow_unit)
+
+    device = dr.async_get(hass).async_get_device_by_identifier(
+        (DOMAIN, SERIAL), entry.entry_id
+    )
+    assert device is not None
+    assert device.hw_version == "127.0.0.1:5020 · via WiNet-S"
+    assert device.configuration_url == "http://127.0.0.1"
+    assert hass.states.get("sensor.sh10rt_connection").state == "winet"
 
 
 async def test_total_dc_power_sensor(

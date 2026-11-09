@@ -54,6 +54,7 @@ from sungrow_modbus.capability_test import (
     ledger,
     planned_steps as capability_test_steps,
 )
+from sungrow_modbus.capability_test.plausibility import FIELDS, Plausibility
 
 from .const import (
     CAPABILITY_TEST_PERMISSION_DEFAULT,
@@ -183,14 +184,65 @@ class DiagnosisRunner:
         self.continuous = ContinuousCapabilityTest(hass, entry, self)
         #: Whether a capability test leaves out the checks earlier runs
         #: established, for single runs and the action. Set by its switch,
-        #: which restores it. Auto-repeat runs always leave them out.
-        self.skip_established = False
+        #: which restores it; on until someone turns it off. Auto-repeat runs
+        #: always leave them out.
+        self.skip_established = True
         #: What *Diagnosis: start* runs; set by the mode select.
         self.mode = DIAGNOSIS_MODE_READ_ONLY
         #: Whether the owner asked the run in flight to end (`async_stop`).
         self._stop_requested = False
         #: Part B's runner while it is in flight, so a stop can reach it.
         self._capability_runner: Any = None
+        #: The readings checked against each other, fed by auto repeat's
+        #: tick and kept per firmware (`capability_test.PLAUSIBILITY_KEY`).
+        self.plausibility = Plausibility()
+        self._plausibility_firmware: str | None = None
+
+    @property
+    def tests(self) -> dict[str, Any] | None:
+        """The kept runs, folded, with the readings' checks counted in.
+
+        What the counters, the test summary and the notification show. The
+        document a run publishes carries the two apart: `capability_test` is
+        the runs, `plausibility` the readings.
+        """
+        return ledger.with_plausibility(
+            self.state.capability_test, self.plausibility.summary()
+        )
+
+    @callback
+    def async_observe(self, now: datetime) -> None:
+        """Feed the last polled readings to the plausibility checks.
+
+        Only between runs: a run holds polling off, and the readings it
+        leaves behind are minutes old.
+        """
+        if self.state.running or self.entry.runtime_data.is_string_inverter:
+            return
+        device = self._device()
+        values: dict[str, float | None] = {}
+        for name in FIELDS:
+            try:
+                value = device.field(name)
+            except AttributeError:
+                value = None
+            values[name] = None if value is None else float(value)
+        if all(value is None for value in values.values()):
+            return
+        self.plausibility.observe(values, dt_util.as_local(now))
+        self._async_save_plausibility()
+
+    @callback
+    def _async_save_plausibility(self) -> None:
+        """Save the plausibility state, lazily."""
+        from .capability_test import PLAUSIBILITY_SAVE_DELAY, plausibility_store
+
+        firmware = self._plausibility_firmware
+        collection = self.plausibility
+        plausibility_store(self.hass, self.entry).async_delay_save(
+            lambda: {"firmware": firmware, "state": collection.as_dict()},
+            PLAUSIBILITY_SAVE_DELAY,
+        )
 
     @property
     def signal(self) -> str:
@@ -323,7 +375,10 @@ class DiagnosisRunner:
             # included: a run every half hour must not stop the inverter or
             # write every control again for answers already kept.
             skip=(
-                ledger.established(self._folded)
+                ledger.established(
+                    self._folded,
+                    moment=ledger.live_moment(self.continuous.live()),
+                )
                 if self.skip_established or self.continuous.active
                 else frozenset()
             ),
@@ -480,6 +535,8 @@ class DiagnosisRunner:
                     self._folded = await self._async_record(block, document)
                 if self._folded is not None:
                     attach_capability_test(document, self._folded, self._device())
+                if self.plausibility.observations:
+                    document["plausibility"] = self.plausibility.document()
         except Exception as err:  # a button press must not be able to crash the loop
             # `exception`, not `warning`: this catches everything, so the type
             # alone is often useless -- a bare `KeyError: 'realtime'` says
@@ -536,19 +593,28 @@ class DiagnosisRunner:
 
     async def async_load_ledger(self) -> None:
         """Fold the runs kept from before a restart, for this firmware."""
-        from .capability_test import async_ledger_runs, firmware_of
-
-        runs = await async_ledger_runs(
-            self.hass, self.entry, firmware_of(self._device())
+        from .capability_test import (
+            async_ledger_runs,
+            async_plausibility_load,
+            firmware_of,
         )
+
+        firmware = firmware_of(self._device())
+        runs = await async_ledger_runs(self.hass, self.entry, firmware)
         self._folded = self._fold(runs)
+        self._plausibility_firmware = firmware
+        self.plausibility = Plausibility.from_dict(
+            await async_plausibility_load(self.hass, self.entry, firmware)
+        )
         self._set(capability_test=self._folded)
 
     async def async_clear_ledger(self) -> None:
         """Forget every kept run, and the notification that showed them."""
-        from .capability_test import async_ledger_clear
+        from .capability_test import async_ledger_clear, plausibility_store
 
         await async_ledger_clear(self.hass, self.entry)
+        await plausibility_store(self.hass, self.entry).async_remove()
+        self.plausibility = Plausibility()
         self._folded = None
         self._set(capability_test=None)
         persistent_notification.async_dismiss(self.hass, self._ledger_notification_id)
@@ -598,9 +664,11 @@ class DiagnosisRunner:
         what an owner collecting runs over a day needs is the list of checks
         still waiting and for what. English for now, like the document.
         """
+        shown = ledger.with_plausibility(folded, self.plausibility.summary())
+        assert shown is not None
         persistent_notification.async_create(
             self.hass,
-            ledger.markdown(folded)
+            ledger.markdown(shown)
             + "\n\n**Download diagnostics** on the device page carries every "
             "run in one document.",
             title=f"Capability tests so far: {self.entry.title}",

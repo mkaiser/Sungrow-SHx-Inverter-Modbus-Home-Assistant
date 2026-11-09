@@ -63,13 +63,13 @@ DIAGNOSTIC_ENTITIES = {
     "sensor.sh10rt_diagnosis_current_step",
     "sensor.sh10rt_diagnosis_last_finished",
     # When auto repeat may start next, and how many runs are kept.
-    "sensor.sh10rt_diagnosis_next_start",
+    "sensor.sh10rt_diagnosis_next_attempt",
     "sensor.sh10rt_diagnosis_test_runs",
     # The capability test runs kept over a day, and the way to start again.
     "button.sh10rt_diagnosis_tests_clear_history",
     "sensor.sh10rt_diagnosis_test_summary",
     # Whether a single run leaves out what earlier runs established; kept.
-    "switch.sh10rt_diagnosis_extended_test_skip_established",
+    "switch.sh10rt_diagnosis_skip_completed_tests",
     # The kept runs' checks, counted by outcome; the five add up to the total.
     "sensor.sh10rt_diagnosis_tests_passed",
     "sensor.sh10rt_diagnosis_tests_failed",
@@ -77,6 +77,10 @@ DIAGNOSTIC_ENTITIES = {
     "sensor.sh10rt_diagnosis_tests_inconclusive",
     "sensor.sh10rt_diagnosis_tests_not_run_yet",
 }
+
+#: Every entry gets this, whatever its mode: how the endpoint is reached,
+#: which decides what a diagnosis can read.
+CONNECTION = "sensor.sh10rt_connection"
 
 
 class _TemporaryUnit:
@@ -130,7 +134,7 @@ async def test_a_diagnostics_entry_has_the_diagnosis_and_nothing_else(
             ("sensor.sh10rt", "button.sh10rt", "switch.sh10rt", "select.sh10rt")
         )
     }
-    assert entities == DIAGNOSTIC_ENTITIES
+    assert entities == DIAGNOSTIC_ENTITIES | {CONNECTION}
 
 
 async def test_a_diagnostics_entry_polls_but_reports_no_readings(

@@ -38,6 +38,7 @@ from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import PERCENTAGE, EntityCategory
 from homeassistant.core import CALLBACK_TYPE, callback
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.event import async_track_time_interval
@@ -50,6 +51,7 @@ from .const import (
     DIAGNOSIS_MODE_EXTENDED,
     DIAGNOSIS_MODE_READ_ONLY,
     DIAGNOSIS_MODES,
+    DOMAIN,
     PERMISSION_CAPABILITY_TEST,
 )
 from .entity import EnglishEntityId
@@ -394,7 +396,7 @@ class DiagnosisNextStartSensor(DiagnosisEntity, SensorEntity):
 
     @property
     def native_value(self) -> datetime | None:
-        """The earliest next start, or None."""
+        """When auto repeat next looks whether a run is due, or None."""
         return self._runner.continuous.next_start(dt_util.utcnow())
 
     @property
@@ -522,7 +524,7 @@ class CapabilityTestStatusSensor(DiagnosisEntity, SensorEntity):
     def native_value(self) -> str:
         """The one-line progress, or that nothing has been kept."""
         state = self._runner.state
-        folded = state.capability_test
+        folded = self._runner.tests
         if self._timing():
             assert state.started is not None
             prefix = f"running {elapsed(state.started, dt_util.now())} · "
@@ -538,7 +540,7 @@ class CapabilityTestStatusSensor(DiagnosisEntity, SensorEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         """The counts, what is missing and why, and the tail of the log."""
         state = self._runner.state
-        folded = state.capability_test or {}
+        folded = self._runner.tests or {}
         running_since = (
             state.started.isoformat()
             if self._timing() and state.started is not None
@@ -588,7 +590,7 @@ class CapabilityTestCountSensor(DiagnosisEntity, SensorEntity):
     @property
     def native_value(self) -> str | None:
         """`count/total`, or None while no run is kept."""
-        folded = self._runner.state.capability_test or {}
+        folded = self._runner.tests or {}
         if "summary" not in folded:
             return None
         _, total = ledger.progress(folded)
@@ -597,7 +599,7 @@ class CapabilityTestCountSensor(DiagnosisEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """The checks in this bucket, by name."""
-        summary = (self._runner.state.capability_test or {}).get("summary") or {}
+        summary = (self._runner.tests or {}).get("summary") or {}
         return {
             "checks": sorted(
                 name
@@ -633,7 +635,8 @@ class SkipEstablishedCapabilityTestsSwitch(
         """Take the last state back, then listen like every diagnosis entity."""
         await super().async_added_to_hass()
         if (last := await self.async_get_last_state()) is not None:
-            self._runner.skip_established = last.state == "on"
+            # On by default: only an explicit off survives a restart as off.
+            self._runner.skip_established = last.state != "off"
 
     @callback
     def async_entity_id_changed(self, old_entity_id: str) -> None:
@@ -655,6 +658,15 @@ class SkipEstablishedCapabilityTestsSwitch(
         self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Run the full test again."""
+        """Run the full test again; refused while auto repeat runs.
+
+        Auto repeat leaves established checks out whatever this says, so an
+        off here would only show something that is not happening.
+        """
+        if self._runner.continuous.active:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="skip_completed_tests_during_auto_repeat",
+            )
         self._runner.skip_established = False
         self.async_write_ha_state()

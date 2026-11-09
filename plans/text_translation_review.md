@@ -1,6 +1,6 @@
 # The texts, for review
 
-**296 texts**: everything in `strings.json` that is not an entity name, by its
+**300 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -628,7 +628,7 @@ and bold are kept.
 > Die Datei benennt deinen Wechselrichter mit einem Platzhalter statt der Seriennummer und enthält die letzten zwei Oktette seiner Adresse nur, solange dieses Feld angehakt ist.
 
 
-## Select states (16)
+## Select states (19)
 
 ### `entity.select.battery_forced_charge_discharge.state.stop`
 
@@ -725,6 +725,24 @@ and bold are kept.
 > **EN** Disabled
 
 > **DE** Deaktiviert
+
+### `entity.sensor.connection.state.direct`
+
+> **EN** Direct, no dongle
+
+> **DE** Direkt, ohne Dongle
+
+### `entity.sensor.connection.state.winet`
+
+> **EN** Via WiNet-S
+
+> **DE** Über WiNet-S
+
+### `entity.sensor.connection.state.module`
+
+> **EN** Via a communication module
+
+> **DE** Über ein Kommunikationsmodul
 
 
 ## Selector options (61)
@@ -1951,7 +1969,7 @@ and bold are kept.
 > **DE** Welcher Wechselrichter gestoppt werden soll.
 
 
-## Error messages (19)
+## Error messages (20)
 
 ### `exceptions.device_not_found.message`
 
@@ -1970,6 +1988,12 @@ and bold are kept.
 > **EN** {name} is not a Sungrow Modbus device.
 
 > **DE** {name} ist kein Sungrow-Modbus-Gerät.
+
+### `exceptions.skip_completed_tests_during_auto_repeat.message`
+
+> **EN** Auto repeat always skips completed tests. Stop it with Diagnosis: stop first, then this switch can be turned off.
+
+> **DE** Die automatische Wiederholung überspringt abgeschlossene Tests immer. Erst mit Diagnose: stoppen beenden, dann lässt sich dieser Schalter ausschalten.
 
 ### `exceptions.diagnosis_already_running.message`
 
