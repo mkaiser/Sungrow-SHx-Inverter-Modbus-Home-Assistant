@@ -29,6 +29,15 @@ if that is below 10 A.
     python python/sungrow_wallbox_capability_test.py 192.168.1.60 --leave --enable
     python python/sungrow_wallbox_capability_test.py 192.168.1.60 --restore SNAPSHOT
 
+With a car charging, `--follow` steps the offer from 6 A to your `--max-amps` and
+back and times how the car follows; `--below-minimum`, `--above-rating` and
+`--fallback` need `--max-amps` given on purpose (the last also needs it no
+higher than the setting the wallbox had); `--phase-charging` switches the phase
+with the charge stopped first; `--mileage` writes the mileage setting its own
+word. `--merge-into DIAGNOSIS.json` keeps the run in a diagnosis document under
+`wallbox_capability_test`. These need a `sungrow-modbus` newer than the one
+pinned above.
+
 **At the wallbox's own address only**: Modbus inside TLS on port 516, unit 248.
 Through a WiNet-S the wallbox reads back stale and the readback is not
 evidence, so this does not run there.
@@ -75,6 +84,16 @@ except ImportError:  # pragma: no cover -- the pinned wheel predates the module
     raise SystemExit(2) from None
 
 import wallbox_direct
+
+#: The options only a library newer than the pinned one has.
+NEW_FLAGS = (
+    "follow",
+    "below_minimum",
+    "above_rating",
+    "phase_charging",
+    "fallback",
+    "mileage",
+)
 
 #: Left in the way a person at a terminal is asked a last time.
 CANCELLED = -2
@@ -223,11 +242,15 @@ def document(outcome: wct.Outcome, args: argparse.Namespace) -> dict[str, Any]:
         "script": "sungrow_wallbox_capability_test.py",
         "read_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "leave": args.leave,
+        "transport": "tls",
+        "fresh_session": True,
         "options": {
             "max_amps": args.max_amps,
+            "cap_explicit": args.cap_explicit,
             "enable": args.enable,
             "phase": args.phase,
             "start_stop": args.start_stop,
+            **{name: getattr(args, name, False) for name in NEW_FLAGS},
         },
         "code": outcome.code,
         "conditions": {k: v for k, v in outcome.conditions.items() if k != "refusals"},
@@ -281,12 +304,22 @@ async def _run(
         async def keep(snapshot: dict[str, Any]) -> None:
             _save(snapshot_path, json.dumps(snapshot, indent=2))
 
+        extra = {name: True for name in NEW_FLAGS if getattr(args, name, False)}
+        if args.cap_explicit:
+            extra["cap_explicit"] = True
+        if extra and "follow" not in wct.Options.__dataclass_fields__:
+            print(
+                "These options need a sungrow-modbus newer than the pinned one.",
+                file=sys.stderr,
+            )
+            return 2
         options = wct.Options(
             leave=args.leave,
             max_amps=args.max_amps,
             start_stop=args.start_stop,
             enable=args.enable,
             phase=args.phase,
+            **extra,
         )
         runner = wct.WallboxCapabilityTest(
             port,
@@ -306,6 +339,10 @@ async def _run(
             await close()
 
     print(report(outcome, leave=args.leave), file=sys.stderr)
+    merged = None
+    if args.merge_into and outcome.conditions.get("model") and args.leave:
+        merged = _merge(Path(args.merge_into), document(outcome, args), args.host)
+        print(f"\n  merged into {merged}", file=sys.stderr)
     if outcome.conditions.get("model"):
         out = _save(
             directory / f"{stamp}-wallbox-capability-test.json",
@@ -322,6 +359,45 @@ async def _run(
     return outcome.code
 
 
+def _merge(target: Path, block: dict[str, Any], host: str) -> Path:
+    """Keep the run in a diagnosis document, folded with the runs already there.
+
+    Refuses to write if the block holds the address: a refusal costs a minute,
+    and an address in a public document is out for good.
+    """
+    from sungrow_modbus.wallbox import ledger  # newer than the pinned wheel
+
+    if host in json.dumps(block):
+        raise SystemExit(
+            f"refusing to merge: the block contains the address ({target})"
+        )
+    data = json.loads(target.read_text(encoding="utf-8"))
+    kept = list(data.get("wallbox_capability_test", {}).get("run_blocks") or [])
+    kept = [run for run in kept if ledger.fold_key(run) == ledger.fold_key(block)]
+    kept.append(block)
+    folded = ledger.fold(kept)
+    options = {
+        option: bool(block["options"].get(option))
+        for _need, option in ledger.CHECKS.values()
+        if option
+    }
+    data["wallbox_capability_test"] = {
+        **ledger.document(folded, options),
+        "run_blocks": kept,
+    }
+    target.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    return target
+
+
+class _CapChosen(argparse.Action):
+    """Record that `--max-amps` was given, so the default is never taken for consent."""
+
+    def __call__(self, parser, namespace, values, option_string=None):  # type: ignore[no-untyped-def]
+        """Store the cap and that it was chosen."""
+        setattr(namespace, self.dest, values)
+        namespace.cap_explicit = True
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Measure a wallbox's output current scale, with leave."
@@ -334,12 +410,31 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--max-amps",
         type=float,
+        action=_CapChosen,
         default=wct.DEFAULT_MAX_AMPS,
         help="the highest current to offer (default %(default)s)",
     )
     parser.add_argument("--start-stop", action="store_true", help="also stop and start")
     parser.add_argument("--enable", action="store_true", help="also disable and enable")
     parser.add_argument("--phase", action="store_true", help="also switch the phase")
+    parser.add_argument("--follow", action="store_true", help="step 6 A to the cap")
+    parser.add_argument(
+        "--below-minimum", action="store_true", help="offer 5 A, then 0"
+    )
+    parser.add_argument(
+        "--above-rating", action="store_true", help="offer the rating plus 1 A"
+    )
+    parser.add_argument(
+        "--phase-charging", action="store_true", help="switch phase while charging"
+    )
+    parser.add_argument("--fallback", action="store_true", help="fall silent for 75 s")
+    parser.add_argument(
+        "--mileage", action="store_true", help="write the mileage its own word"
+    )
+    parser.add_argument(
+        "--merge-into", help="keep the run in this diagnosis document (needs --leave)"
+    )
+    parser.set_defaults(cap_explicit=False)
     parser.add_argument(
         "--restore", help="put a saved snapshot back, and do nothing else"
     )

@@ -72,6 +72,9 @@ class ContinuousCapabilityTest:
         self.started_at: datetime | None = None
         self.last_start: datetime | None = None
         self._last_slot: int | None = None
+        #: The wallbox's own slots: its runs and the inverter's are counted apart,
+        #: so a run of one never uses up the other's half hour.
+        self._last_wallbox_slot: int | None = None
         self.runs_started = 0
         self.waiting: str = "off"
 
@@ -96,6 +99,7 @@ class ContinuousCapabilityTest:
         self.runner.skip_established = True
         now = dt_util.utcnow()
         self.started_at, self.last_start, self._last_slot = now, None, None
+        self._last_wallbox_slot = None
         self.runs_started = 0
         self._cancel = async_track_time_interval(self.hass, self._async_tick, TICK)
         self._async_tick(now)
@@ -156,8 +160,16 @@ class ContinuousCapabilityTest:
         self.runner.async_observe(now)
         folded = self.runner.state.capability_test
         waiting = ledger.awaited(folded)
-        if not waiting:
-            observing = self.runner.plausibility.unsettled()
+        wallbox_waiting = self.runner.wallbox_awaited()
+        if not waiting and not wallbox_waiting:
+            observing = [
+                *self.runner.plausibility.unsettled(),
+                *(
+                    self.runner.wallbox_plausibility.unsettled()
+                    if self.runner.wallbox_present
+                    else []
+                ),
+            ]
             if observing:
                 self._say(
                     "watching the readings for "
@@ -166,24 +178,41 @@ class ContinuousCapabilityTest:
                 return
             self.async_turn_off("nothing left that a run at another moment can answer")
             return
+        started = False
+        if waiting:
+            started = self._inverter_tick(now, folded, waiting)
+        if not started and wallbox_waiting:
+            self._wallbox_tick(now, wallbox_waiting, said=bool(waiting))
+
+    def _quiet(self, now: datetime) -> bool:
+        """Whether the last run ended too recently for another to start."""
+        finished = self.runner.state.finished
+        return finished is not None and now - finished < QUIET
+
+    def _inverter_tick(
+        self,
+        now: datetime,
+        folded: dict[str, Any] | None,
+        waiting: list[tuple[str, str]],
+    ) -> bool:
+        """Start an inverter run when one is allowed and due; say whether it did."""
         if self._last_slot is not None and self._slot(now) <= self._last_slot:
             ready_at = self.next_start(now)
             if ready_at is not None:
                 self._say(f"the next run at {dt_util.as_local(ready_at):%H:%M}")
-            return
-        finished = self.runner.state.finished
-        if finished is not None and now - finished < QUIET:
+            return False
+        if self._quiet(now):
             self._say("a moment of quiet after the last run")
-            return
+            return False
         if self._inverter_running() is False:
             self._say("waiting for the inverter to run")
-            return
+            return False
         due = ledger.due(folded, self.live())
         if not due:
             self._say(
                 "waiting for " + "; ".join(f"{name}: {need}" for name, need in waiting)
             )
-            return
+            return False
         if self.runner.async_start(capability_test=True):
             self.last_start = now
             self._last_slot = self._slot(now)
@@ -195,6 +224,48 @@ class ContinuousCapabilityTest:
                 ", ".join(due),
             )
             self._say("running for " + ", ".join(due))
+            return True
+        return False
+
+    def _wallbox_tick(
+        self, now: datetime, waiting: list[tuple[str, str]], *, said: bool
+    ) -> None:
+        """Start a wallbox run when its slot is free and a car is there to judge.
+
+        `said` is whether the inverter's tick already told the entities what
+        it waits for: the wallbox then speaks only when it starts, so the one
+        line does not flip between the two every minute.
+        """
+        assert self.started_at is not None
+        slot = self._slot(now)
+        if self._last_wallbox_slot is not None and slot <= self._last_wallbox_slot:
+            if not said:
+                ready = self.started_at + (self._last_wallbox_slot + 1) * INTERVAL
+                self._say(f"the next wallbox run at {dt_util.as_local(ready):%H:%M}")
+            return
+        if self._quiet(now):
+            if not said:
+                self._say("a moment of quiet after the last run")
+            return
+        due = self.runner.wallbox_due()
+        if not due:
+            if not said:
+                self._say(
+                    "waiting for the wallbox: "
+                    + "; ".join(f"{name}: {need}" for name, need in waiting)
+                )
+            return
+        if self.runner.async_start_wallbox():
+            self.last_start = now
+            self._last_wallbox_slot = slot
+            self.runs_started += 1
+            _LOGGER.info(
+                "%s: continuous capability testing started wallbox run %d, for %s",
+                self.entry.title,
+                self.runs_started,
+                ", ".join(due),
+            )
+            self._say("running the wallbox for " + ", ".join(due))
 
     @callback
     def _say(self, waiting: str) -> None:

@@ -48,7 +48,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import logging
 import statistics
 from typing import Any, NamedTuple, Protocol
@@ -117,6 +117,27 @@ DISABLED_STATUS = 8
 PHASE_WORDS = (0, 1)
 IDLE_STATUSES = (1, 2, 6, 8)
 
+#: The full-range follow check steps by this much between 6 A and the cap.
+FOLLOW_STEP_A = 2.0
+
+#: How long a car has to follow a step, and how long a pause or a resume may take.
+FOLLOW_TIMEOUT = 60.0
+
+#: An offer under the pilot minimum, for the below-minimum check. Under the
+#: second reading of the scale it is 0.05 A: nothing a car could mistake.
+BELOW_MINIMUM_A = 5.0
+
+#: The headroom the above-rating check offers over the rating.
+ABOVE_RATING_A = 1.0
+
+#: Every read stops for this long in the fallback check. The wallbox drops a
+#: quiet session after sixty seconds; this leaves it fifteen to apply its
+#: fallback current before the first look.
+SILENCE_SECONDS = 75.0
+
+#: A stop is seen when the status is not charging and the draw is under this.
+STOPPED_DRAW_A = 1.0
+
 # -- what a run can say --------------------------------------------------------
 
 MATCHED = "matched"
@@ -127,6 +148,8 @@ INCONCLUSIVE = "could not tell"
 SKIPPED = "skipped"
 REFUSED = "refused"
 DROPPED = "the link dropped"
+CLAMPED = "clamped to the rating"
+NOT_CLAMPED = "accepted above the rating, not clamped"
 
 CODES = {
     0: "every planned check ran and every readback matched",
@@ -140,6 +163,20 @@ DRY_RUN_MEANS = "dry run: the plan resolved, and nothing was written"
 SEVERITY = (0, 3, 4, 1, 2, 5)
 
 
+def _follows(offered: float) -> Callable[[Sample], bool]:
+    """Return the test for a car that is charging at `offered`, within tolerance."""
+
+    def test(sample: Sample) -> bool:
+        return sample.status == CHARGING and abs(sample.draw_a - offered) <= TOLERANCE_A
+
+    return test
+
+
+def _mean(values: list[Any]) -> str:
+    """Return the mean of some seconds as text, or a dash for none."""
+    return f"{statistics.mean(values):.0f} s" if values else "-"
+
+
 def _address(component: type[Any], name: str) -> int:
     """Return a field's protocol address from the library's own map."""
     address: int = component.declared_fields[name].address
@@ -151,6 +188,7 @@ START_STOP = _address(WallboxSettings, "start_stop_raw")
 ENABLED = _address(WallboxSettings, "charger_enabled_raw")
 PHASE_SETPOINT = _address(WallboxSettings, "phase_mode_setpoint_raw")
 PHASE_ACTUAL = _address(WallboxRatings, "phase_mode_raw")
+MILEAGE = _address(WallboxSettings, "mileage_per_kwh")
 RATED_CURRENT = _address(WallboxRatings, "rated_current")
 PHASE_A_CURRENT = _address(WallboxLive, "phase_a_current")
 PHASE_B_CURRENT = _address(WallboxLive, "phase_b_current")
@@ -199,6 +237,39 @@ class Options:
     phase: bool = False
     """Also switch the phase setting and back. Off by default, and refused
     unless nothing is flowing: a contactor does not open under load."""
+
+    follow: bool = False
+    """Step the offer from 6 A to the cap in 2 A steps and back down, timing
+    how fast the car follows each. Needs a car charging."""
+
+    below_minimum: bool = False
+    """Offer 5 A, then 0, and see whether the wallbox refuses or the car
+    pauses. Needs a car charging and `cap_explicit`."""
+
+    above_rating: bool = False
+    """Offer the rating plus 1 A, and see whether it is refused or clamped.
+    Needs a car charging, `cap_explicit` and a cap of at least the rating."""
+
+    phase_charging: bool = False
+    """Switch the phase with a car charging, in the order evcc uses: stop,
+    switch, start. The switch is written only once the stop is seen."""
+
+    fallback: bool = False
+    """Stop every read for 75 s and see what the car is given by the
+    fallback. Needs a car charging and a cap no higher than the setting the
+    house had."""
+
+    mileage: bool = False
+    """Write the mileage setting its own word: a no-op that shows the write
+    path is open."""
+
+    current: bool = True
+    """Run the output current's own three steps (6, 8 and 10 A). Off once an
+    earlier run has settled the scale, so a repeat does not offer them again."""
+
+    cap_explicit: bool = False
+    """Whether the owner chose `max_amps`. The checks that go beyond the
+    default cap need it, so a default is never mistaken for consent."""
 
 
 class Step(NamedTuple):
@@ -287,6 +358,8 @@ class WallboxCapabilityTest:
         self.written: list[tuple[int, int]] = []
         self._codes: list[int] = [0]
         self._charging_at_start = False
+        #: (offered A, available A, draw A) from every step that watched a car.
+        self._pairs: list[tuple[float, float | None, float]] = []
 
     # -- helpers -----------------------------------------------------------
 
@@ -373,13 +446,27 @@ class WallboxCapabilityTest:
         try:
             await self._preflight()
             if self.options.leave:
-                await self._current_steps()
+                if self.options.current:
+                    await self._current_steps()
+                if self.options.follow:
+                    await self._follow()
+                if self.options.below_minimum:
+                    await self._below_minimum()
+                if self.options.above_rating:
+                    await self._above_rating()
+                self._available_vs_setting()
                 if self.options.start_stop:
                     await self._start_stop()
                 if self.options.enable:
                     await self._enable()
                 if self.options.phase:
                     await self._phase()
+                if self.options.phase_charging:
+                    await self._phase_charging()
+                if self.options.mileage:
+                    await self._mileage()
+                if self.options.fallback:
+                    await self._fallback()
             else:
                 self.conditions["dry_run"] = DRY_RUN_MEANS
         except Guard as guard:
@@ -436,7 +523,10 @@ class WallboxCapabilityTest:
         # The two settings a step may touch later. A failed read drops the
         # step rather than the run, because a lost read is not a refusal and
         # never write what cannot be put back.
-        for address, name in ((ENABLED, "enabled"), (PHASE_SETPOINT, "phase")):
+        extra = [(ENABLED, "enabled"), (PHASE_SETPOINT, "phase")]
+        if self.options.mileage:
+            extra.append((MILEAGE, "mileage"))
+        for address, name in extra:
             try:
                 self.snapshot["raw"][address] = await self._read_one("holding", address)
             except _LOST as err:
@@ -464,6 +554,11 @@ class WallboxCapabilityTest:
             raise Guard(2, "the wallbox reports a fault")
         if self.options.max_amps <= 0:
             raise Guard(2, "max_amps must be positive")
+        rating = round(rated_word * SCALE_THIS_PROJECT, 1)
+        if rating > 0 and self.options.max_amps > rating:
+            # The owner's cap is never above what the wallbox is rated for.
+            self.options = replace(self.options, max_amps=rating)
+            self.conditions["cap_limited_to_rating_a"] = rating
 
         # Measured idle at gerd's (2026-11-06): 0 with no car, where a charge
         # read 160. What a 0 means -- no limit set, or nothing offered -- is not
@@ -549,25 +644,32 @@ class WallboxCapabilityTest:
         if failure is not None:
             return Step(name, failure, self.conditions["refusals"][OUTPUT_CURRENT])
 
-        # Leg A: the same session, through the library's own decode.
-        same = await self._read_one("holding", OUTPUT_CURRENT)
-        # Leg B: the raw word on a fresh session.
         if self.port.fresh:
+            # Leg A: the same session, through the library's own decode.
+            same = await self._read_one("holding", OUTPUT_CURRENT)
+            # Leg B: the raw word on a fresh session.
             raw = (await self.port.read_fresh("holding", OUTPUT_CURRENT, 1))[0]
+            if raw != word:
+                return Step(
+                    name,
+                    MISMATCH,
+                    f"wrote {word}; the same session read {same}, a fresh one {raw}",
+                )
         else:
-            raw = same
+            # A read on the session that wrote answers another register's value
+            # (a dongle always, a shared TLS session as measured), so neither
+            # leg is evidence and only what the car does counts.
             self._note(
-                "the port has no fresh session: the raw readback is not independent"
+                "the port has no fresh session: the readback is not independent, "
+                "only what the car does counts"
             )
             self._worst(3)
-        if raw != word:
-            return Step(
-                name,
-                MISMATCH,
-                f"wrote {word}; the same session read {same}, a fresh one {raw}",
-            )
 
         if not self._charging_at_start:
+            if not self.port.fresh:
+                return Step(
+                    name, INCONCLUSIVE, "no car charging: nothing to judge the write by"
+                )
             return Step(name, MATCHED, "no car charging: behaviour not watched")
 
         # Leg C: what the car draws.
@@ -576,6 +678,7 @@ class WallboxCapabilityTest:
         draw = statistics.median(s.draw_a for s in tail)
         offered = word * SCALE_THIS_PROJECT
         charging = all(s.status == CHARGING for s in tail)
+        self._pairs.append((offered, tail[-1].available_a, draw))
         if charging and abs(draw - offered) <= TOLERANCE_A:
             return Step(
                 name, CONFIRMED, f"offered {offered:.1f} A, the car draws {draw:.1f} A"
@@ -623,7 +726,7 @@ class WallboxCapabilityTest:
             )
             self._worst(3)
             return
-        stopped = await self._until(lambda s: s.status != CHARGING, STATE_TIMEOUT)
+        stopped = await self._timed(lambda s: s.status != CHARGING, STATE_TIMEOUT)
         failure = await self._write(START_STOP, START_WORD)
         if failure is not None:
             self.steps.append(
@@ -631,28 +734,47 @@ class WallboxCapabilityTest:
             )
             self._worst(3)
             return
-        resumed = await self._until(lambda s: s.status == CHARGING, STATE_TIMEOUT)
-        if stopped and resumed:
+        resumed = await self._timed(lambda s: s.status == CHARGING, STATE_TIMEOUT)
+        self.conditions["start_stop_seconds"] = {"stop": stopped, "resume": resumed}
+        if stopped is not None and resumed is not None:
             self.steps.append(
-                Step("start/stop", CONFIRMED, "stopped on 1, resumed on 0")
+                Step(
+                    "start/stop",
+                    CONFIRMED,
+                    f"stopped on 1 after {stopped:.0f} s, resumed on 0 after "
+                    f"{resumed:.0f} s",
+                )
             )
         else:
             self.steps.append(
                 Step(
                     "start/stop",
                     INCONCLUSIVE,
-                    f"stopped: {stopped}, resumed: {resumed}",
+                    f"stopped: {stopped is not None}, resumed: {resumed is not None}",
                 )
             )
             self._worst(3)
 
     async def _until(self, condition: Callable[[Sample], bool], timeout: float) -> bool:
         """Poll the live registers until `condition` holds, or the time is up."""
+        return await self._timed(condition, timeout) is not None
 
-        async def check() -> bool:
-            return condition(await self._sample())
+    async def _timed(
+        self, condition: Callable[[Sample], bool], timeout: float
+    ) -> float | None:
+        """Seconds until `condition` held, or None if it did not in `timeout`.
 
-        return await self._poll(check, timeout)
+        The resolution is the sample interval: a wallbox is looked at every
+        five seconds so the session never goes quiet.
+        """
+        start = self.clock.monotonic()
+        end = start + timeout
+        while True:
+            if condition(await self._sample()):
+                return self.clock.monotonic() - start
+            if self.clock.monotonic() >= end:
+                return None
+            await self.clock.sleep(SAMPLE_INTERVAL)
 
     async def _poll(self, check: Callable[[], Awaitable[bool]], timeout: float) -> bool:
         """Ask `check` every sample interval, so the session never goes quiet."""
@@ -691,7 +813,7 @@ class WallboxCapabilityTest:
             )
             self._worst(3)
             return
-        disabled = await self._until(
+        disabled = await self._timed(
             lambda s: s.status == DISABLED_STATUS, STATE_TIMEOUT
         )
         failure = await self._write(ENABLED, ENABLED_WORD)
@@ -702,16 +824,28 @@ class WallboxCapabilityTest:
             self._worst(3)
             return
         if self._charging_at_start:
-            back = await self._until(lambda s: s.status == CHARGING, STATE_TIMEOUT)
+            back = await self._timed(lambda s: s.status == CHARGING, STATE_TIMEOUT)
         else:
-            back = await self._until(
+            back = await self._timed(
                 lambda s: s.status != DISABLED_STATUS, STATE_TIMEOUT
             )
-        if disabled and back:
-            self.steps.append(Step("enable", CONFIRMED, "disabled on 0, back on 1"))
+        self.conditions["enable_seconds"] = {"disable": disabled, "enable": back}
+        if disabled is not None and back is not None:
+            self.steps.append(
+                Step(
+                    "enable",
+                    CONFIRMED,
+                    f"disabled on 0 after {disabled:.0f} s, back on 1 after "
+                    f"{back:.0f} s",
+                )
+            )
         else:
             self.steps.append(
-                Step("enable", INCONCLUSIVE, f"disabled: {disabled}, back: {back}")
+                Step(
+                    "enable",
+                    INCONCLUSIVE,
+                    f"disabled: {disabled is not None}, back: {back is not None}",
+                )
             )
             self._worst(3)
 
@@ -767,6 +901,418 @@ class WallboxCapabilityTest:
             )
             self._worst(3)
 
+    # -- what a car does across the whole range -------------------------------
+
+    def _needs_car(self, name: str) -> bool:
+        """Skip `name` unless a car was charging at the start; say whether to go on."""
+        if self._charging_at_start:
+            return True
+        self._skip(name, "no car is charging")
+        return False
+
+    def _needs_cap(self, name: str) -> bool:
+        """Skip `name` unless the owner chose the cap; say whether to go on."""
+        if self.options.cap_explicit:
+            return True
+        self._skip(name, "the owner's cap was not set explicitly")
+        return False
+
+    async def _follow(self) -> None:
+        """Step the offer up to the cap and back, and time how the car follows."""
+        self._step("follow the offer across the range")
+        if not self._needs_car("current follow"):
+            return
+        ups: list[float] = []
+        amps = MIN_CURRENT_A
+        while amps <= self.options.max_amps + 1e-9:
+            ups.append(amps)
+            amps += FOLLOW_STEP_A
+        if not ups:
+            self._skip("current follow", "the cap is below 6 A: nothing to step")
+            return
+        path = [(a, "up") for a in ups] + [(a, "down") for a in reversed(ups[:-1])]
+        rows: list[dict[str, Any]] = []
+        self.conditions["follow"] = rows
+        previous: float | None = None
+        ceiling: float | None = None
+        for amps, direction in path:
+            self._step(f"offer {amps:.1f} A, {direction}")
+            failure = await self._write(
+                OUTPUT_CURRENT, round(amps / SCALE_THIS_PROJECT)
+            )
+            if failure is not None:
+                self.steps.append(
+                    Step(
+                        "current follow",
+                        failure,
+                        self.conditions["refusals"][OUTPUT_CURRENT],
+                    )
+                )
+                self._worst(3)
+                return
+            seconds = await self._timed(_follows(amps), FOLLOW_TIMEOUT)
+            sample = await self._sample()
+            # A car that stops following on the way up has met its own limit;
+            # a step above that limit, either way, is not the wallbox's doing.
+            beyond = sample.draw_a < amps - TOLERANCE_A
+            limited = (
+                seconds is None
+                and sample.status == CHARGING
+                and beyond
+                and (
+                    (
+                        direction == "up"
+                        and previous is not None
+                        and sample.draw_a >= previous - 0.5
+                    )
+                    or (ceiling is not None and abs(sample.draw_a - ceiling) <= 0.5)
+                )
+            )
+            if limited and ceiling is None:
+                ceiling = sample.draw_a
+            stopped = sample.status != CHARGING and sample.draw_a < MIN_CURRENT_A
+            rows.append(
+                {
+                    "offered_a": amps,
+                    "direction": direction,
+                    "seconds": seconds,
+                    "draw_a": sample.draw_a,
+                    "available_a": sample.available_a,
+                    "limited": limited,
+                    "stopped": stopped,
+                }
+            )
+            if seconds is not None or limited:
+                self._pairs.append((amps, sample.available_a, sample.draw_a))
+            if stopped:
+                break
+            previous = sample.draw_a
+        if any(row["stopped"] for row in rows):
+            self.steps.append(
+                Step(
+                    "current follow",
+                    DECADE,
+                    f"the car stopped when offered {rows[-1]['offered_a']:.1f} A at "
+                    "0.1 A per count, as if offered a tenth of that",
+                )
+            )
+            self._worst(4)
+            return
+        missed = [r for r in rows if r["seconds"] is None and not r["limited"]]
+        followed = [r for r in rows if r["seconds"] is not None]
+        if missed or not followed:
+            detail = (
+                "the draw did not follow at "
+                + ", ".join(f"{r['offered_a']:.0f} A {r['direction']}" for r in missed)
+                if missed
+                else "no step was followed"
+            )
+            self.steps.append(Step("current follow", INCONCLUSIVE, detail))
+            self._worst(3)
+            return
+        up = [r["seconds"] for r in followed if r["direction"] == "up"]
+        down = [r["seconds"] for r in followed if r["direction"] == "down"]
+        limit = [r["draw_a"] for r in rows if r["limited"]]
+        detail = (
+            f"the draw followed {len(followed)} steps from {path[0][0]:.0f} A to "
+            f"{max(a for a, _d in path):.0f} A; up {_mean(up)}, down {_mean(down)}"
+        )
+        if limit:
+            detail += f"; the car stopped following at {limit[0]:.1f} A"
+        self.steps.append(Step("current follow", CONFIRMED, detail))
+
+    async def _below_minimum(self) -> None:
+        """Offer under the pilot minimum, then nothing: refused, or the car pauses."""
+        self._step("offer under the pilot minimum")
+        if not self._needs_car("below minimum") or not self._needs_cap("below minimum"):
+            return
+        outcomes: dict[str, str] = {}
+        self.conditions["below_minimum"] = outcomes
+        resume_word = round(MIN_CURRENT_A / SCALE_THIS_PROJECT)
+        clean = True
+        for label, word in (
+            (f"{BELOW_MINIMUM_A:.1f} A", round(BELOW_MINIMUM_A / SCALE_THIS_PROJECT)),
+            ("0", 0),
+        ):
+            failure = await self._write(OUTPUT_CURRENT, word)
+            if failure == REFUSED:
+                refusal = self.conditions["refusals"][OUTPUT_CURRENT]
+                outcomes[label] = f"refused: {refusal}"
+                continue
+            if failure is not None:
+                outcomes[label] = failure
+                clean = False
+                break
+            paused = await self._timed(
+                lambda s: s.status != CHARGING or s.draw_a < MIN_CURRENT_A,
+                FOLLOW_TIMEOUT,
+            )
+            if paused is None:
+                outcomes[label] = "accepted, the car kept charging"
+                continue
+            failure = await self._write(OUTPUT_CURRENT, resume_word)
+            resumed = (
+                None
+                if failure is not None
+                else await self._timed(
+                    lambda s: (
+                        s.status == CHARGING and s.draw_a >= MIN_CURRENT_A - TOLERANCE_A
+                    ),
+                    FOLLOW_TIMEOUT,
+                )
+            )
+            if resumed is None:
+                outcomes[label] = (
+                    f"accepted, the car paused after {paused:.0f} s and did not resume"
+                )
+                clean = False
+            else:
+                outcomes[label] = (
+                    f"accepted, the car paused after {paused:.0f} s and resumed on "
+                    f"6 A after {resumed:.0f} s"
+                )
+        if not clean:
+            self._worst(3)
+        self.steps.append(
+            Step(
+                "below minimum",
+                CONFIRMED if clean else INCONCLUSIVE,
+                "; ".join(f"{label}: {what}" for label, what in outcomes.items()),
+            )
+        )
+
+    async def _above_rating(self) -> None:
+        """Offer the rating plus 1 A: refused, or clamped, or neither."""
+        self._step("offer above the rating")
+        if not self._needs_car("above rating") or not self._needs_cap("above rating"):
+            return
+        rated = float(self.conditions.get("rated_a") or 0.0)
+        if rated <= 0 or self.options.max_amps < rated:
+            self._skip(
+                "above rating",
+                f"the owner's cap ({self.options.max_amps:.0f} A) is below the "
+                f"rating ({rated:.0f} A)",
+            )
+            return
+        amps = rated + ABOVE_RATING_A
+        original = self.snapshot["raw"][OUTPUT_CURRENT]
+        failure = await self._write(OUTPUT_CURRENT, round(amps / SCALE_THIS_PROJECT))
+        if failure == REFUSED:
+            refusal = self.conditions["refusals"][OUTPUT_CURRENT]
+            self.steps.append(Step("above rating", REFUSED, f"{amps:.0f} A: {refusal}"))
+            return
+        if failure is not None:
+            refusal = self.conditions["refusals"][OUTPUT_CURRENT]
+            self.steps.append(Step("above rating", failure, refusal))
+            self._worst(3)
+            return
+        samples = await self._wait(SETTLE_SECONDS)
+        tail = samples[-SAMPLES:]
+        draw = statistics.median(s.draw_a for s in tail)
+        available = tail[-1].available_a
+        # Put the house's own word back before anything else is offered.
+        await self._write(OUTPUT_CURRENT, original)
+        held = available is None or available <= rated + 0.05
+        if held and draw <= rated + TOLERANCE_A:
+            self.steps.append(
+                Step(
+                    "above rating",
+                    CLAMPED,
+                    f"{amps:.0f} A accepted; the available current reads "
+                    f"{available} A and the car draws {draw:.1f} A",
+                )
+            )
+        else:
+            self.steps.append(
+                Step(
+                    "above rating",
+                    NOT_CLAMPED,
+                    f"{amps:.0f} A accepted; the available current reads "
+                    f"{available} A: a control must cap itself at the rating",
+                )
+            )
+
+    def _available_vs_setting(self) -> None:
+        """Say what the available current (21322) is, beside the setting."""
+        if not self.options.follow:
+            return
+        usable = [(o, a, d) for o, a, d in self._pairs if a is not None]
+        if len(usable) < 2:
+            return
+        offsets = [round(a - o, 2) for o, a, _d in usable]
+        verdict = CONFIRMED
+        if all(abs(x) <= 0.05 for x in offsets):
+            what = "equals the setting"
+        elif all(abs(x - 1.0) <= 0.05 for x in offsets):
+            what = "is the setting plus 1 A"
+        elif all(abs(a - d) <= 0.15 for _o, a, d in usable):
+            what = "follows what the car draws"
+        else:
+            what = "is neither the setting, the setting plus 1 A nor the draw"
+            verdict = INCONCLUSIVE
+            self._worst(3)
+        self.conditions["available_offsets_a"] = offsets
+        self.steps.append(
+            Step("available current", verdict, f"{what} (offsets {offsets})")
+        )
+
+    async def _phase_charging(self) -> None:
+        """Switch the phase with a car charging: stop, switch, start, and back."""
+        self._step("switch the phase with a car charging")
+        if not self._needs_car("phase while charging"):
+            return
+        original = self.snapshot["raw"].get(PHASE_SETPOINT)
+        if original not in PHASE_WORDS:
+            self._skip(
+                "phase while charging",
+                f"the setting reads {original!r}, not one of {PHASE_WORDS}",
+            )
+            return
+        if self.snapshot["raw"].get(START_STOP) != START_WORD:
+            self._skip(
+                "phase while charging",
+                "the start/stop register does not read as running: the order "
+                "stop, switch, start cannot be kept",
+            )
+            return
+        target = PHASE_WORDS[1 - PHASE_WORDS.index(original)]
+        details: list[str] = []
+        clean = True
+        for goal in (target, original):
+            problem, detail = await self._switch_phase(goal)
+            details.append(detail)
+            if problem is not None:
+                clean = False
+                break
+        verdict = CONFIRMED if clean else INCONCLUSIVE
+        if not clean:
+            self._worst(3)
+        self.steps.append(Step("phase while charging", verdict, "; ".join(details)))
+
+    async def _switch_phase(self, target: int) -> tuple[str | None, str]:
+        """Stop, see the stop, write the phase, start. Returns (problem, detail)."""
+        name = f"to {'single' if target == 1 else 'three'} phase"
+        failure = await self._write(START_STOP, STOP_WORD)
+        if failure is not None:
+            return failure, f"{name}: the stop was {failure}"
+        stopped = await self._timed(
+            lambda s: s.status != CHARGING and s.draw_a < STOPPED_DRAW_A,
+            STATE_TIMEOUT,
+        )
+        if stopped is None:
+            await self._write(START_STOP, START_WORD)
+            return (
+                "the stop was not seen",
+                f"{name}: the stop was not seen within {STATE_TIMEOUT:.0f} s, so "
+                "the switch was not written",
+            )
+        failure = await self._write(PHASE_SETPOINT, target)
+        if failure is not None:
+            await self._write(START_STOP, START_WORD)
+            return failure, f"{name}: the switch was {failure}"
+
+        async def followed() -> bool:
+            return await self._read_one("input", PHASE_ACTUAL) == target
+
+        moved = await self._poll(followed, STATE_TIMEOUT)
+        failure = await self._write(START_STOP, START_WORD)
+        if failure is not None:
+            return failure, f"{name}: the start was {failure}"
+        resumed = await self._timed(lambda s: s.status == CHARGING, STATE_TIMEOUT)
+        if resumed is None:
+            return "no resume", f"{name}: the car did not resume"
+        a, b, c = (await self._wait(SETTLE_SECONDS))[-1].currents_a
+        single = (
+            a >= MIN_CURRENT_A - TOLERANCE_A
+            and b < STOPPED_DRAW_A
+            and c < STOPPED_DRAW_A
+        )
+        shape = "on phase A only" if single else f"on {a:.1f}/{b:.1f}/{c:.1f} A"
+        if not moved:
+            return "the actual mode did not follow", f"{name}: 21270 did not follow"
+        if target == 1 and not single:
+            return "not single phase", f"{name}: the car then draws {shape}"
+        return (
+            None,
+            f"{name}: stopped, switched, resumed after {resumed:.0f} s, {shape}",
+        )
+
+    async def _mileage(self) -> None:
+        """Write the mileage setting its own word: a no-op that proves the path."""
+        self._step("write the mileage setting its own word")
+        original = self.snapshot["raw"].get(MILEAGE)
+        if original is None:
+            self._skip(
+                "mileage", "the register could not be read, so it is not written"
+            )
+            return
+        failure = await self._write(MILEAGE, original)
+        if failure is not None:
+            refusal = self.conditions["refusals"][MILEAGE]
+            self.steps.append(Step("mileage", failure, refusal))
+            if failure != REFUSED:
+                self._worst(3)
+            return
+        held = await self._held(MILEAGE)
+        if held == original:
+            self.steps.append(Step("mileage", CONFIRMED, "its own word, taken"))
+        else:
+            self.steps.append(
+                Step("mileage", MISMATCH, f"wrote {original}, then read {held}")
+            )
+            self._worst(3)
+
+    async def _fallback(self) -> None:
+        """Stop every read, and see what the car is left with after the session drops.
+
+        Only once 21203's own word is back and the cap is no higher than the
+        house's setting, so whatever the wallbox falls back to, it is not
+        something this run offered.
+        """
+        self._step("fall silent")
+        if not self._needs_car("fallback") or not self._needs_cap("fallback"):
+            return
+        original = self.snapshot["raw"][OUTPUT_CURRENT]
+        if self.options.max_amps > original * SCALE_THIS_PROJECT + 0.05:
+            self._skip(
+                "fallback",
+                f"the cap ({self.options.max_amps:.0f} A) is above the setting the "
+                f"house had ({original * SCALE_THIS_PROJECT:.0f} A)",
+            )
+            return
+        if OUTPUT_CURRENT in self.snapshot["touched"]:
+            row = await self._restore_one(OUTPUT_CURRENT, original)
+            if not row.restored:
+                self._skip("fallback", "the output current could not be put back first")
+                return
+        before = await self._sample()
+        await self.clock.sleep(SILENCE_SECONDS)
+        try:
+            after = await self._sample()
+        except _LOST:
+            await self.clock.sleep(RESTORE_PAUSE)
+            after = await self._sample()
+        held = await self._held(OUTPUT_CURRENT)
+        self.conditions["fallback"] = {
+            "silence_s": SILENCE_SECONDS,
+            "draw_before_a": before.draw_a,
+            "draw_after_a": after.draw_a,
+            "available_after_a": after.available_a,
+            "status_after": CHARGING_STATUS.get(after.status or 0, after.status),
+            "setting_after_word": held,
+        }
+        left = after.status == CHARGING and after.draw_a >= before.draw_a - TOLERANCE_A
+        self.steps.append(
+            Step(
+                "fallback",
+                CONFIRMED,
+                f"after {SILENCE_SECONDS:.0f} s of silence the car draws "
+                f"{after.draw_a:.1f} A (before {before.draw_a:.1f} A), available "
+                f"{after.available_a} A, setting word {held}"
+                + ("; it is left charging at what it had" if left else ""),
+            )
+        )
+
     async def async_restore(self) -> None:
         """Put back everything in the snapshot, shielded from cancellation.
 
@@ -778,19 +1324,48 @@ class WallboxCapabilityTest:
     # -- the restore: never budgeted, never deadlined, never skipped --------
 
     async def _restore(self) -> None:
-        """Put back every register this run sent a write to, newest first."""
+        """Put back every register this run sent a write to, newest first.
+
+        The phase is the exception to "newest first": a contactor does not open
+        under load, so where the phase and the start word were both written,
+        the charge is stopped before the phase goes back and the start word is
+        restored last.
+        """
         raw: dict[int, int] = self.snapshot["raw"]
-        for address in reversed(self.snapshot["touched"]):
-            original = raw[address]
-            self.restores.append(await self._restore_one(address, original))
+        order = list(reversed(self.snapshot["touched"]))
+        if PHASE_SETPOINT in order and START_STOP in order:
+            order = [a for a in order if a not in (PHASE_SETPOINT, START_STOP)]
+            order += [PHASE_SETPOINT, START_STOP]
+            if await self._held(PHASE_SETPOINT) != raw[PHASE_SETPOINT]:
+                await self._stop_for_phase()
+        for address in order:
+            self.restores.append(await self._restore_one(address, raw[address]))
         if self.restores and any(not row.restored for row in self.restores):
             self._worst(5)
 
-    async def _held(self, address: int) -> int | None:
-        """Read what the register holds now, on a fresh session where possible."""
-        reader = self.port.read_fresh if self.port.fresh else self.port.read
+    async def _stop_for_phase(self) -> None:
+        """Stop the charge and wait to see it, before the phase is put back."""
         try:
-            return (await reader("holding", address, 1))[0]
+            await self.port.write(START_STOP, STOP_WORD)
+            await self._until(
+                lambda s: s.status != CHARGING and s.draw_a < STOPPED_DRAW_A,
+                STATE_TIMEOUT,
+            )
+        except _LOST:
+            _LOGGER.exception("wallbox capability test: could not stop for the phase")
+
+    async def _held(self, address: int) -> int | None:
+        """Read what the register holds now, on a fresh session where possible.
+
+        A port with no fresh session answers the first holding read after a
+        write with another register's value, so it is read twice and the
+        second answer is the one taken.
+        """
+        try:
+            if self.port.fresh:
+                return (await self.port.read_fresh("holding", address, 1))[0]
+            await self.port.read("holding", address, 1)
+            return (await self.port.read("holding", address, 1))[0]
         except _LOST:
             return None
 

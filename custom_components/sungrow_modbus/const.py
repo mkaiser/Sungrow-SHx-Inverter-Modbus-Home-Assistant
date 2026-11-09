@@ -174,6 +174,20 @@ CONF_CAPABILITY_TEST_DISCHARGE_WINDOW = "capability_test_discharge_window"
 #: watched write the integration needs before it offers it as a control.
 CONF_CAPABILITY_TEST_IMPORT_LIMIT = "capability_test_import_limit"
 
+#: Let the capability test write to the wallbox (21203, 21204, 21211, 21212,
+#: 21232) and put each setting back. **Off until switched on**, unlike every
+#: permission above: a wallbox is the one device whose test interrupts a car
+#: mid-charge, and only a measured owner has agreed to that.
+CONF_CAPABILITY_TEST_WALLBOX = "capability_test_wallbox"
+DEFAULT_CAPABILITY_TEST_WALLBOX = False
+
+#: The highest current the wallbox test may offer, in amperes. Never above the
+#: wallbox's own rating. Left unset it is `DEFAULT_WALLBOX_MAX_AMPS`, and the
+#: checks that go beyond that (below the minimum, above the rating, the
+#: fallback) wait until the owner has set it.
+CONF_WALLBOX_MAX_AMPS = "wallbox_max_amps"
+DEFAULT_WALLBOX_MAX_AMPS = 10.0
+
 #: Which slot of a multi-inverter YAML install this entry's device was.
 #:
 #: `""` for a single-inverter package, `"_inv_2"` for the second inverter of a

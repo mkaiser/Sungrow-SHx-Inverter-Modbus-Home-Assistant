@@ -87,6 +87,7 @@ from .const import (
     CONF_CAPABILITY_TEST_IMPORT_LIMIT,
     CONF_CAPABILITY_TEST_PV_CUT,
     CONF_CAPABILITY_TEST_RESTART,
+    CONF_CAPABILITY_TEST_WALLBOX,
     CONF_DIAGNOSIS_OTHER_INVERTER,
     CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL,
     CONF_DIAGNOSIS_TRANSPORT,
@@ -102,6 +103,8 @@ from .const import (
     CONF_REGISTER_DUMP,
     CONF_UNIT_ID,
     CONF_WALLBOX_HOST,
+    CONF_WALLBOX_MAX_AMPS,
+    DEFAULT_CAPABILITY_TEST_WALLBOX,
     DEFAULT_EXTERNAL_PLACEMENT,
     DEFAULT_NAME,
     DEFAULT_PERMISSIONS,
@@ -1444,6 +1447,9 @@ class SungrowOptionsFlow(OptionsFlow):
                 }
                 host = (options.get(CONF_WALLBOX_HOST) or "").strip()
                 options[CONF_WALLBOX_HOST] = host
+                if CONF_WALLBOX_MAX_AMPS not in user_input[SECTION_CAPABILITY_TEST]:
+                    # An optional field left empty is a cap taken back.
+                    options.pop(CONF_WALLBOX_MAX_AMPS, None)
                 if (
                     host
                     and host != self.config_entry.options.get(CONF_WALLBOX_HOST)
@@ -1758,6 +1764,29 @@ class SungrowOptionsFlow(OptionsFlow):
                             CAPABILITY_TEST_PERMISSION_DEFAULT,
                         ),
                     ): BooleanSelector(),
+                    probatio.Required(
+                        CONF_CAPABILITY_TEST_WALLBOX,
+                        default=options.get(
+                            CONF_CAPABILITY_TEST_WALLBOX,
+                            DEFAULT_CAPABILITY_TEST_WALLBOX,
+                        ),
+                    ): BooleanSelector(),
+                    # Suggested rather than defaulted: unset means the owner has
+                    # not chosen, which the checks beyond the default cap need.
+                    probatio.Optional(
+                        CONF_WALLBOX_MAX_AMPS,
+                        description={
+                            "suggested_value": options.get(CONF_WALLBOX_MAX_AMPS)
+                        },
+                    ): NumberSelector(
+                        NumberSelectorConfig(
+                            mode=NumberSelectorMode.BOX,
+                            min=6,
+                            max=32,
+                            step=1,
+                            unit_of_measurement="A",
+                        )
+                    ),
                 }
             ),
             {"collapsed": True},

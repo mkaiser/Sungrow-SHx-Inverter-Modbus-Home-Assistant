@@ -1,6 +1,6 @@
 # The texts, for review
 
-**300 texts**: everything in `strings.json` that is not an entity name, by its
+**304 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -1249,7 +1249,7 @@ and bold are kept.
 > **Prüfe, ob dein Wechselrichter läuft.** Diese Reparatur bleibt offen, damit du es erneut versuchen kannst.
 
 
-## Options flow (89)
+## Options flow (93)
 
 ### `options.step.init.title`
 
@@ -1639,6 +1639,18 @@ and bold are kept.
 
 > **DE** Darf er den Netzbezug während einer kurzen Zwangsladung begrenzen?
 
+### `options.step.init.sections.capability_test.data.capability_test_wallbox`
+
+> **EN** May it write to the wallbox, with a car charging?
+
+> **DE** Darf er mit einem ladenden Auto auf die Wallbox schreiben?
+
+### `options.step.init.sections.capability_test.data.wallbox_max_amps`
+
+> **EN** The highest charging current the wallbox test may offer
+
+> **DE** Der höchste Ladestrom, den der Wallbox-Test anbieten darf
+
 ### `options.step.init.sections.capability_test.data_description.capability_test_restart`
 
 > **EN** On unless you switch it off. With this on, the test writes the stop register, waits for the inverter to report itself stopped, starts it again and times all three transitions, so each model's figures are on record.
@@ -1694,6 +1706,18 @@ and bold are kept.
 > **DE** An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter Register 32998 beantwortet, das Netzbezugslimit, lädt der Test die Batterie zwangsweise, setzt das Limit auf die Mitte zwischen dem, was das Haus dann bezieht, und dem, was es ohne die Ladung beziehen würde, prüft, dass der Netzbezug darauf sinkt, und setzt dein Limit zurück. Danach schreibt er drei Limits an den Enden des Bereichs je einmal, um festzuhalten, welche der Wechselrichter ablehnt. Die Batterie lädt etwa zwei Minuten, aus dem Netz, wenn keine Sonne scheint.
 >
 > Dieses Register steht nicht in Sungrows Dokumentation, weshalb es nur als Messwert angeboten wird. Ein Lauf auf deiner ist der Beleg, dass Schreiben darauf tut, was es soll.
+
+### `options.step.init.sections.capability_test.data_description.capability_test_wallbox`
+
+> **EN** Off until you switch it on, unlike the settings above. With this on, and where a Sungrow wallbox answers behind this connection, the test writes the wallbox's output current, start/stop, enable, phase and mileage settings, reads each back, watches what the car draws and puts every original value back. **A charge in progress is interrupted**: it is stopped and started again, paused below 6 A and the phase is switched with the charge stopped first. The wallbox is also left without any read for 75 seconds, to see what current it falls back to. The checks wait for a car to charge, so a run is a few minutes of a charging session, repeated every half hour in *Extended test (auto repeat)* until each question has an answer.
+
+> **DE** Aus, bis du es einschaltest, anders als die Einstellungen darüber. Mit dieser Einstellung und wo eine Sungrow-Wallbox hinter dieser Verbindung antwortet, schreibt der Test den Ausgangsstrom, Start/Stopp, Freigabe, Phasen und Kilometer pro kWh der Wallbox, liest jeden Wert zurück, beobachtet, was das Auto zieht, und setzt jeden ursprünglichen Wert zurück. **Eine laufende Ladung wird unterbrochen**: Sie wird gestoppt und wieder gestartet, unter 6 A pausiert, und die Phase wird umgeschaltet, nachdem die Ladung gestoppt wurde. Außerdem bleibt die Wallbox 75 Sekunden ohne jeden Lesezugriff, um zu sehen, auf welchen Strom sie zurückfällt. Die Prüfungen warten auf ein ladendes Auto; ein Lauf sind also einige Minuten einer Ladung, in *Erweiterter Test (automatisch wiederholen)* alle halbe Stunde wiederholt, bis jede Frage eine Antwort hat.
+
+### `options.step.init.sections.capability_test.data_description.wallbox_max_amps`
+
+> **EN** The most current any wallbox test may offer a car, never more than the wallbox's own rating. Left empty it is 10 A, and the checks that go beyond that wait: an offer below the 6 A minimum, an offer above the rating, and the silence test, which needs a cap no higher than the setting your wallbox had. Set it to what your installation and your car can take.
+
+> **DE** Der höchste Strom, den ein Wallbox-Test einem Auto anbieten darf, nie mehr als die Nennleistung der Wallbox. Leer sind es 10 A, und die Prüfungen darüber hinaus warten: ein Angebot unter dem Minimum von 6 A, ein Angebot über der Nennleistung und der Stille-Test, der eine Grenze nicht über der Einstellung braucht, die deine Wallbox hatte. Stelle ein, was deine Installation und dein Auto vertragen.
 
 ### `options.step.promote.title`
 

@@ -55,6 +55,10 @@ from sungrow_modbus.capability_test import (
     planned_steps as capability_test_steps,
 )
 from sungrow_modbus.capability_test.plausibility import FIELDS, Plausibility
+from sungrow_modbus.wallbox import (
+    ledger as wallbox_ledger,
+    plausibility as wallbox_plausibility,
+)
 
 from .const import (
     CAPABILITY_TEST_PERMISSION_DEFAULT,
@@ -74,6 +78,20 @@ from .const import (
     LINK_VALID,
 )
 from .continuous import ContinuousCapabilityTest
+from .wallbox_capability_test import (
+    PLAUSIBILITY_SAVE_DELAY as WALLBOX_PLAUSIBILITY_SAVE_DELAY,
+    WallboxTestRunner,
+    async_ledger_add as async_wallbox_ledger_add,
+    async_ledger_clear as async_wallbox_ledger_clear,
+    async_ledger_runs as async_wallbox_ledger_runs,
+    async_plausibility_load as async_wallbox_plausibility_load,
+    check_options as wallbox_check_options,
+    consented as wallbox_consented,
+    firmware_of as wallbox_firmware_of,
+    live_of as wallbox_live_of,
+    plausibility_store as wallbox_plausibility_store,
+    readings_of as wallbox_readings_of,
+)
 
 if TYPE_CHECKING:
     from .coordinator import SungrowConfigEntry
@@ -90,6 +108,10 @@ SIGNAL_DIAGNOSIS = "sungrow_modbus_diagnosis_{}"
 #: serialized connection, and a Sungrow grants very few sessions.
 PART_A = "diagnosis"
 PART_B = "capability test"
+
+#: A run of the wallbox's own checks: after part B in an extended run, or alone
+#: when auto repeat finds one due. Never at the same time as either.
+PART_WALLBOX = "wallbox capability test"
 
 
 @dataclass(frozen=True)
@@ -197,6 +219,11 @@ class DiagnosisRunner:
         #: tick and kept per firmware (`capability_test.PLAUSIBILITY_KEY`).
         self.plausibility = Plausibility()
         self._plausibility_firmware: str | None = None
+        #: The wallbox's kept runs, folded (`sungrow_modbus.wallbox.ledger`).
+        self._wallbox_folded: dict[str, Any] | None = None
+        #: The wallbox's readings checked against each other, kept per firmware.
+        self.wallbox_plausibility = wallbox_plausibility.WallboxPlausibility()
+        self._wallbox_firmware: str | None = None
 
     @property
     def tests(self) -> dict[str, Any] | None:
@@ -207,8 +234,55 @@ class DiagnosisRunner:
         the runs, `plausibility` the readings.
         """
         return ledger.with_plausibility(
-            self.state.capability_test, self.plausibility.summary()
+            self.state.capability_test,
+            {**self.plausibility.summary(), **self._wallbox_rows()},
         )
+
+    @property
+    def wallbox_present(self) -> bool:
+        """Whether this endpoint has a wallbox the tests can reach."""
+        return self.entry.runtime_data.wallbox is not None
+
+    def _wallbox_device(self) -> Any:
+        coordinator = self.entry.runtime_data.wallbox
+        assert coordinator is not None
+        return coordinator.device
+
+    def _wallbox_rows(self) -> dict[str, dict[str, Any]]:
+        """Return the wallbox's checks as summary rows, to count with the rest."""
+        if not self.wallbox_present:
+            return {}
+        rows = self.wallbox_plausibility.summary()
+        if wallbox_consented(self.entry):
+            rows = {
+                **wallbox_ledger.summary_rows(
+                    self._wallbox_folded, wallbox_check_options(self.entry)
+                ),
+                **rows,
+            }
+        return rows
+
+    def wallbox_awaited(self) -> list[tuple[str, str]]:
+        """Return the wallbox checks still unanswered, empty without leave."""
+        if not self.wallbox_present or not wallbox_consented(self.entry):
+            return []
+        return wallbox_ledger.awaited(
+            self._wallbox_folded, wallbox_check_options(self.entry)
+        )
+
+    def wallbox_due(self) -> list[str]:
+        """Return the unanswered checks the wallbox's state allows right now."""
+        if not self.wallbox_awaited():
+            return []
+        return wallbox_ledger.due(
+            self._wallbox_folded,
+            wallbox_live_of(self._wallbox_device()),
+            wallbox_check_options(self.entry),
+        )
+
+    def _wallbox_established(self) -> frozenset[str]:
+        rows = (self._wallbox_folded or {}).get("checks") or {}
+        return frozenset(name for name, row in rows.items() if row["established"])
 
     @callback
     def async_observe(self, now: datetime) -> None:
@@ -217,8 +291,39 @@ class DiagnosisRunner:
         Only between runs: a run holds polling off, and the readings it
         leaves behind are minutes old.
         """
-        if self.state.running or self.entry.runtime_data.is_string_inverter:
+        if self.state.running:
             return
+        if not self.entry.runtime_data.is_string_inverter:
+            self._async_observe_inverter(now)
+        if self.wallbox_present:
+            self._async_observe_wallbox(now)
+
+    @callback
+    def _async_observe_wallbox(self, now: datetime) -> None:
+        """Feed the wallbox's polled readings, and the inverter's load beside them."""
+        reading = wallbox_readings_of(self._wallbox_device())
+        if all(value is None for value in reading.values()):
+            return
+        load: float | None = None
+        if not self.entry.runtime_data.is_string_inverter:
+            try:
+                found = self._device().field("load_power")
+            except AttributeError:
+                found = None
+            load = None if found is None else float(found)
+        self.wallbox_plausibility.observe(
+            wallbox_plausibility.values(reading, load), dt_util.as_local(now)
+        )
+        firmware = self._wallbox_firmware
+        collection = self.wallbox_plausibility
+        wallbox_plausibility_store(self.hass, self.entry).async_delay_save(
+            lambda: {"firmware": firmware, "state": collection.as_dict()},
+            WALLBOX_PLAUSIBILITY_SAVE_DELAY,
+        )
+
+    @callback
+    def _async_observe_inverter(self, now: datetime) -> None:
+        """Feed the inverter's polled readings."""
         device = self._device()
         values: dict[str, float | None] = {}
         for name in FIELDS:
@@ -321,6 +426,110 @@ class DiagnosisRunner:
             name=f"sungrow diagnosis {self.entry.entry_id}",
         )
         return True
+
+    @callback
+    def async_start_wallbox(self) -> bool:
+        """Begin a run of the wallbox's own checks, and nothing else.
+
+        For auto repeat, which finds one due. Refused while another run is in
+        flight and without the owner's leave: the wallbox and the inverter share
+        one connection, and only one run writes at a time.
+        """
+        if self._task is not None and not self._task.done():
+            return False
+        if not self.wallbox_present or not wallbox_consented(self.entry):
+            return False
+        self._async_cancel_lapse()
+        self._stop_requested = False
+        self._set(
+            running=True,
+            fraction=0.0,
+            step=None,
+            started=dt_util.now(),
+            finished=None,
+            extended=True,
+            error=None,
+            fields_read=None,
+            part=PART_WALLBOX,
+            stopped=False,
+            capability_test=self._folded,
+        )
+        self._task = self.entry.async_create_background_task(
+            self.hass,
+            self._async_run_wallbox(),
+            name=f"sungrow wallbox test {self.entry.entry_id}",
+        )
+        return True
+
+    async def _async_run_wallbox(self) -> None:
+        """Run the wallbox's checks under paused polling, and end in a state."""
+        try:
+            async with self.entry.runtime_data.async_paused():
+                await self._async_wallbox_test()
+        except Exception as err:  # a background run must not be able to crash the loop
+            _LOGGER.exception("Wallbox capability test failed for %s", self.entry.title)
+            self._set(
+                running=False,
+                step=None,
+                fraction=None,
+                finished=dt_util.now(),
+                error=f"{type(err).__name__}: {err}",
+                part=None,
+            )
+            return
+        coordinator = self.entry.runtime_data.wallbox
+        if coordinator is not None:
+            await coordinator.async_refresh()
+        self._set(
+            running=False,
+            fraction=1.0,
+            step=None,
+            finished=dt_util.now(),
+            error=None,
+            part=None,
+            stopped=self._stop_requested,
+        )
+
+    async def _async_wallbox_test(self) -> dict[str, Any]:
+        """Run the wallbox's checks, keep the run and fold it with the rest.
+
+        What earlier runs established is left out, as for the inverter: a run
+        every half hour must not stop a car for answers already kept.
+        """
+        self._set(part=PART_WALLBOX, step=f"starting the {PART_WALLBOX}")
+        skip = (
+            self._wallbox_established()
+            if self.skip_established or self.continuous.active
+            else frozenset()
+        )
+        runner = WallboxTestRunner(self.hass, self.entry, skip=skip)
+        block = await runner.async_run(
+            on_progress=lambda label: self._on_progress(
+                self.state.fraction or 0.0, f"{PART_WALLBOX}: {label}"
+            )
+        )
+        runs = await async_wallbox_ledger_add(
+            self.hass,
+            self.entry,
+            wallbox_firmware_of(self._wallbox_device()),
+            block,
+        )
+        self._wallbox_folded = wallbox_ledger.fold(runs)
+        try:
+            persistent_notification.async_create(
+                self.hass,
+                wallbox_ledger.markdown(
+                    self._wallbox_folded, wallbox_check_options(self.entry)
+                ),
+                title=f"Wallbox capability tests so far: {self.entry.title}",
+                notification_id=f"{DOMAIN}_wallbox_ledger_{self.entry.entry_id}",
+            )
+        except Exception:  # the run succeeded; losing its summary must not fail it
+            _LOGGER.exception(
+                "%s: the wallbox test history could not be announced", self.entry.title
+            )
+        self.async_notify()
+        return block
 
     def _shares(
         self, options: dict[str, Any], capability_test: bool, block_reads: int
@@ -533,10 +742,22 @@ class DiagnosisRunner:
                     # and folded with the runs before it.
                     attach_capability_test(document, block, self._device())
                     self._folded = await self._async_record(block, document)
+                    if wallbox_consented(self.entry) and self.wallbox_present:
+                        # After the inverter's part B, never beside it: one
+                        # connection, one writer.
+                        await self._async_wallbox_test()
                 if self._folded is not None:
                     attach_capability_test(document, self._folded, self._device())
+                if self._wallbox_folded is not None:
+                    document["wallbox_capability_test"] = wallbox_ledger.document(
+                        self._wallbox_folded, wallbox_check_options(self.entry)
+                    )
                 if self.plausibility.observations:
                     document["plausibility"] = self.plausibility.document()
+                if self.wallbox_plausibility.observations:
+                    document["wallbox_plausibility"] = (
+                        self.wallbox_plausibility.document()
+                    )
         except Exception as err:  # a button press must not be able to crash the loop
             # `exception`, not `warning`: this catches everything, so the type
             # alone is often useless -- a bare `KeyError: 'realtime'` says
@@ -606,7 +827,35 @@ class DiagnosisRunner:
         self.plausibility = Plausibility.from_dict(
             await async_plausibility_load(self.hass, self.entry, firmware)
         )
+        if self.wallbox_present:
+            wallbox_firmware = wallbox_firmware_of(self._wallbox_device())
+            wallbox_runs = await async_wallbox_ledger_runs(
+                self.hass, self.entry, wallbox_firmware
+            )
+            self._wallbox_folded = (
+                wallbox_ledger.fold(wallbox_runs) if wallbox_runs else None
+            )
+            self._wallbox_firmware = wallbox_firmware
+            self.wallbox_plausibility = (
+                wallbox_plausibility.WallboxPlausibility.from_dict(
+                    await async_wallbox_plausibility_load(
+                        self.hass, self.entry, wallbox_firmware
+                    )
+                )
+            )
+            await self._async_warn_wallbox_leftover()
         self._set(capability_test=self._folded)
+
+    async def _async_warn_wallbox_leftover(self) -> None:
+        """Say a wallbox run did not finish. Nothing is written at setup."""
+        from .wallbox_capability_test import async_leftover as wallbox_leftover
+
+        if await wallbox_leftover(self.hass, self.entry) is not None:
+            _LOGGER.warning(
+                "%s: a wallbox capability test did not finish putting things back. "
+                "The next run puts them back first; nothing is written at setup.",
+                self.entry.title,
+            )
 
     async def async_clear_ledger(self) -> None:
         """Forget every kept run, and the notification that showed them."""
@@ -616,6 +865,11 @@ class DiagnosisRunner:
         await plausibility_store(self.hass, self.entry).async_remove()
         self.plausibility = Plausibility()
         self._folded = None
+        if self.wallbox_present:
+            await async_wallbox_ledger_clear(self.hass, self.entry)
+            await wallbox_plausibility_store(self.hass, self.entry).async_remove()
+            self.wallbox_plausibility = wallbox_plausibility.WallboxPlausibility()
+            self._wallbox_folded = None
         self._set(capability_test=None)
         persistent_notification.async_dismiss(self.hass, self._ledger_notification_id)
 

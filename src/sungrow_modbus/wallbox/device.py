@@ -11,7 +11,8 @@ somebody plugs a car in or reconfigures the unit. Polling those every ten
 seconds would read some forty registers nobody is watching, on a link a
 Sungrow inverter grants very few sessions on.
 
-**Nothing here writes.** The write table in `scripts/generate/tables/writes.py` is the
+**No entity writes.** (`async_write_word` is the capability test's, and only
+its.) The write table in `scripts/generate/tables/writes.py` is the
 only place a writable register is declared and no wallbox register is in it. The
 one thing that writes to a wallbox is `capability_test`, through a port its driver
 supplies, only with leave and only to measure a scale. That is a decision, not an
@@ -107,6 +108,15 @@ class SungrowWallbox(MappedDevice):
 
         words = await self.async_read_words(SERIAL_SPACE, SERIAL_START, SERIAL_COUNT)
         return _printable(words)
+
+    async def async_write_word(self, address: int, word: int) -> None:
+        """Write one raw holding word, for the capability test and nothing else.
+
+        No entity writes to a wallbox. The capability test owns every write,
+        through a `WallboxPort`, so a control can exist only after a run has
+        settled its scale. Raises, like `async_read_words`.
+        """
+        await self._unit.write_register(address, word)
 
     async def async_update(self, only: tuple[str, ...] | None = None) -> UpdateReport:
         """Refresh the components in `only`, tolerating each failing alone.

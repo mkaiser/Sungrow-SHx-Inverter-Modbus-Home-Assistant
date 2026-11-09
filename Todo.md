@@ -105,14 +105,33 @@ Nothing can start now (blocker 13).
    separate the two scales and the meaning of 0 is not known. Input 21322 is
    not the setting's echo.
 
-   Released (0.1.0a30's wheel has the procedure). Left, in order:
+   Built in the tree, not released (`plans/wallbox_capability_tests.md`,
+   steps 1 to 4): the wallbox's tests run from Home Assistant's *Extended test
+   (auto repeat)* (`custom_components/sungrow_modbus/wallbox_capability_test.py`,
+   `DiagnosisRunner.async_start_wallbox`, the wallbox tick in `continuous.py`),
+   over the entry's own connection (no fresh session, so only what the car
+   does counts), with a snapshot flushed first and put back first by the next
+   run if one is left, a ledger per wallbox firmware
+   (`wallbox/ledger.py`, counted with the inverter's checks), and the new
+   checks: current follow across the range with timings, below the minimum,
+   above the rating, available current against the setting, timed start/stop
+   and enable, phase switch while charging (stop seen before 21204 is
+   written), 75 s of silence, the mileage no-op. The plausibility checks are
+   `wallbox/plausibility.py`, fed by auto repeat's tick. The options are
+   *May it write to the wallbox* (off until switched on) and *the highest
+   charging current* (`wallbox_max_amps`); the three checks that go beyond
+   the default 10 A wait until the owner sets it.
 
+   Left, in order:
+
+   0. **Release**, then bump the terminal driver's pin: its new flags
+      (`--follow` ... `--merge-into`) refuse to run on the pinned wheel.
    1. **One window with gerd and a car charging**, so the setting holds a
-      real current: his Home Assistant and evcc off, one TLS session, the
-      lowest current first, never above his installation's limit, no phase
-      switch with the car charging. His consent covers any test; ask again
-      for writes with a car attached. A car drawing more than a tenth of the
-      setting already rules out 0.01 A per count before the first write.
+      real current: his evcc off, the option on and `wallbox_max_amps` set to
+      what his installation takes, the first run watched live before auto
+      repeat is left alone with it. His consent covers any test while
+      charging. Then ingest a day of it (plan step 5): the wiki's wallbox
+      pages, `doc/wallbox_registers.md`, `log.md`.
    2. **Then entities**: a charging current number and an enable switch, on
       what was measured, through the write table
       (`scripts/generate/tables/writes.py`), with the wallbox's 60 s
