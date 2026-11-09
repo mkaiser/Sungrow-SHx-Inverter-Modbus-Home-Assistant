@@ -124,8 +124,7 @@ Nothing can start now (blocker 13).
 
    Left, in order:
 
-   0. **Release**, then bump the terminal driver's pin: its new flags
-      (`--follow` ... `--merge-into`) refuse to run on the pinned wheel.
+   0. Released in 0.1.0a34; the terminal driver pins it.
    1. **One window with gerd and a car charging**, so the setting holds a
       real current: his evcc off, the option on and `wallbox_max_amps` set to
       what his installation takes, the first run watched live before auto
