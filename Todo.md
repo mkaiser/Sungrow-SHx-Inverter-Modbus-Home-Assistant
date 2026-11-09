@@ -173,16 +173,31 @@ Nothing can start now (blocker 17).
       included. The terminal's `--merge-into` folds a run into
       the runs a document carries (`--replace` puts it in their place).
       Released in 0.1.0a30. Left:
-      1. **One hardware day** at the maintainer's SH10RT in auto repeat: the import limit established at night, the PV cut in sun,
-         ingested as one document. Also tells whether `NEEDS`' margins
-         start runs that the checks then skip.
-      2. **Translate** the status line, the step sensor's states (*waiting
+      1. **Auto repeat starts runs into Standby.** A night at the
+         maintainer's SH10RT (19 runs, wiki: the fourth mkaiser reading)
+         established the import limit, the charge window and the charge
+         ceiling, but ten runs from 00:09 to 04:39 UTC were refused (outcome 2)
+         because the inverter sat in low-SoC Standby. Each one counted against
+         `MAX_RUNS_PER_DAY`. `continuous.py`'s `_live` has no running state, and
+         `ledger.due` cannot see one, so a Standby inverter looks due every
+         30 min. Fix: read 13000's running state into `ledger.Live` and wait
+         while the inverter is not running, without counting the wait as a run.
+         `continuous.py` has another agent's uncommitted edits.
+      2. **The charge window is judged without room to charge.** At
+         mkaiser's dev run the battery already charged 2747 W from PV against a
+         2835 W ceiling. The window could add about 90 W, it read
+         "nothing measurable happened", and the ledger folded that as
+         established. Fix in `effects.py`'s `_charge_window_effect`: skip with
+         a note when the charge power already sits within a margin of
+         `snapshot.battery_ceiling`, as the export check already sizes against
+         it. Until then, *Diagnosis: tests, clear history* re-opens it.
+      3. **Translate** the status line, the step sensor's states (*waiting
          for changed test conditions*, *stopped*) and the notifications once
          their wording settles; English for now.
-      3. **Diagnosis: stop on hardware**, mid part B: that the restore reads
+      4. **Diagnosis: stop on hardware**, mid part B: that the restore reads
          every word back and no restart starts. Only the simulator has seen
          it.
-      4. **The *Diagnosis:* names on a real device page**, in English and
+      5. **The *Diagnosis:* names on a real device page**, in English and
          German, once released: that the *Diagnostic* card keeps them
          together in the order `doc/entity_names.md` shows (the frontend's
          collation was not checked in the container), and that the
@@ -238,7 +253,12 @@ Nothing can start now (blocker 17).
      seen without a dongle. Parked until a T is found with a direct path.
    - **Whether an iHomeManager silences 5741-5746** (#647, #651), which
      every WiNet-S refuses anyway; ra1k_0 has one.
-   Still open on the T besides: whether 13018 acts as 31211 does.
+   Still open on the T besides: whether 13018 acts as 31211 does, and
+   33149-33150 (battery start power): the capability table marks them absent,
+   but BiergitKraft's SH10T on `PEARL-H_B001.V001.P038` answered them through
+   a WiNet-S2 in every round (#792), as GalKar's did once. That SH10T is a
+   second candidate for the run above. Its first capability test was refused
+   in Standby after dark, so it needs daylight with the inverter Running.
 
 2. **firetribe, once more (#784).** A cable capability test while the
    inverter is running (it was `Starting`) gives the first SH6.0RT-V112
@@ -288,7 +308,7 @@ Nothing can start now (blocker 17).
     reads 0xFFFF there) can answer it.
     - More firmware confirmed: 31211 answers 0x55 but no cut has been
       watched on `SUNSTONE-H_B000.V001.P068`, `B000.V002.P067`,
-      `B000.V002.P059` and `B000.V002.P057`. The diagnosis's capability test
+      `B000.V002.P059`, `B000.V002.P057` and `PEARL-H_B001.V001.P038`. The diagnosis's capability test
       watches the cut, so it is asked for in the "Most wanted" table of
       `device-diagnosis/devices-wanted.md`, never from one person.
     - One evening's watch on a confirmed device (P022, P023, P071 or P065):
@@ -365,6 +385,15 @@ Nothing can start now (blocker 17).
     register. Left open in the code: a touched register goes back to the
     dongle's word, wrong only if changed over another path since the dongle
     last read it.
+
+20. **33213 at peter_sm's: the register or the house?** Every write of 33213
+    (window 1's end minute) there lost the connection, six of six over four
+    days, while some 37 other writes per run went through (wiki: the 33213
+    query). If it is the register, the time entity *Forced charging end 1*
+    loses the connection at that house too, and the time platform should
+    write the window in one frame or not offer it there. One run settles it,
+    with only the charge window check (`--charge-window`) and then one write
+    of 33213's held value on its own. No code changes before that run.
 
 # Release
 
