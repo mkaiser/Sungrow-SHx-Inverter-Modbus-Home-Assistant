@@ -30,6 +30,8 @@ no diagnosis is listed as **untested** rather than assumed to work.
 | `sh10rt-20-b001v000p023-3p-sisu70-anon-20101498141-battery-sbr128-winet-wlan` | sisu70 | SH10RT-20 (`0x0E13`) | WiNet-S, WiFi (reported) | Sungrow SBR128 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
 | `sh10rt-b001v000p020-3p-anonymous-anon-37323352958-battery-unknown-meter` | anonymous | SH10RT (`0x0E03`) | not determined: register 6100 got no answer, so the route could not be told | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-2` | mkaiser | SH10RT (`0x0E03`) | direct LAN port (reported) | Pylontech Force H1, 14.4kWh | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-3` | mkaiser | SH10RT (`0x0E03`) | direct LAN port (reported) | Pylontech Force H1 14.4kwh | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-4` | mkaiser | SH10RT (`0x0E03`) | direct LAN port (reported) | Pylontech Force H1 14,4 kWh | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan` | mkaiser | SH10RT (`0x0E03`) | direct LAN port (reported) | Pylontech Force H1, 14.4kWh | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-b001v000p020-3p-robbensonmio-anon-21004123443-battery-sbr256-direct-lan` | robbensonmio | SH10RT (`0x0E03`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | yes | no | yes | no |
 | `sh10rt-v112-3p-fwitten-anon-33442450531-battery-none-direct-lan` | fwitten | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | no | — | no | — | no |
@@ -45,6 +47,10 @@ no diagnosis is listed as **untested** rather than assumed to work.
 | `sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan-2` | fwitten | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | yes | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-meter-direct-lan` | fwitten | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | yes | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-fwitten-anon-86493117545-battery-sbr096-winet` | fwitten | SH10RT-V112 (`0x0E0F`) | WiNet-S (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
+| `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-10` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-11` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-12` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-13` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-2` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-3` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-4` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
@@ -52,8 +58,10 @@ no diagnosis is listed as **untested** rather than assumed to work.
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-6` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-7` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-8` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-9` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-thirdparty-meter-direct-lan` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh10t-b001v001p038-3p-biergitkraft-anon-38431301666-battery-sbh100-winet-lan` | BiergitKraft | SH10T (`0x0E23`) | WiNet-S, wired (reported) | — | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh15t-b000v000p067-3p-code-imstillalive-anon-07241574740-battery-unknown-meter-logger` | code-imstillalive | SH15T (`0x0E25`) | Logger (reported) | — | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | yes?[^dongle] | yes | — |
 | `sh15t-b000v000p071-3p-fullhd23-anon-08484305020-battery-unknown-winet-lan` | FullHD23 | SH15T (`0x0E25`) | WiNet-S, wired (reported), **via a Modbus proxy** | Sungrow SBR128 | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
 | `sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan` | GalKar | SH15T (`0x0E25`) | WiNet-S, wired (reported) | — | `ARM_PEARL-H_V11_V01_A` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | yes |
@@ -68,6 +76,7 @@ no diagnosis is listed as **untested** rather than assumed to work.
 | `sh60rs-b000v001p066-1p-icefest-anon-85753181177-battery-sbr192-winet-lan` | icefest | SH6.0RS (`0x0D10`) | WiNet-S, wired (reported) | SBR192 | `ARM_SUNSTONE-H_V11_V01_A` | single phase | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | — |
 | `sh60rs-b000v001p068-1p-anonymous-anon-17579213881-battery-sbr192-winet` | anonymous | SH6.0RS (`0x0D10`) | WiNet-S (reported) | — | `ARM_SUNSTONE-H_V11_V01_A` | single phase | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
 | `sh60rt-20-b001v000p022-3p-anonymous-anon-45132049665-battery-sbr128-meter-direct-lan` | anonymous | SH6.0RT-20 (`0x0E11`) | direct LAN port | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan-2` | anonymous | SH6.0RT-20 (`0x0E11`) | direct LAN port (reported), **via a Modbus proxy** | SBR064 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh60rt-20-b001v000p023-3p-anonymous-anon-43053121526-battery-sbr064-meter-direct-lan` | anonymous | SH6.0RT-20 (`0x0E11`) | direct LAN port (reported), **via a Modbus proxy** | SBR064 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-meter-direct-lan` | Firetribe | SH6.0RT-V112 (`0x0E0D`) | direct LAN port (reported) | SB096 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh60rt-v112-b001v000p023-3p-firetribe-anon-56336064800-battery-sbr096-winet-lan` | Firetribe | SH6.0RT-V112 (`0x0E0D`) | WiNet-S, wired (reported) | SBR096 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | — |
@@ -183,7 +192,7 @@ that has only one would make the next pair.
 | SH10RS | winet_lan | B000.V002.P065 (1 reading) |
 | SH10RS | winet_lan | B000.V002.P067 (1 reading) |
 | SH10RS | winet_wlan | B000.V002.P057 (1 reading) |
-| SH10RT | direct_lan | B001.V000.P020 (3 readings) |
+| SH10RT | direct_lan | B001.V000.P020 (5 readings) |
 | SH10RT | unstated | B001.V000.P020 (1 reading) |
 | SH10RT-20 | direct_lan | B001.V000.P023 (3 readings) |
 | SH10RT-20 | winet_lan | B001.V000.P020 (1 reading) |
@@ -191,10 +200,11 @@ that has only one would make the next pair.
 | SH10RT-20 | winet_wlan | B001.V000.P020 (1 reading) |
 | SH10RT-20 | winet_wlan | B001.V000.P023 (3 readings) |
 | SH10RT-V112 | direct_lan | B001.V000.P020 (2 readings) |
-| SH10RT-V112 | direct_lan | B001.V000.P023 (14 readings) |
+| SH10RT-V112 | direct_lan | B001.V000.P023 (19 readings) |
 | SH10RT-V112 | direct_lan | unknown (2 readings) |
 | SH10RT-V112 | winet | B001.V000.P023 (2 readings) |
 | SH10RT-V112 | winet | unknown (2 readings) |
+| SH10T | winet_lan | B001.V001.P038 (1 reading) |
 | SH15T | logger | B000.V000.P067 (1 reading) |
 | SH15T | winet_lan | B000.V000.P071 (3 readings) |
 | SH20T | winet_wlan | B000.V000.P071 (3 readings) |
@@ -204,7 +214,7 @@ that has only one would make the next pair.
 | SH6.0RS | unstated | B000.V001.P066 (1 reading) |
 | SH6.0RS | winet | B000.V001.P068 (1 reading) |
 | SH6.0RS | winet_lan | B000.V001.P066 (1 reading) |
-| SH6.0RT-20 | direct_lan | B001.V000.P023 (1 reading) |
+| SH6.0RT-20 | direct_lan | B001.V000.P023 (2 readings) |
 | SH6.0RT-20 | unstated | B001.V000.P022 (1 reading) |
 | SH6.0RT-V112 | direct_lan | B001.V000.P023 (1 reading) |
 | SH6.0RT-V112 | winet_lan | B001.V000.P023 (1 reading) |
@@ -266,7 +276,7 @@ last column says what that rules out before anything is even read.
 | `0x0E20` | SH5T | T | untested | battery_start_power, mppt4 |
 | `0x0E21` | SH6T | T | untested | battery_start_power, mppt4 |
 | `0x0E22` | SH8T | T | untested | battery_start_power, mppt4 |
-| `0x0E23` | SH10T | T | untested | battery_start_power, mppt4 |
+| `0x0E23` | SH10T | T | **yes** | battery_start_power, mppt4 |
 | `0x0E24` | SH12T | T | untested | battery_start_power, mppt4 |
 | `0x0E25` | SH15T | T | **yes** | battery_start_power, mppt4 |
 | `0x0E26` | SH20T | T | **yes** | battery_start_power, mppt4 |

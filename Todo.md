@@ -674,14 +674,14 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-07T10:40:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-07T10:40:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-09T11:35:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-09T11:35:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked: **2026-11-07 10:40 UTC** (#786, #791): code-imstillalive's
-SH25T and SH15T through a Logger1000A, and peter_sm's ninth and tenth
-readings (Korsberg's diagnostics downloads), ingested.
+Last checked: **2026-11-09 11:35 UTC** (#786, #792): peter_sm's eleventh to
+fifteenth readings (Korsberg's diagnostics downloads), the anonymous SH6.0RT-20's second reading,
+and BiergitKraft's SH10T (#792), ingested.
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 

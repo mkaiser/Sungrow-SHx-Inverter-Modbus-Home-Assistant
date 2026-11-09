@@ -626,3 +626,26 @@ The device page now chooses what runs in *Diagnosis: mode* (read-only, extended 
 extended test auto repeat) and starts it with *Diagnosis: start*; *Diagnosis: stop* ends a run at
 its next check, keeps what it measured, restores in full and starts no restart. Auto repeat leaves
 out what the kept runs established, the inverter restart included. Updated capability-test.
+
+## [2026-11-09] ingested | issue #786 and #792: peter_sm's eleventh to fifteenth readings, the second SH6.0RT-20 reading, BiergitKraft's SH10T
+
+Korsberg posted five more diagnostics downloads of peter_sm's SH10RT-V112 (P023, cable). The
+charge window's write of 33213 lost the connection in all three new runs that tried it, six of six
+now; forced discharge and the export limit acted again, nine of nine readbacks matched, 13074
+times ten; four restarts, 271-361 s. The anonymous SH6.0RT-20's second
+reading (0.1.0a32) repeats the first. BiergitKraft's SH10T (issue #792), the first SH10T and the first
+`PEARL-H_B001` firmware, through a WiNet-S2 with an SBH100 at unit 2: 33149-33150 answered through
+the dongle; the capability test refused in Standby. New: installation-biergitkraft,
+firmware-pearl-h-b001-v001-p038. Updated installation-peter-sm, the 33213 query, P023, device-sh-t,
+device-sh-rt, device-sbh-battery, the index.
+
+## [2026-11-09] ingested | mkaiser's night of auto repeat and the development instance's run
+
+Two diagnostics downloads of mkaiser's SH10RT (P020, cable), integration 0.1.0a32. The first holds
+19 auto-repeat runs from 20:46 to 11:03 UTC: ten refused in low-SoC Standby without writing; the
+others established the forced charge (eight times), the forced-charging window and the site
+import limit (seven times each), and in the morning the forced discharge and the charge ceiling, new on
+P020. Restarts took 367 s after dark and 186 s in daylight. The discharge windows' raw write lost the
+connection three times. The second, from `make dev`, repeated the ceiling; its charge window read
+"nothing measurable happened" with the battery already near its charge ceiling, and folded as
+established. Updated installation-mkaiser, P020, the index.

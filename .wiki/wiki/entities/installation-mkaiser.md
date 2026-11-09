@@ -22,10 +22,17 @@ discharge limit below the load it did not draw on the battery past it ([the disc
 [Register 13017](register-13017.md)'s 0xAA woke it from low-SoC Standby and 0x55 sent it back; 13017
 is left at 0x55 ([the forced startup run](../sources/mkaiser-forced-startup-2026-11-08-summary.md)).
 The forced-charging window took charging from -633 W to 4499 W and back, did as it was told
-([third reading](../sources/sh10rt-b001v000p020-3p-anonymous-anon-37323352958-battery-unknown-meter-summary.md)). Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
+([third reading](../sources/sh10rt-b001v000p020-3p-anonymous-anon-37323352958-battery-unknown-meter-summary.md)).
+A night of *Extended test (auto repeat)*, 19 runs, did it seven times more, held the site import
+limit seven times, sat out five hours of low-SoC Standby without writing, and in the morning
+established the forced discharge and the charge ceiling; restarts took 367 s after dark and 186 s
+in daylight ([fourth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-3-summary.md)). The development instance's run
+repeated the ceiling ([fifth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-4-summary.md)). Its [energy history](../concepts/energy-history.md) reads implausible 2024 slots.
 
 ## Diagnoses
 
 - [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-summary.md)
 - [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port, second reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-2-summary.md)
 - [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port, third reading](../sources/sh10rt-b001v000p020-3p-anonymous-anon-37323352958-battery-unknown-meter-summary.md)
+- [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port, fourth reading: a night of auto repeat](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-3-summary.md)
+- [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port, fifth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-4-summary.md)
