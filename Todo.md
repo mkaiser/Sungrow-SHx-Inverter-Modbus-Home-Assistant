@@ -168,7 +168,8 @@ Nothing can start now (blocker 16).
 
 ## iHomeManager
 
-Nothing can start now (blocker 17).
+Building its entities can start: blocker 17 is met by one unit (2026-11-10).
+Whether to build them is the maintainer's call.
 
 ## Integration and tooling
 
@@ -386,7 +387,12 @@ Nothing can start now (blocker 17).
     21211-21214 (a short code, masked), and holding 21250-21259 (twenty
     constant ASCII digits, masked). Whichever differ between
     two wallboxes identify a unit and stay masked; whichever match are a model
-    constant and can be unmasked. ra1k_0's AC22E-01 would be one.
+    constant and can be unmasked. 2026-11-10: a second AC22E-01 arrived
+    (anonymous, #786), but both documents publish these blocks as `null`,
+    with no stand-in per block, so the files cannot say whether they
+    differ. Settling it needs the masking to publish a stand-in for each
+    masked block (a hash compares without revealing), and a third reading,
+    or the two owners comparing their own transcripts.
 
 ## Logger
 
@@ -406,14 +412,20 @@ Nothing can start now (blocker 17).
        device nothing maps.
     3. **A contributor with one.** Nobody has offered; the #262 participants
        (RafAustralia, purcell-lab, NBS23) are the leads.
+    4. **The protocol number's word order.** The map reads 8001-8002 high
+       word first; the one iHomeManager measured sends "AW0" low word first
+       (fixed for it, 2026-11-10). Check the Logger's on its first reading.
 
 ## iHomeManager
 
-17. **A first iHomeManager diagnosis** (#786). Unblocks building its entities.
-    The diagnosis reads one (unit 247, port 502, 503 or 504, one
-    connection each); the integration does not, and its config flow fails such
-    an endpoint with `no_serial_number`. Wait for a measured reading before
-    building entities on `sungrow_modbus.ihomemanager`. Sungrow's protocol PDF:
+17. **A first iHomeManager diagnosis** (#786). **Met 2026-11-10**: one unit
+    on SV930.001.00.P020, port 503, answered all 56 mapped fields (wiki: the
+    iHomeManager source page). Its protocol number is read low word first
+    since. Still open from that one unit: whether 4358-4362 are U32 (4359 and
+    4361 read 0), what 8554 means (0, "single phase", on a three-phase site),
+    and the codes 8047 = 0, 8048 = 0xA7 and 8051 = 0, which the map does
+    not know. A second unit, on other firmware, would say which of these
+    are the device's. Sungrow's protocol PDF:
     https://github.com/TCzerny/ha-modbus-manager/blob/main/docs/Communication%20Protocol%20of%20iHomeManager_V1.0.2.pdf
 
 ## Integration and tooling
@@ -429,12 +441,17 @@ Nothing can start now (blocker 17).
     checks were skipped, and there was no cable read afterwards: still open.
     Left open in the code: a touched register goes back to the
     dongle's word, wrong only if changed over another path since the dongle
-    last read it.
+    last read it. 2026-11-10 at ra1k_0's SH20T (#786, outcome 5): the
+    restore of 33209 (forced-charging days, held 1) was refused five times
+    with 0x04, as the check's own write had been, every write of 1. The
+    SH20T has no LAN port, so no cable read settles it: **ask the owner to
+    check the forced-charging schedule's days in iSolarCloud.**
 
 20. **33213 at peter_sm's: the register or the house?** Every write of 33213
-    (window 1's end minute) there lost the connection, six of six over four
-    days, while some 37 other writes per run went through (wiki: the 33213
-    query). If it is the register, the time entity *Forced charging end 1*
+    (window 1's end minute) there lost the connection, nine of nine over five
+    days (wiki: the 33213 query). Until 0.1.0a32 some 37 other writes per run
+    went through; in the three runs since, 13059 lost it once and 13050 and
+    33047 twice each, so a link that drops on writes is now in play too. If it is the register, the time entity *Forced charging end 1*
     loses the connection at that house too, and the time platform should
     write the window in one frame or not offer it there. One run settles it,
     with only the charge window check (`--charge-window`) and then one write
