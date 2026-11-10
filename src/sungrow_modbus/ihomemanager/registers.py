@@ -123,8 +123,9 @@ class IHomeManagerIdentity(Component):
     device_type_code = integer(reg(8000), signed=False)
     """0x072A on every unit, by the document."""
 
-    protocol_number = string(reg(8001), 2)
-    """Text: "AW0"."""
+    protocol_number = string(reg(8001), 2, word_order="little")
+    """Text: "AW0", low word first like the U32s: the unit measured sends
+    `0x3000 0x4157` (SV930.001.00.P020, 2026-11-10)."""
 
     protocol_version_raw = uint32(reg(8003), word_order="little", nan=0xFFFFFFFF)
     """See `protocol_version`."""

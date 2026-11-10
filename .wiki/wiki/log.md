@@ -721,3 +721,10 @@ word first, which the map misreads) and a second AC22E-01 whose 21320 holds a fi
 session's end. Updated installation-peter-sm, installation-ra1k-0, P023, P071, device-ihomemanager,
 device-wallbox, device-winet-s, capability-test, the 33213, iHomeManager and busy WiNet-S
 queries, the index.
+
+## [2026-11-10] changed | the iHomeManager's protocol number is read low word first
+
+The iHomeManager measured today sends "AW0" at 8001-8002 as `0x3000 0x4157`, low word first like
+its U32s, and the map read it high word first and published "0". The map now reads it low word
+first; the Logger's, which no unit has answered yet, is unchanged. Updated device-ihomemanager,
+the iHomeManager source page.

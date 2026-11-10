@@ -49,8 +49,8 @@ def _device() -> dict[str, dict[int, int]]:
     """Return an iHomeManager as V1.0.2 describes one, by protocol address."""
     inputs = {
         7999: 0x072A,  # 8000, the type code
-        8000: _words("AW0")[0],
-        8001: _words("AW0")[1],
+        8000: 0x3000,  # 8001-8002: "AW0", low word first, as a unit sends it
+        8001: 0x4157,
         8002: 0x0200,  # 8003-8004: V1.0.2, sent as 0x02000100
         8003: 0x0100,
         8004: 2,  # 8005, two devices connected

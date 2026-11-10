@@ -61,7 +61,8 @@ inputs 4357-4362, 8000-8006, 8145-8163, 8176-8179, 8318-8332, 8552-8574 and 8594
   units: 416-419 V against 240-241 V. Between them 4359 and 4361 read 0, so they are U16 with a
   gap or U32 low word first; at these values the two cannot be told apart.
 - **The protocol number (8001-8002) is `0x3000 0x4157`**: "AW0" read low word first, the text
-  V1.0.2 gives. The map reads it high word first, as a 2-word string, and publishes "0".
+  V1.0.2 gives. This document was written by a map that read it high word first, so it publishes
+  "0"; the map now reads it low word first (`src/sungrow_modbus/ihomemanager/registers.py`).
 - **8554 reads 0**, which the map decodes as single phase, beside three-phase voltages and
   phase powers. Either 8554 describes something else here, or 0 is not single phase.
 - Codes the map does not know: 8047 (start/stop) reads 0, 8048 (charger mode) 0xA7, 8051

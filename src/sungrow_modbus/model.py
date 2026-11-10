@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from typing import Any, Literal
 
 from modbus_connection import (
     ModbusError,
@@ -78,18 +79,44 @@ class TextField(StringField):
     `modbus_connection`'s own string strips only trailing NULs, which keeps
     whatever a firmware left after its terminator -- invisible in a log, and
     enough to make a firmware string match nothing it is compared against.
+
+    `word_order="little"` reads the words last first, as a U32 is read low
+    word first: an iHomeManager sends its protocol number "AW0" as
+    `0x3000 0x4157` (SV930.001.00.P020, 2026-11-10).
     """
+
+    def __init__(
+        self,
+        address: int,
+        *,
+        word_order: Literal["big", "little"] = "big",
+        **kwargs: Any,
+    ) -> None:
+        """Declare the field; `kwargs` go to `RegisterField`."""
+        super().__init__(address, **kwargs)
+        self.word_order = word_order
 
     def decode(self, words: list[int], scale_exponent: int | None = None) -> str:
         """Return the text before the first NUL, as ASCII, dropping odd bytes."""
+        if self.word_order == "little":
+            words = list(reversed(words))
         raw = b"".join((word & 0xFFFF).to_bytes(2, "big") for word in words)
         text = raw.lstrip(b"\x00").split(b"\x00", 1)[0]
         return text.decode("ascii", errors="ignore")
 
 
-def string(address: int, length: int, *, writable: bool = False) -> TextField:
+def string(
+    address: int,
+    length: int,
+    *,
+    writable: bool = False,
+    word_order: Literal["big", "little"] = "big",
+) -> TextField:
     """Declare a fixed-length, NUL-terminated ASCII string over `length` words."""
-    return TextField(address, count=length, writable=writable)
+    if writable and word_order != "big":
+        # Encoding is the library's, high word first; nothing writes such text.
+        raise ValueError("a writable string is high word first")
+    return TextField(address, count=length, writable=writable, word_order=word_order)
 
 
 def present(value: RegisterValue) -> RegisterValue:

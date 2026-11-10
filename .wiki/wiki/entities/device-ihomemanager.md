@@ -14,7 +14,7 @@ registers on theirs ([evcc cross-reference](../sources/cross-reference-evcc-summ
 
 - **Measured here:** 8028 reads 0x55 for off; 8555-8557 are line to line (416-419 V) and
   4358-4362 phase to neutral (240-241 V); the protocol number at 8001-8002 is "AW0" read low
-  word first, which the map, reading it high word first, publishes as "0"; 8554 reads 0, which the
+  word first, as the map now reads it (the document itself, read before, says "0"); 8554 reads 0, which the
   map calls single phase, on a three-phase site; and inputs 8645-8650 hold a masked text whose
   stand-in matches an inverter's, so the undocumented range carries a managed device's serial
   ([the diagnosis](../sources/ihomemanager-ihomemanager-sv930-001-00-p020-anonymous-port503-summary.md)).

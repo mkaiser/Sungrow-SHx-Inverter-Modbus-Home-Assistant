@@ -50,7 +50,8 @@ def _filled(inputs: dict[int, int], bands) -> dict[int, int]:
 def _unit(kind: str) -> MockModbusUnit:
     unit = MockModbusConnection().for_unit(247)
     if kind == KIND_IHOMEMANAGER:
-        inputs = {7999: 0x072A, 8000: 0x4157, 8001: 0x3000, 8002: 0x0200, 8003: 0x0100}
+        # 8001-8002 low word first, as the unit measured on 2026-11-10 sends "AW0".
+        inputs = {7999: 0x072A, 8000: 0x3000, 8001: 0x4157, 8002: 0x0200, 8003: 0x0100}
         inputs.update({8400 + i: w for i, w in enumerate(GAP_TEXT)})
         unit.input = _filled(inputs, IHOMEMANAGER_BANDS)
         unit.holding = {
