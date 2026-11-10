@@ -141,7 +141,9 @@ Nothing can start now (blocker 13).
    its own, with read-only entities, a diagnosis and **its own capability
    test** (`wallbox_diagnosis.py`; leave and cap in its options; auto repeat
    every 15 minutes). Checked at gerd's in the dev HA with no car: it refuses
-   to write while idle, as it should. Item 1 above applies to it too: its
+   to write while idle, as it should. Auto repeat ran there 2026-11-10 from
+   09:30 for an hour: no car came, so no run started (the right outcome).
+   Item 1 above applies to it too: its
    first writing run needs a car charging, watched live. A `wallbox_host`
    entry is never moved onto one (decided). An iHomeManager or a Logger
    (unit 247) is offered as a diagnosis-only entry, untested on hardware:
@@ -151,7 +153,14 @@ Nothing can start now (blocker 13).
 
    Not to copy: evcc's `sungrow.go` reserves all rights. Inverter work at
    gerd's waits until his Home Assistant is stopped: a read-only diagnosis
-   on 2026-11-06 ran into it and is not evidence.
+   on 2026-11-06 ran into it and is not evidence. On 2026-11-10 inverter
+   auto repeat through his WiNet-S (dev HA, 09:31 to 12:10) ran without a
+   guard refusal: 5 runs, 0 findings, every setting put back; readback
+   verdicts through a dongle are not evidence (since 0.1.0a36 a dongle's
+   "kept its old value" is inconclusive, no longer "not supported").
+   Whether his own Home Assistant was polling then is not known. Both auto
+   repeats are stopped; next is his own HA on 0.1.0a36, over the cable if
+   it reaches one, battery above 20 %, a car charging.
 
 ## Logger
 
@@ -327,7 +336,10 @@ Nothing can start now (blocker 17).
 
 9. **gerd's cable restart.** On 2026-11-03 the start had to be sent three
    times (still stopped 60 s after each), where every earlier restart took
-   the first. Watch whether it recurs.
+   the first. **Recurred on 2026-11-10 through the WiNet-S** (auto repeat in
+   the dev HA): stopped after 2 s, start sent three times, running after
+   182 s, generating 3.5 s later, settings survived. Twice now at gerd's,
+   on both paths: look at what the inverter reports between the starts.
 
 10. **The SG's tracker counts beyond the SG5.0RS.** `MPPT_COUNTS` is the
     source's model table, many entries unverified; a diagnosis of any other SG
@@ -412,7 +424,10 @@ Nothing can start now (blocker 17).
 19. **The capability test's restore through a WiNet-S, on hardware.** A
     dongle-only capability test at gerd on the current tree, with the battery
     above 30 % and no car charging, then a cable read of every snapshot
-    register. Left open in the code: a touched register goes back to the
+    register. 2026-11-10: two dongle-only runs (auto repeat, dev HA) reported
+    all 46 settings written back, but the battery was at 2-3 %, so the SoC
+    checks were skipped, and there was no cable read afterwards: still open.
+    Left open in the code: a touched register goes back to the
     dongle's word, wrong only if changed over another path since the dongle
     last read it.
 
