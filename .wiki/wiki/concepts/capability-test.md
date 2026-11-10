@@ -223,7 +223,13 @@ Two kinds of check settle what a scale readback and a watched effect cannot
   clean decade off is the finding, a ratio merely off is not. The rows count
   in the same counters, and auto repeat stays on until each has an answer.
 
-Not measured on hardware yet.
+The write paths were first run on hardware at [peter-sm](../entities/installation-peter-sm.md),
+over the cable, and at [ra1k-0](../entities/installation-ra1k-0.md), through a WiNet-S. Every
+write path took its own word at both. **The upper bounds are the firmware's only in part**:
+on P023, 13058 and 13059 refuse a step past their maximum, while 33047, 33048, 13052, 33149
+and 33150 store it ([peter-sm](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-14-summary.md)); on P071, 33048 refuses it
+([ra1k-0](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-3-summary.md)). The readings checks are not measured on
+hardware yet.
 
 ## Drivers
 

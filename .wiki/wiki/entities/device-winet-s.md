@@ -78,6 +78,11 @@ slot (6250, 6429, 6608) is 2015, and 2015-2029 are the fifteen; the five slots a
 read 0xFFFF. November and December read 0 while 2025 holds 8541.9 kWh of PV, so the monthly
 registers hold the current calendar year only and are cleared at the new year. One house.
 
+Through [ra1k-0](installation-ra1k-0.md)'s WiNet-S on P071 the monthly PV generation (6227) and
+export (6596) blocks are refused, but the monthly direct consumption (6417) answers, **all 0**,
+beside a daily direct consumption of 118.1 kWh: a dongle's zero, not the inverter's history
+([the reading](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-3-summary.md)).
+
 The integration reads the block over the cable as six sensors, this month and this year per
 quantity, gated on `Capability.ENERGY_HISTORY` (`src/sungrow_modbus/hybrid_inverter/capabilities.py`).
 

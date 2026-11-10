@@ -41,3 +41,9 @@ At gerd on 2026-11-03, with nothing else polling, the dongle's capability test h
 forced-charging window's write of 33211 refused with 0x04 and the stop refused with an
 exception, where the same dongle had stopped the inverter in 4.1 s two days before.
 [Source](../sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-3-summary.md).
+
+At [ra1k-0](../entities/installation-ra1k-0.md) on 2026-11-10, with the owner's iHomeManager
+polling the inverter too, the charge window's write of 33209 and the discharge window's of 33155
+were refused with 0x04, and so were the five restore writes of 33209, each of the value it held.
+Through the dongle nothing could say whether any landed, and the run ended with outcome 5.
+[Source](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-3-summary.md).

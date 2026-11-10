@@ -23,9 +23,16 @@ inverter. There is no cable reading: the SH20T has no LAN port of its own, the o
   both capability tests.
 - Both readings are through the WiNet-S, which refuses 5741-5746, so neither can say whether the
   iHomeManager silences them. A cable reading would.
+- **Outcome 5 on 2026-11-10**: the restore of 33209 (`forced_charging_days_raw`, held at 1) was
+  refused five times through the WiNet-S, as the check's own write of it had been. Every write
+  was of the value it held; whether it landed is not known, and with no LAN port no cable read can
+  tell. The same run had forced discharge show nothing measurable against a 13052 the dongle
+  reported stale, 33048 refuse a value above its bound, and the restart take 148 s
+  ([fourth reading](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-3-summary.md)).
 
 ## Diagnoses
 
 - [SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-summary.md)
 - [SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi, with a capability test](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005-summary.md)
 - [SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi, the PV cut confirmed](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2-summary.md)
+- [SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi, outcome 5](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-3-summary.md)

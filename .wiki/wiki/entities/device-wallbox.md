@@ -101,6 +101,13 @@ What is fixed and what moves is in
 RS485 at unit 248 is reported by others and never measured here; see
 [the open query](../queries/does-a-wallbox-answer-unit-248-on-rs485.md).
 
+A second AC22E-01, on the same firmware `LE-01.1E1.001.901.25`, read by a contributor from a
+standalone wallbox entry in Home Assistant on 2026-11-10, answered the same 279 addresses over
+TLS. With a session completed that morning, **21320 held the session's end**, 07:30:00 on the
+wallbox's clock, 3574 s after its start, hours before the reading; 21313 read 0, the start mode 3,
+and the phase voltages 0 with no charge
+([the diagnosis](../sources/ac22e01-anonymous-anon-12522147000-wallbox-tls-summary.md)).
+
 The [capability test's dry run](../sources/gerd-wallbox-dry-run-2026-11-06-summary.md) on
 2026-11-06, with no car: the output current setting (holding 21203) read **0**, against 160
 and 151 while charging, and input 21322 read 161 beside it, so 21322 is not the setting

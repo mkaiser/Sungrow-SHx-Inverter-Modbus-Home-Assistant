@@ -45,21 +45,25 @@ answered for the registers that entity reads.
 
 ### What the diagnoses say so far
 
-**4 cell(s) split**: models on one firmware disagree.
+**8 cell(s) split**: models on one firmware disagree.
 
 - MPPT3 current, in PEARL-H B000.V000.P067 dongle
+- MPPT3 current, in PEARL-H B000.V000.P071 dongle
 - MPPT3 energy, in PEARL-H B000.V000.P067 dongle
+- MPPT3 energy, in PEARL-H B000.V000.P071 dongle
 - MPPT3 power, in PEARL-H B000.V000.P067 dongle
+- MPPT3 power, in PEARL-H B000.V000.P071 dongle
 - MPPT3 voltage, in PEARL-H B000.V000.P067 dongle
+- MPPT3 voltage, in PEARL-H B000.V000.P071 dongle
 
 What moves between firmware versions of one platform, over one kind of link:
 
 - **PEARL-H, dongle** (B000.V000.P067, B000.V000.P071, B001.V001.P038): 8 differ.
   - Communication module firmware version: B000.V000.P067 ✗, B000.V000.P071 ✓, B001.V001.P038 ✓
-  - MPPT3 current: B000.V000.P067 **split**: ✓ SH25T; 0? SH15T, B000.V000.P071 ✓
-  - MPPT3 energy: B000.V000.P067 **split**: ✓ SH25T; 0? SH15T, B000.V000.P071 ✓
-  - MPPT3 power: B000.V000.P067 **split**: ✓ SH25T; 0? SH15T, B000.V000.P071 ✓
-  - MPPT3 voltage: B000.V000.P067 **split**: ✓ SH25T; 0? SH15T, B000.V000.P071 ✓
+  - MPPT3 current: B000.V000.P067 **split**: ✓ SH25T; 0? SH15T, B000.V000.P071 **split**: ✓ SH15T, SH20T; 0? SH20T
+  - MPPT3 energy: B000.V000.P067 **split**: ✓ SH25T; 0? SH15T, B000.V000.P071 **split**: ✓ SH15T, SH20T; 0? SH20T
+  - MPPT3 power: B000.V000.P067 **split**: ✓ SH25T; 0? SH15T, B000.V000.P071 **split**: ✓ SH15T, SH20T; 0? SH20T
+  - MPPT3 voltage: B000.V000.P067 **split**: ✓ SH25T; 0? SH15T, B000.V000.P071 **split**: ✓ SH15T, SH20T; 0? SH20T
   - Export power: B000.V000.P067 ✗, B000.V000.P071 ✓, B001.V001.P038 ✓
   - Export power signed: B000.V000.P067 ✗, B000.V000.P071 ✓, B001.V001.P038 ✓
   - Import power: B000.V000.P067 ✗, B000.V000.P071 ✓, B001.V001.P038 ✓
@@ -85,7 +89,7 @@ What moves between firmware versions of one platform, over one kind of link:
 | Column | Platform | Firmware | Link | Models | Diagnoses |
 | --- | --- | --- | --- | --- | --- |
 | 1 | PEARL-H | B000.V000.P067 | dongle | SH15T, SH25T | 2 |
-| 2 | PEARL-H | B000.V000.P071 | dongle | SH15T, SH20T | 5 |
+| 2 | PEARL-H | B000.V000.P071 | dongle | SH15T, SH20T | 6 |
 | 3 | PEARL-H | B001.V001.P038 | dongle | SH10T | 1 |
 | 4 | SAPPHIRE-H | 01011.95.03 | direct | SH10RT-V112 | 2 |
 | 5 | SAPPHIRE-H | 01011.95.03 | dongle | SH10RT-V112 | 2 |
@@ -93,7 +97,7 @@ What moves between firmware versions of one platform, over one kind of link:
 | 7 | SAPPHIRE-H | B001.V000.P020 | dongle | SH10RT-20 | 2 |
 | 8 | SAPPHIRE-H | B001.V000.P022 | direct | SH6.0RT-20, SH8.0RT-V112 | 4 |
 | 9 | SAPPHIRE-H | B001.V000.P022 | dongle | SH8.0RT-V112 | 3 |
-| 10 | SAPPHIRE-H | B001.V000.P023 | direct | SH10RT-20, SH10RT-V112, SH5.0RT-V112, SH6.0RT-V112 | 20 |
+| 10 | SAPPHIRE-H | B001.V000.P023 | direct | SH10RT-20, SH10RT-V112, SH5.0RT-V112, SH6.0RT-V112 | 23 |
 | 11 | SAPPHIRE-H | B001.V000.P023 | dongle | SH10RT-20, SH10RT-V112, SH5.0RT-V112, SH6.0RT-V112 | 6 |
 | 12 | SUNSTONE-H | B000.V001.P068 | dongle | SH6.0RS | 1 |
 | 13 | SUNSTONE-H | B000.V002.P059 | dongle | SH10RS | 1 |
@@ -130,31 +134,31 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | Measurement | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Export power limit write scale (13074) |  |  |  | 1:1 | 1:1 | ×10 |  | ×10 | ×10 | ×10 | ×10 |  |  | 1:1 |  |
-| Settings read back as written, over a cable |  |  |  | 12/12 |  | 16/16 |  | 27/27 |  | 132/132 |  |  |  |  |  |
-| Restart: running again after |  | 148 s |  | 170–197 s |  | 186–187 s |  | 181–185 s | 181 s | 168–361 s | 186 s |  |  |  |  |
-| Behaviour: forced charge |  |  |  |  |  | ✓ 1 | ✓ 1 | ✓ 3 | ✓ 2 | ✓ 8, ✗ 1 | ✓ 2 |  |  |  |  |
-| Behaviour: forced discharge |  | ✓ 2 |  | ✓ 1 |  | ✓ 1 | ✓ 1 | ✓ 3 | ✓ 1 | ✓ 8, ✗ 2, ? 3 | ✓ 1, ? 1 |  |  |  |  |
+| Settings read back as written, over a cable |  |  |  | 12/12 |  | 16/16 |  | 27/27 |  | 159/159 |  |  |  |  |  |
+| Restart: running again after |  | 148 s |  | 170–197 s |  | 186–187 s |  | 181–185 s | 181 s | 168–363 s | 186 s |  |  |  |  |
+| Behaviour: forced charge |  | ? 1 |  |  |  | ✓ 1 | ✓ 1 | ✓ 3 | ✓ 2 | ✓ 8, ✗ 1 | ✓ 2 |  |  |  |  |
+| Behaviour: forced discharge |  | ✓ 2, ✗ 1 |  | ✓ 1 |  | ✓ 1 | ✓ 1 | ✓ 3 | ✓ 1 | ✓ 10, ✗ 2, ? 4 | ✓ 1, ? 1 |  |  |  |  |
 | Behaviour: charge ceiling |  |  |  |  |  |  | ✓ 1 |  |  | ✓ 1, ? 1 |  |  |  |  |  |
-| Behaviour: export power limit |  |  |  | ✗ 1 |  | ✓ 1 | ✓ 1 | ✓ 1 | ? 1 | ✓ 8, ? 3 | ✓ 1 |  |  | ? 1 |  |
+| Behaviour: export power limit |  |  |  | ✗ 1 |  | ✓ 1 | ✓ 1 | ✓ 1 | ? 1 | ✓ 11, ? 3 | ✓ 1 |  |  | ? 1 |  |
 | Behaviour: PV generation cut |  | ✓ 1 |  |  |  |  |  | ✓ 3 | ✓ 2 | ✓ 3 | ✓ 1 |  |  | ✓ 1 |  |
-| Behaviour: forced-charging window |  |  |  |  |  | ? 1 |  | ✓ 1, ? 1 | ✓ 1, ? 1 | ✓ 1, ? 8 | ? 1 |  |  |  |  |
-| Behaviour: discharge windows away from now |  |  |  |  |  |  |  | ✓ 1 |  | ? 4 |  |  |  |  |  |
+| Behaviour: forced-charging window |  | ? 1 |  |  |  | ? 1 |  | ✓ 1, ? 1 | ✓ 1, ? 1 | ✓ 1, ? 11 | ? 1 |  |  |  |  |
+| Behaviour: discharge windows away from now |  | ? 1 |  |  |  |  |  | ✓ 1 |  | ? 7 |  |  |  |  |  |
 | Behaviour: site import limit |  |  |  |  |  |  |  |  |  | ✓ 1 |  |  |  |  |  |
 | Behaviour: forced startup under low SoC |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | Behaviour: charging start threshold |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| Behaviour: discharging start threshold |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| Behaviour: backup mode write path |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| Behaviour: load control write path |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| Behaviour: weekend discharge enable write path |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| Behaviour: forced-charging window 2 encoding |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| Behaviour: EMS mode options |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| Behaviour: upper bound of battery_min_soc |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| Behaviour: upper bound of battery_max_soc |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| Behaviour: upper bound of battery_max_charge_power |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| Behaviour: upper bound of battery_max_discharge_power |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| Behaviour: upper bound of battery_forced_charge_discharge_power |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| Behaviour: upper bound of battery_charging_start_power |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| Behaviour: upper bound of battery_discharging_start_power |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Behaviour: discharging start threshold |  |  |  |  |  |  |  |  |  | ✓ 3 |  |  |  |  |  |
+| Behaviour: backup mode write path |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 3 |  |  |  |  |  |
+| Behaviour: load control write path |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 3 |  |  |  |  |  |
+| Behaviour: weekend discharge enable write path |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 3 |  |  |  |  |  |
+| Behaviour: forced-charging window 2 encoding |  |  |  |  |  |  |  |  |  | ✓ 3 |  |  |  |  |  |
+| Behaviour: EMS mode options |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 2 |  |  |  |  |  |
+| Behaviour: upper bound of battery_min_soc |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 2 |  |  |  |  |  |
+| Behaviour: upper bound of battery_max_soc |  | ✓ 1 |  |  |  |  |  |  |  | ✓ 3 |  |  |  |  |  |
+| Behaviour: upper bound of battery_max_charge_power |  | ? 1 |  |  |  |  |  |  |  | ✗ 2 |  |  |  |  |  |
+| Behaviour: upper bound of battery_max_discharge_power |  | ✓ 1 |  |  |  |  |  |  |  | ✗ 3 |  |  |  |  |  |
+| Behaviour: upper bound of battery_forced_charge_discharge_power |  | ? 1 |  |  |  |  |  |  |  | ✗ 3 |  |  |  |  |  |
+| Behaviour: upper bound of battery_charging_start_power |  |  |  |  |  |  |  |  |  | ✗ 3 |  |  |  |  |  |
+| Behaviour: upper bound of battery_discharging_start_power |  |  |  |  |  |  |  |  |  | ✗ 3 |  |  |  |  |  |
 
 ### Backup power
 
@@ -287,10 +291,10 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | MPPT2 energy | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | MPPT2 power | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | MPPT2 voltage | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| MPPT3 current | read | **split**: ✓ SH25T; 0? SH15T | ✓ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
-| MPPT3 energy | read | **split**: ✓ SH25T; 0? SH15T | ✓ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
-| MPPT3 power | read | **split**: ✓ SH25T; 0? SH15T | ✓ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
-| MPPT3 voltage | read | **split**: ✓ SH25T; 0? SH15T | ✓ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
+| MPPT3 current | read | **split**: ✓ SH25T; 0? SH15T | **split**: ✓ SH15T, SH20T; 0? SH20T | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
+| MPPT3 energy | read | **split**: ✓ SH25T; 0? SH15T | **split**: ✓ SH15T, SH20T; 0? SH20T | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
+| MPPT3 power | read | **split**: ✓ SH25T; 0? SH15T | **split**: ✓ SH15T, SH20T; 0? SH20T | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
+| MPPT3 voltage | read | **split**: ✓ SH25T; 0? SH15T | **split**: ✓ SH15T, SH20T; 0? SH20T | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
 | MPPT4 current | read | 0? | 0? | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
 | MPPT4 energy | read | 0? | 0? | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
 | MPPT4 power | read | 0? | 0? | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
@@ -466,13 +470,13 @@ What moves between firmware versions of one platform, over one kind of link:
 | B1 | SBHBCU-S | 22011.04.07 | unit 2 (dongle) | 25.34 kWh, no single model | 1 |
 | B2 | SBHBCU-S | 22011.04.08 32 | unit 2 (dongle) | SBH300 | 1 |
 | B3 | SBHBCU-S | 22011.04.09 | unit 2 (dongle) | SBH100 | 1 |
-| B4 | SBHBCU-S | 22011.04.11 | unit 2 (dongle) | SBH150, SBH200, SBH400 | 5 |
+| B4 | SBHBCU-S | 22011.04.11 | unit 2 (dongle) | SBH150, SBH200, SBH400 | 6 |
 | B5 | SBRBCU-S | 22011.01.21 | unit 200 (cable) | SBR096 | 1 |
 | B6 | SBRBCU-S | 22011.01.21 | unit 2 (dongle) | SBR096 | 1 |
 | B7 | SBRBCU-S | 22011.01.27 | unit 200 (cable) | SBR096, SBR128, SBR256 | 4 |
 | B8 | SBRBCU-S | 22011.01.27 | unit 2 (dongle) | SBR096 | 2 |
 | B9 | SBRBCU-S | 22011.01.27 24 | unit 2 (dongle) | 32 kWh, no single model | 1 |
-| B10 | SBRBCU-S | 22011.01.30 | unit 200 (cable) | SBR064, SBR096, SBR128, SBR160, SBR192, SBR224 | 25 |
+| B10 | SBRBCU-S | 22011.01.30 | unit 200 (cable) | SBR064, SBR096, SBR128, SBR160, SBR192, SBR224 | 28 |
 | B11 | SBRBCU-S | 22011.01.30 | unit 2 (dongle) | 44.8 kWh, no single model, SBR096, SBR128, SBR192 | 9 |
 | B12 | SBRBCU-S | 22011.01.30 44 | unit 2 (dongle) | SBR192 | 1 |
 

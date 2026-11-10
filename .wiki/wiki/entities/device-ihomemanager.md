@@ -1,14 +1,24 @@
 ---
 type: entity
 title: iHomeManager
-tags: [ihomemanager, unmeasured]
+tags: [ihomemanager]
 created: '2026-10-29'
 ---
 
 # iHomeManager
 
-Sungrow's energy manager. **Never measured here**; evcc's users have read a few registers on
-theirs ([evcc cross-reference](../sources/cross-reference-evcc-summary.md)).
+Sungrow's energy manager. **Measured once here**, from Home Assistant, on port 503, firmware
+`iHomeManager-SV930.001.00.P020`: all 56 mapped fields answered
+([the diagnosis](../sources/ihomemanager-ihomemanager-sv930-001-00-p020-anonymous-port503-summary.md)). evcc's users have read a few
+registers on theirs ([evcc cross-reference](../sources/cross-reference-evcc-summary.md)).
+
+- **Measured here:** 8028 reads 0x55 for off; 8555-8557 are line to line (416-419 V) and
+  4358-4362 phase to neutral (240-241 V); the protocol number at 8001-8002 is "AW0" read low
+  word first, which the map, reading it high word first, publishes as "0"; 8554 reads 0, which the
+  map calls single phase, on a three-phase site; and inputs 8645-8650 hold a masked text whose
+  stand-in matches an inverter's, so the undocumented range carries a managed device's serial
+  ([the diagnosis](../sources/ihomemanager-ihomemanager-sv930-001-00-p020-anonymous-port503-summary.md)).
+
 
 - **Where it answers:** slave 247, on port **502, 503 or 504**, and **each
   port takes one TCP connection**, so a port another client holds looks
@@ -45,7 +55,8 @@ theirs ([evcc cross-reference](../sources/cross-reference-evcc-summary.md)).
   runs its diagnosis: no entities measure it. *Diagnosis: start* builds the
   same document as the terminal (`custom_components/sungrow_modbus/device_diagnosis.py`,
   from the library's `ihomemanager` package). Identified by kind, host and
-  port, since it documents no serial. Not run on a real unit yet.
+  port, since it documents no serial. Run on a real unit once
+  ([the diagnosis](../sources/ihomemanager-ihomemanager-sv930-001-00-p020-anonymous-port503-summary.md)).
 - **How it is read:** `sungrow_diagnosis.py` reads it with
   `device-diagnosis/scripts/python/ihomemanager_direct.py`, into a document of
   its own (`"document": "ihomemanager"`): every register the document defines,
@@ -59,6 +70,5 @@ theirs ([evcc cross-reference](../sources/cross-reference-evcc-summary.md)).
   [cross-reference](../sources/cross-reference-modbus-manager-summary.md).
 
 [ra1k-0](installation-ra1k-0.md) reports an iHomeManager installed, and names it
-as a poller of the inverter, but it was not read: a Home Assistant diagnosis reads
-the one endpoint the entry is configured against. Next step:
-[diagnose one](../queries/what-does-an-ihomemanager-answer.md).
+as a poller of the inverter. What is still open about the registers:
+[what an iHomeManager answers](../queries/what-does-an-ihomemanager-answer.md).

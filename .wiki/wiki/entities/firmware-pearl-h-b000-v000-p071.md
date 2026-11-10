@@ -26,7 +26,15 @@ created: '2026-10-29'
   answering, but at [GalKar](installation-galkar.md) a read of 33149-33150 answered in one round of
   the block read test and was refused in others, the pattern of a busy dongle. Both readings are
   through a WiNet-S, which refuses registers that exist when busy and answers some that do not;
-  a cable reading decides.
+  a cable reading decides. At [ra1k-0](installation-ra1k-0.md) on 2026-11-10, 33149 answered in
+  every round of the block read test, and the capability test's probe in the same reading found
+  it absent ([the reading](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-3-summary.md)).
+- **33048's upper bound is enforced**: at [ra1k-0](installation-ra1k-0.md), 26339 W was refused
+  with 0x04 above the 26239 W maximum, and 13059 refused 51 %, 13058 101 %
+  ([the reading](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-3-summary.md)).
+- **The charge window's 33209 refuses through a WiNet-S** at [ra1k-0](installation-ra1k-0.md):
+  the check's write and the restore's five, all of the value it held, were refused with 0x04, so the
+  run ended with outcome 5 ([the reading](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-3-summary.md)).
 
 ## Diagnoses
 
@@ -36,3 +44,4 @@ created: '2026-10-29'
 - [SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi, with a capability test](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-004-005-summary.md)
 - [SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi, the PV cut confirmed](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-2-summary.md)
 - [SH15T, B000.V000.P071, GalKar, a WiNet-S on Ethernet, with a capability test](../sources/sh15t-b000v000p071-3p-galkar-anon-30195315022-battery-sbh150-winet-lan-summary.md)
+- [SH20T, B000.V000.P071, ra1k_0, a WiNet-S on WiFi, outcome 5](../sources/sh20t-b000v000p071-3p-ra1k-0-anon-94125810090-battery-sbh400-winet-wlan-3-summary.md)

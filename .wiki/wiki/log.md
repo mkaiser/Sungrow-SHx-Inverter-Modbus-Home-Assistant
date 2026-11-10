@@ -705,3 +705,19 @@ inverter obey battery_max_soc. The capability test now records such a
 readback as inconclusive and auto repeat does not wait for it, as
 device-winet-s says of legs A and B; kept runs are read the same way. The
 runs are not ingested. Updated nothing else.
+
+## [2026-11-10] ingested | #786: peter_sm x3, ra1k_0's SH20T, an iHomeManager and an AC22E-01
+
+Korsberg's three diagnostics of peter_sm's SH10RT-V112 (P023, cable), integrations 0.1.0a33,
+a34 and a36: three new runs, the first ingested with the write-path checks and upper bounds.
+33213 lost the connection in all three, nine of nine now, but so did 13059 once and 13050 and
+33047 twice, so the query now weighs a link that drops on writes. 13058 and 13059 refuse a step
+past their maximum; 33047, 33048, 13052, 33149 and 33150 store it. Restarts 363 s, 271 s, 303 s.
+Raik0's SH20T (P071, WiNet-S) ended with outcome 5: 33209's restore refused five times through
+the dongle, every write of the value it held; 33048 refused a value above its bound. Two
+anonymous documents, kept unconnected to any installation: the first
+iHomeManager measured (SV930.001.00.P020, port 503, all 56 mapped fields; 8001 is "AW0" low
+word first, which the map misreads) and a second AC22E-01 whose 21320 holds a finished
+session's end. Updated installation-peter-sm, installation-ra1k-0, P023, P071, device-ihomemanager,
+device-wallbox, device-winet-s, capability-test, the 33213, iHomeManager and busy WiNet-S
+queries, the index.
