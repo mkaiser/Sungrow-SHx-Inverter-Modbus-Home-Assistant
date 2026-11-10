@@ -26,7 +26,7 @@ document, the wiki included.
 
 The integration covers the inverter, the
 [SBR battery](.wiki/wiki/entities/device-sbr-battery.md), the
-[wallbox](.wiki/wiki/entities/device-wallbox.md) (read only; through the
+[wallbox](.wiki/wiki/entities/device-wallbox.md) (read-only entities; through the
 dongle, or at its own address with the `wallbox_host` option) and an
 [external generator](.wiki/wiki/concepts/external-generator.md). The
 [iHomeManager](.wiki/wiki/entities/device-ihomemanager.md) is never measured.
@@ -35,7 +35,8 @@ plus the devices found on it,
 [identified by what answers](.wiki/wiki/concepts/identify-by-what-answers.md),
 never by unit id. The one exception is a
 [wallbox](.wiki/wiki/entities/device-wallbox.md) found by the network search at
-its own address (TLS, port 516, unit 248): it is an entry of its own, read only,
+its own address (TLS, port 516, unit 248): it is an entry of its own, with
+read-only entities and a capability test of its own,
 identified by its own serial, with no inverter beside it. The search also
 offers an iHomeManager or a Logger (unit 247) as an entry that is only its
 diagnosis: nothing on it is measured.

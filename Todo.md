@@ -138,11 +138,16 @@ Nothing can start now (blocker 13).
 
    **The search finds every device** (`plans/device_scan_and_diagnosis.md`,
    its status log is current): a wallbox at its own address is an entry of
-   its own, read only, with a read-only diagnosis; it runs at gerd's in the
-   dev HA. An iHomeManager or a Logger (unit 247) is offered as a
-   diagnosis-only entry, untested on hardware: asked for in
-   `device-diagnosis/devices-wanted.md`. Not yet: the wallbox entry's own
-   capability test and options, and moving a `wallbox_host` entry onto one.
+   its own, with read-only entities, a diagnosis and **its own capability
+   test** (`wallbox_diagnosis.py`; leave and cap in its options; auto repeat
+   every 15 minutes). Checked at gerd's in the dev HA with no car: it refuses
+   to write while idle, as it should. Item 1 above applies to it too: its
+   first writing run needs a car charging, watched live. A `wallbox_host`
+   entry is never moved onto one (decided). An iHomeManager or a Logger
+   (unit 247) is offered as a diagnosis-only entry, untested on hardware:
+   asked for in `device-diagnosis/devices-wanted.md`. Not yet: the search
+   showing which inverters sit behind a Logger (decided yes; how a Logger is
+   handled beyond that is open).
 
    Not to copy: evcc's `sungrow.go` reserves all rights. Inverter work at
    gerd's waits until his Home Assistant is stopped: a read-only diagnosis

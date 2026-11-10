@@ -46,7 +46,10 @@ async def async_setup_entry(
 ) -> None:
     """Set up the modes this device actually has."""
     runtime_data = entry.runtime_data
-    if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
+    if (
+        runtime_data.is_wallbox_only
+        or entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS
+    ):
         # A diagnostics-only entry has no settings; its one select is what
         # *Diagnosis: start* runs.
         async_add_entities([DiagnosisModeSelect(runtime_data)])

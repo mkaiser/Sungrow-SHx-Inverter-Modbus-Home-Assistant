@@ -52,6 +52,14 @@ TICK = timedelta(minutes=1)
 #: own readings stale for much of the time.
 INTERVAL = timedelta(minutes=30)
 
+#: The slot of a wallbox at its own address, with no inverter beside it. Its
+#: runs need a car charging, and a session lasts an hour or two: half-hour slots
+#: would leave most of it unused. Not shorter, because every run interrupts the
+#: charge (stop and start, a pause under 6 A, a phase switch, 75 s unread), and
+#: a car stopped every few minutes may stop resuming. Only checks still missing
+#: run, each at most `ledger.MAX_ATTEMPTS` times, so it cannot run for ever.
+WALLBOX_ALONE_INTERVAL = timedelta(minutes=15)
+
 #: The least time from the end of one run to the start of the next, when a
 #: late run in one slot ends near the next slot's start: the link's few
 #: sessions need it (wiki: contention, 90 s to recover).
@@ -90,7 +98,7 @@ class ContinuousCapabilityTest:
             return
         _LOGGER.warning(
             "%s: continuous capability testing is on. Runs that write to the "
-            "inverter and put everything back start on their own until it is "
+            "device and put everything back start on their own until it is "
             "switched off or Home Assistant restarts.",
             self.entry.title,
         )
@@ -149,6 +157,18 @@ class ContinuousCapabilityTest:
         assert self.started_at is not None
         return max(0, int((now - self.started_at) / INTERVAL))
 
+    def _wallbox_slot(self, now: datetime) -> int:
+        """Return the number of the wallbox's slot `now` falls in."""
+        assert self.started_at is not None
+        return max(0, int((now - self.started_at) / self.runner.wallbox_interval))
+
+    def _next_wallbox_start(self) -> datetime:
+        """Return the start of the wallbox's next slot, after the one it ran in."""
+        assert self.started_at is not None and self._last_wallbox_slot is not None
+        return self.started_at + (
+            (self._last_wallbox_slot + 1) * self.runner.wallbox_interval
+        )
+
     @callback
     def _async_tick(self, now: datetime) -> None:
         """Start a run when one is allowed and something missing is due."""
@@ -159,11 +179,13 @@ class ContinuousCapabilityTest:
         # Modbus read and need days, not moments.
         self.runner.async_observe(now)
         folded = self.runner.state.capability_test
-        waiting = ledger.awaited(folded)
+        # A wallbox at its own address has no inverter checks to wait for.
+        inverter = self.runner.inverter_tests
+        waiting = ledger.awaited(folded) if inverter else []
         wallbox_waiting = self.runner.wallbox_awaited()
         if not waiting and not wallbox_waiting:
             observing = [
-                *self.runner.plausibility.unsettled(),
+                *(self.runner.plausibility.unsettled() if inverter else []),
                 *(
                     self.runner.wallbox_plausibility.unsettled()
                     if self.runner.wallbox_present
@@ -236,11 +258,10 @@ class ContinuousCapabilityTest:
         it waits for: the wallbox then speaks only when it starts, so the one
         line does not flip between the two every minute.
         """
-        assert self.started_at is not None
-        slot = self._slot(now)
+        slot = self._wallbox_slot(now)
         if self._last_wallbox_slot is not None and slot <= self._last_wallbox_slot:
             if not said:
-                ready = self.started_at + (self._last_wallbox_slot + 1) * INTERVAL
+                ready = self._next_wallbox_start()
                 self._say(f"the next wallbox run at {dt_util.as_local(ready):%H:%M}")
             return
         if self._quiet(now):
@@ -282,6 +303,13 @@ class ContinuousCapabilityTest:
         rather than the clock.
         """
         if not self.active or self.runner.state.running or self.started_at is None:
+            return None
+        if not self.runner.inverter_tests:
+            if (
+                self._last_wallbox_slot is not None
+                and self._wallbox_slot(now) <= self._last_wallbox_slot
+            ):
+                return self._next_wallbox_start()
             return None
         if self._last_slot is not None and self._slot(now) <= self._last_slot:
             return self.started_at + (self._last_slot + 1) * INTERVAL

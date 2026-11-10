@@ -1,6 +1,6 @@
 # The texts, for review
 
-**309 texts**: everything in `strings.json` that is not an entity name, by its
+**324 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -45,9 +45,9 @@ and bold are kept.
 
 ### `config.abort.wallbox_entry`
 
-> **EN** This is a wallbox read at its own address. It has no settings: to follow it to a new address, search your network again and pick it; the entry finds it by its serial.
+> **EN** This is a wallbox read at its own address, and its address is not changed here: to follow it to a new address, search your network again and pick it; the entry finds it by its serial. Its capability test and diagnosis settings are under **Configure**.
 
-> **DE** Das ist eine Wallbox, die unter ihrer eigenen Adresse gelesen wird. Sie hat keine Einstellungen: Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer.
+> **DE** Das ist eine Wallbox, die unter ihrer eigenen Adresse gelesen wird, und ihre Adresse wird hier nicht geändert: Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer. Die Einstellungen für ihren Funktionstest und ihre Diagnose findest du unter **Konfigurieren**.
 
 ### `config.abort.unit_247_entry`
 
@@ -1265,7 +1265,7 @@ and bold are kept.
 > **Prüfe, ob dein Wechselrichter läuft.** Diese Reparatur bleibt offen, damit du es erneut versuchen kannst.
 
 
-## Options flow (95)
+## Options flow (110)
 
 ### `options.step.init.title`
 
@@ -1861,6 +1861,102 @@ and bold are kept.
 >
 > Du kannst jederzeit hierher zurückwechseln.
 
+### `options.step.wallbox.title`
+
+> **EN** Wallbox settings
+
+> **DE** Wallbox-Einstellungen
+
+### `options.step.wallbox.description`
+
+> **EN** A wallbox read at its own address. To follow it to a new address, search your network again and pick it; the entry finds it by its serial.
+
+> **DE** Eine Wallbox, die unter ihrer eigenen Adresse gelesen wird. Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer.
+
+### `options.step.wallbox.sections.capability_test.name`
+
+> **EN** What the wallbox capability test may do
+
+> **DE** Was der Wallbox-Funktionstest darf
+
+### `options.step.wallbox.sections.capability_test.description`
+
+> **EN** An extended test, started on the device page with "Diagnosis: start", writes the wallbox's settings, reads each one back, watches what the car draws and puts your value back. It writes nothing until you switch it on here.
+
+> **DE** Ein erweiterter Test, auf der Geräteseite mit „Diagnose: starten“ gestartet, schreibt die Einstellungen der Wallbox, liest jede zurück, beobachtet, was das Auto zieht, und setzt deinen Wert zurück. Er schreibt nichts, bis du ihn hier einschaltest.
+
+### `options.step.wallbox.sections.capability_test.data.capability_test_wallbox`
+
+> **EN** May it write to the wallbox, with a car charging?
+
+> **DE** Darf er mit einem ladenden Auto auf die Wallbox schreiben?
+
+### `options.step.wallbox.sections.capability_test.data.wallbox_max_amps`
+
+> **EN** The highest charging current the wallbox test may offer
+
+> **DE** Der höchste Ladestrom, den der Wallbox-Test anbieten darf
+
+### `options.step.wallbox.sections.capability_test.data_description.capability_test_wallbox`
+
+> **EN** Off until you switch it on. With this on, the test writes this wallbox's output current, start/stop, enable, phase and mileage settings, reads each back, watches what the car draws and puts every original value back. **A charge in progress is interrupted**: it is stopped and started again, paused below 6 A and the phase is switched with the charge stopped first. The wallbox is also left without any read for 75 seconds, to see what current it falls back to. The checks wait for a car to charge, so a run is a few minutes of a charging session, repeated every 15 minutes in *Extended test (auto repeat)* until each question has an answer.
+
+> **DE** Aus, bis du es einschaltest. Mit dieser Einstellung schreibt der Test den Ausgangsstrom, Start/Stopp, Freigabe, Phasen und Kilometer pro kWh dieser Wallbox, liest jeden Wert zurück, beobachtet, was das Auto zieht, und setzt jeden ursprünglichen Wert zurück. **Eine laufende Ladung wird unterbrochen**: Sie wird gestoppt und wieder gestartet, unter 6 A pausiert, und die Phase wird umgeschaltet, nachdem die Ladung gestoppt wurde. Außerdem bleibt die Wallbox 75 Sekunden ohne jeden Lesezugriff, um zu sehen, auf welchen Strom sie zurückfällt. Die Prüfungen warten auf ein ladendes Auto; ein Lauf sind also einige Minuten einer Ladung, in *Erweiterter Test (automatisch wiederholen)* alle 15 Minuten wiederholt, bis jede Frage eine Antwort hat.
+
+### `options.step.wallbox.sections.capability_test.data_description.wallbox_max_amps`
+
+> **EN** The most current any wallbox test may offer a car, never more than the wallbox's own rating. Left empty it is 10 A, and the checks that go beyond that wait: an offer below the 6 A minimum, an offer above the rating, and the silence test, which needs a cap no higher than the setting your wallbox had. Set it to what your installation and your car can take.
+
+> **DE** Der höchste Strom, den ein Wallbox-Test einem Auto anbieten darf, nie mehr als die Nennleistung der Wallbox. Leer sind es 10 A, und die Prüfungen darüber hinaus warten: ein Angebot unter dem Minimum von 6 A, ein Angebot über der Nennleistung und der Stille-Test, der eine Grenze nicht über der Einstellung braucht, die deine Wallbox hatte. Stelle ein, was deine Installation und dein Auto vertragen.
+
+### `options.step.wallbox.sections.diagnosis.name`
+
+> **EN** Contribute a wallbox diagnosis
+
+> **DE** Eine Wallbox-Diagnose beisteuern
+
+### `options.step.wallbox.sections.diagnosis.description`
+
+> **EN** Everything below is optional. To run the diagnosis, choose "Read-only" in "Diagnosis: mode" on the device page and press "Diagnosis: start": it reads and never writes, and replaces the serial number with a stand-in.
+
+> **DE** Alles unten ist optional. Um die Diagnose auszuführen, wähle auf der Geräteseite in „Diagnose: Modus“ „Nur lesend“ und drücke „Diagnose: starten“: Sie liest nur, schreibt nie und ersetzt die Seriennummer durch einen Platzhalter.
+
+### `options.step.wallbox.sections.diagnosis.data.reporter`
+
+> **EN** Your name or handle
+
+> **DE** Dein Name oder Pseudonym
+
+### `options.step.wallbox.sections.diagnosis.data.diagnosis_comment`
+
+> **EN** Anything else worth knowing
+
+> **DE** Sonst noch etwas Wissenswertes
+
+### `options.step.wallbox.sections.diagnosis.data.publish_address`
+
+> **EN** May the last two octets of the address be published?
+
+> **DE** Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?
+
+### `options.step.wallbox.sections.diagnosis.data_description.reporter`
+
+> **EN** Credited in the published reading, and who gets asked if a row raises a question. Leave empty to contribute anonymously.
+
+> **DE** Wird in der veröffentlichten Messung genannt und gefragt, wenn eine Zeile Fragen aufwirft. Leer lassen, um anonym beizutragen.
+
+### `options.step.wallbox.sections.diagnosis.data_description.diagnosis_comment`
+
+> **EN** Anything unusual about the installation: how the wallbox is wired, another charger controlling it (evcc, a cloud app), a firmware update you remember.
+
+> **DE** Alles Ungewöhnliche an der Installation: wie die Wallbox angeschlossen ist, ein anderes Programm, das sie steuert (evcc, eine Cloud-App), ein Firmware-Update, an das du dich erinnerst.
+
+### `options.step.wallbox.sections.diagnosis.data_description.publish_address`
+
+> **EN** On, and yours to turn off before you submit. Only the last two octets ever reach the document — never the third, which is what would identify your network — and clear this and it reads xxx.xxx instead. What it buys is telling several readings from one house apart: a master, a slave and two dongles otherwise produce four files that look alike.
+
+> **DE** An, und du kannst es vor dem Absenden ausschalten. Nur die letzten zwei Oktette gelangen je in das Dokument – nie das dritte, das dein Netzwerk identifizieren würde –, und wenn du das deaktivierst, steht stattdessen xxx.xxx. Der Nutzen: Mehrere Messungen aus einem Haus lassen sich unterscheiden – ein Master, ein Slave und zwei Dongles ergeben sonst vier gleich aussehende Dateien.
+
 ### `options.error.nothing_left_to_poll`
 
 > **EN** Every group is set to never, which would leave the integration with nothing to read and no entities at all. Leave at least one group with an interval.
@@ -1896,12 +1992,6 @@ and bold are kept.
 > **EN** Setting up sensors and controls is not in this release. This alpha creates diagnostics-only entries; start again and choose **Perform the device diagnosis**.
 
 > **DE** Sensoren und Steuerungen einzurichten ist in dieser Version nicht enthalten. Diese Alpha legt nur Einträge für die Diagnose an; beginne erneut und wähle **Geräte-Diagnose durchführen**.
-
-### `options.abort.wallbox_entry`
-
-> **EN** This is a wallbox read at its own address. It has no settings: to follow it to a new address, search your network again and pick it; the entry finds it by its serial.
-
-> **DE** Das ist eine Wallbox, die unter ihrer eigenen Adresse gelesen wird. Sie hat keine Einstellungen: Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer.
 
 ### `options.abort.unit_247_entry`
 

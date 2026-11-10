@@ -8,8 +8,9 @@ created: '2026-10-29'
 # Sungrow AC wallbox
 
 AC011E-01 and AC22E-01. In the integration it is a **device of its own**,
-with 32 fields in four components (`src/sungrow_modbus/wallbox/`). It is
-**read only**: nothing writes to it.
+with 32 fields in four components (`src/sungrow_modbus/wallbox/`). Its
+entities are **read only**; only the capability test writes to it, with the
+owner's leave.
 
 ## Three ways in
 
@@ -22,9 +23,12 @@ with 32 fields in four components (`src/sungrow_modbus/wallbox/`). It is
 are the same either way. The network search also looks on port 516 and offers
 a wallbox that answers there over TLS as **an entry of its own**, identified by
 its own serial (the third way in): a separate device from the one an inverter
-entry reads through `wallbox_host`. That entry has a read-only *Diagnosis:
-start*, which writes the same wallbox document as `wallbox_direct.py`
-(`custom_components/sungrow_modbus/device_diagnosis.py`). Never reachable through the inverter's own LAN port
+entry reads through `wallbox_host`. That entry has a *Diagnosis: start*
+whose read-only mode writes the same wallbox document as `wallbox_direct.py`
+(`custom_components/sungrow_modbus/device_diagnosis.py`), and a capability
+test of its own in the extended modes, with its own leave and cap in the
+entry's options (`custom_components/sungrow_modbus/wallbox_diagnosis.py`). An
+inverter entry's `wallbox_host` is not moved onto such an entry. Never reachable through the inverter's own LAN port
 (every unit 0-255 swept). It needs no [iHomeManager](device-ihomemanager.md),
 and sweeping for one cannot find it. Where an iHomeManager is installed it
 drives the wallbox over 516 itself, so `wallbox_host` may find the port taken

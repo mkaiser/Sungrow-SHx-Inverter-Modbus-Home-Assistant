@@ -12,7 +12,7 @@ described: [architecture](../doc/architecture.md) (the wallbox paragraph) and
 
 ## Status log -- keep this current
 
-**Every 5 minutes while working on this plan, update this section** (and tick
+**Every 2 minutes while working on this plan, update this section** (and tick
 the steps below): what is done, what runs right now, what is blocked, and the
 next step. Another session must be able to pick up from this file alone,
 without the conversation. Name uncommitted files, failing tests and anything
@@ -22,6 +22,19 @@ asking (`AGENTS.md`).
 
 | When | Status |
 | --- | --- |
+| 2026-11-10 09:23 | Dev HA restarted on the latest code (old process hung on shutdown, killed): status sensor shows '1 run' at gerd's, so the run-count fix works on hardware. Wallbox idle again (pilot 11.9 V), so no writing run. Reconfigure's abort text no longer says 'no settings'; the unused options abort string removed (en/de). Committing step 9 by named paths after a full pytest. Open: a watched writing run with a car charging at gerd's (step 9 state), step 17 (inverters behind a Logger), step 11 ingest. |
+| 2026-11-10 08:31 | Hardware, gerd's AC22E-01 over the VPN in the dev HA (restarted 07:28 on this tree): entry loads with mode select, skip switch, clear-history button, status + count sensors. Extended without leave: read 32 values, no run kept, nothing written. Options form (leave on, cap 10 A) saved. Extended with leave, idle (pilot 11.9 V, setpoint 0): test started, refused by the guard (21203 reads 0), nothing written, no snapshot, run kept (transport tls, firmware LE-01.1E1.001.901.25). Found: status sensor said 0 runs (it counts the inverter's list shape); fixed in `wallbox_diagnosis.py` (`tests` adds `runs` rows from the kept wallbox runs), test added. A writing run still needs a car charging. |
+| 2026-11-10 07:27 | Step 9: second `make check` green (7650 passed, 2 skipped) on the code before this entry's change. Maintainer chose (2026-11-10) a shorter auto-repeat slot for the standalone wallbox: `continuous.WALLBOX_ALONE_INTERVAL` = 15 min (runner attribute `wallbox_interval`; inverter entries keep 30 min), `next_start` follows it; texts en/de say 15 minutes; 2 new tests. Wallbox suites 29 pass. Next: commit by named paths, restart dev HA (`make stop && make dev-bg`), run at gerd's. |
+| 2026-11-10 07:00 | Step 9: waiting for the second `make check`. gerd's wallbox via dev HA now (old code): idle, control pilot 11.9 V (no car plugged), setpoint 0, firmware LE-01.1E1.001.901.25. So the run at gerd's will check the plumbing only, no writes; a run that writes needs a car charging. Dev HA client for the run: scratchpad `devha.py`. |
+| 2026-11-10 06:59 | Step 9: second `make check` running. Hardware prep: gerd's wallbox answers on 192.168.178.23:516 over the VPN; the dev HA (pid 2266675) runs on the code from before this change and needs `make stop && make dev-bg` to load it. Plan for the run: options leave on, cap 10 A, *Diagnosis: start* in Extended; idle (no car) the procedure refuses to write (21203 reads 0), so the first run checks the plumbing only. |
+| 2026-11-10 06:58 | Step 9: first `make check` stopped at gen-check (stale `plans/text_translation_review.md`, regenerated), so lint, mypy and pytest did not run; a second `make check` is running. `test_wiki` + `test_no_real_serials` pass. Docs updated (uncommitted): wiki `device-wallbox` + `log.md`, `doc/architecture.md`, `AGENTS.md`. Next: commit by named paths, then run it in the dev HA against gerd's wallbox over the VPN. |
+| 2026-11-10 06:55 | Step 9: `tests/test_wallbox_entry.py` (18) and `tests/test_wallbox_capability_test_ha.py` (path test extended for kind wallbox) pass. Next: `make check` (full suite, mypy, gen-check), then docs (architecture, wiki device-wallbox + log, AGENTS.md exception paragraph says read only), then the dev HA run at gerd's over the VPN. |
+| 2026-11-10 06:52 | Step 9: tests written in `tests/test_wallbox_entry.py` (options form, reconfigure still aborts, extended run without leave writes nothing, with leave tests+keeps+restores, ledger survives reload, clear history, auto repeat starts a wallbox run with no inverter, waits with no car). First run: 4 pass, `test_the_entry_is_the_wallbox_and_nothing_else` fails; fixing. |
+| 2026-11-10 06:51 | Step 9: wiring done (uncommitted): `__init__.py` sets up `WallboxDiagnosisRunner` and loads its ledger, `WALLBOX_PLATFORMS` + select and switch; wallbox entry gets mode select, skip-established switch, start/stop/clear-history buttons, next-start, status and count sensors; `transport_of` = tls for kind wallbox. ruff + mypy clean. Not yet run: any test. Next: tests in `tests/test_wallbox_entry.py` (extended run with/without leave, auto repeat inverter-free tick, options form), then the existing suites that touch these files. |
+| 2026-11-10 06:49 | Step 9: built (uncommitted, untested): `wallbox_diagnosis.py` (`WallboxDiagnosisRunner(DiagnosisRunner)`: `_async_run`, `tests`, `async_observe`, `async_load_ledger`, `async_clear_ledger`, wallbox announce/offer texts; extended run without leave reads only and says so); `diagnosis.py` gets `inverter_tests = True` (gates the inverter load in `_async_observe_wallbox`); `continuous.py` skips inverter checks when `inverter_tests` is False. Options step `wallbox` with en/de texts, `make gen` run. Next: `transport_of` for kind wallbox, setup wiring in `__init__.py` (runner, `async_load_ledger`, select platform), entities on the wallbox entry, tests. |
+| 2026-11-10 06:47 | Step 9: options form for kind wallbox built (`config_flow.py` `async_step_wallbox`: sections capability_test with `capability_test_wallbox` + `wallbox_max_amps`, diagnosis with reporter, comment, publish_address); ruff clean. Next: its texts in `strings.json` + `german_texts.json`, then `wallbox_diagnosis.py`. Uncommitted: plan, `config_flow.py`. |
+| 2026-11-10 06:43 | Step 9 design settled after reading the code: `WallboxDiagnosisRunner` in a new `wallbox_diagnosis.py`, a **subclass of the inverter's `DiagnosisRunner`** that overrides only what assumes an inverter (`async_start`/`_async_run`: wallbox read + `_async_wallbox_test`; `async_observe`; `async_load_ledger`; `async_clear_ledger`; announce/offer texts). It inherits `async_start_wallbox`, `_async_wallbox_test`, the wallbox ledger and plausibility. `continuous.py` gets an `inverter_present` guard so auto repeat runs wallbox slots only. Then: options form for kind wallbox (leave, cap, reporter), select + clear-history button + status/count sensors on the wallbox entry, `transport_of` = tls for kind wallbox. Uncommitted: only this plan. Nothing in code yet. |
+| 2026-11-10 06:40 | Maintainer decided (2026-11-10): step 9 **yes**, the standalone wallbox entry gets its own capability test; step 10 **no move**: wallbox support is new, so there is nothing to migrate and the standalone entry is the way; Logger question **yes**, the search should show which inverters sit behind a Logger (how is still open). Working on step 9 now: read `wallbox_capability_test.py`, `device_diagnosis.py`, `diagnosis.py` (the inverter runner's wallbox parts). Nothing changed in code yet. After that: test it over the VPN at gerd's. |
 | 2026-11-10 00:25 | Released as **0.1.0a34** (tag `v0.1.0a34`, commit `ff85ba0`, pushed with the maintainer's leave): release workflow green, PyPI wheel passes `make pin-check`, preview mirror synced and pins 0.1.0a34. Open: steps 9, 10 and the open questions (maintainer's decisions); a first real iHomeManager or Logger diagnosis (asked for in devices-wanted.md). |
 | 2026-11-10 00:10 | Step 8 verified in the dev HA (relaunched in the background, `/tmp/ha.log`): *Diagnosis: start* on `AC22E-01` finished, 32 fields, download `ac22e01-anonymous-anon-41346964423-wallbox-tls.json`, address withheld. Step 11: idle re-read, not ingested (log entry). Steps 9, 10 and the open questions are decisions for the maintainer, not built. Next: release 0.1.0a34 (maintainer gave leave for it). |
 | 2026-11-09 23:55 | Full suite green (`pytest -n 6`: 7620 passed, 2 skipped). Parts 1 and 2 committed as `cd466ea`, not pushed. Left: press *Diagnosis: start* on the AC22E-01 entry in the dev HA after its next restart (`make dev`); steps 9, 10, 11 and the open questions. |
@@ -41,6 +54,21 @@ asking (`AGENTS.md`).
 - **Only directly addressed wallboxes are searched for** (TLS 516, unit 248).
   The dongle's unit 3 stays the inverter entry's business.
 - **Nothing here writes to a device.** Diagnosis part A only reads.
+- **The standalone wallbox entry gets its own capability test** (maintainer,
+  2026-11-10). It is not borrowed from an inverter entry: the wallbox entry has
+  its own leave, cap, snapshot, ledger and auto repeat.
+- **Auto repeat on the standalone wallbox entry runs every 15 minutes**
+  (maintainer, 2026-11-10; `continuous.WALLBOX_ALONE_INTERVAL`), not 30: its
+  runs need a car charging and a session is an hour or two. Not 5: every run
+  interrupts the charge. A charge start is caught within the minute anyway
+  (the tick); only checks still missing run, each at most 3 times.
+- **No wallbox entry is moved or migrated** (maintainer, 2026-11-10). Wallbox
+  support is new, so nobody has wallbox history to keep. The standalone entry
+  is the way forward; a `wallbox_host` on an inverter entry stays as it is and
+  nothing converts it.
+- **The search shows which inverters sit behind a Logger** (maintainer,
+  2026-11-10). How a Logger is handled beyond that is not decided yet (Part 2,
+  step 17).
 - **No real serial or address is published**: stand-ins only
   (`serial_anonymized_hashed`), the tail of an address only with consent. A
   fixture uses `A123456789`-shaped stand-ins, `tests/test_no_real_serials.py`.
@@ -81,12 +109,57 @@ asking (`AGENTS.md`).
    described in *The shared runner* below, publish with `serial_stand_in`, and
    add *Diagnosis: start* / *stop* buttons and the progress sensors to the
    wallbox entry (platforms: button, sensor, binary sensor).
-9. **Capability test for the wallbox entry** is *not* in this plan: its options
-   and runner live on the inverter entry (`plans/wallbox_capability_tests.md`).
-   Decide later whether the standalone entry gets its own.
-10. **Moving a `wallbox_host` entry onto a standalone one** (gerd's case) is
-    open: it changes entity ids, so it must claim the legacy ids
-    (`.wiki/wiki/concepts/legacy-id-adoption.md`). Decide before building.
+9. **A capability test for the standalone wallbox entry** (decided: yes). The
+   procedure, port, snapshot store, ledger and plausibility already exist and
+   are what the inverter entry uses for its wallbox
+   (`sungrow_modbus.wallbox.capability_test`, `ledger`, `plausibility`;
+   `custom_components/sungrow_modbus/wallbox_capability_test.py`:
+   `WallboxTestRunner`, `EntryWallboxPort`, stores keyed per entry). The
+   inverter's `DiagnosisRunner` (`diagnosis.py`, `async_start_wallbox`,
+   `_async_wallbox_test`, `_async_observe_wallbox`) shows how they are driven.
+   Reuse all of it; do not copy it and do not bend the inverter runner.
+   - **Runner**: `WallboxDiagnosisRunner` (`wallbox_diagnosis.py`), a
+     subclass of the inverter's `DiagnosisRunner` that overrides only what
+     assumes an inverter, so the wallbox ledger, plausibility,
+     `async_start_wallbox` and auto repeat are inherited, not copied. It has a mode (read only / extended / extended auto
+     repeat, the same three as the inverter's select). An extended run reads
+     the diagnosis, then runs `WallboxTestRunner`, keeps the block in the
+     ledger, folds it and puts `wallbox_capability_test` (and
+     `wallbox_plausibility` when it has observations) into the document. A
+     read-only run writes nothing, as today.
+   - **Options**: the standalone entry gets an options form instead of aborting
+     with `wallbox_entry`: reporter, comment, publish address, the leave
+     (`CONF_CAPABILITY_TEST_WALLBOX`, default off) and the owner's cap
+     (`CONF_WALLBOX_MAX_AMPS`, never above 21263's rating). Reconfigure keeps
+     aborting.
+   - **Transport**: `wallbox_capability_test.transport_of` returns `tls` for a
+     standalone entry (it now looks only at `CONF_WALLBOX_HOST`).
+   - **Plausibility**: fed from the coordinator's polls between runs, with no
+     inverter load (`load=None`; the check that compares against the
+     inverter's load stays unanswered on a standalone entry).
+   - **Auto repeat**: starts a wallbox run when `ledger.due(...)` says a check
+     is due from the live state (charging and draw >= 5 A for most), in its own
+     slots, until *Diagnosis: stop*; never resumed after a restart.
+   - **At setup**: load the ledger and plausibility for the wallbox firmware
+     (input 21226); a leftover snapshot is logged, never written at setup.
+     The next run restores it first.
+   - **Entities**: the mode select and the counters/summary sensor the inverter
+     entry shows for tests, on the wallbox device.
+   - **Tests**: `tests/test_wallbox_entry.py` and a fake wallbox that raises the
+     real exception types: leave off writes nothing; extended run keeps a
+     ledger block; restore after each check; leftover restored first.
+   - **Hardware**: when it is built and `make check` is green, test it **over
+     the VPN at gerd's** (wallbox at its own address, TLS 516, unit 248; see the
+     dev HA notes in step 6). Without a car only the any-state checks run
+     (enable when idle, mileage no-op); the charging checks need a car charging,
+     and gerd allows every test while charging. Watch the first run live.
+10. ~~Moving a `wallbox_host` entry onto a standalone one~~: **not done**
+    (decided 2026-11-10). Wallbox support is new; there is no history to keep.
+   - **State (2026-11-10):** built, tested, and checked at gerd's idle (no car):
+     no leave reads only; with leave the procedure refuses to write while
+     21203 reads 0, keeps the refused run (path tls), and leaves no snapshot.
+     **Open: a writing run with a car charging at gerd's**, watched live,
+     started by hand in *Extended test*; only after that, auto repeat.
 11. Ingest what a real run shows (wiki wallbox pages, `log.md`).
 
 ## Part 2: the iHomeManager and the Logger
@@ -123,6 +196,13 @@ that way (`AGENTS.md`: the iHomeManager is never measured).
 15. **Tests** with simulated registers (no hardware here for either device); a
     simulator cannot produce a finding (`AGENTS.md`), so none is ingested from
     one.
+17. **Which inverters sit behind a Logger** (decided: show it). When the
+    search finds a Logger, the picker says which inverters answer behind it
+    (the Logger fronts them at forwarding unit ids or ports of their own).
+    How a Logger entry handles them beyond showing them is not decided: ask
+    the maintainer before building more than the display. No Logger has been
+    measured here, so the display is built against the documented forwarding
+    and tested with simulated registers only.
 16. **Docs and wiki**: `doc/architecture.md`, the two wiki pages, `log.md`,
     `doc/development.md` if a script changes; ask for a real unit in
     `device-diagnosis/devices-wanted.md`'s table (never from a named person).
@@ -157,9 +237,7 @@ more than one writer).
 
 ## Open questions
 
-- A Logger answers unit 247 and also fronts inverters at forwarding addresses
-  or ports of their own: should the search say "these inverters are behind this
-  Logger"? Not decided.
-- Whether the standalone wallbox entry needs a capability test of its own (step 9).
+- How to deal with a Logger beyond showing the inverters behind it (step 17):
+  the maintainer does not know yet.
 - Whether a Logger on TLS 516 can collide with a wallbox on 516 in one sweep
   (the library already says: ask the wallbox first, 247 where none answers).

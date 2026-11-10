@@ -144,12 +144,15 @@ STRING_INVERTER_PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SE
 #: sensors, which are also what gives it a device page.
 UNIT_247_PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SENSOR]
 
-#: What a wallbox entry sets up: the readings its device carries. It is read
-#: only, so nothing here writes.
+#: What a wallbox entry sets up: the readings its device carries, and its
+#: diagnosis and capability test. Nothing writes outside that test, which
+#: writes only with the owner's leave.
 WALLBOX_PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
     Platform.BUTTON,
+    Platform.SELECT,
     Platform.SENSOR,
+    Platform.SWITCH,
 ]
 
 
@@ -463,7 +466,7 @@ async def _async_setup_wallbox(hass: HomeAssistant, entry: SungrowConfigEntry) -
     """Set up a wallbox that is an entry of its own, at its own address.
 
     Modbus inside TLS on port 516, unit 248, read only. There is no inverter
-    here: no tiers, no capabilities, no diagnosis, no YAML package ids. The
+    here: no tiers, no capabilities, no YAML package ids. The
     device is identified by the wallbox's **own** serial, which is read before
     anything else and without which nothing can be named.
     """
@@ -490,16 +493,14 @@ async def _async_setup_wallbox(hass: HomeAssistant, entry: SungrowConfigEntry) -
     entry.runtime_data = SungrowRuntimeData(
         {}, intervals=intervals, wallbox=coordinator
     )
-    # A read-only diagnosis of its own, so a wallbox owner can report from here.
-    from .device_diagnosis import (
-        DeviceDiagnosisRunner,
-        wallbox_builder,
-        wallbox_summary,
-    )
+    # A diagnosis and a capability test of its own, so a wallbox owner can
+    # report from here and its controls can be measured.
+    from .wallbox_diagnosis import WallboxDiagnosisRunner
 
-    runner = DeviceDiagnosisRunner(hass, entry, wallbox_builder(entry), wallbox_summary)
+    runner = WallboxDiagnosisRunner(hass, entry)
     entry.runtime_data.diagnosis = runner
     entry.async_on_unload(runner.async_shutdown)
+    await runner.async_load_ledger()
     _async_preview_notice(hass)
     await hass.config_entries.async_forward_entry_setups(entry, WALLBOX_PLATFORMS)
     return True

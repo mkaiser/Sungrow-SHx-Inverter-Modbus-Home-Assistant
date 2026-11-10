@@ -137,12 +137,18 @@ address speaks Modbus only inside TLS on 516, with no port 502. The config
 flow's sweep therefore also looks on 516 and asks what answers there over TLS
 at unit 248 (`_async_probe_wallbox`: a model name, then its own serial). A
 wallbox found that way is an **entry of its own** (`CONF_KIND` is
-`KIND_WALLBOX`): one coordinator, the sensor and binary sensor platforms, no
-inverter, no diagnosis, no options. Its device and unique ids are built from the
+`KIND_WALLBOX`): one coordinator, its readings on the sensor and binary sensor
+platforms, no inverter. Its options are only the wallbox capability test's leave
+and cap and the diagnosis's testimony. Its device and unique ids are built from the
 wallbox's **own** serial, so it is a different device from the same wallbox
 read through an inverter entry's `wallbox_host`; the search offers it either
 way, and found again at another address the entry follows it. It has a
-read-only diagnosis of its own (`device_diagnosis.py`).
+diagnosis and a capability test of its own: `wallbox_diagnosis.WallboxDiagnosisRunner`
+is the inverter's `DiagnosisRunner` with only what assumes an inverter replaced
+(the read is `device_diagnosis.wallbox_builder`; `inverter_tests` is False, so
+auto repeat waits only for the wallbox's checks), so the wallbox's port,
+snapshot, ledger and plausibility are the same code an inverter entry uses for
+its wallbox. A `wallbox_host` on an inverter entry is never moved onto one.
 
 The sweep also asks **unit 247** on every open port 502-505, and over TLS on
 516 where no wallbox answered there: an iHomeManager (type code 0x072A) or a

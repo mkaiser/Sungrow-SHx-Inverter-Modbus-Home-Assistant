@@ -6,7 +6,7 @@
       "wrong_device": "That address answers as a different inverter ({model}), not the one behind “{title}”. Nothing was changed. Each inverter keeps its own entry; to add that one, use Add integration.",
       "connection_unchanged": "That is the connection this entry already uses. Nothing was changed.",
       "connection_moved": "“{title}” now uses the new connection. It has been reloaded; its entities, their history and its settings are unchanged.",
-      "wallbox_entry": "This is a wallbox read at its own address. It has no settings: to follow it to a new address, search your network again and pick it; the entry finds it by its serial.",
+      "wallbox_entry": "This is a wallbox read at its own address, and its address is not changed here: to follow it to a new address, search your network again and pick it; the entry finds it by its serial. Its capability test and diagnosis settings are under **Configure**.",
       "unit_247_entry": "This entry only runs the diagnosis of an iHomeManager or a Sungrow Logger. It measures nothing and has no settings. If the device moves to another address or port, search your network again and add it there."
     },
     "error": {
@@ -1590,6 +1590,38 @@
       "entity_ids_modern": {
         "title": "Move to device-scoped entity IDs",
         "description": "The entities take IDs named after this device, such as `sensor.sh10rt_total_pv_input_power`. Their history and statistics move with them.\n\n{changes}{status}\n\nNothing is copied and nothing is deleted. Names, areas and other settings you gave the entities stay with them. Dashboards, automations and scripts that use the old IDs are not rewritten, so check them afterwards.\n\nYou can move back here at any time."
+      },
+      "wallbox": {
+        "title": "Wallbox settings",
+        "description": "A wallbox read at its own address. To follow it to a new address, search your network again and pick it; the entry finds it by its serial.",
+        "sections": {
+          "capability_test": {
+            "name": "What the wallbox capability test may do",
+            "description": "An extended test, started on the device page with \"Diagnosis: start\", writes the wallbox's settings, reads each one back, watches what the car draws and puts your value back. It writes nothing until you switch it on here.",
+            "data": {
+              "capability_test_wallbox": "May it write to the wallbox, with a car charging?",
+              "wallbox_max_amps": "The highest charging current the wallbox test may offer"
+            },
+            "data_description": {
+              "capability_test_wallbox": "Off until you switch it on. With this on, the test writes this wallbox's output current, start/stop, enable, phase and mileage settings, reads each back, watches what the car draws and puts every original value back. **A charge in progress is interrupted**: it is stopped and started again, paused below 6 A and the phase is switched with the charge stopped first. The wallbox is also left without any read for 75 seconds, to see what current it falls back to. The checks wait for a car to charge, so a run is a few minutes of a charging session, repeated every 15 minutes in *Extended test (auto repeat)* until each question has an answer.",
+              "wallbox_max_amps": "The most current any wallbox test may offer a car, never more than the wallbox's own rating. Left empty it is 10 A, and the checks that go beyond that wait: an offer below the 6 A minimum, an offer above the rating, and the silence test, which needs a cap no higher than the setting your wallbox had. Set it to what your installation and your car can take."
+            }
+          },
+          "diagnosis": {
+            "name": "Contribute a wallbox diagnosis",
+            "description": "Everything below is optional. To run the diagnosis, choose \"Read-only\" in \"Diagnosis: mode\" on the device page and press \"Diagnosis: start\": it reads and never writes, and replaces the serial number with a stand-in.",
+            "data": {
+              "reporter": "Your name or handle",
+              "diagnosis_comment": "Anything else worth knowing",
+              "publish_address": "May the last two octets of the address be published?"
+            },
+            "data_description": {
+              "reporter": "Credited in the published reading, and who gets asked if a row raises a question. Leave empty to contribute anonymously.",
+              "diagnosis_comment": "Anything unusual about the installation: how the wallbox is wired, another charger controlling it (evcc, a cloud app), a firmware update you remember.",
+              "publish_address": "On, and yours to turn off before you submit. Only the last two octets ever reach the document — never the third, which is what would identify your network — and clear this and it reads xxx.xxx instead. What it buys is telling several readings from one house apart: a master, a slave and two dongles otherwise produce four files that look alike."
+            }
+          }
+        }
       }
     },
     "error": {
@@ -1603,7 +1635,6 @@
     },
     "abort": {
       "devices_mode_not_offered": "Setting up sensors and controls is not in this release. This alpha creates diagnostics-only entries; start again and choose **Perform the device diagnosis**.",
-      "wallbox_entry": "This is a wallbox read at its own address. It has no settings: to follow it to a new address, search your network again and pick it; the entry finds it by its serial.",
       "unit_247_entry": "This entry only runs the diagnosis of an iHomeManager or a Sungrow Logger. It measures nothing and has no settings. If the device moves to another address or port, search your network again and add it there."
     }
   },

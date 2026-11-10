@@ -686,3 +686,12 @@ device-ihomemanager, device-logger.
 *Diagnosis: start* on the standalone AC22E-01 entry in the dev Home Assistant read 32 values and
 published the stand-in the committed wallbox documents carry, address withheld. The wallbox was
 idle, so the document adds nothing to them and is not ingested. Updated nothing else.
+
+## [2026-11-10] changed | the standalone wallbox entry gets its own capability test
+
+The maintainer decided that a wallbox entry at its own address has its own
+capability test (leave and cap in its options, its own snapshot, ledger,
+plausibility and auto repeat), that no `wallbox_host` is moved onto such an
+entry since wallbox support is new, and that the search should show which
+inverters sit behind a Logger (how a Logger is handled beyond that is open).
+Not run on hardware yet. Updated device-wallbox.

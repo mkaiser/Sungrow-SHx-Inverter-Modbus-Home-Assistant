@@ -47,7 +47,10 @@ async def async_setup_entry(
 ) -> None:
     """Set up the mode flags this device actually has."""
     runtime_data = entry.runtime_data
-    if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
+    if (
+        runtime_data.is_wallbox_only
+        or entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS
+    ):
         # A diagnostics-only entry has no controls; its one switch is what a
         # single extended run leaves out, and only a hybrid has a capability
         # test.

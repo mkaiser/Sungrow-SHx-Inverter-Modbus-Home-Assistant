@@ -38,6 +38,7 @@ from homeassistant.helpers.selector import (
     SelectSelectorConfig,
     SelectSelectorMode,
     TextSelector,
+    TextSelectorConfig,
 )
 from homeassistant.util import slugify
 from sungrow_modbus import (
@@ -95,6 +96,7 @@ from .const import (
     CONF_CAPABILITY_TEST_PV_CUT,
     CONF_CAPABILITY_TEST_RESTART,
     CONF_CAPABILITY_TEST_WALLBOX,
+    CONF_DIAGNOSIS_COMMENT,
     CONF_DIAGNOSIS_OTHER_INVERTER,
     CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL,
     CONF_DIAGNOSIS_TRANSPORT,
@@ -107,7 +109,9 @@ from .const import (
     CONF_MODE,
     CONF_NETWORK,
     CONF_PERMISSIONS,
+    CONF_PUBLISH_ADDRESS,
     CONF_REGISTER_DUMP,
+    CONF_REPORTER,
     CONF_TLS,
     CONF_UNIT_ID,
     CONF_WALLBOX_HOST,
@@ -1645,7 +1649,7 @@ class SungrowOptionsFlow(OptionsFlow):
         merge below reads section by section rather than flattening.
         """
         if self.config_entry.data.get(CONF_KIND) == KIND_WALLBOX:
-            return self.async_abort(reason="wallbox_entry")
+            return await self.async_step_wallbox()
         if self.config_entry.data.get(CONF_KIND) in UNIT_247_KINDS:
             return self.async_abort(reason="unit_247_entry")
         errors: dict[str, str] = {}
@@ -2018,6 +2022,85 @@ class SungrowOptionsFlow(OptionsFlow):
                 }
             ),
             {"collapsed": True},
+        )
+
+    async def async_step_wallbox(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Set what a wallbox at its own address may be tested with, and its report.
+
+        No polling, permissions or ids: a wallbox entry has one coordinator and
+        writes nothing outside its capability test. What the test may do is the
+        same leave and cap an inverter entry gives its wallbox, so one procedure
+        reads both (`wallbox_capability_test.run_options`).
+        """
+        if user_input is not None:
+            tests = user_input[SECTION_CAPABILITY_TEST]
+            options: dict[str, Any] = {
+                **self.config_entry.options,
+                **user_input[SECTION_DIAGNOSIS],
+                **tests,
+            }
+            if CONF_WALLBOX_MAX_AMPS not in tests:
+                # An optional field left empty is a cap taken back.
+                options.pop(CONF_WALLBOX_MAX_AMPS, None)
+            return self.async_create_entry(data=options)
+        current = self.config_entry.options
+        return self.async_show_form(
+            step_id="wallbox",
+            data_schema=probatio.Schema(
+                {
+                    probatio.Required(SECTION_CAPABILITY_TEST): section(
+                        probatio.Schema(
+                            {
+                                probatio.Required(
+                                    CONF_CAPABILITY_TEST_WALLBOX,
+                                    default=current.get(
+                                        CONF_CAPABILITY_TEST_WALLBOX,
+                                        DEFAULT_CAPABILITY_TEST_WALLBOX,
+                                    ),
+                                ): BooleanSelector(),
+                                probatio.Optional(
+                                    CONF_WALLBOX_MAX_AMPS,
+                                    description={
+                                        "suggested_value": current.get(
+                                            CONF_WALLBOX_MAX_AMPS
+                                        )
+                                    },
+                                ): NumberSelector(
+                                    NumberSelectorConfig(
+                                        mode=NumberSelectorMode.BOX,
+                                        min=6,
+                                        max=32,
+                                        step=1,
+                                        unit_of_measurement="A",
+                                    )
+                                ),
+                            }
+                        ),
+                        {"collapsed": False},
+                    ),
+                    probatio.Required(SECTION_DIAGNOSIS): section(
+                        probatio.Schema(
+                            {
+                                probatio.Optional(
+                                    CONF_REPORTER,
+                                    default=current.get(CONF_REPORTER, ""),
+                                ): TextSelector(),
+                                probatio.Optional(
+                                    CONF_DIAGNOSIS_COMMENT,
+                                    default=current.get(CONF_DIAGNOSIS_COMMENT, ""),
+                                ): TextSelector(TextSelectorConfig(multiline=True)),
+                                probatio.Required(
+                                    CONF_PUBLISH_ADDRESS,
+                                    default=current.get(CONF_PUBLISH_ADDRESS, True),
+                                ): BooleanSelector(),
+                            }
+                        ),
+                        {"collapsed": True},
+                    ),
+                }
+            ),
         )
 
     def _entity_id_style(self) -> str:

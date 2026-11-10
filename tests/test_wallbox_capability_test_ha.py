@@ -310,10 +310,15 @@ async def test_clearing_the_history_forgets_the_wallbox_runs(
 
 def test_a_path_is_named_by_where_the_wallbox_is_read() -> None:
     class Entry:
+        data: ClassVar[dict[str, Any]] = {}
         options: ClassVar[dict[str, Any]] = {}
 
     assert wbt.transport_of(Entry()) == "dongle"  # type: ignore[arg-type]
     Entry.options = {"wallbox_host": "wallbox.local"}
+    assert wbt.transport_of(Entry()) == "tls"  # type: ignore[arg-type]
+    # A wallbox entry of its own is always at its own address.
+    Entry.options = {}
+    Entry.data = {"kind": "wallbox"}
     assert wbt.transport_of(Entry()) == "tls"  # type: ignore[arg-type]
 
 

@@ -35,11 +35,13 @@ from sungrow_modbus.wallbox import capability_test as wct, ledger, plausibility
 
 from .const import (
     CONF_CAPABILITY_TEST_WALLBOX,
+    CONF_KIND,
     CONF_WALLBOX_HOST,
     CONF_WALLBOX_MAX_AMPS,
     DEFAULT_CAPABILITY_TEST_WALLBOX,
     DEFAULT_WALLBOX_MAX_AMPS,
     DOMAIN,
+    KIND_WALLBOX,
 )
 
 if TYPE_CHECKING:
@@ -129,7 +131,12 @@ def consented(entry: SungrowConfigEntry) -> bool:
 
 
 def transport_of(entry: SungrowConfigEntry) -> str:
-    """Name the path to the wallbox: its own address, or the dongle."""
+    """Name the path to the wallbox: its own address, or the dongle.
+
+    A wallbox entry of its own is always at its own address.
+    """
+    if entry.data.get(CONF_KIND) == KIND_WALLBOX:
+        return "tls"
     return "tls" if entry.options.get(CONF_WALLBOX_HOST) else "dongle"
 
 

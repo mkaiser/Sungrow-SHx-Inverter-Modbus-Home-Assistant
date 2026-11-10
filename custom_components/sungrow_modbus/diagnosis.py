@@ -77,7 +77,7 @@ from .const import (
     DOMAIN,
     LINK_VALID,
 )
-from .continuous import ContinuousCapabilityTest
+from .continuous import INTERVAL, ContinuousCapabilityTest
 from .wallbox_capability_test import (
     PLAUSIBILITY_SAVE_DELAY as WALLBOX_PLAUSIBILITY_SAVE_DELAY,
     WallboxTestRunner,
@@ -189,6 +189,14 @@ class DiagnosisState:
 
 class DiagnosisRunner:
     """Owns one entry's diagnosis: starts it, tracks it, announces it."""
+
+    #: Whether this entry has an inverter whose checks auto repeat waits for
+    #: and whose load the wallbox's readings are compared with. False on a
+    #: wallbox at its own address (`wallbox_diagnosis.WallboxDiagnosisRunner`).
+    inverter_tests = True
+
+    #: How far apart auto repeat starts the wallbox's runs.
+    wallbox_interval = INTERVAL
 
     def __init__(self, hass: HomeAssistant, entry: SungrowConfigEntry) -> None:
         """Prepare a runner. Nothing runs until `async_start`."""
@@ -305,7 +313,7 @@ class DiagnosisRunner:
         if all(value is None for value in reading.values()):
             return
         load: float | None = None
-        if not self.entry.runtime_data.is_string_inverter:
+        if self.inverter_tests and not self.entry.runtime_data.is_string_inverter:
             try:
                 found = self._device().field("load_power")
             except AttributeError:

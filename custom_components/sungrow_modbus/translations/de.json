@@ -6,7 +6,7 @@
       "wrong_device": "Diese Adresse meldet sich als anderer Wechselrichter ({model}), nicht als der hinter „{title}“. Es wurde nichts geändert. Jeder Wechselrichter behält seinen eigenen Eintrag; um jenen hinzuzufügen, wähle „Integration hinzufügen“.",
       "connection_unchanged": "Das ist bereits die Verbindung dieses Eintrags. Es wurde nichts geändert.",
       "connection_moved": "„{title}“ verwendet jetzt die neue Verbindung. Der Eintrag wurde neu geladen; seine Entitäten, deren Verlauf und seine Einstellungen sind unverändert.",
-      "wallbox_entry": "Das ist eine Wallbox, die unter ihrer eigenen Adresse gelesen wird. Sie hat keine Einstellungen: Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer.",
+      "wallbox_entry": "Das ist eine Wallbox, die unter ihrer eigenen Adresse gelesen wird, und ihre Adresse wird hier nicht geändert: Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer. Die Einstellungen für ihren Funktionstest und ihre Diagnose findest du unter **Konfigurieren**.",
       "unit_247_entry": "Dieser Eintrag führt nur die Diagnose eines iHomeManagers oder eines Sungrow-Loggers aus. Er misst nichts und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu."
     },
     "error": {
@@ -1590,6 +1590,38 @@
       "entity_ids_modern": {
         "title": "Zu gerätebezogenen Entitäts-IDs wechseln",
         "description": "Die Entitäten erhalten IDs, die nach diesem Gerät benannt sind, etwa `sensor.sh10rt_total_pv_input_power`. Ihr Verlauf und ihre Statistiken ziehen mit.\n\n{changes}{status}\n\nEs wird nichts kopiert und nichts gelöscht. Namen, Bereiche und andere Einstellungen, die du den Entitäten gegeben hast, bleiben bei ihnen. Dashboards, Automationen und Skripte, die die alten IDs verwenden, werden nicht umgeschrieben, prüfe sie also danach.\n\nDu kannst jederzeit hierher zurückwechseln."
+      },
+      "wallbox": {
+        "title": "Wallbox-Einstellungen",
+        "description": "Eine Wallbox, die unter ihrer eigenen Adresse gelesen wird. Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer.",
+        "sections": {
+          "capability_test": {
+            "name": "Was der Wallbox-Funktionstest darf",
+            "description": "Ein erweiterter Test, auf der Geräteseite mit „Diagnose: starten“ gestartet, schreibt die Einstellungen der Wallbox, liest jede zurück, beobachtet, was das Auto zieht, und setzt deinen Wert zurück. Er schreibt nichts, bis du ihn hier einschaltest.",
+            "data": {
+              "capability_test_wallbox": "Darf er mit einem ladenden Auto auf die Wallbox schreiben?",
+              "wallbox_max_amps": "Der höchste Ladestrom, den der Wallbox-Test anbieten darf"
+            },
+            "data_description": {
+              "capability_test_wallbox": "Aus, bis du es einschaltest. Mit dieser Einstellung schreibt der Test den Ausgangsstrom, Start/Stopp, Freigabe, Phasen und Kilometer pro kWh dieser Wallbox, liest jeden Wert zurück, beobachtet, was das Auto zieht, und setzt jeden ursprünglichen Wert zurück. **Eine laufende Ladung wird unterbrochen**: Sie wird gestoppt und wieder gestartet, unter 6 A pausiert, und die Phase wird umgeschaltet, nachdem die Ladung gestoppt wurde. Außerdem bleibt die Wallbox 75 Sekunden ohne jeden Lesezugriff, um zu sehen, auf welchen Strom sie zurückfällt. Die Prüfungen warten auf ein ladendes Auto; ein Lauf sind also einige Minuten einer Ladung, in *Erweiterter Test (automatisch wiederholen)* alle 15 Minuten wiederholt, bis jede Frage eine Antwort hat.",
+              "wallbox_max_amps": "Der höchste Strom, den ein Wallbox-Test einem Auto anbieten darf, nie mehr als die Nennleistung der Wallbox. Leer sind es 10 A, und die Prüfungen darüber hinaus warten: ein Angebot unter dem Minimum von 6 A, ein Angebot über der Nennleistung und der Stille-Test, der eine Grenze nicht über der Einstellung braucht, die deine Wallbox hatte. Stelle ein, was deine Installation und dein Auto vertragen."
+            }
+          },
+          "diagnosis": {
+            "name": "Eine Wallbox-Diagnose beisteuern",
+            "description": "Alles unten ist optional. Um die Diagnose auszuführen, wähle auf der Geräteseite in „Diagnose: Modus“ „Nur lesend“ und drücke „Diagnose: starten“: Sie liest nur, schreibt nie und ersetzt die Seriennummer durch einen Platzhalter.",
+            "data": {
+              "reporter": "Dein Name oder Pseudonym",
+              "diagnosis_comment": "Sonst noch etwas Wissenswertes",
+              "publish_address": "Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?"
+            },
+            "data_description": {
+              "reporter": "Wird in der veröffentlichten Messung genannt und gefragt, wenn eine Zeile Fragen aufwirft. Leer lassen, um anonym beizutragen.",
+              "diagnosis_comment": "Alles Ungewöhnliche an der Installation: wie die Wallbox angeschlossen ist, ein anderes Programm, das sie steuert (evcc, eine Cloud-App), ein Firmware-Update, an das du dich erinnerst.",
+              "publish_address": "An, und du kannst es vor dem Absenden ausschalten. Nur die letzten zwei Oktette gelangen je in das Dokument – nie das dritte, das dein Netzwerk identifizieren würde –, und wenn du das deaktivierst, steht stattdessen xxx.xxx. Der Nutzen: Mehrere Messungen aus einem Haus lassen sich unterscheiden – ein Master, ein Slave und zwei Dongles ergeben sonst vier gleich aussehende Dateien."
+            }
+          }
+        }
       }
     },
     "error": {
@@ -1603,7 +1635,6 @@
     },
     "abort": {
       "devices_mode_not_offered": "Sensoren und Steuerungen einzurichten ist in dieser Version nicht enthalten. Diese Alpha legt nur Einträge für die Diagnose an; beginne erneut und wähle **Geräte-Diagnose durchführen**.",
-      "wallbox_entry": "Das ist eine Wallbox, die unter ihrer eigenen Adresse gelesen wird. Sie hat keine Einstellungen: Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer.",
       "unit_247_entry": "Dieser Eintrag führt nur die Diagnose eines iHomeManagers oder eines Sungrow-Loggers aus. Er misst nichts und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu."
     }
   },

@@ -75,20 +75,26 @@ async def async_setup_entry(
         )
         return
 
-    # A wallbox entry has the wallbox's readings and nothing else: no
-    # inverter to say how it is reached, no diagnosis.
+    # A wallbox entry has the wallbox's readings, its diagnosis and its
+    # capability test: no inverter to say how it is reached.
     if runtime_data.is_wallbox_only:
         assert runtime_data.wallbox is not None
         async_add_entities(
             SungrowWallboxSensor(runtime_data.wallbox, description)
             for description in WALLBOX_DESCRIPTIONS
         )
-        # And the read-only diagnosis's three, so its owner can report it.
+        # And the diagnosis's sensors, the capability test's beside them.
         async_add_entities(
             [
                 DiagnosisProgressSensor(runtime_data),
                 DiagnosisStepSensor(runtime_data),
                 DiagnosisResultSensor(runtime_data),
+                DiagnosisNextStartSensor(runtime_data),
+                CapabilityTestStatusSensor(runtime_data),
+                *(
+                    CapabilityTestCountSensor(runtime_data, bucket)
+                    for bucket in ledger.BUCKETS
+                ),
             ]
         )
         return
