@@ -271,6 +271,16 @@ NO_WINDOW = "no probe value can show a decade error here"
 #: repeat never waits for it (`ledger.NEEDS_LEAVE`).
 UNCURABLE = "which waiting cannot change"
 
+#: Why a readback through a WiNet-S that showed the old value settles nothing:
+#: the dongle answers with the word it held before it forwarded the write. No
+#: moment of the day makes that answer fresh, so auto repeat does not wait for
+#: it. `readback` records it so, and `ledger.fold` reads kept runs the same way.
+STALE_READBACK = (
+    "a WiNet-S answered with the value it held before the write, which says "
+    "nothing about whether the register took it; only a readback over a "
+    f"cable can tell, {UNCURABLE}"
+)
+
 #: Which side a finding implicates, when it can be told.
 LIBRARY = "library"
 DEVICE = "device"

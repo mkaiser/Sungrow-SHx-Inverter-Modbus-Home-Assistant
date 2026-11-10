@@ -75,7 +75,12 @@ from sungrow_modbus.capability_test import (
     soc_pair_order,
     visibility,
 )
-from sungrow_modbus.capability_test.procedure import _admissible
+from sungrow_modbus.capability_test.procedure import (
+    STALE_READBACK,
+    UNCHANGED,
+    UNCURABLE,
+    _admissible,
+)
 
 sys.path.insert(
     0, str(Path(__file__).resolve().parents[1] / "scripts" / "generate" / "tables")
@@ -543,6 +548,42 @@ async def test_a_clamped_register_is_not_reported_as_a_match(
     withslope = await run._slope(probe, first, (10.0, 10000.0), [700.0])
     assert withslope.verdict == CLAMPED
     assert withslope.slope == pytest.approx(0.0)
+
+
+@pytest.mark.parametrize(
+    ("direct", "verdict"), [(True, UNCHANGED), (False, INCONCLUSIVE)]
+)
+async def test_an_old_value_is_evidence_only_over_a_cable(
+    sungrow_unit: MockModbusUnit, direct: bool, verdict: str
+) -> None:
+    """Through a WiNet-S, "kept its old value" is the dongle's cache talking.
+
+    A dongle answers with the word it held before it forwarded the write, so
+    a register that took the write reads back exactly like one that did not.
+    At gerd's, battery_max_charge_power, battery_max_discharge_power and
+    battery_max_soc were counted as not supported on this alone, while the
+    same runs watched the inverter obey battery_max_soc. Over a cable the old
+    word is the register's own, and it is a refusal.
+    """
+
+    def keep(event: Any) -> None:
+        if event.address == CHARGE_ADDRESS:
+            sungrow_unit.holding[event.address] = 500
+
+    sungrow_unit.on_write(keep)
+    run = _runner(sungrow_unit)
+    run.direct = direct
+
+    result = await run._probe_once(_probe(), 700.0, (10.0, 10000.0))
+
+    assert result.verdict == verdict
+    assert result.raw_word == 500
+    if direct:
+        assert run.code == 3
+    else:
+        assert result.detail == STALE_READBACK
+        assert UNCURABLE in STALE_READBACK, "auto repeat must not wait for it"
+        assert run.code == 0
 
 
 async def test_a_correct_device_matches_on_both_legs(

@@ -23,7 +23,9 @@ from sungrow_modbus.capability_test.procedure import (
     OUT_OF_TIME,
     REFUSED,
     SCALED,
+    STALE_READBACK,
     STOPPED,
+    UNCHANGED,
 )
 
 EFFECTS = Path(ledger.__file__).with_name("effects.py")
@@ -445,3 +447,36 @@ def test_the_fold_lists_only_restores_that_did_something() -> None:
     assert (
         ledger.unfold(folded, read_at=None)[0]["block"]["restored"] == block["restored"]
     )
+
+
+@pytest.mark.parametrize("direct", [True, False])
+def test_a_kept_dongle_readback_of_the_old_value_settles_nothing(
+    direct: bool,
+) -> None:
+    """A run kept before the probe knew better is read as the probe now records it.
+
+    Through a WiNet-S the old value is the dongle's cache, so the check stays
+    missing, counted inconclusive rather than not supported, and auto repeat
+    does not wait for it: no moment of the day makes the dongle's answer
+    fresh. Over a cable the old value is the register refusing, and settles it.
+    """
+    block = _block(
+        readback=[_probe("battery_max_charge_power", UNCHANGED)], direct=direct
+    )
+
+    folded = ledger.fold([_run("2026-11-10T09:54:00+01:00", block)])
+
+    row = folded["summary"]["battery_max_charge_power"]
+    missing = {item["name"]: item for item in folded["still_missing"]}
+    if direct:
+        assert row["verdict"] == UNCHANGED and row["established"]
+        assert ledger.counts(folded)["not_supported"] == 1
+        assert "battery_max_charge_power" not in missing
+    else:
+        assert row["verdict"] == INCONCLUSIVE and not row["established"]
+        assert ledger.counts(folded)["not_supported"] == 0
+        assert ledger.counts(folded)["inconclusive"] == 1
+        assert missing["battery_max_charge_power"]["why"] == STALE_READBACK
+        assert "battery_max_charge_power" not in dict(ledger.awaited(folded))
+        # The run itself is kept as it was recorded.
+        assert folded["runs"][0]["readback"][0]["verdict"] == UNCHANGED

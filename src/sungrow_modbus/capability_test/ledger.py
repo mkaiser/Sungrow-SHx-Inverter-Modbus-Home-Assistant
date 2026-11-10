@@ -68,6 +68,7 @@ from .procedure import (
     SLOPE_WRONG,
     SOC_CEILING_FLOOR,
     SOC_CHARGE_CEILING,
+    STALE_READBACK,
     STOPPED,
     STOPPED_W,
     UNCHANGED,
@@ -206,6 +207,18 @@ def _worst_code(codes: Sequence[int]) -> int:
     return max(known, key=SEVERITY.index) if known else 1
 
 
+def _through_dongle(row: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Return a readback row of a run through a WiNet-S, as far as it is evidence.
+
+    A dongle answers with the word it held before it forwarded a write, so
+    its "kept its old value" settles nothing. A run kept before the probe
+    recorded it so is read the way the probe now records it.
+    """
+    if row.get("verdict") != UNCHANGED:
+        return row
+    return {**row, "verdict": INCONCLUSIVE, "detail": STALE_READBACK}
+
+
 def fold(
     runs: Sequence[Mapping[str, Any]],
     *,
@@ -240,8 +253,11 @@ def fold(
     already_original = 0
     for index, run in enumerate(runs):
         block = run["block"]
+        direct = (block.get("conditions") or {}).get("direct_connection") is True
         for row in block.get("readback") or []:
-            readback.setdefault(str(row.get("field")), []).append((index, row))
+            readback.setdefault(str(row.get("field")), []).append(
+                (index, row if direct else _through_dongle(row))
+            )
         for row in block.get("effects") or []:
             effects.setdefault(str(row.get("check")), []).append((index, row))
         for row in block.get("restored") or []:

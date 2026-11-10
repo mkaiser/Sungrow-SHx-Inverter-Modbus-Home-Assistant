@@ -15,6 +15,7 @@ from .procedure import (
     DEVICE,
     DROPPED,
     EXPORT_MODE,
+    INCONCLUSIVE,
     LIBRARY,
     MATCH,
     MODE_ON,
@@ -23,6 +24,7 @@ from .procedure import (
     SCALED,
     SKIPPED,
     SLOPE_WRONG,
+    STALE_READBACK,
     STOPPED,
     UNCHANGED,
     UNSAFE_STATE,
@@ -129,6 +131,15 @@ class ReadbackSteps(PreflightSteps):
 
         held = self.snapshot.raw.get(probe.field)
         if raw == held and expected != held:
+            if self.direct is not True:
+                # A WiNet-S answers with the word it held before it forwarded
+                # the write: its old value says nothing about the register.
+                return blank._replace(
+                    library_read=library_read,
+                    raw_word=raw,
+                    verdict=INCONCLUSIVE,
+                    detail=STALE_READBACK,
+                )
             self._worst(3)
             return blank._replace(
                 library_read=library_read, raw_word=raw, verdict=UNCHANGED

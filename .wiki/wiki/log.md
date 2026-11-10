@@ -695,3 +695,13 @@ plausibility and auto repeat), that no `wallbox_host` is moved onto such an
 entry since wallbox support is new, and that the search should show which
 inverters sit behind a Logger (how a Logger is handled beyond that is open).
 Not run on hardware yet. Updated device-wallbox.
+
+## [2026-11-10] changed | a dongle's "kept its old value" settles nothing
+
+Auto repeat at gerd's through his WiNet-S counted battery_max_charge_power,
+battery_max_discharge_power and battery_max_soc as not supported on one
+readback each that showed the old value, while the same runs watched the
+inverter obey battery_max_soc. The capability test now records such a
+readback as inconclusive and auto repeat does not wait for it, as
+device-winet-s says of legs A and B; kept runs are read the same way. The
+runs are not ingested. Updated nothing else.
