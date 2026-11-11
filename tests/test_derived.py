@@ -9,6 +9,8 @@ number has to match what the entity showed yesterday.
 
 from __future__ import annotations
 
+import contextlib
+
 from modbus_connection.mock import MockModbusConnection
 import pytest
 
@@ -154,3 +156,97 @@ async def test_consumption_is_generation_less_what_left(
 ) -> None:
     # 30 made, 10 exported, 5 imported, 8 stored, 4 released.
     assert inverter.derived.daily_consumed_energy == pytest.approx(21.0)
+
+
+async def test_self_consumption_is_what_the_balance_leaves() -> None:
+    """PV + battery discharge - export - load: 6000 + 1500 - 2500 - 4800."""
+    pv_low, pv_high = _int32(6000)
+    load_low, load_high = _int32(4800)
+    device = await _inverter(
+        {5016: pv_low, 5017: pv_high, 13007: load_low, 13008: load_high}
+    )
+    assert device.derived.inverter_self_consumption == 200
+
+
+async def test_self_consumption_counts_charge_and_import_the_other_way() -> None:
+    """Charging 800 W and importing 1200 W: 0 - 800 + 1200 - 300."""
+    battery_low, battery_high = _int32(-800)
+    grid_low, grid_high = _int32(-1200)
+    load_low, load_high = _int32(300)
+    device = await _inverter(
+        {
+            5016: 0,
+            5017: 0,
+            5213: battery_low,
+            5214: battery_high,
+            13009: grid_low,
+            13010: grid_high,
+            13007: load_low,
+            13008: load_high,
+        }
+    )
+    assert device.derived.inverter_self_consumption == 100
+
+
+async def test_self_consumption_is_unknown_when_an_input_is() -> None:
+    """The load's "unavailable" word: no balance, not a balance without it."""
+    pv_low, pv_high = _int32(6000)
+    load_low, load_high = _int32(2147483647)
+    device = await _inverter(
+        {5016: pv_low, 5017: pv_high, 13007: load_low, 13008: load_high}
+    )
+    assert device.derived.inverter_self_consumption is None
+
+
+async def _without_5214(overrides: dict[int, int]) -> SungrowInverter:
+    """Return an inverter whose 5214 is refused, as through an SH8.0RS's WiNet-S."""
+    from modbus_connection import IllegalDataAddressError
+
+    unit = MockModbusConnection().for_unit(1)
+    unit.input = {**INPUT, **overrides}
+    unit.holding = dict(HOLDING)
+    unit.fail_read(
+        5213, IllegalDataAddressError("exception 0x02"), register_type="input"
+    )
+    device = SungrowInverter(unit)
+    for tier in TIER_COMPONENTS:
+        with contextlib.suppress(IllegalDataAddressError):
+            await device.async_update_tier(tier)
+    assert device.field("battery_power") is None
+    return device
+
+
+#: PV 6000 W, export 2500 W (the fixture's), load 4000 W.
+_BALANCE = {
+    5016: _int32(6000)[0],
+    5017: _int32(6000)[1],
+    13007: _int32(4000)[0],
+    13008: _int32(4000)[1],
+}
+
+
+@pytest.mark.parametrize(
+    ("flow", "magnitude", "expected"),
+    [
+        # Discharging 700 W: 6000 + 700 - 2500 - 4000.
+        (0x04, 700, 200),
+        # Charging 300 W: 6000 - 300 - 2500 - 4000.
+        (0x02, 300, -800),
+        # Idle: no bit, no power.
+        (0x01, 0, -500),
+        # A magnitude with no direction, or both directions: no sign to give.
+        (0x01, 700, None),
+        (0x06, 700, None),
+    ],
+)
+async def test_where_5214_is_refused_13022_takes_its_sign_from_13001(
+    flow: int, magnitude: int, expected: int | None
+) -> None:
+    device = await _without_5214({**_BALANCE, 13000: flow, 13021: magnitude})
+    assert device.derived.inverter_self_consumption == expected
+
+
+async def test_5214_wins_where_it_answers() -> None:
+    """13022 and its bits say charging; 5214's 1500 W discharge is used."""
+    device = await _inverter({**_BALANCE, 13000: 0x02, 13021: 900})
+    assert device.derived.inverter_self_consumption == 6000 + 1500 - 2500 - 4000

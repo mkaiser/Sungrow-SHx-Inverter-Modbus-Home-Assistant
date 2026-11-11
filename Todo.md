@@ -63,18 +63,15 @@ stays unique.
    low SoC*, on P020 and P023. Still unmeasured: whether the inverter resets
    it by itself later or on PV (#444 reports 0xAA to 0x55 after ~20 min),
    and P022 or any other firmware.
-2. **Inverter self consumption as a sensor.** What the inverter itself
-   uses and loses in conversion, by energy balance: PV + battery discharge
-   + grid import - house load - export - battery charge (W, `measurement`).
-   Tried as a template in the YAML package (#626, unique id
-   `sg_inverter_self_consumption`, with a one-minute mean beside it) and
-   never shipped there. Build it in `derived`, from the registers its inputs
-   come from rather than from other entities, with `depends_on` so a missing
-   input makes it unavailable, not a plausible number. Open: whether it
-   adopts the #626 id, which the maintainer's own recorder has statistics
-   for, though `doc/legacy_entity_map.json` does not list it; whether the
-   instantaneous value is too noisy to show without the mean (the inputs are
-   not read in one block); and its energy counterpart.
+2. **The inverter's own consumption, on hardware.** Built: *Inverter self
+   consumption (estimated)* (`Derived.inverter_self_consumption`, PV +
+   battery - export - load, shown as a one-minute time-weighted mean, no
+   legacy id: #626 never shipped). The battery term is 5214 where it
+   answers, else 13022 signed by 13001's bits (as evcc), so the sensor
+   exists where 5214 is refused (#655). Left: look at it on the
+   maintainer's SH10RT by day and night, whether the mean is steady enough
+   and plausible (tens of watts at night); the 13022 path on a house that
+   refuses 5214; its energy counterpart.
 
 ## Battery
 
@@ -197,18 +194,35 @@ Whether to build them is the maintainer's call.
       `forced_startup: true`) has not run on an inverter yet: one in
       low-SoC standby, after dark. The SH-RT's factory 0 goes back as
       0x55, the one `RESTORE_EQUIVALENT` (AGENTS.md).
-   2. **The new checks on hardware** (built, uncommitted on 2026-11-09, not
-      run on an inverter; `doc/capability_tests.md`): the write paths
-      (`capability_test/writepath.py`: no-op writes of backup mode, load
-      control and the weekend enable; window 2 read back with the schedule
-      off; each EMS option once; each number a step above its maximum), the
-      two start thresholds as behavioural checks, 13088 recorded during the
-      export check, a check established by day measured once more at night
-      (`ledger.TWO_MOMENTS`), and the readings' plausibility checks fed by
-      auto repeat (`capability_test/plausibility.py`, document schema 26).
-      One auto-repeat collection at the maintainer's SH10RT, a day and a
-      night, then ingest. The wallbox's tests are planned in
-      `plans/wallbox_capability_tests.md`.
+   2. **The new checks on hardware** (`doc/capability_tests.md`). First run
+      on 2026-11-08 to 11-10, at peter_sm (P023, cable, five runs) and
+      ra1k_0 (P071, WiNet-S, one run); ingested. Ran:
+      - the write paths (backup mode, load control, weekend enable): taken at
+        both;
+      - window 2 read back with the schedule off: taken at peter_sm; not at
+        ra1k_0 (its schedule is on);
+      - each EMS option: taken at ra1k_0; at peter_sm mode 3 lost the
+        connection in two runs of three;
+      - each number a step above its maximum: 13058 and 13059 refuse on P023,
+        33048 on P071; P023 stores the rest (not enforced), and through the
+        dongle whether it stored them cannot be read;
+      - the discharging start threshold: confirmed at peter_sm; skipped at
+        ra1k_0 (33149 did not answer the run's probe);
+      - 13088 beside the export check: at peter_sm it follows 13074 as a
+        share of the rating (12.5 % for 1250 W of 10 kW).
+      Not yet seen on hardware:
+      - **the charging start threshold**: needs a battery charging a few
+        hundred watts from PV;
+      - **`ledger.TWO_MOMENTS`**: a check established by day measured again
+        at night, on one firmware; needs auto repeat across a dusk;
+      - **the plausibility checks** (`capability_test/plausibility.py`): no
+        committed document carries a `plausibility` block, because they are
+        fed only by auto repeat;
+      - **anything on a WiNet-S beyond one run**, and any T-series cable.
+      The night re-check and the plausibility checks need one auto-repeat
+      collection at the maintainer's SH10RT over a day and a night, which
+      may catch a slow PV charge for the threshold too; then ingest. The
+      wallbox's tests are planned in `plans/wallbox_capability_tests.md`.
    3. **Outside the repository**: issue #786's title still says survey, and
       the repository variable `SURVEY_ISSUE` keeps its name.
    4. **Capability test runs over a day.** Home Assistant keeps every run per
@@ -392,7 +406,10 @@ Whether to build them is the maintainer's call.
     with no stand-in per block, so the files cannot say whether they
     differ. Settling it needs the masking to publish a stand-in for each
     masked block (a hash compares without revealing), and a third reading,
-    or the two owners comparing their own transcripts.
+    or the two owners comparing their own transcripts. 2026-11-11: gerd's
+    serial as iSolarCloud shows it hashes to gerd's published stand-in, so
+    21201-21206 is the serial the portal shows (checked locally, recorded
+    nowhere).
 
 ## Logger
 
@@ -456,6 +473,18 @@ Whether to build them is the maintainer's call.
     write the window in one frame or not offer it there. One run settles it,
     with only the charge window check (`--charge-window`) and then one write
     of 33213's held value on its own. No code changes before that run.
+    2026-11-11: after the other drops the next write went through at once;
+    after 33213's the next check's write dropped too, in all three runs,
+    with reads answering for 20 s in between (wiki: the 33213 query).
+21. **Battery power where 5214 is refused** (#655, #770). On ten firmwares
+    5214's sign follows 13001's bits and 13022 holds the same magnitude
+    (wiki: is battery power firmware dependent), so the self consumption's
+    fallback to 13022 is built. Never measured: a house that refuses 5214.
+    A diagnosis of #655's SH8.0RS with its firmware, or of any inverter on
+    SAPPHIRE 51.0x or with a third-party battery (#770), settles whether 5214
+    is missing by firmware and tests the fallback. Then decide whether the
+    *Battery power* entity falls back too. Not to be asked for on #655
+    (maintainer, 2026-11-11): it waits for a diagnosis that arrives.
 
 # Release
 

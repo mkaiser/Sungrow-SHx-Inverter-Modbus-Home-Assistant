@@ -471,6 +471,11 @@ def _cell(answers: list[tuple[Any, str]], write: bool) -> str:
     drop out first; what remains either agrees or is a **split**.
     """
     evidence = [(r, a) for r, a in answers if a not in (UNTESTED, NOT_FITTED)]
+    # A zero cannot tell (MPPT3 at night, a dongle's "unavailable"), so beside
+    # a reading that answered it disagrees with nothing: P071's SH20T read ✓
+    # by day and 0? by night, which is one inverter, not a split.
+    if any(a == YES for _, a in evidence):
+        evidence = [(r, a) for r, a in evidence if a != ZERO]
     if not evidence:
         if any(a == NOT_FITTED for _, a in answers):
             return MARKS[NOT_FITTED]

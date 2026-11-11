@@ -1,6 +1,6 @@
 # The entity names
 
-**336 entities** that modern mode can create (Hybrid inverter 196, SBR battery 34, Wallbox 21, SG string inverter 85).
+**337 entities** that modern mode can create (Hybrid inverter 197, SBR battery 34, Wallbox 21, SG string inverter 85).
 
 The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
@@ -37,7 +37,7 @@ end. Their ids are the YAML package's, kept so that history keyed to them
 carries on, and modern mode replaces each with something better.
 
 
-## Hybrid inverter (196)
+## Hybrid inverter (197)
 
 The inverter's own device, named after the model unless the owner named it. Ids shown for `SH10RT`.
 
@@ -262,7 +262,7 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 | Total export energy (13046) | Total exported energy | Total exported energy | Gesamt eingespeiste Energie | `sensor.sh10rt_total_exported_energy` | `sensor.total_exported_energy` | kWh |
 | Total Import Energy (13037) | Total imported energy | Total imported energy | Gesamt bezogene Energie | `sensor.sh10rt_total_imported_energy` | `sensor.total_imported_energy` | kWh |
 
-### The house (16)
+### The house (17)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -272,6 +272,7 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 | Daily direct energy consumption (13017) | Daily direct energy consumption | Daily direct energy consumption | Täglicher Direktverbrauch | `sensor.sh10rt_daily_direct_energy_consumption` | `sensor.daily_direct_energy_consumption` | kWh |
 |  |  | Direct consumption this month | Direktverbrauch diesen Monat | `sensor.sh10rt_direct_consumption_this_month` |  | kWh |
 |  |  | Direct consumption this year | Direktverbrauch dieses Jahr | `sensor.sh10rt_direct_consumption_this_year` |  | kWh |
+|  |  | Inverter self consumption (estimated) | Wechselrichter Eigenbedarf (geschätzt) | `sensor.sh10rt_inverter_self_consumption_estimated` |  | W |
 | Load ON/OFF mode (13011) | Load adjustment mode **←** | Load control | Laststeuerung | `switch.sh10rt_load_control` | `switch.load_adjustment_mode` |  |
 | Load Control Mode (13002) | Load adjustment mode **←** | Load control mode | Laststeuerungsmodus | `select.sh10rt_load_control_mode` | `select.load_adjustment_mode` |  |
 | Load power (13008) | Load power | Load power | Leistungsaufnahme Verbraucher | `sensor.sh10rt_load_power` | `sensor.load_power` | W |

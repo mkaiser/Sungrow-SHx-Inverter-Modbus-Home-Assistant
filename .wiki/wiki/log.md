@@ -728,3 +728,28 @@ The iHomeManager measured today sends "AW0" at 8001-8002 as `0x3000 0x4157`, low
 its U32s, and the map read it high word first and published "0". The map now reads it low word
 first; the Logger's, which no unit has answered yet, is unchanged. Updated device-ihomemanager,
 the iHomeManager source page.
+
+## [2026-11-11] corrected | after 33213 the next write drops too; 13088 recorded
+
+The 33213 query said the discharge-window write after 33213 dropped because the link was not
+back. It was back for reads: that check read the house for 20 s, readings that vary, before its
+own write dropped, in all three runs. After the other drops (13059, 13050, 33047) the next write
+went through at once, so only 33213's loss is followed by a second. Also recorded what the
+ingest left out: the export check's 13088 reads 12.5 % for 1250 W on peter_sm's 10 kW
+SH10RT-V112, the limit as a share of the rating. Updated the 33213 query, P023.
+
+## [2026-11-11] changed | 13022 as battery power where 5214 is refused
+
+The inverter's self consumption now takes its battery term from 13022 (U16, W) signed by 13001's
+charging and discharging bits where 5214 is refused, as evcc does. Checked against gerd's cable
+document of 2026-11-03, which read 3800 W at both (`register_dump`, protocol addresses 13021 and
+5213). No committed diagnosis refuses 5214: 60 answered it, two intermittently. Updated nothing
+else.
+
+## [2026-11-11] queried | is battery power firmware dependent?
+
+35 readings across ten firmwares with 5214, 13022 and 13001 in one dump: 5214's sign follows
+13001's charging and discharging bits in all 35, 13022 holds the same magnitude unsigned, and a
+battery-less inverter reads 13022 as 65535. No committed diagnosis refuses 5214; #655 (an SH8.0RS
+through a WiNet-S) and #770 (a third-party battery) report it missing, and SAPPHIRE 51.0x is
+unread. New query is-battery-power-firmware-dependent, the index.

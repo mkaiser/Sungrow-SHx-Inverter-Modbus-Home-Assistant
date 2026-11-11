@@ -92,6 +92,7 @@ def test_the_derived_layer_covers_the_yaml_template_sensors() -> None:
     sys.path.insert(0, str(scripts))
     sys.path.insert(0, str(scripts / "tables"))
     from descriptions import (
+        BALANCED,
         DISCHARGE_SCHEDULE,
         HISTORY,
         INTEGRATED,
@@ -114,8 +115,17 @@ def test_the_derived_layer_covers_the_yaml_template_sensors() -> None:
     history = {f"sensor.{key}" for key in HISTORY}
     # The trackers' energy: no register counts it, so the YAML had none.
     integrated = {f"sensor.{key}" for key in INTEGRATED}
+    # Powers by energy balance: #626 tried one as a template, never shipped.
+    balanced = {f"sensor.{key}" for key in BALANCED}
     assert not (
-        ported - expected - declared - problems - schedule - history - integrated
+        ported
+        - expected
+        - declared
+        - problems
+        - schedule
+        - history
+        - integrated
+        - balanced
     ), "derived entities with no YAML counterpart and no declaration"
     for entity_id in declared:
         assert entity_id in set(LEGACY_ONLY_SENSORS.values()), (

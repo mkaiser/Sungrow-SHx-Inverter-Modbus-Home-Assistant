@@ -140,7 +140,7 @@ class InverterRealtimeInput(Component):
 
 
 class InverterFastInput(Component):
-    """43 input fields, polled every 10s."""
+    """44 input fields, polled every 10s."""
 
     register_space = "input"
 
@@ -278,6 +278,16 @@ class InverterFastInput(Component):
     """
     battery_voltage = gauge(reg(13020), 0.1, signed=False, unit="V")
     """Battery voltage."""
+    battery_power_unsigned = gauge(reg(13022), 1, signed=False, nan=65535, unit="W")
+    """Battery power, without a direction (V1.1.11: U16, W).
+
+    Not an entity: `battery_power` (5214) is the signed one. Read so the
+    inverter's self consumption has a battery term where 5214 is refused,
+    signed by 13001's charging and discharging bits, as evcc does. Inside
+    the 13010-13035 block already read, so it costs no request. Matched 5214
+    at gerd's on the cable (3800 W both, same document). 65535 is what an
+    inverter with no battery answers (fwitten's slave).
+    """
     phase_a_current = gauge(reg(13031), 0.1, signed=True, unit="A")
     """Phase A current."""
     phase_b_current = gauge(reg(13032), 0.1, signed=True, unit="A")

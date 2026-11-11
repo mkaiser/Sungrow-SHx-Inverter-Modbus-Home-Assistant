@@ -129,6 +129,26 @@ NOT_A_SENSOR: dict[str, str] = {
 for _key in NOT_A_SENSOR:
     del ADDED[_key]
 
+#: Additions read only as an input to a derived value, which is where the
+#: reading goes: no entity of their own, because it would show the same
+#: quantity twice. Each names the derived sensor that reads it.
+INPUT_ONLY: dict[str, str] = {
+    # 13022, unsigned: the battery term of the self consumption where 5214
+    # is refused, signed by 13001's bits. 5214 is the battery power entity.
+    "battery_power_unsigned": "inverter_self_consumption",
+}
+for _key in INPUT_ONLY:
+    del ADDED[_key]
+
+
+def test_an_input_only_addition_is_read_by_the_value_it_names() -> None:
+    """Declared input-only, so it must be an input: otherwise it is dropped."""
+    from custom_components.sungrow_modbus.derived_descriptions import DERIVED_SENSORS
+
+    derived = {d.key: d for d in DERIVED_SENSORS}
+    for field, key in INPUT_ONLY.items():
+        assert field in derived[key].depends_on, (field, key)
+
 
 def test_an_addition_that_is_not_a_sensor_names_what_it_became() -> None:
     from custom_components.sungrow_modbus.button_descriptions import BUTTON_DESCRIPTIONS

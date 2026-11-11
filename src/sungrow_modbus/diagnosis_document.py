@@ -1276,7 +1276,25 @@ def label_for(document: dict[str, Any]) -> str:
     Nothing here can leak: the model, the firmware and the phases are
     properties of a product line, the stand-in is the document's own and is
     required to say so, and the contributor's name is one they typed.
+
+    A wallbox's, an iHomeManager's, a Logger's and an SG's document says what
+    it is in `"document"`, and is named by its own package's deriver: one
+    entry point, so no caller can name one as though it were an inverter's
+    (which gives `unknown-...-battery-unreadable`).
     """
+    kind = document.get("document")
+    if kind == WALLBOX_DOCUMENT:
+        return wallbox_label_for(document)
+    if kind is not None:
+        # Imported here: each package's document module imports this one.
+        from . import ihomemanager, logger, string_inverter
+
+        if kind == ihomemanager.DOCUMENT:
+            return ihomemanager.label_for(document)
+        if kind == logger.DOCUMENT:
+            return logger.label_for(document)
+        if kind == string_inverter.DOCUMENT:
+            return string_inverter.label_for(document)
     device = document.get("device") or {}
     said = document.get("user_inputs") or {}
 

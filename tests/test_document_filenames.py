@@ -25,7 +25,7 @@ import pytest
 
 from sungrow_modbus.diagnosis_document import label_for
 
-from .corpus import INVERTER_DOCUMENTS
+from .corpus import ALL_DOCUMENTS, INVERTER_DOCUMENTS
 
 
 def test_there_are_documents_to_check_against() -> None:
@@ -50,6 +50,27 @@ def test_a_committed_document_derives_its_own_filename(path: Path) -> None:
     assert path.stem == label or path.stem.startswith(f"{label}-"), (
         f"{path.name} does not derive from its own contents"
     )
+
+
+@pytest.mark.parametrize(
+    "path",
+    [path for path in ALL_DOCUMENTS if path not in INVERTER_DOCUMENTS],
+    ids=lambda p: p.stem[:40],
+)
+def test_every_kind_of_document_is_named_by_the_one_entry_point(path: Path) -> None:
+    """A wallbox's, an iHomeManager's or an SG's document, through `label_for`.
+
+    Each kind has its own deriver, and `label_for` routes to it by the
+    document's `"document"`: handed straight to the inverter's naming, one
+    comes out as `unknown-anonymous-battery-unreadable`.
+    """
+    document = json.loads(path.read_text(encoding="utf-8"))
+    label = label_for(document)
+
+    assert path.stem == label or path.stem.startswith(f"{label}-"), (
+        f"{path.name} does not derive from its own contents"
+    )
+    assert not label.startswith("unknown-")
 
 
 def test_a_name_never_carries_the_real_serial_or_a_full_address() -> None:

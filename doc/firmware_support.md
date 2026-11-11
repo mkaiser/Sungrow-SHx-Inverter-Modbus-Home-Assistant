@@ -45,28 +45,19 @@ answered for the registers that entity reads.
 
 ### What the diagnoses say so far
 
-**8 cell(s) split**: models on one firmware disagree.
-
-- MPPT3 current, in PEARL-H B000.V000.P067 dongle
-- MPPT3 current, in PEARL-H B000.V000.P071 dongle
-- MPPT3 energy, in PEARL-H B000.V000.P067 dongle
-- MPPT3 energy, in PEARL-H B000.V000.P071 dongle
-- MPPT3 power, in PEARL-H B000.V000.P067 dongle
-- MPPT3 power, in PEARL-H B000.V000.P071 dongle
-- MPPT3 voltage, in PEARL-H B000.V000.P067 dongle
-- MPPT3 voltage, in PEARL-H B000.V000.P071 dongle
+**No cell is split.** Wherever two models on one firmware were both
+diagnosed, they answered every entity's registers alike, once what a
+house has fitted is set aside. The assumption holds on this evidence;
+it is tested only where a column pools more than one of the models.
 
 What moves between firmware versions of one platform, over one kind of link:
 
-- **PEARL-H, dongle** (B000.V000.P067, B000.V000.P071, B001.V001.P038): 8 differ.
+- **PEARL-H, dongle** (B000.V000.P067, B000.V000.P071, B001.V001.P038): 5 differ.
   - Communication module firmware version: B000.V000.P067 ✗, B000.V000.P071 ✓, B001.V001.P038 ✓
-  - MPPT3 current: B000.V000.P067 **split**: ✓ SH25T; 0? SH15T, B000.V000.P071 **split**: ✓ SH15T, SH20T; 0? SH20T
-  - MPPT3 energy: B000.V000.P067 **split**: ✓ SH25T; 0? SH15T, B000.V000.P071 **split**: ✓ SH15T, SH20T; 0? SH20T
-  - MPPT3 power: B000.V000.P067 **split**: ✓ SH25T; 0? SH15T, B000.V000.P071 **split**: ✓ SH15T, SH20T; 0? SH20T
-  - MPPT3 voltage: B000.V000.P067 **split**: ✓ SH25T; 0? SH15T, B000.V000.P071 **split**: ✓ SH15T, SH20T; 0? SH20T
   - Export power: B000.V000.P067 ✗, B000.V000.P071 ✓, B001.V001.P038 ✓
   - Export power signed: B000.V000.P067 ✗, B000.V000.P071 ✓, B001.V001.P038 ✓
   - Import power: B000.V000.P067 ✗, B000.V000.P071 ✓, B001.V001.P038 ✓
+  - Inverter self consumption (estimated): B000.V000.P067 ✗, B000.V000.P071 ✓, B001.V001.P038 ✓
 - **SAPPHIRE-H, direct** (01011.95.03, B001.V000.P020, B001.V000.P022, B001.V000.P023): 6 differ.
   - Backup frequency: 01011.95.03 ✗, B001.V000.P020 ✓, B001.V000.P022 ✓, B001.V000.P023 ✓
   - Firmware version: 01011.95.03 ✗, B001.V000.P020 ✓, B001.V000.P022 ✓, B001.V000.P023 ✓
@@ -291,10 +282,10 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | MPPT2 energy | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | MPPT2 power | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | MPPT2 voltage | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| MPPT3 current | read | **split**: ✓ SH25T; 0? SH15T | **split**: ✓ SH15T, SH20T; 0? SH20T | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
-| MPPT3 energy | read | **split**: ✓ SH25T; 0? SH15T | **split**: ✓ SH15T, SH20T; 0? SH20T | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
-| MPPT3 power | read | **split**: ✓ SH25T; 0? SH15T | **split**: ✓ SH15T, SH20T; 0? SH20T | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
-| MPPT3 voltage | read | **split**: ✓ SH25T; 0? SH15T | **split**: ✓ SH15T, SH20T; 0? SH20T | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
+| MPPT3 current | read | ✓ | ✓ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
+| MPPT3 energy | read | ✓ | ✓ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
+| MPPT3 power | read | ✓ | ✓ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
+| MPPT3 voltage | read | ✓ | ✓ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
 | MPPT4 current | read | 0? | 0? | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
 | MPPT4 energy | read | 0? | 0? | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
 | MPPT4 power | read | 0? | 0? | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | ✗ | 0? | 0? | 0? | ✓ | ✓ |
@@ -408,6 +399,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | Daily direct energy consumption | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Direct consumption this month | read | ✗ | ✗ | ✗ |  |  | ✓ |  | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Direct consumption this year | read | ✗ | ✗ | ✗ |  |  | ✓ |  | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Inverter self consumption (estimated) | read | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Load control *(switch)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Load control mode *(select)* | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Load control mode enable code | read + watched | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |

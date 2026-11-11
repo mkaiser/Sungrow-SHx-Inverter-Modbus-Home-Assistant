@@ -30,12 +30,7 @@ from aiohttp import web
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.components.http.auth import async_sign_path
 from homeassistant.core import HomeAssistant, callback
-from sungrow_modbus import ihomemanager, logger, string_inverter
-from sungrow_modbus.diagnosis_document import (
-    WALLBOX_DOCUMENT,
-    label_for,
-    wallbox_label_for,
-)
+from sungrow_modbus.diagnosis_document import label_for
 
 if TYPE_CHECKING:
     from .coordinator import SungrowConfigEntry
@@ -108,16 +103,9 @@ def _filename(document: dict[str, Any]) -> str:
     The standalone diagnosis appends the address tail when a name is already
     taken by a different reading; nothing here does, because a download is
     one file and the collision it guards against is a directory's problem.
-    An SG's document is its own kind, and is named as the terminal names it.
+    A wallbox's, an iHomeManager's, a Logger's and an SG's document is its own
+    kind, and `label_for` names each as the terminal names it.
     """
-    if document.get("document") == string_inverter.DOCUMENT:
-        return f"{string_inverter.label_for(document)}.json"
-    if document.get("document") == WALLBOX_DOCUMENT:
-        return f"{wallbox_label_for(document)}.json"
-    if document.get("document") == ihomemanager.DOCUMENT:
-        return f"{ihomemanager.label_for(document)}.json"
-    if document.get("document") == logger.DOCUMENT:
-        return f"{logger.label_for(document)}.json"
     return f"{label_for(document)}.json"
 
 

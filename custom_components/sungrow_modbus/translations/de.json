@@ -716,6 +716,9 @@
       "inverter_rated_output": {
         "name": "Nennausgangsleistung"
       },
+      "inverter_self_consumption": {
+        "name": "Wechselrichter Eigenbedarf (geschätzt)"
+      },
       "inverter_temperature": {
         "name": "Gerätetemperatur"
       },

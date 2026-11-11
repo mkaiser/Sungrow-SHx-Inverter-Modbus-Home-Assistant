@@ -21,6 +21,13 @@ The most-measured firmware in the corpus.
 - **Upper bounds, at [peter-sm](installation-peter-sm.md) over the cable**: 13059 refuses 51 % and
   13058 101 % with 0x04, but 33047, 33048 and 13052 store 8200 W, above the run's 8100 W maximum, and 33149 and 33150 store 1010 W, above 1000 W
   ([sixteenth reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-14-summary.md)).
+- **Register 13088 follows the export limit as a share of the rating**, at
+  [peter-sm](installation-peter-sm.md) over the cable: with 13074 at 1250 W on a 10000 W
+  SH10RT-V112 it read 12.5 %, and 92 % before the write, in every run that recorded it
+  (the export check's `feed_in_ratio`;
+  [sixteenth](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-14-summary.md),
+  [eighteenth](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-16-summary.md)
+  readings).
 - [Register 32998](register-32998.md), the site import limit, **holds under a forced charge**, over
   the cable and through a WiNet-S, at [bar12](installation-bar12.md); it does not cap the load with
   the battery empty ([the runs](../sources/bar12-import-limit-2026-11-07-summary.md)). It holds a

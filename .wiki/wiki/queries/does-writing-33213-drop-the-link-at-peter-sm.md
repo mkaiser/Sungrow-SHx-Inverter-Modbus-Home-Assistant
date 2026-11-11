@@ -35,8 +35,13 @@ the owner's own charge schedule was on.
 
 **Those three runs also lost the connection elsewhere**, where the earlier ones had not: the
 write of 13059 once, EMS mode 3's write of 13050 twice, and a write of 33047 above its bound
-twice, among the write-path checks that 0.1.0a33 added. Each time the discharge-window write
-that follows 33213 dropped too (33154 or 33155), which says only that the link was not back.
+twice, among the write-path checks that 0.1.0a33 added. **After each of those, the next write
+went through at once.** After 33213 it did not: the discharge-window check that follows read the
+house for 20 s, readings that vary, so the link answered reads, and then lost the connection on
+its first write (33154 or 33155) in all three runs
+([sixteenth](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-14-summary.md),
+[eighteenth](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-16-summary.md)
+readings). Between the two, the window's undo writes only its enable.
 
 The same write lost the connection once at [mkaiser](../entities/installation-mkaiser.md) on
 [P020](../entities/firmware-sapphire-h-b001-v000-p020.md), and went through on the next run
@@ -48,7 +53,8 @@ Against the register: the same window, 33213 included, was written over the cabl
 For it: the same write nine times, on five days, where [contention](../concepts/contention.md) loses
 the connection at a different address each time. Against it, since 0.1.0a33: this house now loses
 the connection at other addresses too, so a link that drops on writes is in play; but only 33213
-has dropped in every run that wrote it, and 13050 and 33047 went through in one run of three.
+has dropped in every run that wrote it, 13050 and 33047 went through in one run of three, and only
+33213's loss is followed by a second one on the next check's write.
 
 What answers it: a third run at peter-sm with only the charge window check
 (`--charge-window`), and one single write of 33213's own held value; a loss on that write alone

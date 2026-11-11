@@ -492,6 +492,60 @@ class Derived:
         raw = self._value("export_power_raw")
         return None if raw is None else max(-int(raw), 0)
 
+    # -- energy balance ---------------------------------------------------
+
+    def _battery_discharge_w(self) -> float | None:
+        """Battery power, positive while discharging, or None.
+
+        5214 (`battery_power`) where it answers. Where it is refused, as
+        through an SH8.0RS's WiNet-S (#655), 13022's magnitude signed by
+        13001's charging and discharging bits, as evcc does. Neither bit set
+        reads as idle only if the magnitude is 0 too, and both set, or a
+        magnitude with no bit, is None: a direction made up is a wrong sign.
+        """
+        signed = self._value("battery_power")
+        if signed is not None:
+            return float(signed)
+        magnitude, flow = (
+            self._value("battery_power_unsigned"),
+            self._value("power_flow_status"),
+        )
+        if magnitude is None or flow is None:
+            return None
+        bits = int(flow)
+        charging = bool(bits & POWER_FLOW_BITS["battery_charging"])
+        discharging = bool(bits & POWER_FLOW_BITS["battery_discharging"])
+        if charging and not discharging:
+            return -float(magnitude)
+        if discharging and not charging:
+            return float(magnitude)
+        if not charging and not discharging and float(magnitude) == 0:
+            return 0.0
+        return None
+
+    @property
+    def inverter_self_consumption(self) -> int | None:
+        """What the inverter itself uses and loses in conversion, in W.
+
+        By energy balance: what comes in (PV, battery discharge, grid import)
+        less what goes out (house load, battery charge, export). With the
+        battery positive while discharging (`_battery_discharge_w`) and
+        `export_power_raw` positive while exporting, that is
+        PV + battery - export - load.
+
+        Signed, and not clamped at zero: the inputs are read in different
+        blocks at different moments, so one reading can come out negative,
+        and the sensor shows a one-minute mean, which clamping would bias
+        upwards. YAML package #626 tried it as a template and never shipped
+        it, so there is no entity id to adopt.
+        """
+        values = self._floats("total_dc_power", "export_power_raw", "load_power")
+        battery = self._battery_discharge_w()
+        if values is None or battery is None:
+            return None
+        pv, export, load = values
+        return round(pv + battery - export - load)
+
     # -- battery capacity -------------------------------------------------
 
     @property

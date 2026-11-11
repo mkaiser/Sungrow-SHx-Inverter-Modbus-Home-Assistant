@@ -388,6 +388,12 @@ OVERRIDES: dict[str, str] = {
     # `sungrow_modbus.hybrid_inverter.smoothing` has always called smoothing.
     # The module, the docs and the entity finally agree.
     "daily_consumed_energy_filtered": "Daily consumed energy (smoothed)",
+    # What the inverter uses and loses itself. "Inverter" names the subject,
+    # against the house's self-consumption, so it may lead
+    # (`DEVICE_WORD_FIRST`). A balance of four readings taken at different
+    # moments, not a reading, so "(estimated)". Shown only as a one-minute
+    # mean (`BALANCED` in `descriptions.py`).
+    "inverter_self_consumption": "Inverter self consumption (estimated)",
     # `(delayed)` for the same reason and in the same grammar: the seven
     # binary sensors below report true only once the condition has held for
     # sixty seconds. `(delay)` is a noun, and reads as though the entity were
@@ -792,6 +798,7 @@ GERMAN: dict[str, str] = {
     "daily_consumed_energy_filtered": (
         "Tägliche Energieaufnahme Verbraucher (geglättet)"
     ),
+    "inverter_self_consumption": "Wechselrichter Eigenbedarf (geschätzt)",
     "daily_direct_energy_consumption": "Täglicher Direktverbrauch",
     "daily_exported_energy": "Täglich eingespeiste Energie",
     "daily_exported_energy_from_pv": "Täglich aus PV eingespeiste Energie",
@@ -1127,6 +1134,12 @@ def modern_name(key: str, legacy_name: str) -> str:
     return " ".join(fixed)
 
 
+#: Keys whose name may start with a device word, because there it names the
+#: subject, not the device: the inverter's own consumption, against the
+#: house's ("Self-consumption of today"). The maintainer's call, 2026-11-11.
+DEVICE_WORD_FIRST = frozenset({"inverter_self_consumption"})
+
+
 def violations(key: str, name: str, diagnostic: bool) -> list[str]:
     """Return every way this name breaks the convention. Empty means it holds.
 
@@ -1139,7 +1152,7 @@ def violations(key: str, name: str, diagnostic: bool) -> list[str]:
 
     if not name.strip():
         return [f"{key}: empty name"]
-    if words[0].lower() in DEVICE_WORDS:
+    if words[0].lower() in DEVICE_WORDS and key not in DEVICE_WORD_FIRST:
         problems.append(
             f"{key}: starts with {words[0]!r}, which Home Assistant already "
             "prefixes as the device name"

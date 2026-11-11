@@ -716,6 +716,9 @@
       "inverter_rated_output": {
         "name": "Rated output power"
       },
+      "inverter_self_consumption": {
+        "name": "Inverter self consumption (estimated)"
+      },
       "inverter_temperature": {
         "name": "Device temperature"
       },

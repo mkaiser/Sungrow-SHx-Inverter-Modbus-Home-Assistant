@@ -297,6 +297,28 @@ INTEGRATED: dict[str, str] = {
     f"mppt{number}_energy": f"mppt{number}_power" for number in range(1, 5)
 }
 
+#: Power by energy balance, shown only as a time-weighted mean: key to (the
+#: value on `Derived`, the registers it reads, the window in seconds). Its
+#: inputs are read in different blocks at different moments, so a single
+#: reading mixes moments and swings; a minute's mean is what is worth showing.
+#: New, with no YAML predecessor: #626 tried it as a template and never
+#: shipped it, so it claims no legacy id.
+BALANCED: dict[str, tuple[str, tuple[str, ...], float]] = {
+    "inverter_self_consumption": (
+        "inverter_self_consumption",
+        # Not 5214 (`battery_power`): where it is refused the battery term
+        # comes from 13022 and 13001, and the sensor must still exist there.
+        (
+            "total_dc_power",
+            "export_power_raw",
+            "load_power",
+            "battery_power_unsigned",
+            "power_flow_status",
+        ),
+        60,
+    ),
+}
+
 #: Seconds a power-flow bit must hold before its `(delay)` twin reports it.
 #: One value for all seven, which is what the YAML uses.
 DELAY_ON = 60
@@ -471,6 +493,20 @@ def render_derived() -> str:
 
     for key, (source_key, window) in SMOOTHED.items():
         lines += _smoothed_description(key, source_key, window, legacy)
+
+    for key, (field, depends, window) in BALANCED.items():
+        lines.append("    SungrowSensorDescription(")
+        lines.append(f'        key="{key}",')
+        lines.append('        component="derived",')
+        lines.append(f'        field="{field}",')
+        lines.append(f'        translation_key="{key}",')
+        lines.append(f"        depends_on={depends!r},")
+        lines.append(f"        smoothed_over={window},")
+        lines.append("        device_class=SensorDeviceClass.POWER,")
+        lines.append("        state_class=SensorStateClass.MEASUREMENT,")
+        lines.append('        native_unit_of_measurement="W",')
+        lines.append("        suggested_display_precision=0,")
+        lines.append("    ),")
 
     for key, source in INTEGRATED.items():
         _, depends = DERIVED[source]

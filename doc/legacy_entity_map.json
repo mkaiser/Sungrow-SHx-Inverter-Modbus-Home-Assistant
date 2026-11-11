@@ -2023,6 +2023,21 @@
       "scan_interval": 10
     },
     {
+      "entity_id": "sensor.battery_power_unsigned",
+      "unique_id": null,
+      "name": "Battery power unsigned",
+      "domain": "sensor",
+      "layer": "specification",
+      "state_class": "measurement",
+      "unit_of_measurement": "W",
+      "input_type": "input",
+      "address": 13021,
+      "data_type": "uint16",
+      "scale": 1,
+      "nan_value": 65535,
+      "scan_interval": 10
+    },
+    {
       "entity_id": "sensor.pv_power_limitation_raw",
       "unique_id": null,
       "name": "PV power limitation raw",
