@@ -4,6 +4,10 @@ set -e
 
 cd "$(dirname "$0")/../.."
 
+# First, before anything reads a file: a clone made by Git for Windows and
+# opened here can carry CRLF line endings, which break scripts and tests.
+python3 scripts/dev/check_line_endings.py --fix
+
 # Two passes: the first lets pip upgrade itself before the bulk install.
 python3 -m pip install --upgrade pip
 python3 -m pip install --requirement requirements_dev.txt

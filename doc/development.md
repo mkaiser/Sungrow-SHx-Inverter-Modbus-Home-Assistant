@@ -168,7 +168,8 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | Script | What it does |
 | --- | --- |
 | **`scripts/dev/`** | **The dev loop** |
-| `setup.sh` | Install HA, the device library (editable) and tooling, and a headless browser for screenshots in a venv of its own |
+| `setup.sh` | Install HA, the device library (editable) and tooling, and a headless browser for screenshots in a venv of its own; first, repair CRLF line endings (`check_line_endings.py --fix`) |
+| `check_line_endings.py` | List tracked files checked out with CRLF where the repository has LF (`make line-endings`, part of `make quick`); `--fix` strips the CRs and refreshes their index entries, nothing staged. See Pitfalls |
 | `develop.sh` | Boot HA on <http://localhost:8123> against `config/` |
 | `ha_onboard.py` | Walk a fresh instance through onboarding over the API, so nobody types `dev`/`dev` into a wizard. Both boot scripts run it in the background; idempotent, and it refuses a non-loopback URL |
 | `hacs_testbed.sh` | Boot a **second** HA on :8124 against `config-hacs/`, with HACS installed, or with `--marketplace` HA 2026.11 on :8126 against `config-marketplace/`; see [Testing the install a user actually gets](#testing-the-install-a-user-actually-gets) |
@@ -206,6 +207,15 @@ tree.
 
 Each of these is verified in a container or against hardware.
 
+- **A clone made on Windows and opened in the devcontainer** has CRLF line
+  endings: Git for Windows' `core.autocrlf=true` writes them on checkout.
+  In the container every file then shows as modified, a shell script's first
+  line breaks and a test comparing bytes fails (`test_diagnosis_dependencies`
+  did). `.gitattributes` now asks for LF everywhere (`* text=auto eol=lf`),
+  which a fresh checkout honours; `setup.sh` repairs an older one, and
+  `python3 scripts/dev/check_line_endings.py --fix` does it by hand. The raw
+  diagnoses in `device-diagnosis/results/` are kept byte for byte (`-text`),
+  four of them with CRLF.
 - **Python lives in `/usr/local/python/current`**, not `/usr/local/bin`, in
   the devcontainer image (`mcr.microsoft.com/devcontainers/python:3.14-bookworm`).
   Its `bin/` comes first on the image's `PATH`, ahead of the image's own pipx

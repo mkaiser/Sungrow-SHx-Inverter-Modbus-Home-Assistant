@@ -100,14 +100,18 @@ refs: ## Clone HA core and the Modbus libraries into .reference/
 
 ##@ Check
 
-check: version-check gen-check lint typecheck test ## Everything CI gates on, fast
+check: version-check line-endings gen-check lint typecheck test ## Everything CI gates on, fast
 .PHONY: check
 
 ci: check build ## check, plus the package -- the full CI job
 .PHONY: ci
 
-quick: version-check gen-check lint typecheck ## `check` without the test suite, in seconds; the pre-commit hook
+quick: version-check line-endings gen-check lint typecheck ## `check` without the test suite, in seconds; the pre-commit hook
 .PHONY: quick
+
+line-endings: ## Fail on files checked out with CRLF where the repository has LF
+	@$(PY) scripts/dev/check_line_endings.py
+.PHONY: line-endings
 
 hooks: ## Run `make quick` before every commit, through a git pre-commit hook
 	ln -sf "$(CURDIR)/scripts/dev/pre-commit.sh" "$$(git rev-parse --git-path hooks)/pre-commit"

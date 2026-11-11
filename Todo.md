@@ -170,11 +170,26 @@ Nothing can start now (blocker 16).
    shows 40 read-only sensors beside its diagnosis (the site's flows, the
    grid meter, the charger, its settings as set;
    `ihomemanager_descriptions.py`), tested against the one unit's words.
-   Not yet seen in a real Home Assistant. Left out until a second unit
-   (blocker 17): 8554, 8047, 8048, 8051-8052, channel 2 and 8029. The
-   entry now holds its port while loaded, and each port takes one
-   connection: worth a line in the user docs once released, beside the
-   `legacy/doc/faq.md` answer (Release).
+   Not yet seen in a real Home Assistant. The entry now holds its port
+   while loaded, and each port takes one connection: worth a line in the
+   user docs once released, beside the `legacy/doc/faq.md` answer
+   (Release).
+2. **The fields left out of its entities, until a second unit is
+   measured** (blocker 17; wiki: the iHomeManager source page). Each is
+   read and kept in the diagnosis, and gets no entity:
+   - **8554, the output type**: reads 0, "single phase", on a three-phase
+     site (three phase voltages, three phase powers).
+   - **8047 (start/stop) and 8048 (charger mode)**: read 0 and 0xA7, codes
+     no document lists.
+   - **8051-8052, the active power limitation and its ratio**: 8051 reads
+     0, not a code of the 0xAA/0x55 pair; 8052 reads 0x7FFF, an unset value.
+   - **Channel 2 (8565-8574), the PROD.CT**: all zeros on a unit with no
+     CT there.
+   - **8029, the feed-in limit in kW**: only in a third-party template, in
+     no Sungrow document.
+   A second unit, ideally single phase, on other firmware or with a
+   PROD.CT, decides each: a field whose reading then makes sense gets its
+   entity in `ihomemanager_descriptions.py`.
 
 ## Integration and tooling
 

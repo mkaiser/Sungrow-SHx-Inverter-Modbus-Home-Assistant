@@ -1,3 +1,15 @@
+# Every text file is LF in the working tree, on every host. A checkout made by
+# Git for Windows (`core.autocrlf=true`) and opened in the devcontainer would
+# otherwise carry CRLF into Linux, where a script's shebang line breaks, a
+# test comparing bytes fails and every file shows as modified.
+# `scripts/dev/check_line_endings.py` finds, and with `--fix` repairs, a
+# checkout made before this line existed.
+* text=auto eol=lf
+
+# A committed diagnosis is published byte for byte, CRLF included where a
+# contributor's tool wrote it: a raw source is never rewritten (AGENTS.md).
+device-diagnosis/results/** -text
+
 # The diagnosis's launchers run where they are unpacked, so their line endings are
 # fixed here rather than left to whoever checks them out: cmd.exe misreads a
 # batch file with bare LF line endings, and /bin/sh chokes on a CR.
