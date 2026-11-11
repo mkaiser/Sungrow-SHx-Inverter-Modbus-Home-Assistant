@@ -495,3 +495,59 @@ async def test_the_wallbox_shows_its_own_serial_and_publishes_only_its_hash(
 
     diagnostics = await get_diagnostics_for_config_entry(hass, hass_client, entry)
     assert "A987654321" not in json.dumps(diagnostics, default=str)
+
+
+async def test_a_wallbox_back_from_an_outage_is_available_on_its_next_poll(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """Not five minutes later, when the slow block is next due.
+
+    A poll that skips the slow block carries the slow components' verdicts
+    forward, since it did not read them. It once carried the fast ones' as
+    well, so a live block that timed out kept its entities unavailable after
+    the link was back -- seen on a real AC22E-01 when the VPN to its house
+    dropped and came back.
+    """
+    from modbus_connection import ModbusTimeoutError
+
+    wallbox = _wallbox_unit(3)
+    entry = MockConfigEntry(
+        domain=DOMAIN, data=ENTRY_DATA, unique_id=SERIAL, title="SH10RT"
+    )
+    entry.add_to_hass(hass)
+    empty = MockModbusConnection().for_unit(9)
+    empty.input = {}
+    empty.holding = {}
+
+    def units(_hass, _entry, _params, unit_id):
+        return {1: sungrow_unit, 3: wallbox}.get(unit_id, empty)
+
+    with patch("custom_components.sungrow_modbus.async_get_unit", side_effect=units):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    coordinator = entry.runtime_data.wallbox
+    assert coordinator is not None
+    status = er.async_get(hass).async_get_entity_id(
+        "sensor", DOMAIN, f"{SERIAL}_wallbox_charging_status"
+    )
+    assert status is not None
+
+    def status_state() -> str:
+        state = hass.states.get(status)
+        assert state is not None
+        return state.state
+
+    assert status_state() != "unavailable"
+    # Neither poll below is the every-thirtieth one that reads the slow block.
+    coordinator._polls = 1
+
+    wallbox.fail_requests(ModbusTimeoutError("Response timeout"))
+    await coordinator.async_refresh()
+    await hass.async_block_till_done()
+    assert status_state() == "unavailable", "the outage itself must show"
+
+    wallbox.fail_requests(None)
+    await coordinator.async_refresh()
+    await hass.async_block_till_done()
+    assert status_state() != "unavailable"

@@ -545,11 +545,17 @@ class SungrowWallboxCoordinator(SungrowSubDeviceCoordinator):
                 report = report | await self.device.async_update(only=SLOW)
         # A slow component that was not read this time keeps the values it
         # had, so it must not be reported as failed -- an entity would go
-        # unavailable for four minutes out of five.
+        # unavailable for four minutes out of five. Only the slow components'
+        # verdicts are carried: a fast one was just read, and an old failure
+        # of it kept here would hold its entities unavailable after the link
+        # is back, until the next slow read.
         if not due and self.data is not None:
+            slow_failed = {
+                name: err for name, err in self.data.failed.items() if name not in FAST
+            }
             report = UpdateReport(
                 updated=report.updated | (self.data.updated - set(FAST)),
-                failed={**self.data.failed, **report.failed},
+                failed={**slow_failed, **report.failed},
             )
         return report
 
