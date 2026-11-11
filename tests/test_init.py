@@ -130,7 +130,7 @@ async def test_through_a_winet_s_the_device_page_links_its_web_interface(
     )
     assert device is not None
     assert device.hw_version == "127.0.0.1:5020 · via WiNet-S"
-    assert device.configuration_url == "http://127.0.0.1"
+    assert device.configuration_url == "https://127.0.0.1"
     assert hass.states.get("sensor.sh10rt_connection").state == "winet"
 
 

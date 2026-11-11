@@ -67,7 +67,7 @@ def test_the_address_and_the_link() -> None:
     entry = MagicMock()
     entry.data = {CONF_HOST: "10.0.0.5", CONF_PORT: 502}
     assert connection_text(entry, "direct") == "10.0.0.5 · direct, no dongle"
-    assert web_interface(entry, "winet") == "http://10.0.0.5"
+    assert web_interface(entry, "winet") == "https://10.0.0.5"
     # The inverter's own port serves no page, and a link nowhere is worse.
     assert web_interface(entry, "direct") is None
     assert web_interface(entry, None) is None

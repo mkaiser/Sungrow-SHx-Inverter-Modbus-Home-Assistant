@@ -92,11 +92,14 @@ def web_interface(entry: SungrowConfigEntry, route: str | None) -> str | None:
     """Return the WiNet-S's web interface, the endpoint's own host, or None.
 
     Only through a WiNet-S: the inverter's own LAN port serves no web page,
-    and a link that leads nowhere is worse than none.
+    and a link that leads nowhere is worse than none. HTTPS, not HTTP: a
+    WiNet-S refuses port 80 and serves its page on 443, under a self-signed
+    certificate the browser asks about once (measured at two houses; its
+    mDNS record still names port 80).
     """
     if route != ROUTE_WINET:
         return None
-    return f"http://{entry.data.get(CONF_HOST, '')}"
+    return f"https://{entry.data.get(CONF_HOST, '')}"
 
 
 def connection_text(entry: SungrowConfigEntry, route: str | None) -> str:
