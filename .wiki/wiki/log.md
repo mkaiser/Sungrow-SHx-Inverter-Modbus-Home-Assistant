@@ -754,6 +754,16 @@ battery-less inverter reads 13022 as 65535. No committed diagnosis refuses 5214;
 through a WiNet-S) and #770 (a third-party battery) report it missing, and SAPPHIRE 51.0x is
 unread. New query is-battery-power-firmware-dependent, the index.
 
+## [2026-11-11] ingested | gerd's devices over mDNS, and their web pages
+
+Asked over a VPN, unicast to each device's port 5353: gerd's WiNet-S and his wallbox at its own
+address answer with a `_http._tcp` service whose TXT record names model, serial and units, and
+the dongle's names the inverter and the SBR behind it too. The inverter's LAN port answers
+nothing. The dongle's web page is HTTPS on 443; port 80, which its record names, refuses. The
+wallbox serves no page. The device page's *Visit* link now opens `https://`. New query on
+multicast and other firmware. Updated device-winet-s, device-wallbox, installation-gerd,
+identify-by-what-answers, the index.
+
 ## [2026-11-11] changed | an iHomeManager entry shows its readings
 
 The integration now polls an iHomeManager entry's device and shows 40 read-only sensors beside

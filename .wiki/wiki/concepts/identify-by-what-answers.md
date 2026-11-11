@@ -18,6 +18,9 @@ is a Sungrow, and an inverter is not always unit 1.
   ([fwitten](../entities/installation-fwitten.md)).
 - Input 8000 on unit 247 is probed for an
   [iHomeManager](../entities/device-ihomemanager.md).
+- **An mDNS record is a hint, not an identity.** A WiNet-S and a wallbox advertise their
+  model, serial and units ([gerd](../sources/gerd-mdns-2026-11-11-summary.md)), which says where
+  to ask; the entry is still made from what answers over Modbus.
 
 ## Units by device and transport
 

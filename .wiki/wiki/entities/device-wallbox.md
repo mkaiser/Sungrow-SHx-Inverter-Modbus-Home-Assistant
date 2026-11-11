@@ -19,6 +19,10 @@ owner's leave.
 | through the [WiNet-S](device-winet-s.md) | Modbus TCP, port 502 | **3** | found behind the inverter's entry by itself |
 | at its own LAN address | Modbus TCP inside TLS, port **516** | **248** | when the inverter's entry has the `wallbox_host` **option** |
 
+At its own address it answers mDNS as `_http._tcp` on port 516, which is its Modbus TLS port,
+not a web page (it serves none), with a TXT record naming its model, serial and units 3 and
+248 ([gerd](../sources/gerd-mdns-2026-11-11-summary.md)).
+
 `wallbox_host` is an option, not an entry, so the device and its entity ids
 are the same either way. The network search also looks on port 516 and offers
 a wallbox that answers there over TLS as **an entry of its own**, identified by

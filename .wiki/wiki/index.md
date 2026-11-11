@@ -85,6 +85,7 @@
 - [gerd-wallbox-charging-session-2026-11-03.md](sources/gerd-wallbox-charging-session-2026-11-03-summary.md) — gerd's AC22E-01 through a 3 h charging session and its end: 21313 falls to 0, status 3-5-6, 21267 about one per 5 s #wallbox #ac22e-01 #gerd #charging-session #tls
 - [gerd-wallbox-dry-run-2026-11-06.md](sources/gerd-wallbox-dry-run-2026-11-06-summary.md) — the wallbox capability test's dry run, no car: the current setting reads 0 idle, 21322 is not its echo #wallbox #ac22e-01 #gerd #capability-test #tls
 - [gerd-tls-certificate-2026-11-06.md](sources/gerd-tls-certificate-2026-11-06-summary.md) — the WiNet-S and the wallbox at one house serve one certificate, serial 1, its SHA-256 recorded #winet-s #wallbox #tls #gerd
+- [gerd-mdns-2026-11-11.md](sources/gerd-mdns-2026-11-11-summary.md) — the WiNet-S and the wallbox answer mDNS with records naming every device's model, serial and units; the dongle's page is HTTPS only #winet-s #wallbox #mdns #discovery #gerd
 - [bar12-tls-certificate-2026-11-06.md](sources/bar12-tls-certificate-2026-11-06-summary.md) — bar12's WiNet-S serves gerd's certificate: one key in every unit #winet-s #tls #bar12
 - [gerd-wallbox-isolarcloud-2026-10-30.md](sources/gerd-wallbox-isolarcloud-2026-10-30-summary.md) — gerd's AC22E-01 beside Sungrow's portal: 21201-21206 is the serial, 21300 and 21310 in Wh #wallbox #ac22e-01 #gerd #isolarcloud
 - [hybrid-protocol-v1-1-17.md](sources/hybrid-protocol-v1-1-17-summary.md) — Sungrow's hybrid protocol V1.1.17: no registers since V1.1.11, five MG..TL types, 13017 grid-connected only #specification #hybrid #device-types #naming
@@ -190,6 +191,7 @@
 ## Queries
 
 - [Does a wallbox answer unit 248 on RS485?](queries/does-a-wallbox-answer-unit-248-on-rs485.md) — Open: reported by others, never measured #wallbox #rs485 #open
+- [Does a WiNet-S advertise over mDNS, and can discovery start there?](queries/does-a-winet-s-advertise-over-mdns.md) — Partly answered: at gerd the dongle and the wallbox do, by unicast; multicast and other firmware open #winet-s #mdns #discovery #open
 - [Does a busy WiNet-S refuse with 0x04?](queries/does-a-busy-winet-s-refuse-with-0x04.md) — Answered: yes, reproduced at gerd with three clients #winet-s #contention #answered
 - [Do models on one firmware answer alike?](queries/do-models-on-one-firmware-answer-alike.md) — Answered so far: yes, for inverters and battery packs, in every column that pools two models #firmware #capability #battery #answered
 - [Does the site import limit hold during a forced charge on an SH-RT?](queries/does-the-import-limit-hold-during-a-forced-charge.md) — Open: holds on an SH10RS, and on P020, P022 and P023 under EMS and scheduled charges, cable and WiNet-S; reported ignored on an SH10RT-V112, how it was commanded unknown #register-32998 #import-limit #forced-charge #open

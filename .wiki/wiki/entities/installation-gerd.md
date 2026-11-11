@@ -31,3 +31,4 @@ dongle mid-restore, and the cable closed every session for minutes
 - [AC22E-01 wallbox, gerd, TLS, while charging](../sources/ac22e01-gerd-anon-41346964423-wallbox-tls-2-summary.md), 2026-11-03
 - [The TLS certificate of the WiNet-S and the wallbox](../sources/gerd-tls-certificate-2026-11-06-summary.md), 2026-11-06, one certificate
 - [The wallbox capability test's dry run](../sources/gerd-wallbox-dry-run-2026-11-06-summary.md), 2026-11-06, no car
+- [What the devices advertise over mDNS, and their web pages](../sources/gerd-mdns-2026-11-11-summary.md), 2026-11-11

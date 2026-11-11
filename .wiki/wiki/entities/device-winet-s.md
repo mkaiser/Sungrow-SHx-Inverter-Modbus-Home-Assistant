@@ -53,6 +53,22 @@ certificate built into the firmware, its private key on every unit, so this TLS
 authenticates nothing and verifying it gains nothing.
 `sungrow_diagnosis.py` reports a WiNet-S's 516 without reading it, after asking it for a wallbox at unit 248 and a Logger at unit 247.
 
+## mDNS and its web page
+
+At [gerd](installation-gerd.md) it answers mDNS with one service, `_http._tcp`, instance
+`WiNet-WebServer`, on a host named `SUNGROW` and its serial. Its TXT record lists **every device
+behind it with its serial**: the inverter (unit, device type code 4999, model), the battery
+(unit through the dongle and over the cable, model) and the dongle itself
+([the reading](../sources/gerd-mdns-2026-11-11-summary.md)). Anyone on the LAN can read them.
+Whether a multicast browse sees the same, and on other firmware, is
+[open](../queries/does-a-winet-s-advertise-over-mdns.md).
+
+Its web page is **HTTPS on port 443** under a self-signed Sungrow certificate; port 80, which
+its own mDNS record names, refuses ([gerd](../sources/gerd-mdns-2026-11-11-summary.md); 443
+also answers at [bar12](../sources/sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-lan-summary.md)).
+The device page's *Visit* link opens `https://` and the entry's host
+(`custom_components/sungrow_modbus/route.py`).
+
 ## The history registers
 
 V1.1.16's inputs from 6196 hold PV, direct-consumption and export history:

@@ -456,8 +456,43 @@ Nothing can start now (blocker 16).
 
 ## Integration and tooling
 
-18. **Does a WiNet-S advertise over mDNS?** Needs a house with a dongle and
-    a run on the host, not in the container.
+18. **Does a WiNet-S advertise over mDNS?** Yes at gerd, asked by unicast over
+    the VPN (wiki: the mDNS query): the dongle and the wallbox advertise
+    `_http._tcp` with TXT records naming model, serial and units, the dongle's
+    for every device behind it. 2026-11-11: python-zeroconf (HA's library)
+    resolves both and parses the TXT into properties, by QU queries from
+    port 5353 aimed at each device; the inverter's LAN port answers nothing.
+    Outstanding:
+    - **A multicast browse on a LAN.** Nothing multicast crosses the VPN or
+      the container. `probe.py mdns` on a machine in a house with a dongle
+      (`pip install sungrow-modbus[discovery]`), or the diagnosis step below.
+    - **Other firmware, other houses.** One dongle and one wallbox so far.
+    - **Does `ethinfo` say wired or WiFi?** It is empty on gerd's dongle,
+      which is on WiFi; it may carry the Ethernet details when the dongle is
+      wired. Answer it from the diagnoses already covered: once the
+      diagnosis records the dongle's TXT, compare `ethinfo` with
+      `user_inputs.transport` (`winet_lan` / `winet_wlan`) across the corpus.
+      bar12 has published both transports of one dongle, so a rerun there is
+      the cleanest pair. If it holds, `wifi_or_ethernet` (today "not
+      determinable over Modbus") can say what the dongle reports.
+    - **The fields nothing explains**: the battery's 8423 (0x20E7), the
+      inverter's trailing `1;4`, the wallbox's `info=16256` (0x3F80), every
+      `;1;`. More houses, compared with what Modbus measured there.
+    - **mDNS in the diagnosis.** Part A runs on the contributor's machine in
+      the LAN, where multicast works: browse `_http._tcp` for a few seconds,
+      keep the Sungrow records (TXT, port, model), serials and host names
+      replaced by stand-ins before anything reaches the document, and record
+      "no answer" as that, never as "no dongle" (container, VLAN, firewall).
+      Needs `async_mdns_services` in a released wheel and `zeroconf` in the
+      PEP 723 header (`device-diagnosis/reference.md`); check whether binding
+      port 5353 raises a Windows firewall prompt. In Home Assistant, the
+      device page's diagnosis browses through HA's shared zeroconf instance
+      (`zeroconf` in `after_dependencies`), not sockets of its own.
+    - Then decide on a `zeroconf` matcher in the manifest: the records as a
+      hint that the Modbus check confirms, the sweep kept for cable-only
+      inverters. And a WiNet-S's *Visit* link for a cable entry, found by
+      the inverter serial in its TXT (a link on the inverter, or the dongle
+      as its own device).
 
 19. **The capability test's restore through a WiNet-S, on hardware.** A
     dongle-only capability test at gerd on the current tree, with the battery
