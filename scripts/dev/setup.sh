@@ -20,3 +20,8 @@ SCREENSHOT_VENV="$HOME/.local/share/sungrow-screenshots"
 python3 -m venv "$SCREENSHOT_VENV"
 "$SCREENSHOT_VENV/bin/pip" install --quiet --upgrade pip playwright
 "$SCREENSHOT_VENV/bin/playwright" install --with-deps chromium-headless-shell
+
+# wg and wg-quick, for a WireGuard tunnel to another owner's inverter from
+# inside the container (runArgs in devcontainer.json grants NET_ADMIN).
+sudo apt-get update
+sudo apt-get install -y --no-install-recommends wireguard-tools

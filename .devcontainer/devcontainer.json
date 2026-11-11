@@ -17,6 +17,13 @@
 
   "remoteUser": "vscode",
 
+  // WireGuard inside the container, so a tunnel to another owner's inverter
+  // touches only this container, never the host's network. NET_ADMIN lets
+  // wg-quick create the interface and its routes; /dev/net/tun is there for
+  // wireguard-go should a kernel lack the module. The confs and the script
+  // that switches them live in the ~/.claude bind mount, never in the repo.
+  "runArgs": ["--cap-add=NET_ADMIN", "--device=/dev/net/tun"],
+
   // Session handoff: bind the host's ~/.claude into the container so Claude
   // Code auth, settings, transcripts and plan files survive a rebuild and are
   // shared with sessions running on the host. A bind (not a named volume)
