@@ -194,20 +194,6 @@ Nothing can start now (blocker 16).
 
 ## Integration and tooling
 
-4. **Home Assistant 2026.11: the diagnosis's headers.** The
-   dev environment and CI run 2026.11.0 with modbus-connection 4.12.7 and
-   tmodbus 1.1.0, tested with core's own `pytest-homeassistant` (2026.11.0),
-   which replaced `pytest-homeassistant-custom-component` (that one stops at
-   2026.10.4 and is declared broken upstream). The integration keeps
-   supporting 2026.9 (`requirements_dev.txt` says why). Left:
-   1. **The diagnosis's PEP 723 headers** (`sungrow_diagnosis.py`,
-      `sungrow_capability_test.py`, `sungrow_wallbox_capability_test.py`,
-      line 6) pin `modbus-connection[tmodbus]==4.12.7` in the working tree
-      since 2026-11-11, uncommitted: it resolves from PyPI with tmodbus 1.1.0
-      and `sungrow-modbus==0.1.0a37`. A new transport for contributors' runs,
-      so it is committed only after one diagnosis on hardware with it
-      (`device-diagnosis/scripts/diagnosis.sh` from this checkout at the
-      maintainer's SH10RT).
 5. **The diagnosis and its capability tests.** In the code: three modes in
    *Diagnosis: mode* (read-only, extended test single run and auto repeat),
    started by *Diagnosis: start* and ended early by *Diagnosis: stop*, a
