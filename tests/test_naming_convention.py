@@ -52,6 +52,9 @@ from custom_components.sungrow_modbus.derived_descriptions import (
 )
 from custom_components.sungrow_modbus.diagnosis_entities import DIAGNOSIS_ENTITIES
 from custom_components.sungrow_modbus.external_descriptions import EXTERNAL_SENSORS
+from custom_components.sungrow_modbus.ihomemanager_descriptions import (
+    IHOMEMANAGER_DESCRIPTIONS,
+)
 from custom_components.sungrow_modbus.number_descriptions import NUMBER_DESCRIPTIONS
 from custom_components.sungrow_modbus.select_descriptions import SELECT_DESCRIPTIONS
 from custom_components.sungrow_modbus.sensor_descriptions import SENSOR_DESCRIPTIONS
@@ -92,6 +95,8 @@ DESCRIPTIONS = {
         *EXTERNAL_SENSORS,
         # An SG's, hand-written like the wallbox's: no legacy name either.
         *STRING_INVERTER_DESCRIPTIONS,
+        # An iHomeManager's, an entry of its own: no legacy name either.
+        *IHOMEMANAGER_DESCRIPTIONS,
     ),
     "binary_sensor": (
         *DERIVED_BINARY_SENSORS,
@@ -313,6 +318,8 @@ DEVICE_OF = {
         # An SG entry's own inverter: never on one page with a hybrid's.
         ("string_inverter", STRING_INVERTER_DESCRIPTIONS),
         ("string_inverter", STRING_INVERTER_BINARY_DESCRIPTIONS),
+        # An iHomeManager entry: its own device, never beside an inverter.
+        ("ihomemanager", IHOMEMANAGER_DESCRIPTIONS),
     )
     for description in group
 }

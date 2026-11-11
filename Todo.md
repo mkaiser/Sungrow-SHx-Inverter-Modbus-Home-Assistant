@@ -142,9 +142,10 @@ Nothing can start now (blocker 13).
    09:30 for an hour: no car came, so no run started (the right outcome).
    Item 1 above applies to it too: its
    first writing run needs a car charging, watched live. A `wallbox_host`
-   entry is never moved onto one (decided). An iHomeManager or a Logger
-   (unit 247) is offered as a diagnosis-only entry, untested on hardware:
-   asked for in `device-diagnosis/devices-wanted.md`. Not yet: the search
+   entry is never moved onto one (decided). A Logger (unit 247) is offered
+   as a diagnosis-only entry, untested on hardware: asked for in
+   `device-diagnosis/devices-wanted.md`. An iHomeManager's entry has its
+   readings too (iHomeManager, below). Not yet: the search
    showing which inverters sit behind a Logger (decided yes; how a Logger is
    handled beyond that is open).
 
@@ -165,8 +166,15 @@ Nothing can start now (blocker 16).
 
 ## iHomeManager
 
-Building its entities can start: blocker 17 is met by one unit (2026-11-10).
-Whether to build them is the maintainer's call.
+1. **Its entities on hardware.** Built 2026-11-11: an iHomeManager entry
+   shows 40 read-only sensors beside its diagnosis (the site's flows, the
+   grid meter, the charger, its settings as set;
+   `ihomemanager_descriptions.py`), tested against the one unit's words.
+   Not yet seen in a real Home Assistant. Left out until a second unit
+   (blocker 17): 8554, 8047, 8048, 8051-8052, channel 2 and 8029. The
+   entry now holds its port while loaded, and each port takes one
+   connection: worth a line in the user docs once released, beside the
+   `legacy/doc/faq.md` answer (Release).
 
 ## Integration and tooling
 
@@ -442,7 +450,8 @@ Whether to build them is the maintainer's call.
     4361 read 0), what 8554 means (0, "single phase", on a three-phase site),
     and the codes 8047 = 0, 8048 = 0xA7 and 8051 = 0, which the map does
     not know. A second unit, on other firmware, would say which of these
-    are the device's. Sungrow's protocol PDF:
+    are the device's; until then the entities leave 8554 and those codes
+    out. Sungrow's protocol PDF:
     https://github.com/TCzerny/ha-modbus-manager/blob/main/docs/Communication%20Protocol%20of%20iHomeManager_V1.0.2.pdf
 
 ## Integration and tooling

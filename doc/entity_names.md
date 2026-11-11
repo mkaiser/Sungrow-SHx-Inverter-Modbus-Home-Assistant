@@ -1,6 +1,6 @@
 # The entity names
 
-**337 entities** that modern mode can create (Hybrid inverter 197, SBR battery 34, Wallbox 21, SG string inverter 85).
+**377 entities** that modern mode can create (Hybrid inverter 197, SBR battery 34, Wallbox 21, SG string inverter 85, iHomeManager 40).
 
 The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
@@ -469,6 +469,55 @@ An entry of its own, never beside a hybrid. Trackers and phases exist only where
 | Total export energy (5095) |  | Total exported energy | Gesamt eingespeiste Energie | `sensor.sg5_0rs_total_exported_energy` |  | kWh |
 | Total import energy (5099) |  | Total imported energy | Gesamt bezogene Energie | `sensor.sg5_0rs_total_imported_energy` |  | kWh |
 | Total running time (5006) |  | Total running time | Gesamte Laufzeit | `sensor.sg5_0rs_total_running_time` |  | h |
+
+## iHomeManager (40)
+
+An entry of its own at unit 247, read only. A field that read nothing gets no entity. Ids shown for `iHomeManager`.
+
+### Everything (40)
+
+| Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
+| --- | --- | --- | --- | --- | --- | --- |
+|  |  | Active power of the inverters | Wirkleistung der Wechselrichter | `sensor.ihomemanager_active_power_of_the_inverters` |  | kW |
+|  |  | Battery command | Batteriebefehl | `sensor.ihomemanager_battery_command` |  |  |
+|  |  | Battery command power | Leistung des Batteriebefehls | `sensor.ihomemanager_battery_command_power` |  | kW |
+|  |  | Battery level | Batterie-Ladestand | `sensor.ihomemanager_battery_level` |  | % |
+|  |  | Battery power | Batterieleistung | `sensor.ihomemanager_battery_power` |  | kW |
+|  |  | Battery power range | Batterieleistungsbereich | `sensor.ihomemanager_battery_power_range` |  | kW |
+|  |  | Charger enabled | Ladestation aktiviert | `sensor.ihomemanager_charger_enabled` |  |  |
+|  |  | Charger phase A power | Ladestation Phase A Leistung | `sensor.ihomemanager_charger_phase_a_power` |  | W |
+|  |  | Charger phase B power | Ladestation Phase B Leistung | `sensor.ihomemanager_charger_phase_b_power` |  | W |
+|  |  | Charger phase C power | Ladestation Phase C Leistung | `sensor.ihomemanager_charger_phase_c_power` |  | W |
+|  |  | Charger power | Leistung der Ladestation | `sensor.ihomemanager_charger_power` |  | W |
+|  |  | Charger status | Status der Ladestation | `sensor.ihomemanager_charger_status` |  |  |
+|  |  | Connected devices | Verbundene Geräte | `sensor.ihomemanager_connected_devices` |  |  |
+|  |  | Devices in fault | Geräte mit Fehler | `sensor.ihomemanager_devices_in_fault` |  |  |
+|  |  | EMS mode | EMS-Modus | `sensor.ihomemanager_ems_mode` |  |  |
+|  |  | Exported energy | Eingespeiste Energie | `sensor.ihomemanager_exported_energy` |  | kWh |
+|  |  | Feed-in limitation | Einspeisebegrenzung | `sensor.ihomemanager_feed_in_limitation` |  |  |
+|  |  | Feed-in limitation ratio | Einspeisebegrenzung prozentual | `sensor.ihomemanager_feed_in_limitation_ratio` |  | % |
+|  |  | Grid charging permitted | Laden aus dem Netz erlaubt | `sensor.ihomemanager_grid_charging_permitted` |  |  |
+|  |  | Grid frequency | Netzfrequenz | `sensor.ihomemanager_grid_frequency` |  | Hz |
+|  |  | Grid power | Netzleistung | `sensor.ihomemanager_grid_power` |  | kW |
+|  |  | Grid voltage A | Netzspannung A | `sensor.ihomemanager_grid_voltage_a` |  | V |
+|  |  | Grid voltage B | Netzspannung B | `sensor.ihomemanager_grid_voltage_b` |  | V |
+|  |  | Grid voltage C | Netzspannung C | `sensor.ihomemanager_grid_voltage_c` |  | V |
+|  |  | Imported energy | Bezogene Energie | `sensor.ihomemanager_imported_energy` |  | kWh |
+|  |  | Load power | Leistungsaufnahme Verbraucher | `sensor.ihomemanager_load_power` |  | kW |
+|  |  | Maximum battery charge power | Maximale Batterie-Ladeleistung | `sensor.ihomemanager_maximum_battery_charge_power` |  | kW |
+|  |  | Maximum battery discharge power | Maximale Batterie-Entladeleistung | `sensor.ihomemanager_maximum_battery_discharge_power` |  | kW |
+|  |  | Minimum battery charge power | Minimale Batterie-Ladeleistung | `sensor.ihomemanager_minimum_battery_charge_power` |  | kW |
+|  |  | Minimum battery discharge power | Minimale Batterie-Entladeleistung | `sensor.ihomemanager_minimum_battery_discharge_power` |  | kW |
+|  |  | Phase A power | Phase A Leistung | `sensor.ihomemanager_phase_a_power` |  | W |
+|  |  | Phase A voltage | Phase A Spannung | `sensor.ihomemanager_phase_a_voltage` |  | V |
+|  |  | Phase B power | Phase B Leistung | `sensor.ihomemanager_phase_b_power` |  | W |
+|  |  | Phase B voltage | Phase B Spannung | `sensor.ihomemanager_phase_b_voltage` |  | V |
+|  |  | Phase C power | Phase C Leistung | `sensor.ihomemanager_phase_c_power` |  | W |
+|  |  | Phase C voltage | Phase C Spannung | `sensor.ihomemanager_phase_c_voltage` |  | V |
+|  |  | Protocol version | Protokollversion | `sensor.ihomemanager_protocol_version` |  |  |
+|  |  | Total rated active power | Gesamte Nennwirkleistung | `sensor.ihomemanager_total_rated_active_power` |  | kW |
+|  |  | Total rated battery capacity | Gesamte Nennkapazität der Batterien | `sensor.ihomemanager_total_rated_battery_capacity` |  | kWh |
+|  |  | VPP heartbeat | VPP-Heartbeat | `sensor.ihomemanager_vpp_heartbeat` |  | s |
 
 ## Legacy mode only (21)
 

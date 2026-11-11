@@ -51,8 +51,11 @@ registers on theirs ([evcc cross-reference](../sources/cross-reference-evcc-summ
   map posted in discussion #262; any other code is reported by its number
   and not read (`discovery.UNIT_247_DEVICE`).
 - **In Home Assistant:** the network search asks unit 247 on every open
-  port 502-505 and offers an iHomeManager as an entry of its own that only
-  runs its diagnosis: no entities measure it. *Diagnosis: start* builds the
+  port 502-505 and offers an iHomeManager as an entry of its own, with
+  read-only sensors (`custom_components/sungrow_modbus/ihomemanager_descriptions.py`,
+  which leaves out 8554, the unknown codes, channel 2 and 8029) and its
+  diagnosis. The entry holds its port while loaded, and each port takes one
+  connection. *Diagnosis: start* builds the
   same document as the terminal (`custom_components/sungrow_modbus/device_diagnosis.py`,
   from the library's `ihomemanager` package). Identified by kind, host and
   port, since it documents no serial. Run on a real unit once

@@ -3,10 +3,10 @@
 Sungrow's *Communication Protocol of iHomeManager* **V1.0.2** is the source,
 with V1.0.1 beside it; both ship in TCzerny/ha-modbus-manager's `docs/`, and
 `.wiki/raw/cross-reference-modbus-manager.md` compares that project's MIT template
-with them. **No iHomeManager has been measured here.** Users of other
-projects have read a few registers on theirs
-(`.wiki/raw/cross-reference-evcc.md`), and where they contradict the document
-the reading wins. `CONFIDENCE` names the source of each field:
+with them. **One iHomeManager has been measured here** (SV930.001.00.P020,
+2026-11-10, every field answered); users of other projects have read a few
+registers on theirs (`.wiki/raw/cross-reference-evcc.md`). Where a reading
+contradicts the document, the reading wins. `CONFIDENCE` names the source of each field:
 
 * **spec V1.0.2** -- in V1.0.2's register tables.
 * **spec V1.0.1** -- in V1.0.1 only: channel 2's phase voltages, which
@@ -40,7 +40,7 @@ from __future__ import annotations
 from modbus_connection.model import Component, gauge, int32, integer, uint32
 
 from ..addresses import reg
-from ..model import string
+from ..model import RegisterValue, string
 
 #: The unit an iHomeManager answers on, fixed by Sungrow ("changes are not
 #: supported").
@@ -101,6 +101,13 @@ OUTPUT_TYPE: dict[int, str] = {
 }
 
 
+def _meaning(table: dict[int, str], code: RegisterValue) -> str | None:
+    """Return what a code means, or None for an unknown one, never a made-up label."""
+    if code is None:
+        return None
+    return table.get(int(code))
+
+
 def protocol_version(value: int | None) -> str | None:
     """Render register 8003-8004 as a version: `0x01000200` is `V1.0.2`.
 
@@ -134,6 +141,12 @@ class IHomeManagerIdentity(Component):
     """Devices on RS485, WiFi or Ethernet; not those on a DO."""
 
     devices_in_fault = integer(reg(8006), signed=False, nan=0xFFFF)
+
+    @property
+    def protocol_version(self) -> str | None:
+        """The protocol version as `V1.0.1`."""
+        raw = self.protocol_version_raw
+        return protocol_version(None if raw is None else int(raw))
 
 
 class IHomeManagerSystem(Component):
@@ -243,6 +256,11 @@ class IHomeManagerMeters(Component):
         reg(8573), word_order="little", nan=0x7FFFFFFF, unit="W"
     )
 
+    @property
+    def charger_status(self) -> str | None:
+        """What the charger is doing, in words."""
+        return _meaning(CHARGER_STATUS, self.charger_status_raw)
+
 
 class IHomeManagerCharger(Component):
     """The charger's power, total and per phase. Field only: issue #86 there."""
@@ -304,6 +322,31 @@ class IHomeManagerSettings(Component):
     grid_draw_permitted_raw = integer(reg(8050), signed=False, nan=0xFFFF)
     active_power_limitation_raw = integer(reg(8051), signed=False, nan=0xFFFF)
     active_power_limit_ratio = gauge(reg(8052), 0.1, signed=False, nan=0xFFFF, unit="%")
+
+    @property
+    def ems_mode(self) -> str | None:
+        """The EMS mode, in words."""
+        return _meaning(EMS_MODE, self.ems_mode_raw)
+
+    @property
+    def charge_command(self) -> str | None:
+        """The battery command the EMS mode carries out, in words."""
+        return _meaning(CHARGE_COMMAND, self.charge_command_raw)
+
+    @property
+    def feed_in_limitation(self) -> str | None:
+        """Whether feed-in is limited."""
+        return _meaning(FEED_IN_LIMITATION, self.feed_in_limitation_raw)
+
+    @property
+    def charger_enabled(self) -> str | None:
+        """Whether the charger is enabled."""
+        return _meaning(ENABLED, self.charger_enabled_raw)
+
+    @property
+    def grid_draw_permitted(self) -> str | None:
+        """Whether charging the battery from the grid is permitted."""
+        return _meaning(ENABLED, self.grid_draw_permitted_raw)
 
 
 #: The components, by the name a document groups them under.

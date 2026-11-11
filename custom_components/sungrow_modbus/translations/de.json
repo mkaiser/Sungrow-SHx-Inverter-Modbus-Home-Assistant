@@ -7,7 +7,7 @@
       "connection_unchanged": "Das ist bereits die Verbindung dieses Eintrags. Es wurde nichts geändert.",
       "connection_moved": "„{title}“ verwendet jetzt die neue Verbindung. Der Eintrag wurde neu geladen; seine Entitäten, deren Verlauf und seine Einstellungen sind unverändert.",
       "wallbox_entry": "Das ist eine Wallbox, die unter ihrer eigenen Adresse gelesen wird, und ihre Adresse wird hier nicht geändert: Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer. Die Einstellungen für ihren Funktionstest und ihre Diagnose findest du unter **Konfigurieren**.",
-      "unit_247_entry": "Dieser Eintrag führt nur die Diagnose eines iHomeManagers oder eines Sungrow-Loggers aus. Er misst nichts und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu."
+      "unit_247_entry": "Dieser Eintrag zeigt die Messwerte und die Diagnose eines iHomeManagers oder die Diagnose eines Sungrow-Loggers und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu."
     },
     "error": {
       "cannot_connect": "Verbindung fehlgeschlagen: {error}",
@@ -703,6 +703,126 @@
       },
       "grid_side_fault": {
         "name": "Netzseitiger Fehler"
+      },
+      "ihm_battery_level": {
+        "name": "Batterie-Ladestand"
+      },
+      "ihm_battery_power": {
+        "name": "Batterieleistung"
+      },
+      "ihm_battery_power_range": {
+        "name": "Batterieleistungsbereich"
+      },
+      "ihm_charge_command": {
+        "name": "Batteriebefehl"
+      },
+      "ihm_charge_power": {
+        "name": "Leistung des Batteriebefehls"
+      },
+      "ihm_charger_enabled": {
+        "name": "Ladestation aktiviert"
+      },
+      "ihm_charger_phase_a_power": {
+        "name": "Ladestation Phase A Leistung"
+      },
+      "ihm_charger_phase_b_power": {
+        "name": "Ladestation Phase B Leistung"
+      },
+      "ihm_charger_phase_c_power": {
+        "name": "Ladestation Phase C Leistung"
+      },
+      "ihm_charger_power": {
+        "name": "Leistung der Ladestation"
+      },
+      "ihm_charger_status": {
+        "name": "Status der Ladestation"
+      },
+      "ihm_connected_devices": {
+        "name": "Verbundene Geräte"
+      },
+      "ihm_devices_in_fault": {
+        "name": "Geräte mit Fehler"
+      },
+      "ihm_ems_mode": {
+        "name": "EMS-Modus"
+      },
+      "ihm_feed_in_limitation": {
+        "name": "Einspeisebegrenzung"
+      },
+      "ihm_feed_in_limitation_ratio": {
+        "name": "Einspeisebegrenzung prozentual"
+      },
+      "ihm_grid_active_power": {
+        "name": "Netzleistung"
+      },
+      "ihm_grid_draw_permitted": {
+        "name": "Laden aus dem Netz erlaubt"
+      },
+      "ihm_grid_export_energy": {
+        "name": "Eingespeiste Energie"
+      },
+      "ihm_grid_frequency": {
+        "name": "Netzfrequenz"
+      },
+      "ihm_grid_import_energy": {
+        "name": "Bezogene Energie"
+      },
+      "ihm_inverter_active_power": {
+        "name": "Wirkleistung der Wechselrichter"
+      },
+      "ihm_load_active_power": {
+        "name": "Leistungsaufnahme Verbraucher"
+      },
+      "ihm_max_battery_charge_power": {
+        "name": "Maximale Batterie-Ladeleistung"
+      },
+      "ihm_max_battery_discharge_power": {
+        "name": "Maximale Batterie-Entladeleistung"
+      },
+      "ihm_min_battery_charge_power": {
+        "name": "Minimale Batterie-Ladeleistung"
+      },
+      "ihm_min_battery_discharge_power": {
+        "name": "Minimale Batterie-Entladeleistung"
+      },
+      "ihm_phase_a_power": {
+        "name": "Phase A Leistung"
+      },
+      "ihm_phase_a_voltage": {
+        "name": "Phase A Spannung"
+      },
+      "ihm_phase_b_power": {
+        "name": "Phase B Leistung"
+      },
+      "ihm_phase_b_voltage": {
+        "name": "Phase B Spannung"
+      },
+      "ihm_phase_c_power": {
+        "name": "Phase C Leistung"
+      },
+      "ihm_phase_c_voltage": {
+        "name": "Phase C Spannung"
+      },
+      "ihm_protocol_version": {
+        "name": "Protokollversion"
+      },
+      "ihm_total_rated_active_power": {
+        "name": "Gesamte Nennwirkleistung"
+      },
+      "ihm_total_rated_battery_capacity": {
+        "name": "Gesamte Nennkapazität der Batterien"
+      },
+      "ihm_voltage_a": {
+        "name": "Netzspannung A"
+      },
+      "ihm_voltage_b": {
+        "name": "Netzspannung B"
+      },
+      "ihm_voltage_c": {
+        "name": "Netzspannung C"
+      },
+      "ihm_vpp_heartbeat": {
+        "name": "VPP-Heartbeat"
       },
       "import_power": {
         "name": "Bezugsleistung"
@@ -1638,7 +1758,7 @@
     },
     "abort": {
       "devices_mode_not_offered": "Sensoren und Steuerungen einzurichten ist in dieser Version nicht enthalten. Diese Alpha legt nur Einträge für die Diagnose an; beginne erneut und wähle **Geräte-Diagnose durchführen**.",
-      "unit_247_entry": "Dieser Eintrag führt nur die Diagnose eines iHomeManagers oder eines Sungrow-Loggers aus. Er misst nichts und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu."
+      "unit_247_entry": "Dieser Eintrag zeigt die Messwerte und die Diagnose eines iHomeManagers oder die Diagnose eines Sungrow-Loggers und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu."
     }
   },
   "services": {

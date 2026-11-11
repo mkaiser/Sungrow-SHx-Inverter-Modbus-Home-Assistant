@@ -153,10 +153,14 @@ its wallbox. A `wallbox_host` on an inverter entry is never moved onto one.
 The sweep also asks **unit 247** on every open port 502-505, and over TLS on
 516 where no wallbox answered there: an iHomeManager (type code 0x072A) or a
 Sungrow Logger (`logger.MODELS`) is offered as an entry of kind `ihomemanager`
-or `logger`, which is **only its diagnosis**: no coordinator, no measured
-entity, the *Diagnosis: start/stop* buttons and three sensors, and the
-library's document for it. Neither documents a serial, so the entry's unique
-id is kind, host and port. `DeviceDiagnosisRunner` is the read-only runner
+or `logger`: the *Diagnosis: start/stop* buttons and three sensors, and the
+library's document for it. An iHomeManager's entry also polls the device
+(`sungrow_modbus.ihomemanager.SungrowIHomeManager`, one coordinator per tier,
+`custom_components/sungrow_modbus/ihomemanager.py`) and shows its readings,
+read only (`ihomemanager_descriptions.py` says which, and which not); its
+port takes one connection, held while the entry is loaded. A Logger's is
+only its diagnosis. Neither documents a serial, so the entry's unique id is
+kind, host and port. `DeviceDiagnosisRunner` is the read-only runner
 these three entries share; the inverter's `DiagnosisRunner` is not used for
 them. Sub-devices are probed
 again whenever the entry's endpoint changes, so a move from a dongle to a

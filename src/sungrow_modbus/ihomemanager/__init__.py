@@ -2,10 +2,12 @@
 
 Not a gateway: it forwards none of the devices it manages, so it is its own
 endpoint and its own document. The map is Sungrow's document (`registers`),
-and the published form masks any undocumented text (`document`).
+the device that polls it `device`, and the published form masks any
+undocumented text (`document`).
 """
 
 from ..dump import IHOMEMANAGER_BANDS as BANDS
+from .device import TIER_COMPONENTS, SungrowIHomeManager
 from .document import (
     IHOMEMANAGER_DOCUMENT,
     document,
@@ -25,8 +27,10 @@ __all__ = [
     "DOCUMENT",
     "IHOMEMANAGER_DOCUMENT",
     "PORTS",
+    "TIER_COMPONENTS",
     "TYPE_CODE",
     "UNIT",
+    "SungrowIHomeManager",
     "document",
     "label_for",
     "masked_text",

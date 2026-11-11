@@ -1,7 +1,7 @@
 """An iHomeManager or a Logger, found by the search and set up for its diagnosis.
 
-Neither has been read here, so the registers are built the way Sungrow's
-documents describe them (as `tests/test_ihomemanager.py` and
+Neither had been read here when these were written, so the registers are
+built the way Sungrow's documents describe them (as `tests/test_ihomemanager.py` and
 `tests/test_logger.py` do). A simulator cannot produce a finding: these tests
 check the wiring, never what a device answers.
 """
@@ -188,11 +188,11 @@ async def _setup(hass: HomeAssistant, kind: str, port: int = 502) -> MockConfigE
     return entry
 
 
-@pytest.mark.parametrize("kind", [KIND_IHOMEMANAGER, KIND_LOGGER])
-async def test_the_entry_is_a_diagnosis_and_nothing_measured(
-    hass: HomeAssistant, kind: str
+async def test_a_logger_entry_is_a_diagnosis_and_nothing_measured(
+    hass: HomeAssistant,
 ) -> None:
-    entry = await _setup(hass, kind)
+    """An iHomeManager's readings are `tests/test_ihomemanager_entities.py`'s."""
+    entry = await _setup(hass, KIND_LOGGER)
 
     assert entry.state is ConfigEntryState.LOADED
     keys = {

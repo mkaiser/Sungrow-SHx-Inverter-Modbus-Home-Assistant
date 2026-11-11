@@ -7,7 +7,7 @@
       "connection_unchanged": "That is the connection this entry already uses. Nothing was changed.",
       "connection_moved": "“{title}” now uses the new connection. It has been reloaded; its entities, their history and its settings are unchanged.",
       "wallbox_entry": "This is a wallbox read at its own address, and its address is not changed here: to follow it to a new address, search your network again and pick it; the entry finds it by its serial. Its capability test and diagnosis settings are under **Configure**.",
-      "unit_247_entry": "This entry only runs the diagnosis of an iHomeManager or a Sungrow Logger. It measures nothing and has no settings. If the device moves to another address or port, search your network again and add it there."
+      "unit_247_entry": "This entry shows an iHomeManager's readings and its diagnosis, or a Sungrow Logger's diagnosis, and has no settings. If the device moves to another address or port, search your network again and add it there."
     },
     "error": {
       "cannot_connect": "Failed to connect: {error}",
@@ -703,6 +703,126 @@
       },
       "grid_side_fault": {
         "name": "Grid-side fault"
+      },
+      "ihm_battery_level": {
+        "name": "Battery level"
+      },
+      "ihm_battery_power": {
+        "name": "Battery power"
+      },
+      "ihm_battery_power_range": {
+        "name": "Battery power range"
+      },
+      "ihm_charge_command": {
+        "name": "Battery command"
+      },
+      "ihm_charge_power": {
+        "name": "Battery command power"
+      },
+      "ihm_charger_enabled": {
+        "name": "Charger enabled"
+      },
+      "ihm_charger_phase_a_power": {
+        "name": "Charger phase A power"
+      },
+      "ihm_charger_phase_b_power": {
+        "name": "Charger phase B power"
+      },
+      "ihm_charger_phase_c_power": {
+        "name": "Charger phase C power"
+      },
+      "ihm_charger_power": {
+        "name": "Charger power"
+      },
+      "ihm_charger_status": {
+        "name": "Charger status"
+      },
+      "ihm_connected_devices": {
+        "name": "Connected devices"
+      },
+      "ihm_devices_in_fault": {
+        "name": "Devices in fault"
+      },
+      "ihm_ems_mode": {
+        "name": "EMS mode"
+      },
+      "ihm_feed_in_limitation": {
+        "name": "Feed-in limitation"
+      },
+      "ihm_feed_in_limitation_ratio": {
+        "name": "Feed-in limitation ratio"
+      },
+      "ihm_grid_active_power": {
+        "name": "Grid power"
+      },
+      "ihm_grid_draw_permitted": {
+        "name": "Grid charging permitted"
+      },
+      "ihm_grid_export_energy": {
+        "name": "Exported energy"
+      },
+      "ihm_grid_frequency": {
+        "name": "Grid frequency"
+      },
+      "ihm_grid_import_energy": {
+        "name": "Imported energy"
+      },
+      "ihm_inverter_active_power": {
+        "name": "Active power of the inverters"
+      },
+      "ihm_load_active_power": {
+        "name": "Load power"
+      },
+      "ihm_max_battery_charge_power": {
+        "name": "Maximum battery charge power"
+      },
+      "ihm_max_battery_discharge_power": {
+        "name": "Maximum battery discharge power"
+      },
+      "ihm_min_battery_charge_power": {
+        "name": "Minimum battery charge power"
+      },
+      "ihm_min_battery_discharge_power": {
+        "name": "Minimum battery discharge power"
+      },
+      "ihm_phase_a_power": {
+        "name": "Phase A power"
+      },
+      "ihm_phase_a_voltage": {
+        "name": "Phase A voltage"
+      },
+      "ihm_phase_b_power": {
+        "name": "Phase B power"
+      },
+      "ihm_phase_b_voltage": {
+        "name": "Phase B voltage"
+      },
+      "ihm_phase_c_power": {
+        "name": "Phase C power"
+      },
+      "ihm_phase_c_voltage": {
+        "name": "Phase C voltage"
+      },
+      "ihm_protocol_version": {
+        "name": "Protocol version"
+      },
+      "ihm_total_rated_active_power": {
+        "name": "Total rated active power"
+      },
+      "ihm_total_rated_battery_capacity": {
+        "name": "Total rated battery capacity"
+      },
+      "ihm_voltage_a": {
+        "name": "Grid voltage A"
+      },
+      "ihm_voltage_b": {
+        "name": "Grid voltage B"
+      },
+      "ihm_voltage_c": {
+        "name": "Grid voltage C"
+      },
+      "ihm_vpp_heartbeat": {
+        "name": "VPP heartbeat"
       },
       "import_power": {
         "name": "Import power"
@@ -1638,7 +1758,7 @@
     },
     "abort": {
       "devices_mode_not_offered": "Setting up sensors and controls is not in this release. This alpha creates diagnostics-only entries; start again and choose **Perform the device diagnosis**.",
-      "unit_247_entry": "This entry only runs the diagnosis of an iHomeManager or a Sungrow Logger. It measures nothing and has no settings. If the device moves to another address or port, search your network again and add it there."
+      "unit_247_entry": "This entry shows an iHomeManager's readings and its diagnosis, or a Sungrow Logger's diagnosis, and has no settings. If the device moves to another address or port, search your network again and add it there."
     }
   },
   "services": {

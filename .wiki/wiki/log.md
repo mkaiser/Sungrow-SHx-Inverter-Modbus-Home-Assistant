@@ -753,3 +753,9 @@ else.
 battery-less inverter reads 13022 as 65535. No committed diagnosis refuses 5214; #655 (an SH8.0RS
 through a WiNet-S) and #770 (a third-party battery) report it missing, and SAPPHIRE 51.0x is
 unread. New query is-battery-power-firmware-dependent, the index.
+
+## [2026-11-11] changed | an iHomeManager entry shows its readings
+
+The integration now polls an iHomeManager entry's device and shows 40 read-only sensors beside
+its diagnosis, decoded as the unit measured on 2026-11-10 answered. 8554, the unknown codes
+8047, 8048 and 8051-8052, channel 2 and 8029 get none. Updated device-ihomemanager.

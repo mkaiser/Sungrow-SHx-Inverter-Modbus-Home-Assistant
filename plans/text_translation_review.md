@@ -51,9 +51,9 @@ and bold are kept.
 
 ### `config.abort.unit_247_entry`
 
-> **EN** This entry only runs the diagnosis of an iHomeManager or a Sungrow Logger. It measures nothing and has no settings. If the device moves to another address or port, search your network again and add it there.
+> **EN** This entry shows an iHomeManager's readings and its diagnosis, or a Sungrow Logger's diagnosis, and has no settings. If the device moves to another address or port, search your network again and add it there.
 
-> **DE** Dieser Eintrag führt nur die Diagnose eines iHomeManagers oder eines Sungrow-Loggers aus. Er misst nichts und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu.
+> **DE** Dieser Eintrag zeigt die Messwerte und die Diagnose eines iHomeManagers oder die Diagnose eines Sungrow-Loggers und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu.
 
 ### `config.error.cannot_connect`
 
@@ -1995,9 +1995,9 @@ and bold are kept.
 
 ### `options.abort.unit_247_entry`
 
-> **EN** This entry only runs the diagnosis of an iHomeManager or a Sungrow Logger. It measures nothing and has no settings. If the device moves to another address or port, search your network again and add it there.
+> **EN** This entry shows an iHomeManager's readings and its diagnosis, or a Sungrow Logger's diagnosis, and has no settings. If the device moves to another address or port, search your network again and add it there.
 
-> **DE** Dieser Eintrag führt nur die Diagnose eines iHomeManagers oder eines Sungrow-Loggers aus. Er misst nichts und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu.
+> **DE** Dieser Eintrag zeigt die Messwerte und die Diagnose eines iHomeManagers oder die Diagnose eines Sungrow-Loggers und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu.
 
 
 ## Actions (18)

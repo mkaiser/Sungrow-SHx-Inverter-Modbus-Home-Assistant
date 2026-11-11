@@ -98,7 +98,13 @@ STRING_INVERTER = Device(
     "An entry of its own, never beside a hybrid. Trackers and phases exist "
     "only where the model serves them, so this is every one a model can have.",
 )
-DEVICES = (INVERTER, BATTERY, WALLBOX, STRING_INVERTER)
+IHOMEMANAGER = Device(
+    "iHomeManager",
+    "iHomeManager",
+    "An entry of its own at unit 247, read only. A field that read nothing "
+    "gets no entity.",
+)
+DEVICES = (INVERTER, BATTERY, WALLBOX, STRING_INVERTER, IHOMEMANAGER)
 
 
 @dataclass(frozen=True)
@@ -141,6 +147,9 @@ def _descriptions() -> list[tuple[Device, str, object]]:
         DERIVED_SENSORS,
     )
     from custom_components.sungrow_modbus.external_descriptions import EXTERNAL_SENSORS
+    from custom_components.sungrow_modbus.ihomemanager_descriptions import (
+        IHOMEMANAGER_DESCRIPTIONS,
+    )
     from custom_components.sungrow_modbus.number_descriptions import NUMBER_DESCRIPTIONS
     from custom_components.sungrow_modbus.select_descriptions import SELECT_DESCRIPTIONS
     from custom_components.sungrow_modbus.sensor_descriptions import SENSOR_DESCRIPTIONS
@@ -168,6 +177,7 @@ def _descriptions() -> list[tuple[Device, str, object]]:
         (WALLBOX, "binary_sensor", WALLBOX_BINARY_DESCRIPTIONS),
         (STRING_INVERTER, "sensor", STRING_INVERTER_DESCRIPTIONS),
         (STRING_INVERTER, "binary_sensor", STRING_INVERTER_BINARY_DESCRIPTIONS),
+        (IHOMEMANAGER, "sensor", IHOMEMANAGER_DESCRIPTIONS),
     )
     return [
         (device, domain, description)

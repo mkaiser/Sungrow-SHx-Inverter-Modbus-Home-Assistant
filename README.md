@@ -69,7 +69,10 @@ dashboards when they switch ([doc/integration_migration.md](doc/integration_migr
   it and puts everything back
   ([device-diagnosis/README.md](device-diagnosis/README.md)).
 
-**Not yet:** the iHomeManager and the Sungrow Logger (never measured; see
+An **iHomeManager** found by the network search gets an entry of its own,
+read only: the site's flows, its grid meter and its settings as set.
+
+**Not yet:** the Sungrow Logger (never measured; see
 [devices-wanted.md](device-diagnosis/devices-wanted.md)), SBH batteries, the
 SBR's per-module entities, and writing to the wallbox.
 

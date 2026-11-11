@@ -28,8 +28,7 @@ The integration covers the inverter, the
 [SBR battery](.wiki/wiki/entities/device-sbr-battery.md), the
 [wallbox](.wiki/wiki/entities/device-wallbox.md) (read-only entities; through the
 dongle, or at its own address with the `wallbox_host` option) and an
-[external generator](.wiki/wiki/concepts/external-generator.md). The
-[iHomeManager](.wiki/wiki/entities/device-ihomemanager.md) is never measured.
+[external generator](.wiki/wiki/concepts/external-generator.md).
 One config entry is **one inverter behind one Modbus endpoint** (host + port),
 plus the devices found on it,
 [identified by what answers](.wiki/wiki/concepts/identify-by-what-answers.md),
@@ -38,8 +37,9 @@ never by unit id. The one exception is a
 its own address (TLS, port 516, unit 248): it is an entry of its own, with
 read-only entities and a capability test of its own,
 identified by its own serial, with no inverter beside it. The search also
-offers an iHomeManager or a Logger (unit 247) as an entry that is only its
-diagnosis: nothing on it is measured.
+offers an [iHomeManager](.wiki/wiki/entities/device-ihomemanager.md) or a
+Logger (unit 247) as an entry of its own: an iHomeManager's has read-only
+entities and its diagnosis, a Logger's (never measured) only its diagnosis.
 
 Home Assistant 2026.9's `modbus` integration hands a device integration a
 *unit* (`async_get_unit(...)`), and everything on one host/port shares one

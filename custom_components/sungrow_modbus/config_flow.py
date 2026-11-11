@@ -128,6 +128,7 @@ from .const import (
     IDENTIFY_UNITS,
     INTERVAL_MINIMUM,
     INTERVAL_NEVER,
+    KIND_IHOMEMANAGER,
     KIND_STRING_INVERTER,
     KIND_WALLBOX,
     MODE_DEVICES,
@@ -921,7 +922,8 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 CONF_TLS: tls,
                 CONF_KIND: who.kind,
                 "model": model,
-                "label": f"{model} at {hostname or host}, port {port} (diagnosis only)",
+                "label": f"{model} at {hostname or host}, port {port}"
+                + ("" if who.kind == KIND_IHOMEMANAGER else " (diagnosis only)"),
             }
         _LOGGER.debug(
             "Identified %s device(s) at unit 247 on %s: %s",
@@ -1096,12 +1098,12 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def _async_add_unit_247(self, key: str) -> ConfigFlowResult:
-        """Create a diagnosis-only entry for an iHomeManager or a Logger.
+        """Create an entry for an iHomeManager or a Logger.
 
         Neither documents a serial, so the entry is named by what it is and
         where it answers: kind, host and port. Found again at the same place
-        it is the same entry. It measures nothing; its one use is a diagnosis
-        its owner can send in.
+        it is the same entry. An iHomeManager's shows its readings and its
+        diagnosis; a Logger's, never measured, only its diagnosis.
         """
         device = self._unit_247[key]
         unique_id = f"{device[CONF_KIND]}-{device[CONF_HOST]}-{device[CONF_PORT]}"

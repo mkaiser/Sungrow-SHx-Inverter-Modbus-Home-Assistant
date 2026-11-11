@@ -345,7 +345,7 @@ KIND_STRING_INVERTER = "string_inverter"
 """An SG: its own map, read only, no battery, no YAML package ids."""
 
 KIND_IHOMEMANAGER = "ihomemanager"
-"""An iHomeManager at unit 247: a diagnosis and nothing measured."""
+"""An iHomeManager at unit 247: its readings, read only, and its diagnosis."""
 
 KIND_LOGGER = "logger"
 """A Sungrow Logger at unit 247: a diagnosis and nothing measured."""

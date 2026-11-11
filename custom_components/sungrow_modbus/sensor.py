@@ -47,6 +47,8 @@ from .entity import (
 )
 from .external import combined, external_power
 from .external_descriptions import EXTERNAL_SENSORS
+from .ihomemanager import SungrowIHomeManagerSensor
+from .ihomemanager_descriptions import IHOMEMANAGER_DESCRIPTIONS
 from .route import ROUTE_LABELS, address
 from .sensor_descriptions import SENSOR_DESCRIPTIONS
 from .string_inverter_descriptions import STRING_INVERTER_DESCRIPTIONS
@@ -64,7 +66,9 @@ async def async_setup_entry(
     """Set up the Sungrow sensors."""
     runtime_data = entry.runtime_data
 
-    # An iHomeManager or Logger entry is its diagnosis and nothing else.
+    # An iHomeManager or Logger entry: its diagnosis, and an iHomeManager's
+    # readings. An entity only for a field the device served on the first
+    # poll, because nothing ever removes an entity once made.
     if runtime_data.is_device_only:
         async_add_entities(
             [
@@ -73,6 +77,17 @@ async def async_setup_entry(
                 DiagnosisResultSensor(runtime_data),
             ]
         )
+        polled = runtime_data.ihomemanager
+        if polled:
+            prefix, _info = runtime_data.device
+            async_add_entities(
+                SungrowIHomeManagerSensor(
+                    polled[description.component], description, prefix
+                )
+                for description in IHOMEMANAGER_DESCRIPTIONS
+                if description.component in polled
+                and polled[description.component].device.serves(description.field)
+            )
         return
 
     # A wallbox entry has the wallbox's readings, its diagnosis and its

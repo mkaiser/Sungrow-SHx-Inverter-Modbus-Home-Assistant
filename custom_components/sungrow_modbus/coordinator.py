@@ -739,6 +739,13 @@ class SungrowRuntimeData:
     `None` on every other entry. After `diagnosis`, for the reason it gives.
     """
 
+    ihomemanager: dict[str, Any] = field(default_factory=dict)
+    """An iHomeManager entry's coordinators, by component.
+
+    Empty on every other entry, a Logger's included: a Logger shows its
+    diagnosis only. After `diagnosis`, for the reason it gives.
+    """
+
     polling_paused: bool = False
     """True while a diagnosis or capability test wants the link to itself.
 

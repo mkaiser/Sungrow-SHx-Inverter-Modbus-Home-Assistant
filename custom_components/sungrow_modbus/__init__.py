@@ -506,14 +506,59 @@ async def _async_setup_wallbox(hass: HomeAssistant, entry: SungrowConfigEntry) -
     return True
 
 
+async def _async_read_ihomemanager(entry: SungrowConfigEntry, unit: Any) -> Any:
+    """Bind an iHomeManager and read what it is, its software version included.
+
+    Read once before its device is registered, so the device page carries the
+    version from the start; `slowest` keeps it fresh afterwards.
+    """
+    from sungrow_modbus.ihomemanager import SungrowIHomeManager
+
+    device = SungrowIHomeManager(unit)
+    try:
+        await device.async_update_tier("slowest")
+    except ModbusError as err:
+        raise ConfigEntryNotReady(
+            translation_domain=DOMAIN,
+            translation_key="setup_unreachable",
+            translation_placeholders={"title": entry.title, "error": str(err)},
+        ) from err
+    return device
+
+
+async def _async_ihomemanager_coordinators(
+    hass: HomeAssistant, entry: SungrowConfigEntry, device: Any, info: dr.DeviceInfo
+) -> dict[str, Any]:
+    """Poll an iHomeManager by tier: its coordinators, by component."""
+    from sungrow_modbus.ihomemanager import TIER_COMPONENTS
+
+    from .ihomemanager import SungrowIHomeManagerCoordinator
+
+    intervals = {**DEFAULT_INTERVALS, **entry.options.get(CONF_INTERVALS, {})}
+    coordinators: dict[str, Any] = {}
+    for tier, components in TIER_COMPONENTS.items():
+        interval = intervals.get(tier, DEFAULT_INTERVALS[tier])
+        if interval == INTERVAL_NEVER:
+            continue
+        coordinator = SungrowIHomeManagerCoordinator(
+            hass, entry, device, tier, timedelta(seconds=interval), info
+        )
+        await coordinator.async_config_entry_first_refresh()
+        for component in components:
+            coordinators[component] = coordinator
+    return coordinators
+
+
 async def _async_setup_unit_247(hass: HomeAssistant, entry: SungrowConfigEntry) -> bool:
-    """Set up an iHomeManager or a Logger: its diagnosis, and nothing measured.
+    """Set up an iHomeManager or a Logger: its diagnosis, and its readings.
 
     Unit 247, on the port the search found it on, plain or inside TLS. Neither
     device documents a serial, so the entry's unique id (kind, host and port)
     names the device. Asked what it is once here, so an entry whose device no
     longer answers waits rather than offering a diagnosis of nothing; a link
-    down is not a refusal, and is retried.
+    down is not a refusal, and is retried. An iHomeManager's readings are
+    polled as well (`ihomemanager.py`); a Logger, which no unit has answered
+    yet, shows its diagnosis only.
     """
     from sungrow_modbus import MANUFACTURER, ihomemanager, logger
     from sungrow_modbus.discovery import IHOMEMANAGER_UNIT, async_identify_unit_247_on
@@ -547,13 +592,24 @@ async def _async_setup_unit_247(hass: HomeAssistant, entry: SungrowConfigEntry) 
             },
         )
     assert entry.unique_id is not None
+    polled_device = (
+        await _async_read_ihomemanager(entry, unit)
+        if kind == KIND_IHOMEMANAGER
+        else None
+    )
+    version = None if polled_device is None else polled_device.software_version
     info = dr.DeviceInfo(
         identifiers={(DOMAIN, entry.unique_id)},
         manufacturer=MANUFACTURER,
         model=identity.model,
         name=entry.title,
+        **({"sw_version": version} if version else {}),
     )
     entry.runtime_data = SungrowRuntimeData({}, device=(entry.unique_id, info))
+    if polled_device is not None:
+        entry.runtime_data.ihomemanager = await _async_ihomemanager_coordinators(
+            hass, entry, polled_device, info
+        )
     package = ihomemanager if kind == KIND_IHOMEMANAGER else logger
     runner = DeviceDiagnosisRunner(
         hass, entry, unit_247_builder(entry, unit, package), unit_247_summary
