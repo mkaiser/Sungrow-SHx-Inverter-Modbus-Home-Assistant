@@ -149,7 +149,7 @@ Isolarcloud app:
 
 Q: Will this integration support the iHome Manager from Sungrow?
 
-A: Not at the moment. The iHome Manager uses a different Modbus map and is not supported by this integration. If you are interested in supporting the iHome Manager, please create an issue or submit a PR.
+A: Not by this YAML package: the iHomeManager uses a Modbus map of its own. The Home Assistant integration that replaces the package ([installing_a_preview.md](../../doc/installing_a_preview.md)) reads it: its network search offers an iHomeManager as an entry of its own, with read-only sensors (the site's flows, its grid meter, the charger, its settings as set). That entry keeps a connection to the iHomeManager's port open while it is loaded. How many connections an iHomeManager accepts at once has not been measured, so another client on the same port (evcc, this YAML package) may be refused.
 
 
 ## Q: How can I change the input sliders to boxes?

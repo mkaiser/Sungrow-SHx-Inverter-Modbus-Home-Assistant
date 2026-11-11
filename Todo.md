@@ -131,7 +131,9 @@ Nothing can start now (blocker 13).
    2. **Then entities**: a charging current number and an enable switch, on
       what was measured, through the write table
       (`scripts/generate/tables/writes.py`), with the wallbox's 60 s
-      fallback in mind.
+      fallback in mind, and a report in discussion #571 (rudolf992,
+      2026-04-27, unmeasured): in EMS mode the current set over Modbus went
+      back to iSolarCloud's value within seconds.
 
    **The search finds every device** (`plans/device_scan_and_diagnosis.md`,
    its status log is current): a wallbox at its own address is an entry of
@@ -169,11 +171,10 @@ Nothing can start now (blocker 16).
 1. **Its entities on hardware.** Built 2026-11-11: an iHomeManager entry
    shows 40 read-only sensors beside its diagnosis (the site's flows, the
    grid meter, the charger, its settings as set;
-   `ihomemanager_descriptions.py`), tested against the one unit's words.
-   Not yet seen in a real Home Assistant. The entry now holds its port
-   while loaded, and each port takes one connection: worth a line in the
-   user docs once released, beside the `legacy/doc/faq.md` answer
-   (Release).
+   `ihomemanager_descriptions.py`), tested against the one unit's words,
+   released in 0.1.0a37. Not yet seen in a real Home Assistant. The entry
+   holds its port while loaded; how many connections an iHomeManager takes
+   at once is not measured (`doc/integration_help.md` and the FAQ say so).
 2. **The fields left out of its entities, until a second unit is
    measured** (blocker 17; wiki: the iHomeManager source page). Each is
    read and kept in the diagnosis, and gets no entity:
@@ -200,10 +201,13 @@ Nothing can start now (blocker 16).
    2026.10.4 and is declared broken upstream). The integration keeps
    supporting 2026.9 (`requirements_dev.txt` says why). Left:
    1. **The diagnosis's PEP 723 headers** (`sungrow_diagnosis.py`,
-      `sungrow_capability_test.py`, `sungrow_wallbox_capability_test.py`) still pin
-      `modbus-connection[tmodbus]==4.12.4`; to 4.12.7 with tmodbus 1.1.0, a
-      new transport for contributors' runs, so after one diagnosis on hardware
-      with it (`device-diagnosis/reference.md` first).
+      `sungrow_capability_test.py`, `sungrow_wallbox_capability_test.py`,
+      line 6) pin `modbus-connection[tmodbus]==4.12.7` in the working tree
+      since 2026-11-11, uncommitted: it resolves from PyPI with tmodbus 1.1.0
+      and `sungrow-modbus==0.1.0a37`. A new transport for contributors' runs,
+      so it is committed only after one diagnosis on hardware with it
+      (`device-diagnosis/scripts/diagnosis.sh` from this checkout at the
+      maintainer's SH10RT).
 5. **The diagnosis and its capability tests.** In the code: three modes in
    *Diagnosis: mode* (read-only, extended test single run and auto repeat),
    started by *Diagnosis: start* and ended early by *Diagnosis: stop*, a
@@ -303,9 +307,10 @@ Nothing can start now (blocker 16).
    `sungrow_capability_test.py <host> --import-limit --allow-dark
    --no-restart`, a dry run first, the stand-in read before any write;
    their Home Assistant stays connected, so expect retries. After dark, a
-   battery under 90 % and not in Standby. Then ingest, and the reply to
-   #546 (drafted in the session of 2026-11-07; its table is in the wiki's
-   register 32998 page).
+   battery under 90 % and not in Standby. Then ingest. In discussion #546
+   ulfben (2026-11-07, offers to stop evcc for it) and Jam3s97 (2026-11-08,
+   an SH-RS) offered runs; no reply is planned there: the long-term logs
+   asked of contributors are expected to settle it.
 
 # Blockers
 
@@ -451,7 +456,8 @@ Nothing can start now (blocker 16).
        diagnosis guesses; `identify` looks at units 1-5 only. A DTSU666 is a
        device nothing maps.
     3. **A contributor with one.** Nobody has offered; the #262 participants
-       (RafAustralia, purcell-lab, NBS23) are the leads.
+       are the leads: horstvogel (2025-12-23, a Logger1000 EU read over
+       Modbus TCP at unit 247), RafAustralia, purcell-lab and NBS23.
     4. **The protocol number's word order.** The map reads 8001-8002 high
        word first; the one iHomeManager measured sends "AW0" low word first
        (fixed for it, 2026-11-10). Check the Logger's on its first reading.
@@ -619,15 +625,8 @@ catalog submission on release, not before (item 2), and
    (`switch.sungrow_modbus_preview_pre_release` exists, off). Home Assistant
    then pip-installed `sungrow-modbus==0.1.0a30` from PyPI, and the
    maintainer's SH10RT was found, added and diagnosed. All three questions
-   are answered. Left:
-   1. Correct `doc/installing_a_preview.md` and `doc/maintainer_setup.md`
-      §5 (*Add from link* still "to be tried"). Keep the HACS path while
-      `hacs.json` allows 2026.9 and 2026.10.
-   2. **Two testbed faults** in `hacs_testbed.sh`: a `--reset` testbed's
-      first boot serves :8123, not its port, because `ha_http_port.py` has
-      no `.storage/http` to pin yet (with `make dev` up, the two collide);
-      and *Restart* in the UI ends the testbed, because `hass` exits 100
-      and nothing starts it again.
+   are answered, and the docs say so. Keep the HACS path in them while
+   `hacs.json` allows 2026.9 and 2026.10.
 
 4. **The production database.** The migration is verified at real scale
    only against the maintainer's years-old YAML install; what to collect and
@@ -641,7 +640,7 @@ catalog submission on release, not before (item 2), and
    from here until Docker gets IPv6 or an IPv4 address is given. Counts and
    mismatches are reported, no serial or address.
 
-5. **The YAML track's documentation, for the integration.** The four pages
+5. **The YAML track's documentation, for the integration.** The pages
    below open with a note that they are for the YAML package, pointing at
    `doc/installing_a_preview.md` and `doc/integration_migration.md`; the
    first-line documentation of the integration is `strings.json`. At the
@@ -651,7 +650,6 @@ catalog submission on release, not before (item 2), and
    | --- | --- |
    | `legacy/doc/cleanup_entities.md` | Link it from a repair as the manual fallback, if one is built |
    | `legacy/doc/dashboard.md` | A generated dashboard (Future work) |
-   | `legacy/doc/faq.md` | The iHomeManager answer, once its entities ship |
 
 6. **Handing the preview channel's users over to the release.** Read in
    core 2026.11.0's Marketplace source (`.venv-marketplace`,
@@ -853,14 +851,14 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-10T15:19:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-10T15:19:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-11T20:00:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-11T20:00:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked: **2026-11-10 15:19 UTC** (#786): peter_sm's sixteenth to eighteenth
-readings (Korsberg), Raik0's SH20T (outcome 5 on 33209, through the WiNet-S), and two
-anonymous documents, the first iHomeManager and a second AC22E-01, ingested.
+Last checked: **2026-11-11 20:00 UTC**: nothing new since 2026-11-10 15:19 in
+#786 or any issue; every issue and discussion this file cites was read, and the
+leads in discussions #262, #546 and #571 are recorded where they apply.
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 

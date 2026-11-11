@@ -301,12 +301,13 @@ ${NAME}/                                  http://localhost:${PORT}
   3  Settings -> Devices & services -> Add integration ->
      Sungrow Modbus (preview).
 
-  What to find out (Todo.md, next step 1)
+  What is still to find out (Todo.md, Release item 6), once main
+  carries the integration
 
-  - Does Add from link install the channel, at a commit hash?
-  - Is an update offered when the channel moves?
-  - After --adopt-hacs: did the Marketplace take over the HACS install,
-    and does it still offer the preview's updates?
+  - Do the five steps from the preview to the main repository keep the
+    entity ids and their history on a migrated install?
+  - Does a commit-tracked install switch to versions once the mirror
+    publishes a release?
 
 ========================================================================
 
@@ -394,4 +395,25 @@ fi
 # a loop mode rather than a logging flag, and an asyncio debug loop makes this
 # integration's network search report an empty network. This testbed exists to
 # see what a user gets, and a user does not run with it.
-exec "${HASS}" --config "${CONFIG}"
+#
+# `SETUP_PORT` covers the first boot, which `ha_http_port.py` cannot: there is
+# no `.storage/http` to pin yet, and Home Assistant would create one on :8123,
+# into the dev instance's port. It is `http`'s own default for an instance with
+# no stored port (`default_server_port` in `homeassistant/components/http/
+# config.py`), so on every later boot the pinned store decides and this is
+# ignored.
+#
+# A loop rather than `exec`, because *Restart* in the UI is Home Assistant
+# exiting with 100 (`RESTART_EXIT_CODE`) and leaving the start to whatever
+# launched it -- the Supervisor, or here this script. Any other exit, a stop or
+# Ctrl-C included, ends the testbed.
+while true; do
+    status=0
+    SETUP_PORT="${PORT}" "${HASS}" --config "${CONFIG}" || status=$?
+    if [[ "${status}" -ne 100 ]]; then
+        exit "${status}"
+    fi
+    echo "Home Assistant asked for a restart (exit 100); starting it again"
+    # The store exists by now, and nothing holds it between the two runs.
+    python3 "${PWD}/scripts/dev/ha_http_port.py" "${CONFIG}" "${PORT}"
+done

@@ -191,8 +191,11 @@ repository's *Pre-release* switch, an entity disabled by default. Whether that
 changes what the preview channel delivers: checked on 2026.11.0 with a
 copy of a HACS install (`make marketplace ARGS=--adopt-hacs`), the Marketplace
 took it over and offered and installed the channel's newer commit without a
-GitHub connection. Adding the channel from a link (*Add from link*) needs the
-connection, and is still to be tried (`Todo.md`).
+GitHub connection. Adding the channel from a link (*Add from link*, the
+preview repository's URL, type *Integration*) needs the connection: checked on
+2026.11.0 from a fresh `make marketplace ARGS=--reset`, it added and
+downloaded the channel at its HEAD commit with no *Pre-release* switch turned
+on, and Home Assistant then installed the pinned library from PyPI.
 
 ## 6. Keeping data out of the cloud
 

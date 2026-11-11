@@ -101,10 +101,17 @@ automation:
   voltage* or *Phase A/B/C power*, rather than show line voltages under a
   phase name and powers about 1.7 times too high. The phase currents are
   created as usual. No 3P3L inverter has been diagnosed yet.
-- **Not supported yet:** the iHomeManager, the Sungrow Logger, SBH batteries,
-  writing to the wallbox, and writing to an SG string inverter.
-- **The preview sets up diagnostics only**: it identifies the inverter and
-  runs the diagnosis, and creates no sensors for the readings.
+- **Not supported yet:** the Sungrow Logger (its entry runs only the
+  diagnosis), SBH batteries, writing to the wallbox, and writing to an SG
+  string inverter.
+- **The preview sets up an inverter for diagnostics only**: it identifies the
+  inverter and runs the diagnosis, and creates no sensors for its readings.
+  A wallbox at its own address and an iHomeManager, each an entry of its own
+  found by the network search, show their readings, read only.
+- **An iHomeManager's entry keeps a connection to its port open** while
+  loaded. How many connections an iHomeManager accepts at once has not been
+  measured, so another client on the same port (evcc, a second Home
+  Assistant) may be refused.
 
 [compatibility.md](compatibility.md) lists every diagnosed model and firmware.
 
