@@ -16,7 +16,7 @@ flowchart TD
     user["user<br/>dashboards, automations, scripts, Developer Tools"]
     core["Home Assistant core<br/>entity registry, recorder and statistics<br/>auth: admin / user / read-only"]
 
-    subgraph integration["custom_components/sungrow_modbus &mdash; the integration, delivered by HACS"]
+    subgraph integration["custom_components/sungrow_modbus &mdash; the integration, delivered by the Marketplace"]
         direction TB
         flow["config_flow<br/>probe, identify, scan the LAN,<br/>ask about entity ids<br/><br/>config_flow_schemas: the forms it shows,<br/>separated from the decisions about showing them"]
         diagnosis["diagnosis &mdash; both parts, one progress bar<br/><br/>part A: probe every capability,<br/>publish a document that carries a<br/>stand-in serial and at most two octets<br/><br/>part B capability_test (in the library): write each<br/>control, check the raw word against a hand-typed<br/>scale, watch what the inverter does, put it back<br/><br/>repairs: a run that did not finish restoring<br/>becomes a fix flow somebody can click<br/>download: a signed, short-lived link"]
@@ -395,8 +395,9 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
   system.
 - **13074's write scale is measured per device** (`sungrow_modbus.hybrid_inverter.export_scale`)
   and stored with the firmware it was measured on.
-- **Delivery is HACS first**, through the preview channel until the merge
-  into `main` ([maintainer_setup.md](maintainer_setup.md)).
+- **Delivery is the Marketplace** (HACS as built into Home Assistant
+  2026.11, the minimum), through the preview channel until the merge into
+  `main` ([maintainer_setup.md](maintainer_setup.md)), then the catalog.
 - **The brand mark is original**, not Sungrow's.
 
 ## Register sources

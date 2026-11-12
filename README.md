@@ -22,8 +22,9 @@
 
 ## Trying it
 
-Install it through **HACS** from the preview channel,
-`Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview`: HACS reads a
+It needs Home Assistant 2026.11 or later. Install it through **Settings →
+Marketplace → Add from link** from the preview channel,
+`Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview`: the Marketplace reads a
 repository's default branch, and this one's is the YAML package.
 [doc/installing_a_preview.md](doc/installing_a_preview.md) has the steps;
 [doc/integration_options.md](doc/integration_options.md) lists every option
@@ -36,9 +37,9 @@ built and tested, and switched on in a later release.
 
 ## What this is
 
-A Home Assistant integration on the Modbus architecture of Home Assistant
-2026.9, meant to **replace** the YAML package. The hard requirement is that
-existing users keep their recorder history, long-term statistics and
+A Home Assistant integration on the Modbus architecture Home Assistant
+introduced in 2026.9 (it needs 2026.11 or later), meant to **replace** the
+YAML package. The hard requirement is that existing users keep their recorder history, long-term statistics and
 dashboards when they switch ([doc/integration_migration.md](doc/integration_migration.md)).
 
 **What it does:**

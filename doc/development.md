@@ -13,10 +13,11 @@ YAML package in `legacy/modbus_sungrow.yaml` is unaffected by anything here.
 
 
 Open the repo in the devcontainer (VS Code: *Dev Containers: Reopen in
-Container*). It pins Python 3.14 - Home Assistant 2026.9 requires 3.14.2 or
+Container*). It pins Python 3.14 - Home Assistant 2026.11 requires 3.14.2 or
 newer - installs Home Assistant and the tooling via
 `scripts/dev/setup.sh`, and forwards ports 8123 (Home Assistant), 5020 (the
-simulator), 8124 (the HACS testbed) and 8126 (the Marketplace testbed).
+simulator), 8126 (the Marketplace testbed) and 8124 (the HACS testbed, for
+the upgrade only).
 
 On Windows, clone into a **named container volume** (*Dev Containers: Clone
 Repository in Container Volume*) rather than bind-mounting the Windows
@@ -151,7 +152,7 @@ src/sungrow_modbus/                 device library (no Home Assistant imports)
   diagnosis, features, block_test,
   capability_test, dump
 tests/                              library and integration tests
-scripts/dev/                        dev loop: setup, boot, simulator, HACS testbed
+scripts/dev/                        dev loop: setup, boot, simulator, Marketplace testbed
 scripts/generate/                   everything that writes a committed file
 scripts/release/                    version lockstep and the pinned-library gate
 scripts/helpers/                    one-off tools
@@ -172,8 +173,8 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `check_line_endings.py` | List tracked files checked out with CRLF where the repository has LF (`make line-endings`, part of `make quick`); `--fix` strips the CRs and refreshes their index entries, nothing staged. See Pitfalls |
 | `develop.sh` | Boot HA on <http://localhost:8123> against `config/` |
 | `ha_onboard.py` | Walk a fresh instance through onboarding over the API, so nobody types `dev`/`dev` into a wizard. Both boot scripts run it in the background; idempotent, and it refuses a non-loopback URL |
-| `hacs_testbed.sh` | Boot a **second** HA on :8124 against `config-hacs/`, with HACS installed, or with `--marketplace` HA 2026.11 on :8126 against `config-marketplace/`; see [Testing the install a user actually gets](#testing-the-install-a-user-actually-gets) |
-| `ha_http_port.py` | Write a scripted instance's HTTP port where Home Assistant 2026.9 reads it, the `stable` config in `.storage/http`. `http:` in `configuration.yaml` only becomes a pending config that reverts after five minutes unless somebody promotes it. `hacs_testbed.sh` calls it |
+| `hacs_testbed.sh` | Boot a **second** HA: with `--marketplace` (`make marketplace`) 2026.11 on :8126 against `config-marketplace/`, the install a user gets; without it, on :8124 against `config-hacs/` with HACS installed, the upgrade from HACS only; see [Testing the install a user actually gets](#testing-the-install-a-user-actually-gets) |
+| `ha_http_port.py` | Write a scripted instance's HTTP port where Home Assistant reads it (since 2026.9), the `stable` config in `.storage/http`. `http:` in `configuration.yaml` only becomes a pending config that reverts after five minutes unless somebody promotes it. `hacs_testbed.sh` calls it |
 | `simulate.sh` | Regenerate the register seed and serve it on :5020 (`simulator.py`, seed in `simulator_registers.json`) |
 | `fetch_references.sh` | Clone HA core + libs into `.reference/` (gitignored) |
 | `pre-commit.sh` | The git pre-commit hook `make hooks` installs: `make quick` |
@@ -195,6 +196,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | **`scripts/helpers/`** | **One-off tools** |
 | `influx_migration.py` | Print Grafana regexes and rewrite recipes for InfluxDB users; connects to nothing |
 | `review_names.py` | Lay the entity names out for the open naming decision -- grouped by subject, each with the entity id it produces and its legacy name. `--markdown` prints the name table (redirect it into `doc/entity_names.md`), `--texts` the other texts of `strings.json` in English and German (into `plans/text_translation_review.md`); `--check` fails when either file has drifted |
+| `diagnosis_issue_body.py` | Build the body of the pinned diagnosis issue (#786) from `device-diagnosis/diagnosis-issue.md` and `devices-wanted.md`, links made absolute; `.github/workflows/diagnosis-issue.yml` runs it. Prints to stdout |
 | `make_brand_icon.py` | Regenerate the integration's `brand/` icons and wide logos, light and dark (`--preview` renders a check sheet of the icons) |
 
 What a contributor is handed, `device-diagnosis/scripts/`, is described in
@@ -329,21 +331,22 @@ Everything above runs the working tree: `scripts/dev/develop.sh` symlinks
 your editor with a UI attached. That is the wrong instrument for one class of
 question — *does this install?* A manifest pinning a library version whose
 wheel lacks a module the integration imports passes every test, ruff,
-hassfest and the release, and fails only in a real install. HACS refusing a
-repository whose default branch has no `custom_components/` is invisible
-from here entirely.
+hassfest and the release, and fails only in a real install. The Marketplace
+refusing a repository whose default branch has no `custom_components/` is
+invisible from here entirely.
 
-`scripts/dev/hacs_testbed.sh` (`make hacs`) is the other instrument: a **second**
-Home Assistant, on :8124, against `config-hacs/`, with HACS downloaded into
-it. Nothing in it is symlinked. HACS installs this integration from the
+`make marketplace` (`scripts/dev/hacs_testbed.sh --marketplace`) is the other
+instrument: a **second** Home Assistant, 2026.11 from a venv of its own,
+`.venv-marketplace/` (apart from the dev environment, so a testbed's installs
+never reach it), against `config-marketplace/` on :8126. Nothing in it is
+symlinked. The built-in **Marketplace** installs this integration from the
 preview channel, over the network, so what runs there is what was
 *published*.
 
 ```console
-$ make hacs                       # sets up if needed, then boots
-$ make hacs ARGS=--setup-only     # prepare it without holding the terminal
-$ make hacs ARGS=--update         # re-download HACS first
-$ make hacs ARGS=--reset          # delete config-hacs/ and start over
+$ make marketplace                         # sets up if needed, then boots
+$ make marketplace ARGS=--reset            # delete config-marketplace/ and start over
+$ make marketplace ARGS=--adopt-hacs       # from a copy of config-hacs/ (below)
 ```
 
 It onboards itself (`dev` / `dev`, same as the other instance) and refuses to
@@ -353,42 +356,39 @@ things it writes is a store a running Home Assistant holds in memory.
 
 Two steps are yours, and the script prints them before it boots:
 
-1. **Add integration → HACS**, which asks you to authorise a GitHub account
-   with a device code at <https://github.com/login/device>. There is no way
-   past it: HACS 2.x has no path through its config flow that skips the
-   device step, because it uses the token for GitHub API calls whose
-   unauthenticated limit is 60 requests an hour. Any account works. (Its
-   *catalogue* no longer comes from GitHub at all — HACS 2.x fetches that
-   from `data-v2.hacs.xyz`.)
-2. **HACS → ⋮ → Custom repositories**, the preview channel's URL, category
-   *Integration*, then **Download** and restart.
+1. **Settings → Marketplace → Connect GitHub**, a device code at
+   <https://github.com/login/device>. Any account works. Only adding a
+   repository from a link needs it; browsing and updating do not.
+2. **Add from link**, the preview channel's URL, type *Integration*, then
+   **Download** and restart.
 
-What it shows that :8123 cannot: the **commit hash** HACS reports (what a
-bug report quotes), the library **pip-installed from PyPI** against the pin
-(`RequirementsNotFound` surfaces here), and the lag to the preview channel:
-a commit, a green CI run and a sync. HACS gets its own config directory
-because it downloads into `<config>/custom_components/`, which on the dev
-instance is a symlink into this repository.
+What it shows that :8123 cannot: the **commit hash** the Marketplace reports
+(what a bug report quotes), the library **pip-installed from PyPI** against
+the pin (`RequirementsNotFound` surfaces here), and the lag to the preview
+channel: a commit, a green CI run and a sync. It gets its own config
+directory because the Marketplace downloads into
+`<config>/custom_components/`, which on the dev instance is a symlink into
+this repository.
 
-### The Marketplace, on 2026.11
+### The HACS testbed, for the upgrade only
 
-Home Assistant 2026.11 builds HACS in as **Settings → Marketplace**, and the
-HACS installer stops there. `make marketplace` (`hacs_testbed.sh
---marketplace`) is the same testbed for it: Home Assistant 2026.11 from a
-venv of its own, `.venv-marketplace/` (apart from the dev environment, so a
-testbed's installs never reach it), against
-`config-marketplace/` on :8126, with nothing downloaded.
+Home Assistant 2026.11 is the integration's minimum, and the separate HACS
+installer stops there, so no user installs through HACS any more. What is
+left is the upgrade of somebody who installed the preview through HACS on
+2026.9 or 2026.10: the Marketplace adopts it on its first start (verified on
+2026.11.0, 2026-11-06). `make hacs` (`hacs_testbed.sh` without
+`--marketplace`) builds such an install in `config-hacs/` on :8124 (HACS's own
+GitHub device login, **⋮ → Custom repositories**), and
+`make marketplace ARGS=--adopt-hacs` boots a copy of it on 2026.11;
+`config-hacs/` is not touched. `make hacs` boots the dev environment's
+`hass`, which is 2026.11 now, so a new HACS install there is adopted at once:
+building one again needs a Home Assistant before 2026.11 on the `PATH`.
 
 ```console
-$ make marketplace                         # 2026.11, fresh
-$ make marketplace ARGS=--adopt-hacs       # from a copy of config-hacs/
-$ make marketplace ARGS=--reset            # delete config-marketplace/
+$ make hacs                       # sets up if needed, then boots
+$ make hacs ARGS=--update         # re-download HACS first
+$ make hacs ARGS=--reset          # delete config-hacs/ and start over
 ```
-
-`--adopt-hacs` copies `config-hacs/`, HACS and its installed preview
-included, which is the upgrade a HACS user makes; `config-hacs/` is not
-touched. In the Marketplace, **Connect GitHub** (the same device code) and
-**Add from link** with the preview channel's URL, type *Integration*.
 
 ## Screenshots for the docs
 
@@ -436,8 +436,9 @@ What the frontend needs, for a new shot:
 - a flow left half-done blocks the next with "already being configured".
   Restarting the scratch instance clears it.
 
-The HACS screenshots need the HACS testbed (`make hacs`) and a GitHub device
-login, so they are retaken only when HACS's dialogs change.
+The *Add integration* screenshot (`HACS-add-integration-sungrow-modbus.png`,
+named for where it was first taken) is Home Assistant's own dialog, so any
+instance with the integration installed can retake it.
 
 **Looking is also a test.** A screenshot session is where these were found:
 a description placeholder missing on a step's first showing renders as

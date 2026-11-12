@@ -35,8 +35,8 @@ back and times how the car follows; `--below-minimum`, `--above-rating` and
 higher than the setting the wallbox had); `--phase-charging` switches the phase
 with the charge stopped first; `--mileage` writes the mileage setting its own
 word. `--merge-into DIAGNOSIS.json` keeps the run in a diagnosis document under
-`wallbox_capability_test`. These need a `sungrow-modbus` newer than the one
-pinned above.
+`wallbox_capability_test`. They came with `sungrow-modbus` 0.1.0a34, so the
+pin above has them.
 
 **At the wallbox's own address only**: Modbus inside TLS on port 516, unit 248.
 Through a WiNet-S the wallbox reads back stale and the readback is not

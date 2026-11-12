@@ -14,39 +14,29 @@ choosing whether to take over `modbus_sungrow.yaml`'s entity ids decides
 where years of history attach, and that is not a thing to hand somebody in
 an alpha. An entry made now can be upgraded later without losing anything.
 
-It installs through **HACS**, from a second repository, the *preview
-channel*: HACS reads a repository's default branch, and this one's is the
+It needs **Home Assistant 2026.11 or later**, and installs through
+**Settings → Marketplace**, from a second repository, the *preview channel*:
+the Marketplace reads a repository's default branch, and this one's is the
 YAML package. Four steps; the third is the one people forget.
 
-## 1. Add the preview channel to HACS
+## 1. Add the preview channel to the Marketplace
 
-**HACS → ⋮ (top right) → Custom repositories**:
+**Settings → Marketplace → Add from link**:
 
 | Field | Value |
 | --- | --- |
 | Repository | `https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview` |
 | Type | **Integration** |
 
-![HACS custom repositories dialog with the preview repository added as an Integration](../device-diagnosis/images/HACS-add-custom-repository.png)
-
-HACS itself needs a GitHub account (it asks for a device code at
-<https://github.com/login/device>). Any account works; it is not tied to this
-integration.
-
-**On Home Assistant 2026.11 or later** HACS is built in, as **Settings →
-Marketplace**, and can no longer be installed separately. Add the channel
-there with **Add from link**, giving the same repository and the type
-**Integration**. Adding a custom repository needs a GitHub connection
-(read-only); browsing and updating do not. A preview installed through HACS
-before the upgrade stays installed: the Marketplace takes it over on its first
-start, as a repository followed by commit. When the channel moves, the
-Marketplace offers the new commit as an update (the version is a commit
-hash, as it was in HACS) and installs it without a GitHub connection;
-restart afterwards.
+Adding a repository from a link needs a read-only GitHub connection, which
+the Marketplace asks for at that point; any account works. Browsing,
+downloading and updating do not need it. Leave the repository's
+*Pre-release* switch off: the channel publishes no releases, so there is
+nothing for it to change.
 
 ## 2. Download it
 
-Open the repository HACS lists and press **Download**. The version shown is a
+Open the repository and press **Download**. The version shown is a
 **commit hash**: the channel follows the development branch and publishes no
 releases of its own, so the hash is what identifies your code. Quote it in
 bug reports.
@@ -126,20 +116,19 @@ Send the document to
 [the diagnosis issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/786).
 For a bug, see [troubleshooting](integration_help.md#troubleshooting) first,
 then open an issue with **Download diagnostics** (serial and address removed)
-and the commit hash HACS shows.
+and the commit hash the Marketplace shows.
 
 ## Updating
 
-HACS offers an update whenever the channel moves; a commit that changes
-nothing you install does not notify you. Press **Update**, then restart: Home
+The Marketplace offers an update whenever the channel moves; a commit that
+changes nothing you install does not notify you. Press **Update**, then restart: Home
 Assistant installs the library version the new pin names. The entry, its
 entities and their history survive.
 
 ## Going back
 
 1. **Settings → Devices & services → Sungrow Modbus →** delete the entry.
-2. **HACS →** the integration **→ ⋮ → Remove** (on 2026.11 or later, the
-   same in **Settings → Marketplace**).
+2. **Settings → Marketplace →** the integration **→ ⋮ → Remove**.
 3. Restart.
 
 If you took over the YAML package's entity ids, returning to the package needs
@@ -147,5 +136,5 @@ the reverse migration in [integration_migration.md](integration_migration.md).
 
 Once the integration reaches `main`, do not install it from this repository
 beside the preview: both install the same integration at the same path, and
-HACS (the Marketplace) refuses the second. Nor will it remove an integration
+the Marketplace refuses the second. Nor will it remove an integration
 that is still set up. How to move over comes with the release.

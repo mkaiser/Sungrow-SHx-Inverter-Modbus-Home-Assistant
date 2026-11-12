@@ -30,8 +30,8 @@
 #
 # 2026.11 builds HACS in, as Settings -> Marketplace, and the HACS installer
 # stops there. `--marketplace` boots that instead: Home Assistant 2026.11 from
-# a venv of its own (`.venv-marketplace/`, created on first use, because the
-# dev environment is held at the version the test plugin supports), against
+# a venv of its own (`.venv-marketplace/`, created on first use, so a
+# testbed's installs never reach the dev environment), against
 # `config-marketplace/` on :8126, with nothing downloaded. Add the preview
 # channel there with Add from link.
 #

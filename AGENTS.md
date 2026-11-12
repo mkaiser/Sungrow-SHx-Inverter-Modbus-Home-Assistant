@@ -8,7 +8,7 @@ document, the wiki included.
 | What we know about Sungrow devices | the wiki: start at `.wiki/wiki/index.md`; its schema and ingest workflow are `.wiki/AGENTS.md` |
 | Dev loop, every script, environment pitfalls | `doc/development.md` (`doc/development.yaml` is the copy-paste runbook) |
 | How the integration is cut up, and why | `doc/architecture.md` |
-| Releasing, hassfest, HACS and the preview channel | `doc/maintainer_setup.md` |
+| Releasing, hassfest, the Marketplace and the preview channel | `doc/maintainer_setup.md` |
 | Running the diagnosis / its document, scripts and pinned library | `device-diagnosis/README.md` / `device-diagnosis/reference.md` |
 | What is next, open decisions, what waits on hardware | `Todo.md` |
 | Goals, decisions, register sources and licences | `doc/architecture.md` |
@@ -41,7 +41,8 @@ offers an [iHomeManager](.wiki/wiki/entities/device-ihomemanager.md) or a
 Logger (unit 247) as an entry of its own: an iHomeManager's has read-only
 entities and its diagnosis, a Logger's (never measured) only its diagnosis.
 
-Home Assistant 2026.9's `modbus` integration hands a device integration a
+The integration needs Home Assistant **2026.11** or later (`hacs.json`).
+Home Assistant's `modbus` integration (2026.9 on) hands a device integration a
 *unit* (`async_get_unit(...)`), and everything on one host/port shares one
 serialized connection: a Sungrow accepts few sessions. The library has **no
 Home Assistant imports**, one subpackage per device (`hybrid_inverter/`,

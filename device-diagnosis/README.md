@@ -15,12 +15,11 @@ Two ways to run it:
 
 ### 1. In Home Assistant, with the preview integration
 
-1. In HACS → ⋮ → *Custom repositories*, add
+1. On Home Assistant 2026.11 or later, in *Settings → Marketplace → Add from
+   link*, add
    `https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview`
    as type *Integration*, download it and restart Home Assistant
    ([the whole guide](../doc/installing_a_preview.md)).
-
-   <img src="images/HACS-add-custom-repository.png" width="400" alt="HACS custom repositories dialog with the preview repository added as an Integration">
 
 2. *Settings → Devices & services → Add integration*, search for
    *Sungrow Modbus (preview)*.
@@ -243,7 +242,8 @@ the reading but not the block read test.
 | `diagnosis.sh` | the launcher on Linux and macOS |
 | `diagnosis.cmd`, `diagnosis.ps1` | the launcher on Windows; the `.cmd` only starts the `.ps1` |
 | `python/sungrow_diagnosis.py` | the diagnosis, start to finish. Its PEP 723 header names the library version it runs on |
-| `python/sungrow_capability_test.py` | the capability test, the one file here that writes. The diagnosis runs it only with your yes; `diagnosis.sh tests ...` runs it on its own |
+| `python/sungrow_capability_test.py` | the inverter's capability test, which writes. The diagnosis runs it only with your yes; `diagnosis.sh tests ...` runs it on its own |
+| `python/sungrow_wallbox_capability_test.py` | the wallbox's capability test, the other file here that writes: a wallbox at its own address, over TLS on port 516. Without `--leave` it is a dry run |
 | `python/probe.py` | the individual steps — `mdns`, `sweep`, `units`, `capabilities`, `dump` |
 | `python/blocks.py` | the block read test from a terminal: which grouped read a device fails. `--client raw` uses the library's strict raw socket, which names the count a padded frame needs |
 | `python/wallbox_direct.py` | finds and reads a wallbox at its own address, over TLS on port 516 |

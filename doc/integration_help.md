@@ -161,4 +161,4 @@ answers.
 **Anything else:** open an
 [issue](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues)
 with **Download diagnostics** from the device page attached (serial and
-address removed) and the version HACS shows.
+address removed) and the version the Marketplace shows.

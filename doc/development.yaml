@@ -5,7 +5,7 @@
 # command they bite on rather than three paragraphs away.
 #
 # Everything here runs INSIDE the devcontainer unless a step says otherwise.
-# Home Assistant 2026.9 needs Python >= 3.14.2 and a specific set of pinned
+# Home Assistant 2026.11 needs Python >= 3.14.2 and a specific set of pinned
 # dependencies; the host has neither, which is what the container is for.
 
 devcontainer:
@@ -127,10 +127,10 @@ running:
 
   marketplace_testbed:
     why: >-
-      The same on Home Assistant 2026.11, where HACS is built in as Settings ->
-      Marketplace and its installer stops. Home Assistant 2026.11 runs from a
-      venv of its own, because the dev environment is held at the version the
-      test plugin supports.
+      The install a user gets: Home Assistant 2026.11, the integration's
+      minimum, where HACS is built in as Settings -> Marketplace and its
+      installer stops. It runs from a venv of its own, so a testbed's installs
+      never reach the dev environment.
     command: scripts/dev/hacs_testbed.sh --marketplace   # make marketplace; --adopt-hacs, --reset
     listens: 0.0.0.0:8126
     config: config-marketplace/           # gitignored entirely, like .venv-marketplace/

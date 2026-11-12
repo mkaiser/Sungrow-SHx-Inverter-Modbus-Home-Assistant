@@ -43,7 +43,7 @@ PLATFORM_MODULES = (
     "time",
 )
 
-requires_readd = getattr(ha_entity, "_entity_class_requires_readd", None)
+requires_readd = ha_entity._entity_class_requires_readd
 
 
 def _entity_classes() -> list[type[ha_entity.Entity]]:
@@ -59,10 +59,8 @@ def _entity_classes() -> list[type[ha_entity.Entity]]:
     return found
 
 
-@pytest.mark.skipif(requires_readd is None, reason="Home Assistant before 2026.11")
 @pytest.mark.parametrize("cls", _entity_classes(), ids=lambda c: c.__name__)
 def test_no_entity_class_falls_back_to_a_re_add(cls: type[ha_entity.Entity]) -> None:
-    assert requires_readd is not None
     assert not requires_readd(cls)
 
 

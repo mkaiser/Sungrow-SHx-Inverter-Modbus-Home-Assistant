@@ -143,8 +143,9 @@ Nothing can start now (blocker 13).
    to write while idle, as it should. Auto repeat ran there 2026-11-10 from
    09:30 for an hour: no car came, so no run started (the right outcome).
    Item 1 above applies to it too: its
-   first writing run needs a car charging, watched live. A `wallbox_host`
-   entry is never moved onto one (decided). A Logger (unit 247) is offered
+   first writing run needs a car charging, watched live. A wallbox with an
+   address of its own is set up only that way; `wallbox_host` goes (Future
+   work, *The wallbox: the direct connection first*). A Logger (unit 247) is offered
    as a diagnosis-only entry, untested on hardware: asked for in
    `device-diagnosis/devices-wanted.md`. An iHomeManager's entry has its
    readings too (iHomeManager, below). Not yet: the search
@@ -611,8 +612,17 @@ catalog submission on release, not before (item 2), and
    (`switch.sungrow_modbus_preview_pre_release` exists, off). Home Assistant
    then pip-installed `sungrow-modbus==0.1.0a30` from PyPI, and the
    maintainer's SH10RT was found, added and diagnosed. All three questions
-   are answered, and the docs say so. Keep the HACS path in them while
-   `hacs.json` allows 2026.9 and 2026.10.
+   are answered, and the docs say so.
+
+   **Decided 2026-11-12: Home Assistant 2026.11 is the minimum**
+   (`hacs.json`), and the docs describe the Marketplace only; the HACS
+   install is gone from them (`doc/installing_a_preview.md`, `README.md`,
+   `device-diagnosis/README.md`, `doc/development.md`). A preview installed
+   through HACS on 2026.9 or 2026.10 is adopted by the Marketplace when its
+   Home Assistant is upgraded (verified above), so nobody needs a HACS
+   step. Left: a screenshot of *Add from link* for
+   `doc/installing_a_preview.md`, in place of HACS's custom-repository
+   dialog, taken on `make marketplace`.
 
 4. **The production database.** The migration is verified at real scale
    only against the maintainer's years-old YAML install; what to collect and
@@ -710,6 +720,19 @@ days: the trackers' daily sum against *Daily PV generation*, on a cable and
 through a WiNet-S, which says how much the polling interval and a dongle's
 stale reads cost.
 
+**Not part of the capability test today** (checked 2026-11-12). Auto
+repeat's plausibility checks (`capability_test/plausibility.py`) compare
+*Daily PV generation* with the integral of *Total DC power*, and each
+tracker's V × I with *Total DC power* at one moment, but nothing integrates
+the trackers the way the *MPPTn energy* sensors do. Proposed: one more
+check of that kind, the trackers' summed V × I integrated against the rise
+of *Daily PV generation*. It would ride on auto repeat, which every
+collection already runs, and its median ratio, kept in the ledger and the
+diagnosis document, is the drift asked for here, per firmware and
+transport. One caveat: the check judges in decades (a scale error), and a
+drift of a few percent comes out as `MATCH` or `INCONCLUSIVE`, so the
+document has to carry the median itself, not only the verdict.
+
 ## A generated dashboard
 
 Nothing generates one yet. Open: generate a Lovelace dashboard (asking
@@ -770,8 +793,10 @@ unavailable, not 0, when a member is. `total_site_pv_power` already exists
 for the inverter that has a second one on its supply, so the Site wording
 has a precedent.
 
-Naming suggestions, in the existing convention (sentence case, the device
-name added by Home Assistant, the ids in English):
+Names, in the existing convention (sentence case, the device name added by
+Home Assistant, the ids in English). **Agreed by the maintainer
+2026-11-12**; they go into `scripts/generate/tables/naming.py` when the
+entities are built:
 
 | Entity | Name | Id (device "Site") |
 | --- | --- | --- |
@@ -810,14 +835,54 @@ real InfluxDB with the migrated data is worth testing once the production
 copy (Release item 4, `doc/maintainer_setup.md` §8) exists. The guide has
 not yet been run against a real InfluxDB.
 
-## Modbus over TLS on a WiNet-S's 516
+## The wallbox: the direct connection first
 
-Built for a wallbox's own address (`wallbox_host`,
-`links.wallbox_tls_params`). For the dongle it is worth building only if 516
-is a *separate* session pool from 502: hold 502 until it refuses, then try
-516. The certificate is settled (wiki: `device-winet-s.md`): gerd's WiNet-S,
-his wallbox and bar12's WiNet-S serve one certificate, so it is built into the
-firmware, its key is on every unit, and verifying it gains nothing.
+**Decided 2026-11-12**: a wallbox that has a network connection of its own
+is read and tested over that, as an entry of its own (TLS on 516, unit 248,
+`KIND_WALLBOX`), not through an inverter. Through the inverter's WiNet-S
+(unit 3) stays only for a wallbox that does not answer at an address of its
+own. **No backwards compatibility**: the YAML package never had a wallbox,
+so no legacy entity id or history is at stake, and a preview install that
+read its wallbox another way sets it up again.
+
+What that changes, to build:
+
+1. **The `wallbox_host` option goes.** It read the wallbox's own address
+   from inside an inverter entry, as a sub-device keyed on the inverter's
+   serial, so one wallbox became two devices once the search offered it as an
+   entry too. Removed with it: `CONF_WALLBOX_HOST` and its options field and
+   texts (`config_flow.py`, `config_flow_schemas.py`, the generated
+   strings), its reads in `__init__.py`, `diagnosis_document.py`,
+   `diagnostics.py` and `wallbox_capability_test.py` (`"tls"` transport on an
+   inverter entry), `tests/test_wallbox_direct.py` and the other tests that
+   set it, and every page that names it (AGENTS.md, `doc/architecture.md`,
+   `doc/wallbox_registers.md`, the wiki's `device-wallbox.md`,
+   `device-winet-s.md` and `identify-by-what-answers.md`,
+   `plans/device_scan_and_diagnosis.md`). No migration: an entry that has it
+   loses the option at its next options save, and its wallbox sub-device
+   is removed.
+2. **One wallbox, one device.** Where a wallbox entry exists, an inverter
+   entry that finds the same wallbox at unit 3 (same own serial, input
+   21201-21206) does not create it, and removes a sub-device it made before.
+   Setting up the wallbox entry reloads the inverter entry on the same
+   network, so the change needs no restart.
+3. **The search prefers it.** A wallbox that answers on 516 is offered as
+   its own entry, and the inverter it hangs off is told not to carry it; the
+   question in the search's result says so rather than offering both.
+4. **Writes only over the direct path.** The wallbox's capability test runs
+   from the wallbox entry (as the terminal driver does, TLS only); a wallbox
+   read through a WiNet-S stays read only, which also keeps the dongle's
+   session free (and its 10 s polling floor) for the inverter.
+5. **Docs and wiki** say "its own entry" first, the WiNet-S path second, and
+   the move step's warning ("a move to a cable loses a dongle-carried
+   wallbox") names the wallbox entry as the way to keep it.
+
+Open, unchanged: Modbus over TLS on a **WiNet-S's** own 516 for the
+inverter. Worth building only if 516 is a *separate* session pool from 502:
+hold 502 until it refuses, then try 516. The certificate is settled (wiki:
+`device-winet-s.md`): gerd's WiNet-S, his wallbox and bar12's WiNet-S serve
+one certificate, so it is built into the firmware, its key is on every unit,
+and verifying it gains nothing.
 
 ## EVCC connection
 

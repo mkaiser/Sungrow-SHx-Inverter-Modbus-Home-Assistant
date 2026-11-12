@@ -180,11 +180,11 @@ repository whose default branch *is* the integration, synced by
 running there. Its cron runs some time within the hour;
 `gh workflow run sync.yml -R mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant-preview`
 runs it now. See [installing_a_preview.md](installing_a_preview.md);
-`scripts/dev/hacs_testbed.sh` installs from it the way a user does. HACS
-itself requires a GitHub account.
+`make marketplace` installs from it the way a user does. Adding it from a
+link requires a GitHub account.
 
-From Home Assistant 2026.11, HACS is built in as the **Marketplace**
-(Settings → Marketplace) and its installer stops there. It keeps the
+From Home Assistant 2026.11, the integration's minimum, HACS is built in as
+the **Marketplace** (Settings → Marketplace) and its installer stops there. It keeps the
 `hacs.json` contract: a repository without one stays installed but gets no
 updates. It offers stable releases only, unless the user turns on that
 repository's *Pre-release* switch, an entity disabled by default. Whether that
