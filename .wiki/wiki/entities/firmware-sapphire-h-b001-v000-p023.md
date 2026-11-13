@@ -80,3 +80,6 @@ The most-measured firmware in the corpus.
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, sixteenth reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-14-summary.md)
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, seventeenth reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-15-summary.md)
 - [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, eighteenth reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-16-summary.md)
+- [SH10RT-V112, B001.V000.P023, peter_sm, the inverter's own LAN port, nineteenth reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-17-summary.md)
+- [SH8.0RT-V112, B001.V000.P023, tristangrichard, the inverter's own LAN port](../sources/sh80rt-v112-b001v000p023-3p-tristangrichard-anon-04477133025-battery-sbr096-meter-direct-lan-summary.md)
+- [SH10RT-V112, B001.V000.P023, anonymous, through a Modbus proxy under load, SBR128](../sources/sh10rt-v112-b001v000p023-3p-anonymous-anon-33455145473-battery-sbr128-meter-direct-lan-summary.md)

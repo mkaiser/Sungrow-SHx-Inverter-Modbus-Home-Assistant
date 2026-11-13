@@ -30,7 +30,11 @@ A Sungrow accepts **very few simultaneous sessions**, and the recovery is
   minutes later with nothing else polling
   ([through the proxy](../sources/sh10rt-v112-b001v000p020-3p-anonymous-anon-33472554127-battery-thirdparty-meter-direct-lan-summary.md),
   [direct](../sources/sh10rt-v112-b001v000p020-3p-anonymous-anon-33472554127-battery-thirdparty-meter-direct-lan-2-summary.md)).
-  Register 6100 answered through it, so transport detection still sees the cable.
+  Register 6100 answered through it, so transport detection still sees the cable. The same held
+  **under two other clients**: an anonymous SH10RT-V112 on P023, read through modbus-proxy 1.1.0
+  while the YAML package and evcc both polled through it, answered 37 of 37 blocks in both rounds
+  with no reconnect and no link drop
+  ([the reading](../sources/sh10rt-v112-b001v000p023-3p-anonymous-anon-33455145473-battery-sbr128-meter-direct-lan-summary.md)).
 - **One write lost the connection at the same place twice**: the charge window's write of
   register 33213 at [peter-sm](../entities/installation-peter-sm.md), in both capability tests of
   2026-11-02, over the cable. Whether that is the register or the link is

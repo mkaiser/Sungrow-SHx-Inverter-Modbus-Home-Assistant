@@ -48,3 +48,4 @@ By the two protocols, as `src/sungrow_modbus/string_inverter/registers.py` maps 
   registers from 5000 mean other things: the clock at 5000-5005 and the power limitation at
   5007-5008, where a hybrid has neither.
 - What it answers is in `doc/compatibility.md`, under "String inverters (SG)".
+- The three-phase SG-RT reads the same way: [SG-RT](device-sg-rt.md).

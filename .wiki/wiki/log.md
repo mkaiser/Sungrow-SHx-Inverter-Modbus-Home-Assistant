@@ -769,3 +769,13 @@ identify-by-what-answers, the index.
 The integration now polls an iHomeManager entry's device and shows 40 read-only sensors beside
 its diagnosis, decoded as the unit measured on 2026-11-10 answered. 8554, the unknown codes
 8047, 8048 and 8051-8052, channel 2 and 8029 get none. Updated device-ihomemanager.
+
+## [2026-11-13] ingested | #786: peter_sm, tristangrichard's SH8.0RT, an anonymous SH10RT through a proxy and an SG10RT
+
+Four read-only diagnoses posted to #786 since 2026-11-11, committed unchanged: peter_sm's
+nineteenth reading (Home Assistant, after dark; five blocks inconsistent in one round),
+tristangrichard's SH8.0RT-V112 on P023 over the cable (the first SH8.0RT on P023; 12 link drops
+outside the block read test), and from one anonymous site an SH10RT-V112 on P023 read through
+modbus-proxy while the YAML package and evcc polled (37 of 37 blocks, no reconnect; added to
+`contention`) and an SG10RT, the first three-phase string inverter (new page `device-sg-rt`).
+New installation page tristangrichard.

@@ -40,6 +40,7 @@ no diagnosis is listed as **untested** rather than assumed to work.
 | `sh10rt-v112-3p-fwitten-anon-86493117545-battery-sbr096-winet` | fwitten | SH10RT-V112 (`0x0E0F`) | WiNet-S (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
 | `sh10rt-v112-b001v000p020-3p-anonymous-anon-33472554127-battery-thirdparty-meter-direct-lan-2` | anonymous | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | BYD Battery-Box Premium HVS 10.2 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p020-3p-anonymous-anon-33472554127-battery-thirdparty-meter-direct-lan` | anonymous | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported), **via a Modbus proxy** | BYD Battery-Box Premium HVS 10.2 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh10rt-v112-b001v000p023-3p-anonymous-anon-33455145473-battery-sbr128-meter-direct-lan` | anonymous | SH10RT-V112 (`0x0E0F`) | direct LAN port, **via a Modbus proxy** | Sungrow SBR128 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | yes | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-anonymous-anon-40315531061-battery-sbr224-meter-direct-lan` | anonymous | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | Sungrow SBR224 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | yes | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-anonymous-anon-91477823483-battery-sbr160-meter-direct-lan` | anonymous | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-fwitten-anon-33442450531-battery-none-direct-lan` | fwitten | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | no | — | no | yes | no |
@@ -54,6 +55,7 @@ no diagnosis is listed as **untested** rather than assumed to work.
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-14` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-15` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-16` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-17` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-2` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-3` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-4` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
@@ -90,6 +92,7 @@ no diagnosis is listed as **untested** rather than assumed to work.
 | `sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-2` | gerd | SH8.0RT-V112 (`0x0E0E`) | WiNet-S, WiFi (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
 | `sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-3` | gerd | SH8.0RT-V112 (`0x0E0E`) | WiNet-S, WiFi (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
 | `sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan` | gerd | SH8.0RT-V112 (`0x0E0E`) | WiNet-S, WiFi (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | yes?[^dongle] | yes?[^dongle] | yes | — | — | yes | no |
+| `sh80rt-v112-b001v000p023-3p-tristangrichard-anon-04477133025-battery-sbr096-meter-direct-lan` | tristangrichard | SH8.0RT-V112 (`0x0E0E`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | yes | yes | yes | no |
 
 [^dongle]: Read through a WiNet-S or Logger, which answers **0**
     where the inverter answers the specification's "unavailable"
@@ -185,6 +188,16 @@ wallbox) is left out.
 same way on B001.V000.P020 and B001.V000.P023, which is a result worth having: it says this firmware
 change moved nothing this project reads.
 
+### SH8.0RT-V112, direct_lan
+
+Same model, same transport, different firmware — so a difference
+here is the firmware's. What a house has fitted (battery, meter,
+wallbox) is left out.
+
+**No capability differs.** Every curated probe answered the
+same way on B001.V000.P022 and B001.V000.P023, which is a result worth having: it says this firmware
+change moved nothing this project reads.
+
 ### Everything else
 
 Every reading by model and transport. A second firmware in any row
@@ -204,8 +217,9 @@ that has only one would make the next pair.
 | SH10RT-20 | winet_wlan | B001.V000.P020 (1 reading) |
 | SH10RT-20 | winet_wlan | B001.V000.P023 (3 readings) |
 | SH10RT-V112 | direct_lan | B001.V000.P020 (2 readings) |
-| SH10RT-V112 | direct_lan | B001.V000.P023 (22 readings) |
+| SH10RT-V112 | direct_lan | B001.V000.P023 (23 readings) |
 | SH10RT-V112 | direct_lan | unknown (2 readings) |
+| SH10RT-V112 | unsure | B001.V000.P023 (1 reading) |
 | SH10RT-V112 | winet | B001.V000.P023 (2 readings) |
 | SH10RT-V112 | winet | unknown (2 readings) |
 | SH10T | winet_lan | B001.V001.P038 (1 reading) |
@@ -223,6 +237,7 @@ that has only one would make the next pair.
 | SH6.0RT-V112 | direct_lan | B001.V000.P023 (1 reading) |
 | SH6.0RT-V112 | winet_lan | B001.V000.P023 (1 reading) |
 | SH8.0RT-V112 | direct_lan | B001.V000.P022 (3 readings) |
+| SH8.0RT-V112 | direct_lan | B001.V000.P023 (1 reading) |
 | SH8.0RT-V112 | winet_wlan | B001.V000.P022 (3 readings) |
 
 ## Models this library knows, and whether anybody has tested one
@@ -305,6 +320,7 @@ that is not evidence the machine has it.
 
 | Setup | By | Model | Connection | ARM firmware | Phases | PV and AC | Meter block | MPPT4 and up | Precise totals | Power limitation (read) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `sg10rt-3p-anonymous-anon-05631532143` | anonymous | SG10RT (`0x2433`) | — | `LCD_BERYL-S_V11_V01_A` | three phase 3P4L | yes | 0 only | 0 only | yes | yes |
 | `sg5-0rs-1p-bleughb-anon-85541281016` | bleughb | SG5.0RS (`0x2606`) | WiNet-S, WiFi (reported) | `ARM_SUNSTONE-S_V11_V01_A` | single phase | yes | 0 only | 0 only | yes | yes |
 | `sg5-0rs-1p-bleughb-anon-91627862515` | bleughb | SG5.0RS (`0x2606`) | WiNet-S, WiFi (reported) | `ARM_SUNSTONE-S_V11_V01_A` | single phase | yes | 0 only | 0 only | yes | yes |
 
@@ -328,7 +344,7 @@ Every SG model the source names, and whether anybody has tested one:
 | `0x2430` | SG5.0RT | untested |
 | `0x2431` | SG6.0RT | untested |
 | `0x2432` | SG8.0RT | untested |
-| `0x2433` | SG10RT | untested |
+| `0x2433` | SG10RT | **yes** |
 | `0x2434` | SG12RT | untested |
 | `0x2435` | SG15RT | untested |
 | `0x2437` | SG20RT | untested |
