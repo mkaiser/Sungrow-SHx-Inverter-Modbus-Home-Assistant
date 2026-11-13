@@ -1328,6 +1328,9 @@ async def capabilities(args: argparse.Namespace) -> Reading:
         # not, and a document without it says so by its absence rather than
         # by an empty section.
         "block_read_test": getattr(args, "block_read_test", None),
+        # What the device says about itself beside Modbus, when the caller
+        # browsed for it: `sungrow_diagnosis.py` does, once per run.
+        "network_names": getattr(args, "network_names", None),
         "registers": {},
     }
     probed: dict[str, object] = {

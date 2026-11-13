@@ -5,6 +5,7 @@
 #     "sungrow-modbus==0.1.0a37",
 #     "modbus-connection[tmodbus]==4.12.7",
 #     "tzdata",
+#     "zeroconf==0.152.0",
 # ]
 # ///
 """Scan a Sungrow installation and write one report -- run this file.
@@ -86,6 +87,7 @@ from sungrow_modbus import (
     dump as register_dump,
     features,
     model_for,
+    network_names,
     string_inverter,
 )
 from sungrow_modbus.block_test import ATTEMPTS, ROUNDS
@@ -98,7 +100,12 @@ from sungrow_modbus.diagnosis_document import (
     connection_block,
     transport_contradiction,
 )
-from sungrow_modbus.discovery import NetworkTooLarge, async_identify_unit_247, hosts_in
+from sungrow_modbus.discovery import (
+    NetworkTooLarge,
+    async_hostname,
+    async_identify_unit_247,
+    hosts_in,
+)
 
 #: The ports a sweep looks at, what answering on each one means, and whether
 #: this tool can then read it.
@@ -361,6 +368,57 @@ _MANAGERS: list[ihomemanager_direct.Found] = []
 #: SG string inverters found by `_find`, diagnosed by `run` by their own map:
 #: the hybrid diagnosis, its block test and its capability test never reach one.
 _STRING_INVERTERS: list[string_inverter_direct.Found] = []
+
+#: What the run's one mDNS browse heard: `adverts` (None when no browse ran)
+#: and `why` it did not. Module state like `_WALLBOXES`: the browse is about
+#: the network, and every device's document reads it.
+_MDNS: dict[str, object] = {"adverts": None, "why": "not browsed"}
+
+
+async def _browse(echo) -> None:
+    """Listen for Sungrow mDNS records, once, for every document of the run.
+
+    What it hears decides whether Home Assistant can find a device without a
+    search, which is why every document records it -- and records hearing
+    nothing as that, never as "no dongle": a container, a VLAN or a firewall
+    keeps multicast out as surely as an absent dongle does. Only the kind and
+    model are printed: a console is pasted where anyone can read it.
+    """
+    echo("")
+    echo(f"  listening for mDNS records for {network_names.BROWSE_SECONDS:.0f}s")
+    try:
+        adverts = await network_names.async_browse()
+    except (RuntimeError, OSError) as error:
+        _MDNS.update(adverts=None, why=f"{type(error).__name__}: {error}")
+        echo(f"  mDNS not browsed: {error}")
+        return
+    _MDNS.update(adverts=adverts, why=None)
+    if not adverts:
+        echo("  no Sungrow device answered over mDNS here")
+    for advert in adverts:
+        board = advert.board
+        behind = advert.inverter
+        echo(
+            f"  mDNS: a {advert.kind} ({board.model if board else 'unknown model'})"
+            + (f", naming a {behind.model} behind it" if behind else "")
+        )
+
+
+async def _network_names(host: str, serials: list[str | None]) -> dict[str, object]:
+    """Return the `network_names` section for the device at `host`.
+
+    Asked after the device has been read, so the ARP cache has its MAC.
+    """
+    adverts = _MDNS.get("adverts")
+    why = _MDNS.get("why")
+    return network_names.network_section(
+        host=host,
+        device_serials=[serial for serial in serials if serial],
+        adverts=adverts if isinstance(adverts, list) else None,
+        browse_error=why if isinstance(why, str) else None,
+        hostname=await async_hostname(host),
+        mac_prefix=await network_names.async_mac_prefix(host),
+    )
 
 
 async def _find(args, echo) -> list[Found]:
@@ -952,6 +1010,9 @@ async def _diagnosis(entry: Found, args, echo) -> Outcome:
     # Handed over before the document is written, so the block evidence is
     # published rather than left in a transcript the contributor keeps.
     answers.block_read_test = _block_document(outcome, client)
+    answers.network_names = await _network_names(
+        entry.host, [entry.who.serial if entry.who else None]
+    )
     reading = await probe.capabilities(answers)
     echo("")
     code = _code_for(reading, transport, answers)
@@ -1438,7 +1499,10 @@ async def _diagnosis_wallbox(found: wallbox_direct.Found, args, echo) -> int:
         )
     tail = address_tail(found.host, consent == "two_octets")
     answers = argparse.Namespace(
-        timeout=args.timeout, reporter=reporter, comment=comment
+        timeout=args.timeout,
+        reporter=reporter,
+        comment=comment,
+        network_names=await _network_names(found.host, []),
     )
     # A wallbox is asked three of the questions, so its line carries three.
     answers.command_line = replay_command(
@@ -1663,6 +1727,8 @@ async def run(args) -> int:
         except ValueError as error:
             echo(f"  {error}")
             return _finish(2, echo)
+        if found or _WALLBOXES:
+            await _browse(echo)
         if not found and not _WALLBOXES and not _MANAGERS and not _STRING_INVERTERS:
             echo("  Nothing to scan.")
             return _finish(1, echo)

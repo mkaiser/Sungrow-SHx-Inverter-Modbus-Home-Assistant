@@ -42,6 +42,7 @@ from .const import (
     LINK_VALID,
 )
 from .coordinator import SungrowConfigEntry
+from .network_records import async_network_names
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -311,6 +312,9 @@ def wallbox_builder(entry: SungrowConfigEntry) -> Builder:
             address_tail=tail,
             connection={"protocol": "Modbus TCP inside TLS", "port": port},
             wallbox=diagnosis.wallbox_from_dump(device.unit_id, raw, path="tls"),
+            network_names=await async_network_names(
+                coordinator.hass, entry.data.get(CONF_HOST, "")
+            ),
         )
 
     return build

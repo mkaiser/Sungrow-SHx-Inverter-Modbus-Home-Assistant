@@ -109,7 +109,15 @@ from .const import model_for
 #: verdicts and counts only, with a `schema` of its own. Written by Home
 #: Assistant alone, and only once a reading was observed, so its absence
 #: means none was.
-SCHEMA = 26
+#:
+#: 27 admits **`network_names`**: what the device says about itself beside
+#: Modbus -- the Sungrow mDNS records heard on the LAN, the reverse-DNS name's
+#: first label and the MAC address's vendor prefix
+#: (`sungrow_modbus.network_names.network_section`), serials as stand-ins and
+#: no address. They decide whether Home Assistant can discover a device by
+#: itself. Before 27 nothing was asked, and `mdns.state` tells "heard nothing
+#: here" from "not browsed".
+SCHEMA = 27
 
 #: The key part B's block is under, by schema: `control_test` before 25.
 CAPABILITY_TEST_KEY = "capability_test"
@@ -654,14 +662,16 @@ def wallbox_document(
     address_tail: str,
     connection: Mapping[str, object],
     wallbox: Mapping[str, object],
+    network_names: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     """Build the document for a wallbox read at its own address.
 
     `wallbox` is a `wallbox_section`, already masked. `user_inputs` keeps only
     what was answered: a wallbox diagnosis asks two questions, not the inverter's
-    seven, and an empty key would claim a question was put.
+    seven, and an empty key would claim a question was put. `network_names`
+    is a finished `network_section`, which owns its stand-ins.
     """
-    return {
+    document: dict[str, object] = {
         "schema": SCHEMA,
         "document": WALLBOX_DOCUMENT,
         "command_line": command_line,
@@ -671,6 +681,9 @@ def wallbox_document(
         "connection": dict(connection),
         "wallbox": dict(wallbox),
     }
+    if network_names:
+        document["network_names"] = dict(network_names)
+    return document
 
 
 def wallbox_label_for(document: Mapping[str, Any]) -> str:
@@ -716,6 +729,7 @@ def assemble_document(
     battery_pack: Mapping[str, Any] | None = None,
     capability_test: Mapping[str, object] | None = None,
     steps_lost: Mapping[str, str] | None = None,
+    network_names: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     """Build the publishable document from sections already collected.
 
@@ -783,6 +797,12 @@ def assemble_document(
         document["block_read_test"] = block_read_test
     if battery_pack and (battery_pack.get("readings") or {}).get("values"):
         document["battery_pack"] = dict(battery_pack)
+    # A finished section from `network_section`, which owns its stand-ins;
+    # checked here all the same, as the capability test's block is.
+    if network_names:
+        if serial and serial in json.dumps(network_names, default=str):
+            raise ValueError("refusing to publish network_names: it carries the serial")
+        document["network_names"] = dict(network_names)
     if capability_test:
         attach_capability_test(document, capability_test, serial=serial)
     attach_features(document)
@@ -878,6 +898,7 @@ def publish_document(
         battery_pack=raw_data.get("battery_pack"),
         capability_test=raw_data.get("capability_test"),
         steps_lost=raw_data.get("steps_lost"),
+        network_names=raw_data.get("network_names"),
     )
 
 

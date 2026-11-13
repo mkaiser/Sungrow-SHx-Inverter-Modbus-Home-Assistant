@@ -31,9 +31,10 @@ back through callbacks, and `next_steps(document)` returns recommendations
 rather than opening issues. What the scripts add is the questions, the
 terminal output and transcript, the connection setup and the files.
 
-The base package discovers devices over Modbus. mDNS needs an optional extra,
-`pip install sungrow-modbus[discovery]`; without it `probe.py mdns` gives the
-install command and the network sweep still works.
+The base package discovers devices over Modbus. mDNS needs `zeroconf`: the
+diagnosis's header declares it, and for `probe.py mdns` in a plain install it
+is the optional extra, `pip install sungrow-modbus[discovery]`; without it
+`probe.py mdns` gives the install command and the network sweep still works.
 
 ### The header is the whole install
 
@@ -75,14 +76,14 @@ Unset, the launchers behave exactly as a contributor's.
 
 ## The document
 
-The format is `sungrow_modbus.diagnosis_document.SCHEMA`, **26**; the comment beside
+The format is `sungrow_modbus.diagnosis_document.SCHEMA`, **27**; the comment beside
 it says what each number from 17 admits, and `probe.py` keeps the older ones.
 A document is read by its own number, which is often older. Sections in
 order: `schema`, `command_line`, `read_at`,
 `user_inputs`, `ip_address_last_two_octets`, `device`, `firmware`,
 `connection`, `readings`, `capability_probes`, then whichever of
 `steps_lost`, `contention`, `register_dump`, `wallbox`, `block_read_test`, `battery_pack`,
-`capability_test`, `plausibility` and `export_scale` the run produced, and last
+`network_names`, `capability_test`, `plausibility` and `export_scale` the run produced, and last
 `features`.
 Up to schema 24 the `capability_test` block is called `control_test`.
 
@@ -255,6 +256,59 @@ in `layout.py`.
 A document from Home Assistant's **Download diagnostics** carries none; the
 diagnosis button's does. A document from Home Assistant also has a `contention`
 section, saying whether that entry's own polling was held off during the run.
+
+### The `network_names` section
+
+From schema 27: what the device says about itself beside Modbus, which
+decides whether Home Assistant can find it without a search
+(`sungrow_modbus.network_names`). The terminal diagnosis listens for mDNS
+once per run, for five seconds, after finding the devices; Home Assistant's
+diagnosis button browses for two through Home Assistant's own zeroconf
+instance. The download leaves it out.
+
+```json
+"network_names": {
+  "mdns": {
+    "state": "answered",
+    "browsed_seconds": 5.0,
+    "services": [
+      {
+        "this_device": true,
+        "kind": "dongle",
+        "instance": "WiNet-WebServer",
+        "type": "_http._tcp.local.",
+        "port": 80,
+        "server": "SUNGROWanon-68311414753",
+        "properties": {
+          "board": "SUNGROW;1;WiNet-S;anon-68311414753;1;",
+          "inverter": "1;3598;anon-00267885816;1;516;SH8.0RT;1;4;"
+        }
+      }
+    ]
+  },
+  "reverse_dns_label": "SUNGROWanon-68311414753",
+  "mac_vendor_prefix": "A4:CF:12"
+}
+```
+
+- **`mdns.state`** is `answered`, `nothing_answered` or `not_browsed` (with
+  `why`). Nothing answered is a statement about the network between as much
+  as the device: a container, a VLAN or a firewall keeps multicast out as
+  surely as an absent dongle. Every Sungrow record heard is listed, and
+  `this_device` marks the one heard from this device's address or naming its
+  serial.
+- **Serials** in a record are replaced by their stand-ins; a MAC address, an
+  IP address or a serial-like string in a field nobody has explained by
+  `<mac>`, `<address>` or `<unexplained>`. No address is published.
+- **`reverse_dns_label`** is the first label of the name the network's DNS
+  gives the address, usually the device's DHCP hostname; the domain is the
+  owner's and is dropped. **`mac_vendor_prefix`** is the first three octets
+  of its MAC address, from this machine's ARP cache: a manufacturer, never
+  one device. Both are `null` from behind a router, a VPN or a container
+  bridge. They are what a `dhcp` matcher would key on, which an inverter on
+  its own LAN port, announcing nothing over mDNS, needs.
+
+A wallbox's own document carries the same section.
 
 ### A `capability_test` block, where a document has one
 

@@ -139,6 +139,7 @@ async def async_diagnosis(
         address_tail=address_tail,
         connection={"protocol": "Modbus TCP inside TLS", "port": PORT},
         wallbox=section,
+        network_names=getattr(answers, "network_names", None),
     )
     answered = register_dump.answered(masked)
     if not answered:

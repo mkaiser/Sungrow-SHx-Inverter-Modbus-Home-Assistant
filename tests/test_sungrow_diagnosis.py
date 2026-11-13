@@ -863,6 +863,12 @@ def diagnosed(monkeypatch, tmp_path):
     monkeypatch.setattr(sungrow_diagnosis, "_ask_all", ask_all)
     monkeypatch.setattr(sungrow_diagnosis, "_check_transport", check_transport)
     monkeypatch.setattr(sungrow_diagnosis, "_block_test", block_test)
+
+    async def no_network_names(*_args):
+        return {}
+
+    # A reverse-DNS lookup and an ARP read are the network: not in a test.
+    monkeypatch.setattr(sungrow_diagnosis, "_network_names", no_network_names)
     monkeypatch.setattr(sungrow_diagnosis.probe, "capabilities", capabilities)
     monkeypatch.setattr(
         sungrow_diagnosis.sungrow_capability_test, "async_main", control
@@ -965,3 +971,40 @@ def test_the_scripts_run_with_the_handler_installed() -> None:
         return asyncio.get_running_loop().get_exception_handler()
 
     assert probe.run(handler_in_place()) is probe._ignore_resets
+
+
+async def test_every_document_of_a_run_reads_the_one_browse(monkeypatch) -> None:
+    """One browse per run; each device's section marks its own record."""
+    from sungrow_modbus.network_names import Advert
+
+    heard = Advert(
+        instance="WiNet-WebServer",
+        addresses=("192.0.2.10",),
+        properties={"board": "SUNGROW;1;WiNet-S;B123456789;1;"},
+    )
+
+    async def browse(*_args, **_kwargs):
+        return [heard]
+
+    async def no_name(_host):
+        return None
+
+    async def no_prefix(_host):
+        return None
+
+    monkeypatch.setattr(sungrow_diagnosis.network_names, "async_browse", browse)
+    monkeypatch.setattr(sungrow_diagnosis, "async_hostname", no_name)
+    monkeypatch.setattr(sungrow_diagnosis.network_names, "async_mac_prefix", no_prefix)
+    await sungrow_diagnosis._browse(lambda *_: None)
+    section = await sungrow_diagnosis._network_names("192.0.2.10", [None])
+    assert section["mdns"]["state"] == "answered"
+    assert section["mdns"]["services"][0]["this_device"] is True
+    assert "B123456789" not in str(section)
+
+    async def refused(*_args, **_kwargs):
+        raise RuntimeError("zeroconf missing")
+
+    monkeypatch.setattr(sungrow_diagnosis.network_names, "async_browse", refused)
+    await sungrow_diagnosis._browse(lambda *_: None)
+    section = await sungrow_diagnosis._network_names("192.0.2.10", [])
+    assert section["mdns"]["state"] == "not_browsed"

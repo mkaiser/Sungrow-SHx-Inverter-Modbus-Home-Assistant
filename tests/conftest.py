@@ -141,3 +141,23 @@ def _no_export_scale_pause(monkeypatch: pytest.MonkeyPatch) -> None:
     from sungrow_modbus.hybrid_inverter import export_scale
 
     monkeypatch.setattr(export_scale, "ASK_PAUSE", 0.0)
+
+
+@pytest.fixture(autouse=True)
+def _no_network_names(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep the diagnosis's mDNS browse, DNS lookup and ARP read off the network.
+
+    `tests/test_network_records.py` tests them, with this stub's targets
+    patched its own way.
+    """
+    from custom_components.sungrow_modbus import network_records
+
+    async def nothing_heard(_hass: object) -> list[object]:
+        return []
+
+    async def no_answer(_host: str) -> None:
+        return None
+
+    monkeypatch.setattr(network_records, "_async_adverts", nothing_heard)
+    monkeypatch.setattr(network_records, "async_hostname", no_answer)
+    monkeypatch.setattr(network_records, "async_mac_prefix", no_answer)
