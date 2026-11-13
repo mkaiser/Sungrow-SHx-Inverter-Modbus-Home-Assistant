@@ -1,0 +1,189 @@
+# Wallbox dashboard for the Sungrow Modbus integration (AC22E-01 / AC011E family).
+#
+# How to use: Settings -> Dashboards -> Add dashboard -> "New dashboard from
+# scratch", open it, top right menu -> Edit dashboard -> menu -> Raw
+# configuration editor, and paste this file.
+#
+# Entity ids: written for a wallbox whose device is named "AC22E-01", which
+# gives the prefix `ac22e_01_`. If yours differs, replace that prefix
+# everywhere (search and replace in the raw editor).
+#
+# Only built-in cards; nothing to install. The wallbox entities are read only:
+# there are no controls here until the integration offers them.
+
+title: Wallbox
+views:
+  - title: Wallbox
+    path: wallbox
+    icon: mdi:ev-station
+    type: sections
+    max_columns: 3
+    sections:
+      # --- Now -------------------------------------------------------------
+      - type: grid
+        cards:
+          - type: heading
+            heading: Now
+            icon: mdi:ev-station
+            badges:
+              - type: entity
+                entity: binary_sensor.ac22e_01_charger_enabled
+                show_state: true
+                show_icon: true
+          - type: tile
+            entity: sensor.ac22e_01_charging_status
+            grid_options:
+              columns: 12
+          - type: gauge
+            entity: sensor.ac22e_01_charging_power
+            name: Charging power
+            min: 0
+            max: 22080
+            needle: true
+            severity:
+              green: 0
+              yellow: 11000
+              red: 20000
+            grid_options:
+              columns: 12
+          - type: tile
+            entity: sensor.ac22e_01_session_energy
+            name: This session
+          - type: tile
+            entity: sensor.ac22e_01_offered_charging_current
+            name: Offered current
+          - type: tile
+            entity: binary_sensor.ac22e_01_charging
+            name: Charging
+          - type: tile
+            entity: sensor.ac22e_01_control_pilot_voltage
+            name: Control pilot
+
+      # --- Phases (only while a car is plugged in) -------------------------
+      - type: grid
+        cards:
+          - type: heading
+            heading: Phases
+            icon: mdi:sine-wave
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: sensor.ac22e_01_charging_status
+                state_not: idle
+            card:
+              type: glance
+              columns: 3
+              show_state: true
+              entities:
+                - entity: sensor.ac22e_01_phase_a_charging_current
+                  name: L1 A
+                - entity: sensor.ac22e_01_phase_b_charging_current
+                  name: L2 A
+                - entity: sensor.ac22e_01_phase_c_charging_current
+                  name: L3 A
+                - entity: sensor.ac22e_01_phase_a_voltage
+                  name: L1 V
+                - entity: sensor.ac22e_01_phase_b_voltage
+                  name: L2 V
+                - entity: sensor.ac22e_01_phase_c_voltage
+                  name: L3 V
+          - type: history-graph
+            title: Current, last 6 hours
+            hours_to_show: 6
+            entities:
+              - entity: sensor.ac22e_01_phase_a_charging_current
+                name: L1
+              - entity: sensor.ac22e_01_phase_b_charging_current
+                name: L2
+              - entity: sensor.ac22e_01_phase_c_charging_current
+                name: L3
+              - entity: sensor.ac22e_01_offered_charging_current
+                name: Offered
+              - entity: sensor.ac22e_01_charging_current_setpoint
+                name: Setting
+          - type: history-graph
+            title: Power and status, last 24 hours
+            hours_to_show: 24
+            entities:
+              - entity: sensor.ac22e_01_charging_power
+                name: Power
+              - entity: sensor.ac22e_01_charging_status
+                name: Status
+
+      # --- Energy ----------------------------------------------------------
+      - type: grid
+        cards:
+          - type: heading
+            heading: Energy
+            icon: mdi:lightning-bolt
+          - type: statistics-graph
+            title: Charged per day
+            entities:
+              - entity: sensor.ac22e_01_total_charged_energy
+                name: Charged
+            stat_types:
+              - change
+            chart_type: bar
+            period: day
+            days_to_show: 30
+          - type: statistics-graph
+            title: Charged per month
+            entities:
+              - entity: sensor.ac22e_01_total_charged_energy
+                name: Charged
+            stat_types:
+              - change
+            chart_type: bar
+            period: month
+            days_to_show: 365
+          - type: tile
+            entity: sensor.ac22e_01_total_charged_energy
+            name: Lifetime
+
+      # --- Settings and ratings --------------------------------------------
+      - type: grid
+        cards:
+          - type: heading
+            heading: Settings and ratings
+            icon: mdi:cog
+          - type: entities
+            state_color: true
+            entities:
+              - entity: sensor.ac22e_01_charging_current_setpoint
+                name: Output current setting
+              - entity: sensor.ac22e_01_phase_mode
+              - entity: sensor.ac22e_01_start_mode
+              - entity: binary_sensor.ac22e_01_charger_enabled
+              - type: divider
+              - entity: sensor.ac22e_01_maximum_charging_current
+                name: Rated current
+              - entity: sensor.ac22e_01_maximum_charging_power
+              - entity: sensor.ac22e_01_minimum_charging_power
+              - entity: sensor.ac22e_01_firmware_version
+
+      # --- Diagnosis and capability test -----------------------------------
+      - type: grid
+        cards:
+          - type: heading
+            heading: Diagnosis
+            icon: mdi:stethoscope
+          - type: entities
+            entities:
+              - entity: select.ac22e_01_diagnosis_mode
+              - entity: button.ac22e_01_diagnosis_start
+              - entity: button.ac22e_01_diagnosis_stop
+              - entity: switch.ac22e_01_diagnosis_skip_completed_tests
+              - type: divider
+              - entity: sensor.ac22e_01_diagnosis_current_step
+              - entity: sensor.ac22e_01_diagnosis_progress
+              - entity: sensor.ac22e_01_diagnosis_last_finished
+              - entity: sensor.ac22e_01_diagnosis_next_attempt
+          - type: entities
+            title: Test results
+            entities:
+              - entity: sensor.ac22e_01_diagnosis_test_summary
+              - entity: sensor.ac22e_01_diagnosis_tests_passed
+              - entity: sensor.ac22e_01_diagnosis_tests_failed
+              - entity: sensor.ac22e_01_diagnosis_tests_not_supported
+              - entity: sensor.ac22e_01_diagnosis_tests_inconclusive
+              - entity: sensor.ac22e_01_diagnosis_tests_not_run_yet
