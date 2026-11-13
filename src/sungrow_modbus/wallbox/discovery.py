@@ -20,11 +20,27 @@ from ..addresses import field_address, read
 
 #: Unit ids a wallbox may answer on, in the order to try them.
 #:
-#: Behind a plain Modbus TCP endpoint. 3 first: a WiNet-S forwards the
-#: wallbox there. 248 second, for an RS485-to-TCP adapter wired straight to
-#: the wallbox -- reported by others, not measured here. The wallbox's own
-#: address over TLS is probed at 248 alone, by its caller.
-UNITS: tuple[int, ...] = (3, 248)
+#: Behind a plain Modbus TCP endpoint. A WiNet-S forwards a wallbox on its
+#: RS485 bus at a unit of its own choosing: 3 first, as measured here (an
+#: AC22E-01); then 2 and 4, reported elsewhere and not measured here (2 and 3
+#: in the ioBroker thread and evcc discussion #7104, 2 in ha-modbus-manager
+#: issue #127, 4 for an AC011E-01 in this repository's issue #786). 248 last,
+#: for an RS485-to-TCP adapter wired straight to the wallbox -- reported, not
+#: measured. The wallbox's own address over TLS is probed at 248 alone, by its
+#: caller.
+UNITS: tuple[int, ...] = (3, 2, 4, 248)
+
+#: Units only a communication module forwards to. Tried only once the
+#: endpoint has *answered* an earlier unit -- zeros or a refusal, as a WiNet-S
+#: does for a unit it does not forward. An endpoint that went silent instead
+#: is the inverter's own LAN port, which answers no wallbox unit and costs a
+#: timeout for each one asked; there the search stays at 3 and 248.
+DONGLE_ONLY_UNITS: tuple[int, ...] = (2, 4)
+
+#: What every Sungrow AC wallbox's model name starts with (AC22E-01, AC011E-01,
+#: AC007-00). Unit 2 is also where some endpoints answer an SBR, so a printable
+#: name alone is not enough to call a unit a wallbox.
+NAME_PREFIX = "AC"
 
 #: The register read to decide whether a wallbox is there, and its length.
 #:
@@ -59,18 +75,32 @@ async def probe_units(
     An answer is not enough; it has to be a **name**. Any successful read is
     satisfied by a device answering zeros, which is precisely what a dongle
     in the path does for a unit it does not forward. So the words have to
-    decode to printable text, because that is what a model name is.
-    """
-    from modbus_connection import ModbusError
+    decode to printable text, because that is what a model name is, and to a
+    Sungrow wallbox's name (`NAME_PREFIX`), because another device may answer
+    text on the same unit.
 
+    The units in `DONGLE_ONLY_UNITS` are skipped until the endpoint has
+    answered one, with words or a refusal: a timeout or a lost read is not an
+    answer, and asking a silent endpoint more units only costs more timeouts.
+    """
+    from modbus_connection import ModbusError, ModbusExceptionError
+
+    answered = False
     for unit in units:
+        if unit in DONGLE_ONLY_UNITS and not answered:
+            continue
         try:
             words = await read(unit_for(unit), MODEL_NAME)
+        except ModbusExceptionError:
+            answered = True
+            continue
         except (ModbusError, TimeoutError, OSError):
             continue
+        answered = True
         if not words or all(int(word) in IMPLAUSIBLE for word in words):
             continue
-        if model_name(words):
+        name = model_name(words)
+        if name and name.upper().startswith(NAME_PREFIX):
             return unit
     return None
 
