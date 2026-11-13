@@ -33,8 +33,8 @@ is a Sungrow, and an inverter is not always unit 1.
 | [Logger](../entities/device-logger.md) | | | 247 on 502, or TLS on 516 (by Sungrow's manual) |
 
 Sub-devices are found again whenever an entry's endpoint changes. So moving
-to a cable keeps the pack, and loses a wallbox the dongle was carrying unless
-`wallbox_host` points at it.
+to a cable keeps the pack, and loses a wallbox the dongle was carrying; one
+with an address of its own is read there, as an entry of its own.
 
 ## One entry, one endpoint
 

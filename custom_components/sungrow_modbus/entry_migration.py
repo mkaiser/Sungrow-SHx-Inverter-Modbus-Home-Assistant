@@ -5,6 +5,13 @@ the options that configure them, the permission for the capability test,
 the diagnosis entities' unique ids and the store holding an unfinished
 capability test's snapshot. Nothing here reads or writes the inverter.
 
+Minor version 3 drops what an inverter entry no longer has: the
+`wallbox_host` option, which read a wallbox's own address from inside the
+inverter's entry, and the wallbox test's leave and cap, since only a wallbox
+entry of its own writes to a wallbox. A wallbox with an address of its own
+is added through the search instead; no history is carried over (the YAML
+package never had a wallbox). The sub-device the option made goes with it.
+
 The snapshot is the part that must not be lost: it is what puts the owner's
 settings back after a capability test that did not finish. It is copied to
 its new key and only then removed from the old one, so an interruption at
@@ -18,7 +25,11 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import entity_registry as er, issue_registry as ir
+from homeassistant.helpers import (
+    device_registry as dr,
+    entity_registry as er,
+    issue_registry as ir,
+)
 from homeassistant.helpers.storage import Store
 
 from .capability_test import STORE_KEY, STORE_VERSION
@@ -37,8 +48,10 @@ from .const import (
     CONF_DIAGNOSIS_POLLERS,
     CONF_DIAGNOSIS_PROXY,
     CONF_DIAGNOSIS_TRANSPORT,
+    CONF_KIND,
     CONF_PERMISSIONS,
     DOMAIN,
+    KIND_WALLBOX,
     PERMISSION_CAPABILITY_TEST,
 )
 from .repairs import ISSUE_PREFIX
@@ -46,7 +59,14 @@ from .repairs import ISSUE_PREFIX
 _LOGGER = logging.getLogger(__name__)
 
 #: The minor version this module brings an entry to.
-MINOR_VERSION = 2
+MINOR_VERSION = 3
+
+#: Options minor version 3 removes from an inverter entry.
+REMOVED_INVERTER_OPTIONS = (
+    "wallbox_host",
+    "capability_test_wallbox",
+    "wallbox_max_amps",
+)
 
 #: Option keys as minor version 1 stored them, to their names now.
 RENAMED_OPTIONS: dict[str, str] = {
@@ -134,11 +154,52 @@ async def _async_move_snapshot(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Migrate an entry stored at minor version 1 to minor version 2."""
+    """Migrate an entry stored at an older minor version to this one."""
     if entry.version > 1:
         return False
     if entry.minor_version >= MINOR_VERSION:
         return True
+    if entry.minor_version < 2:
+        await _async_migrate_names(hass, entry)
+    if entry.minor_version < 3:
+        _async_drop_wallbox_options(hass, entry)
+    hass.config_entries.async_update_entry(entry, minor_version=MINOR_VERSION)
+    _LOGGER.debug("%s: migrated to minor version %d", entry.title, MINOR_VERSION)
+    return True
+
+
+@callback
+def _async_drop_wallbox_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Remove what minor version 3 takes from an inverter entry."""
+    if entry.data.get(CONF_KIND) == KIND_WALLBOX:
+        return
+    had_host = bool(entry.options.get("wallbox_host"))
+    options = {
+        key: value
+        for key, value in entry.options.items()
+        if key not in REMOVED_INVERTER_OPTIONS
+    }
+    hass.config_entries.async_update_entry(entry, options=options)
+    if not had_host or entry.unique_id is None:
+        return
+    # The wallbox it read at its own address was a sub-device keyed on the
+    # inverter's serial. Removed rather than left unavailable; the wallbox
+    # comes back as an entry of its own once the search adds it.
+    registry = dr.async_get(hass)
+    device = registry.async_get_device_by_identifier(
+        (DOMAIN, f"{entry.unique_id}-wallbox"), entry.entry_id
+    )
+    if device is not None:
+        registry.async_remove_device(device.id)
+    _LOGGER.warning(
+        "%s: the wallbox address option is gone; add the wallbox through "
+        "Add integration > Search my network, as an entry of its own",
+        entry.title,
+    )
+
+
+async def _async_migrate_names(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Bring minor version 1's names to minor version 2's."""
     await _async_move_snapshot(hass, entry)
     ir.async_delete_issue(hass, DOMAIN, f"{OLD_ISSUE_PREFIX}_{entry.entry_id}")
     # The new issue id is raised from the moved snapshot at setup.
@@ -154,7 +215,5 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry,
         data=migrated_options(dict(entry.data)),
         options=migrated_options(dict(entry.options)),
-        minor_version=MINOR_VERSION,
+        minor_version=2,
     )
-    _LOGGER.debug("%s: migrated to minor version %d", entry.title, MINOR_VERSION)
-    return True

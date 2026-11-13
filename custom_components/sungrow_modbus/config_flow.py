@@ -116,7 +116,6 @@ from .const import (
     CONF_REPORTER,
     CONF_TLS,
     CONF_UNIT_ID,
-    CONF_WALLBOX_HOST,
     CONF_WALLBOX_MAX_AMPS,
     DEFAULT_CAPABILITY_TEST_WALLBOX,
     DEFAULT_EXTERNAL_PLACEMENT,
@@ -335,7 +334,7 @@ def _where(data: Mapping[str, Any], texts: Texts) -> str:
 
 def _loses_wallbox(entry: ConfigEntry, direct: bool | None) -> bool:
     """Whether moving to a direct path leaves a dongle-read wallbox behind."""
-    if direct is not True or entry.options.get(CONF_WALLBOX_HOST):
+    if direct is not True:
         return False
     runtime = getattr(entry, "runtime_data", None)
     return getattr(runtime, "wallbox", None) is not None
@@ -418,8 +417,9 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a Sungrow Modbus config flow."""
 
     VERSION = 1
-    #: 2 names the diagnosis and the capability test: `entry_migration.py`.
-    MINOR_VERSION = 2
+    #: 2 names the diagnosis and the capability test, 3 takes the wallbox
+    #: options from an inverter entry: `entry_migration.py`.
+    MINOR_VERSION = 3
 
     @staticmethod
     @callback
@@ -1189,9 +1189,10 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
 
         Identified by its **own** serial, because there is no inverter here
         to borrow one from. Found again at another address it is the same
-        wallbox: the entry follows it. A wallbox an inverter entry already
-        reads through its `wallbox_host` is offered all the same, and is a
-        second, separate device.
+        wallbox: the entry follows it. This is the path preferred for a
+        wallbox with an address of its own: an inverter entry that read the
+        same wallbox through its dongle gives it up when this entry is set up
+        (`_async_wallbox` in `__init__.py`).
         """
         wallbox = self._wallboxes[host]
         await self.async_set_unique_id(wallbox["serial"])
@@ -1700,27 +1701,6 @@ def _switch_placeholders(
     }
 
 
-async def _async_wallbox_answers(hass: HomeAssistant, host: str) -> bool:
-    """Whether a Sungrow wallbox answers at this address, over TLS at unit 248.
-
-    The same test setup applies -- a model *name* at input 21216, never the
-    serial below it -- through a temporary unit, so checking an address does
-    not hold a connection the entry has not asked for yet. A link failure is
-    a no: the address is refused either way, and the dialog says why.
-    """
-    try:
-        async with async_get_temporary_unit(
-            hass, wallbox_tls_params(host), WALLBOX_TLS_UNIT
-        ) as unit:
-            found = await wallbox_probe_units(
-                lambda _unit_id: unit, (WALLBOX_TLS_UNIT,)
-            )
-    except (ModbusError, TimeoutError, OSError, HomeAssistantError) as err:
-        _LOGGER.debug("no wallbox over TLS at %s: %s", host, err)
-        return False
-    return found is not None
-
-
 class SungrowOptionsFlow(OptionsFlow):
     """Settings that can be changed after setup.
 
@@ -1788,21 +1768,7 @@ class SungrowOptionsFlow(OptionsFlow):
                     **user_input[SECTION_CAPABILITY_TEST],
                     **user_input[SECTION_ADVANCED],
                 }
-                host = (options.get(CONF_WALLBOX_HOST) or "").strip()
-                options[CONF_WALLBOX_HOST] = host
-                if CONF_WALLBOX_MAX_AMPS not in user_input[SECTION_CAPABILITY_TEST]:
-                    # An optional field left empty is a cap taken back.
-                    options.pop(CONF_WALLBOX_MAX_AMPS, None)
                 if (
-                    host
-                    and host != self.config_entry.options.get(CONF_WALLBOX_HOST)
-                    and not await _async_wallbox_answers(self.hass, host)
-                ):
-                    # Refused here rather than discovered at the next poll:
-                    # an address that answers nothing would otherwise leave
-                    # the wallbox's entities unavailable with only a log line.
-                    errors["base"] = "wallbox_not_found"
-                elif (
                     user_input.get(CONF_ENTITY_IDS) == ENTITY_IDS_MIGRATE
                     and user_input[CONF_ENTITY_IDS] != self._entity_id_style()
                     and await self._async_slot() is None
@@ -2019,13 +1985,6 @@ class SungrowOptionsFlow(OptionsFlow):
                         CONF_REGISTER_DUMP,
                         default=options.get(CONF_REGISTER_DUMP, False),
                     ): BooleanSelector(),
-                    # Suggested rather than defaulted, so it can be cleared.
-                    probatio.Optional(
-                        CONF_WALLBOX_HOST,
-                        description={
-                            "suggested_value": options.get(CONF_WALLBOX_HOST, "")
-                        },
-                    ): TextSelector(),
                 }
             ),
             {"collapsed": True},
@@ -2107,29 +2066,6 @@ class SungrowOptionsFlow(OptionsFlow):
                             CAPABILITY_TEST_PERMISSION_DEFAULT,
                         ),
                     ): BooleanSelector(),
-                    probatio.Required(
-                        CONF_CAPABILITY_TEST_WALLBOX,
-                        default=options.get(
-                            CONF_CAPABILITY_TEST_WALLBOX,
-                            DEFAULT_CAPABILITY_TEST_WALLBOX,
-                        ),
-                    ): BooleanSelector(),
-                    # Suggested rather than defaulted: unset means the owner has
-                    # not chosen, which the checks beyond the default cap need.
-                    probatio.Optional(
-                        CONF_WALLBOX_MAX_AMPS,
-                        description={
-                            "suggested_value": options.get(CONF_WALLBOX_MAX_AMPS)
-                        },
-                    ): NumberSelector(
-                        NumberSelectorConfig(
-                            mode=NumberSelectorMode.BOX,
-                            min=6,
-                            max=32,
-                            step=1,
-                            unit_of_measurement="A",
-                        )
-                    ),
                 }
             ),
             {"collapsed": True},
@@ -2141,9 +2077,9 @@ class SungrowOptionsFlow(OptionsFlow):
         """Set what a wallbox at its own address may be tested with, and its report.
 
         No polling, permissions or ids: a wallbox entry has one coordinator and
-        writes nothing outside its capability test. What the test may do is the
-        same leave and cap an inverter entry gives its wallbox, so one procedure
-        reads both (`wallbox_capability_test.run_options`).
+        writes nothing outside its capability test. It is the only entry that
+        may write to a wallbox: one read through an inverter's dongle stays
+        read only (`wallbox_capability_test.consented`).
         """
         if user_input is not None:
             tests = user_input[SECTION_CAPABILITY_TEST]

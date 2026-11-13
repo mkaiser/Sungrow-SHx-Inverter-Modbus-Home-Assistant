@@ -1,6 +1,6 @@
 # The texts, for review
 
-**329 texts**: everything in `strings.json` that is not an entity name, by its
+**322 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -953,9 +953,9 @@ and bold are kept.
 
 ### `selector.flow_text.options.wallbox_lost`
 
-> **EN** **The wallbox goes quiet.** It is read through the WiNet-S today, and the inverter's own LAN port does not reach it. Its entities stay, unavailable, until **Wallbox address** in this entry's options points at the wallbox itself.
+> **EN** **The wallbox goes quiet.** It is read through the WiNet-S today, and the inverter's own LAN port does not reach it. If the wallbox has a network connection of its own, add it as an entry of its own: **Add integration**, then **Search my network**.
 
-> **DE** **Die Wallbox verstummt.** Sie wird heute über den WiNet-S gelesen, und der eigene LAN-Anschluss des Wechselrichters erreicht sie nicht. Ihre Entitäten bleiben, nicht verfügbar, bis **Wallbox-Adresse** in den Optionen dieses Eintrags auf die Wallbox selbst zeigt.
+> **DE** **Die Wallbox verstummt.** Sie wird heute über den WiNet-S gelesen, und der eigene LAN-Anschluss des Wechselrichters erreicht sie nicht. Hat die Wallbox einen eigenen Netzwerkanschluss, füge sie als eigenen Eintrag hinzu: **Integration hinzufügen**, dann **Mein Netzwerk durchsuchen**.
 
 ### `selector.flow_text.options.search_prefilled`
 
@@ -1299,7 +1299,7 @@ and bold are kept.
 > **Prüfe, ob dein Wechselrichter läuft.** Diese Reparatur bleibt offen, damit du es erneut versuchen kannst.
 
 
-## Options flow (110)
+## Options flow (103)
 
 ### `options.step.init.title`
 
@@ -1475,9 +1475,9 @@ and bold are kept.
 
 ### `options.step.init.sections.advanced.name`
 
-> **EN** Battery, wallbox and diagnostics
+> **EN** Battery and diagnostics
 
-> **DE** Batterie, Wallbox und Diagnose
+> **DE** Batterie und Diagnose
 
 ### `options.step.init.sections.advanced.description`
 
@@ -1497,12 +1497,6 @@ and bold are kept.
 
 > **DE** Rohen Registerauszug in die Diagnose aufnehmen
 
-### `options.step.init.sections.advanced.data.wallbox_host`
-
-> **EN** Wallbox address, when it is on the network itself
-
-> **DE** Wallbox-Adresse, wenn sie selbst im Netzwerk ist
-
 ### `options.step.init.sections.advanced.data_description.battery_max_power`
 
 > **EN** 0 means work it out: a Sungrow pack is identified from the capacity it reports and looked up against its datasheet, and any other pack that reports a BMS charge current gets that instead. Set a value to override either.
@@ -1514,12 +1508,6 @@ and bold are kept.
 > **EN** Adds every mapped register's raw value. Only useful when a value looks wrong and the decoding itself is in question. Producing it is a second full read of the register map on top of normal polling, which is slow over a WiNet-S dongle, so leave it off unless you have been asked for it.
 
 > **DE** Fügt den Rohwert jedes abgebildeten Registers hinzu. Nur nützlich, wenn ein Wert falsch aussieht und die Dekodierung selbst in Frage steht. Ihn zu erzeugen ist ein zweiter vollständiger Lesedurchlauf der Registerkarte zusätzlich zur normalen Abfrage, was über einen WiNet-S-Dongle langsam ist, lass es also aus, außer jemand hat danach gefragt.
-
-### `options.step.init.sections.advanced.data_description.wallbox_host`
-
-> **EN** Only for a Sungrow wallbox with a network cable or WiFi of its own. Without this, the integration finds a wallbox behind a WiNet-S by itself, and that is all most installations need. With it, the wallbox is read at its own address instead -- encrypted, on port 516 -- which also works when this entry is on the inverter's own LAN port, where a wallbox cannot otherwise be seen. Its entities and their history stay as they are. Leave empty to go back to the WiNet-S.
-
-> **DE** Nur für eine Sungrow-Wallbox mit eigenem Netzwerkkabel oder WLAN. Ohne dies findet die Integration eine Wallbox hinter einem WiNet-S selbst, und das ist alles, was die meisten Installationen brauchen. Mit dieser Angabe wird die Wallbox stattdessen an ihrer eigenen Adresse gelesen – verschlüsselt, auf Port 516 –, was auch funktioniert, wenn dieser Eintrag am eigenen LAN-Port des Wechselrichters hängt, wo eine Wallbox sonst nicht zu sehen ist. Ihre Entitäten und deren Verlauf bleiben, wie sie sind. Leer lassen, um zum WiNet-S zurückzukehren.
 
 ### `options.step.init.sections.diagnosis.name`
 
@@ -1689,18 +1677,6 @@ and bold are kept.
 
 > **DE** Darf er den Netzbezug während einer kurzen Zwangsladung begrenzen?
 
-### `options.step.init.sections.capability_test.data.capability_test_wallbox`
-
-> **EN** May it write to the wallbox, with a car charging?
-
-> **DE** Darf er mit einem ladenden Auto auf die Wallbox schreiben?
-
-### `options.step.init.sections.capability_test.data.wallbox_max_amps`
-
-> **EN** The highest charging current the wallbox test may offer
-
-> **DE** Der höchste Ladestrom, den der Wallbox-Test anbieten darf
-
 ### `options.step.init.sections.capability_test.data_description.capability_test_restart`
 
 > **EN** On unless you switch it off. With this on, the test writes the stop register, waits for the inverter to report itself stopped, starts it again and times all three transitions, so each model's figures are on record.
@@ -1756,18 +1732,6 @@ and bold are kept.
 > **DE** An, sofern du es nicht ausschaltest. Mit dieser Einstellung und wo dein Wechselrichter Register 32998 beantwortet, das Netzbezugslimit, lädt der Test die Batterie zwangsweise, setzt das Limit auf die Mitte zwischen dem, was das Haus dann bezieht, und dem, was es ohne die Ladung beziehen würde, prüft, dass der Netzbezug darauf sinkt, und setzt dein Limit zurück. Danach schreibt er drei Limits an den Enden des Bereichs je einmal, um festzuhalten, welche der Wechselrichter ablehnt. Die Batterie lädt etwa zwei Minuten, aus dem Netz, wenn keine Sonne scheint.
 >
 > Dieses Register steht nicht in Sungrows Dokumentation, weshalb es nur als Messwert angeboten wird. Ein Lauf auf deiner ist der Beleg, dass Schreiben darauf tut, was es soll.
-
-### `options.step.init.sections.capability_test.data_description.capability_test_wallbox`
-
-> **EN** Off until you switch it on, unlike the settings above. With this on, and where a Sungrow wallbox answers behind this connection, the test writes the wallbox's output current, start/stop, enable, phase and mileage settings, reads each back, watches what the car draws and puts every original value back. **A charge in progress is interrupted**: it is stopped and started again, paused below 6 A and the phase is switched with the charge stopped first. The wallbox is also left without any read for 75 seconds, to see what current it falls back to. The checks wait for a car to charge, so a run is a few minutes of a charging session, repeated every half hour in *Extended test (auto repeat)* until each question has an answer.
-
-> **DE** Aus, bis du es einschaltest, anders als die Einstellungen darüber. Mit dieser Einstellung und wo eine Sungrow-Wallbox hinter dieser Verbindung antwortet, schreibt der Test den Ausgangsstrom, Start/Stopp, Freigabe, Phasen und Kilometer pro kWh der Wallbox, liest jeden Wert zurück, beobachtet, was das Auto zieht, und setzt jeden ursprünglichen Wert zurück. **Eine laufende Ladung wird unterbrochen**: Sie wird gestoppt und wieder gestartet, unter 6 A pausiert, und die Phase wird umgeschaltet, nachdem die Ladung gestoppt wurde. Außerdem bleibt die Wallbox 75 Sekunden ohne jeden Lesezugriff, um zu sehen, auf welchen Strom sie zurückfällt. Die Prüfungen warten auf ein ladendes Auto; ein Lauf sind also einige Minuten einer Ladung, in *Erweiterter Test (automatisch wiederholen)* alle halbe Stunde wiederholt, bis jede Frage eine Antwort hat.
-
-### `options.step.init.sections.capability_test.data_description.wallbox_max_amps`
-
-> **EN** The most current any wallbox test may offer a car, never more than the wallbox's own rating. Left empty it is 10 A, and the checks that go beyond that wait: an offer below the 6 A minimum, an offer above the rating, and the silence test, which needs a cap no higher than the setting your wallbox had. Set it to what your installation and your car can take.
-
-> **DE** Der höchste Strom, den ein Wallbox-Test einem Auto anbieten darf, nie mehr als die Nennleistung der Wallbox. Leer sind es 10 A, und die Prüfungen darüber hinaus warten: ein Angebot unter dem Minimum von 6 A, ein Angebot über der Nennleistung und der Stille-Test, der eine Grenze nicht über der Einstellung braucht, die deine Wallbox hatte. Stelle ein, was deine Installation und dein Auto vertragen.
 
 ### `options.step.promote.title`
 
@@ -1996,12 +1960,6 @@ and bold are kept.
 > **EN** Every group is set to never, which would leave the integration with nothing to read and no entities at all. Leave at least one group with an interval.
 
 > **DE** Jede Gruppe steht auf „nie“, was der Integration nichts zu lesen und überhaupt keine Entitäten ließe. Lass mindestens eine Gruppe mit einem Intervall.
-
-### `options.error.wallbox_not_found`
-
-> **EN** No Sungrow wallbox answered at that address. It has to be the wallbox's own address (not the inverter's or the WiNet-S's), reachable from Home Assistant, and not busy with another client.
-
-> **DE** Unter dieser Adresse hat keine Sungrow-Wallbox geantwortet. Es muss die eigene Adresse der Wallbox sein (nicht die des Wechselrichters oder des WiNet-S), von Home Assistant erreichbar und nicht von einem anderen Client belegt.
 
 ### `options.error.legacy_package_still_loaded`
 

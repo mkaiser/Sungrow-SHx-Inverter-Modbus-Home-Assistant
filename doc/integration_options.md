@@ -39,13 +39,12 @@ which is **Reconfigure** on the same page.
 | *Power sensors for the other generation* | none | Power sensors of a non-Sungrow inverter. The Sungrow cannot see it, so its house load reads low by what that inverter makes; these correct it. Empty switches the correction off |
 | *Where it is connected* | behind the same grid meter | Behind the meter, or on its own supply. It changes the arithmetic |
 
-## Battery, wallbox and diagnostics
+## Battery and diagnostics
 
 | Option | Default | What it does |
 | --- | --- | --- |
 | *Maximum battery charge power (W)* | 0, worked out | 0 takes a Sungrow pack's limit from its datasheet, or another pack's from its BMS charge current. A value overrides both |
 | *Include a raw register dump in diagnostics* | off | Adds every mapped register's raw value to **Download diagnostics**. A second full read, slow through a WiNet-S |
-| *Wallbox address* | empty | Only for a wallbox with its own network connection: read it there, encrypted, instead of through the WiNet-S |
 
 ## Contribute a capability diagnosis
 
@@ -72,7 +71,7 @@ setting, reads it back against Sungrow's specification, and puts your value
 back. Pressing Start is your consent; the six switches below are the parts that go further, and
 **each is on until you switch it off**. Switch off what you do not want
 *before* pressing the button; what you switch off stays off. With all six
-off, the test still forces the battery and checks every setting's scale. The wallbox's two options, last in the table, are separate: the first is off until you switch it on.
+off, the test still forces the battery and checks every setting's scale. A wallbox has its own test, in the options of its own entry (below).
 
 <img src="../device-diagnosis/images/HA-settings-configure-capability-test.png" width="450" alt="The capability test section of the options dialog, with all six switches on">
 
@@ -84,9 +83,20 @@ off, the test still forces the battery and checks every setting's scale. The wal
 | *May it set a forced-charging window around now?* | on | Where your own forced-charging schedule is off: writes a window around the inverter's clock, checks the battery starts charging, and puts every word of the schedule back. Skips itself when the battery is full |
 | *May it move the discharge windows away from now?* | on | Where the inverter answers the discharge schedules: moves every weekday and weekend window away from now, checks the battery stops discharging, and puts every word back. Skips itself when the battery is not discharging |
 | *May it cap grid import during a short forced charge?* | on | Where the inverter answers register 32998 (the **Grid import limit** reading): force-charges the battery for about two minutes, sets the limit halfway between the import that causes and the import without it, checks grid import comes down to it, and puts your limit back. Then writes 0, 5001 and 5000 once each to record which the inverter refuses. Skips itself when PV covers most of the charge, or the battery is full |
-| *May it write to the wallbox, with a car charging?* | **off** | Only where a Sungrow wallbox answers behind the connection. Writes its output current, start/stop, enable, phase and mileage settings, reads each back, watches what the car draws and puts every value back. **A charge in progress is interrupted**: stopped and started again, paused below 6 A, the phase switched with the charge stopped first, and the wallbox left without a read for 75 seconds to see what it falls back to. Runs while a car charges, every half hour in *Extended test (auto repeat)* until each question has an answer. Off until you switch it on, because it is the one test that interrupts a car |
-| *The highest charging current the wallbox test may offer* | empty (10 A) | Never above the wallbox's own rating. The offer below the 6 A minimum, the offer above the rating and the silence test wait until you have set it: a default is not consent to them |
 
 Anything the test could not put back becomes a repair under **Settings →
 Repairs** that restores it. The terminal diagnosis has no such switches: it
 asks before writing anything, and the default is no.
+
+### A wallbox's own entry
+
+A wallbox with a network connection of its own is set up as an entry of its
+own (**Add integration → Search my network**), read at its own address over
+TLS. That is the only place it can be tested: a wallbox read through an
+inverter's WiNet-S stays read only. Its options:
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| *May it write to the wallbox, with a car charging?* | **off** | Writes its output current, start/stop, enable, phase and mileage settings, reads each back, watches what the car draws and puts every value back. **A charge in progress is interrupted**: stopped and started again, paused below 6 A, the phase switched with the charge stopped first, and the wallbox left without a read for 75 seconds to see what it falls back to. Runs while a car charges, every 15 minutes in *Extended test (auto repeat)* until each question has an answer. Off until you switch it on, because it is the one test that interrupts a car |
+| *The highest charging current the wallbox test may offer* | empty (10 A) | Never above the wallbox's own rating. The offer below the 6 A minimum, the offer above the rating and the silence test wait until you have set it: a default is not consent to them |
+

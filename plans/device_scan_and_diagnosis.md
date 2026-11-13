@@ -52,8 +52,10 @@ asking (`AGENTS.md`).
 - **A wallbox at its own address is an entry of its own** (kind `wallbox`),
   read only, identified by **its own serial**. This is the one exception to one
   entry per inverter.
-- **A wallbox an inverter entry already carries is still offered.** It is a
-  separate device from the one read through `wallbox_host`. No skipping.
+- **A wallbox an inverter entry already carries is still offered**, and is
+  then read only by its own entry: the direct path is preferred (maintainer,
+  2026-11-12). The inverter entry leaves out a wallbox whose own serial has an
+  entry, and only that entry writes to it. The `wallbox_host` option is gone.
 - **Only directly addressed wallboxes are searched for** (TLS 516, unit 248).
   The dongle's unit 3 stays the inverter entry's business.
 - **Nothing here writes to a device.** Diagnosis part A only reads.
@@ -67,8 +69,9 @@ asking (`AGENTS.md`).
   (the tick); only checks still missing run, each at most 3 times.
 - **No wallbox entry is moved or migrated** (maintainer, 2026-11-10). Wallbox
   support is new, so nobody has wallbox history to keep. The standalone entry
-  is the way forward; a `wallbox_host` on an inverter entry stays as it is and
-  nothing converts it.
+  is the way forward; the `wallbox_host` option an inverter entry had is
+  dropped by the entry migration (minor version 3), with its sub-device, and
+  nothing converts it (maintainer, 2026-11-12).
 - **The search shows which inverters sit behind a Logger** (maintainer,
   2026-11-10). How a Logger is handled beyond that is not decided yet (Part 2,
   step 17).
@@ -136,7 +139,8 @@ asking (`AGENTS.md`).
      (`CONF_WALLBOX_MAX_AMPS`, never above 21263's rating). Reconfigure keeps
      aborting.
    - **Transport**: `wallbox_capability_test.transport_of` returns `tls` for a
-     standalone entry (it now looks only at `CONF_WALLBOX_HOST`).
+     standalone entry and `dongle` for an inverter entry's wallbox, which since
+     2026-11-12 is never written.
    - **Plausibility**: fed from the coordinator's polls between runs, with no
      inverter load (`load=None`; the check that compares against the
      inverter's load stays unanswered on a standalone entry).

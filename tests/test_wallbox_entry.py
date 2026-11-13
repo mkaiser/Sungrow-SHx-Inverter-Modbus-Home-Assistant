@@ -325,6 +325,20 @@ async def test_its_diagnosis_reads_it_and_publishes_only_a_stand_in(
     assert section["path"] == "tls"
     assert section["readings"]["model_name"]["value"] == "AC22E-01"
     assert section["serial_anonymized_hashed"].startswith("anon-")
+    # Dumped where TLS answers: a read starts only on a data point's first word.
+    from sungrow_modbus.dump import WALLBOX_TLS_BANDS
+
+    dumped = {
+        (space, int(address))
+        for space, values in section["register_dump"].items()
+        if isinstance(values, dict)
+        for address in values
+    }
+    assert dumped == {
+        (space, address)
+        for space, start, count, _why in WALLBOX_TLS_BANDS
+        for address in range(start, start + count)
+    }
     # The serial's words are masked; the real one appears nowhere.
     assert WALLBOX_SERIAL not in json.dumps(document)
     assert notification.async_create.called

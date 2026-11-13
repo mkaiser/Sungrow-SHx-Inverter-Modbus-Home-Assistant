@@ -102,9 +102,11 @@ Nothing can start now (blocker 13).
    separate the two scales and the meaning of 0 is not known. Input 21322 is
    not the setting's echo.
 
-   Built in the tree, not released (`plans/wallbox_capability_tests.md`,
-   steps 1 to 4): the wallbox's tests run from Home Assistant's *Extended test
-   (auto repeat)* (`custom_components/sungrow_modbus/wallbox_capability_test.py`,
+   Built (`plans/wallbox_capability_tests.md`, steps 1 to 4): the wallbox's
+   tests run from Home Assistant's *Extended test (auto repeat)*, on the
+   wallbox's entry of its own only (since 2026-11-12; a wallbox behind a
+   dongle stays read only)
+   (`custom_components/sungrow_modbus/wallbox_capability_test.py`,
    `DiagnosisRunner.async_start_wallbox`, the wallbox tick in `continuous.py`),
    over the entry's own connection (no fresh session, so only what the car
    does counts), with a snapshot flushed first and put back first by the next
@@ -123,7 +125,8 @@ Nothing can start now (blocker 13).
 
    0. Released in 0.1.0a34; the terminal driver pins it.
    1. **One window with gerd and a car charging**, so the setting holds a
-      real current: his evcc off, the option on and `wallbox_max_amps` set to
+      real current (he runs no evcc: the 160/151 seen while charging are the
+      wallbox's own setting), the option on and `wallbox_max_amps` set to
       what his installation takes, the first run watched live before auto
       repeat is left alone with it. His consent covers any test while
       charging. Then ingest a day of it (plan step 5): the wiki's wallbox
@@ -144,8 +147,8 @@ Nothing can start now (blocker 13).
    09:30 for an hour: no car came, so no run started (the right outcome).
    Item 1 above applies to it too: its
    first writing run needs a car charging, watched live. A wallbox with an
-   address of its own is set up only that way; `wallbox_host` goes (Future
-   work, *The wallbox: the direct connection first*). A Logger (unit 247) is offered
+   address of its own is set up only that way, and only that entry writes to
+   it (Future work, *The wallbox: the direct connection first*). A Logger (unit 247) is offered
    as a diagnosis-only entry, untested on hardware: asked for in
    `device-diagnosis/devices-wanted.md`. An iHomeManager's entry has its
    readings too (iHomeManager, below). Not yet: the search
@@ -840,45 +843,21 @@ not yet been run against a real InfluxDB.
 
 ## The wallbox: the direct connection first
 
-**Decided 2026-11-12**: a wallbox that has a network connection of its own
-is read and tested over that, as an entry of its own (TLS on 516, unit 248,
-`KIND_WALLBOX`), not through an inverter. Through the inverter's WiNet-S
-(unit 3) stays only for a wallbox that does not answer at an address of its
-own. **No backwards compatibility**: the YAML package never had a wallbox,
-so no legacy entity id or history is at stake, and a preview install that
-read its wallbox another way sets it up again.
+Decided and built 2026-11-12 (`doc/architecture.md`, wiki `device-wallbox.md`):
+a wallbox with an address of its own is an entry of its own and the only one
+that writes to it; an inverter entry leaves it out by its serial; the
+`wallbox_host` option is gone (entry minor version 3). Left:
 
-What that changes, to build:
-
-1. **The `wallbox_host` option goes.** It read the wallbox's own address
-   from inside an inverter entry, as a sub-device keyed on the inverter's
-   serial, so one wallbox became two devices once the search offered it as an
-   entry too. Removed with it: `CONF_WALLBOX_HOST` and its options field and
-   texts (`config_flow.py`, `config_flow_schemas.py`, the generated
-   strings), its reads in `__init__.py`, `diagnosis_document.py`,
-   `diagnostics.py` and `wallbox_capability_test.py` (`"tls"` transport on an
-   inverter entry), `tests/test_wallbox_direct.py` and the other tests that
-   set it, and every page that names it (AGENTS.md, `doc/architecture.md`,
-   `doc/wallbox_registers.md`, the wiki's `device-wallbox.md`,
-   `device-winet-s.md` and `identify-by-what-answers.md`,
-   `plans/device_scan_and_diagnosis.md`). No migration: an entry that has it
-   loses the option at its next options save, and its wallbox sub-device
-   is removed.
-2. **One wallbox, one device.** Where a wallbox entry exists, an inverter
-   entry that finds the same wallbox at unit 3 (same own serial, input
-   21201-21206) does not create it, and removes a sub-device it made before.
-   Setting up the wallbox entry reloads the inverter entry on the same
-   network, so the change needs no restart.
-3. **The search prefers it.** A wallbox that answers on 516 is offered as
-   its own entry, and the inverter it hangs off is told not to carry it; the
-   question in the search's result says so rather than offering both.
-4. **Writes only over the direct path.** The wallbox's capability test runs
-   from the wallbox entry (as the terminal driver does, TLS only); a wallbox
-   read through a WiNet-S stays read only, which also keeps the dongle's
-   session free (and its 10 s polling floor) for the inverter.
-5. **Docs and wiki** say "its own entry" first, the WiNet-S path second, and
-   the move step's warning ("a move to a cable loses a dongle-carried
-   wallbox") names the wallbox entry as the way to keep it.
+1. **The search's result says it.** Where the search finds an inverter
+   behind a WiNet-S and a wallbox on 516, the list could say that the
+   wallbox will be read on its own and not through the inverter. Today the
+   inverter entry simply gives it up once the wallbox entry is added.
+2. **On hardware at gerd's**: his inverter entry (WiNet-S) and his
+   wallbox entry side by side, to see the inverter entry give the wallbox up
+   after a reload, and take it back when the wallbox entry is deleted.
+3. **The options screenshot** (`HA-settings-configure-capability-test.png`)
+   still shows the two wallbox fields an inverter entry no longer has;
+   retake it (`doc/development.md`, *Screenshots for the docs*).
 
 Open, unchanged: Modbus over TLS on a **WiNet-S's** own 516 for the
 inverter. Worth building only if 516 is a *separate* session pool from 502:
@@ -905,14 +884,17 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-11T20:00:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-11T20:00:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-13T16:15:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-13T16:15:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked: **2026-11-11 20:00 UTC**: nothing new since 2026-11-10 15:19 in
-#786 or any issue; every issue and discussion this file cites was read, and the
-leads in discussions #262, #546 and #571 are recorded where they apply.
+Last checked: **2026-11-13 16:15 UTC**: #786 brought four diagnoses, ingested
+(peter_sm's nineteenth, tristangrichard's SH8.0RT, an anonymous SH10RT through a
+proxy and an SG10RT), and cyablo's question (2026-11-12) about an AC011E-01
+behind a WiNet-S at unit 4: the wallbox search now tries units 2 and 4 behind
+a dongle too (`ae83be0`, wiki query *Which unit does a WiNet-S give a
+wallbox?*), in the next release; not yet answered on the issue. No other issue changed since 2026-11-09.
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 

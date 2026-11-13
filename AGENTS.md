@@ -26,8 +26,8 @@ document, the wiki included.
 
 The integration covers the inverter, the
 [SBR battery](.wiki/wiki/entities/device-sbr-battery.md), the
-[wallbox](.wiki/wiki/entities/device-wallbox.md) (read-only entities; through the
-dongle, or at its own address with the `wallbox_host` option) and an
+[wallbox](.wiki/wiki/entities/device-wallbox.md) (read-only entities, through the
+dongle) and an
 [external generator](.wiki/wiki/concepts/external-generator.md).
 One config entry is **one inverter behind one Modbus endpoint** (host + port),
 plus the devices found on it,
@@ -36,7 +36,9 @@ never by unit id. The one exception is a
 [wallbox](.wiki/wiki/entities/device-wallbox.md) found by the network search at
 its own address (TLS, port 516, unit 248): it is an entry of its own, with
 read-only entities and a capability test of its own,
-identified by its own serial, with no inverter beside it. The search also
+identified by its own serial, with no inverter beside it. That is the
+preferred way to a wallbox: an inverter entry leaves a wallbox that has its
+own entry out, and only that entry may write to it. The search also
 offers an [iHomeManager](.wiki/wiki/entities/device-ihomemanager.md) or a
 Logger (unit 247) as an entry of its own: an iHomeManager's has read-only
 entities and its diagnosis, a Logger's (never measured) only its diagnosis.
@@ -196,7 +198,7 @@ Verified against hardware; read the page before changing code that relies on it:
 | 6100 decides transport: not 13265, and not round-trip time | [transport detection](.wiki/wiki/concepts/transport-detection.md) |
 | What a WiNet-S refuses, invents, re-encodes and reads back stale | [WiNet-S](.wiki/wiki/entities/device-winet-s.md) |
 | Sweep unit ids, never trust a port; which units answer depends on transport | [identify by what answers](.wiki/wiki/concepts/identify-by-what-answers.md) |
-| A wallbox is at unit 3 behind a dongle, or 248 over TLS on 516; over TLS a read starts on a data point's first register | [wallbox](.wiki/wiki/entities/device-wallbox.md) |
+| A wallbox is at unit 3 behind a dongle (2 or 4 reported, tried too), or 248 over TLS on 516; over TLS a read starts on a data point's first register | [wallbox](.wiki/wiki/entities/device-wallbox.md) |
 
 ## Hard constraint: migration must preserve history
 

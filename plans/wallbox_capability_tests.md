@@ -30,8 +30,9 @@ section. Nothing in Home Assistant can start it.
 The inverter's machinery, reused rather than copied:
 
 - **A runner** beside the inverter's (`custom_components/sungrow_modbus/diagnosis.py`),
-  with a `WallboxPort` over the entry's own connection to the wallbox (the
-  `wallbox_host` TLS unit 248, or unit 3 through the dongle). A port through
+  with a `WallboxPort` over the entry's own connection to the wallbox (TLS
+  unit 248 from a wallbox entry of its own; since 2026-11-12 the only path that
+  writes, so unit 3 through a dongle is read only). A port through
   the shared connection has no fresh session: `fresh=False`, and the run says
   leg B is not independent. Over the dongle only leg C counts, as on the inverter.
 - **Polling held off** for the wallbox coordinator during a run, as

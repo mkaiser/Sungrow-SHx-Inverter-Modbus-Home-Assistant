@@ -1499,7 +1499,7 @@
         "package_loaded": "⚠️ **The YAML package is still running.** {live} of its entities are live on this instance right now and are holding their entity IDs, so migrating cannot work yet.\n\nTo migrate: remove `modbus_sungrow.yaml` from your configuration — or comment out the line that includes it — then **restart Home Assistant** and add this integration again. Until then only starting fresh will work.",
         "package_not_loaded": "✅ **The YAML package is not running**, so its entity IDs are free to take over. Both answers below will work.",
         "switch_blocked": "⚠️ **The YAML package is still running.** {live} of its entities are live and hold the ids these would move to. Remove `modbus_sungrow.yaml` from your configuration, restart Home Assistant, and come back here.",
-        "wallbox_lost": "**The wallbox goes quiet.** It is read through the WiNet-S today, and the inverter's own LAN port does not reach it. Its entities stay, unavailable, until **Wallbox address** in this entry's options points at the wallbox itself.",
+        "wallbox_lost": "**The wallbox goes quiet.** It is read through the WiNet-S today, and the inverter's own LAN port does not reach it. If the wallbox has a network connection of its own, add it as an entry of its own: **Add integration**, then **Search my network**.",
         "search_prefilled": "The range below is the network Home Assistant is on, which on a home network is almost always the right one.",
         "search_not_detected": "**Home Assistant could not work out which network to search.** It is running in a container that can see only its own virtual network, so there is nothing here to detect your inverter's range from -- your inverter is still reachable, it just cannot be guessed at. Type the range your inverter is on, for example `192.168.1.0/24`; if you do not know it, the address of any computer on the same network gives it to you -- replace the last number with 0 and add `/24`.",
         "search_same_dongle": "**Two of these are one inverter behind one WiNet-S** — its network socket and its WiFi, which have separate addresses. Modbus cannot say which is which: nothing in the protocol reports it.\n\nIt makes no difference which you pick. Both go through the same dongle to the same inverter, and both answer identically — measured on a dongle read on both of its addresses, where every register matched. If you want to know anyway, your router's client list shows them as two devices with different MAC addresses, and the WiNet-S web interface names the one it is using.",
@@ -1627,17 +1627,15 @@
             }
           },
           "advanced": {
-            "name": "Battery, wallbox and diagnostics",
+            "name": "Battery and diagnostics",
             "description": "Battery charge power: {battery_status} Leave it at 0 to let the integration work it out. Otherwise take your datasheet's recommended charge current times the low end of the voltage range, not the nominal voltage (25 A at 355 V is about 8875 W), and round down. Download diagnostics on the device page describes this setup, with the serial number and address removed.",
             "data": {
               "battery_max_power": "Maximum battery charge power (W)",
-              "register_dump": "Include a raw register dump in diagnostics",
-              "wallbox_host": "Wallbox address, when it is on the network itself"
+              "register_dump": "Include a raw register dump in diagnostics"
             },
             "data_description": {
               "battery_max_power": "0 means work it out: a Sungrow pack is identified from the capacity it reports and looked up against its datasheet, and any other pack that reports a BMS charge current gets that instead. Set a value to override either.",
-              "register_dump": "Adds every mapped register's raw value. Only useful when a value looks wrong and the decoding itself is in question. Producing it is a second full read of the register map on top of normal polling, which is slow over a WiNet-S dongle, so leave it off unless you have been asked for it.",
-              "wallbox_host": "Only for a Sungrow wallbox with a network cable or WiFi of its own. Without this, the integration finds a wallbox behind a WiNet-S by itself, and that is all most installations need. With it, the wallbox is read at its own address instead -- encrypted, on port 516 -- which also works when this entry is on the inverter's own LAN port, where a wallbox cannot otherwise be seen. Its entities and their history stay as they are. Leave empty to go back to the WiNet-S."
+              "register_dump": "Adds every mapped register's raw value. Only useful when a value looks wrong and the decoding itself is in question. Producing it is a second full read of the register map on top of normal polling, which is slow over a WiNet-S dongle, so leave it off unless you have been asked for it."
             }
           },
           "diagnosis": {
@@ -1675,9 +1673,7 @@
               "capability_test_pv_cut": "May it cut PV generation for about a minute?",
               "capability_test_charge_window": "May it set a forced-charging window around now?",
               "capability_test_discharge_window": "May it move the discharge windows away from now?",
-              "capability_test_import_limit": "May it cap grid import during a short forced charge?",
-              "capability_test_wallbox": "May it write to the wallbox, with a car charging?",
-              "wallbox_max_amps": "The highest charging current the wallbox test may offer"
+              "capability_test_import_limit": "May it cap grid import during a short forced charge?"
             },
             "data_description": {
               "capability_test_restart": "On unless you switch it off. With this on, the test writes the stop register, waits for the inverter to report itself stopped, starts it again and times all three transitions, so each model's figures are on record.\n\nWhile it is stopped you generate nothing, the battery neither charges nor discharges, and anything on a backup circuit loses power. Measured so far: stopped within about 2 seconds, running again after 3 to 4 minutes in daylight and over 6 at night, generating up to 20 seconds later. The inverter is never left stopped: the start is retried on fresh connections, it is started again if Home Assistant shuts down mid-test, and if all of that fails you get a repair that starts it.",
@@ -1685,9 +1681,7 @@
               "capability_test_pv_cut": "On unless you switch it off. With this on, and where your inverter answers register 31211, the test writes the code that stops PV generation, checks that DC power falls to zero, and allows PV again. Generation stops for about half a minute and takes up to a minute more to come back while the inverter searches for its operating point again; the battery and the grid cover the house meanwhile.\n\nThis register is not in Sungrow's documentation, which is why the **Cut PV generation** switch is offered only on firmware where this check has passed. A run on yours is how your firmware gets on that list.",
               "capability_test_charge_window": "On unless you switch it off. With this on, and where your inverter has the forced-charging schedule and it is off, the test writes a window around the inverter's own clock with a target a few percent above the battery, switches the schedule on, checks that the battery starts charging, and switches it off again. The battery charges for a minute or two, from the grid if there is no sun. Every word of the schedule is put back afterwards. Skipped where your own schedule is on.",
               "capability_test_discharge_window": "On unless you switch it off. With this on, and where your inverter answers the discharge schedules (registers 33151-33187), the test moves every weekday and weekend discharge window away from now, checks that the battery stops discharging, and puts every window back. For a minute or two the house imports instead of using the battery.\n\nThese registers are not in Sungrow's documentation, which is why they are offered only as readings. A run on yours is the evidence that writing them does what it should.",
-              "capability_test_import_limit": "On unless you switch it off. With this on, and where your inverter answers register 32998, the grid import limit, the test force-charges the battery, sets the limit halfway between what the house then imports and what it would import without the charge, checks that grid import comes down to it, and puts your limit back. It then writes three limits at the ends of the range once each, to record which ones the inverter refuses. The battery charges for about two minutes, from the grid if there is no sun.\n\nThis register is not in Sungrow's documentation, which is why it is offered only as a reading. A run on yours is the evidence that writing it does what it should.",
-              "capability_test_wallbox": "Off until you switch it on, unlike the settings above. With this on, and where a Sungrow wallbox answers behind this connection, the test writes the wallbox's output current, start/stop, enable, phase and mileage settings, reads each back, watches what the car draws and puts every original value back. **A charge in progress is interrupted**: it is stopped and started again, paused below 6 A and the phase is switched with the charge stopped first. The wallbox is also left without any read for 75 seconds, to see what current it falls back to. The checks wait for a car to charge, so a run is a few minutes of a charging session, repeated every half hour in *Extended test (auto repeat)* until each question has an answer.",
-              "wallbox_max_amps": "The most current any wallbox test may offer a car, never more than the wallbox's own rating. Left empty it is 10 A, and the checks that go beyond that wait: an offer below the 6 A minimum, an offer above the rating, and the silence test, which needs a cap no higher than the setting your wallbox had. Set it to what your installation and your car can take."
+              "capability_test_import_limit": "On unless you switch it off. With this on, and where your inverter answers register 32998, the grid import limit, the test force-charges the battery, sets the limit halfway between what the house then imports and what it would import without the charge, checks that grid import comes down to it, and puts your limit back. It then writes three limits at the ends of the range once each, to record which ones the inverter refuses. The battery charges for about two minutes, from the grid if there is no sun.\n\nThis register is not in Sungrow's documentation, which is why it is offered only as a reading. A run on yours is the evidence that writing it does what it should."
             }
           }
         }
@@ -1756,7 +1750,6 @@
     },
     "error": {
       "nothing_left_to_poll": "Every group is set to never, which would leave the integration with nothing to read and no entities at all. Leave at least one group with an interval.",
-      "wallbox_not_found": "No Sungrow wallbox answered at that address. It has to be the wallbox's own address (not the inverter's or the WiNet-S's), reachable from Home Assistant, and not busy with another client.",
       "legacy_package_still_loaded": "The YAML package is still running, so its entities still hold their IDs. Remove `modbus_sungrow.yaml` from your configuration, restart Home Assistant and try again.",
       "legacy_slot_unknown": "This house ran the YAML package for more than one inverter, and Home Assistant cannot tell which of them this one was, so the old IDs could be another inverter's. Put the YAML package back for one restart, so this inverter's serial is recorded, then remove it, restart again and come back here."
     },

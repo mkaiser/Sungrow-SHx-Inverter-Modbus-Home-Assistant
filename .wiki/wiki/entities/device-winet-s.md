@@ -28,7 +28,7 @@ what a diagnosis sees through it is the dongle's doing, not the inverter's.
 | Answers **0x04** to reads it answers alone, while other clients poll it ([firetribe](installation-firetribe.md), and reproduced at [gerd](installation-gerd.md)) | 0x04 through a dongle settles nothing, like 0x06 | [busy WiNet-S](../queries/does-a-busy-winet-s-refuse-with-0x04.md) |
 | Refuses the SBR's cells and modules blocks | fewer pack fields | [SBR battery](device-sbr-battery.md) |
 | Faults when the wallbox behind it is polled faster than every 10 s, by an ioBroker user's account ([shcshc76](../sources/cross-reference-shcshc76-summary.md)); not measured here | the wallbox's poll stays at 10 s or slower | [wallbox](device-wallbox.md) |
-| Carries a [wallbox](device-wallbox.md) at unit **3** | moving to a cable loses it unless `wallbox_host` is set | [identify by what answers](../concepts/identify-by-what-answers.md) |
+| Carries a [wallbox](device-wallbox.md) at unit **3** | moving to a cable loses it, unless the wallbox has an address of its own and an entry of its own there | [identify by what answers](../concepts/identify-by-what-answers.md) |
 
 A dongle forwards about 1020 of 1510 dumped addresses, where a cable forwards
 1461.

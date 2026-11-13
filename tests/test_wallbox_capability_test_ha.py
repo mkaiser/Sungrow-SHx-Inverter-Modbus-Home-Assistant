@@ -1,5 +1,8 @@
 """The wallbox capability test in Home Assistant: leave, snapshot, ledger, repeat.
 
+It runs only from a wallbox entry of its own, at the wallbox's own address:
+a wallbox an inverter entry reads through its dongle stays read only.
+
 The procedure is tested in `test_wallbox_capability_test.py` against a wallbox
 that behaves. This tests what only exists because it runs here: that nothing
 is written without the owner's leave, that polling is held off and the
@@ -26,6 +29,7 @@ from custom_components.sungrow_modbus.const import (
     CONF_UNIT_ID,
     CONF_WALLBOX_MAX_AMPS,
     DOMAIN,
+    WALLBOX_TLS_UNIT,
 )
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
@@ -34,6 +38,7 @@ from sungrow_modbus.wallbox import capability_test as wct, ledger
 from .conftest import SERIAL
 from .test_capability_test_ha import InstantClock
 from .test_wallbox_entities import WORDS
+from .test_wallbox_entry import DATA, WALLBOX_SERIAL, _serial_words
 
 ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 
@@ -46,8 +51,8 @@ def no_waiting(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def _wallbox(*, charging: bool, setting: int = 160) -> MockModbusUnit:
     """Return a mock wallbox, with a car on it or without."""
-    unit = MockModbusConnection().for_unit(3)
-    unit.input = dict(WORDS["input"])
+    unit = MockModbusConnection().for_unit(WALLBOX_TLS_UNIT)
+    unit.input = {**WORDS["input"], **_serial_words(WALLBOX_SERIAL)}
     unit.holding = dict(WORDS["holding"])
     unit.input[wct.RATED_CURRENT] = 320
     unit.input[wct.CHARGING_STATUS_ADDRESS] = 3 if charging else 1
@@ -63,11 +68,26 @@ def _wallbox(*, charging: bool, setting: int = 160) -> MockModbusUnit:
 
 
 async def _setup(
+    hass: HomeAssistant, wallbox: MockModbusUnit, **options: Any
+) -> MockConfigEntry:
+    """Set up a wallbox entry of its own, at its own address."""
+    entry = MockConfigEntry(
+        domain=DOMAIN, data=DATA, options=options, unique_id=WALLBOX_SERIAL
+    )
+    entry.add_to_hass(hass)
+    with patch("custom_components.sungrow_modbus.async_get_unit", return_value=wallbox):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+    return entry
+
+
+async def _setup_inverter(
     hass: HomeAssistant,
     inverter: MockModbusUnit,
     wallbox: MockModbusUnit,
     **options: Any,
 ) -> MockConfigEntry:
+    """Set up an inverter entry that reads the wallbox through its dongle."""
     entry = MockConfigEntry(
         domain=DOMAIN,
         data=ENTRY_DATA,
@@ -98,10 +118,10 @@ async def _run(hass: HomeAssistant, entry: MockConfigEntry) -> None:
 
 
 async def test_without_the_owners_leave_a_wallbox_run_is_refused(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+    hass: HomeAssistant,
 ) -> None:
     box = _wallbox(charging=True)
-    entry = await _setup(hass, sungrow_unit, box)
+    entry = await _setup(hass, box)
     before = dict(box.holding)
 
     assert not entry.runtime_data.diagnosis.async_start_wallbox()
@@ -109,13 +129,29 @@ async def test_without_the_owners_leave_a_wallbox_run_is_refused(
     assert box.holding == before
 
 
-async def test_a_run_writes_with_polling_held_off_and_puts_everything_back(
+async def test_a_wallbox_behind_a_dongle_is_never_written(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """Even with a leave an older version stored: only the direct path writes."""
+    box = _wallbox(charging=True)
+    entry = await _setup_inverter(
+        hass, sungrow_unit, box, **{CONF_CAPABILITY_TEST_WALLBOX: True}
+    )
+    before = dict(box.holding)
+
+    assert entry.runtime_data.wallbox is not None
+    assert not wbt.consented(entry)
+    assert not entry.runtime_data.diagnosis.async_start_wallbox()
+    assert entry.runtime_data.diagnosis.wallbox_awaited() == []
+    assert box.holding == before
+
+
+async def test_a_run_writes_with_polling_held_off_and_puts_everything_back(
+    hass: HomeAssistant,
 ) -> None:
     box = _wallbox(charging=True)
     entry = await _setup(
         hass,
-        sungrow_unit,
         box,
         **{CONF_CAPABILITY_TEST_WALLBOX: True, CONF_WALLBOX_MAX_AMPS: 10},
     )
@@ -144,12 +180,10 @@ async def test_a_run_writes_with_polling_held_off_and_puts_everything_back(
 
 
 async def test_the_snapshot_is_on_disk_before_the_first_write(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+    hass: HomeAssistant,
 ) -> None:
     box = _wallbox(charging=True)
-    entry = await _setup(
-        hass, sungrow_unit, box, **{CONF_CAPABILITY_TEST_WALLBOX: True}
-    )
+    entry = await _setup(hass, box, **{CONF_CAPABILITY_TEST_WALLBOX: True})
     seen: list[Any] = []
     real_write = box.write_register
 
@@ -167,12 +201,10 @@ async def test_the_snapshot_is_on_disk_before_the_first_write(
 
 
 async def test_a_leftover_snapshot_is_put_back_before_a_new_run_takes_its_own(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+    hass: HomeAssistant,
 ) -> None:
     box = _wallbox(charging=True)
-    entry = await _setup(
-        hass, sungrow_unit, box, **{CONF_CAPABILITY_TEST_WALLBOX: True}
-    )
+    entry = await _setup(hass, box, **{CONF_CAPABILITY_TEST_WALLBOX: True})
     # A run that died: the register holds its 6 A, the snapshot holds the house's.
     box.holding[wct.OUTPUT_CURRENT] = 60
     await wbt.snapshot_store(hass, entry).async_save(
@@ -193,12 +225,10 @@ async def test_a_leftover_snapshot_is_put_back_before_a_new_run_takes_its_own(
 
 
 async def test_the_cap_is_never_above_the_rating_and_a_default_is_not_consent(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+    hass: HomeAssistant,
 ) -> None:
     box = _wallbox(charging=True)
-    entry = await _setup(
-        hass, sungrow_unit, box, **{CONF_CAPABILITY_TEST_WALLBOX: True}
-    )
+    entry = await _setup(hass, box, **{CONF_CAPABILITY_TEST_WALLBOX: True})
     options = wbt.run_options(entry)
 
     assert options.leave
@@ -212,12 +242,10 @@ async def test_the_cap_is_never_above_the_rating_and_a_default_is_not_consent(
 
 
 async def test_established_checks_are_left_out_of_the_next_run(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+    hass: HomeAssistant,
 ) -> None:
     box = _wallbox(charging=True)
-    entry = await _setup(
-        hass, sungrow_unit, box, **{CONF_CAPABILITY_TEST_WALLBOX: True}
-    )
+    entry = await _setup(hass, box, **{CONF_CAPABILITY_TEST_WALLBOX: True})
 
     options = wbt.run_options(entry, frozenset({"output current", "mileage"}))
     assert not options.current
@@ -226,12 +254,10 @@ async def test_established_checks_are_left_out_of_the_next_run(
 
 
 async def test_the_counters_count_the_wallbox_with_the_inverters_checks(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+    hass: HomeAssistant,
 ) -> None:
     box = _wallbox(charging=True)
-    entry = await _setup(
-        hass, sungrow_unit, box, **{CONF_CAPABILITY_TEST_WALLBOX: True}
-    )
+    entry = await _setup(hass, box, **{CONF_CAPABILITY_TEST_WALLBOX: True})
     runner = entry.runtime_data.diagnosis
     await _run(hass, entry)
 
@@ -240,12 +266,10 @@ async def test_the_counters_count_the_wallbox_with_the_inverters_checks(
 
 
 async def test_auto_repeat_starts_a_wallbox_run_only_while_a_car_charges(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+    hass: HomeAssistant,
 ) -> None:
     box = _wallbox(charging=False)
-    entry = await _setup(
-        hass, sungrow_unit, box, **{CONF_CAPABILITY_TEST_WALLBOX: True}
-    )
+    entry = await _setup(hass, box, **{CONF_CAPABILITY_TEST_WALLBOX: True})
     runner = entry.runtime_data.diagnosis
     from homeassistant.util import dt as dt_util
 
@@ -275,12 +299,10 @@ async def test_auto_repeat_starts_a_wallbox_run_only_while_a_car_charges(
 
 
 async def test_a_wallbox_run_and_an_inverter_run_never_overlap(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+    hass: HomeAssistant,
 ) -> None:
     box = _wallbox(charging=True)
-    entry = await _setup(
-        hass, sungrow_unit, box, **{CONF_CAPABILITY_TEST_WALLBOX: True}
-    )
+    entry = await _setup(hass, box, **{CONF_CAPABILITY_TEST_WALLBOX: True})
     runner = entry.runtime_data.diagnosis
 
     assert runner.async_start_wallbox()
@@ -291,12 +313,10 @@ async def test_a_wallbox_run_and_an_inverter_run_never_overlap(
 
 
 async def test_clearing_the_history_forgets_the_wallbox_runs(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+    hass: HomeAssistant,
 ) -> None:
     box = _wallbox(charging=True)
-    entry = await _setup(
-        hass, sungrow_unit, box, **{CONF_CAPABILITY_TEST_WALLBOX: True}
-    )
+    entry = await _setup(hass, box, **{CONF_CAPABILITY_TEST_WALLBOX: True})
     runner = entry.runtime_data.diagnosis
     await _run(hass, entry)
     firmware = wbt.firmware_of(runner._wallbox_device())
@@ -314,10 +334,7 @@ def test_a_path_is_named_by_where_the_wallbox_is_read() -> None:
         options: ClassVar[dict[str, Any]] = {}
 
     assert wbt.transport_of(Entry()) == "dongle"  # type: ignore[arg-type]
-    Entry.options = {"wallbox_host": "wallbox.local"}
-    assert wbt.transport_of(Entry()) == "tls"  # type: ignore[arg-type]
     # A wallbox entry of its own is always at its own address.
-    Entry.options = {}
     Entry.data = {"kind": "wallbox"}
     assert wbt.transport_of(Entry()) == "tls"  # type: ignore[arg-type]
 

@@ -21,7 +21,6 @@ from custom_components.sungrow_modbus.const import (
     CONF_DIAGNOSIS_TRANSPORT,
     CONF_MODE,
     CONF_UNIT_ID,
-    CONF_WALLBOX_HOST,
     DOMAIN,
     MODE_DEVICES,
 )
@@ -177,20 +176,15 @@ async def test_adding_it_at_the_same_connection_is_still_already_configured(
 
 
 def test_a_wallbox_read_through_the_dongle_is_warned_about_before_a_cable() -> None:
-    """Only a direct path loses it, and only without its own address set."""
+    """Only a direct path loses it; the warning names the wallbox's own entry."""
     with_wallbox = SimpleNamespace(
         options={}, runtime_data=SimpleNamespace(wallbox=object())
-    )
-    own_address = SimpleNamespace(
-        options={CONF_WALLBOX_HOST: "192.168.176.23"},
-        runtime_data=SimpleNamespace(wallbox=object()),
     )
     without = SimpleNamespace(options={}, runtime_data=SimpleNamespace(wallbox=None))
 
     assert _loses_wallbox(with_wallbox, direct=True)
     assert not _loses_wallbox(with_wallbox, direct=False)
     assert not _loses_wallbox(with_wallbox, direct=None)
-    assert not _loses_wallbox(own_address, direct=True)
     assert not _loses_wallbox(without, direct=True)
 
 

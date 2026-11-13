@@ -40,7 +40,7 @@ flowchart TD
     end
 
     device["the inverter's endpoint, port 502<br/>inverter on unit 1, or 2 for a cluster slave<br/>SBR on 200 direct, 2 through a WiNet-S<br/>wallbox on 3, through a WiNet-S only<br/><br/>a WiNet-S forwards less than a cable"]
-    wbdev["the wallbox's own address, port 516<br/>Modbus inside TLS, unit 248<br/>read only when the wallbox_host option is set"]
+    wbdev["the wallbox's own address, port 516<br/>Modbus inside TLS, unit 248<br/>an entry of its own, found by the search"]
 
     user <--> core
     core <--> integration
@@ -124,13 +124,12 @@ on moves with the transport**, so none of them is asked for:
 | --- | --- | --- |
 | Inverter | **1**, or **2** for a cluster slave on its own LAN port | `identify()` sweeping 1 to 5. A dongle presents whatever is behind it as unit 1 regardless, so the address is only the role on a direct path |
 | SBR pack | **200** direct, **2** through a WiNet-S | `battery.probe_units`, discriminating against a slave inverter — which also sits at 2 and answers a device type code where a pack does not |
-| Wallbox | **3** through a WiNet-S, **248** at its own address over TLS on port 516 | `wallbox.probe_units`, reading the model *name* rather than the code or the serial. Its own address is the `wallbox_host` option, checked by the options flow before it is saved; with it set, the endpoint is not asked as well |
+| Wallbox | **3** through a WiNet-S | `wallbox.probe_units`, reading the model *name* rather than the code or the serial. Left out when a wallbox entry of its own has the same serial (below) |
 
 Each extra device gets its **own device registry entry**, hung off the
 inverter with `via_device`, identified by the *inverter's* serial plus a
 suffix: an SBR has no serial anywhere in its registers, and a wallbox's is
-shown on its device page but published only as a stand-in. So the wallbox's device and entity ids are the same whichever path reaches it,
-and moving it from the dongle to its own address keeps its history.
+shown on its device page but published only as a stand-in.
 
 A wallbox never answers through the inverter's own LAN port, and its own
 address speaks Modbus only inside TLS on 516, with no port 502. The config
@@ -140,15 +139,27 @@ wallbox found that way is an **entry of its own** (`CONF_KIND` is
 `KIND_WALLBOX`): one coordinator, its readings on the sensor and binary sensor
 platforms, no inverter. Its options are only the wallbox capability test's leave
 and cap and the diagnosis's testimony. Its device and unique ids are built from the
-wallbox's **own** serial, so it is a different device from the same wallbox
-read through an inverter entry's `wallbox_host`; the search offers it either
-way, and found again at another address the entry follows it. It has a
+wallbox's **own** serial, and found again at another address the entry
+follows it.
+
+**This is the preferred way to a wallbox** (decided 2026-11-12). An inverter
+entry that finds the same wallbox at unit 3 (the same own serial, input
+21201-21206) leaves it out, removes the sub-device an earlier setup made
+(`_async_wallbox` in `__init__.py`) and remembers its serial
+(`SungrowRuntimeData.wallbox_elsewhere`); setting up the wallbox entry reloads
+such an inverter entry, and removing it hands the wallbox back. Only the
+wallbox entry writes to a wallbox (`wallbox_capability_test.consented`): one
+read through a dongle stays read only, which also leaves the dongle's few
+sessions to the inverter. No history is carried between the two devices: the
+YAML package never had a wallbox. The wallbox entry has a
 diagnosis and a capability test of its own: `wallbox_diagnosis.WallboxDiagnosisRunner`
 is the inverter's `DiagnosisRunner` with only what assumes an inverter replaced
 (the read is `device_diagnosis.wallbox_builder`; `inverter_tests` is False, so
 auto repeat waits only for the wallbox's checks), so the wallbox's port,
-snapshot, ledger and plausibility are the same code an inverter entry uses for
-its wallbox. A `wallbox_host` on an inverter entry is never moved onto one.
+snapshot, ledger and plausibility are the same code the inverter's runner
+uses. An inverter entry's `wallbox_host` option, which once read a wallbox's
+own address from inside the inverter's entry, is gone: minor version 3 of the
+entry drops it with the sub-device it made (`entry_migration.py`).
 
 The sweep also asks **unit 247** on every open port 502-505, and over TLS on
 516 where no wallbox answered there: an iHomeManager (type code 0x072A) or a
@@ -164,8 +175,9 @@ kind, host and port. `DeviceDiagnosisRunner` is the read-only runner
 these three entries share; the inverter's `DiagnosisRunner` is not used for
 them. Sub-devices are probed
 again whenever the entry's endpoint changes, so a move from a dongle to a
-cable keeps the pack and loses a dongle-carried wallbox unless `wallbox_host`
-points at it; the move step says so before it happens.
+cable keeps the pack and loses a dongle-carried wallbox; the move step says
+so before it happens, and names the wallbox's own entry as the way to keep
+it.
 
 The pack is polled on the inverter's *medium* interval. The wallbox fires on
 the *fast* one and reads only its live block, refreshing identity, ratings and

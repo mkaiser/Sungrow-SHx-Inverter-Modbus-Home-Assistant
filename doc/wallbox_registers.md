@@ -52,7 +52,7 @@ answered on — 3 through a WiNet-S, 248 at its own address — never at unit 1.
 | Path | Protocol | Unit | In the integration |
 | --- | --- | --- | --- |
 | through the WiNet-S, at the dongle's address | plain Modbus TCP, port 502 | 3 | found behind the inverter's entry by itself |
-| at the wallbox's own LAN address | Modbus TCP inside TLS, port 516 | 248 | when the entry's `wallbox_host` option names it |
+| at the wallbox's own LAN address | Modbus TCP inside TLS, port 516 | 248 | an entry of its own, found by the network search; preferred where it answers |
 
 Same wallbox both ways: firmware string, lifetime energy and the live block
 agree word for word. Over TLS only unit 248 answers (0-255 swept); the

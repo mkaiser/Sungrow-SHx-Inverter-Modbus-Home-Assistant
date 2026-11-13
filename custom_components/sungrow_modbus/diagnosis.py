@@ -552,18 +552,13 @@ class DiagnosisRunner:
         A's. The alternative -- a bar that resets, or a second bar -- is worse
         for the person watching, and the step label names the part throughout.
         """
-        from .diagnosis_document import (
-            planned_steps as diagnosis_steps,
-            wallbox_is_direct,
-        )
+        from .diagnosis_document import planned_steps as diagnosis_steps
 
         dumping = bool(options.get(CONF_DIAGNOSIS_DUMP, DEFAULT_DIAGNOSIS_DUMP))
         a_steps = diagnosis_steps(
             dumping,
             block_reads,
             wallbox=self.entry.runtime_data.wallbox is not None,
-            wallbox_direct=self.entry.runtime_data.wallbox is not None
-            and wallbox_is_direct(self.entry.runtime_data.wallbox),
         )
         if not capability_test:
             return 1.0, a_steps

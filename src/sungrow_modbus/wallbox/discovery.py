@@ -7,8 +7,9 @@ all. Never through the inverter's own LAN port.
 
 So discovery asks the endpoints it already has, rather than sweeping for
 another one -- the same shape the SBR takes, and the reason one config entry
-is one endpoint plus whatever answers behind it. The wallbox's own address is
-an option on that entry (`wallbox_host`), probed at unit 248 over TLS alone.
+is one endpoint plus whatever answers behind it. A wallbox at its own address
+is found by a sweep for port 516 instead, and probed at unit 248 over TLS
+alone; in Home Assistant it is an entry of its own.
 """
 
 from __future__ import annotations

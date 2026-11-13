@@ -36,7 +36,6 @@ from sungrow_modbus.wallbox import capability_test as wct, ledger, plausibility
 from .const import (
     CONF_CAPABILITY_TEST_WALLBOX,
     CONF_KIND,
-    CONF_WALLBOX_HOST,
     CONF_WALLBOX_MAX_AMPS,
     DEFAULT_CAPABILITY_TEST_WALLBOX,
     DEFAULT_WALLBOX_MAX_AMPS,
@@ -124,20 +123,21 @@ class EntryWallboxPort:
 
 
 def consented(entry: SungrowConfigEntry) -> bool:
-    """Whether the owner has allowed the wallbox test to write."""
-    return bool(
+    """Whether the owner has allowed the wallbox test to write.
+
+    Only a wallbox entry of its own writes, at the wallbox's own address. A
+    wallbox an inverter entry reads through its dongle stays read only: the
+    direct path is the one this integration prefers, and the dongle's few
+    sessions stay the inverter's.
+    """
+    return entry.data.get(CONF_KIND) == KIND_WALLBOX and bool(
         entry.options.get(CONF_CAPABILITY_TEST_WALLBOX, DEFAULT_CAPABILITY_TEST_WALLBOX)
     )
 
 
 def transport_of(entry: SungrowConfigEntry) -> str:
-    """Name the path to the wallbox: its own address, or the dongle.
-
-    A wallbox entry of its own is always at its own address.
-    """
-    if entry.data.get(CONF_KIND) == KIND_WALLBOX:
-        return "tls"
-    return "tls" if entry.options.get(CONF_WALLBOX_HOST) else "dongle"
+    """Name the path to the wallbox: its own address, or the dongle."""
+    return "tls" if entry.data.get(CONF_KIND) == KIND_WALLBOX else "dongle"
 
 
 def check_options(entry: SungrowConfigEntry) -> dict[str, bool]:

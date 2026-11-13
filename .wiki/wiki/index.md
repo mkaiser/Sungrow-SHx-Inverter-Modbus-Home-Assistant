@@ -197,6 +197,7 @@
 ## Queries
 
 - [Does a wallbox answer unit 248 on RS485?](queries/does-a-wallbox-answer-unit-248-on-rs485.md) — Open: reported by others, never measured #wallbox #rs485 #open
+- [Which unit does a WiNet-S give a wallbox?](queries/which-unit-does-a-winet-s-give-a-wallbox.md) — Open: 3 measured, 2 and 4 reported; the search tries all three #wallbox #winet-s #open
 - [Does a WiNet-S advertise over mDNS, and can discovery start there?](queries/does-a-winet-s-advertise-over-mdns.md) — Partly answered: at gerd the dongle and the wallbox do, by unicast; multicast and other firmware open #winet-s #mdns #discovery #open
 - [Does a busy WiNet-S refuse with 0x04?](queries/does-a-busy-winet-s-refuse-with-0x04.md) — Answered: yes, reproduced at gerd with three clients #winet-s #contention #answered
 - [Do models on one firmware answer alike?](queries/do-models-on-one-firmware-answer-alike.md) — Answered so far: yes, for inverters and battery packs, in every column that pools two models #firmware #capability #battery #answered

@@ -770,15 +770,13 @@ The integration now polls an iHomeManager entry's device and shows 40 read-only 
 its diagnosis, decoded as the unit measured on 2026-11-10 answered. 8554, the unknown codes
 8047, 8048 and 8051-8052, channel 2 and 8029 get none. Updated device-ihomemanager.
 
-## [2026-11-13] ingested | #786: peter_sm, tristangrichard's SH8.0RT, an anonymous SH10RT through a proxy and an SG10RT
+## [2026-11-12] changed | a wallbox at its own address is its own entry, and the only one that writes
 
-Four read-only diagnoses posted to #786 since 2026-11-11, committed unchanged: peter_sm's
-nineteenth reading (Home Assistant, after dark; five blocks inconsistent in one round),
-tristangrichard's SH8.0RT-V112 on P023 over the cable (the first SH8.0RT on P023; 12 link drops
-outside the block read test), and from one anonymous site an SH10RT-V112 on P023 read through
-modbus-proxy while the YAML package and evcc polled (37 of 37 blocks, no reconnect; added to
-`contention`) and an SG10RT, the first three-phase string inverter (new page `device-sg-rt`).
-New installation page tristangrichard.
+Decided by the maintainer: the direct path to a wallbox is preferred. The `wallbox_host` option
+on an inverter entry is gone (entry minor version 3 drops it and its sub-device); an inverter
+entry leaves out a wallbox at unit 3 whose own serial has an entry of its own, and only that
+entry writes to a wallbox. No history is carried over: the YAML package never had a wallbox.
+Nothing measured changed. Updated device-wallbox, device-winet-s and identify-by-what-answers.
 
 ## [2026-11-13] changed | discovery over mDNS, and the diagnosis records what a device announces
 
@@ -789,3 +787,20 @@ that, and an entry already set up is never moved by an announcement. Diagnoses f
 carry `network_names` (mDNS records heard, reverse-DNS label, MAC vendor prefix), which answers
 the multicast and other-firmware questions house by house. Nothing new measured. Updated the
 query does-a-winet-s-advertise-over-mdns.
+
+## [2026-11-13] ingested | #786: peter_sm, tristangrichard's SH8.0RT, an anonymous SH10RT through a proxy and an SG10RT
+
+Four read-only diagnoses posted to #786 since 2026-11-11, committed unchanged: peter_sm's
+nineteenth reading (Home Assistant, after dark; five blocks inconsistent in one round),
+tristangrichard's SH8.0RT-V112 on P023 over the cable (the first SH8.0RT on P023; 12 link drops
+outside the block read test), and from one anonymous site an SH10RT-V112 on P023 read through
+modbus-proxy while the YAML package and evcc polled (37 of 37 blocks, no reconnect; added to
+`contention`) and an SG10RT, the first three-phase string inverter (new page `device-sg-rt`).
+New installation page tristangrichard.
+
+## [2026-11-13] changed | the wallbox search tries units 2 and 4 behind a dongle
+
+A WiNet-S may forward a wallbox at a unit other than the 3 measured at gerd: 2 and 4 are reported
+elsewhere (ioBroker, evcc #7104, ha-modbus-manager #127, an AC011E-01 in #786), none measured
+here. The search now tries 3, 2, 4 and 248, and counts a unit only if its model name starts with
+`AC`. New query which-unit-does-a-winet-s-give-a-wallbox; updated device-wallbox, the index.

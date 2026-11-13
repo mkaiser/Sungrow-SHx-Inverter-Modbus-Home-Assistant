@@ -12,30 +12,31 @@ with 32 fields in four components (`src/sungrow_modbus/wallbox/`). Its
 entities are **read only**; only the capability test writes to it, with the
 owner's leave.
 
-## Three ways in
+## Two ways in
 
 | Path | Protocol | Unit | In the integration |
 | --- | --- | --- | --- |
-| through the [WiNet-S](device-winet-s.md) | Modbus TCP, port 502 | **3** | found behind the inverter's entry by itself |
-| at its own LAN address | Modbus TCP inside TLS, port **516** | **248** | when the inverter's entry has the `wallbox_host` **option** |
+| at its own LAN address | Modbus TCP inside TLS, port **516** | **248** | **an entry of its own**, offered by the network search; the preferred path |
+| through the [WiNet-S](device-winet-s.md) | Modbus TCP, port 502 | **3** (2 or 4 reported elsewhere: [which unit](../queries/which-unit-does-a-winet-s-give-a-wallbox.md)) | found behind the inverter's entry by itself, read only, and only while no entry of its own has the same serial |
 
 At its own address it answers mDNS as `_http._tcp` on port 516, which is its Modbus TLS port,
 not a web page (it serves none), with a TXT record naming its model, serial and units 3 and
 248 ([gerd](../sources/gerd-mdns-2026-11-11-summary.md)).
 
-`wallbox_host` is an option, not an entry, so the device and its entity ids
-are the same either way. The network search also looks on port 516 and offers
-a wallbox that answers there over TLS as **an entry of its own**, identified by
-its own serial (the third way in): a separate device from the one an inverter
-entry reads through `wallbox_host`. That entry has a *Diagnosis: start*
+The network search looks on port 516 and offers a wallbox that answers there
+over TLS as **an entry of its own**, identified by its own serial. An inverter
+entry that finds the same wallbox at unit 3 leaves it to that entry and
+removes its own sub-device, so one wallbox is one device; only the entry of
+its own writes to it (`custom_components/sungrow_modbus/__init__.py`,
+`wallbox_capability_test.py`). That entry has a *Diagnosis: start*
 whose read-only mode writes the same wallbox document as `wallbox_direct.py`
 (`custom_components/sungrow_modbus/device_diagnosis.py`), and a capability
 test of its own in the extended modes, with its own leave and cap in the
-entry's options (`custom_components/sungrow_modbus/wallbox_diagnosis.py`). An
-inverter entry's `wallbox_host` is not moved onto such an entry. Never reachable through the inverter's own LAN port
+entry's options (`custom_components/sungrow_modbus/wallbox_diagnosis.py`).
+Never reachable through the inverter's own LAN port
 (every unit 0-255 swept). It needs no [iHomeManager](device-ihomemanager.md),
 and sweeping for one cannot find it. Where an iHomeManager is installed it
-drives the wallbox over 516 itself, so `wallbox_host` may find the port taken
+drives the wallbox over 516 itself, so a wallbox entry may find the port taken
 (reported to evcc, not measured here:
 [evcc cross-reference](../sources/cross-reference-evcc-summary.md)).
 

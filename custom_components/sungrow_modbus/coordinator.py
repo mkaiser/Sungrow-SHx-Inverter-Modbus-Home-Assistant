@@ -356,10 +356,11 @@ class SungrowSubDeviceCoordinator(
         """Return the serial that identifies this device's entities.
 
         The **inverter's**, not this device's, and public because the entities
-        need it: an SBR reports no serial anywhere in its register band, and a
-        wallbox reports one, at input registers 21201-21206, that this
-        project deliberately never reads. So the only stable identity either
-        device has is the inverter it is reached through.
+        need it: an SBR reports no serial anywhere in its register band, so
+        the only stable identity it has is the inverter it is reached through.
+        A wallbox read through an inverter's dongle is keyed the same way; its
+        own serial (input registers 21201-21206) is shown on its device page
+        and decides whether a wallbox entry of its own already reads it.
         """
         if self._inverter is None:
             # A wallbox that is an entry of its own: it has nothing to be
@@ -388,8 +389,9 @@ class SungrowSubDeviceCoordinator(
         Identified by the **inverter's** serial with a suffix, for both. An
         SBR reports no serial anywhere in the 10740-10789 band, which the
         diagnosis reads whole. A wallbox does report one, at input registers
-        21201-21206, and shows it as its `serial_number` -- but the identifier
-        stays the inverter's, so the devices users already have keep theirs.
+        21201-21206, and shows it as its `serial_number`; behind a dongle the
+        identifier stays the inverter's. A wallbox entry of its own has no
+        inverter, and is identified by that serial instead.
         """
         serial = self.inverter_serial
         model = self._model()
@@ -490,9 +492,9 @@ class SungrowWallboxCoordinator(SungrowSubDeviceCoordinator):
     firings -- reading the ratings every ten seconds would spend a Sungrow's
     scarce session time on a rated current that cannot change.
 
-    Its unit is either behind the inverter's endpoint (unit 3 through a
-    WiNet-S) or at the wallbox's own address over TLS (unit 248, the
-    `wallbox_host` option). This class does not care which.
+    Its unit is either behind an inverter entry's endpoint (unit 3 through a
+    WiNet-S) or, for a wallbox entry of its own, at the wallbox's own address
+    over TLS (unit 248). This class does not care which.
     """
 
     kind = "wallbox"
@@ -609,10 +611,18 @@ class SungrowRuntimeData:
     wallbox: SungrowWallboxCoordinator | None = None
     """The wallbox's coordinator, when this endpoint has one.
 
-    `None` is the common case: most installations have no Sungrow wallbox,
-    and one that exists answers only behind a WiNet-S on this endpoint or at
-    its own address when `wallbox_host` names it -- never on the inverter's
-    own LAN port.
+    `None` is the common case: most installations have no Sungrow wallbox.
+    An inverter entry reads one only behind a WiNet-S on this endpoint, never
+    on the inverter's own LAN port; a wallbox with an address of its own is
+    an entry of its own, whose runtime data holds it here instead.
+    """
+
+    wallbox_elsewhere: str | None = None
+    """The serial of the wallbox behind this dongle left to an entry of its own.
+
+    Set when this inverter entry found the wallbox at unit 3 and a wallbox
+    entry already reads it at its own address. That entry's removal reloads
+    this one, which then reads the wallbox through the dongle again.
     """
 
     battery_has_cells: bool = False

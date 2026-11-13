@@ -64,7 +64,6 @@ from .const import (
     CONF_MODE,
     CONF_TLS,
     CONF_UNIT_ID,
-    CONF_WALLBOX_HOST,
     DEFAULT_EXTERNAL_PLACEMENT,
     DOMAIN,
     ENTITY_IDS_MIGRATE,
@@ -75,7 +74,6 @@ from .const import (
     MODE_DEVICES,
     MODE_DIAGNOSTICS,
     UNIT_247_KINDS,
-    WALLBOX_TLS_PORT,
     WALLBOX_TLS_UNIT,
 )
 from .coordinator import (
@@ -493,6 +491,8 @@ async def _async_setup_wallbox(hass: HomeAssistant, entry: SungrowConfigEntry) -
     entry.runtime_data = SungrowRuntimeData(
         {}, intervals=intervals, wallbox=coordinator
     )
+    # An inverter entry that read this wallbox through its dongle gives it up.
+    _async_reload_inverters_of(hass, coordinator.own_serial)
     # A diagnosis and a capability test of its own, so a wallbox owner can
     # report from here and its controls can be measured.
     from .wallbox_diagnosis import WallboxDiagnosisRunner
@@ -660,7 +660,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
         pack_found=battery is not None,
         capacity_kwh=_capacity(inverter),
     )
-    wallbox = await _async_wallbox(hass, entry, inverter, intervals)
+    wallbox, wallbox_elsewhere = await _async_wallbox(hass, entry, inverter, intervals)
     inverter_device_id = _async_register_inverter(
         hass, entry, coordinators, await _async_route(inverter)
     )
@@ -675,6 +675,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> b
         inverter_device_id=inverter_device_id,
         battery=battery,
         wallbox=wallbox,
+        wallbox_elsewhere=wallbox_elsewhere,
         battery_has_cells=battery_has_cells,
         battery_modules=battery_modules,
         legacy_ids=legacy_ids,
@@ -936,19 +937,19 @@ async def _async_wallbox(
     entry: SungrowConfigEntry,
     inverter: SungrowInverter,
     intervals: dict[str, int],
-) -> SungrowWallboxCoordinator | None:
-    """Find this inverter's wallbox and start polling it, or not.
+) -> tuple[SungrowWallboxCoordinator | None, str | None]:
+    """Find the wallbox behind this inverter's dongle and poll it, or not.
 
-    Two places it can answer, both measured on an AC22E-01: as unit 3 behind
-    a WiNet-S, which is asked here of the endpoint this entry already has,
-    and as unit 248 at its **own address**, over TLS on port 516 -- never
-    through the inverter's own LAN port. The second is an option
-    (`CONF_WALLBOX_HOST`), because nothing on a network says which TLS host
-    is whose wallbox. With it set, the endpoint is not asked as well.
+    Unit 3 behind a WiNet-S, asked of the endpoint this entry already has.
+    A wallbox never answers through the inverter's own LAN port. One with an
+    address of its own is not read from here at all: the search offers it as
+    an entry of its own (`_async_setup_wallbox`), over TLS on port 516, and
+    that is the path this integration prefers. Where such an entry exists for
+    the same wallbox (its own serial), this entry leaves it out and removes
+    the sub-device an earlier setup made, so one wallbox is one device.
 
-    Either way the device, its entities and their unique ids are the same:
-    they are built from the inverter's serial, so a wallbox moved from the
-    dongle to its own address keeps its history.
+    Returns the coordinator, or None, and the serial of a wallbox left to its
+    own entry, so that entry's removal can hand it back.
 
     The probe reads the model *name*, not the serial below it (input
     registers 21201-21206) and not the device type code: a name is
@@ -957,37 +958,16 @@ async def _async_wallbox(
 
     Finding nothing is the common case and never fails the entry.
     """
-    unit_for: Callable[[int], ModbusUnit]
-    if host := entry.options.get(CONF_WALLBOX_HOST):
-        # Its own address, over TLS. The endpoint is not probed as well: a
-        # dongle would find the same wallbox at unit 3 and make it twice.
-        direct = async_get_unit(hass, entry, wallbox_tls_params(host), WALLBOX_TLS_UNIT)
-
-        def unit_for(_unit_id: int) -> ModbusUnit:
-            return direct
-
-        units: tuple[int, ...] = (WALLBOX_TLS_UNIT,)
-    else:
-        unit_for = _unit_factory(hass, entry)
-        units = WALLBOX_UNITS
+    unit_for = _unit_factory(hass, entry)
     try:
-        wallbox_unit = await wallbox_probe_units(unit_for, units)
+        wallbox_unit = await wallbox_probe_units(unit_for, WALLBOX_UNITS)
     except (ModbusConnectionError, ModbusError) as err:
         _LOGGER.debug("%s: could not probe for a wallbox: %s", entry.title, err)
-        return None
+        return None, None
 
     if wallbox_unit is None:
-        if host:
-            _LOGGER.warning(
-                "%s: no wallbox answered at its configured address over TLS "
-                "(port %s, unit %s); polling it is skipped until it does",
-                entry.title,
-                WALLBOX_TLS_PORT,
-                WALLBOX_TLS_UNIT,
-            )
-        else:
-            _LOGGER.debug("%s: no Sungrow wallbox on this endpoint", entry.title)
-        return None
+        _LOGGER.debug("%s: no Sungrow wallbox on this endpoint", entry.title)
+        return None, None
 
     device = SungrowWallbox(unit_for(wallbox_unit), wallbox_unit)
     coordinator = SungrowWallboxCoordinator(
@@ -1007,7 +987,17 @@ async def _async_wallbox(
             entry.title,
             wallbox_unit,
         )
-        return None
+        return None, None
+
+    if (own := coordinator.own_serial) is not None and _wallbox_entry_for(hass, own):
+        # Read at its own address by an entry of its own: not here as well.
+        _LOGGER.debug(
+            "%s: the wallbox behind this dongle has an entry of its own; "
+            "it is read there, not here",
+            entry.title,
+        )
+        _async_remove_wallbox_device(hass, entry, coordinator)
+        return None, own
 
     _LOGGER.debug(
         "%s: wallbox on unit %s, model %s",
@@ -1015,7 +1005,52 @@ async def _async_wallbox(
         wallbox_unit,
         device.model or "not named",
     )
-    return coordinator
+    return coordinator, None
+
+
+def _wallbox_entry_for(hass: HomeAssistant, serial: str) -> bool:
+    """Whether a wallbox entry of its own exists for the wallbox with `serial`."""
+    return any(
+        other.data.get(CONF_KIND) == KIND_WALLBOX and other.unique_id == serial
+        for other in hass.config_entries.async_entries(DOMAIN)
+    )
+
+
+@callback
+def _async_remove_wallbox_device(
+    hass: HomeAssistant,
+    entry: SungrowConfigEntry,
+    coordinator: SungrowWallboxCoordinator,
+) -> None:
+    """Remove the wallbox sub-device this inverter entry made, if there is one.
+
+    Its identifier is the one `SungrowSubDeviceCoordinator.device_info` builds:
+    the inverter's serial and the kind. Built here, because `device_info` needs
+    runtime data this setup has not stored yet.
+    """
+    registry = dr.async_get(hass)
+    identifier = (DOMAIN, f"{coordinator.inverter_serial}-{coordinator.kind}")
+    device = registry.async_get_device_by_identifier(identifier, entry.entry_id)
+    if device is not None:
+        registry.async_remove_device(device.id)
+
+
+@callback
+def _async_reload_inverters_of(hass: HomeAssistant, serial: str) -> None:
+    """Reload the inverter entries that read the wallbox with `serial` themselves.
+
+    Called when that wallbox's own entry is set up, so the inverter entry
+    gives it up without a restart.
+    """
+    for other in hass.config_entries.async_entries(DOMAIN):
+        runtime = getattr(other, "runtime_data", None)
+        wallbox = getattr(runtime, "wallbox", None)
+        if (
+            other.data.get(CONF_KIND) != KIND_WALLBOX
+            and wallbox is not None
+            and wallbox.own_serial == serial
+        ):
+            hass.config_entries.async_schedule_reload(other.entry_id)
 
 
 #: Raised while this is a preview, and taken out when it is not.
@@ -1154,6 +1189,12 @@ async def async_remove_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> 
     from .capability_test import async_forget
 
     await async_forget(hass, entry)
+    if entry.data.get(CONF_KIND) == KIND_WALLBOX and entry.unique_id:
+        # The inverter entry that left this wallbox to it reads it again.
+        for other in hass.config_entries.async_entries(DOMAIN):
+            runtime = getattr(other, "runtime_data", None)
+            if getattr(runtime, "wallbox_elsewhere", None) == entry.unique_id:
+                hass.config_entries.async_schedule_reload(other.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: SungrowConfigEntry) -> bool:

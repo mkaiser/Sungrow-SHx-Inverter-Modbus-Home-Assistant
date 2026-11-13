@@ -73,7 +73,6 @@ CONF_REGISTER_DUMP = "register_dump"
 #: and the unit are constants, not options -- they are the only values
 #: anybody has measured. The certificate is Sungrow-signed and identical
 #: across devices, so there is nothing to verify it against.
-CONF_WALLBOX_HOST = "wallbox_host"
 WALLBOX_TLS_PORT = 516
 WALLBOX_TLS_UNIT = 248
 
@@ -471,8 +470,8 @@ CONF_ADD_DEVICES = "add_devices"
 #:
 #: 516 is deliberately absent. A WiNet-S serves the same Modbus over TLS
 #: there, which offers nothing 502 does not; a wallbox serves it on its own
-#: address, and that is `CONF_WALLBOX_HOST`, entered on the options page,
-#: rather than an inverter endpoint a search should offer.
+#: address, and the search offers that as a wallbox entry of its own
+#: (`KIND_WALLBOX`), never as an inverter endpoint.
 #:
 #: Not a question in the form: somebody whose next question would be "which
 #: number?" is better served by trying the two that are known.
