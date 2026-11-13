@@ -1,5 +1,6 @@
 {
   "config": {
+    "flow_title": "{name}",
     "abort": {
       "already_configured": "Das Gerät ist bereits konfiguriert",
       "devices_mode_not_offered": "Der Geräte-Modus ist in dieser Vorschau nicht verfügbar. Diese Version richtet die Integration nur für die Diagnose ein: Sie fragt den Wechselrichter ab und kann die Diagnose ausführen, legt aber keine Sensoren an. Die Freischaltung folgt in einer späteren Version; der Eintrag muss dafür nicht entfernt und neu hinzugefügt werden.",
@@ -7,7 +8,9 @@
       "connection_unchanged": "Das ist bereits die Verbindung dieses Eintrags. Es wurde nichts geändert.",
       "connection_moved": "„{title}“ verwendet jetzt die neue Verbindung. Der Eintrag wurde neu geladen; seine Entitäten, deren Verlauf und seine Einstellungen sind unverändert.",
       "wallbox_entry": "Das ist eine Wallbox, die unter ihrer eigenen Adresse gelesen wird, und ihre Adresse wird hier nicht geändert: Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer. Die Einstellungen für ihren Funktionstest und ihre Diagnose findest du unter **Konfigurieren**.",
-      "unit_247_entry": "Dieser Eintrag zeigt die Messwerte und die Diagnose eines iHomeManagers oder die Diagnose eines Sungrow-Loggers und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu."
+      "unit_247_entry": "Dieser Eintrag zeigt die Messwerte und die Diagnose eines iHomeManagers oder die Diagnose eines Sungrow-Loggers und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu.",
+      "not_supported": "Diese Ankündigung nennt kein Sungrow-Gerät, das sich daraus einrichten lässt. Ein WiNet-S, der keinen Wechselrichter hinter sich nennt, hat nichts hinzuzufügen.",
+      "not_identified": "Das Gerät unter {host} hat über Modbus nicht als Sungrow-Gerät geantwortet. Ein Sungrow nimmt nur sehr wenige Modbus-Verbindungen an: Fragt eine andere Integration, ein zweites Home Assistant oder das YAML-Paket es noch ab, beende das und versuche es erneut, oder nutze **Integration hinzufügen → Mein Netzwerk durchsuchen**."
     },
     "error": {
       "cannot_connect": "Verbindung fehlgeschlagen: {error}",
@@ -146,6 +149,10 @@
       "move": {
         "title": "Neue Verbindung verwenden?",
         "description": "Dieser Wechselrichter ist bereits als **{title}** eingerichtet und wird unter **{old}** erreicht. Er antwortet auch unter **{new}**.\n\n**Absenden** stellt den Eintrag auf **{new}** um und lädt ihn neu. Seine Entitäts-IDs, deren Verlauf und seine Einstellungen bleiben, wie sie sind; Batterie und Wallbox werden an der neuen Verbindung erneut gesucht. Deine Antwort darauf, wie die Diagnose den Wechselrichter erreicht, wird gelöscht, weil sie die alte Verbindung beschrieb.{wallbox}\n\nUm die aktuelle Verbindung zu behalten, schließe diesen Dialog."
+      },
+      "discovery_confirm": {
+        "title": "Sungrow-Gerät gefunden",
+        "description": "Ein **{model}** hat sich in deinem Netzwerk unter **{host}** angekündigt, über {via}.\n\nBeim Einrichten wird das Gerät zuerst über Modbus gefragt, was es ist: Die Ankündigung ist nur ein Hinweis. Fragt das YAML-Paket oder eine andere Integration es noch ab, beende das zuerst."
       }
     },
     "progress": {

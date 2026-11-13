@@ -86,6 +86,7 @@ from .const import (
 )
 from .coordinator import SungrowConfigEntry
 from .diagnosis import Progress
+from .network_records import async_network_names
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -179,6 +180,7 @@ async def async_build(
     *,
     allow_dump: bool = False,
     allow_block_test: bool = False,
+    allow_network_names: bool = False,
 ) -> dict[str, Any]:
     """Return one publishable diagnosis document for this entry.
 
@@ -200,6 +202,11 @@ async def async_build(
     progress bar and a notification at the end. The diagnostics download
     cannot: it is a button somebody waits on, so it leaves this False and the
     option has no effect there, however the owner set it.
+
+    `allow_network_names` adds what the device says about itself beside
+    Modbus (`network_records`): a two-second mDNS browse, a reverse-DNS
+    lookup and an ARP read. The button's, like the block test; the download
+    leaves it off, because somebody is waiting on it.
 
     `allow_block_test` is the same decision for the block read test, which is
     not an option at all: the diagnosis button always runs it and the download
@@ -280,6 +287,13 @@ async def async_build(
         ),
         battery_pack=collected.battery_pack,
         steps_lost={str(step): why for step, why in collected.failed.items()},
+        network_names=(
+            await async_network_names(
+                hass, entry.data.get(CONF_HOST, ""), [collected.serial]
+            )
+            if allow_network_names
+            else None
+        ),
     )
     attach_export_scale(document, entry, device)
     return document

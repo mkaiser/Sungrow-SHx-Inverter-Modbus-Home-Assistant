@@ -779,3 +779,13 @@ outside the block read test), and from one anonymous site an SH10RT-V112 on P023
 modbus-proxy while the YAML package and evcc polled (37 of 37 blocks, no reconnect; added to
 `contention`) and an SG10RT, the first three-phase string inverter (new page `device-sg-rt`).
 New installation page tristangrichard.
+
+## [2026-11-13] changed | discovery over mDNS, and the diagnosis records what a device announces
+
+The integration's manifest now matches the two records measured at gerd, so Home Assistant offers
+a WiNet-S naming an inverter, and a wallbox at its own address, without a search; the owner
+confirms and the device is identified over Modbus as the search does. Nothing is read before
+that, and an entry already set up is never moved by an announcement. Diagnoses from schema 27
+carry `network_names` (mDNS records heard, reverse-DNS label, MAC vendor prefix), which answers
+the multicast and other-firmware questions house by house. Nothing new measured. Updated the
+query does-a-winet-s-advertise-over-mdns.

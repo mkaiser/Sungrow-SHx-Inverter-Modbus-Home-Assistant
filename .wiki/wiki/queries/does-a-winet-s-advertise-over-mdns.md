@@ -31,7 +31,16 @@ Still open:
 - **The fields nothing explains**: the battery's 8423 (0x20E7), the inverter's trailing `1;4`,
   the wallbox's `info=16256` (0x3F80), and every `;1;`.
 
-What it would change: a `zeroconf` matcher in the manifest would find a dongle and a wallbox with
-no sweep, already knowing the model, serial, units and port. A record is still a hint, never an
-identity: an entry is made from [what answers](../concepts/identify-by-what-answers.md) over
-Modbus. An inverter on its own LAN port is found only by the sweep.
+What depends on it: the integration's manifest matches `_http._tcp` instances named
+`WiNet-WebServer*` and `SUNGROW*`, so Home Assistant offers a dongle naming an inverter, and a
+wallbox at its own address, with no search. The record decides only whether to offer; an entry is
+made from [what answers](../concepts/identify-by-what-answers.md) over Modbus once the owner
+confirms. The TXT fields are read by the layout measured at gerd
+(`sungrow_modbus.network_names.LAYOUTS`), so a record laid out otherwise names fewer facts, never
+wrong ones. An inverter on its own LAN port is found only by the sweep.
+
+How it gets answered: from schema 27 every diagnosis carries a `network_names` section — the
+Sungrow records heard by a multicast browse, the reverse-DNS name's first label and the MAC
+vendor prefix, serials as stand-ins (`device-diagnosis/reference.md`). Its `mdns.state` answers
+the multicast question per house; the name and the prefix are what a DHCP matcher for an
+inverter's own LAN port would need, and nothing has measured them yet.

@@ -80,10 +80,10 @@ rules:
   diagnostics: done
   discovery-update-info:
     status: todo
-    comment: Follows discovery.
+    comment: A wallbox's entry follows its own address when it announces itself again. An inverter's is not moved by an announcement, because the dongle can announce an inverter whose entry uses its own LAN port; DHCP, once measured, could follow that.
   discovery:
-    status: todo
-    comment: Waits on hardware (Todo.md, "Does a WiNet-S advertise over mDNS?"). A zeroconf or DHCP matcher needs a measured service type, hostname or MAC prefix; the config flow's network search covers setup until then.
+    status: done
+    comment: Zeroconf, from the records measured at one house (wiki, "Does a WiNet-S advertise over mDNS?"); the diagnosis's network_names section collects them from more. An inverter on its own LAN port announces nothing and is found by the network search; a DHCP matcher waits on a measured hostname or MAC prefix.
   docs-data-update:
     status: done
     comment: Poll tiers in doc/integration_options.md.

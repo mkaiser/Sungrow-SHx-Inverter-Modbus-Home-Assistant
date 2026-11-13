@@ -1,6 +1,6 @@
 # The texts, for review
 
-**324 texts**: everything in `strings.json` that is not an entity name, by its
+**329 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -11,7 +11,13 @@ A `{placeholder}` is filled in by the integration and stays as written; backtick
 and bold are kept.
 
 
-## Setup flow (85)
+## Setup flow (90)
+
+### `config.flow_title`
+
+> **EN** {name}
+
+> **DE** {name}
 
 ### `config.abort.already_configured`
 
@@ -54,6 +60,18 @@ and bold are kept.
 > **EN** This entry shows an iHomeManager's readings and its diagnosis, or a Sungrow Logger's diagnosis, and has no settings. If the device moves to another address or port, search your network again and add it there.
 
 > **DE** Dieser Eintrag zeigt die Messwerte und die Diagnose eines iHomeManagers oder die Diagnose eines Sungrow-Loggers und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu.
+
+### `config.abort.not_supported`
+
+> **EN** This announcement does not name a Sungrow device that can be set up from it. A WiNet-S naming no inverter behind it has nothing to add.
+
+> **DE** Diese Ankündigung nennt kein Sungrow-Gerät, das sich daraus einrichten lässt. Ein WiNet-S, der keinen Wechselrichter hinter sich nennt, hat nichts hinzuzufügen.
+
+### `config.abort.not_identified`
+
+> **EN** The device at {host} did not answer as a Sungrow device over Modbus. A Sungrow accepts very few Modbus connections: if another integration, a second Home Assistant or the YAML package is still polling it, stop that and try again, or use **Add integration → Search my network**.
+
+> **DE** Das Gerät unter {host} hat über Modbus nicht als Sungrow-Gerät geantwortet. Ein Sungrow nimmt nur sehr wenige Modbus-Verbindungen an: Fragt eine andere Integration, ein zweites Home Assistant oder das YAML-Paket es noch ab, beende das und versuche es erneut, oder nutze **Integration hinzufügen → Mein Netzwerk durchsuchen**.
 
 ### `config.error.cannot_connect`
 
@@ -602,6 +620,22 @@ and bold are kept.
 > **Absenden** stellt den Eintrag auf **{new}** um und lädt ihn neu. Seine Entitäts-IDs, deren Verlauf und seine Einstellungen bleiben, wie sie sind; Batterie und Wallbox werden an der neuen Verbindung erneut gesucht. Deine Antwort darauf, wie die Diagnose den Wechselrichter erreicht, wird gelöscht, weil sie die alte Verbindung beschrieb.{wallbox}
 >
 > Um die aktuelle Verbindung zu behalten, schließe diesen Dialog.
+
+### `config.step.discovery_confirm.title`
+
+> **EN** Sungrow device found
+
+> **DE** Sungrow-Gerät gefunden
+
+### `config.step.discovery_confirm.description`
+
+> **EN** A **{model}** announced itself on your network at **{host}**, through {via}.
+>
+> Setting it up first asks the device over Modbus what it is: the announcement is only a hint. If the YAML package or another integration is still polling it, stop that first.
+
+> **DE** Ein **{model}** hat sich in deinem Netzwerk unter **{host}** angekündigt, über {via}.
+>
+> Beim Einrichten wird das Gerät zuerst über Modbus gefragt, was es ist: Die Ankündigung ist nur ein Hinweis. Fragt das YAML-Paket oder eine andere Integration es noch ab, beende das zuerst.
 
 ### `config.progress.searching`
 

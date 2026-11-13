@@ -56,8 +56,9 @@ dashboards when they switch ([doc/integration_migration.md](doc/integration_migr
   as devices of their own, behind a WiNet-S or, for the wallbox, at its own
   address over TLS.
 - **One shared connection per inverter**, so no external Modbus proxy.
-- Setup by **searching the network**; model, unit id and a cluster slave's
-  role come from what the devices answer.
+- **Discovered by Home Assistant** behind a WiNet-S, and a wallbox at its
+  own address; otherwise set up by **searching the network**. Model, unit id
+  and a cluster slave's role come from what the devices answer.
 - **Configurable poll intervals**, per group, from 5 seconds to never.
 - **A generator the Sungrow cannot see**: a non-Sungrow inverter behind the
   same meter, added back into the house load.

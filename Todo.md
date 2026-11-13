@@ -486,21 +486,24 @@ Nothing can start now (blocker 16).
     - **The fields nothing explains**: the battery's 8423 (0x20E7), the
       inverter's trailing `1;4`, the wallbox's `info=16256` (0x3F80), every
       `;1;`. More houses, compared with what Modbus measured there.
-    - **mDNS in the diagnosis.** Part A runs on the contributor's machine in
-      the LAN, where multicast works: browse `_http._tcp` for a few seconds,
-      keep the Sungrow records (TXT, port, model), serials and host names
-      replaced by stand-ins before anything reaches the document, and record
-      "no answer" as that, never as "no dongle" (container, VLAN, firewall).
-      Needs `async_mdns_services` in a released wheel and `zeroconf` in the
-      PEP 723 header (`device-diagnosis/reference.md`); check whether binding
-      port 5353 raises a Windows firewall prompt. In Home Assistant, the
-      device page's diagnosis browses through HA's shared zeroconf instance
-      (`zeroconf` in `after_dependencies`), not sockets of its own.
-    - Then decide on a `zeroconf` matcher in the manifest: the records as a
-      hint that the Modbus check confirms, the sweep kept for cable-only
-      inverters. And a WiNet-S's *Visit* link for a cable entry, found by
-      the inverter serial in its TXT (a link on the inverter, or the dongle
-      as its own device).
+    - **mDNS in the diagnosis: built, unreleased.** Schema 27's
+      `network_names` (`sungrow_modbus.network_names`): the terminal browses
+      `_http._tcp` for 5 s once per run, Home Assistant's diagnosis button
+      for 2 s through its shared zeroconf instance; plus the reverse-DNS
+      label and the MAC vendor prefix for a future DHCP matcher. Reaches
+      contributors with the next release (the header pins `zeroconf`).
+      Still to check: whether binding port 5353 raises a Windows firewall
+      prompt.
+    - **The zeroconf matcher: built, unreleased.** `WiNet-WebServer*` and
+      `SUNGROW*` on `_http._tcp`; the record only decides whether to offer,
+      Modbus identifies on confirm, nothing set up is ever moved. Waits on
+      the first diagnoses with `network_names` from other houses.
+    - **A DHCP matcher** for an inverter on its own LAN port, once
+      `reverse_dns_label` or `mac_vendor_prefix` from a few direct-LAN
+      diagnoses agree.
+    - A WiNet-S's *Visit* link for a cable entry, found by the inverter
+      serial in its TXT (a link on the inverter, or the dongle as its own
+      device).
 
 19. **The capability test's restore through a WiNet-S, on hardware.** A
     dongle-only capability test at gerd on the current tree, with the battery

@@ -743,6 +743,9 @@ class DiagnosisRunner:
                     # Likewise only here, and not an option: the measurement
                     # `src/sungrow_modbus/hybrid_inverter/layout.py` is changed from.
                     allow_block_test=True,
+                    # What decides whether Home Assistant could have found
+                    # this device by itself: mDNS, DHCP name, MAC prefix.
+                    allow_network_names=True,
                 )
                 if capability_test:
                     block = await self._async_capability_test(share)

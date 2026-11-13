@@ -67,6 +67,13 @@ already there.
 
 ## Setting it up
 
+If your inverter is connected through a WiNet-S, Home Assistant may already
+offer it: a **Discovered** card under Settings → Devices & Services, named
+after the inverter. The dongle announces itself on the network, and
+**Add** on the card connects and continues as below. A wallbox with its own
+network connection is offered the same way. An inverter on its own LAN cable
+announces nothing, so for it, and whenever no card appears:
+
 Settings → Devices & Services → **Add integration** → *Sungrow Modbus* →
 *Set up my inverter*. Either let it search your network, or choose *I know the
 address* and enter what your `secrets.yaml` already has:

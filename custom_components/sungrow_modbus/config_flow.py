@@ -40,6 +40,7 @@ from homeassistant.helpers.selector import (
     TextSelector,
     TextSelectorConfig,
 )
+from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 from homeassistant.util import slugify
 from sungrow_modbus import (
     COMPONENTS,
@@ -55,6 +56,7 @@ from sungrow_modbus import (
     hosts_in,
     inverter_kind,
     model_for_capacity,
+    network_names,
     network_of,
     power_from_bms,
 )
@@ -120,6 +122,7 @@ from .const import (
     DEFAULT_EXTERNAL_PLACEMENT,
     DEFAULT_NAME,
     DEFAULT_PERMISSIONS,
+    DEFAULT_PORT,
     DIAGNOSIS_ISSUE_URL,
     DOMAIN,
     ENERGY_DASHBOARD_GUIDE_URL,
@@ -465,6 +468,9 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         #: endpoint is the inverter's own LAN port -- set when this flow finds
         #: an inverter that is already set up somewhere else.
         self._move: tuple[ConfigEntry, dict[str, Any], bool | None] | None = None
+        #: What an mDNS record announced: host, kind, model and the serial it
+        #: named, if any. A hint until the device answers over Modbus.
+        self._discovered: dict[str, Any] = {}
 
     async def _async_claim(
         self, serial: str, endpoint: Mapping[str, Any], direct: bool | None
@@ -627,6 +633,109 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             # rather than dropped.
             description_placeholders=_alpha_placeholders(await _flow_texts(self)),
         )
+
+    async def async_step_zeroconf(
+        self, discovery_info: ZeroconfServiceInfo
+    ) -> ConfigFlowResult:
+        """Offer a WiNet-S or a wallbox that announced itself over mDNS.
+
+        Both advertise `_http._tcp` with a TXT record naming the device and
+        its serial; a dongle's also names the inverter behind it (wiki: *Does
+        a WiNet-S advertise over mDNS?*). The record decides only whether to
+        **offer**: nothing Modbus is read here, because this runs at every
+        start for every announcing device, and a Sungrow grants very few
+        sessions. Anything already set up -- by the serial the record names,
+        or by its address -- is left alone. What the device is, is decided
+        when the owner confirms, by what answers over Modbus.
+
+        An inverter on its own LAN port announces nothing, and is still found
+        by the search.
+        """
+        advert = network_names.Advert(
+            instance=network_names.instance_of(
+                discovery_info.name, discovery_info.type
+            ),
+            service_type=discovery_info.type,
+            port=discovery_info.port,
+            server=discovery_info.hostname,
+            addresses=tuple(str(address) for address in discovery_info.ip_addresses),
+            properties=network_names.text_properties(discovery_info.properties),
+        )
+        host = discovery_info.host
+        if advert.kind == "dongle":
+            named = advert.inverter
+        elif advert.kind == "wallbox":
+            named = advert.board
+        else:
+            named = None
+        if not advert.is_sungrow or named is None:
+            # A dongle naming no inverter has nothing behind it to set up.
+            return self.async_abort(reason="not_supported")
+        self._async_abort_entries_match({CONF_HOST: host})
+        if named.serial:
+            await self.async_set_unique_id(named.serial)
+            # A wallbox's entry is its own address, so it follows a new one.
+            # An inverter's may be its LAN port while the dongle announces
+            # it: never moved from here, only left alone.
+            self._abort_if_unique_id_configured(
+                updates={CONF_HOST: host} if advert.kind == "wallbox" else None
+            )
+        model = named.model or (
+            "Sungrow wallbox" if advert.kind == "wallbox" else DEFAULT_NAME
+        )
+        board = advert.board
+        self._discovered = {
+            CONF_HOST: host,
+            "kind": advert.kind,
+            "model": model,
+            "via": (board.model if board else None) or advert.instance,
+        }
+        self.context["title_placeholders"] = {"name": f"{model} ({host})"}
+        return await self.async_step_discovery_confirm()
+
+    async def async_step_discovery_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ask before connecting, then identify over Modbus as the search does.
+
+        From here on it is the search's path: an inverter goes through `pick`,
+        with its naming, its move offer and the entity id question; a wallbox
+        gets its own entry by its own serial.
+        """
+        found = self._discovered
+        host = found[CONF_HOST]
+        if user_input is None:
+            self._set_confirm_only()
+            return self.async_show_form(
+                step_id="discovery_confirm",
+                description_placeholders={
+                    "model": found["model"],
+                    "host": host,
+                    "via": found["via"],
+                },
+            )
+        self._mode = MODE_DIAGNOSTICS if ONLY_DIAGNOSIS_MODE else MODE_DEVICES
+        if found["kind"] == "wallbox":
+            if (wallbox := await _async_probe_wallbox(self.hass, host)) is None:
+                return self.async_abort(
+                    reason="not_identified", description_placeholders={"host": host}
+                )
+            model, serial = wallbox
+            self._wallboxes = {
+                host: {
+                    CONF_HOST: host,
+                    "model": model,
+                    "serial": serial,
+                    "label": f"{model} (wallbox) at {host}",
+                }
+            }
+            return await self._async_add_wallbox(host)
+        self._found = await self._async_identify([(host, DEFAULT_PORT)])
+        if host not in self._found:
+            return self.async_abort(
+                reason="not_identified", description_placeholders={"host": host}
+            )
+        return await self.async_step_pick({CONF_HOST: host})
 
     async def async_step_setup_devices(
         self, user_input: dict[str, Any] | None = None

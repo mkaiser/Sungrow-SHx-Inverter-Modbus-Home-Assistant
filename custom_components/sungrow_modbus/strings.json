@@ -1,5 +1,6 @@
 {
   "config": {
+    "flow_title": "{name}",
     "abort": {
       "already_configured": "Device is already configured",
       "devices_mode_not_offered": "Devices mode is not available in this preview. This build sets the integration up for diagnostics only -- it polls the inverter and can run the capability diagnosis, but creates no sensors. Promotion will be offered in a later release, and the entry does not need to be removed and added again when it is.",
@@ -7,7 +8,9 @@
       "connection_unchanged": "That is the connection this entry already uses. Nothing was changed.",
       "connection_moved": "“{title}” now uses the new connection. It has been reloaded; its entities, their history and its settings are unchanged.",
       "wallbox_entry": "This is a wallbox read at its own address, and its address is not changed here: to follow it to a new address, search your network again and pick it; the entry finds it by its serial. Its capability test and diagnosis settings are under **Configure**.",
-      "unit_247_entry": "This entry shows an iHomeManager's readings and its diagnosis, or a Sungrow Logger's diagnosis, and has no settings. If the device moves to another address or port, search your network again and add it there."
+      "unit_247_entry": "This entry shows an iHomeManager's readings and its diagnosis, or a Sungrow Logger's diagnosis, and has no settings. If the device moves to another address or port, search your network again and add it there.",
+      "not_supported": "This announcement does not name a Sungrow device that can be set up from it. A WiNet-S naming no inverter behind it has nothing to add.",
+      "not_identified": "The device at {host} did not answer as a Sungrow device over Modbus. A Sungrow accepts very few Modbus connections: if another integration, a second Home Assistant or the YAML package is still polling it, stop that and try again, or use **Add integration → Search my network**."
     },
     "error": {
       "cannot_connect": "Failed to connect: {error}",
@@ -146,6 +149,10 @@
       "move": {
         "title": "Use the new connection?",
         "description": "This inverter is already set up as **{title}**, reached at **{old}**. It also answers at **{new}**.\n\n**Submit** switches the entry to **{new}** and reloads it. Its entity IDs, their history and its settings stay as they are; the battery and wallbox are looked for again on the new connection. Your answer about how the diagnosis reaches the inverter is cleared, because it described the old connection.{wallbox}\n\nTo keep the current connection, close this dialog."
+      },
+      "discovery_confirm": {
+        "title": "Sungrow device found",
+        "description": "A **{model}** announced itself on your network at **{host}**, through {via}.\n\nSetting it up first asks the device over Modbus what it is: the announcement is only a hint. If the YAML package or another integration is still polling it, stop that first."
       }
     },
     "progress": {
