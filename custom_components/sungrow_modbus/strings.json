@@ -1607,12 +1607,11 @@
     },
     "wallbox_capability_test_unfinished": {
       "title": "A wallbox test on {name} did not put everything back",
-      "description": "A capability test of this wallbox could not put these settings back, so your car may not charge as you set it:\n\n{settings}\n\nOpen this to try again, or set them in the app as listed.",
       "fix_flow": {
         "step": {
           "confirm": {
             "title": "Put the wallbox's settings back",
-            "description": "These will be written back, then the wallbox (and, for a wallbox the inverter manages, the charge) checked again:\n\n{settings}\n\nIf the wallbox was left disabled it answers no write: then switch *Ladegerät aktivieren* on in the app first."
+            "description": "A capability test of this wallbox could not put these settings back, so your car may not charge as you set it. Submitting writes them back, then checks the wallbox (and, for a wallbox the inverter manages, the charge) again:\n\n{settings}\n\nIf the wallbox was left disabled it answers no write: then switch *Ladegerät aktivieren* on in the app first. You can also set these in the app as listed."
           }
         },
         "abort": {

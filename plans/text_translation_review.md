@@ -1,6 +1,6 @@
 # The texts, for review
 
-**351 texts**: everything in `strings.json` that is not an entity name, by its
+**350 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -1318,7 +1318,7 @@ and bold are kept.
 > **DE** Eine deaktivierte Ladestation nimmt keinen Schreibbefehl an, und das Auto muss eventuell neu eingesteckt werden. Stelle diese Werte in der App wie aufgeführt ein und versuche es dann erneut; diese Reparatur bleibt offen, bis die Ladestation wieder richtig meldet.
 
 
-## Repairs (15)
+## Repairs (14)
 
 ### `issues.preview_release.title`
 
@@ -1402,20 +1402,6 @@ and bold are kept.
 
 > **DE** Ein Wallbox-Test an {name} hat nicht alles zurückgesetzt
 
-### `issues.wallbox_capability_test_unfinished.description`
-
-> **EN** A capability test of this wallbox could not put these settings back, so your car may not charge as you set it:
->
-> {settings}
->
-> Open this to try again, or set them in the app as listed.
-
-> **DE** Ein Funktionstest dieser Wallbox konnte diese Einstellungen nicht zurücksetzen, daher lädt dein Auto womöglich nicht wie eingestellt:
->
-> {settings}
->
-> Öffne dies, um es erneut zu versuchen, oder stelle sie in der App wie aufgeführt ein.
-
 ### `issues.wallbox_capability_test_unfinished.fix_flow.step.confirm.title`
 
 > **EN** Put the wallbox's settings back
@@ -1424,17 +1410,17 @@ and bold are kept.
 
 ### `issues.wallbox_capability_test_unfinished.fix_flow.step.confirm.description`
 
-> **EN** These will be written back, then the wallbox (and, for a wallbox the inverter manages, the charge) checked again:
+> **EN** A capability test of this wallbox could not put these settings back, so your car may not charge as you set it. Submitting writes them back, then checks the wallbox (and, for a wallbox the inverter manages, the charge) again:
 >
 > {settings}
 >
-> If the wallbox was left disabled it answers no write: then switch *Ladegerät aktivieren* on in the app first.
+> If the wallbox was left disabled it answers no write: then switch *Ladegerät aktivieren* on in the app first. You can also set these in the app as listed.
 
-> **DE** Diese werden zurückgeschrieben, dann wird die Wallbox (und bei einer vom Wechselrichter verwalteten Wallbox der Ladevorgang) erneut geprüft:
+> **DE** Ein Funktionstest dieser Wallbox konnte diese Einstellungen nicht zurücksetzen, daher lädt dein Auto womöglich nicht wie eingestellt. Absenden schreibt sie zurück und prüft dann die Wallbox (und bei einer vom Wechselrichter verwalteten Wallbox den Ladevorgang) erneut:
 >
 > {settings}
 >
-> Wurde die Wallbox deaktiviert zurückgelassen, nimmt sie keinen Schreibbefehl an: dann zuerst *Ladegerät aktivieren* in der App einschalten.
+> Wurde die Wallbox deaktiviert zurückgelassen, nimmt sie keinen Schreibbefehl an: dann zuerst *Ladegerät aktivieren* in der App einschalten. Du kannst sie auch in der App wie aufgeführt einstellen.
 
 ### `issues.wallbox_capability_test_unfinished.fix_flow.abort.restore_failed`
 
