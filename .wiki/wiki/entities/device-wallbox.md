@@ -30,7 +30,9 @@ inverter. Measured at [gerd](installation-gerd.md) on 2026-11-14
   Switching the mode can end a session; charging on starts it again. Over the cable and through
   the WiNet-S alike. The library's map is `src/sungrow_modbus/hybrid_inverter/ev_charger.py`; the
   inverter's entry offers these four words as controls only on firmware where the writes were
-  watched (`CONFIRMED_ON_FIRMWARE` in `src/sungrow_modbus/hybrid_inverter/capabilities.py`).
+  watched (`CONFIRMED_ON_FIRMWARE` in `src/sungrow_modbus/hybrid_inverter/capabilities.py`); run
+  from Home Assistant at gerd's, each took its write
+  ([the controls](../sources/gerd-wallbox-ha-controls-2026-11-14-summary.md)).
 - Nothing on the wallbox alone tells a managed wallbox from a standalone one (input 21314 read 1
   idle and 3 charging, as on every earlier reading), so the capability test needs the owner to
   say so (`Options.standalone`), and refuses a setting that moves with nothing written.

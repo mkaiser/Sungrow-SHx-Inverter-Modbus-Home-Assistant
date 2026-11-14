@@ -866,3 +866,11 @@ At gerd, the charger's *Einstellungen* page: its Plug&Play moved holding 21298 a
 the inverter's 33550, as the other screens do; *Fahrstrecke pro kWh* is holding 21232, set back
 from 5555.2 (left by the capability test of 2026-11-13) to 5.0. Updated the raw note and source
 gerd-wallbox-app-settings-2026-11-14.
+
+## [2026-11-14] measured | the integration's EV charger controls at gerd's, from Home Assistant
+
+The four controls on gerd's inverter entry (P022, cable), each written once from the dev Home
+Assistant and put back with no car charging: grid purchase both ways, the user current refused
+outside user-defined mode and taken in it, the mode with charging kept off, charging on and off.
+The block read as before afterwards. New raw note and source gerd-wallbox-ha-controls-2026-11-14;
+the index.

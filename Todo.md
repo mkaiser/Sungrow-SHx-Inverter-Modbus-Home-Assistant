@@ -142,8 +142,10 @@ Nothing can start now (blocker 13).
       `EV_CHARGER_CONTROL` (firmware watched: P022 only, gerd's). The select
       keeps charging as it was after a mode change; the number refuses with
       a message outside user-defined mode (`tests/test_ev_charger_entities.py`).
-      Next: watch it from the dev Home Assistant at gerd's; add P023 and
-      others only from a watched write there. Discussion #571's report
+      Run from the dev Home Assistant at gerd's on 2026-11-14 night, no car:
+      each control took its write and the house was put back (wiki:
+      `gerd-wallbox-ha-controls-2026-11-14-summary.md`). Next: the same with
+      a car charging; add P023 and others only from a watched write there. Discussion #571's report
       (rudolf992, 2026-04-27: the current set over Modbus went back to
       iSolarCloud's within seconds) is the same thing seen from the wallbox
       side.
