@@ -85,6 +85,12 @@ which file to send.
 accepts very few connections, and a second reader makes registers look
 broken. Dropped connections in the output are normal; the diagnosis reconnects.
 
+**In this repository's dev container with Claude Code**, `/run-diagnosis`
+does all of the above for you: it searches your network, asks the
+questions, runs the diagnosis, compares what it found with what is already
+known, and then opens a pull request or hands you the file for the issue.
+It writes to your inverter only if you say yes to the capability test.
+
 ### Two modes: read-only, or with capability tests
 
 A **read-only diagnosis** reads your inverter and writes nothing to it. A
