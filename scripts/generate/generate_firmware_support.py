@@ -149,15 +149,19 @@ class Column:
 def _fields() -> dict[str, tuple[str, Any]]:
     """Return {field name: (register space, field)} over every inverter component."""
     found: dict[str, tuple[str, Any]] = {}
+    # `registers.COMPONENTS` as well as the modules' own classes: the EV
+    # charger's component lives in a module of its own.
+    classes = [*registers.COMPONENTS.values()]
     for module in (registers, components):
-        for klass in vars(module).values():
-            if (
-                inspect.isclass(klass)
-                and issubclass(klass, Component)
-                and klass is not Component
-            ):
-                for name, field in klass.declared_fields.items():
-                    found.setdefault(name, (klass.register_space, field))
+        classes += vars(module).values()
+    for klass in classes:
+        if (
+            inspect.isclass(klass)
+            and issubclass(klass, Component)
+            and klass is not Component
+        ):
+            for name, field in klass.declared_fields.items():
+                found.setdefault(name, (klass.register_space, field))
     return found
 
 

@@ -47,7 +47,7 @@ class Number(TypedDict, total=False):
     step: float
 
     unit: str
-    """`%` or `W`. Decides the device class too."""
+    """`%`, `W` or `A`. Decides the device class too."""
 
     minimum_field: str
     """Read the lower bound from this register instead of using `minimum`.
@@ -71,6 +71,9 @@ class Number(TypedDict, total=False):
     entities would be created **writable** against registers that are not
     there.
     """
+
+    key: str
+    """The entity key, where the field's own is not the name it should have."""
 
     maximum_from_battery: bool
     """Cap at what the battery will take.
@@ -289,6 +292,26 @@ NUMBERS += (
     },
 )
 
+#: The wallbox the inverter manages: its user-defined current, register 33545
+#: (0.1 A), outside Sungrow's document. Watched at gerd's on P022: the car
+#: followed 6, 8, 10 and 12 A; 5 A was refused, so 6 A is the floor, and 33 A
+#: was taken on a 32 A wallbox, so the inverter does not cap it. 32 A, the
+#: largest Sungrow wallbox's rating, is the ceiling here. The inverter takes it
+#: **only in user-defined mode**; the number refuses before writing in any
+#: other (`number.py`). Gated by `EV_CHARGER_CONTROL`, which
+#: `capabilities.CONFIRMED_ON_FIRMWARE` grants per watched firmware.
+NUMBERS += (
+    {
+        "field": "ev_charger_user_current",
+        "key": "ev_charger_user_current",
+        "requires": "EV_CHARGER_CONTROL",
+        "unit": "A",
+        "minimum": 6,
+        "maximum": 32,
+        "step": 1,
+    },
+)
+
 
 class Switch(TypedDict):
     """One writable register exposed as a `switch`."""
@@ -381,6 +404,26 @@ SWITCHES: tuple[Switch, ...] = (
         "off": 0x55,
         "also_off": (0,),
     },
+    # The wallbox the inverter manages (registers 33540 and 33550, outside
+    # Sungrow's document; `sungrow_modbus.hybrid_inverter.ev_charger`).
+    # Charging on/off: watched at gerd's on P022, off stopped the car within a
+    # second, on started it within 7-15 s. Energy purchase (*Netzbezug*) in
+    # PV surplus: followed the app's switch both ways. Both gated by
+    # `EV_CHARGER_CONTROL`, granted per watched firmware.
+    {
+        "field": "ev_charger_charging_raw",
+        "key": "ev_charger_charging",
+        "requires": "EV_CHARGER_CONTROL",
+        "on": 0xAA,
+        "off": 0x55,
+    },
+    {
+        "field": "ev_charger_grid_purchase_raw",
+        "key": "ev_charger_grid_purchase",
+        "requires": "EV_CHARGER_CONTROL",
+        "on": 0xAA,
+        "off": 0x55,
+    },
 )
 
 
@@ -467,6 +510,21 @@ SELECTS: tuple[Select, ...] = (
         "options": (
             {"slug": "weekdays", "value": 0, "label": "Weekdays"},
             {"slug": "every_day", "value": 1, "label": "Every day"},
+        ),
+    },
+    # Register 33541, the managed wallbox's charging mode, as the app sets it.
+    # Watched at gerd's on P022. 162 (quantity and time) is the ioBroker
+    # thread's and was never seen, so it is not offered. A change has side
+    # effects the select undoes (`select.py`): leaving user defined, and fast
+    # to PV surplus, end the session; user defined switches charging on.
+    {
+        "key": "ev_charger_mode",
+        "field": "ev_charger_mode_raw",
+        "requires": "EV_CHARGER_CONTROL",
+        "options": (
+            {"slug": "fast", "value": 160, "label": "Fast charge"},
+            {"slug": "pv_surplus", "value": 161, "label": "PV surplus"},
+            {"slug": "user_defined", "value": 163, "label": "User defined"},
         ),
     },
 )

@@ -20,12 +20,13 @@ from modbus_connection import ModbusError
 
 from homeassistant.components.number import NumberEntity
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
 from sungrow_modbus import FALLBACK_W, Capability
 from sungrow_modbus.battery import ceiling as battery_ceiling
-from sungrow_modbus.hybrid_inverter import export_scale
+from sungrow_modbus.hybrid_inverter import ev_charger, export_scale
 
 from .const import (
     CONF_BATTERY_MAX_POWER,
@@ -55,6 +56,10 @@ _LOGGER = logging.getLogger(__name__)
 #: The one setting whose write scale differs between firmwares.
 EXPORT_LIMIT = "export_power_limit"
 
+#: The managed wallbox's user-defined current, and the mode select it needs.
+EV_CHARGER_USER_CURRENT = "ev_charger_user_current"
+EV_CHARGER_MODE_KEY = "ev_charger_mode"
+
 #: An entity's unit against its field's, where the two differ on purpose.
 #: Register 32998 is kept in kW, as the YAML-era map records it
 #: (`tests/test_registers.py`), and shown in W like every other power setting.
@@ -69,14 +74,19 @@ async def async_setup_entry(
     """Set up the settings this device actually has."""
     runtime_data = entry.runtime_data
     async_add_entities(
-        (
-            SungrowExportLimitNumber
-            if description.field == EXPORT_LIMIT
-            else SungrowNumber
-        )(runtime_data, description)
+        _number_class(description)(runtime_data, description)
         for description in NUMBER_DESCRIPTIONS
         if runtime_data.serves(description)
     )
+
+
+def _number_class(description: SungrowNumberDescription) -> type[SungrowNumber]:
+    """Return the entity class a number needs: most need none of their own."""
+    if description.field == EXPORT_LIMIT:
+        return SungrowExportLimitNumber
+    if description.field == EV_CHARGER_USER_CURRENT:
+        return EvChargerUserCurrentNumber
+    return SungrowNumber
 
 
 class SungrowNumber(SungrowEntity, NumberEntity):
@@ -311,3 +321,33 @@ class SungrowExportLimitNumber(SungrowNumber):
         }
         self.hass.config_entries.async_update_entry(entry, data=data)
         return None
+
+
+class EvChargerUserCurrentNumber(SungrowNumber):
+    """The managed wallbox's user-defined current, taken only in that mode.
+
+    The inverter refuses a write of register 33545 with exception 0x04 in any
+    mode but user defined (37 times at gerd's), so this says why before it
+    writes, rather than passing on a refusal nobody can read.
+    """
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Write the current, or refuse while the mode is not user defined."""
+        block = self.coordinator.device.component(self.entity_description.component)
+        if getattr(block, "ev_charger_mode_raw", None) != ev_charger.USER_DEFINED:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="ev_charger_user_current_mode",
+                translation_placeholders={"mode_entity": self._mode_entity_id()},
+            )
+        await super().async_set_native_value(value)
+
+    def _mode_entity_id(self) -> str:
+        """Return the mode select's entity id, or its key if it has none."""
+        key = self.entity_description.key
+        if self.unique_id and self.unique_id.endswith(key):
+            unique_id = self.unique_id.removesuffix(key) + EV_CHARGER_MODE_KEY
+            registry = er.async_get(self.hass)
+            if entity_id := registry.async_get_entity_id("select", DOMAIN, unique_id):
+                return entity_id
+        return EV_CHARGER_MODE_KEY

@@ -12,7 +12,12 @@ no write-then-read. An integration does not.
 from __future__ import annotations
 
 from homeassistant.components.number import NumberDeviceClass, NumberMode
-from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfPower
+from homeassistant.const import (
+    PERCENTAGE,
+    EntityCategory,
+    UnitOfElectricCurrent,
+    UnitOfPower,
+)
 from sungrow_modbus import Capability
 
 from .entity import SungrowNumberDescription
@@ -214,6 +219,20 @@ NUMBER_DESCRIPTIONS: tuple[SungrowNumberDescription, ...] = (
         native_step=1,
         native_unit_of_measurement=PERCENTAGE,
         device_class=NumberDeviceClass.BATTERY,
+        mode=NumberMode.BOX,
+        entity_category=EntityCategory.CONFIG,
+    ),
+    SungrowNumberDescription(
+        key="ev_charger_user_current",
+        component="ev_charger",
+        field="ev_charger_user_current",
+        translation_key="ev_charger_user_current",
+        requires=Capability.EV_CHARGER_CONTROL,
+        native_min_value=6,
+        native_max_value=32,
+        native_step=1,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=NumberDeviceClass.CURRENT,
         mode=NumberMode.BOX,
         entity_category=EntityCategory.CONFIG,
     ),

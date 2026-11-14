@@ -183,7 +183,7 @@ and no file in `device-diagnosis/` implements a Modbus write function.
 | 21212 | u16 | — | Start/stop: 0 start, 1 stop. The app's Start/Stop writes it | 0 / 1 | two sources, and the app |
 | 21225-21230 | u16 × 6 | — | **The wallbox's clock**, local time: year (two digits), month, day, hour, minute, second. Read 26, 10, 13, 21, 12, 23 at 21:12 local on 2026-10-13, and 26, 9, 8, 17, 57, 44 during the run of 2026-09-08 | 26-10-13 21:12:23 | measured here |
 | 21231 | u16 | — | Configured unit id, read-only | 248 | named elsewhere |
-| 21232 | u16 | 0.1 km/kWh | Mileage per kWh, the app's *Fahrstrecke pro kWh*: set to 5.0 in the app, it read 50 | 50 → 5.0 | measured here, and the app |
+| 21232 | u16 | 0.1 km/kWh | Mileage per kWh, the app's *Fahrstrecke pro kWh*: set to 5.0 in the app, it read 50 | 50 → 5.0 | named elsewhere, and the app |
 | 21233 | u16 | — | Configured minimum current | 6 | named elsewhere |
 | 21263 | u16 | — | Working mode: 0 network, 2 plug and play, 6 EMS, says one project. **No answer through the dongle**; 0 inside a block read at its own address, where no read may start on it | no answer / 0 | named elsewhere |
 | 21298 | u16 | — | **Plug&Play**: 1 a plugged-in car starts charging by itself, 0 it waits for a start. Echoed at input 21362 | 1 / 0 | measured here, and the app |

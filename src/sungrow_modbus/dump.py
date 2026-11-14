@@ -61,6 +61,11 @@ DUMP_BANDS: tuple[tuple[str, int, int, str], ...] = (
     ),
     ("input", 5241, 1, "grid frequency, the 0.01 Hz one the specification recommends"),
     ("holding", 33273, 1, "load rated power"),
+    # Registers 33538-33550: the EV charger block of a wallbox the inverter
+    # manages, outside Sungrow's document, with the two unnamed words below
+    # it. Read whole at gerd's over the cable and the WiNet-S alike (wiki:
+    # gerd-wallbox-inverter-control-2026-11-14).
+    ("holding", 33537, 13, "the EV charger block of a managed wallbox"),
     # The rest of the history block, registers 6200-6826: daily, monthly and
     # yearly PV, direct-consumption, export and battery-charge energy. V1.1.16:
     # "WiNet-S/S2 and Logger is not supported", so a dongle refuses every

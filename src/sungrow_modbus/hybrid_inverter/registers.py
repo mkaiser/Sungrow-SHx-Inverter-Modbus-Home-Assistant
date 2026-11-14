@@ -38,6 +38,7 @@ from modbus_connection.model import (
 
 from ..addresses import reg
 from ..model import string
+from . import ev_charger
 
 #: Unavailable sentinels the YAML package does not declare, by field name.
 #:
@@ -1001,6 +1002,9 @@ COMPONENTS: dict[str, type[Component]] = {
     "pv_generation_cut": InverterPvGenerationCut,
     "forced_charging": InverterForcedCharging,
     "site_import_limit": InverterSiteImportLimit,
+    # The wallbox the inverter manages: its own module, because this one is
+    # held to the YAML package's record, which has no wallbox.
+    "ev_charger": ev_charger.EvChargerControl,
     "discharge_weekday": InverterDischargeWeekday,
     "discharge_weekend": InverterDischargeWeekend,
     "slowest_input": InverterSlowestInput,
@@ -1031,6 +1035,7 @@ TIER_COMPONENTS: dict[str, tuple[str, ...]] = {
         "pv_generation_cut",
         "forced_charging",
         "site_import_limit",
+        "ev_charger",
         "discharge_weekday",
         "discharge_weekend",
     ),

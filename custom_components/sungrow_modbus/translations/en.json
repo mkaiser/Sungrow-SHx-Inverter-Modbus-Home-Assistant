@@ -236,6 +236,9 @@
       "wallbox_enabled": {
         "name": "Charger enabled"
       },
+      "wallbox_plug_and_play": {
+        "name": "Start charging on plug-in"
+      },
       "weekend_discharge": {
         "name": "Weekend discharge"
       }
@@ -276,6 +279,9 @@
       "battery_reserved_soc_for_backup": {
         "name": "Battery reserved SoC for backup"
       },
+      "ev_charger_user_current": {
+        "name": "Wallbox user-defined current"
+      },
       "export_power_limit": {
         "name": "Feed-in limit"
       },
@@ -313,6 +319,14 @@
           "forced": "Forced (compulsory)",
           "external_ems": "External EMS",
           "vpp": "VPP"
+        }
+      },
+      "ev_charger_mode": {
+        "name": "Wallbox charge mode",
+        "state": {
+          "fast": "Fast charge",
+          "pv_surplus": "PV surplus",
+          "user_defined": "User defined"
         }
       },
       "forced_charging_days": {
@@ -1361,6 +1375,9 @@
       "wallbox_minimum_charging_power": {
         "name": "Minimum charging power"
       },
+      "wallbox_offline_current": {
+        "name": "Offline charging current"
+      },
       "wallbox_output_current_setting": {
         "name": "Charging current setpoint"
       },
@@ -1384,6 +1401,9 @@
       },
       "wallbox_phase_mode": {
         "name": "Phase mode"
+      },
+      "wallbox_power_limit": {
+        "name": "Power limit"
       },
       "wallbox_rated_current": {
         "name": "Maximum charging current"
@@ -1413,6 +1433,12 @@
       },
       "cut_pv_generation": {
         "name": "Cut PV generation"
+      },
+      "ev_charger_charging": {
+        "name": "Wallbox charge"
+      },
+      "ev_charger_grid_purchase": {
+        "name": "Wallbox grid purchase"
       },
       "export_power_limit_mode": {
         "name": "Feed-in limit mode"
@@ -1536,7 +1562,23 @@
         "switch_archives": "**{count}** ids already hold older history, which is renamed aside first, not deleted:",
         "switch_dropped": "**{count}** raw sensors exist with legacy ids only and are removed; their history stays where it is.",
         "switch_nothing": "Nothing to move: every entity is already there, or has an id you chose yourself, which is left alone.",
-        "endpoint": "{host}:{port}, unit {unit}"
+        "endpoint": "{host}:{port}, unit {unit}",
+        "wallbox_left_output_current": "Charging current setpoint: {amps} A (holding 21203)",
+        "wallbox_left_phase_three": "Phase setting: three phase (holding 21204)",
+        "wallbox_left_phase_single": "Phase setting: single phase (holding 21204)",
+        "wallbox_left_enabled": "Charger enabled (holding 21211). In the app: the charger's *Systemparameter*, *Ladegerät aktivieren*",
+        "wallbox_left_disabled": "Charger disabled (holding 21211). In the app: the charger's *Systemparameter*, *Ladegerät aktivieren*",
+        "wallbox_left_started": "Start/stop at start (holding 21212). In the app: *Start* on the charger's page",
+        "wallbox_left_stopped": "Start/stop at stop (holding 21212). In the app: *Stop* on the charger's page",
+        "wallbox_left_charging_on": "Wallbox charge on (the inverter's 33540). In the app: start charging on the charger's page",
+        "wallbox_left_charging_off": "Wallbox charge off (the inverter's 33540). In the app: stop charging on the charger's page",
+        "wallbox_left_mode_fast": "Wallbox charge mode: fast charge (the inverter's 33541). In the app: the charging mode",
+        "wallbox_left_mode_pv_surplus": "Wallbox charge mode: PV surplus (the inverter's 33541). In the app: the charging mode",
+        "wallbox_left_mode_quantity_and_time": "Wallbox charge mode: quantity and time (the inverter's 33541). In the app: the charging mode",
+        "wallbox_left_mode_user_defined": "Wallbox charge mode: user defined (the inverter's 33541). In the app: the charging mode",
+        "wallbox_left_user_current": "Wallbox user-defined current: {amps} A (the inverter's 33545). In the app: the user-defined charging current",
+        "wallbox_left_register": "Register {register}: {word}",
+        "wallbox_restore_by_hand": "A disabled wallbox answers no write, and the car may need replugging. Set these in the app as listed, then try again; this repair stays open until the wallbox reads as it should."
       }
     }
   },
@@ -1556,6 +1598,21 @@
         },
         "abort": {
           "restore_failed": "Could not put everything back: {error}\n\nThis repair stays open so you can try again."
+        }
+      }
+    },
+    "wallbox_capability_test_unfinished": {
+      "title": "A wallbox test on {name} did not put everything back",
+      "description": "A capability test of this wallbox could not put these settings back, so your car may not charge as you set it:\n\n{settings}\n\nOpen this to try again, or set them in the app as listed.",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Put the wallbox's settings back",
+            "description": "These will be written back, then the wallbox (and, for a wallbox the inverter manages, the charge) checked again:\n\n{settings}\n\nIf the wallbox was left disabled it answers no write: then switch *Ladegerät aktivieren* on in the app first."
+          }
+        },
+        "abort": {
+          "restore_failed": "Could not put everything back: {error}"
         }
       }
     },
@@ -1827,6 +1884,9 @@
     },
     "not_on_string_inverter": {
       "message": "{title} is a string inverter. This action writes to a hybrid inverter's registers, and nothing in this integration writes to a string inverter."
+    },
+    "ev_charger_user_current_mode": {
+      "message": "The user-defined current is taken only in the user-defined charge mode; the inverter refuses it in any other. Set {mode_entity} to User defined first."
     },
     "write_failed": {
       "message": "Could not write {entity_id}: {error}"

@@ -241,14 +241,18 @@ In order; 1 to 4 need the owner at the app.
 
 ## 7. In the repository, still to do
 
-- **Entities on the inverter's entry** (`Todo.md`, Wallbox): a charging switch, a mode select, a user
-  current number, from `src/sungrow_modbus/hybrid_inverter/ev_charger.py` through the write table.
-  Tests 1-3 above decide details of the select.
+- ~~Entities on the inverter's entry~~: built 2026-11-14 (`Todo.md`, Wallbox item 3.2), on P022
+  only. Tests 1-3 above may still change the select: writing what is already set, a sleeping car,
+  the same mode change from the app.
+- ~~A repair for a run that left the house changed~~: built 2026-11-14. A wallbox run (managed or
+  standalone) that cannot put everything back, or a snapshot found at setup, raises a Repairs issue
+  naming each setting, its value and where the app sets it (an error where the wallbox may be
+  disabled or the charge switched); the fix writes it back and checks the house, not only the
+  word (status not 8 after an enable) (`custom_components/sungrow_modbus/repairs.py`,
+  `tests/test_wallbox_repairs.py`).
 - **The standalone test before it meets a standalone wallbox**:
   - refuse to start while the battery is at or near its minimum SoC (the SBR's 10744 against 13059;
     13023 near 0 if the SBR cannot be read), recorded in the snapshot;
-  - a restore that checks the house (status as before, the enable reading 1 on a fresh session) and
-    says what to do on site if it cannot;
   - the inverter's block and EMS mode in its snapshot, read only;
   - an option, or a measured signal, that declares a wallbox standalone in Home Assistant.
 - **The standalone test's phase switch** writes 21204 as soon as the stop is seen; by the fork

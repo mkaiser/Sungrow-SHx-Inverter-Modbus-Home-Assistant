@@ -83,6 +83,9 @@ ENABLED: dict[int, str] = {0: "disabled", 1: "enabled"}
 #: opposite polarity to `ENABLED`.
 START_STOP: dict[int, str] = {0: "start", 1: "stop"}
 
+#: Whether a plugged-in car starts charging by itself, holding 21298.
+PLUG_AND_PLAY: dict[int, str] = {0: "off", 1: "on"}
+
 #: Which wallbox a device type code names.
 #:
 #: `0x3F80` was read here; the other two come from the community projects, so
@@ -353,7 +356,8 @@ class WallboxSettings(Component):
     """
 
     mileage_per_kwh = gauge(reg(21232), 0.1, signed=False, unit="km/kWh")
-    """Range added per kWh, as configured. Named elsewhere.
+    """Range added per kWh, as configured: the app's *Fahrstrecke pro kWh*.
+    Named elsewhere, and checked against the app (5.0 read 50).
 
     A display preference rather than a measurement: it is what the wallbox
     multiplies by to show a driver how far they have charged.
@@ -381,12 +385,53 @@ class WallboxSettings(Component):
         return None if code is None else int(code) == 1
 
 
+class WallboxAppSettings(Component):
+    """The settings Sungrow's app offers as the charger's system parameters.
+
+    Holding registers, read and never written. Mapped on 2026-11-14 at gerd's
+    AC22E-01: each setting changed in iSolarCloud and back, the wallbox read
+    whole after every save, and only these words moved (wiki:
+    `gerd-wallbox-app-settings-2026-11-14`). Each has an echo in the input
+    space (21362 and 21363), not read. **Only the wallbox's own address
+    answers them**: a WiNet-S forwards holding registers only below 21250, so
+    behind a dongle this component fails alone and its entities stay
+    unavailable.
+    """
+
+    register_space = "holding"
+
+    plug_and_play_raw = integer(reg(21298), signed=False)
+    """Plug&Play: 1, a plugged-in car starts charging by itself; 0, it waits
+    for a start. Measured here, against the app."""
+
+    offline_current = gauge(reg(21299), 0.1, signed=False, unit="A")
+    """The current offered without a connection to an EMS (the app's
+    *Offline-Ladestrom*, 6-32 A). Measured here, against the app.
+
+    It does not follow the power limit: it stayed 32 A at an 11 kW limit, in
+    the registers and the app alike.
+    """
+
+    power_limit = gauge(reg(21313), 0.1, signed=False, unit="kW")
+    """The power limit (the app's *Leistungsgrenze*): 22 or 11 kW. Measured
+    here, against the app; the rated current (input 21263) and the maximum
+    charging power (input 21273) follow it. Not input 21313, which is unnamed.
+    """
+
+    @property
+    def plug_and_play(self) -> bool | None:
+        """Whether a plugged-in car starts charging without a start command."""
+        code = self.plug_and_play_raw
+        return None if code is None else int(code) == 1
+
+
 #: The wallbox's components, by the name a description refers to them by.
 COMPONENTS: dict[str, type[Component]] = {
     "wallbox_identity": WallboxIdentity,
     "wallbox_ratings": WallboxRatings,
     "wallbox_live": WallboxLive,
     "wallbox_settings": WallboxSettings,
+    "wallbox_app_settings": WallboxAppSettings,
 }
 
 
@@ -428,6 +473,9 @@ CONFIDENCE: dict[str, str] = {
     "charger_enabled": "two sources",
     "start_stop": "two sources",
     "mileage_per_kwh": "named elsewhere",
+    "plug_and_play": "measured here",
+    "offline_current": "measured here",
+    "power_limit": "measured here",
 }
 
 #: What each coded field's number means, by its published name.
@@ -438,6 +486,7 @@ CODES: dict[str, dict[int, str]] = {
     "charging_status": CHARGING_STATUS,
     "charger_enabled": ENABLED,
     "start_stop": START_STOP,
+    "plug_and_play": PLUG_AND_PLAY,
 }
 
 #: The two epoch-shaped fields whose value is the wallbox's local clock.

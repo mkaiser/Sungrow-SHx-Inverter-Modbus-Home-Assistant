@@ -12,8 +12,10 @@ car did.
 
 In its own module, as the wallbox's and the battery's maps are:
 `registers.py` is held field by field to the YAML package's record, which has
-no wallbox. Read only here. Nothing is writable until the integration's write
-table names it; the words and their order are below, as measured.
+no wallbox; it lists this component among the inverter's, polled on the
+medium tier. The four words are writable; the integration's write table
+(`scripts/generate/tables/writes.py`) is what exposes them, behind
+`Capability.EV_CHARGER`, granted only while the mode reads a named code.
 
 **What was measured** (register numbers, one above the protocol address):
 
@@ -74,28 +76,35 @@ class EvChargerControl(Component):
 
     register_space = "holding"
 
-    charging_raw = integer(reg(33540), signed=False)
+    ev_charger_charging_raw = integer(
+        reg(33540), signed=False, nan=0xFFFF, writable=True
+    )
     """Charging on (0xAA) or off (0x55). Measured here."""
 
-    mode_raw = integer(reg(33541), signed=False)
+    ev_charger_mode_raw = integer(reg(33541), signed=False, nan=0xFFFF, writable=True)
     """The charging mode, as a code; see `MODES`. Measured here."""
 
-    user_current = gauge(reg(33545), AMPS_PER_COUNT, signed=False, unit="A")
+    ev_charger_user_current = gauge(
+        reg(33545), AMPS_PER_COUNT, signed=False, nan=0xFFFF, unit="A", writable=True
+    )
     """The current in user-defined mode. Measured here, by what the car drew."""
 
-    grid_surplus_raw = integer(reg(33550), signed=False)
-    """Whether PV-surplus charging may take from the grid. Named elsewhere."""
+    ev_charger_grid_purchase_raw = integer(
+        reg(33550), signed=False, nan=0xFFFF, writable=True
+    )
+    """Whether PV-surplus charging may buy from the grid: the app's *Netzbezug*
+    (energy purchase). Measured here: it followed the app's switch both ways."""
 
     @property
-    def charging(self) -> bool | None:
+    def ev_charger_charging(self) -> bool | None:
         """Whether charging is switched on; None for a word that is neither."""
-        raw = self.charging_raw
+        raw = self.ev_charger_charging_raw
         return None if raw is None else {ON: True, OFF: False}.get(raw)
 
     @property
-    def mode(self) -> str | None:
+    def ev_charger_mode(self) -> str | None:
         """The charging mode's name, or None for a code nobody has named."""
-        raw = self.mode_raw
+        raw = self.ev_charger_mode_raw
         return None if raw is None else MODES.get(raw)
 
 
@@ -132,17 +141,20 @@ def user_current_word(amps: float, rating_a: float) -> int:
 
 
 def mode_writes(mode: int, *, charge: bool) -> list[tuple[int, int]]:
-    """Return the writes, in order, that switch to `mode`.
+    """Return the writes, in order, that switch to `mode` and keep `charge`.
 
     Leaving user-defined mode or entering PV surplus ends a session, so a
     caller that wants a charge afterwards gets charging switched on after the
-    mode. User-defined mode switches it on by itself.
+    mode. User-defined mode switches charging on by itself, even from off, so
+    a caller that had it off gets it switched off again after the mode.
     """
     if mode not in MODES:
         raise ValueError(f"{mode} is not a charging mode")
     writes = [(MODE, mode)]
     if charge and mode != USER_DEFINED:
         writes.append((CHARGING, ON))
+    if not charge and mode == USER_DEFINED:
+        writes.append((CHARGING, OFF))
     return writes
 
 

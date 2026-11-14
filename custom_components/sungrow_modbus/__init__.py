@@ -501,6 +501,7 @@ async def _async_setup_wallbox(hass: HomeAssistant, entry: SungrowConfigEntry) -
     entry.runtime_data.diagnosis = runner
     entry.async_on_unload(runner.async_shutdown)
     await runner.async_load_ledger()
+    await _async_check_wallbox_capability_test(hass, entry)
     _async_preview_notice(hass)
     await hass.config_entries.async_forward_entry_setups(entry, WALLBOX_PLATFORMS)
     return True
@@ -796,6 +797,31 @@ async def _async_route(inverter: Any) -> str | None:
     except (AttributeError, KeyError):
         module = None
     return route_key(direct, module if isinstance(module, str) else None)
+
+
+async def _async_check_wallbox_capability_test(
+    hass: HomeAssistant, entry: SungrowConfigEntry
+) -> None:
+    """Raise a repair for a wallbox test that did not put everything back.
+
+    As for the inverter's test, and not repaired here: setup never writes. A
+    run that ended without its restore -- Home Assistant restarted, the link
+    went away -- leaves its snapshot, and the owner has to know before the
+    car does not charge.
+    """
+    from .repairs import async_clear_wallbox, async_raise_wallbox
+    from .wallbox_capability_test import async_leftover
+
+    leftover = await async_leftover(hass, entry)
+    if leftover is None:
+        async_clear_wallbox(hass, entry)
+        return
+    _LOGGER.warning(
+        "%s: a wallbox capability test did not finish putting things back. "
+        "See Settings -> Repairs.",
+        entry.title,
+    )
+    await async_raise_wallbox(hass, entry, leftover)
 
 
 async def _async_check_capability_test(

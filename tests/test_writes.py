@@ -142,6 +142,11 @@ def test_a_number_the_yaml_never_had_follows_its_source() -> None:
             "W",
             "SITE_IMPORT_LIMIT_CONTROL",
         ),
+        # Register 33545, the managed wallbox's user-defined current, in no
+        # Sungrow document: 6 A the floor (5 A refused), 32 A the largest
+        # wallbox's rating, watched on P022 (wiki:
+        # gerd-wallbox-inverter-control-2026-11-14).
+        "ev_charger_user_current": (6, 32, 1, "A", "EV_CHARGER_CONTROL"),
     }
     rows = {row["field"]: row for row in NUMBERS if not row.get("legacy_unique_id")}
     assert set(rows) == set(source)

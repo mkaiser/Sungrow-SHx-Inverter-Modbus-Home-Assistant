@@ -19,12 +19,17 @@ from __future__ import annotations
 from homeassistant.components.select import SelectEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from sungrow_modbus.hybrid_inverter import ev_charger
 
 from .const import CONF_MODE, MODE_DEVICES, MODE_DIAGNOSTICS
 from .coordinator import SungrowConfigEntry
 from .diagnosis_entities import DiagnosisModeSelect
 from .entity import SungrowEntity, SungrowSelectDescription
 from .select_descriptions import SELECT_DESCRIPTIONS
+
+#: The managed wallbox's charging mode, and the charging word written after it.
+EV_CHARGER_MODE = "ev_charger_mode"
+CHARGING = "ev_charger_charging_raw"
 
 # One at a time, and not for the usual reason. A Sungrow accepts very few
 # simultaneous Modbus sessions, and everything on this endpoint is already
@@ -55,7 +60,9 @@ async def async_setup_entry(
         async_add_entities([DiagnosisModeSelect(runtime_data)])
         return
     async_add_entities(
-        SungrowSelect(runtime_data, description)
+        (EvChargerModeSelect if description.key == EV_CHARGER_MODE else SungrowSelect)(
+            runtime_data, description
+        )
         for description in SELECT_DESCRIPTIONS
         if runtime_data.serves(description)
     )
@@ -88,3 +95,23 @@ class SungrowSelect(SungrowEntity, SelectEntity):
         """Write the value this option maps to, then read the register back."""
         description = self.entity_description
         await self._async_write((description.field, description.values[option]))
+
+
+class EvChargerModeSelect(SungrowSelect):
+    """The managed wallbox's charging mode, which keeps charging as it was.
+
+    A mode change has side effects, measured at gerd's: leaving user defined,
+    and fast charge to PV surplus, end the session; to user defined switches
+    charging on by itself. So the charging word is written after the mode,
+    back to what it was (`ev_charger.mode_writes`).
+    """
+
+    async def async_select_option(self, option: str) -> None:
+        """Write the mode, then charging as it was, then read the block back."""
+        description = self.entity_description
+        block = self.coordinator.device.component(description.component)
+        charging = getattr(block, "ev_charger_charging", None)
+        mode = description.values[option]
+        writes = ev_charger.mode_writes(mode, charge=bool(charging))
+        fields = {ev_charger.MODE: description.field, ev_charger.CHARGING: CHARGING}
+        await self._async_write(*((fields[address], word) for address, word in writes))

@@ -30,6 +30,7 @@ from ..device import MappedDevice
 from ..model import UpdateReport
 from .registers import (
     COMPONENTS,
+    WallboxAppSettings,
     WallboxIdentity,
     WallboxLive,
     WallboxRatings,
@@ -67,6 +68,7 @@ class SungrowWallbox(MappedDevice):
     wallbox_ratings: WallboxRatings
     wallbox_live: WallboxLive
     wallbox_settings: WallboxSettings
+    wallbox_app_settings: WallboxAppSettings
 
     def __init__(self, unit: ModbusUnit, unit_id: int) -> None:
         """Bind every component; 3 and 248 are different paths, so the id is kept."""

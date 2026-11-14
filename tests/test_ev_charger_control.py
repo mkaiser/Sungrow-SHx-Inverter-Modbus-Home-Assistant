@@ -19,10 +19,10 @@ def test_the_protocol_addresses_are_the_ones_written_on_site() -> None:
         33549,
     )
     fields = ev.EvChargerControl.declared_fields
-    assert fields["charging_raw"].address == ev.CHARGING
-    assert fields["mode_raw"].address == ev.MODE
-    assert fields["user_current"].address == ev.USER_CURRENT
-    assert fields["grid_surplus_raw"].address == ev.GRID_SURPLUS
+    assert fields["ev_charger_charging_raw"].address == ev.CHARGING
+    assert fields["ev_charger_mode_raw"].address == ev.MODE
+    assert fields["ev_charger_user_current"].address == ev.USER_CURRENT
+    assert fields["ev_charger_grid_purchase_raw"].address == ev.GRID_SURPLUS
 
 
 def test_the_block_decodes_what_was_read() -> None:
@@ -33,10 +33,10 @@ def test_the_block_decodes_what_was_read() -> None:
     block = ev.EvChargerControl(unit)
     asyncio.run(block.async_update())
 
-    assert block.charging is True
-    assert block.mode == "user_defined"
-    assert block.user_current == pytest.approx(10.0)
-    assert block.grid_surplus_raw == ev.OFF
+    assert block.ev_charger_charging is True
+    assert block.ev_charger_mode == "user_defined"
+    assert block.ev_charger_user_current == pytest.approx(10.0)
+    assert block.ev_charger_grid_purchase_raw == ev.OFF
 
 
 @pytest.mark.parametrize(
@@ -79,6 +79,14 @@ def test_a_mode_that_ends_the_session_is_followed_by_charging_on() -> None:
 
 def test_user_defined_mode_switches_charging_on_by_itself() -> None:
     assert ev.mode_writes(ev.USER_DEFINED, charge=True) == [(ev.MODE, ev.USER_DEFINED)]
+
+
+def test_charging_that_was_off_stays_off_after_user_defined() -> None:
+    """To user defined switched charging on even from off: it is put back."""
+    assert ev.mode_writes(ev.USER_DEFINED, charge=False) == [
+        (ev.MODE, ev.USER_DEFINED),
+        (ev.CHARGING, ev.OFF),
+    ]
 
 
 def test_an_unknown_mode_is_never_written() -> None:

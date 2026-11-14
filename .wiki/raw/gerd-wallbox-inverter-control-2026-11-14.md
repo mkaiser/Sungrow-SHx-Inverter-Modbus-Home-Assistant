@@ -291,3 +291,9 @@ the wallbox logged every 5 s from 19:33.
 
 So protocol 33549 (register 33550) is the app's *Netzbezug* / energy purchase in PV surplus mode:
 0x55 off, 0xAA on. Left as the maintainer set it: PV surplus, Netzbezug off, charging off.
+
+## The inverter's firmware (read 2026-11-14 evening, cable)
+
+Read only, for the record of which firmware these writes were watched on: register 13250 reads
+`SAPPHIRE-H_B001.V000.P022`, register 2582 `SAPPHIRE-H_01011.95.13`. No update was applied
+during the day.

@@ -80,6 +80,17 @@ DEVICE_WORDS: frozenset[str] = frozenset({"sungrow", "inverter"})
 #: written out. Kept short on purpose: a long table here means the rules are
 #: wrong, not the names.
 OVERRIDES: dict[str, str] = {
+    # -- the wallbox the inverter manages, from the inverter's own block ---
+    #
+    # On the inverter's device, so "Wallbox" says which charger they drive.
+    # "Charge", not "Charging": `-ing` is reserved for a binary sensor that
+    # says something is happening now, and this switch is what makes it so.
+    # "Grid purchase" is the app's *Netzbezug* (its English "energy
+    # purchase"), the grid being where the energy is bought.
+    "ev_charger_charging": "Wallbox charge",
+    "ev_charger_mode": "Wallbox charge mode",
+    "ev_charger_user_current": "Wallbox user-defined current",
+    "ev_charger_grid_purchase": "Wallbox grid purchase",
     # -- the SBR pack, which is its own device on its own unit ------------
     #
     # These have no legacy name to derive from: the registers live in
@@ -187,10 +198,18 @@ OVERRIDES: dict[str, str] = {
     # (21322) -- and what the car draws per phase. "Setpoint" rather than
     # "setting", which would trip the `-ing` rule.
     "wallbox_output_current_setting": "Charging current setpoint",
+    # The app's system parameters, by its own words where they are plain:
+    # the current offered without an EMS, and the 11/22 kW limit.
+    "wallbox_offline_current": "Offline charging current",
+    "wallbox_power_limit": "Power limit",
     # `-ing` on a binary sensor, which is what the convention reserves it
     # for: something happening right now.
     "wallbox_charging": "Charging",
     "wallbox_enabled": "Charger enabled",
+    # Sungrow's "Plug&Play", named for what it does: on, a plugged-in car
+    # starts charging by itself; off, it waits for a start. Not "Plug and
+    # Charge", which is ISO 15118's certificate login.
+    "wallbox_plug_and_play": "Start charging on plug-in",
     # -- an SG string inverter, the entry's own inverter ------------------
     #
     # No legacy name either: the YAML package never read an SG. Named as the
@@ -631,6 +650,9 @@ DIAGNOSTIC: frozenset[str] = frozenset(
         "wallbox_firmware_version",
         "wallbox_output_current_setting",
         "wallbox_enabled",
+        "wallbox_offline_current",
+        "wallbox_power_limit",
+        "wallbox_plug_and_play",
         # A bitmask, whose seven bits are the binary sensors.
         "power_flow_status",
         # Appendix 4's fault and alarm words, counted. What you open when the
@@ -729,6 +751,7 @@ GERMAN: dict[str, str] = {
     "sg_fault_reported": "Fehler gemeldet",
     "wallbox_charging": "Lädt",
     "wallbox_enabled": "Ladestation aktiviert",
+    "wallbox_plug_and_play": "Automatischer Ladestart",
     "weekend_discharge": "Entladung am Wochenende",
     # -- the diagnosis -------------------------------------------------------
     "connection": "Verbindung",
@@ -764,6 +787,10 @@ GERMAN: dict[str, str] = {
     "battery_min_soc": "Minimaler Batterie-Ladezustand",
     "battery_reserved_soc_for_backup": "Reservierter Batterie-Ladezustand für Backup",
     "cut_pv_generation": "PV-Erzeugung abschalten",
+    "ev_charger_charging": "Wallbox laden",
+    "ev_charger_grid_purchase": "Wallbox Netzbezug",
+    "ev_charger_mode": "Wallbox-Lademodus",
+    "ev_charger_user_current": "Wallbox benutzerdefinierter Ladestrom",
     "ems_mode": "EMS-Modus",
     "export_power_limit": "Einspeiselimit",
     "export_power_limit_mode": "Einspeiselimit-Modus",
@@ -989,6 +1016,7 @@ GERMAN: dict[str, str] = {
     "wallbox_lifetime_energy": "Gesamte Ladeenergie",
     "wallbox_maximum_charging_power": "Maximale Ladeleistung",
     "wallbox_minimum_charging_power": "Minimale Ladeleistung",
+    "wallbox_offline_current": "Offline-Ladestrom",
     "wallbox_output_current_setting": "Ladestrom-Sollwert",
     "wallbox_phase_a_current": "Ladestrom Phase A",
     "wallbox_phase_a_voltage": "Phase A Spannung",
@@ -997,6 +1025,7 @@ GERMAN: dict[str, str] = {
     "wallbox_phase_c_current": "Ladestrom Phase C",
     "wallbox_phase_c_voltage": "Phase C Spannung",
     "wallbox_phase_mode": "Phasenmodus",
+    "wallbox_power_limit": "Leistungsgrenze",
     "wallbox_rated_current": "Maximaler Ladestrom",
     "wallbox_session_energy": "Energie der Ladesitzung",
     "wallbox_start_mode": "Startmodus",

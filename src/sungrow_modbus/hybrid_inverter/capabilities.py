@@ -26,6 +26,7 @@ from enum import StrEnum
 
 from ..battery.power import model_for_capacity
 from ..const import model_for
+from . import ev_charger
 
 
 class Capability(StrEnum):
@@ -215,6 +216,26 @@ class Capability(StrEnum):
     leaves PV, export, a charge from PV and the house load alone. Never
     probed; granted by `resolve` only where `SITE_IMPORT_LIMIT` answered
     **and** the firmware is in `CONFIRMED_ON_FIRMWARE`.
+    """
+
+    EV_CHARGER = "ev_charger"
+    """The inverter manages a wallbox: its charging mode (33541) reads a named
+    code (`ev_charger.MODES`).
+
+    Outside Sungrow's document; the app's EV charger settings write it.
+    Granted only by a named code (`EV_CHARGER_CODES_ONLY`): what an inverter
+    with no wallbox reads there is not measured, so neither 0 nor 0xFFFF
+    grants it. This is the *read*; writing is `EV_CHARGER_CONTROL`.
+    """
+
+    EV_CHARGER_CONTROL = "ev_charger_control"
+    """The inverter's EV charger block may be written, because writes were
+    watched here.
+
+    Charging on/off (33540), the mode (33541), the user-defined current
+    (33545) and energy purchase (33550), judged by what the car did. Never
+    probed; granted by `resolve` only where `EV_CHARGER` answered **and** the
+    firmware is in `CONFIRMED_ON_FIRMWARE`.
     """
 
     PV_GENERATION_CUT_CONTROL = "pv_generation_cut_control"
@@ -509,6 +530,11 @@ def known_absent(
 #: the diagnosis whose `capability_test` block carries the passing check. An
 #: empty set means the entity waits; the read-only state still ships.
 CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
+    # gerd's SH8.0RT-V112 with an AC22E-01, 2026-11-14, over the cable and the
+    # WiNet-S alike: charging off stopped the car within a second and on
+    # started it, each mode was followed, the user current by 0.1 A, energy
+    # purchase followed the app (wiki: gerd-wallbox-inverter-control-2026-11-14).
+    Capability.EV_CHARGER_CONTROL: frozenset({"SAPPHIRE-H_B001.V000.P022"}),
     # fwitten's SH10RT-V112 master over its own LAN port, 2026-10-29: DC power
     # 1213 W before, 0 W during, 1199 W after. A trace showed the ramp: 0 W
     # 20 s after 0xAA, back 8 s after 0x55.
@@ -552,6 +578,7 @@ CONFIRMED_ON_FIRMWARE: dict[Capability, frozenset[str]] = {
 #: The read a confirmed write also needs, so a firmware entry can never grant
 #: control over a register this particular device does not answer.
 CONTROL_REQUIRES: dict[Capability, Capability] = {
+    Capability.EV_CHARGER_CONTROL: Capability.EV_CHARGER,
     Capability.PV_GENERATION_CUT_CONTROL: Capability.PV_GENERATION_CUT,
     Capability.FORCED_STARTUP_CONTROL: Capability.FORCED_STARTUP,
     Capability.SITE_IMPORT_LIMIT_CONTROL: Capability.SITE_IMPORT_LIMIT,
@@ -620,6 +647,7 @@ PROBES: dict[Capability, tuple[str, ...]] = {
     Capability.FORCED_STARTUP: ("forced_startup_under_low_soc_raw",),
     Capability.PV_GENERATION_CUT: ("pv_generation_cut_raw",),
     Capability.SITE_IMPORT_LIMIT: ("site_import_power_limit",),
+    Capability.EV_CHARGER: ("ev_charger_mode_raw",),
     Capability.FORCED_CHARGING: ("forced_charging_raw",),
     Capability.DISCHARGE_SCHEDULE: ("weekend_discharge_raw",),
     Capability.ENERGY_HISTORY: tuple(
@@ -643,6 +671,9 @@ MODE_CODES_ONLY: frozenset[Capability] = frozenset(
 
 #: The two codes every Sungrow mode register uses.
 MODE_CODES: frozenset[int] = frozenset({0xAA, 0x55})
+
+#: Capabilities granted only by a charging mode somebody has named.
+EV_CHARGER_CODES_ONLY: frozenset[Capability] = frozenset({Capability.EV_CHARGER})
 
 
 #: Capabilities that an all-zero answer must **not** grant.
@@ -725,6 +756,10 @@ def probe(read: Callable[[str], object]) -> frozenset[Capability]:
         if capability in ZERO_MEANS_ABSENT and all(v == 0 for v in values):
             continue
         if capability in MODE_CODES_ONLY and not all(v in MODE_CODES for v in values):
+            continue
+        if capability in EV_CHARGER_CODES_ONLY and not all(
+            v in ev_charger.MODES for v in values
+        ):
             continue
         found.add(capability)
     return frozenset(found)

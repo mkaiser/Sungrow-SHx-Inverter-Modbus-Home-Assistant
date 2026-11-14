@@ -641,7 +641,12 @@ no write-then-read. An integration does not.
 from __future__ import annotations
 
 from homeassistant.components.number import NumberDeviceClass, NumberMode
-from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfPower
+from homeassistant.const import (
+    PERCENTAGE,
+    EntityCategory,
+    UnitOfElectricCurrent,
+    UnitOfPower,
+)
 
 from sungrow_modbus import Capability
 
@@ -658,11 +663,12 @@ def render_numbers() -> str:
     lines = [NUMBERS_HEADER]
 
     for row in NUMBERS:
+        key = row.get("key") or row["field"]
         lines.append("    SungrowNumberDescription(")
-        lines.append(f'        key="{row["field"]}",')
+        lines.append(f'        key="{key}",')
         lines.append(f'        component="{_component_of(row["field"], registers)}",')
         lines.append(f'        field="{row["field"]}",')
-        lines.append(f'        translation_key="{row["field"]}",')
+        lines.append(f'        translation_key="{key}",')
         # The YAML's `number` entity is what a migrating user has, so its name
         # and platform are what the id is claimed through -- not the sensor's,
         # which reads the same register under a different entity id. A number
@@ -690,6 +696,11 @@ def render_numbers() -> str:
         if row["unit"] == "%":
             lines.append("        native_unit_of_measurement=PERCENTAGE,")
             lines.append("        device_class=NumberDeviceClass.BATTERY,")
+        elif row["unit"] == "A":
+            lines.append(
+                "        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,"
+            )
+            lines.append("        device_class=NumberDeviceClass.CURRENT,")
         else:
             lines.append("        native_unit_of_measurement=UnitOfPower.WATT,")
             lines.append("        device_class=NumberDeviceClass.POWER,")

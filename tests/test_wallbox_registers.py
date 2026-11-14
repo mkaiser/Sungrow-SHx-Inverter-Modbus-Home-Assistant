@@ -77,10 +77,10 @@ def test_the_committed_dump_decodes_to_the_committed_readings() -> None:
     moved into the library, so this is the move's proof as well as a guard
     against a later change to a scale, a code table or a confidence mark.
     """
-    assert (
-        readings(masked(SECTION["register_dump"], WALLBOX_MASKED))
-        == (SECTION["readings"])
-    )
+    decoded = readings(masked(SECTION["register_dump"], WALLBOX_MASKED))
+    published = SECTION["readings"]
+    # A field mapped since may add a reading; it may change none.
+    assert {name: decoded.get(name) for name in published} == published
 
 
 @pytest.mark.parametrize(

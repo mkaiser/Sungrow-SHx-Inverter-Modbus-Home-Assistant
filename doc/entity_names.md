@@ -1,6 +1,6 @@
 # The entity names
 
-**377 entities** that modern mode can create (Hybrid inverter 197, SBR battery 34, Wallbox 21, SG string inverter 85, iHomeManager 40).
+**384 entities** that modern mode can create (Hybrid inverter 201, SBR battery 34, Wallbox 24, SG string inverter 85, iHomeManager 40).
 
 The **entity id**
 column is what a dashboard and years of history are keyed to, and a name supplies
@@ -37,7 +37,7 @@ end. Their ids are the YAML package's, kept so that history keyed to them
 carries on, and modern mode replaces each with something better.
 
 
-## Hybrid inverter (197)
+## Hybrid inverter (201)
 
 The inverter's own device, named after the model unless the owner named it. Ids shown for `SH10RT`.
 
@@ -80,7 +80,7 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 |  |  | Weekend discharge window 1 | Entladefenster Wochenende 1 | `sensor.sh10rt_weekend_discharge_window_1` |  |  |
 |  |  | Weekend discharge window 2 | Entladefenster Wochenende 2 | `sensor.sh10rt_weekend_discharge_window_2` |  |  |
 
-### Everything else (7)
+### Everything else (10)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -91,6 +91,9 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 | Power Flow Status (13001) | Power Flow Status **←** | Power flow code | Leistungsfluss Code | `sensor.sh10rt_power_flow_code` | `sensor.power_flow_status` |  |
 |  | Sungrow inverter state **←** | Running state | Betriebszustand | `sensor.sh10rt_running_state` | `sensor.sungrow_inverter_state` |  |
 |  |  | Shutdown inverter when limited to 0 % power | Abschalten bei Begrenzung auf 0 % Leistung | `binary_sensor.sh10rt_shutdown_inverter_when_limited_to_0_power` |  |  |
+| *not in the datasheet* (33540) |  | Wallbox charge | Wallbox laden | `switch.sh10rt_wallbox_charge` |  |  |
+| *not in the datasheet* (33541) |  | Wallbox charge mode | Wallbox-Lademodus | `select.sh10rt_wallbox_charge_mode` |  |  |
+| *not in the datasheet* (33545) |  | Wallbox user-defined current | Wallbox benutzerdefinierter Ladestrom | `number.sh10rt_wallbox_user_defined_current` |  | A |
 
 ### Faults and alarms (9)
 
@@ -239,7 +242,7 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 | Total battery charge energy from PV (13013) | Total battery charge from PV **←** | Total battery charge energy from PV | Gesamte Batterie-Ladeenergie aus PV | `sensor.sh10rt_total_battery_charge_energy_from_pv` | `sensor.total_battery_charge_from_pv` | kWh |
 | Total battery discharge energy (13027) | Total battery discharge **←** | Total battery discharge energy | Gesamte Batterie-Entladeenergie | `sensor.sh10rt_total_battery_discharge_energy` | `sensor.total_battery_discharge` | kWh |
 
-### The grid (18)
+### The grid (19)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -261,6 +264,7 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 |  | Importing Power (delay) **←** | Importing power (delayed) | Netzbezug (verzögert) | `binary_sensor.sh10rt_importing_power_delayed` | `binary_sensor.importing_power_delay` |  |
 | Total export energy (13046) | Total exported energy | Total exported energy | Gesamt eingespeiste Energie | `sensor.sh10rt_total_exported_energy` | `sensor.total_exported_energy` | kWh |
 | Total Import Energy (13037) | Total imported energy | Total imported energy | Gesamt bezogene Energie | `sensor.sh10rt_total_imported_energy` | `sensor.total_imported_energy` | kWh |
+| *not in the datasheet* (33550) |  | Wallbox grid purchase | Wallbox Netzbezug | `switch.sh10rt_wallbox_grid_purchase` |  |  |
 
 ### The house (17)
 
@@ -346,11 +350,11 @@ A device of its own under the inverter, named after the pack its capacity matche
 |  |  | Warmest module | Wärmstes Modul | `sensor.sbr096_warmest_module` |  |  |
 |  |  | Warmest module temperature | Temperatur wärmstes Modul | `sensor.sbr096_warmest_module_temperature` |  | °C |
 
-## Wallbox (21)
+## Wallbox (24)
 
 A device of its own under the inverter, named after the model it reports, `Wallbox` where it reports none. Ids shown for `AC22E-01`.
 
-### Everything (21)
+### Everything (24)
 
 | Datasheet | YAML | English | Deutsch | Entity id | YAML entity id | Unit |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -365,6 +369,7 @@ A device of its own under the inverter, named after the model it reports, `Wallb
 |  |  | Maximum charging power | Maximale Ladeleistung | `sensor.ac22e_01_maximum_charging_power` |  | W |
 |  |  | Minimum charging power | Minimale Ladeleistung | `sensor.ac22e_01_minimum_charging_power` |  | W |
 |  |  | Offered charging current | Freigegebener Ladestrom | `sensor.ac22e_01_offered_charging_current` |  | A |
+|  |  | Offline charging current | Offline-Ladestrom | `sensor.ac22e_01_offline_charging_current` |  | A |
 |  |  | Phase A charging current | Ladestrom Phase A | `sensor.ac22e_01_phase_a_charging_current` |  | A |
 |  |  | Phase A voltage | Phase A Spannung | `sensor.ac22e_01_phase_a_voltage` |  | V |
 |  |  | Phase B charging current | Ladestrom Phase B | `sensor.ac22e_01_phase_b_charging_current` |  | A |
@@ -372,7 +377,9 @@ A device of its own under the inverter, named after the model it reports, `Wallb
 |  |  | Phase C charging current | Ladestrom Phase C | `sensor.ac22e_01_phase_c_charging_current` |  | A |
 |  |  | Phase C voltage | Phase C Spannung | `sensor.ac22e_01_phase_c_voltage` |  | V |
 |  |  | Phase mode | Phasenmodus | `sensor.ac22e_01_phase_mode` |  |  |
+|  |  | Power limit | Leistungsgrenze | `sensor.ac22e_01_power_limit` |  | kW |
 |  |  | Session energy | Energie der Ladesitzung | `sensor.ac22e_01_session_energy` |  | Wh |
+|  |  | Start charging on plug-in | Automatischer Ladestart | `binary_sensor.ac22e_01_start_charging_on_plug_in` |  |  |
 |  |  | Start mode | Startmodus | `sensor.ac22e_01_start_mode` |  |  |
 |  |  | Total charged energy | Gesamte Ladeenergie | `sensor.ac22e_01_total_charged_energy` |  | Wh |
 

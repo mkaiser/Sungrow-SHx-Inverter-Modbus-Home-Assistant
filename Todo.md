@@ -132,16 +132,21 @@ Nothing can start now (blocker 13).
    0. Released in 0.1.0a34; the terminal driver pins it.
    1. Done 2026-11-14, on site with a car (above). The 160/151 seen while
       charging earlier were the inverter's value, not the wallbox's own.
-   2. **Next, entities on the inverter's entry**, from
-      `hybrid_inverter/ev_charger.py`, through the write table
-      (`scripts/generate/tables/writes.py`): a charging switch (on/off), a
-      charging mode select (fast, PV surplus, user defined), and a user
-      current number (6 A to the wallbox's rating, written only in user
-      defined mode). Created only where the inverter's mode register holds a
-      named code. A mode change can end the session: the select writes
-      charging on after it. Discussion #571's report (rudolf992, 2026-04-27:
-      the current set over Modbus went back to iSolarCloud's within seconds)
-      is the same thing seen from the wallbox side.
+   2. **Built 2026-11-14: entities on the inverter's entry**, from
+      `hybrid_inverter/ev_charger.py` (now the inverter's `ev_charger`
+      component, medium tier) through the write table: *Wallbox charge*
+      (switch, 33540), *Wallbox charge mode* (select: fast, PV surplus,
+      user defined; 33541), *Wallbox user-defined current* (number, 6-32 A,
+      33545) and *Wallbox grid purchase* (switch, 33550, the app's
+      *Netzbezug*). Behind `EV_CHARGER` (the mode reads a named code) and
+      `EV_CHARGER_CONTROL` (firmware watched: P022 only, gerd's). The select
+      keeps charging as it was after a mode change; the number refuses with
+      a message outside user-defined mode (`tests/test_ev_charger_entities.py`).
+      Next: watch it from the dev Home Assistant at gerd's; add P023 and
+      others only from a watched write there. Discussion #571's report
+      (rudolf992, 2026-04-27: the current set over Modbus went back to
+      iSolarCloud's within seconds) is the same thing seen from the wallbox
+      side.
    3. **A standalone wallbox** (no inverter managing it, evcc's case) is the
       only one whose own registers may be written; none measured yet.
    4. **The managed wallbox's capability test** exists, from a terminal
@@ -188,12 +193,16 @@ Nothing can start now (blocker 13).
    app at gerd's (wiki: `gerd-wallbox-app-settings-2026-11-14-summary.md`),
    all holding, the wallbox's own: enable 21211 (status 8 while disabled),
    Plug&Play 21298, offline current 21299 (0.1 A), power limit 21313
-   (0.1 kW). Add the three new ones to `WallboxSettings`, read only first.
-   Names decided: Plug&Play is **Start charging on plug-in** /
-   **Automatischer Ladestart** (not "Plug and Charge", which is ISO 15118's
-   certificate login). Status 8 needs a name (*disabled*).
+   (0.1 kW). **Built 2026-11-14, read only**: `WallboxAppSettings` with
+   *Start charging on plug-in* / *Automatischer Ladestart* (binary sensor;
+   not "Plug and Charge", which is ISO 15118's certificate login), *Offline
+   charging current* and *Power limit*; only the wallbox's own address
+   answers them. Status 8 was already *disabled*.
    Mileage per kWh (21232) is the app's *Fahrstrecke pro kWh*; gerd's read
    5555.2 after the capability test of 2026-11-13 and is set back to 5.0.
+   A run that leaves the house changed now raises a Repairs issue naming
+   each setting and where the app sets it, with a fix that checks the house
+   (`repairs.py`, built 2026-11-14).
    Every recorded write of 21232 that day wrote 50, so how it came to hold
    55552 is open (`plans/wallbox_tests.md`, open questions). The capability
    test's mileage check is removed (2026-11-14): it proved only a display

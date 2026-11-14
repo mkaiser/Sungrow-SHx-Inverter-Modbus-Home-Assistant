@@ -63,4 +63,14 @@ SELECT_DESCRIPTIONS: tuple[SungrowSelectDescription, ...] = (
         values={"weekdays": 0, "every_day": 1},
         entity_category=EntityCategory.CONFIG,
     ),
+    SungrowSelectDescription(
+        key="ev_charger_mode",
+        component="ev_charger",
+        field="ev_charger_mode_raw",
+        translation_key="ev_charger_mode",
+        requires=Capability.EV_CHARGER_CONTROL,
+        options=["fast", "pv_surplus", "user_defined"],
+        values={"fast": 160, "pv_surplus": 161, "user_defined": 163},
+        entity_category=EntityCategory.CONFIG,
+    ),
 )

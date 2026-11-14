@@ -204,6 +204,9 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | Running state code | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Shutdown inverter when limited to 0 % power *(binary_sensor)* | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Shutdown inverter when limited to 0 % power code | read | ✓ | ✓ | ✓ |  | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Wallbox charge *(switch)* | read |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Wallbox charge mode *(select)* | read |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Wallbox user-defined current *(number)* | read |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 
 ### Faults and alarms
 
@@ -388,6 +391,7 @@ counts that check's runs: ✓ the inverter did as it was told, ×10 the inverter
 | Importing power *(binary_sensor)* | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Total exported energy | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Total imported energy | read | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Wallbox grid purchase *(switch)* | read |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 
 ### The house
 

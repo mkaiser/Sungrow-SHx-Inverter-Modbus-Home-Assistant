@@ -144,6 +144,7 @@ def test_confirmed_firmware_grants_the_control_where_the_register_answers(
 WATCHED_IN_RAW_NOTES: dict[Capability, str] = {
     Capability.FORCED_STARTUP_CONTROL: "forced-startup",
     Capability.SITE_IMPORT_LIMIT_CONTROL: "import-limit",
+    Capability.EV_CHARGER_CONTROL: "wallbox-inverter-control",
 }
 RAW_NOTES = Path(__file__).resolve().parent.parent / ".wiki" / "raw"
 

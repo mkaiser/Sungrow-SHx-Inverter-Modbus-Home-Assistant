@@ -8,7 +8,7 @@ created: '2026-10-29'
 # Sungrow AC wallbox
 
 AC011E-01 and AC22E-01. In the integration it is a **device of its own**,
-with 32 fields in four components (`src/sungrow_modbus/wallbox/`). Its
+with 35 fields in five components (`src/sungrow_modbus/wallbox/`). Its
 entities are **read only**. The capability test writes to it only with the
 owner's leave **and only when it is declared standalone**: a wallbox a hybrid
 inverter manages is controlled through the inverter, not through its own
@@ -28,7 +28,9 @@ inverter. Measured at [gerd](installation-gerd.md) on 2026-11-14
   (0x55), 33541 the mode (160 fast, 161 PV surplus, 163 user defined), 33545 the user-defined
   current at 0.1 A per count, writable only in user-defined mode, 6 A to (at least) the rating.
   Switching the mode can end a session; charging on starts it again. Over the cable and through
-  the WiNet-S alike. The library's map is `src/sungrow_modbus/hybrid_inverter/ev_charger.py`.
+  the WiNet-S alike. The library's map is `src/sungrow_modbus/hybrid_inverter/ev_charger.py`; the
+  inverter's entry offers these four words as controls only on firmware where the writes were
+  watched (`CONFIRMED_ON_FIRMWARE` in `src/sungrow_modbus/hybrid_inverter/capabilities.py`).
 - Nothing on the wallbox alone tells a managed wallbox from a standalone one (input 21314 read 1
   idle and 3 charging, as on every earlier reading), so the capability test needs the owner to
   say so (`Options.standalone`), and refuses a setting that moves with nothing written.

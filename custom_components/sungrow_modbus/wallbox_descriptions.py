@@ -8,7 +8,7 @@ which makes this the one device with no migration question at all.
 `tests/test_wallbox_entities.py` is their guard: every `field` resolves to a
 real field or property, and no key collides with another device's.
 
-**What gets an entity, and what does not.** Thirty-two registers, and three
+**What gets an entity, and what does not.** Thirty-five registers, and three
 kinds of thing are deliberately left out:
 
 * the **raw code** fields -- `charging_status_raw` and its five siblings.
@@ -257,6 +257,28 @@ SETTING_DESCRIPTIONS: tuple[SungrowSensorDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         suggested_display_precision=1,
     ),
+    # The app's system parameters. Read only at the wallbox's own address: a
+    # dongle does not forward them, and they stay unavailable behind one.
+    SungrowSensorDescription(
+        key="wallbox_offline_current",
+        component="wallbox_app_settings",
+        field="offline_current",
+        translation_key="wallbox_offline_current",
+        device_class=SensorDeviceClass.CURRENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        suggested_display_precision=1,
+    ),
+    SungrowSensorDescription(
+        key="wallbox_power_limit",
+        component="wallbox_app_settings",
+        field="power_limit",
+        translation_key="wallbox_power_limit",
+        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        suggested_display_precision=0,
+    ),
 )
 
 #: States, where a boolean is the honest shape.
@@ -278,6 +300,13 @@ BINARY_DESCRIPTIONS: tuple[SungrowBinarySensorDescription, ...] = (
         component="wallbox_settings",
         field="charger_enabled",
         translation_key="wallbox_enabled",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SungrowBinarySensorDescription(
+        key="wallbox_plug_and_play",
+        component="wallbox_app_settings",
+        field="plug_and_play",
+        translation_key="wallbox_plug_and_play",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )

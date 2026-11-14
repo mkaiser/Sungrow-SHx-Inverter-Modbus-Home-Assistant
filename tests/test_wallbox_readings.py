@@ -245,11 +245,14 @@ def test_every_recorded_dump_decodes_to_what_it_published(path) -> None:
     """The golden test: today's decoder against every reading ever published.
 
     A document carries the words and the readings decoded from them at the
-    time. Decoding the words again must give the readings again, or a change
-    to the decoder has quietly reinterpreted somebody's published hardware.
+    time. Decoding the words again must give every reading again, or a change
+    to the decoder has quietly reinterpreted somebody's published hardware. A
+    field mapped since may add a reading beside them; it may change none.
     """
     section = json.loads(path.read_text(encoding="utf-8"))["wallbox"]
-    assert decode(section["register_dump"]) == section["readings"]
+    decoded = decode(section["register_dump"])
+    published = section["readings"]
+    assert {name: decoded.get(name) for name in published} == published
 
 
 #: An invented serial in the words a wallbox answers it in, at input 21200.

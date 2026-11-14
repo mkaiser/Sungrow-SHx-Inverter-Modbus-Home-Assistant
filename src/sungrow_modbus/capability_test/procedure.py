@@ -794,6 +794,24 @@ MODE_ON = 0xAA
 #: quietly escape the procedure -- it fails the suite until somebody decides which of
 #: the two it is.
 NOT_PROBED: dict[str, str] = {
+    # The managed wallbox's block: its own test writes it, judged by the car
+    # (`sungrow_modbus.wallbox.managed_test`), from the wallbox's entry.
+    "ev_charger_charging_raw": (
+        "starts and stops somebody's car; written by the managed wallbox test, "
+        "which judges it by what the car draws, never by this walk"
+    ),
+    "ev_charger_mode_raw": (
+        "a mode change can end a charging session; written by the managed "
+        "wallbox test, which puts the house back, never by this walk"
+    ),
+    "ev_charger_user_current": (
+        "taken only in user-defined mode, and judged by what the car draws; "
+        "written by the managed wallbox test, never by this walk"
+    ),
+    "ev_charger_grid_purchase_raw": (
+        "decides whether a car charges from the grid; no check writes it yet, "
+        "and the app's switch was watched moving it both ways"
+    ),
     "backup_mode_raw": (
         "a mode flag with no scale to get wrong, and turning it on changes what "
         "happens to the house in an outage; the backup mode write path check "

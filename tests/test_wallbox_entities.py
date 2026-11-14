@@ -214,6 +214,11 @@ async def test_the_wallbox_reports_what_it_read(
     assert float(one("wallbox_output_current_setting")) == pytest.approx(15.1)
     # 22080 W is 32 A on three phases at 230 V, which is the 22 in AC22E-01.
     assert float(one("wallbox_maximum_charging_power")) == 22080
+    # The app's system parameters, from the same words: holding 21298 0,
+    # 21299 60 and 21313 220 (wiki: gerd-wallbox-app-settings-2026-11-14).
+    assert one("wallbox_plug_and_play") == "off"
+    assert float(one("wallbox_offline_current")) == pytest.approx(6.0)
+    assert float(one("wallbox_power_limit")) == pytest.approx(22.0)
 
 
 def _charging_state(hass: HomeAssistant, entry_id: str) -> str | None:
@@ -329,7 +334,14 @@ async def test_the_device_page_publishes_the_diagnoses_wallbox_section(
     section = document["wallbox"]
     assert section["unit"] == 3
     assert section["path"] == "dongle"
-    assert section["readings"] == committed["readings"]
+    published = committed["readings"]
+    assert {name: section["readings"].get(name) for name in published} == published
+    # Mapped since the document was written: read beside it, never instead.
+    assert set(section["readings"]) - set(published) <= {
+        "plug_and_play",
+        "offline_current",
+        "power_limit",
+    }
     # The serial as the inverter's is published: a stand-in, in both modes.
     assert section["serial_anonymized_hashed"] == stand_in("A987654321")
     if dumping:

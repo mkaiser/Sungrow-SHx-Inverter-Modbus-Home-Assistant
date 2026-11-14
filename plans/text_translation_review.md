@@ -1,6 +1,6 @@
 # The texts, for review
 
-**324 texts**: everything in `strings.json` that is not an entity name, by its
+**349 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -690,7 +690,7 @@ and bold are kept.
 > Die Datei benennt deinen Wechselrichter mit einem Platzhalter statt der Seriennummer und enthält die letzten zwei Oktette seiner Adresse nur, solange dieses Feld angehakt ist.
 
 
-## Select states (19)
+## Select states (22)
 
 ### `entity.select.battery_forced_charge_discharge.state.stop`
 
@@ -752,6 +752,24 @@ and bold are kept.
 
 > **DE** VPP
 
+### `entity.select.ev_charger_mode.state.fast`
+
+> **EN** Fast charge
+
+> **DE** Schnellladen
+
+### `entity.select.ev_charger_mode.state.pv_surplus`
+
+> **EN** PV surplus
+
+> **DE** PV-Überschuss
+
+### `entity.select.ev_charger_mode.state.user_defined`
+
+> **EN** User defined
+
+> **DE** Benutzerdefiniert
+
 ### `entity.select.forced_charging_days.state.weekdays`
 
 > **EN** Weekdays
@@ -807,7 +825,7 @@ and bold are kept.
 > **DE** Über ein Kommunikationsmodul
 
 
-## Selector options (61)
+## Selector options (77)
 
 ### `selector.entity_ids.options.migrate`
 
@@ -1183,8 +1201,104 @@ and bold are kept.
 
 > **DE** {host}:{port}, Unit {unit}
 
+### `selector.flow_text.options.wallbox_left_output_current`
 
-## Repairs (10)
+> **EN** Charging current setpoint: {amps} A (holding 21203)
+
+> **DE** Ladestrom-Sollwert: {amps} A (Holding 21203)
+
+### `selector.flow_text.options.wallbox_left_phase_three`
+
+> **EN** Phase setting: three phase (holding 21204)
+
+> **DE** Phaseneinstellung: dreiphasig (Holding 21204)
+
+### `selector.flow_text.options.wallbox_left_phase_single`
+
+> **EN** Phase setting: single phase (holding 21204)
+
+> **DE** Phaseneinstellung: einphasig (Holding 21204)
+
+### `selector.flow_text.options.wallbox_left_enabled`
+
+> **EN** Charger enabled (holding 21211). In the app: the charger's *Systemparameter*, *Ladegerät aktivieren*
+
+> **DE** Ladestation aktiviert (Holding 21211). In der App: *Systemparameter* der Ladestation, *Ladegerät aktivieren*
+
+### `selector.flow_text.options.wallbox_left_disabled`
+
+> **EN** Charger disabled (holding 21211). In the app: the charger's *Systemparameter*, *Ladegerät aktivieren*
+
+> **DE** Ladestation deaktiviert (Holding 21211). In der App: *Systemparameter* der Ladestation, *Ladegerät aktivieren*
+
+### `selector.flow_text.options.wallbox_left_started`
+
+> **EN** Start/stop at start (holding 21212). In the app: *Start* on the charger's page
+
+> **DE** Start/Stopp auf Start (Holding 21212). In der App: *Start* auf der Seite der Ladestation
+
+### `selector.flow_text.options.wallbox_left_stopped`
+
+> **EN** Start/stop at stop (holding 21212). In the app: *Stop* on the charger's page
+
+> **DE** Start/Stopp auf Stopp (Holding 21212). In der App: *Stopp* auf der Seite der Ladestation
+
+### `selector.flow_text.options.wallbox_left_charging_on`
+
+> **EN** Wallbox charge on (the inverter's 33540). In the app: start charging on the charger's page
+
+> **DE** Wallbox laden an (33540 des Wechselrichters). In der App: Laden starten auf der Seite der Ladestation
+
+### `selector.flow_text.options.wallbox_left_charging_off`
+
+> **EN** Wallbox charge off (the inverter's 33540). In the app: stop charging on the charger's page
+
+> **DE** Wallbox laden aus (33540 des Wechselrichters). In der App: Laden stoppen auf der Seite der Ladestation
+
+### `selector.flow_text.options.wallbox_left_mode_fast`
+
+> **EN** Wallbox charge mode: fast charge (the inverter's 33541). In the app: the charging mode
+
+> **DE** Wallbox-Lademodus: Schnellladen (33541 des Wechselrichters). In der App: der Lademodus
+
+### `selector.flow_text.options.wallbox_left_mode_pv_surplus`
+
+> **EN** Wallbox charge mode: PV surplus (the inverter's 33541). In the app: the charging mode
+
+> **DE** Wallbox-Lademodus: PV-Überschuss (33541 des Wechselrichters). In der App: der Lademodus
+
+### `selector.flow_text.options.wallbox_left_mode_quantity_and_time`
+
+> **EN** Wallbox charge mode: quantity and time (the inverter's 33541). In the app: the charging mode
+
+> **DE** Wallbox-Lademodus: Menge und Zeit (33541 des Wechselrichters). In der App: der Lademodus
+
+### `selector.flow_text.options.wallbox_left_mode_user_defined`
+
+> **EN** Wallbox charge mode: user defined (the inverter's 33541). In the app: the charging mode
+
+> **DE** Wallbox-Lademodus: benutzerdefiniert (33541 des Wechselrichters). In der App: der Lademodus
+
+### `selector.flow_text.options.wallbox_left_user_current`
+
+> **EN** Wallbox user-defined current: {amps} A (the inverter's 33545). In the app: the user-defined charging current
+
+> **DE** Wallbox benutzerdefinierter Ladestrom: {amps} A (33545 des Wechselrichters). In der App: der benutzerdefinierte Ladestrom
+
+### `selector.flow_text.options.wallbox_left_register`
+
+> **EN** Register {register}: {word}
+
+> **DE** Register {register}: {word}
+
+### `selector.flow_text.options.wallbox_restore_by_hand`
+
+> **EN** A disabled wallbox answers no write, and the car may need replugging. Set these in the app as listed, then try again; this repair stays open until the wallbox reads as it should.
+
+> **DE** Eine deaktivierte Ladestation nimmt keinen Schreibbefehl an, und das Auto muss eventuell neu eingesteckt werden. Stelle diese Werte in der App wie aufgeführt ein und versuche es dann erneut; diese Reparatur bleibt offen, bis die Ladestation wieder richtig meldet.
+
+
+## Repairs (15)
 
 ### `issues.preview_release.title`
 
@@ -1261,6 +1375,52 @@ and bold are kept.
 > **DE** Es konnte nicht alles zurückgesetzt werden: {error}
 >
 > Diese Reparatur bleibt offen, damit du es erneut versuchen kannst.
+
+### `issues.wallbox_capability_test_unfinished.title`
+
+> **EN** A wallbox test on {name} did not put everything back
+
+> **DE** Ein Wallbox-Test an {name} hat nicht alles zurückgesetzt
+
+### `issues.wallbox_capability_test_unfinished.description`
+
+> **EN** A capability test of this wallbox could not put these settings back, so your car may not charge as you set it:
+>
+> {settings}
+>
+> Open this to try again, or set them in the app as listed.
+
+> **DE** Ein Funktionstest dieser Wallbox konnte diese Einstellungen nicht zurücksetzen, daher lädt dein Auto womöglich nicht wie eingestellt:
+>
+> {settings}
+>
+> Öffne dies, um es erneut zu versuchen, oder stelle sie in der App wie aufgeführt ein.
+
+### `issues.wallbox_capability_test_unfinished.fix_flow.step.confirm.title`
+
+> **EN** Put the wallbox's settings back
+
+> **DE** Die Einstellungen der Wallbox zurücksetzen
+
+### `issues.wallbox_capability_test_unfinished.fix_flow.step.confirm.description`
+
+> **EN** These will be written back, then the wallbox (and, for a wallbox the inverter manages, the charge) checked again:
+>
+> {settings}
+>
+> If the wallbox was left disabled it answers no write: then switch *Ladegerät aktivieren* on in the app first.
+
+> **DE** Diese werden zurückgeschrieben, dann wird die Wallbox (und bei einer vom Wechselrichter verwalteten Wallbox der Ladevorgang) erneut geprüft:
+>
+> {settings}
+>
+> Wurde die Wallbox deaktiviert zurückgelassen, nimmt sie keinen Schreibbefehl an: dann zuerst *Ladegerät aktivieren* in der App einschalten.
+
+### `issues.wallbox_capability_test_unfinished.fix_flow.abort.restore_failed`
+
+> **EN** Could not put everything back: {error}
+
+> **DE** Es konnte nicht alles zurückgesetzt werden: {error}
 
 ### `issues.capability_test_left_stopped.title`
 
@@ -2115,7 +2275,7 @@ and bold are kept.
 > **DE** Welcher Wechselrichter gestoppt werden soll.
 
 
-## Error messages (21)
+## Error messages (22)
 
 ### `exceptions.device_not_found.message`
 
@@ -2152,6 +2312,12 @@ and bold are kept.
 > **EN** {title} is a string inverter. This action writes to a hybrid inverter's registers, and nothing in this integration writes to a string inverter.
 
 > **DE** {title} ist ein String-Wechselrichter. Diese Aktion schreibt in die Register eines Hybrid-Wechselrichters, und nichts in dieser Integration schreibt in einen String-Wechselrichter.
+
+### `exceptions.ev_charger_user_current_mode.message`
+
+> **EN** The user-defined current is taken only in the user-defined charge mode; the inverter refuses it in any other. Set {mode_entity} to User defined first.
+
+> **DE** Der benutzerdefinierte Ladestrom wird nur im Lademodus „Benutzerdefiniert“ übernommen; der Wechselrichter lehnt ihn in jedem anderen ab. Stellen Sie zuerst {mode_entity} auf „Benutzerdefiniert“.
 
 ### `exceptions.write_failed.message`
 
