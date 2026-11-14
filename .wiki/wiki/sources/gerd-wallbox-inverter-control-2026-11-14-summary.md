@@ -40,8 +40,8 @@ protocol addresses, one lower.
 What did not answer: what 33550 does (a minimum charge from the grid was not kept up), and the
 quantity-and-time mode (162), not tried.
 
-Two writes of 21203 on the wallbox itself were made in breach of
-`plans/wallbox_recovery_and_retest.md`'s stop (only 21203, nothing under 6 A, no enable and no
+Two writes of 21203 on the wallbox itself were made in breach of the
+stop on wallbox writes then in force (its rules are now `plans/wallbox_tests.md`, section 3) (only 21203, nothing under 6 A, no enable and no
 start/stop); both were overwritten by the inverter and put back.
 
 What it changed: the wallbox [capability test](../concepts/capability-test.md) now writes nothing

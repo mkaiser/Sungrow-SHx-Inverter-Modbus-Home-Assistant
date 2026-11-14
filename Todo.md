@@ -81,7 +81,7 @@ Nothing can start now (blocker 13).
 
 3. **Controlling the wallbox: through the inverter.** Measured at gerd's on
    site, 2026-11-14 (wiki: `gerd-wallbox-inverter-control-2026-11-14-summary.md`,
-   `plans/wallbox_recovery_and_retest.md`): the scale of holding 21203 is
+   `plans/wallbox_tests.md`): the scale of holding 21203 is
    **0.1 A, settled by the car**. But his wallbox is **managed by the
    inverter**, which drives 21203 and overwrites any write to it; the charge
    is controlled at the inverter (unit 1): charging on/off, mode, and the
@@ -108,7 +108,7 @@ Nothing can start now (blocker 13).
    separate the two scales and the meaning of 0 is not known. Input 21322 is
    not the setting's echo.
 
-   Built (`plans/wallbox_capability_tests.md`, steps 1 to 4): the wallbox's
+   Built (`plans/wallbox_tests.md`, section 4): the wallbox's
    tests run from Home Assistant's *Extended test (auto repeat)*, on the
    wallbox's entry of its own only (since 2026-11-12; a wallbox behind a
    dongle stays read only)
@@ -151,7 +151,7 @@ Nothing can start now (blocker 13).
       from the wallbox's entry when an inverter entry here left the wallbox
       to it, writing through that entry (`managing_entry`); a wallbox with
       no such inverter entry awaits nothing.
-   5. **The next session at gerd's**: `plans/gerd_wallbox_handoff.md`
+   5. **The next session at gerd's**: `plans/wallbox_tests.md`
       (quantity-and-time mode, writes that repeat what is set, waking a
       sleeping car, phase switching, PV surplus in sun).
 
@@ -256,7 +256,7 @@ Nothing can start now (blocker 16).
       The night re-check and the plausibility checks need one auto-repeat
       collection at the maintainer's SH10RT over a day and a night, which
       may catch a slow PV charge for the threshold too; then ingest. The
-      wallbox's tests are planned in `plans/wallbox_capability_tests.md`.
+      wallbox's tests are planned in `plans/wallbox_tests.md`.
    3. **Outside the repository**: issue #786's title still says survey, and
       the repository variable `SURVEY_ISSUE` keeps its name.
    4. **Capability test runs over a day.** Home Assistant keeps every run per
