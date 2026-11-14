@@ -67,6 +67,32 @@ moves with nothing written.
 - **What 162 (quantity and time) writes**, and what the three always-zero words between the mode and
   the user current are.
 
+### What others report on phase switching (web, 2026-11-14)
+
+Register numbers here; evcc's code uses protocol addresses, one lower.
+
+- **Sungrow switches automatically, by power.** Datasheets and dealers: automatic 1/3-phase
+  switching with a Sungrow hybrid, charging from 1.38 kW of PV surplus. The iHomeManager's manual:
+  when the charging power falls within **1.38-4.14 kW** the iHomeManager tells the charger to switch
+  to single phase. No source names a setting, in iSolarCloud or elsewhere, to choose the phases by
+  hand.
+- **evcc on a standalone wallbox** (`charger/sungrow.go`, PR #23716 for issue #23715): writes
+  holding **21204** (0 three, 1 single) only with the charge stopped: holding 21212 = 1 (stop),
+  then 21204, then 21211 = 1, 21212 = 0 and the current; reads the phases in use at input 21270.
+  Issue #23715: on an AC011E (firmware 1.7.186) a switch without a stop was ignored by some cars;
+  evcc's maintainer calls a switch that does not interrupt the charge a firmware fault.
+- **A fork's fix** (BastiSch/evcc, branch `fix_sungrow_phase_switching`, 2026-09-07) waits **5 s
+  after the stop** before writing 21204. Its comment: the wallbox sets the phases back to three once
+  it reaches *completed*, 2-3 s after a stop; and *the SH10RT does not stop the charger when it
+  switches phases*: so the inverter switches phases on a managed wallbox, under load.
+- **Cars differ**: a Toyota bZ4X needed a pause; a CUPRA Tavascan stopped at the three-phase
+  minimum and did not resume on one phase (evcc discussions #23715, #28643).
+- **Inverter and evcc on one wallbox fight** (evcc discussion #20739): users decouple the wallbox
+  from the inverter for evcc to switch phases; one switched the wallbox to EMS mode for it.
+
+So on gerd's managed wallbox the phases are the inverter's to switch, most likely in PV surplus
+when the power wanted is 1.38-4.14 kW; test 5 watches for that.
+
 ## 3. Rules for any wallbox write
 
 1. **Never write a managed wallbox's own registers.** The capability test refuses unless the wallbox
@@ -200,6 +226,9 @@ In order; 1 to 4 need the owner at the app.
     says what to do on site if it cannot;
   - the inverter's block and EMS mode in its snapshot, read only;
   - an option, or a measured signal, that declares a wallbox standalone in Home Assistant.
+- **The standalone test's phase switch** writes 21204 as soon as the stop is seen; by the fork
+  above, the wallbox then resets the phases to three when it reaches *completed*. Wait for a
+  settled status and 5 s more before writing 21204.
 - **A write through the dongle** (unit 3), leg C only, if a standalone wallbox behind a dongle turns
   up.
 - **The managed test's open checks**: writing what is already set, and a longer stop for a sleeping
