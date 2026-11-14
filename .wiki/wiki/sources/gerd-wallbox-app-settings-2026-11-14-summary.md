@@ -25,7 +25,10 @@ written over Modbus. Register numbers here.
 | Input 21263 (maximum current) and input 21273 (nominal power) follow the limit | 320 → 160 (32 → 16 A), 22080 → 11040 W, and back |
 | **The offline current does not follow the limit**: 32 A at an 11 kW limit, in the registers and the app alike | holding 21299 read 320 throughout |
 | None of these is in the inverter's 33501-33600: they are the wallbox's own settings | the inverter's words never moved |
+| **The charger's *Einstellungen* page writes the same words**: its Plug&Play is holding 21298, its *Netzbezug* the inverter's 33550 | toggled there at 20:10-20:16, the same words moved |
+| **Holding 21232 is *Fahrstrecke pro kWh***, 0.1 km/kWh | the app showed 5555.2 against 55552; set to 5.0 it read 50 |
 | Input 21364 drifts by itself (signed, about -62) | 65473-65476 over 20 minutes with nothing changed |
 
 Not touched: *Datenlöschung* (data deletion), also shown while the charger is disabled.
-Afterwards everything read as at the start.
+Afterwards everything read as at the start, except the mileage, set back from 5555.2 to 5.0: it
+had read 50 before the capability test of 2026-11-13, whose restore of 21232 failed.

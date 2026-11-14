@@ -859,3 +859,10 @@ wallbox and the inverter were read whole: enable 21211 (status 8 while disabled)
 offline current 21299, power limit 21313, with input echoes; the offline current does not follow
 the limit. New raw note and source gerd-wallbox-app-settings-2026-11-14; updated device-wallbox,
 the index.
+
+## [2026-11-14] measured | the charger's own app page writes the same words; mileage set back
+
+At gerd, the charger's *Einstellungen* page: its Plug&Play moved holding 21298 and its Netzbezug
+the inverter's 33550, as the other screens do; *Fahrstrecke pro kWh* is holding 21232, set back
+from 5555.2 (left by the capability test of 2026-11-13) to 5.0. Updated the raw note and source
+gerd-wallbox-app-settings-2026-11-14.

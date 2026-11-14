@@ -54,3 +54,22 @@ differ. Everything the app touched is back as it was; the inverter's 33501-33600
 
 None of them is in the inverter's holding 33501-33600: they are the wallbox's own. A setting the
 app changed was read back within a minute or two, so each is the setting, not a cached copy.
+
+## The charger's *Einstellungen* page (20:08-, *Funktionseinstellungen*)
+
+The same app's charger page has its own switches: *Plug&Play*, *Fahrstrecke pro kWh* (showing
+5555.2 km/kWh, which is holding 21231 = 55552 in every reading of the evening: 21232 by register
+number), *Netzbezug*, and *Geräteeinstellungen* (the page above). Baseline 20:08:14, the same as
+19:58:05.
+
+| Time | Change in the app | Words that changed | Before → after |
+| --- | --- | --- | --- |
+| 20:10:40 | Plug&Play on → off (this page) | holding 21297; input 21361 | 1 → 0; 1 → 0: the same word as the system parameters' Plug&Play |
+
+*Netzbezug* on this page showed off; the inverter's 33549 read 85 (off) before and after.
+| 20:13:01 | Plug&Play off → on and *Netzbezug* off → on (this page, together) | holding 21297; input 21361; **inverter 33549** | 0 → 1; 0 → 1; **85 → 170**: this page's Netzbezug is the same inverter word as the charging mode screen's |
+| 20:16:00 | *Netzbezug* on → off; *Fahrstrecke pro kWh* 5555.2 → **5.0** (this page) | inverter 33549; holding 21231 | 170 → 85; **55552 → 50** |
+
+20:16:38, against 20:08:14: only the mileage differs (now 5.0, as before the capability test of
+2026-11-13), apart from the clock and the counters. Left: PV surplus, Netzbezug off, charging
+off, Plug&Play on, offline current 32 A, 22 kW, enabled.

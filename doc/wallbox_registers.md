@@ -183,7 +183,7 @@ and no file in `device-diagnosis/` implements a Modbus write function.
 | 21212 | u16 | — | Start/stop: 0 start, 1 stop. The app's Start/Stop writes it | 0 / 1 | two sources, and the app |
 | 21225-21230 | u16 × 6 | — | **The wallbox's clock**, local time: year (two digits), month, day, hour, minute, second. Read 26, 10, 13, 21, 12, 23 at 21:12 local on 2026-10-13, and 26, 9, 8, 17, 57, 44 during the run of 2026-09-08 | 26-10-13 21:12:23 | measured here |
 | 21231 | u16 | — | Configured unit id, read-only | 248 | named elsewhere |
-| 21232 | u16 | 0.1 km/kWh | Mileage per kWh, the app's *Fahrstrecke pro kWh* | 50 → 5.0; 55552 → the app's 5555.2 | named elsewhere, and the app |
+| 21232 | u16 | 0.1 km/kWh | Mileage per kWh, the app's *Fahrstrecke pro kWh*: set to 5.0 in the app, it read 50 | 50 → 5.0 | measured here, and the app |
 | 21233 | u16 | — | Configured minimum current | 6 | named elsewhere |
 | 21263 | u16 | — | Working mode: 0 network, 2 plug and play, 6 EMS, says one project. **No answer through the dongle**; 0 inside a block read at its own address, where no read may start on it | no answer / 0 | named elsewhere |
 | 21298 | u16 | — | **Plug&Play**: 1 a plugged-in car starts charging by itself, 0 it waits for a start. Echoed at input 21362 | 1 / 0 | measured here, and the app |
@@ -206,7 +206,7 @@ named in an ioBroker thread (post 85, 2025-05-19).
 | 33540 | Charging on/off | 0xAA on, 0x55 off | off stopped the car within a second; on started it within 7-15 s, ramping from 6 A |
 | 33541 | Charging mode | 160 fast, 161 PV surplus, 162 quantity and time, 163 user defined | 160, 161 and 163 seen and written; 162 not tried |
 | 33545 | User-defined current | 0.1 A | followed by the car at 6, 8, 10 and 12 A; **refused (0x04) unless 33541 is 163**; 5 A refused, 33 A taken on a 32 A unit |
-| 33550 | Surplus from the grid in PV-surplus mode: the app's *Netzbezug* | 0x55 no, 0xAA yes | followed the app's switch both ways within 5 s; written, with 1.7 kW of sun and the battery at its minimum it did not keep a charge going |
+| 33550 | Surplus from the grid in PV-surplus mode: the app's *Netzbezug*, on the charging mode screen and on the charger's page alike | 0x55 no, 0xAA yes | followed the app's switch both ways within 5 s; written, with 1.7 kW of sun and the battery at its minimum it did not keep a charge going |
 
 **A mode change has side effects.** To 163 switches charging on by itself;
 163 to 160 and 160 to 161 end the session, and charging on written after it

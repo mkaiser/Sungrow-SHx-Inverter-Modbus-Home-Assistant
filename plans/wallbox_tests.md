@@ -42,7 +42,7 @@ moves with nothing written.
 | The wallbox's own current | wallbox holding 21203, 0.1 A | **driven by the inverter**: writes overwritten in seconds; the car follows the inverter's ramp (about 1.4 A every 5 s) |
 | The app's enable / Start | wallbox holding 21211 / 21212 | 21211 1 = enabled, 0 = disabled (status 21317 then reads **8**, *disabled*); 21212 0 = start |
 | The app's other system parameters | wallbox holding 21298 Plug&Play (1/0), 21299 offline current (0.1 A), 21313 power limit (0.1 kW, shown only while disabled) | each changed in the app and back, 2026-11-14 19:36-19:58, seen in the registers within a minute; the offline current does not follow the limit |
-| Mileage per kWh | wallbox holding 21232, 0.1 km/kWh | reads **55552 = the app's 5555.2**; it was 50 before the capability test of 2026-11-13, whose restore of 21232 failed: probably ours to put back |
+| Mileage per kWh | wallbox holding 21232, 0.1 km/kWh | read **55552 = the app's 5555.2** after the capability test of 2026-11-13 (50 before; its restore of 21232 failed); set back to 5.0 in the app at 20:16, read 50 |
 
 - The same writes work through the WiNet-S, judged by the car (its readback is not evidence).
 - **Status 8 is *disabled***: it reads 8 whenever 21211 is 0, and 1 (idle) again on enable.
@@ -164,12 +164,13 @@ a draw of 5 A or more.
 
 ## 5. gerd's: how it was left (2026-11-14)
 
-- At 19:58: the inverter in mode **PV surplus** (set in the app by the maintainer at 19:32),
+- At 20:16: the inverter in mode **PV surplus** (set in the app by the maintainer at 19:32),
   *Netzbezug* (33550) **off**, charging **off**, user current 16.0 A. The wallbox: enabled
   (21211 = 1), start (21212 = 0), Plug&Play on, offline current 32 A, power limit 22 kW, three
   phase, idle. Everything the app's system parameters touched read as it did at 19:36.
-- Mileage per kWh (21232) reads 5555.2, probably left by the capability test of 2026-11-13 (50
-  before); to be set back in the app.
+- Mileage per kWh (21232) set back to 5.0 in the app at 20:16 (it read 5555.2, left by the
+  capability test of 2026-11-13). The charger's own page (Plug&Play, Netzbezug) writes the same
+  words as the system parameters and the charging mode screen.
 - The owner's Home Assistant was stopped for the session.
 - The car at about 44 %. In PV surplus without Netzbezug it charges only with surplus: the
   one-phase test (section 6, test 5) needs a sunny day and the battery above its minimum.
