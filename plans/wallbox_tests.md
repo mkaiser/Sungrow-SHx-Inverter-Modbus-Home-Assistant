@@ -57,9 +57,14 @@ moves with nothing written.
 
 - **Remote control status 8** (input 21268) and an enable register reading 8: undocumented, seen
   after the disable.
-- **What ended the session at 10.2 kWh** with the car at 43 % (2026-11-14, about 14:55). Pressing
-  *fast charge* in the app restarted it with no replug. Being checked: does the new session stop
-  near 10 kWh as well (a charge amount the inverter applies in fast mode too)?
+- **Why the inverter switches charging off by itself.** Twice on 2026-11-14 a fast-charge session
+  ended with the car at 43 %: at about 14:55 (10.2 kWh) and at 16:31 (3.5 kWh, after a restart
+  from the app). The second time the inverter's on/off word went to off first, the wallbox
+  followed, and the battery read at its minimum SoC (13023 0.8 %, no PV). Most likely the
+  inverter stops the wallbox to protect the battery, as the app's *Grund* screen lists. To
+  confirm: the app's reason for a stop, and whether a session runs on with the battery well above
+  its minimum. If it holds, a charging switch entity reads off for this reason too, and auto repeat
+  sees no car to test.
 - **What 162 (quantity and time) writes**, and what the three always-zero words between the mode and
   the user current are.
 
@@ -118,7 +123,7 @@ Three runners:
 | PV surplus in sun, grid surplus off and on | — | on site, read only beside the app |
 | Unplug and replug: the block and the wallbox at a session's ends | — | on site |
 | The block polled every 10 s for an hour through the WiNet-S | — | read only, can run remotely |
-| Does a session stop near 10 kWh in fast mode | — | read only, can run remotely (running 2026-11-14) |
+| Does the inverter stop the charge at the battery's minimum SoC | — | read only, can run remotely (`session_watch.py` beside `energy.py`); the app's reason on site |
 
 A check whose need was met and still did not settle runs again in the next auto-repeat slot that
 meets it, up to three times; then it is reported as not settled. Charging checks need status 3 and

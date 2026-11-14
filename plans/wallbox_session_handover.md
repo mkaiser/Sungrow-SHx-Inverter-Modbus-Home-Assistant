@@ -5,12 +5,12 @@ Start with `plans/wallbox_tests.md` (facts, rules, coverage, next tests at gerd'
 - **Done and committed** (4b90098 and before): the managed wallbox test (library, terminal script,
   Home Assistant from the wallbox's entry via `managing_entry`); the standalone test refuses on a
   managed wallbox. Pushed up to c455602; **4b90098 and later are not pushed**: ask before pushing.
-- **Running, read only**: `tmp/gerd-wallbox-2026-11-14/session_watch.py` logs gerd's session to
-  `session_watch.log` in that folder every 2 min until the charge stops. It tests whether a session
-  in fast mode stops near 10 kWh (the last one stopped at 10223 Wh with the car at 43 %; restarted
-  from the app at about 16:11). Write the result into
-  `.wiki/raw/gerd-wallbox-inverter-control-2026-11-14.md` and `plans/wallbox_tests.md` section 2.
-- **gerd's house**: charging on, fast charge, 16 A. Nothing to put back. Never write the wallbox's
-  own registers there; write the inverter's block only with the owner's consent.
+- **Open finding**: the inverter switched gerd's charging off by itself twice on 2026-11-14 (car
+  at 43 %), the second time with the battery at its minimum SoC. Likely battery protection; to
+  confirm (`plans/wallbox_tests.md`, section 2). `tmp/gerd-wallbox-2026-11-14/session_watch.py`
+  and `energy.py` read it remotely.
+- **gerd's house**: fast charge, 16 A; charging off by the inverter since 16:31, the car at 43 %.
+  Nothing of ours to put back. Never write the wallbox's own registers there; write the inverter's
+  block only with the owner's consent.
 - **Next in code**: the inverter entry's EV charger entities (`Todo.md`, Wallbox item 3), from
   `src/sungrow_modbus/hybrid_inverter/ev_charger.py`.

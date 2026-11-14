@@ -174,6 +174,18 @@ not established: it did not keep a minimum charge going here. Left as found: fas
   charge quantity of 10 kWh (the quantity-and-time mode's amount), the inverter may apply it in fast
   mode too. To check: the amount in the app's charging settings, and whether this session also
   stops near 10 kWh.
+- **The 10 kWh idea is wrong.** Read only, every ~2 min: 16:31:04 the block's on/off 170 (on), car
+  charging, session 3334 Wh; 16:31:50 on/off **85 (off)** while the wallbox still read charging
+  (15.4/15.7/16.1 A, 3469 Wh); 16:34 a read timed out; 16:37:12 status *completed*, 0 A, session
+  **3501 Wh**, on/off 85, mode 160. The inverter switched charging off first, and the wallbox
+  ended the session after it. Nothing was written from here. Not known whether the owner pressed
+  Stop in the app.
+- 16:37, read only through the WiNet-S: PV 0 W, import 1102 W, load 1045 W, the inverter's battery
+  level (13023) **0.8 %**, battery power 0 W: the battery is at its minimum SoC (13023 is the charge
+  within the min-max window). Fits the app's *Grund* cause seen on 2026-11-13 (the battery under
+  its protection threshold, the house served first): the inverter turns charging off when the
+  battery reaches its minimum, also in fast mode. Likely for 14:55 too, not read then. To confirm:
+  the app's reason for this stop, and a stop with the battery well above its minimum.
 
 ## Wire 33545-33548: two times, read only
 
