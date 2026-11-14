@@ -75,7 +75,6 @@ class FakeWallbox:
         refuse_below_a: float | None = None,
         clamp_to_rating: bool = True,
         available_offset_a: float = 0.0,
-        mileage: int = 70,
         stays_on_after_stop: bool = False,
         driven: bool = False,
     ) -> None:
@@ -105,7 +104,6 @@ class FakeWallbox:
         self.available_offset_a = available_offset_a
         self.stays_on_after_stop = stays_on_after_stop
         self.driven = driven
-        self.holding[wct.MILEAGE] = mileage
         self.fixed_phase = phase
         self.original = dict(self.holding)
         self.writes: list[tuple[int, int]] = []
@@ -1001,23 +999,6 @@ async def test_a_restore_after_a_dead_run_stops_before_it_moves_the_phase() -> N
     assert order.index((wct.PHASE_SETPOINT, 0)) > 0
     assert order[-1] == (wct.START_STOP, wct.START_WORD)
     assert all(row.restored for row in run.restores)
-
-
-async def test_the_mileage_write_is_a_no_op_that_is_taken() -> None:
-    box = FakeWallbox()
-    outcome, _ = await _run(box, mileage=True)
-
-    assert _verdicts(outcome)["mileage"] == wct.CONFIRMED
-    assert (wct.MILEAGE, 70) in box.writes
-    assert all(w == 70 for a, w in box.writes if a == wct.MILEAGE)
-
-
-async def test_a_refused_mileage_write_is_a_finding_not_a_failure() -> None:
-    box = FakeWallbox(refuse={wct.MILEAGE})
-    outcome, _ = await _run(box, mileage=True)
-
-    assert _verdicts(outcome)["mileage"] == wct.REFUSED
-    assert outcome.code == 0
 
 
 async def test_the_fallback_waits_in_silence_and_reports_what_the_car_is_given() -> (

@@ -39,10 +39,9 @@ With a car charging, `--follow` steps the offer from 6 A to your `--max-amps` an
 back and times how the car follows; `--above-rating` and
 `--fallback` need `--max-amps` given on purpose (the last also needs it no
 higher than the setting the wallbox had); `--phase-charging` switches the phase
-with the charge stopped first; `--mileage` writes the mileage setting its own
-word. `--merge-into DIAGNOSIS.json` keeps the run in a diagnosis document under
-`wallbox_capability_test`. They came with `sungrow-modbus` 0.1.0a34, so the
-pin above has them.
+with the charge stopped first. `--merge-into DIAGNOSIS.json` keeps the run in a
+diagnosis document under `wallbox_capability_test`. They came with
+`sungrow-modbus` 0.1.0a34, so the pin above has them.
 
 **At the wallbox's own address only**: Modbus inside TLS on port 516, unit 248.
 Through a WiNet-S the wallbox reads back stale and the readback is not
@@ -112,7 +111,6 @@ NEW_FLAGS = (
     "above_rating",
     "phase_charging",
     "fallback",
-    "mileage",
 )
 
 #: Left in the way a person at a terminal is asked a last time.
@@ -465,9 +463,6 @@ def _parser() -> argparse.ArgumentParser:
         "--phase-charging", action="store_true", help="switch phase while charging"
     )
     parser.add_argument("--fallback", action="store_true", help="fall silent for 75 s")
-    parser.add_argument(
-        "--mileage", action="store_true", help="write the mileage its own word"
-    )
     parser.add_argument(
         "--merge-into", help="keep the run in this diagnosis document (needs --leave)"
     )

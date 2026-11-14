@@ -66,9 +66,8 @@ moves with nothing written.
   was set back on 2026-11-14 20:16, so the wallbox had really stored it. The same day 21211 read 8
   (only 0 and 1 are documented) after a write of 1, and the wallbox answered duplicate frames.
   Every read-back that day was 0, so the restore's check could not see either value. No
-  transcript of the day is left. The mileage check now runs only in the standalone test, behind
-  the wallbox permission (off by default), so never at gerd's managed wallbox; whether to drop it
-  is open (`Todo.md`, Wallbox item 4).
+  transcript of the day is left. The capability test no longer writes 21232: its mileage check is
+  removed.
 - **Why the inverter switches charging off by itself.** Twice on 2026-11-14 a fast-charge session
   ended with the car at 43 %: at about 14:55 (10.2 kWh) and at 16:31 (3.5 kWh, after a restart
   from the app). The second time the inverter's on/off word went to off first, the wallbox
@@ -151,7 +150,7 @@ Three runners:
 | Start/stop at 21212, timed | standalone test, *start/stop* | built; no standalone wallbox yet |
 | Phase switch, idle and while charging (stop seen before 21204) | standalone test, *phase*, *phase while charging* | built; no standalone wallbox yet |
 | Fallback after 75 s of silence | standalone test, *fallback* | built; no standalone wallbox yet |
-| Mileage per kWh no-op write (21232) | standalone test, *mileage* | built; no standalone wallbox yet |
+| Mileage per kWh no-op write (21232) | — | **removed** 2026-11-14: its one run at gerd's left 55552 behind |
 | Enable (21211) | — | **never written**, by rule 2; the check only skips |
 | Below the minimum on the wallbox (5 A, 0) | — | **never written**, by rule 2; the check only skips |
 | A write through the dongle (unit 3) | — | not built |

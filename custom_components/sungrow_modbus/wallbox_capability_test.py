@@ -205,7 +205,6 @@ def check_options(
         "phase": alone,
         "phase_charging": alone,
         "fallback": alone,
-        "mileage": alone,
         "managed": managed,
     }
 

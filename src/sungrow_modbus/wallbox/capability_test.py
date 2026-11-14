@@ -219,7 +219,6 @@ START_STOP = _address(WallboxSettings, "start_stop_raw")
 ENABLED = _address(WallboxSettings, "charger_enabled_raw")
 PHASE_SETPOINT = _address(WallboxSettings, "phase_mode_setpoint_raw")
 PHASE_ACTUAL = _address(WallboxRatings, "phase_mode_raw")
-MILEAGE = _address(WallboxSettings, "mileage_per_kwh")
 RATED_CURRENT = _address(WallboxRatings, "rated_current")
 PHASE_A_CURRENT = _address(WallboxLive, "phase_a_current")
 PHASE_B_CURRENT = _address(WallboxLive, "phase_b_current")
@@ -289,10 +288,6 @@ class Options:
     """Stop every read for 75 s and see what the car is given by the
     fallback. Needs a car charging and a cap no higher than the setting the
     house had."""
-
-    mileage: bool = False
-    """Write the mileage setting its own word: a no-op that shows the write
-    path is open."""
 
     current: bool = True
     """Run the output current's own three steps (6, 8 and 10 A). Off once an
@@ -500,8 +495,6 @@ class WallboxCapabilityTest:
                     await self._phase()
                 if self.options.phase_charging:
                     await self._phase_charging()
-                if self.options.mileage:
-                    await self._mileage()
                 if self.options.fallback:
                     await self._fallback()
             else:
@@ -561,8 +554,6 @@ class WallboxCapabilityTest:
         # step rather than the run, because a lost read is not a refusal and
         # never write what cannot be put back.
         extra = [(ENABLED, "enabled"), (PHASE_SETPOINT, "phase")]
-        if self.options.mileage:
-            extra.append((MILEAGE, "mileage"))
         for address, name in extra:
             try:
                 self.snapshot["raw"][address] = await self._read_one("holding", address)
@@ -1181,31 +1172,6 @@ class WallboxCapabilityTest:
             None,
             f"{name}: stopped, switched, resumed after {resumed:.0f} s, {shape}",
         )
-
-    async def _mileage(self) -> None:
-        """Write the mileage setting its own word: a no-op that proves the path."""
-        self._step("write the mileage setting its own word")
-        original = self.snapshot["raw"].get(MILEAGE)
-        if original is None:
-            self._skip(
-                "mileage", "the register could not be read, so it is not written"
-            )
-            return
-        failure = await self._write(MILEAGE, original)
-        if failure is not None:
-            refusal = self.conditions["refusals"][MILEAGE]
-            self.steps.append(Step("mileage", failure, refusal))
-            if failure != REFUSED:
-                self._worst(3)
-            return
-        held = await self._held(MILEAGE)
-        if held == original:
-            self.steps.append(Step("mileage", CONFIRMED, "its own word, taken"))
-        else:
-            self.steps.append(
-                Step("mileage", MISMATCH, f"wrote {original}, then read {held}")
-            )
-            self._worst(3)
 
     async def _fallback(self) -> None:
         """Stop every read, and see what the car is left with after the session drops.

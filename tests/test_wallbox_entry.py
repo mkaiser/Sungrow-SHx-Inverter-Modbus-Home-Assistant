@@ -369,7 +369,6 @@ def _testable(*, charging: bool, setting: int = 160) -> MockModbusUnit:
     unit.holding[wct.START_STOP] = 0
     unit.holding[wct.ENABLED] = 1
     unit.holding[wct.PHASE_SETPOINT] = 0
-    unit.holding[wct.MILEAGE] = 70
     return unit
 
 

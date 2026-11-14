@@ -63,7 +63,6 @@ def _wallbox(*, charging: bool, setting: int = 160) -> MockModbusUnit:
     unit.holding[wct.START_STOP] = 0
     unit.holding[wct.ENABLED] = 1
     unit.holding[wct.PHASE_SETPOINT] = 0
-    unit.holding[wct.MILEAGE] = 70
     return unit
 
 
@@ -290,9 +289,9 @@ async def test_established_checks_are_left_out_of_the_next_run(
     box = _wallbox(charging=True)
     entry = await _setup(hass, box, **{CONF_CAPABILITY_TEST_WALLBOX: True})
 
-    options = wbt.run_options(entry, frozenset({"output current", "mileage"}))
+    options = wbt.run_options(entry, frozenset({"output current", "phase"}))
     assert not options.current
-    assert not options.mileage
+    assert not options.phase
     assert options.start_stop
 
 

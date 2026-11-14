@@ -70,7 +70,6 @@ CHECKS: dict[str, tuple[str, str | None]] = {
     "phase": (IDLE_NEED, "phase"),
     "phase while charging": (CHARGING_NEED, "phase_charging"),
     "fallback": (CHARGING_NEED, "fallback"),
-    "mileage": (ANY_NEED, "mileage"),
     "user current": (CHARGING_NEED, "managed"),
     "floor": (CHARGING_NEED, "managed"),
 }
@@ -157,7 +156,6 @@ def block(
             "above_rating": options.above_rating,
             "phase_charging": options.phase_charging,
             "fallback": options.fallback,
-            "mileage": options.mileage,
             "standalone": getattr(options, "standalone", False),
         },
         "code": outcome.code,

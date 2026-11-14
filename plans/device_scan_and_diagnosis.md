@@ -158,7 +158,7 @@ asking (`AGENTS.md`).
    - **Hardware**: when it is built and `make check` is green, test it **over
      the VPN at gerd's** (wallbox at its own address, TLS 516, unit 248; see the
      dev HA notes in step 6). Without a car only the any-state checks run
-     (enable when idle, mileage no-op); the charging checks need a car charging,
+     (enable when idle); the charging checks need a car charging,
      and gerd allows every test while charging. Watch the first run live.
 10. ~~Moving a `wallbox_host` entry onto a standalone one~~: **not done**
     (decided 2026-11-10). Wallbox support is new; there is no history to keep.
