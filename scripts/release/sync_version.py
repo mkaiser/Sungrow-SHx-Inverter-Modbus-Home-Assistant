@@ -51,6 +51,11 @@ SCRIPTS = (
     / "scripts"
     / "python"
     / "sungrow_wallbox_capability_test.py",
+    REPO
+    / "device-diagnosis"
+    / "scripts"
+    / "python"
+    / "sungrow_managed_wallbox_test.py",
 )
 
 #: The pin inside a script's `# /// script` block, where the dependency list

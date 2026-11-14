@@ -62,6 +62,12 @@ addresses; the addresses themselves are in the maintainer's local notes, never i
 | `seq.py WATCH ADDR=V[:PAUSE] ...` | writes a sequence with no restore (used to put the house back), then watches |
 | `energy.py` | read only: PV, grid, load, battery level |
 
+**For the inverter-side checks use the managed test instead**, which does what `inv_steps.py`
+did with a snapshot on disk and a restore that waits for the car:
+`device-diagnosis/scripts/python/sungrow_managed_wallbox_test.py INVERTER --wallbox WALLBOX`
+(dry run), then `--leave` (`--start-stop` for the stop and start). It needs this tree's library
+until the next release.
+
 Addresses in them are **protocol** addresses (33539 is register 33540). One session per path at a
 time; the TLS port refuses connections opened in quick succession.
 

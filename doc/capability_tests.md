@@ -83,6 +83,15 @@ setting that moves with nothing written, never disables the charge point and nev
 6 A. From Home Assistant it writes nothing: an entry cannot tell a managed wallbox from a
 standalone one. Its document is separate from the inverter's feature report.
 
+A **managed** wallbox has a test of its own, `sungrow_managed_wallbox_test.py`
+(`src/sungrow_modbus/wallbox/managed_test.py`): it writes only the inverter's EV charger block
+and reads the wallbox for what the car does. With a car charging it switches to user-defined mode,
+offers 6, 8 and 10 A (never above the cap or the rating) and times the car following each, offers
+5 A for the inverter to refuse, and with `--start-stop` stops the charge for 15 s and starts it.
+The restore puts the house back: the user current while still in user-defined mode, then the mode,
+then charging on, and it waits for the car to charge again; a car that does not is exit 5, with
+what to do on site. Terminal only for now.
+
 ## Readings checked against each other
 
 Read only, every minute between runs while *Extended test (auto repeat)* is on; the rows count

@@ -144,7 +144,13 @@ Nothing can start now (blocker 13).
       is the same thing seen from the wallbox side.
    3. **A standalone wallbox** (no inverter managing it, evcc's case) is the
       only one whose own registers may be written; none measured yet.
-   4. **The next session at gerd's**: `plans/gerd_wallbox_handoff.md`
+   4. **The managed wallbox's capability test** exists, from a terminal
+      (`wallbox/managed_test.py`, `sungrow_managed_wallbox_test.py`): it
+      writes the inverter's block and judges by the car. First run on
+      hardware: at gerd's, with a car charging. Not yet in Home Assistant:
+      it needs the inverter's connection and the wallbox's readings in one
+      runner, decided where (the inverter's entry or the wallbox's).
+   5. **The next session at gerd's**: `plans/gerd_wallbox_handoff.md`
       (quantity-and-time mode, writes that repeat what is set, waking a
       sleeping car, phase switching, PV surplus in sun).
 
