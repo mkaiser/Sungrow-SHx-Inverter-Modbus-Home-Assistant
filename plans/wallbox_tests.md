@@ -60,6 +60,14 @@ moves with nothing written.
 
 - ~~The 8 seen after the disable~~: answered on 2026-11-14, the charging status (input 21317) reads
   8, *disabled*, whenever 21211 is 0; input 21268 reads 0 then.
+- **How 21232 became 55552 on 2026-11-13.** The snapshot at 10:00 held 50, and every recorded
+  write of 21232 that day (run 1's no-op and restore, run 2, three terminal restores) wrote 50;
+  none carried 55552. Yet a probe at 11:47 read 55552 (0xD900), and the app showed 5555.2 until it
+  was set back on 2026-11-14 20:16, so the wallbox had really stored it. The same day 21211 read 8
+  (only 0 and 1 are documented) after a write of 1, and the wallbox answered duplicate frames.
+  Every read-back that day was 0, so the restore's check could not see either value. No
+  transcript of the day is left. Until it is understood, the capability test's mileage check
+  stays off (it is opt-in) and is not run at gerd's.
 - **Why the inverter switches charging off by itself.** Twice on 2026-11-14 a fast-charge session
   ended with the car at 43 %: at about 14:55 (10.2 kWh) and at 16:31 (3.5 kWh, after a restart
   from the app). The second time the inverter's on/off word went to off first, the wallbox
