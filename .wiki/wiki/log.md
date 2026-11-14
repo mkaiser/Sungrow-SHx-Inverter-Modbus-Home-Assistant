@@ -804,3 +804,7 @@ A WiNet-S may forward a wallbox at a unit other than the 3 measured at gerd: 2 a
 elsewhere (ioBroker, evcc #7104, ha-modbus-manager #127, an AC011E-01 in #786), none measured
 here. The search now tries 3, 2, 4 and 248, and counts a unit only if its model name starts with
 `AC`. New query which-unit-does-a-winet-s-give-a-wallbox; updated device-wallbox, the index.
+
+## [2026-11-14] changed | a remote site's link drop, and the tunnel that did not recover
+
+The provider cut gerd's internet line at about 02:52; every read of the wallbox and inverter timed out until the tunnel was restarted at about 07:00. New concept remote-link-loss and its raw note; the index.

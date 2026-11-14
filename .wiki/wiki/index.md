@@ -69,6 +69,7 @@
 - [The legacy slot of a second inverter](concepts/legacy-slot.md) — Which inverter was inv n is measured from the serial sensor; None is not the empty slot #migration #history #multi-inverter
 - [Padded frames](concepts/padded-frames.md) — 2612 and 2628 send 15-register frames; layout.COUNTS and ISOLATE, measured with a strict client #modbus #layout #block-read
 - [Protocol addresses and register numbers](concepts/protocol-addresses.md) — Addresses are one below register numbers; maps use reg(), no literal addresses #addresses #registers #convention
+- [A remote site's link drops](concepts/remote-link-loss.md) — The provider cut gerd's line overnight; the tunnel did not recover until restarted; an up interface says nothing #remote #vpn #polling #evidence
 - [Serial anonymization](concepts/serial-anonymization.md) — Stand-ins in every published document, transcripts never tracked, the tree checked by shape #privacy #serial #diagnosis
 - [Transport detection](concepts/transport-detection.md) — 6100 decides cable versus dongle; what differs by transport #transport #winet-s #capabilities
 - [Zero and empty mean absent](concepts/zero-means-absent.md) — A dongle's 0 and a NUL-filled string are not evidence of a capability #capabilities #winet-s #decoding
