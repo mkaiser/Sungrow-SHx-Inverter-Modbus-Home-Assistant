@@ -85,7 +85,7 @@
       },
       "pick": {
         "title": "Devices found",
-        "description": "{count} device(s) answered and identified themselves. Names come from your router's DNS where it provides them, otherwise the address is shown.\n\nA **wallbox** is found at its own address and set up as a device of its own. It is read only, and it is identified by its own serial. An **iHomeManager** or a **Sungrow Logger** is set up for its diagnosis only: it measures nothing, and its *Diagnosis: start* button reads it into a document you can send in. An iHomeManager accepts one connection per port, so one another program holds can be missed.\n\nWhere there is more than one inverter, each says its part in the cluster and how that is known: **measured** is read from the inverter itself, **inferred** is worked out from what the others answered. An inferred role is a good guess, not a reading.\n\nIf none of these is the device you meant, choose the last option and you can enter its address yourself.{note}",
+        "description": "{count} device(s) answered and identified themselves. Names come from your router's DNS where it provides them, otherwise the address is shown.\n\nA **wallbox** is found at its own address and set up as a device of its own. It is read only, and it is identified by its own serial. An **iHomeManager** or a **Sungrow Logger** is set up for its diagnosis only: it measures nothing, and its *Diagnosis: start* button reads it into a document you can send in. An iHomeManager accepts one connection per port, so one another program holds can be missed.\n\nWhere there is more than one inverter, each says its part in the cluster and how that is known: **measured** is read from the inverter itself, **inferred** is worked out from what the others answered. An inferred role is a good guess, not a reading.\n\nPick one here. Every other device in this list is offered afterwards under **Discovered**, to add with one click; you do not need to search again.\n\nIf none of these is the device you meant, choose the last option and you can enter its address yourself.{note}",
         "data": {
           "host": "Device"
         }
@@ -155,6 +155,10 @@
       "discovery_confirm": {
         "title": "Sungrow device found",
         "description": "A **{model}** announced itself on your network at **{host}**, through {via}.\n\nSetting it up first asks the device over Modbus what it is: the announcement is only a hint. If the YAML package or another integration is still polling it, stop that first."
+      },
+      "offered_confirm": {
+        "title": "Found by your search",
+        "description": "Your network search also found **{label}**.\n\nSubmit to set it up the way the search's list would have. Nothing is read from it until you do. If the YAML package or another integration is still polling it, stop that first."
       }
     },
     "progress": {

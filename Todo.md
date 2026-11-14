@@ -544,15 +544,15 @@ Nothing can start now (blocker 16).
     - **The fields nothing explains**: the battery's 8423 (0x20E7), the
       inverter's trailing `1;4`, the wallbox's `info=16256` (0x3F80), every
       `;1;`. More houses, compared with what Modbus measured there.
-    - **mDNS in the diagnosis: built, unreleased.** Schema 27's
+    - **mDNS in the diagnosis: released in 0.1.0a38.** Schema 27's
       `network_names` (`sungrow_modbus.network_names`): the terminal browses
       `_http._tcp` for 5 s once per run, Home Assistant's diagnosis button
       for 2 s through its shared zeroconf instance; plus the reverse-DNS
-      label and the MAC vendor prefix for a future DHCP matcher. Reaches
-      contributors with the next release (the header pins `zeroconf`).
-      Still to check: whether binding port 5353 raises a Windows firewall
+      label and the MAC vendor prefix for a future DHCP matcher. No
+      published diagnosis carries the section yet. Still to check: whether binding port 5353 raises a Windows firewall
       prompt.
-    - **The zeroconf matcher: built, unreleased.** `WiNet-WebServer*` and
+    - **The zeroconf matcher: released in 0.1.0a38**, never seen on a LAN
+      multicast. `WiNet-WebServer*` and
       `SUNGROW*` on `_http._tcp`; the record only decides whether to offer,
       Modbus identifies on confirm, nothing set up is ever moved. Waits on
       the first diagnoses with `network_names` from other houses.

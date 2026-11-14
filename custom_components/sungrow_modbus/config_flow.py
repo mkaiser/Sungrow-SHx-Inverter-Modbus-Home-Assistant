@@ -15,6 +15,8 @@ from homeassistant.components import network
 from homeassistant.components.modbus import async_get_temporary_unit
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import (
+    SOURCE_INTEGRATION_DISCOVERY,
+    SOURCE_USER,
     ConfigEntry,
     ConfigEntryState,
     ConfigFlow,
@@ -25,6 +27,7 @@ from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import UnknownFlow, section
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import discovery_flow
 from homeassistant.helpers.selector import (
     BooleanSelector,
     BooleanSelectorConfig,
@@ -356,6 +359,11 @@ WALLBOX_PREFIX = "wallbox:"
 #: The picker's value for an iHomeManager or Logger: `unit247:<host>:<port>`.
 UNIT_247_PREFIX = "unit247:"
 
+#: What a search's leftover offer holds (`_async_offer_the_rest`).
+DEVICE_INVERTER = "inverter"
+DEVICE_WALLBOX = "wallbox"
+DEVICE_UNIT_247 = "unit_247"
+
 
 async def _async_probe_unit_247(
     hass: HomeAssistant, host: str, port: int, *, tls: bool
@@ -472,6 +480,9 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         #: What an mDNS record announced: host, kind, model and the serial it
         #: named, if any. A hint until the device answers over Modbus.
         self._discovered: dict[str, Any] = {}
+        #: What a search handed this flow to offer: one device it found and
+        #: the owner did not pick (`_async_offer_the_rest`).
+        self._offered: dict[str, Any] = {}
 
     async def _async_claim(
         self, serial: str, endpoint: Mapping[str, Any], direct: bool | None
@@ -1107,6 +1118,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             if user_input[CONF_HOST] == NOT_LISTED:
                 return await self.async_step_manual()
+            self._async_offer_the_rest(user_input[CONF_HOST])
             if user_input[CONF_HOST].startswith(UNIT_247_PREFIX):
                 return await self._async_add_unit_247(
                     user_input[CONF_HOST].removeprefix(UNIT_247_PREFIX)
@@ -1133,8 +1145,11 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             # Only where there is more than one inverter to tell apart, and
             # counted by **serial**: two addresses of one machine are one
             # inverter, so a house with a cable and a dongle is not asked to
-            # name anything.
-            self._others = len({entry["serial"] for entry in self._found.values()})
+            # name anything. An offered inverter brings the search's count.
+            self._others = max(
+                len({entry["serial"] for entry in self._found.values()}),
+                found.get("inverters", 1),
+            )
             return await self.async_step_name()
 
         # In the order `_described` put them, not re-sorted by address: it
@@ -1184,6 +1199,103 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             },
             last_step=False,
         )
+
+    @callback
+    def _async_offer_the_rest(self, picked: str) -> None:
+        """Offer every device the search found and the owner did not pick.
+
+        A flow makes one entry, so each of the others becomes a discovery
+        flow of its own: a *Discovered* card, confirmed without searching
+        again. One per **serial** for inverters -- a cable and a dongle to
+        one machine are one card, its first address the one `_described`
+        ranked first -- and the picked inverter's other address is no card
+        at all. Anything already set up or already offered is dropped by
+        the discovery step itself, by unique id.
+
+        Only from a search the owner started: a flow that is itself an
+        offer has nothing else to hand on.
+        """
+        if self.source != SOURCE_USER:
+            return
+        picked_serial = (found := self._found.get(picked)) and found["serial"]
+        serials = {entry["serial"] for entry in self._found.values()}
+        offers: list[dict[str, Any]] = []
+        seen: set[str] = {picked_serial} if picked_serial else set()
+        for host, entry in self._found.items():
+            if entry["serial"] in seen:
+                continue
+            seen.add(entry["serial"])
+            offers.append(
+                {
+                    **entry,
+                    "device": DEVICE_INVERTER,
+                    "key": host,
+                    "inverters": len(serials),
+                }
+            )
+        offers.extend(
+            {**wallbox, "device": DEVICE_WALLBOX, "key": host}
+            for host, wallbox in self._wallboxes.items()
+            if f"{WALLBOX_PREFIX}{host}" != picked
+        )
+        offers.extend(
+            {**device, "device": DEVICE_UNIT_247, "key": key}
+            for key, device in self._unit_247.items()
+            if f"{UNIT_247_PREFIX}{key}" != picked
+        )
+        for offer in offers:
+            discovery_flow.async_create_flow(
+                self.hass,
+                DOMAIN,
+                {"source": SOURCE_INTEGRATION_DISCOVERY},
+                {**offer, CONF_MODE: self._mode},
+            )
+
+    async def async_step_integration_discovery(
+        self, discovery_info: dict[str, Any]
+    ) -> ConfigFlowResult:
+        """Hold one device a search found and the owner did not pick.
+
+        Identified by what the search already read, so nothing is asked over
+        Modbus until the owner confirms; set up already, or offered by
+        another flow, it is dropped here. An inverter's entry is never moved
+        from a card: that is the search's question, asked in its dialog.
+        """
+        device = discovery_info["device"]
+        if device == DEVICE_UNIT_247:
+            unique_id = (
+                f"{discovery_info[CONF_KIND]}-{discovery_info[CONF_HOST]}"
+                f"-{discovery_info[CONF_PORT]}"
+            )
+        else:
+            unique_id = discovery_info["serial"]
+        await self.async_set_unique_id(unique_id)
+        self._abort_if_unique_id_configured()
+        self._offered = discovery_info
+        self.context["title_placeholders"] = {"name": discovery_info["label"]}
+        return await self.async_step_offered_confirm()
+
+    async def async_step_offered_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ask before setting up what the search found, then do as `pick` would."""
+        offer = self._offered
+        if user_input is None:
+            self._set_confirm_only()
+            return self.async_show_form(
+                step_id="offered_confirm",
+                description_placeholders={"label": offer["label"]},
+            )
+        self._mode = offer[CONF_MODE]
+        key = offer["key"]
+        if offer["device"] == DEVICE_WALLBOX:
+            self._wallboxes = {key: offer}
+            return await self._async_add_wallbox(key)
+        if offer["device"] == DEVICE_UNIT_247:
+            self._unit_247 = {key: offer}
+            return await self._async_add_unit_247(key)
+        self._found = {key: offer}
+        return await self.async_step_pick({CONF_HOST: key})
 
     async def _async_add_wallbox(self, host: str) -> ConfigFlowResult:
         """Create an entry for a wallbox found at its own address.

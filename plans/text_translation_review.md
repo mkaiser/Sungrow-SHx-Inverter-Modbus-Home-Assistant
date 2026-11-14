@@ -1,6 +1,6 @@
 # The texts, for review
 
-**349 texts**: everything in `strings.json` that is not an entity name, by its
+**351 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -11,7 +11,7 @@ A `{placeholder}` is filled in by the integration and stays as written; backtick
 and bold are kept.
 
 
-## Setup flow (92)
+## Setup flow (94)
 
 ### `config.flow_title`
 
@@ -357,6 +357,8 @@ and bold are kept.
 >
 > Where there is more than one inverter, each says its part in the cluster and how that is known: **measured** is read from the inverter itself, **inferred** is worked out from what the others answered. An inferred role is a good guess, not a reading.
 >
+> Pick one here. Every other device in this list is offered afterwards under **Discovered**, to add with one click; you do not need to search again.
+>
 > If none of these is the device you meant, choose the last option and you can enter its address yourself.{note}
 
 > **DE** {count} Gerät(e) haben geantwortet und sich zu erkennen gegeben. Namen stammen aus dem DNS deines Routers, sofern er welche liefert, sonst wird die Adresse angezeigt.
@@ -364,6 +366,8 @@ and bold are kept.
 > Eine **Wallbox** wird unter ihrer eigenen Adresse gefunden und als eigenes Gerät eingerichtet. Sie wird nur gelesen und über ihre eigene Seriennummer erkannt. Ein **iHomeManager** oder ein **Sungrow-Logger** wird nur für seine Diagnose eingerichtet: Er misst nichts, und seine Schaltfläche *Diagnose: starten* liest ihn in ein Dokument, das du einsenden kannst. Ein iHomeManager nimmt pro Port nur eine Verbindung an, daher kann einer übersehen werden, den ein anderes Programm belegt.
 >
 > Gibt es mehr als einen Wechselrichter, nennt jeder seine Rolle im Verbund und woher man sie kennt: **gemessen** wurde vom Wechselrichter selbst gelesen, **abgeleitet** wird aus den Antworten der anderen geschlossen. Eine abgeleitete Rolle ist eine gute Vermutung, keine Messung.
+>
+> Wähle hier eines. Jedes andere Gerät dieser Liste wird danach unter **Entdeckt** angeboten und lässt sich mit einem Klick hinzufügen; eine neue Suche ist nicht nötig.
 >
 > Ist keines davon das gemeinte Gerät, wähle die letzte Option, dann kannst du seine Adresse selbst eingeben.{note}
 
@@ -648,6 +652,22 @@ and bold are kept.
 > **DE** Ein **{model}** hat sich in deinem Netzwerk unter **{host}** angekündigt, über {via}.
 >
 > Beim Einrichten wird das Gerät zuerst über Modbus gefragt, was es ist: Die Ankündigung ist nur ein Hinweis. Fragt das YAML-Paket oder eine andere Integration es noch ab, beende das zuerst.
+
+### `config.step.offered_confirm.title`
+
+> **EN** Found by your search
+
+> **DE** Von deiner Suche gefunden
+
+### `config.step.offered_confirm.description`
+
+> **EN** Your network search also found **{label}**.
+>
+> Submit to set it up the way the search's list would have. Nothing is read from it until you do. If the YAML package or another integration is still polling it, stop that first.
+
+> **DE** Deine Netzwerksuche hat auch **{label}** gefunden.
+>
+> Sende ab, um es so einzurichten, wie es die Liste der Suche getan hätte. Bis dahin wird nichts davon gelesen. Fragt das YAML-Paket oder eine andere Integration es noch ab, beende das zuerst.
 
 ### `config.progress.searching`
 

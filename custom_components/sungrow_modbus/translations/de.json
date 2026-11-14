@@ -85,7 +85,7 @@
       },
       "pick": {
         "title": "Geräte gefunden",
-        "description": "{count} Gerät(e) haben geantwortet und sich zu erkennen gegeben. Namen stammen aus dem DNS deines Routers, sofern er welche liefert, sonst wird die Adresse angezeigt.\n\nEine **Wallbox** wird unter ihrer eigenen Adresse gefunden und als eigenes Gerät eingerichtet. Sie wird nur gelesen und über ihre eigene Seriennummer erkannt. Ein **iHomeManager** oder ein **Sungrow-Logger** wird nur für seine Diagnose eingerichtet: Er misst nichts, und seine Schaltfläche *Diagnose: starten* liest ihn in ein Dokument, das du einsenden kannst. Ein iHomeManager nimmt pro Port nur eine Verbindung an, daher kann einer übersehen werden, den ein anderes Programm belegt.\n\nGibt es mehr als einen Wechselrichter, nennt jeder seine Rolle im Verbund und woher man sie kennt: **gemessen** wurde vom Wechselrichter selbst gelesen, **abgeleitet** wird aus den Antworten der anderen geschlossen. Eine abgeleitete Rolle ist eine gute Vermutung, keine Messung.\n\nIst keines davon das gemeinte Gerät, wähle die letzte Option, dann kannst du seine Adresse selbst eingeben.{note}",
+        "description": "{count} Gerät(e) haben geantwortet und sich zu erkennen gegeben. Namen stammen aus dem DNS deines Routers, sofern er welche liefert, sonst wird die Adresse angezeigt.\n\nEine **Wallbox** wird unter ihrer eigenen Adresse gefunden und als eigenes Gerät eingerichtet. Sie wird nur gelesen und über ihre eigene Seriennummer erkannt. Ein **iHomeManager** oder ein **Sungrow-Logger** wird nur für seine Diagnose eingerichtet: Er misst nichts, und seine Schaltfläche *Diagnose: starten* liest ihn in ein Dokument, das du einsenden kannst. Ein iHomeManager nimmt pro Port nur eine Verbindung an, daher kann einer übersehen werden, den ein anderes Programm belegt.\n\nGibt es mehr als einen Wechselrichter, nennt jeder seine Rolle im Verbund und woher man sie kennt: **gemessen** wurde vom Wechselrichter selbst gelesen, **abgeleitet** wird aus den Antworten der anderen geschlossen. Eine abgeleitete Rolle ist eine gute Vermutung, keine Messung.\n\nWähle hier eines. Jedes andere Gerät dieser Liste wird danach unter **Entdeckt** angeboten und lässt sich mit einem Klick hinzufügen; eine neue Suche ist nicht nötig.\n\nIst keines davon das gemeinte Gerät, wähle die letzte Option, dann kannst du seine Adresse selbst eingeben.{note}",
         "data": {
           "host": "Gerät"
         }
@@ -155,6 +155,10 @@
       "discovery_confirm": {
         "title": "Sungrow-Gerät gefunden",
         "description": "Ein **{model}** hat sich in deinem Netzwerk unter **{host}** angekündigt, über {via}.\n\nBeim Einrichten wird das Gerät zuerst über Modbus gefragt, was es ist: Die Ankündigung ist nur ein Hinweis. Fragt das YAML-Paket oder eine andere Integration es noch ab, beende das zuerst."
+      },
+      "offered_confirm": {
+        "title": "Von deiner Suche gefunden",
+        "description": "Deine Netzwerksuche hat auch **{label}** gefunden.\n\nSende ab, um es so einzurichten, wie es die Liste der Suche getan hätte. Bis dahin wird nichts davon gelesen. Fragt das YAML-Paket oder eine andere Integration es noch ab, beende das zuerst."
       }
     },
     "progress": {
