@@ -40,6 +40,11 @@ protocol forbids redistribution, and the rest are Sungrow's.
 | Third-party meter via Logger1000, TI_20201127 | sungrowpowerservice.com, `Files/KnowledgeBase/Monitoring/TechDoc/` | meter point tables |
 | COM100D/E user manual Ver11 | info-support.sungrowpower.com, linked from discussion #262 | **no registers**: a cabinet around a Logger |
 | iHomeManager user manual (German) | ger.sungrowpower.com | installation only |
+| AC22E-01 user manual Ver18-202509, datasheet V6 | info-support.sungrowpower.com (`/product-materials/...` and `/application/pdf/2025/08/04/...`) | automatic phase switching, no phase setting; EMS mode needs the inverter's RS485 or an iHomeManager: [phase sources](../sources/wallbox-phase-switching-sources-2026-11-14-summary.md) |
+| SH5.0-10RT user manual Ver24-202503 | info-support.sungrowpower.com, `/application/pdf/2025/07/17/SHRT User Manual.pdf` | the minimum charger firmware; nothing on charging modes |
+| iSolarCloud user manual V146 Ver28-202610 | info-support.sungrowpower.com (`/cms/...` path) | the charger's modes and settings; no phase setting |
+| Sungrow EV Power Guide (2023) | a dealer's site, cleanpowersweden.com | the AC011E-01's modes, 4.14 kW minimum |
+| iHomeManager user manual (English) | ManualsLib, manual 3715764 | **not read**: a bot check; said to hold the 1.38-4.14 kW one-phase rule |
 
 ## Community register maps
 

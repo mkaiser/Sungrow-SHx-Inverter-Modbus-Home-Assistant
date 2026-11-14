@@ -827,3 +827,35 @@ up) at the inverter were written over the cable and the WiNet-S and followed by 
 change can end the session. New source gerd-wallbox-inverter-control-2026-11-14; updated
 device-wallbox (new section), installation-gerd, the index. The wallbox capability test now
 writes only to a wallbox declared standalone and never disables or offers under 6 A.
+
+## [2026-11-14] ingested | phase switching on a managed wallbox, from Sungrow's documents and owners
+
+Read Sungrow's AC22E-01 datasheet and manual, the SH-RT and iSolarCloud manuals, the EV Power
+Guide, ha-modbus-manager's two wallbox pages and Photovoltaikforum's 873-post AC22E-01 thread.
+None offers a way to choose the phases of a wallbox an inverter manages: switching is automatic,
+by owners' reports to one phase in PV surplus with energy purchase off. New raw note and source
+wallbox-phase-switching-sources-2026-11-14, concept managed-wallbox-phases, query
+can-a-managed-wallbox-be-set-to-one-phase; updated device-wallbox, where-are-sungrows-documents,
+gerd-wallbox-inverter-control-2026-11-14 (no phase setting in the app; 33538/33539 refuse writes),
+the index.
+
+## [2026-11-14] measured | gerd's 33538/33539 refuse writes in PV surplus mode too
+
+With charging off and the mode set to PV surplus, 33539 = 160 and 33538 = 0xAA were refused
+(0x04) as they were in fast charge; 33539 read 161 in both modes; all put back. Updated the raw
+note gerd-wallbox-inverter-control-2026-11-14, its source page, the query
+can-a-managed-wallbox-be-set-to-one-phase, concept managed-wallbox-phases, the index.
+
+## [2026-11-14] measured | 33550 is the app's energy purchase (Netzbezug)
+
+At gerd, in PV surplus with charging off, the maintainer switched *Netzbezug* on and off in the
+app; the inverter's 33550 read 170 and 85 within 5 s each time, nothing else moved and no charge
+started. Updated the raw note gerd-wallbox-inverter-control-2026-11-14, its source page.
+
+## [2026-11-14] ingested | gerd's app settings mapped to the wallbox's registers
+
+The maintainer changed each of the charger's system parameters in iSolarCloud and back while the
+wallbox and the inverter were read whole: enable 21211 (status 8 while disabled), Plug&Play 21298,
+offline current 21299, power limit 21313, with input echoes; the offline current does not follow
+the limit. New raw note and source gerd-wallbox-app-settings-2026-11-14; updated device-wallbox,
+the index.

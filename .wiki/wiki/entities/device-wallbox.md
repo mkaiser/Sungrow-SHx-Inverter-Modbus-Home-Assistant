@@ -33,7 +33,15 @@ inverter. Measured at [gerd](installation-gerd.md) on 2026-11-14
   idle and 3 charging, as on every earlier reading), so the capability test needs the owner to
   say so (`Options.standalone`), and refuses a setting that moves with nothing written.
 
-The app's enable is holding 21211 and its Start/Stop holding 21212 (0 starts). A disable written
+- **The phases are the inverter's too**: it switches a managed wallbox to one phase by itself,
+  by owners' reports in PV surplus with grid purchase off, and nothing documented chooses them;
+  the wallbox's own 21204 did not ([a managed wallbox's phases](../concepts/managed-wallbox-phases.md)).
+
+The app's enable (*Ladegerät aktivieren*) is holding 21211 and its Start/Stop holding 21212 (0
+starts). The app's system parameters are the wallbox's own holding registers, not the inverter's:
+Plug&Play 21298, the offline current 21299 (0.1 A) and the power limit 21313 (0.1 kW, which the
+maximum current at input 21263 and the nominal power at 21273 follow); a disabled charger reads
+status **8** ([the app's settings](../sources/gerd-wallbox-app-settings-2026-11-14-summary.md)). A disable written
 over Modbus on 2026-11-13 ended a charge that the enable written back did not resume, and offers
 of 5 A and 0 left the wallbox suspended; the capability test no longer writes either.
 

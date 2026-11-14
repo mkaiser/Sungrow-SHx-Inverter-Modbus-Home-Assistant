@@ -36,8 +36,12 @@ protocol addresses, one lower.
 | A stopped car falls asleep | a start 7 minutes after a stop gave *suspended by the vehicle* with up to 21 A offered; a replug woke it; a start 2.5 minutes after a stop did not need one |
 | The app's enable is wallbox holding 21211, its Start/Stop wallbox holding 21212 (0 start) | 21211 0 → 1 when switched on in the app; 21212 1 → 0 on Start |
 | Wallbox input 21314 read 1 idle and 3 during a session | every reading of the day |
+| **Inverter holding 33550 is the app's energy purchase (*Netzbezug*) in PV surplus**: 0x55 off, 0xAA on | switched on and off in the app at 19:34, it read 170 and 85 within 5 s; nothing else moved, and no charge started with no sun and an empty battery |
+| **No phase setting in iSolarCloud**, with the installer's account or the owner's | looked for at about 17:45 |
+| The inverter's holding 33501-33600 with the car idle on three phases: 33538 85 and 33539 161 just below the block, nearly everything else 65535 | read once over the cable, a baseline for a one-phase session |
+| **33538 and 33539 refuse a write** in fast charge and in PV surplus, charging off: 0xAA and 160, exception 0x04, nothing moved; 33539 reads 161 in both modes, so it does not follow the mode | one write each per mode (17:57-18:00 and 19:22-19:25), read back on a fresh session; see [can a managed wallbox be set to one phase](../queries/can-a-managed-wallbox-be-set-to-one-phase.md) |
 
-What did not answer: what 33550 does (a minimum charge from the grid was not kept up), and the
+What did not answer: what energy purchase (33550) changes in a session (a minimum charge from the grid was not kept up), and the
 quantity-and-time mode (162), not tried.
 
 Two writes of 21203 on the wallbox itself were made in breach of the

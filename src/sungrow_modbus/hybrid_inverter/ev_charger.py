@@ -31,9 +31,11 @@ table names it; the words and their order are below, as measured.
   took 33.0 A on a 32 A wallbox, so the cap at the rating is the caller's. A
   lower current applied within six seconds, a higher one was ramped (8 to
   12 A in about 20 s). The car drew about 0.5 A under the setting.
-* 33550, surplus from the grid: 0x55 no, 0xAA yes (ioBroker thread). Set to
-  yes with PV surplus, the inverter still ended the charge with 1.7 kW of sun
-  and the battery at its minimum: what it does is not established.
+* 33550, surplus from the grid: 0x55 no, 0xAA yes. It is the app's energy
+  purchase (*Netzbezug*) in PV surplus: switched in the app, it followed within
+  5 s both ways. Set to yes with PV surplus, the inverter still ended the
+  charge with 1.7 kW of sun and the battery at its minimum, and started none
+  with no sun: what it changes is not established.
 """
 
 from __future__ import annotations

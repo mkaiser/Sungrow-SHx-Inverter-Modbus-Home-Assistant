@@ -38,11 +38,14 @@ moves with nothing written.
 | User current | inverter holding 33545, 0.1 A | **only in mode 163** (0x04 otherwise); 5 A refused, 6 A to 33 A taken on a 32 A unit |
 | Mode side effects | — | to 163 turns charging on; 163 → 160 and 160 → 161 **end the session**; charging on starts it again |
 | Two times | inverter 33546-33549, two u32, low word first, Unix time | changed when the app saved; probably the quantity-and-time window |
-| Grid surplus | inverter holding 33550, 0x55 / 0xAA | written; no effect seen at 1.7 kW PV and an empty battery |
+| Grid surplus | inverter holding 33550, 0x55 / 0xAA | **the app's energy purchase (*Netzbezug*)**: followed the app both ways (2026-11-14 19:34); written, no effect seen at 1.7 kW PV and an empty battery |
 | The wallbox's own current | wallbox holding 21203, 0.1 A | **driven by the inverter**: writes overwritten in seconds; the car follows the inverter's ramp (about 1.4 A every 5 s) |
-| The app's enable / Start | wallbox holding 21211 / 21212 | 21211 1 = enabled; 21212 0 = start |
+| The app's enable / Start | wallbox holding 21211 / 21212 | 21211 1 = enabled, 0 = disabled (status 21317 then reads **8**, *disabled*); 21212 0 = start |
+| The app's other system parameters | wallbox holding 21298 Plug&Play (1/0), 21299 offline current (0.1 A), 21313 power limit (0.1 kW, shown only while disabled) | each changed in the app and back, 2026-11-14 19:36-19:58, seen in the registers within a minute; the offline current does not follow the limit |
+| Mileage per kWh | wallbox holding 21232, 0.1 km/kWh | reads **55552 = the app's 5555.2**; it was 50 before the capability test of 2026-11-13, whose restore of 21232 failed: probably ours to put back |
 
 - The same writes work through the WiNet-S, judged by the car (its readback is not evidence).
+- **Status 8 is *disabled***: it reads 8 whenever 21211 is 0, and 1 (idle) again on enable.
 - **A disable (21211 = 0) stops the charge, and writing 1 back does not restart it.** The owner had
   to enable it in the app and press Start.
 - **The wallbox pauses on its own** when the home battery is at its minimum SoC (the app's *Grund*
@@ -55,8 +58,8 @@ moves with nothing written.
 
 ### Open questions
 
-- **Remote control status 8** (input 21268) and an enable register reading 8: undocumented, seen
-  after the disable.
+- ~~The 8 seen after the disable~~: answered on 2026-11-14, the charging status (input 21317) reads
+  8, *disabled*, whenever 21211 is 0; input 21268 reads 0 then.
 - **Why the inverter switches charging off by itself.** Twice on 2026-11-14 a fast-charge session
   ended with the car at 43 %: at about 14:55 (10.2 kWh) and at 16:31 (3.5 kWh, after a restart
   from the app). The second time the inverter's on/off word went to off first, the wallbox
@@ -92,6 +95,11 @@ Register numbers here; evcc's code uses protocol addresses, one lower.
 
 So on gerd's managed wallbox the phases are the inverter's to switch, most likely in PV surplus
 when the power wanted is 1.38-4.14 kW; test 5 watches for that.
+
+Sungrow's own manuals, ha-modbus-manager and the 873-post Photovoltaikforum thread, read on
+2026-11-14, agree: no setting anywhere, automatic only, and owners see one phase in **PV surplus
+with energy purchase (33550) off**, three phase with it on. The wiki keeps it:
+`.wiki/wiki/concepts/managed-wallbox-phases.md`.
 
 ## 3. Rules for any wallbox write
 
@@ -156,11 +164,18 @@ a draw of 5 A or more.
 
 ## 5. gerd's: how it was left (2026-11-14)
 
-- The inverter's block as the owner wants it: charging **on**, mode **fast charge**, user current
-  **16.0 A**, grid surplus **no**. The wallbox: enabled (21211 = 1), start (21212 = 0), three phase.
+- At 19:58: the inverter in mode **PV surplus** (set in the app by the maintainer at 19:32),
+  *Netzbezug* (33550) **off**, charging **off**, user current 16.0 A. The wallbox: enabled
+  (21211 = 1), start (21212 = 0), Plug&Play on, offline current 32 A, power limit 22 kW, three
+  phase, idle. Everything the app's system parameters touched read as it did at 19:36.
+- Mileage per kWh (21232) reads 5555.2, probably left by the capability test of 2026-11-13 (50
+  before); to be set back in the app.
 - The owner's Home Assistant was stopped for the session.
-- Charging is off since the inverter stopped it at 16:31 (put back to off after a 5-minute charge
-  over Modbus at 16:51); the car at about 44 %.
+- The car at about 44 %. In PV surplus without Netzbezug it charges only with surplus: the
+  one-phase test (section 6, test 5) needs a sunny day and the battery above its minimum.
+- `tmp/gerd-wallbox-2026-11-14/settings_diff.py LABEL [BASE]` (read only) snapshots the wallbox
+  whole and the inverter's 33501-33600 and prints what changed: the way the app's settings were
+  mapped.
 
 **The field tool** is `scripts/dev/managed_wallbox_field.py` (this tree's library; the addresses as
 `--inverter` / `--wallbox` or `$SUNGROW_INVERTER` / `$SUNGROW_WALLBOX`, never in the repository).
@@ -195,8 +210,9 @@ In order; 1 to 4 need the owner at the app.
    phase A only), and Sungrow's datasheet promises automatic 1/3-phase switching from 1.38 kW of
    PV surplus. Our own 21204 write did nothing. The inverter's charger block has no phase word;
    registers 33538 (85) and 33539 (161), just below it, are candidates (baseline in the raw note,
-   2026-11-14, there in protocol addresses). In fast mode with charging off both refused a write
-   (0x04: 33539 = 160, 33538 = 0xAA); whether they take writes in another mode is open. Neither
+   2026-11-14, there in protocol addresses). With charging off both refused a write (0x04: 33539 =
+   160, 33538 = 0xAA) in fast mode and again in PV surplus mode (19:22); 33539 reads 161 in both
+   modes. Whether either moves during a one-phase session is open. Neither
    app account shows a phase setting.
    - **Remotely, read only**: on a day with 1.5-4 kW of sun, the battery above its minimum, the
      car plugged in and *PV surplus* set, run the field tool's `phase MINUTES`. Then

@@ -258,3 +258,36 @@ is midnight UTC. Not written.
    160, end the session. A controller that changes the mode writes 33539 = 170 after it, if a
    charge is wanted.
 4. 21203 is 0.1 A per count (behaviour); the app's enable is 21211 and its Start/Stop 21212.
+
+## The two candidates again, in PV surplus mode (19:22-19:25, cable, charging off)
+
+At the maintainer's request, after Sungrow's documents and the forum named no phase setting
+(`raw/wallbox-phase-switching-sources-2026-11-14.md`). Dark, PV 0, battery level 0.0 %, the
+wallbox *idle*, no current. Snapshot flushed first: protocol 33537 = 85, 33538 = 161, 33539 = 85
+(charging off), 33540 = 160 (fast).
+
+- 19:22:24, protocol **33540 = 161** (PV surplus): taken. Watched 30 s: charging stayed off,
+  **33538 stayed 161** (it does not follow the mode), the wallbox 21204 0, 21225 3, 21270 0,
+  21272 4140, idle.
+- 19:22:59, protocol **33538 = 160**: **refused, exception 0x04**. Nothing moved in 45 s.
+- 19:23:45, protocol **33537 = 170** (0xAA): **refused, exception 0x04**. Nothing moved in 45 s.
+- 19:24:30 wrote 33540 = 160 back; a fresh session at 19:24:38 read 85, 161, 85, 160, the
+  snapshot. Watched 20 s more: unchanged, idle.
+
+So both words refuse these writes in fast and in PV surplus mode alike, charging off. Neither is
+shown to be a phase setting; a single-phase session's reading of them is still to come.
+
+## The app's "Netzbezug" is 33549 (19:32-19:43, cable, read only)
+
+The maintainer set the charging mode to PV surplus (*Überschussladen*) with *Netzbezug* (energy
+purchase) off in the app; read at 19:32: protocol 33540 = 161, 33549 = 85, charging off (33539
+85), the wallbox *idle*, PV 0, battery level 0.0 %, the house drawing about 310 W. The block and
+the wallbox logged every 5 s from 19:33.
+
+- The maintainer switched *Netzbezug* **on**: **33549 went 85 → 170** at 19:34:20, the first row
+  after it. Nothing else in the block moved; charging stayed off, the wallbox idle at 0 A.
+- Switched *Netzbezug* **off** again: **33549 went 170 → 85** at 19:34:50, the first row after it.
+  Again nothing else moved, and no charge started either way.
+
+So protocol 33549 (register 33550) is the app's *Netzbezug* / energy purchase in PV surplus mode:
+0x55 off, 0xAA on. Left as the maintainer set it: PV surplus, Netzbezug off, charging off.

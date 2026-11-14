@@ -23,5 +23,7 @@ python3 -m venv "$SCREENSHOT_VENV"
 
 # wg and wg-quick, for a WireGuard tunnel to another owner's inverter from
 # inside the container (runArgs in devcontainer.json grants NET_ADMIN).
+# poppler-utils (pdftotext, pdftoppm), to read manufacturers' manuals and
+# datasheets: Claude Code's PDF reading renders pages with pdftoppm.
 sudo apt-get update
-sudo apt-get install -y --no-install-recommends wireguard-tools
+sudo apt-get install -y --no-install-recommends wireguard-tools poppler-utils

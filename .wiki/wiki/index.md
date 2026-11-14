@@ -68,6 +68,7 @@
 - [Identify by what answers](concepts/identify-by-what-answers.md) — Sweep unit ids, never trust a port; the unit table by device and transport #discovery #unit-id #config-flow
 - [Adopting the legacy entity ids](concepts/legacy-id-adoption.md) — Claim the YAML entity_id at creation so history continues; renames are refused onto known ids #migration #history #entity-id #recorder
 - [The legacy slot of a second inverter](concepts/legacy-slot.md) — Which inverter was inv n is measured from the serial sensor; None is not the empty slot #migration #history #multi-inverter
+- [A managed wallbox's phases are the inverter's](concepts/managed-wallbox-phases.md) — Automatic only, by power: one phase in PV surplus without grid purchase; no setting, and 21204 does not do it #wallbox #phases #ems
 - [Padded frames](concepts/padded-frames.md) — 2612 and 2628 send 15-register frames; layout.COUNTS and ISOLATE, measured with a strict client #modbus #layout #block-read
 - [Protocol addresses and register numbers](concepts/protocol-addresses.md) — Addresses are one below register numbers; maps use reg(), no literal addresses #addresses #registers #convention
 - [A remote site's link drops](concepts/remote-link-loss.md) — The provider cut gerd's line overnight; the tunnel did not recover until restarted; an up interface says nothing #remote #vpn #polling #evidence
@@ -88,6 +89,8 @@
 - [cross-reference-shcshc76.md](sources/cross-reference-shcshc76-summary.md) — an ioBroker user's AC011E-01 tables, read again: agrees with the map; a WiNet-S faults polled faster than 10 s #cross-reference #wallbox #winet-s #licences
 - [cross_reference_modbus_manager.md](sources/cross-reference-modbus-manager-summary.md) — TCzerny/ha-modbus-manager compared register by register; the MIT iHomeManager map #ihomemanager #cross-reference #licences
 - [gerd-wallbox-charging-session-2026-11-03.md](sources/gerd-wallbox-charging-session-2026-11-03-summary.md) — gerd's AC22E-01 through a 3 h charging session and its end: 21313 falls to 0, status 3-5-6, 21267 about one per 5 s #wallbox #ac22e-01 #gerd #charging-session #tls
+- [wallbox-phase-switching-sources-2026-11-14.md](sources/wallbox-phase-switching-sources-2026-11-14-summary.md) — Sungrow's AC22E-01, SH-RT and iSolarCloud manuals, ha-modbus-manager and an 873-post forum thread on phases: automatic only, one phase in PV surplus without grid purchase #wallbox #ac22e-01 #ac011e-01 #phases #ems #cross-reference
+- [gerd-wallbox-app-settings-2026-11-14.md](sources/gerd-wallbox-app-settings-2026-11-14-summary.md) — the app's charger settings in the wallbox's holding registers: enable 21211, Plug&Play 21298, offline current 21299, power limit 21313; status 8 is disabled #wallbox #ac22e-01 #gerd #isolarcloud #settings
 - [gerd-wallbox-inverter-control-2026-11-14.md](sources/gerd-wallbox-inverter-control-2026-11-14-summary.md) — the inverter manages the wallbox and drives 21203 (0.1 A, by the car); control is the inverter's 33540 on/off, 33541 mode, 33545 user current (6 A up, only in user-defined mode) #wallbox #gerd #ems #capability-test
 - [gerd-wallbox-dry-run-2026-11-06.md](sources/gerd-wallbox-dry-run-2026-11-06-summary.md) — the wallbox capability test's dry run, no car: the current setting reads 0 idle, 21322 is not its echo #wallbox #ac22e-01 #gerd #capability-test #tls
 - [gerd-tls-certificate-2026-11-06.md](sources/gerd-tls-certificate-2026-11-06-summary.md) — the WiNet-S and the wallbox at one house serve one certificate, serial 1, its SHA-256 recorded #winet-s #wallbox #tls #gerd
@@ -200,6 +203,7 @@
 
 ## Queries
 
+- [Can a managed wallbox be set to one phase over Modbus?](queries/can-a-managed-wallbox-be-set-to-one-phase.md) — Open: no document names a way; 21204 did not, 33538/33539 refuse writes in fast and PV surplus #wallbox #phases #ems #open
 - [Does a wallbox answer unit 248 on RS485?](queries/does-a-wallbox-answer-unit-248-on-rs485.md) — Open: reported by others, never measured #wallbox #rs485 #open
 - [Which unit does a WiNet-S give a wallbox?](queries/which-unit-does-a-winet-s-give-a-wallbox.md) — Open: 3 measured, 2 and 4 reported; the search tries all three #wallbox #winet-s #open
 - [Does a WiNet-S advertise over mDNS, and can discovery start there?](queries/does-a-winet-s-advertise-over-mdns.md) — Partly answered: at gerd the dongle and the wallbox do, by unicast; multicast and other firmware open #winet-s #mdns #discovery #open

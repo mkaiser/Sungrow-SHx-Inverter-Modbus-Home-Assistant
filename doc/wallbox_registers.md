@@ -147,11 +147,11 @@ and its echo, holding 21312, and what start mode 3 means.
 | 21225 | u16 | — | Phase count in use. **Follows the phase mode**, not the wiring: 1 in single-phase mode, 3 in three-phase mode, on the same three-phase installation | 1 / 3 | two sources |
 | 21226-21235 | ASCII | — | Firmware version string. Whole only when read in one request starting at 21226; a read that starts inside it gets zeros for the rest | `LE-01.1E1.001.901.25` | measured here |
 | 21262 | u16 | 1 V | Nominal voltage | 230 | three sources |
-| 21263 | u16 | 0.1 A | Rated current — 32.0 A, which is what a 22 kW three-phase unit draws. The AC011E project reads this address as a work mode and marks it UNVERIFIED; an enum would not be 320, so either the models differ or that mark is optimistic. It held 320 across a change of both phase mode and start mode, which a work mode would not | 320 | measured here |
-| 21268 | u16 | — | Remote control status | 1 | named elsewhere |
+| 21263 | u16 | 0.1 A | Rated current — 32.0 A, which is what a 22 kW three-phase unit draws. The AC011E project reads this address as a work mode and marks it UNVERIFIED; an enum would not be 320, so either the models differ or that mark is optimistic. It held 320 across a change of both phase mode and start mode, which a work mode would not. **Follows the app's power limit** (holding 21313): 160 at 11 kW, 320 at 22 kW | 320 / 160 | measured here, and the app |
+| 21268 | u16 | — | Remote control status. **0 while the charger is disabled** in the app (holding 21211), 1 enabled | 1 / 0 | named elsewhere, and the app |
 | 21270 | u16 | — | Actual phase mode: 0 three phase, 1 single phase. The holding setpoint agrees | 1 | three sources |
 | 21272 | u16 | 1 W | Minimum charging power: 6 A at 230 V on each phase in use, so it follows the phase mode | 1380 / 4140 | named elsewhere |
-| 21273 | u16 | 1 W | Nominal (maximum) charging power. 22080 names the model as surely as the type code does | 22080 | two sources |
+| 21273 | u16 | 1 W | Nominal (maximum) charging power. 22080 names the model as surely as the type code does, **at the app's power limit**: 11040 at 11 kW | 22080 / 11040 | two sources, and the app |
 | 21300/21301 | u32, **low word first** | 1 Wh | Lifetime energy. **32-bit, not 16** — see below | 280.157 → 280.305 kWh | measured here |
 | 21302, 21304, 21306 | u16 | 0.1 V | Charging voltage, phases A/B/C. **0 when not charging** | 2279, 0, 0 | three sources |
 | 21303, 21305, 21307 | u16 | 0.1 A | Charging current, phases A/B/C | 88-146, 0, 0 | three sources |
@@ -166,6 +166,9 @@ and its echo, holding 21312, and what start mode 3 means.
 | 21318/21319 | u32, low word first | epoch | Charging **start** time. See the note on the clock. 0 with no vehicle connected, as is 21320 | 17:25:24 | named elsewhere |
 | 21320/21321 | u32, low word first | epoch | Charging **end** time; it advances while charging and freezes when the session ends | 17:28:28 | named elsewhere |
 | 21322 | u16 | 0.1 A | Tracks the output current setting in holding 21203 — 160 against 160 — but read 161 once while the setting stayed at 160, so "available current" fits better; idle with no car it read 161 while the setting read 0 (2026-11-06), so it is not the setting echoed than "the setting, echoed" | 160-161 | measured here |
+| 21362 | u16 | — | Echo of holding 21298, Plug&Play | 1 / 0 | measured here, and the app |
+| 21363 | u16 | 0.1 A | Echo of holding 21299, the offline current | 320 / 160 | measured here, and the app |
+| 21364 | u16 | — | **Open.** Drifts by itself, read as signed about -62 (65473-65476 over 20 minutes, idle) | 65474 | open |
 
 ## Holding registers
 
@@ -180,9 +183,12 @@ and no file in `device-diagnosis/` implements a Modbus write function.
 | 21212 | u16 | — | Start/stop: 0 start, 1 stop. The app's Start/Stop writes it | 0 / 1 | two sources, and the app |
 | 21225-21230 | u16 × 6 | — | **The wallbox's clock**, local time: year (two digits), month, day, hour, minute, second. Read 26, 10, 13, 21, 12, 23 at 21:12 local on 2026-10-13, and 26, 9, 8, 17, 57, 44 during the run of 2026-09-08 | 26-10-13 21:12:23 | measured here |
 | 21231 | u16 | — | Configured unit id, read-only | 248 | named elsewhere |
-| 21232 | u16 | 0.1 km/kWh | Mileage per kWh, for the app's range estimate | 50 → 5.0 | named elsewhere |
+| 21232 | u16 | 0.1 km/kWh | Mileage per kWh, the app's *Fahrstrecke pro kWh* | 50 → 5.0; 55552 → the app's 5555.2 | named elsewhere, and the app |
 | 21233 | u16 | — | Configured minimum current | 6 | named elsewhere |
 | 21263 | u16 | — | Working mode: 0 network, 2 plug and play, 6 EMS, says one project. **No answer through the dongle**; 0 inside a block read at its own address, where no read may start on it | no answer / 0 | named elsewhere |
+| 21298 | u16 | — | **Plug&Play**: 1 a plugged-in car starts charging by itself, 0 it waits for a start. Echoed at input 21362 | 1 / 0 | measured here, and the app |
+| 21299 | u16 | 0.1 A | **Offline current** (*Offline-Ladestrom*), the app's range 6-32 A. Echoed at input 21363. Does not follow the power limit: 32 A stayed at 11 kW | 320 / 160 | measured here, and the app |
+| 21313 | u16 | 0.1 kW | **Power limit** (*Leistungsgrenze*), offered by the app only while the charger is disabled; input 21263 and 21273 follow it. Not input 21313 | 220 / 110 | measured here, and the app |
 
 ## Under an inverter's energy management
 
@@ -200,7 +206,7 @@ named in an ioBroker thread (post 85, 2025-05-19).
 | 33540 | Charging on/off | 0xAA on, 0x55 off | off stopped the car within a second; on started it within 7-15 s, ramping from 6 A |
 | 33541 | Charging mode | 160 fast, 161 PV surplus, 162 quantity and time, 163 user defined | 160, 161 and 163 seen and written; 162 not tried |
 | 33545 | User-defined current | 0.1 A | followed by the car at 6, 8, 10 and 12 A; **refused (0x04) unless 33541 is 163**; 5 A refused, 33 A taken on a 32 A unit |
-| 33550 | Surplus from the grid in PV-surplus mode | 0x55 no, 0xAA yes | written; with 1.7 kW of sun and the battery at its minimum it did not keep a charge going |
+| 33550 | Surplus from the grid in PV-surplus mode: the app's *Netzbezug* | 0x55 no, 0xAA yes | followed the app's switch both ways within 5 s; written, with 1.7 kW of sun and the battery at its minimum it did not keep a charge going |
 
 **A mode change has side effects.** To 163 switches charging on by itself;
 163 to 160 and 160 to 161 end the session, and charging on written after it
@@ -215,7 +221,7 @@ standalone one: input 21314 read 1 idle and 3 during a session, input 21268
 
 ## The charging status codes
 
-Nine codes, from the wallbox project; the four measured here are marked.
+Nine codes, from the wallbox project; the five measured here are marked.
 
 | Code | Meaning | Seen |
 | --- | --- | --- |
@@ -226,7 +232,7 @@ Nine codes, from the wallbox project; the four measured here are marked.
 | 5 | Suspended by the vehicle | |
 | 6 | Completed | **yes**, and it stayed there |
 | 7 | Reserved | |
-| 8 | Disabled | |
+| 8 | Disabled | **yes**, while the app's *Ladegerät aktivieren* was off; 1 again when on |
 | 9 | Fault | |
 
 This is where a cross-check earns its keep. Watching one session, `6` looks
