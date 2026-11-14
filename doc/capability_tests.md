@@ -90,7 +90,11 @@ offers 6, 8 and 10 A (never above the cap or the rating) and times the car follo
 5 A for the inverter to refuse, and with `--start-stop` stops the charge for 15 s and starts it.
 The restore puts the house back: the user current while still in user-defined mode, then the mode,
 then charging on, and it waits for the car to charge again; a car that does not is exit 5, with
-what to do on site. Terminal only for now.
+what to do on site. In Home Assistant it runs from the wallbox's own entry, in the extended
+modes with the owner's leave, wherever an inverter entry here left the wallbox to it: it writes
+through that inverter entry's connection and holds both entries' polling off. A wallbox with no
+such inverter entry awaits no check at all, so auto repeat does not wait for a run that could not
+write.
 
 ## Readings checked against each other
 

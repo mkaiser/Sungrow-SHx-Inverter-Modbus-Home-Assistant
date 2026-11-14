@@ -35,7 +35,8 @@ Every write and reading: `.wiki/raw/gerd-wallbox-inverter-control-2026-11-14.md`
   has the block and the write order, read only; the entities are `Todo.md`'s next wallbox item.
 - **Phase B as a test**: `src/sungrow_modbus/wallbox/managed_test.py` and its terminal driver
   `sungrow_managed_wallbox_test.py` (user current steps, the 5 A refusal, start/stop, a restore
-  of the house), against a fake inverter that behaves as gerd's did. Not yet in Home Assistant.
+  of the house), against a fake inverter that behaves as gerd's did. In Home Assistant from the
+  wallbox's entry, through the inverter entry that left the wallbox to it.
 - **Next on site**: `plans/gerd_wallbox_handoff.md` (how it was left, the rules, the tools, the
   test list).
 

@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 from typing import Any, NamedTuple
 
 from ..capability_test import procedure as inverter
-from . import capability_test as wct
+from . import capability_test as wct, managed_test as mt
 
 #: Bumped when the shape of a folded ledger changes.
 LEDGER_SCHEMA = 1
@@ -42,6 +42,9 @@ RANK: dict[str, int] = {
     wct.INCONCLUSIVE: 2,
     wct.DROPPED: 1,
     wct.SKIPPED: 0,
+    mt.CONFIRMED: ANSWERED,
+    mt.TAKEN: FINDING,
+    mt.CAR_LIMIT: 2,
 }
 
 #: Which step names are one check, and the check's name.
@@ -53,9 +56,11 @@ IDLE_NEED = "nothing flowing"
 ANY_NEED = "any state"
 
 #: check -> (what it needs of the house, the option that allows it, or None for
-#: the checks every run makes).
+#: the checks every run makes). The wallbox's own registers are written only on
+#: a wallbox no inverter manages (`standalone`); one an inverter manages is
+#: tested at the inverter (`managed`, `managed_test`), and shares only start/stop.
 CHECKS: dict[str, tuple[str, str | None]] = {
-    "output current": (CHARGING_NEED, None),
+    "output current": (CHARGING_NEED, "standalone"),
     "current follow": (CHARGING_NEED, "follow"),
     "available current": (CHARGING_NEED, "follow"),
     "below minimum": (CHARGING_NEED, "below_minimum"),
@@ -66,6 +71,8 @@ CHECKS: dict[str, tuple[str, str | None]] = {
     "phase while charging": (CHARGING_NEED, "phase_charging"),
     "fallback": (CHARGING_NEED, "fallback"),
     "mileage": (ANY_NEED, "mileage"),
+    "user current": (CHARGING_NEED, "managed"),
+    "floor": (CHARGING_NEED, "managed"),
 }
 
 #: The checks that cannot be judged without a car.
@@ -103,6 +110,8 @@ def check_of(step_name: str) -> str:
     """Return the check a step belongs to."""
     if step_name.startswith("output current"):
         return "output current"
+    if step_name.startswith("user current"):
+        return "user current"
     return _ALIASES.get(step_name, step_name)
 
 
@@ -149,6 +158,7 @@ def block(
             "phase_charging": options.phase_charging,
             "fallback": options.fallback,
             "mileage": options.mileage,
+            "standalone": getattr(options, "standalone", False),
         },
         "code": outcome.code,
         "conditions": {k: v for k, v in outcome.conditions.items() if k != "refusals"},
@@ -158,6 +168,48 @@ def block(
         "steps": [step._asdict() for step in outcome.steps],
         "restores": [row._asdict() for row in outcome.restores],
         "unestablished": list(outcome.unestablished),
+    }
+
+
+def managed_block(
+    outcome: mt.Outcome,
+    options: mt.Options,
+    *,
+    firmware: str | None = None,
+) -> dict[str, Any]:
+    """Return one run of the managed test in the same shape as `block`.
+
+    Its path is the inverter's (`transport` "inverter"); the restore is of the
+    house, one row. No serial and no address.
+    """
+    return {
+        "document": DOCUMENT,
+        "read_at": datetime.now(UTC).isoformat(timespec="seconds"),
+        "leave": options.leave,
+        "transport": "inverter",
+        "fresh_session": False,
+        "firmware": firmware,
+        "options": {
+            "max_amps": options.max_amps,
+            "managed": True,
+            "current": options.current,
+            "floor": options.floor,
+            "start_stop": options.start_stop,
+        },
+        "code": outcome.code,
+        "conditions": dict(outcome.conditions),
+        "refusals": {},
+        "steps": [step._asdict() for step in outcome.steps],
+        "restores": [
+            {
+                "address": "house",
+                "original": outcome.conditions.get("charging_word"),
+                "restored": outcome.restored,
+                "attempts": 0,
+                "detail": "" if outcome.restored else mt.ON_SITE,
+            }
+        ],
+        "unestablished": [],
     }
 
 
@@ -330,6 +382,9 @@ COUNTED_AS: dict[str, str] = {
     wct.INCONCLUSIVE: inverter.INCONCLUSIVE,
     wct.DROPPED: inverter.DROPPED,
     wct.SKIPPED: inverter.SKIPPED,
+    mt.CONFIRMED: inverter.CONFIRMED,
+    mt.TAKEN: inverter.OFF_BY,
+    mt.CAR_LIMIT: inverter.INCONCLUSIVE,
 }
 
 

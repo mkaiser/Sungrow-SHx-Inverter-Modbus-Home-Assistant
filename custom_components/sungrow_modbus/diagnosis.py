@@ -264,7 +264,7 @@ class DiagnosisRunner:
         if wallbox_consented(self.entry):
             rows = {
                 **wallbox_ledger.summary_rows(
-                    self._wallbox_folded, wallbox_check_options(self.entry)
+                    self._wallbox_folded, wallbox_check_options(self.entry, self.hass)
                 ),
                 **rows,
             }
@@ -275,7 +275,7 @@ class DiagnosisRunner:
         if not self.wallbox_present or not wallbox_consented(self.entry):
             return []
         return wallbox_ledger.awaited(
-            self._wallbox_folded, wallbox_check_options(self.entry)
+            self._wallbox_folded, wallbox_check_options(self.entry, self.hass)
         )
 
     def wallbox_due(self) -> list[str]:
@@ -285,7 +285,7 @@ class DiagnosisRunner:
         return wallbox_ledger.due(
             self._wallbox_folded,
             wallbox_live_of(self._wallbox_device()),
-            wallbox_check_options(self.entry),
+            wallbox_check_options(self.entry, self.hass),
         )
 
     def _wallbox_established(self) -> frozenset[str]:
@@ -527,7 +527,7 @@ class DiagnosisRunner:
             persistent_notification.async_create(
                 self.hass,
                 wallbox_ledger.markdown(
-                    self._wallbox_folded, wallbox_check_options(self.entry)
+                    self._wallbox_folded, wallbox_check_options(self.entry, self.hass)
                 ),
                 title=f"Wallbox capability tests so far: {self.entry.title}",
                 notification_id=f"{DOMAIN}_wallbox_ledger_{self.entry.entry_id}",
@@ -756,7 +756,8 @@ class DiagnosisRunner:
                     attach_capability_test(document, self._folded, self._device())
                 if self._wallbox_folded is not None:
                     document["wallbox_capability_test"] = wallbox_ledger.document(
-                        self._wallbox_folded, wallbox_check_options(self.entry)
+                        self._wallbox_folded,
+                        wallbox_check_options(self.entry, self.hass),
                     )
                 if self.plausibility.observations:
                     document["plausibility"] = self.plausibility.document()

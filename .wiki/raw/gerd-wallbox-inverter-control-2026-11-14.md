@@ -155,6 +155,26 @@ once (13:54:13) and then switched charging off, as without it at 12:54. What 335
 not established: it did not keep a minimum charge going here. Left as found: fast charge, 33549 85,
 16 A user current, charging.
 
+## After the site was left (read only, over the VPN)
+
+- 14:25: charging, 15.3-16.1 A, 10.6 kW; the block 170, 160, user current 160, 33549 85.
+- About 16:05: the session **ended**: status *completed*, 0 A, the wallbox's own setting 0, session
+  energy (input 21310) **10223 Wh**; the inverter's on/off word read **85 (off)**, mode 160, user
+  current 160. Nothing was written after 13:56; 10.2 kWh at 10.6 kW is about 58 minutes, so the
+  session most likely ended at about 14:55, by the car (full, or its own limit). Not checked with
+  the owner.
+- About 16:10, the owner reports the car at **43 %**: it was not full. What ended the session is
+  open: a charge limit set in the car, the car's own stop, or the inverter switching charging off
+  (its on/off word read off). Not yet told apart.
+- About 16:11 the owner pressed *fast charge* in the app, with no replug. At 16:12: the block
+  170, 160, user current 160, 33549 85 (charging on again); the wallbox *charging*, 15.2/15.4/16.1 A,
+  10.5 kW, available 16.0 A, its own setting ramping 191 -> 227 in 15 s. The car accepted a new
+  session at 43 %, so it had not stopped at a charge limit of its own near 43 %.
+- Open, not a finding: the session stopped at 10223 Wh, just over 10 kWh. If the app holds a
+  charge quantity of 10 kWh (the quantity-and-time mode's amount), the inverter may apply it in fast
+  mode too. To check: the amount in the app's charging settings, and whether this session also
+  stops near 10 kWh.
+
 ## Wire 33545-33548: two times, read only
 
 The four words between the user current and the grid flag read, as two 32-bit values with the

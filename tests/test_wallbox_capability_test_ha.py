@@ -15,7 +15,6 @@ judged: only that every register is back where it was.
 
 from __future__ import annotations
 
-from dataclasses import replace
 from datetime import timedelta
 from typing import Any, ClassVar
 from unittest.mock import patch
@@ -70,17 +69,12 @@ def _wallbox(*, charging: bool, setting: int = 160) -> MockModbusUnit:
 
 @pytest.fixture
 def standalone(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Run as on a wallbox no inverter manages, which the entry cannot yet say.
+    """Run as on a wallbox declared standalone, which no option can say yet.
 
     The write machinery -- polling held off, the snapshot first, the restore --
     is what these tests are about, and it is the same once it may write.
     """
-    real = wbt.run_options
-
-    def options(*args: Any, **kwargs: Any) -> wct.Options:
-        return replace(real(*args, **kwargs), standalone=True)
-
-    monkeypatch.setattr(wbt, "run_options", options)
+    monkeypatch.setattr(wbt, "declared_standalone", lambda _entry: True)
 
 
 async def _setup(
@@ -282,15 +276,14 @@ async def test_the_cap_is_never_above_the_rating_and_a_default_is_not_consent(
     assert options.max_amps == wbt.DEFAULT_WALLBOX_MAX_AMPS
     assert not options.cap_explicit
 
-    with patch.object(
-        wbt, "run_options", lambda *a, **k: replace(options, standalone=True)
-    ):
+    with patch.object(wbt, "declared_standalone", lambda _entry: True):
         await _run(hass, entry)
     checks = entry.runtime_data.diagnosis._wallbox_folded["checks"]
     for name in ("below minimum", "above rating", "fallback"):
         assert checks[name]["verdict"] == wct.SKIPPED
 
 
+@pytest.mark.usefixtures("standalone")
 async def test_established_checks_are_left_out_of_the_next_run(
     hass: HomeAssistant,
 ) -> None:
@@ -303,6 +296,7 @@ async def test_established_checks_are_left_out_of_the_next_run(
     assert options.start_stop
 
 
+@pytest.mark.usefixtures("standalone")
 async def test_the_counters_count_the_wallbox_with_the_inverters_checks(
     hass: HomeAssistant,
 ) -> None:
@@ -315,6 +309,7 @@ async def test_the_counters_count_the_wallbox_with_the_inverters_checks(
     assert any(name.startswith("wallbox ") for name in rows)
 
 
+@pytest.mark.usefixtures("standalone")
 async def test_auto_repeat_starts_a_wallbox_run_only_while_a_car_charges(
     hass: HomeAssistant,
 ) -> None:

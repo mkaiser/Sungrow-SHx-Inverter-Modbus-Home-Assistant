@@ -147,9 +147,10 @@ Nothing can start now (blocker 13).
    4. **The managed wallbox's capability test** exists, from a terminal
       (`wallbox/managed_test.py`, `sungrow_managed_wallbox_test.py`): it
       writes the inverter's block and judges by the car. First run on
-      hardware: at gerd's, with a car charging. Not yet in Home Assistant:
-      it needs the inverter's connection and the wallbox's readings in one
-      runner, decided where (the inverter's entry or the wallbox's).
+      hardware: at gerd's, with a car charging. In Home Assistant it runs
+      from the wallbox's entry when an inverter entry here left the wallbox
+      to it, writing through that entry (`managing_entry`); a wallbox with
+      no such inverter entry awaits nothing.
    5. **The next session at gerd's**: `plans/gerd_wallbox_handoff.md`
       (quantity-and-time mode, writes that repeat what is set, waking a
       sleeping car, phase switching, PV surplus in sun).
@@ -289,6 +290,16 @@ Nothing can start now (blocker 16).
          together in the order `doc/entity_names.md` shows (the frontend's
          collation was not checked in the container), and that the
          counters read sensibly after a day's runs.
+6. **A switch in the setup dialog that creates the entities of an inverter
+   series.** It is for testing only and is not recommended for use: the
+   dialog's text says so, and it stays off by default.
+7. **Host networking for the devcontainer, to test mDNS auto-discovery.**
+   Multicast does not cross the container's bridge today, so the zeroconf
+   matcher (blocker 18) can't be tried from `make dev`. Find out how to give
+   the devcontainer host networking: `--network=host` in
+   `.devcontainer/devcontainer.json`, and what that does under WSL2 and
+   Docker Desktop, including its mirrored networking mode. Also check what it
+   changes for the ports the simulator and Home Assistant publish.
 
 # Open decisions
 

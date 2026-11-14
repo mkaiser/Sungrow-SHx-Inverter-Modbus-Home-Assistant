@@ -1087,18 +1087,22 @@ async def _block(box: FakeWallbox, **options: Any) -> dict[str, Any]:
     )
 
 
+#: The wallbox's own registers' checks are asked only of a wallbox declared standalone.
+ALONE = {"standalone": True}
+
+
 async def test_a_run_without_a_car_leaves_the_scale_missing_until_one_charges() -> None:
     idle = await _block(FakeWallbox(charging=False))
     folded = ledger.fold([idle])
     assert not folded["checks"]["output current"]["established"]
     assert folded["checks"]["output current"]["attempts"] == 0
-    assert ledger.due(folded, ledger.Live(1, 0.0), {}) == []
-    assert ledger.due(folded, ledger.Live(3, 9.0), {}) == ["output current"]
+    assert ledger.due(folded, ledger.Live(1, 0.0), ALONE) == []
+    assert ledger.due(folded, ledger.Live(3, 9.0), ALONE) == ["output current"]
 
     charging = await _block(FakeWallbox())
     both = ledger.fold([idle, charging])
     assert both["checks"]["output current"]["established"]
-    assert ledger.awaited(both, {}) == []
+    assert ledger.awaited(both, ALONE) == []
 
 
 async def test_a_finding_outranks_a_later_pass() -> None:
@@ -1122,9 +1126,22 @@ async def test_a_check_that_will_not_settle_is_given_up_after_three_tries() -> N
     folded = ledger.fold(runs)
 
     assert not folded["checks"]["output current"]["established"]
-    assert ledger.awaited(folded, {}) == []
-    missing = ledger.still_missing(folded, {})
+    assert ledger.awaited(folded, ALONE) == []
+    missing = ledger.still_missing(folded, ALONE)
     assert "not settled after 3 tries" in missing[0]["why"]
+
+
+async def test_a_wallbox_neither_standalone_nor_managed_awaits_nothing() -> None:
+    """Home Assistant cannot write it: auto repeat must not wait for it."""
+    assert ledger.awaited(None, {}) == []
+
+
+async def test_a_managed_wallbox_awaits_the_inverters_checks_and_start_stop() -> None:
+    names = {
+        name
+        for name, _need in ledger.awaited(None, {"managed": True, "start_stop": True})
+    }
+    assert names == {"user current", "floor", "start/stop"}
 
 
 async def test_options_decide_which_checks_are_awaited() -> None:

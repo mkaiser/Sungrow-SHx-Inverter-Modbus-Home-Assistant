@@ -121,7 +121,7 @@ class WallboxDiagnosisRunner(DiagnosisRunner):
                     await self._async_wallbox_test()
                 if self._wallbox_folded is not None:
                     document["wallbox_capability_test"] = wallbox_ledger.document(
-                        self._wallbox_folded, check_options(self.entry)
+                        self._wallbox_folded, check_options(self.entry, self.hass)
                     )
                 if self.wallbox_plausibility.observations:
                     document["wallbox_plausibility"] = (

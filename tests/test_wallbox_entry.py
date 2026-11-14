@@ -7,7 +7,6 @@ wallbox is looked for; the dongle's unit 3 stays the inverter entry's business.
 
 from __future__ import annotations
 
-from dataclasses import replace
 import json
 from unittest.mock import patch
 
@@ -427,12 +426,7 @@ async def test_with_leave_an_extended_run_tests_keeps_and_puts_back(
     hass: HomeAssistant, no_waiting: None, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """As on a wallbox no inverter manages, which the entry cannot yet say."""
-    real_options = wbt.run_options
-    monkeypatch.setattr(
-        wbt,
-        "run_options",
-        lambda *a, **k: replace(real_options(*a, **k), standalone=True),
-    )
+    monkeypatch.setattr(wbt, "declared_standalone", lambda _entry: True)
     unit = _testable(charging=True)
     entry = await _setup_with(
         hass,
@@ -517,6 +511,13 @@ async def test_clearing_the_history_forgets_the_wallbox_runs(
     )
 
 
+@pytest.fixture
+def standalone(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Run as on a wallbox declared standalone, which no option can say yet."""
+    monkeypatch.setattr(wbt, "declared_standalone", lambda _entry: True)
+
+
+@pytest.mark.usefixtures("standalone")
 async def test_auto_repeat_starts_a_wallbox_run_with_no_inverter_to_ask(
     hass: HomeAssistant, no_waiting: None
 ) -> None:
@@ -564,6 +565,7 @@ async def test_auto_repeat_waits_while_no_car_charges(
     runner.continuous.async_turn_off("test over")
 
 
+@pytest.mark.usefixtures("standalone")
 async def test_auto_repeat_spaces_wallbox_runs_by_its_own_shorter_slot(
     hass: HomeAssistant, no_waiting: None
 ) -> None:
