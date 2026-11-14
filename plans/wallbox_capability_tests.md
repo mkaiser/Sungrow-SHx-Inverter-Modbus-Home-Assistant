@@ -6,6 +6,11 @@ collection: it runs in Home Assistant's *Extended test (auto repeat)* at gerd's
 while a car charges, keeps every run, and asks every question a charging
 session can answer. gerd allows every test while charging.
 
+**Status 2026-11-14:** at gerd's the wallbox is managed by the inverter, which overwrites
+writes to its own registers; the test now writes only with `standalone` (never from Home
+Assistant), never disables and never offers under 6 A. The checks below stand for a standalone
+wallbox. Control of a managed one: `plans/wallbox_recovery_and_retest.md`, phase B and D.
+
 Device facts are on the wiki's [wallbox](../.wiki/wiki/entities/device-wallbox.md)
 page; the procedure is `src/sungrow_modbus/wallbox/capability_test.py`.
 

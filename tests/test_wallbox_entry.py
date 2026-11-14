@@ -7,6 +7,7 @@ wallbox is looked for; the dongle's unit 3 stays the inverter entry's business.
 
 from __future__ import annotations
 
+from dataclasses import replace
 import json
 from unittest.mock import patch
 
@@ -423,8 +424,15 @@ async def test_without_leave_an_extended_run_reads_and_writes_nothing(
 
 
 async def test_with_leave_an_extended_run_tests_keeps_and_puts_back(
-    hass: HomeAssistant, no_waiting: None
+    hass: HomeAssistant, no_waiting: None, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """As on a wallbox no inverter manages, which the entry cannot yet say."""
+    real_options = wbt.run_options
+    monkeypatch.setattr(
+        wbt,
+        "run_options",
+        lambda *a, **k: replace(real_options(*a, **k), standalone=True),
+    )
     unit = _testable(charging=True)
     entry = await _setup_with(
         hass,

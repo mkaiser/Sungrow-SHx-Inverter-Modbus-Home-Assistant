@@ -14,6 +14,15 @@ run like this has settled its scale.
 
 **What keeps it safe, in the order it matters:**
 
+* *Only on a wallbox no inverter manages* (`Options.standalone`). Under a
+  hybrid inverter's energy management the inverter drives the output current
+  and overwrites a write within seconds; the charge is controlled through the
+  inverter's block (`sungrow_modbus.hybrid_inverter.ev_charger`) instead.
+  A setting that moves between two reads with nothing written is refused too.
+* *Never a disable, never under 6 A, never 0.* At gerd's on 2026-11-13 a
+  disable ended a charge the enable written back did not resume, and 5 A and
+  0 left the wallbox suspended. `enable` and `below_minimum` now only record
+  that they were not run.
 * *The word written is safe under every candidate scale.* A count of 60 is
   6.0 A or 0.6 A; 80 is 8.0 A or 0.8 A; 100 is 10.0 A or 1.0 A. The wrong
   reading can only offer *less* than meant, never ten times more. `max_amps`
@@ -126,6 +135,28 @@ FOLLOW_TIMEOUT = 60.0
 #: An offer under the pilot minimum, for the below-minimum check. Under the
 #: second reading of the scale it is 0.05 A: nothing a car could mistake.
 BELOW_MINIMUM_A = 5.0
+
+#: Why the run writes nothing to a wallbox not declared standalone.
+MANAGED_REASON = (
+    "a wallbox managed by an inverter ignores writes to its own registers: the "
+    "inverter drives its output current and overwrites a write within seconds. "
+    "Its charging is controlled through the inverter's wallbox block instead. "
+    "Run this only on a wallbox no inverter manages (`standalone`)"
+)
+
+#: Why the enable check never disables. At gerd's on 2026-11-13 a disable
+#: ended the charge, and the enable written back did not bring it back.
+ENABLE_NEVER = (
+    "the charge point is never disabled: a disable ended a charge that the "
+    "enable written back did not resume (gerd, 2026-11-13)"
+)
+
+#: Why nothing under the pilot minimum is offered. 5 A and 0 left the wallbox
+#: suspended until a current was written again (gerd, 2026-11-13; KevinD987).
+BELOW_MINIMUM_NEVER = (
+    "nothing under 6 A and never 0 is written: an offer under the minimum can "
+    "leave the wallbox suspended until a current is written again"
+)
 
 #: The headroom the above-rating check offers over the rating.
 ABOVE_RATING_A = 1.0
@@ -270,6 +301,12 @@ class Options:
     cap_explicit: bool = False
     """Whether the owner chose `max_amps`. The checks that go beyond the
     default cap need it, so a default is never mistaken for consent."""
+
+    standalone: bool = False
+    """The owner says no inverter manages this wallbox. Without it nothing is
+    written: a wallbox under an inverter's energy management has its output
+    current driven by the inverter, which overwrites a write within seconds
+    (gerd, 2026-11-14), and nothing on the wallbox alone tells the two apart."""
 
 
 class Step(NamedTuple):
@@ -546,6 +583,21 @@ class WallboxCapabilityTest:
         )
         self._charging_at_start = sample.status == CHARGING
 
+        # Something else writing the setting -- an inverter's energy management
+        # ramps it every few seconds while a car charges -- shows as a second
+        # read that differs from the first, with nothing written in between.
+        again = await self._read_one("holding", OUTPUT_CURRENT)
+        if again != setting:
+            self.conditions["setting_moved"] = [setting, again]
+        if self.options.leave and not self.options.standalone:
+            raise Guard(2, MANAGED_REASON)
+        if self.options.leave and again != setting:
+            raise Guard(
+                2,
+                f"the output current setting moved from {setting} to {again} with "
+                "nothing written: another controller drives it",
+            )
+
         if self.options.leave:
             if self._on_snapshot is None:
                 raise Guard(2, "writes need a snapshot callback to keep the snapshot")
@@ -793,61 +845,9 @@ class WallboxCapabilityTest:
         self._worst(3)
 
     async def _enable(self) -> None:
-        """Disable the charge point, see the wallbox say so, enable it again."""
+        """Never disable the charge point; say so, and write nothing."""
         self._step("disable and enable the charge point")
-        original = self.snapshot["raw"].get(ENABLED)
-        if original is None:
-            self._skip("enable", "the register could not be read, so it is not written")
-            return
-        if original != ENABLED_WORD:
-            self._skip(
-                "enable",
-                f"the register reads {original}, not {ENABLED_WORD}: it is already "
-                "disabled, or not the state this took it for",
-            )
-            return
-        failure = await self._write(ENABLED, DISABLED_WORD)
-        if failure is not None:
-            self.steps.append(
-                Step("disable", failure, self.conditions["refusals"][ENABLED])
-            )
-            self._worst(3)
-            return
-        disabled = await self._timed(
-            lambda s: s.status == DISABLED_STATUS, STATE_TIMEOUT
-        )
-        failure = await self._write(ENABLED, ENABLED_WORD)
-        if failure is not None:
-            self.steps.append(
-                Step("enable", failure, self.conditions["refusals"][ENABLED])
-            )
-            self._worst(3)
-            return
-        if self._charging_at_start:
-            back = await self._timed(lambda s: s.status == CHARGING, STATE_TIMEOUT)
-        else:
-            back = await self._timed(
-                lambda s: s.status != DISABLED_STATUS, STATE_TIMEOUT
-            )
-        self.conditions["enable_seconds"] = {"disable": disabled, "enable": back}
-        if disabled is not None and back is not None:
-            self.steps.append(
-                Step(
-                    "enable",
-                    CONFIRMED,
-                    f"disabled on 0 after {disabled:.0f} s, back on 1 after "
-                    f"{back:.0f} s",
-                )
-            )
-        else:
-            self.steps.append(
-                Step(
-                    "enable",
-                    INCONCLUSIVE,
-                    f"disabled: {disabled is not None}, back: {back is not None}",
-                )
-            )
-            self._worst(3)
+        self._skip("enable", ENABLE_NEVER)
 
     # -- the phase setting ----------------------------------------------------
 
@@ -1022,64 +1022,9 @@ class WallboxCapabilityTest:
         self.steps.append(Step("current follow", CONFIRMED, detail))
 
     async def _below_minimum(self) -> None:
-        """Offer under the pilot minimum, then nothing: refused, or the car pauses."""
+        """Never offer under the pilot minimum; say so, and write nothing."""
         self._step("offer under the pilot minimum")
-        if not self._needs_car("below minimum") or not self._needs_cap("below minimum"):
-            return
-        outcomes: dict[str, str] = {}
-        self.conditions["below_minimum"] = outcomes
-        resume_word = round(MIN_CURRENT_A / SCALE_THIS_PROJECT)
-        clean = True
-        for label, word in (
-            (f"{BELOW_MINIMUM_A:.1f} A", round(BELOW_MINIMUM_A / SCALE_THIS_PROJECT)),
-            ("0", 0),
-        ):
-            failure = await self._write(OUTPUT_CURRENT, word)
-            if failure == REFUSED:
-                refusal = self.conditions["refusals"][OUTPUT_CURRENT]
-                outcomes[label] = f"refused: {refusal}"
-                continue
-            if failure is not None:
-                outcomes[label] = failure
-                clean = False
-                break
-            paused = await self._timed(
-                lambda s: s.status != CHARGING or s.draw_a < MIN_CURRENT_A,
-                FOLLOW_TIMEOUT,
-            )
-            if paused is None:
-                outcomes[label] = "accepted, the car kept charging"
-                continue
-            failure = await self._write(OUTPUT_CURRENT, resume_word)
-            resumed = (
-                None
-                if failure is not None
-                else await self._timed(
-                    lambda s: (
-                        s.status == CHARGING and s.draw_a >= MIN_CURRENT_A - TOLERANCE_A
-                    ),
-                    FOLLOW_TIMEOUT,
-                )
-            )
-            if resumed is None:
-                outcomes[label] = (
-                    f"accepted, the car paused after {paused:.0f} s and did not resume"
-                )
-                clean = False
-            else:
-                outcomes[label] = (
-                    f"accepted, the car paused after {paused:.0f} s and resumed on "
-                    f"6 A after {resumed:.0f} s"
-                )
-        if not clean:
-            self._worst(3)
-        self.steps.append(
-            Step(
-                "below minimum",
-                CONFIRMED if clean else INCONCLUSIVE,
-                "; ".join(f"{label}: {what}" for label, what in outcomes.items()),
-            )
-        )
+        self._skip("below minimum", BELOW_MINIMUM_NEVER)
 
     async def _above_rating(self) -> None:
         """Offer the rating plus 1 A: refused, or clamped, or neither."""

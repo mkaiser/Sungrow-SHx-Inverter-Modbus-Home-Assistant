@@ -15,6 +15,10 @@ The only wallbox measured. [Register 32998](register-32998.md) capped a forced c
 and through the dongle; a run through the dongle while the house's Home Assistant polled lost the
 dongle mid-restore, and the cable closed every session for minutes
 ([the run](../sources/gerd-import-limit-2026-11-08-summary.md)).
+**The inverter manages the wallbox**: its charging, mode and user-defined current are written at
+the inverter, and the wallbox's own current setting is the inverter's to drive
+([the session](../sources/gerd-wallbox-inverter-control-2026-11-14-summary.md)). The car on it
+draws at most 16 A on three phases; the installation allows 22 kW (32 A).
 
 ## Diagnoses
 
@@ -33,3 +37,4 @@ dongle mid-restore, and the cable closed every session for minutes
 - [The TLS certificate of the WiNet-S and the wallbox](../sources/gerd-tls-certificate-2026-11-06-summary.md), 2026-11-06, one certificate
 - [The wallbox capability test's dry run](../sources/gerd-wallbox-dry-run-2026-11-06-summary.md), 2026-11-06, no car
 - [What the devices advertise over mDNS, and their web pages](../sources/gerd-mdns-2026-11-11-summary.md), 2026-11-11
+- [The wallbox controlled through the inverter](../sources/gerd-wallbox-inverter-control-2026-11-14-summary.md), 2026-11-14, a car charging, on site

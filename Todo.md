@@ -79,11 +79,17 @@ Nothing can start now (blocker 13).
 
 ## Wallbox
 
-3. **Writing to the wallbox: measure the output current's scale at gerd's.**
-   The wallbox is read only. Three sources disagree on the output current
-   setting, holding 21203: 0.1 A per count here, 0.01 A in discussion #571, a
-   factor ten on a mains charger. No wallbox control is built until a measured
-   run settles it.
+3. **Controlling the wallbox: through the inverter.** Measured at gerd's on
+   site, 2026-11-14 (wiki: `gerd-wallbox-inverter-control-2026-11-14-summary.md`,
+   `plans/wallbox_recovery_and_retest.md`): the scale of holding 21203 is
+   **0.1 A, settled by the car**. But his wallbox is **managed by the
+   inverter**, which drives 21203 and overwrites any write to it; the charge
+   is controlled at the inverter (unit 1): charging on/off, mode, and the
+   user-defined current (only in user-defined mode, 6 A up). The library has
+   the block, read only (`hybrid_inverter/ev_charger.py`). The wallbox
+   capability test now writes only to a wallbox declared standalone
+   (`--standalone`; from Home Assistant never, it cannot tell), never
+   disables and never offers under 6 A.
 
    Built and tested (59 tests, 99 % of the procedure): the procedure,
    `src/sungrow_modbus/wallbox/capability_test.py`, and its terminal driver,
@@ -124,19 +130,23 @@ Nothing can start now (blocker 13).
    Left, in order:
 
    0. Released in 0.1.0a34; the terminal driver pins it.
-   1. **One window with gerd and a car charging**, so the setting holds a
-      real current (he runs no evcc: the 160/151 seen while charging are the
-      wallbox's own setting), the option on and `wallbox_max_amps` set to
-      what his installation takes, the first run watched live before auto
-      repeat is left alone with it. His consent covers any test while
-      charging. Then ingest a day of it (plan step 5): the wiki's wallbox
-      pages, `doc/wallbox_registers.md`, `log.md`.
-   2. **Then entities**: a charging current number and an enable switch, on
-      what was measured, through the write table
-      (`scripts/generate/tables/writes.py`), with the wallbox's 60 s
-      fallback in mind, and a report in discussion #571 (rudolf992,
-      2026-04-27, unmeasured): in EMS mode the current set over Modbus went
-      back to iSolarCloud's value within seconds.
+   1. Done 2026-11-14, on site with a car (above). The 160/151 seen while
+      charging earlier were the inverter's value, not the wallbox's own.
+   2. **Next, entities on the inverter's entry**, from
+      `hybrid_inverter/ev_charger.py`, through the write table
+      (`scripts/generate/tables/writes.py`): a charging switch (on/off), a
+      charging mode select (fast, PV surplus, user defined), and a user
+      current number (6 A to the wallbox's rating, written only in user
+      defined mode). Created only where the inverter's mode register holds a
+      named code. A mode change can end the session: the select writes
+      charging on after it. Discussion #571's report (rudolf992, 2026-04-27:
+      the current set over Modbus went back to iSolarCloud's within seconds)
+      is the same thing seen from the wallbox side.
+   3. **A standalone wallbox** (no inverter managing it, evcc's case) is the
+      only one whose own registers may be written; none measured yet.
+   4. **The next session at gerd's**: `plans/gerd_wallbox_handoff.md`
+      (quantity-and-time mode, writes that repeat what is set, waking a
+      sleeping car, phase switching, PV surplus in sun).
 
    **The search finds every device** (`plans/device_scan_and_diagnosis.md`,
    its status log is current): a wallbox at its own address is an entry of

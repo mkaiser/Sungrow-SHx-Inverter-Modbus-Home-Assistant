@@ -817,3 +817,13 @@ between minimum and maximum SoC, fits, and so do 48 of 57 corpus pairs within 2 
 misses, all peter-sm). New entity register-13023, new source gerd-battery-level-2026-11-14;
 updated device-sbr-battery, installation-gerd (max SoC now 100 %, 90 % until 2026-11-03), and the
 SH6.0RT-20 source page that left the question open.
+
+## [2026-11-14] ingested | gerd's wallbox is controlled through the inverter
+
+On site with a car charging: the inverter manages the AC22E-01 and drives its output current
+(21203), which the car follows at 0.1 A per count; writes to 21203 are overwritten. Charging
+on/off (33540), mode (33541) and the user-defined current (33545, only in user-defined mode, 6 A
+up) at the inverter were written over the cable and the WiNet-S and followed by the car; a mode
+change can end the session. New source gerd-wallbox-inverter-control-2026-11-14; updated
+device-wallbox (new section), installation-gerd, the index. The wallbox capability test now
+writes only to a wallbox declared standalone and never disables or offers under 6 A.

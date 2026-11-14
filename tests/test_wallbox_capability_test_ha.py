@@ -15,6 +15,7 @@ judged: only that every register is back where it was.
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import timedelta
 from typing import Any, ClassVar
 from unittest.mock import patch
@@ -65,6 +66,21 @@ def _wallbox(*, charging: bool, setting: int = 160) -> MockModbusUnit:
     unit.holding[wct.PHASE_SETPOINT] = 0
     unit.holding[wct.MILEAGE] = 70
     return unit
+
+
+@pytest.fixture
+def standalone(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Run as on a wallbox no inverter manages, which the entry cannot yet say.
+
+    The write machinery -- polling held off, the snapshot first, the restore --
+    is what these tests are about, and it is the same once it may write.
+    """
+    real = wbt.run_options
+
+    def options(*args: Any, **kwargs: Any) -> wct.Options:
+        return replace(real(*args, **kwargs), standalone=True)
+
+    monkeypatch.setattr(wbt, "run_options", options)
 
 
 async def _setup(
@@ -146,6 +162,35 @@ async def test_a_wallbox_behind_a_dongle_is_never_written(
     assert box.holding == before
 
 
+async def test_a_run_from_home_assistant_never_writes_to_the_wallbox(
+    hass: HomeAssistant,
+) -> None:
+    """With the owner's leave too: the entry cannot tell it no inverter manages it."""
+    box = _wallbox(charging=True)
+    entry = await _setup(
+        hass,
+        box,
+        **{CONF_CAPABILITY_TEST_WALLBOX: True, CONF_WALLBOX_MAX_AMPS: 10},
+    )
+    before = dict(box.holding)
+    writes: list[tuple[int, int]] = []
+    real_write = box.write_register
+
+    async def watching(address: int, value: int) -> Any:
+        writes.append((address, value))
+        return await real_write(address, value)
+
+    assert wbt.consented(entry)
+    assert not wbt.run_options(entry).standalone
+    with patch.object(box, "write_register", watching):
+        await _run(hass, entry)
+
+    assert writes == []
+    assert box.holding == before
+    assert await wbt.async_leftover(hass, entry) is None
+
+
+@pytest.mark.usefixtures("standalone")
 async def test_a_run_writes_with_polling_held_off_and_puts_everything_back(
     hass: HomeAssistant,
 ) -> None:
@@ -179,6 +224,7 @@ async def test_a_run_writes_with_polling_held_off_and_puts_everything_back(
     assert "output current" in runner._wallbox_folded["checks"]
 
 
+@pytest.mark.usefixtures("standalone")
 async def test_the_snapshot_is_on_disk_before_the_first_write(
     hass: HomeAssistant,
 ) -> None:
@@ -200,6 +246,7 @@ async def test_the_snapshot_is_on_disk_before_the_first_write(
     assert seen[0]["raw"][wct.OUTPUT_CURRENT] == 160
 
 
+@pytest.mark.usefixtures("standalone")
 async def test_a_leftover_snapshot_is_put_back_before_a_new_run_takes_its_own(
     hass: HomeAssistant,
 ) -> None:
@@ -235,7 +282,10 @@ async def test_the_cap_is_never_above_the_rating_and_a_default_is_not_consent(
     assert options.max_amps == wbt.DEFAULT_WALLBOX_MAX_AMPS
     assert not options.cap_explicit
 
-    await _run(hass, entry)
+    with patch.object(
+        wbt, "run_options", lambda *a, **k: replace(options, standalone=True)
+    ):
+        await _run(hass, entry)
     checks = entry.runtime_data.diagnosis._wallbox_folded["checks"]
     for name in ("below minimum", "above rating", "fallback"):
         assert checks[name]["verdict"] == wct.SKIPPED

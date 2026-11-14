@@ -73,11 +73,15 @@ Nothing here can be written, so a read is the whole test.
 
 ## The wallbox
 
-The output current's scale (holding 21203, 0.1 A or 0.01 A per count) is measured by
-`sungrow_wallbox_capability_test.py`, at the wallbox's own address over TLS. It is a dry run
-without `--leave`; with it, the current is stepped to 6, 8 and 10 A. Enable, phase switching and
-start/stop are optional flags. Its document is separate and does not appear in the inverter's
-feature report yet. Folding it in is the next step.
+The output current's scale (holding 21203) is **0.1 A per count**, settled on 2026-11-14 by a
+car following it at gerd's. `sungrow_wallbox_capability_test.py` tests a wallbox's own registers at
+its own address over TLS: a dry run without `--leave`, and **with it only on a wallbox declared
+`--standalone`**. A wallbox a hybrid inverter manages (its EV charger in iSolarCloud) has its
+current driven by the inverter, which overwrites a write within seconds; it is controlled at the
+inverter instead (`src/sungrow_modbus/hybrid_inverter/ev_charger.py`). The test also refuses a
+setting that moves with nothing written, never disables the charge point and never offers under
+6 A. From Home Assistant it writes nothing: an entry cannot tell a managed wallbox from a
+standalone one. Its document is separate from the inverter's feature report.
 
 ## Readings checked against each other
 

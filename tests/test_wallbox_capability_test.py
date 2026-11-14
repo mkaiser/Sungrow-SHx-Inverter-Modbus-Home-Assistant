@@ -77,6 +77,7 @@ class FakeWallbox:
         available_offset_a: float = 0.0,
         mileage: int = 70,
         stays_on_after_stop: bool = False,
+        driven: bool = False,
     ) -> None:
         """Set the wallbox up; every argument is a way for it to be different."""
         self.scale = scale
@@ -103,6 +104,7 @@ class FakeWallbox:
         self.clamp_to_rating = clamp_to_rating
         self.available_offset_a = available_offset_a
         self.stays_on_after_stop = stays_on_after_stop
+        self.driven = driven
         self.holding[wct.MILEAGE] = mileage
         self.fixed_phase = phase
         self.original = dict(self.holding)
@@ -145,6 +147,10 @@ class FakeWallbox:
         return self._words(space, address, count)
 
     def _words(self, space: str, address: int, count: int) -> list[int]:
+        if self.driven and space == "holding" and address == wct.OUTPUT_CURRENT:
+            # An inverter's energy management ramps the setting while a car
+            # charges, about 0.7 A at a time (gerd, 2026-11-14).
+            self.holding[address] += 7
         if space == "holding":
             return [self.holding.get(address + i, 0) for i in range(count)]
         if address == MODEL_NAME.address:
@@ -210,6 +216,7 @@ async def _run(
             f"snapshot touched={list(data['touched'])} writes={len(box.writes)}"
         )
 
+    options.setdefault("standalone", True)
     run = wct.WallboxCapabilityTest(
         box,
         wct.Options(leave=leave, **options),
@@ -217,6 +224,41 @@ async def _run(
         on_snapshot=on_snapshot if snapshot else None,
     )
     return await run.async_run(), events
+
+
+# -- a wallbox an inverter manages ------------------------------------------------
+
+
+async def test_a_wallbox_not_declared_standalone_is_never_written() -> None:
+    """The default: nothing on the wallbox alone tells a managed one apart."""
+    box = FakeWallbox()
+    outcome, events = await _run(box, standalone=False)
+
+    assert outcome.code == 2
+    assert outcome.conditions["guard"] == wct.MANAGED_REASON
+    assert box.writes == []
+    assert events == []
+    assert outcome.restores == ()
+
+
+async def test_a_setting_another_controller_drives_is_never_written() -> None:
+    """gerd, 2026-11-14: the inverter ramped 21203 with nothing written by us."""
+    box = FakeWallbox(driven=True)
+    outcome, _ = await _run(box)
+
+    assert outcome.code == 2
+    assert "another controller drives it" in outcome.conditions["guard"]
+    assert box.writes == []
+
+
+async def test_a_dry_run_records_a_setting_that_moves() -> None:
+    box = FakeWallbox(driven=True)
+    outcome, _ = await _run(box, leave=False, standalone=False)
+
+    assert outcome.code == 0
+    first, second = outcome.conditions["setting_moved"]
+    assert second == first + 7
+    assert box.writes == []
 
 
 # -- the straight run -----------------------------------------------------------
@@ -489,16 +531,15 @@ async def test_enable_is_not_run_by_default() -> None:
 
 
 @pytest.mark.parametrize("charging", [True, False])
-async def test_disable_and_enable_are_seen_with_or_without_a_car(
-    charging: bool,
-) -> None:
+async def test_the_charge_point_is_never_disabled(charging: bool) -> None:
+    """At gerd's a disable ended a charge the enable written back did not resume."""
     box = FakeWallbox(charging=charging)
     outcome, _ = await _run(box, enable=True)
 
     step = next(s for s in outcome.steps if s.name == "enable")
-    assert step.verdict == wct.CONFIRMED
-    words = [w for a, w in box.writes if a == wct.ENABLED]
-    assert words[:2] == [wct.DISABLED_WORD, wct.ENABLED_WORD]
+    assert step.verdict == wct.SKIPPED
+    assert step.detail == wct.ENABLE_NEVER
+    assert all(a != wct.ENABLED for a, _w in box.writes)
     assert box.holding == box.original
 
 
@@ -748,37 +789,6 @@ async def test_an_enable_register_that_cannot_be_read_is_not_written() -> None:
     assert any(s.name == "enable" and s.verdict == wct.SKIPPED for s in outcome.steps)
 
 
-async def test_a_refused_disable_ends_the_step() -> None:
-    box = FakeWallbox(charging=False)
-    _refuse_the_nth_write_to(box, wct.ENABLED, 1)
-    outcome, _ = await _run(box, enable=True)
-
-    step = next(s for s in outcome.steps if s.name == "disable")
-    assert step.verdict == wct.REFUSED
-    assert box.holding == box.original
-
-
-async def test_a_refused_re_enable_is_put_back_by_the_restore() -> None:
-    """The one that matters: a charge point left disabled would stop every charge."""
-    box = FakeWallbox(charging=False)
-    _refuse_the_nth_write_to(box, wct.ENABLED, 2)
-    outcome, _ = await _run(box, enable=True)
-
-    step = next(s for s in outcome.steps if s.name == "enable")
-    assert step.verdict == wct.REFUSED
-    assert box.holding[wct.ENABLED] == wct.ENABLED_WORD
-    assert all(row.restored for row in outcome.restores)
-
-
-async def test_a_wallbox_that_ignores_disable_is_inconclusive() -> None:
-    box = FakeWallbox(charging=False, ignores_enable=True)
-    outcome, _ = await _run(box, enable=True)
-
-    step = next(s for s in outcome.steps if s.name == "enable")
-    assert step.verdict == wct.INCONCLUSIVE
-    assert box.holding == box.original
-
-
 async def test_a_refused_phase_write_ends_the_step() -> None:
     box = FakeWallbox(charging=False)
     _refuse_the_nth_write_to(box, wct.PHASE_SETPOINT, 1)
@@ -871,27 +881,14 @@ async def test_an_available_current_that_is_nothing_known_is_inconclusive() -> N
     assert step.verdict == wct.INCONCLUSIVE
 
 
-async def test_an_offer_below_the_minimum_pauses_the_car_and_it_resumes() -> None:
+async def test_nothing_under_the_minimum_is_ever_offered() -> None:
+    """5 A and 0 left gerd's wallbox suspended until a current was written."""
     box = FakeWallbox(setting=160)
     outcome, _ = await _run(box, below_minimum=True, max_amps=10.0, cap_explicit=True)
 
-    assert _verdicts(outcome)["below minimum"] == wct.CONFIRMED
-    results = outcome.conditions["below_minimum"]
-    assert set(results) == {"5.0 A", "0"}
-    assert all("paused" in what and "resumed" in what for what in results.values())
+    assert _verdicts(outcome)["below minimum"] == wct.SKIPPED
+    assert not any(w < 60 for a, w in box.writes if a == wct.OUTPUT_CURRENT)
     assert box.holding == box.original
-
-
-async def test_an_offer_below_the_minimum_may_be_refused() -> None:
-    box = FakeWallbox(setting=160, refuse_below_a=6.0)
-    outcome, _ = await _run(box, below_minimum=True, max_amps=10.0, cap_explicit=True)
-
-    assert _verdicts(outcome)["below minimum"] == wct.CONFIRMED
-    assert all(
-        what.startswith("refused")
-        for what in outcome.conditions["below_minimum"].values()
-    )
-    assert all(row.restored for row in outcome.restores)
 
 
 async def test_below_minimum_is_not_run_on_a_default_cap() -> None:
@@ -948,13 +945,13 @@ async def test_above_the_rating_refused() -> None:
     assert refusing.holding == refusing.original
 
 
-async def test_start_stop_and_enable_are_timed() -> None:
+async def test_start_stop_is_timed_and_enable_never_written() -> None:
     box = FakeWallbox()
     outcome, _ = await _run(box, start_stop=True, enable=True)
 
     assert set(outcome.conditions["start_stop_seconds"]) == {"stop", "resume"}
     assert outcome.conditions["start_stop_seconds"]["stop"] is not None
-    assert outcome.conditions["enable_seconds"]["disable"] is not None
+    assert "enable_seconds" not in outcome.conditions
 
 
 async def test_the_phase_is_switched_with_a_car_charging_in_evcc_order() -> None:

@@ -57,10 +57,20 @@ async def test_without_leave_it_is_a_dry_run_that_writes_nothing(cli, tmp_path, 
     assert not list(tmp_path.glob("*snapshot*"))
 
 
+async def test_leave_without_standalone_writes_nothing(cli, capsys):
+    """Refused by the script itself: the pinned wheel predates the library's guard."""
+    box = FakeWallbox()
+    code = await cli._run(_args(cli, "--leave", "--yes"), box, FakeClock())
+
+    assert code == cli.REFUSED_HERE
+    assert box.writes == []
+    assert "--standalone" in capsys.readouterr().err
+
+
 async def test_leave_with_nobody_at_a_terminal_is_a_no(cli, monkeypatch, capsys):
     monkeypatch.setattr(sys.stdin, "isatty", lambda: False)
     box = FakeWallbox()
-    code = await cli._run(_args(cli, "--leave"), box, FakeClock())
+    code = await cli._run(_args(cli, "--leave", "--standalone"), box, FakeClock())
 
     assert code == cli.CANCELLED
     assert box.writes == []
@@ -71,7 +81,7 @@ async def test_a_declined_question_writes_nothing(cli, monkeypatch):
     monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
     monkeypatch.setattr("builtins.input", lambda _prompt="": "")
     box = FakeWallbox()
-    code = await cli._run(_args(cli, "--leave"), box, FakeClock())
+    code = await cli._run(_args(cli, "--leave", "--standalone"), box, FakeClock())
 
     assert code == cli.CANCELLED
     assert box.writes == []
@@ -79,7 +89,9 @@ async def test_a_declined_question_writes_nothing(cli, monkeypatch):
 
 async def test_a_run_with_leave_restores_and_keeps_no_address(cli, tmp_path):
     box = FakeWallbox()
-    code = await cli._run(_args(cli, "--leave", "--yes"), box, FakeClock())
+    code = await cli._run(
+        _args(cli, "--leave", "--standalone", "--yes"), box, FakeClock()
+    )
 
     assert code == 0
     assert box.holding == box.original
@@ -105,7 +117,7 @@ async def test_the_snapshot_is_on_disk_before_the_first_write(cli, tmp_path):
         await real_write(address, word)
 
     box.write = write  # type: ignore[method-assign]
-    await cli._run(_args(cli, "--leave", "--yes"), box, FakeClock())
+    await cli._run(_args(cli, "--leave", "--standalone", "--yes"), box, FakeClock())
 
     assert seen
     assert seen[0] is True
@@ -113,7 +125,9 @@ async def test_the_snapshot_is_on_disk_before_the_first_write(cli, tmp_path):
 
 async def test_a_run_that_cannot_restore_keeps_its_snapshot_and_exits_5(cli, tmp_path):
     box = FakeWallbox(restore_fails=True)
-    code = await cli._run(_args(cli, "--leave", "--yes"), box, FakeClock())
+    code = await cli._run(
+        _args(cli, "--leave", "--standalone", "--yes"), box, FakeClock()
+    )
 
     assert code == 5
     assert list(tmp_path.glob("*-wallbox-snapshot.json"))

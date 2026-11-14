@@ -148,7 +148,10 @@ entry that finds the same wallbox at unit 3 (the same own serial, input
 (`_async_wallbox` in `__init__.py`) and remembers its serial
 (`SungrowRuntimeData.wallbox_elsewhere`); setting up the wallbox entry reloads
 such an inverter entry, and removing it hands the wallbox back. Only the
-wallbox entry writes to a wallbox (`wallbox_capability_test.consented`): one
+wallbox entry may write to a wallbox (`wallbox_capability_test.consented`), and
+for now it does not: its capability test runs with `standalone` off, because
+an inverter that manages a wallbox overwrites writes to it (the inverter's
+`hybrid_inverter/ev_charger.py` block is the control there). One
 read through a dongle stays read only, which also leaves the dongle's few
 sessions to the inverter. No history is carried between the two devices: the
 YAML package never had a wallbox. The wallbox entry has a

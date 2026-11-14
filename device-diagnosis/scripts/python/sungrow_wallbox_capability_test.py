@@ -19,18 +19,24 @@ the rating, the setting and what the car draws, says which scale they fit, and
 prints what it would write. With a car charging, "the car draws 13 A while the
 setting is 160" already rules out 0.01 A per count, before any write.
 
-With `--leave` it offers 6, 8 and 10 A (60, 80 and 100 counts). Those are safe
-at either scale: at the wrong one they offer a tenth. `--max-amps` lowers the
-top. It never goes above what you give it, so give it your installation's limit
-if that is below 10 A.
+**Only on a wallbox no inverter manages.** A wallbox under a hybrid
+inverter's energy management (its EV charger settings in iSolarCloud) ignores
+writes to its own registers: the inverter drives the output current and
+overwrites a write within seconds, and the charge is controlled through the
+inverter instead (measured 2026-11-14). So `--leave` writes nothing unless
+`--standalone` says no inverter manages this one.
+
+With `--leave --standalone` it offers 6, 8 and 10 A (60, 80 and 100 counts).
+Those are safe at either scale: at the wrong one they offer a tenth.
+`--max-amps` lowers the top. It never goes above what you give it, so give it
+your installation's limit if that is below 10 A.
 
     python python/sungrow_wallbox_capability_test.py 192.168.1.60
-    python python/sungrow_wallbox_capability_test.py 192.168.1.60 --leave
-    python python/sungrow_wallbox_capability_test.py 192.168.1.60 --leave --enable
+    python python/sungrow_wallbox_capability_test.py 192.168.1.60 --leave --standalone
     python python/sungrow_wallbox_capability_test.py 192.168.1.60 --restore SNAPSHOT
 
 With a car charging, `--follow` steps the offer from 6 A to your `--max-amps` and
-back and times how the car follows; `--below-minimum`, `--above-rating` and
+back and times how the car follows; `--above-rating` and
 `--fallback` need `--max-amps` given on purpose (the last also needs it no
 higher than the setting the wallbox had); `--phase-charging` switches the phase
 with the charge stopped first; `--mileage` writes the mileage setting its own
@@ -49,10 +55,12 @@ Before you start:
   succession, and drops a session after sixty seconds of silence.
 * **For the behavioural leg, a car must be plugged in and charging.** Without
   one only the raw word is checked, and the run says the scale is not settled.
-* **`--enable` disables the charge point and enables it again**: a charge in
-  progress stops and resumes. **`--phase` switches the phase setting and
-  back**, and only when nothing is flowing. **`--start-stop`** stops and starts
-  the charge once, and only if the register reads 0 while a car charges.
+* **`--enable` and `--below-minimum` write nothing any more**: a disable
+  ended a charge that the enable written back did not resume, and an offer
+  under 6 A can leave the wallbox suspended (both 2026-11-13). **`--phase`
+  switches the phase setting and back**, and only when nothing is flowing.
+  **`--start-stop`** stops and starts the charge once, and only if the
+  register reads 0 while a car charges.
 
 The snapshot of what the settings held is written and flushed to the disk
 before the first write. If the run dies, `--restore SNAPSHOT` puts it back.
@@ -84,6 +92,18 @@ except ImportError:  # pragma: no cover -- the pinned wheel predates the module
     raise SystemExit(2) from None
 
 import wallbox_direct
+
+#: Why `--leave` alone writes nothing. Measured at gerd's on 2026-11-14.
+MANAGED = """
+Nothing was written. A wallbox managed by an inverter's energy management
+(a hybrid inverter's EV charger settings in iSolarCloud) ignores writes to its
+own registers: the inverter drives the output current and overwrites a write
+within seconds. Its charging is controlled through the inverter instead.
+Give --standalone only for a wallbox that no inverter manages.
+"""
+
+#: The exit code for a run this script refuses before it connects.
+REFUSED_HERE = 2
 
 #: The options only a library newer than the pinned one has.
 NEW_FLAGS = (
@@ -297,6 +317,10 @@ async def _run(
     try:
         if args.restore:
             return await _restore_mode(port, Path(args.restore))
+        if args.leave and not args.standalone:
+            # Here, not only in the library: the pinned wheel predates the guard.
+            print(MANAGED, file=sys.stderr)
+            return REFUSED_HERE
         if args.leave and not _ready(args):
             print("Cancelled. Nothing was written to the wallbox.", file=sys.stderr)
             return CANCELLED
@@ -307,7 +331,9 @@ async def _run(
         extra = {name: True for name in NEW_FLAGS if getattr(args, name, False)}
         if args.cap_explicit:
             extra["cap_explicit"] = True
-        if extra and "follow" not in wct.Options.__dataclass_fields__:
+        if args.standalone:
+            extra["standalone"] = True
+        if any(name not in wct.Options.__dataclass_fields__ for name in extra):
             print(
                 "These options need a sungrow-modbus newer than the pinned one.",
                 file=sys.stderr,
@@ -414,12 +440,23 @@ def _parser() -> argparse.ArgumentParser:
         default=wct.DEFAULT_MAX_AMPS,
         help="the highest current to offer (default %(default)s)",
     )
+    parser.add_argument(
+        "--standalone",
+        action="store_true",
+        help="no inverter manages this wallbox (without it, nothing is written)",
+    )
     parser.add_argument("--start-stop", action="store_true", help="also stop and start")
-    parser.add_argument("--enable", action="store_true", help="also disable and enable")
+    parser.add_argument(
+        "--enable",
+        action="store_true",
+        help="recorded as never run: the charge point is never disabled",
+    )
     parser.add_argument("--phase", action="store_true", help="also switch the phase")
     parser.add_argument("--follow", action="store_true", help="step 6 A to the cap")
     parser.add_argument(
-        "--below-minimum", action="store_true", help="offer 5 A, then 0"
+        "--below-minimum",
+        action="store_true",
+        help="recorded as never run: nothing under 6 A",
     )
     parser.add_argument(
         "--above-rating", action="store_true", help="offer the rating plus 1 A"

@@ -243,7 +243,7 @@ the reading but not the block read test.
 | `diagnosis.cmd`, `diagnosis.ps1` | the launcher on Windows; the `.cmd` only starts the `.ps1` |
 | `python/sungrow_diagnosis.py` | the diagnosis, start to finish. Its PEP 723 header names the library version it runs on |
 | `python/sungrow_capability_test.py` | the inverter's capability test, which writes. The diagnosis runs it only with your yes; `diagnosis.sh tests ...` runs it on its own |
-| `python/sungrow_wallbox_capability_test.py` | the wallbox's capability test, the other file here that writes: a wallbox at its own address, over TLS on port 516. Without `--leave` it is a dry run |
+| `python/sungrow_wallbox_capability_test.py` | the wallbox's capability test, the other file here that writes: a wallbox at its own address, over TLS on port 516. Without `--leave` it is a dry run, and `--leave` writes only with `--standalone`: a wallbox a hybrid inverter manages ignores writes to its own registers (the inverter drives them) |
 | `python/probe.py` | the individual steps — `mdns`, `sweep`, `units`, `capabilities`, `dump` |
 | `python/blocks.py` | the block read test from a terminal: which grouped read a device fails. `--client raw` uses the library's strict raw socket, which names the count a padded frame needs |
 | `python/wallbox_direct.py` | finds and reads a wallbox at its own address, over TLS on port 516 |

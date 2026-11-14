@@ -8,6 +8,34 @@ car charging again, and what to test next, in which order and how. Every write, 
 
 **No further wallbox write at any site until the changes in section 3 are made and tested.**
 
+## Status, 2026-11-14 (on site at gerd's, a car charging)
+
+Every write and reading: `.wiki/raw/gerd-wallbox-inverter-control-2026-11-14.md`.
+
+- **Recovered.** The owner enabled the charger in the app (holding 21211 0 → 1) and pressed Start
+  (21212 1 → 0): the car charged at 16 A.
+- **The stop above was broken once**: the capability test's base run and one hand probe wrote the
+  wallbox's 21203 (60, then 316 back), only that register, nothing under 6 A. Both writes were
+  overwritten by the inverter within seconds; the car never moved.
+- **Phase A, partly**: the app's fast charge, PV surplus, user defined (10 A), Stop and Start, read
+  at the inverter and the wallbox. Finding 1 holds: the inverter drives 21203, ramping it after a
+  start, and the car follows that ramp, which settles 21203 at 0.1 A by behaviour. Not done:
+  quantity and time (A3), unplugging (A5).
+- **Phase B passed**, over the cable and through the WiNet-S: user current 8 and 12 A followed by
+  the car; mode written over Modbus (163 brings the user current, 163 → 160 and 160 → 161 end the
+  session); charging on/off (wire 33539) stops and starts a charge with no replug; user current
+  5 A refused, 6 A to 33 A taken; 33544 refused outside user-defined mode.
+- **Section 3, done**: writes refused unless the wallbox is declared standalone (`Options.standalone`,
+  `--standalone`; Home Assistant never declares it), and refused when 21203 moves between two reads
+  with nothing written; the enable check never writes 21211 = 0; nothing under 6 A, never 0. Tests:
+  `tests/test_wallbox_capability_test.py`, `_cli.py`, `_ha.py`. **Not done**: the battery-SoC
+  refusal, the house-level restore check, the inverter block in the snapshot (the test now refuses
+  on gerd's wallbox before any of them would matter).
+- **Phase D can start** on the inverter's side: `src/sungrow_modbus/hybrid_inverter/ev_charger.py`
+  has the block and the write order, read only; the entities are `Todo.md`'s next wallbox item.
+- **Next on site**: `plans/gerd_wallbox_handoff.md` (how it was left, the rules, the tools, the
+  test list).
+
 ## 1. Findings
 
 ### What happened

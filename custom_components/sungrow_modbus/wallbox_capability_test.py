@@ -183,6 +183,10 @@ def run_options(
         max_amps=float(cap) if cap else DEFAULT_WALLBOX_MAX_AMPS,
         cap_explicit=bool(cap),
         current="output current" not in skip,
+        # Nothing here can tell a wallbox an inverter manages from one no
+        # inverter does, and a managed one overwrites every write (gerd,
+        # 2026-11-14): so the library writes nothing, and says why.
+        standalone=False,
         **wanted,
     )
 

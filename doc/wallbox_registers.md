@@ -174,15 +174,44 @@ and no file in `device-diagnosis/` implements a Modbus write function.
 
 | Register | Type | Scale | Meaning | Read here | Confidence |
 | --- | --- | --- | --- | --- | --- |
-| 21203 | u16 | 0.1 A | Output current setting. The AC011E project gives its range as 60-160, i.e. 6-16 A — that is an 11 kW unit's range, and a 22 kW unit should go to 320 | 160 → 16.0 A | two sources |
+| 21203 | u16 | 0.1 A | Output current setting. The AC011E project gives its range as 60-160, i.e. 6-16 A — that is an 11 kW unit's range, and a 22 kW unit should go to 320. **Under an inverter's energy management the inverter writes it** and a write from outside is overwritten ([below](#under-an-inverters-energy-management)); the car follows it at 0.1 A per count | 160 → 16.0 A | two sources, and behaviour |
 | 21204 | u16 | — | Phase mode setpoint: 0 three phase, 1 single phase | 1 | three sources |
-| 21211 | u16 | — | Availability / charger enable: 0 disabled, 1 enabled | 1 | two sources |
-| 21212 | u16 | — | Start/stop: 0 start, 1 stop | 0 / 1 | two sources |
+| 21211 | u16 | — | Availability / charger enable: 0 disabled, 1 enabled. The iSolarCloud app's enable switch writes it | 1 | two sources, and the app |
+| 21212 | u16 | — | Start/stop: 0 start, 1 stop. The app's Start/Stop writes it | 0 / 1 | two sources, and the app |
 | 21225-21230 | u16 × 6 | — | **The wallbox's clock**, local time: year (two digits), month, day, hour, minute, second. Read 26, 10, 13, 21, 12, 23 at 21:12 local on 2026-10-13, and 26, 9, 8, 17, 57, 44 during the run of 2026-09-08 | 26-10-13 21:12:23 | measured here |
 | 21231 | u16 | — | Configured unit id, read-only | 248 | named elsewhere |
 | 21232 | u16 | 0.1 km/kWh | Mileage per kWh, for the app's range estimate | 50 → 5.0 | named elsewhere |
 | 21233 | u16 | — | Configured minimum current | 6 | named elsewhere |
 | 21263 | u16 | — | Working mode: 0 network, 2 plug and play, 6 EMS, says one project. **No answer through the dongle**; 0 inside a block read at its own address, where no read may start on it | no answer / 0 | named elsewhere |
+
+## Under an inverter's energy management
+
+A wallbox on a hybrid inverter's bus (set up as the inverter's EV charger in
+iSolarCloud) is **driven by the inverter**, which writes its output current
+(21203) every few seconds. Writes to the wallbox's own registers are then
+overwritten within seconds and change nothing the car does; the charge is
+controlled at the **inverter, unit 1, holding**. Measured at one SH8.0RT-V112
+with this AC22E-01 on 2026-11-14, over the inverter's LAN cable and through
+the WiNet-S alike, judged by what a charging car drew; the meanings were first
+named in an ioBroker thread (post 85, 2025-05-19).
+
+| Register | Meaning | Values | Measured |
+| --- | --- | --- | --- |
+| 33540 | Charging on/off | 0xAA on, 0x55 off | off stopped the car within a second; on started it within 7-15 s, ramping from 6 A |
+| 33541 | Charging mode | 160 fast, 161 PV surplus, 162 quantity and time, 163 user defined | 160, 161 and 163 seen and written; 162 not tried |
+| 33545 | User-defined current | 0.1 A | followed by the car at 6, 8, 10 and 12 A; **refused (0x04) unless 33541 is 163**; 5 A refused, 33 A taken on a 32 A unit |
+| 33550 | Surplus from the grid in PV-surplus mode | 0x55 no, 0xAA yes | written; with 1.7 kW of sun and the battery at its minimum it did not keep a charge going |
+
+**A mode change has side effects.** To 163 switches charging on by itself;
+163 to 160 and 160 to 161 end the session, and charging on written after it
+starts the next. In fast charge the inverter ramps 21203 by about 1.4 A every
+5 s from 6 A towards the rating, past what the car takes; in user-defined mode
+it sets 21203 to the user current, a lower one at once and a higher one
+ramped. The car drew about 0.5 A under the setting.
+
+Nothing on the wallbox alone was seen to tell a managed wallbox from a
+standalone one: input 21314 read 1 idle and 3 during a session, input 21268
+1, the same as on every earlier reading.
 
 ## The charging status codes
 
@@ -338,7 +367,9 @@ evcc's driver agrees in its code and not in its comment: the comment says
 for 6 A.
 
 So the scale here stays 0.1, and the disagreement is recorded rather than
-averaged. It may still be right for the AC011E-01, which is a different
+averaged. On 2026-11-14 a car settled it by behaviour: it followed the
+setting one step behind as the inverter ramped it, 7.3 A offered and 6.1-6.5 A
+drawn, 12.4 A and 10.5-11.1 A, until its own 16 A. It may still be right for the AC011E-01, which is a different
 model.
 
 ### Input 21308 and 21310: signed or unsigned?
