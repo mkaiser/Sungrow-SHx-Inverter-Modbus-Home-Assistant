@@ -169,7 +169,9 @@ In order; 1 to 4 need the owner at the app.
    phase A only), and Sungrow's datasheet promises automatic 1/3-phase switching from 1.38 kW of
    PV surplus. Our own 21204 write did nothing. The inverter's charger block has no phase word;
    registers 33538 (85) and 33539 (161), just below it, are candidates (baseline in the raw note,
-   2026-11-14, there in protocol addresses).
+   2026-11-14, there in protocol addresses). In fast mode with charging off both refused a write
+   (0x04: 33539 = 160, 33538 = 0xAA); whether they take writes in another mode is open. Neither
+   app account shows a phase setting.
    - **Remotely, read only**: on a day with 1.5-4 kW of sun, the battery above its minimum, the
      car plugged in and *PV surplus* set, run the field tool's `phase MINUTES`. Then
      `scan single-phase` during the one-phase session, to compare with `scan` at three phase.

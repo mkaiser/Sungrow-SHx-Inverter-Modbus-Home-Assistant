@@ -219,6 +219,21 @@ The wallbox at the same time: holding 21204 = 0, input 21225 = 3, 21270 = 0, 212
 status 6 (*completed*). 33537 and 33538 are candidates for an inverter-side phase setting
 (e.g. 160 three phase / 161 single phase, or 161 automatic), nothing more.
 
+About 17:45: the maintainer found **no phase setting** in iSolarCloud, neither with the installer's
+account nor the owner's.
+
+Then the two candidates, at the maintainer's request, one at a time, cable, car stopped (*completed*),
+snapshot flushed first, 60 s watched, restore checked on a fresh session:
+
+- 17:57:15, protocol **33538 = 160** (from 161): **refused, exception 0x04**. Nothing moved: the
+  block, 21204 0, 21225 3, 21270 0, 21272 4140. Read 161 on a fresh session at 17:58:22.
+- 17:59:12, protocol **33537 = 170** (0xAA, from 85): **refused, exception 0x04**. Nothing moved.
+  Read 85 on a fresh session at 18:00:19.
+
+Both answer reads and refuse these writes. Not settled: whether they are read only, take other
+values, or take writes only in another mode (as the user current takes them only in mode 163;
+the charger was in fast mode, charging off). One-phase charging could not be tested tonight.
+
 ## Wire 33545-33548: two times, read only
 
 The four words between the user current and the grid flag read, as two 32-bit values with the
