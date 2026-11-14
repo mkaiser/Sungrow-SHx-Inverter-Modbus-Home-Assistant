@@ -121,7 +121,7 @@ Nothing can start now (blocker 13).
    checks: current follow across the range with timings, below the minimum,
    above the rating, available current against the setting, timed start/stop
    and enable, phase switch while charging (stop seen before 21204 is
-   written), 75 s of silence, the mileage no-op. The plausibility checks are
+   written), 75 s of silence. The plausibility checks are
    `wallbox/plausibility.py`, fed by auto repeat's tick. The options are
    *May it write to the wallbox* (off until switched on) and *the highest
    charging current* (`wallbox_max_amps`); the three checks that go beyond
@@ -184,6 +184,20 @@ Nothing can start now (blocker 13).
    Whether his own Home Assistant was polling then is not known. Both auto
    repeats are stopped; next is his own HA on 0.1.0a36, over the cable if
    it reaches one, battery above 20 %, a car charging.
+4. **The wallbox's settings as entities.** Mapped on 2026-11-14 from the
+   app at gerd's (wiki: `gerd-wallbox-app-settings-2026-11-14-summary.md`),
+   all holding, the wallbox's own: enable 21211 (status 8 while disabled),
+   Plug&Play 21298, offline current 21299 (0.1 A), power limit 21313
+   (0.1 kW). Add the three new ones to `WallboxSettings`, read only first.
+   Names decided: Plug&Play is **Start charging on plug-in** /
+   **Automatischer Ladestart** (not "Plug and Charge", which is ISO 15118's
+   certificate login). Status 8 needs a name (*disabled*).
+   Mileage per kWh (21232) is the app's *Fahrstrecke pro kWh*; gerd's read
+   5555.2 after the capability test of 2026-11-13 and is set back to 5.0.
+   Every recorded write of 21232 that day wrote 50, so how it came to hold
+   55552 is open (`plans/wallbox_tests.md`, open questions). The capability
+   test's mileage check is removed (2026-11-14): it proved only a display
+   value, and its one run at gerd's left that value wrong.
 
 ## Logger
 
@@ -292,16 +306,6 @@ Nothing can start now (blocker 16).
          together in the order `doc/entity_names.md` shows (the frontend's
          collation was not checked in the container), and that the
          counters read sensibly after a day's runs.
-6. **A switch in the setup dialog that creates the entities of an inverter
-   series.** It is for testing only and is not recommended for use: the
-   dialog's text says so, and it stays off by default.
-7. **Host networking for the devcontainer, to test mDNS auto-discovery.**
-   Multicast does not cross the container's bridge today, so the zeroconf
-   matcher (blocker 18) can't be tried from `make dev`. Find out how to give
-   the devcontainer host networking: `--network=host` in
-   `.devcontainer/devcontainer.json`, and what that does under WSL2 and
-   Docker Desktop, including its mirrored networking mode. Also check what it
-   changes for the ports the simulator and Home Assistant publish.
 
 # Open decisions
 
@@ -313,6 +317,17 @@ Nothing can start now (blocker 16).
    only diverges new installs, which a registry migration can close, so it
    stays cheap until release, not free. A new name goes under **To
    discuss** (`NAME_DISCUSSION` in `naming.py`).
+
+2. **Is mDNS in the devcontainer worth a second config?** Measured
+   against Docker's documentation (`doc/development.yaml`,
+   `real_hardware.host_networking`): on Docker Desktop, which this
+   devcontainer runs on, `--network=host` forwards TCP/UDP ports only and
+   carries no LAN multicast, and WSL's mirrored mode does not change that.
+   The one Windows route left is Docker Engine inside a WSL distribution in
+   mirrored mode: untried, with the Hyper-V firewall and Windows' own hold
+   on UDP 5353 still open, and it would put the WireGuard tunnels into the
+   host's routes. The other way is to try the zeroconf matcher (blocker 18)
+   on a Linux Home Assistant in a house with a dongle.
 
 # Planned tests
 
