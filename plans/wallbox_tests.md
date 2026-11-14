@@ -60,11 +60,10 @@ moves with nothing written.
 - **Why the inverter switches charging off by itself.** Twice on 2026-11-14 a fast-charge session
   ended with the car at 43 %: at about 14:55 (10.2 kWh) and at 16:31 (3.5 kWh, after a restart
   from the app). The second time the inverter's on/off word went to off first, the wallbox
-  followed, and the battery read at its minimum SoC (13023 0.8 %, no PV). Most likely the
-  inverter stops the wallbox to protect the battery, as the app's *Grund* screen lists. To
-  confirm: the app's reason for a stop, and whether a session runs on with the battery well above
-  its minimum. If it holds, a charging switch entity reads off for this reason too, and auto repeat
-  sees no car to test.
+  followed, and the battery read at its minimum SoC (13023 0.8 %, no PV). But charging switched
+  on over Modbus at 16:51 ran 5 minutes at 10.5 kW with the battery still at 0.8 % and was not
+  stopped, so the battery's minimum alone is not the cause (or it acts only after longer). Next:
+  the app's reason for a stop, and a longer watched session.
 - **What 162 (quantity and time) writes**, and what the three always-zero words between the mode and
   the user current are.
 

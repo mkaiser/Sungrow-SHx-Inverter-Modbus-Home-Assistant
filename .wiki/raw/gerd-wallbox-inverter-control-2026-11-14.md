@@ -186,6 +186,19 @@ not established: it did not keep a minimum charge going here. Left as found: fas
   its protection threshold, the house served first): the inverter turns charging off when the
   battery reaches its minimum, also in fast mode. Likely for 14:55 too, not read then. To confirm:
   the app's reason for this stop, and a stop with the battery well above its minimum.
+- 16:51, at the maintainer's request, charging on for 5 minutes through the WiNet-S (wire 33539 =
+  170; the cable timed out on the snapshot read first, nothing written then). Snapshot 85. The
+  write was taken; within 3 s the wallbox left *completed* for *suspended by the vehicle*, its own
+  setting ramping (67, 82), the car drawing 0 A: about 20 minutes after the stop at 16:31.
+- The car woke **with no replug** (nobody on site touched it, as far as known): status *charging*
+  at 16:51:41 (+16 s), drawing from about 16:51:50; 12.9-13.7 A at 16:51:55, 15.2/15.4/16.0 A,
+  10.5 kW from 16:52:18 to the end; the wallbox's setting ramped to about 26.7 A. **The inverter
+  did not switch it off in 5 minutes**, with the battery level (13023) at 0.8 % throughout
+  (read again 16:57: 0.8 %, battery power 0 W, the house importing). So the battery at its
+  minimum alone does not stop a session started over Modbus within 5 minutes; what stopped the
+  ones at 14:55 and 16:31 stays open.
+- 16:56:39 written back 33539 = 85. The first read through the WiNet-S still said 170 (its stale
+  readback); written again, read 85. The wallbox *completed*, 0 A, from 16:56:45.
 
 ## Wire 33545-33548: two times, read only
 
