@@ -111,7 +111,8 @@
           "diagnosis_other_inverter": "Gibt es hier einen weiteren Wechselrichter, der kein Sungrow ist?",
           "diagnosis_battery": "Hersteller und Modell der Batterie",
           "diagnosis_comment": "Sonst noch etwas Wissenswertes",
-          "publish_address": "Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?"
+          "publish_address": "Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?",
+          "test_entities": "Auch die Entitäten anlegen (zum Testen, nicht empfohlen)"
         },
         "data_description": {
           "reporter": "Wird in der veröffentlichten Messung genannt und gefragt, wenn eine Zeile Fragen aufwirft. Leer lassen, um anonym beizutragen.",
@@ -121,7 +122,8 @@
           "diagnosis_other_inverter": "Dein Sungrow misst nicht, wie viel dein Haus verbraucht – er errechnet es aus seiner eigenen Leistung plus dem, was der Netzzähler als Bezug meldet. Ein zweiter Wechselrichter am selben Zähler macht daher jeden Lastwert um genau dessen Erzeugung zu niedrig, während alles andere normal aussieht. Kein Register kann uns das sagen: Der Sungrow sieht ihn nicht. Antworte mit Ja, dann fragen wir, was es ist.",
           "diagnosis_battery": "Kein Register meldet das. \"SBR096\" oder \"Pylontech Force H1, 14,4 kWh\" ist nützlicher als eine Kapazität, die der Wechselrichter ohnehin meldet.",
           "diagnosis_comment": "Alles Ungewöhnliche an der Anlage – ein Verbund, ein zweiter Wechselrichter, eine Wallbox, ein Firmware-Update, an das du dich erinnerst.",
-          "publish_address": "An, und du kannst es vor dem Absenden ausschalten. Nur die letzten zwei Oktette gelangen je in das Dokument – nie das dritte, das dein Netzwerk identifizieren würde –, und wenn du das deaktivierst, steht stattdessen xxx.xxx. Der Nutzen: Mehrere Messungen aus einem Haus lassen sich unterscheiden – ein Master, ein Slave und zwei Dongles ergeben sonst vier gleich aussehende Dateien."
+          "publish_address": "An, und du kannst es vor dem Absenden ausschalten. Nur die letzten zwei Oktette gelangen je in das Dokument – nie das dritte, das dein Netzwerk identifizieren würde –, und wenn du das deaktivierst, steht stattdessen xxx.xxx. Der Nutzen: Mehrere Messungen aus einem Haus lassen sich unterscheiden – ein Master, ein Slave und zwei Dongles ergeben sonst vier gleich aussehende Dateien.",
+          "test_entities": "Zum Testen dieser Alpha und nicht empfohlen für eine Installation, auf die du dich verlässt. Legt zusätzlich die Sensoren und Steuerungen dieses Wechselrichters an, unter neuen Entitäts-IDs. Die Entitäts-IDs des YAML-Pakets werden nie übernommen, sein Verlauf setzt sich hier also nicht fort; lass das aus, wenn dir dieser Verlauf wichtig ist. Entitäten und ihre Namen können sich bis zu einer Version noch ändern."
         }
       },
       "user": {

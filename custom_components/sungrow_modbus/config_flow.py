@@ -114,6 +114,7 @@ from .const import (
     CONF_PUBLISH_ADDRESS,
     CONF_REGISTER_DUMP,
     CONF_REPORTER,
+    CONF_TEST_ENTITIES,
     CONF_TLS,
     CONF_UNIT_ID,
     CONF_WALLBOX_MAX_AMPS,
@@ -1591,13 +1592,32 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         """
         if user_input is not None:
             self._testimony = dict(user_input)
+            # The flag is checked as well as the answer, as on the options
+            # page: a field the form did not offer can still be posted.
+            if self._testimony.pop(CONF_TEST_ENTITIES, False) and ONLY_DIAGNOSIS_MODE:
+                # Device-scoped ids, and the YAML package's never: taking
+                # those over is the decision the gate keeps out of an alpha.
+                # The options page can still switch them later, and says
+                # what moves first.
+                self._mode = MODE_DEVICES
             if self._testimony.get(CONF_DIAGNOSIS_OTHER_INVERTER) == OTHER_INVERTER_YES:
                 return await self.async_step_other_inverter()
             return self._async_create(ENTITY_IDS_NEW)
 
+        schema = _testimony_schema({}, include_dump=False)
+        if ONLY_DIAGNOSIS_MODE:
+            # Last, below the questions it has nothing to do with, so nobody
+            # meets it before they have read what it is for.
+            schema = schema.extend(
+                {
+                    probatio.Optional(
+                        CONF_TEST_ENTITIES, default=False
+                    ): BooleanSelector()
+                }
+            )
         return self.async_show_form(
             step_id="testimony",
-            data_schema=_testimony_schema({}, include_dump=False),
+            data_schema=schema,
             description_placeholders={
                 "measured": self._async_measured(await _flow_texts(self))
             },

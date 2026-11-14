@@ -1,6 +1,6 @@
 # The texts, for review
 
-**322 texts**: everything in `strings.json` that is not an entity name, by its
+**324 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -11,7 +11,7 @@ A `{placeholder}` is filled in by the integration and stays as written; backtick
 and bold are kept.
 
 
-## Setup flow (90)
+## Setup flow (92)
 
 ### `config.flow_title`
 
@@ -477,6 +477,12 @@ and bold are kept.
 
 > **DE** Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?
 
+### `config.step.testimony.data.test_entities`
+
+> **EN** Create the entities too (for testing, not recommended)
+
+> **DE** Auch die Entitäten anlegen (zum Testen, nicht empfohlen)
+
 ### `config.step.testimony.data_description.reporter`
 
 > **EN** Credited in the published reading, and who gets asked if a row raises a question. Leave empty to contribute anonymously.
@@ -524,6 +530,12 @@ and bold are kept.
 > **EN** On, and yours to turn off before you submit. Only the last two octets ever reach the document — never the third, which is what would identify your network — and clear this and it reads xxx.xxx instead. What it buys is telling several readings from one house apart: a master, a slave and two dongles otherwise produce four files that look alike.
 
 > **DE** An, und du kannst es vor dem Absenden ausschalten. Nur die letzten zwei Oktette gelangen je in das Dokument – nie das dritte, das dein Netzwerk identifizieren würde –, und wenn du das deaktivierst, steht stattdessen xxx.xxx. Der Nutzen: Mehrere Messungen aus einem Haus lassen sich unterscheiden – ein Master, ein Slave und zwei Dongles ergeben sonst vier gleich aussehende Dateien.
+
+### `config.step.testimony.data_description.test_entities`
+
+> **EN** For testing this alpha, and not recommended for an installation you rely on. Creates this inverter's sensors and controls as well, under new entity ids. It never takes over the YAML package's entity ids, so its history does not continue here; leave this off if that history matters to you. Entities and their names may still change before a release.
+
+> **DE** Zum Testen dieser Alpha und nicht empfohlen für eine Installation, auf die du dich verlässt. Legt zusätzlich die Sensoren und Steuerungen dieses Wechselrichters an, unter neuen Entitäts-IDs. Die Entitäts-IDs des YAML-Pakets werden nie übernommen, sein Verlauf setzt sich hier also nicht fort; lass das aus, wenn dir dieser Verlauf wichtig ist. Entitäten und ihre Namen können sich bis zu einer Version noch ändern.
 
 ### `config.step.user.title`
 

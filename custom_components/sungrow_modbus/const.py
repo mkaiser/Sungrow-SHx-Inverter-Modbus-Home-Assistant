@@ -404,6 +404,10 @@ entity-ids question gets asked.
 #: later; the promotion toggle is greyed. `setup_devices` and `promote`
 #: refuse too, so a hand-written request cannot get round the screen.
 #:
+#: One way past it, for testing: `CONF_TEST_ENTITIES`, a switch on the
+#: diagnostics setup's last dialog, creates the entities under device-scoped
+#: ids and never offers the YAML package's.
+#:
 #: **Flipping this to False is the whole re-enablement.**
 #: `tests/test_alpha_gate.py` asserts both halves of that, and nothing outside
 #: the config flow branches on it.
@@ -460,6 +464,12 @@ SECTION_CAPABILITY_TEST = "capability_test"
 #: to become an ordinary one. Not a section, because ticking it leads to a
 #: question rather than saving a value.
 CONF_ADD_DEVICES = "add_devices"
+
+#: The way past `ONLY_DIAGNOSIS_MODE` for testing: a switch on the last
+#: dialog of the diagnostics setup that creates the entry with entities
+#: instead, under device-scoped ids. Off by default, offered only while the
+#: gate is shut, and never stored: it decides the entry's mode and is gone.
+CONF_TEST_ENTITIES = "test_entities"
 
 #: The ports a network search tries, so nobody has to know them.
 #:

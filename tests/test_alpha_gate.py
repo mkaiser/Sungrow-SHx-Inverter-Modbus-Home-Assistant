@@ -13,6 +13,10 @@ nothing checks is a promise that quietly stops being kept.
 
 While the gate is shut the opening menu offers only the diagnosis, and its
 description says why the ordinary setup is not there.
+
+One way past it is meant: a switch on the diagnostics setup's last dialog,
+off by default and offered only while the gate is shut, that creates the
+entities for testing, under new ids and never the YAML package's.
 """
 
 from unittest.mock import patch
@@ -23,9 +27,12 @@ from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.sungrow_modbus.const import (
     CONF_ADD_DEVICES,
+    CONF_ENTITY_IDS,
     CONF_MODE,
+    CONF_TEST_ENTITIES,
     CONF_UNIT_ID,
     DOMAIN,
+    ENTITY_IDS_NEW,
     MODE_DEVICES,
     MODE_DIAGNOSTICS,
     SECTION_ADVANCED,
@@ -38,6 +45,7 @@ from custom_components.sungrow_modbus.const import (
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType, InvalidData
+from homeassistant.helpers import entity_registry as er
 
 from .conftest import SERIAL
 
@@ -167,6 +175,109 @@ async def test_the_unavailable_answer_cannot_be_posted_by_hand(
         await hass.config_entries.flow.async_configure(
             result["flow_id"], {"next_step_id": "setup_devices"}
         )
+
+
+# -- the test switch on the last setup dialog ----------------------------------
+
+
+async def _to_testimony(hass: HomeAssistant, unit: MockModbusUnit) -> dict:
+    """Walk the diagnostics setup as far as its last dialog."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": "user"}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "setup_diagnostics"}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "manual"}
+    )
+    with (
+        patch("custom_components.sungrow_modbus.async_get_unit", return_value=unit),
+        patch(
+            "custom_components.sungrow_modbus.config_flow.async_get_temporary_unit",
+            return_value=_TemporaryUnit(unit),
+        ),
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: "192.168.178.35", CONF_UNIT_ID: 1}
+        )
+    assert result["step_id"] == "testimony"
+    return result
+
+
+async def _finish(
+    hass: HomeAssistant, unit: MockModbusUnit, result: dict, answers: dict
+) -> dict:
+    with patch("custom_components.sungrow_modbus.async_get_unit", return_value=unit):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], answers
+        )
+        await hass.async_block_till_done()
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    return result
+
+
+def _entities(hass: HomeAssistant, result: dict) -> list[str]:
+    return [
+        entity.entity_id
+        for entity in er.async_entries_for_config_entry(
+            er.async_get(hass), result["result"].entry_id
+        )
+    ]
+
+
+async def test_the_test_switch_is_offered_and_off(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """Last on the page, and off unless somebody turns it on."""
+    result = await _to_testimony(hass, sungrow_unit)
+
+    keys = [str(key) for key in result["data_schema"].schema]
+    assert keys[-1] == CONF_TEST_ENTITIES
+    defaults = result["data_schema"]({})
+    assert defaults[CONF_TEST_ENTITIES] is False
+
+
+async def test_left_off_the_entry_is_diagnostics_only(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    result = await _finish(
+        hass, sungrow_unit, await _to_testimony(hass, sungrow_unit), {}
+    )
+
+    assert result["data"][CONF_MODE] == MODE_DIAGNOSTICS
+    assert CONF_TEST_ENTITIES not in result["options"]
+    assert hass.states.get("sensor.sh10rt_total_pv_input_power") is None
+
+
+async def test_turned_on_the_entities_are_created_under_new_ids(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit
+) -> None:
+    """A devices entry, and the YAML package's ids never: that is the gate's point."""
+    result = await _finish(
+        hass,
+        sungrow_unit,
+        await _to_testimony(hass, sungrow_unit),
+        {CONF_TEST_ENTITIES: True},
+    )
+
+    assert result["data"][CONF_MODE] == MODE_DEVICES
+    assert result["data"][CONF_ENTITY_IDS] == ENTITY_IDS_NEW
+    # Not a setting: it decided the mode and is not kept.
+    assert CONF_TEST_ENTITIES not in result["options"]
+    assert any(
+        entity_id.endswith("_total_pv_input_power")
+        for entity_id in _entities(hass, result)
+    )
+
+
+async def test_the_open_gate_has_no_test_switch(
+    hass: HomeAssistant, sungrow_unit: MockModbusUnit, devices_mode_offered: None
+) -> None:
+    """With the gate open the menu offers the real setup, so the switch goes."""
+    result = await _to_testimony(hass, sungrow_unit)
+
+    assert CONF_TEST_ENTITIES not in {str(key) for key in result["data_schema"].schema}
 
 
 # -- the door on the options page ----------------------------------------------

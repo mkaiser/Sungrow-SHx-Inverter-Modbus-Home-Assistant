@@ -171,7 +171,8 @@ real_hardware:
   what_does_not_work:
     - >-
       Multicast, so mDNS discovery finds nothing from in here -- a Docker
-      bridge does not carry it. Run `device-diagnosis/scripts/python/probe.py mdns` on the
+      bridge does not carry it, and host networking on Docker Desktop does not
+      either (host_networking below). Run `device-diagnosis/scripts/python/probe.py mdns` on the
       host instead (it needs `pip install sungrow-modbus[discovery]`).
     - >-
       Inbound. Reaching the container's Home Assistant from another machine is
@@ -222,6 +223,52 @@ real_hardware:
       Overlapping subnets bite silently: if two sites are both on
       192.168.178.0/24 (the FRITZ!Box default) a probe can reach the wrong
       inverter without any error. See doc/maintainer_setup.md section 4.
+
+  host_networking:
+    # Whether `"runArgs": ["--network=host"]` lets the container see the LAN's
+    # mDNS, so the zeroconf matcher can be tried from `make dev`. It depends
+    # on which Docker runs the container.
+    docker_desktop: >-
+      No. This container runs on Docker Desktop's WSL2 backend (resolv.conf
+      names 192.168.65.7, host.docker.internal is fdc4:...::254). Docker
+      Desktop has host networking from 4.34 on, behind Settings -> Resources
+      -> Network -> Enable host networking, but Docker's documentation says it
+      "works on layer 4" and "the container has no direct access to the
+      interfaces of the host": TCP and UDP ports are forwarded between the
+      container and Windows, and nothing joins a multicast group on the LAN.
+      It also does not work with Enhanced Container Isolation.
+      (docs.docker.com/engine/network/drivers/host/, Limitations.)
+      WSL's mirrored networking mode does not change this: it mirrors Windows'
+      adapters into WSL distributions, and Docker Desktop's containers reach
+      the network through com.docker.backend, not through a distribution.
+    docker_engine_in_wsl: >-
+      Possibly, untried. Docker Engine installed in a WSL distribution (not
+      Docker Desktop), with `networkingMode=mirrored` under [wsl2] in
+      %UserProfile%\.wslconfig (Windows 11 22H2 or later), gives a host-network
+      container the distribution's namespace, and mirrored mode lists
+      "Multicast support". Open questions: the Hyper-V firewall drops inbound
+      by default (Set-NetFirewallHyperVVMSetting ... -DefaultInboundAction
+      Allow, or a rule for UDP 5353), and Windows' own mDNS responder holds
+      UDP 5353 on the same, shared ports.
+    native_linux: >-
+      Yes: --network=host shares the host's interfaces and multicast with it.
+    what_it_changes:
+      - >-
+        Ports: -p and --publish are ignored. Home Assistant (8123, 8124, 8126)
+        and the simulator (5020) bind on the host itself, so they collide with
+        anything there already on those ports. VS Code's forwardPorts still
+        works.
+      - >-
+        WireGuard: runArgs grants NET_ADMIN so wg-quick touches only the
+        container. In the host's namespace a tunnel changes the host's own
+        routes. Do not combine host networking with the tunnels.
+      - >-
+        Network search: the range would be prefilled from the LAN adapter
+        instead of 172.17.0.0/24.
+    instead: >-
+      Test the zeroconf matcher where multicast is native: a Home Assistant on
+      a Linux machine in a house with a dongle, or `probe.py mdns` on the
+      Windows host for the records alone.
 
   prefer_the_simulator: >-
     scripts/dev/simulate.sh serves the whole register map on localhost:5020,

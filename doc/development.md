@@ -97,6 +97,9 @@ units 1-5 for the inverter and finds a battery or wallbox behind it. This
 release sets every new entry up as **diagnostics only** -- the entity id
 question that devices mode asks is gated behind `ONLY_DIAGNOSIS_MODE` in
 `const.py` (see [Reviewing the migration by hand](#reviewing-the-migration-by-hand)).
+To get entities anyway, turn on *Create the entities too* on the setup's last
+dialog: a devices entry under new ids, with the entity id question never
+asked.
 
 **A real inverter on your LAN is reachable from the container without any
 setup.** The Docker bridge NATs outbound, so the container follows the host's
