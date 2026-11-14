@@ -62,10 +62,34 @@ car charging again, and what to test next, in which order and how. Every write, 
    since the owner switched it off (15:13). Who switched it on, and when, is not known, nor whether
    it is connected to the wallbox's state.
 
+7. **The wallbox also pauses on its own for an empty battery.** At 12:49 on 2026-11-13, a minute
+   after the status-4 reading (*suspended by the charge point*), the app's *Grund* screen for the
+   interrupted charge listed three causes, without saying which applied: the household's
+   consumption over its limit (resumes when the load drops); a charge delay required by grid
+   rules (resumes when it runs out); and the home battery's SoC under its protection threshold, the
+   house served first (resumes once the battery is recharged). The third fits the readings:
+   - 2026-11-14 about 09:05, read only: the SBR's own SoC (input 10744, unit 2 through the
+     WiNet-S) **11.4 %**, the app 11.1 % at 09:01, just over the minimum SoC (13059) of 10 %;
+     maximum SoC (13058) 100 %, backup reserve (13100) 0 %;
+   - the inverter's battery level (input 13023) read **1.5 %** at the same time (1.4 % at about
+     08:50). Voltage, current, temperature and health in the same block match the app and the
+     SBR, so it is not the scale: 13023 looks like the SoC within the window between minimum
+     and maximum, (11.4 − 10) / 90 = 1.6 %. One reading, one site; a second pair at a higher SoC
+     would tell this from an offset (SoC − minimum);
+   - the battery discharged all night (input 5214 +300 to +600 W, positive is discharge, as a
+     charge reads negative at mkaiser), stopped at about 08:00 at its minimum, and the house then
+     drew from the grid (1.9 kW at 08:44). By 09:00 it charged from PV at about 200 W.
+   So the car may stay paused until the battery recovers, whatever the wallbox's registers say.
+   Which threshold the app means (the inverter's minimum SoC or a setting of the charger's own) is
+   not known.
+
 Not established: what remote control status 8 and an enable register reading 8 mean (no source
 documents 8 there), and whether they keep the wallbox from starting.
 
 ## 2. Getting the car charging again (on site)
+
+First check the battery's SoC in the app (finding 7): while it is at or near its minimum the wallbox
+pauses by design, and none of the steps below can be judged until it has recovered.
 
 In this order; stop at the first that works. Read-only checks between steps are done from here
 (TLS, one session, nothing else connected). Every step is done with the car plugged in.
@@ -102,6 +126,7 @@ while charging, holding 21203 = 320 while charging. Mileage per kWh is set back 
 | **One client.** The run refuses to start while any other client is connected that it knows of (Home Assistant's own polling held off, as now); the terminal driver says so in its question. | The 11:47 write took only with nothing else connected. |
 | **Restore checks the house, not the register**: the restore is done when the status is what it was (charging if it was charging) and the enable reads 1 on a fresh session, and it keeps trying (never deadlined) with the evcc order. If it cannot, it says what to do on site (section 2). | Today's restore "failed" on read-backs while the charge point was the real problem. |
 | **Snapshot also the inverter's wallbox block and EMS mode** (read only), so a run can show what the inverter was doing. | Finding 1 and 6. |
+| **Refuse to start while the battery is at or near its minimum SoC** (the SBR's own 10744 against 13059; 13023 near 0 if the SBR cannot be read), and record both in the snapshot and every step. | Finding 7: the wallbox pauses by itself then, so no step can be judged. |
 | Tests in `tests/test_wallbox_capability_test.py` against a fake port that ignores writes (slave mode), drops a session, answers a read twice, and zeroes 21203 on start. | Each of today's failures as a test. |
 
 ## 4. The test plan
