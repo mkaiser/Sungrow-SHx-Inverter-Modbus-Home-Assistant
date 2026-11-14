@@ -102,12 +102,26 @@ automation:
   phase name and powers about 1.7 times too high. The phase currents are
   created as usual. No 3P3L inverter has been diagnosed yet.
 - **Not supported yet:** the Sungrow Logger (its entry runs only the
-  diagnosis), SBH batteries, writing to the wallbox, and writing to an SG
-  string inverter.
+  diagnosis), SBH batteries, writing to a wallbox's own settings, and writing
+  to an SG string inverter.
+- **A wallbox the inverter manages** (set up as its EV charger in
+  iSolarCloud) is controlled through the inverter: its entry offers *Wallbox
+  charge*, *Wallbox charge mode*, *Wallbox user-defined current* (taken only
+  in user-defined mode) and *Wallbox grid purchase* (the app's *Netzbezug*),
+  on inverter firmware where these writes were watched, so far
+  `SAPPHIRE-H_B001.V000.P022`. The phases are the inverter's to choose: it
+  switches to one phase by itself in PV surplus with grid purchase off, and
+  nothing sets them by hand.
 - **The preview sets up an inverter for diagnostics only**: it identifies the
   inverter and runs the diagnosis, and creates no sensors for its readings.
   A wallbox at its own address and an iHomeManager, each an entry of its own
-  found by the network search, show their readings, read only.
+  found by the network search, show their readings, read only; the wallbox's
+  include the app's *Start charging on plug-in* (Plug&Play), offline charging
+  current and power limit.
+- **A wallbox test that cannot put everything back** raises a Repairs issue
+  naming each setting, its value and where the app sets it. Its fix writes
+  them back and checks the wallbox; a disabled wallbox answers no write, so
+  the issue may ask you to switch *Ladegerät aktivieren* on in the app first.
 - **An iHomeManager's entry keeps a connection to its port open** while
   loaded. How many connections an iHomeManager accepts at once has not been
   measured, so another client on the same port (evcc, a second Home

@@ -105,7 +105,8 @@ inverter's device so a sub-device can hang off it
 (`_async_register_inverter`); assemble the runtime data and the diagnosis runner;
 drop correction entities the options no longer ask for; claim the legacy ids
 (`_async_take_over_legacy_ids`); raise a repair if a capability test left
-registers changed (`_async_check_capability_test`); and forward the platforms --
+registers changed (`_async_check_capability_test`, and for a wallbox entry
+`_async_check_wallbox_capability_test`); and forward the platforms --
 all five for an ordinary entry; button, sensor and switch for a diagnostics-only one.
 Each step is a named function that can be read on its own, which is the only
 way a setup path stays reviewable as it grows.
@@ -398,7 +399,11 @@ get advice and a script (`scripts/helpers/influx_migration.py`).
   its restart, export limit and PV cut are each granted until the owner
   switches them off. The YAML's danger-mode toggle and automations are not
   ported.
-- **The wallbox is read-only.** No manufacturer document covers its map.
+- **A wallbox's own registers are read-only.** No manufacturer document
+  covers its map, and an inverter that manages a wallbox overwrites them. A
+  managed wallbox is controlled through the inverter's EV charger block
+  (`hybrid_inverter/ev_charger.py`), behind `EV_CHARGER_CONTROL`: only on
+  firmware where those writes were watched.
 - **The opt-in SBR YAML sensors are not adopted and keep no history**:
   partial adoption looks like a migration and is not one.
 - **Entity ids are English in every language; names are translated.** Home

@@ -96,6 +96,14 @@ through that inverter entry's connection and holds both entries' polling off. A 
 such inverter entry awaits no check at all, so auto repeat does not wait for a run that could not
 write.
 
+**A run that cannot put everything back** (either test), or a snapshot found when the entry
+starts, raises a Repairs issue that names each setting, the value it should have and where the app
+sets it; an error where the wallbox may be left disabled or the charge switched. The fix writes it
+back and checks the house, not only the word: a standalone wallbox whose enable was touched must
+not report status 8 (*disabled*), and the managed test waits for the charge
+(`custom_components/sungrow_modbus/repairs.py`). The mileage check is gone: its one run on
+hardware left the app's *Fahrstrecke pro kWh* wrong.
+
 ## Readings checked against each other
 
 Read only, every minute between runs while *Extended test (auto repeat)* is on; the rows count
