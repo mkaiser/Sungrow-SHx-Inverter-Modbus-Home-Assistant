@@ -46,9 +46,9 @@ The [position words](../entities/device-sbr-battery.md) decode consistently: `ma
 522 = `0x20A`, module 2 cell 10; `min_cell_position` 531 = `0x213`, module 2 cell 19.
 
 Read nearly empty, at 18 °C: **the inverter's battery level reads 1.2 % where the pack's own state
-of charge at unit 200 reads 6.3 %**, with the minimum SoC set to 5 %. Other houses' pairs differ by
-up to 13 points (14.5 against 27.3 at one); what the inverter's figure is relative to is
-not established.
+of charge at unit 200 reads 6.3 %**, with the minimum SoC set to 5 %: the inverter's figure is the
+charge within the minimum-maximum window, (6.3 - 5) / 95 = 1.4 %
+([register 13023](../entities/register-13023.md)).
 
 ## Settings read
 

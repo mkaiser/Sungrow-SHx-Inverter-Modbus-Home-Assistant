@@ -46,6 +46,7 @@
 - [Installation ra1k-0](entities/installation-ra1k-0.md) — SH20T on P071 with SBH400 through a WiNet-S; the first SH-T capability test and PV cut; an outcome 5 on 33209 that no cable can settle; iHomeManager and wallbox present, unread #installation #ra1k-0
 - [Installation sisu70](entities/installation-sisu70.md) — SH10RT-20 on P023 with SBR128, cable and dongle, read while polling #installation #sisu70
 - [Installation tristangrichard](entities/installation-tristangrichard.md) — SH8.0RT-V112 on P023 with SBR096 over the cable, read only #installation #tristangrichard
+- [Register 13023 \(battery level\)](entities/register-13023.md) — The charge within the min-max SoC window, not the pack's absolute SoC; 0 % is at the minimum #register #input #battery #soc
 - [Register 13000 \(running state\)](entities/register-13000.md) — Running state; 0x0000 is Running, and a dongle re-encodes it #register #input #running-state
 - [Register 13074 \(export power limit\)](entities/register-13074.md) — Export power limit; writes x10 on B001 firmware, 1:1 on 01011.95.03 #register #holding #export-limit #write-scale
 - [Register 13017 \(forced startup under low SoC standby\)](entities/register-13017.md) — A switch: 0xAA wakes a low-SoC standby inverter and keeps it running, 0x55 is off, other words refused (P023); reads 0 from the factory, which cannot be written back; a switch on P023 #register #holding #switch
@@ -76,6 +77,7 @@
 
 ## Sources
 
+- [gerd-battery-level-2026-11-14.md](sources/gerd-battery-level-2026-11-14-summary.md) — gerd's inverter battery level 1.5 % beside the pack's 11.4 % at a 10 % minimum: the min-max window #register-13023 #soc #gerd #read-only
 - [ac22e01-gerd-anon-41346964423-wallbox-tls.json](sources/ac22e01-gerd-anon-41346964423-wallbox-tls-summary.md) — AC22E-01 wallbox, gerd, at its own address over TLS #diagnosis #wallbox #ac22e-01 #gerd #tls
 - [ac22e01-gerd-anon-41346964423-wallbox-tls-2.json](sources/ac22e01-gerd-anon-41346964423-wallbox-tls-2-summary.md) — AC22E-01 wallbox, gerd, over TLS while a car charged; 21320 holds the time of reading during a session #diagnosis #wallbox #ac22e-01 #gerd #tls
 - [ac22e01-anonymous-anon-12522147000-wallbox-tls.json](sources/ac22e01-anonymous-anon-12522147000-wallbox-tls-summary.md) — AC22E-01 wallbox, anonymous, over TLS from Home Assistant after a session; the same 279 addresses as gerd's, 21320 holds the session's end #diagnosis #wallbox #ac22e-01 #anonymous #tls

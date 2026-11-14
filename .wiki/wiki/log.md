@@ -808,3 +808,12 @@ here. The search now tries 3, 2, 4 and 248, and counts a unit only if its model 
 ## [2026-11-14] changed | a remote site's link drop, and the tunnel that did not recover
 
 The provider cut gerd's internet line at about 02:52; every read of the wallbox and inverter timed out until the tunnel was restarted at about 07:00. New concept remote-link-loss and its raw note; the index.
+
+## [2026-11-14] answered | register 13023 is the charge within the min-max SoC window
+
+At gerd the inverter's battery level read 1.5 % while the SBR096's own SoC read 11.4 % and the app
+11.1 %, at a 10 % minimum: the maintainer's reading, that 13023 is relative to the usable window
+between minimum and maximum SoC, fits, and so do 48 of 57 corpus pairs within 2 points (four
+misses, all peter-sm). New entity register-13023, new source gerd-battery-level-2026-11-14;
+updated device-sbr-battery, installation-gerd (max SoC now 100 %, 90 % until 2026-11-03), and the
+SH6.0RT-20 source page that left the question open.

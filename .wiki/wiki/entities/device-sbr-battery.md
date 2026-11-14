@@ -34,6 +34,13 @@ datasheet's conservative power for that model (`battery/power.py`) instead of
 BMS current times voltage. The integration and the capability test grant it the
 same way. An [SBH](device-sbh-battery.md) is not granted yet.
 
+## Its state of charge and the inverter's battery level
+
+The pack's own state of charge is the absolute charge iSolarCloud shows. The inverter's battery
+level ([register 13023](register-13023.md)) is the charge within the minimum-maximum SoC window,
+so it reads lower, and 0 % at the minimum
+([gerd, 2026-11-14](../sources/gerd-battery-level-2026-11-14-summary.md)).
+
 ## What a dongle does not forward
 
 Through a WiNet-S, the **cells** and **modules** components
