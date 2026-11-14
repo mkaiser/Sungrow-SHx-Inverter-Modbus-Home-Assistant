@@ -200,6 +200,25 @@ not established: it did not keep a minimum charge going here. Left as found: fas
 - 16:56:39 written back 33539 = 85. The first read through the WiNet-S still said 170 (its stale
   readback); written again, read 85. The wallbox *completed*, 0 A, from 16:56:45.
 
+## The inverter's holding 33500-33599, read only (17:2x, cable, car idle, three phase)
+
+A baseline for finding a phase word: to be read again during a single-phase session and compared.
+Protocol addresses; every ten answered, no exception.
+
+| Protocol address | Word | Note |
+| --- | --- | --- |
+| 33500, 33501, 33502 | 160, 2, 65535 | master/slave mode, role, count by the modbus-manager map |
+| 33503 | 150 | unknown |
+| 33508 | 160 | unknown |
+| **33537** | **85** (0x55) | unknown; shaped like an on/off flag, next to the charger block |
+| **33538** | **161** | unknown; shaped like a 160/161 enum, next to the charger block |
+| 33539-33549 | 85, 160, 0, 0, 0, 160, 42112, 27383, 62976, 27384, 85 | the charger block |
+| everything else | 65535 | |
+
+The wallbox at the same time: holding 21204 = 0, input 21225 = 3, 21270 = 0, 21272 = 4140,
+status 6 (*completed*). 33537 and 33538 are candidates for an inverter-side phase setting
+(e.g. 160 three phase / 161 single phase, or 161 automatic), nothing more.
+
 ## Wire 33545-33548: two times, read only
 
 The four words between the user current and the grid flag read, as two 32-bit values with the

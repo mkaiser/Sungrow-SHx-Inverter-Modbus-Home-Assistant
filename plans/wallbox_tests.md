@@ -118,7 +118,7 @@ Three runners:
 | Writing what is already set (charging on while on, the same mode) | — | not built; could join the managed test |
 | Starting a car asleep (stopped over 10 min) by charging on | — | not built; the managed test's pause is 15 s |
 | A mode change from the app: does it end the session too | — | on site |
-| One/three phase on a managed wallbox | — | on site: the app's setting; 21204 did nothing at gerd's |
+| One/three phase on a managed wallbox | — | read only on a sunny day (`phase_watch.py`), and the app's setting on site; 21204 did nothing at gerd's |
 | PV surplus in sun, grid surplus off and on | — | on site, read only beside the app |
 | Unplug and replug: the block and the wallbox at a session's ends | — | on site |
 | The block polled every 10 s for an hour through the WiNet-S | — | read only, can run remotely |
@@ -145,6 +145,8 @@ a draw of 5 A or more.
 | `inv_steps.py ADDR=V:SEC ...` | writes the inverter, watches, restores the snapshot; superseded by the managed test |
 | `seq.py WATCH ADDR=V[:PAUSE] ...` | writes a sequence with no restore (used to put the house back), then watches |
 | `energy.py` | read only: PV, grid, load, battery level |
+| `phase_watch.py MINUTES` | read only: the inverter's 33536-33549, PV, battery, and the wallbox's phase registers every 5 s, changes marked |
+| `scan_335xx.py LABEL` | read only: the inverter's holding 33500-33599 and the wallbox's phase registers, to a JSON for comparison |
 
 ## 6. Next at gerd's (on site, a car plugged in)
 
@@ -156,8 +158,21 @@ In order; 1 to 4 need the owner at the app.
    a mode select writes charging on after every mode change.
 3. **Starting a car asleep** (stopped over 10 minutes) by charging on over Modbus.
 4. **The same mode change from the app**: does user defined → fast end the session there too?
-5. **Phase switching**: find the app's one/three phase setting; switch it with the car stopped while
-   `phase_a.py` reads the inverter's block and wallbox inputs 21225, 21270, 21272.
+5. **Phase switching.** On a managed wallbox the inverter switches phases itself: gerd's charged on
+   one phase on 2026-09-08 (21204 = 1, written by nobody here) and 2026-10-30 (the portal: 6.1 A on
+   phase A only), and Sungrow's datasheet promises automatic 1/3-phase switching from 1.38 kW of
+   PV surplus. Our own 21204 write did nothing. The inverter's charger block has no phase word;
+   33537 (85) and 33538 (161), just below it, are candidates (baseline in the raw note, 2026-11-14).
+   - **Remotely, read only**: on a day with 1.5-4 kW of sun, the battery above its minimum, the
+     car plugged in and *PV surplus* set, run `phase_watch.py MINUTES` (the inverter's 33536-33549,
+     PV, battery, the wallbox's 21204/21225/21270/21272, status and phase currents every 5 s; a
+     changed row is marked). Then `scan_335xx.py single-phase` during the one-phase session, to
+     compare with the baseline.
+   - **On site**: look for a phase setting in the app (iSolarCloud, its local access, the installer
+     view) and switch it with the car stopped while `phase_watch.py` runs.
+   - **Decides**: a phase select on the inverter entry (if an inverter word switches it, written
+     stop → switch → start), or only a sensor for the phase in use (21270, 21225) with *PV surplus*
+     as the way to one phase.
 6. **PV surplus on a sunny day**, battery well above its minimum, grid surplus off then on: how the
    inverter modulates the current and what 33550 does.
 7. **Unplug and replug**: the block and the wallbox at a session's end and start.
