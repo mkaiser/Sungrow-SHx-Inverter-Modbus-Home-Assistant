@@ -4,7 +4,7 @@ The one plan for testing and controlling a Sungrow wallbox: the facts measured s
 any write, which checks the capability tests run on their own and which need a person on site, and
 the next session at gerd's (SH8.0RT with an AC22E-01). gerd allows every test while a car charges.
 
-Device facts are on the wiki's [wallbox](../.wiki/wiki/entities/device-wallbox.md) page (section
+Where a session left off: `plans/wallbox_session_handover.md`. Device facts are on the wiki's [wallbox](../.wiki/wiki/entities/device-wallbox.md) page (section
 *Under an inverter's energy management*) and in `doc/wallbox_registers.md`. Every write and reading,
 with times, is in the raw notes:
 
@@ -118,7 +118,7 @@ Three runners:
 | Writing what is already set (charging on while on, the same mode) | — | not built; could join the managed test |
 | Starting a car asleep (stopped over 10 min) by charging on | — | not built; the managed test's pause is 15 s |
 | A mode change from the app: does it end the session too | — | on site |
-| One/three phase on a managed wallbox | — | read only on a sunny day (`phase_watch.py`), and the app's setting on site; 21204 did nothing at gerd's |
+| One/three phase on a managed wallbox | — | read only on a sunny day (the field tool's `phase`), and the app's setting on site; 21204 did nothing at gerd's |
 | PV surplus in sun, grid surplus off and on | — | on site, read only beside the app |
 | Unplug and replug: the block and the wallbox at a session's ends | — | on site |
 | The block polled every 10 s for an hour through the WiNet-S | — | read only, can run remotely |
@@ -133,20 +133,26 @@ a draw of 5 A or more.
 - The inverter's block as the owner wants it: charging **on**, mode **fast charge**, user current
   **16.0 A**, grid surplus **no**. The wallbox: enabled (21211 = 1), start (21212 = 0), three phase.
 - The owner's Home Assistant was stopped for the session.
-- Field scripts and logs are in `tmp/gerd-wallbox-2026-11-14/` (gitignored: they carry addresses,
-  which live only in the maintainer's local notes). They use protocol addresses.
+- Charging is off since the inverter stopped it at 16:31 (put back to off after a 5-minute charge
+  over Modbus at 16:51); the car at about 44 %.
 
-| Script | Does |
+**The field tool** is `scripts/dev/managed_wallbox_field.py` (this tree's library; the addresses as
+`--inverter` / `--wallbox` or `$SUNGROW_INVERTER` / `$SUNGROW_WALLBOX`, never in the repository).
+Run it from `tmp/`: its logs and scans go to the current directory.
+
+| Command | Does |
 | --- | --- |
-| `phase_a.py` | read only: the inverter's block (cable) beside the wallbox (TLS) every 5 s, to a log |
-| `watch.py N` | read only: the wallbox's setting, status, phase currents, N samples |
-| `session_watch.py` | read only: status, currents, session energy and the inverter's on/off every 2 min until the charge stops |
-| `inv_block.py` | read only: the inverter's block and EMS mode, both paths |
-| `inv_steps.py ADDR=V:SEC ...` | writes the inverter, watches, restores the snapshot; superseded by the managed test |
-| `seq.py WATCH ADDR=V[:PAUSE] ...` | writes a sequence with no restore (used to put the house back), then watches |
-| `energy.py` | read only: PV, grid, load, battery level |
-| `phase_watch.py MINUTES` | read only: the inverter's 33536-33549, PV, battery, and the wallbox's phase registers every 5 s, changes marked |
-| `scan_335xx.py LABEL` | read only: the inverter's holding 33500-33599 and the wallbox's phase registers, to a JSON for comparison |
+| `block` | read only: the inverter's block with the two words below it (33538-33550) |
+| `energy` | read only: PV, grid, load, battery level (13023) and power |
+| `watch N` | read only: the wallbox's status, setting, phase currents and power, N samples |
+| `log MINUTES` | read only: the block beside the wallbox every 5 s, to a log |
+| `session MINUTES` | read only: the wallbox, the session's energy and the block every 2 min, until the charge stops |
+| `phase MINUTES` | read only: the block, PV, battery and the wallbox's 21204/21225/21270/21272 every 5 s; a changed row is marked |
+| `scan LABEL` | read only: the inverter's holding 33501-33600 and the wallbox's phases, to `scan_LABEL.json` |
+| `charge on\|off SECONDS` | **writes** the inverter's charging on/off, watches, puts the snapshot (flushed first) back, checked on a fresh session |
+
+For the user current and the mode use the managed test (section 4), which restores the house.
+2026-11-14's one-off scripts stay in the maintainer's `tmp/gerd-wallbox-2026-11-14/`.
 
 ## 6. Next at gerd's (on site, a car plugged in)
 
@@ -162,14 +168,13 @@ In order; 1 to 4 need the owner at the app.
    one phase on 2026-09-08 (21204 = 1, written by nobody here) and 2026-10-30 (the portal: 6.1 A on
    phase A only), and Sungrow's datasheet promises automatic 1/3-phase switching from 1.38 kW of
    PV surplus. Our own 21204 write did nothing. The inverter's charger block has no phase word;
-   33537 (85) and 33538 (161), just below it, are candidates (baseline in the raw note, 2026-11-14).
+   registers 33538 (85) and 33539 (161), just below it, are candidates (baseline in the raw note,
+   2026-11-14, there in protocol addresses).
    - **Remotely, read only**: on a day with 1.5-4 kW of sun, the battery above its minimum, the
-     car plugged in and *PV surplus* set, run `phase_watch.py MINUTES` (the inverter's 33536-33549,
-     PV, battery, the wallbox's 21204/21225/21270/21272, status and phase currents every 5 s; a
-     changed row is marked). Then `scan_335xx.py single-phase` during the one-phase session, to
-     compare with the baseline.
+     car plugged in and *PV surplus* set, run the field tool's `phase MINUTES`. Then
+     `scan single-phase` during the one-phase session, to compare with `scan` at three phase.
    - **On site**: look for a phase setting in the app (iSolarCloud, its local access, the installer
-     view) and switch it with the car stopped while `phase_watch.py` runs.
+     view) and switch it with the car stopped while `phase` runs.
    - **Decides**: a phase select on the inverter entry (if an inverter word switches it, written
      stop → switch → start), or only a sensor for the phase in use (21270, 21225) with *PV surplus*
      as the way to one phase.

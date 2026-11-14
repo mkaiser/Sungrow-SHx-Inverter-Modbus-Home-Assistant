@@ -153,7 +153,9 @@ Nothing can start now (blocker 13).
       no such inverter entry awaits nothing.
    5. **The next session at gerd's**: `plans/wallbox_tests.md`
       (quantity-and-time mode, writes that repeat what is set, waking a
-      sleeping car, phase switching, PV surplus in sun).
+      sleeping car, phase switching, PV surplus in sun), where the last one
+      left off in `plans/wallbox_session_handover.md`, and the field tool
+      `scripts/dev/managed_wallbox_field.py` (read only, but `charge`).
 
    **The search finds every device** (`plans/device_scan_and_diagnosis.md`,
    its status log is current): a wallbox at its own address is an entry of

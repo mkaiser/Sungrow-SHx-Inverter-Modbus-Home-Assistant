@@ -180,6 +180,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `pre-commit.sh` | The git pre-commit hook `make hooks` installs: `make quick` |
 | `screenshot.py` | Retake a documentation screenshot from a scratch instance, on the screenshot venv's Python; see [Screenshots for the docs](#screenshots-for-the-docs) |
 | `seed_migration_testbed.py` | Make the dev instance look like a house that ran the YAML package for years; see [Reviewing the migration by hand](#reviewing-the-migration-by-hand) |
+| `managed_wallbox_field.py` | Watch a wallbox an inverter manages, on this tree's library: its block, energy, a session, a phase switch, a scan of the inverter's 33501-33600; `charge` writes charging on/off and puts it back. Addresses as arguments; see `plans/wallbox_tests.md` |
 | **`scripts/generate/`** | **Everything that writes a committed file; each has `--check` but the multi-inverter YAML, which CI regenerates and commits instead** |
 | `descriptions.py` | The entity descriptions and names: `derived`, `numbers`, `switches`, `selects`, `times`, `buttons`, `strings`, `german`, or all eight with no argument (`strings` and `german` last, since they read the others) |
 | `tables/writes.py` | **Input table**: which registers the integration may write and within what bounds. Feeds the number/switch/select/time/button descriptions; `tests/test_writes.py` holds `registers.py`'s writable set to it |
