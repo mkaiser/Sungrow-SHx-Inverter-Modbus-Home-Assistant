@@ -368,15 +368,16 @@ KIND_WALLBOX = "wallbox"
 """A wallbox at its own address (TLS, port 516, unit 248), with no inverter
 beside it: read only, identified by its own serial."""
 
-#: A contributor who wants to send a reading should not have to answer the
-#: migration question at all: it decides which entity ids years of recorder
-#: history attach to, and it has nothing whatever to do with producing a
-#: document. So there are two
-#: kinds of entry.
+#: Which kind of entry this is.
+#:
+#: Every setup the config flow runs now makes a `MODE_DEVICES` entry: the
+#: ordinary integration, with entities, the diagnosis and the capability test
+#: on one device page. `MODE_DIAGNOSTICS` is no longer offered, and is kept
+#: because entries made while it was are still out there and still load.
 CONF_MODE = "mode"
 
 MODE_DEVICES = "devices"
-"""The ordinary integration: entities, migration, the whole thing."""
+"""The ordinary integration: entities, migration, the diagnosis, the whole thing."""
 
 MODE_DIAGNOSTICS = "diagnostics"
 """Connect, identify, poll, and create only the diagnosis's entities.
@@ -384,43 +385,16 @@ MODE_DIAGNOSTICS = "diagnostics"
 Three buttons, a switch and four sensors, which give the entry a device page; no
 readings, no controls, no migration.
 
+**Not offered any more.** The preview's opening dialog asked whether an entry
+was for the inverter or for a reading, and that question is gone: a devices
+entry carries the diagnosis too, so there is nothing the lighter entry does
+that the ordinary one cannot. What is left here serves the entries that were
+made while it was offered, which load, poll and promote exactly as before --
+`add_devices` on the options page is the way across.
+
 Still opens a Modbus connection -- so it still spends one of the very few
 sessions a Sungrow grants, which is cheaper than a full entry and not free.
-Promoted to a full entry later from the options flow, which is when the
-entity-ids question gets asked.
 """
-
-#: Whether the UI offers only the diagnosis, so nobody can *choose* devices
-#: mode. On during the alpha.
-#:
-#: This gates the door, not the room. Every line of devices mode stays built
-#: and stays tested; what is shut is the two places a person can
-#: create such an entry -- the question the config flow opens with, and the
-#: promotion toggle on a diagnostics entry's options page.
-#:
-#: On because that path contains the **weightiest** decision this
-#: integration makes. Choosing to take over `modbus_sungrow.yaml`'s entity ids
-#: decides which ids years of recorder history and every dashboard card attach
-#: to, and getting it wrong breaks both silently. That is not a thing to put
-#: in front of a stranger running an alpha, and an alpha's job here is to
-#: gather readings anyway.
-#:
-#: The opening menu offers only the diagnosis and says the ordinary setup comes
-#: later; the promotion toggle is greyed. `setup_devices` and `promote`
-#: refuse too, so a hand-written request cannot get round the screen.
-#:
-#: One way past it, for testing: `CONF_TEST_ENTITIES`, a switch on the
-#: diagnostics setup's last dialog, creates the entities under device-scoped
-#: ids and never offers the YAML package's.
-#:
-#: **Flipping this to False is the whole re-enablement.**
-#: `tests/test_alpha_gate.py` asserts both halves of that, and nothing outside
-#: the config flow branches on it.
-#:
-#: It does not touch an entry that already exists. A devices entry -- from a
-#: backup, or made while the gate was open -- loads, polls and configures
-#: normally.
-ONLY_DIAGNOSIS_MODE = True
 
 #: Where a contributed reading goes: the one pinned diagnosis issue, so every
 #: diagnosis is a comment in one place rather than an issue of its own.
@@ -469,12 +443,6 @@ SECTION_CAPABILITY_TEST = "capability_test"
 #: to become an ordinary one. Not a section, because ticking it leads to a
 #: question rather than saving a value.
 CONF_ADD_DEVICES = "add_devices"
-
-#: The way past `ONLY_DIAGNOSIS_MODE` for testing: a switch on the last
-#: dialog of the diagnostics setup that creates the entry with entities
-#: instead, under device-scoped ids. Off by default, offered only while the
-#: gate is shut, and never stored: it decides the entry's mode and is gone.
-CONF_TEST_ENTITIES = "test_entities"
 
 #: The ports a network search tries, so nobody has to know them.
 #:

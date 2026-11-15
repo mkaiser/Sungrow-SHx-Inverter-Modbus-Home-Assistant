@@ -25,6 +25,7 @@ from custom_components.sungrow_modbus.const import (
     MODE_DEVICES,
     MODE_DIAGNOSTICS,
 )
+from custom_components.sungrow_modbus.diagnosis_entities import DIAGNOSIS_ENTITIES
 from custom_components.sungrow_modbus.diagnostics import (
     async_get_config_entry_diagnostics,
 )
@@ -181,9 +182,13 @@ async def test_an_sg_entry_is_its_own_device_with_only_what_answered(
         assert f"{SERIAL}_sg_{answered}" in ids
     for absent in ("mppt3_voltage", "phase_b_voltage", "meter_active_power"):
         assert f"{SERIAL}_sg_{absent}" not in ids, "unavailable or refused"
-    # Every entry's connection sensor beside the SG's own.
+    # The SG's own, every entry's connection sensor, and the diagnosis, which
+    # an ordinary entry carries now as a diagnostics-only one always did.
+    diagnosis = {f"{SERIAL}_{key}" for _, key in DIAGNOSIS_ENTITIES}
     assert all(
-        unique_id.startswith(f"{SERIAL}_sg_") or unique_id == f"{SERIAL}_connection"
+        unique_id.startswith(f"{SERIAL}_sg_")
+        or unique_id == f"{SERIAL}_connection"
+        or unique_id in diagnosis
         for unique_id in ids
     )
     assert hass.states.get("sensor.sg5_0rs_total_pv_input_power").state == "1890"
@@ -282,24 +287,25 @@ async def test_the_config_flow_records_an_sg_and_skips_the_battery(
         DOMAIN, context={"source": SOURCE_USER}
     )
     result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"next_step_id": "setup_diagnostics"}
-    )
-    result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {"next_step_id": "manual"}
     )
-    with patch(
-        "custom_components.sungrow_modbus.config_flow._async_probe",
-        return_value=(probed, True, None),
+    with (
+        patch(
+            "custom_components.sungrow_modbus.config_flow._async_probe",
+            return_value=(probed, True, None),
+        ),
+        # The entry is created by this same call now, so setup has to be held
+        # off here rather than a step later.
+        patch("custom_components.sungrow_modbus.async_setup_entry", return_value=True),
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
             {CONF_HOST: "192.0.2.50", CONF_PORT: 502, CONF_UNIT_ID: 1},
         )
-    assert result["step_id"] == "testimony"
-    with patch("custom_components.sungrow_modbus.async_setup_entry", return_value=True):
-        result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
-
+        await hass.async_block_till_done()
+    # Straight to the entry: an SG was never in the YAML package, so there
+    # are no ids to take over and nothing left to ask.
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "SG5.0RS"
     assert result["data"][CONF_KIND] == KIND_STRING_INVERTER
-    assert result["data"][CONF_MODE] == MODE_DIAGNOSTICS
+    assert result["data"][CONF_MODE] == MODE_DEVICES

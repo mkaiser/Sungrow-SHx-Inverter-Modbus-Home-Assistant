@@ -82,11 +82,6 @@ UNIT_247 = {
 }
 
 
-@pytest.fixture(autouse=True)
-def _open_the_alpha_gate(devices_mode_offered: None) -> None:
-    """Walk the devices path, as the search tests do."""
-
-
 @pytest.fixture
 def no_setup():
     """Stop the created entries from reaching for the network."""

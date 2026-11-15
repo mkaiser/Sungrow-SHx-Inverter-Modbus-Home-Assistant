@@ -907,3 +907,10 @@ its own LAN port), committed unchanged as -5: three auto-repeat capability-test 
 their maximum, and the first plausibility block measured on hardware (power balance, tracker V×I
 and both meter checks matched; battery idle). New source page; updated installation-mkaiser, the
 P020 page, the index.
+
+## [2026-11-15] corrected | auto repeat is on every entry
+
+The integration stopped offering the diagnostics-only setup: there is one setup, it creates
+entities, and the diagnosis and capability test are on every inverter's device page under
+*Diagnostic*. Updated capability-test, which said auto repeat was a diagnostics-only entry's
+alone.

@@ -1,6 +1,6 @@
 # The texts, for review
 
-**359 texts**: everything in `strings.json` that is not an entity name, by its
+**324 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -11,7 +11,7 @@ A `{placeholder}` is filled in by the integration and stays as written; backtick
 and bold are kept.
 
 
-## Setup flow (102)
+## Setup flow (73)
 
 ### `config.flow_title`
 
@@ -42,12 +42,6 @@ and bold are kept.
 > **EN** That is the connection this entry already uses. Nothing was changed.
 
 > **DE** Das ist bereits die Verbindung dieses Eintrags. Es wurde nichts geändert.
-
-### `config.abort.devices_mode_not_offered`
-
-> **EN** Devices mode is not available in this preview. This build sets the integration up for diagnostics only -- it polls the inverter and can run the capability diagnosis, but creates no sensors. Promotion will be offered in a later release, and the entry does not need to be removed and added again when it is.
-
-> **DE** Der Geräte-Modus ist in dieser Vorschau nicht verfügbar. Diese Version richtet die Integration nur für die Diagnose ein: Sie fragt den Wechselrichter ab und kann die Diagnose ausführen, legt aber keine Sensoren an. Die Freischaltung folgt in einer späteren Version; der Eintrag muss dafür nicht entfernt und neu hinzugefügt werden.
 
 ### `config.abort.not_identified`
 
@@ -339,28 +333,6 @@ and bold are kept.
 
 > **DE** Zurück zum Anfang
 
-### `config.step.other_inverter.title`
-
-> **EN** What is the other inverter?
-
-> **DE** Welcher ist der andere Wechselrichter?
-
-### `config.step.other_inverter.description`
-
-> **EN** The make, and its size if you know it — *Fronius Symo 8.2*, or *5 kW string inverter on the south roof*. The size is the useful part: it says how large the gap in the load figures is.
->
-> This goes into the document, so leave out serial numbers, addresses and names. You can leave it blank.
-
-> **DE** Der Hersteller und, falls bekannt, die Größe – *Fronius Symo 8.2* oder *5-kW-String-Wechselrichter auf dem Süddach*. Die Größe ist der nützliche Teil: Sie sagt, wie groß die Lücke in den Lastwerten ist.
->
-> Das gelangt in das Dokument, lass deshalb Seriennummern, Adressen und Namen weg. Du kannst es leer lassen.
-
-### `config.step.other_inverter.data.diagnosis_other_inverter_detail`
-
-> **EN** The other inverter
-
-> **DE** Der andere Wechselrichter
-
 ### `config.step.pick.title`
 
 > **EN** Devices found
@@ -427,162 +399,6 @@ and bold are kept.
 
 > **DE** In CIDR-Notation, zum Beispiel 192.168.1.0/24.
 
-### `config.step.testimony.title`
-
-> **EN** What do you want to tell us?
-
-> **DE** Was möchtest du uns mitteilen?
-
-### `config.step.testimony.description`
-
-> **EN** You chose diagnostics only, which means this entry exists to produce a reading — so these are the questions that reading needs and no register can answer.
->
-> {measured}
->
-> Everything here is optional, and leaving a field empty is honest: it records that the question was not answered, which is different from answering "I don't know". You can change any of it later under the integration's options.
->
-> Afterwards, on the device page, choose what to run in **Diagnosis: mode** and press **Diagnosis: start**.
-
-> **DE** Du hast „nur Diagnose“ gewählt, das heißt, dieser Eintrag existiert, um eine Messung zu erzeugen – dies sind also die Fragen, die diese Messung braucht und die kein Register beantworten kann.
->
-> {measured}
->
-> Alles hier ist optional, und ein leeres Feld ist ehrlich: Es hält fest, dass die Frage nicht beantwortet wurde, was etwas anderes ist, als mit „Ich weiß es nicht“ zu antworten. Du kannst alles später unter den Optionen der Integration ändern.
->
-> Wähle danach auf der Geräteseite in **Diagnose: Modus**, was laufen soll, und drücke **Diagnose: starten**.
-
-### `config.step.testimony.data.reporter`
-
-> **EN** Your name or handle
-
-> **DE** Dein Name oder Pseudonym
-
-### `config.step.testimony.data.diagnosis_transport`
-
-> **EN** How this inverter is connected
-
-> **DE** Wie dieser Wechselrichter angebunden ist
-
-### `config.step.testimony.data.diagnosis_proxy`
-
-> **EN** Is a Modbus proxy in the path?
-
-> **DE** Befindet sich ein Modbus-Proxy im Pfad?
-
-### `config.step.testimony.data.diagnosis_pollers`
-
-> **EN** Anything else polling this inverter?
-
-> **DE** Fragt noch etwas anderes diesen Wechselrichter ab?
-
-### `config.step.testimony.data.diagnosis_other_inverter`
-
-> **EN** Is there another inverter here that is not a Sungrow?
-
-> **DE** Gibt es hier einen weiteren Wechselrichter, der kein Sungrow ist?
-
-### `config.step.testimony.data.diagnosis_battery`
-
-> **EN** Battery make and model
-
-> **DE** Hersteller und Modell der Batterie
-
-### `config.step.testimony.data.diagnosis_comment`
-
-> **EN** Anything else worth knowing
-
-> **DE** Sonst noch etwas Wissenswertes
-
-### `config.step.testimony.data.publish_address`
-
-> **EN** May the last two octets of the address be published?
-
-> **DE** Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?
-
-### `config.step.testimony.data.test_entities`
-
-> **EN** Create the entities too (for testing, not recommended)
-
-> **DE** Auch die Entitäten anlegen (zum Testen, nicht empfohlen)
-
-### `config.step.testimony.data_description.reporter`
-
-> **EN** Credited in the published reading, and who gets asked if a row raises a question. Leave empty to contribute anonymously.
-
-> **DE** Wird in der veröffentlichten Messung genannt und gefragt, wenn eine Zeile Fragen aufwirft. Leer lassen, um anonym beizutragen.
-
-### `config.step.testimony.data_description.diagnosis_transport`
-
-> **EN** Cable against dongle is measured already. What only you know is whether a dongle is on its Ethernet socket or its WiFi — a WiNet-S answers identically either way, so "not sure" is a real answer and better than a guess.
-
-> **DE** Kabel gegenüber Dongle ist bereits gemessen. Nur du weißt, ob ein Dongle an seiner Ethernet-Buchse oder per WLAN hängt – ein WiNet-S antwortet in beiden Fällen gleich, daher ist "nicht sicher" eine echte Antwort und besser als eine Vermutung.
-
-### `config.step.testimony.data_description.diagnosis_proxy`
-
-> **EN** modbus-proxy, evcc's proxy, a Home Assistant add-on. A proxy holds one connection and lends it out, so it changes what a dropped register means — and it rebuilds every frame, which can hide or create the frame quirks this project tracks.
-
-> **DE** modbus-proxy, der Proxy von evcc, ein Home-Assistant-Add-on. Ein Proxy hält eine Verbindung und verleiht sie weiter, was die Bedeutung eines ausgefallenen Registers verändert – und er baut jeden Frame neu auf, was die Frame-Eigenheiten, die dieses Projekt verfolgt, verbergen oder erzeugen kann.
-
-### `config.step.testimony.data_description.diagnosis_pollers`
-
-> **EN** This Home Assistant is recorded automatically. What matters here is anything else: another Home Assistant, the YAML package, evcc, a logger. An inverter grants very few connections, and two clients competing for one looks exactly like a broken register.
-
-> **DE** Dieses Home Assistant wird automatisch erfasst. Wichtig ist hier alles andere: ein anderes Home Assistant, das YAML-Paket, evcc, ein Logger. Ein Wechselrichter gewährt sehr wenige Verbindungen, und zwei Clients, die um eine konkurrieren, sehen genau wie ein defektes Register aus.
-
-### `config.step.testimony.data_description.diagnosis_other_inverter`
-
-> **EN** Your Sungrow does not measure how much your house is using — it works it out from its own output plus what the grid meter says is coming in. A second inverter feeding the same meter therefore makes every load figure too low, by exactly what that inverter is producing, while everything else reads normally. No register can tell us: the Sungrow cannot see it. Say yes and we will ask what it is.
-
-> **DE** Dein Sungrow misst nicht, wie viel dein Haus verbraucht – er errechnet es aus seiner eigenen Leistung plus dem, was der Netzzähler als Bezug meldet. Ein zweiter Wechselrichter am selben Zähler macht daher jeden Lastwert um genau dessen Erzeugung zu niedrig, während alles andere normal aussieht. Kein Register kann uns das sagen: Der Sungrow sieht ihn nicht. Antworte mit Ja, dann fragen wir, was es ist.
-
-### `config.step.testimony.data_description.diagnosis_battery`
-
-> **EN** No register reports it. "SBR096" or "Pylontech Force H1, 14.4 kWh" is more useful than a capacity the inverter already reports.
-
-> **DE** Kein Register meldet das. "SBR096" oder "Pylontech Force H1, 14,4 kWh" ist nützlicher als eine Kapazität, die der Wechselrichter ohnehin meldet.
-
-### `config.step.testimony.data_description.diagnosis_comment`
-
-> **EN** Anything unusual about the installation — a cluster, a second inverter, a wallbox, a firmware update you remember.
-
-> **DE** Alles Ungewöhnliche an der Anlage – ein Verbund, ein zweiter Wechselrichter, eine Wallbox, ein Firmware-Update, an das du dich erinnerst.
-
-### `config.step.testimony.data_description.publish_address`
-
-> **EN** On, and yours to turn off before you submit. Only the last two octets ever reach the document — never the third, which is what would identify your network — and clear this and it reads xxx.xxx instead. What it buys is telling several readings from one house apart: a master, a slave and two dongles otherwise produce four files that look alike.
-
-> **DE** An, und du kannst es vor dem Absenden ausschalten. Nur die letzten zwei Oktette gelangen je in das Dokument – nie das dritte, das dein Netzwerk identifizieren würde –, und wenn du das deaktivierst, steht stattdessen xxx.xxx. Der Nutzen: Mehrere Messungen aus einem Haus lassen sich unterscheiden – ein Master, ein Slave und zwei Dongles ergeben sonst vier gleich aussehende Dateien.
-
-### `config.step.testimony.data_description.test_entities`
-
-> **EN** For testing this alpha, and not recommended for an installation you rely on. Creates this inverter's sensors and controls as well, under new entity ids. It never takes over the YAML package's entity ids, so its history does not continue here; leave this off if that history matters to you. Entities and their names may still change before a release.
-
-> **DE** Zum Testen dieser Alpha und nicht empfohlen für eine Installation, auf die du dich verlässt. Legt zusätzlich die Sensoren und Steuerungen dieses Wechselrichters an, unter neuen Entitäts-IDs. Die Entitäts-IDs des YAML-Pakets werden nie übernommen, sein Verlauf setzt sich hier also nicht fort; lass das aus, wenn dir dieser Verlauf wichtig ist. Entitäten und ihre Namen können sich bis zu einer Version noch ändern.
-
-### `config.step.user.title`
-
-> **EN** What is this for?
-
-> **DE** Wofür ist das?
-
-### `config.step.user.description`
-
-> **EN** {mode_intro}**The device diagnosis** connects to the inverter, works out what it is and what it answers, and creates **no entities at all**. It exists because this project has to *measure* which registers each model and firmware supports — Sungrow's own specification has been wrong in both directions — and today that evidence comes from the few houses that have sent a reading.{mode_choice}
-
-> **DE** {mode_intro}**Die Geräte-Diagnose** verbindet sich mit dem Wechselrichter, ermittelt, was er ist und was er beantwortet, und legt **überhaupt keine Entitäten an**. Es gibt sie, weil dieses Projekt *messen* muss, welche Register jedes Modell und jede Firmware unterstützt – Sungrows eigene Spezifikation lag in beide Richtungen falsch – und dieser Nachweis stammt heute von den wenigen Haushalten, die eine Messung eingesandt haben.{mode_choice}
-
-### `config.step.user.menu_options.setup_devices`
-
-> **EN** Set up my inverter — sensors, controls, the lot
-
-> **DE** Meinen Wechselrichter einrichten – Sensoren, Steuerungen, alles
-
-### `config.step.user.menu_options.setup_diagnostics`
-
-> **EN** Perform the device diagnosis — help this project, create no entities
-
-> **DE** Geräte-Diagnose durchführen – dem Projekt helfen, keine Entitäten anlegen
-
 ### `config.step.reconfigure.title`
 
 > **EN** Change the connection
@@ -645,13 +461,13 @@ and bold are kept.
 
 > **EN** This inverter is already set up as **{title}**, reached at **{old}**. It also answers at **{new}**.
 >
-> **Submit** switches the entry to **{new}** and reloads it. Its entity IDs, their history and its settings stay as they are; the battery and wallbox are looked for again on the new connection. Your answer about how the diagnosis reaches the inverter is cleared, because it described the old connection.{wallbox}
+> **Submit** switches the entry to **{new}** and reloads it. Its entity IDs, their history and its settings stay as they are; the battery and wallbox are looked for again on the new connection. Your answer about how the diagnosis reaches the inverter is cleared, because it described the old connection.{wallbox}{proxy}
 >
 > To keep the current connection, close this dialog.
 
 > **DE** Dieser Wechselrichter ist bereits als **{title}** eingerichtet und wird unter **{old}** erreicht. Er antwortet auch unter **{new}**.
 >
-> **Absenden** stellt den Eintrag auf **{new}** um und lädt ihn neu. Seine Entitäts-IDs, deren Verlauf und seine Einstellungen bleiben, wie sie sind; Batterie und Wallbox werden an der neuen Verbindung erneut gesucht. Deine Antwort darauf, wie die Diagnose den Wechselrichter erreicht, wird gelöscht, weil sie die alte Verbindung beschrieb.{wallbox}
+> **Absenden** stellt den Eintrag auf **{new}** um und lädt ihn neu. Seine Entitäts-IDs, deren Verlauf und seine Einstellungen bleiben, wie sie sind; Batterie und Wallbox werden an der neuen Verbindung erneut gesucht. Deine Antwort darauf, wie die Diagnose den Wechselrichter erreicht, wird gelöscht, weil sie die alte Verbindung beschrieb.{wallbox}{proxy}
 >
 > Um die aktuelle Verbindung zu behalten, schließe diesen Dialog.
 
@@ -744,26 +560,14 @@ and bold are kept.
 > **EN** **You are set up.** The inverter's entities appear on its device page as their first readings arrive.
 >
 > To see it in the Energy dashboard (**Settings → Dashboards → Energy**), pick the sensors [the Energy dashboard guide]({energy_dashboard_url}) names: several energy sensors have names that look right and are not.
+>
+> **If you can spare a few minutes, send a reading.** Which registers a model answers is measured here rather than looked up — Sungrow's own specification has been wrong in both directions — and today that evidence comes from the houses that have sent one. On the device page, under *Diagnostic*: leave **Diagnosis: mode** on *Read-only* and press **Diagnosis: start**. It reads and never writes. A notification tells you when it has finished; **Download diagnostics** on the same page is then the file to send to [the diagnosis issue]({diagnosis_issue_url}), with your serial number replaced by a stand-in. **Configure** holds a few questions no register can answer — how this inverter is connected, which battery it has — and filling those in first makes the reading worth more.
 
 > **DE** **Die Einrichtung ist abgeschlossen.** Die Entitäten des Wechselrichters erscheinen auf seiner Geräteseite, sobald ihre ersten Messwerte eintreffen.
 >
 > Um ihn im Energie-Dashboard zu sehen (**Einstellungen → Dashboards → Energie**), wähle die Sensoren, die [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt: Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.
-
-### `config.create_entry.diagnostics`
-
-> **EN** **You are set up, and nothing has been read yet.** Two more steps, both on the device page this dialog is about to show you:
 >
-> 1. Under *Diagnostic*, leave **Diagnosis: mode** on *Read-only* and press **Diagnosis: start**. Read-only reads and never writes. It runs in the background, so you can leave the page; on a cable it is over in a couple of minutes with the register sweep on, over a VPN it can take considerably longer, and the sensors beside the button say how far along it is and what it is reading. Please do not restart Home Assistant while it runs.
-> 2. A notification in the sidebar — the badge at the bottom left — tells you when it has finished. Then press **Download diagnostics** on the same device page: that is the JSON file to send to [the diagnosis issue]({diagnosis_issue_url}), and it never expires.
->
-> The file names your inverter by a stand-in rather than its serial number, and carries the last two octets of its address only while that box is ticked.
-
-> **DE** **Die Einrichtung ist abgeschlossen, und es wurde noch nichts gelesen.** Zwei weitere Schritte, beide auf der Geräteseite, die dieser Dialog gleich anzeigt:
->
-> 1. Lass unter *Diagnose* **Diagnose: Modus** auf *Nur lesend* und drücke **Diagnose: starten**. Nur lesend liest und schreibt nie. Die Diagnose läuft im Hintergrund, du kannst die Seite also verlassen; am Kabel ist sie mit dem Registerdurchlauf in ein paar Minuten fertig, über ein VPN kann es deutlich länger dauern, und die Sensoren neben der Schaltfläche zeigen, wie weit sie ist und was sie liest. Bitte starte Home Assistant währenddessen nicht neu.
-> 2. Eine Benachrichtigung in der Seitenleiste – das Abzeichen unten links – sagt dir, wann sie fertig ist. Drücke dann **Diagnose herunterladen** auf derselben Geräteseite: Das ist die JSON-Datei für [das Diagnose-Issue]({diagnosis_issue_url}), und sie läuft nie ab.
->
-> Die Datei benennt deinen Wechselrichter mit einem Platzhalter statt der Seriennummer und enthält die letzten zwei Oktette seiner Adresse nur, solange dieses Feld angehakt ist.
+> **Wenn du ein paar Minuten erübrigen kannst, schick eine Messung ein.** Welche Register ein Modell beantwortet, wird hier gemessen statt nachgeschlagen – Sungrows eigene Spezifikation lag schon in beide Richtungen falsch – und diese Belege kommen bisher aus den Haushalten, die eine Messung geschickt haben. Auf der Geräteseite, unter *Diagnose*: Lass **Diagnose: Modus** auf *Nur lesen* und drücke **Diagnose: starten**. Es wird nur gelesen, nie geschrieben. Eine Benachrichtigung sagt dir, wann es fertig ist; **Diagnose herunterladen** auf derselben Seite ist dann die Datei für [das Diagnose-Issue]({diagnosis_issue_url}), mit einem Platzhalter anstelle deiner Seriennummer. Unter **Konfigurieren** stehen ein paar Fragen, die kein Register beantworten kann – wie dieser Wechselrichter angebunden ist, welche Batterie er hat – und sie vorher auszufüllen macht die Messung wertvoller.
 
 
 ## Select states (22)
@@ -901,7 +705,7 @@ and bold are kept.
 > **DE** Über ein Kommunikationsmodul
 
 
-## Selector options (77)
+## Selector options (71)
 
 ### `selector.entity_ids.options.migrate`
 
@@ -1017,24 +821,6 @@ and bold are kept.
 
 > **DE** Gerätebezogene IDs, etwa sensor.sh10rt_total_pv_input_power
 
-### `selector.flow_text.options.devices_mode_coming`
-
-> **EN** ⚠️ **Sensors and controls are not in this release.** This is an early alpha, and it exists to gather readings: it connects to your inverter, works out what it is and which registers it answers, and creates no entities for the values. Setting up the inverter properly -- including taking over the entity IDs of the YAML package, which decides where years of history continue -- comes in a later release, and an entry made now can be upgraded to it then without being deleted.
-
-> **DE** ⚠️ **Sensoren und Steuerungen sind in dieser Version nicht enthalten.** Dies ist eine frühe Alpha, und sie ist dazu da, Messwerte zu sammeln: Sie verbindet sich mit deinem Wechselrichter, ermittelt, was er ist und welche Register er beantwortet, und legt keine Entitäten für die Werte an. Den Wechselrichter richtig einzurichten -- einschließlich der Übernahme der Entitäts-IDs des YAML-Pakets, die entscheidet, wo Jahre an Verlauf weitergehen -- kommt in einer späteren Version, und ein jetzt angelegter Eintrag kann dann darauf umgestellt werden, ohne ihn zu löschen.
-
-### `selector.flow_text.options.devices_mode_open`
-
-> **EN** Both answers are fine, and you can change your mind later: picking **the device diagnosis** skips the weightiest question in this dialog, about which entity IDs to take over, because a reading does not need it.
-
-> **DE** Beide Antworten sind in Ordnung, und du kannst es dir später anders überlegen: **Die Geräteerfassung** überspringt die gewichtigste Frage in diesem Dialog, welche Entitäts-IDs übernommen werden, weil eine Messung sie nicht braucht.
-
-### `selector.flow_text.options.devices_mode_intro`
-
-> **EN** **Set up my inverter** is what you want if you came here to see your solar production in Home Assistant.
-
-> **DE** **Meinen Wechselrichter einrichten** ist das Richtige, wenn du hier bist, um deine Solarproduktion in Home Assistant zu sehen.
-
 ### `selector.flow_text.options.package_loaded`
 
 > **EN** ⚠️ **The YAML package is still running.** {live} of its entities are live on this instance right now and are holding their entity IDs, so migrating cannot work yet.
@@ -1056,6 +842,12 @@ and bold are kept.
 > **EN** ⚠️ **The YAML package is still running.** {live} of its entities are live and hold the ids these would move to. Remove `modbus_sungrow.yaml` from your configuration, restart Home Assistant, and come back here.
 
 > **DE** ⚠️ **Das YAML-Paket läuft noch.** {live} seiner Entitäten sind aktiv und halten die IDs, auf die diese umziehen würden. Entferne `modbus_sungrow.yaml` aus deiner Konfiguration, starte Home Assistant neu und komm hierher zurück.
+
+### `selector.flow_text.options.proxy_left`
+
+> **EN** **This moves off a Modbus proxy.** The current address is Home Assistant's own, so the inverter is reached today through a proxy that shares its single Modbus port: everything that polls the inverter goes through one connection, and nothing has to wait for a session. The new address is the inverter itself. After the move this entry opens its own connection, and anything else still polling the inverter — the YAML package, evcc, another integration — competes with it for the few sessions a Sungrow grants.
+
+> **DE** **Damit entfällt ein Modbus-Proxy.** Die aktuelle Adresse ist die von Home Assistant selbst: Der Wechselrichter wird heute über einen Proxy erreicht, der dessen einzigen Modbus-Port teilt. Alles, was den Wechselrichter abfragt, läuft über eine Verbindung, und nichts muss auf eine Sitzung warten. Die neue Adresse ist der Wechselrichter selbst. Nach dem Umstellen öffnet dieser Eintrag eine eigene Verbindung, und alles andere, was den Wechselrichter weiterhin abfragt — das YAML-Paket, evcc, eine andere Integration — konkurriert mit ihm um die wenigen Sitzungen, die ein Sungrow gewährt.
 
 ### `selector.flow_text.options.wallbox_lost`
 
@@ -1114,30 +906,6 @@ and bold are kept.
 > **EN** an unidentified model
 
 > **DE** ein nicht erkanntes Modell
-
-### `selector.flow_text.options.measured_nothing`
-
-> **EN** Nothing has been measured for this address yet, so please answer from what you know.
-
-> **DE** Für diese Adresse wurde noch nichts gemessen, bitte antworte also nach dem, was du weißt.
-
-### `selector.flow_text.options.measured_direct`
-
-> **EN** Already measured, so you do not need to tell us: this is **{model}**, reached through its own LAN port — register 6100 answers, which is what a cable straight into the inverter looks like.
-
-> **DE** Schon gemessen, du musst es uns also nicht sagen: Das ist **{model}**, erreicht über seinen eigenen LAN-Anschluss — Register 6100 antwortet, und so sieht ein Kabel direkt in den Wechselrichter aus.
-
-### `selector.flow_text.options.measured_dongle`
-
-> **EN** Already measured, so you do not need to tell us: this is **{model}**, reached through a communication module, so a WiNet-S, WiNet-S2 or Logger is in the path — register 6100 was refused. Whether it is using its Ethernet socket or its WiFi is **not** determinable over Modbus, and that is the part only you can tell us.
-
-> **DE** Schon gemessen, du musst es uns also nicht sagen: Das ist **{model}**, erreicht über ein Kommunikationsmodul, also ist ein WiNet-S, WiNet-S2 oder Logger im Weg — Register 6100 wurde abgelehnt. Ob es seine Ethernet-Buchse oder sein WLAN nutzt, ist über Modbus **nicht** feststellbar, und das ist der Teil, den nur du uns sagen kannst.
-
-### `selector.flow_text.options.measured_unknown`
-
-> **EN** Already measured, so you do not need to tell us: this is **{model}**, and the route could not be measured — register 6100 neither answered nor was refused, which is what a busy link looks like from here. A cable answers it and a dongle refuses it, so this is one for you to tell us.
-
-> **DE** Schon gemessen, du musst es uns also nicht sagen: Das ist **{model}**, und der Weg ließ sich nicht messen — Register 6100 hat weder geantwortet noch abgelehnt, und so sieht von hier aus eine ausgelastete Verbindung aus. Ein Kabel beantwortet es, ein Dongle lehnt es ab, also ist das eine Frage für dich.
 
 ### `selector.flow_text.options.load_offline`
 

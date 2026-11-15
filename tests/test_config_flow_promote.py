@@ -70,9 +70,7 @@ async def mock_recorder_before_hass(
 
 
 @pytest.fixture(autouse=True)
-async def recorder(
-    hass: HomeAssistant, recorder_mock: Recorder, devices_mode_offered: None
-) -> None:
+async def recorder(hass: HomeAssistant, recorder_mock: Recorder) -> None:
     await async_setup_component(hass, "sensor", {})
     await async_recorder_block_till_done(hass)
 

@@ -79,11 +79,6 @@ class _Unit:
         return None
 
 
-@pytest.fixture(autouse=True)
-def _open_the_alpha_gate(devices_mode_offered: None) -> None:
-    """Open the gate on the devices path, which the alpha shuts."""
-
-
 async def _scan(hass: HomeAssistant, answers: dict[int, str]) -> dict:
     """Search a network where HOST has `answers`: port to the kind at unit 247."""
 
@@ -109,9 +104,6 @@ async def _scan(hass: HomeAssistant, answers: dict[int, str]) -> dict:
     ):
         result = await hass.config_entries.flow.async_init(
             DOMAIN, context={"source": SOURCE_USER}
-        )
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"next_step_id": "setup_devices"}
         )
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], {"next_step_id": "search"}

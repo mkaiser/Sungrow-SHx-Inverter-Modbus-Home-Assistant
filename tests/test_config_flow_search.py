@@ -75,9 +75,6 @@ async def _search(hass: HomeAssistant, user_input: dict | None = None) -> dict:
     )
     # The flow opens by asking what the entry is for; these
     # tests are about the ordinary one.
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"next_step_id": "setup_devices"}
-    )
     assert result["type"] is FlowResultType.MENU
     assert set(result["menu_options"]) == {"search", "manual"}
     result = await hass.config_entries.flow.async_configure(
@@ -104,20 +101,6 @@ async def _finish_sweep(hass: HomeAssistant, result: dict) -> dict:
     return result
 
 
-@pytest.fixture(autouse=True)
-def _open_the_alpha_gate(devices_mode_offered: None) -> None:
-    """Every test in this file walks the devices path, which the alpha shuts.
-
-    `ONLY_DIAGNOSIS_MODE` is on for the first release, so the config flow
-    will not create a devices entry. What it gates is the door; this file
-    tests the room behind it, and the room has not changed. Opening the gate
-    for the whole module keeps that coverage exactly as it was rather than
-    letting a release flag quietly retire it.
-
-    The door itself is tested in `tests/test_alpha_gate.py`, from both sides.
-    """
-
-
 async def test_the_range_is_prefilled_with_the_network_home_assistant_is_on(
     hass: HomeAssistant,
 ) -> None:
@@ -126,9 +109,6 @@ async def test_the_range_is_prefilled_with_the_network_home_assistant_is_on(
     )
     # The flow opens by asking what the entry is for; these
     # tests are about the ordinary one.
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"next_step_id": "setup_devices"}
-    )
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {"next_step_id": "search"}
     )
@@ -486,9 +466,6 @@ async def test_a_container_bridge_is_not_offered_as_the_network_to_search(
         # The flow opens by asking what the entry is for; these
         # tests are about the ordinary one.
         result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"next_step_id": "setup_devices"}
-        )
-        result = await hass.config_entries.flow.async_configure(
             result["flow_id"], {"next_step_id": "search"}
         )
 
@@ -536,9 +513,6 @@ async def test_a_real_adapter_is_still_prefilled(hass: HomeAssistant) -> None:
         # The flow opens by asking what the entry is for; these
         # tests are about the ordinary one.
         result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"next_step_id": "setup_devices"}
-        )
-        result = await hass.config_entries.flow.async_configure(
             result["flow_id"], {"next_step_id": "search"}
         )
 
@@ -579,9 +553,6 @@ async def test_a_lan_adapter_wins_over_a_bridge_on_the_same_host(
         # The flow opens by asking what the entry is for; these
         # tests are about the ordinary one.
         result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"next_step_id": "setup_devices"}
-        )
-        result = await hass.config_entries.flow.async_configure(
             result["flow_id"], {"next_step_id": "search"}
         )
 
@@ -614,9 +585,6 @@ async def test_a_range_is_something_to_pick_and_not_only_to_type(
         )
         # The flow opens by asking what the entry is for; these
         # tests are about the ordinary one.
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"next_step_id": "setup_devices"}
-        )
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], {"next_step_id": "search"}
         )
@@ -651,9 +619,6 @@ async def test_the_detected_network_is_offered_first_and_labelled_as_detected(
         # The flow opens by asking what the entry is for; these
         # tests are about the ordinary one.
         result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"next_step_id": "setup_devices"}
-        )
-        result = await hass.config_entries.flow.async_configure(
             result["flow_id"], {"next_step_id": "search"}
         )
 
@@ -676,9 +641,6 @@ async def test_the_search_no_longer_asks_which_port(
     """
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}
-    )
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"next_step_id": "setup_devices"}
     )
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {"next_step_id": "search"}
@@ -717,9 +679,6 @@ async def test_the_sweep_reports_progress_while_it_runs(
             DOMAIN, context={"source": SOURCE_USER}
         )
         result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"next_step_id": "setup_devices"}
-        )
-        result = await hass.config_entries.flow.async_configure(
             result["flow_id"], {"next_step_id": "search"}
         )
         result = await hass.config_entries.flow.async_configure(
@@ -748,9 +707,6 @@ async def _default_network(hass: HomeAssistant, adapters: list[dict]) -> str:
     ):
         result = await hass.config_entries.flow.async_init(
             DOMAIN, context={"source": SOURCE_USER}
-        )
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"next_step_id": "setup_devices"}
         )
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], {"next_step_id": "search"}

@@ -121,9 +121,6 @@ async def _pick_options(
         # The flow opens by asking what the entry is for; these
         # tests are about the ordinary one.
         result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"next_step_id": "setup_devices"}
-        )
-        result = await hass.config_entries.flow.async_configure(
             result["flow_id"], {"next_step_id": "search"}
         )
         result = await hass.config_entries.flow.async_configure(
@@ -137,20 +134,6 @@ async def _pick_options(
     assert result["type"] is FlowResultType.FORM, result
     assert result["step_id"] == "pick"
     return result["data_schema"].schema[CONF_HOST].config["options"]
-
-
-@pytest.fixture(autouse=True)
-def _open_the_alpha_gate(devices_mode_offered: None) -> None:
-    """Every test in this file walks the devices path, which the alpha shuts.
-
-    `ONLY_DIAGNOSIS_MODE` is on for the first release, so the config flow
-    will not create a devices entry. What it gates is the door; this file
-    tests the room behind it, and the room has not changed. Opening the gate
-    for the whole module keeps that coverage exactly as it was rather than
-    letting a release flag quietly retire it.
-
-    The door itself is tested in `tests/test_alpha_gate.py`, from both sides.
-    """
 
 
 async def test_a_slave_on_its_own_lan_port_is_found_at_all(
@@ -349,9 +332,6 @@ async def test_a_device_that_answers_without_naming_itself_stops_the_sweep(
         # The flow opens by asking what the entry is for; these
         # tests are about the ordinary one.
         result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"next_step_id": "setup_devices"}
-        )
-        result = await hass.config_entries.flow.async_configure(
             result["flow_id"], {"next_step_id": "search"}
         )
         result = await hass.config_entries.flow.async_configure(
@@ -390,9 +370,6 @@ async def _to_name_step(hass: HomeAssistant, topology, host: str):
         )
         # The flow opens by asking what the entry is for; these
         # tests are about the ordinary one.
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"next_step_id": "setup_devices"}
-        )
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], {"next_step_id": "search"}
         )
@@ -586,9 +563,6 @@ async def _pick_with_routes(hass, topology, direct, capacity=None):
         )
         # The flow opens by asking what the entry is for; these
         # tests are about the ordinary one.
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {"next_step_id": "setup_devices"}
-        )
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], {"next_step_id": "search"}
         )

@@ -185,10 +185,10 @@ Runs on different transports are never folded: through a
 
 The terminal's `--merge-into` folds a run into a document's runs the same way.
 
-The mode *Extended test (auto repeat)* does the coming back, on a diagnostics-only
-entry only: an ordinary entry has no diagnosis entities, and its owner reaches
-the capability test through the action. Pressing *Diagnosis: start* in that
-mode is the leave: it lasts until *Diagnosis: stop*, and ends at every
+The mode *Extended test (auto repeat)* does the coming back, on any entry:
+*Diagnosis: mode* and *Diagnosis: start* are on every inverter's device page,
+under *Diagnostic*, and `sungrow_modbus.run_capability_test` is the same run
+for a script. Pressing *Diagnosis: start* in that mode is the leave: it lasts until *Diagnosis: stop*, and ends at every
 restart. Every run it starts leaves out what the kept runs established, the
 inverter restart included, so a restart is measured once per collection.
 *Diagnosis: current step* says what it waits for. Once a minute it compares the polled readings with what each missing

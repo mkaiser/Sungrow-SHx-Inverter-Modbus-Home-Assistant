@@ -117,34 +117,41 @@ async def async_setup_entry(
     # Every entry, whatever its mode or kind: how this endpoint is reached.
     async_add_entities([SungrowConnectionSensor(entry)])
 
-    # A diagnostics-only entry is made of the diagnosis and nothing else: three
-    # sensors here and two buttons beside them, which between them give the
-    # entry a device page -- a device reaches the registry only when an
-    # entity carrying its `device_info` is added.
-    #
-    # An ordinary entry gets none of them. It has readings to show and an
-    # owner who asked for those; the diagnosis is an action for them, leaving no
-    # entity, no history and nothing to tidy up.
-    if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
+    # The diagnosis's own sensors, on every inverter entry whatever its mode.
+    # They were once the whole of a diagnostics entry and nothing of an
+    # ordinary one, on the reasoning that an owner who came for readings did
+    # not come for a progress bar. That left the integration's one way of
+    # measuring what a device answers reachable only from an entry with no
+    # readings -- so the people best placed to contribute were the ones who
+    # could not. They are diagnostic-category entities: Home Assistant files
+    # them under *Diagnostic* on the device page, below what the owner came
+    # for.
+    async_add_entities(
+        [
+            DiagnosisProgressSensor(runtime_data),
+            DiagnosisStepSensor(runtime_data),
+            DiagnosisResultSensor(runtime_data),
+        ]
+    )
+    if not runtime_data.is_string_inverter:
+        # No capability test on an SG: nothing here writes to one, so a
+        # summary of tests that can never run would only mislead.
         async_add_entities(
             [
-                DiagnosisProgressSensor(runtime_data),
-                DiagnosisStepSensor(runtime_data),
-                DiagnosisResultSensor(runtime_data),
+                DiagnosisNextStartSensor(runtime_data),
+                DiagnosisTestRunsSensor(runtime_data),
+                CapabilityTestStatusSensor(runtime_data),
+                *(
+                    CapabilityTestCountSensor(runtime_data, bucket)
+                    for bucket in ledger.BUCKETS
+                ),
             ]
         )
-        if not runtime_data.is_string_inverter:
-            async_add_entities(
-                [
-                    DiagnosisNextStartSensor(runtime_data),
-                    DiagnosisTestRunsSensor(runtime_data),
-                    CapabilityTestStatusSensor(runtime_data),
-                    *(
-                        CapabilityTestCountSensor(runtime_data, bucket)
-                        for bucket in ledger.BUCKETS
-                    ),
-                ]
-            )
+
+    # A diagnostics-only entry is the diagnosis and nothing else. No new one
+    # is made -- the mode is not offered any more -- but the ones made while
+    # it was still load.
+    if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
         return
 
     # An SG: its own map, and nothing else on this entry. An entity only for

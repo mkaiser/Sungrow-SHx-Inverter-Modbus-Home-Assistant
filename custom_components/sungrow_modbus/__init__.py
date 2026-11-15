@@ -112,23 +112,24 @@ PLATFORMS: list[Platform] = [
     Platform.TIME,
 ]
 
-#: What a diagnostics-only entry sets up: the diagnosis, capability test and
-#: history buttons, the continuous switch and the four sensors that watch the
-#: runs, and nothing else.
+#: What a diagnostics-only entry sets up: the diagnosis's mode select, its
+#: buttons, the skip switch and the sensors that watch the runs, and nothing
+#: else.
 #:
 #: Not nothing, because the diagnosis lives on the device page, and a device
 #: reaches the registry only when an entity carrying its `device_info` is
 #: added -- an entry with no entities has no page to put a button on. The
 #: platforms themselves decide what to build in this mode -- `sensor.py` adds
-#: the diagnosis's three and returns.
+#: the diagnosis's and returns.
 #:
-#: And **only** this mode. An ordinary entry gets no diagnosis entities: its
-#: owner installed this for solar readings and should not carry diagnostic
-#: tooling they never asked for, in their registry, their history or their
-#: entity pickers. They help through the `run_diagnosis` action instead, which
-#: leaves nothing behind at all. Deleting an entry removes its entities
-#: either way -- asserted in `test_diagnosis_device_page.py` -- but the cleanest
-#: cleanup is still the one that was never needed.
+#: An ordinary entry forwards these platforms too and gets the same entities
+#: on top of its readings. It did not use to, on the reasoning that somebody
+#: who installed this for solar readings should not carry diagnostic tooling
+#: they never asked for -- but that left the only way of measuring what a
+#: model answers reachable only from an entry with no readings, so the owners
+#: best placed to contribute were the ones who could not. They are
+#: diagnostic-category entities, which Home Assistant files under their own
+#: heading and keeps out of the automatic dashboard.
 DIAGNOSTIC_PLATFORMS: list[Platform] = [
     Platform.BUTTON,
     Platform.SELECT,
@@ -136,9 +137,18 @@ DIAGNOSTIC_PLATFORMS: list[Platform] = [
     Platform.SWITCH,
 ]
 
-#: What an ordinary SG entry sets up: its readings, and nothing that writes.
-#: Read only by decision, until a write has been watched on one.
-STRING_INVERTER_PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR]
+#: What an ordinary SG entry sets up: its readings, and the diagnosis, and
+#: nothing that writes. Read only by decision, until a write has been watched
+#: on one -- so the button and select platforms are here for the diagnosis's
+#: own entities, and `button.py` and `select.py` return before the commands
+#: and the settings. The diagnosis is the point of an SG entry as much as the
+#: readings are: eight of them have been measured, against eighty hybrids.
+STRING_INVERTER_PLATFORMS: list[Platform] = [
+    Platform.BINARY_SENSOR,
+    Platform.BUTTON,
+    Platform.SELECT,
+    Platform.SENSOR,
+]
 
 #: What an iHomeManager or Logger entry sets up: its diagnosis's buttons and
 #: sensors, which are also what gives it a device page.

@@ -180,8 +180,8 @@ The inverter's own device, named after the model unless the owner named it. Ids 
 |  |  | MPPT4 energy | MPPT4 Energie | `sensor.sh10rt_mppt4_energy` |  | kWh |
 |  | MPPT4 power | MPPT4 power | MPPT4 Leistung | `sensor.sh10rt_mppt4_power` | `sensor.mppt4_power` | W |
 | MPPT 4 Voltage (5115) | MPPT4 voltage | MPPT4 voltage | MPPT4 Spannung | `sensor.sh10rt_mppt4_voltage` | `sensor.mppt4_voltage` | V |
-|  | PV generating | PV generating | PV erzeugt | `binary_sensor.sh10rt_pv_generating` | `binary_sensor.pv_generating` |  |
-|  | PV generating (delay) **←** | PV generating (delayed) | PV erzeugt (verzögert) | `binary_sensor.sh10rt_pv_generating_delayed` | `binary_sensor.pv_generating_delay` |  |
+|  | PV generating | PV generating | PV-Erzeugung | `binary_sensor.sh10rt_pv_generating` | `binary_sensor.pv_generating` |  |
+|  | PV generating (delay) **←** | PV generating (delayed) | PV-Erzeugung (verzögert) | `binary_sensor.sh10rt_pv_generating_delayed` | `binary_sensor.pv_generating_delay` |  |
 |  |  | PV generation cut | PV-Erzeugung abgeschaltet | `binary_sensor.sh10rt_pv_generation_cut` |  |  |
 |  |  | PV generation this month | PV-Erzeugung diesen Monat | `sensor.sh10rt_pv_generation_this_month` |  | kWh |
 |  |  | PV generation this year | PV-Erzeugung dieses Jahr | `sensor.sh10rt_pv_generation_this_year` |  | kWh |

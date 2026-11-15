@@ -76,9 +76,6 @@ async def _connect(hass: HomeAssistant) -> dict:
     )
     # The flow opens by asking what the entry is for; these
     # tests are about the ordinary one.
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"next_step_id": "setup_devices"}
-    )
     # The flow now opens on a menu: search the network, or say where it is.
     assert result["type"] is FlowResultType.MENU
     result = await hass.config_entries.flow.async_configure(
@@ -86,20 +83,6 @@ async def _connect(hass: HomeAssistant) -> dict:
     )
     assert result["step_id"] == "manual"
     return await hass.config_entries.flow.async_configure(result["flow_id"], USER_INPUT)
-
-
-@pytest.fixture(autouse=True)
-def _open_the_alpha_gate(devices_mode_offered: None) -> None:
-    """Every test in this file walks the devices path, which the alpha shuts.
-
-    `ONLY_DIAGNOSIS_MODE` is on for the first release, so the config flow
-    will not create a devices entry. What it gates is the door; this file
-    tests the room behind it, and the room has not changed. Opening the gate
-    for the whole module keeps that coverage exactly as it was rather than
-    letting a release flag quietly retire it.
-
-    The door itself is tested in `tests/test_alpha_gate.py`, from both sides.
-    """
 
 
 async def test_a_newcomer_is_not_asked_about_migrating(

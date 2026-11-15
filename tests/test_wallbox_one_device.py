@@ -13,7 +13,6 @@ from typing import Any
 from unittest.mock import patch
 
 from modbus_connection.mock import MockModbusConnection, MockModbusUnit
-import pytest
 from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.sungrow_modbus.const import (
@@ -37,11 +36,6 @@ from .test_wallbox_entry import DATA, WALLBOX_SERIAL, _serial_words
 
 ENTRY_DATA = {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1}
 WALLBOX_DEVICE = (DOMAIN, f"{SERIAL}-wallbox")
-
-
-@pytest.fixture(autouse=True)
-def _open_the_alpha_gate(devices_mode_offered: None) -> None:
-    """Open the gate on the devices path, which the alpha shuts."""
 
 
 def _words() -> dict[str, dict[int, int]]:

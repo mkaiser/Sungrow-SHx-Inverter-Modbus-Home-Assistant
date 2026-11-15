@@ -21,7 +21,7 @@ flowchart TD
         flow["config_flow<br/>probe, identify, scan the LAN,<br/>ask about entity ids<br/><br/>config_flow_schemas: the forms it shows,<br/>separated from the decisions about showing them"]
         diagnosis["diagnosis &mdash; both parts, one progress bar<br/><br/>part A: probe every capability,<br/>publish a document that carries a<br/>stand-in serial and at most two octets<br/><br/>part B capability_test (in the library): write each<br/>control, check the raw word against a hand-typed<br/>scale, watch what the inverter does, put it back<br/><br/>repairs: a run that did not finish restoring<br/>becomes a fix flow somebody can click<br/>download: a signed, short-lived link"]
         coord["coordinator<br/>four for the inverter, one per tier:<br/>realtime 5s, fast 10s, medium 60s, slowest 600s<br/><br/>one more per extra device that answered:<br/>the SBR pack on medium, the wallbox on fast<br/>with its slow blocks every 30th poll<br/><br/>an SG string inverter: the same four tiers,<br/>its own coordinator class"]
-        ent["entity<br/>sensor, binary_sensor, button,<br/>number, switch, select, time<br/>an SG entry: sensor and binary_sensor only<br/><br/>diagnosis_entities: a diagnostics-only entry's<br/>diagnosis, capability test and history buttons,<br/>a continuous switch and four sensors"]
+        ent["entity<br/>sensor, binary_sensor, button,<br/>number, switch, select, time<br/>an SG entry: sensor and binary_sensor only<br/><br/>diagnosis_entities: on every entry,<br/>the diagnosis's mode select, buttons,<br/>skip switch and progress sensors"]
         mig["migration<br/>claim the YAML entity_id,<br/>or take a modern id then rename"]
         svc["services<br/>start_inverter, stop_inverter,<br/>run_capability_test: audience set per entry,<br/>admins only by default<br/>run_diagnosis: anyone"]
         diag["diagnostics<br/>the downloadable report"]
@@ -67,10 +67,8 @@ lines are worth knowing before moving anything across them.
 `config_flow_schemas.py` holds the `probatio` schemas, the option lists and
 the prose Home Assistant renders above them; `config_flow.py` holds the steps
 that decide which of those to show. The split keeps the flow readable as flow
-logic. `_alpha_placeholders` stays in `config_flow.py` although it only
-produces text: it reads `ONLY_DIAGNOSIS_MODE` at call time so a test can
-patch the flag there. The same instinct puts the `*_descriptions.py` files
-beside the platforms that consume them.
+logic. The same instinct puts the `*_descriptions.py` files beside the
+platforms that consume them.
 
 **Anything reachable without Home Assistant lives in the library.** That is why
 the capability test's engine is `sungrow_modbus.capability_test` and not here: it has
@@ -122,7 +120,8 @@ drop correction entities the options no longer ask for; claim the legacy ids
 (`_async_take_over_legacy_ids`); raise a repair if a capability test left
 registers changed (`_async_check_capability_test`, and for a wallbox entry
 `_async_check_wallbox_capability_test`); and forward the platforms --
-all five for an ordinary entry; button, sensor and switch for a diagnostics-only one.
+all five for an ordinary entry; button, select, sensor and switch for a
+diagnostics-only one.
 Each step is a named function that can be read on its own, which is the only
 way a setup path stays reviewable as it grows.
 
@@ -217,13 +216,19 @@ Reconfigure, or Add integration finding the same serial at another address,
 moves the entry there (`async_step_move`) with every entity id and its history
 intact, and refuses an endpoint that answers with a different serial.
 
-An entry is one of two modes (`CONF_MODE`). **Devices** is the integration:
-entities, migration, controls. **Diagnostics only** connects, identifies and
-polls, but creates only the diagnosis and capability test buttons and three diagnosis
-sensors -- enough for a device page -- and never asks the entity-id question.
-It can be promoted from the options flow. While `ONLY_DIAGNOSIS_MODE` is
-`True`, new entries can only be diagnostics: the menu offers only the diagnosis
-and says why, and the promotion toggle is greyed.
+An entry is one of two modes (`CONF_MODE`), and **setup makes only the first
+one**. **Devices** is the integration: entities, migration, controls, and the
+diagnosis and capability test beside them on the same device page.
+**Diagnostics only** connects, identifies and polls, but creates only the
+diagnosis's own entities and never asks the entity-id question.
+
+The flow used to open by asking which one, behind a release flag that allowed
+only the second answer. Both are gone: a devices entry carries the diagnosis
+too, so the lighter entry did nothing the ordinary one cannot, while costing a
+contributor their entities and everybody a dialog. `MODE_DIAGNOSTICS` remains
+because entries made while it was offered are still out there; they load as
+before, and `add_devices` on their options page promotes them, which is where
+the entity-id question is finally put.
 
 ## At build time
 

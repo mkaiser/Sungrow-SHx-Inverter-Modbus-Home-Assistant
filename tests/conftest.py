@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from typing import Any
-from unittest.mock import patch
 
 from modbus_connection.mock import MockModbusConnection, MockModbusUnit
 import pytest
@@ -112,27 +111,6 @@ def auto_enable_custom_integrations(
 ) -> Generator[None]:
     """Load custom_components/ in every Home Assistant test."""
     yield
-
-
-@pytest.fixture
-def devices_mode_offered() -> Generator[None]:
-    """Open the alpha gate, so a test can reach devices mode at all.
-
-    `ONLY_DIAGNOSIS_MODE` is on for the first release: the config flow's
-    opening step and the options page's promotion toggle both refuse to
-    create a devices entry. That is a decision about the **door**, and every
-    test that walks through it into migration, entity ids, polling or
-    controls is testing the room, which has not changed and must not start
-    silently going untested because a release flag was flipped.
-
-    So those tests take this fixture and keep running exactly as they did.
-    `tests/test_alpha_gate.py` is the one place that tests the door itself,
-    from both sides.
-    """
-    with patch(
-        "custom_components.sungrow_modbus.config_flow.ONLY_DIAGNOSIS_MODE", False
-    ):
-        yield
 
 
 @pytest.fixture(autouse=True)

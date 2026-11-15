@@ -1,10 +1,8 @@
 # Setting up Home Assistant's Energy dashboard
 
-> **Not in the preview releases yet.** The preview releases set an entry up
-> for diagnostics only and create no readings, so there is nothing to pick
-> yet. This guide describes the ordinary setup, which comes in a later
-> release. For the YAML package, see
-> [legacy/doc/dashboard.md](../legacy/doc/dashboard.md).
+> **Still a preview.** The integration creates these sensors and they are
+> yours to pick, but it has not had a stable release yet. For the YAML
+> package, see [legacy/doc/dashboard.md](../legacy/doc/dashboard.md).
 
 Home Assistant's Energy dashboard (**Settings → Dashboards → Energy**, then
 the pencil at the top right) asks you to pick sensors. The integration

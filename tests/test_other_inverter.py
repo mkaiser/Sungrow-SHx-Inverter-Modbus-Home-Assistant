@@ -16,11 +16,14 @@ field when an answer changes, so "ask what it is, but only if there is one"
 has to be a step of its own, in both the setup flow and the options page.
 """
 
+import json
+from pathlib import Path
 from unittest.mock import patch
 
 from modbus_connection.mock import MockModbusUnit
 from pytest_homeassistant.common import MockConfigEntry
 
+import custom_components.sungrow_modbus as component
 from custom_components.sungrow_modbus.const import (
     CONF_DIAGNOSIS_OTHER_INVERTER,
     CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL,
@@ -90,103 +93,6 @@ async def _entry(
         await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
     return entry
-
-
-async def _to_testimony(hass: HomeAssistant, unit: MockModbusUnit) -> dict:
-    """Walk the diagnostics path as far as the questions."""
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN, context={"source": "user"}
-    )
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"next_step_id": "setup_diagnostics"}
-    )
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"next_step_id": "manual"}
-    )
-    with (
-        patch("custom_components.sungrow_modbus.async_get_unit", return_value=unit),
-        patch(
-            "custom_components.sungrow_modbus.config_flow.async_get_temporary_unit",
-            return_value=_TemporaryUnit(unit),
-        ),
-    ):
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {CONF_HOST: "192.168.178.35", CONF_UNIT_ID: 1}
-        )
-    assert result["step_id"] == "testimony"
-    return result
-
-
-# -- at setup ------------------------------------------------------------------
-
-
-async def test_saying_no_does_not_ask_what_it_is(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
-) -> None:
-    """Which is the whole reason this is a step and not a text box.
-
-    Most installations have one inverter, and a box they have to look at and
-    decide to leave empty is worse than a question they are never asked.
-    """
-    result = await _to_testimony(hass, sungrow_unit)
-
-    with patch(
-        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
-    ):
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {CONF_DIAGNOSIS_OTHER_INVERTER: "no"}
-        )
-        await hass.async_block_till_done()
-
-    assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["options"][CONF_DIAGNOSIS_OTHER_INVERTER] == "no"
-    assert not result["options"].get(CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL)
-
-
-async def test_saying_yes_asks_what_it_is(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
-) -> None:
-    """And keeps the answer, because the size says how large the error is."""
-    result = await _to_testimony(hass, sungrow_unit)
-
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {CONF_DIAGNOSIS_OTHER_INVERTER: OTHER_INVERTER_YES}
-    )
-    assert result["type"] is FlowResultType.FORM
-    assert result["step_id"] == "other_inverter"
-
-    with patch(
-        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
-    ):
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"],
-            {CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL: "Fronius Symo 8.2"},
-        )
-        await hass.async_block_till_done()
-
-    assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["options"][CONF_DIAGNOSIS_OTHER_INVERTER] == OTHER_INVERTER_YES
-    assert result["options"][CONF_DIAGNOSIS_OTHER_INVERTER_DETAIL] == "Fronius Symo 8.2"
-
-
-async def test_leaving_the_question_alone_records_nothing(
-    hass: HomeAssistant, sungrow_unit: MockModbusUnit
-) -> None:
-    """Empty is a real answer and it means the question was not put.
-
-    The format has always kept that apart from a "no", and a field arriving
-    must not turn every silence already in the corpus into a denial.
-    """
-    result = await _to_testimony(hass, sungrow_unit)
-
-    with patch(
-        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
-    ):
-        result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
-        await hass.async_block_till_done()
-
-    assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert not result["options"].get(CONF_DIAGNOSIS_OTHER_INVERTER)
 
 
 # -- on the options page -------------------------------------------------------
@@ -324,20 +230,16 @@ async def test_the_last_screen_says_where_the_file_will_be(
 ) -> None:
     """The wizard ends having read nothing, and has to say so.
 
-    A diagnostics entry is created and then does nothing: the diagnosis is a
-    button somebody has to find, and its document arrives in a notification
-    they have no reason to be watching. Both were reported by a contributor
-    who ran the diagnosis and then asked where the file had gone. The success
-    dialog is the last place left to answer that before they close it.
+    The diagnosis is a button somebody has to find, and its document arrives
+    in a notification they have no reason to be watching. Both were reported
+    by a contributor who ran the diagnosis and then asked where the file had
+    gone. This used to be answered on the diagnostics path's own success
+    dialog; that path is gone, so it is on the only one left, which everybody
+    now sees.
     """
-    result = await _to_testimony(hass, sungrow_unit)
+    strings = json.loads((Path(component.__file__).parent / "strings.json").read_text())
+    said = strings["config"]["create_entry"]["default"]
 
-    with patch(
-        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
-    ):
-        result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
-        await hass.async_block_till_done()
-
-    assert result["type"] is FlowResultType.CREATE_ENTRY
-    # The key the frontend looks up as `config.create_entry.<description>`.
-    assert result["description"] == "diagnostics"
+    assert "Diagnosis: start" in said
+    assert "Download diagnostics" in said
+    assert "{diagnosis_issue_url}" in said

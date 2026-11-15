@@ -6,7 +6,6 @@
       "already_in_progress": "This device is already being offered. Finish or close that dialog first.",
       "connection_moved": "“{title}” now uses the new connection. It has been reloaded; its entities, their history and its settings are unchanged.",
       "connection_unchanged": "That is the connection this entry already uses. Nothing was changed.",
-      "devices_mode_not_offered": "Devices mode is not available in this preview. This build sets the integration up for diagnostics only -- it polls the inverter and can run the capability diagnosis, but creates no sensors. Promotion will be offered in a later release, and the entry does not need to be removed and added again when it is.",
       "not_identified": "The device at {host} did not answer as a Sungrow device over Modbus. A Sungrow accepts very few Modbus connections: if another integration, a second Home Assistant or the YAML package is still polling it, stop that and try again, or use **Add integration → Search my network**.",
       "not_supported": "This announcement does not name a Sungrow device that can be set up from it. A WiNet-S naming no inverter behind it has nothing to add.",
       "unit_247_entry": "This entry shows an iHomeManager's readings and its diagnosis, or a Sungrow Logger's diagnosis, and has no settings. If the device moves to another address or port, search your network again and add it there.",
@@ -79,13 +78,6 @@
           "start_over": "Back to the start"
         }
       },
-      "other_inverter": {
-        "title": "What is the other inverter?",
-        "description": "The make, and its size if you know it — *Fronius Symo 8.2*, or *5 kW string inverter on the south roof*. The size is the useful part: it says how large the gap in the load figures is.\n\nThis goes into the document, so leave out serial numbers, addresses and names. You can leave it blank.",
-        "data": {
-          "diagnosis_other_inverter_detail": "The other inverter"
-        }
-      },
       "pick": {
         "title": "Devices found",
         "description": "{count} device(s) answered and identified themselves. Names come from your router's DNS where it provides them, otherwise the address is shown.\n\nA **wallbox** is found at its own address and set up as a device of its own. It is read only, and it is identified by its own serial. An **iHomeManager** or a **Sungrow Logger** is set up for its diagnosis only: it measures nothing, and its *Diagnosis: start* button reads it into a document you can send in. An iHomeManager accepts one connection per port, so one another program holds can be missed.\n\nWhere there is more than one inverter, each says its part in the cluster and how that is known: **measured** is read from the inverter itself, **inferred** is worked out from what the others answered. An inferred role is a good guess, not a reading.\n\nPick one here. Every other device in this list is offered afterwards under **Discovered**, to add with one click; you do not need to search again.\n\nIf none of these is the device you meant, choose the last option and you can enter its address yourself.{note}",
@@ -101,40 +93,6 @@
         },
         "data_description": {
           "network": "In CIDR notation, for example 192.168.1.0/24."
-        }
-      },
-      "testimony": {
-        "title": "What do you want to tell us?",
-        "description": "You chose diagnostics only, which means this entry exists to produce a reading — so these are the questions that reading needs and no register can answer.\n\n{measured}\n\nEverything here is optional, and leaving a field empty is honest: it records that the question was not answered, which is different from answering \"I don't know\". You can change any of it later under the integration's options.\n\nAfterwards, on the device page, choose what to run in **Diagnosis: mode** and press **Diagnosis: start**.",
-        "data": {
-          "reporter": "Your name or handle",
-          "diagnosis_transport": "How this inverter is connected",
-          "diagnosis_proxy": "Is a Modbus proxy in the path?",
-          "diagnosis_pollers": "Anything else polling this inverter?",
-          "diagnosis_other_inverter": "Is there another inverter here that is not a Sungrow?",
-          "diagnosis_battery": "Battery make and model",
-          "diagnosis_comment": "Anything else worth knowing",
-          "publish_address": "May the last two octets of the address be published?",
-          "test_entities": "Create the entities too (for testing, not recommended)"
-        },
-        "data_description": {
-          "reporter": "Credited in the published reading, and who gets asked if a row raises a question. Leave empty to contribute anonymously.",
-          "diagnosis_transport": "Cable against dongle is measured already. What only you know is whether a dongle is on its Ethernet socket or its WiFi — a WiNet-S answers identically either way, so \"not sure\" is a real answer and better than a guess.",
-          "diagnosis_proxy": "modbus-proxy, evcc's proxy, a Home Assistant add-on. A proxy holds one connection and lends it out, so it changes what a dropped register means — and it rebuilds every frame, which can hide or create the frame quirks this project tracks.",
-          "diagnosis_pollers": "This Home Assistant is recorded automatically. What matters here is anything else: another Home Assistant, the YAML package, evcc, a logger. An inverter grants very few connections, and two clients competing for one looks exactly like a broken register.",
-          "diagnosis_other_inverter": "Your Sungrow does not measure how much your house is using — it works it out from its own output plus what the grid meter says is coming in. A second inverter feeding the same meter therefore makes every load figure too low, by exactly what that inverter is producing, while everything else reads normally. No register can tell us: the Sungrow cannot see it. Say yes and we will ask what it is.",
-          "diagnosis_battery": "No register reports it. \"SBR096\" or \"Pylontech Force H1, 14.4 kWh\" is more useful than a capacity the inverter already reports.",
-          "diagnosis_comment": "Anything unusual about the installation — a cluster, a second inverter, a wallbox, a firmware update you remember.",
-          "publish_address": "On, and yours to turn off before you submit. Only the last two octets ever reach the document — never the third, which is what would identify your network — and clear this and it reads xxx.xxx instead. What it buys is telling several readings from one house apart: a master, a slave and two dongles otherwise produce four files that look alike.",
-          "test_entities": "For testing this alpha, and not recommended for an installation you rely on. Creates this inverter's sensors and controls as well, under new entity ids. It never takes over the YAML package's entity ids, so its history does not continue here; leave this off if that history matters to you. Entities and their names may still change before a release."
-        }
-      },
-      "user": {
-        "title": "What is this for?",
-        "description": "{mode_intro}**The device diagnosis** connects to the inverter, works out what it is and what it answers, and creates **no entities at all**. It exists because this project has to *measure* which registers each model and firmware supports — Sungrow's own specification has been wrong in both directions — and today that evidence comes from the few houses that have sent a reading.{mode_choice}",
-        "menu_options": {
-          "setup_devices": "Set up my inverter — sensors, controls, the lot",
-          "setup_diagnostics": "Perform the device diagnosis — help this project, create no entities"
         }
       },
       "reconfigure": {
@@ -153,7 +111,7 @@
       },
       "move": {
         "title": "Use the new connection?",
-        "description": "This inverter is already set up as **{title}**, reached at **{old}**. It also answers at **{new}**.\n\n**Submit** switches the entry to **{new}** and reloads it. Its entity IDs, their history and its settings stay as they are; the battery and wallbox are looked for again on the new connection. Your answer about how the diagnosis reaches the inverter is cleared, because it described the old connection.{wallbox}\n\nTo keep the current connection, close this dialog."
+        "description": "This inverter is already set up as **{title}**, reached at **{old}**. It also answers at **{new}**.\n\n**Submit** switches the entry to **{new}** and reloads it. Its entity IDs, their history and its settings stay as they are; the battery and wallbox are looked for again on the new connection. Your answer about how the diagnosis reaches the inverter is cleared, because it described the old connection.{wallbox}{proxy}\n\nTo keep the current connection, close this dialog."
       },
       "discovery_confirm": {
         "title": "Sungrow device found",
@@ -179,8 +137,7 @@
       "searching": "Searching {network}.\n\n{stage}\n\nPorts 502 and 503 are both tried, so you do not have to know which one your equipment uses."
     },
     "create_entry": {
-      "default": "**You are set up.** The inverter's entities appear on its device page as their first readings arrive.\n\nTo see it in the Energy dashboard (**Settings → Dashboards → Energy**), pick the sensors [the Energy dashboard guide]({energy_dashboard_url}) names: several energy sensors have names that look right and are not.",
-      "diagnostics": "**You are set up, and nothing has been read yet.** Two more steps, both on the device page this dialog is about to show you:\n\n1. Under *Diagnostic*, leave **Diagnosis: mode** on *Read-only* and press **Diagnosis: start**. Read-only reads and never writes. It runs in the background, so you can leave the page; on a cable it is over in a couple of minutes with the register sweep on, over a VPN it can take considerably longer, and the sensors beside the button say how far along it is and what it is reading. Please do not restart Home Assistant while it runs.\n2. A notification in the sidebar — the badge at the bottom left — tells you when it has finished. Then press **Download diagnostics** on the same device page: that is the JSON file to send to [the diagnosis issue]({diagnosis_issue_url}), and it never expires.\n\nThe file names your inverter by a stand-in rather than its serial number, and carries the last two octets of its address only while that box is ticked."
+      "default": "**You are set up.** The inverter's entities appear on its device page as their first readings arrive.\n\nTo see it in the Energy dashboard (**Settings → Dashboards → Energy**), pick the sensors [the Energy dashboard guide]({energy_dashboard_url}) names: several energy sensors have names that look right and are not.\n\n**If you can spare a few minutes, send a reading.** Which registers a model answers is measured here rather than looked up — Sungrow's own specification has been wrong in both directions — and today that evidence comes from the houses that have sent one. On the device page, under *Diagnostic*: leave **Diagnosis: mode** on *Read-only* and press **Diagnosis: start**. It reads and never writes. A notification tells you when it has finished; **Download diagnostics** on the same page is then the file to send to [the diagnosis issue]({diagnosis_issue_url}), with your serial number replaced by a stand-in. **Configure** holds a few questions no register can answer — how this inverter is connected, which battery it has — and filling those in first makes the reading worth more."
     }
   },
   "entity": {
@@ -1542,12 +1499,10 @@
     },
     "flow_text": {
       "options": {
-        "devices_mode_coming": "⚠️ **Sensors and controls are not in this release.** This is an early alpha, and it exists to gather readings: it connects to your inverter, works out what it is and which registers it answers, and creates no entities for the values. Setting up the inverter properly -- including taking over the entity IDs of the YAML package, which decides where years of history continue -- comes in a later release, and an entry made now can be upgraded to it then without being deleted.",
-        "devices_mode_open": "Both answers are fine, and you can change your mind later: picking **the device diagnosis** skips the weightiest question in this dialog, about which entity IDs to take over, because a reading does not need it.",
-        "devices_mode_intro": "**Set up my inverter** is what you want if you came here to see your solar production in Home Assistant.",
         "package_loaded": "⚠️ **The YAML package is still running.** {live} of its entities are live on this instance right now and are holding their entity IDs, so migrating cannot work yet.\n\nTo migrate: remove `modbus_sungrow.yaml` from your configuration — or comment out the line that includes it — then **restart Home Assistant** and add this integration again. Until then only starting fresh will work.",
         "package_not_loaded": "✅ **The YAML package is not running**, so its entity IDs are free to take over. Both answers below will work.",
         "switch_blocked": "⚠️ **The YAML package is still running.** {live} of its entities are live and hold the ids these would move to. Remove `modbus_sungrow.yaml` from your configuration, restart Home Assistant, and come back here.",
+        "proxy_left": "**This moves off a Modbus proxy.** The current address is Home Assistant's own, so the inverter is reached today through a proxy that shares its single Modbus port: everything that polls the inverter goes through one connection, and nothing has to wait for a session. The new address is the inverter itself. After the move this entry opens its own connection, and anything else still polling the inverter — the YAML package, evcc, another integration — competes with it for the few sessions a Sungrow grants.",
         "wallbox_lost": "**The wallbox goes quiet.** It is read through the WiNet-S today, and the inverter's own LAN port does not reach it. If the wallbox has a network connection of its own, add it as an entry of its own: **Add integration**, then **Search my network**.",
         "search_prefilled": "The range below is the network Home Assistant is on, which on a home network is almost always the right one.",
         "search_not_detected": "**Home Assistant could not work out which network to search.** It is running in a container that can see only its own virtual network, so there is nothing here to detect your inverter's range from -- your inverter is still reachable, it just cannot be guessed at. Type the range your inverter is on, for example `192.168.1.0/24`; if you do not know it, the address of any computer on the same network gives it to you -- replace the last number with 0 and add `/24`.",
@@ -1557,10 +1512,6 @@
         "search_retry": "Nothing answered. Trying again more slowly, because a busy moment can make a sweep miss a device that is there.",
         "search_asking": "Asking {host} what it is ({index} of {of}). Anything that is not a Sungrow has to time out on every unit id before it can be ruled out, which is the slowest part of this.",
         "model_unidentified": "an unidentified model",
-        "measured_nothing": "Nothing has been measured for this address yet, so please answer from what you know.",
-        "measured_direct": "Already measured, so you do not need to tell us: this is **{model}**, reached through its own LAN port — register 6100 answers, which is what a cable straight into the inverter looks like.",
-        "measured_dongle": "Already measured, so you do not need to tell us: this is **{model}**, reached through a communication module, so a WiNet-S, WiNet-S2 or Logger is in the path — register 6100 was refused. Whether it is using its Ethernet socket or its WiFi is **not** determinable over Modbus, and that is the part only you can tell us.",
-        "measured_unknown": "Already measured, so you do not need to tell us: this is **{model}**, and the route could not be measured — register 6100 neither answered nor was refused, which is what a busy link looks like from here. A cable answers it and a dongle refuses it, so this is one for you to tell us.",
         "load_offline": "The inverter is not connected, so its load reading cannot be shown.",
         "load_none": "The inverter has not reported a load figure yet.",
         "load_negative": "Right now this inverter reports a house load of {load} W. A negative load is what an unmetered generator looks like: the house appears to be using less than nothing because something is producing that the inverter cannot see.",

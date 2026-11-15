@@ -51,13 +51,18 @@ async def async_setup_entry(
 ) -> None:
     """Set up the modes this device actually has."""
     runtime_data = entry.runtime_data
+    # What *Diagnosis: start* runs, on every entry that has a diagnosis: the
+    # read-only pass, one extended test, or extended on auto repeat. An
+    # ordinary entry used to have no way to choose, which left the capability
+    # test reachable only through the `run_capability_test` action.
+    async_add_entities([DiagnosisModeSelect(runtime_data)])
     if (
         runtime_data.is_wallbox_only
+        or runtime_data.is_string_inverter
         or entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS
     ):
-        # A diagnostics-only entry has no settings; its one select is what
-        # *Diagnosis: start* runs.
-        async_add_entities([DiagnosisModeSelect(runtime_data)])
+        # None of them has settings to offer beside it: an SG is read only by
+        # decision, and the other two have no settings at all.
         return
     async_add_entities(
         (EvChargerModeSelect if description.key == EV_CHARGER_MODE else SungrowSelect)(

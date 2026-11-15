@@ -1,10 +1,10 @@
 # Moving from the YAML package to the integration
 
-> **Not in the preview releases yet.** The preview releases set an entry up
-> for diagnostics only: it identifies the inverter and runs the diagnosis, and
-> creates no readings, so nothing described below happens and your YAML
-> package keeps running untouched. This guide describes the ordinary setup,
-> which comes in a later release.
+> **Still a preview.** Everything below happens in the preview releases: the
+> setup asks the entity ID question and creates the entities. There has not
+> been a stable release yet, so read [Going back to the YAML
+> package](#going-back-to-the-yaml-package) before you start — it is short,
+> and it is the whole of the way out.
 
 The integration is meant to replace `modbus_sungrow.yaml`. Your recorder
 history, your long-term statistics and every dashboard card are stored against

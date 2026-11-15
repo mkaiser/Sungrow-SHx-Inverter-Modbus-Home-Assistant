@@ -40,8 +40,8 @@ TOPOLOGY = {DONGLE: {1: SERIAL_A}, CABLE: {1: SERIAL_A}, OTHER: {1: SERIAL_B}}
 
 
 @pytest.fixture(autouse=True)
-def _gate_and_setup(devices_mode_offered: None):
-    """Open the devices path, and keep a reloaded entry off the network."""
+def _no_network_on_reload():
+    """Keep a reloaded entry off the network."""
     with patch("custom_components.sungrow_modbus.async_setup_entry", return_value=True):
         yield
 
@@ -138,9 +138,6 @@ async def _add_by_address(hass: HomeAssistant, host: str) -> dict:
         DOMAIN, context={"source": SOURCE_USER}
     )
     result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"next_step_id": "setup_devices"}
-    )
-    result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {"next_step_id": "manual"}
     )
     with _house(TOPOLOGY):
@@ -209,9 +206,6 @@ async def test_the_address_form_has_every_placeholder_on_first_showing(
     )
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}
-    )
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"next_step_id": "setup_diagnostics"}
     )
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {"next_step_id": "manual"}

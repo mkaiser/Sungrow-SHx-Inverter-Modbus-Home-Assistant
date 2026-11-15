@@ -39,8 +39,8 @@ def _steps_showing_a_form(module: str) -> set[str]:
     """Flow steps that call `async_show_form`, and therefore need words.
 
     A step that only decides where to go next shows nothing, so it needs
-    nothing -- `setup_devices`, `setup_diagnostics` and `start_over` are all
-    pure redirects. Asking the source which ones render is the only way to tell
+    nothing -- `user` and `start_over` are both pure redirects. Asking the
+    source which ones render is the only way to tell
     them apart without listing them by hand and watching that list rot.
     """
     tree = ast.parse((INTEGRATION / module).read_text())

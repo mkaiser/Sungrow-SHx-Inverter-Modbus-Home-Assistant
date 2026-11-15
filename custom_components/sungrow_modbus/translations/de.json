@@ -6,7 +6,6 @@
       "already_in_progress": "Dieses Gerät wird schon angeboten. Schließe zuerst diesen Dialog ab.",
       "connection_moved": "„{title}“ verwendet jetzt die neue Verbindung. Der Eintrag wurde neu geladen; seine Entitäten, deren Verlauf und seine Einstellungen sind unverändert.",
       "connection_unchanged": "Das ist bereits die Verbindung dieses Eintrags. Es wurde nichts geändert.",
-      "devices_mode_not_offered": "Der Geräte-Modus ist in dieser Vorschau nicht verfügbar. Diese Version richtet die Integration nur für die Diagnose ein: Sie fragt den Wechselrichter ab und kann die Diagnose ausführen, legt aber keine Sensoren an. Die Freischaltung folgt in einer späteren Version; der Eintrag muss dafür nicht entfernt und neu hinzugefügt werden.",
       "not_identified": "Das Gerät unter {host} hat über Modbus nicht als Sungrow-Gerät geantwortet. Ein Sungrow nimmt nur sehr wenige Modbus-Verbindungen an: Fragt eine andere Integration, ein zweites Home Assistant oder das YAML-Paket es noch ab, beende das und versuche es erneut, oder nutze **Integration hinzufügen → Mein Netzwerk durchsuchen**.",
       "not_supported": "Diese Ankündigung nennt kein Sungrow-Gerät, das sich daraus einrichten lässt. Ein WiNet-S, der keinen Wechselrichter hinter sich nennt, hat nichts hinzuzufügen.",
       "unit_247_entry": "Dieser Eintrag zeigt die Messwerte und die Diagnose eines iHomeManagers oder die Diagnose eines Sungrow-Loggers und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu.",
@@ -79,13 +78,6 @@
           "start_over": "Zurück zum Anfang"
         }
       },
-      "other_inverter": {
-        "title": "Welcher ist der andere Wechselrichter?",
-        "description": "Der Hersteller und, falls bekannt, die Größe – *Fronius Symo 8.2* oder *5-kW-String-Wechselrichter auf dem Süddach*. Die Größe ist der nützliche Teil: Sie sagt, wie groß die Lücke in den Lastwerten ist.\n\nDas gelangt in das Dokument, lass deshalb Seriennummern, Adressen und Namen weg. Du kannst es leer lassen.",
-        "data": {
-          "diagnosis_other_inverter_detail": "Der andere Wechselrichter"
-        }
-      },
       "pick": {
         "title": "Geräte gefunden",
         "description": "{count} Gerät(e) haben geantwortet und sich zu erkennen gegeben. Namen stammen aus dem DNS deines Routers, sofern er welche liefert, sonst wird die Adresse angezeigt.\n\nEine **Wallbox** wird unter ihrer eigenen Adresse gefunden und als eigenes Gerät eingerichtet. Sie wird nur gelesen und über ihre eigene Seriennummer erkannt. Ein **iHomeManager** oder ein **Sungrow-Logger** wird nur für seine Diagnose eingerichtet: Er misst nichts, und seine Schaltfläche *Diagnose: starten* liest ihn in ein Dokument, das du einsenden kannst. Ein iHomeManager nimmt pro Port nur eine Verbindung an, daher kann einer übersehen werden, den ein anderes Programm belegt.\n\nGibt es mehr als einen Wechselrichter, nennt jeder seine Rolle im Verbund und woher man sie kennt: **gemessen** wurde vom Wechselrichter selbst gelesen, **abgeleitet** wird aus den Antworten der anderen geschlossen. Eine abgeleitete Rolle ist eine gute Vermutung, keine Messung.\n\nWähle hier eines. Jedes andere Gerät dieser Liste wird danach unter **Entdeckt** angeboten und lässt sich mit einem Klick hinzufügen; eine neue Suche ist nicht nötig.\n\nIst keines davon das gemeinte Gerät, wähle die letzte Option, dann kannst du seine Adresse selbst eingeben.{note}",
@@ -101,40 +93,6 @@
         },
         "data_description": {
           "network": "In CIDR-Notation, zum Beispiel 192.168.1.0/24."
-        }
-      },
-      "testimony": {
-        "title": "Was möchtest du uns mitteilen?",
-        "description": "Du hast „nur Diagnose“ gewählt, das heißt, dieser Eintrag existiert, um eine Messung zu erzeugen – dies sind also die Fragen, die diese Messung braucht und die kein Register beantworten kann.\n\n{measured}\n\nAlles hier ist optional, und ein leeres Feld ist ehrlich: Es hält fest, dass die Frage nicht beantwortet wurde, was etwas anderes ist, als mit „Ich weiß es nicht“ zu antworten. Du kannst alles später unter den Optionen der Integration ändern.\n\nWähle danach auf der Geräteseite in **Diagnose: Modus**, was laufen soll, und drücke **Diagnose: starten**.",
-        "data": {
-          "reporter": "Dein Name oder Pseudonym",
-          "diagnosis_transport": "Wie dieser Wechselrichter angebunden ist",
-          "diagnosis_proxy": "Befindet sich ein Modbus-Proxy im Pfad?",
-          "diagnosis_pollers": "Fragt noch etwas anderes diesen Wechselrichter ab?",
-          "diagnosis_other_inverter": "Gibt es hier einen weiteren Wechselrichter, der kein Sungrow ist?",
-          "diagnosis_battery": "Hersteller und Modell der Batterie",
-          "diagnosis_comment": "Sonst noch etwas Wissenswertes",
-          "publish_address": "Dürfen die letzten zwei Oktette der Adresse veröffentlicht werden?",
-          "test_entities": "Auch die Entitäten anlegen (zum Testen, nicht empfohlen)"
-        },
-        "data_description": {
-          "reporter": "Wird in der veröffentlichten Messung genannt und gefragt, wenn eine Zeile Fragen aufwirft. Leer lassen, um anonym beizutragen.",
-          "diagnosis_transport": "Kabel gegenüber Dongle ist bereits gemessen. Nur du weißt, ob ein Dongle an seiner Ethernet-Buchse oder per WLAN hängt – ein WiNet-S antwortet in beiden Fällen gleich, daher ist \"nicht sicher\" eine echte Antwort und besser als eine Vermutung.",
-          "diagnosis_proxy": "modbus-proxy, der Proxy von evcc, ein Home-Assistant-Add-on. Ein Proxy hält eine Verbindung und verleiht sie weiter, was die Bedeutung eines ausgefallenen Registers verändert – und er baut jeden Frame neu auf, was die Frame-Eigenheiten, die dieses Projekt verfolgt, verbergen oder erzeugen kann.",
-          "diagnosis_pollers": "Dieses Home Assistant wird automatisch erfasst. Wichtig ist hier alles andere: ein anderes Home Assistant, das YAML-Paket, evcc, ein Logger. Ein Wechselrichter gewährt sehr wenige Verbindungen, und zwei Clients, die um eine konkurrieren, sehen genau wie ein defektes Register aus.",
-          "diagnosis_other_inverter": "Dein Sungrow misst nicht, wie viel dein Haus verbraucht – er errechnet es aus seiner eigenen Leistung plus dem, was der Netzzähler als Bezug meldet. Ein zweiter Wechselrichter am selben Zähler macht daher jeden Lastwert um genau dessen Erzeugung zu niedrig, während alles andere normal aussieht. Kein Register kann uns das sagen: Der Sungrow sieht ihn nicht. Antworte mit Ja, dann fragen wir, was es ist.",
-          "diagnosis_battery": "Kein Register meldet das. \"SBR096\" oder \"Pylontech Force H1, 14,4 kWh\" ist nützlicher als eine Kapazität, die der Wechselrichter ohnehin meldet.",
-          "diagnosis_comment": "Alles Ungewöhnliche an der Anlage – ein Verbund, ein zweiter Wechselrichter, eine Wallbox, ein Firmware-Update, an das du dich erinnerst.",
-          "publish_address": "An, und du kannst es vor dem Absenden ausschalten. Nur die letzten zwei Oktette gelangen je in das Dokument – nie das dritte, das dein Netzwerk identifizieren würde –, und wenn du das deaktivierst, steht stattdessen xxx.xxx. Der Nutzen: Mehrere Messungen aus einem Haus lassen sich unterscheiden – ein Master, ein Slave und zwei Dongles ergeben sonst vier gleich aussehende Dateien.",
-          "test_entities": "Zum Testen dieser Alpha und nicht empfohlen für eine Installation, auf die du dich verlässt. Legt zusätzlich die Sensoren und Steuerungen dieses Wechselrichters an, unter neuen Entitäts-IDs. Die Entitäts-IDs des YAML-Pakets werden nie übernommen, sein Verlauf setzt sich hier also nicht fort; lass das aus, wenn dir dieser Verlauf wichtig ist. Entitäten und ihre Namen können sich bis zu einer Version noch ändern."
-        }
-      },
-      "user": {
-        "title": "Wofür ist das?",
-        "description": "{mode_intro}**Die Geräte-Diagnose** verbindet sich mit dem Wechselrichter, ermittelt, was er ist und was er beantwortet, und legt **überhaupt keine Entitäten an**. Es gibt sie, weil dieses Projekt *messen* muss, welche Register jedes Modell und jede Firmware unterstützt – Sungrows eigene Spezifikation lag in beide Richtungen falsch – und dieser Nachweis stammt heute von den wenigen Haushalten, die eine Messung eingesandt haben.{mode_choice}",
-        "menu_options": {
-          "setup_devices": "Meinen Wechselrichter einrichten – Sensoren, Steuerungen, alles",
-          "setup_diagnostics": "Geräte-Diagnose durchführen – dem Projekt helfen, keine Entitäten anlegen"
         }
       },
       "reconfigure": {
@@ -153,7 +111,7 @@
       },
       "move": {
         "title": "Neue Verbindung verwenden?",
-        "description": "Dieser Wechselrichter ist bereits als **{title}** eingerichtet und wird unter **{old}** erreicht. Er antwortet auch unter **{new}**.\n\n**Absenden** stellt den Eintrag auf **{new}** um und lädt ihn neu. Seine Entitäts-IDs, deren Verlauf und seine Einstellungen bleiben, wie sie sind; Batterie und Wallbox werden an der neuen Verbindung erneut gesucht. Deine Antwort darauf, wie die Diagnose den Wechselrichter erreicht, wird gelöscht, weil sie die alte Verbindung beschrieb.{wallbox}\n\nUm die aktuelle Verbindung zu behalten, schließe diesen Dialog."
+        "description": "Dieser Wechselrichter ist bereits als **{title}** eingerichtet und wird unter **{old}** erreicht. Er antwortet auch unter **{new}**.\n\n**Absenden** stellt den Eintrag auf **{new}** um und lädt ihn neu. Seine Entitäts-IDs, deren Verlauf und seine Einstellungen bleiben, wie sie sind; Batterie und Wallbox werden an der neuen Verbindung erneut gesucht. Deine Antwort darauf, wie die Diagnose den Wechselrichter erreicht, wird gelöscht, weil sie die alte Verbindung beschrieb.{wallbox}{proxy}\n\nUm die aktuelle Verbindung zu behalten, schließe diesen Dialog."
       },
       "discovery_confirm": {
         "title": "Sungrow-Gerät gefunden",
@@ -179,8 +137,7 @@
       "searching": "{network} wird durchsucht.\n\n{stage}\n\nDie Ports 502 und 503 werden beide probiert, du musst also nicht wissen, welchen deine Geräte verwenden."
     },
     "create_entry": {
-      "default": "**Die Einrichtung ist abgeschlossen.** Die Entitäten des Wechselrichters erscheinen auf seiner Geräteseite, sobald ihre ersten Messwerte eintreffen.\n\nUm ihn im Energie-Dashboard zu sehen (**Einstellungen → Dashboards → Energie**), wähle die Sensoren, die [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt: Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.",
-      "diagnostics": "**Die Einrichtung ist abgeschlossen, und es wurde noch nichts gelesen.** Zwei weitere Schritte, beide auf der Geräteseite, die dieser Dialog gleich anzeigt:\n\n1. Lass unter *Diagnose* **Diagnose: Modus** auf *Nur lesend* und drücke **Diagnose: starten**. Nur lesend liest und schreibt nie. Die Diagnose läuft im Hintergrund, du kannst die Seite also verlassen; am Kabel ist sie mit dem Registerdurchlauf in ein paar Minuten fertig, über ein VPN kann es deutlich länger dauern, und die Sensoren neben der Schaltfläche zeigen, wie weit sie ist und was sie liest. Bitte starte Home Assistant währenddessen nicht neu.\n2. Eine Benachrichtigung in der Seitenleiste – das Abzeichen unten links – sagt dir, wann sie fertig ist. Drücke dann **Diagnose herunterladen** auf derselben Geräteseite: Das ist die JSON-Datei für [das Diagnose-Issue]({diagnosis_issue_url}), und sie läuft nie ab.\n\nDie Datei benennt deinen Wechselrichter mit einem Platzhalter statt der Seriennummer und enthält die letzten zwei Oktette seiner Adresse nur, solange dieses Feld angehakt ist."
+      "default": "**Die Einrichtung ist abgeschlossen.** Die Entitäten des Wechselrichters erscheinen auf seiner Geräteseite, sobald ihre ersten Messwerte eintreffen.\n\nUm ihn im Energie-Dashboard zu sehen (**Einstellungen → Dashboards → Energie**), wähle die Sensoren, die [die Anleitung zum Energie-Dashboard]({energy_dashboard_url}) nennt: Mehrere Energiesensoren haben Namen, die richtig aussehen und es nicht sind.\n\n**Wenn du ein paar Minuten erübrigen kannst, schick eine Messung ein.** Welche Register ein Modell beantwortet, wird hier gemessen statt nachgeschlagen – Sungrows eigene Spezifikation lag schon in beide Richtungen falsch – und diese Belege kommen bisher aus den Haushalten, die eine Messung geschickt haben. Auf der Geräteseite, unter *Diagnose*: Lass **Diagnose: Modus** auf *Nur lesen* und drücke **Diagnose: starten**. Es wird nur gelesen, nie geschrieben. Eine Benachrichtigung sagt dir, wann es fertig ist; **Diagnose herunterladen** auf derselben Seite ist dann die Datei für [das Diagnose-Issue]({diagnosis_issue_url}), mit einem Platzhalter anstelle deiner Seriennummer. Unter **Konfigurieren** stehen ein paar Fragen, die kein Register beantworten kann – wie dieser Wechselrichter angebunden ist, welche Batterie er hat – und sie vorher auszufüllen macht die Messung wertvoller."
     }
   },
   "entity": {
@@ -237,10 +194,10 @@
         "name": "Positive Leistungsaufnahme Verbraucher (verzögert)"
       },
       "pv_generating": {
-        "name": "PV erzeugt"
+        "name": "PV-Erzeugung"
       },
       "pv_generating_delay": {
-        "name": "PV erzeugt (verzögert)"
+        "name": "PV-Erzeugung (verzögert)"
       },
       "pv_generation_cut": {
         "name": "PV-Erzeugung abgeschaltet"
@@ -1542,12 +1499,10 @@
     },
     "flow_text": {
       "options": {
-        "devices_mode_coming": "⚠️ **Sensoren und Steuerungen sind in dieser Version nicht enthalten.** Dies ist eine frühe Alpha, und sie ist dazu da, Messwerte zu sammeln: Sie verbindet sich mit deinem Wechselrichter, ermittelt, was er ist und welche Register er beantwortet, und legt keine Entitäten für die Werte an. Den Wechselrichter richtig einzurichten -- einschließlich der Übernahme der Entitäts-IDs des YAML-Pakets, die entscheidet, wo Jahre an Verlauf weitergehen -- kommt in einer späteren Version, und ein jetzt angelegter Eintrag kann dann darauf umgestellt werden, ohne ihn zu löschen.",
-        "devices_mode_open": "Beide Antworten sind in Ordnung, und du kannst es dir später anders überlegen: **Die Geräteerfassung** überspringt die gewichtigste Frage in diesem Dialog, welche Entitäts-IDs übernommen werden, weil eine Messung sie nicht braucht.",
-        "devices_mode_intro": "**Meinen Wechselrichter einrichten** ist das Richtige, wenn du hier bist, um deine Solarproduktion in Home Assistant zu sehen.",
         "package_loaded": "⚠️ **Das YAML-Paket läuft noch.** {live} seiner Entitäten sind gerade auf dieser Instanz aktiv und halten ihre Entitäts-IDs, deshalb kann die Übernahme noch nicht funktionieren.\n\nZum Übernehmen: Entferne `modbus_sungrow.yaml` aus deiner Konfiguration — oder kommentiere die Zeile aus, die es einbindet —, dann **starte Home Assistant neu** und füge diese Integration erneut hinzu. Bis dahin funktioniert nur ein Neuanfang.",
         "package_not_loaded": "✅ **Das YAML-Paket läuft nicht**, seine Entitäts-IDs können also übernommen werden. Beide Antworten unten funktionieren.",
         "switch_blocked": "⚠️ **Das YAML-Paket läuft noch.** {live} seiner Entitäten sind aktiv und halten die IDs, auf die diese umziehen würden. Entferne `modbus_sungrow.yaml` aus deiner Konfiguration, starte Home Assistant neu und komm hierher zurück.",
+        "proxy_left": "**Damit entfällt ein Modbus-Proxy.** Die aktuelle Adresse ist die von Home Assistant selbst: Der Wechselrichter wird heute über einen Proxy erreicht, der dessen einzigen Modbus-Port teilt. Alles, was den Wechselrichter abfragt, läuft über eine Verbindung, und nichts muss auf eine Sitzung warten. Die neue Adresse ist der Wechselrichter selbst. Nach dem Umstellen öffnet dieser Eintrag eine eigene Verbindung, und alles andere, was den Wechselrichter weiterhin abfragt — das YAML-Paket, evcc, eine andere Integration — konkurriert mit ihm um die wenigen Sitzungen, die ein Sungrow gewährt.",
         "wallbox_lost": "**Die Wallbox verstummt.** Sie wird heute über den WiNet-S gelesen, und der eigene LAN-Anschluss des Wechselrichters erreicht sie nicht. Hat die Wallbox einen eigenen Netzwerkanschluss, füge sie als eigenen Eintrag hinzu: **Integration hinzufügen**, dann **Mein Netzwerk durchsuchen**.",
         "search_prefilled": "Der Bereich unten ist das Netzwerk, in dem Home Assistant läuft, und in einem Heimnetz ist das fast immer das richtige.",
         "search_not_detected": "**Home Assistant konnte nicht ermitteln, welches Netzwerk durchsucht werden soll.** Es läuft in einem Container, der nur sein eigenes virtuelles Netzwerk sieht, also gibt es hier nichts, woraus sich der Bereich deines Wechselrichters ablesen ließe -- dein Wechselrichter ist trotzdem erreichbar, er lässt sich nur nicht erraten. Gib den Bereich ein, in dem dein Wechselrichter ist, zum Beispiel `192.168.1.0/24`; wenn du ihn nicht kennst, verrät ihn dir die Adresse eines beliebigen Computers im selben Netz -- ersetze die letzte Zahl durch 0 und hänge `/24` an.",
@@ -1557,10 +1512,6 @@
         "search_retry": "Nichts hat geantwortet. Es wird langsamer noch einmal versucht, weil ein Gerät, das da ist, in einem geschäftigen Moment beim Durchsuchen übersehen werden kann.",
         "search_asking": "{host} wird gefragt, was es ist ({index} von {of}). Alles, was kein Sungrow ist, muss auf jeder Unit-ID in eine Zeitüberschreitung laufen, bevor es ausgeschlossen werden kann, und das ist der langsamste Teil davon.",
         "model_unidentified": "ein nicht erkanntes Modell",
-        "measured_nothing": "Für diese Adresse wurde noch nichts gemessen, bitte antworte also nach dem, was du weißt.",
-        "measured_direct": "Schon gemessen, du musst es uns also nicht sagen: Das ist **{model}**, erreicht über seinen eigenen LAN-Anschluss — Register 6100 antwortet, und so sieht ein Kabel direkt in den Wechselrichter aus.",
-        "measured_dongle": "Schon gemessen, du musst es uns also nicht sagen: Das ist **{model}**, erreicht über ein Kommunikationsmodul, also ist ein WiNet-S, WiNet-S2 oder Logger im Weg — Register 6100 wurde abgelehnt. Ob es seine Ethernet-Buchse oder sein WLAN nutzt, ist über Modbus **nicht** feststellbar, und das ist der Teil, den nur du uns sagen kannst.",
-        "measured_unknown": "Schon gemessen, du musst es uns also nicht sagen: Das ist **{model}**, und der Weg ließ sich nicht messen — Register 6100 hat weder geantwortet noch abgelehnt, und so sieht von hier aus eine ausgelastete Verbindung aus. Ein Kabel beantwortet es, ein Dongle lehnt es ab, also ist das eine Frage für dich.",
         "load_offline": "Der Wechselrichter ist nicht verbunden, deshalb lässt sich sein Lastwert nicht anzeigen.",
         "load_none": "Der Wechselrichter hat noch keinen Lastwert gemeldet.",
         "load_negative": "Gerade meldet dieser Wechselrichter einen Hausverbrauch von {load} W. Eine negative Last ist das, wonach ein ungemessener Generator aussieht: Das Haus scheint weniger als nichts zu verbrauchen, weil etwas erzeugt, das der Wechselrichter nicht sieht.",

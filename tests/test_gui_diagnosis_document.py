@@ -543,16 +543,21 @@ async def test_the_sections_a_reader_needs_are_all_present(
 # -- the diagnostics-only entry ------------------------------------------------
 
 
-async def test_the_flow_asks_what_the_entry_is_for_first(
+async def test_the_flow_opens_on_the_wiring(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """Before anything about wiring, because it changes what else is asked."""
+    """It used to ask what the entry was for; there is only one answer now.
+
+    Kept here, where the diagnostics entry is tested, because this is the
+    file that would notice if the old question came back -- `tests/
+    test_one_setup_path.py` owns the rest of that story.
+    """
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": "user"}
     )
 
     assert result["type"] is FlowResultType.MENU
-    assert "setup_diagnostics" in result["menu_options"]
+    assert set(result["menu_options"]) == {"search", "manual"}
 
 
 async def test_a_diagnostics_entry_creates_no_entities(
@@ -774,7 +779,6 @@ async def test_every_sections_evidence_is_on_the_one_page(
 async def test_a_diagnostics_entry_is_offered_a_way_to_become_a_full_one(
     hass: HomeAssistant,
     sungrow_unit: MockModbusUnit,
-    devices_mode_offered: None,
 ) -> None:
     """Otherwise it is a dead end, and the page says so first.
 
@@ -803,7 +807,6 @@ async def test_a_diagnostics_entry_is_offered_a_way_to_become_a_full_one(
 async def test_promotion_with_an_undetermined_slot_explains_and_claims_nothing(
     hass: HomeAssistant,
     sungrow_unit: MockModbusUnit,
-    devices_mode_offered: None,
 ) -> None:
     """A numbered YAML slot existed and this serial matches none.
 
@@ -843,7 +846,6 @@ async def test_promotion_with_an_undetermined_slot_explains_and_claims_nothing(
 async def test_promotion_keeps_what_was_typed_beside_the_checkbox(
     hass: HomeAssistant,
     sungrow_unit: MockModbusUnit,
-    devices_mode_offered: None,
 ) -> None:
     """Options are written when a flow *ends*, and promotion ends it elsewhere.
 

@@ -17,7 +17,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 from modbus_connection.mock import MockModbusUnit
-import pytest
 from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.sungrow_modbus import wifi_module
@@ -49,11 +48,6 @@ SUNGROW_MAC = "ac199f000001"
 RAK_MAC = "ac1f09000002"
 RAK_NAME = "rakmodule-000002"
 FLOW = "custom_components.sungrow_modbus.config_flow"
-
-
-@pytest.fixture(autouse=True)
-def _open_the_alpha_gate(devices_mode_offered: None) -> None:
-    """Open the devices path, as the search tests do."""
 
 
 def _port(host: str = PORT_HOST) -> DhcpServiceInfo:

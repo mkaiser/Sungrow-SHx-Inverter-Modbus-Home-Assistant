@@ -47,15 +47,15 @@ async def async_setup_entry(
 ) -> None:
     """Set up the mode flags this device actually has."""
     runtime_data = entry.runtime_data
+    # What a single extended run leaves out, on every entry with a capability
+    # test to skip tests of. Only a hybrid has one.
+    if not runtime_data.is_string_inverter:
+        async_add_entities([SkipEstablishedCapabilityTestsSwitch(runtime_data)])
     if (
         runtime_data.is_wallbox_only
         or entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS
     ):
-        # A diagnostics-only entry has no controls; its one switch is what a
-        # single extended run leaves out, and only a hybrid has a capability
-        # test.
-        if not runtime_data.is_string_inverter:
-            async_add_entities([SkipEstablishedCapabilityTestsSwitch(runtime_data)])
+        # Neither has controls to offer beside it.
         return
     async_add_entities(
         SungrowSwitch(runtime_data, description)

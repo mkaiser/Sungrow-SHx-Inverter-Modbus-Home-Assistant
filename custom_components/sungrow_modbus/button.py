@@ -1,23 +1,28 @@
-"""Buttons: the inverter's commands, and on a diagnostics-only entry the diagnosis.
+"""Buttons: the diagnosis on every entry, and the inverter's commands besides.
 
-**An ordinary entry** gets the commands in `button_descriptions.py`, each
-gated on a capability only a watched write grants. A command register holds
-no state worth a switch -- *Force startup* (13017) never reads back the 0xAA
-it was sent -- so a press writes one word and the device page shows nothing
-else.
+**The diagnosis's buttons** -- start, stop, and clear the capability test's
+history -- are on every inverter entry. They used to be a diagnostics-only
+entry's alone, which meant the one way this project measures what a model
+answers was reachable only by somebody who had given up their readings to get
+it, or who went looking in Developer tools for an action. They are
+diagnostic-category entities, so Home Assistant files them under their own
+heading on the device page.
 
-**A diagnostics-only entry** gets the diagnosis and capability test buttons, and
-nothing else. Such an entry has no readings, no controls and no numbers -- it
-was set up by somebody who offered to send a reading and did not want their
-house filled with entities -- so these buttons and the four sensors beside
-them are the entirety of its device page, and the reason it has one. An
-ordinary entry reaches the same runs through the `run_diagnosis` and
-`run_capability_test` actions, which leave no entity behind.
+The capability test's start is among them, and deliberately: the contributor
+who has hardware is exactly who this project needs a write measurement from.
+What carries the warning is the button's own description, the mode select
+beside it and the guards in `sungrow_modbus.capability_test`, not a missing
+entity.
 
-The capability test button is there too. That entry mode exists for the
-contributor who has hardware and offered to help, which is exactly who this
-project needs a write measurement from; what carries the warning is the
-button's own description and the guards behind it, not a missing entity.
+**The commands** in `button_descriptions.py` come after, each gated on a
+capability only a watched write grants. A command register holds no state
+worth a switch -- *Force startup* (13017) never reads back the 0xAA it was
+sent -- so a press writes one word and the device page shows nothing else.
+A diagnostics-only entry and an SG get none of them: the first writes nothing
+but the capability test's own probes, and nothing here writes to an SG at all.
+
+The same runs are reachable as the `run_diagnosis` and `run_capability_test`
+actions, which is what a script or an automation can call.
 """
 
 from __future__ import annotations
@@ -70,24 +75,29 @@ async def async_setup_entry(
             [DiagnosisStartButton(runtime_data), DiagnosisStopButton(runtime_data)]
         )
         return
-    if entry.data.get(CONF_MODE, MODE_DEVICES) != MODE_DIAGNOSTICS:
-        async_add_entities(
-            SungrowButton(runtime_data, description)
-            for description in BUTTON_DESCRIPTIONS
-            if runtime_data.serves(description)
-        )
-        return
-    if runtime_data.is_string_inverter:
-        async_add_entities(
-            [DiagnosisStartButton(runtime_data), DiagnosisStopButton(runtime_data)]
-        )
-        return
+    # The diagnosis's own buttons, on every inverter entry whatever its mode.
+    # An ordinary entry had none of them and the `run_diagnosis` /
+    # `run_capability_test` actions instead, which meant the one thing this
+    # project needs from a device -- a measurement of what it answers -- was
+    # behind Developer tools.
     async_add_entities(
-        [
-            DiagnosisStartButton(runtime_data),
-            DiagnosisStopButton(runtime_data),
-            ClearCapabilityTestHistoryButton(runtime_data),
-        ]
+        [DiagnosisStartButton(runtime_data), DiagnosisStopButton(runtime_data)]
+    )
+    if runtime_data.is_string_inverter:
+        # No capability test on an SG, so no history of one to clear -- and
+        # nothing here writes to one, so none of the commands either.
+        return
+    async_add_entities([ClearCapabilityTestHistoryButton(runtime_data)])
+
+    # A diagnostics-only entry stops there: no commands, because it writes
+    # nothing but the capability test's own probes.
+    if entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
+        return
+
+    async_add_entities(
+        SungrowButton(runtime_data, description)
+        for description in BUTTON_DESCRIPTIONS
+        if runtime_data.serves(description)
     )
 
 

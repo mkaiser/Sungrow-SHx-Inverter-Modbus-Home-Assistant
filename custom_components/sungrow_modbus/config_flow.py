@@ -31,7 +31,6 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr, discovery_flow
 from homeassistant.helpers.selector import (
     BooleanSelector,
-    BooleanSelectorConfig,
     EntitySelector,
     EntitySelectorConfig,
     NumberSelector,
@@ -120,7 +119,6 @@ from .const import (
     CONF_PUBLISH_ADDRESS,
     CONF_REGISTER_DUMP,
     CONF_REPORTER,
-    CONF_TEST_ENTITIES,
     CONF_TLS,
     CONF_UNIT_ID,
     CONF_WALLBOX_MAX_AMPS,
@@ -143,7 +141,6 @@ from .const import (
     KIND_WALLBOX,
     MODE_DEVICES,
     MODE_DIAGNOSTICS,
-    ONLY_DIAGNOSIS_MODE,
     PLACEMENT_BEHIND_METER,
     PLACEMENT_SEPARATE,
     ROLE_MASTER,
@@ -183,36 +180,6 @@ CONTEXT_HOST = "discovered_host"
 CONF_INVERTER = "inverter"
 
 
-def _alpha_placeholders(texts: Texts) -> dict[str, str]:
-    """Return what the two gated dialogs should say about the gate.
-
-    A function rather than a constant because `ONLY_DIAGNOSIS_MODE` is read
-    at call time: a module-level dict would freeze the answer at import and
-    quietly ignore the flag it exists to report.
-
-    `mode_choice` and `devices_mode` rather than one key because the two places
-    need opposite things when the gate is open. The opening step needs a
-    sentence either way -- it is explaining a choice, or why there is none.
-    The options page's promotion toggle needs one only while promotion is
-    refused; with the gate open there is nothing to say and the helper text
-    beside it is already complete.
-
-    All are always present and never absent: an unsubstituted placeholder
-    renders as the literal `{devices_mode}` in the dialog, which is the one
-    outcome worse than either sentence.
-    """
-    coming = "\n\n" + texts("devices_mode_coming")
-    return {
-        "mode_intro": ""
-        if ONLY_DIAGNOSIS_MODE
-        else texts("devices_mode_intro") + "\n\n",
-        "mode_choice": (
-            coming if ONLY_DIAGNOSIS_MODE else "\n\n" + texts("devices_mode_open")
-        ),
-        "devices_mode": coming if ONLY_DIAGNOSIS_MODE else "",
-    }
-
-
 async def _flow_texts(flow: ConfigFlow | OptionsFlow) -> Texts:
     """Return the flow's sentences, fetched once per flow (`texts.py`)."""
     texts: Texts | None = getattr(flow, "_texts_cache", None)
@@ -220,6 +187,31 @@ async def _flow_texts(flow: ConfigFlow | OptionsFlow) -> Texts:
         texts = await async_texts(flow.hass)
         setattr(flow, "_texts_cache", texts)  # noqa: B010 -- not a declared attribute
     return texts
+
+
+async def _async_local_addresses(hass: HomeAssistant) -> frozenset[str]:
+    """Return every IPv4 address this Home Assistant answers on.
+
+    Which is how an address is recognised as a Modbus proxy rather than an
+    inverter: a proxy add-on runs on the machine Home Assistant runs on, so
+    its address *is* one of these. Nothing else distinguishes it -- a proxy
+    forwards the inverter's answers unchanged, serial and register 6100
+    included, so over Modbus the two addresses are one device.
+
+    Only an add-on, or a proxy on this machine, is caught. One on a third
+    machine is not, and is not guessed at: the cost of being wrong is telling
+    somebody their inverter is a proxy.
+
+    Unfiltered, container bridges included, unlike `_async_default_network`:
+    a bridge address is a poor thing to *sweep*, but it is still this
+    machine, and that is the whole question here.
+    """
+    return frozenset(
+        address["address"]
+        for adapter in await network.async_get_adapters(hass)
+        if adapter["enabled"]
+        for address in adapter["ipv4"]
+    )
 
 
 async def _async_legacy_ids(hass: HomeAssistant, slot: str) -> set[str]:
@@ -472,9 +464,6 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         #: than passed, because the progress step is re-entered to show it
         #: and has no other way to know.
         self._stage = ""
-        #: What the contributor said about their installation, on the
-        #: diagnostics path. Saved as options when the entry is created.
-        self._testimony: dict[str, Any] = {}
         self._role: str | None = None
         #: Whether the user was asked for a name and gave one.
         self._named = False
@@ -592,6 +581,14 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         inverter's own LAN port, so that is said before, not discovered
         after. The owner's transport answer for the diagnosis described the old
         path, so it goes.
+
+        **Leaving a Modbus proxy is said too.** This step is where a DHCP
+        sighting of an inverter that is already set up *through* a proxy
+        arrives: the sighting carries the inverter's own address, which no
+        check before here can match against the proxy's, so the offer looks
+        like any other new path. Accepting it takes the entry off the proxy
+        and onto the inverter's scarce sessions, which is a real change and
+        not one anybody would infer from two addresses.
         """
         assert self._move is not None
         entry, endpoint, direct = self._move
@@ -615,6 +612,10 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 description_placeholders={"title": entry.title},
             )
         texts = await _flow_texts(self)
+        local = await _async_local_addresses(self.hass)
+        leaves_proxy = (
+            entry.data.get(CONF_HOST) in local and endpoint.get(CONF_HOST) not in local
+        )
         return self.async_show_form(
             step_id="move",
             description_placeholders={
@@ -626,39 +627,29 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                     if _loses_wallbox(entry, direct)
                     else ""
                 ),
+                "proxy": "\n\n" + texts("proxy_left") if leaves_proxy else "",
             },
         )
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Ask what this entry is for before asking anything about the wiring.
+        """Start the only setup there is: find the inverter, then set it up.
 
-        Two very different intentions arrive at this dialog. Most people want
-        their inverter in Home Assistant. Some want to help this project find
-        out what their model answers -- and for them the flow's central
-        question, whether to take over the YAML package's entity ids, is both
-        weighty and beside the point.
+        The preview opened with a question -- is this entry for your inverter,
+        or for a reading to send in? -- and it is gone, because the answer
+        stopped mattering. A devices entry carries the diagnosis and the
+        capability test on its own device page, so the lighter entry did
+        nothing the ordinary one cannot, while costing everybody a dialog and
+        costing a contributor their entities.
 
-        So it is asked first, and cheaply: a diagnostics entry connects,
-        identifies the hardware, creates only the diagnosis's buttons and
-        sensors, and never mentions migration. It can be promoted to a full
-        entry afterwards, which is when the id question is put.
-
-        While `ONLY_DIAGNOSIS_MODE` is on the menu offers only the diagnosis,
-        and its description says why.
+        What follows is the wiring (search or type an address), the device,
+        and then the one question that is genuinely a decision: whether to
+        take over `modbus_sungrow.yaml`'s entity ids. That one is asked only
+        where there is something to take over.
         """
-        options = ["setup_diagnostics"]
-        if not ONLY_DIAGNOSIS_MODE:
-            options.insert(0, "setup_devices")
-        return self.async_show_menu(
-            step_id="user",
-            menu_options=options,
-            # The step description carries placeholders, so the menu has to
-            # substitute them -- an unfilled placeholder is rendered literally
-            # rather than dropped.
-            description_placeholders=_alpha_placeholders(await _flow_texts(self)),
-        )
+        self._mode = MODE_DEVICES
+        return await self.async_step_find()
 
     async def async_step_zeroconf(
         self, discovery_info: ZeroconfServiceInfo
@@ -887,7 +878,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                     "via": found["via"],
                 },
             )
-        self._mode = MODE_DIAGNOSTICS if ONLY_DIAGNOSIS_MODE else MODE_DEVICES
+        self._mode = MODE_DEVICES
         if found["kind"] == "wallbox":
             if (wallbox := await _async_probe_wallbox(self.hass, host)) is None:
                 return self.async_abort(
@@ -907,34 +898,13 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def _async_identify_discovered(self, host: str) -> ConfigFlowResult:
         """Identify a discovered inverter over Modbus, then take the search's path."""
-        self._mode = MODE_DIAGNOSTICS if ONLY_DIAGNOSIS_MODE else MODE_DEVICES
+        self._mode = MODE_DEVICES
         self._found = await self._async_identify([(host, DEFAULT_PORT)])
         if host not in self._found:
             return self.async_abort(
                 reason="not_identified", description_placeholders={"host": host}
             )
         return await self.async_step_pick({CONF_HOST: host})
-
-    async def async_step_setup_devices(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Set up the inverter properly, with entities.
-
-        Off the menu while the gate is shut, and Home Assistant refuses a step
-        id the menu did not offer; the fallback to diagnostics is the rule
-        behind that, in case it ever lets one through.
-        """
-        if ONLY_DIAGNOSIS_MODE:
-            return await self.async_step_setup_diagnostics()
-        self._mode = MODE_DEVICES
-        return await self.async_step_find()
-
-    async def async_step_setup_diagnostics(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Set up only enough to read the inverter and report on it."""
-        self._mode = MODE_DIAGNOSTICS
-        return await self.async_step_find()
 
     async def async_step_find(
         self, user_input: dict[str, Any] | None = None
@@ -1270,10 +1240,8 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Return to the choice of *how to find* the inverter.
 
-        Not all the way to the first menu. A sweep that found nothing says
-        nothing about what the entry is for, and re-asking a question the
-        user has already answered is how a dead end starts to feel like a
-        loop.
+        Which is where the flow starts anyway: "back to the start" and the
+        first screen are the same screen.
         """
         return await self.async_step_find()
 
@@ -1611,7 +1579,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                     "label": f"{model} at {hostname or host}",
                 }
                 break
-        return _described(found)
+        return _described(found, await _async_local_addresses(self.hass))
 
     async def async_step_manual(
         self, user_input: dict[str, Any] | None = None
@@ -1650,11 +1618,9 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 else:
                     self._data = {**user_input, **_kind_data(code)}
                     self._title = _model_of(inverter) or DEFAULT_NAME
-                    # `_found` is what `_async_measured` reads to tell the
-                    # testimony step what has already been measured, so a
-                    # typed address gets the probe's findings as a searched
-                    # one does. It steers `diagnosis_transport`, which is
-                    # published.
+                    # `_found` is what the later steps read about this
+                    # address, so a typed one carries the probe's findings as
+                    # a searched one does.
                     self._found = {
                         user_input[CONF_HOST]: {
                             CONF_HOST: user_input[CONF_HOST],
@@ -1684,13 +1650,6 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         make, so they are not shown a question about a package they have never
         heard of — the entry is created with device-scoped ids directly.
         """
-        # A diagnostics entry creates no entities, so there is nothing for an
-        # id to attach to and nothing to migrate. Asking would be worse than
-        # pointless: it decides where years of history continue, and
-        # answering it wrongly to get past a dialog is how somebody loses
-        # track of that history.
-        if self._mode == MODE_DIAGNOSTICS:
-            return await self.async_step_testimony()
         # The YAML package reads only hybrids, so an SG has no history there.
         if self._data.get(CONF_KIND) == KIND_STRING_INVERTER:
             return self._async_create(ENTITY_IDS_NEW)
@@ -1823,109 +1782,6 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             return f"{self._title} master"
         return self._title
 
-    @callback
-    def _async_measured(self, texts: Texts) -> str:
-        """Say what discovery already worked out, so nobody re-answers it.
-
-        The transport is the one that matters and the one already settled:
-        register 6100 distinguishes a direct connection from a dongle, 9
-        times out of 9. What an owner adds is the half no register reaches --
-        whether a dongle is on its cable or its WiFi, which is not
-        determinable and not guessed.
-        """
-        device = self._found.get(self._data.get(CONF_HOST, ""), {})
-        if not device:
-            # Nothing was probed for this address, so there is nothing to
-            # report. Saying so beats inventing a route.
-            return texts("measured_nothing")
-        model = device.get("model") or texts("model_unidentified")
-        direct = device.get("direct")
-        if direct is True:
-            return texts("measured_direct", model=model)
-        if direct is False:
-            return texts("measured_dongle", model=model)
-        # Neither answered nor refused: the read failed on the link. A guess
-        # here is worse than a question, because this steers the
-        # `diagnosis_transport` answer and that is published.
-        return texts("measured_unknown", model=model)
-
-    async def async_step_testimony(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Ask the few things a diagnosis needs and no register can answer.
-
-        Only on the diagnostics path, and at setup rather than later, because
-        this is the entry that exists **in order** to produce a document --
-        somebody who chose this mode has already said they want to help, and
-        finding the questions afterwards meant finding a section of an
-        options page they had no reason to open.
-
-        Every answer is optional, and blank is a real answer: the document
-        format distinguishes an empty field -- the question was not put --
-        from `unsure`, where it was put and the owner did not know. What is
-        asked is what no register reaches: no register reports a battery's
-        make, nothing distinguishes a cable from a dongle's Ethernet socket,
-        and a Modbus proxy in the path changes what every dropped block means
-        while being invisible from this end.
-        """
-        if user_input is not None:
-            self._testimony = dict(user_input)
-            # The flag is checked as well as the answer, as on the options
-            # page: a field the form did not offer can still be posted.
-            if self._testimony.pop(CONF_TEST_ENTITIES, False) and ONLY_DIAGNOSIS_MODE:
-                # Device-scoped ids, and the YAML package's never: taking
-                # those over is the decision the gate keeps out of an alpha.
-                # The options page can still switch them later, and says
-                # what moves first.
-                self._mode = MODE_DEVICES
-            if self._testimony.get(CONF_DIAGNOSIS_OTHER_INVERTER) == OTHER_INVERTER_YES:
-                return await self.async_step_other_inverter()
-            return self._async_create(ENTITY_IDS_NEW)
-
-        schema = _testimony_schema({}, include_dump=False)
-        if ONLY_DIAGNOSIS_MODE:
-            # Last, below the questions it has nothing to do with, so nobody
-            # meets it before they have read what it is for.
-            schema = schema.extend(
-                {
-                    probatio.Optional(
-                        CONF_TEST_ENTITIES, default=False
-                    ): BooleanSelector()
-                }
-            )
-        return self.async_show_form(
-            step_id="testimony",
-            data_schema=schema,
-            description_placeholders={
-                "measured": self._async_measured(await _flow_texts(self))
-            },
-            # Not the last step when the answer turns out to be yes, and Home
-            # Assistant has to be told before it knows: the flag decides
-            # whether the button says "Submit" or "Next". It is set here
-            # because the common answer is no, and a dialog that says "Next"
-            # and then finishes is the worse surprise of the two.
-            last_step=True,
-        )
-
-    async def async_step_other_inverter(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Ask what the other inverter is, having been told there is one.
-
-        A step rather than a field, because a config flow form is built
-        before it is sent and cannot reveal a box when an answer changes. So
-        the box is only ever shown to the people it is about.
-        """
-        if user_input is not None:
-            self._testimony.update(user_input)
-            return self._async_create(ENTITY_IDS_NEW)
-
-        return self.async_show_form(
-            step_id="other_inverter",
-            data_schema=_other_inverter_schema(""),
-            last_step=True,
-        )
-
     def _async_create(self, entity_ids: str) -> ConfigFlowResult:
         """Create the entry with the id style already decided."""
         data = {**self._data, CONF_ENTITY_IDS: entity_ids, CONF_MODE: self._mode}
@@ -1938,21 +1794,15 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_create_entry(
             title=self._title,
             data=data,
-            # Straight into the options, which is where the diagnosis reads
-            # them from and where the same questions are editable
-            # afterwards. Two places to store one answer would be one too
-            # many.
-            options=self._testimony or None,
             # The last screen of the wizard, and the only place left to say
-            # what happens next. A diagnostics entry has just been created
-            # and has done nothing yet -- the diagnosis is a button somebody has
-            # to find and press, and the document arrives in a notification
-            # they have no reason to be watching. `async_create_entry`
-            # renders this as markdown on the
-            # success dialog; the key is `config.create_entry.<description>`.
-            description=(
-                "diagnostics" if self._mode == MODE_DIAGNOSTICS else "default"
-            ),
+            # what happens next -- including the ask for a reading, which
+            # used to live on the diagnostics path's own success dialog and
+            # would otherwise have gone with it. The diagnosis is a button
+            # somebody has to find and press, and the document arrives in a
+            # notification they have no reason to be watching.
+            # `async_create_entry` renders this as markdown on the success
+            # dialog; the key is `config.create_entry.<description>`.
+            description="default",
             # hassfest refuses a URL inside a translation string.
             description_placeholders={
                 "diagnosis_issue_url": DIAGNOSIS_ISSUE_URL,
@@ -2097,10 +1947,7 @@ class SungrowOptionsFlow(OptionsFlow):
                     # reveal after the first time.
                     self._pending_options = options
                     return await self.async_step_other_inverter()
-                # The flag is checked as well as the value: a disabled
-                # control is a frontend courtesy, and the payload arrives over
-                # a websocket anybody with a token can write by hand.
-                elif not ONLY_DIAGNOSIS_MODE and user_input.get(CONF_ADD_DEVICES):
+                elif user_input.get(CONF_ADD_DEVICES):
                     # The promotion question is asked on its own page, and
                     # that is deliberate: it decides where years of history
                     # continue, and it does not belong folded into a section
@@ -2128,9 +1975,6 @@ class SungrowOptionsFlow(OptionsFlow):
                 "reported_load": self._async_load_now(texts),
                 "measured": await self._async_diagnosis_measured(texts),
                 "battery_status": self._async_battery_status(texts),
-                # Why the promotion toggle above is greyed, in the same words
-                # the config flow uses for the same gate.
-                **_alpha_placeholders(texts),
             },
         )
 
@@ -2152,16 +1996,11 @@ class SungrowOptionsFlow(OptionsFlow):
         # Only where it means something: an entry that already has devices
         # would be offered a box that does nothing.
         if self.config_entry.data.get(CONF_MODE, MODE_DEVICES) == MODE_DIAGNOSTICS:
-            # Greyed rather than dropped while the gate is closed, so an
-            # owner can see that promotion exists and is coming. `read_only`
-            # makes the frontend disable the field and leave it out of what
-            # it submits, which is why the default above is what comes back.
+            # The way across for an entry made while the two kinds were
+            # offered. Ticking it leads to the entity-id question, which this
+            # entry never had to answer.
             schema[probatio.Required(CONF_ADD_DEVICES, default=False)] = (
-                BooleanSelector(
-                    BooleanSelectorConfig(read_only=True)
-                    if ONLY_DIAGNOSIS_MODE
-                    else BooleanSelectorConfig()
-                )
+                BooleanSelector()
             )
 
         elif self.config_entry.data.get(CONF_KIND) != KIND_STRING_INVERTER:
@@ -2583,8 +2422,6 @@ class SungrowOptionsFlow(OptionsFlow):
         ran `modbus_sungrow.yaml` has no history and no decision, so the
         entry is simply promoted.
         """
-        if ONLY_DIAGNOSIS_MODE:
-            return self.async_abort(reason="devices_mode_not_offered")
         # The YAML package reads only hybrids, so an SG has no history there.
         if self.config_entry.data.get(CONF_KIND) == KIND_STRING_INVERTER:
             return await self._async_promote(ENTITY_IDS_NEW)

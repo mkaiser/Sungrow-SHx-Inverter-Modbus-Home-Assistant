@@ -36,11 +36,6 @@ BLOCK = [ev.ON, ev.FAST, 0, 0, 0, 160, 0, 0, 0, 0, ev.OFF]
 
 
 @pytest.fixture(autouse=True)
-def _open_the_alpha_gate(devices_mode_offered: None) -> None:
-    """Open the gate on the devices path, which the alpha shuts."""
-
-
-@pytest.fixture(autouse=True)
 def no_waiting(monkeypatch: pytest.MonkeyPatch) -> None:
     """Pass every wait at once."""
     monkeypatch.setattr(mt, "RealClock", InstantClock)

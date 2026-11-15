@@ -7,12 +7,15 @@ its name in *Add integration*, and by a notice under **Settings → Repairs**.
 > package, in use by thousands of people and the only finished part of this
 > project. A preview is for people who want to help find what is broken.
 
-**A preview sets up diagnostics only.** It identifies your inverter, works out
-which registers it answers and gives you a diagnosis to send back. It creates
-**no sensors for the readings**. The full setup is built; it waits because
-choosing whether to take over `modbus_sungrow.yaml`'s entity ids decides
-where years of history attach, and that is not a thing to hand somebody in
-an alpha. An entry made now can be upgraded later without losing anything.
+**A preview sets your inverter up properly**: sensors, controls, and the
+diagnosis and capability test on the same device page. Setup asks one real
+question — whether to take over `modbus_sungrow.yaml`'s entity ids, which
+decides where years of history attach — and only where you have ids to take
+over. If you would rather not decide yet, answer *Start fresh*: your YAML
+package keeps its ids and its history, and the options page can switch this
+entry onto them later. [Moving from the YAML package to the
+integration](integration_migration.md) describes both answers and the way
+back.
 
 It needs **Home Assistant 2026.11 or later**, and installs through
 **Settings → Marketplace**, from a second repository, the *preview channel*:

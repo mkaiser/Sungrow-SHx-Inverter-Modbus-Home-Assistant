@@ -20,9 +20,7 @@ from modbus_connection import ModbusConnectionError
 import pytest
 from pytest_homeassistant.common import MockConfigEntry
 
-from custom_components.sungrow_modbus.config_flow_schemas import _testimony_schema
 from custom_components.sungrow_modbus.const import (
-    CONF_DIAGNOSIS_DUMP,
     CONF_MODE,
     CONF_UNIT_ID,
     DOMAIN,
@@ -47,9 +45,6 @@ async def _manual_form(hass: HomeAssistant) -> dict:
     """Walk Add integration to the address form."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}
-    )
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"next_step_id": "setup_diagnostics"}
     )
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {"next_step_id": "manual"}
@@ -103,40 +98,6 @@ async def test_the_address_form_says_what_the_inverter_answered(
     if placeholder is not None:
         key, text = placeholder
         assert text in result["description_placeholders"][key]
-
-
-@pytest.mark.parametrize(
-    ("direct", "says"),
-    [
-        (True, "its own LAN port"),
-        (False, "through a communication module"),
-        (None, "could not be measured"),
-    ],
-    ids=["answered", "refused", "unanswered"],
-)
-async def test_the_testimony_page_reports_the_measured_route(
-    hass: HomeAssistant, direct: bool | None, says: str
-) -> None:
-    """A guess here would be published as `diagnosis_transport`; a question is not."""
-    result = await _submit(hass, {"return_value": (_inverter(), direct, None)})
-
-    assert result["step_id"] == "testimony"
-    measured = result["description_placeholders"]["measured"]
-    assert "SH10RT" in measured
-    assert says in measured
-
-
-async def test_the_testimony_page_does_not_ask_for_the_sweep(
-    hass: HomeAssistant,
-) -> None:
-    """Sweeping is a choice about a run; setup asks only what the owner knows."""
-    result = await _submit(hass, {"return_value": (_inverter(), True, None)})
-
-    assert result["step_id"] == "testimony"
-    assert CONF_DIAGNOSIS_DUMP not in {str(key) for key in result["data_schema"].schema}
-    assert CONF_DIAGNOSIS_DUMP in {str(key) for key in _testimony_schema({}).schema}, (
-        "the options page still asks it"
-    )
 
 
 async def test_reconfigure_refuses_an_inverter_without_a_serial(

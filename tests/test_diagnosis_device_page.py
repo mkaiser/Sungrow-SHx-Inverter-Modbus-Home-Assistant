@@ -17,17 +17,19 @@ from __future__ import annotations
 
 import asyncio
 from datetime import timedelta
+import json
+from pathlib import Path
 from unittest.mock import patch
 
 from modbus_connection.mock import MockModbusUnit
 import pytest
 from pytest_homeassistant.common import MockConfigEntry, async_fire_time_changed
 
+import custom_components.sungrow_modbus as component
 from custom_components.sungrow_modbus.const import (
     CONF_DIAGNOSIS_PROXY,
     CONF_DIAGNOSIS_TRANSPORT,
     CONF_MODE,
-    CONF_PUBLISH_ADDRESS,
     CONF_REPORTER,
     CONF_UNIT_ID,
     DIAGNOSIS_ISSUE_URL,
@@ -35,13 +37,12 @@ from custom_components.sungrow_modbus.const import (
     LINK_VALID,
     MODE_DEVICES,
     MODE_DIAGNOSTICS,
+    SECTION_DIAGNOSIS,
 )
 from custom_components.sungrow_modbus.diagnosis import DiagnosisRunner, DiagnosisState
 from custom_components.sungrow_modbus.diagnosis_entities import DIAGNOSIS_ENTITIES
-from homeassistant.config_entries import SOURCE_USER
 from homeassistant.const import CONF_HOST, CONF_PORT, STATE_UNAVAILABLE, Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.util import dt as dt_util
 from sungrow_modbus import block_test, diagnosis_document as diagnosis
@@ -163,31 +164,33 @@ async def test_the_entities_give_the_entry_a_device_page(
     assert [device for device in devices if (DOMAIN, SERIAL) in device.identifiers]
 
 
-async def test_an_ordinary_entry_gets_none_of_them(
+async def test_an_ordinary_entry_gets_them_too(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """Somebody who installed this for solar readings asked for solar readings.
+    """They used to be a diagnostics entry's alone, and that was the bug.
 
-    Deleting an entry removes its entities cleanly either way, so this is not
-    about cleanup -- it is about not putting five diagnostic entities into
-    every install's registry, history and entity pickers to begin with. That
-    owner helps through the `run_diagnosis` action, which leaves nothing behind
-    at all.
+    An owner who installed this for solar readings is also the owner of a
+    model whose register support this project can only measure. Leaving the
+    diagnosis off their entry meant the only way to contribute was to give up
+    the readings they came for, or to find an action in Developer tools. They
+    are diagnostic-category entities, so Home Assistant keeps them under
+    their own heading and out of the automatic dashboard.
     """
     await _setup(hass, sungrow_unit)
 
     for entity_id in DIAGNOSTIC_ENTITIES:
-        assert hass.states.get(entity_id) is None, entity_id
+        assert hass.states.get(entity_id) is not None, entity_id
     assert hass.states.get("sensor.sh10rt_total_pv_input_power") is not None
 
 
-async def test_an_ordinary_entry_can_still_run_one_as_an_action(
+async def test_an_ordinary_entry_can_also_run_one_as_an_action(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """Helping is not something only a diagnostics entry can do.
+    """The button is not the only route, and the action predates it here.
 
-    The action is the whole diagnosis: it reads, it builds the document, and it
-    offers it in the same notification the button's run does.
+    The action is the whole diagnosis: it reads, it builds the document, and
+    it offers it in the same notification the button's run does. It is also
+    what a script or an automation can call, which no button is.
     """
     entry = await _setup(hass, sungrow_unit)
     device = dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)[0]
@@ -201,9 +204,6 @@ async def test_an_ordinary_entry_can_still_run_one_as_an_action(
     await hass.async_block_till_done()
 
     assert entry.runtime_data.diagnosis.state.document is not None
-    # And nothing was created to make that possible.
-    for entity_id in DIAGNOSTIC_ENTITIES:
-        assert hass.states.get(entity_id) is None, entity_id
 
 
 @pytest.mark.parametrize(("domain", "key"), DIAGNOSIS_ENTITIES)
@@ -216,7 +216,7 @@ async def test_every_diagnosis_entity_is_a_diagnostic_one(
     keeps them out of the automatic dashboard, which is where something that
     reports "probing input 13049" belongs.
     """
-    await _setup(hass, sungrow_unit, mode=MODE_DIAGNOSTICS)
+    await _setup(hass, sungrow_unit)
 
     registry = er.async_get(hass)
     entity_id = registry.async_get_entity_id(
@@ -547,65 +547,43 @@ def test_a_runner_starts_idle(hass: HomeAssistant) -> None:
     assert state.document is None
 
 
-async def test_the_diagnostics_path_asks_before_it_finishes(
+async def test_setup_points_at_the_questions_it_no_longer_asks(
     hass: HomeAssistant, sungrow_unit: MockModbusUnit
 ) -> None:
-    """Somebody who chose this mode came to help, so ask them while they are here.
+    """A document with every testimony field empty was a real report.
 
-    The failure this fixes was reported from a real installation: the button
-    produced a document in under ten seconds with every testimony field
-    empty, and the contributor's reasonable reaction was "why was I not
-    asked?". The questions were on an options page they had no reason to
-    open.
+    A contributor pressed the button, got a document in under ten seconds
+    with nothing in it, and asked, reasonably, why they had not been asked.
+    The diagnostics path answered that by putting the questions in the
+    wizard; that path is gone, and what answers it now is the last screen of
+    the one wizard there is, which names the section that holds them.
 
+    So: the options page asks them, and the success dialog says where.
     """
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN, context={"source": SOURCE_USER}
-    )
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"next_step_id": "setup_diagnostics"}
-    )
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"next_step_id": "manual"}
-    )
+    said = json.loads((Path(component.__file__).parent / "strings.json").read_text())[
+        "config"
+    ]["create_entry"]["default"]
+    assert "Configure" in said
 
-    with (
-        patch(
-            "custom_components.sungrow_modbus.async_get_unit",
-            return_value=sungrow_unit,
-        ),
-        patch(
-            "custom_components.sungrow_modbus.config_flow.async_get_temporary_unit",
-            # The probe uses it as an async context manager, so a bare mock
-            # unit will not do.
-            return_value=_TemporaryUnit(sungrow_unit),
-        ),
+    entry = MockConfigEntry(
+        domain=DOMAIN, data=ENTRY_DATA, unique_id=SERIAL, title="SH10RT"
+    )
+    entry.add_to_hass(hass)
+    with patch(
+        "custom_components.sungrow_modbus.async_get_unit", return_value=sungrow_unit
     ):
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"],
-            {CONF_HOST: "127.0.0.1", CONF_PORT: 5020, CONF_UNIT_ID: 1},
-        )
-
-        # Not straight to an entry: the questions come first.
-        assert result["type"] is FlowResultType.FORM
-        assert result["step_id"] == "testimony"
-        assert "Already measured" in result["description_placeholders"]["measured"]
-
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"],
-            {
-                CONF_REPORTER: "a contributor",
-                CONF_DIAGNOSIS_TRANSPORT: "direct_lan",
-                CONF_DIAGNOSIS_PROXY: "no",
-                CONF_PUBLISH_ADDRESS: False,
-            },
-        )
+        await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
 
-    assert result["type"] is FlowResultType.CREATE_ENTRY
-    # Straight into the options, which is where the diagnosis reads them from.
-    assert result["options"][CONF_REPORTER] == "a contributor"
-    assert result["options"][CONF_DIAGNOSIS_TRANSPORT] == "direct_lan"
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    section = next(
+        value
+        for marker, value in result["data_schema"].schema.items()
+        if str(marker) == SECTION_DIAGNOSIS
+    )
+    asked = {str(key) for key in section.schema.schema}
+    assert CONF_REPORTER in asked
+    assert CONF_DIAGNOSIS_TRANSPORT in asked
 
 
 async def test_the_answers_reach_the_document(

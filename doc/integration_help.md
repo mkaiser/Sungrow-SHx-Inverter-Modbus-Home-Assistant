@@ -112,8 +112,10 @@ automation:
   `SAPPHIRE-H_B001.V000.P022`. The phases are the inverter's to choose: it
   switches to one phase by itself in PV surplus with grid purchase off, and
   nothing sets them by hand.
-- **The preview sets up an inverter for diagnostics only**: it identifies the
-  inverter and runs the diagnosis, and creates no sensors for its readings.
+- **An inverter's entry carries its readings, its controls and the
+  diagnosis**: the diagnosis and the capability test are on the same device
+  page, under *Diagnostic*, with *Diagnosis: mode* choosing what
+  *Diagnosis: start* runs.
   A wallbox at its own address and an iHomeManager, each an entry of its own
   found by the network search, show their readings, read only; the wallbox's
   include the app's *Start charging on plug-in* (Plug&Play), offline charging

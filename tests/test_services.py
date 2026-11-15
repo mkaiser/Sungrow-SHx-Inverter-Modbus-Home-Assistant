@@ -72,13 +72,20 @@ async def test_neither_start_nor_stop_is_an_entity(
     one press away from anybody browsing a picker -- so start and stop are
     actions, which Home Assistant gates by user group.
 
-    There is a diagnosis button in this integration, and it is not here: it
-    belongs to a **diagnostics-only** entry, which somebody sets up in order
-    to produce a reading. An ordinary entry like this one has no buttons at
-    all, so the original assertion holds unchanged -- and that is the point
-    of the split rather than a coincidence of it.
+    The diagnosis's buttons are on this entry, and that is not a hole in the
+    reasoning: a diagnosis reads, and the capability test behind *Diagnosis:
+    start* puts back everything it writes and is held by its own permission.
+    Shutting the inverter down and leaving it down is the thing no picker may
+    offer -- so this names those two rather than counting buttons, which is
+    what it always meant and is now what it says.
     """
-    assert list(hass.states.async_all("button")) == []
+    buttons = [state.entity_id for state in hass.states.async_all("button")]
+
+    assert buttons, "the diagnosis's buttons should be here"
+    for forbidden in ("start_inverter", "stop_inverter"):
+        assert not [
+            entity_id for entity_id in buttons if entity_id.endswith(forbidden)
+        ], f"{forbidden} is an action, never a button"
 
 
 async def test_the_actions_exist(hass: HomeAssistant, entry: MockConfigEntry) -> None:

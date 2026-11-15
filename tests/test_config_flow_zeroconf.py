@@ -77,11 +77,6 @@ def no_setup():
         yield
 
 
-@pytest.fixture(autouse=True)
-def _open_the_alpha_gate(devices_mode_offered: None) -> None:
-    """Open the devices path, as the search tests do."""
-
-
 def test_the_manifest_matches_both_announcements() -> None:
     manifest = json.loads(
         (

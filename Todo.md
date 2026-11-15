@@ -520,16 +520,18 @@ diagnosis-only entry; how it is handled beyond that is open.
 # Release
 
 The maintainer targets a stable release in December 2026 (said
-2026-11-06). It needs: the ordinary setup switched on (item 1,
-`ONLY_DIAGNOSIS_MODE`), a stable `0.1.0` rather than an alpha (item 2), the
+2026-11-06). It needs: a stable `0.1.0` rather than an alpha (item 2), the
 production-database run or a decision to go without it (item 4), the
 catalog submission on release, not before (item 2), and
 `doc/integration_migration.md` made current.
 
-1. **When to offer the ordinary setup**, targeted for December 2026 (the
-   maintainer, 2026-11-06) (`ONLY_DIAGNOSIS_MODE` in `const.py`;
-   turning it off is the whole re-enablement, `tests/test_alpha_gate.py`),
-   and **when to merge into `main`.** The merge retires the preview channel
+The ordinary setup is **on** (the maintainer, 2026-11-15): the opening
+"what is this for?" dialog and `ONLY_DIAGNOSIS_MODE` are both gone, every
+new entry has entities, and the diagnosis and capability test are on the
+same device page as the readings (`tests/test_one_setup_path.py`).
+`MODE_DIAGNOSTICS` stays for the entries made while it was offered.
+
+1. **When to merge into `main`.** The merge retires the preview channel
    and opens the HACS default store, which also needs the brand in
    `home-assistant/brands` (`scripts/helpers/make_brand_icon.py` draws it).
    At the merge, the links that name the `proper-ha-integration` branch move

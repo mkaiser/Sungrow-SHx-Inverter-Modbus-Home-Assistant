@@ -5,15 +5,12 @@ Home Assistant renders above them are not flow logic, and reading the flow
 should not mean scrolling past them. So the data lives here and the decisions
 live in `config_flow.py`. The split is along that
 line rather than along size -- anything that asks *what happens next* stayed
-behind. `_alpha_placeholders` is the case worth naming: it reads
-`ONLY_DIAGNOSIS_MODE` at call time precisely so a test can patch the flag on
-`config_flow`, and moving it here would quietly put it beyond that patch's
-reach while every test still passed.
+behind.
 """
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
 from ipaddress import ip_address, ip_network
 from typing import Any
 
@@ -239,18 +236,13 @@ def _other_inverter_schema(default: str) -> probatio.Schema:
 
 
 def _testimony_schema(
-    options: dict[str, Any] | Mapping[str, Any], *, include_dump: bool = True
+    options: dict[str, Any] | Mapping[str, Any],
 ) -> probatio.Schema:
     """Return the questions a diagnosis needs and no register can answer.
 
-    Shared by the diagnostics setup step and the options page's section:
-    the same questions in both places, because they produce the same fields
-    of the same document and a contributor who answers one should not find
-    the other asking something else.
-
-    `include_dump` is False at setup: whether to sweep the raw bands is a
-    choice about a run, made on the device page or the options page, not
-    testimony. Left unasked it stays at `DEFAULT_DIAGNOSIS_DUMP`.
+    The options page's *Contribute a capability diagnosis* section, and the
+    only place these are asked: setup no longer puts them, because setup no
+    longer knows whether this entry will ever send a reading.
 
     `suggested_value` rather than `default` on the dropdowns -- a default of
     "" is injected when the field is left alone and "" is not one of the
@@ -330,13 +322,10 @@ def _testimony_schema(
             ): BooleanSelector(),
         }
     )
-    if not include_dump:
-        return schema
     # Last, because it is the expensive one: the diagnosis is two seconds
     # without it and about five minutes with it. On by default all the same
     # -- the sweep is how every undocumented register was found -- and the
-    # description says so. Only on the options page: at setup nobody has
-    # chosen a run yet.
+    # description says so.
     return schema.extend(
         {
             probatio.Required(
@@ -426,7 +415,9 @@ def _roles(
     return roles
 
 
-def _described(found: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+def _described(
+    found: dict[str, dict[str, Any]], local: Collection[str] = ()
+) -> dict[str, dict[str, Any]]:
     """Work out what the set of answers means, and say it in the labels.
 
     Three things a user cannot answer and the wire can, all measured at a
@@ -453,6 +444,16 @@ def _described(found: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
     unit 1 through its dongle. So a house whose inverters are each reachable
     only through their own dongle cannot have its roles read at all, and this
     says nothing rather than guessing.
+
+    **Home Assistant's own address is a Modbus proxy**, and `local` is how
+    this knows: a sweep of the subnet Home Assistant sits on reaches Home
+    Assistant too, and a modbus-proxy in front of the inverter answers every
+    identity read with the inverter's own answers -- register 6100 included,
+    measured (wiki: *contention*). So the proxy and the inverter are two
+    cards carrying one serial *and the same route note*, which is the one
+    pair in this list nobody could otherwise tell apart. Named rather than
+    hidden, because a proxy is usually the better address: it shares the
+    inverter's single Modbus port with whatever else polls it.
     """
     by_serial: dict[str, list[str]] = {}
     for host, entry in found.items():
@@ -474,6 +475,12 @@ def _described(found: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
                 if direct is False
                 else "route not measured -- 6100 neither answered nor refused"
             )
+            # Said straight after the route, because it qualifies it: a proxy
+            # forwards 6100, so the line above describes what is *behind*
+            # this address rather than this address itself.
+            if host in local:
+                entry["proxy"] = True
+                notes.append("Home Assistant's own address, so a Modbus proxy")
             if serial in roles:
                 entry["role"], note = roles[serial]
                 notes.append(note)
@@ -511,13 +518,17 @@ def _described(found: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
     # reads, where a dongle forwards 1020, refuses inputs 2612 and 2628, and
     # answers 0 where the inverter answers "unavailable", which fabricates
     # capabilities. Picking the dongle where a cable exists costs entities.
-    # Then unit 1 before a slave's address, then the address, so the order is
-    # stable.
+    # Then a proxy ahead of the bare address behind it, because it reaches
+    # the same path and shares the inverter's one Modbus port rather than
+    # taking it -- but *within* a route rather than across one, so a proxy in
+    # front of a dongle never outranks a cable. Then unit 1 before a slave's
+    # address, then the address, so the order is stable.
     return dict(
         sorted(
             found.items(),
             key=lambda item: (
                 not item[1].get("direct"),
+                not item[1].get("proxy"),
                 item[1][CONF_UNIT_ID] != DEFAULT_UNIT_ID,
                 item[0],
             ),
