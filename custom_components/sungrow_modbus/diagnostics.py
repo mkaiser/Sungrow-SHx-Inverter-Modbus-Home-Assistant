@@ -59,6 +59,7 @@ from sungrow_modbus.addresses import field_address
 from sungrow_modbus.hybrid_inverter.capabilities import OUTPUT_TYPES, known_absent
 from sungrow_modbus.string_inverter import TIER_COMPONENTS as STRING_INVERTER_TIERS
 
+from . import wifi_module
 from .const import CONF_KIND, CONF_REGISTER_DUMP, CONF_UNIT_ID, DOMAIN
 from .coordinator import COMPONENT_TIERS, SungrowConfigEntry
 from .diagnosis_document import async_build, attach_capability_test
@@ -143,6 +144,8 @@ async def async_get_config_entry_diagnostics(
         "polling": _polling(runtime),
         "entities": _entities(hass, runtime),
         "readings": async_redact_data(_readings(device), TO_REDACT),
+        # A WiFi module the owner linked to this inverter, with no address.
+        "wifi_module": wifi_module.diagnostics(entry),
     }
 
     # A publishable capability diagnosis, in the same format the standalone
@@ -218,6 +221,8 @@ async def _async_string_inverter_diagnostics(
             ]
         ),
         "readings": async_redact_data(_readings(device), TO_REDACT),
+        # A WiFi module the owner linked to this inverter, with no address.
+        "wifi_module": wifi_module.diagnostics(entry),
     }
     try:
         report["diagnosis"] = await async_build(hass, entry)

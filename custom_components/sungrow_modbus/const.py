@@ -359,6 +359,11 @@ CONF_TLS = "tls"
 #: Sungrow's iHomeManager document, 505 by a Logger1000A measured through.
 UNIT_247_PORTS: tuple[int, ...] = (502, 503, 504, 505)
 
+#: Entry data: a WiFi module the owner said is plugged into this inverter,
+#: as a DHCP sighting offered it: host, MAC and hostname
+#: (`wifi_module.py`). Its device page links the module's own web page.
+CONF_WIFI_MODULE = "wifi_module"
+
 KIND_WALLBOX = "wallbox"
 """A wallbox at its own address (TLS, port 516, unit 248), with no inverter
 beside it: read only, identified by its own serial."""

@@ -348,5 +348,13 @@
  "config.step.discovery_confirm.title": "Sungrow-Gerät gefunden",
  "config.step.discovery_confirm.description": "Ein **{model}** hat sich in deinem Netzwerk unter **{host}** angekündigt, über {via}.\n\nBeim Einrichten wird das Gerät zuerst über Modbus gefragt, was es ist: Die Ankündigung ist nur ein Hinweis. Fragt das YAML-Paket oder eine andere Integration es noch ab, beende das zuerst.",
  "config.step.offered_confirm.title": "Von deiner Suche gefunden",
- "config.step.offered_confirm.description": "Deine Netzwerksuche hat auch **{label}** gefunden.\n\nSende ab, um es so einzurichten, wie es die Liste der Suche getan hätte. Bis dahin wird nichts davon gelesen. Fragt das YAML-Paket oder eine andere Integration es noch ab, beende das zuerst."
+ "config.step.offered_confirm.description": "Deine Netzwerksuche hat auch **{label}** gefunden.\n\nSende ab, um es so einzurichten, wie es die Liste der Suche getan hätte. Bis dahin wird nichts davon gelesen. Fragt das YAML-Paket oder eine andere Integration es noch ab, beende das zuerst.",
+ "config.step.dhcp_confirm.title": "Sungrow-Gerät gefunden",
+ "config.step.dhcp_confirm.description": "Ein Gerät mit Sungrows Netzwerk-Adresspräfix hat deinen Router nach einer Adresse gefragt: **{host}**. So sehen der eigene LAN-Anschluss eines Wechselrichters und ein WiNet-S aus.\n\nBeim Einrichten wird das Gerät zuerst über Modbus gefragt, was es ist: Die Sichtung ist nur ein Hinweis. Fragt das YAML-Paket oder eine andere Integration es noch ab, beende das zuerst.",
+ "config.step.wifi_module.title": "WLAN-Modul gefunden",
+ "config.step.wifi_module.description": "Ein RAK-WLAN-Modul, **{hostname}**, ist in deinem Netzwerk unter **{host}**. Es ist der WLAN-Stick, den manche Sungrow-Wechselrichter tragen, und kein Modbus-Gerät: Es lässt sich nicht für sich einrichten, und der Wechselrichter sagt nicht, ob er eines trägt.\n\nSteckt es in einem deiner Wechselrichter, wähle diesen: Seine Geräteseite zeigt dann das Modul, mit einem Link auf die Webseite des Moduls ({url}, hinter dessen eigener Anmeldung). Um nichts zu verknüpfen, schließe diesen Dialog; **Ignorieren** beendet dieses Angebot.",
+ "config.step.wifi_module.data.inverter": "Wechselrichter, in dem es steckt",
+ "config.abort.already_in_progress": "Dieses Gerät wird schon angeboten. Schließe zuerst diesen Dialog ab.",
+ "config.abort.wifi_module_linked": "Das WLAN-Modul erscheint jetzt auf der Geräteseite von **{title}**, mit einem Link auf seine Webseite.",
+ "config.abort.wifi_module_no_inverter": "Ein RAK-WLAN-Modul ist in deinem Netzwerk unter {host}, aber es ist noch kein Sungrow-Wechselrichter eingerichtet, mit dem es sich verknüpfen ließe. Richte zuerst den Wechselrichter ein; das Modul wird wieder angeboten, wenn Home Assistant es das nächste Mal sieht."
 }

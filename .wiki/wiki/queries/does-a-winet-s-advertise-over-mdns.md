@@ -48,4 +48,6 @@ Sungrow records heard by a multicast browse, the reverse-DNS name's first label 
 vendor prefix, serials as stand-ins (`device-diagnosis/reference.md`). Its `mdns.state` answers
 the multicast question per house; the name and the prefix are what a DHCP matcher for an
 inverter's own LAN port would need. The first prefix: `AC:19:9F`, for peter-sm's inverter on its
-own LAN port; one house is not yet a pattern.
+own LAN port; one house is not yet a pattern. It is Sungrow's one prefix in the IEEE registry,
+and the integration's DHCP matcher keys on it
+([the maintainer's house](../sources/mkaiser-network-discovery-2026-11-15-summary.md)).

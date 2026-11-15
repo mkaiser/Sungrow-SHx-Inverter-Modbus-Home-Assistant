@@ -1,6 +1,6 @@
 # The texts, for review
 
-**350 texts**: everything in `strings.json` that is not an entity name, by its
+**358 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -11,7 +11,7 @@ A `{placeholder}` is filled in by the integration and stays as written; backtick
 and bold are kept.
 
 
-## Setup flow (94)
+## Setup flow (102)
 
 ### `config.flow_title`
 
@@ -25,23 +25,11 @@ and bold are kept.
 
 > **DE** Das Gerät ist bereits konfiguriert
 
-### `config.abort.devices_mode_not_offered`
+### `config.abort.already_in_progress`
 
-> **EN** Devices mode is not available in this preview. This build sets the integration up for diagnostics only -- it polls the inverter and can run the capability diagnosis, but creates no sensors. Promotion will be offered in a later release, and the entry does not need to be removed and added again when it is.
+> **EN** This device is already being offered. Finish or close that dialog first.
 
-> **DE** Der Geräte-Modus ist in dieser Vorschau nicht verfügbar. Diese Version richtet die Integration nur für die Diagnose ein: Sie fragt den Wechselrichter ab und kann die Diagnose ausführen, legt aber keine Sensoren an. Die Freischaltung folgt in einer späteren Version; der Eintrag muss dafür nicht entfernt und neu hinzugefügt werden.
-
-### `config.abort.wrong_device`
-
-> **EN** That address answers as a different inverter ({model}), not the one behind “{title}”. Nothing was changed. Each inverter keeps its own entry; to add that one, use Add integration.
-
-> **DE** Diese Adresse meldet sich als anderer Wechselrichter ({model}), nicht als der hinter „{title}“. Es wurde nichts geändert. Jeder Wechselrichter behält seinen eigenen Eintrag; um jenen hinzuzufügen, wähle „Integration hinzufügen“.
-
-### `config.abort.connection_unchanged`
-
-> **EN** That is the connection this entry already uses. Nothing was changed.
-
-> **DE** Das ist bereits die Verbindung dieses Eintrags. Es wurde nichts geändert.
+> **DE** Dieses Gerät wird schon angeboten. Schließe zuerst diesen Dialog ab.
 
 ### `config.abort.connection_moved`
 
@@ -49,17 +37,23 @@ and bold are kept.
 
 > **DE** „{title}“ verwendet jetzt die neue Verbindung. Der Eintrag wurde neu geladen; seine Entitäten, deren Verlauf und seine Einstellungen sind unverändert.
 
-### `config.abort.wallbox_entry`
+### `config.abort.connection_unchanged`
 
-> **EN** This is a wallbox read at its own address, and its address is not changed here: to follow it to a new address, search your network again and pick it; the entry finds it by its serial. Its capability test and diagnosis settings are under **Configure**.
+> **EN** That is the connection this entry already uses. Nothing was changed.
 
-> **DE** Das ist eine Wallbox, die unter ihrer eigenen Adresse gelesen wird, und ihre Adresse wird hier nicht geändert: Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer. Die Einstellungen für ihren Funktionstest und ihre Diagnose findest du unter **Konfigurieren**.
+> **DE** Das ist bereits die Verbindung dieses Eintrags. Es wurde nichts geändert.
 
-### `config.abort.unit_247_entry`
+### `config.abort.devices_mode_not_offered`
 
-> **EN** This entry shows an iHomeManager's readings and its diagnosis, or a Sungrow Logger's diagnosis, and has no settings. If the device moves to another address or port, search your network again and add it there.
+> **EN** Devices mode is not available in this preview. This build sets the integration up for diagnostics only -- it polls the inverter and can run the capability diagnosis, but creates no sensors. Promotion will be offered in a later release, and the entry does not need to be removed and added again when it is.
 
-> **DE** Dieser Eintrag zeigt die Messwerte und die Diagnose eines iHomeManagers oder die Diagnose eines Sungrow-Loggers und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu.
+> **DE** Der Geräte-Modus ist in dieser Vorschau nicht verfügbar. Diese Version richtet die Integration nur für die Diagnose ein: Sie fragt den Wechselrichter ab und kann die Diagnose ausführen, legt aber keine Sensoren an. Die Freischaltung folgt in einer späteren Version; der Eintrag muss dafür nicht entfernt und neu hinzugefügt werden.
+
+### `config.abort.not_identified`
+
+> **EN** The device at {host} did not answer as a Sungrow device over Modbus. A Sungrow accepts very few Modbus connections: if another integration, a second Home Assistant or the YAML package is still polling it, stop that and try again, or use **Add integration → Search my network**.
+
+> **DE** Das Gerät unter {host} hat über Modbus nicht als Sungrow-Gerät geantwortet. Ein Sungrow nimmt nur sehr wenige Modbus-Verbindungen an: Fragt eine andere Integration, ein zweites Home Assistant oder das YAML-Paket es noch ab, beende das und versuche es erneut, oder nutze **Integration hinzufügen → Mein Netzwerk durchsuchen**.
 
 ### `config.abort.not_supported`
 
@@ -67,11 +61,35 @@ and bold are kept.
 
 > **DE** Diese Ankündigung nennt kein Sungrow-Gerät, das sich daraus einrichten lässt. Ein WiNet-S, der keinen Wechselrichter hinter sich nennt, hat nichts hinzuzufügen.
 
-### `config.abort.not_identified`
+### `config.abort.unit_247_entry`
 
-> **EN** The device at {host} did not answer as a Sungrow device over Modbus. A Sungrow accepts very few Modbus connections: if another integration, a second Home Assistant or the YAML package is still polling it, stop that and try again, or use **Add integration → Search my network**.
+> **EN** This entry shows an iHomeManager's readings and its diagnosis, or a Sungrow Logger's diagnosis, and has no settings. If the device moves to another address or port, search your network again and add it there.
 
-> **DE** Das Gerät unter {host} hat über Modbus nicht als Sungrow-Gerät geantwortet. Ein Sungrow nimmt nur sehr wenige Modbus-Verbindungen an: Fragt eine andere Integration, ein zweites Home Assistant oder das YAML-Paket es noch ab, beende das und versuche es erneut, oder nutze **Integration hinzufügen → Mein Netzwerk durchsuchen**.
+> **DE** Dieser Eintrag zeigt die Messwerte und die Diagnose eines iHomeManagers oder die Diagnose eines Sungrow-Loggers und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu.
+
+### `config.abort.wallbox_entry`
+
+> **EN** This is a wallbox read at its own address, and its address is not changed here: to follow it to a new address, search your network again and pick it; the entry finds it by its serial. Its capability test and diagnosis settings are under **Configure**.
+
+> **DE** Das ist eine Wallbox, die unter ihrer eigenen Adresse gelesen wird, und ihre Adresse wird hier nicht geändert: Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer. Die Einstellungen für ihren Funktionstest und ihre Diagnose findest du unter **Konfigurieren**.
+
+### `config.abort.wifi_module_linked`
+
+> **EN** The WiFi module is now shown on **{title}**'s device page, with a link to its web page.
+
+> **DE** Das WLAN-Modul erscheint jetzt auf der Geräteseite von **{title}**, mit einem Link auf seine Webseite.
+
+### `config.abort.wifi_module_no_inverter`
+
+> **EN** A RAK WiFi module is on your network at {host}, but no Sungrow inverter is set up yet to link it to. Set up the inverter first; the module is offered again when Home Assistant next sees it.
+
+> **DE** Ein RAK-WLAN-Modul ist in deinem Netzwerk unter {host}, aber es ist noch kein Sungrow-Wechselrichter eingerichtet, mit dem es sich verknüpfen ließe. Richte zuerst den Wechselrichter ein; das Modul wird wieder angeboten, wenn Home Assistant es das nächste Mal sieht.
+
+### `config.abort.wrong_device`
+
+> **EN** That address answers as a different inverter ({model}), not the one behind “{title}”. Nothing was changed. Each inverter keeps its own entry; to add that one, use Add integration.
+
+> **DE** Diese Adresse meldet sich als anderer Wechselrichter ({model}), nicht als der hinter „{title}“. Es wurde nichts geändert. Jeder Wechselrichter behält seinen eigenen Eintrag; um jenen hinzuzufügen, wähle „Integration hinzufügen“.
 
 ### `config.error.cannot_connect`
 
@@ -668,6 +686,44 @@ and bold are kept.
 > **DE** Deine Netzwerksuche hat auch **{label}** gefunden.
 >
 > Sende ab, um es so einzurichten, wie es die Liste der Suche getan hätte. Bis dahin wird nichts davon gelesen. Fragt das YAML-Paket oder eine andere Integration es noch ab, beende das zuerst.
+
+### `config.step.dhcp_confirm.title`
+
+> **EN** Sungrow device found
+
+> **DE** Sungrow-Gerät gefunden
+
+### `config.step.dhcp_confirm.description`
+
+> **EN** A device with Sungrow's network address prefix asked your router for an address: **{host}**. An inverter's own LAN port and a WiNet-S look like this.
+>
+> Setting it up first asks the device over Modbus what it is: the sighting is only a hint. If the YAML package or another integration is still polling it, stop that first.
+
+> **DE** Ein Gerät mit Sungrows Netzwerk-Adresspräfix hat deinen Router nach einer Adresse gefragt: **{host}**. So sehen der eigene LAN-Anschluss eines Wechselrichters und ein WiNet-S aus.
+>
+> Beim Einrichten wird das Gerät zuerst über Modbus gefragt, was es ist: Die Sichtung ist nur ein Hinweis. Fragt das YAML-Paket oder eine andere Integration es noch ab, beende das zuerst.
+
+### `config.step.wifi_module.title`
+
+> **EN** WiFi module found
+
+> **DE** WLAN-Modul gefunden
+
+### `config.step.wifi_module.description`
+
+> **EN** A RAK WiFi module, **{hostname}**, is on your network at **{host}**. It is the WiFi stick some Sungrow inverters carry, and it is not a Modbus device: it cannot be set up on its own, and the inverter does not say whether it carries one.
+>
+> If it is plugged into one of your inverters, pick that inverter: its device page then shows the module, with a link to the module's web page ({url}, behind the module's own login). To link nothing, close this dialog; **Ignore** stops this offer.
+
+> **DE** Ein RAK-WLAN-Modul, **{hostname}**, ist in deinem Netzwerk unter **{host}**. Es ist der WLAN-Stick, den manche Sungrow-Wechselrichter tragen, und kein Modbus-Gerät: Es lässt sich nicht für sich einrichten, und der Wechselrichter sagt nicht, ob er eines trägt.
+>
+> Steckt es in einem deiner Wechselrichter, wähle diesen: Seine Geräteseite zeigt dann das Modul, mit einem Link auf die Webseite des Moduls ({url}, hinter dessen eigener Anmeldung). Um nichts zu verknüpfen, schließe diesen Dialog; **Ignorieren** beendet dieses Angebot.
+
+### `config.step.wifi_module.data.inverter`
+
+> **EN** Inverter it is plugged into
+
+> **DE** Wechselrichter, in dem es steckt
 
 ### `config.progress.searching`
 

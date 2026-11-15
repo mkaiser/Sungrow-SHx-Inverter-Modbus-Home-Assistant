@@ -3,14 +3,17 @@
     "flow_title": "{name}",
     "abort": {
       "already_configured": "Device is already configured",
-      "devices_mode_not_offered": "Devices mode is not available in this preview. This build sets the integration up for diagnostics only -- it polls the inverter and can run the capability diagnosis, but creates no sensors. Promotion will be offered in a later release, and the entry does not need to be removed and added again when it is.",
-      "wrong_device": "That address answers as a different inverter ({model}), not the one behind “{title}”. Nothing was changed. Each inverter keeps its own entry; to add that one, use Add integration.",
-      "connection_unchanged": "That is the connection this entry already uses. Nothing was changed.",
+      "already_in_progress": "This device is already being offered. Finish or close that dialog first.",
       "connection_moved": "“{title}” now uses the new connection. It has been reloaded; its entities, their history and its settings are unchanged.",
-      "wallbox_entry": "This is a wallbox read at its own address, and its address is not changed here: to follow it to a new address, search your network again and pick it; the entry finds it by its serial. Its capability test and diagnosis settings are under **Configure**.",
-      "unit_247_entry": "This entry shows an iHomeManager's readings and its diagnosis, or a Sungrow Logger's diagnosis, and has no settings. If the device moves to another address or port, search your network again and add it there.",
+      "connection_unchanged": "That is the connection this entry already uses. Nothing was changed.",
+      "devices_mode_not_offered": "Devices mode is not available in this preview. This build sets the integration up for diagnostics only -- it polls the inverter and can run the capability diagnosis, but creates no sensors. Promotion will be offered in a later release, and the entry does not need to be removed and added again when it is.",
+      "not_identified": "The device at {host} did not answer as a Sungrow device over Modbus. A Sungrow accepts very few Modbus connections: if another integration, a second Home Assistant or the YAML package is still polling it, stop that and try again, or use **Add integration → Search my network**.",
       "not_supported": "This announcement does not name a Sungrow device that can be set up from it. A WiNet-S naming no inverter behind it has nothing to add.",
-      "not_identified": "The device at {host} did not answer as a Sungrow device over Modbus. A Sungrow accepts very few Modbus connections: if another integration, a second Home Assistant or the YAML package is still polling it, stop that and try again, or use **Add integration → Search my network**."
+      "unit_247_entry": "This entry shows an iHomeManager's readings and its diagnosis, or a Sungrow Logger's diagnosis, and has no settings. If the device moves to another address or port, search your network again and add it there.",
+      "wallbox_entry": "This is a wallbox read at its own address, and its address is not changed here: to follow it to a new address, search your network again and pick it; the entry finds it by its serial. Its capability test and diagnosis settings are under **Configure**.",
+      "wifi_module_linked": "The WiFi module is now shown on **{title}**'s device page, with a link to its web page.",
+      "wifi_module_no_inverter": "A RAK WiFi module is on your network at {host}, but no Sungrow inverter is set up yet to link it to. Set up the inverter first; the module is offered again when Home Assistant next sees it.",
+      "wrong_device": "That address answers as a different inverter ({model}), not the one behind “{title}”. Nothing was changed. Each inverter keeps its own entry; to add that one, use Add integration."
     },
     "error": {
       "cannot_connect": "Failed to connect: {error}",
@@ -159,6 +162,17 @@
       "offered_confirm": {
         "title": "Found by your search",
         "description": "Your network search also found **{label}**.\n\nSubmit to set it up the way the search's list would have. Nothing is read from it until you do. If the YAML package or another integration is still polling it, stop that first."
+      },
+      "dhcp_confirm": {
+        "title": "Sungrow device found",
+        "description": "A device with Sungrow's network address prefix asked your router for an address: **{host}**. An inverter's own LAN port and a WiNet-S look like this.\n\nSetting it up first asks the device over Modbus what it is: the sighting is only a hint. If the YAML package or another integration is still polling it, stop that first."
+      },
+      "wifi_module": {
+        "title": "WiFi module found",
+        "description": "A RAK WiFi module, **{hostname}**, is on your network at **{host}**. It is the WiFi stick some Sungrow inverters carry, and it is not a Modbus device: it cannot be set up on its own, and the inverter does not say whether it carries one.\n\nIf it is plugged into one of your inverters, pick that inverter: its device page then shows the module, with a link to the module's web page ({url}, behind the module's own login). To link nothing, close this dialog; **Ignore** stops this offer.",
+        "data": {
+          "inverter": "Inverter it is plugged into"
+        }
       }
     },
     "progress": {

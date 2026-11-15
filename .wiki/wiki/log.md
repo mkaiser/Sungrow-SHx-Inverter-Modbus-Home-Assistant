@@ -883,3 +883,12 @@ gerd's TXT layout and an `ethinfo` address; the inverter's MAC vendor prefix is 
 mode 3 was taken; 33213 lost the connection a tenth time of ten, 33047 above its bound a third
 time; 13074 times ten again; restart in 271 s. New source page; updated installation-peter-sm,
 the P023 page, the 33213 and mDNS queries, the index.
+
+## [2026-11-15] measured | discovery at the maintainer's house; a RAK WiFi module
+
+Through the production Home Assistant on 0.1.0a40: zeroconf heard nothing from Sungrow; a RAK
+WiFi module answers HTTP 401 on 80 and DHCP as rakmodule-*, RAKwireless's prefix; Sungrow's one
+IEEE prefix is AC:19:9F; the network search missed the inverter twice while the manual step found
+it. New raw note and source mkaiser-network-discovery-2026-11-15, entity device-rak-wifi-module,
+query why-did-the-search-miss-mkaisers-inverter; updated installation-mkaiser, the mDNS query, the
+index.

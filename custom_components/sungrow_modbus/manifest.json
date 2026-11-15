@@ -23,6 +23,14 @@
     "network",
     "repairs"
   ],
+  "dhcp": [
+    {
+      "macaddress": "AC199F*"
+    },
+    {
+      "hostname": "rakmodule-*"
+    }
+  ],
   "documentation": "https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant",
   "integration_type": "device",
   "iot_class": "local_polling",

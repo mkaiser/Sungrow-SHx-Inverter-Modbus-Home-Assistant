@@ -3,14 +3,17 @@
     "flow_title": "{name}",
     "abort": {
       "already_configured": "Das Gerät ist bereits konfiguriert",
-      "devices_mode_not_offered": "Der Geräte-Modus ist in dieser Vorschau nicht verfügbar. Diese Version richtet die Integration nur für die Diagnose ein: Sie fragt den Wechselrichter ab und kann die Diagnose ausführen, legt aber keine Sensoren an. Die Freischaltung folgt in einer späteren Version; der Eintrag muss dafür nicht entfernt und neu hinzugefügt werden.",
-      "wrong_device": "Diese Adresse meldet sich als anderer Wechselrichter ({model}), nicht als der hinter „{title}“. Es wurde nichts geändert. Jeder Wechselrichter behält seinen eigenen Eintrag; um jenen hinzuzufügen, wähle „Integration hinzufügen“.",
-      "connection_unchanged": "Das ist bereits die Verbindung dieses Eintrags. Es wurde nichts geändert.",
+      "already_in_progress": "Dieses Gerät wird schon angeboten. Schließe zuerst diesen Dialog ab.",
       "connection_moved": "„{title}“ verwendet jetzt die neue Verbindung. Der Eintrag wurde neu geladen; seine Entitäten, deren Verlauf und seine Einstellungen sind unverändert.",
-      "wallbox_entry": "Das ist eine Wallbox, die unter ihrer eigenen Adresse gelesen wird, und ihre Adresse wird hier nicht geändert: Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer. Die Einstellungen für ihren Funktionstest und ihre Diagnose findest du unter **Konfigurieren**.",
-      "unit_247_entry": "Dieser Eintrag zeigt die Messwerte und die Diagnose eines iHomeManagers oder die Diagnose eines Sungrow-Loggers und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu.",
+      "connection_unchanged": "Das ist bereits die Verbindung dieses Eintrags. Es wurde nichts geändert.",
+      "devices_mode_not_offered": "Der Geräte-Modus ist in dieser Vorschau nicht verfügbar. Diese Version richtet die Integration nur für die Diagnose ein: Sie fragt den Wechselrichter ab und kann die Diagnose ausführen, legt aber keine Sensoren an. Die Freischaltung folgt in einer späteren Version; der Eintrag muss dafür nicht entfernt und neu hinzugefügt werden.",
+      "not_identified": "Das Gerät unter {host} hat über Modbus nicht als Sungrow-Gerät geantwortet. Ein Sungrow nimmt nur sehr wenige Modbus-Verbindungen an: Fragt eine andere Integration, ein zweites Home Assistant oder das YAML-Paket es noch ab, beende das und versuche es erneut, oder nutze **Integration hinzufügen → Mein Netzwerk durchsuchen**.",
       "not_supported": "Diese Ankündigung nennt kein Sungrow-Gerät, das sich daraus einrichten lässt. Ein WiNet-S, der keinen Wechselrichter hinter sich nennt, hat nichts hinzuzufügen.",
-      "not_identified": "Das Gerät unter {host} hat über Modbus nicht als Sungrow-Gerät geantwortet. Ein Sungrow nimmt nur sehr wenige Modbus-Verbindungen an: Fragt eine andere Integration, ein zweites Home Assistant oder das YAML-Paket es noch ab, beende das und versuche es erneut, oder nutze **Integration hinzufügen → Mein Netzwerk durchsuchen**."
+      "unit_247_entry": "Dieser Eintrag zeigt die Messwerte und die Diagnose eines iHomeManagers oder die Diagnose eines Sungrow-Loggers und hat keine Einstellungen. Zieht das Gerät auf eine andere Adresse oder einen anderen Port um, durchsuche dein Netzwerk erneut und füge es dort hinzu.",
+      "wallbox_entry": "Das ist eine Wallbox, die unter ihrer eigenen Adresse gelesen wird, und ihre Adresse wird hier nicht geändert: Um ihr an eine neue Adresse zu folgen, durchsuche dein Netzwerk erneut und wähle sie aus; der Eintrag findet sie über ihre Seriennummer. Die Einstellungen für ihren Funktionstest und ihre Diagnose findest du unter **Konfigurieren**.",
+      "wifi_module_linked": "Das WLAN-Modul erscheint jetzt auf der Geräteseite von **{title}**, mit einem Link auf seine Webseite.",
+      "wifi_module_no_inverter": "Ein RAK-WLAN-Modul ist in deinem Netzwerk unter {host}, aber es ist noch kein Sungrow-Wechselrichter eingerichtet, mit dem es sich verknüpfen ließe. Richte zuerst den Wechselrichter ein; das Modul wird wieder angeboten, wenn Home Assistant es das nächste Mal sieht.",
+      "wrong_device": "Diese Adresse meldet sich als anderer Wechselrichter ({model}), nicht als der hinter „{title}“. Es wurde nichts geändert. Jeder Wechselrichter behält seinen eigenen Eintrag; um jenen hinzuzufügen, wähle „Integration hinzufügen“."
     },
     "error": {
       "cannot_connect": "Verbindung fehlgeschlagen: {error}",
@@ -159,6 +162,17 @@
       "offered_confirm": {
         "title": "Von deiner Suche gefunden",
         "description": "Deine Netzwerksuche hat auch **{label}** gefunden.\n\nSende ab, um es so einzurichten, wie es die Liste der Suche getan hätte. Bis dahin wird nichts davon gelesen. Fragt das YAML-Paket oder eine andere Integration es noch ab, beende das zuerst."
+      },
+      "dhcp_confirm": {
+        "title": "Sungrow-Gerät gefunden",
+        "description": "Ein Gerät mit Sungrows Netzwerk-Adresspräfix hat deinen Router nach einer Adresse gefragt: **{host}**. So sehen der eigene LAN-Anschluss eines Wechselrichters und ein WiNet-S aus.\n\nBeim Einrichten wird das Gerät zuerst über Modbus gefragt, was es ist: Die Sichtung ist nur ein Hinweis. Fragt das YAML-Paket oder eine andere Integration es noch ab, beende das zuerst."
+      },
+      "wifi_module": {
+        "title": "WLAN-Modul gefunden",
+        "description": "Ein RAK-WLAN-Modul, **{hostname}**, ist in deinem Netzwerk unter **{host}**. Es ist der WLAN-Stick, den manche Sungrow-Wechselrichter tragen, und kein Modbus-Gerät: Es lässt sich nicht für sich einrichten, und der Wechselrichter sagt nicht, ob er eines trägt.\n\nSteckt es in einem deiner Wechselrichter, wähle diesen: Seine Geräteseite zeigt dann das Modul, mit einem Link auf die Webseite des Moduls ({url}, hinter dessen eigener Anmeldung). Um nichts zu verknüpfen, schließe diesen Dialog; **Ignorieren** beendet dieses Angebot.",
+        "data": {
+          "inverter": "Wechselrichter, in dem es steckt"
+        }
       }
     },
     "progress": {

@@ -15,6 +15,7 @@ from homeassistant.components import network
 from homeassistant.components.modbus import async_get_temporary_unit
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import (
+    SOURCE_DHCP,
     SOURCE_INTEGRATION_DISCOVERY,
     SOURCE_USER,
     ConfigEntry,
@@ -27,7 +28,7 @@ from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import UnknownFlow, section
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import discovery_flow
+from homeassistant.helpers import device_registry as dr, discovery_flow
 from homeassistant.helpers.selector import (
     BooleanSelector,
     BooleanSelectorConfig,
@@ -43,6 +44,7 @@ from homeassistant.helpers.selector import (
     TextSelector,
     TextSelectorConfig,
 )
+from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
 from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 from homeassistant.util import slugify
 from sungrow_modbus import (
@@ -77,6 +79,7 @@ from sungrow_modbus.string_inverter import model_for as string_inverter_model_fo
 from sungrow_modbus.wallbox import probe_units as wallbox_probe_units
 from sungrow_modbus.wallbox.device import SungrowWallbox
 
+from . import wifi_module
 from .config_flow_schemas import (
     NOT_LISTED,
     STEP_USER_DATA_SCHEMA,
@@ -121,6 +124,7 @@ from .const import (
     CONF_TLS,
     CONF_UNIT_ID,
     CONF_WALLBOX_MAX_AMPS,
+    CONF_WIFI_MODULE,
     DEFAULT_CAPABILITY_TEST_WALLBOX,
     DEFAULT_EXTERNAL_PLACEMENT,
     DEFAULT_NAME,
@@ -170,6 +174,13 @@ from .route import async_direct
 from .texts import Texts, async_texts
 
 _LOGGER = logging.getLogger(__name__)
+
+#: Flow context: the address a discovery offers, so a DHCP sighting and an
+#: mDNS record of one device make one offer, not two.
+CONTEXT_HOST = "discovered_host"
+
+#: The WiFi module step's one field: the inverter entry it belongs to.
+CONF_INVERTER = "inverter"
 
 
 def _alpha_placeholders(texts: Texts) -> dict[str, str]:
@@ -480,6 +491,9 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
         #: What an mDNS record announced: host, kind, model and the serial it
         #: named, if any. A hint until the device answers over Modbus.
         self._discovered: dict[str, Any] = {}
+        #: A RAK WiFi module DHCP saw: host, MAC and hostname, until the owner
+        #: says which inverter it belongs to.
+        self._wifi_module: dict[str, Any] = {}
         #: What a search handed this flow to offer: one device it found and
         #: the owner did not pick (`_async_offer_the_rest`).
         self._offered: dict[str, Any] = {}
@@ -684,6 +698,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             # A dongle naming no inverter has nothing behind it to set up.
             return self.async_abort(reason="not_supported")
         self._async_abort_entries_match({CONF_HOST: host})
+        self.context[CONTEXT_HOST] = host  # type: ignore[literal-required]
         if named.serial:
             await self.async_set_unique_id(named.serial)
             # A wallbox's entry is its own address, so it follows a new one.
@@ -703,7 +718,153 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
             "via": (board.model if board else None) or advert.instance,
         }
         self.context["title_placeholders"] = {"name": f"{model} ({host})"}
+        # The record names more than a DHCP sighting of the same address did:
+        # one offer, this one.
+        for flow in self._async_in_progress(include_uninitialized=True):
+            if (
+                flow["context"].get(CONTEXT_HOST) == host
+                and flow["context"].get("source") == SOURCE_DHCP
+            ):
+                self.hass.config_entries.flow.async_abort(flow["flow_id"])
         return await self.async_step_discovery_confirm()
+
+    async def async_step_dhcp(
+        self, discovery_info: DhcpServiceInfo
+    ) -> ConfigFlowResult:
+        """Offer a Sungrow network port, or link a RAK WiFi module, seen by DHCP.
+
+        A Sungrow port (`wifi_module.SUNGROW_MAC_PREFIX`) is offered as the
+        zeroconf step offers a dongle: nothing read until the owner confirms,
+        anything set up at that address left alone, and identified over
+        Modbus once confirmed. An inverter's own LAN port announces nothing
+        over mDNS, so this is how Home Assistant notices one by itself -- if
+        it asks the router for its address; a fixed address is never seen.
+
+        A RAK WiFi module is not a Modbus device; the owner is asked which
+        inverter it is plugged into (`async_step_wifi_module`).
+        """
+        host = discovery_info.ip
+        if wifi_module.is_rak_module(discovery_info.hostname):
+            return await self._async_wifi_module_seen(
+                host, discovery_info.macaddress, discovery_info.hostname
+            )
+        if not wifi_module.is_sungrow_mac(discovery_info.macaddress):
+            return self.async_abort(reason="not_supported")
+        self._async_abort_entries_match({CONF_HOST: host})
+        for flow in self._async_in_progress(include_uninitialized=True):
+            if flow["context"].get(CONTEXT_HOST) == host:
+                return self.async_abort(reason="already_in_progress")
+        self.context[CONTEXT_HOST] = host  # type: ignore[literal-required]
+        # Until the serial is read: lets the owner ignore this one device.
+        await self.async_set_unique_id(
+            f"dhcp-{dr.format_mac(discovery_info.macaddress)}"
+        )
+        self._abort_if_unique_id_configured()
+        self._discovered = {
+            CONF_HOST: host,
+            "kind": "inverter",
+            "model": DEFAULT_NAME,
+            "via": None,
+        }
+        self.context["title_placeholders"] = {"name": f"Sungrow ({host})"}
+        return await self.async_step_dhcp_confirm()
+
+    async def async_step_dhcp_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ask before connecting to a Sungrow port DHCP saw, then identify it."""
+        host = self._discovered[CONF_HOST]
+        if user_input is None:
+            self._set_confirm_only()
+            return self.async_show_form(
+                step_id="dhcp_confirm", description_placeholders={"host": host}
+            )
+        return await self._async_identify_discovered(host)
+
+    async def _async_wifi_module_seen(
+        self, host: str, mac: str, hostname: str
+    ) -> ConfigFlowResult:
+        """Follow a linked module to its new address, or ask whom a new one serves."""
+        await self.async_set_unique_id(
+            f"{wifi_module.IDENTIFIER_PREFIX}{dr.format_mac(mac)}"
+        )
+        self._abort_if_unique_id_configured()
+        entries = self._async_current_entries(include_ignore=False)
+        if (linked := wifi_module.linked_to(entries, mac)) is not None:
+            module = linked.data[CONF_WIFI_MODULE]
+            if module.get(CONF_HOST) != host:
+                # The device page's link follows; nothing reloads.
+                self.hass.config_entries.async_update_entry(
+                    linked,
+                    data={**linked.data, CONF_WIFI_MODULE: {**module, CONF_HOST: host}},
+                )
+                wifi_module.async_refresh(self.hass, linked)
+            return self.async_abort(reason="already_configured")
+        if not wifi_module.inverter_entries(entries):
+            return self.async_abort(
+                reason="wifi_module_no_inverter",
+                description_placeholders={"host": host},
+            )
+        self._wifi_module = {
+            CONF_HOST: host,
+            wifi_module.MAC: dr.format_mac(mac),
+            wifi_module.HOSTNAME: hostname,
+        }
+        self.context["title_placeholders"] = {"name": f"WiFi module ({host})"}
+        return await self.async_step_wifi_module()
+
+    async def async_step_wifi_module(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ask which inverter a RAK WiFi module is plugged into, and link it there.
+
+        Only the owner knows: the inverter does not report the module over
+        Modbus. Linking stores it on that inverter's entry and shows the module
+        under the inverter, with a link to its web page; nothing reloads.
+        Closing the dialog links nothing; *Ignore* stops the offer.
+        """
+        module = self._wifi_module
+        inverters = wifi_module.inverter_entries(
+            self._async_current_entries(include_ignore=False)
+        )
+        if user_input is not None:
+            entry = next(
+                (e for e in inverters if e.entry_id == user_input[CONF_INVERTER]),
+                None,
+            )
+            if entry is None:
+                return self.async_abort(reason="not_supported")
+            self.hass.config_entries.async_update_entry(
+                entry, data={**entry.data, CONF_WIFI_MODULE: module}
+            )
+            wifi_module.async_refresh(self.hass, entry)
+            return self.async_abort(
+                reason="wifi_module_linked",
+                description_placeholders={"title": entry.title},
+            )
+        return self.async_show_form(
+            step_id="wifi_module",
+            data_schema=probatio.Schema(
+                {
+                    probatio.Required(
+                        CONF_INVERTER, default=inverters[0].entry_id
+                    ): SelectSelector(
+                        SelectSelectorConfig(
+                            options=[
+                                SelectOptionDict(value=e.entry_id, label=e.title)
+                                for e in inverters
+                            ],
+                            mode=SelectSelectorMode.DROPDOWN,
+                        )
+                    )
+                }
+            ),
+            description_placeholders={
+                "host": module[CONF_HOST],
+                "hostname": module[wifi_module.HOSTNAME],
+                "url": wifi_module.web_page(module),
+            },
+        )
 
     async def async_step_discovery_confirm(
         self, user_input: dict[str, Any] | None = None
@@ -742,6 +903,11 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                 }
             }
             return await self._async_add_wallbox(host)
+        return await self._async_identify_discovered(host)
+
+    async def _async_identify_discovered(self, host: str) -> ConfigFlowResult:
+        """Identify a discovered inverter over Modbus, then take the search's path."""
+        self._mode = MODE_DIAGNOSTICS if ONLY_DIAGNOSIS_MODE else MODE_DEVICES
         self._found = await self._async_identify([(host, DEFAULT_PORT)])
         if host not in self._found:
             return self.async_abort(

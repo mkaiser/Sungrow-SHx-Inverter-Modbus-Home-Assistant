@@ -56,6 +56,8 @@
 - [Register 32998 \(site import power limit\)](entities/register-32998.md) — Undocumented import cap in 0.01 kW; holds on an SH10RS and on P020 under a forced charge (grid import alone, PV counted), not against house load, reported ignored on an SH10RT-V112 #register #holding #import-limit #undocumented
 - [Register 6100 \(transport probe\)](entities/register-6100.md) — Answers on a cable, refused through a dongle: the transport question #register #input #transport
 
+- [RAK WiFi module](entities/device-rak-wifi-module.md) — an older WiFi stick: a web page on 80, no Modbus, DHCP name rakmodule-*; linked by the owner #rak-module #dongle #discovery
+
 ## Concepts
 
 - [Contention](concepts/contention.md) — Few sessions, 90 s to recover; progressive failure means contention, a fixed address means a fault #modbus #sessions #polling
@@ -203,6 +205,8 @@
 - [sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-3.json](sources/sh80rt-v112-b001v000p022-3p-gerd-anon-00267885816-battery-sbr096-wallbox-winet-wlan-3-summary.md) — SH8.0RT-V112, P022, gerd, WiNet-S, third reading; the wallbox charging, 21313 at 527; PV cut did as told, stop refused #diagnosis #sh80rt-v112 #sapphire-h-b001-v000-p022 #gerd #winet #wallbox #capability-test
 - [wallbox_registers.md](sources/wallbox-registers-summary.md) — The AC wallbox map, with how strongly each row is held #wallbox #registers #ac22e-01
 
+- [mkaiser-network-discovery-2026-11-15.md](sources/mkaiser-network-discovery-2026-11-15-summary.md) — no Sungrow mDNS at the maintainer's house, a RAK WiFi module by DHCP, Sungrow's one vendor prefix, the search missing the inverter #discovery #mdns #dhcp #rak-module #mkaiser
+
 ## Queries
 
 - [Can a managed wallbox be set to one phase over Modbus?](queries/can-a-managed-wallbox-be-set-to-one-phase.md) — Open: no document names a way; 21204 did not, 33538/33539 refuse writes in fast and PV surplus #wallbox #phases #ems #open
@@ -220,3 +224,4 @@
 - [What does a Sungrow Logger answer?](queries/what-does-a-logger-answer.md) — Open: the Logger itself unread; two inverters read through one #logger #open #diagnosis-wanted
 - [What do the registers only V1.1.17 lists read?](queries/what-do-the-v1-1-17-only-registers-read.md) — Answered: 31222 is 13074 in 0.01 kW, 13043 is never a DRM state, 13080 is not a heartbeat setting #specification #hybrid #drm #ems #answered
 - [Where are Sungrow's documents?](queries/where-are-sungrows-documents.md) — Answered: where each protocol, manual and community map is, and which searches found nothing #specification #logger #ihomemanager #wallbox #answered
+- [Why did the search miss the maintainer's inverter?](queries/why-did-the-search-miss-mkaisers-inverter.md) — Open: port 502 never answered the sweep from the Home Assistant that polls it #discovery #contention #mkaiser #open

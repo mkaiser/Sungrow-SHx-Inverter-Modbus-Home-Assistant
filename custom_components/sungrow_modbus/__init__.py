@@ -51,6 +51,7 @@ from sungrow_modbus.wallbox import (
 )
 from sungrow_modbus.wallbox.device import SungrowWallbox
 
+from . import wifi_module
 from .battery_descriptions import MODULE_DESCRIPTIONS
 from .const import (
     CONF_ENTITY_IDS,
@@ -64,6 +65,7 @@ from .const import (
     CONF_MODE,
     CONF_TLS,
     CONF_UNIT_ID,
+    CONF_WIFI_MODULE,
     DEFAULT_EXTERNAL_PLACEMENT,
     DOMAIN,
     ENTITY_IDS_MIGRATE,
@@ -782,11 +784,14 @@ def _async_register_inverter(
         coordinator.route = route
         coordinator.web_interface = link
     device_info = next(iter(coordinators.values())).device_info
-    return (
+    device_id = (
         dr.async_get(hass)
         .async_get_or_create(config_entry_id=entry.entry_id, **device_info)
         .id
     )
+    # After the inverter, which the module names as the device it hangs off.
+    wifi_module.async_register(hass, entry, device_info)
+    return device_id
 
 
 async def _async_route(inverter: Any) -> str | None:
@@ -1163,6 +1168,10 @@ def _built_from(entry: SungrowConfigEntry) -> tuple[dict[str, Any], dict[str, An
         CONF_EXPORT_WRITE_SCALE,
         CONF_EXPORT_WRITE_SCALE_FIRMWARE,
         CONF_EXPORT_WRITE_SCALE_PROBE,
+        # The linked WiFi module is a device of its own, kept in step where
+        # the link changes (`wifi_module.async_refresh`); a reload there would
+        # race the device registry removing the module's device.
+        CONF_WIFI_MODULE,
     }
     data = {k: v for k, v in entry.data.items() if k not in measured}
     return data, dict(entry.options)
@@ -1178,6 +1187,14 @@ async def async_remove_config_entry_device(
     the owner knows it is gone for good. The inverter and every device this
     setup found refuse, because the next poll would recreate them.
     """
+    if wifi_module.is_module_device(device_entry):
+        # The owner's link, so the owner's to undo; without it the next setup
+        # would put the device back.
+        hass.config_entries.async_update_entry(
+            entry,
+            data={k: v for k, v in entry.data.items() if k != CONF_WIFI_MODULE},
+        )
+        return True
     runtime = entry.runtime_data
     if runtime.is_device_only:
         # An iHomeManager or Logger entry has its own device, and nothing else.

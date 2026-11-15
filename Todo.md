@@ -331,7 +331,8 @@ Nothing can start now (blocker 16).
    (that happens only when nothing answers). Find out whether the inverter
    refuses a second TCP session from an address that already holds one, and
    if so, have the sweep count a host Home Assistant's `modbus` already
-   connects to as a candidate.
+   connects to as a candidate (wiki: why did the search miss the
+   maintainer's inverter).
 
 # Open decisions
 
@@ -572,9 +573,12 @@ Nothing can start now (blocker 16).
       `SUNGROW*` on `_http._tcp`; the record only decides whether to offer,
       Modbus identifies on confirm, nothing set up is ever moved. Waits on
       the first diagnoses with `network_names` from other houses.
-    - **A DHCP matcher** for an inverter on its own LAN port, once
-      `reverse_dns_label` or `mac_vendor_prefix` from a few direct-LAN
-      diagnoses agree.
+    - **A DHCP matcher: built 2026-11-15, unreleased** (`wifi_module.py`,
+      `tests/test_config_flow_dhcp.py`): Sungrow's one IEEE prefix
+      `AC199F*` offers a port as zeroconf does, and a RAK WiFi module
+      (`rakmodule-*`) is linked to the inverter its owner names, with a
+      device and a link to its page. Never seen on a LAN: needs a house whose
+      inverter port takes its address by DHCP; a fixed address is never seen.
     - A WiNet-S's *Visit* link for a cable entry, found by the inverter
       serial in its TXT (a link on the inverter, or the dongle as its own
       device).
