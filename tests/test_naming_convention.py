@@ -146,7 +146,7 @@ def test_every_name_follows_the_convention(domain: str, key: str, name: str) -> 
 
 #: Entities every entry has, with no register behind them either: how the
 #: endpoint is reached (`sensor.SungrowConnectionSensor`).
-ENTRY_ENTITIES = (("sensor", "connection"),)
+ENTRY_ENTITIES = (("sensor", "connection"), ("binary_sensor", "controls_held_by_test"))
 
 
 def test_every_entity_has_a_name_and_no_name_is_orphaned() -> None:

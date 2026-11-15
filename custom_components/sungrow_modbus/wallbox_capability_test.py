@@ -56,6 +56,7 @@ from .const import (
     KIND_WALLBOX,
 )
 from .repairs import async_clear_wallbox, async_raise_wallbox
+from .write_owner import async_test_owns_writes
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -345,7 +346,11 @@ async def async_restore_leftover(
     inverter_entry = managing_entry(hass, entry) if leftover["managed"] else None
     if leftover["managed"] and inverter_entry is None:
         return False
-    async with entry.runtime_data.async_paused():
+    held = [entry] if inverter_entry is None else [entry, inverter_entry]
+    async with (
+        entry.runtime_data.async_paused(),
+        async_test_owns_writes(held, entry.title),
+    ):
         if inverter_entry is None:
             done = await async_put_back(leftover, port, None)
         else:
@@ -369,6 +374,13 @@ def _snapshot_data(snapshot: dict[str, Any]) -> dict[str, Any]:
         "managed": bool(snapshot.get("managed")),
         "charging_at_start": bool(snapshot.get("charging_at_start")),
     }
+
+
+async def async_keep_leftover(
+    hass: HomeAssistant, entry: SungrowConfigEntry, leftover: dict[str, Any]
+) -> None:
+    """Save a leftover snapshot again, after the owner's write replaced a word."""
+    await snapshot_store(hass, entry).async_save(_snapshot_data(leftover))
 
 
 # -- the ledger -----------------------------------------------------------------
@@ -554,31 +566,32 @@ class WallboxTestRunner:
             # has already been changed.
             await store.async_save(_snapshot_data(snapshot))
 
-        try:
-            await self._async_restore_leftover(port)
-        except wct.Guard as guard:
-            outcome = wct.Outcome(
-                guard.code, (), (), {"guard": guard.reason}, (guard.reason,)
-            )
-            return ledger.block(
-                outcome,
+        async with async_test_owns_writes([self.entry], self.entry.title):
+            try:
+                await self._async_restore_leftover(port)
+            except wct.Guard as guard:
+                outcome = wct.Outcome(
+                    guard.code, (), (), {"guard": guard.reason}, (guard.reason,)
+                )
+                return ledger.block(
+                    outcome,
+                    options,
+                    transport=transport_of(self.entry),
+                    fresh=False,
+                    firmware=firmware_of(device),
+                )
+            self._test = wct.WallboxCapabilityTest(
+                port,
                 options,
-                transport=transport_of(self.entry),
-                fresh=False,
-                firmware=firmware_of(device),
+                on_snapshot=keep if options.leave else None,
+                on_step=on_progress,
             )
-        self._test = wct.WallboxCapabilityTest(
-            port,
-            options,
-            on_snapshot=keep if options.leave else None,
-            on_step=on_progress,
-        )
-        _LOGGER.warning(
-            "%s: running the wallbox capability test. It writes to the wallbox's "
-            "settings and puts each one back.",
-            self.entry.title,
-        )
-        outcome = await self._test.async_run()
+            _LOGGER.warning(
+                "%s: running the wallbox capability test. It writes to the "
+                "wallbox's settings and puts each one back.",
+                self.entry.title,
+            )
+            outcome = await self._test.async_run()
         if outcome.not_restored:
             _LOGGER.error(
                 "%s: the wallbox capability test could not put %s back; the "
@@ -617,7 +630,12 @@ class WallboxTestRunner:
             await store.async_save(_snapshot_data({**snapshot, "managed": True}))
 
         # The inverter entry polls the same inverter: held off as this one is.
-        async with inverter_entry.runtime_data.async_paused():
+        # And its controls refuse: the block this run writes is theirs, and
+        # an owner's write in between would be undone by the restore.
+        async with (
+            inverter_entry.runtime_data.async_paused(),
+            async_test_owns_writes([self.entry, inverter_entry], self.entry.title),
+        ):
             try:
                 await self._async_restore_leftover(reader, port)
             except wct.Guard as guard:

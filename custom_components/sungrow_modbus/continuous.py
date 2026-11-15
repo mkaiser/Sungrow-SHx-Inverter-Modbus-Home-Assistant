@@ -23,7 +23,10 @@ still unsettled, and writes nothing for them.
 Bounded so a forgotten switch cannot become a nuisance: one run per slot, never
 one while the inverter is not running (low-SoC Standby at night would refuse
 it anyway, after part A), at least `QUIET` after the last run ended, and it
-switches itself off once nothing waiting can answer is left.
+switches itself off once nothing waiting can answer is left. And it waits
+after the owner changed a control (`write_owner.OWNER_QUIET`), or a managed
+wallbox's charging (`OWNER_QUIET_EV`): a run then would read the house still
+answering the owner.
 """
 
 from __future__ import annotations
@@ -36,6 +39,8 @@ from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.util import dt as dt_util
 from sungrow_modbus.capability_test import is_running, ledger
+
+from .write_owner import EV_CHARGER, OWNER_QUIET, OWNER_QUIET_EV, owner_quiet_until
 
 if TYPE_CHECKING:
     from .coordinator import SungrowConfigEntry
@@ -229,6 +234,13 @@ class ContinuousCapabilityTest:
         if self._inverter_running() is False:
             self._say("waiting for the inverter to run")
             return False
+        held = owner_quiet_until(self.entry.runtime_data, OWNER_QUIET, now=now)
+        if held is not None:
+            self._say(
+                "the owner changed a control; the next run not before "
+                f"{dt_util.as_local(held):%H:%M}"
+            )
+            return False
         due = ledger.due(folded, self.live())
         if not due:
             self._say(
@@ -268,6 +280,14 @@ class ContinuousCapabilityTest:
             if not said:
                 self._say("a moment of quiet after the last run")
             return
+        held = self._owner_charging_until(now)
+        if held is not None:
+            if not said:
+                self._say(
+                    "the owner changed the wallbox's charging; the next wallbox "
+                    f"run not before {dt_util.as_local(held):%H:%M}"
+                )
+            return
         due = self.runner.wallbox_due()
         if not due:
             if not said:
@@ -287,6 +307,21 @@ class ContinuousCapabilityTest:
                 ", ".join(due),
             )
             self._say("running the wallbox for " + ", ".join(due))
+
+    def _owner_charging_until(self, now: datetime) -> datetime | None:
+        """Return when a wallbox run may start after the owner set its charging.
+
+        The owner sets it at the inverter that manages the wallbox, on that
+        inverter's entry: its EV charger controls.
+        """
+        from .wallbox_capability_test import managing_entry
+
+        inverter = managing_entry(self.hass, self.entry)
+        if inverter is None:
+            return None
+        return owner_quiet_until(
+            inverter.runtime_data, OWNER_QUIET_EV, (EV_CHARGER,), now=now
+        )
 
     @callback
     def _say(self, waiting: str) -> None:

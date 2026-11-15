@@ -1,6 +1,6 @@
 # The texts, for review
 
-**358 texts**: everything in `strings.json` that is not an entity name, by its
+**359 texts**: everything in `strings.json` that is not an entity name, by its
 path -- the setup and options flows, repairs, actions and error messages.
 Each is shown in English and with its German, which lives in
 `scripts/generate/tables/german_texts.json` and ships in
@@ -2337,7 +2337,7 @@ and bold are kept.
 > **DE** Welcher Wechselrichter gestoppt werden soll.
 
 
-## Error messages (22)
+## Error messages (23)
 
 ### `exceptions.device_not_found.message`
 
@@ -2386,6 +2386,12 @@ and bold are kept.
 > **EN** Could not write {entity_id}: {error}
 
 > **DE** {entity_id} konnte nicht geschrieben werden: {error}
+
+### `exceptions.test_has_link.message`
+
+> **EN** {target} was not written: a capability test run by {by} has held the controls since {since}. It puts everything back when it ends, and the controls work again then. Where that device has Diagnosis: stop, it ends the run sooner.
+
+> **DE** {target} wurde nicht geschrieben: Ein Funktionstest von {by} belegt die Steuerung seit {since}. Er setzt am Ende alles zurück, danach funktioniert die Steuerung wieder. Wo dieses Gerät Diagnose: stoppen hat, beendet das den Lauf früher.
 
 ### `exceptions.write_scale_unread.message`
 

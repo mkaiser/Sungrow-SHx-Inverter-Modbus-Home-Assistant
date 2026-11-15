@@ -206,6 +206,9 @@
       "battery_discharging_delay": {
         "name": "Batterie entlädt (verzögert)"
       },
+      "controls_held_by_test": {
+        "name": "Diagnose: Steuerung vom Test belegt"
+      },
       "exporting_power": {
         "name": "Einspeisung"
       },
@@ -1907,6 +1910,9 @@
     },
     "write_failed": {
       "message": "{entity_id} konnte nicht geschrieben werden: {error}"
+    },
+    "test_has_link": {
+      "message": "{target} wurde nicht geschrieben: Ein Funktionstest von {by} belegt die Steuerung seit {since}. Er setzt am Ende alles zurück, danach funktioniert die Steuerung wieder. Wo dieses Gerät Diagnose: stoppen hat, beendet das den Lauf früher."
     },
     "write_scale_unread": {
       "message": "{entity_id} konnte nicht geschrieben werden: Die Grenzen der Einspeisebegrenzung konnten nicht gelesen werden, um den Schreibfaktor dieses Wechselrichters zu ermitteln: {error}"

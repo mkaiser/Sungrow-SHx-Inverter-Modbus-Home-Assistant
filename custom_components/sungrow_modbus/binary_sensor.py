@@ -21,6 +21,7 @@ from sungrow_modbus.hybrid_inverter.smoothing import DelayOn
 
 from .coordinator import SungrowConfigEntry, SungrowRuntimeData
 from .derived_descriptions import DERIVED_BINARY_SENSORS
+from .diagnosis_entities import ControlsHeldByTestBinarySensor
 from .entity import (
     SungrowBinarySensorDescription,
     SungrowDeviceEntity,
@@ -66,6 +67,9 @@ async def async_setup_entry(
         for description in DERIVED_BINARY_SENSORS
         if runtime_data.serves(description)
     )
+
+    # Whether a capability test holds the controls, which refuse meanwhile.
+    async_add_entities([ControlsHeldByTestBinarySensor(runtime_data)])
 
     # The wallbox's two: whether it is charging, and whether it is enabled.
     # `Charging` is derived from the status code rather than from the power,

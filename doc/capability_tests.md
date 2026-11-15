@@ -104,6 +104,31 @@ not report status 8 (*disabled*), and the managed test waits for the charge
 (`custom_components/sungrow_modbus/repairs.py`). The mileage check is gone: its one run on
 hardware left the app's *Fahrstrecke pro kWh* wrong.
 
+## The controls during a run
+
+A run and the owner's controls never write at the same time
+(`custom_components/sungrow_modbus/write_owner.py`):
+
+- **While a run writes, the controls refuse.** From just before part B's snapshot until its
+  restore is checked, every control of that entry (numbers, switches, selects, times, buttons,
+  the feed-in limit and the start and stop actions) refuses before anything is sent, with an
+  error naming the run and since when. A wallbox run that writes an inverter's EV charger block
+  holds that inverter entry's controls too. The read-only part A holds nothing.
+- **They stay available.** Home Assistant silently drops a call to an unavailable entity, so an
+  automation would believe it had written. Instead it gets the error, and can catch it with
+  `continue_on_error`. *Diagnosis: controls held by test* is on for the duration, naming the run
+  in `held_by`; a dashboard can hide the controls behind it.
+- **Auto repeat waits after the owner wrote**: 10 minutes after a change to any control, before
+  an inverter run, and an hour after a change to the wallbox's charging, before a wallbox run.
+  *Diagnosis: current step* says until when. A run started by hand does not wait.
+- **The owner's value beats a leftover snapshot.** A run that did not finish leaves its
+  snapshot, and its repair (or, for a wallbox, the next run) writes it back. A control the owner
+  set since then is taken out of it: the inverter's snapshot drops that setting, and a managed
+  wallbox's keeps the owner's word instead, the charge left off if the owner switched it off.
+- **What cannot be held**: a write that does not go through these entities, such as
+  `modbus.write_register` or another program on a connection of its own. Leave those off while
+  auto repeat runs.
+
 ## Readings checked against each other
 
 Read only, every minute between runs while *Extended test (auto repeat)* is on; the rows count

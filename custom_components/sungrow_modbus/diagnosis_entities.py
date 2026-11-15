@@ -32,6 +32,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
+from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.components.button import ButtonEntity
 from homeassistant.components.select import SelectEntity
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
@@ -56,6 +57,7 @@ from .const import (
 )
 from .entity import EnglishEntityId
 from .services import async_authorize
+from .write_owner import holder
 
 if TYPE_CHECKING:
     from .coordinator import SungrowRuntimeData
@@ -680,3 +682,33 @@ class SkipEstablishedCapabilityTestsSwitch(
             )
         self._runner.skip_established = False
         self.async_write_ha_state()
+
+
+class ControlsHeldByTestBinarySensor(DiagnosisEntity, BinarySensorEntity):
+    """On while a capability test holds this entry's controls (`write_owner`).
+
+    The one diagnosis entity an ordinary entry has, because it is the one
+    with controls. They stay available while held, and refuse: an automation
+    that writes then gets an error it can see, and a dashboard can hide them
+    behind this. A wallbox test writing this inverter's EV charger block
+    turns it on too, and names that entry.
+    """
+
+    def __init__(self, runtime_data: SungrowRuntimeData) -> None:
+        """Attach to the entry's inverter device."""
+        super().__init__(runtime_data, "controls_held_by_test")
+        self._runtime_data = runtime_data
+
+    @property
+    def is_on(self) -> bool:
+        """Whether a run holds the controls now."""
+        return holder(self._runtime_data) is not None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Whose run holds them, and since when."""
+        owner = holder(self._runtime_data)
+        return {
+            "held_by": None if owner is None else owner.by,
+            "since": None if owner is None else owner.since.isoformat(),
+        }

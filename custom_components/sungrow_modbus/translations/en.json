@@ -206,6 +206,9 @@
       "battery_discharging_delay": {
         "name": "Battery discharging (delayed)"
       },
+      "controls_held_by_test": {
+        "name": "Diagnosis: controls held by test"
+      },
       "exporting_power": {
         "name": "Exporting power"
       },
@@ -1907,6 +1910,9 @@
     },
     "write_failed": {
       "message": "Could not write {entity_id}: {error}"
+    },
+    "test_has_link": {
+      "message": "{target} was not written: a capability test run by {by} has held the controls since {since}. It puts everything back when it ends, and the controls work again then. Where that device has Diagnosis: stop, it ends the run sooner."
     },
     "write_scale_unread": {
       "message": "Could not write {entity_id}: could not read the export limit's bounds to work out this inverter's write scale: {error}"

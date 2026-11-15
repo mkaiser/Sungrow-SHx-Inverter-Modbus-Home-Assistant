@@ -27,6 +27,14 @@ exist so that a house is never left changed without anyone knowing.
   the restore writes `0x55` (off), checks it by raw read, and says so in its row. The pair is
   `RESTORE_EQUIVALENT` in `capability_test/procedure.py`, and nothing else is restored as
   anything but the snapshot's word.
+- **A control the owner sets after a run replaces that register's entry in the
+  leftover snapshot.** The owner's value is the one the house should keep, so
+  the inverter's snapshot drops the field and a managed wallbox's takes the
+  owner's word, with the charge left off where the owner switched it off. While
+  a run writes, the owner's controls refuse, so this happens only between a run
+  that did not finish and its repair (`custom_components/sungrow_modbus/write_owner.py`,
+  `tests/test_write_owner.py`; the maintainer's decision of 2026-11-15, in
+  `doc/architecture.md`).
 - **A restore is a statement about where the register is**, not about
   whether a write succeeded. **Over a confirmed cable** it reads before it
   writes, so a register that held its value throughout is never reported

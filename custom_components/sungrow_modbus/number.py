@@ -38,6 +38,7 @@ from .const import (
 from .coordinator import SungrowConfigEntry
 from .entity import SungrowEntity, SungrowNumberDescription, write_failed
 from .number_descriptions import NUMBER_DESCRIPTIONS
+from .write_owner import async_owner_wrote, refuse_while_test_writes
 
 # One at a time, and not for the usual reason. A Sungrow accepts very few
 # simultaneous Modbus sessions, and everything on this endpoint is already
@@ -203,6 +204,8 @@ class SungrowExportLimitNumber(SungrowNumber):
 
     async def async_set_native_value(self, value: float) -> None:
         """Write the limit at the measured scale, probing for it first if need be."""
+        # Before the probe too: its one write is a write.
+        refuse_while_test_writes(self._runtime_data, self.entity_id)
         factor = await self._async_write_scale()
         word = export_scale.word_for(value, factor)
         try:
@@ -211,6 +214,12 @@ class SungrowExportLimitNumber(SungrowNumber):
             )
         except ModbusError as err:
             raise write_failed(self.entity_id, err) from err
+        await async_owner_wrote(
+            self.hass,
+            self.coordinator.config_entry,
+            self.entity_description.component,
+            [(export_scale.LIMIT.address, word)],
+        )
         await self.async_refresh_after_write()
 
     async def _async_write_scale(self) -> int:

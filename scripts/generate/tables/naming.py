@@ -124,6 +124,9 @@ OVERRIDES: dict[str, str] = {
     "diagnosis_test_runs": "Diagnosis: test runs",
     "clear_capability_test_history": "Diagnosis: tests, clear history",
     "capability_test_status": "Diagnosis: test summary",
+    # On the entry with controls, not among the diagnosis's own: whether a
+    # capability test holds them (`write_owner`).
+    "controls_held_by_test": "Diagnosis: controls held by test",
     # The capability test's checks, counted by outcome (`ledger.BUCKETS`).
     "diagnosis_tests_passed": "Diagnosis: tests passed",
     "diagnosis_tests_failed": "Diagnosis: tests failed",
@@ -768,6 +771,7 @@ GERMAN: dict[str, str] = {
     "diagnosis_test_runs": "Diagnose: Testläufe",
     "clear_capability_test_history": "Diagnose: Testverlauf löschen",
     "capability_test_status": "Diagnose: Testübersicht",
+    "controls_held_by_test": "Diagnose: Steuerung vom Test belegt",
     "diagnosis_tests_passed": "Diagnose: Tests bestanden",
     "diagnosis_tests_failed": "Diagnose: Tests fehlgeschlagen",
     "diagnosis_tests_not_supported": "Diagnose: Tests nicht unterstützt",

@@ -157,7 +157,10 @@ Nothing can start now (blocker 13).
       hardware: at gerd's, with a car charging. In Home Assistant it runs
       from the wallbox's entry when an inverter entry here left the wallbox
       to it, writing through that entry (`managing_entry`); a wallbox with
-      no such inverter entry awaits nothing.
+      no such inverter entry awaits nothing. While a run writes, the
+      inverter entry's controls refuse (`write_owner.py`, built 2026-11-15,
+      not yet released or run on hardware): the rollout at gerd's, the
+      EV charger controls beside wallbox auto repeat, is the first test of it.
    5. **The next session at gerd's**: `plans/wallbox_tests.md`
       (quantity-and-time mode, writes that repeat what is set, waking a
       sleeping car, phase switching, PV surplus in sun), where the last one

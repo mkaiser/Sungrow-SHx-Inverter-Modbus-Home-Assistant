@@ -146,9 +146,14 @@ does, and puts everything back. Non-negotiable:
   budgeted, never deadlined and never skipped**, and it writes the snapshot's
   raw word, checked by raw read. The one exception is listed in
   `RESTORE_EQUIVALENT`: 13017's factory 0, which the register refuses, goes
-  back as `0x55`, which behaves the same. The snapshot is flushed before the first
+  back as `0x55`, which behaves the same. And a control the owner set after a
+  run left its snapshot replaces that register's entry: the owner's value is
+  the one to keep (`write_owner.py`). The snapshot is flushed before the first
   write. **No snapshot file for a day means no writes that day.** Exit 5 is
   the one code that means a house is left changed.
+- **While a run writes, the owner's controls refuse** (`write_owner.py`), and
+  stay available: Home Assistant drops a call to an unavailable entity
+  without a word.
 - **Leg B's scale is hand-typed from V1.1.11, never read from
   `field.scale`.** `tests/test_capability_test.py` makes the two meet.
 - **A simulator cannot produce a finding**, and through a WiNet-S only the

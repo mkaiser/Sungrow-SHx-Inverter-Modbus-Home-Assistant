@@ -25,6 +25,7 @@ from .coordinator import (
     SungrowStringInverterCoordinator,
     SungrowSubDeviceCoordinator,
 )
+from .write_owner import async_owner_wrote, refuse_while_test_writes, written
 
 
 class EnglishEntityId(Entity):
@@ -354,13 +355,21 @@ class SungrowEntity(EnglishEntityId, CoordinatorEntity[SungrowDataUpdateCoordina
         something it prefers, and showing what was asked for rather than what
         was accepted is how the YAML package's own readback automations came
         to exist.
+
+        Refused, before anything is sent, while a capability test holds this
+        entry's controls (`write_owner`).
         """
-        component = self.coordinator.device.component(self.entity_description.component)
+        refuse_while_test_writes(self._runtime_data, self.entity_id)
+        name = self.entity_description.component
+        component = self.coordinator.device.component(name)
         try:
             for field, value in writes:
                 await component.write(field, value)
         except ModbusError as err:
             raise write_failed(self.entity_id, err) from err
+        await async_owner_wrote(
+            self.hass, self.coordinator.config_entry, name, written(component, writes)
+        )
         await self.async_refresh_after_write()
 
     async def async_refresh_after_write(self) -> None:

@@ -779,6 +779,21 @@ class SungrowRuntimeData:
     unavailable for the length of a run.
     """
 
+    write_owners: list[Any] = field(default_factory=list)
+    """The runs holding this entry's controls, oldest first; empty for none.
+
+    After `diagnosis`, for the reason it gives. `write_owner.WriteOwner`s,
+    typed loosely for the same reason `diagnosis` is. While one is here every
+    control refuses (`write_owner.refuse_while_test_writes`).
+    """
+
+    owner_writes: dict[str, Any] = field(default_factory=dict)
+    """When the owner last wrote each component, as UTC datetimes.
+
+    After `diagnosis`, for the reason it gives. Auto repeat waits a while after
+    one (`write_owner.owner_quiet_until`).
+    """
+
     @asynccontextmanager
     async def async_paused(self) -> AsyncIterator[None]:
         """Hold every coordinator on this entry off the link for the duration.

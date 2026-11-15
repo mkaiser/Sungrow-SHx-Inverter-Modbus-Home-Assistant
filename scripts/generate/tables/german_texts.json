@@ -258,6 +258,7 @@
  "exceptions.diagnosis_already_running.message": "Auf diesem Wechselrichter läuft bereits eine Diagnose. Zwei gleichzeitig würden um eine seiner sehr wenigen Modbus-Verbindungen konkurrieren.",
  "exceptions.not_on_string_inverter.message": "{title} ist ein String-Wechselrichter. Diese Aktion schreibt in die Register eines Hybrid-Wechselrichters, und nichts in dieser Integration schreibt in einen String-Wechselrichter.",
  "exceptions.write_failed.message": "{entity_id} konnte nicht geschrieben werden: {error}",
+ "exceptions.test_has_link.message": "{target} wurde nicht geschrieben: Ein Funktionstest von {by} belegt die Steuerung seit {since}. Er setzt am Ende alles zurück, danach funktioniert die Steuerung wieder. Wo dieses Gerät Diagnose: stoppen hat, beendet das den Lauf früher.",
  "exceptions.write_scale_unread.message": "{entity_id} konnte nicht geschrieben werden: Die Grenzen der Einspeisebegrenzung konnten nicht gelesen werden, um den Schreibfaktor dieses Wechselrichters zu ermitteln: {error}",
  "exceptions.start_failed.message": "{device} konnte nicht gestartet werden: {error}",
  "exceptions.stop_failed.message": "{device} konnte nicht gestoppt werden: {error}",

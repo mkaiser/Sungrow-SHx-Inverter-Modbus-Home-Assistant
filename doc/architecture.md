@@ -97,6 +97,21 @@ waiting. And these registers **interlock**: `battery_min_soc` and
 and `binary_sensor` are 0 because the coordinator polls; `button` is 0
 because a press schedules the run and the runner refuses a second.
 
+**A capability test and the owner's controls never write at once**
+(`write_owner.py`). The serialized connection keeps their requests from
+overlapping, but not from interleaving: an owner's write between a run's
+snapshot and its restore is undone by the restore, and read as the run's
+effect. So a run holds its entry's controls from before the snapshot until
+the restore is checked (`async_test_owns_writes`, on both entries when a
+wallbox run writes an inverter's EV charger block), and `_async_write`, the
+feed-in limit and the start and stop actions refuse meanwhile, before a byte
+is sent. They refuse rather than go unavailable, because Home Assistant drops
+a call to an unavailable entity silently; *Diagnosis: controls held by test*
+shows the hold. The other way round, auto repeat waits after an owner's write
+(`OWNER_QUIET`, `OWNER_QUIET_EV`), and an owner's write replaces its register's
+entry in a leftover snapshot (decided 2026-11-15): the inverter's drops the
+field, a managed wallbox's takes the owner's word.
+
 **And `async_setup_entry` reads as a list of steps.** Connect and identify
 (`_async_connect`); build and first-refresh the tier coordinators
 (`_async_tier_coordinators`); resolve capabilities from that first poll; probe

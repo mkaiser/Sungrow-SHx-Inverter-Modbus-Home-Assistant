@@ -1011,6 +1011,7 @@ def names() -> dict[str, dict[str, str]]:
     """Return the modern name of every entity, by domain and translation key."""
     from custom_components.sungrow_modbus.diagnosis_entities import DIAGNOSIS_ENTITIES
     from custom_components.sungrow_modbus.route import ROUTE_ENTITIES
+    from custom_components.sungrow_modbus.write_owner import CONTROL_ENTITIES
 
     result: dict[str, dict[str, str]] = {}
     for domain, key, legacy in descriptions():
@@ -1019,7 +1020,7 @@ def names() -> dict[str, dict[str, str]]:
     # The diagnosis's own entities. They carry no `EntityDescription` -- there is
     # no register behind them -- so they are listed rather than discovered,
     # and `modern_name` finds each one in `naming.OVERRIDES`.
-    for domain, key in (*DIAGNOSIS_ENTITIES, *ROUTE_ENTITIES):
+    for domain, key in (*DIAGNOSIS_ENTITIES, *ROUTE_ENTITIES, *CONTROL_ENTITIES):
         result.setdefault(domain, {})[key] = modern_name(key, "")
     return result
 

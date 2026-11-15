@@ -60,6 +60,7 @@ from .const import (
     PERMISSION_START_STOP,
 )
 from .coordinator import SungrowConfigEntry
+from .write_owner import refuse_while_test_writes
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -246,6 +247,9 @@ async def _async_write(call: ServiceCall, value: int, what: str) -> None:
     entry = _async_entry_for(call.hass, call.data[ATTR_DEVICE_ID])
     _refuse_on_string_inverter(entry)
     await _async_authorize(call, entry)
+    # A run that holds the controls may itself have stopped the inverter, and
+    # its restore starts it again.
+    refuse_while_test_writes(entry.runtime_data, entry.title)
     coordinator = entry.runtime_data.coordinator_for(STATE_COMPONENT)
 
     # Logged at warning, not debug. Somebody working out why their inverter

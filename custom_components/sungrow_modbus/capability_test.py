@@ -45,6 +45,7 @@ from .const import (
     CONF_CAPABILITY_TEST_RESTART,
     DOMAIN,
 )
+from .write_owner import async_test_owns_writes
 
 if TYPE_CHECKING:
     from .coordinator import SungrowConfigEntry
@@ -82,6 +83,13 @@ async def async_leftover(
 async def async_forget(hass: HomeAssistant, entry: SungrowConfigEntry) -> None:
     """Drop the snapshot, once everything in it is known to be back."""
     await _store(hass, entry).async_remove()
+
+
+async def async_keep(
+    hass: HomeAssistant, entry: SungrowConfigEntry, snapshot: Snapshot
+) -> None:
+    """Save a leftover snapshot again, after the owner's write replaced a field."""
+    await _store(hass, entry).async_save(snapshot.to_dict())
 
 
 #: The ledger: every finished run's block, so runs at different moments of a
@@ -352,7 +360,11 @@ class CapabilityTestRunner:
             self.entry.title,
         )
         try:
-            outcome = await self._test.async_run()
+            # The controls refuse from before the snapshot until the restore
+            # is checked: a write in between would be undone by the restore,
+            # and read as this run's effect.
+            async with async_test_owns_writes([self.entry], self.entry.title):
+                outcome = await self._test.async_run()
         finally:
             self._disarm_shutdown_guard()
 
@@ -381,9 +393,10 @@ class CapabilityTestRunner:
         runtime = self.entry.runtime_data
         coordinator = next(iter(runtime.coordinators.values()))
         test = CapabilityTest(coordinator.device)
-        if snapshot.stopped_at is not None:
-            await test.async_ensure_running()
-        results = await test.async_restore(snapshot)
+        async with async_test_owns_writes([self.entry], self.entry.title):
+            if snapshot.stopped_at is not None:
+                await test.async_ensure_running()
+            results = await test.async_restore(snapshot)
         await coordinator.async_refresh()
         if all(row.restored for row in results):
             await async_forget(self.hass, self.entry)
