@@ -284,10 +284,12 @@ Nothing can start now (blocker 16).
       collection at the maintainer's SH10RT over a day and a night, which
       may catch a slow PV charge for the threshold too; then ingest. The
       wallbox's tests are planned in `plans/wallbox_tests.md`.
-      **Running since 2026-11-15 11:28** on the maintainer's production Home
-      Assistant (0.1.0a40 from the Marketplace, a new diagnosis-only entry,
-      auto repeat, an overcast day): leave it over the night, then download
-      the diagnostics and ingest.
+      A first collection on the maintainer's production Home Assistant
+      (0.1.0a40, 2026-11-15 11:28-12:29, three runs, stopped by the owner)
+      settled 26 of 53 checks, 0 failed, and brought the first plausibility
+      block from hardware; its diagnostics download is kept locally, not yet
+      ingested. History cleared for a fresh start; the day-and-night
+      collection is still to do.
    3. **Outside the repository**: issue #786's title still says survey, and
       the repository variable `SURVEY_ISSUE` keeps its name.
    4. **Capability test runs over a day.** Home Assistant keeps every run per
