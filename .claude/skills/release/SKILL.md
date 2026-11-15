@@ -8,7 +8,10 @@ description: Release a new version of the integration and library (PyPI, GitHub 
 `doc/maintainer_setup.md`, section 1, is the procedure; this is the checklist.
 **Every push needs the maintainer's yes for that push**, and a release is one.
 
-1. `make check` green, with `$?` read directly, not through a pipe.
+1. `make check` green, with `$?` read directly, not through a pipe; then
+   `make hassfest` (after `make refs` once), with no `Invalid integrations`.
+   `make check` does not run hassfest, and `release.yml` does: a finding
+   there stops the release after the tag is pushed.
 2. `make version VERSION=X.Y.Z`, then
    `python scripts/release/check_pinned_library.py --wheel dist/*.whl` on a
    fresh `make wheel`.

@@ -130,6 +130,28 @@ def test_every_repair_issue_has_a_message():
     assert not missing, f"repair issues with no strings: {missing}"
 
 
+def test_a_fixable_repair_has_its_text_only_in_the_fix_flow():
+    """An issue takes `description` or `fix_flow` in hassfest, never both.
+
+    `make check` does not run hassfest, and the release workflow does: an
+    issue carrying both stopped a release at the tag.
+    """
+    for name in ("strings.json", "translations/en.json", "translations/de.json"):
+        issues = json.loads((INTEGRATION / name).read_text()).get("issues", {})
+        both = sorted(
+            key
+            for key, issue in issues.items()
+            if "description" in issue and "fix_flow" in issue
+        )
+        assert not both, f"{name}: description beside fix_flow in {both}"
+        unworded = sorted(
+            key
+            for key, issue in issues.items()
+            if "description" not in issue and "fix_flow" not in issue
+        )
+        assert not unworded, f"{name}: neither description nor fix_flow in {unworded}"
+
+
 def test_no_translation_string_carries_a_url() -> None:
     """Hassfest refuses one, and `make check` does not run it.
 

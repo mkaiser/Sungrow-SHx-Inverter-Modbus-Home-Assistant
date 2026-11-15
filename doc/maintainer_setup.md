@@ -18,6 +18,7 @@ is installed editable from `src/`, which no user has.
 A release is a tag:
 
 ```bash
+make check && make hassfest        # hassfest is not in make check; release.yml runs it
 make version VERSION=0.1.0a18      # pyproject, manifest, the scripts' PEP 723 pins
 git commit -am "Release 0.1.0a18"
 git tag -a v0.1.0a18               # the tag message is the published release note
