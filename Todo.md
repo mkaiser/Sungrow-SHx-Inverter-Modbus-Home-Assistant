@@ -284,6 +284,10 @@ Nothing can start now (blocker 16).
       collection at the maintainer's SH10RT over a day and a night, which
       may catch a slow PV charge for the threshold too; then ingest. The
       wallbox's tests are planned in `plans/wallbox_tests.md`.
+      **Running since 2026-11-15 11:28** on the maintainer's production Home
+      Assistant (0.1.0a40 from the Marketplace, a new diagnosis-only entry,
+      auto repeat, an overcast day): leave it over the night, then download
+      the diagnostics and ingest.
    3. **Outside the repository**: issue #786's title still says survey, and
       the repository variable `SURVEY_ISSUE` keeps its name.
    4. **Capability test runs over a day.** Home Assistant keeps every run per
@@ -317,6 +321,17 @@ Nothing can start now (blocker 16).
          together in the order `doc/entity_names.md` shows (the frontend's
          collation was not checked in the container), and that the
          counters read sensibly after a day's runs.
+
+6. **The search missed the maintainer's inverter** (2026-11-15, 0.1.0a40,
+   production Home Assistant): two sweeps of the home /24 found port 502
+   open only on the old RAK WiFi module (which accepts and echoes, not
+   Modbus) and never on the SH10RT, which the YAML package was polling
+   through the same Home Assistant; from the dev container the SH10RT
+   accepted six of six connects in under 10 ms. The manual step identified it at once. Not retried slowly
+   (that happens only when nothing answers). Find out whether the inverter
+   refuses a second TCP session from an address that already holds one, and
+   if so, have the sweep count a host Home Assistant's `modbus` already
+   connects to as a candidate.
 
 # Open decisions
 
