@@ -22,6 +22,14 @@ SH-RT firmware in the B001 numbering ([SH-RT](device-sh-rt.md)). Version strings
 - A night of auto repeat at mkaiser established the forced charge, the forced-charging window
   (seven times) and the site import limit (seven times) again; a Modbus restart took 367 s after
   dark and 186 s in daylight ([fourth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-3-summary.md)).
+- **Five battery-power upper bounds are not enforced**: a short auto-repeat collection stored
+  7204 W above the 7104 W maximum (33047/33048/13052) and 1010 W above 1000 W (33149/33150), each
+  read back ([sixth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5-summary.md)).
+  The same holds on [P023](firmware-sapphire-h-b001-v000-p023.md)
+  ([peter-sm](installation-peter-sm.md)).
+- **The plausibility checks match**: power balance (median 0.828), tracker V×I (0.934), the meter's
+  phases (0.999) and the meter against export (1.000), over 67 observations at mkaiser
+  ([sixth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5-summary.md)).
 - The history block (inputs 6101-6826) answers whole over the cable, on the SH10RT-V112 and on
   [robbensonmio](installation-robbensonmio.md)'s SH10RT.
 - **[Register 32998](register-32998.md), the site import limit, holds during a forced charge**: set to
@@ -48,6 +56,7 @@ SH-RT firmware in the B001 numbering ([SH-RT](device-sh-rt.md)). Version strings
 - [SH10RT-20, B001.V000.P020, bar12, a WiNet-S on WiFi](../sources/sh10rt-20-b001v000p020-3p-bar12-anon-81257679535-battery-sbr096-winet-wlan-summary.md)
 - [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-summary.md)
 - [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port, fourth reading: a night of auto repeat](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-3-summary.md)
+- [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port, sixth reading: auto repeat with plausibility](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5-summary.md)
 - [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port, fifth reading](../sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-4-summary.md)
 - [SH10RT, B001.V000.P020, mkaiser, the inverter's own LAN port, third reading](../sources/sh10rt-b001v000p020-3p-anonymous-anon-37323352958-battery-unknown-meter-summary.md)
 - [SH10RT, B001.V000.P020, robbensonmio, the inverter's own LAN port, SBR256](../sources/sh10rt-b001v000p020-3p-robbensonmio-anon-21004123443-battery-sbr256-direct-lan-summary.md)

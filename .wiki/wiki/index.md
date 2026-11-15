@@ -207,6 +207,8 @@
 
 - [mkaiser-network-discovery-2026-11-15.md](sources/mkaiser-network-discovery-2026-11-15-summary.md) — no Sungrow mDNS at the maintainer's house, a RAK WiFi module by DHCP, Sungrow's one vendor prefix, the search missing the inverter #discovery #mdns #dhcp #rak-module #mkaiser
 
+- [sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5.json](sources/sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5-summary.md) — SH10RT, P020, mkaiser, sixth reading on 0.1.0a40: three auto-repeat runs, the house's first plausibility block, five battery-power bounds unenforced #diagnosis #sh10rt #sapphire-h-b001-v000-p020 #mkaiser #direct_lan #capability-test #plausibility
+
 ## Queries
 
 - [Can a managed wallbox be set to one phase over Modbus?](queries/can-a-managed-wallbox-be-set-to-one-phase.md) — Open: no document names a way; 21204 did not, 33538/33539 refuse writes in fast and PV surplus #wallbox #phases #ems #open

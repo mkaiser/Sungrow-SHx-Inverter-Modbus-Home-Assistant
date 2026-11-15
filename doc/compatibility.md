@@ -32,6 +32,7 @@ no diagnosis is listed as **untested** rather than assumed to work.
 | `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-2` | mkaiser | SH10RT (`0x0E03`) | direct LAN port (reported) | Pylontech Force H1, 14.4kWh | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-3` | mkaiser | SH10RT (`0x0E03`) | direct LAN port (reported) | Pylontech Force H1 14.4kwh | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-4` | mkaiser | SH10RT (`0x0E03`) | direct LAN port (reported) | Pylontech Force H1 14,4 kWh | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan-5` | mkaiser | SH10RT (`0x0E03`) | direct LAN port (reported) | Pylontech Force H1 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-b001v000p020-3p-mkaiser-anon-37323352958-battery-thirdparty-meter-direct-lan` | mkaiser | SH10RT (`0x0E03`) | direct LAN port (reported) | Pylontech Force H1, 14.4kWh | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-b001v000p020-3p-robbensonmio-anon-21004123443-battery-sbr256-direct-lan` | robbensonmio | SH10RT (`0x0E03`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | yes | no | yes | no |
 | `sh10rt-v112-3p-fwitten-anon-33442450531-battery-none-direct-lan` | fwitten | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | — | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | no | — | no | — | no |
@@ -210,7 +211,7 @@ that has only one would make the next pair.
 | SH10RS | winet_lan | B000.V002.P065 (1 reading) |
 | SH10RS | winet_lan | B000.V002.P067 (1 reading) |
 | SH10RS | winet_wlan | B000.V002.P057 (1 reading) |
-| SH10RT | direct_lan | B001.V000.P020 (5 readings) |
+| SH10RT | direct_lan | B001.V000.P020 (6 readings) |
 | SH10RT | unstated | B001.V000.P020 (1 reading) |
 | SH10RT-20 | direct_lan | B001.V000.P023 (3 readings) |
 | SH10RT-20 | winet_lan | B001.V000.P020 (1 reading) |

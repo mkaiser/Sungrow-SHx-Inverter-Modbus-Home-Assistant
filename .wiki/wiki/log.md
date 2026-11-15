@@ -892,3 +892,18 @@ IEEE prefix is AC:19:9F; the network search missed the inverter twice while the 
 it. New raw note and source mkaiser-network-discovery-2026-11-15, entity device-rak-wifi-module,
 query why-did-the-search-miss-mkaisers-inverter; updated installation-mkaiser, the mDNS query, the
 index.
+
+## [2026-11-15] decided | the owner's controls and a capability test never write at once
+
+While a run writes, the integration's controls refuse; auto repeat waits after the owner wrote;
+an owner's write replaces its register's entry in a leftover snapshot. Updated
+capability-test-restore.
+
+## [2026-11-15] ingested | mkaiser's sixth reading, the first plausibility block from hardware
+
+A diagnostics download from the maintainer's production Home Assistant (0.1.0a40, SH10RT on P020,
+its own LAN port), committed unchanged as -5: three auto-repeat capability-test runs (outcome 3,
+0 failed), the forced-charging window now passing, five battery-power upper bounds stored above
+their maximum, and the first plausibility block measured on hardware (power balance, tracker V×I
+and both meter checks matched; battery idle). New source page; updated installation-mkaiser, the
+P020 page, the index.
