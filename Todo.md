@@ -1,6 +1,12 @@
 Todo.md contains only what is still to do (forward looking).
 Anything done is removed here; history goes into git and `.wiki/wiki/log.md`.
 
+Revising this file -- closing an item as done or as decided, keeping it
+forward looking, reordering it, taking in new issues -- follows
+[`.claude/skills/revise-todo/SKILL.md`](.claude/skills/revise-todo/SKILL.md)
+(`/revise-todo`). It has more than one writer: read it from disk and change
+only your part (`AGENTS.md`).
+
 Structure:
 
 1. **Next steps** -- work that can start now, in order of priority.
@@ -26,43 +32,28 @@ stays unique.
 
 ## Inverter
 
-1. **The site import limit (32998): the cases still open.** Measured
-   (wiki: mkaiser-import-limit-*, bar12-import-limit-*, gerd-import-limit-*): under a charge the cap is on grid import alone, PV counted,
-   on P020, P022 and P023, over the cable and through a WiNet-S, whether
-   the charge is commanded by the EMS registers or the forced-charging
-   schedule (on P022 the schedule only through the dongle, wiki:
-   gerd-import-limit-schedule-2026-11-08); it settles within ~2-6 s, 0-3 % over the cap on P020, at it
-   on P022, ~5 % under on P023; 0 and 5001 are refused.
-   It does not cap house load: not with the battery held idle by a forced
-   stop (P020), and not with the battery empty in normal operation (P023).
-   With PV above the load it disturbs neither a charge from PV nor export
-   (P020, wiki: mkaiser-import-limit-export-2026-11-08), and with the
-   discharge limit below the load it does not draw on the battery past it
-   (P020, wiki: mkaiser-import-limit-discharge-2026-11-08). It is the
-   number *Grid import limit* (W, 10 W step) on P020, P022 and P023, where it
-   replaces the read-only sensor.
+1. **The site import limit (32998) and forced startup (13017): what is
+   left.** Both are measured and shipped as controls, the number *Grid
+   import limit* (W, 10 W step) and the switch *Forced startup under low
+   SoC*, on the firmware the wiki lists
+   ([register 32998](.wiki/wiki/entities/register-32998.md),
+   [register 13017](.wiki/wiki/entities/register-13017.md), which carry what
+   every run measured). Still to run:
 
-   | # | PV | Battery | Command | Question | How, where |
-   | --- | --- | --- | --- | --- | --- |
-   | e | above the load | part full | forced charge above the surplus | the grid's share capped, PV counted | the engine check, daylight |
+   | Case | What it settles | How, where |
+   | --- | --- | --- |
+   | PV above the load, battery part full, a forced charge above the surplus | whether the cap is on the grid's share alone, PV counted | the engine's `--import-limit` check, daylight |
+   | 13017 left on | whether the inverter flips `0xAA` back by itself or on PV (#444 reports ~20 min; not at bar12 after 23) | a watched run, after dark |
+   | 13017 on P022 and other firmware | whether it is a switch there too | a watched run, after dark |
 
    Not worth a run: a full battery at night, a forced charge into a full
    battery (the engine skips at 90 %), a forced discharge.
 
    **The engine refuses an inverter in low-SoC Standby** ("reports
-   'Standby'"), though a forced charge wakes one by itself in ~2 min (EMS
-   or schedule, bar12). Whether the import-limit check should command its
+   'Standby'"), though a forced charge wakes one by itself in ~2 min (EMS or
+   schedule, bar12). Whether the import-limit check should command that
    charge and wait for the start instead of refusing: decide with the
    diagnosis's rework.
-
-   **Register 13017 is a switch, not a command** (wiki:
-   bar12-forced-startup-2026-11-07 on P023, mkaiser-forced-startup-2026-11-08
-   on P020): 0xAA wakes a low-SoC standby inverter and keeps it running,
-   0x55 sends it back, both read back, every other word is refused, and the
-   factory 0 cannot be written back. It is the switch *Forced startup under
-   low SoC*, on P020 and P023. Still unmeasured: whether the inverter resets
-   it by itself later or on PV (#444 reports 0xAA to 0x55 after ~20 min),
-   and P022 or any other firmware.
 2. **The inverter's own consumption, on hardware.** Built: *Inverter self
    consumption (estimated)* (`Derived.inverter_self_consumption`, PV +
    battery - export - load, shown as a one-minute time-weighted mean, no
@@ -79,143 +70,83 @@ Nothing can start now (blocker 13).
 
 ## Wallbox
 
-3. **Controlling the wallbox: through the inverter.** Measured at gerd's on
-   site, 2026-11-14 (wiki: `gerd-wallbox-inverter-control-2026-11-14-summary.md`,
-   `plans/wallbox_tests.md`): the scale of holding 21203 is
-   **0.1 A, settled by the car**. But his wallbox is **managed by the
-   inverter**, which drives 21203 and overwrites any write to it; the charge
-   is controlled at the inverter (unit 1): charging on/off, mode, and the
-   user-defined current (only in user-defined mode, 6 A up). The library has
-   the block, read only (`hybrid_inverter/ev_charger.py`). The wallbox
-   capability test now writes only to a wallbox declared standalone
-   (`--standalone`; from Home Assistant never, it cannot tell), never
-   disables and never offers under 6 A.
+3. **Controlling the wallbox.** gerd's wallbox is **managed by the
+   inverter**, which drives 21203 and overwrites any write to it, so the
+   charge is controlled at the inverter (unit 1): charging on/off, mode, and
+   the user-defined current in user-defined mode, 6 A up
+   (`hybrid_inverter/ev_charger.py`; wiki:
+   `gerd-wallbox-inverter-control-2026-11-14-summary.md`). Holding 21203
+   scales 0.1 A, settled by the car. A standalone wallbox is the only one
+   whose own registers may be written (`--standalone` from a terminal; from
+   Home Assistant never, it cannot tell), never under 6 A.
 
-   Built and tested (59 tests, 99 % of the procedure): the procedure,
-   `src/sungrow_modbus/wallbox/capability_test.py`, and its terminal driver,
-   `device-diagnosis/scripts/python/sungrow_wallbox_capability_test.py` (TLS 516,
-   unit 248 only; no `--leave` is a dry run; `--enable`, `--phase`,
-   `--start-stop`, `--max-amps`, `--restore`). It offers 6, 8 and 10 A, safe at
-   either scale; flushes a snapshot before the first write; reads the raw word
-   back on a fresh session (a same-session read after a write answered another
-   register); restores the snapshot's raw word, never skipped. The enable step
-   disables and re-enables (status 8 in between); the phase step switches only
-   when nothing flows. It refuses to write when the setting reads 0.
-
-   What gerd's wallbox said in the dry run (wiki:
-   `gerd-wallbox-dry-run-2026-11-06-summary.md`): idle, with no car, the
-   setting reads **0** (160 and 151 while charging), so an idle wallbox cannot
-   separate the two scales and the meaning of 0 is not known. Input 21322 is
-   not the setting's echo.
-
-   Built (`plans/wallbox_tests.md`, section 4): the wallbox's
-   tests run from Home Assistant's *Extended test (auto repeat)*, on the
-   wallbox's entry of its own only (since 2026-11-12; a wallbox behind a
-   dongle stays read only)
-   (`custom_components/sungrow_modbus/wallbox_capability_test.py`,
-   `DiagnosisRunner.async_start_wallbox`, the wallbox tick in `continuous.py`),
-   over the entry's own connection (no fresh session, so only what the car
-   does counts), with a snapshot flushed first and put back first by the next
-   run if one is left, a ledger per wallbox firmware
-   (`wallbox/ledger.py`, counted with the inverter's checks), and the new
-   checks: current follow across the range with timings, below the minimum,
-   above the rating, available current against the setting, timed start/stop
-   and enable, phase switch while charging (stop seen before 21204 is
-   written), 75 s of silence. The plausibility checks are
-   `wallbox/plausibility.py`, fed by auto repeat's tick. The options are
-   *May it write to the wallbox* (off until switched on) and *the highest
-   charging current* (`wallbox_max_amps`); the three checks that go beyond
-   the default 10 A wait until the owner sets it.
+   What exists: the wallbox's capability test
+   (`src/sungrow_modbus/wallbox/capability_test.py`, terminal driver
+   `sungrow_wallbox_capability_test.py`, TLS 516 unit 248), the managed
+   wallbox's (`wallbox/managed_test.py`, `sungrow_managed_wallbox_test.py`,
+   which writes the inverter's block and judges by the car), both also from
+   Home Assistant on the wallbox's own entry in *Extended test (auto
+   repeat)*, with the plausibility checks (`wallbox/plausibility.py`), a
+   ledger per wallbox firmware (`wallbox/ledger.py`), the options *May it
+   write to the wallbox* (off until switched on) and the highest charging
+   current (`wallbox_max_amps`), and the EV charger controls on the
+   inverter's entry: *Wallbox charge* (33540), *Wallbox charge mode*
+   (33541), *Wallbox user-defined current* (33545) and *Wallbox grid
+   purchase* (33550), behind `EV_CHARGER` and `EV_CHARGER_CONTROL` (watched
+   on P022, gerd's, alone). `plans/wallbox_tests.md` is the procedure,
+   `plans/wallbox_session_handover.md` where the last session stopped.
 
    Left, in order:
 
-   0. Released in 0.1.0a34; the terminal driver pins it.
-   1. Done 2026-11-14, on site with a car (above). The 160/151 seen while
-      charging earlier were the inverter's value, not the wallbox's own.
-   2. **Built 2026-11-14: entities on the inverter's entry**, from
-      `hybrid_inverter/ev_charger.py` (now the inverter's `ev_charger`
-      component, medium tier) through the write table: *Wallbox charge*
-      (switch, 33540), *Wallbox charge mode* (select: fast, PV surplus,
-      user defined; 33541), *Wallbox user-defined current* (number, 6-32 A,
-      33545) and *Wallbox grid purchase* (switch, 33550, the app's
-      *Netzbezug*). Behind `EV_CHARGER` (the mode reads a named code) and
-      `EV_CHARGER_CONTROL` (firmware watched: P022 only, gerd's). The select
-      keeps charging as it was after a mode change; the number refuses with
-      a message outside user-defined mode (`tests/test_ev_charger_entities.py`).
-      Run from the dev Home Assistant at gerd's on 2026-11-14 night, no car:
-      each control took its write and the house was put back (wiki:
-      `gerd-wallbox-ha-controls-2026-11-14-summary.md`). Next: the same with
-      a car charging; add P023 and others only from a watched write there. Discussion #571's report
-      (rudolf992, 2026-04-27: the current set over Modbus went back to
-      iSolarCloud's within seconds) is the same thing seen from the wallbox
-      side.
-   3. **A standalone wallbox** (no inverter managing it, evcc's case) is the
-      only one whose own registers may be written; none measured yet.
-   4. **The managed wallbox's capability test** exists, from a terminal
-      (`wallbox/managed_test.py`, `sungrow_managed_wallbox_test.py`): it
-      writes the inverter's block and judges by the car. First run on
-      hardware: at gerd's, with a car charging. In Home Assistant it runs
-      from the wallbox's entry when an inverter entry here left the wallbox
-      to it, writing through that entry (`managing_entry`); a wallbox with
-      no such inverter entry awaits nothing. While a run writes, the
-      inverter entry's controls refuse (`write_owner.py`, built 2026-11-15,
-      not yet released or run on hardware): the rollout at gerd's, the
-      EV charger controls beside wallbox auto repeat, is the first test of it.
+   1. **The EV charger controls with a car charging**, at gerd's. The night
+      run of 2026-11-14 with no car took every write and put the house back
+      (wiki: `gerd-wallbox-ha-controls-2026-11-14-summary.md`); firmware
+      beyond P022 is added only from a watched write there. Discussion #571
+      (rudolf992: a current set over Modbus went back to iSolarCloud's
+      within seconds) is the same thing seen from the wallbox side.
+   2. **The managed capability test's first run on hardware**, at gerd's,
+      with a car charging. It writes through the managing inverter entry
+      (`managing_entry`), whose controls refuse while it runs
+      (`write_owner.py`, unreleased, never run on hardware): that rollout is
+      its first test.
+   3. **A standalone wallbox** (evcc's case): none measured. Idle and with
+      no car, gerd's setting reads 0 (160 and 151 while charging), so an
+      idle wallbox cannot separate the two scales and the meaning of 0 is
+      unknown (wiki: `gerd-wallbox-dry-run-2026-11-06-summary.md`). Input
+      21322 is not the setting's echo.
+   4. **The wallbox entry's first writing run**, which needs a car charging,
+      watched live. With no car it refuses while the wallbox is idle, as it
+      should (gerd's; auto repeat ran an hour on 2026-11-10 and started no
+      run, the right outcome).
    5. **The next session at gerd's**: `plans/wallbox_tests.md`
       (quantity-and-time mode, writes that repeat what is set, waking a
-      sleeping car, phase switching, PV surplus in sun), where the last one
-      left off in `plans/wallbox_session_handover.md`, and the field tool
+      sleeping car, phase switching, PV surplus in sun), with the field tool
       `scripts/dev/managed_wallbox_field.py` (read only, but `charge`).
+      Inverter work there waits for his own Home Assistant to be stopped,
+      on the current release, over the cable if it reaches one, the battery
+      above 20 %, a car charging. Readback verdicts through a dongle are
+      not evidence.
 
-   **The search finds every device** (`plans/device_scan_and_diagnosis.md`,
-   its status log is current): a wallbox at its own address is an entry of
-   its own, with read-only entities, a diagnosis and **its own capability
-   test** (`wallbox_diagnosis.py`; leave and cap in its options; auto repeat
-   every 15 minutes). Checked at gerd's in the dev HA with no car: it refuses
-   to write while idle, as it should. Auto repeat ran there 2026-11-10 from
-   09:30 for an hour: no car came, so no run started (the right outcome).
-   Item 1 above applies to it too: its
-   first writing run needs a car charging, watched live. A wallbox with an
-   address of its own is set up only that way, and only that entry writes to
-   it (Future work, *The wallbox: the direct connection first*). A Logger (unit 247) is offered
-   as a diagnosis-only entry, untested on hardware: asked for in
-   `device-diagnosis/devices-wanted.md`. An iHomeManager's entry has its
-   readings too (iHomeManager, below). Not yet: the search
-   showing which inverters sit behind a Logger (decided yes; how a Logger is
-   handled beyond that is open).
+4. **The wallbox's settings as entities.** Read only: *Start charging on
+   plug-in* (21298; not "Plug and Charge", which is ISO 15118's certificate
+   login), *Offline charging current* (21299, 0.1 A) and *Power limit*
+   (21313, 0.1 kW), with enable 21211 (status 8 while disabled); only the
+   wallbox's own address answers them (wiki:
+   `gerd-wallbox-app-settings-2026-11-14-summary.md`). Left: whether any of
+   them may be written, which needs the standalone wallbox of item 3.3.
 
-   Not to copy: evcc's `sungrow.go` reserves all rights. Inverter work at
-   gerd's waits until his Home Assistant is stopped: a read-only diagnosis
-   on 2026-11-06 ran into it and is not evidence. On 2026-11-10 inverter
-   auto repeat through his WiNet-S (dev HA, 09:31 to 12:10) ran without a
-   guard refusal: 5 runs, 0 findings, every setting put back; readback
-   verdicts through a dongle are not evidence (since 0.1.0a36 a dongle's
-   "kept its old value" is inconclusive, no longer "not supported").
-   Whether his own Home Assistant was polling then is not known. Both auto
-   repeats are stopped; next is his own HA on 0.1.0a36, over the cable if
-   it reaches one, battery above 20 %, a car charging.
-4. **The wallbox's settings as entities.** Mapped on 2026-11-14 from the
-   app at gerd's (wiki: `gerd-wallbox-app-settings-2026-11-14-summary.md`),
-   all holding, the wallbox's own: enable 21211 (status 8 while disabled),
-   Plug&Play 21298, offline current 21299 (0.1 A), power limit 21313
-   (0.1 kW). **Built 2026-11-14, read only**: `WallboxAppSettings` with
-   *Start charging on plug-in* / *Automatischer Ladestart* (binary sensor;
-   not "Plug and Charge", which is ISO 15118's certificate login), *Offline
-   charging current* and *Power limit*; only the wallbox's own address
-   answers them. Status 8 was already *disabled*.
-   Mileage per kWh (21232) is the app's *Fahrstrecke pro kWh*; gerd's read
-   5555.2 after the capability test of 2026-11-13 and is set back to 5.0.
-   A run that leaves the house changed now raises a Repairs issue naming
-   each setting and where the app sets it, with a fix that checks the house
-   (`repairs.py`, built 2026-11-14).
-   Every recorded write of 21232 that day wrote 50, so how it came to hold
-   55552 is open (`plans/wallbox_tests.md`, open questions). The capability
-   test's mileage check is removed (2026-11-14): it proved only a display
-   value, and its one run at gerd's left that value wrong.
+   The mileage check (21232) is **removed**: it proved only a display value,
+   and its one run left gerd's at 5555.2 (set back to 5.0). How a day whose
+   every recorded write was 50 came to hold 55552 is open
+   (`plans/wallbox_tests.md`, open questions). A run that leaves a house
+   changed raises a Repairs issue naming each setting and where the app sets
+   it (`repairs.py`).
 
 ## Logger
 
-Nothing can start now (blocker 16).
+Nothing can start now (blocker 16). Decided, not built: the search should
+say which inverters sit behind a Logger. A Logger is offered as a
+diagnosis-only entry; how it is handled beyond that is open.
 
 ## iHomeManager
 
@@ -245,66 +176,46 @@ Nothing can start now (blocker 16).
 
 ## Integration and tooling
 
-5. **The diagnosis and its capability tests.** In the code: three modes in
-   *Diagnosis: mode* (read-only, extended test single run and auto repeat),
-   started by *Diagnosis: start* and ended early by *Diagnosis: stop*, a
-   `features` section in every document (schema 25), the *Diagnosis* column
-   and the measured findings in `doc/firmware_support.md`, and the forced
-   startup mode (`diagnosis.sh tests <host> --forced-startup`). What each
-   capability can be tested with is `doc/capability_tests.md`. Left:
+5. **The diagnosis and its capability tests.** In the code: the three
+   modes of *Diagnosis: mode* (read-only, extended test single run, auto
+   repeat), *Diagnosis: start* and *Diagnosis: stop*, a `features` section
+   in every document (schema 25), and the forced startup mode
+   (`diagnosis.sh tests <host> --forced-startup`). What each capability can
+   be tested with is `doc/capability_tests.md`. Left:
    1. **A first run of the forced startup mode on hardware.** The start is
       watched by one-off scripts on P020 and P023 (wiki: register-13017);
       the engine's own mode (`--forced-startup`, or the action's
       `forced_startup: true`) has not run on an inverter yet: one in
       low-SoC standby, after dark. The SH-RT's factory 0 goes back as
       0x55, the one `RESTORE_EQUIVALENT` (AGENTS.md).
-   2. **The new checks on hardware** (`doc/capability_tests.md`). First run
-      on 2026-11-08 to 11-10, at peter_sm (P023, cable, five runs) and
-      ra1k_0 (P071, WiNet-S, one run); ingested. Ran:
-      - the write paths (backup mode, load control, weekend enable): taken at
-        both;
-      - window 2 read back with the schedule off: taken at peter_sm; not at
-        ra1k_0 (its schedule is on);
-      - each EMS option: taken at ra1k_0; at peter_sm mode 3 lost the
-        connection in two runs of three;
-      - each number a step above its maximum: 13058 and 13059 refuse on P023,
-        33048 on P071; P023 stores the rest (not enforced), and through the
-        dongle whether it stored them cannot be read;
-      - the discharging start threshold: confirmed at peter_sm; skipped at
-        ra1k_0 (33149 did not answer the run's probe);
-      - 13088 beside the export check: at peter_sm it follows 13074 as a
-        share of the rating (12.5 % for 1250 W of 10 kW).
-      Not yet seen on hardware:
+   2. **The new checks on hardware** (`doc/capability_tests.md`). First
+      run 2026-11-08 to 11-10 at peter_sm (P023, cable, five runs) and
+      ra1k_0 (P071, WiNet-S, one run), ingested; what each took is on their
+      installation pages. Not yet seen on hardware:
       - **the charging start threshold**: needs a battery charging a few
         hundred watts from PV;
       - **`ledger.TWO_MOMENTS`**: a check established by day measured again
         at night, on one firmware; needs auto repeat across a dusk;
-      - **the plausibility checks** (`capability_test/plausibility.py`): no
-        committed document carries a `plausibility` block, because they are
-        fed only by auto repeat;
+      - **the plausibility checks** (`capability_test/plausibility.py`): the
+        first block from hardware came from the maintainer's production Home
+        Assistant on 2026-11-15 (0.1.0a40, three runs, 26 of 53 checks
+        settled, 0 failed); its diagnostics download is kept locally and is
+        **still to ingest**, and the history was cleared for a fresh start;
       - **anything on a WiNet-S beyond one run**, and any T-series cable.
       The night re-check and the plausibility checks need one auto-repeat
       collection at the maintainer's SH10RT over a day and a night, which
       may catch a slow PV charge for the threshold too; then ingest. The
       wallbox's tests are planned in `plans/wallbox_tests.md`.
-      A first collection on the maintainer's production Home Assistant
-      (0.1.0a40, 2026-11-15 11:28-12:29, three runs, stopped by the owner)
-      settled 26 of 53 checks, 0 failed, and brought the first plausibility
-      block from hardware; its diagnostics download is kept locally, not yet
-      ingested. History cleared for a fresh start; the day-and-night
-      collection is still to do.
    3. **Outside the repository**: issue #786's title still says survey, and
       the repository variable `SURVEY_ISSUE` keeps its name.
-   4. **Capability test runs over a day.** Home Assistant keeps every run per
-      firmware and folds them into one schema-3 block
-      (`capability_test/ledger.py`; the *Diagnosis: test summary* sensor
-      with a run's elapsed time, five counters by outcome, a notification
-      rewritten per run, *Diagnosis: tests, clear history*), and the mode
-      *Extended test (auto repeat)* starts runs when a missing check is due
-      (`continuous.py`), leaving out what is established, the restart
-      included. The terminal's `--merge-into` folds a run into
-      the runs a document carries (`--replace` puts it in their place).
-      Released in 0.1.0a30. Left:
+   4. **Capability test runs over a day.** Home Assistant folds every run
+      per firmware into one schema-3 block (`capability_test/ledger.py`, the
+      *Diagnosis: test summary* sensor, a notification rewritten per run,
+      *Diagnosis: tests, clear history*), and *Extended test (auto repeat)*
+      starts runs when a missing check is due (`continuous.py`), leaving out
+      what is established, the restart included. The terminal's
+      `--merge-into` folds a run into the runs a document carries
+      (`--replace` puts it in their place). Left:
       1. **The slot schedule on hardware**: one night at the maintainer's
          SH10RT, to see that low-SoC Standby starts no run and *Diagnosis: next
          start* names the next slot. Runs are kept with no cap, so a long
@@ -485,25 +396,21 @@ Nothing can start now (blocker 16).
     charging ends, not power) and input 21365 (-71 to -63, flat). A wallbox
     restart would show whether 21267 falls to near zero.
 
-15. **A second wallbox's diagnosis.** Settles whether 21211-21214 identify the
-    unit. The wallbox reports its own serial (input 21201-21206, 11 ASCII
-    characters, as Sungrow's portal shows it); the
-    integration shows it on the device page, identifies the device by the
-    inverter's serial plus `-wallbox`, and publishes it only as a stand-in.
-    Three registers wait on a second unit:
-    input 21201-21206 (the serial: use it as the device identity?), input
-    21211-21214 (a short code, masked), and holding 21250-21259 (twenty
-    constant ASCII digits, masked). Whichever differ between
-    two wallboxes identify a unit and stay masked; whichever match are a model
-    constant and can be unmasked. 2026-11-10: a second AC22E-01 arrived
-    (anonymous, #786), but both documents publish these blocks as `null`,
-    with no stand-in per block, so the files cannot say whether they
-    differ. Settling it needs the masking to publish a stand-in for each
-    masked block (a hash compares without revealing), and a third reading,
-    or the two owners comparing their own transcripts. 2026-11-11: gerd's
-    serial as iSolarCloud shows it hashes to gerd's published stand-in, so
-    21201-21206 is the serial the portal shows (checked locally, recorded
-    nowhere).
+15. **A second wallbox's diagnosis.** Settles whether 21211-21214 identify
+    the unit. Three registers wait on it: input 21201-21206 (the serial as
+    Sungrow's portal shows it -- gerd's hashes to his published stand-in, so
+    this block is that serial; use it as the device identity?), input
+    21211-21214 (a short code, masked) and holding 21250-21259 (twenty
+    constant ASCII digits, masked). Whichever differ between two wallboxes
+    identify a unit and stay masked; whichever match are a model constant
+    and can be unmasked. A second AC22E-01 arrived 2026-11-10 (anonymous,
+    #786), but both documents publish these blocks as `null` with no
+    stand-in per block, so they cannot be compared: settling it needs the
+    masking to publish a stand-in for each masked block (a hash compares
+    without revealing), and a third reading. The open lead is cyablo's
+    **AC011E-01 behind a WiNet-S at unit 4** (#786), asked on 2026-11-15 to
+    retry on 0.1.0a40, which tries units 2 and 4 behind a dongle; it would
+    be the first of that model.
 
 ## Logger
 
@@ -530,60 +437,46 @@ Nothing can start now (blocker 16).
 
 ## iHomeManager
 
-17. **A first iHomeManager diagnosis** (#786). **Met 2026-11-10**: one unit
-    on SV930.001.00.P020, port 503, answered all 56 mapped fields (wiki: the
-    iHomeManager source page). Its protocol number is read low word first
-    since. Still open from that one unit: whether 4358-4362 are U32 (4359 and
-    4361 read 0), what 8554 means (0, "single phase", on a three-phase site),
-    and the codes 8047 = 0, 8048 = 0xA7 and 8051 = 0, which the map does
-    not know. A second unit, on other firmware, would say which of these
-    are the device's; until then the entities leave 8554 and those codes
-    out. Sungrow's protocol PDF:
+17. **A second iHomeManager diagnosis** (#786). The first was met
+    2026-11-10: one unit on SV930.001.00.P020, port 503, answered all 56
+    mapped fields (wiki: the iHomeManager source page), and its protocol
+    number is read low word first since. A second unit, ideally single
+    phase, on other firmware or with a PROD.CT, decides the fields left out
+    of its entities (iHomeManager in Next steps) and whether 4358-4362 are
+    U32 (4359 and 4361 read 0). Sungrow's protocol PDF:
     https://github.com/TCzerny/ha-modbus-manager/blob/main/docs/Communication%20Protocol%20of%20iHomeManager_V1.0.2.pdf
 
 ## Integration and tooling
 
-18. **Does a WiNet-S advertise over mDNS?** Yes at gerd, asked by unicast over
-    the VPN (wiki: the mDNS query): the dongle and the wallbox advertise
-    `_http._tcp` with TXT records naming model, serial and units, the dongle's
-    for every device behind it. 2026-11-11: python-zeroconf (HA's library)
-    resolves both and parses the TXT into properties, by QU queries from
-    port 5353 aimed at each device; the inverter's LAN port answers nothing.
-    Outstanding:
-    - **A multicast browse on a LAN: answered at peter_sm's** (2026-11-15,
-      Home Assistant's zeroconf, wiki: the mDNS query): their WiNet-S, gerd's
-      TXT layout, an address in `ethinfo`. Their inverter's MAC prefix,
-      `AC:19:9F`, is the first for a DHCP matcher.
-    - **Other firmware, other houses.** One dongle and one wallbox so far.
+18. **Does a WiNet-S advertise over mDNS?** Yes (wiki: the mDNS query):
+    gerd's dongle and wallbox advertise `_http._tcp` with TXT records naming
+    model, serial and units, the dongle's for every device behind it, and
+    python-zeroconf (Home Assistant's library) resolves and parses both; the
+    inverter's LAN port answers nothing. A multicast browse on a LAN is
+    answered too, at peter_sm's on 2026-11-15, whose inverter MAC prefix
+    `AC:19:9F` is the first for a DHCP matcher. Built: the diagnosis's
+    `network_names` (schema 27, released) and the zeroconf matcher
+    (released; `WiNet-WebServer*` and `SUNGROW*` on `_http._tcp`, where the
+    record only decides whether to offer, Modbus identifies on confirm and
+    nothing set up is ever moved), and the DHCP matcher (unreleased,
+    `wifi_module.py`), which offers a port for Sungrow's one IEEE prefix
+    `AC199F*` and links a RAK WiFi module (`rakmodule-*`) to the inverter
+    its owner names. Outstanding:
+    - **Other houses, other firmware.** One dongle and one wallbox so far;
+      both matchers wait on diagnoses carrying `network_names`, and the DHCP
+      matcher on a house whose inverter port takes its address by DHCP (a
+      fixed address is never seen).
     - **Does `ethinfo` say wired or WiFi?** It is empty on gerd's dongle,
       which is on WiFi; it may carry the Ethernet details when the dongle is
-      wired. Answer it from the diagnoses already covered: once the
-      diagnosis records the dongle's TXT, compare `ethinfo` with
-      `user_inputs.transport` (`winet_lan` / `winet_wlan`) across the corpus.
-      bar12 has published both transports of one dongle, so a rerun there is
-      the cleanest pair. If it holds, `wifi_or_ethernet` (today "not
-      determinable over Modbus") can say what the dongle reports.
+      wired. Answer it from the corpus: compare `ethinfo` with
+      `user_inputs.transport` (`winet_lan` / `winet_wlan`) as the diagnoses
+      arrive. bar12 has published both transports of one dongle, so a rerun
+      there is the cleanest pair. If it holds, `wifi_or_ethernet` (today
+      "not determinable over Modbus") can say what the dongle reports.
     - **The fields nothing explains**: the battery's 8423 (0x20E7), the
       inverter's trailing `1;4`, the wallbox's `info=16256` (0x3F80), every
       `;1;`. More houses, compared with what Modbus measured there.
-    - **mDNS in the diagnosis: released in 0.1.0a38.** Schema 27's
-      `network_names` (`sungrow_modbus.network_names`): the terminal browses
-      `_http._tcp` for 5 s once per run, Home Assistant's diagnosis button
-      for 2 s through its shared zeroconf instance; plus the reverse-DNS
-      label and the MAC vendor prefix for a future DHCP matcher. No
-      published diagnosis carries the section yet. Still to check: whether binding port 5353 raises a Windows firewall
-      prompt.
-    - **The zeroconf matcher: released in 0.1.0a38**, never seen on a LAN
-      multicast. `WiNet-WebServer*` and
-      `SUNGROW*` on `_http._tcp`; the record only decides whether to offer,
-      Modbus identifies on confirm, nothing set up is ever moved. Waits on
-      the first diagnoses with `network_names` from other houses.
-    - **A DHCP matcher: built 2026-11-15, unreleased** (`wifi_module.py`,
-      `tests/test_config_flow_dhcp.py`): Sungrow's one IEEE prefix
-      `AC199F*` offers a port as zeroconf does, and a RAK WiFi module
-      (`rakmodule-*`) is linked to the inverter its owner names, with a
-      device and a link to its page. Never seen on a LAN: needs a house whose
-      inverter port takes its address by DHCP; a fixed address is never seen.
+    - Whether binding port 5353 raises a Windows firewall prompt.
     - A WiNet-S's *Visit* link for a cable entry, found by the inverter
       serial in its TXT (a link on the inverter, or the dongle as its own
       device).
@@ -643,14 +536,13 @@ catalog submission on release, not before (item 2), and
    to `main` (`grep -rn proper-ha-integration custom_components`: the Energy
    dashboard guide and the preview repair's entity names).
 
-2. **Submitting to the catalog, when the merge is decided.** Read
-   2026-11-06 (a subagent's reading of hacs.xyz and
-   contributors.home-assistant.io/marketplace; not checked against
-   `hacs/default` itself): the route is unchanged. The catalog is still
-   `hacs/default`, run by the HACS team and read by the Marketplace; a PR
+2. **Submitting to the catalog, when the merge is decided.** The catalog
+   is `hacs/default`, run by the HACS team and read by the Marketplace; a PR
    from a personal account adds `owner/repository` to its `integration`
    file, alphabetically, with the template filled in. Review is automated
-   checks and then "months" in the queue. Where this repository stands:
+   checks and then "months" in the queue (read on hacs.xyz and
+   contributors.home-assistant.io/marketplace, 2026-11-06; not checked
+   against `hacs/default` itself). Where this repository stands:
 
    | Requirement | Here |
    | --- | --- |
@@ -669,44 +561,17 @@ catalog submission on release, not before (item 2), and
    Marketplace refreshes the catalog every 6 hours and a repository added from
    a link every 48 hours.
 
-3. **The preview channel under the Marketplace.** In Home Assistant 2026.11
-   HACS is built in as Settings → Marketplace, and the HACS installer stops
-   at 2026.11. The Marketplace offers stable releases only, unless the user
-   turns on a repository's *Pre-release* switch. The preview channel
-   publishes no releases, so it is tracked by commit hash. The testbed is
-   `make marketplace` (`hacs_testbed.sh --marketplace`: 2026.11.0 from
+3. **The preview channel under the Marketplace.** Home Assistant 2026.11
+   is the minimum (`hacs.json`), where HACS is built in as Settings →
+   Marketplace, and the docs describe the Marketplace alone: a preview
+   installed through HACS on 2026.9 or 2026.10 is adopted when its Home
+   Assistant is upgraded, so nobody needs a HACS step (decided 2026-11-12;
+   what the testbed checked is in `doc/maintainer_setup.md` §5). The testbed
+   is `make marketplace` (`hacs_testbed.sh --marketplace`: 2026.11.0 from
    `.venv-marketplace/`, `config-marketplace/`, :8126, login dev/dev;
    `ARGS=--adopt-hacs` starts from a copy of `config-hacs/`).
 
-   Verified on 2026.11.0, 2026-11-06, adopting a HACS install of preview
-   0.1.0a17 (commit `2d735b1`): the Marketplace took over 4 entities and 2
-   devices, adopted HACS's stored data, removed `custom_components/hacs`, and
-   kept the preview as an installed, commit-tracked repository. It reported
-   `pending_upgrade` (available `e0d1840`) with no GitHub connection, and
-   `marketplace/repository/install` installed it without one (only
-   *detect* and *add*, that is *Add from link*, are marked `requires_github`
-   in the source). After a restart Home Assistant pip-installed
-   `sungrow-modbus==0.1.0a26` from PyPI against the manifest pin, with
-   `modbus-connection` 4.12.7 and `tmodbus` 1.1.0, and the integration
-   loaded (the copied entry then failed only to reach its old inverter
-   address). The stored `hacs/integration` entry was gone after the restart.
-
-   Verified on 2026.11.0, 2026-11-08, from a fresh `make marketplace
-   ARGS=--reset`: with GitHub connected, *Add from link* (the preview
-   repository's URL, type *Integration*) added and downloaded the channel at
-   commit `d0fbbee`, its HEAD, with no *Pre-release* switch turned on
-   (`switch.sungrow_modbus_preview_pre_release` exists, off). Home Assistant
-   then pip-installed `sungrow-modbus==0.1.0a30` from PyPI, and the
-   maintainer's SH10RT was found, added and diagnosed. All three questions
-   are answered, and the docs say so.
-
-   **Decided 2026-11-12: Home Assistant 2026.11 is the minimum**
-   (`hacs.json`), and the docs describe the Marketplace only; the HACS
-   install is gone from them (`doc/installing_a_preview.md`, `README.md`,
-   `device-diagnosis/README.md`, `doc/development.md`). A preview installed
-   through HACS on 2026.9 or 2026.10 is adopted by the Marketplace when its
-   Home Assistant is upgraded (verified above), so nobody needs a HACS
-   step. Left: a screenshot of *Add from link* for
+   Left: a screenshot of *Add from link* for
    `doc/installing_a_preview.md`, in place of HACS's custom-repository
    dialog, taken on `make marketplace`.
 
@@ -733,68 +598,38 @@ catalog submission on release, not before (item 2), and
    | `legacy/doc/cleanup_entities.md` | Link it from a repair as the manual fallback, if one is built |
    | `legacy/doc/dashboard.md` | A generated dashboard (Future work) |
 
-6. **Handing the preview channel's users over to the release.** Read in
-   core 2026.11.0's Marketplace source (`.venv-marketplace`,
-   `components/marketplace`), 2026-11-07; nothing tried on the testbed yet.
-
-   **There is no one-click switch.** The Marketplace refuses to install an
-   integration whose domain another installed repository owns ("The
-   sungrow_modbus directory belongs to ...-preview", `async_pre_install` in
-   `repositories/integration.py`), and refuses to remove one while a config
-   entry of its domain exists ("still set up ... Delete it under Settings >
-   Devices & services before uninstalling it", `repository_in_use` in
-   `websocket/repository.py`). So the switch is five steps: **delete the
-   entry**, **Remove** the preview, **Download** from this repository,
-   restart, and **set the integration up again**. Home Assistant restores a
-   deleted entity's id when the same platform and unique id come back within
-   30 days (`ORPHANED_ENTITY_KEEP_SECONDS` in `entity_registry.py`), so the
+6. **Handing the preview channel's users over to the release.** There is
+   no one-click switch: the Marketplace refuses to install an integration
+   whose domain another installed repository owns, and refuses to remove one
+   while a config entry of its domain exists, so the switch is five steps --
+   delete the entry, remove the preview, download this repository, restart,
+   set the integration up again. Home Assistant restores a deleted entity's
+   id when the same platform and unique id come back within 30 days, so the
    ids, and with them the history, should come back; the options are asked
-   again. Not tried: that the restore and the legacy-id claim agree on a
-   migrated install. Two more routes that do not help:
-   - The catalog's `removed` feed raises a repair for an installed
-     repository it lists (`async_handle_removed_repositories` in `base.py`),
-     but that repair is not fixable: it only links the repository's page.
-     Unknown: whether `hacs/default` takes a removal entry for a repository
-     that was never in the catalog.
-   - A GitHub rename carries over by repository id
-     (`_async_take_over_catalog_entry`), but two repositories cannot be
-     merged into one, so no rename moves the mirror's users.
+   again. How that was read out of core 2026.11.0, and the two routes that
+   do not help, are in `doc/maintainer_setup.md` §5.
 
-   The options:
-   1. **Zero clicks: keep the mirror going after the release.** `sync.yml`
-      follows `main`'s release tags and publishes the same release on the
-      mirror, with the name lacking "(preview)". Mirror users get an
-      ordinary **Update** and never have to switch. Costs a second
-      repository for as long as anyone is on it.
-   2. **A repair of our own** that names the three steps above, raised when
-      the integration was installed from the mirror (a marker `sync.yml`
-      writes, such as a constant in `const.py`; the Marketplace's stored data
-      also names the repository, but that is its internals). A fix flow that
-      drives the Marketplace's remove and install would use its websocket
-      API (`marketplace/repository/install`) from a custom integration: not
-      worth the fragility.
-
-   Proposal: 1 at the release, since the switch costs a new setup, with 2
-   alongside it for whoever wants the main repository; archive the mirror
-   once few installs use it. To check on `make marketplace` once `main`
-   carries the integration: the five steps keep the ids and history on a
-   migrated install, and a commit-tracked install switches to versions once
-   the mirror publishes a release.
+   **For the maintainer to decide**: keep the mirror running after the
+   release, publishing `main`'s release tags under a name without
+   "(preview)", so mirror users get an ordinary *Update* and never switch
+   (proposed, since the switch costs a new setup), with a repair of our own
+   naming the five steps for whoever wants the main repository; archive the
+   mirror once few installs use it. To check on `make marketplace` once
+   `main` carries the integration: that the five steps keep the ids and the
+   history on a migrated install, and that a commit-tracked install switches
+   to versions once the mirror publishes a release.
 
 7. **Deprecating and retiring the YAML package, after the release.** Once
-   the integration is complete (parity with the YAML package, merged into
-   `main`, in the HACS default store), deprecate `legacy/modbus_sungrow.yaml`
-   and the generated multi-inverter files, then retire them: announce it,
-   point every `legacy/doc/` page at the integration and
-   `doc/integration_migration.md`, and set a date after which the YAML
-   package gets no further changes.
+   the integration has parity, is merged into `main` and is in the HACS
+   default store: deprecate `legacy/modbus_sungrow.yaml` and the generated
+   multi-inverter files, announce it, point every `legacy/doc/` page at the
+   integration and `doc/integration_migration.md`, and set a date after
+   which the YAML package gets no further changes.
 
-   What retiring does not end: anyone may still migrate later, so the legacy-id
-   adoption and its guards stay as long as migration is offered.
-   `tests/test_sensor_descriptions.py` (ids, unit class, `state_class` against
-   `doc/legacy_entity_map.json`) keeps history continuous and stays.
-   `tests/test_registers.py`'s comparison with the YAML can then be anchored to
-   the specification instead; its scan-interval check goes first.
+   Retiring does not end migration, so the legacy-id adoption, its guards
+   and `tests/test_sensor_descriptions.py` stay as long as migration is
+   offered. `tests/test_registers.py`'s comparison with the YAML can then be
+   anchored to the specification instead; its scan-interval check goes first.
 
 # Future work
 
@@ -806,18 +641,16 @@ days: the trackers' daily sum against *Daily PV generation*, on a cable and
 through a WiNet-S, which says how much the polling interval and a dongle's
 stale reads cost.
 
-**Not part of the capability test today** (checked 2026-11-12). Auto
-repeat's plausibility checks (`capability_test/plausibility.py`) compare
-*Daily PV generation* with the integral of *Total DC power*, and each
-tracker's V × I with *Total DC power* at one moment, but nothing integrates
-the trackers the way the *MPPTn energy* sensors do. Proposed: one more
-check of that kind, the trackers' summed V × I integrated against the rise
-of *Daily PV generation*. It would ride on auto repeat, which every
-collection already runs, and its median ratio, kept in the ledger and the
-diagnosis document, is the drift asked for here, per firmware and
-transport. One caveat: the check judges in decades (a scale error), and a
-drift of a few percent comes out as `MATCH` or `INCONCLUSIVE`, so the
-document has to carry the median itself, not only the verdict.
+**No capability test measures it** (checked 2026-11-12): auto repeat's
+plausibility checks compare *Daily PV generation* with the integral of
+*Total DC power*, and each tracker's V × I with *Total DC power* at one
+moment, but nothing integrates the trackers the way the sensors do.
+Proposed: one more check of that kind, the trackers' summed V × I
+integrated against the rise of *Daily PV generation*, riding on auto repeat,
+whose median ratio in the ledger and the document is the drift asked for
+here, per firmware and transport. Caveat: the check judges in decades (a
+scale error), so a drift of a few percent comes out `MATCH` or
+`INCONCLUSIVE` and the document must carry the median itself.
 
 ## A generated dashboard
 
@@ -826,58 +659,41 @@ first), or rely on entity metadata and document the auto-generated view.
 
 ## Helping users set up the Energy dashboard
 
-Investigated 2026-11-06 against Home Assistant 2026.11. Findings:
+The guide is written and linked from the README (`doc/energy_dashboard.md`:
+hybrid, SG, battery, wallbox, several inverters with a Sum helper for one
+power total), and the ordinary setup's success dialog links it
+(`ENERGY_DASHBOARD_GUIDE_URL`).
 
-- **No hook to pre-fill it.** Core's `energy` component has one platform hook
-  for integrations, the solar *forecast* (`async_get_solar_forecast`, for a
-  forecast provider, not for an inverter). The sources are saved through
-  `energy/save_prefs`, and `EnergyManager.async_update` could merge entries
-  from the integration, but that edits the user's own preferences: only with
-  an explicit action and a confirmation, never on setup.
-- **What the dashboard accepts.** An energy-class sensor in kWh with the
-  state class `total` or `total_increasing` (Wh and kWh both). Ours qualify,
-  54 entities (hybrid 18, derived 13, SG 21, wallbox 2, in Wh). Offered in a
-  list of that size the user
-  picks by name, and several names are traps: *Daily …* resets at midnight,
-  *Total PV generation & battery discharge* double counts, *(smoothed)* is for
-  a card, *MPPTn energy* is the integrated estimate.
-- **What to pick** (hybrid, names as shipped): grid consumption *Total
-  imported energy*, grid return *Total exported energy*, solar *Total PV
-  generation*, battery in *Total battery charge energy*, out *Total battery
-  discharge energy*, and under individual devices the wallbox's *Total
-  charged energy*. An SG: its *Total PV generation*, *Total exported energy*
-  and *Total imported energy*. Several inverters: each is a solar source of
-  its own, so no sum is needed; the battery comes from the inverter that has
-  it.
-- **Unverified:** whether the import and export totals need a meter fitted
-  (what a house without one reads), and whether the *Total …* energies, which
-  keep the YAML package's `total` state class, behave across an inverter
-  reset. Both want a house to check before a guide states them.
+**Nothing can pre-fill the dashboard** (checked against Home Assistant
+2026.11): core's `energy` component offers an integration only the solar
+*forecast* platform, and the sources are the user's own preferences, so
+anything that writes them needs an explicit action and a confirmation, never
+a setup step.
 
-Done: the user guide, `doc/energy_dashboard.md` (hybrid, SG, battery,
-wallbox, several inverters with a Sum helper for one power total), linked from
-the README. The ordinary setup's success dialog links it
-(`ENERGY_DASHBOARD_GUIDE_URL`). Still proposed, in order of cost: a repair or
-notification after setup that names the same entities; an action that adds
-them to the dashboard, only on request. The guide states the
-two unverified points; each is answered by one house. Feeds `legacy/doc/dashboard.md`'s
-Energy dashboard row below.
+Still proposed, in order of cost: a repair or a notification after setup
+that names the same entities; an action that adds them to the dashboard,
+only on request.
+
+Unverified, each answered by one house, and stated as open in the guide:
+whether the import and export totals need a meter fitted (what a house
+without one reads), and whether the *Total …* energies, which keep the YAML
+package's `total` state class, behave across an inverter reset. Feeds
+`legacy/doc/dashboard.md`'s Energy dashboard row.
 
 ## Site-wide sensors for several inverters
 
-Each inverter is its own config entry, so nothing adds them up. Today the
-answer is documented helpers: `doc/energy_dashboard.md` (*Several
-inverters*) says what to sum with a Sum helper, what to take from the master
-only and what never to sum, from fwitten's master and slave (committed
-diagnoses, 2026-10-29, P023 cables; the slave has no meter and no battery).
+Each inverter is its own config entry, so nothing adds them up, and the
+answer today is documented helpers: `doc/energy_dashboard.md` (*Several
+inverters*) says what to sum, what to take from the master only and what
+never to sum.
 
 Open: entities of the integration's own, **only if users ask**. They need
 something above the one-entry-per-inverter rule (`doc/architecture.md`): the
 entry that is the cluster's master owns a "Site" device, found by the roles
-the diagnosis already measures (*measured* or *inferred*), and the sensors are
-unavailable, not 0, when a member is. `total_site_pv_power` already exists
-for the inverter that has a second one on its supply, so the Site wording
-has a precedent.
+the diagnosis already measures (*measured* or *inferred*), and the sensors
+are unavailable, not 0, when a member is. `total_site_pv_power` already
+exists for the inverter that has a second one on its supply, so the Site
+wording has a precedent.
 
 Names, in the existing convention (sentence case, the device name added by
 Home Assistant, the ids in English). **Agreed by the maintainer
@@ -901,40 +717,34 @@ words renames the helper, not the integration.
 
 ## Renames and the databases outside Home Assistant
 
-How to deal with entity renames, the user-visible ones and the ones a
-future name change would cause, for the stores that do not follow the
-recorder: InfluxDB, and with it Grafana, Prometheus, MQTT statestream and
-Node-RED. They get the print-only script (`scripts/helpers/influx_migration.py`)
-and a step-by-step guide a user follows or hands to an AI assistant
-(`doc/influx_migration_llm_guide.md`, linked from
-`doc/integration_migration.md`). No built-in path: the integration cannot
-reach the user's InfluxDB, and versions, measurement settings and
+The stores that do not follow the recorder -- InfluxDB and with it Grafana,
+Prometheus, MQTT statestream, Node-RED -- get the print-only script
+(`scripts/helpers/influx_migration.py`) and a guide a user follows or hands
+to an AI assistant (`doc/influx_migration_llm_guide.md`, linked from
+`doc/integration_migration.md`). There is no built-in path: the integration
+cannot reach the user's InfluxDB, and versions, measurement settings and
 downsampling differ per installation. The legacy-id adoption keeps ids, so
-most users need neither. Checked against the maintainer's production
-registry (local only, never committed): every YAML statistic a description
-replaces keeps its unit class and sum/mean kind, and the YAML templates'
-values match `derived` over three days of history.
-Open: what the integration should do when an id does change (a repair that
-names the affected entities and links the guide; a list of old and new ids
-a user can export), how a rename after release is announced, and whether a
-real InfluxDB with the migrated data is worth testing once the production
-copy (Release item 4, `doc/maintainer_setup.md` §8) exists. The guide has
-not yet been run against a real InfluxDB.
+most users need neither.
+
+Open: what the integration should do when an id does change (a repair naming
+the affected entities and linking the guide; an export of old and new ids),
+how a rename after release is announced, and whether a real InfluxDB with
+migrated data is worth testing once the production copy exists (Release item
+4). The guide has never run against a real InfluxDB.
 
 ## The wallbox: the direct connection first
 
-Decided and built 2026-11-12 (`doc/architecture.md`, wiki `device-wallbox.md`):
-a wallbox with an address of its own is an entry of its own and the only one
-that writes to it; an inverter entry leaves it out by its serial; the
-`wallbox_host` option is gone (entry minor version 3). Left:
+A wallbox with an address of its own is an entry of its own and the only one
+that writes to it; an inverter entry leaves it out by its serial (decided and
+built 2026-11-12: `doc/architecture.md`, wiki `device-wallbox.md`). Left:
 
 1. **The search's result says it.** Where the search finds an inverter
    behind a WiNet-S and a wallbox on 516, the list could say that the
    wallbox will be read on its own and not through the inverter. Today the
    inverter entry simply gives it up once the wallbox entry is added.
-2. **On hardware at gerd's**: his inverter entry (WiNet-S) and his
-   wallbox entry side by side, to see the inverter entry give the wallbox up
-   after a reload, and take it back when the wallbox entry is deleted.
+2. **On hardware at gerd's**: his inverter entry (WiNet-S) and his wallbox
+   entry side by side, to see the inverter entry give the wallbox up after a
+   reload, and take it back when the wallbox entry is deleted.
 3. **The options screenshot** (`HA-settings-configure-capability-test.png`)
    still shows the two wallbox fields an inverter entry no longer has;
    retake it (`doc/development.md`, *Screenshots for the docs*).
@@ -942,9 +752,8 @@ that writes to it; an inverter entry leaves it out by its serial; the
 Open, unchanged: Modbus over TLS on a **WiNet-S's** own 516 for the
 inverter. Worth building only if 516 is a *separate* session pool from 502:
 hold 502 until it refuses, then try 516. The certificate is settled (wiki:
-`device-winet-s.md`): gerd's WiNet-S, his wallbox and bar12's WiNet-S serve
-one certificate, so it is built into the firmware, its key is on every unit,
-and verifying it gains nothing.
+`device-winet-s.md`): one certificate is built into the firmware, its key is
+on every unit, and verifying it gains nothing.
 
 ## EVCC connection
 
@@ -971,9 +780,11 @@ gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments
 
 Last checked: **2026-11-15 09:00 UTC**: #786 brought peter_sm's twentieth
 reading (posted by Korsberg, 0.1.0a40, capability test), ingested: the first
-`network_names` from a house (blocker 18). cyablo's question (2026-11-12) about
-an AC011E-01 behind a WiNet-S at unit 4: the wallbox search tries units 2 and 4
-behind a dongle since 0.1.0a40 (`ae83be0`); a reply is drafted, not yet posted.
+`network_names` from a house (blocker 18). cyablo's question (2026-11-12)
+about an AC011E-01 behind a WiNet-S at unit 4 is answered (posted
+2026-11-15 10:43 UTC): the wallbox search tries units 2 and 4 behind a
+dongle since 0.1.0a40 (`ae83be0`), and they were asked to retry. Their
+answer is blocker 15's lead.
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 

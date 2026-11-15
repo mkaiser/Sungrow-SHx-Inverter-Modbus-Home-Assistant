@@ -198,6 +198,37 @@ preview repository's URL, type *Integration*) needs the connection: checked on
 downloaded the channel at its HEAD commit with no *Pre-release* switch turned
 on, and Home Assistant then installed the pinned library from PyPI.
 
+### Handing the channel's users over to a release
+
+Read in core 2026.11.0's Marketplace source (`.venv-marketplace`,
+`components/marketplace`), 2026-11-07; nothing tried on the testbed yet.
+
+There is no one-click switch. The Marketplace refuses to install an
+integration whose domain another installed repository owns ("The
+sungrow_modbus directory belongs to ...-preview", `async_pre_install` in
+`repositories/integration.py`), and refuses to remove one while a config
+entry of its domain exists ("still set up ... Delete it under Settings >
+Devices & services before uninstalling it", `repository_in_use` in
+`websocket/repository.py`). So a user takes five steps: delete the entry,
+**Remove** the preview, **Download** from the main repository, restart, and
+set the integration up again. Home Assistant restores a deleted entity's id
+when the same platform and unique id come back within 30 days
+(`ORPHANED_ENTITY_KEEP_SECONDS` in `entity_registry.py`), so the ids, and
+with them the history, should come back; the options are asked again.
+
+Two routes that do not help:
+
+- The catalog's `removed` feed raises a repair for an installed repository
+  it lists (`async_handle_removed_repositories` in `base.py`), but that
+  repair is not fixable: it only links the repository's page. Whether
+  `hacs/default` takes a removal entry for a repository that was never in
+  the catalog is unknown.
+- A GitHub rename carries over by repository id
+  (`_async_take_over_catalog_entry`), but two repositories cannot be merged
+  into one, so no rename moves the mirror's users.
+
+Which route to take at the release is open, in `Todo.md` (Release, item 6).
+
 ## 6. Keeping data out of the cloud
 
 Worth being precise, because "cloud" means two different things here and the

@@ -241,7 +241,7 @@ In order; 1 to 4 need the owner at the app.
 
 ## 7. In the repository, still to do
 
-- ~~Entities on the inverter's entry~~: built 2026-11-14 (`Todo.md`, Wallbox item 3.2), on P022
+- ~~Entities on the inverter's entry~~: built 2026-11-14 (`Todo.md`, Wallbox item 3), on P022
   only. Tests 1-3 above may still change the select: writing what is already set, a sleeping car,
   the same mode change from the app.
 - ~~A repair for a run that left the house changed~~: built 2026-11-14. A wallbox run (managed or
