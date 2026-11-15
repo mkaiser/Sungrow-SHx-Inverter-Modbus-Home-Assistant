@@ -56,6 +56,7 @@ no diagnosis is listed as **untested** rather than assumed to work.
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-15` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-16` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-17` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
+| `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-18` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-2` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-3` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
 | `sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-4` | peter_sm | SH10RT-V112 (`0x0E0F`) | direct LAN port (reported) | SBR160 | `ARM_SAPPHIRE-H_V11_V01_B` | three phase 3P4L | no | no | yes | — | yes | yes | no |
@@ -217,7 +218,7 @@ that has only one would make the next pair.
 | SH10RT-20 | winet_wlan | B001.V000.P020 (1 reading) |
 | SH10RT-20 | winet_wlan | B001.V000.P023 (3 readings) |
 | SH10RT-V112 | direct_lan | B001.V000.P020 (2 readings) |
-| SH10RT-V112 | direct_lan | B001.V000.P023 (23 readings) |
+| SH10RT-V112 | direct_lan | B001.V000.P023 (24 readings) |
 | SH10RT-V112 | direct_lan | unknown (2 readings) |
 | SH10RT-V112 | unsure | B001.V000.P023 (1 reading) |
 | SH10RT-V112 | winet | B001.V000.P023 (2 readings) |

@@ -60,7 +60,10 @@ At [gerd](installation-gerd.md) it answers mDNS with one service, `_http._tcp`, 
 behind it with its serial**: the inverter (unit, device type code 4999, model), the battery
 (unit through the dongle and over the cable, model) and the dongle itself
 ([the reading](../sources/gerd-mdns-2026-11-11-summary.md)). Anyone on the LAN can read them.
-Whether a multicast browse sees the same, and on other firmware, is
+A multicast browse on a LAN heard the same layout at [peter-sm](installation-peter-sm.md), on
+`WINET-SV200.001.00.P045`, from Home Assistant's own zeroconf
+([twentieth reading](../sources/sh10rt-v112-b001v000p023-3p-peter-sm-anon-91477823483-battery-sbr160-meter-direct-lan-18-summary.md));
+other firmware and what `ethinfo` says are
 [open](../queries/does-a-winet-s-advertise-over-mdns.md).
 
 Its web page is **HTTPS on port 443** under a self-signed Sungrow certificate; port 80, which

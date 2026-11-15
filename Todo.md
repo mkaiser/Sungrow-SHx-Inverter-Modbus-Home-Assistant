@@ -529,9 +529,10 @@ Nothing can start now (blocker 16).
     resolves both and parses the TXT into properties, by QU queries from
     port 5353 aimed at each device; the inverter's LAN port answers nothing.
     Outstanding:
-    - **A multicast browse on a LAN.** Nothing multicast crosses the VPN or
-      the container. `probe.py mdns` on a machine in a house with a dongle
-      (`pip install sungrow-modbus[discovery]`), or the diagnosis step below.
+    - **A multicast browse on a LAN: answered at peter_sm's** (2026-11-15,
+      Home Assistant's zeroconf, wiki: the mDNS query): their WiNet-S, gerd's
+      TXT layout, an address in `ethinfo`. Their inverter's MAC prefix,
+      `AC:19:9F`, is the first for a DHCP matcher.
     - **Other firmware, other houses.** One dongle and one wallbox so far.
     - **Does `ethinfo` say wired or WiFi?** It is empty on gerd's dongle,
       which is on WiFi; it may carry the Ethernet details when the dongle is
@@ -939,17 +940,16 @@ the commit; a diagnosis signed `anonymous` stays unnamed. Then move the date
 below on.
 
 ```bash
-gh issue list -s all --search "updated:>=2026-11-13T16:15:00Z" -L 50
-gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-13T16:15:00Z&per_page=100' \
+gh issue list -s all --search "updated:>=2026-11-15T09:00:00Z" -L 50
+gh api 'repos/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/comments?since=2026-11-15T09:00:00Z&per_page=100' \
   -q '.[] | "\(.issue_url | split("/") | last) \(.user.login) \(.created_at)"'
 ```
 
-Last checked: **2026-11-13 16:15 UTC**: #786 brought four diagnoses, ingested
-(peter_sm's nineteenth, tristangrichard's SH8.0RT, an anonymous SH10RT through a
-proxy and an SG10RT), and cyablo's question (2026-11-12) about an AC011E-01
-behind a WiNet-S at unit 4: the wallbox search now tries units 2 and 4 behind
-a dongle too (`ae83be0`, wiki query *Which unit does a WiNet-S give a
-wallbox?*), in the next release; not yet answered on the issue. No other issue changed since 2026-11-09.
+Last checked: **2026-11-15 09:00 UTC**: #786 brought peter_sm's twentieth
+reading (posted by Korsberg, 0.1.0a40, capability test), ingested: the first
+`network_names` from a house (blocker 18). cyablo's question (2026-11-12) about
+an AC011E-01 behind a WiNet-S at unit 4: the wallbox search tries units 2 and 4
+behind a dongle since 0.1.0a40 (`ae83be0`); a reply is drafted, not yet posted.
 
 ## Recurrent: llmwiki upstream check (every 6 weeks, next: 2026-12-10)
 

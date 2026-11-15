@@ -874,3 +874,12 @@ Assistant and put back with no car charging: grid purchase both ways, the user c
 outside user-defined mode and taken in it, the mode with charging kept off, charging on and off.
 The block read as before afterwards. New raw note and source gerd-wallbox-ha-controls-2026-11-14;
 the index.
+
+## [2026-11-15] ingested | peter_sm's twentieth reading, the first network_names from a house (#786)
+
+Posted by Korsberg: SH10RT-V112 on P023, the inverter's own LAN port, integration 0.1.0a40, with
+a capability test (outcome 3). Its WiNet-S answered Home Assistant's multicast mDNS browse with
+gerd's TXT layout and an `ethinfo` address; the inverter's MAC vendor prefix is `AC:19:9F`. EMS
+mode 3 was taken; 33213 lost the connection a tenth time of ten, 33047 above its bound a third
+time; 13074 times ten again; restart in 271 s. New source page; updated installation-peter-sm,
+the P023 page, the 33213 and mDNS queries, the index.
