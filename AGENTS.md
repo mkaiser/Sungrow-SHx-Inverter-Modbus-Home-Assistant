@@ -12,7 +12,7 @@ document, the wiki included.
 | Running the diagnosis / its document, scripts and pinned library | `device-diagnosis/README.md` / `device-diagnosis/reference.md` |
 | What is next, open decisions, what waits on hardware | `Todo.md` |
 | Goals, decisions, register sources and licences | `doc/architecture.md` |
-| Recurring procedures (ingest new diagnoses, release) | `.claude/skills/`, each pointing at the document it follows |
+| Recurring procedures (ingest new diagnoses, release, run a diagnosis for a contributor) | `.claude/skills/`, each pointing at the document it follows; any agent can follow them, not only Claude Code |
 | Where the integration stands on Home Assistant's quality scale | `custom_components/sungrow_modbus/quality_scale.yaml`, held to the code by `tests/test_quality_scale.py` |
 
 ## Two tracks

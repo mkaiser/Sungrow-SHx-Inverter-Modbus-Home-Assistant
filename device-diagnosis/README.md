@@ -85,26 +85,31 @@ which file to send.
 accepts very few connections, and a second reader makes registers look
 broken. Dropped connections in the output are normal; the diagnosis reconnects.
 
-### 3. With Claude Code, in the dev container
+### 3. With an AI coding agent, in the dev container
 
-If you have VS Code, Docker and [Claude Code](https://claude.com/claude-code),
-Claude can do the whole thing with you. It searches your network, asks you
-the questions, runs the diagnosis, compares what it found with what is
-already known, and then opens a pull request or gives you the file for the
-issue. It writes to your inverter only if you say yes to the capability test.
+If you have VS Code, Docker and an AI coding agent (Claude Code, OpenAI
+Codex, GitHub Copilot's agent mode or similar), the agent can do the whole
+thing with you. It searches your network, asks you the questions, runs the
+diagnosis, compares what it found with what is already known, and then
+opens a pull request or gives you the file for the issue. It writes to your
+inverter only if you say yes to the capability test. The procedure it
+follows is
+[`.claude/skills/run-diagnosis/SKILL.md`](../.claude/skills/run-diagnosis/SKILL.md).
 
 1. Clone the repository on the `proper-ha-integration` branch, open it in VS
    Code and choose *Dev Containers: Reopen in Container*. The first build
    takes a few minutes.
-2. Open Claude Code in the container and paste:
+2. Start your agent in the container and paste:
 
    ```text
-   /run-diagnosis I'd like to run the device diagnosis on my Sungrow inverter.
-   My home network is 192.168.178.0/24 (or: my inverter is at 192.168.178.50).
-   Read-only, please, unless I say otherwise.
+   Follow .claude/skills/run-diagnosis/SKILL.md to run the device diagnosis
+   on my Sungrow inverter. My home network is 192.168.178.0/24 (or: my
+   inverter is at 192.168.178.50). Read-only, please, unless I say otherwise.
    ```
 
-   Put in your own network or address; leave that line out and Claude asks.
+   Put in your own network or address; leave that line out and the agent
+   asks. In Claude Code, `/run-diagnosis` at the start of the prompt does
+   the same.
 3. Answer its questions. Pause Home Assistant's Sungrow polling while it
    reads, if you can.
 

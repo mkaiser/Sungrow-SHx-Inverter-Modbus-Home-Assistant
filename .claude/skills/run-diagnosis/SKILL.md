@@ -5,6 +5,11 @@ description: Guide a contributor through the device diagnosis (the "survey") fro
 
 # Run a diagnosis for a contributor
 
+Any coding agent can follow this (Claude Code loads it as a skill; Codex,
+Copilot and others read it when told to). Where it says *ask*, use your
+agent's question tool if it has one (AskUserQuestion in Claude Code), or ask
+in chat and wait for the answer.
+
 The person in front of you owns the inverter, and probably not the
 repository. They are giving their time and their house: say what each step
 does before it runs, and ask, never assume, anything that is published or
@@ -12,8 +17,8 @@ written. The diagnosis itself is `device-diagnosis/README.md` (what it does,
 the exit codes) and `device-diagnosis/reference.md` (the document); this is
 the order to drive it in from here.
 
-**You cannot answer the script's prompts**, since Bash has no terminal. So you
-ask every question yourself, with AskUserQuestion, and pass each answer as its
+**You cannot answer the script's prompts**: an agent's shell has no terminal. So
+you ask every question yourself and pass each answer as its
 flag (`sungrow_diagnosis.py --help`, group *answers*). A flag given is a
 question not asked; one left out makes the script wait on a prompt nobody
 sees.
@@ -34,7 +39,7 @@ sees.
 
 The container cannot find them by itself: multicast (mDNS) does not cross the
 Docker bridge, and the script's default network is the container's own
-`172.17.x`. So ask (AskUserQuestion): *I know the address* (take it), or
+`172.17.x`. So ask: *I know the address* (take it), or
 *Search my network* (ask for the range, e.g. `192.168.178.0/24`: the first three
 parts of their PC's or router's address, then `.0/24`).
 
@@ -59,9 +64,8 @@ address into anything tracked**; on screen it is their own data.
 
 ## 3. Ask the questions, per device
 
-Each answer is published in the document except the host, so say that. One
-AskUserQuestion call takes four questions; use two calls, then the capability
-test on its own.
+Each answer is published in the document except the host, so say that. Ask
+them in two or three short rounds, then the capability test on its own.
 
 | Question | Flag | Notes |
 | --- | --- | --- |
@@ -102,7 +106,9 @@ python3 device-diagnosis/scripts/python/sungrow_diagnosis.py <host> --port <port
   --capability-test no < /dev/null
 ```
 
-Run it in the background and wait for the notification, never a polling loop.
+Run it in the background if your agent can, and wait for it to finish rather
+than polling every few seconds; its own transcript (`sungrow-scan-*.log`) has
+everything it printed.
 Tell them where it stands at each phase in the output (find, questions,
 transport, block test, reading, capability test, summary). It looks stuck more
 than once over a slow link; dropped connections are normal.
@@ -156,7 +162,7 @@ Then `make gen` and
 
 ## 6. PR, or the file
 
-Ask (AskUserQuestion): **Open a pull request** with the document and the pages,
+Ask: **Open a pull request** with the document and the pages,
 or **just give me the file** for the issue. Recommend the PR only if it is news.
 
 **The file:** give the absolute path of each `.json` to send, and
@@ -168,8 +174,8 @@ nothing was committed.
 **The PR:**
 
 1. `git commit -- <only the paths you added or changed>`; the message names
-   the contributor (no `@`) and #786, unless `anonymous`, and ends with the
-   attribution lines.
+   the contributor (no `@`) and #786, unless `anonymous`, and ends with your
+   agent's co-author line, if it has one.
 2. `gh auth status`. If `origin` is not theirs, `gh repo fork --remote` (it
    renames the original to `upstream`).
 3. **Ask before pushing**, then `git push -u origin diagnosis/<label>` and

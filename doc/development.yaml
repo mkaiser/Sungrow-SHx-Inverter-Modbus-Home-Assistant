@@ -270,13 +270,15 @@ real_hardware:
       a Linux machine in a house with a dongle, or `probe.py mdns` on the
       Windows host for the records alone.
 
-  diagnosis_with_claude: >-
-    In Claude Code, inside the container, paste:
-      /run-diagnosis Run the device diagnosis on my inverter at 192.168.x.y,
-      read-only. Ingest what it finds and tell me whether it is news.
-    It searches the network you name, asks the questions, runs the diagnosis,
-    ingests it on a scratch branch and opens a PR or hands over the file for
-    #786. It writes only after a yes to the capability test.
+  diagnosis_with_an_ai_agent: >-
+    Any coding agent (Claude Code, Codex, Copilot, ...), inside the container:
+      Follow .claude/skills/run-diagnosis/SKILL.md: run the device diagnosis
+      on my inverter at 192.168.x.y, read-only. Ingest what it finds and tell
+      me whether it is news.
+    In Claude Code, /run-diagnosis does the same. It searches the network you
+    name, asks the questions, runs the diagnosis, ingests it on a scratch
+    branch and opens a PR or hands over the file for #786. It writes only
+    after a yes to the capability test.
 
   prefer_the_simulator: >-
     scripts/dev/simulate.sh serves the whole register map on localhost:5020,

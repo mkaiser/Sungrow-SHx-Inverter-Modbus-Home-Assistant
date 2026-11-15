@@ -53,22 +53,27 @@ path-independent. `CLAUDE.md`, which includes `AGENTS.md`, is loaded
 automatically wherever the repo is opened, and `AGENTS.md` points into the
 wiki.
 
-## A diagnosis of your own inverter, with Claude Code
+## A diagnosis of your own inverter, with an AI agent
 
-The `run-diagnosis` skill (`.claude/skills/run-diagnosis/`) runs the device
-diagnosis against real hardware from this container: it sweeps the LAN you
-name (mDNS does not reach the container), asks the diagnosis's questions and
-passes them as flags, runs it, ingests the result on a scratch branch, and
-opens a PR or hands over the file for #786. It writes to the inverter only
-after an explicit yes to the capability test. In Claude Code:
+[`.claude/skills/run-diagnosis/SKILL.md`](../.claude/skills/run-diagnosis/SKILL.md)
+is a procedure any coding agent can follow (Claude Code loads it as the
+`run-diagnosis` skill; Codex, Copilot and others read it when told to). It
+runs the device diagnosis against real hardware from this container: it
+sweeps the LAN you name (mDNS does not reach the container), asks the
+diagnosis's questions and passes them as flags, runs it, ingests the result
+on a scratch branch, and opens a PR or hands over the file for #786. It
+writes to the inverter only after an explicit yes to the capability test.
+Paste:
 
 ```text
-/run-diagnosis Run the device diagnosis on my inverter at 192.168.178.50,
-read-only. Ingest what it finds and tell me whether it is news.
+Follow .claude/skills/run-diagnosis/SKILL.md: run the device diagnosis on my
+inverter at 192.168.178.50, read-only. Ingest what it finds and tell me
+whether it is news.
 ```
 
-Without an address it asks for the network to search. The tree's library is
-what it runs on; `make scan-local` is the launcher's equivalent by hand.
+In Claude Code, `/run-diagnosis` in place of the first line does the same.
+Without an address the agent asks for the network to search. It runs on the
+tree's library; `make scan-local` is the launcher's equivalent by hand.
 
 ## The GitHub CLI
 
