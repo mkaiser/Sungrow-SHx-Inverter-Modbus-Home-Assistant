@@ -107,8 +107,8 @@ Nothing can start now (blocker 13).
    2. **The managed capability test's first run on hardware**, at gerd's,
       with a car charging. It writes through the managing inverter entry
       (`managing_entry`), whose controls refuse while it runs
-      (`write_owner.py`, unreleased, never run on hardware): that rollout is
-      its first test.
+      (`write_owner.py`, released in 0.1.0a41, never run on hardware): that
+      rollout is its first test.
    3. **A standalone wallbox** (evcc's case): none measured. Idle and with
       no car, gerd's setting reads 0 (160 and 151 while charging), so an
       idle wallbox cannot separate the two scales and the meaning of 0 is
@@ -458,7 +458,7 @@ diagnosis-only entry; how it is handled beyond that is open.
     `network_names` (schema 27, released) and the zeroconf matcher
     (released; `WiNet-WebServer*` and `SUNGROW*` on `_http._tcp`, where the
     record only decides whether to offer, Modbus identifies on confirm and
-    nothing set up is ever moved), and the DHCP matcher (unreleased,
+    nothing set up is ever moved), and the DHCP matcher (0.1.0a41,
     `wifi_module.py`), which offers a port for Sungrow's one IEEE prefix
     `AC199F*` and links a RAK WiFi module (`rakmodule-*`) to the inverter
     its owner names. Outstanding:
