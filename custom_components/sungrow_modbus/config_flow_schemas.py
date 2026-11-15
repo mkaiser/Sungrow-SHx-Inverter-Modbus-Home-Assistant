@@ -58,6 +58,7 @@ from .const import (
     ROLE_MASTER,
     ROLE_SLAVE,
 )
+from .wifi_module import is_sungrow_mac
 
 STEP_USER_DATA_SCHEMA = probatio.Schema(
     {
@@ -454,6 +455,20 @@ def _described(
     pair in this list nobody could otherwise tell apart. Named rather than
     hidden, because a proxy is usually the better address: it shares the
     inverter's single Modbus port with whatever else polls it.
+
+    **The MAC's vendor prefix says the same of any machine**, not only this
+    one. `AC:19:9F` is Sungrow's one IEEE registration, so an address
+    answering as an inverter from another vendor's hardware is not the
+    inverter: something there is relaying. Three-valued like every other
+    probe here -- an ARP entry exists only on the same segment and only
+    after this machine has talked to the address, so behind a router, a VPN
+    or a container bridge there is **no answer**, which says nothing rather
+    than accusing a device.
+
+    A note and not a ranking, deliberately. Sungrow could register a second
+    prefix tomorrow, and the cost of being wrong that way is telling
+    somebody their inverter is a proxy; the cost of a missing note is only
+    that two cards read alike, which is where this started.
     """
     by_serial: dict[str, list[str]] = {}
     for host, entry in found.items():
@@ -481,6 +496,13 @@ def _described(
             if host in local:
                 entry["proxy"] = True
                 notes.append("Home Assistant's own address, so a Modbus proxy")
+            prefix = entry.get("mac_prefix")
+            if prefix and not is_sungrow_mac(prefix):
+                notes.append(
+                    f"the hardware at this address is {prefix}, not Sungrow's "
+                    "AC:19:9F, so something here is relaying: a Modbus proxy, "
+                    "or a forwarded port"
+                )
             if serial in roles:
                 entry["role"], note = roles[serial]
                 notes.append(note)

@@ -59,9 +59,10 @@ def _adapters(*addresses: str):
     )
 
 
-def _found(host: str, *, direct: bool) -> dict:
+def _found(host: str, *, direct: bool, mac: str | None = "AC:19:9F") -> dict:
     """One identified address, as `_async_identify` builds it."""
     return {
+        "mac_prefix": mac,
         CONF_HOST: host,
         CONF_PORT: 502,
         CONF_UNIT_ID: 1,
@@ -184,3 +185,64 @@ async def test_moving_onto_a_proxy_says_nothing(hass: HomeAssistant) -> None:
     result = await _move_to(hass, entry, PROXY)
 
     assert result["description_placeholders"]["proxy"] == ""
+
+
+def test_a_foreign_mac_says_something_is_relaying() -> None:
+    """The half the local-address test cannot reach: a proxy on a third machine.
+
+    `AC:19:9F` is Sungrow's one IEEE registration, so an address answering
+    as an inverter from another vendor's hardware is not the inverter. This
+    is the only evidence here that works when the proxy is neither this
+    machine nor the device.
+    """
+    described = _described(
+        {
+            CABLE: _found(CABLE, direct=True),
+            PROXY: _found(PROXY, direct=True, mac="B8:27:EB"),
+        }
+    )
+
+    assert "B8:27:EB" in described[PROXY]["label"]
+    assert "relaying" in described[PROXY]["label"]
+    assert "relaying" not in described[CABLE]["label"]
+
+
+def test_no_arp_entry_accuses_nobody() -> None:
+    """Three-valued, like every probe here: absent is not foreign.
+
+    An ARP entry exists only on the same segment, so behind a router, a VPN
+    or a container bridge every address answers `None` -- which is the
+    devcontainer this is developed in. Reading that as "not Sungrow" would
+    label every inverter a proxy wherever the cache cannot see.
+    """
+    described = _described(
+        {
+            CABLE: _found(CABLE, direct=True, mac=None),
+            DONGLE: _found(DONGLE, direct=False, mac=None),
+        }
+    )
+
+    assert not any("relaying" in entry["label"] for entry in described.values())
+
+
+def test_a_sungrow_mac_is_left_unremarked() -> None:
+    """The ordinary case says nothing: a note everybody gets is noise."""
+    described = _described({CABLE: _found(CABLE, direct=True)})
+
+    assert "AC:19:9F" not in described[CABLE]["label"]
+
+
+def test_the_two_proxy_tests_agree_and_do_not_repeat_each_other() -> None:
+    """Home Assistant's own address *and* a foreign MAC: both said, once each."""
+    described = _described(
+        {
+            CABLE: _found(CABLE, direct=True),
+            PROXY: _found(PROXY, direct=True, mac="B8:27:EB"),
+        },
+        local={PROXY},
+    )
+    label = described[PROXY]["label"]
+
+    assert label.count("Modbus proxy") == 2
+    assert "Home Assistant's own address" in label
+    assert "B8:27:EB" in label

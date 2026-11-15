@@ -74,6 +74,7 @@ from sungrow_modbus.discovery import (
     async_identify_unit_247_on,
 )
 from sungrow_modbus.identity import STRING_INVERTER
+from sungrow_modbus.network_names import async_mac_prefix
 from sungrow_modbus.string_inverter import model_for as string_inverter_model_for
 from sungrow_modbus.wallbox import probe_units as wallbox_probe_units
 from sungrow_modbus.wallbox.device import SungrowWallbox
@@ -1562,6 +1563,10 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                     # would be wrong.
                     break
                 hostname = await async_hostname(host)
+                # Asked after the identity read, never before: an ARP entry
+                # exists only once this machine has talked to the address.
+                # `network_records.py` asks it the same way for the diagnosis.
+                mac_prefix = await async_mac_prefix(host)
                 code = inverter.device_type_code
                 model = _model_of(inverter) or DEFAULT_NAME
                 found[host] = {
@@ -1572,6 +1577,7 @@ class SungrowConfigFlow(ConfigFlow, domain=DOMAIN):
                     "model": _model_of(inverter),
                     "kind": _kind_data(code),
                     "hostname": hostname,
+                    "mac_prefix": mac_prefix,
                     "direct": direct,
                     "battery": battery,
                     # Rebuilt by `_described`, which is the only place that
