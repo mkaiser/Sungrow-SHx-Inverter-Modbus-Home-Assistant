@@ -85,11 +85,28 @@ which file to send.
 accepts very few connections, and a second reader makes registers look
 broken. Dropped connections in the output are normal; the diagnosis reconnects.
 
-**In this repository's dev container with Claude Code**, `/run-diagnosis`
-does all of the above for you: it searches your network, asks the
-questions, runs the diagnosis, compares what it found with what is already
-known, and then opens a pull request or hands you the file for the issue.
-It writes to your inverter only if you say yes to the capability test.
+### 3. With Claude Code, in the dev container
+
+If you have VS Code, Docker and [Claude Code](https://claude.com/claude-code),
+Claude can do the whole thing with you. It searches your network, asks you
+the questions, runs the diagnosis, compares what it found with what is
+already known, and then opens a pull request or gives you the file for the
+issue. It writes to your inverter only if you say yes to the capability test.
+
+1. Clone the repository on the `proper-ha-integration` branch, open it in VS
+   Code and choose *Dev Containers: Reopen in Container*. The first build
+   takes a few minutes.
+2. Open Claude Code in the container and paste:
+
+   ```text
+   /run-diagnosis I'd like to run the device diagnosis on my Sungrow inverter.
+   My home network is 192.168.178.0/24 (or: my inverter is at 192.168.178.50).
+   Read-only, please, unless I say otherwise.
+   ```
+
+   Put in your own network or address; leave that line out and Claude asks.
+3. Answer its questions. Pause Home Assistant's Sungrow polling while it
+   reads, if you can.
 
 ### Two modes: read-only, or with capability tests
 

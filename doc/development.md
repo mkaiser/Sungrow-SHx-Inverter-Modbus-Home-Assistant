@@ -53,6 +53,23 @@ path-independent. `CLAUDE.md`, which includes `AGENTS.md`, is loaded
 automatically wherever the repo is opened, and `AGENTS.md` points into the
 wiki.
 
+## A diagnosis of your own inverter, with Claude Code
+
+The `run-diagnosis` skill (`.claude/skills/run-diagnosis/`) runs the device
+diagnosis against real hardware from this container: it sweeps the LAN you
+name (mDNS does not reach the container), asks the diagnosis's questions and
+passes them as flags, runs it, ingests the result on a scratch branch, and
+opens a PR or hands over the file for #786. It writes to the inverter only
+after an explicit yes to the capability test. In Claude Code:
+
+```text
+/run-diagnosis Run the device diagnosis on my inverter at 192.168.178.50,
+read-only. Ingest what it finds and tell me whether it is news.
+```
+
+Without an address it asks for the network to search. The tree's library is
+what it runs on; `make scan-local` is the launcher's equivalent by hand.
+
 ## The GitHub CLI
 
 The devcontainer installs `gh` and sets `GH_CONFIG_DIR` to
