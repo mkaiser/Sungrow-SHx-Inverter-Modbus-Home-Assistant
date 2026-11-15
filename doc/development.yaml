@@ -538,6 +538,8 @@ generated_files:
       writes: doc/compatibility.md
     - script: scripts/generate/generate_firmware_support.py
       writes: doc/firmware_support.md
+    - script: scripts/generate/generate_devices_wanted.py
+      writes: device-diagnosis/devices-wanted.md   # the coverage table between its markers only
     - script: scripts/generate/generate_simulator_registers.py
       writes: scripts/dev/simulator_registers.json   # also on every simulate.sh
     - script: scripts/generate/generate_second_inverter_config.py

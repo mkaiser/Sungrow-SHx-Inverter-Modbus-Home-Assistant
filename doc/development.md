@@ -213,6 +213,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `tables/german_texts.json` | **Input table**: German for every `strings.json` text that is not an entity name, by path; read through `naming.GERMAN_TEXTS`. Feeds `translations/de.json` and `review_names.py --texts` (`plans/text_translation_review.md`) |
 | `tables/datasheet_names.json` | **Input table**: Sungrow's own name for every register an entity reads, as the hybrid's V1.1.11 and the SG's V1.1.58 datasheets print it, by `space:register`. Feeds the **Datasheet** column of `review_names.py` |
 | `generate_compatibility.py` | Build `doc/compatibility.md` from the committed diagnoses |
+| `generate_devices_wanted.py` | Rewrite the coverage table of `device-diagnosis/devices-wanted.md` (and so of the pinned diagnosis issue) from the committed diagnoses, each device counted once by its stand-in serial; the wanted list above it stays hand-written |
 | `generate_firmware_support.py` | Build `doc/firmware_support.md`: every inverter entity against every platform and firmware the diagnoses cover, each diagnosis's register dump replayed through the integration's decoding and capability probe; then every SBR/SBH pack entity against every BCU firmware, from the diagnoses' decoded pack readings |
 | `generate_simulator_registers.py` | The simulator's seed, from the entity map |
 | `generate_second_inverter_config.py` | The `legacy/` multi-inverter YAML files; run by CI on a change to the YAML package |

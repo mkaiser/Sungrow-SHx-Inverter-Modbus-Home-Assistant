@@ -12,26 +12,26 @@ details are under [Why each one](#why-each-one).
 
 | # | Device or situation | What one diagnosis settles |
 | --- | --- | --- |
-| 1 | **A single-phase inverter of the K or MG family** (SH*K, MG*) | Single phase is read on the SH-RS and on an SG5.0RS; nothing from the K or MG family has been, so every capability those two families are given today is an inference |
-| 2 | **An iHomeManager** (unit 247, port 502, 503 or 504) | The first reading of the device at all. Its Modbus TCP must be opened in the app first, see [item 2](#2-an-ihomemanager) |
-| 3 | **An SH-T (SH15T, SH20T…) through its WiNet-S**, with the capability test and feed-in limitation allowed, in daylight with export | Every T so far was read through a WiNet-S or a Logger, and the T seems to have no LAN port of its own. Settles the export limit's write scale (register 13074) on P071 by what the inverter does, and the PV cut on P071 |
+| 1 | **An inverter of the K or MG family** (SH*K, MG*RL) | Nothing from either family has been read, so every capability the two are given today is an inference |
+| 2 | **A second iHomeManager** (unit 247, port 502, 503 or 504), on firmware other than `SV930.001.00.P020` above all | One unit has been read; a second tells the device's behaviour from that unit's. Its Modbus TCP must be opened in the app first, see [item 2](#2-a-second-ihomemanager) |
+| 3 | **An SH-T (SH15T, SH20T…) through its WiNet-S**, with the capability test and feed-in limitation allowed, in daylight with export | Every T so far was read through a WiNet-S or a Logger, and the T seems to have no LAN port of its own. Settles the export limit's write scale (register 13074) on P071 by what the inverter does |
 | 4 | **A Sungrow Logger1000, 3000 or 4000** | The first reading of the Logger itself: inverters have been read through one, the Logger not. Answer *a Logger* to the transport question so the diagnosis also reads the Logger itself |
 | 5 | **A wallbox other than the one already read**, an AC011E-01 above all | Which of its registers identify a unit and which are a model constant, and a scale another source reads differently |
-| 6 | **A charging car**, at any house with a Sungrow wallbox | What input 21313 does over a session, and whether 21308/21310 are signed. Two runs a few minutes apart while charging |
-| 7 | **Version 1 between `.95.03` and `.95.12`, or a `.95.14` that is not 10 kW** | Where the export limit's write scale changes ([#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)) |
+| 6 | **A charging car**, at any house with a Sungrow wallbox | Whether 21308/21310 are signed. Two runs a few minutes apart while charging |
+| 7 | **Version 1 between `.95.03` and `.95.12`, or a `.95.14` that is not 10 kW**, with the capability test and feed-in limitation on | Where the export limit's write scale changes ([#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)) |
 | 8 | **A second master/slave cluster** | Whether a slave's address 2 is a rule or one house's convention |
 | 9 | **An SH-RS on `SUNSTONE-H` P057, P059, P066, P067 or P068**, with the capability test, in daylight | Whether the PV cut (register 31211) works there: it answers on all five, and has been watched cutting on P065 only |
-| 10 | **Any SG string inverter other than an SG5.0RS** | Its tracker and phase count, which decide its entities: the source's table is unverified for most models, and an SG answers 0 for hardware it lacks |
+| 10 | **Any SG string inverter other than an SG5.0RS or SG10RT** | Its tracker and phase count, which decide its entities: the source's table is unverified for most models, and an SG answers 0 for hardware it lacks |
 | 11 | **Any inverter on a three-wire grid (3P3L, no neutral)**: the diagnosis shows the output type it reads from register 5002 | On 3P3L, registers 5019-5021 carry line voltages, and the integration creates no phase voltages or phase powers there. One reading shows what to create instead |
-| 12 | **Any hybrid in low-SoC standby**: the battery at its minimum, no PV, usually at night. Run `scripts/diagnosis.sh tests <host> --forced-startup`, or in Home Assistant the `run_capability_test` action with *Forced startup only* | Whether *Forced startup under low SoC* (register 13017) wakes this firmware and sends it back to sleep. Watched by hand on P023 only, so the switch is created there only; the check has not run on hardware yet |
+| 12 | **Any hybrid in low-SoC standby**: the battery at its minimum, no PV, usually at night. Run `scripts/diagnosis.sh tests <host> --forced-startup`, or in Home Assistant the `run_capability_test` action with *Forced startup only* | Whether *Forced startup under low SoC* (register 13017) wakes this firmware and sends it back to sleep. Watched on P020 and P023 only, so the switch is created there only: P022 and an SH-T above all |
 
 ## Not needed any more
 
 Already read several times over. Please send one of these **only** if it
 differs from what is in [`results/inverter/`](results/inverter/) in one of the ways below:
 
-- an **SH10RT, SH10RT-20 or SH10RT-V112 on P023**, on either path (five
-  houses);
+- an **SH10RT-20 or SH10RT-V112 on P023**, on either path (seven
+  inverters);
 - an **SH8.0RT-V112 on P022** or an **SH6.0RT-V112 on P023**;
 - an **SBR096** behind any of those;
 - a **WiNet-S certificate hash**: two houses, a WiNet-S and a wallbox all
@@ -44,38 +44,48 @@ apart, or a **battery size** nobody has read.
 
 ## Where the coverage is today
 
-28 documents from 10 houses: 11 inverters, 13 inverter documents with a
-capability test, and one wallbox read at its own address.
+<!-- coverage: generated by scripts/generate/generate_devices_wanted.py -->
+
+Generated from [`results/`](results/) by `scripts/generate/generate_devices_wanted.py`; edit that, not this.
+
+32 inverters, each counted once by its stand-in serial however many times it was read: 29 hybrids and 3 SG string inverters. Beside them 2 wallboxes read, each at its own address, and an iHomeManager.
 
 | Axis | Covered | Missing |
 | --- | --- | --- |
-| Inverter model | **8 of 42**: SH10RT, SH10RT-20, SH5.0RT-V112, SH6.0RT-V112, SH8.0RT-V112, SH10RT-V112, SH15T, SH20T | every model outside RT and T |
-| Product family | RT and T | RS, MG, RL, K, CX, TL (MG10-25TL) |
-| Phase / output type | three phase 3P4L only | **single phase**, and three phase 3P3L |
-| Inverter firmware | `B001.V000.P020`, `P022`, `P023`, `B000.V000.P071` | a fifth |
-| Version 1 | `SAPPHIRE-H_01011.95.03`, `.95.12`, `.95.13`, `.95.14`, `PEARL-H_01011.01.45` | see item 7 |
-| Communication module | WiNet-S `P040`, `P043`, `P044`, `P045`; WiNet-S2 `P032`, `P033` | a Logger |
-| Battery | SBR096, SBR128, SBR160, SBH200, SBH400, one Pylontech | the other SBR and SBH sizes, other third-party packs |
-| Transport | direct LAN, WiNet-S and WiNet-S2, wired and WiFi | a Logger, a Modbus proxy, **a T on a cable, if one exists** |
+| Hybrid inverter model | **13 of 61**: SH10RS, SH10RT, SH10RT-20, SH10RT-V112, SH10T, SH15T, SH20T, SH25T, SH5.0RT-V112, SH6.0RS, SH6.0RT-20, SH6.0RT-V112, SH8.0RT-V112 | the other models |
+| Product family | RS, RT, T | CX, K, MG, RL, TL |
+| SG string inverter model | **2 of 40**: SG10RT, SG5.0RS | the other models |
+| Phase / output type | single phase, three phase 3P4L | three phase 3P3L |
+| Inverter firmware | PEARL-H `B000.V000.P067`, `B000.V000.P071`, `B001.V001.P038`; SAPPHIRE-H `B001.V000.P020`, `B001.V000.P022`, `B001.V000.P023`; SUNSTONE-H `B000.V001.P066`, `B000.V001.P068`, `B000.V002.P057`, `B000.V002.P059`, `B000.V002.P065`, `B000.V002.P067` | any other |
+| Version 1 | PEARL-H `01011.01.42`, `01011.01.45`, `01011.94.41`, `01011.95.41`; SAPPHIRE-H `01011.95.03`, `01011.95.11`, `01011.95.12`, `01011.95.13`, `01011.95.14`; SUNSTONE-H `01011.02.61`, `01011.02.65`, `01011.02.67`, `01011.03.68` | see item 7 |
+| Communication module | `WINET-SV200.001.00` P036, P038, P040, P043, P044, P045; `WINET-SV300.001.03` P021, P024, P031, P032, P033 | any other |
+| Sungrow battery | SBH100, SBH150, SBH200, SBH300, SBH400, SBR064, SBR096, SBR128, SBR160, SBR192, SBR224, SBR256 | SBH250, SBH350 |
+| Third-party battery | 3 inverters | other packs |
+| Transport | Logger, WiNet-S, WiNet-S over WiFi, WiNet-S wired, direct LAN; 4 inverters through a Modbus proxy | any route not listed |
+| Capability test | 14 of 29 hybrid inverters | every other model and firmware |
 | Wallbox | AC22E-01 | AC011E-01, AC007-00 |
-| iHomeManager | none | any |
-| Sungrow Logger | two inverters read through a Logger1000A; the Logger itself unread | the Logger's own registers |
+| iHomeManager | read | a second unit |
+| Sungrow Logger | the Logger itself unread; 2 inverters read through one | the Logger's own registers |
+
+<!-- coverage: end -->
 
 ## Why each one
 
 What has been measured, and what each answer would change, is in the
 [wiki](../.wiki/wiki/index.md); these say only why a diagnosis is wanted.
 
-### 1. Any single-phase inverter
+### 1. An inverter of the K or MG family
 
-Nothing single-phase has been read. Every RS capability in
+Nothing from either family has been read. Every capability they are given in
 [compatibility.md](../doc/compatibility.md) is inferred from the family; one
 diagnosis confirms the lot or finds the first exception. Fewer entities than the
 YAML package gave on the same machine is itself a finding.
 
-### 2. An iHomeManager
+### 2. A second iHomeManager
 
-Never measured. **Open its Modbus TCP first**, in the iSolarCloud app:
+One unit has been read, on `iHomeManager-SV930.001.00.P020`: a second, on other
+firmware above all, shows which of its readings are the device's and which that
+unit's. **Open its Modbus TCP first**, in the iSolarCloud app:
 *iHomeManager settings → Forwarding channel settings*, port 502, 503 or 504,
 SSL off. Each port takes one connection, so stop other clients. The diagnosis
 finds it at unit 247 and writes a document of its own. In Home Assistant,
@@ -90,8 +100,7 @@ Every T so far was read through a WiNet-S or a Logger, and the T seems to have n
 port of its own (an SH20T owner says so; Sungrow's SH5T-SH25T manual lists a
 WiNet-S2 and a COM2 terminal). Run it with the capability test, feed-in
 limitation and PV cut allowed, while the house exports: through a dongle only
-what the inverter does counts, and that settles 13074's write scale and the PV
-cut on P071. An SBH pack's cell layout, which a dongle refuses, stays unread. See
+what the inverter does counts, and that settles 13074's write scale on P071. An SBH pack's cell layout, which a dongle refuses, stays unread. See
 [SH-T](../.wiki/wiki/entities/device-sh-t.md).
 
 ### 4. A Sungrow Logger1000, 3000 or 4000
@@ -114,29 +123,52 @@ diagnosis finds one behind a WiNet-S, or at its own address on port 516.
 
 ### 6. A charging car
 
-Two runs a few minutes apart while a car charges: what input 21313 does over
-a session, and whether 21308/21310 are signed.
+Two runs a few minutes apart while a car charges: whether 21308/21310 are
+signed. Their high words have read 0 through every session so far.
 
 ### 7. Version 1 between `.95.03` and `.95.12`, or a `.95.14` that is not 10 kW
 
 13074 stores a written word 1:1 only on `.95.03` and multiplies it by ten on
 every later firmware measured ([register 13074](../.wiki/wiki/entities/register-13074.md),
 [#763](https://github.com/mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant/issues/763)).
-A machine in between places the change: `diagnosis.sh tests <host>
+A machine in between places the change (one on `.95.11` has been read, but
+without the scale): `diagnosis.sh tests <host>
 --export-scale` asks with one write that changes nothing. A `.95.14` that is
 not 10 kW tells "0.1 % of rated power" from "10 W" apart, which coincide at
 10 kW. A 5 kW SH5.0RT-V112 on `.95.14` has answered the probe with a refusal, which both
 readings give: a capability test on one, with limitation on, settles it.
 
-### 8. An SBR192 on a direct link
-
-The one size not yet read over a cable ([SBR battery](../.wiki/wiki/entities/device-sbr-battery.md)).
-
-### 9. A second master/slave cluster
+### 8. A second master/slave cluster
 
 One cluster gave two rules the config flow relies on: a slave's device
 address is 2, and a slave answers 0 where a standalone inverter answers
 0xFFFF. A second shows whether they are rules or one house's convention.
+
+### 9. An SH-RS on P057, P059, P066, P067 or P068
+
+Register 31211, the PV cut, answers on all five, and has been watched cutting
+on P065 only, so the integration offers the switch on P065 only
+([register 31211](../.wiki/wiki/entities/register-31211.md)). A capability test
+in daylight, with the PV cut allowed, watches it on one more.
+
+### 10. An SG string inverter other than an SG5.0RS or SG10RT
+
+The SG map is from another project's source and unmeasured for most models,
+and an SG answers 0 for hardware it lacks, so its tracker and phase count
+decide its entities ([SG-RS](../.wiki/wiki/entities/device-sg-rs.md), [SG-RT](../.wiki/wiki/entities/device-sg-rt.md)).
+
+### 11. An inverter on a three-wire grid (3P3L)
+
+Register 5002 says 3P3L when there is no neutral; then 5019-5021 carry line
+voltages, and the integration creates no phase voltages or phase powers.
+Nothing on 3P3L has been read.
+
+### 12. A hybrid in low-SoC standby
+
+Register 13017 wakes a standby inverter and sends it back to sleep on P020 and
+P023, watched ([register 13017](../.wiki/wiki/entities/register-13017.md)); the
+switch is created only there. A run in standby, battery at its minimum and no
+PV, watches it on one more firmware.
 
 ## Also worth sending
 

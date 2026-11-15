@@ -83,6 +83,8 @@ Edit the source, not the output:
   from `sungrow_modbus.hybrid_inverter.derived` and `scripts/generate/tables/`;
 - `doc/compatibility.md` and `doc/firmware_support.md` --
   `generate_compatibility.py` and `generate_firmware_support.py`, from the diagnoses;
+- the coverage table in `device-diagnosis/devices-wanted.md`, between its
+  markers -- `generate_devices_wanted.py`, from the diagnoses;
 - `scripts/dev/simulator_registers.json` -- `generate_simulator_registers.py`;
 - `doc/entity_names.md` and `plans/text_translation_review.md` --
   `scripts/helpers/review_names.py --markdown` and `--texts`;
@@ -90,7 +92,7 @@ Edit the source, not the output:
   `generate_second_inverter_config.py`; CI regenerates and commits it,
   overwriting any hand edit.
 
-`make gen-check` (and CI) fails on a hand edit of the first four.
+`make gen-check` (and CI) fails on a hand edit of the first five.
 `pyproject.toml`'s version and `manifest.json`'s pin move only through
 `scripts/release/sync_version.py --set X.Y.Z`.
 

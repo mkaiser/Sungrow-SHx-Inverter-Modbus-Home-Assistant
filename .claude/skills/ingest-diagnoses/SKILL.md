@@ -1,6 +1,6 @@
 ---
 name: ingest-diagnoses
-description: Check the diagnosis issues for new device diagnoses and ingest them into device-diagnosis/results and the wiki. Use for the daily diagnosis check, or when someone mentions a diagnosis posted on #786 or another issue.
+description: Check the diagnosis issues for new device diagnoses and ingest them into device-diagnosis/results, the wiki and the wanted list the diagnosis issue shows. Use for the daily diagnosis check, or when someone mentions a diagnosis posted on #786 or another issue.
 ---
 
 # Ingest new diagnoses
@@ -33,8 +33,17 @@ ingest workflow); this is the order to apply them in.
 6. **Code follows only from evidence**: a watched PV cut adds the firmware to
    `CONFIRMED_ON_FIRMWARE`; 31211 answering adds it to `ANSWERING` in
    `tests/test_pv_generation_cut.py`.
-7. `make gen` (the compatibility table), then
-   `pytest tests/test_wiki.py tests/test_no_real_serials.py tests/test_pv_generation_cut.py`.
-8. **Commit** naming the contributor (no `@`) and the issue, unless the diagnosis
+7. **The wanted list**, `device-diagnosis/devices-wanted.md`, is the top of
+   the pinned diagnosis issue. Its *Most wanted* and *Not needed any more* are
+   hand-written: drop or reword every row this diagnosis settles (or
+   narrows), adjust the inverter counts in *Not needed*, and keep each
+   *Why each one* heading numbered and named like its row, since the table's
+   anchors point at them. Its coverage table is generated (next step); never
+   edit between its markers.
+8. `make gen` (`doc/compatibility.md`, `doc/firmware_support.md` and the
+   coverage table), then
+   `pytest tests/test_wiki.py tests/test_no_real_serials.py tests/test_pv_generation_cut.py tests/test_diagnosis_issue_body.py`.
+9. **Commit** naming the contributor (no `@`) and the issue, unless the diagnosis
    says `anonymous`. Move the last-checked time in `Todo.md` on. Ask before
-   pushing.
+   pushing: the push is what rewrites the issue's body
+   (`.github/workflows/diagnosis-issue.yml`), so say when the list changed.
