@@ -115,13 +115,12 @@ the second, point it at either:
   `secrets.yaml` (`sungrow_modbus_device_address`, normally `1`)
 
 The flow identifies what answers rather than trusting the address: it sweeps
-units 1-5 for the inverter and finds a battery or wallbox behind it. This
-release sets every new entry up as **diagnostics only** -- the entity id
-question that devices mode asks is gated behind `ONLY_DIAGNOSIS_MODE` in
-`const.py` (see [Reviewing the migration by hand](#reviewing-the-migration-by-hand)).
-To get entities anyway, turn on *Create the entities too* on the setup's last
-dialog: a devices entry under new ids, with the entity id question never
-asked.
+units 1-5 for the inverter and finds a battery or wallbox behind it. Every
+new entry is an ordinary one: entities, controls, and the diagnosis and
+capability test beside them under *Diagnostic* on the device page. The one
+question the setup puts is whether to take over the YAML package's entity ids,
+and only where there is something to take over (see
+[Reviewing the migration by hand](#reviewing-the-migration-by-hand)).
 
 **A real inverter on your LAN is reachable from the container without any
 setup.** The Docker bridge NATs outbound, so the container follows the host's
@@ -339,11 +338,6 @@ Statistics: 2880 hourly rows
 $ scripts/dev/simulate.sh &                         # an inverter to talk to
 $ scripts/dev/develop.sh
 ```
-
-The entity id question is asked only in devices mode, which this release
-does not offer: set `ONLY_DIAGNOSIS_MODE` in
-`custom_components/sungrow_modbus/const.py` to `False` locally first, and do
-not commit it.
 
 Home Assistant must be **stopped** while it runs: it writes the entity
 registry and the recorder database directly. `--reset` undoes it, so the same

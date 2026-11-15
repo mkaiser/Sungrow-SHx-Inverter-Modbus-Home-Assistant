@@ -4,6 +4,7 @@
 #   make            the help screen
 #   make check      everything CI gates on, before you push
 #   make dev        Home Assistant on :8123
+#   make dev-real   a second one on :8125, for real hardware
 #   make sim        the simulator on :5020
 #   make forget     forget the stored inverter, so setup re-detects it
 #
@@ -32,6 +33,10 @@ dev: ## Boot Home Assistant on :8123 against config/ (ARGS=--forget to drop the 
 
 develop: dev
 .PHONY: develop
+
+dev-real: ## Boot a third HA on :8125 against config-real/, for real hardware
+	SUNGROW_DEV_CONFIG=config-real SUNGROW_DEV_PORT=8125 scripts/dev/develop.sh $(ARGS)
+.PHONY: dev-real
 
 sim: ## Regenerate the register seed and serve it on :5020
 	scripts/dev/simulate.sh $(ARGS)

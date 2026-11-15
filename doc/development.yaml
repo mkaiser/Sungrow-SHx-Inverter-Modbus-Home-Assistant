@@ -492,10 +492,8 @@ reviewing_the_migration:
   # the choice well enough to make it, and whether the graph is really
   # continuous afterwards.
   gate: >-
-    The entity id question is asked only in devices mode, which this release
-    does not offer. Set ONLY_DIAGNOSIS_MODE = False in
-    custom_components/sungrow_modbus/const.py locally first, and do not
-    commit it.
+    The entity id question is asked only where the YAML package left ids to
+    take over, so the testbed below is what makes it appear at all.
   steps:
     - scripts/dev/develop.sh                       # once, to create config/
     - pkill -f 'bin/has[s]'                 # it must be stopped for the next step

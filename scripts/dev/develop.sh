@@ -4,12 +4,34 @@ set -e
 
 cd "$(dirname "$0")/../.."
 
+# Which instance this is. The default is the one everybody means by "the dev
+# instance": `config/` on :8123, against the simulator.
+#
+# `make dev-real` sets these to `config-real` and 8125, for an instance
+# pointed at **real hardware**. Two instances rather than two config entries
+# in one, because the point of the second is that it is disposable: its
+# history, its entity ids and its registry are its own, so a day of talking
+# to a real inverter leaves nothing to untangle from the simulator's.
+#
+# They must not run against the same directory at once -- Home Assistant
+# rewrites `.storage` on change and the second one would lose the first's
+# writes -- but on different ones they run side by side happily.
+CONFIG_DIR="${SUNGROW_DEV_CONFIG:-config}"
+PORT="${SUNGROW_DEV_PORT:-8123}"
+CONFIG="${PWD}/${CONFIG_DIR}"
+
 # Create the dev config on first run.
-if [[ ! -d "${PWD}/config" ]]; then
-    mkdir -p "${PWD}/config"
+mkdir -p "${CONFIG}"
+if [[ ! -f "${CONFIG}/.HA_VERSION" ]]; then
+    hass --config "${CONFIG}" --script ensure_config
 fi
-if [[ ! -f "${PWD}/config/.HA_VERSION" ]]; then
-    hass --config "${PWD}/config" --script ensure_config
+
+# One configuration.yaml, copied rather than written: `config/configuration.yaml`
+# is the tracked one and says why each component is there, and a second
+# instance that drifted from it would debug differently from the first for
+# reasons nobody would think to look for.
+if [[ "${CONFIG_DIR}" != "config" && ! -f "${CONFIG}/configuration.yaml" ]]; then
+    cp "${PWD}/config/configuration.yaml" "${CONFIG}/configuration.yaml"
 fi
 
 # Home Assistant looks for custom integrations in <config>/custom_components,
@@ -24,8 +46,7 @@ fi
 # A real installation has config/custom_components/ as a directory and the
 # library in site-packages, which is exactly what this reproduces. config/ is
 # gitignored, so the link costs nothing.
-mkdir -p "${PWD}/config"
-ln -sfn "${PWD}/custom_components" "${PWD}/config/custom_components"
+ln -sfn "${PWD}/custom_components" "${CONFIG}/custom_components"
 
 # `--forget` drops any Sungrow config entry this dev instance is holding, so
 # the next boot starts at "Add integration" again.
@@ -38,11 +59,12 @@ ln -sfn "${PWD}/custom_components" "${PWD}/config/custom_components"
 # address. Nothing does. This is how to forget it without hand-editing
 # .storage.
 if [[ "${1:-}" == "--forget" ]]; then
-    python - <<'PY'
+    SUNGROW_DEV_CONFIG_DIR="${CONFIG}" python - <<'PY'
 import json
+import os
 from pathlib import Path
 
-store = Path("config/.storage/core.config_entries")
+store = Path(os.environ["SUNGROW_DEV_CONFIG_DIR"]) / ".storage/core.config_entries"
 if not store.exists():
     print("no config entries yet -- nothing to forget")
     raise SystemExit
@@ -63,13 +85,22 @@ PY
     exit 0
 fi
 
+# A second instance has to be told its port, and told it in `.storage/http`
+# rather than in the YAML: `ha_http_port.py` says why in full -- the short of
+# it is that a YAML port is a *pending* one Home Assistant reverts after five
+# minutes with nobody to promote it, and it would then land on :8123 on top of
+# the first instance. Harmless before the store exists; it says so and stops.
+if [[ "${PORT}" != "8123" ]]; then
+    python3 "${PWD}/scripts/dev/ha_http_port.py" "${CONFIG_DIR}" "${PORT}"
+fi
+
 # Onboarding, in the background, while Home Assistant starts in front of it.
 # A fresh config/ -- or one whose .storage was cleared -- otherwise opens on
 # `onboarding.html` and asks for the account that doc/development.yaml already
 # publishes. Idempotent, so an instance that is already onboarded prints one
 # line and stops.
 (
-    python3 "${PWD}/scripts/dev/ha_onboard.py" --url http://127.0.0.1:8123 \
+    python3 "${PWD}/scripts/dev/ha_onboard.py" --url "http://127.0.0.1:${PORT}" \
         --username dev --password dev || true
 ) &
 
@@ -87,4 +118,11 @@ fi
 # Modbus stack to debug; `--debug` adds only the loop mode and
 # `hass.config.debug`. If you want it back for an asyncio bug, add it -- and
 # expect the search to fail while it is on.
-hass --config "${PWD}/config"
+# `SETUP_PORT` covers the **first** boot, which `ha_http_port.py` cannot:
+# there is no `.storage/http` to pin yet, and Home Assistant would create one
+# on :8123 -- straight into the first instance's port, which is how this was
+# found. It is `http`'s own default for an instance with no stored port
+# (`default_server_port` in `homeassistant/components/http/config.py`), so
+# from the second boot on the pinned store decides and this is ignored.
+# `hacs_testbed.sh` does the same for the same reason.
+SETUP_PORT="${PORT}" hass --config "${CONFIG}"

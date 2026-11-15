@@ -10,8 +10,9 @@
 
   "features": {
     // `gh`, for issues, workflow runs and the preview mirror's manual sync.
-    // No apt packages: ffmpeg, libturbojpeg and libpcap serve camera, stream
-    // and dhcp, which neither dev instance loads (no `default_config:`).
+    // The apt packages are in scripts/dev/setup.sh, which already needs sudo
+    // for wireguard-tools: ffmpeg, libturbojpeg0 and libpcap0.8 go in there,
+    // and that file says what each is for.
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
 
@@ -58,7 +59,7 @@
     "GH_CONFIG_DIR": "/home/vscode/.claude/gh-devcontainer"
   },
 
-  "forwardPorts": [8123, 5020, 8124, 8126],
+  "forwardPorts": [8123, 5020, 8124, 8125, 8126],
   "portsAttributes": {
     "8123": {
       "label": "Home Assistant",
@@ -70,6 +71,14 @@
     // the other is what a user actually receives.
     "8124": {
       "label": "Home Assistant (HACS testbed)",
+      "onAutoForward": "notify"
+    },
+    // A third Home Assistant, from `make dev-real`: the same working tree as
+    // :8123, against a real inverter instead of the simulator, with a config
+    // directory of its own so a day on hardware leaves the simulator's
+    // history and entity ids alone.
+    "8125": {
+      "label": "Home Assistant (real hardware)",
       "onAutoForward": "notify"
     },
     // The same on Home Assistant 2026.11, through its built-in Marketplace

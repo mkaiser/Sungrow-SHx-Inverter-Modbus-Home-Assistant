@@ -95,7 +95,12 @@ class Instance:
                 raise RuntimeError(f"{path} needs a token and none was obtained")
             headers["Authorization"] = f"Bearer {self.token}"
         request = urllib.request.Request(self.url + path, data=data, headers=headers)
-        with urllib.request.urlopen(request, timeout=30) as answer:
+        # Generous, because the slow call here is creating the owner on a
+        # genuinely fresh instance: Home Assistant is still setting components
+        # up behind it, and at 30 seconds that call timed out *after* the
+        # server had made the user -- leaving an instance half onboarded and a
+        # script that reported failure for something that had worked.
+        with urllib.request.urlopen(request, timeout=180) as answer:
             raw = answer.read().decode()
         return json.loads(raw) if raw.strip() else None
 
@@ -269,7 +274,18 @@ def main(argv: list[str] | None = None) -> int:
     try:
         for step in steps:
             if step == "user":
-                instance.create_user(args.name, args.username, args.password)
+                try:
+                    instance.create_user(args.name, args.username, args.password)
+                except urllib.error.HTTPError as error:
+                    # 400 here means the owner already exists: a previous run
+                    # made it and lost the answer. `/api/onboarding` can still
+                    # list the step as outstanding, because Home Assistant
+                    # writes that store lazily. Logging in is what the rest of
+                    # this loop needs from the step, so take that route.
+                    if error.code != 400:
+                        raise
+                    print("onboarding: user already exists -- logging in")
+                    instance.log_in(args.username, args.password)
             else:
                 if instance.token is None:
                     instance.log_in(args.username, args.password)
