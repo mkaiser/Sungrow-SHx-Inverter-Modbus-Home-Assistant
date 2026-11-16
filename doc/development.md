@@ -223,7 +223,7 @@ VERSION=X.Y.Z` moves the version everywhere it must agree (see Pitfalls).
 | `influx_migration.py` | Print Grafana regexes and rewrite recipes for InfluxDB users; connects to nothing |
 | `review_names.py` | Lay the entity names out for the open naming decision -- grouped by subject, each with the entity id it produces and its legacy name. `--markdown` prints the name table (redirect it into `doc/entity_names.md`), `--texts` the other texts of `strings.json` in English and German (into `plans/text_translation_review.md`); `--check` fails when either file has drifted |
 | `diagnosis_issue_body.py` | Build the body of the pinned diagnosis issue (#786) from `device-diagnosis/diagnosis-issue.md` and `devices-wanted.md`, links made absolute; `.github/workflows/diagnosis-issue.yml` runs it. Prints to stdout |
-| `make_brand_icon.py` | Regenerate the integration's `brand/` icons and wide logos, light and dark (`--preview` renders a check sheet of the icons) |
+| `make_brand_icon.py` | Regenerate the integration's `brand/` icons and wide logos, light and dark (`--preview` also renders a check sheet of the icons, at the sizes they are shown at and on both backgrounds, to `build/brand_preview.png`) |
 
 What a contributor is handed, `device-diagnosis/scripts/`, is described in
 [device-diagnosis/README.md](../device-diagnosis/README.md#what-is-in-scripts).

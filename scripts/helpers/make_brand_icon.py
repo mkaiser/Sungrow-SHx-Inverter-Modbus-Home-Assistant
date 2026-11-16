@@ -19,8 +19,8 @@ at about 32 pixels in Home Assistant's own UI, so every part is a plain
 silhouette, and the parts sit in one row under the array so none overlaps
 another. Chosen by the maintainer on 2026-11-07 from three drafts.
 
-    python scripts/helpers/make_brand_icon.py            # writes the brand/ folder
-    python scripts/helpers/make_brand_icon.py --preview  # also writes a large preview
+    python scripts/helpers/make_brand_icon.py            # writes brand/
+    python scripts/helpers/make_brand_icon.py --preview  # and build/brand_preview.png
 """
 
 from __future__ import annotations
@@ -33,6 +33,11 @@ from PIL import Image, ImageDraw
 
 REPO = Path(__file__).resolve().parents[2]
 BRAND = REPO / "custom_components" / "sungrow_modbus" / "brand"
+
+#: The check sheet is not an asset, and `brand/` is enumerated by hassfest,
+#: which warns about any file there that Home Assistant's brands repository
+#: does not take. It goes to the ignored build directory instead.
+PREVIEW = REPO / "build" / "brand_preview.png"
 
 #: Drawn far larger than needed and downsampled, which is the cheapest way to
 #: get clean edges out of Pillow's non-antialiased primitives.
@@ -257,7 +262,9 @@ def main() -> int:
     """Render every brand asset."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--preview", action="store_true", help="also write a large preview sheet"
+        "--preview",
+        action="store_true",
+        help=f"also write a check sheet to {PREVIEW.relative_to(REPO)}",
     )
     args = parser.parse_args()
 
@@ -278,9 +285,9 @@ def main() -> int:
                     (size, size), Image.LANCZOS
                 )
                 sheet.paste(small, (x0 + 260, 50 + i * 80), small)
-        path = BRAND / "preview.png"
-        sheet.convert("RGB").save(path, "PNG")
-        written.append(path)
+        PREVIEW.parent.mkdir(parents=True, exist_ok=True)
+        sheet.convert("RGB").save(PREVIEW, "PNG")
+        written.append(PREVIEW)
 
     for path in written:
         print(f"{path.relative_to(REPO)}  {path.stat().st_size:,} bytes")

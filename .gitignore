@@ -31,9 +31,6 @@ __pycache__/
 .ruff_cache/
 .coverage
 
-# Generated only for eyeballing the brand mark, not an asset.
-**/brand/preview.png
-
 # Build artefacts from `python -m build`.
 dist/
 build/
